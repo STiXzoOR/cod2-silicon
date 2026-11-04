@@ -9798,5 +9798,237 @@
   "linux:script/scr_yacc.c:3340:yywrap": {
     "status": "equal",
     "evidence": "Inlined constant EOF completion in Mac yyparse 0x10cfda-0x10cfff and actions 95-97 at 0x10d047: no callback/read restart after wrap; scanner completion is equivalent to returning 1."
+  },
+  "mac:0x00073e32": {
+    "status": "equal",
+    "evidence": "Mac 0x73e32: clearing g_empty matches the native assignment."
+  },
+  "mac:0x00074180": {
+    "status": "equal",
+    "evidence": "Mac 0x74180\u20130x741ce: reverse model walk, XModelBad test, early true and empty false match."
+  },
+  "mac:0x0007561a": {
+    "status": "fixed",
+    "evidence": "Mac DObjCalcSkel 0x7561a\u20130x76600: corrected qx/qy accumulation order in parent composition to SSE order at 0x75850\u20130x75913 and 0x75bf0\u20130x75cbe (also child copies at 0x75e6f\u20130x75f46/0x764a2\u20130x76579). The zero-length fallback at 0x75d15\u20130x75d2c, 0x765b0\u20130x765ce and 0x765e4\u20130x765f2 writes only quat[3]=1 and transWeight=2; native now preserves xyz, including signed zeros and underflowed components. Reviewed remaining masks/root/child/duplicate/control paths. Native-only; compiled and reviewed, not exercised."
+  },
+  "linux:xanim/dobj.cpp:730:DObjClone": {
+    "status": "unchecked",
+    "evidence": "No native definition or Mac text symbol/caller identity established for this Linux-only object-copy/reference helper; no behavior inferred from Linux."
+  },
+  "mac:0x0007499e": {
+    "status": "equal",
+    "evidence": "Mac 0x7499e\u20130x74b1c: lazy duplicate creation, model start indexes, descending bone walk, duplicate target bits, parent deltas and attached-root sentinel match."
+  },
+  "mac:0x000752f0": {
+    "status": "equal",
+    "evidence": "Mac 0x752f0\u20130x7561a: object reset, inlined tree generation rollover, attachment lookup/warnings, 127-bone limit and ordered bound sums match; native tree infoArray addressing accounts for widened header pointers."
+  },
+  "mac:0x00074660": {
+    "status": "equal",
+    "evidence": "Mac 0x74660\u20130x7499e: attached-model skip, first matching tag search, destination/source encoding, root warning, empty-string reuse and SL length/flags match. Read attributed native body directly."
+  },
+  "mac:0x00073f68": {
+    "status": "equal",
+    "evidence": "Mac 0x73f68\u20130x73fa0: stores skeleton/time and clears all four words of animation, control and skeleton masks."
+  },
+  "mac:0x00074fbe": {
+    "status": "equal",
+    "evidence": "Mac 0x74fbe\u20130x752f0: null-object print, model/bone loops, three inlined bone-name searches, duplicate mapping print and final newline match."
+  },
+  "mac:0x00073eb0": {
+    "status": "equal",
+    "evidence": "Mac 0x73eb0\u20130x73f1c: tree pointer clearing, g_empty exemption, string suffix length plus 17 and duplicate ID clearing match."
+  },
+  "mac:0x00074306": {
+    "status": "equal",
+    "evidence": "Mac 0x74306\u20130x743f2: initializes output fields, carries incoming fraction, walks model bone matrices in order, records nonnegative hits and copies final trace fields."
+  },
+  "mac:0x00073f1c": {
+    "status": "equal",
+    "evidence": "Mac 0x73f1c\u20130x73f2e: numBones*32+48 allocation formula matches native DSkel/DObjAnimMat storage."
+  },
+  "mac:0x00074116": {
+    "status": "equal",
+    "evidence": "Mac 0x74116\u20130x74176: ordered model lookup, accumulated preceding bone counts, first successful index and missing -1 match."
+  },
+  "linux:xanim/dobj.cpp:85:DObjGetBoneIndexInternal": {
+    "status": "equal",
+    "evidence": "Linux name maps to native DObjFindBoneIndexForTag and the inlined Mac searches in DObjCreateDuplicateParts (0x74782\u20130x748c3), DObjSetLocalTag (0x74e67\u20130x74ebb) and DObjSetControlTagAngles (0x74f15\u20130x74f69); first matching model and accumulated offsets match."
+  },
+  "mac:0x00073fde": {
+    "status": "equal",
+    "evidence": "Mac 0x73fde\u20130x74044: walks model/bone counts and emits consecutive 40-byte XBoneInfo records; native uses full-width parts and output pointers."
+  },
+  "linux:xanim/dobj.cpp:1082:DObjGetBoneName": {
+    "status": "equal",
+    "evidence": "Linux name maps to native DObjGetBoneNameString; Mac DObjDumpInfo inlines the model-range/name lookup at 0x75018\u20130x7507d, 0x750e7\u20130x7514c and 0x75165\u20130x751cf, including null on exhaustion."
+  },
+  "mac:0x000742cc": {
+    "status": "equal",
+    "evidence": "Mac 0x742cc\u20130x74306: all three mins then all three maxs are copied in the same order."
+  },
+  "linux:xanim/dobj.cpp:767:DObjGetCreateParms": {
+    "status": "unchecked",
+    "evidence": "No native definition or Mac text symbol/caller identity established for this Linux-only creation-parameter extraction helper; no behavior inferred from Linux."
+  },
+  "mac:0x00074b1c": {
+    "status": "equal",
+    "evidence": "Mac 0x74b1c\u20130x74cbe: four-word clear, lazy duplicate data, valid bone model lookup, parent-delta ascent, duplicate jumps, model-parent ascent and 255 termination match."
+  },
+  "mac:0x000741da": {
+    "status": "equal",
+    "evidence": "Mac 0x741da\u20130x741f6: forwards the selected model and unchanged distance to XModelGetLodForDist."
+  },
+  "mac:0x000741f6": {
+    "status": "equal",
+    "evidence": "Mac 0x741f6\u20130x74266: zero-initialized maximum and ordered model calls match native comparison, including retaining the previous maximum for ties/unordered current distance."
+  },
+  "mac:0x00073fce": {
+    "status": "equal",
+    "evidence": "Mac 0x73fce\u20130x73fde: zero-extended matOffset[modelIndex] matches."
+  },
+  "linux:xanim/dobj.cpp:1489:DObjGetMaxLodOutDist": {
+    "status": "equal",
+    "evidence": "Linux spelling maps to Mac/native DObjGetLodOutDist (0x741f6\u20130x74266); compared zero initial maximum and ordered XModelGetLodOutDist calls."
+  },
+  "mac:0x00073fac": {
+    "status": "equal",
+    "evidence": "Mac 0x73fac\u20130x73fbc: indexed models pointer load matches native pointer-width indexing."
+  },
+  "linux:xanim/dobj.cpp:1484:DObjGetModelLodForDist": {
+    "status": "equal",
+    "evidence": "Linux spelling maps to Mac/native DObjGetLodForDist (0x741da\u20130x741f6); selected model and distance forwarding match."
+  },
+  "linux:xanim/dobj.cpp:962:DObjGetModelSurface": {
+    "status": "equal",
+    "evidence": "Linux spelling maps to Mac/native DObjGetSurface (0x740ba\u20130x740de); model/LOD/surface pointer indexing matches."
+  },
+  "linux:xanim/dobj.cpp:967:DObjGetModelSurfaceName": {
+    "status": "equal",
+    "evidence": "Linux spelling maps to Mac/native DObjGetSurfaceName (0x740de\u20130x74116); material ID lookup and zero-ID DEFAULT path match."
+  },
+  "mac:0x00073fa0": {
+    "status": "equal",
+    "evidence": "Mac 0x73fa0\u20130x73fac: zero-extended numModels byte matches."
+  },
+  "mac:0x00074044": {
+    "status": "equal",
+    "evidence": "Mac 0x74044\u20130x740ba: reverse model traversal, signed negative LOD skip, absent-surface skip and signed surface count accumulation match."
+  },
+  "mac:0x00073fbc": {
+    "status": "equal",
+    "evidence": "Mac 0x73fbc\u20130x73fce: null skeleton yields null; otherwise returns matrix storage after the 48-byte mask header."
+  },
+  "mac:0x000740ba": {
+    "status": "equal",
+    "evidence": "Mac 0x740ba\u20130x740de: selected LOD surface pointer array indexing matches native full-width pointer loads."
+  },
+  "linux:xanim/dobj.cpp:936:DObjGetSurfaceCount": {
+    "status": "equal",
+    "evidence": "Linux spelling maps to Mac/native DObjGetNumSurfaces (0x74044\u20130x740ba); reverse LOD walk, negative LOD and missing-surface skips, accumulation match."
+  },
+  "linux:xanim/dobj.cpp:979:DObjGetSurfaceList": {
+    "status": "equal",
+    "evidence": "Linux spelling maps to Mac/native DObjGetSurfaces (0x743f2\u20130x74660); compared reference order, count/error path and shifted unsigned bone-mask carry."
+  },
+  "mac:0x000740de": {
+    "status": "equal",
+    "evidence": "Mac 0x740de\u20130x74116: selected unsigned-short material string ID, DEFAULT on zero and SL_ConvertToString otherwise match."
+  },
+  "mac:0x000743f2": {
+    "status": "equal",
+    "evidence": "Mac 0x743f2\u20130x74660: four-word clear, LOD/surface filtering, 64-surface error and diagnostics, surface references, shifted unsigned mask carry and final count match."
+  },
+  "mac:0x00074176": {
+    "status": "equal",
+    "evidence": "Mac 0x74176\u20130x74180: loads the first DObj field, the tree pointer."
+  },
+  "mac:0x00074266": {
+    "status": "equal",
+    "evidence": "Mac 0x74266\u20130x742ae: ordered model calls, content-mask test and first true/empty false match."
+  },
+  "mac:0x00073e44": {
+    "status": "equal",
+    "evidence": "Mac 0x73e44\u20130x73e58: zero-extended ignoreCollision byte, model-index shift and low-bit mask match."
+  },
+  "mac:0x00073db0": {
+    "status": "equal",
+    "evidence": "Mac exact-symbol restart at 0x73db0\u20130x73e04: five zero words and SL_GetStringOfLen(data,0,17,12) match. Restart was necessary because full-binary disassembly misaligned the prologue."
+  },
+  "linux:xanim/dobj.cpp:1607:DObjInitFromModel": {
+    "status": "equal",
+    "evidence": "Linux spelling maps to Mac/native DObjSetModel (0x742ae\u20130x742cc); parts skeleton pointer, truncated bone count and first model assignment match."
+  },
+  "mac:0x000741ce": {
+    "status": "equal",
+    "evidence": "Mac 0x741ce\u20130x741da: zero-extended numBones byte matches."
+  },
+  "linux:xanim/dobj.cpp:596:DObjSetBounds": {
+    "status": "equal",
+    "evidence": "Mac DObjCreate inlines this helper at 0x75367\u20130x753ac and 0x7549a\u20130x75559; native uses the same zero-initialized, model-order component sums and final bounds stores."
+  },
+  "linux:xanim/dobj.cpp:913:DObjSetControlRotTransIndex": {
+    "status": "equal",
+    "evidence": "Mac DObjSetControlTagAngles inlines this helper at 0x74f6b\u20130x74f94; native requested bit test, existing skeleton bit rejection, control and animation mask ORs match."
+  },
+  "mac:0x00074f0c": {
+    "status": "equal",
+    "evidence": "Mac 0x74f0c\u20130x74fbe: inlined model/bone lookup, requested-bit and stale-skeleton gates, control+animation bit writes and zero-translation tag call match."
+  },
+  "linux:xanim/dobj.cpp:1598:DObjSetLocalBoneIndex": {
+    "status": "equal",
+    "evidence": "Mac DObjSetLocalTag inlines this wrapper after its tag lookup at 0x74ebd\u20130x74f07; native bit-gated DObjSetLocalTagInternal call and boolean return match."
+  },
+  "mac:0x00074e5e": {
+    "status": "equal",
+    "evidence": "Mac 0x74e5e\u20130x74f0c: inlined bone lookup, requested-bit/stale-skeleton gates, animation bit write, tag argument order and success return match."
+  },
+  "mac:0x00074cbe": {
+    "status": "equal",
+    "evidence": "Mac 0x74cbe\u20130x74e5e: null skeleton return, double half-degree conversion before float sin/cos calls, quaternion products/sums, null-angle identity, zero weight and translation copy match."
+  },
+  "mac:0x000742ae": {
+    "status": "equal",
+    "evidence": "Mac 0x742ae\u20130x742cc: parts skeleton address, low-byte bone count and models[0] store match native typed addressing after pointer widening."
+  },
+  "linux:xanim/dobj.cpp:891:DObjSetRotTransIndex": {
+    "status": "equal",
+    "evidence": "Mac DObjSetLocalTag inlines this helper at 0x74ebd\u20130x74ee2; native tests requested bit, rejects completed skeleton bit and ORs the animation bit."
+  },
+  "linux:xanim/dobj.cpp:566:DObjSetTree": {
+    "status": "equal",
+    "evidence": "Mac DObjCreate inlines tree/animToModel assignment and age rollover at 0x7531a\u20130x75344, 0x75565\u20130x75581 and 0x75586\u20130x7558d; native matches with infoArray-relative addressing for the widened header."
+  },
+  "mac:0x00073e04": {
+    "status": "equal",
+    "evidence": "Mac 0x73e04\u20130x73e32: no-op when empty, removal with length 17 and final g_empty clear match."
+  },
+  "mac:0x00073e78": {
+    "status": "equal",
+    "evidence": "Mac 0x73e78\u20130x73eb0: all four requested words are tested against complemented current skeleton bits; first missing bit returns false."
+  },
+  "mac:0x00073f52": {
+    "status": "equal",
+    "evidence": "Mac 0x73f52\u20130x73f68: clears timestamp and skeleton pointer in that order."
+  },
+  "mac:0x00073f2e": {
+    "status": "equal",
+    "evidence": "Mac 0x73f2e\u20130x73f52: timestamp mismatch clears the skeleton and returns false; matching time returns pointer presence."
+  },
+  "mac:0x00073e58": {
+    "status": "equal",
+    "evidence": "Mac 0x73e58\u20130x73e78: word index, low-five-bit shift and low-bit extraction match."
+  },
+  "linux:xanim/dobj.cpp:815:DObjSkelIsValid": {
+    "status": "unchecked",
+    "evidence": "No native definition or Mac text symbol/caller identity established for the Linux-only nonmutating timestamp/skeleton predicate. Mac DObjSkelExists at 0x73f2e clears skel on mismatch, so it cannot be equated with this row."
+  },
+  "mac:0x00076600": {
+    "status": "equal",
+    "evidence": "Mac 0x76600\u20130x774d0: reviewed output reset, finite-input sphere broad phase, priority inheritance, ignored models, inverse transforms, six-plane AABB clip, start-solid handling and final normal. Native shared hitSign retains the Mac scratch-sign behavior across later rejected candidates; model/parts guards preserve defined native handling outside valid loaded-model inputs."
+  },
+  "linux:xanim/dobj.cpp:1138:InvMatrixTransformVectorQuatTrans": {
+    "status": "equal",
+    "evidence": "Linux helper maps to native DObjTraceInversePointLocal and Mac DObjTraceline inline start/end transforms (0x76bcf\u20130x76f31); compared subtraction, scaled-quaternion axes and left-associated dot products."
   }
 }
