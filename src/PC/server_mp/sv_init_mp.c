@@ -318,7 +318,11 @@ void SV_SetUserinfo(int index, const char *val)
     const char *name;
 
     if (index < 0 || index >= (sv_maxclients)->current.integer) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025SV_SetUserinfo: bad index %i\n", index);
+#else
         Com_Error(1, "SV_SetUserinfo: bad index %i\n", index);
+#endif
     }
 
     if (!val)
@@ -492,7 +496,7 @@ void SV_Init(void)
     sv_mapRotationCurrent = Dvar_RegisterString("sv_mapRotationCurrent", "", SV_RESET_FLAGS);
     sv_debugRate = Dvar_RegisterBool("sv_debugRate", 0, SV_RESET_FLAGS);
     sv_debugReliableCmds = Dvar_RegisterBool("sv_debugReliableCmds", 0, SV_RESET_FLAGS);
-#if COD2_IS_PATCH_13
+#if COD2_IS_PATCH_13 && !defined(COD2_X64)
     sv_wwwDownload = Dvar_RegisterBool("sv_wwwDownload", 0, 0x1001);
     sv_wwwBaseURL = Dvar_RegisterString("sv_wwwBaseURL", "", 0x1001);
     sv_wwwDlDisconnected = Dvar_RegisterBool("sv_wwwDlDisconnected", 0, 0x1001);
@@ -503,6 +507,11 @@ void SV_Init(void)
     *(dvar_t **)&nextmap = Dvar_RegisterString("nextmap", "", SV_RESET_FLAGS);
 #endif
     com_expectedHunkUsage = Dvar_RegisterInt("com_expectedHunkUsage", 0, 0, 0x7fffffff, 0x1040);
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    sv_wwwDownload = Dvar_RegisterBool("sv_wwwDownload", 0, 0x1001);
+    sv_wwwBaseURL = Dvar_RegisterString("sv_wwwBaseURL", "", 0x1001);
+    sv_wwwDlDisconnected = Dvar_RegisterBool("sv_wwwDlDisconnected", 0, 0x1001);
+#endif
 }
 
 void SV_SetConfigstring(const int index, const char *val)
@@ -518,8 +527,13 @@ void SV_SetConfigstring(const int index, const char *val)
     byte *client;
     char cmd;
 
+#if defined(COD2_X64)
+    if ((unsigned int)index > 0x7ff) {
+        Com_Error(1, "\025SV_SetConfigstring: bad index %i\n", index);
+#else
     if (index > 0x7ff) {
         Com_Error(1, "SV_SetConfigstring: bad index %i\n", index);
+#endif
     }
 
     if (!val)
@@ -541,7 +555,11 @@ void SV_SetConfigstring(const int index, const char *val)
 
     len = strlen(val);
     sprintf(buf, "%i", index);
+#if defined(COD2_X64)
+    maxChunk = 0x3fd - (strlen(buf) + 1);
+#else
     maxChunk = 0x3fd - strlen(buf);
+#endif
 
     {
         serverStatic_t *svsPtr = (serverStatic_t *)imp_svs;
@@ -589,7 +607,11 @@ void SV_SetConfigValueForKey(int start, int max, const char *key, const char *va
             break;
     }
     if (i == max) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025SV_SetConfigValueForKey: overflow");
+#else
         Com_Error(1, "SV_SetConfigValueForKey: overflow");
+#endif
     }
     SV_SetConfigstring(start + max + i, value);
 }
@@ -749,7 +771,11 @@ void SV_Shutdown(char *finalmsg)
         DObjAbort();
         XAnimAbort();
         Scr_Abort();
+#if defined(COD2_X64)
+        *(void **)imp_bgs = NULL;
+#else
         *(int *)imp_com_errorEntered = 0;
+#endif
     }
 }
 
@@ -762,7 +788,11 @@ void SV_Startup(void)
 
     svs = (serverStatic_t *)imp_svs;
     if (svs->initialized) {
+#if defined(COD2_X64)
+        Com_Error(0, "\025SV_Startup: svs.initialized");
+#else
         Com_Error(0, "SV_Startup: svs.initialized");
+#endif
     }
 
     maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 0x40, 0x1025);
@@ -778,7 +808,11 @@ void SV_Startup(void)
     numClients = maxclients->current.integer;
     svs->clients = (client_t *)(Z_VirtualAllocInternal(numClients * sizeof(client_t)));
     if (!svs->clients) {
+#if defined(COD2_X64)
+        Com_Error(0, "\025SV_Startup: unable to allocate svs.clients");
+#else
         Com_Error(0, "SV_Startup: unable to allocate svs.clients");
+#endif
     }
 
 #if defined(COD2_X64)
@@ -796,6 +830,9 @@ void SV_Startup(void)
         svs->numSnapshotClients = numClients * numClients * 4;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    svs->sv_lastTimeMasterServerCommunicated = svs->time;
+#endif
     svs->initialized = 1;
     Dvar_SetBool( (dvar_t *)(com_sv_running), 1);
 }
@@ -855,7 +892,11 @@ void SV_ChangeMaxClients(void)
     numClients = (sv_maxclients)->current.integer;
     svs->clients = (client_t *)(Z_VirtualAllocInternal(numClients * sizeof(client_t)));
     if (!svs->clients) {
+#if defined(COD2_X64)
+        Com_Error(0, "\025SV_Startup: unable to allocate svs.clients");
+#else
         Com_Error(0, "SV_Startup: unable to allocate svs.clients");
+#endif
     }
 
     numClients = (sv_maxclients)->current.integer;
@@ -1010,6 +1051,9 @@ void SV_SpawnServer(const char *server)
     SV_SetExpectedHunkUsage(filename);
 #if !COD2_APPLE_SDK || !defined(DEDICATED)
     CL_StartLoading(server, svg->gametype);
+#if defined(COD2_X64)
+    UI_LoadIngameMenus();
+#endif
 #endif
 
     {
