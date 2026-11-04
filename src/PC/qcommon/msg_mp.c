@@ -39,7 +39,12 @@ COD2_ASSERT_FIELD(struct huffman_t, decompressor.tree, 28708);
 
 #define PSF(x) #x, __builtin_offsetof(playerState_t, x)
 #define CSF(x) #x, __builtin_offsetof(clientState_t, x)
+#if defined(COD2_X64)
+/* Mac's archived fields omit the enclosing s/r member in diagnostic names. */
+#define AEF(x) (#x + 2), __builtin_offsetof(archivedEntity_t, x)
+#else
 #define AEF(x) #x, __builtin_offsetof(archivedEntity_t, x)
+#endif
 #define ESF(x) #x, __builtin_offsetof(entityState_t, x)
 
 static const NetField playerStateFields[105] = {
@@ -152,17 +157,31 @@ static const NetField playerStateFields[105] = {
 
 static const NetField clientStateFields[22] = {
     { CSF(team), 2 },
+#if defined(COD2_X64)
+    { CSF(name[0]), -98 },
+    { CSF(name[4]), -98 },
+#else
     { CSF(name[0]), 32 },
     { CSF(name[4]), 32 },
+#endif
     { CSF(modelindex), 8 },
     { CSF(attachModelIndex[1]), 8 },
     { CSF(attachModelIndex[0]), 8 },
+#if defined(COD2_X64)
+    { CSF(name[8]), -98 },
+    { CSF(name[12]), -98 },
+    { CSF(name[16]), -98 },
+    { CSF(name[20]), -98 },
+    { CSF(name[24]), -98 },
+    { CSF(name[28]), -98 },
+#else
     { CSF(name[8]), 32 },
     { CSF(name[12]), 32 },
     { CSF(name[16]), 32 },
     { CSF(name[20]), 32 },
     { CSF(name[24]), 32 },
     { CSF(name[28]), 32 },
+#endif
     { CSF(attachTagIndex[5]), 5 },
     { CSF(attachTagIndex[0]), 5 },
     { CSF(attachTagIndex[1]), 5 },
@@ -425,7 +444,11 @@ void MSG_WriteBits(msg_t *msg, int value, int bits)
         return;
     }
 
+#if defined(COD2_X64)
+    for (i = 0; i != bits; i++) {
+#else
     for (i = 0; i < bits; i++) {
+#endif
         bit = msg->bit & 7;
         if (bit == 0) {
             msg->bit = msg->cursize * 8;
@@ -1117,7 +1140,12 @@ static qboolean __attribute_regparm__(3)
 
     (void)indexBits;
 
+#if defined(COD2_X64)
+    /* Mac 0x174321 continues delta handling when the remove bit is missing. */
+    if (MSG_ReadBit_core(msg) == 1) {
+#else
     if (MSG_ReadBit_core(msg)) {
+#endif
         if (cl_shownet && (cl_shownet->current.integer > 1 || cl_shownet->current.integer == -1))
             Com_Printf("%3i: #%-3i remove\n", msg->readcount, number);
         return 1;
