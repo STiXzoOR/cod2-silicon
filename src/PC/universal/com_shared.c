@@ -5,6 +5,10 @@
 #include <time.h>
 
 extern int toupper(int c);
+#if defined(COD2_X64)
+extern int I_strcmp(const char *s0, const char *s1);
+extern int I_stricmp(const char *s0, const char *s1);
+#endif
 
 extern void Com_Error(int code, const char *fmt, ...);
 
@@ -84,10 +88,18 @@ Bool Com_Filter(const char *filter, const char *name, int casesensitive)
 
             for (i = 0; i <= maxpos; i++) {
                 if (casesensitive) {
+#if defined(COD2_X64)
+                    if (!I_strcmp(name, buf))
+#else
                     if (!strncmp(name, buf, buflen))
+#endif
                         break;
                 } else {
+#if defined(COD2_X64)
+                    if (!I_stricmp(name, buf))
+#else
                     if (!strncasecmp(name, buf, buflen))
+#endif
                         break;
                 }
                 name++;
@@ -112,6 +124,10 @@ Bool Com_Filter(const char *filter, const char *name, int casesensitive)
             while (*filter) {
                 if (found) {
 
+#if defined(COD2_X64)
+                    if (*filter == ']' && filter[1] != ']')
+                        break;
+#else
                     if (*filter == ']') {
                         filter++;
                         if (*filter == ']')
@@ -119,12 +135,17 @@ Bool Com_Filter(const char *filter, const char *name, int casesensitive)
                         name++;
                         break;
                     }
+#endif
                     filter++;
                     continue;
                 }
                 if (*filter == ']') {
 
+#if defined(COD2_X64)
+                    if (filter[1] != ']') {
+#else
                     if (filter[1] == ']') {
+#endif
 
                         return 0;
                     }
@@ -135,7 +156,11 @@ Bool Com_Filter(const char *filter, const char *name, int casesensitive)
                 if (filter[1] == '-') {
                 check_range:;
                     char range_end = filter[2];
+#if defined(COD2_X64)
+                    if (range_end == '\0' || (range_end == ']' && filter[3] != ']')) {
+#else
                     if (range_end == '\0' || range_end == ']') {
+#endif
                         goto check_single;
                     }
                     if (casesensitive) {
