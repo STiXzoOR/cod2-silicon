@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 4212,
+      "unchecked": 4206,
       "intentional": 1602,
-      "equal": 3068,
-      "fixed": 575
+      "equal": 3069,
+      "fixed": 580
     },
     "scopes": {
       "unassigned": 777,
@@ -70008,8 +70008,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared CG_DrawShellShockSavedScreenBlend by hand with Mac 0x1d6e64\u20130x1d6f2a: activation/expiry gates, saved-screen flag, blend/save call order and rounding. Mac 0x1d6ee1\u20130x1d6ef5 divides timeLeft by fadeDuration before multiplying effectTime; native multiplied first. Corrected only under COD2_X64; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001d6d88",
@@ -70030,8 +70030,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared CG_LoadShellShockDvars by hand with Mac 0x1d6d88\u20130x1d6e64: requested/default opens, allocation/read/NUL/close, 29-name parse, free and return. Restored the full default-file failure diagnostic referenced at Mac 0x1d6e54 (string 0x2e3678); compiled and reviewed, that failure branch not exercised. Retained documented WS41 native filename-buffer adaptation because native file services/parser reuse va storage. Existing ASan shellshock_file fixture passed unchanged, exercising stable requested filename and table/count."
       },
       {
         "id": "mac:0x001d6c10",
@@ -70052,8 +70052,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared CG_PerturbCamera by hand with Mac 0x1d6c10\u20130x1d6cda, including unordered/zero gate, normalize/cross sequence, copied view axis and MatrixMultiply. Mac constructs adjacent forward/cross/up rows at stack -0x3c/-0x30/-0x24 and passes all nine floats at 0x1d6ccd; native passed a three-float local followed by unrelated local storage. Added one typed contiguous 3x3 basis and matching local API declaration under COD2_X64. Compiled and reviewed, not exercised; shared MatrixMultiply provider unchanged."
       },
       {
         "id": "mac:0x001d6cda",
@@ -70074,8 +70074,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared CG_SaveShellShockDvars by hand with Mac 0x1d6cda\u20130x1d6d88: 0x10000-byte buffer, 29-name serialization failure, shock/%s.shock path, write-mode open failure, strlen byte count, write/close and boolean return. Script also verified all 29 names in order against Mac table 0x34d680. No implementation change; no save operation exercised."
       },
       {
         "id": "mac:0x001d7528",
@@ -70096,8 +70096,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared CG_UpdateShellShock by hand with Mac 0x1d7528\u20130x1d7bc0: initial/disabled resets, channel/environment envelope, loop timing/end events, mouse fade/turn caps, smoothstep amplitude, phase/index and cubic interpolation. Corrected reversed sound-envelope selection at 0x1d7574\u20130x1d759e; restored abort alias shellshock_end_abort (0x2e36d4) and silent loop shellshock_loop_silent (0x2e36fc); restored nonzero engine perturbation table at 0x33c1a0, formerly zero-filled. Script verified all 262 float values and three wrap pairs; compiled object preserves those bytes. Retained zero-loop-fade reuse of prior envelope (0x1d7abd), actual native SND providers and documented pointer-width/imp_vec3_origin adaptation. Compiled and reviewed, audio/camera behavior not exercised."
       },
       {
         "id": "mac:0x001d6f2a",
@@ -70118,8 +70118,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_shellshock.c (cgame_mp/cg_shellshock); whole CG_SetShellShockParmsFromDvars was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to cgame/cg_shellshock; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_shellshock.c:302; assigned universal header has no body. Mac symbol __Z30CG_SetShellShockParmsFromDvarsP18shellshock_parms_t at 0x001d6f2a. Whole caller not audited by universal-math."
+        "status": "fixed",
+        "evidence": "Compared whole native CG_SetShellShockParmsFromDvars with Mac 0x1d6f2a\u20130x1d7528, resolving the previously routed universal/com_math ownership gap. Script verified all 29 GOT-to-native dvar sources in order; manually compared millisecond conversions, immediate 3000 view fade, rate/radius, room copy/termination, sound/channel mapping/clamps, mouse and float-bit copies. Fixed unordered rate condition: Mac 0x1d6fbe falls through to 1.0 while native >= selected division for NaN. Other ordinary paths match. Compiled and reviewed, unordered-input branch not exercised."
       }
     ],
     "cgame/cg_snapshot_mp": [
