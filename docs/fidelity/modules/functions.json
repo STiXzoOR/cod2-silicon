@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 4472,
-      "intentional": 1584,
-      "equal": 2888,
-      "fixed": 513
+      "unchecked": 4448,
+      "intentional": 1586,
+      "equal": 2905,
+      "fixed": 518
     },
     "scopes": {
       "unassigned": 777,
@@ -65308,8 +65308,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1e4150-0x1e4164 by hand: the sole operation is Scr_BeginLoadAnimTrees(0), matching native."
       },
       {
         "id": "mac:0x001e4188",
@@ -65330,8 +65330,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1e4188-0x1e41b8 by hand: entity type mismatch returns false, then model pointer mismatch returns false, otherwise true; native typed arrays preserve the native pointer width."
       },
       {
         "id": "mac:0x001e422e",
@@ -65352,8 +65352,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1e422e-0x1e42a6 by hand: entities 0 through 63 free the client DObj, clear cached type/model, conditionally free the animation tree using MT_Free, and clear its pointer in that order."
       },
       {
         "id": "mac:0x001e42a6",
@@ -65374,8 +65374,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1e42a6-0x1e4328 by hand: entities 64 through 1023 use the same DObj/cache/tree cleanup order as native. Checked loop start, exclusive limit and conditional tree free."
       },
       {
         "id": "mac:0x001e41b8",
@@ -65396,8 +65396,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1e41b8-0x1e422e by hand: client DObj free precedes clearing cached type/model; a present entity tree is freed with MT_Free and nulled. Native typed entity indexing replaces the i386 0x224 stride."
       },
       {
         "id": "mac:0x001e4164",
@@ -65418,8 +65418,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1e4164-0x1e4188 by hand: both supplied type and model pointer are stored for the given entity index, matching the typed native arrays."
       }
     ],
     "cgame/cg_compassfriendlies_mp": [
@@ -68988,8 +68988,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1e78ea-0x1e7a84 by hand: hidden gate, corpse clientinfo mapping, DObj update/reacquisition, animation, axes/origin, torso/stance lighting offsets (12/20/32), and scene flags match. Preserved the existing pointer-widened, zeroed GfxEntity scratch and native omission of the extra legacy DObjUpdateClientInfo call."
       },
       {
         "id": "mac:0x001e6834",
@@ -69010,8 +69010,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared Mac 0x1e6834-0x1e78ea, including the complete inline turret blend. Native used eFlags 0x2 instead of the 0x20000 weapon gate at 0x1e6fec, and seven blend speeds grouped abs(delta)*1000/frame instead of abs(delta)*(1000/frame), e.g. 0x1e71b2-0x1e71be. Restored missing-tag and localized childless-animation diagnostics. Preserved typed native render storage and existing null-tree protection. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x001e64c6",
@@ -69032,8 +69032,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1e64c6-0x1e662c by hand: local first-person suppression, head tag/fallback origins (height+21 or height+82), radius+10 and fixed-screen 0.0043/0x3000 path, opaque white color and minimum screen radius match."
       },
       {
         "id": "mac:0x001e662c",
@@ -69054,8 +69054,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1e662c-0x1e6834 by hand: both clientinfo validity checks, script icon/team filtering and +16 spacing, local killcam icon, connection priority, friendly/spectator voice icon and talking balloon height minus five match."
       },
       {
         "id": "mac:0x001e62e4",
@@ -69076,8 +69076,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared Mac 0x1e62e4-0x1e64c6 by hand. Mac reaches the debug print after both dead and live paths (0x1e64c1 -> 0x1e6333); native printed only for dead players. Native now explicitly supplies the low word of the promoted yaw double to the original %i format, preserving the deterministic i386 mismatch without native varargs UB. Animation root/torso/legs/turning weights and typed frame clears match; existing null-tree guard remains. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x001e6278",
@@ -69098,8 +69098,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1e6278-0x1e62e4 by hand; restarted otool at the exact symbol to correct full-listing prologue misalignment. nextValid gate, nextState.clientNum clientinfo/DObj indexing, localClientNum and BG_UpdatePlayerDObj final argument zero match."
       }
     ],
     "cgame/cg_playerstate_mp": [
@@ -69122,8 +69122,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Compared the complete Mac 0x1e3e10-0x1e4088 damage feedback: 0.2 scale/clamp 5..90, 255/255 nondirectional branch, byte-to-angle arithmetic, view-axis dot products, oldest of eight slots, jitter/normalization and timers match. Preserved the existing native null-dvar fallback to 2000ms; Mac directly dereferences the registered hud-damage-icon-time dvar. This keeps defined native bootstrap behavior."
       },
       {
         "id": "mac:0x001e3c56",
@@ -69144,8 +69144,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1e3c56-0x1e3e10 by hand; restarted exact-symbol disassembly for the misaligned full-listing prologue. Snapshot player-state copy, selected weapon/offhand/timers, sway/kick/gun/damage/shake/error clears, legacy UI slot, ADS/offhand/breath/low-health calls match through native field offsets."
       },
       {
         "id": "mac:0x001e4088",
@@ -69166,8 +69166,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1e4088-0x1e4150 by hand: changed damageEvent/count feedback, last-four event iteration, Mac jle exclusion at oldSequence-4 (already present in native), changed-slot comparison, nextState.eventParm write and CG_EntityEvent arguments match."
       }
     ],
     "cgame/cg_predict_mp": [
@@ -69199,8 +69199,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1dea06-0x1deb10 by hand: clear both counts, walk nextSnap entities, resolve typed centity nextState, reject disabled/contentless brush models, add items to trigger list and other nonzero solids to solid list. Limits/branch ordering match."
       },
       {
         "id": "mac:0x001dd7ec",
@@ -69230,8 +69230,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1dd7ec-0x1dd806 by hand: clears exactly the two solid/trigger counts, matching native."
       },
       {
         "id": "mac:0x001de5b8",
@@ -69261,8 +69261,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared Mac 0x1de5b8-0x1de958 by hand. At 0x1de734-0x1de745, CM_TempBoxModel receives entity contents (0x2000000 for players, 1 otherwise), but native passed capsule selector 1. Corrected under COD2_X64; decoded solid extents, brush-model radius rejection, transformed trace and fraction/allsolid/startsolid merging otherwise match. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x001dd8b2",
@@ -69283,8 +69283,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1dd8b2-0x1ddafa by hand: next snapshot state copy, optional current-command view-angle update, monotonic serverTime gate, bob wrap at 256, spread/origin/velocity/view-angle interpolation and view height/lean/weapon fraction arithmetic order match."
       },
       {
         "id": "mac:0x001dd806",
@@ -69314,8 +69314,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1dd806-0x1dd8b2 by hand: world point contents plus non-skipped solid brush models with nonzero model index, transformed by each entity origin/angles, then final content mask match."
       },
       {
         "id": "mac:0x001ddafa",
@@ -69336,8 +69336,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared complete Mac 0x1ddafa-0x1de480 by hand: interpolation modes, masks, command replay, mover correction, error accumulation, pickup prediction and final predicted entity match. Corrected decay from 1-elapsed/decay to (decay-elapsed)/decay (0x1de312-0x1de319), ADS random angle to float-times-two then double-pi then float (0x1ddd69-0x1ddd79), unsigned normal-movement trigger gate (0x1ddfbd), and three diagnostic strings. Preserved native dvar safety and existing moved initialization/reticle reset. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:cgame/cg_predict_mp.cpp:187:CG_Trace",
@@ -69355,8 +69355,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only naming row: its world trace, 1022/1023 entity classification, zero-fraction return and entity clipping with final selector 1 correspond to the complete Mac CG_TraceCapsule at 0x1de958-0x1dea06, which is the native implementation. Confirmed native pmove/view/draw callers use CG_TraceCapsule and no CG_Trace caller/definition exists; no duplicate Linux-named wrapper is introduced."
       },
       {
         "id": "mac:0x001de958",
@@ -69377,8 +69377,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1de958-0x1dea06 by hand: CM_BoxTrace world/model zero argument order, entityNum 1023 only at fraction one else 1022, exact-zero early return and CG_ClipMoveToEntities selector one match, including unordered fraction behavior."
       },
       {
         "id": "mac:0x001de480",
@@ -69408,8 +69408,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared Mac 0x1de480-0x1de5b8 by hand with exact-symbol entry disassembly. Native direct min/max comparisons selected the interpolated endpoint on ties/unordered values; Mac subtraction masks select start. Native now preserves subtraction-then-less-than-zero predicates for all six bounds after start+(end-start)*fraction. Compiled and reviewed; not exercised."
       }
     ],
     "cgame/cg_scoreboard_mp": [

@@ -89,6 +89,37 @@ void CG_UpdatePlayerDObj(centity_t *cent)
 
 void CG_ResetPlayerEntity(centity_t *cent)
 {
+#if defined(COD2_X64)
+    entityState_t *es = &cent->nextState;
+    clientInfo_t *ci = &cg->bgs.clientinfo[es->clientNum];
+
+    if (!(es->eFlags & 0x20000)) {
+        XAnimTree_s *tree = ci->pXAnimTree;
+        if (tree) {
+            XAnimClearTreeGoalWeights(tree, cg->bgs.generic_human.root.index, 0.0f);
+            XAnimSetCompleteGoalWeight(tree, cg->bgs.animScriptData.torsoAnim,
+                                      0.0f, 0.0f, 1.0f, 0, 0, 0);
+            XAnimSetCompleteGoalWeight(tree, cg->bgs.animScriptData.legsAnim,
+                                      1.0f, 0.0f, 1.0f, 0, 0, 0);
+            XAnimSetCompleteGoalWeight(tree, cg->bgs.animScriptData.turningAnim,
+                                      0.0f, 0.0f, 1.0f, 0, 0, 0);
+        }
+        memset(&ci->legs, 0, sizeof(ci->legs));
+        ci->legs.yawAngle = ci->playerAngles[1];
+        memset(&ci->torso, 0, sizeof(ci->torso));
+        ci->torso.yawAngle = ci->playerAngles[1];
+        ci->torso.pitchAngle = ci->playerAngles[0];
+    }
+
+    if (cg_debugPosition->current.enabled) {
+        /* Mac supplies a double to %i: preserve its i386 stack low word
+         * explicitly instead of depending on the native varargs ABI. */
+        double yaw = ci->torso.yawAngle;
+        int yawWord;
+        memcpy(&yawWord, &yaw, sizeof(yawWord));
+        Com_Printf("%i ResetPlayerEntity yaw=%i\n", es->number, yawWord);
+    }
+#else
     entityState_t *es;
     byte *ciBase;
     byte *ci;
@@ -147,6 +178,7 @@ void CG_ResetPlayerEntity(centity_t *cent)
         (*(int *)&((clientInfo_t *)ci)->torso.pitchAngle) = (*(int *)&((clientInfo_t *)ci)->playerAngles[0]);
         ((clientInfo_t *)ci)->torso.pitching = 0;
     }
+#endif
 }
 
 static void CG_PlayerFloatSprite(centity_t *cent, MaterialHandle material, float additionalRadiusSize, int height, Bool fixedScreenSize)
@@ -380,7 +412,11 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
                                           (unsigned int)scr_const.tag_weapon);
         if (!tagMat) {
 
+#if defined(COD2_X64)
+            Com_Printf("WARNING: aborting player positioning on turret since 'tag_weapon' does not exist\n");
+#else
             Com_Printf("CG_Player: turret tag not found\n");
+#endif
             return;
         }
 
@@ -437,7 +473,11 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
 
         numVertChildren = XAnimGetNumChildren(pXAnims, baseAnim);
         if (!numVertChildren)
+#if defined(COD2_X64)
+            Com_Error(1, "\x15Player anim '%s' has no children",
+#else
             Com_Error(1, "Player anim '%s' has no children",
+#endif
                       XAnimGetAnimDebugName(pXAnims, baseAnim));
 
         fPrevBlend = 0.0f;
@@ -457,7 +497,11 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
 
             numHorChildren = XAnimGetNumChildren(pXAnims, heightAnim);
             if (!numHorChildren)
+#if defined(COD2_X64)
+                Com_Error(1, "\x15Player anim '%s' has no children",
+#else
                 Com_Error(1, "Player anim '%s' has no children",
+#endif
                           XAnimGetAnimDebugName(pXAnims, heightAnim));
 
             rawBlend = (float)numHorChildren * 0.5f - localYaw / ((WeaponDef *)weapDef)->fAnimHorRotateInc;
@@ -509,7 +553,11 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
         {
             float cw = XAnimGetWeight(pAnimTree, leafAnim1);
             float tw = 1.0f - frac;
+#if defined(COD2_X64)
+            float spd = fabsf(cw - tw) * (1000.0f / (float)cg->frametime);
+#else
             float spd = fabsf(cw - tw) * 1000.0f / (float)frameDuration;
+#endif
             float gt = 0.0f;
             if (spd > 0.0f)
                 gt = 1.0f / spd;
@@ -518,7 +566,11 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
 
         if (frac != 0.0f) {
             float cw = XAnimGetWeight(pAnimTree, leafAnim2);
+#if defined(COD2_X64)
+            float spd = fabsf(cw - frac) * (1000.0f / (float)cg->frametime);
+#else
             float spd = fabsf(cw - frac) * 1000.0f / (float)frameDuration;
+#endif
             float gt = 0.0f;
             if (spd > 0.0f)
                 gt = 1.0f / spd;
@@ -528,7 +580,11 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
         if (i == 0 || i == numVertChildren) {
 
             float cw = XAnimGetWeight(pAnimTree, heightAnim);
+#if defined(COD2_X64)
+            float spd = fabsf(cw - 1.0f) * (1000.0f / (float)cg->frametime);
+#else
             float spd = fabsf(cw - 1.0f) * 1000.0f / (float)frameDuration;
+#endif
             float gt = 0.0f;
             if (spd > 0.0f)
                 gt = 1.0f / spd;
@@ -541,7 +597,11 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
 
             {
                 float cw = XAnimGetWeight(pAnimTree, heightAnim);
+#if defined(COD2_X64)
+                float spd = fabsf(cw - fHeightRatio) * (1000.0f / (float)cg->frametime);
+#else
                 float spd = fabsf(cw - fHeightRatio) * 1000.0f / (float)frameDuration;
+#endif
                 float gt = 0.0f;
                 if (spd > 0.0f)
                     gt = 1.0f / spd;
@@ -553,7 +613,11 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
             {
                 float gw = 1.0f - fHeightRatio;
                 float cw = XAnimGetWeight(pAnimTree, prevHeightAnim);
+#if defined(COD2_X64)
+                float spd = fabsf(cw - gw) * (1000.0f / (float)cg->frametime);
+#else
                 float spd = fabsf(cw - gw) * 1000.0f / (float)frameDuration;
+#endif
                 float gt = 0.0f;
                 if (spd > 0.0f)
                     gt = 1.0f / spd;
@@ -564,7 +628,11 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
                 unsigned short prevLeaf = XAnimGetChildAt(pXAnims, prevHeightAnim, iPrevBlend);
                 float gw = 1.0f - fPrevBlend;
                 float cw = XAnimGetWeight(pAnimTree, prevLeaf);
+#if defined(COD2_X64)
+                float spd = fabsf(cw - gw) * (1000.0f / (float)cg->frametime);
+#else
                 float spd = fabsf(cw - gw) * 1000.0f / (float)frameDuration;
+#endif
                 float gt = 0.0f;
                 if (spd > 0.0f)
                     gt = 1.0f / spd;
@@ -573,7 +641,11 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
                 if (fPrevBlend != 0.0f) {
                     unsigned short prevLeaf2 = XAnimGetChildAt(pXAnims, prevHeightAnim, iPrevBlend + 1);
                     cw = XAnimGetWeight(pAnimTree, prevLeaf2);
+#if defined(COD2_X64)
+                    spd = fabsf(cw - fPrevBlend) * (1000.0f / (float)cg->frametime);
+#else
                     spd = fabsf(cw - fPrevBlend) * 1000.0f / (float)frameDuration;
+#endif
                     gt = 0.0f;
                     if (spd > 0.0f)
                         gt = 1.0f / spd;
@@ -719,7 +791,11 @@ void CG_Player(centity_t *cent)
 
     CG_AddCEntityToScene((const GfxEntity *)body, obj, cent);
 
+#if defined(COD2_X64)
+    if (es->eFlags & 0x20000)
+#else
     if (es->eFlags & 0x2)
+#endif
         return;
 
     CG_AddPlayerWeapon(body, 0, cent, 1);
