@@ -277,6 +277,7 @@ static void FootstepsCase(void)
     centity_t *cent = &entities[1];
     cent->nextState.number = 1;
     memcpy(cent->lerpOrigin, (vec3_t){117,29,41}, sizeof(vec3_t));
+    memcpy(cent->nextState.pos.trBase, cent->lerpOrigin, sizeof(vec3_t));
     for (int view = 0; view < 2; ++view) for (int kind = 0; kind < 3; ++kind) for (int surface = 0; surface < 23; ++surface) {
         /* The original flag/client test controls the first-person slot. */
         snapshot.ps.pm_flags = view ? 0xc00000 : 0;

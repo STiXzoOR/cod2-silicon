@@ -16230,5 +16230,121 @@
   "mac:0x001c50a8": {
     "status": "equal",
     "evidence": "Read complete Mac 0x1c50a8 and decoded every immediate float: all six x/y/w/h border records and return count 6 agree."
+  },
+  "mac:0x00143722": {
+    "status": "equal",
+    "evidence": "Read Mac 0x143722: Cmd_ArgvBuffer receives the argument, shared 1024-byte buffer and 0x400 length; returns that same buffer."
+  },
+  "mac:0x001436f2": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1436f2: console channel 2, message, zero duration and current bold-message width match."
+  },
+  "mac:0x0014420c": {
+    "status": "equal",
+    "evidence": "Read Mac 0x14420c: optional iDObjWeapon world model, left/right bone dvar selection, zero collision flag, unsigned-short model count and final creation arguments match the typed native layout."
+  },
+  "mac:0x001442a8": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1442a8: iterate weapon indices 1 through BG_GetNumWeapons inclusive, free handles and non-null trees, then clear all 256 item and 128 weapon records using native sizes."
+  },
+  "mac:0x001436c2": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1436c2: console channel 1, message, zero duration and current message width match."
+  },
+  "mac:0x00144544": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x144544: entity handle bounds/origin/angles and viewmodel axes match. Retain established native camera contract from 19c0151: viewmodel effects read typed cg->refdef.vieworg instead of Mac 0x144569 cgArray.viewModelOrigin; no renderer/provider change."
+  },
+  "mac:0x00143676": {
+    "status": "equal",
+    "evidence": "Read exact-entry Mac 0x143676 after full-binary otool misaligned its prologue: entity index, lerpOrigin copy and lerpAngles-to-axis call match native typed centity strides."
+  },
+  "mac:0x00144202": {
+    "status": "equal",
+    "evidence": "Read Mac 0x144202: tail-call CL_RegisterModel with the original model name."
+  },
+  "mac:0x00145214": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x145214 through 0x14715c and inline helpers. Removed native-only cg_shock_viewKickFadeTime registration at the 0x146668 transition (native loader already uses fixed 3000 ms), and empty debug prints absent at 0x146ecd-0x146ed2. Script checked all 152 registration types/names/defaults/ranges/flags and all three enum tables. Retained native typed storage and CoD2x radar initialization; compiled and reviewed. Existing layout fixture exercised animation-tree allocation and entity-handle initialization, not full CG_Init."
+  },
+  "mac:0x00144164": {
+    "status": "equal",
+    "evidence": "Read Mac 0x144164: configstrings 0xf/0x11/0x12 supply vote time/yes/no; localized 0x10 vote string uses context vote string, error mode 0 and 256-byte bounded copy."
+  },
+  "mac:0x001440da": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1440da: load ui_mp/hud.txt with track 7, add menu list, select Compass for one active client or Compass_mp otherwise, and conditionally copy width/height/y from the first rectangle."
+  },
+  "mac:0x00144b3c": {
+    "status": "equal",
+    "evidence": "Read Mac 0x144b3c and native shared helpers: local next-snapshot client/origin, list picker, null handling, sound system 1, zero timeshift, duration result and subtitle width/minimum-time branches match. Nonnegative subtitle minimum uses equivalent truncation in the valid integer-duration range."
+  },
+  "mac:0x00144a64": {
+    "status": "equal",
+    "evidence": "Read Mac 0x144a64 and shared helpers: local next-snapshot client/origin, name picker, null handling, sound system 1, zero timeshift, duration result and subtitle width/minimum-time branches match. Nonnegative subtitle minimum uses equivalent truncation in the valid integer-duration range."
+  },
+  "mac:0x00144c14": {
+    "status": "fixed",
+    "evidence": "Mac 0x144c30 passes centity nextState.pos.trBase (+0x108), while native used lerpOrigin (+0x1ec). Corrected the typed sound origin; picker/null/system/timeshift/subtitle/return flow also read. Compiled and reviewed; existing audio output fixture, with its stationary emitter initialized in both fields, passed all 138 footstep event/render cases under ASan/UBSan."
+  },
+  "mac:0x001445de": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x1445de-0x14482a, including both inline entity searches. Mac 0x14468b/0x144791 selects when bestTime==0, while native used !found; restored the time-zero sentinel quirk. Flag/time2/time filters, minimum-time arithmetic, rewind/120000-ms warp, effect origin/up and final warp match; compiled and reviewed, not exercised."
+  },
+  "mac:0x0014482a": {
+    "status": "equal",
+    "evidence": "Read Mac 0x14482a and shared helpers: list picker, null handling, alias/entity/origin/system-1/zero-timeshift call, return duration and subtitle aspect/minimum branches match. Nonnegative subtitle minimum uses equivalent truncation in the valid integer-duration range."
+  },
+  "mac:0x00144474": {
+    "status": "equal",
+    "evidence": "Read Mac 0x144474 and shared helpers: name picker, null handling, master call with system 1 and zero timeshift, duration result and subtitle aspect/minimum branches match. Nonnegative subtitle minimum uses equivalent truncation in the valid integer-duration range."
+  },
+  "mac:0x001448fa": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1448fa and shared helpers: name picker, null handling, alias/entity/origin/system-1/zero-timeshift call, return duration and subtitle aspect/minimum branches match. Nonnegative subtitle minimum uses equivalent truncation in the valid integer-duration range."
+  },
+  "mac:0x00143e6a": {
+    "status": "equal",
+    "evidence": "Read Mac 0x143e6a: returns true without performing playback, matching native."
+  },
+  "mac:0x00143e60": {
+    "status": "equal",
+    "evidence": "Read Mac 0x143e60: returns true without performing playback, matching native."
+  },
+  "mac:0x0014374a": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x14374a-0x143de6 against active cg_registergraphics_new.c. Restored first-empty model/effect termination at 0x143bc8/0x143c01, per-model screen update at 0x143b9b and float-delta/double midpoint order at 0x143d3a-0x143d63. Material/effect names, image tracks, typed model handles, shellshock/impact errors and registration sequence also compared; compiled and reviewed, not exercised."
+  },
+  "mac:0x00144cf8": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x144cf8-0x145214 and decoded all alias strings: restored two singles, fourteen 23-surface sets, then fifteen singles in Mac lookup order. Kept native typed pointer arrays and bounded formatting; compiled and reviewed. Existing cgame layout fixture exercised final sound pointer storage, not lookup ordering."
+  },
+  "mac:0x00143e74": {
+    "status": "equal",
+    "evidence": "Read Mac 0x143e74-0x144052: copied search buffer, [{/}] delimiters, empty/missing rejection, Controls_GetConfig, binding lookup and KEY_UNBOUND fallback, 256-byte size limit, prefix/replacement/tail lengths and updated search/length outputs match."
+  },
+  "mac:0x001449ca": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1449ca and shared localization helper: zero-index no-op, configstring index+0x51e, hudelem string context/error mode 0, 256-byte bound, copy/terminator and repeated directive replacement match."
+  },
+  "mac:0x0014434e": {
+    "status": "equal",
+    "evidence": "Read Mac 0x14434e: statistics/sound reset, map/ambient flags, teardown ordering, all 64 client and 8 corpse tree frees/nulls, conditional game-string shutdown and final cg clear match with native typed strides/sizes."
+  },
+  "mac:0x00143de6": {
+    "status": "equal",
+    "evidence": "Read Mac 0x143de6: configstring 3 keys n/t, picked alias, fadeTime-current time, clamp negative or zero-time fade to zero and ambient system 1 match."
+  },
+  "mac:0x00144052": {
+    "status": "equal",
+    "evidence": "Read Mac 0x144052 and native shared helper: localize with supplied context/error mode 0, reject strings including terminator longer than 256 bytes, copy/terminate and replace directives until none remain."
+  },
+  "mac:0x0014446a": {
+    "status": "equal",
+    "evidence": "Read assigned Mac 0x14446a: forwards size to Hunk_AllocInternal."
+  },
+  "mac:0x0014444e": {
+    "status": "equal",
+    "evidence": "Read assigned cgame Mac 0x14444e directly, not duplicate first symbol at 0x38872: forwards size and alignment 4 to Hunk_AllocAlignInternal."
   }
 }
