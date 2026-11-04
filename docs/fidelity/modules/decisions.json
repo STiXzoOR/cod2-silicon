@@ -4802,5 +4802,157 @@
   "mac:0x00077f0a": {
     "status": "fixed",
     "evidence": "Read full Mac 0x77f0a-0x784dc: node initialization, candidate scores, straddler/front/back collection, shared tolerance, recursive bounds, content aggregation and short offsets. Restored unordered straddler acceptance at 0x78390-0x783a0 and ordered back-tolerance update at 0x78344-0x78369, plus exact overflow errors. Compiled and reviewed; not exercised."
+  },
+  "linux:qcommon/cm_polylib.cpp:21:AllocWinding": {
+    "status": "intentional",
+    "evidence": "Linux-only dead utility deliberately omitted: AllocWinding has no native definition/caller or Mac text symbol; Mac lacks winding diagnostics and Linux has no callers outside cm_polylib.cpp. No absent-body equality claimed."
+  },
+  "linux:qcommon/cm_polylib.cpp:72:BaseWindingForPlane": {
+    "status": "intentional",
+    "evidence": "Linux-only dead utility deliberately omitted: BaseWindingForPlane has no native definition/caller or Mac text symbol; Mac lacks winding diagnostics and Linux has no callers outside cm_polylib.cpp. No absent-body equality claimed."
+  },
+  "linux:qcommon/cm_polylib.cpp:160:ChopWindingInPlace": {
+    "status": "intentional",
+    "evidence": "Linux-only dead utility deliberately omitted: ChopWindingInPlace has no native definition/caller or Mac text symbol; Mac lacks winding diagnostics and Linux has no callers outside cm_polylib.cpp. No absent-body equality claimed."
+  },
+  "linux:qcommon/cm_polylib.cpp:145:CopyWinding": {
+    "status": "intentional",
+    "evidence": "Linux-only dead utility deliberately omitted: CopyWinding has no native definition/caller or Mac text symbol; Mac lacks winding diagnostics and Linux has no callers outside cm_polylib.cpp. No absent-body equality claimed."
+  },
+  "linux:qcommon/cm_polylib.cpp:38:FreeWinding": {
+    "status": "intentional",
+    "evidence": "Linux-only dead utility deliberately omitted: FreeWinding has no native definition/caller or Mac text symbol; Mac lacks winding diagnostics and Linux has no callers outside cm_polylib.cpp. No absent-body equality claimed."
+  },
+  "linux:qcommon/cm_polylib.cpp:51:WindingBounds": {
+    "status": "intentional",
+    "evidence": "Linux-only dead utility deliberately omitted: WindingBounds has no native definition/caller or Mac text symbol; Mac lacks winding diagnostics and Linux has no callers outside cm_polylib.cpp. No absent-body equality claimed."
+  },
+  "mac:0x000bd718": {
+    "status": "equal",
+    "evidence": "Read Mac 0xbd718-0xbd722 and native forwarding body: size passes unchanged to Hunk_AllocInternal. Call/string triage and literal check also inspected."
+  },
+  "mac:0x000bd722": {
+    "status": "equal",
+    "evidence": "Read Mac 0xbd722-0xbd72c and native forwarding body: size passes unchanged to Hunk_AllocInternal. Call/string triage and literal check also inspected."
+  },
+  "mac:0x000bd750": {
+    "status": "equal",
+    "evidence": "Read Mac 0xbd750-0xbd86e and native: origin subtraction, endpoint transforms, base-pose trace arguments, hit sign branch, entity 0x3fe, normal transpose/normalize/copy match. Call/string triage and literal check also inspected."
+  },
+  "mac:0x000bd86e": {
+    "status": "equal",
+    "evidence": "Read Mac 0xbd86e-0xbd94c and native: endpoint transforms and trace arguments match; only local fraction initialized to 1.0, then hit sign bit returned. Call/string triage and literal check also inspected."
+  },
+  "mac:0x000bd72c": {
+    "status": "equal",
+    "evidence": "Read Mac 0xbd72c-0xbd750 and native: name and allocation callbacks passed to XModelPrecache in the same order. Call/string triage and literal check also inspected."
+  },
+  "linux:qcommon/cm_staticmodel_load_obj.cpp:36:CM_CreateStaticModel": {
+    "status": "fixed",
+    "evidence": "Read native creation block and Mac inline path in CM_LoadStaticModels, 0x779dd-0x77b9f plus errors 0x77ce1-0x77d97. Restored invalid-name diagnostic at 0x77ce1 and leading 0x15 on scale diagnostics referenced at 0x77d13/0x77d51/0x77d83; failed-precache count and successful initialization path match. COD2_X64 only; compiled and reviewed, not exercised."
+  },
+  "linux:qcommon/cm_staticmodel_load_obj.cpp:9:CM_InitStaticModel": {
+    "status": "equal",
+    "evidence": "Read native initialization block against Mac inline 0x77a2b-0x77b9f: origin copy, AnglesToAxis, three per-axis scale multiplies, MatrixInverse and successful-bounds translation match."
+  },
+  "mac:0x00077724": {
+    "status": "fixed",
+    "evidence": "Read full Mac 0x77724-0x77d9c and native two-pass parser, name filters, allocations, count adjustment and inline creation/initialization. Restored creation diagnostics at 0x77ce1/0x77d13/0x77d51/0x77d83; binary-string extraction and post-change triage show matching strings. Native sizeof allocation retained for LP64. COD2_X64 only; compiled and reviewed, not exercised."
+  },
+  "linux:qcommon/cm_world.cpp:203:CM_AddEntityToNode": {
+    "status": "equal",
+    "evidence": "Read native CM_InsertEntityIntoWorldSector and index helpers against inline entity insertion at 0xb1057-0xb10e1 and 0xb0b15-0xb0ba3: sorted one-based list, worldSector and next-link writes match."
+  },
+  "linux:qcommon/cm_world.cpp:226:CM_AddStaticModelToNode": {
+    "status": "equal",
+    "evidence": "Read native CM_InsertStaticModelIntoWorldSector against inline blocks 0xb09a3-0xb0a02 and 0xb0e3f-0xb0e9d: model pointer index, sorted one-based chain and next-link writes match."
+  },
+  "linux:qcommon/cm_world.cpp:14:CM_AllocWorldSector": {
+    "status": "equal",
+    "evidence": "Read native helper against all inline allocation branches in CM_SortNode 0xb0708-0xb0cc2, including 0xb07a8, 0xb0861, 0xb08f2 and 0xb0a60: freeHead guard, longest XY axis, strict greater-than-512 threshold, free-list pop and add-then-half midpoint match."
+  },
+  "mac:0x000af7c4": {
+    "status": "equal",
+    "evidence": "Read Mac 0xaf7c4-0xaf802 and native wrapper: parameter setup, zero count, root sector 1 and returned count match."
+  },
+  "mac:0x000af624": {
+    "status": "equal",
+    "evidence": "Read Mac 0xaf624-0xaf7c4 and attribute-decorated native body: content mask, inclusive AABB checks, maxcount diagnostic/return, zero-based entity result and child traversal order match."
+  },
+  "linux:qcommon/cm_world.cpp:60:CM_ClearWorld": {
+    "status": "equal",
+    "evidence": "Read native initialization in CM_LinkWorld against inline Mac 0xb0cc2-0xb0d83: whole-world clear, model bounds, free sectors 2..1023, longest XY root axis and midpoint match."
+  },
+  "mac:0x000b06a8": {
+    "status": "equal",
+    "evidence": "Read Mac 0xb06a8-0xb0708 and native wrapper: start/end coordinates, fourth components 0/current fraction and root traversal arguments match."
+  },
+  "linux:qcommon/cm_world.cpp:919:CM_ClipMoveToEntities_r": {
+    "status": "equal",
+    "evidence": "Read full Mac 0xb03a0-0xb06a8 and attribute-decorated native body: contents/linkcontents filters, entity calls, side-only paths, split fraction pruning, reciprocal times offsets, clamp and four-component interpolation match."
+  },
+  "mac:0x000afe92": {
+    "status": "equal",
+    "evidence": "Read Mac 0xafe92-0xafeac and native root wrapper: clip, sector 1 and original start/end arguments match."
+  },
+  "linux:qcommon/cm_world.cpp:1060:CM_ClipSightTraceToEntities_r": {
+    "status": "equal",
+    "evidence": "Read full Mac 0xafbf8-0xafe92 and attribute-decorated native body: contents filter, full hit-result returns, side-only descent, zero delta, reciprocal-then-multiply clipping fractions and recursive-first/tail-second interpolation match."
+  },
+  "linux:qcommon/cm_world.cpp:595:CM_LinkAllStaticModels": {
+    "status": "equal",
+    "evidence": "Read native model loop in CM_LinkWorld against inline Mac 0xb0d83-0xb0ed2: positive model count, sequential iteration, skip zero contents and sorted insertion/sort match."
+  },
+  "mac:0x000b0ed2": {
+    "status": "equal",
+    "evidence": "Read full Mac 0xb0ed2-0xb13ca against native: model contents, zero-content unlink, bounds descent, same-node mask update, unlink/restart, one-based insertion and sort match; Mac inlines the two unlink paths."
+  },
+  "linux:qcommon/cm_world.cpp:519:CM_LinkStaticModel": {
+    "status": "equal",
+    "evidence": "Read native per-model block in CM_LinkWorld against inline Mac 0xb0db8-0xb0ed2: contents accumulation, strict bound/plane descent, model insertion and CM_SortNode arguments match."
+  },
+  "mac:0x000b0cc2": {
+    "status": "equal",
+    "evidence": "Read full Mac 0xb0cc2-0xb0ed2 and native: clear/bounds, 1024-sector free list, root axis/midpoint and all static-model link paths match. Memset triage mismatch is compiler expansion."
+  },
+  "mac:0x000af982": {
+    "status": "equal",
+    "evidence": "Read Mac 0xaf982-0xaf99c and native wrapper: root 1 with original clip endpoints, full recursive result returned."
+  },
+  "mac:0x000af802": {
+    "status": "equal",
+    "evidence": "Read full Mac 0xaf802-0xaf982 and native attribute-decorated body: mask pruning, product-side selection, subtract/divide/multiply/add midpoint, child-first recursion, entity iteration and full hit return match."
+  },
+  "mac:0x000b00e2": {
+    "status": "equal",
+    "evidence": "Read Mac 0xb00e2-0xb017a and native: contents/endpoints copied, CM_CalcTraceEntents called, fourth components 0/current fraction and root traversal arguments match."
+  },
+  "mac:0x000afb9e": {
+    "status": "equal",
+    "evidence": "Read Mac 0xafb9e-0xafbf8 and native wrapper: extents/content setup, CM_CalcTraceEntents and root traversal arguments match."
+  },
+  "mac:0x000af99c": {
+    "status": "equal",
+    "evidence": "Read full Mac 0xaf99c-0xafb9e and native attribute-decorated body: model/content chain, bounds rejection at fraction 1, complete trace branch, product-side selection, recursive first and tail second children match."
+  },
+  "linux:qcommon/cm_world.cpp:702:CM_PointTraceStaticModels_r": {
+    "status": "equal",
+    "evidence": "Read full Mac 0xafeac-0xb00e2 and native attribute-decorated body: contents/model chain, trace-box/current-fraction calls, model trace arguments, side-only descent, split pruning and four-component interpolation match."
+  },
+  "mac:0x000b0344": {
+    "status": "equal",
+    "evidence": "Read Mac 0xb0344-0xb03a0 and native: original endpoints copied, fourth components 0/current fraction and root call arguments match."
+  },
+  "linux:qcommon/cm_world.cpp:1189:CM_PointTraceToEntities_r": {
+    "status": "equal",
+    "evidence": "Read full Mac 0xb017a-0xb0344 and native attribute-decorated body: content/entity loop, point trace arguments, side selection, split-only fraction pruning, midpoint and tail traversal match."
+  },
+  "mac:0x000b0708": {
+    "status": "equal",
+    "evidence": "Read full Mac 0xb0708-0xb0cc2 and native attribute-decorated body/helpers: lock guard, entity/model list iteration, strict plane tests, free-node allocation using original supplied bounds, parent/child linking, sorted insertion and contents updates match."
+  },
+  "mac:0x000af49c": {
+    "status": "equal",
+    "evidence": "Read full Mac 0xaf49c-0xaf624 and native: early unlinked return, one-based head/interior removal, empty-sector free list, child clearing, entity plus child content recomputation and parent walk match."
   }
 }
