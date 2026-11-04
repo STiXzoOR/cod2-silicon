@@ -953,7 +953,11 @@ scan_replace:
         if (g_snd.chaninfo[channel].entchannel != g_snd.chaninfo[i].entchannel) {
             diff = g_snd.chaninfo[i].entchannel - g_snd.chaninfo[channel].entchannel;
         } else if (g_snd.chaninfo[channel].endtime != g_snd.chaninfo[i].endtime) {
+#if defined(COD2_X64)
+            diff = g_snd.chaninfo[i].endtime - g_snd.chaninfo[channel].endtime;
+#else
             diff = g_snd.chaninfo[channel].endtime - g_snd.chaninfo[i].endtime;
+#endif
         } else {
             goto snd_next;
         }
@@ -998,7 +1002,11 @@ found:
     if (entchannel <= 10 && ((1 << entchannel) & 0x786)) {
 
     } else if (!g_snd.listeners[0].active) {
+#if defined(COD2_X64)
+        Com_Error(1, "attempted to play spatialized alias '%s' while there is no active listener. Most likely this means you tried to play a spatialized sound while not in a level.\n", pAlias0->pszAliasName);
+#else
         Com_Error(1, "attempted to play spatialized alias '%s' while there is no active listener\n", pAlias0->pszAliasName);
+#endif
     }
 
     if (treatAsMaster || (pAlias0->flags & 2)) {
@@ -1517,12 +1525,20 @@ static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_al
     flags = pAlias->flags;
     entchannel = (flags & 0x780) >> 7;
     if (entchannel > 10 || !((1 << entchannel) & 0x786)) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025alias %s sound %s played as an ambient / music track uses a 3D channel type; should probably be channel 'local'\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
+#else
         Com_Error(1, "\025alias %s sound %s played as an ambient / music track uses a 3D channel\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
+#endif
         flags = pAlias->flags;
     }
 
     if ((unsigned)((flags & 0x60) >> 5) - 2 > 1) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025alias %s sound %s played as an ambient / music track is not streamed; type must be 'streamed'\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
+#else
         Com_Error(1, "\025alias %s sound %s played as an ambient / music track is not streamed\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
+#endif
     }
 
     volume = pAlias->fVolMin + randomf() * (pAlias->fVolMax - pAlias->fVolMin);
@@ -1639,7 +1655,11 @@ void SND_StopMusic(int fadetime)
         return;
     }
 
+#if defined(COD2_X64)
+    if (!(g_snd.background[0].goalvolume > 0.0f))
+#else
     if (g_snd.background[0].goalvolume <= 0.0f)
+#endif
         return;
 
     g_snd.background[0].goalrate = -g_snd.background[0].goalvolume / (float)fadetime;
@@ -1742,7 +1762,7 @@ void SND_SetEnvironmentEffects_f(void)
     float wet;
 
     if (Cmd_Argc() != 6) {
-        Com_Printf("usage: snd_setEnvironmentEffects <priority> <roomtype> <drylevel> <wetlevel> <fademsec>\n");
+        Com_Printf("USAGE: snd_setEnvironmentEffects <const char *priority> <const char *roomstring> <float drylevel> <float wetlevel> <int fademsec>\n");
         return;
     }
 
@@ -1752,7 +1772,9 @@ void SND_SetEnvironmentEffects_f(void)
             break;
     }
     if (priority == 3) {
-        Com_Printf("invalid priority '%s'; use level or shellshock\n", priorityName);
+        Com_Printf("invalid priority string '%s', it must be one of the following strings:\n", priorityName);
+        for (priority = 1; priority < 3; ++priority)
+            Com_Printf("  %s\n", priorities[priority]);
         return;
     }
 
@@ -1762,7 +1784,7 @@ void SND_SetEnvironmentEffects_f(void)
             break;
     }
     if (!snd_roomStrings[roomIndex]) {
-        Com_Printf("invalid roomtype '%s'; available room types:\n", room);
+        Com_Printf("invalid roomtype string '%s', it must be one of the following strings:\n", room);
         for (roomIndex = 0; snd_roomStrings[roomIndex]; ++roomIndex) {
             if (snd_roomStrings[roomIndex][0])
                 Com_Printf("  %s\n", snd_roomStrings[roomIndex]);
@@ -1772,17 +1794,17 @@ void SND_SetEnvironmentEffects_f(void)
 
     dry = (float)atof(Cmd_Argv(3));
     if (dry < 0.0f || dry > 1.0f) {
-        Com_Printf("invalid drylevel %g; expected 0 to 1\n", dry);
+        Com_Printf("invalid 'drylevel' %g, must be in the range of 0.0-1.0\n", dry);
         return;
     }
     wet = (float)atof(Cmd_Argv(4));
     if (wet < 0.0f || wet > 1.0f) {
-        Com_Printf("invalid wetlevel %g; expected 0 to 1\n", wet);
+        Com_Printf("invalid 'wetlevel' %g, must be in the range of 0.0-1.0\n", wet);
         return;
     }
     fade = atoi(Cmd_Argv(5));
     if (fade < 0) {
-        Com_Printf("invalid fademsec %i; expected zero or greater\n", fade);
+        Com_Printf("invalid 'fademsec' %i, must be greater than or equal to zero\n", fade);
         return;
     }
     SND_SetEnvironmentEffects(priority, room, dry, wet, fade);
@@ -1797,11 +1819,19 @@ void SND_DeactivateEnvironmentEffects_f(void)
     int i;
 
     if (Cmd_Argc() != 3) {
+#if defined(COD2_X64)
+        Com_Printf("USAGE: snd_deactivateEnvironmentEffects <int priority> <int fademsec>\n");
+#else
         Com_Printf("usage: snd_deactivateenveffects <priority> <fademsec>\n");
+#endif
         return;
     }
 
+#if defined(COD2_X64)
+    priorityStrings[0] = "none";
+#else
     priorityStrings[0] = "effect";
+#endif
     priorityStrings[1] = "level";
     priorityStrings[2] = "shellshock";
 
@@ -1816,7 +1846,11 @@ void SND_DeactivateEnvironmentEffects_f(void)
     }
 
     if (priority < 0) {
+#if defined(COD2_X64)
+        Com_Printf("invalid priority string '%s', it must be one of the following strings:\n", priorityName);
+#else
         Com_Printf("invalid priority string '%s', it must be one of the following:\n", priorityName);
+#endif
         for (i = 1; i < 3; i++) {
             Com_Printf("  %s\n", priorityStrings[i]);
         }
@@ -2218,7 +2252,11 @@ void SND_Update(void)
     for (i = 0; i < 11; i++) {
         vi = &g_snd.channelvol->channelvol[i];
         vi->volume += frametime_f * vi->goalrate;
+#if defined(COD2_X64)
+        if (!(vi->goalrate < 0.0f)) {
+#else
         if (vi->goalrate >= 0.0f) {
+#endif
             if (vi->volume > vi->goalvolume) {
                 vi->volume = vi->goalvolume;
                 vi->goalrate = 0.0f;
@@ -2233,7 +2271,11 @@ void SND_Update(void)
 
     if (g_snd.mastervol.goalrate != 0.0f) {
         g_snd.mastervol.volume += frametime_f * g_snd.mastervol.goalrate;
+#if defined(COD2_X64)
+        if (!(g_snd.mastervol.goalrate < 0.0f)) {
+#else
         if (g_snd.mastervol.goalrate >= 0.0f) {
+#endif
             if (g_snd.mastervol.volume > g_snd.mastervol.goalvolume) {
                 g_snd.mastervol.volume = g_snd.mastervol.goalvolume;
                 g_snd.mastervol.goalrate = 0.0f;
@@ -2279,7 +2321,11 @@ void SND_Update(void)
         }
 
         timescale = Com_GetTimescaleForSnd();
+#if defined(COD2_X64)
+        newTimescale = (timescale <= 0.0f) ? 1.0f : timescale;
+#else
         newTimescale = (timescale > 0.0f) ? timescale : 1.0f;
+#endif
         if (newTimescale != g_snd.timescale) {
             ratio = newTimescale / g_snd.timescale;
             g_snd.timescale = newTimescale;
@@ -2307,6 +2353,9 @@ void SND_Update(void)
         }
 
         eff = g_snd.effect;
+#if defined(COD2_X64)
+        Bool updateReverbs = eff->dryrate != 0.0f || eff->wetrate != 0.0f;
+#endif
         if (eff->dryrate != 0.0f) {
             eff->drylevel += frametime_f * eff->dryrate;
             if (eff->dryrate < 0.0f) {
@@ -2335,7 +2384,12 @@ void SND_Update(void)
                 }
             }
         }
+#if defined(COD2_X64)
+        if (updateReverbs)
+            SND_UpdateReverbs();
+#else
         SND_UpdateReverbs();
+#endif
     }
 
     hasMaster = 0;
@@ -2369,10 +2423,15 @@ void SND_Update(void)
             g_snd.slaveLerp += delta;
         else
             g_snd.slaveLerp -= delta;
+#if defined(COD2_X64)
+        g_snd.slaveLerp = g_snd.slaveLerp > 0.0f
+            ? (g_snd.slaveLerp < 1.0f ? g_snd.slaveLerp : 1.0f) : 0.0f;
+#else
         if (g_snd.slaveLerp > 1.0f)
             g_snd.slaveLerp = 1.0f;
         if (g_snd.slaveLerp < 0.0f)
             g_snd.slaveLerp = 0.0f;
+#endif
     }
 
     for (i = 0; i < g_snd.max_3D_channels; i++) {
