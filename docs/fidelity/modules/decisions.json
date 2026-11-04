@@ -12754,5 +12754,633 @@
   "mac:0x000f9ff8": {
     "status": "equal",
     "evidence": "Mac 0x000f9ff8 symbol-start disassembly read by hand against native. Compared all 256 eight-bit reversals, exact double angular step, float conversion, sinf/cosf and imag/real stores."
+  },
+  "mac:0x00054806": {
+    "status": "fixed",
+    "evidence": "Mac 0x549ef-0x54a0c skips the rest of every recognized dvar line; native skipped only unknown lines. Restored that skip and the missing error-header newline from 0x54948. Read reset, token matching, duplicate tracking and missing-name diagnostics throughout 0x54806. Native retains its initial missing-dvar guard. Compiled and reviewed; corrected paths not exercised."
+  },
+  "mac:0x0005198c": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x5198c: case-insensitive hashed lookup, current ValueToString, name/quoted-value/newline snprintf, negative-result failure and cursor/remaining-size advancement match native. Both assume registered input names and enough storage."
+  },
+  "mac:0x00050eb0": {
+    "status": "equal",
+    "evidence": "Read Mac 0x50eb0: OR argument into the 16-bit flags field, matching native truncation."
+  },
+  "linux:universal/dvar.cpp:100:Dvar_AllocNameString": {
+    "status": "equal",
+    "evidence": "Inline Mac RegisterVariant 0x53fc6 and PerformUnregistration 0x528ba: CopyStringInternal for external ownership matches native."
+  },
+  "linux:universal/dvar.cpp:75:Dvar_AllocVector": {
+    "status": "equal",
+    "evidence": "Inline Mac Dvar_StringToValue at 0x51391, 0x513ff and 0x51464: ring end >12 wraps to zero, returns old index then advances by component count; matches native Dvar_AllocTempVector (which also performs the caller zeroing)."
+  },
+  "linux:universal/dvar.cpp:88:Dvar_AllocVectors": {
+    "status": "equal",
+    "evidence": "Inline Mac RegisterVariant 0x53fe2, 0x5411a and 0x5416d, plus MakeExplicitType 0x52d42: allocate 3*type floats and partition current/latched/reset by type; native matches the allocator/layout contract."
+  },
+  "mac:0x0005194e": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x5194e: sorted traversal returns on first unequal current/latched pair; native matches."
+  },
+  "mac:0x0005312e": {
+    "status": "equal",
+    "evidence": "Read Mac 0x5312e: forwards dvar/value to compared UpdateResetValue, matching native."
+  },
+  "linux:universal/dvar.cpp:455:Dvar_ClampValueToDomain": {
+    "status": "equal",
+    "evidence": "Read Mac inline clamp in MakeExplicitType 0x52f4b-0x530a3 and UpdateEnumDomain 0x52000-0x5216b; decoded 0x328bc4/0x328b84. Per-component min then max, NaN preservation, bool normalization, integer bounds and enum reset fallback match native."
+  },
+  "linux:universal/dvar.cpp:427:Dvar_ClampVectorToDomain": {
+    "status": "equal",
+    "evidence": "Read Mac inline clamp in MakeExplicitType 0x52f4b-0x530a3 and UpdateEnumDomain 0x52000-0x5216b; decoded 0x328bc4/0x328b84. Per-component min then max, NaN preservation, bool normalization, integer bounds and enum reset fallback match native."
+  },
+  "linux:universal/dvar.cpp:1039:Dvar_ClearFlags": {
+    "status": "equal",
+    "evidence": "Read full Mac Dvar_UnregisterSystem 0x529d6: sorted traversal, flag intersection and external exclusions, 16-bit clear, 0x7000 remaining-system check and PerformUnregistration match native. Linux ClearFlags helper is inline in this caller, not an absent engine operation."
+  },
+  "linux:universal/dvar.cpp:1054:Dvar_ClearFlagsFromAll": {
+    "status": "equal",
+    "evidence": "Read full Mac Dvar_UnregisterSystem 0x529d6: sorted traversal, flag intersection and external exclusions, 16-bit clear, 0x7000 remaining-system check and PerformUnregistration match native. Linux ClearFlags helper is inline in this caller, not an absent engine operation."
+  },
+  "linux:universal/dvar.cpp:1195:Dvar_ClearLatchedValue": {
+    "status": "equal",
+    "evidence": "Compared Linux helper identity with same-current cancellation in Mac SetVariant 0x532b4/0x53457: SetLatchedValue(current) clears pending latch, matching native. The no-pending-value case has the same logical value; no standalone native API or additional Mac behavior is claimed."
+  },
+  "mac:0x00050e98": {
+    "status": "equal",
+    "evidence": "Read Mac 0x50e98: clears modified byte, matching native."
+  },
+  "linux:universal/dvar.cpp:1810:Dvar_ClearServerInfoNoUpdateFlags": {
+    "status": "equal",
+    "evidence": "Linux name identifies native Dvar_ResetScriptInfo. Read Mac 0x50ec4: starts at dvarPool, follows next and clears 0x400; native preserves this first-pool-entry traversal."
+  },
+  "mac:0x00050d44": {
+    "status": "equal",
+    "evidence": "Read Mac 0x50d44: forwards the latched slot to Dvar_ValueToString, matching native forwarding to the compared implementation."
+  },
+  "mac:0x00050d34": {
+    "status": "equal",
+    "evidence": "Read Mac 0x50d34: forwards the reset slot to Dvar_ValueToString, matching native forwarding to the compared implementation."
+  },
+  "mac:0x00050d24": {
+    "status": "equal",
+    "evidence": "Read Mac 0x50d24: forwards the current slot to Dvar_ValueToString, matching native forwarding to the compared implementation."
+  },
+  "linux:universal/dvar.cpp:636:Dvar_DomainToString": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x52172 plus GetLines 0x52716 and PrintDomain 0x5273e; decoded table 0x328ba0 and checked all domain strings/sentinel cases. Native retains existing nonpositive-size and snprintf-truncation bounds instead of Mac cursor escape/last-byte writes; normal output, enum line counts and end-cursor return match."
+  },
+  "mac:0x00052716": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x52172 plus GetLines 0x52716 and PrintDomain 0x5273e; decoded table 0x328ba0 and checked all domain strings/sentinel cases. Native retains existing nonpositive-size and snprintf-truncation bounds instead of Mac cursor escape/last-byte writes; normal output, enum line counts and end-cursor return match."
+  },
+  "mac:0x00052172": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x52172 plus GetLines 0x52716 and PrintDomain 0x5273e; decoded table 0x328ba0 and checked all domain strings/sentinel cases. Native retains existing nonpositive-size and snprintf-truncation bounds instead of Mac cursor escape/last-byte writes; normal output, enum line counts and end-cursor return match."
+  },
+  "mac:0x00050b62": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x50b62: empty domain and indexed current enum lookup match. Native retains its defined null-dvar empty-string guard; Mac dereferences the dvar unconditionally."
+  },
+  "linux:universal/dvar.cpp:792:Dvar_FindMalleableVar": {
+    "status": "equal",
+    "evidence": "Read full Mac Dvar_FindVar 0x51f38: signed-character tolower hash weighted by index+0x77, mask 0xff, hash-chain I_stricmp lookup and null-name error match native. Linux FindMalleableVar is the mutable-return alias used inline by registration, not a second Mac algorithm."
+  },
+  "mac:0x00051f38": {
+    "status": "equal",
+    "evidence": "Read full Mac Dvar_FindVar 0x51f38: signed-character tolower hash weighted by index+0x77, mask 0xff, hash-chain I_stricmp lookup and null-name error match native. Linux FindMalleableVar is the mutable-return alias used inline by registration, not a second Mac algorithm."
+  },
+  "linux:universal/dvar.cpp:151:Dvar_FreeCurrentString": {
+    "status": "intentional",
+    "evidence": "Read current update inline in Mac SetVariant 0x532d2-0x53753 and MakeExplicitType 0x52c9e-0x53128: vector/scalar copies and current/latched/reset string-sharing rules match. Native retains old current storage until after incoming string rebuild to keep its input alive; Mac frees and clears current before rebuilding. No new indeterminate storage was introduced."
+  },
+  "linux:universal/dvar.cpp:137:Dvar_FreeInternString": {
+    "status": "equal",
+    "evidence": "Read string release/clear branches in Mac SetLatchedValue 0x5167c, UpdateResetValue 0x52a86 and Shutdown 0x5184c-0x51947: pointer aliases, empty/single-digit/static on/off exclusions and slot clears match native helpers on valid owned string storage."
+  },
+  "linux:universal/dvar.cpp:159:Dvar_FreeLatchedString": {
+    "status": "equal",
+    "evidence": "Read string release/clear branches in Mac SetLatchedValue 0x5167c, UpdateResetValue 0x52a86 and Shutdown 0x5184c-0x51947: pointer aliases, empty/single-digit/static on/off exclusions and slot clears match native helpers on valid owned string storage."
+  },
+  "linux:universal/dvar.cpp:105:Dvar_FreeNameString": {
+    "status": "equal",
+    "evidence": "Inline Mac RegisterVariant 0x5421a and Shutdown 0x517ea: Z_FreeInternal for the owned external name matches native."
+  },
+  "linux:universal/dvar.cpp:167:Dvar_FreeResetString": {
+    "status": "equal",
+    "evidence": "Read string release/clear branches in Mac SetLatchedValue 0x5167c, UpdateResetValue 0x52a86 and Shutdown 0x5184c-0x51947: pointer aliases, empty/single-digit/static on/off exclusions and slot clears match native helpers on valid owned string storage."
+  },
+  "linux:universal/dvar.cpp:95:Dvar_FreeVectors": {
+    "status": "equal",
+    "evidence": "Inline Mac Shutdown 0x51902 and PerformUnregistration 0x528a7: release only the base/current vector allocation, matching native shared block ownership."
+  },
+  "mac:0x00051e80": {
+    "status": "fixed",
+    "evidence": "Read full Mac 0x51e80: native now parse the stored string directly without consuming a va ring slot. Preserved defined native formatting fallback for incompatible non-string types instead of reinterpreting scalar bits as LP64 pointers. Compiled and reviewed; corrected path not exercised."
+  },
+  "mac:0x00051d0e": {
+    "status": "fixed",
+    "evidence": "Read full Mac 0x51d0e: native now parse the stored string directly without consuming a va ring slot. Preserved defined native formatting fallback for incompatible non-string types instead of reinterpreting scalar bits as LP64 pointers. Compiled and reviewed; corrected path not exercised."
+  },
+  "mac:0x00051dca": {
+    "status": "fixed",
+    "evidence": "Read full Mac 0x51dca: native now parse the stored string directly without consuming a va ring slot. Preserved defined native formatting fallback for incompatible non-string types instead of reinterpreting scalar bits as LP64 pointers. Compiled and reviewed; corrected path not exercised."
+  },
+  "linux:universal/dvar.cpp:1155:Dvar_GetReinterpretedResetValue": {
+    "status": "equal",
+    "evidence": "Read Mac RegisterVariant 0x54213-0x54254: existing external to internal transition performs unregistration, frees owned name, stores borrowed name, clears 0x4000 and makes explicit type using the incoming reset value unchanged; native matches these inline Linux identities."
+  },
+  "mac:0x00051c56": {
+    "status": "fixed",
+    "evidence": "Read full Mac 0x51c56: native now return stored string pointer rather than a va copy; enum lookup remains direct. Preserved defined native formatting fallback for incompatible non-string types instead of reinterpreting scalar bits as LP64 pointers. Compiled and reviewed; corrected path not exercised."
+  },
+  "mac:0x000515a2": {
+    "status": "equal",
+    "evidence": "Read full Mac Dvar_GetUnpackedColor 0x515a2: packed current bytes for type 8, otherwise StringToColor, then four float multiplications by binary32 1/255; native shared implementation matches the Linux UnpackColor identity."
+  },
+  "mac:0x00051a8e": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x51a8e: hash lookup, missing-name colorWhite copy and packed/string color unpacking match native."
+  },
+  "mac:0x00051bb2": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x51bb2: inlined hash lookup, missing-name empty string and current ValueToString tail call match native."
+  },
+  "linux:universal/dvar.cpp:885:Dvar_GetVec2": {
+    "status": "unchecked",
+    "evidence": "Linux-only 2-vector getter has no native definition or callers. Searched native sources and Mac symbols; read related typed lookup/conversion bodies Dvar_GetFloat 0x51d0e, GetUnpackedColorByName 0x51a8e and StringToValue 0x512c6. Those identify scalar/color/temporary-vector operations, not this name-to-vector-return entry, so the Mac caller identity and fallback/default contract remain unresolved."
+  },
+  "linux:universal/dvar.cpp:899:Dvar_GetVec3": {
+    "status": "unchecked",
+    "evidence": "Linux-only 3-vector getter has no native definition or callers. Searched native sources and Mac symbols; read related typed lookup/conversion bodies Dvar_GetFloat 0x51d0e, GetUnpackedColorByName 0x51a8e and StringToValue 0x512c6. Those identify scalar/color/temporary-vector operations, not this name-to-vector-return entry, so the Mac caller identity and fallback/default contract remain unresolved."
+  },
+  "linux:universal/dvar.cpp:913:Dvar_GetVec4": {
+    "status": "unchecked",
+    "evidence": "Linux-only 4-vector getter has no native definition or callers. Searched native sources and Mac symbols; read related typed lookup/conversion bodies Dvar_GetFloat 0x51d0e, GetUnpackedColorByName 0x51a8e and StringToValue 0x512c6. Those identify scalar/color/temporary-vector operations, not this name-to-vector-return entry, so the Mac caller identity and fallback/default contract remain unresolved."
+  },
+  "mac:0x00050e58": {
+    "status": "equal",
+    "evidence": "Read Mac 0x50e58: negates current/latched Dvar_ValuesEqual, matching native."
+  },
+  "mac:0x00051000": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x51000: empty domain, all-digit scan, atoi and unchecked enum indexing match native. The nonnegative digit classification is equivalent for the compared ASCII input."
+  },
+  "mac:0x00054772": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54772: marks system active, registers sv_cheats false with flags 0x1018 and zero domain, stores pointer, adds commands; native matches."
+  },
+  "linux:universal/dvar.cpp:111:Dvar_InternString": {
+    "status": "equal",
+    "evidence": "Read intern branches in Mac SetLatchedValue 0x516f5-0x517b2 and RegisterVariant 0x542a8-0x54343: empty string, one digit, exact lowercase on/off and copied-string fallback match native CanonicalizeValueString."
+  },
+  "mac:0x00050e7a": {
+    "status": "equal",
+    "evidence": "Read Mac 0x50e7a: current/reset Dvar_ValuesEqual result matches native."
+  },
+  "mac:0x00050ada": {
+    "status": "equal",
+    "evidence": "Read Mac 0x50ada: zero-extended active byte return matches native."
+  },
+  "mac:0x00050ae6": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x50ae6: null/empty handling, signed char rune lookup, 0x500 alphanumeric mask and underscore acceptance match native."
+  },
+  "linux:universal/dvar.cpp:1865:Dvar_LoadDvarsFromBuffer": {
+    "status": "unchecked",
+    "evidence": "Linux helper consumes size-bounded name-NUL/value-NUL pairs and registers missing names. Read Mac Com_LoadDvarsFromBuffer 0x54806 and searched actual native CG_LoadShellShockDvars/R_LoadSunThroughDvars consumers: these parse named text with reset/required-name checks. No native definition/callers or matching Mac binary-blob loader identified; this is not an alias of Com_LoadDvarsFromBuffer."
+  },
+  "mac:0x00052bc2": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x52bc2: domain/type write, read-only/cheat reset choice, string conversion/clamp, sequential slot cleanup, 3*components vector allocation, reset/current/latched update and modified flags match. Native retains an explicit temporary string copy to protect its LP64 string alias lifetime during promotion; the existing live-slot cleanup fix remains unchanged."
+  },
+  "linux:universal/dvar.cpp:1188:Dvar_MakeLatchedValueCurrent": {
+    "status": "equal",
+    "evidence": "Read existing-name Mac RegisterVariant 0x5406f-0x54119 with branch islands: type/ownership transition, flags OR, cheat reset and latch current replay match native. Linux MakeLatchedValueCurrent is the internal-source SetVariant call at 0x541e4, not a missing Mac body."
+  },
+  "mac:0x00052782": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x52782: external flag/name copy, string early return, saved vector base, latched/reset conversion and interning, type=7 then vector free match native."
+  },
+  "mac:0x0005273e": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x52172 plus GetLines 0x52716 and PrintDomain 0x5273e; decoded table 0x328ba0 and checked all domain strings/sentinel cases. Native retains existing nonpositive-size and snprintf-truncation bounds instead of Mac cursor escape/last-byte writes; normal output, enum line counts and end-cursor return match."
+  },
+  "mac:0x00054730": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54730: zero-extended bool byte, zero domain, type 0 and flags match native RegisterVariant forwarding. Native retains defined null-table support in enum registration where applicable."
+  },
+  "mac:0x00054348": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54348: four upper/lower clamps, binary32 multiply by 255 then add 0.5 and floor, RGBA packing, zero domain and flags/type forwarding match native; NaN selects 1 as on Mac."
+  },
+  "mac:0x00054574": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54574: table count, default index, type 6 and flags match native RegisterVariant forwarding. Native retains defined null-table support in enum registration where applicable."
+  },
+  "mac:0x000546d8": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x546d8: float bits, bounds, type 1 and flags match native RegisterVariant forwarding. Native retains defined null-table support in enum registration where applicable."
+  },
+  "mac:0x00054704": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54704: integer bits, bounds, type 5 and flags match native RegisterVariant forwarding. Native retains defined null-table support in enum registration where applicable."
+  },
+  "linux:universal/dvar.cpp:1230:Dvar_RegisterNew": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x53de8: case-insensitive hash lookup, 0x7000 registration transitions, external promotion/name ownership, changeable enum domain, cheat/latch replay, new value/vector allocation and sorted/hash insertion match native. Existing CoD2x mode deliberately expands the pool from Mac 1280 to 4096 and uses its exhaustion message; stock limit remains 1280. Native zero-initializes new pointer-sized records."
+  },
+  "mac:0x000545c4": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x545c4: string pointer, zero domain, type 7 and flags match native RegisterVariant forwarding. Native retains defined null-table support in enum registration where applicable."
+  },
+  "mac:0x00053de8": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x53de8: case-insensitive hash lookup, 0x7000 registration transitions, external promotion/name ownership, changeable enum domain, cheat/latch replay, new value/vector allocation and sorted/hash insertion match native. Existing CoD2x mode deliberately expands the pool from Mac 1280 to 4096 and uses its exhaustion message; stock limit remains 1280. Native zero-initializes new pointer-sized records."
+  },
+  "mac:0x00054698": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54698: two stack components, vector limits, type 2 and flags match native RegisterVariant forwarding. Native retains defined null-table support in enum registration where applicable."
+  },
+  "mac:0x00054652": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54652: three stack components, vector limits, type 3 and flags match native RegisterVariant forwarding. Native retains defined null-table support in enum registration where applicable."
+  },
+  "mac:0x00054606": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54606: four stack components, vector limits, type 4 and flags match native RegisterVariant forwarding. Native retains defined null-table support in enum registration where applicable."
+  },
+  "linux:universal/dvar.cpp:1160:Dvar_ReinterpretDvar": {
+    "status": "equal",
+    "evidence": "Read Mac RegisterVariant 0x54213-0x54254: existing external to internal transition performs unregistration, frees owned name, stores borrowed name, clears 0x4000 and makes explicit type using the incoming reset value unchanged; native matches these inline Linux identities."
+  },
+  "linux:universal/dvar.cpp:1203:Dvar_Reregister": {
+    "status": "equal",
+    "evidence": "Read existing-name Mac RegisterVariant 0x5406f-0x54119 with branch islands: type/ownership transition, flags OR, cheat reset and latch current replay match native. Linux MakeLatchedValueCurrent is the internal-source SetVariant call at 0x541e4, not a missing Mac body."
+  },
+  "mac:0x00053792": {
+    "status": "equal",
+    "evidence": "Read Mac 0x53792: forwards reset slot and caller source to SetVariant, matching native."
+  },
+  "mac:0x000547c0": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x547c0: sorted flag-filter traversal and reset/source assignment match native."
+  },
+  "linux:universal/dvar.cpp:1834:Dvar_SaveDvars": {
+    "status": "unchecked",
+    "evidence": "Linux helper packs flag-filtered name-NUL/value-NUL pairs by hash bucket and optionally measures size. Read Mac Com_SaveDvarsToBuffer 0x5198c and searched its actual native CG_SaveShellShockDvars/R_Cmd_SaveSun consumers: these use name-list quoted text and a different signature. No native definition/callers or matching Mac binary-blob save path were identified; representation/caller identity remains unresolved."
+  },
+  "mac:0x00054abe": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54abe: low-byte bool versus 1/0 string, internal source; branch, union argument and source forwarding to SetVariant match native."
+  },
+  "mac:0x00054d78": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54d78: inlined name hash and missing-name 1/0 external string; existing bool/string dispatch, all flags/source arguments match native."
+  },
+  "mac:0x00053da6": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x53da6: low-byte bool versus 1/0 string; branch, union argument and source forwarding to SetVariant match native."
+  },
+  "mac:0x00053758": {
+    "status": "equal",
+    "evidence": "Read full Mac Dvar_SetCheatState 0x53758: sorted traversal of flag 0x80 dvars and internal-source reset assignment match native and the Linux SetCheatsToReset alias."
+  },
+  "linux:universal/dvar.cpp:1789:Dvar_SetCheatsToReset": {
+    "status": "equal",
+    "evidence": "Read full Mac Dvar_SetCheatState 0x53758: sorted traversal of flag 0x80 dvars and internal-source reset assignment match native and the Linux SetCheatsToReset alias."
+  },
+  "mac:0x00053ca8": {
+    "status": "fixed",
+    "evidence": "Read full Mac 0x53ca8: internal-source forwarding matches native; its corrected SetColorFromSource implementation now rounds original floats as Mac 0x53a7c does. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00055796": {
+    "status": "unchecked",
+    "evidence": "Read full Mac 0x55796: existing-name bytes become floats and invoke corrected SetColorFromSource. Missing-name path 0x557fb passes four promoted integers to va format %g %g %g %g, whose four double reads overrun the supplied 16-byte argument area. Native has the same format/type mismatch on a different variadic ABI; exact output is unresolved, not equality."
+  },
+  "mac:0x000539fe": {
+    "status": "fixed",
+    "evidence": "Mac 0x539fe/0x53a7c clamps and rounds the original float components. Native formatted %g and parsed again first, changing values near byte thresholds. Restored direct component conversion; retained defined generic parsing for incompatible non-string/non-color destinations rather than raw union-pointer reinterpretation. Compiled and reviewed; not exercised."
+  },
+  "mac:0x000559e2": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x559e2: external source=1 set, result/autoexec guard, OR 0x8000 and reset update from current match native."
+  },
+  "linux:universal/dvar.cpp:175:Dvar_SetCurrentStringValue": {
+    "status": "intentional",
+    "evidence": "Read current update inline in Mac SetVariant 0x532d2-0x53753 and MakeExplicitType 0x52c9e-0x53128: vector/scalar copies and current/latched/reset string-sharing rules match. Native retains old current storage until after incoming string rebuild to keep its input alive; Mac frees and clears current before rebuilding. No new indeterminate storage was introduced."
+  },
+  "mac:0x00054af8": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54af8: float type versus %g string in 32 bytes, internal source; branch, union argument and source forwarding to SetVariant match native."
+  },
+  "mac:0x00054fce": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54fce: inlined name hash and missing-name va %g external string; existing float/string dispatch, all flags/source arguments match native."
+  },
+  "mac:0x00053ce0": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x53ce0: float type versus %g string in 32 bytes; branch, union argument and source forwarding to SetVariant match native."
+  },
+  "mac:0x0005387e": {
+    "status": "equal",
+    "evidence": "Read Mac 0x5387e: invokes compared SetFromStringFromSource with source zero, matching native."
+  },
+  "mac:0x00055a20": {
+    "status": "equal",
+    "evidence": "Read Mac 0x55a20 through call/return: internal source zero forwarding to ByNameFromSource matches native."
+  },
+  "mac:0x00055900": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x55900: hash lookup, existing conversion with caller source and returned dvar, otherwise external string registration and returned new dvar match native."
+  },
+  "mac:0x000537a4": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x537a4: bounded 1024-byte copy, type/domain conversion, enum -1337 diagnostic/domain print and reset fallback, and original source propagation match native."
+  },
+  "mac:0x00050acc": {
+    "status": "equal",
+    "evidence": "Read Mac 0x50acc: writes the low argument byte to the autoexec flag, matching native."
+  },
+  "mac:0x00054b5e": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54b5e: int/enum type versus %i string in 32 bytes, internal source; branch, union argument and source forwarding to SetVariant match native."
+  },
+  "mac:0x00054e96": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54e96: inlined name hash and missing-name 32-byte %i external string; existing int/enum/string dispatch, all flags/source arguments match native."
+  },
+  "mac:0x00053d48": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x53d48: int/enum type versus %i string in 32 bytes; branch, union argument and source forwarding to SetVariant match native."
+  },
+  "linux:universal/dvar.cpp:185:Dvar_SetLatchedStringValue": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x5161a: 2/3/4 component copies; string old-latch release excluding current/reset/static strings, clear, reuse current/reset by pointer/content, otherwise intern; scalar slot assignment matches native helpers for valid owned strings."
+  },
+  "mac:0x0005161a": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x5161a: 2/3/4 component copies; string old-latch release excluding current/reset/static strings, clear, reuse current/reset by pointer/content, otherwise intern; scalar slot assignment matches native helpers for valid owned strings."
+  },
+  "mac:0x00050ea4": {
+    "status": "equal",
+    "evidence": "Read Mac 0x50ea4: sets modified byte to one, matching native."
+  },
+  "linux:universal/dvar.cpp:195:Dvar_SetResetStringValue": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x52a24: 2/3/4 component reset copies, scalar assignment and reset-string free/clear/reuse-current-or-latched/intern sequence match native helpers on valid owned values."
+  },
+  "mac:0x00053890": {
+    "status": "intentional",
+    "evidence": "Read full Mac SetString 0x53890 and ByName 0x55570: string copy is capped at 1024 and non-string path is specifically enum parsing. Native preserves those string/enum paths, with defined generic conversion for incompatible destination types instead of treating arbitrary domain bits as an enum table. Linux source helper is instantiated only with source zero in these native/Mac entry paths; no separate native public helper is added."
+  },
+  "mac:0x00055570": {
+    "status": "intentional",
+    "evidence": "Read full Mac SetString 0x53890 and ByName 0x55570: string copy is capped at 1024 and non-string path is specifically enum parsing. Native preserves those string/enum paths, with defined generic conversion for incompatible destination types instead of treating arbitrary domain bits as an enum table. Linux source helper is instantiated only with source zero in these native/Mac entry paths; no separate native public helper is added."
+  },
+  "linux:universal/dvar.cpp:1545:Dvar_SetStringFromSource": {
+    "status": "intentional",
+    "evidence": "Read full Mac SetString 0x53890 and ByName 0x55570: string copy is capped at 1024 and non-string path is specifically enum parsing. Native preserves those string/enum paths, with defined generic conversion for incompatible destination types instead of treating arbitrary domain bits as an enum table. Linux source helper is instantiated only with source zero in these native/Mac entry paths; no separate native public helper is added."
+  },
+  "mac:0x0005313e": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x5313e and decoded type table 0x328be0: logging, domain rejection/enum reset recursion, external/script protection, external-only cheats, latch warning, equality cancellation and modified flags match. Native retains null/name guards and its defined string update lifetime ordering (Mac frees current before rebuilding)."
+  },
+  "mac:0x00054bba": {
+    "status": "unchecked",
+    "evidence": "Read full Mac 0x54bba: compares type 4 at 0x54bcf, supplies only two local floats at ebp-0x10/-0xc, then vec4 SetVariant reads the following saved-register words as components 3/4. Native has the same two-float source shape but its stack/LP64 layout cannot establish those values. No indeterminate storage was introduced; exact overflow behavior remains unresolved."
+  },
+  "mac:0x000550f6": {
+    "status": "unchecked",
+    "evidence": "Read full Mac ByName 0x550f6 and SetVec2 0x54bba: type-4 branch 0x551d0 passes two locals at ebp-0x20/-0x1c to vec4 SetVariant, reading two additional uninitialized stack words. The native two-float helper and Linux source helper share the dispatch, but the exact extra words/source variants have no portable established contract."
+  },
+  "linux:universal/dvar.cpp:1479:Dvar_SetVec2FromSource": {
+    "status": "unchecked",
+    "evidence": "Read full Mac ByName 0x550f6 and SetVec2 0x54bba: type-4 branch 0x551d0 passes two locals at ebp-0x20/-0x1c to vec4 SetVariant, reading two additional uninitialized stack words. The native two-float helper and Linux source helper share the dispatch, but the exact extra words/source variants have no portable established contract."
+  },
+  "mac:0x00054c34": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54c34: type 3 uses three local floats; otherwise 96-byte %g string; source zero and SetVariant forwarding match native."
+  },
+  "mac:0x0005524c": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x5524c: inlined name hash and missing-name va vector external string; existing three-vector/string dispatch, all flags/source arguments match native."
+  },
+  "linux:universal/dvar.cpp:1501:Dvar_SetVec3FromSource": {
+    "status": "intentional",
+    "evidence": "Read Mac Dvar_SetVec3 0x54c34 and ByName existing-value branch 0x55337: the Linux helper computation is instantiated with internal source zero, matching native. This native/Mac API has no variable-source vector entry or callers; the unused Linux public helper is deliberately not added."
+  },
+  "mac:0x00054cca": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x54cca: type 4 uses four local floats; otherwise 128-byte %g string; source zero and SetVariant forwarding match native."
+  },
+  "mac:0x000553ce": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x553ce: inlined name hash and missing-name va vector external string; existing four-vector/string dispatch, all flags/source arguments match native."
+  },
+  "linux:universal/dvar.cpp:1523:Dvar_SetVec4FromSource": {
+    "status": "intentional",
+    "evidence": "Read Mac Dvar_SetVec4 0x54cca and ByName existing-value branch 0x554c4: the Linux helper computation is instantiated with internal source zero, matching native. This native/Mac API has no variable-source vector entry or callers; the unused Linux public helper is deliberately not added."
+  },
+  "mac:0x000517b8": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x517b8: sorted traversal, sequential current/reset/latched string release and clears, vector base release, external-name release, global reset and hash-table zeroing match native with pointer-sized storage."
+  },
+  "linux:universal/dvar.cpp:264:Dvar_StringToBool": {
+    "status": "equal",
+    "evidence": "Inline Mac Dvar_StringToValue 0x512f6: atoi != 0 matches native BOOL case; only the low byte is semantically consumed."
+  },
+  "linux:universal/dvar.cpp:343:Dvar_StringToColor": {
+    "status": "equal",
+    "evidence": "Recovered real Mac symbol at 0x51074 despite Linux-only ledger identity. Read all four zero-initialized sscanf components, upper/lower clamp and ordered multiply 255/add 0.5/floor conversions; native helper matches, including NaN selecting one."
+  },
+  "linux:universal/dvar.cpp:310:Dvar_StringToEnum": {
+    "status": "equal",
+    "evidence": "Inline Mac Dvar_StringToValue 0x51324-0x51594 and SetString 0x538a9-0x539f8: exact case-insensitive match, numeric-only early rejection, valid index, numeric prefix fallback and -1337 sentinel match Dvar_StringToEnumIndex."
+  },
+  "linux:universal/dvar.cpp:274:Dvar_StringToFloat": {
+    "status": "equal",
+    "evidence": "Inline Mac Dvar_StringToValue 0x514bb: atof double result narrowed once to float matches native FLOAT case."
+  },
+  "linux:universal/dvar.cpp:269:Dvar_StringToInt": {
+    "status": "equal",
+    "evidence": "Inline Mac Dvar_StringToValue 0x5137e: atoi result matches native INT case."
+  },
+  "mac:0x000512c6": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x512c6 and decoded table 0x328b60: atoi/atof, zeroed wrapping vector ring, enum exact/numeric/prefix resolution, string pointer and color conversion match native implementation. Native initializes unused union bytes rather than propagating indeterminate stack bytes."
+  },
+  "linux:universal/dvar.cpp:279:Dvar_StringToVec2": {
+    "status": "equal",
+    "evidence": "Inline Mac Dvar_StringToValue 0x51464: allocates 2 ring components, wraps past 12, zeros components then scans %g values, matching native AllocTempVector and the type case."
+  },
+  "linux:universal/dvar.cpp:289:Dvar_StringToVec3": {
+    "status": "equal",
+    "evidence": "Inline Mac Dvar_StringToValue 0x513ff: allocates 3 ring components, wraps past 12, zeros components then scans %g values, matching native AllocTempVector and the type case."
+  },
+  "linux:universal/dvar.cpp:299:Dvar_StringToVec4": {
+    "status": "equal",
+    "evidence": "Inline Mac Dvar_StringToValue 0x51391: allocates 4 ring components, wraps past 12, zeros components then scans %g values, matching native AllocTempVector and the type case."
+  },
+  "linux:universal/dvar.cpp:956:Dvar_UnpackColor": {
+    "status": "equal",
+    "evidence": "Read full Mac Dvar_GetUnpackedColor 0x515a2: packed current bytes for type 8, otherwise StringToColor, then four float multiplications by binary32 1/255; native shared implementation matches the Linux UnpackColor identity."
+  },
+  "mac:0x000529d6": {
+    "status": "equal",
+    "evidence": "Read full Mac Dvar_UnregisterSystem 0x529d6: sorted traversal, flag intersection and external exclusions, 16-bit clear, 0x7000 remaining-system check and PerformUnregistration match native. Linux ClearFlags helper is inline in this caller, not an absent engine operation."
+  },
+  "mac:0x00051fc4": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x51fc4 and decoded table 0x328b84: table count, domain replacement, type clamping and current/latched slot assignment match. Native retains a null-table empty-domain guard; Mac immediately dereferences the table."
+  },
+  "linux:universal/dvar.cpp:1175:Dvar_UpdateRegistration": {
+    "status": "equal",
+    "evidence": "Read Mac RegisterVariant 0x54254-0x54288 and 0x54320: non-external incoming flag 0x1000 absent on existing dvar replaces name and, for enum, domain; native transition logic matches."
+  },
+  "mac:0x00052a24": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x52a24: 2/3/4 component reset copies, scalar assignment and reset-string free/clear/reuse-current-or-latched/intern sequence match native helpers on valid owned values."
+  },
+  "linux:universal/dvar.cpp:1093:Dvar_UpdateValue": {
+    "status": "intentional",
+    "evidence": "Read current update inline in Mac SetVariant 0x532d2-0x53753 and MakeExplicitType 0x52c9e-0x53128: vector/scalar copies and current/latched/reset string-sharing rules match. Native retains old current storage until after incoming string rebuild to keep its input alive; Mac frees and clears current before rebuilding. No new indeterminate storage was introduced."
+  },
+  "mac:0x00050edc": {
+    "status": "equal",
+    "evidence": "Read full Mac Dvar_ValueInDomain 0x50edc and decoded table 0x328b3c, plus inline validation in Dvar_SetVariant 0x53183-0x53452: scalar/vector min/max comparisons accept unordered floats, integer bounds and enum zero special case match native."
+  },
+  "mac:0x00050b82": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x50b82 and decoded type table 0x328af4: bool literals, scalar/vector formats, enum empty domain, string va copy and byte-to-float RGBA scaling match Dvar_ValueToString_impl."
+  },
+  "mac:0x00050d54": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x50d54 and decoded table 0x328b18: byte bool, ordered float/vector equality including NaN rejection, integer/enum/color word equality and strcmp string equality match native."
+  },
+  "linux:universal/dvar.cpp:529:Dvar_VectorDomainToString": {
+    "status": "equal",
+    "evidence": "Read vector branches and islands in Mac Dvar_DomainToString_Internal 0x522a7-0x52677: dimensions 2/3/4, +/-FLT_MAX comparisons and unbounded/one-sided/two-sided formats match Dvar_DescribeVectorDomain."
+  },
+  "linux:universal/dvar.cpp:440:Dvar_VectorInDomain": {
+    "status": "equal",
+    "evidence": "Read full Mac Dvar_ValueInDomain 0x50edc and decoded table 0x328b3c, plus inline validation in Dvar_SetVariant 0x53183-0x53452: scalar/vector min/max comparisons accept unordered floats, integer bounds and enum zero special case match native."
+  },
+  "linux:universal/dvar.cpp:33:generateHashValue": {
+    "status": "equal",
+    "evidence": "Read full Mac Dvar_FindVar 0x51f38: signed-character tolower hash weighted by index+0x77, mask 0xff, hash-chain I_stricmp lookup and null-name error match native. Linux FindMalleableVar is the mutable-return alias used inline by registration, not a second Mac algorithm."
+  },
+  "mac:0x00050506": {
+    "status": "fixed",
+    "evidence": "Read full Mac 0x50506: logfile/optional filter, traversal, current/latched output and footer. Restored latched-before-current display evaluation (0x50595/0x50662) and traversal-count-before-dvarCount summary arguments at 0x505f2; native reversed them. Compiled and reviewed; corrected output path not exercised."
+  },
+  "mac:0x000509c0": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x509c0: compared all 13 command strings, order and handler identities, including final setu; native matches."
+  },
+  "mac:0x0004f83a": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x4f83a: name lookup and miss result, combined set path, reset-before-current display, optional latched output and domain print match native."
+  },
+  "linux:universal/dvar_cmds.cpp:577:Dvar_Dump_f": {
+    "status": "equal",
+    "evidence": "Recovered Mac symbol 0x50768: calls Com_DvarDump(channel0), matching native."
+  },
+  "mac:0x0004f76c": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x4f76c, restarting exact mangled-symbol disassembly to correct full-otool prologue misalignment: empty-list guard, sorted next traversal and callback(name) match native."
+  },
+  "linux:universal/dvar_cmds.cpp:17:Dvar_GetCombinedString": {
+    "status": "equal",
+    "evidence": "Recovered real Mac 0x4f798 symbol. Full body compares argc, clears output, counts from argument byte 1, rejects cumulative length >0xffd, appends whole arguments/spaces with size4096; compared Dvar_GetCombinedString_impl used by Command/Set. The empty ABI shell is unused by live native callers."
+  },
+  "mac:0x000508d8": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x508d8: clear 1024-byte buffer, sorted bit filter/current display and Info_SetValueForKey match. Existing native dedicated build omits the client username override for bit2; client build follows Mac CL_GetUsernameForLocalClient(0)."
+  },
+  "mac:0x00050960": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x50960: clear 8192-byte buffer, sorted bit filter and Big key/value builder match native."
+  },
+  "linux:universal/dvar_cmds.cpp:483:Dvar_List_f": {
+    "status": "equal",
+    "evidence": "Recovered full Mac 0x5032e: optional case-insensitive filter, S/U/R/I/A/L/C flag columns with masks0x404/2/0x40/0x10/1/0x20/0x80, current value and total dvarCount match native."
+  },
+  "linux:universal/dvar_cmds.cpp:237:Dvar_RegisterBool_f": {
+    "status": "equal",
+    "evidence": "Recovered full Mac symbol 0x4fd98: arity/atoi-or-atof/default/limits checks, existing bool early return, external-string flag0x4000 gate and registration flags match native. Float wrong-type diagnostic intentionally says integer, as Mac does."
+  },
+  "linux:universal/dvar_cmds.cpp:307:Dvar_RegisterFloat_f": {
+    "status": "equal",
+    "evidence": "Recovered full Mac symbol 0x4ff56: arity/atoi-or-atof/default/limits checks, existing float early return, external-string flag0x4000 gate and registration flags match native. Float wrong-type diagnostic intentionally says integer, as Mac does."
+  },
+  "linux:universal/dvar_cmds.cpp:267:Dvar_RegisterInt_f": {
+    "status": "equal",
+    "evidence": "Recovered full Mac symbol 0x4fe4c: arity/atoi-or-atof/default/limits checks, existing int/enum early return, external-string flag0x4000 gate and registration flags match native. Float wrong-type diagnostic intentionally says integer, as Mac does."
+  },
+  "linux:universal/dvar_cmds.cpp:425:Dvar_Reset_f": {
+    "status": "equal",
+    "evidence": "Recovered Mac symbol 0x5020e: arity2, name lookup and source1 reset if found match native."
+  },
+  "mac:0x0005013e": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x5013e: argc check/usage, Set_f, argv1 lookup and flag 1 OR only if found match native."
+  },
+  "linux:universal/dvar_cmds.cpp:404:Dvar_SetFromDvar_f": {
+    "status": "equal",
+    "evidence": "Recovered Mac symbol 0x5018c: arity3, source lookup/missing diagnostic, display source then set destination name match native."
+  },
+  "mac:0x000500f0": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x500f0: argc check/usage, Set_f, argv1 lookup and flag 4 OR only if found match native."
+  },
+  "mac:0x000500a2": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x500a2: argc check/usage, Set_f, argv1 lookup and flag 2 OR only if found match native."
+  },
+  "mac:0x0004fcfe": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x4fcfe: argc>2, valid-name diagnostic, combined argv from index2 and SetCommand name/value match native."
+  },
+  "linux:universal/dvar_cmds.cpp:129:Dvar_ToggleInternal": {
+    "status": "equal",
+    "evidence": "Read full Mac Dvar_ToggleInternal 0x4f92e and decoded table 0x328aa0: usage/miss checks, bool/float/int/enum simple toggles, NaN-sensitive domain choice, sequence wrap and numeric-enum mapping match native. Linux ToggleSimple is inline in its argc=2 branch."
+  },
+  "mac:0x0004fcb6": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x4fcb6: only successful toggle re-looks-up argv1 and prints its display value, matching native."
+  },
+  "linux:universal/dvar_cmds.cpp:73:Dvar_ToggleSimple": {
+    "status": "equal",
+    "evidence": "Read full Mac Dvar_ToggleInternal 0x4f92e and decoded table 0x328aa0: usage/miss checks, bool/float/int/enum simple toggles, NaN-sensitive domain choice, sequence wrap and numeric-enum mapping match native. Linux ToggleSimple is inline in its argc=2 branch."
+  },
+  "linux:universal/dvar_cmds.cpp:189:Dvar_Toggle_f": {
+    "status": "equal",
+    "evidence": "Recovered Mac symbol 0x4fca8: calls ToggleInternal and discards result, matching native."
+  },
+  "mac:0x000502c0": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x502c0: excludes cl_cdkey and mask0x40c0, writes set with reset display value; native matches."
+  },
+  "mac:0x00050256": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x50256: sorted traversal excludes cl_cdkey case-insensitively, selects archive bit1, writes seta with latched display value; native matches."
+  },
+  "mac:0x0005077c": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x5077c: only an existing name is forwarded to SetFromStringByName. This is a bundled PunkBuster callback, absent from native definitions/callers after the documented pb_null_adapter.c/WS44 unsupported backend replacement; ordinary dvar set entry points were compared separately."
+  },
+  "mac:0x00050816": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x50816: clears output, walks sorted dvars and copies first out-of-domain name. No native definitions/callers remain at this bundled PunkBuster callback boundary after pb_null_adapter.c/WS44; engine ValueInDomain and setter validation were compared separately."
+  },
+  "mac:0x000507ae": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x507ae: persistent sorted iterator returns name/current/flags/reset, then zero at end. No native definitions/callers remain at this bundled PunkBuster callback boundary after pb_null_adapter.c/WS44; engine traversal and display operations were compared separately."
+  },
+  "mac:0x0005087c": {
+    "status": "equal",
+    "evidence": "Read full Mac 0x5087c: sorted flag-bit filter and SetConfigValueForKey(start,max,name,current-display) match native."
   }
 }
