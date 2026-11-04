@@ -1,9 +1,9 @@
 module,total,equal,fixed,intentional,unchecked
 EffectsCore/FxArchive,26,0,0,0,26
-EffectsCore/FxChannel,6,0,0,0,6
-EffectsCore/FxCurve,5,0,0,0,5
-EffectsCore/FxCurve_load_obj,2,0,0,0,2
-EffectsCore/FxMemMgr,5,0,0,0,5
+EffectsCore/FxChannel,6,4,1,0,1
+EffectsCore/FxCurve,5,4,0,0,1
+EffectsCore/FxCurve_load_obj,2,1,0,0,1
+EffectsCore/FxMemMgr,5,1,0,0,4
 EffectsCore/FxPrimitives,201,0,0,0,201
 EffectsCore/FxScheduler,59,0,0,0,59
 EffectsCore/FxScheduler_load_obj,17,0,0,0,17
