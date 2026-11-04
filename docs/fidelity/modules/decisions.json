@@ -5138,5 +5138,313 @@
   "mac:0x0004fca8": {
     "status": "equal",
     "evidence": "Read Mac 0x4fca8: invokes Dvar_ToggleInternal and returns, matching native."
+  },
+  "mac:0x0014715c": {
+    "status": "equal",
+    "evidence": "Mac 0x14715c returns without modifying state; read the empty native body in client_mp/cl_main_mp.c and the Mac prologue/return."
+  },
+  "linux:qcommon/common.cpp:1053:COM_PlayIntroMovies": {
+    "status": "fixed",
+    "evidence": "Mac inline 0x31484-0x314af and 0x31550: restored the legal cinematic every nondedicated startup, complete nextmap chain only on first intro, and setting introPlayed even when already true; Windows 0x433fb0 agrees. Compiled and reviewed; not exercised."
+  },
+  "linux:qcommon/common.cpp:657:Com_AddStartupCommands": {
+    "status": "equal",
+    "evidence": "Compared the inline command loop in Mac Com_Init_Try_Block_Function 0x31302-0x3136a: null/empty lines are skipped, the three-byte set comparison result is ignored, and every remaining line plus newline is queued, as native does."
+  },
+  "mac:0x0002ef80": {
+    "status": "fixed",
+    "evidence": "Mac 0x2f026/0x2f043 uses signed byte whitespace comparisons, while native used unsigned bytes; corrected that and kept bounded copy from reading beyond available room. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0002decc": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2decc: reject null buffer, zero size or null flush callback; install all three redirect globals and clear the first byte."
+  },
+  "mac:0x0002f70e": {
+    "status": "fixed",
+    "evidence": "Mac 0x2f74f-0x2f760 expands the rolling multiplier to 31337, not 1000000007; corrected wrapped 32-bit arithmetic and signed-byte input, preserving mask/checksum+1 and both configuration-change paths. Compiled and reviewed; not exercised."
+  },
+  "linux:qcommon/common.cpp:1484:Com_CheckSyncFrame": {
+    "status": "unchecked",
+    "evidence": "Linux-only row has no Mac code symbol. Native scr_debugger_compose.c implements a watchdog debugger loop, but a corresponding Mac inline range was not identified; no equality claim."
+  },
+  "linux:qcommon/common.cpp:328:Com_ClearTempMemory": {
+    "status": "equal",
+    "evidence": "Compared the inline temporary-memory clears in Mac Com_Quit_f 0x2f962-0x2f96c and Com_ErrorCleanup 0x2fad4-0x2fade with the corresponding native calls; there is no separate native helper."
+  },
+  "mac:0x0002eee8": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2eee8 shutdown order through animation, collision, sound, hunk and script teardown. Native dedicated omits client sound work at the existing dedicated boundary."
+  },
+  "linux:qcommon/common.cpp:1515:Com_CloseLogfiles": {
+    "status": "equal",
+    "evidence": "Compared the inline logfile close/reset branch in Mac Com_Quit_f 0x2f99f and 0x2f9c4-0x2f9d6 against native; both close only a nonzero handle and clear it."
+  },
+  "mac:0x0002e846": {
+    "status": "fixed",
+    "evidence": "Mac 0x2e849 writes 0x12345678 to address zero; native nonvolatile null store was deleted by optimizing Clang. Made the native store volatile so the crash command emits the reference faulting write. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0002e14c": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2e14c: absent/zero developer gate, 4096-byte vsnprintf buffer, final-byte termination, and percent-s forwarding to Com_Printf."
+  },
+  "mac:0x0002ee14": {
+    "status": "equal",
+    "evidence": "Compared all branches of Mac 0x2ee14-0x2eee8 with the inline block in native Com_Frame_Try_Block_Function: ROM/current-latched gates, registrations 0x1020/0x1040, modified clear, client shutdown and dedicated commands."
+  },
+  "mac:0x0002defa": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2defa: invoke a nonnull flush callback before clearing buffer, size and callback globals."
+  },
+  "mac:0x0002e33a": {
+    "status": "fixed",
+    "evidence": "Mac 0x2e387 preserves com_fixedConsolePosition for ERR_DROP (1); native cleared it. Corrected that branch and reviewed code 4/6 UI handling, code 5, recursion and longjmp(-1). Compiled and reviewed; not exercised."
+  },
+  "linux:qcommon/common.cpp:505:Com_ErrorAbort": {
+    "status": "unchecked",
+    "evidence": "Linux-only error-abort helper has no Mac symbol or native body; a corresponding Mac inline caller was not identified."
+  },
+  "mac:0x0002faa8": {
+    "status": "fixed",
+    "evidence": "Mac 0x2fc96 shuts down with EXE_DISCONNECTEDFROMOWNLISTENSERVER for errorcode 2; native supplied an unrelated printf-like server crash string. Corrected it; reviewed cleanup ordering, error flood escalation and other shutdown branches. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0002e80a": {
+    "status": "fixed",
+    "evidence": "Mac 0x2e81a/0x2e830 prefixes both developer test errors with localization control byte 0x15; restored it for drop and fatal cases. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0002fe0a": {
+    "status": "fixed",
+    "evidence": "Mac jump table 0x328600 decoded to none/key/char/ignore/console/packet. Restored unsigned invalid-type and packet-size checks, direct key forwarding, localization prefix, and discarding server loopback when sv_running is false instead of delivering it to the client. Reviewed packet copy/free and dispatch ordering. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0002fd78": {
+    "status": "fixed",
+    "evidence": "Mac 0x2fd82 uses the filesystem-selected default_config; native always executed default_mp.cfg. Added guarded shared selection state in universal/com_files.c: Mac 0x37346/0x373aa and Windows 0x425868/0x4258b5 select localized default first with ordinary default fallback; restart checks the selected file. Remaining autoexec/safemode ordering reviewed. Compiled and reviewed; not exercised."
+  },
+  "linux:qcommon/common.cpp:605:Com_ForceSafeMode": {
+    "status": "unchecked",
+    "evidence": "Mac has only a zero-address EH metadata name, no code symbol. Full text search found com_safemode read in Com_SafeMode but no named write; native also has no callable helper. No corresponding live implementation identified."
+  },
+  "mac:0x000306c4": {
+    "status": "intentional",
+    "evidence": "Mac 0x306c4 frame/error-cleanup flow matches; native additionally runs the opt-in Sys_StateHashFrame instrumentation hook after the frame."
+  },
+  "mac:0x0003028a": {
+    "status": "intentional",
+    "evidence": "Mac 0x3028a core flow, float scaling, clamps, dedicated transition and client/statmon sequencing compared by hand. Native retains the pre-existing macOS timer wait/frame observation, MatchSummary and optional COD2x FPS policy in place of the Mac busy-yield pacing."
+  },
+  "mac:0x0002ef60": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2ef60: mismatched owner returns; matching owner is cleared before BG_ShutdownWeaponDefFiles."
+  },
+  "mac:0x000309a2": {
+    "status": "fixed",
+    "evidence": "Mac 0x30bb1 continues at exact equality and exits only after elapsed seconds exceed the requested float duration; native used >=. Corrected strict comparison and freeze usage string; reviewed both event-push loops. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0002e9b4": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2e9b4 parser loop: EOF before empty-token return, 31-byte name limit, 64-column limit, 32-byte copies and all error strings/arguments."
+  },
+  "mac:0x0002ea88": {
+    "status": "fixed",
+    "evidence": "Mac 0x2ea88 uses localization prefix 0x15 and the full unexpected end-of-file text; restored exact errors while preserving validation of all columns, optional 32-byte copies and extra-column handling. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0002f054": {
+    "status": "fixed",
+    "evidence": "Mac 0x2f073 includes language 14 in comma locales; native omitted it. Added it; Windows 0x435636 confirms the same visible behavior. Compiled and reviewed; not exercised."
+  },
+  "linux:qcommon/common.cpp:811:Com_GetEvent": {
+    "status": "equal",
+    "evidence": "Compared the inlined event selection in Mac Com_EventLoop 0x2fe4e-0x2fe9b and 0x2ff87-0x2ffd4: queued tail/head ordering, low-byte ring index and fallback to Sys_GetEvent match native."
+  },
+  "mac:0x0002edea": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2edea: return fixedtime converted to float when nonzero, otherwise return the timescale float unchanged."
+  },
+  "mac:0x0002e8e6": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2e8e6 recursive wildcard control flow, including zero-or-more star matching, space consuming nondigits, question mark, signed-character tolower comparison and normalized -1/0/1 result."
+  },
+  "mac:0x00031570": {
+    "status": "intentional",
+    "evidence": "Mac 0x31570 setjmp/startup/fatal flow compared. Native adds opt-in tracing initialization and a trace-gated real-error print; those native diagnostic hooks are retained."
+  },
+  "linux:qcommon/common.cpp:1066:Com_InitDvars": {
+    "status": "intentional",
+    "evidence": "Compared inline Mac 0x30cb3-0x30f46 registrations: stock names/defaults/ranges/flags match. Optional COD2x deliberately changes maxfps to 250 and adds com_writeConfig; retained without changing the stock registration path."
+  },
+  "linux:qcommon/common.cpp:743:Com_InitPushEvent": {
+    "status": "equal",
+    "evidence": "Compared the inline queue initialization at Mac 0x30c21-0x30c51: zero all 256 event slots and reset head/tail. Native uses its LP64 event size."
+  },
+  "mac:0x00030be6": {
+    "status": "fixed",
+    "evidence": "Mac 0x30f8e-0x30f9f does not re-run SEH_InitLanguage after FS initialization; removed the native duplicate. Restored intro sequence at 0x31484/0x31550; reviewed remaining initialization order and dvar constants. Existing native/COD2x version/profile/dedicated paths remain deliberate port behavior. Compiled and reviewed; not exercised."
+  },
+  "linux:qcommon/common.cpp:358:Com_IsNoticeError": {
+    "status": "equal",
+    "evidence": "Compared the inline notice scan in Mac Com_SetErrorMessage 0x2e20f-0x2e21d and 0x2e2a4-0x2e2ca with native: seven notice strings, case-insensitive matching and the separate errorcode==2 notice case."
+  },
+  "mac:0x0002f8b0": {
+    "status": "fixed",
+    "evidence": "Mac 0x2f908 includes comma language 14 after snprintf; native omitted it. Added it; Windows 0x435689 agrees. Reviewed maxlen-1 formatting, explicit terminator and bounded first-dot replacement. Compiled and reviewed; not exercised."
+  },
+  "mac:0x000307c4": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x307c4-0x308b4 event drain: return the first no-event time, low-byte ring indexing, overflow above 255, one warning per overflow run, free displaced payload and advance both counters correctly."
+  },
+  "linux:qcommon/common.cpp:1342:Com_ModifyMsec": {
+    "status": "equal",
+    "evidence": "Compared the inline Mac Com_Frame_Try_Block_Function 0x3034b-0x303f6 and 0x3041d-0x304ac: fixed time, ordered float scaling then floorf(x+0.5f), minimum 1, dedicated hitch range 501..499999, 5000/200 clamps and timescale ratio."
+  },
+  "linux:qcommon/common.cpp:553:Com_ParseCommandLine": {
+    "status": "equal",
+    "evidence": "Compared the inline Mac 0x30c51-0x30c82 and 0x31178-0x311a2: store the initial line, split only plus/newline in place, and stop adding after 32 lines."
+  },
+  "mac:0x0002df82": {
+    "status": "fixed",
+    "evidence": "Mac 0x2dfcf compares the full sum of message and redirect lengths against size-1; native subtracted one and truncated instead of flushing. Restored that threshold, the nonnull dedicated gate at 0x2e024, console_mp.log (also Windows 0x431e57) and localtime-before-open ordering. PunkBuster capture remains deliberately absent at the documented native null-backend boundary. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0002df34": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2df34: 4096-byte vsnprintf destination, explicit final-byte NUL and print type zero."
+  },
+  "mac:0x000308b4": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x308b4-0x309a2: stop on no-event; otherwise enqueue with the same ring, warning, displaced-payload free and counter logic as native."
+  },
+  "linux:qcommon/common.cpp:759:Com_PushEvent": {
+    "status": "equal",
+    "evidence": "Compared the inline push logic in Mac Com_Milliseconds 0x307cf-0x308a9, Com_PumpMessageLoop and both freeze loops: low-byte ring index, occupancy above 255, warning reset, displaced-payload free, tail advance and all event fields/head update match native."
+  },
+  "mac:0x0002f940": {
+    "status": "intentional",
+    "evidence": "Mac 0x2f940 quit/recursive-error teardown compared; native dedicated omits client teardown and optional COD2x client can intercept demo quit requests. Retained those existing target behaviors."
+  },
+  "mac:0x0002f802": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2f802: request 21 bytes from the codkey preference bridge, split 16 key and 4 checksum bytes with terminators, validate, otherwise replace only key bytes with spaces."
+  },
+  "linux:qcommon/common.cpp:1477:Com_ResetFrametime": {
+    "status": "unchecked",
+    "evidence": "Linux-only helper has no Mac symbol or native body; a matching standalone or inlined reset-to-Sys_Milliseconds operation was not identified."
+  },
+  "mac:0x0002f9d8": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2f9d8 teardown/reinitialization and script developer/logfile settings. Existing dedicated guards suppress client-only teardown; common script, animation and DObj order matches."
+  },
+  "linux:qcommon/common.cpp:1097:Com_RunAutoExec": {
+    "status": "equal",
+    "evidence": "Compared the inline autoexec block in Mac Com_ExecStartupConfigs 0x2fdce-0x2fdeb: enable autoexec, execute, disable; native has the same sequence."
+  },
+  "mac:0x0002e48c": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2e48c: tokenize each stored line, match safe/dvar_restart case-insensitively, empty the matching command and return true; otherwise return the saved safemode flag."
+  },
+  "mac:0x0002ec60": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ec86 forces r_aaSamples to 1. This is a visible Mac graphics override: native now follows Windows 0x433870-0x4338fc, which applies supplied CSV values and archives each dvar, including AA. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0002e1b6": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2e1b6 registration flags/names, notice/title choice, localization fallbacks, message dvar writes and copying successful message translations into the 4096-byte error buffer."
+  },
+  "mac:0x0002f086": {
+    "status": "fixed",
+    "evidence": "Mac 0x2f086: restored Com_Parse/UngetToken section traversal, +8 MB tolerance at 0x2f3fa, fatal no-CPU-match at 0x2f2cd, whitespace rather than uppercase GPU pattern folding at 0x2f5d8, exact localized errors, and wrapped 31337 checksum at 0x2f443-0x2f454. CPU best GHz/MB selection and GPU first-match/all-row validation were reviewed. Compiled and reviewed; not exercised."
+  },
+  "linux:qcommon/common.cpp:1038:Com_SetScriptSettings": {
+    "status": "equal",
+    "evidence": "Compared the inline settings in Mac Com_Init_Try_Block_Function 0x311b1-0x311f0 and Com_Restart 0x2fa0b-0x2fa46: enabled iff developer or logfile, then developer_script boolean and developer integer arguments."
+  },
+  "linux:qcommon/common.cpp:339:Com_SetTimeScale": {
+    "status": "unchecked",
+    "evidence": "Mac has only a zero-address EH metadata name, no code symbol. Common code writes com_codeTimeScale=1 during initialization and reads it for frame scaling; no corresponding caller for the Linux arbitrary-value setter was identified, and native has no helper."
+  },
+  "mac:0x0002ef52": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2ef52: store the supplied owner unchanged."
+  },
+  "mac:0x0003062e": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x3062e: internal shutdown, clear UI map and start hunk users; existing dedicated guards omit client calls."
+  },
+  "mac:0x0002e7be": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2e7be: drain while head>tail, index with low eight bits, increment tail, free only nonnull payloads."
+  },
+  "mac:0x0002fa64": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2fa64 client disconnect/all/demo teardown, final message forwarding to SV_Shutdown and Com_Restart; existing dedicated guards omit client calls."
+  },
+  "mac:0x0003065a": {
+    "status": "fixed",
+    "evidence": "Mac 0x306b6 uses Error during initialization; native appended of hunk users. Restored exact text and reviewed setjmp, UI/hunk/event/menu order. Compiled and reviewed; not exercised."
+  },
+  "linux:qcommon/common.cpp:1132:Com_StartupConfigs": {
+    "status": "unchecked",
+    "evidence": "Linux standalone wrapper has no Mac symbol/native body. Mac and native initialize profiles before command-buffer execution, but the wrapper identity was not traced through player-profile code in this assignment."
+  },
+  "mac:0x0002e520": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2e520 matched/unmatched loops: exact case-sensitive variable-name filter, case-insensitive set/seta command tests and correct Dvar_Set_f/Dvar_SetA_f dispatch."
+  },
+  "linux:qcommon/common.cpp:98:Com_SyncThreads": {
+    "status": "unchecked",
+    "evidence": "Linux helper is an empty dedicated inline; neither a native body nor a corresponding Mac code/inline identity was established. No equality inferred merely from absence."
+  },
+  "mac:0x0002e856": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2e856 validation/failure clearing and successful 16+4-byte preference serialization with NUL terminator through the native MacPreferences bridge."
+  },
+  "mac:0x0002ecfe": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ecfe open/header/unbindall/bindings/dvars/close sequence compared. Native retains the existing COD2x com_writeConfig switch, including persisting a disabled switch once; dedicated omits key bindings."
+  },
+  "mac:0x0002ed6e": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2ed6e argc gate, 64-byte argument copy/default extension, write announcement and config writer dispatch."
+  },
+  "linux:qcommon/common.cpp:1263:Com_WriteConfiguration": {
+    "status": "equal",
+    "evidence": "Compared the inline block in Mac Com_Frame_Try_Block_Function 0x30293-0x302ad and 0x305b0-0x305e9: require fully initialized/archive-modified, clear bit 1, require profile, construct config_mp.cfg profile path and write it."
+  },
+  "linux:qcommon/common.cpp:1239:Com_WriteDefaultsToFile": {
+    "status": "equal",
+    "evidence": "Compared its inline implementation in Mac Com_WriteDefaults_f 0x30778-0x307c4: open, report open failure, emit generated header, write defaults, close."
+  },
+  "mac:0x00030708": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x30708 filename/argc handling and open/header/defaults/close behavior, including every printed string."
+  },
+  "linux:qcommon/common.cpp:1579:Com_XAnimCreateSmallTree": {
+    "status": "unchecked",
+    "evidence": "Linux-only wrapper has no Mac symbol/native body; corresponding animation allocator caller was not identified in assigned common code."
+  },
+  "linux:qcommon/common.cpp:1585:Com_XAnimFreeSmallTree": {
+    "status": "unchecked",
+    "evidence": "Linux-only wrapper has no Mac symbol/native body; corresponding animation tree free caller was not identified in assigned common code."
+  },
+  "mac:0x00030158": {
+    "status": "fixed",
+    "evidence": "Mac 0x30221 supplies localization prefix 0x15 on the bad-event error; restored it. Decoded six entries at jump table 0x328618 and compared queued/system event selection, key/character/console routing, packet free, ignored-event flag and return on no-event. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0002ef12": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2ef12: clear the 256-byte buffer, reset cursor/scroll and set drawWidth to 256."
+  },
+  "linux:qcommon/common.cpp:113:Field_CompleteCommand": {
+    "status": "unchecked",
+    "evidence": "Linux dedicated helper is empty, but Mac has no matching symbol and native no body; client completion identity was not established."
+  },
+  "mac:0x0002e644": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x2e644: optional leading slash, key/value token scan, pad keys shorter than 20, missing-value print/return and advance past separators."
+  },
+  "linux:qcommon/common.cpp:1573:MT_AllocAnimTree": {
+    "status": "unchecked",
+    "evidence": "Linux-only allocation wrapper has no Mac symbol/native body; a matching caller/allocator tag was not identified in assigned common code."
+  },
+  "mac:0x00181f00": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x181f00 sprintf/return and resolved its constants: percent-s space percent-s, pc_1.3_1_1 and Mon May 01 2006 05:05:43PM. Windows 0x4011b0 has the same format/build/date; active native patch-1.3 branch matches."
   }
 }
