@@ -1,8 +1,8 @@
 # universal/com_math module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**123/245 reconciled: 101 equal, 22 fixed; 122 unchecked.** The 82 native math definitions and 41 complete inline or alias identities were compared by hand with Mac 1.3 symbol-start disassembly. The 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
+**160/229 reconciled: 136 equal, 24 fixed; 69 unchecked.** The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
 ## Corrections
 
@@ -26,7 +26,7 @@ Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-univer
 
 ## Ownership correction
 
-16 unchecked whole-caller rows were moved to their actual engine modules after integration. Original Mac attribution, IDs and unchecked verdicts are preserved. The preceding audit totals describe the original assignment. This module now holds 229 rows: 101 equal, 22 fixed, 0 intentional, 106 unchecked. The destination owners must audit each complete caller; matching a shared inline helper does not certify it.
+16 unchecked whole-caller rows were moved to their actual engine modules after integration. Original Mac attribution, IDs and unchecked verdicts are preserved. The preceding audit totals describe the original assignment. After that ownership correction, before the 2026-11-05 follow-up, this module held 229 rows: 101 equal, 22 fixed, 0 intentional, 106 unchecked. The destination owners must audit each complete caller; matching a shared inline helper does not certify it.
 
 ## Integrated batch verification
 

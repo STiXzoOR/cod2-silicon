@@ -1,8 +1,8 @@
 # server/sv_game_mp module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**47/54 reconciled: 40 equal, 7 fixed, 7 unchecked.** Mac 1.3 i386 is the authority. All 43 Mac-backed functions were read by hand, plus the identified inline helpers and the matrix-array wrapper's alternate Linux name. The legacy source is preserved in the inactive branches.
+**47/54 reconciled: 39 equal, 8 fixed, 7 unchecked.** Mac 1.3 i386 is the authority. All 43 Mac-backed functions were read by hand, plus the identified inline helpers and the matrix-array wrapper's alternate Linux name. The legacy source is preserved in the inactive branches.
 
 ## Corrections
 
