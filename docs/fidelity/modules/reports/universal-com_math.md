@@ -2,7 +2,9 @@
 
 Updated 2026-11-05.
 
-**160/229 reconciled: 136 equal, 24 fixed; 69 unchecked.** The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
+**Current: 165/229 reconciled: 138 equal, 27 fixed, 0 intentional; 64 unchecked.**
+
+Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
 ## Corrections
 
@@ -42,7 +44,9 @@ Hosted ILP32 byte comparison remains unavailable because its unchanged reference
 
 ## Remaining-helper follow-up — 2026-11-05
 
-**160/229 reconciled: 136 equal, 24 fixed; 69 unchecked.** This pass closes 37
+**Current: 165/229 reconciled: 138 equal, 27 fixed, 0 intentional; 64 unchecked.**
+
+Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. This pass closes 37
 of the 106 remaining Linux-only helper rows: 35 equal and two fixed. The original
 123 reconciled statuses/evidence remain unchanged. Linux supplied helper names;
 Mac symbol-start disassembly supplied behavior. Every new closure accounts for
@@ -246,3 +250,10 @@ Private evidence: recon-math6.noindex.
 ## FloatIdentity provider boundary
 
 Original1.3 FloatIdentity copies0x80553f2/0x80b933a load the incoming word as float, and original FloatNoSwap calls the latter. Exact Mac FloatReadNoSwap has matching word instructions, but its input contract is raw integer bits. No positive float-input consumer/representation adapter connects the original helper to that native API. Independent review therefore retains FloatIdentity as unchecked; no cross-ABI alias or arbitrary NaN/exception equality is asserted. The separately found FloatReadSwap signed-shift correction belongs to the q_shared provider and does not close this helper.
+
+
+## FloatIdentity in the collision-plane loader — shared8
+
+Complete consumed FloatIdentity operation identified in original CMod_LoadPlanes 0x8053d82: actual source-field ADDRESS reaches raw-word dereference helper 0x8055284 at 0x8053e54, then FloatFromBits 0x8055374 at 0x8053e5c, then FloatIdentity 0x80553f2 at 0x8055380; returned float is stored to the matching normal field. Distance repeats the same full chain at 0x8053e9d/0x8053ea5. Fresh complete Mac CMod_LoadPlanes 0x77dc2 has the corresponding raw normal load/local/MOVSS/store at 0x77e3e–0x77e4b and distance MOVL transfer at 0x77e63–0x77e6c. Native cm_load_obj.c copies those same three normal fields and distance. This actual storage adapter resolves the prior hypothetical float-input/int-input bridge: no numeric conversion, callback cast or disconnected API is invented. Equal applies to the identified Mac/native consumed field transfer, not standalone FloatIdentity ABI, original Linux FLDS/FSTPS signaling-NaN/exception behavior, malformed-BSP storage, later comparison side effects or whole loader equivalence. FloatNoSwap/FloatSwap remain separately unchecked. Independent review: review-provenance-shared8-floatidentity.md. No source changes, compilation, tests, CI, replay or runtime verification.
+
+The prior standalone provider rejection remains valid for FloatNoSwap and FloatSwap. This closure uses the newly recovered complete original loader adapter and its actual corresponding Mac/native storage transfer. Existing plane-loader source, layout, count checks, diagnostics and classification logic are unchanged. Private evidence: `recon-provenance-shared8.noindex`.
