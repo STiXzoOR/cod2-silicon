@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+import re
 import shlex
 import subprocess
 ROOT = Path(__file__).resolve().parents[3]
@@ -16,6 +17,11 @@ out.mkdir(parents=True, exist_ok=False)
 path = 'src/PC/qcommon/net_chan_mp.c'
 source = (subprocess.check_output(['git', 'show', a.baseline + ':' + path], cwd=ROOT)
           if a.baseline else (ROOT / path).read_bytes())
+send_declaration = re.search(
+    rb'#if\s+defined\(COD2_X64\)\s+extern\s+(Bool|void)\s+Sys_SendPacket\s*\(', source)
+if not send_declaration:
+    raise SystemExit('Cannot identify the native Sys_SendPacket declaration in selected source')
+send_returns_bool = int(send_declaration.group(1) == b'Bool')
 (out / 'f1_transport_source.c').write_bytes(source)
 rows = json.loads(a.compile_db.read_text())
 row = next(r for r in rows if r['file'].endswith('/' + path))
@@ -24,7 +30,8 @@ original = row['file'][:-len('/' + path)]
 flags = [v.replace(original, str(ROOT)) for v in command[:command.index('-o')]
          if v not in ('-c', '-DNDEBUG')]
 flags += ['-UNDEBUG', '-I' + str(out), '-fsanitize=address,undefined',
-          '-fno-omit-frame-pointer', '-ffunction-sections', '-fdata-sections']
+          '-fno-omit-frame-pointer', '-ffunction-sections', '-fdata-sections',
+          '-DF1_TRANSPORT_SEND_RETURNS_BOOL=' + str(send_returns_bool)]
 exe = out / 'f1_transport'
 cmd = [*flags, str(ROOT / 'tests/lp64/network/f1_transport.c'),
        '-Wl,-dead_strip', '-o', str(exe)]
