@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 296,
+      "unchecked": 295,
       "intentional": 3184,
-      "equal": 4770,
+      "equal": 4771,
       "fixed": 1207
     },
     "scopes": {
@@ -199873,8 +199873,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no VectorAdd4 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up XAnimCalc four-component owners establish scaling, squared length and scaled accumulation. They do not establish an independent full unscaled float vector add/subtract helper; integer-frame interpolation differences were not treated as that identity."
+        "status": "equal",
+        "evidence": "Vec4ops24 complete consumed four-component sum in exact Mac CM_PointTraceStaticModels_r0xafeac: wrapper0xb00e2 creates actual startXYZ/fraction0 and endXYZ/current-fraction float4 arrays; recursive owner copies all4 first-input components to local p. Real split arithmetic produces four scaled-difference operand values and ADDSS0xb003d/0xb0058/0xb0073/0xb0089 adds them to matching p components, storing complete mid[4] at0xb0041/0xb005c/0xb0077/0xb008d. Actual mid is passed to recursion0xb00a7\u20130xb00b3 and all4 words replace p0xb00c4\u20130xb00d9; XYZ controls spatial splits and fraction component controls prune0xb000d\u20130xb0018. Native vec4 p/mid and four expressions preserve this complete actual addition/storage operation. Reconstructed header gives name/intent only; no original standalone identity or inline ancestry claimed. Distinct actual local output and ancestor input storage; computed second-operand values need no imagined temporary array. Scope is actual produced operand domain and complete sum storage, excluding arbitrary pointer overlap/standalone ABI, FP flags/trap timing/NaN payload/concurrent observation and whole trace-owner recertification. Equal, no new defect/source change or inherited repair. Independent review units/review-provenance-vec4ops24.md; fresh full owners/source hashes recon-provenance-vec4ops24.noindex. Static only; no compilation/tests/CI/replay/runtime."
       },
       {
         "id": "mac:0x0002dbc6",
@@ -200238,7 +200238,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no VectorSubtract4 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up XAnimCalc four-component owners establish scaling, squared length and scaled accumulation. They do not establish an independent full unscaled float vector add/subtract helper; integer-frame interpolation differences were not treated as that identity. Original IDB names VectorSubtract417 at 0x80d9d5a and VectorSubtract412 at 0x810dca4 were inspected through their complete 68-byte bodies. Each subtracts exactly offsets0,4,8 and returns; neither touches offset12. The numeric suffix is a duplicated three-component name, not positive four-component helper identity. Existing four-component reconstructed header alone still lacks original identity/complete Mac provider evidence; remains unchecked."
+        "evidence": "Native body/caller gap: no VectorSubtract4 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up XAnimCalc four-component owners establish scaling, squared length and scaled accumulation. They do not establish an independent full unscaled float vector add/subtract helper; integer-frame interpolation differences were not treated as that identity. Original IDB names VectorSubtract417 at 0x80d9d5a and VectorSubtract412 at 0x810dca4 were inspected through their complete 68-byte bodies. Each subtracts exactly offsets0,4,8 and returns; neither touches offset12. The numeric suffix is a duplicated three-component name, not positive four-component helper identity. Existing four-component reconstructed header alone still lacks original identity/complete Mac provider evidence; remains unchecked. Vec4ops24 new positive arithmetic route: actual Mac float4 trace endpoints (XYZ plus fraction), local p and complete interpolation mid in CM_PointTraceStaticModels_r0xafeac establish four matching p2-minus-p SUBSS at0xb0035/0xb0050/0xb006b/0xb0081. These are real float differences, unlike prior three-component/packed-short candidates, but each unscaled result is immediately multiplied then added before the interpolated output is stored. No unscaled four-result destination or independently consumed unscaled vector has been established; attributing reconstructed void helper output writes would assume a temporary and store elimination without original inline identity. Retain unchecked for that precise complete-output-storage gap, not absence or incorrect arithmetic. Separate complete VectorAdd4 sum-to-mid operation accepted; no subtraction closure implied. Full fresh Mac wrapper/owner and unchanged native source under recon-provenance-vec4ops24.noindex; independent split review units/review-provenance-vec4ops24.md. No source change/compile/tests/CI/replay/runtime."
       },
       {
         "id": "mac:0x0002d0ee",
