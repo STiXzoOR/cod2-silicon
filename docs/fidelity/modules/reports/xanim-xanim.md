@@ -1,8 +1,8 @@
 # xanim/xanim module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**138/147 reconciled: 118 equal, 13 fixed, 7 intentional; 9 unchecked.** Mac 1.3 i386 is the authority. Every assigned row was evaluated. Nontrivial exported functions were compared by hand, including the complete blend, cache, update and notify bodies and the compiler's repeated inlined recursion. Linux was used only for helper names and intent.
+**139/147 reconciled: 118 equal, 14 fixed, 7 intentional; 8 unchecked.** Mac 1.3 i386 is the authority. Every assigned row was evaluated. Nontrivial exported functions were compared by hand, including the complete blend, cache, update and notify bodies and the compiler's repeated inlined recursion. Linux was used only for helper names and intent.
 
 ## Corrections
 
@@ -65,3 +65,11 @@ The original knob wrappers clamp the weight, clear sibling weights through a sep
 The anonymous Linux 1.0 body at 0x80ba7b0 maps to original 1.3 0x80bcd88–0x80bcd94 and writes byte one to its leak-check global. This supplies a concrete original `XAnimDisableLeakCheck` state-write anchor, but a complete primary Mac owner remains unidentified. Related initialization or exception metadata cannot establish the missing write. The eight previously anchored helper bodies retain their existing complete-operation gaps. Targeted PPC source/owner additions concern initialization, precache and notification owners and do not establish those missing operations. All nine stay unchecked; notification/storage adaptations remain intact.
 
 Private evidence is in `recon-provenance-animation10.noindex`. No source changes, compilation, tests, CI, replay or runtime exercise ran.
+
+## Complete ordinary-knob operation (anim19)
+
+`XAnimSetGoalWeightKnob` is fixed through the complete initial target phase of actual Mac/native `XAnimSetCompleteGoalWeightKnobAll`. The original 127-byte wrapper at 0x80c1df6–0x80c1e74 establishes the clamp and two-provider operation. Mac first clamps weight at 0x3ef81–0x3ef9f, then computes the current-weight sibling blend and clears siblings, calls the complete internal target setter at 0x3f061 with notify type zero, allocates missing zero-goal parents, and performs all optional target restart branches. These effects join at 0x3f0ed/0x3f0f8 before the root-limited ancestor loop. Native has the same complete phase, consumed by actual animation callers.
+
+This classification inherits the already repaired internal setter's unordered descending-weight and descendant-selection gates at 0x3b66f and 0x3b738. The wrapper preserves unordered input, so those repairs are within its operation; no new defect was found. It is not an alias of whole KnobAll, and its void result does not acquire the enclosing owner's return contract. Later ancestor propagation is excluded. The complete-knob wrapper's weight-one ancestor policy and immediate-child-only clearing remain separate unchecked operations.
+
+The mapping retains valid tree/storage and existing native notification ownership. It does not claim allocation-exhaustion continuation equality after a returned fatal Com_Error: Mac resumes with null storage while native supplies defined g_xAnimInfo[0] storage. That existing adaptation remains unchanged. No standalone exported ABI, literal inline ancestry, malformed-tree behavior, FP flags/traps or NaN payload equality is claimed. Full original providers and fresh exact Mac bodies were independently reviewed in units/review-provenance-anim19.md; private evidence is in recon-provenance-anim19.noindex. No source changed. No compilation, tests, CI or replay ran. Inherited corrections remain compiled and reviewed, not runtime verified.
