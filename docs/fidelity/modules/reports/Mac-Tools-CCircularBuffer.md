@@ -11,3 +11,5 @@ The default constructor 0x1f95ee and Reset 0x1f9618 match initialized field beha
 The size-taking constructor at 0x1f9740 was read: it zeroes all fields, allocates, and records the requested capacity. Native exposes a default constructor and separate Alloc, but no callable identity or surviving caller for that overloaded constructor was found. Its row stays unchecked; absence is not equality. Old Carbon recorder/Miles playback consumers are excluded; native audio/voice providers do not use those raw layouts.
 
 The arm64 Release dedicated target compiled and linked the changed provider. The corrections were reviewed against the disassembly but not exercised; no new tests, full CI or replay ran. OFF preprocessing matches the base, and the file contains no __LINE__ expansions.
+
+Parent ran the unchanged existing Debug ASan/UBSan threads_ring fixture after correcting its SDL target dependency: recursive mutexes, native IDs, virtual destructors,20 dual-stop restarts and10000 wrapped bytes passed. Full/empty ambiguity and allocation failures were not directly exercised. No new tests were added.
