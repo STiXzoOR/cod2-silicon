@@ -54,3 +54,25 @@ are no `__LINE__` uses. No tests were added, and no full CI or replay was run.
 ## Integrated batch 21 acceptance
 
 The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.
+
+## Remaining identity search — 2026-11-05
+
+All seven unresolved identities remain unchecked. Exact Mac server conversion
+and allocator owners reject two further candidate mappings:
+
+- `SV_SvEntityForGentity` at 0x14d990–0x14d9de reads and validates
+  `gEnt->s.number`, then returns the indexed server-entity pointer.
+  `SV_GEntityForSvEntity` at 0x14e40c–0x14e458 converts a server-array
+  pointer index into a game-entity pointer. Neither is `SV_NumForGentity`'s
+  input game-pointer subtraction/division and integer-result interface.
+- `SV_AllocXModelPrecache` at 0x14dbd2–0x14dbdc and
+  `SV_AllocXModelPrecacheColl` at 0x14dbdc–0x14dbe6 tail-jump directly to
+  `Hunk_AllocInternal`. Their complete native wrappers also forward directly;
+  they do not establish `SV_Hunk_AllocInternal`'s loading-state guard or
+  error behavior.
+
+The corresponding native owners were read. These observations reject candidate
+identities; they neither close the missing helpers nor prove dead operations.
+No source defect was established. No source changed, and no compilation, tests,
+CI or replay ran. Exact-entry evidence remains in the private
+`CoD2-native-decomp/recon-identity-parent3.noindex` directory.
