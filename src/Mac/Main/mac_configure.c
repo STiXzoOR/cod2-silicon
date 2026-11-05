@@ -1,3 +1,58 @@
+#if defined(COD2_X64) && defined(__APPLE__)
+#include <CoreFoundation/CoreFoundation.h>
+#include <IOKit/IOKitLib.h>
+#include <stdint.h>
+#include <string.h>
+
+extern float MacFeatures_GetCPUSpeedInGHz(void);
+extern uint32_t MacFeatures_GetMemorySizeInMB(void);
+
+double Sys_CpuGHz(void)
+{
+    return (double)MacFeatures_GetCPUSpeedInGHz();
+}
+
+int Sys_SystemMemoryMB(void)
+{
+    int mb = (int)MacFeatures_GetMemorySizeInMB();
+    if (mb >= 0x8000001)
+        mb = 0x8000000;
+    return mb;
+}
+
+void Sys_DetectVideoCard(int descLimit, char *description)
+{
+    char renderer[512] = "Unknown GPU";
+    io_service_t accelerator;
+
+    if (descLimit <= 0)
+        return;
+
+    /* WinMain collects this before the native renderer creates a context. */
+    accelerator = IOServiceGetMatchingService(kIOMainPortDefault,
+                                              IOServiceMatching("IOAccelerator"));
+    if (accelerator) {
+        CFTypeRef model = IORegistryEntryCreateCFProperty(accelerator, CFSTR("model"), NULL, 0);
+        IOObjectRelease(accelerator);
+        if (model) {
+            if (CFGetTypeID(model) == CFStringGetTypeID() &&
+                !CFStringGetCString((CFStringRef)model, renderer, sizeof(renderer), kCFStringEncodingUTF8))
+                strcpy(renderer, "Unknown GPU");
+            CFRelease(model);
+        }
+    }
+
+    strncpy(description, renderer, descLimit);
+    /* sys_info feeds dvars and strcmp; retain its native C-string contract. */
+    description[descLimit - 1] = '\0';
+}
+
+int Sys_SupportsSSE(void)
+{
+    /* The native SIMD implementation does not depend on an x86 Gestalt bit. */
+    return 1;
+}
+#else
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -39,3 +94,4 @@ bool Sys_SupportsSSE(void)
     return 1;
 #endif
 }
+#endif
