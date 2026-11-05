@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**45 entries: 17 equal, 7 fixed, 9 intentional, 12 unchecked.** Mac 1.3 i386 is the authority. The live scanner and parser implementation is included from `yyparse_impl.h`.
+**45 entries: 17 equal, 8 fixed, 9 intentional, 11 unchecked.** Mac 1.3 i386 is the authority. The live scanner and parser implementation is included from `yyparse_impl.h`.
 
 ## Corrections
 
@@ -89,3 +89,13 @@ Mac's actual producer writes yytext at 0x10c4ef and yyleng at 0x10c4f9, saves th
 The mapping requires a live matched token in the existing serialized scanner, valid backing and representable length; a defined consumer also requires representable length+1 and valid provider storage. It does not claim arbitrary stale, null or oversized state is checked. The getters have no mutation or reference effect, and their mapping ends before later arithmetic/provider behavior. No exported ABI, literal inline ancestry, future-token pointer lifetime, reentrancy/concurrency, interning/error-result or whole scanner/DFA/token-code equivalence is claimed. Existing persistent descriptor, native pointer width and ownership adaptations remain unchanged. Unrelated scanner repairs do not turn these two already-correct reads into fixed verdicts.
 
 Parent independently reviewed fresh complete owners, original bodies, producer state, raw jump table and source hashes: `units/review-provenance-lexget25.md`. Private evidence is `recon-provenance-lexget25.noindex`. Two closures, no source change or new defect; no compilation, tests, CI, full build, replay or runtime verification.
+
+## Selected input stream read and rejected output route (lexstream26)
+
+`yyget_in` is fixed through the complete actual EOF input-pointer snapshot, inheriting the existing EOF repair09c27097. Original1.3 getter0x808b89d–0x808b8a6 only reads its FILE-pointer global and returns. Mac0x10ffaa reads complete yyin and saves it locally;0x11002d reloads it and0x110033 stores it unchanged in the descriptor. Nonnull additionally reaches fileno; NULL skips that call but is still a complete pointer result consumed by the descriptor store. Native `FILE *input=yyin` and the unchanged descriptor assignment were introduced by that existing repair. This is not a new defect or a claim that fileno runs for NULL.
+
+The selected route is backed by actual input and parser state. Scr_LoadScript installs the synthetic '+' prefix and finite source; ScriptParse installs its descriptor and start3 before yyparse. Raw scanner action28 returns prefix token0x118; raw parser translation26 shifts state1, default reduction130 has length0 and goes to state3 after successful ordinary empty-list allocation. State3 requests the next token. A finite newline source selects ignored action1; the following boundary sentinels select EOB94 with cursor=start+1, hence retained count0. Scr_ScanFile reaches the source NUL with parseBufNULL and returns0, selecting the EOF snapshot. This is static table/control-flow evidence, not execution. The earlier equal cold-creation proposal is withdrawn because ScriptParse already installs the actual descriptor.
+
+`yyget_out` remains unchecked. The generated action93 contains a full output-pointer read passed to fwrite, but all256 raw yy_accept entries contain only0–92 and94. Normal/fallback selectors use that table; synthetic EOF actions are95–97 for the actual assigned starts1/3/5. The recorded valid selector flow does not select action93, so its jump-table entry alone cannot establish a complete consumed getter. This precise rejected route does not imply an intentional unsupported API or a closure from absent symbols.
+
+The input mapping assumes actual serialized finite input, live descriptor/backing, successful ordinary parser allocation and defined counts. It covers the complete logical pointer result and unchanged descriptor consumer, preserving the approved persistent descriptor and full native pointer width. No standalone/raw ABI, literal inline ancestry, stale or forged-state safety, stream ownership, concurrent/reentrant operation, subsequent provider/I/O result or whole scanner/parser equivalence is claimed. Independent review accepted the split in `units/review-provenance-lexstream26.md`; private original/full Mac bodies, raw selectors, prefix-parser entries and hashes remain in `recon-provenance-lexstream26.noindex`. One closure, no source change or new defect; no compilation, tests, CI, full build, replay or runtime verification.
