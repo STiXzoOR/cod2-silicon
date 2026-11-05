@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 295,
+      "unchecked": 294,
       "intentional": 3184,
-      "equal": 4771,
+      "equal": 4772,
       "fixed": 1207
     },
     "scopes": {
@@ -198307,8 +198307,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no Q_log2 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native water log2 counters search powers of two by left-shifting a count; this is not the generic signed right-shift-until-zero operation or its full input/termination contract. Original-address provenance recovered: Linux 1.0 IDB 0x80a1b42 maps to retained original Linux 1.3 ELF 0x80a3ea6 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
+        "status": "equal",
+        "evidence": "Original1.0 0x80a1b42 full38-byte region maps uniquely to original1.3 0x80a3ea6: initialize result0, repeatedly arithmetic-shift signed input1, increment for each nonzero shifted result, return at0x80a3eca (executable end0x80a3ecb exclusive; trailingNOP follows). Complete consumed positive-count operation is actual Mac R_ImageList_f0xe769c: real initialized count0/enumeration callback R_AddImageToList0xe6a84 and2048-slot ImageList provide valid nonempty count1..2048; optional built-ins have unsigned<=2047 guard. Empty-list gate0xe7782/84 bypasses calculation. Actual pointer difference divided by4 supplies count at0xe778a\u20130xe7790. Full loop0xe779c\u20130xe77a6 increments result and arithmetic-shifts count until1. Actual n==1 branch reaches XOR AL,AL bytes30c0 at0xe7cb8 with EAX proven1, giving exact0. LEA doubles full floorlog2 result at0xe77a8, actual depth store0xe77b3 and sort call0xe77c4 consume it. Native element-count loop and depth*2 match every valid produced count including1 and nonpowers of2; both native branches already match this scalar operation. Existing whole-owner LP64 insertion/reporting corrections are outside this operation, so equal without inherited scalar defect. Complete producer/operation/consumer, not a shift fragment or hypothetical signed-provider adapter. Scope explicitly excludes original standalone/export ABI, zero-input call, negative-input termination, malformed enumeration/count/storage and whole sort/list command; the unguarded callback is not certified overflow-safe. Mac is behavioral authority, original only identity/intent. Independent parent review-provenance-math24-log2.md accepted; exact original/Mac bodies, raw target bytes and source hashes retained recon-provenance-math24.noindex. No source change, compilation, tests, CI, full build, replay or runtime verification."
       },
       {
         "id": "linux:universal/com_math.h:218:Q_rint",
