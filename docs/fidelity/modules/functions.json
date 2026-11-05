@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 3418,
-      "intentional": 1678,
-      "equal": 3660,
-      "fixed": 701
+      "unchecked": 3306,
+      "intentional": 1683,
+      "equal": 3759,
+      "fixed": 709
     },
     "scopes": {
       "unassigned": 777,
@@ -188813,8 +188813,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a881c: passes the onAccept (x86 +0x2b4) address and parser handle to PC_Script_Parse, normalizes its result to 0/1."
       },
       {
         "id": "mac:0x001a87f4",
@@ -188835,8 +188835,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a87f4: passes the action (+0x2b0) address and parser handle to PC_Script_Parse, normalizes its result to 0/1."
       },
       {
         "id": "mac:0x001ac4e4",
@@ -188857,8 +188857,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ac4e4: optional separate minus token, numeric type 3 check and integer diagnostic; writes signed intvalue into alignment (+0x278) only after successful parsing."
       },
       {
         "id": "mac:0x001a8da6",
@@ -188879,8 +188879,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8da6: ORs static flag 0x800000, calls Window_SetStaticFlags and returns 1 without consuming a token."
       },
       {
         "id": "mac:0x001aaf2a",
@@ -188901,8 +188901,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aaf2a: four sequential signed float parses into window.backColor (+0x1dc); stops at first failed token and retains earlier successful components."
       },
       {
         "id": "mac:0x001a9a32",
@@ -188923,8 +188923,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a9a32: Token read, String_Alloc, 64-byte bounded copy, lowercase, item imageTrack and material registration into window.background match."
       },
       {
         "id": "mac:0x001ac218",
@@ -188945,8 +188945,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ac218: optional separate minus token, numeric type 3 check and integer diagnostic; writes signed intvalue into window.border (+0xd4) only after successful parsing."
       },
       {
         "id": "mac:0x001ab0cc",
@@ -188967,8 +188967,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ab0cc: four sequential signed float parses into window.borderColor (+0x1ec); stops at first failed token and retains earlier successful components."
       },
       {
         "id": "mac:0x001aac02",
@@ -188989,8 +188989,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aac02: optional separate minus token, numeric type 3 check and float diagnostic; copies floatvalue or toggles its sign into window.borderSize (+0xe0) after successful parsing."
       },
       {
         "id": "mac:0x001a9ab8",
@@ -189011,8 +189011,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a9ab8: failed token read returns 0; successful token text is interned into window.cinematicName (+0xc8), then returns 1."
       },
       {
         "id": "mac:0x001abfa2",
@@ -189033,8 +189033,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1ac096-0x1ac13b holds pos/width/maxChars locally and commits the three fields only after every read succeeds. Native wrote earlier fields before a later failure. Restored atomic per-column stores, keeping signed count and cap 16; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001a8d56",
@@ -189055,8 +189055,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8d56: ORs static flag 0x100000, calls Window_SetStaticFlags and returns 1 without consuming a token."
       },
       {
         "id": "mac:0x001a89f4",
@@ -189077,8 +189077,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a89f4: parses the enableDvar script (+0x2cc), returns 0 on failure, otherwise ORs dvarFlags (+0x2d0) with 2 and returns 1."
       },
       {
         "id": "mac:0x001a86ac",
@@ -189099,8 +189099,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a86ac: Validates type data, checks storage/listbox pointer, then parses doubleClick script and normalizes its result."
       },
       {
         "id": "mac:0x001a9b3c",
@@ -189121,8 +189121,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1a9b4d-0x1a9b51 validates/allocates type data before reading the dvar token. Restored missing validation and exact storage/edit-definition gate for setting min/max/default to -1. UI_Alloc forwards to zeroing Hunk_AllocAlignInternal; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001a9bd4",
@@ -189143,8 +189143,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a9bd4: Type validation precedes current-type-13 check; existing type data produces enumDvarList already given; otherwise reads/interns enum name into typeData."
       },
       {
         "id": "mac:0x001ab25c",
@@ -189165,8 +189165,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ab25c: Type allocation/edit getter gates, dvar name allocation and default/min/max float reads match in order, including partial stores on later failure."
       },
       {
         "id": "mac:0x001ab46a",
@@ -189187,8 +189187,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ab46a: Validates type 12 storage, resets count/strDef, requires opening brace, skips comma/semicolon, stores label then signed float, increments count and fails after entry 32; EOF/closing-brace paths match."
       },
       {
         "id": "mac:0x001a8888",
@@ -189209,8 +189209,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8888: Validates type 12 storage, resets count/strDef, requires brace; separator skipping and alternating label/value stores match, including successful close after an unmatched label and failure after entry 32."
       },
       {
         "id": "mac:0x001a9afa",
@@ -189231,8 +189231,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a9afa: failed token read returns 0; successful token text is interned into dvarTest (+0x2c4), then returns 1."
       },
       {
         "id": "mac:0x001aaa72",
@@ -189253,8 +189253,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aaa72: Type validation, listbox getter/null failure and signed float parse into elementHeight (+0x38) match."
       },
       {
         "id": "mac:0x001abed8",
@@ -189275,8 +189275,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001abed8: Type validation/typeData and listbox getter gates, signed int parse into elementStyle (+0x3c) match."
       },
       {
         "id": "mac:0x001aa9ac",
@@ -189297,8 +189297,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aa9ac: Type validation, listbox getter/null failure and signed float parse into elementWidth (+0x34) match."
       },
       {
         "id": "mac:0x001a89be",
@@ -189319,8 +189319,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a89be: parses the enableDvar script (+0x2cc), returns 0 on failure, otherwise ORs dvarFlags (+0x2d0) with 1 and returns 1."
       },
       {
         "id": "mac:0x001a8e5a",
@@ -189341,8 +189341,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8e5a: Unsigned first token byte widened through short to key, script parse and typed handler prepend to item onKey match."
       },
       {
         "id": "mac:0x001ac9e0",
@@ -189363,8 +189363,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ac9e0: Signed key parse, script parse, typed handler allocation and prepend to item onKey match; 64-bit handler pointers retain native width."
       },
       {
         "id": "mac:0x001aab38",
@@ -189385,8 +189385,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aab38: optional separate minus token, numeric type 3 check and float diagnostic; copies floatvalue or toggles its sign into special (+0x2d8) after successful parsing."
       },
       {
         "id": "mac:0x001a8a96",
@@ -189407,8 +189407,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8a96: parses the enableDvar script (+0x2cc), returns 0 on failure, otherwise ORs dvarFlags (+0x2d0) with 0x10 and returns 1."
       },
       {
         "id": "mac:0x001a9964",
@@ -189429,8 +189429,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a9964: Token read, String_Alloc, Com_FindSoundAlias and focusSound (+0x2d4) store match."
       },
       {
         "id": "mac:0x001aaff0",
@@ -189451,8 +189451,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aaff0: Four signed float parses store foreColor one component at a time; each successful component sets dynamic flag 0x10000 before the next read."
       },
       {
         "id": "mac:0x001a99f0",
@@ -189473,8 +189473,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a99f0: failed token read returns 0; successful token text is interned into window.group (+0xc4), then returns 1."
       },
       {
         "id": "mac:0x001a8a60",
@@ -189495,8 +189495,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8a60: parses the enableDvar script (+0x2cc), returns 0 on failure, otherwise ORs dvarFlags (+0x2d0) with 8 and returns 1."
       },
       {
         "id": "mac:0x001a8684",
@@ -189517,8 +189517,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8684: ORs static flag 0x200000, calls Window_SetStaticFlags and returns 1 without consuming a token."
       },
       {
         "id": "mac:0x001a872c",
@@ -189539,8 +189539,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a872c: passes the leaveFocus (+0x2bc) address and parser handle to PC_Script_Parse, normalizes its result to 0/1."
       },
       {
         "id": "mac:0x001ac79c",
@@ -189561,8 +189561,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ac79c: Validates allocation, parses signed maxChars before the edit getter, and only then stores at editField +0x10."
       },
       {
         "id": "mac:0x001ac862",
@@ -189583,8 +189583,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ac862: Validates allocation, parses signed maxPaintChars before the edit getter, and only then stores at editField +0x18."
       },
       {
         "id": "mac:0x001a8754",
@@ -189605,8 +189605,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8754: passes the mouseEnter (+0x2a8) address and parser handle to PC_Script_Parse, normalizes its result to 0/1."
       },
       {
         "id": "mac:0x001a87a4",
@@ -189627,8 +189627,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a87a4: passes the mouseEnterText (+0x2a0) address and parser handle to PC_Script_Parse, normalizes its result to 0/1."
       },
       {
         "id": "mac:0x001a877c",
@@ -189649,8 +189649,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a877c: passes the mouseExit (+0x2ac) address and parser handle to PC_Script_Parse, normalizes its result to 0/1."
       },
       {
         "id": "mac:0x001a87cc",
@@ -189671,8 +189671,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a87cc: passes the mouseExitText (+0x2a4) address and parser handle to PC_Script_Parse, normalizes its result to 0/1."
       },
       {
         "id": "mac:0x001a9922",
@@ -189693,8 +189693,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a9922: failed token read returns 0; successful token text is interned into window.name (+0xc0), then returns 1."
       },
       {
         "id": "mac:0x001a8644",
@@ -189715,8 +189715,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8644: Validates type data once, gets listbox, returns 0 for null, sets noScrollBars only for current type 6 and otherwise succeeds."
       },
       {
         "id": "mac:0x001a8604",
@@ -189737,8 +189737,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8604: Validates type data, gets listbox, returns 0 for null, sets notselectable only for current type 6 and otherwise succeeds."
       },
       {
         "id": "mac:0x001a8704",
@@ -189759,8 +189759,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8704: passes the onFocus (+0x2b8) address and parser handle to PC_Script_Parse, normalizes its result to 0/1."
       },
       {
         "id": "mac:0x001abbde",
@@ -189781,8 +189781,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001abbde: Two signed integer reads complete before copying all six client rectangle fields, adding float-converted x/y and calling Window_SetRectClient."
       },
       {
         "id": "mac:0x001a9c5a",
@@ -189803,8 +189803,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a9c5a: four sequential signed float parses into window.outlineColor (+0x1fc); stops at first failed token and retains earlier successful components."
       },
       {
         "id": "mac:0x001ac412",
@@ -189825,8 +189825,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ac412: Signed integer parse into ownerDraw (+0xd8), followed by type=8 only on success, matches."
       },
       {
         "id": "mac:0x001ac928",
@@ -189847,8 +189847,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ac928: Signed integer parse then OR into ownerDrawFlags (+0xdc), with no mutation on parse failure, matches."
       },
       {
         "id": "mac:0x001aa130",
@@ -189869,8 +189869,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aa130: PC_Rect_Parse failure propagation and Window_SetRectClient call on success match; all six rectangle fields are provided by the parser."
       },
       {
         "id": "mac:0x001a8a2a",
@@ -189891,8 +189891,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8a2a: parses the enableDvar script (+0x2cc), returns 0 on failure, otherwise ORs dvarFlags (+0x2d0) with 4 and returns 1."
       },
       {
         "id": "mac:0x001ab192",
@@ -189913,8 +189913,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ab192: optional separate minus token, numeric type 3 check and float diagnostic; copies floatvalue or toggles its sign into special (+0x2d8) after successful parsing."
       },
       {
         "id": "mac:0x001abd54",
@@ -189935,8 +189935,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001abd54: optional separate minus token, numeric type 3 check and integer diagnostic; writes signed intvalue into window.style (+0xd0) only after successful parsing."
       },
       {
         "id": "mac:0x001a99ae",
@@ -189957,8 +189957,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a99ae: failed token read returns 0; successful token text is interned into text (+0x294), then returns 1."
       },
       {
         "id": "mac:0x001ac592",
@@ -189979,8 +189979,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ac592: optional separate minus token, numeric type 3 check and integer diagnostic; writes signed intvalue into textalignment (+0x280) only after successful parsing."
       },
       {
         "id": "mac:0x001aaccc",
@@ -190001,8 +190001,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aaccc: optional separate minus token, numeric type 3 check and float diagnostic; copies floatvalue or toggles its sign into textalignx (+0x284) after successful parsing."
       },
       {
         "id": "mac:0x001aad96",
@@ -190023,8 +190023,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aad96: optional separate minus token, numeric type 3 check and float diagnostic; copies floatvalue or toggles its sign into textaligny (+0x288) after successful parsing."
       },
       {
         "id": "mac:0x001a8ee6",
@@ -190045,8 +190045,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8ee6: Compared token/open/read/terminate/close/String_Alloc sequence, including NULL text for an unopened file. Native and Mac use a 4096-byte menuBuf1 with no length guard; equality covers control flow and valid in-bounds input, not defined behavior for oversized files."
       },
       {
         "id": "mac:0x001ac6ee",
@@ -190067,8 +190067,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ac6ee: optional separate minus token, numeric type 3 check and integer diagnostic; writes signed intvalue into fontEnum (+0x27c) only after successful parsing."
       },
       {
         "id": "mac:0x001a85e2",
@@ -190089,8 +190089,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a85e2: Stores literal savegameinfo in text and sets textSavegameInfo=1; consumes no token and returns 1."
       },
       {
         "id": "mac:0x001aae60",
@@ -190111,8 +190111,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aae60: optional separate minus token, numeric type 3 check and float diagnostic; copies floatvalue or toggles its sign into textscale (+0x28c) after successful parsing."
       },
       {
         "id": "mac:0x001ac640",
@@ -190133,8 +190133,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ac640: optional separate minus token, numeric type 3 check and integer diagnostic; writes signed intvalue into textStyle (+0x290) only after successful parsing."
       },
       {
         "id": "mac:0x001abe02",
@@ -190155,8 +190155,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1abea0-0x1abea9 validates type data and returns without resetting dvar limits. Removed native Item_InitDvarEditField call that overwrote previously parsed dvarFloat values. Signed type parsing and type validation retained; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001ac2c6",
@@ -190177,8 +190177,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1ac355-0x1ac3b7 suppresses @MENU_SHADOWS/ui_sc_enable controls. Windows item visible table entry at VA 0x5dd458 routes to 0x544b10, which parses signed integer then sets visibility bit 4 without either suppression (neither string occurs in executable). Native now follows this player-visible Windows behavior, retaining native Window_SetDynamicFlags; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001a8d7e",
@@ -190199,8 +190199,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8d7e: ORs static flag 0x400000, calls Window_SetStaticFlags and returns 1 without consuming a token."
       },
       {
         "id": "mac:0x001a8388",
@@ -190221,8 +190221,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8388: Null/current-type-6 gate, listbox lookup, item cursor reset and conditional list cursor/start/end resets occur in the same order."
       },
       {
         "id": "mac:0x001a92d4",
@@ -190243,8 +190243,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1a947e emits end-of-file text with trailing newline; restored exact diagnostic. Compared brace/keyword hash/unknown-keyword continuation/parse failure and success paths. Native token clearing retained; PC_ReadTokenHandle writes all parser-used fields on success; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001a8844",
@@ -190265,8 +190265,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8844: Validates type data, checks storage/edit getter, sets maxCharsGotoNext=1 and succeeds only with a valid edit definition."
       },
       {
         "id": "mac:0x001a95ca",
@@ -190287,8 +190287,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a95ca: Compared all 512 bucket clears, signed-character/uppercase folding, weights starting 0x77, arithmetic shifts 10/20, 0x1ff mask and prepend chains. Scripted ordered table check additionally matched all 65 item keyword/callback pairs and null terminator."
       },
       {
         "id": "mac:0x001a84c4",
@@ -190309,8 +190309,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Compared full Mac 0x1a84c4: existing-data mismatch diagnostic, type selection, allocation and edit maxPaintChars=256 behavior match. Native deliberately uses sizeof for pointer-bearing listbox/multi storage instead of Mac 0x110/0x188 byte sizes. Verified UI_Alloc -> Hunk_AllocAlignInternal zeroes the entire requested size; documented native layout adaptation retained, no uninitialized fields introduced."
       },
       {
         "id": "mac:0x001aa26a",
@@ -190331,8 +190331,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aa26a: four sequential signed float parses into window.backColor (+0x1dc); stops at first failed token and retains earlier successful components."
       },
       {
         "id": "mac:0x001a985a",
@@ -190353,8 +190353,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a985a: Token read, String_Alloc, 64-byte bounded copy, lowercase, menu imageTrack and material registration into window.background match."
       },
       {
         "id": "mac:0x001aa8bc",
@@ -190375,8 +190375,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aa8bc: Signed float parse and store precede the negative-value diagnostic/failure. Zero, positive and unordered NaN pass, as in Mac ucomiss/jp/jb at 0x1aa95e."
       },
       {
         "id": "mac:0x001ab838",
@@ -190397,8 +190397,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ab838: optional separate minus token, numeric type 3 check and integer diagnostic; writes signed intvalue into window.border (+0xd4) only after successful parsing."
       },
       {
         "id": "mac:0x001aa1a0",
@@ -190419,8 +190419,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aa1a0: optional separate minus token, numeric type 3 check and float diagnostic; copies floatvalue or toggles its sign into window.borderSize (+0xe0) after successful parsing."
       },
       {
         "id": "mac:0x001aa40c",
@@ -190441,8 +190441,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aa40c: four sequential signed float parses into window.borderColor (+0x1ec); stops at first failed token and retains earlier successful components."
       },
       {
         "id": "mac:0x001a98e0",
@@ -190463,8 +190463,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a98e0: failed token read returns 0; successful token text is interned into window.cinematicName (+0xc8), then returns 1."
       },
       {
         "id": "mac:0x001aa598",
@@ -190485,8 +190485,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aa598: four sequential signed float parses into disableColor (+0x26c); stops at first failed token and retains earlier successful components."
       },
       {
         "id": "mac:0x001a8dce",
@@ -190507,8 +190507,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8dce: Unsigned first token byte widened through short to key, script parse and typed handler prepend to menu onKey match."
       },
       {
         "id": "mac:0x001abafa",
@@ -190529,8 +190529,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001abafa: Signed key parse, script parse, typed handler allocation and prepend to menu onKey match; 64-bit handler pointers retain native width."
       },
       {
         "id": "mac:0x001aa728",
@@ -190551,8 +190551,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aa728: optional separate minus token, numeric type 3 check and float diagnostic; copies floatvalue or toggles its sign into fadeAmount (+0x238) after successful parsing."
       },
       {
         "id": "mac:0x001aa65e",
@@ -190573,8 +190573,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aa65e: optional separate minus token, numeric type 3 check and float diagnostic; copies floatvalue or toggles its sign into fadeClamp (+0x234) after successful parsing."
       },
       {
         "id": "mac:0x001aba4c",
@@ -190595,8 +190595,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aba4c: optional separate minus token, numeric type 3 check and integer diagnostic; writes signed intvalue into fadeCycle (+0x230) only after successful parsing."
       },
       {
         "id": "mac:0x001aa7f2",
@@ -190617,8 +190617,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aa7f2: optional separate minus token, numeric type 3 check and float diagnostic; copies floatvalue or toggles its sign into fadeInAmount (+0x23c) after successful parsing."
       },
       {
         "id": "mac:0x001aa4d2",
@@ -190639,8 +190639,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aa4d2: four sequential signed float parses into focusColor (+0x25c); stops at first failed token and retains earlier successful components."
       },
       {
         "id": "mac:0x001aa330",
@@ -190661,8 +190661,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aa330: Four signed float parses store foreColor one component at a time; each successful component sets dynamic flag 0x10000 before the next read."
       },
       {
         "id": "mac:0x001ab610",
@@ -190683,8 +190683,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ab610: optional separate minus token, numeric type 3 check and integer diagnostic; writes signed intvalue into fullScreen (+0x214) only after successful parsing."
       },
       {
         "id": "mac:0x001a94a2",
@@ -190705,8 +190705,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Compared full Mac 0x1a94a2: cap 256, insert-before-parse, zero/default textscale 0.55/imageTrack, control initialization, parent and count updates match. Preserves documented d4b7503 typed sizeof(itemDef_t)/sizeof(window) adaptation instead of x86 0x2f4/0x210 byte spans; existing native zero initialization remains defined."
       },
       {
         "id": "mac:0x001a8d2e",
@@ -190727,8 +190727,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8d2e: ORs static flag 0x4000000, calls Window_SetStaticFlags and returns 1 without consuming a token."
       },
       {
         "id": "mac:0x001a9818",
@@ -190749,8 +190749,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a9818: failed token read returns 0; successful token text is interned into window.name (+0xc0), then returns 1."
       },
       {
         "id": "mac:0x001a8424",
@@ -190771,8 +190771,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8424: passes the onClose (+0x248) address and parser handle to PC_Script_Parse, normalizes its result to 0/1."
       },
       {
         "id": "mac:0x001a844c",
@@ -190793,8 +190793,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a844c: passes the onESC (+0x24c) address and parser handle to PC_Script_Parse, normalizes its result to 0/1."
       },
       {
         "id": "mac:0x001a83fc",
@@ -190815,8 +190815,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a83fc: passes the onOpen (+0x244) address and parser handle to PC_Script_Parse, normalizes its result to 0/1."
       },
       {
         "id": "mac:0x001a8d06",
@@ -190837,8 +190837,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8d06: ORs static flag 0x2000000, calls Window_SetStaticFlags and returns 1 without consuming a token."
       },
       {
         "id": "mac:0x001a9d22",
@@ -190859,8 +190859,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a9d22: four sequential signed float parses into window.outlineColor (+0x1fc); stops at first failed token and retains earlier successful components."
       },
       {
         "id": "mac:0x001ab99e",
@@ -190881,8 +190881,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ab99e: optional separate minus token, numeric type 3 check and integer diagnostic; writes signed intvalue into window.ownerDraw (+0xd8) only after successful parsing."
       },
       {
         "id": "mac:0x001ab8e6",
@@ -190903,8 +190903,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ab8e6: Signed integer parse then OR into ownerDrawFlags (+0xdc), with no mutation on parse failure, matches."
       },
       {
         "id": "mac:0x001a8cde",
@@ -190925,8 +190925,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8cde: ORs static flag 0x1000000, calls Window_SetStaticFlags and returns 1 without consuming a token."
       },
       {
         "id": "mac:0x001aa168",
@@ -190947,8 +190947,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001aa168: PC_Rect_Parse failure propagation and Window_SetRect call on success match; all six rectangle fields are provided by the parser."
       },
       {
         "id": "mac:0x001a8474",
@@ -190969,8 +190969,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8474: Reads token; empty string succeeds without changing soundName, nonempty string is interned and stored."
       },
       {
         "id": "mac:0x001ab6be",
@@ -190991,8 +190991,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ab6be: optional separate minus token, numeric type 3 check and integer diagnostic; writes signed intvalue into window.style (+0xd0) only after successful parsing."
       },
       {
         "id": "mac:0x001ab76c",
@@ -191013,8 +191013,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001ab76c: Signed integer parse; zero succeeds without clearing flags, nonzero ORs dynamic visibility bit 4 through Window_SetDynamicFlags."
       },
       {
         "id": "mac:0x001a8f84",
@@ -191035,8 +191035,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1a9240 EOF diagnostic has trailing newline; 0x1a92a1 uses localized Menu_New/EXE_ERR_OUT_OF_MEMORY text. Restored both diagnostics. Compared initialization, keyword loop, name requirement, post-parse and menu insertion; documented typed native storage/window sizing retained; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001a8c56",
@@ -191057,8 +191057,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1a8c9e-0x1a8cbf copies existing window rectangle alignments into the fullscreen 640x480 rectangle; native left both fields uninitialized. Restored both alignments, preserving typed pointer-sized item copy and Menu_UpdatePosition; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001a96f0",
@@ -191079,8 +191079,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a96f0: Compared all 512 bucket clears, signed-character/uppercase folding, weights starting 0x77, arithmetic shifts 10/20, 0x1ff mask and prepend chains. Scripted ordered table check additionally matched all 32 menu keyword/callback pairs and null terminator."
       },
       {
         "id": "mac:0x001a9dec",
@@ -191101,8 +191101,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a9dec: Compared all four required float parses and both optional signed integer reads restricted to the same line; each absent/invalid optional alignment defaults to zero and the function still succeeds."
       },
       {
         "id": "mac:0x001a8272",
@@ -191123,8 +191123,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8272: Compared 1024-byte zeroed script, brace checks, EOF failures, quoting of empty/multicharacter tokens, single-character tokens, bounded concatenation plus spaces, and final String_Alloc/store."
       },
       {
         "id": "mac:0x001a81f0",
@@ -191145,8 +191145,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a81f0: Compared 4096-byte vsnprintf buffer (Mac __mh_execute_header immediate is 0x1000), filename/line initial values, source lookup and exact print format."
       },
       {
         "id": "mac:0x001a8acc",
@@ -191167,8 +191167,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1a8acc identity is UI_RegisterLocaleFont: decoded 9-entry table at 0x33bec0, all locale path strings and imageTrack call. Preserves WS70-locale-font-selection.md safe literal %s formatting for supplied default paths instead of treating path text as a format; other locale role/path selection matches. Actual stock/CoD2x client TU compiled; not exercised here."
       },
       {
         "id": "mac:0x001ad942",
@@ -191189,8 +191189,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1ad9af default-menu failure uses full diagnostic with 0x15 prefix/newline; restored it. Compared native load storage reset, requested menu attempt, warning/default fallback and MenuList return; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001ad780",
@@ -191211,8 +191211,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1ad8f4 default-menu failure uses full diagnostic with 0x15 prefix/newline; 0x1ad928 oversized-file error has 0x15 prefix. Restored both. Compared clear/open/fallback, 0x7fff limit, read/compress, loadmenu loop and cleanup; typed native load storage retained; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001a8044",
@@ -191233,8 +191233,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x001a8044: Compared filename/FS failure gates, CSV parse session, strlen+1 <=255 bound, key/value diagnostics, imageTrack=3 material aliasing, lowercase and cleanup. Existing overlong-key diagnostic reads previous/uninitialized key; no new indeterminate storage was introduced."
       },
       {
         "id": "mac:0x001acac4",
@@ -191255,8 +191255,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Compared full Mac 0x1acac4-0x1ad780: source/free/return gates, all six font roles and aliases, materials, sound aliases, fade/shadow fields, partial failure stores and unknown tokens. Preserves documented WS70 literal-format adaptation through UI_RegisterLocaleFont and native typed loadAssets storage. Compiled actual stock/CoD2x client TU; not exercised here."
       }
     ],
     "ui/ui_utils": [
