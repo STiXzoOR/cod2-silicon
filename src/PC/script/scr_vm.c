@@ -7490,7 +7490,8 @@ static void VM_CandidateHandleEndOnCallback(unsigned int localId, VariableValue 
 }
 
 #if defined(COD2_X64)
-static void VM_CandidateHandleSwitch(const char *volatile *pos, VariableValue *volatile *top)
+static void VM_CandidateHandleSwitch(const char *volatile *pos, VariableValue *volatile *top,
+                                      volatile unsigned int *caseValueScratch)
 #else
 static void VM_CandidateHandleSwitch(const char **pos, VariableValue **top)
 #endif
@@ -7511,19 +7512,36 @@ static void VM_CandidateHandleSwitch(const char **pos, VariableValue **top)
 
     if ((*top)->type == VAR_STRING) {
         caseValue = (*top)->u.stringValue;
+#if defined(COD2_X64)
+        *caseValueScratch = caseValue;
+#endif
         SL_RemoveRefToString(caseValue);
     } else if ((*top)->type == VAR_INTEGER) {
         if (!IsValidArrayIndex((unsigned int)(*top)->u.intValue)) {
 #if defined(COD2_X64)
             Scr_SetErrorMessageAndJump(va("switch index %d out of range", (*top)->u.intValue));
+            /* Keep Mac's raw key, but do not release an invalid integer as a
+             * string ID, including aliases into valid string storage. */
+            caseValue = (unsigned int)(*top)->u.intValue;
 #else
             Scr_SetErrorMessageAndJump("switch index out of range");
 #endif
         }
+#if defined(COD2_X64)
+        else {
+            caseValue = GetInternalVariableIndex((unsigned int)(*top)->u.intValue);
+        }
+        *caseValueScratch = caseValue;
+#else
         caseValue = GetInternalVariableIndex((unsigned int)(*top)->u.intValue);
+#endif
     } else {
         Scr_SetErrorMessageAndJump(va("cannot switch on %s", ((const char *const *)imp_var_typename)[(*top)->type]));
+#if defined(COD2_X64)
+        caseValue = *caseValueScratch;
+#else
         caseValue = 0;
+#endif
     }
 
     for (i = 0; i < caseCount; i++) {
@@ -7868,7 +7886,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
     unsigned int objectId = 0;
     unsigned int waitTime = 0;
     unsigned int caseCount = 0;
+#if defined(COD2_X64)
+    volatile unsigned int caseValue = 0;
+#else
     unsigned int caseValue = 0;
+#endif
     unsigned int currentCaseValue = 0;
     const char *currentCodePos = NULL;
     unsigned int thread_count = 0;
@@ -7914,6 +7936,8 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         /* Mac 0x8623d resets this scratch on every interpreter longjmp,
          * including the native checkpoint path, before any later read. */
         waitTime = 0;
+        /* Mac 0x8624d also resets the persistent switch key on every jump. */
+        caseValue = 0;
         if (errorCheckpoint.active) {
             pos = errorCheckpoint.frame.pos;
             localId = errorCheckpoint.frame.localId;
@@ -7929,7 +7953,6 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             fieldValueId = 0;
             objectId = 0;
             caseCount = 0;
-            caseValue = 0;
             currentCaseValue = 0;
             currentCodePos = NULL;
             thread_count = 0;
@@ -8821,7 +8844,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             break;
 
         case VMOP_Switch:
+#if defined(COD2_X64)
+            VM_CandidateHandleSwitch(&pos, &top, &caseValue);
+#else
             VM_CandidateHandleSwitch(&pos, &top);
+#endif
             break;
 
         case VMOP_EndSwitch:
