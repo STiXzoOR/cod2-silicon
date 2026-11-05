@@ -358,10 +358,16 @@ void R_LockSkinnedCache(GfxLockType lockType)
     if (!vb)
         return;
 
+#if defined(COD2_X64) && defined(__APPLE__)
+    /* Mac 0xd0054 always discards; the native GL owner now honors flags. */
+    (void)lockType;
+    lockFlags = 0x2000;
+#else
     if (dx->gpuSync != 0 || lockType != 0)
         lockFlags = 0x1000;
     else
         lockFlags = 0x2000;
+#endif
 
     vtable = *(void ***)vb;
     hr = ((HRESULT (*)(void *, UINT, UINT, void **, DWORD))(vtable[0x2C / 4]))(
