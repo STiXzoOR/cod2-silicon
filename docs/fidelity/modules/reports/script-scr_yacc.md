@@ -1,8 +1,8 @@
 # script/scr_yacc module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**45 entries: 14 equal, 7 fixed, 24 unchecked.** Mac 1.3 i386 is the authority. The live scanner and parser implementation is included from `yyparse_impl.h`.
+**45 entries: 15 equal, 7 fixed, 8 intentional, 15 unchecked.** Mac 1.3 i386 is the authority. The live scanner and parser implementation is included from `yyparse_impl.h`.
 
 ## Corrections
 
@@ -28,9 +28,23 @@ The arm64 Release `cod2_macos_ded` target builds at low priority with two jobs. 
 
 The parser group has zero inactive-token mismatches against b275adb09e414d75706f61b1770a6e85b1903d38 across four files and seven `COD2_X64=OFF` configurations.
 
-Twenty-four Linux flex-only rows remain unchecked, including scan/switch/delete APIs, buffer stacks, input/unput, destruction/free, debug/stream/text/line accessors, the no-op destructor and `TransferRefToParseUser`. No Mac identity or equivalent inlined caller was established for them. The Linux scanner generation differs from the older Mac scanner; missing identities were not relabeled equal.
+Fifteen helper identities remain unchecked: `TransferRefToParseUser`, `input`, `yyunput`, `yy_delete_buffer`, `yyfree`, the three memory-scan APIs, `yy_switch_to_buffer`, and the six input/output/text/length accessors. They have specific owner investigations in the private ledger. The string-reference helper is engine code, not a generated scanner API. Similar global loads or direct buffer replacement do not establish callable helper identity.
 
 Private table checks, decoded dispatch evidence, build/fixture receipts and the complete unit ledger remain outside Git.
+
+## Remaining scanner ownership review
+
+The Mac STABS compilation unit names `script/scr_yacc.c`, `scr_yacc.txt`, `scr_lex.h` and `scr_lex.txt`. Its descriptor is 40 bytes with ten fields; the scanner has one `yy_current_buffer` pointer at 0xda2288. The Linux naming reference identifies a different generated interface, but its version label is not authority for Mac behavior. No exact Mac generator version is claimed.
+
+Whole-text symbol-reference inspection and exact-entry disassembly identify the live Mac graph: `Scr_LoadScript` calls `ScriptParse`; `ScriptParse` calls `yyparse`; only `yyparse` calls `yy_create_buffer`. The buffer pointer, input stream and token-text globals are owned by these three functions; output stream and token length are consumed inside `yyparse`. Native `Scr_LoadScript` and the native debugger's `Scr_CompileTextInternal` both use `ScriptParse` with `scrCompilePub.in_ptr/parseBuf`, and refill goes through `Scr_ScanFile`.
+
+`ScriptParse` installs a stack descriptor over static `ch_buf` at 0x110257–0x1102c6 and returns the result at 0x1102cb–0x1102d7 without restoring a previous descriptor. This does not make every scanner allocation stack-owned. `yy_create_buffer` allocates both descriptor and character storage at 0x10be39–0x10be68. Scanner initialization at 0x10fa8e–0x10faaa and EOF restart at 0x10ffb5–0x10ffd4 can install a newly allocated descriptor. Growth at 0x1100bb–0x110126 reallocates owned character storage; EOF restart resets the same active descriptor at 0x10ffde–0x110089. These paths are retained natively.
+
+The three buffer-stack APIs and whole-stack `yylex_destroy` are intentional unsupported interfaces under that single-buffer ownership contract. There is no descriptor stack, saved predecessor, capacity or stack lifetime to implement. This decision does not close the older deletion/free/switch helpers. Scanner debug and line-counter accessors are also unsupported interfaces: Mac tokens carry cumulative byte positions through `g_out_pos/g_sourcePos`, and diagnostics consume those positions directly. Neither the recorded scanner state nor the retained DFA/action flow owns a mutable scanner line counter or tracing flag. The engine's script debugger is a separate feature.
+
+The no-op semantic destructor is reconciled at its actual owner. Lookahead discard at 0x10c5e6–0x10c5fe resets `yychar`; error recovery at 0x10c14b–0x10c16b moves stack pointers. Abort and success at 0x10c35a–0x10c366 and 0x10fae2–0x10fae4 return without freeing semantic values or transferring string references. Native error recovery and returns have the same behavior.
+
+This follow-up changes documentation only; the 21 previously resolved verdicts retain their exact evidence. Stock and CoD2x configured Release scanner objects compile. The four existing parser fixtures pass under ASan/UBSan in each configuration: native nodes, stack growth, bad syntax and unexpected EOF. They do not exercise the unsupported interfaces or prove the 15 remaining identities. No source, tests, assertions, diagnostic line maps or OFF preprocessing changed; no CI or replay was run for this follow-up.
 
 ## Integrated batch verification
 
