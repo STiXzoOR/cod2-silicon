@@ -8472,8 +8472,8 @@
     "evidence": "Mac 0x0008b912: Compared all lookup/new-child branches, type tests, field sentinel 0xfffe, string-reference release and invalid-index/type errors; native helpers preserve original hash and sibling operations."
   },
   "linux:script/scr_variable.cpp:4823:Scr_InitStringSet": {
-    "status": "unchecked",
-    "evidence": "Inspected assigned Linux row for Scr_InitStringSet, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+    "status": "equal",
+    "evidence": "Complete forwarding-operation mapping: original Linux 1.0 address body 0x0807f740 and original 1.3 0x0807fd92-0x0807fda0 call Scr_AllocArray without arguments and return its result, with no other state or conversion. Linux supplies wrapper identity/intent only. Complete authoritative Mac Scr_AllocArray 0x8c816-0x8c8f8 owns free-list allocation/relocation, exhaustion error, status0x76, zero reference count and array size; current native Scr_AllocArray/core/AllocVariable implement that established operation. This closes the exact operation, not a separately emitted Mac string-set API or AddStringSet. Primary verdict retained; source/binary review only, no new compilation or runtime exercise."
   },
   "linux:script/scr_variable.cpp:2593:Scr_IsThreadAlive": {
     "status": "unchecked",
@@ -8516,8 +8516,8 @@
     "evidence": "Mac 0x00088558: Compared full status-mask updates, packed notify/wait fields and string-reference release order."
   },
   "linux:script/scr_variable.cpp:4867:Scr_ShutdownStringSet": {
-    "status": "unchecked",
-    "evidence": "Inspected assigned Linux row for Scr_ShutdownStringSet, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+    "status": "fixed",
+    "evidence": "Complete forwarding-operation mapping: original Linux 1.0 address body0x0807f7e0 and original1.3 0x0807fe32-0x0807fe46 forward the unchanged object ID to RemoveRefToObject without additional guard, ownership action or result processing. Linux supplies wrapper identity/intent only. Authoritative complete Mac RemoveRefToObject0x8cd30-0x8d050 establishes decrement, entity final-reference, child-release/unlink and free-list behavior. Current native provider includes previously corrected full status clears at Mac0x8cf25/0x8cfb1, so this wrapper maps to that fixed provider. No new source correction or separately emitted Mac wrapper claimed; primary verdicts/adaptations retained. Previously compiled/reviewed provider; this identity follow-up was source/binary review only, not newly compiled or exercised."
   },
   "mac:0x0008f3a4": {
     "status": "equal",
