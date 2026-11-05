@@ -82,7 +82,11 @@ void Image_Generate3D(GfxImage *image, byte *pixels, int width, int height, int 
 void Image_BuildWaterMap(GfxImage *image)
 {
     int *dxCaps = (int *)r_rendererInUse;
+#if defined(COD2_X64)
+    if (r_rendererInUse->current.integer == 2) {
+#else
     if (dxCaps[2] == 2) {
+#endif
         Image_Create2DTexture(image, image->width, image->height, 1, 0x200, 0x16, 0);
     } else {
         Image_Create2DTexture(image, image->width, image->height, 0, 0x200, 0x32, 0);
@@ -237,11 +241,12 @@ static void __attribute_regparm__(3) Image_LoadWavelet(GfxImage *image, const by
     int depth = *(short *)(fileHeader + 10);
     int mipmapCount = *(byte *)(fileHeader + 5);
 #if defined(COD2_X64)
-    int isCubemap = image->mapType == 5;
+    int isCubemap;
+    int faceCount;
 #else
     int isCubemap = (*(int *)image == 5);
-#endif
     int faceCount = isCubemap ? 6 : 1;
+#endif
     int pixelStride = (bytesPerPixel == 3) ? 4 : bytesPerPixel;
     int startLevel;
     int totalSize = width * height * pixelStride;
@@ -252,6 +257,10 @@ static void __attribute_regparm__(3) Image_LoadWavelet(GfxImage *image, const by
 
     Image_Setup(image, width, height, depth, mipmapCount, 0, format);
 
+#if defined(COD2_X64)
+    isCubemap = image->mapType == 5;
+    faceCount = isCubemap ? 6 : 1;
+#endif
     int picmip = image->picmip.platform[0];
 
     if (*(byte *)(fileHeader + 5) & 2) {
@@ -292,7 +301,13 @@ static void __attribute_regparm__(3) Image_LoadWavelet(GfxImage *image, const by
         if (faceCount <= 0)
             continue;
 
+#if defined(COD2_X64)
+        /* Mac rounds down before copying sizeForLevel bytes. Keep the native
+           allocation defined for the one- and two-byte smallest mip levels. */
+        int allocSize = sizeForLevel;
+#else
         int allocSize = (sizeForLevel / 4) * 4;
+#endif
 
         for (face = 0; face < faceCount; face++) {
 
@@ -432,7 +447,11 @@ static void Image_GetWaterColorForVector(const vec_t *facePos, int packedColor, 
 
     Vec3NormalizeTo(facePos, dirFromEye);
 
+#if defined(COD2_X64)
+    fresnel = FresnelTerm(1.0f, BM_I2F(0x3faa9fbe), dirFromEye[2]);
+#else
     fresnel = FresnelTerm(1.0f, BM_I2F(0x3faa9fbe), *(float *)&dirFromEye[1]);
+#endif
 
     color = packedColor;
 
@@ -468,10 +487,14 @@ static void Image_GetLightGridWeightsForVector(const vec_t *facePos, int subMap,
     majorAxis = Vec3MajorAxis(transformedPos);
 
     {
+#if defined(COD2_X64)
+        float majorVal = __builtin_fabsf(transformedPos[majorAxis]);
+#else
         float majorVal = transformedPos[majorAxis];
 
         if (majorVal < 0.0f)
             majorVal = -majorVal;
+#endif
         invMajor = 1.0f / majorVal;
     }
     transformedPos[0] *= invMajor;
@@ -499,10 +522,19 @@ static void Image_GetLightGridWeightsForVector(const vec_t *facePos, int subMap,
         float oneMinusSu = 1.0f - su;
         float oneMinusSv = 1.0f - sv;
 
+#if defined(COD2_X64)
+        float lower = oneMinusSv * sw;
+        float upper = sw * sv;
+        float blend_00 = lower * oneMinusSu;
+        float blend_10 = su * lower;
+        float blend_01 = oneMinusSu * upper;
+        float blend_11 = su * upper;
+#else
         float blend_00 = oneMinusSu * oneMinusSv * sw;
         float blend_10 = su * oneMinusSv * sw;
         float blend_01 = oneMinusSu * sv * sw;
         float blend_11 = su * sv * sw;
+#endif
 
         pixel[0] = ClampByte((int)floorf(blend_01 * 255.0f + 0.5f));
         pixel[1] = ClampByte((int)floorf(blend_10 * 255.0f + 0.5f));

@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 2432,
-      "intentional": 2216,
-      "equal": 4016,
-      "fixed": 793
+      "unchecked": 2356,
+      "intentional": 2240,
+      "equal": 4059,
+      "fixed": 802
     },
     "scopes": {
       "unassigned": 777,
@@ -105523,8 +105523,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xecbde: null input, console-string/inline glyph width loop, remaining limit, icon-width addition and float-to-int truncation. Existing font-icon measure case passes."
       },
       {
         "id": "mac:0x000ece9a",
@@ -105545,8 +105545,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xece9a parsing, draw parameters, width accumulation, font-pixel scaling, baseline expression and flipped UV calls hand-compared. Native preserves documented WS12 callback ABI adaptation: this reconstructed int interface returns deterministic0 after drawing, while original return register is unspecified. All six existing font-icon cases pass."
       },
       {
         "id": "mac:0x000ec57e",
@@ -105567,8 +105567,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xec57e forwards cursor(-1,0) and every drawing argument. Preserve WS12 native direct void R_AddCmdDrawTextWithCursor call followed by deterministic0 for reconstructed int return; legacy incompatible function cast unchanged."
       },
       {
         "id": "mac:0x000ec422",
@@ -105589,8 +105589,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xec422 existing-name copy/name retention, sixteen-font limit, allocation/name-copy/registration compared. Native sizeof(Font_s) widens object for LP64 and keeps reconstructed int return 0 rather than unspecified Mac void return register (WS12 ABI boundary). Compiled; duplication branch not exercised."
       },
       {
         "id": "mac:0x000ec2d8",
@@ -105611,8 +105611,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xec2d8 and inlined glyph searches: direct0x20-0x7f indexing, binary search starting96, signed midpoint and fallback glyph 14; byte advance widths remain unsigned."
       },
       {
         "id": "mac:0x000ec7a6",
@@ -105633,8 +105633,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xec7a6 including decoded tables0x32b340/0x32b35c: high-byte opcodes0x0d-0x13, low-byte values, RGB colors, /32 dimensions, material track7, limit/return pointer and optional flip. All six existing font-icon cases pass."
       },
       {
         "id": "mac:0x000ec5da",
@@ -105655,8 +105655,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xec5da: limit cap1023, color-index7, trailing-space mark, high-byte icon boundaries, RGB controls0xa-0xc, emitted caret-color changes, remaining-count subtraction and continuation pointer. Existing font-icon drawing/measurement fixtures pass."
       },
       {
         "id": "mac:0x000ec532",
@@ -105677,8 +105677,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xec532 is empty, as native is."
       },
       {
         "id": "mac:0x000ec548",
@@ -105699,8 +105699,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xec548 computes (48.0f*scale)/(float)pixelHeight in that order; native expression matches."
       },
       {
         "id": "mac:0x000ec36a",
@@ -105721,8 +105721,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xec36a: case-insensitive registered-name search, limit 16, R_LoadFont arguments, both diagnostics and append/count increment."
       },
       {
         "id": "mac:0x000ec538",
@@ -105743,8 +105743,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xec538 zeros registeredFontCount only; native matches."
       },
       {
         "id": "mac:0x000ec572",
@@ -105765,8 +105765,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xec572 returns font.pixelHeight; native typed access matches."
       },
       {
         "id": "mac:0x000eca5e",
@@ -105787,8 +105787,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xeca5e: nonpositive max becomes INT_MAX, SEH character reader, newline reset, caret-digit skips, glyph binary search and maximum line/unsigned-byte advance accumulation. Existing font-icon measure case exercises width path."
       }
     ],
     "gfx_d3d/r_font_load_obj": [
@@ -105811,8 +105811,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Exact-symbol Mac 0xfb970 file open/errors,16-byte header, inserted glyph pointer at+16 and payload at+20, base+4 name/material offsets and material-track registration hand-compared. Preserve native LP64 disk-to-Font marshaling, bounded strings/glyph count and short-read checks instead of ILP32 in-place pointer relocation. Existing font_disk ASan/UBSan fixture passes valid relocation plus invalid offsets/count and short reads."
       }
     ],
     "gfx_d3d/r_image": [
@@ -105835,8 +105835,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe75fa: sizeof-image plus NUL-terminated name allocation, category/semantic/track stores, 0x7ff hash mask and linear probing. Native sizeof(GfxImage) and typed hash slots preserve the allocation/lookup contract on LP64."
       },
       {
         "id": "mac:0x000e7594",
@@ -105857,8 +105857,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe7594: program-image/name indexing, category and zero semantic/track, and linear-probe insertion. All twelve program names match the binary data table."
       },
       {
         "id": "mac:0x000e6ae4",
@@ -105879,8 +105879,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe6ae4 and native Image_Create2DTexture_core: ushort dimensions, depth 1/mapType 3, device slot 23 arguments, HRESULT failure and complete error arguments."
       },
       {
         "id": "mac:0x000e6bb4",
@@ -105901,8 +105901,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xe6bb4 dimension/mapType stores, device slot 24 arguments and error path match for a live resource. Preserve the native missing-device early return and typed texture-pointer clear for the current GL shim lifecycle; Mac dereferences its device unconditionally."
       },
       {
         "id": "mac:0x000e6c9a",
@@ -105923,8 +105923,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xe6cd0/0xe6d44 reports the effective one-level count when cube mips are unsupported. Native reported the requested count; now uses actualMipCount under COD2_X64. Dimension stores, ignored usage, pool and slot-25 arguments compared. Native missing-device guard preserved. Compiled and reviewed; failure diagnostic not exercised."
       },
       {
         "id": "mac:0x000e6dce",
@@ -105945,8 +105945,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe6dce: texture slot 18 gets mip-zero surface, repeats while alwaysfails, and returns the surface pointer. Typed native COM slots preserve the interface."
       },
       {
         "id": "mac:0x000e6d74",
@@ -105967,8 +105967,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe6d74: semantics 2/5, 3, 4 choose the three globals; unsupported semantics zero both bytes; min-PC byte 2 and current clamp [0,3] match."
       },
       {
         "id": "mac:0x000e82ba",
@@ -105989,8 +105989,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe82ba: DX7 early exit, unbind/release, 32x256 L8 managed texture recreation, shifted specularity generation and face/mip-zero upload; inlined create/error path checked against native core."
       },
       {
         "id": "mac:0x000e7e52",
@@ -106011,8 +106011,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe7e52: 0x7ff hash/probe, exact name comparison, program-image range bypass, byte semantic passed to Image_Load, and fatal load failure."
       },
       {
         "id": "mac:0x000e72a2",
@@ -106033,8 +106033,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xe72a2 accounting exclusions (tracks 0,1,4), two platform-memory subtractions, conditional texture clear and mapType reset compared with native shared release core. Preserve its current GL null-vtable/Release-slot guard for native incomplete shim resources; Mac calls Release unconditionally when texture is nonnull."
       },
       {
         "id": "mac:0x000e86d8",
@@ -106055,8 +106055,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xe86d8 inlines release then loads from file and reports failure. Native shared core preserves accounting and reset order but retains the current GL incomplete-resource null-vtable/Release guard, an intentional native lifecycle adaptation."
       },
       {
         "id": "mac:0x000e80ca",
@@ -106077,8 +106077,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xe80ca ushort dimensions, mapType/depth, one mip, usage 1, default pool, error path and flag-3 accounting hand-compared. Preserve native missing-device return and typed texture clear for current GL resource initialization; no Metal provider is selected."
       },
       {
         "id": "mac:0x000e81c2",
@@ -106099,8 +106099,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xe81c2 ushort dimensions, mapType/depth, one mip, usage 0x200, system pool, error and flag-3 accounting hand-compared. Preserve current native GL missing-device return and typed texture clear."
       },
       {
         "id": "mac:0x000e74ac",
@@ -106121,8 +106121,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe74ac: current framebuffer versus 640x480 min-PC dimensions, picmip shifts/clamps, flag-3 depth-one memory amounts, per-image additive accounting and track exclusions."
       },
       {
         "id": "mac:0x000e7382",
@@ -106143,8 +106143,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe7382: both platform picmips and max-one dimensions unless flag 1, per-image memory assignment and global accounting excluding tracks 0,1,4."
       },
       {
         "id": "mac:0x000e8616",
@@ -106165,8 +106165,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xe8616 compares current-platform picmip only, releases, replaces both picmip bytes, reloads and reports failure. That flow matches; native shared release core intentionally keeps its null-vtable/Release guard for incomplete current GL resources."
       },
       {
         "id": "mac:0x000e6a84",
@@ -106187,8 +106187,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact-symbol restart at Mac 0xe6a84 corrected full-disassembly misalignment. Compared image pointer store at count and post-increment of count with native typed ImageList storage."
       },
       {
         "id": "mac:0x000e712e",
@@ -106209,8 +106209,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe712e: 1x1 no-op, single-axis adjacent-pair averaging, 2x2 four-byte sum order, channel loop, row strides and truncating right shifts. Buffer-size parameters remain unused in both."
       },
       {
         "id": "mac:0x000e6ade",
@@ -106231,8 +106231,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xe6ade is an empty body; native is empty."
       },
       {
         "id": "mac:0x000e6a9a",
@@ -106253,8 +106253,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe6a9a: count zero then DB_EnumXAssets type 3, R_AddImageToList callback, supplied list and overrides 1."
       },
       {
         "id": "mac:0x000e6acc",
@@ -106275,8 +106275,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xe6acc returns imageGlobals+0x2010; native IG_SCALAR(2052) is the same min-PC accounting scalar with widened hash storage."
       },
       {
         "id": "mac:0x000e769c",
@@ -106297,8 +106297,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xe77c9 byte cutoff 0x43 means more than sixteen ILP32 pointers. Native LP64 byte comparison selected a 16-element insertion prefix for 9-15-element lists; now compares element count. Restored Mac format labels/header, MB suffix and related-command footer from 0xe787b-0xe7c2f. Enumeration, effective depth, sorting, descriptions and both accounting modes hand-compared; data tables match. Compiled and reviewed; command/sort paths not exercised. Parent follow-up uses typed surface/volume descriptor union so non-Apple LP64 DWORD widening cannot overflow the old eight-int local storage; Apple provider contract remains unchanged. Actual object compiled; command not executed."
       },
       {
         "id": "mac:0x000e7f0a",
@@ -106319,8 +106319,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe7f0a: picmip setup, white/black then DX7 watercolor versus normal/specular/light-grid/lightmap registrations, backend initialization, raw program-image insertion and sampler 0x32."
       },
       {
         "id": "mac:0x000e7082",
@@ -106341,8 +106341,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe7082: existing setup search, limit 16 diagnostic, indexed setup creation, count increment and returned slot."
       },
       {
         "id": "mac:0x000e8588",
@@ -106363,8 +106363,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xe8588 walks all 2048 slots and releases category >4 images. Native shared release core matches accounting/reset flow while preserving its null-vtable/Release guard for incomplete current GL resources."
       },
       {
         "id": "mac:0x000e731a",
@@ -106385,8 +106385,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe731a: 2048-slot walk, category >4, missing texture, exclusion of program-image range, and category-5-only water-map recreation."
       },
       {
         "id": "mac:0x000e6ad8",
@@ -106407,8 +106407,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xe6ad8 is an empty body; native is empty."
       },
       {
         "id": "mac:0x000e6e0c",
@@ -106429,8 +106429,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xe6e0c-0xe7054 uses unsigned texture/system-memory thresholds and complete manual/automatic/final messages. Restored those diagnostics and low-memory minimum application in the native branch. Retained documented WS11 current-GL high-memory automatic picmip policy (0 at >=512 MB texture and >=1024 MB system, otherwise 1 above128 MB or2) instead of reverting modern hardware to original automatic2. Compiled and reviewed; settings path not exercised."
       },
       {
         "id": "mac:0x000e842a",
@@ -106451,8 +106451,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand-compared Mac 0xe842a: unbind, save program images, release others, clear only hash table and rehash saved images. Native typed hash storage preserves those semantics; shared release core keeps the current GL null-vtable/Release guard for incomplete resources."
       },
       {
         "id": "mac:0x000e7054",
@@ -106473,8 +106473,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xe7054: track ascending, then current-platform card memory ascending; equal keys return false."
       }
     ],
     "gfx_d3d/r_image_load_common": [
@@ -106497,8 +106497,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x108ff8 returns its integer face unchanged, as native does."
       },
       {
         "id": "mac:0x00109000",
@@ -106519,8 +106519,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x109000 format decision tree: 4/2/1-byte formats, DXT rounded blocks, successive max-one dimensions unless flag2, cube factor6 and unsupported-format zero. Native format constants and arithmetic match."
       },
       {
         "id": "mac:0x00108fd4",
@@ -106541,8 +106541,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x108fd4: noPicmip clears two bytes, otherwise forwards semantic to Image_PicmipForSemantic."
       },
       {
         "id": "mac:0x00109218",
@@ -106563,8 +106563,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x109218: noPicmip from flags&3, DXT minimum4 versus1, picmip limit <=3 from minimum width/height, both-platform clamps, dimension shifts and cube/volume/2D managed creation and tracking."
       },
       {
         "id": "mac:0x001093fe",
@@ -106585,8 +106585,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x10998d/0x109a80 rejects format 33; native mistakenly copied X8B8G8R8 as two-byte pixels. Removed that case under COD2_X64 in shared stride helper and 2D/cube dispatch. All three lock/copy/unlock paths hand-compared. Preserve native device/resource guards and pitched volume upload; its four-byte X8R8G8B8 source slices follow the current GL BGRA producer contract instead of Mac 0x1099f0 three-byte slice advance. Compiled and reviewed; existing padded volume/DXT fixture exercised retained upload paths, not rejected format 33."
       }
     ],
     "gfx_d3d/r_image_load_obj": [
@@ -106609,8 +106609,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xfbf20 branches on ILP32 dvar.current at+8. Native int[2] read LP64 dvar metadata; now reads current.integer under COD2_X64. Compared dimensions, L8 full-chain versus X8R8G8B8 one-level and usage 0x200/default-pool calls. Compiled and reviewed; DX7 recreation branch not exercised."
       },
       {
         "id": "mac:0x000fbe30",
@@ -106631,8 +106631,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact entry Mac 0xfbe30: Image_Setup(width,height,1,flags 3,usage 0,format), face-zero conversion and mip-zero upload match."
       },
       {
         "id": "mac:0x000fbea0",
@@ -106653,8 +106653,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xfbea0: supplied dimensions, flags 0xb/usage 0, face-zero conversion and mip-zero upload match."
       },
       {
         "id": "mac:0x000fcda6",
@@ -106675,8 +106675,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xfcda6: all six face origins/directions, inverse-resolution and half-texel arithmetic, callback iteration order, flag 7 RGBA cube creation and face uploads. Exact faceAxis data at 0x32b820 matches. Existing lighting_lookup fixture exercised generated faces."
       },
       {
         "id": "mac:0x000fc74c",
@@ -106697,8 +106697,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xfc74c: normalized eye direction, sun-minus-eye normalized half vector, z/y/x rounded component writes at3/2/1 and constant0x80 at0."
       },
       {
         "id": "mac:0x000fc862",
@@ -106719,8 +106719,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xfc87c loads normalized direction Z (stack base-0x18 plus8) for FresnelTerm; native passed Y. Corrected to dirFromEye[2] under COD2_X64. IOR bits0x3faa9fbe, rounding and packed-color low-byte replacement checked. Compiled and reviewed; callback not exercised."
       },
       {
         "id": "mac:0x000fd52a",
@@ -106741,8 +106741,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xfd52a built-in/file dispatch, names, categories, semantics, generators, sizes and failures hand-compared. Native strcmp avoids Mac fixed-length reads beyond short names; solid colors remain current-GL little-endian BGRA (Mac builds ARGB-ordered bytes). Preserve these existing native contracts and planned-Metal exclusion. Downstream generated lighting was exercised, not this dispatcher."
       },
       {
         "id": "mac:0x000fbf9a",
@@ -106761,8 +106761,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xfbf9a setup, post-setup face count, mip descent, offsets, temporary-buffer lifetime and per-face upload compared. Preserve existing native BGR-to-BGRA expansion for current GL X8R8G8B8, replacing Mac ARGB byte writes at 0xfc092. Existing bitmap_channels ASan/UBSan fixture passes."
       },
       {
         "id": "mac:0x000fc1be",
@@ -106781,8 +106781,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xfc1be: header dimensions and flags, post-setup face count, largest mip selection, rounded four-pixel blocks, descending levels and per-face contiguous source advance."
       },
       {
         "id": "mac:0x000fc5fa",
@@ -106803,8 +106803,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Decoded Mac jump table0x32b7a0 for formats0-13: all bitmap/wavelet/DXT format and bytes-per-pixel/block arguments match. Native typed full-pointer clear replaces the ILP32 texture store before dispatch."
       },
       {
         "id": "mac:0x000fcb88",
@@ -106825,8 +106825,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xfcb88 filename construction, file-length/magic/version errors, noPicmip, successful payload offset 28/load/free compared. Preserve native short-header rejection and explicit six-byte wavelet lookahead padding because FS_ReadFile only guarantees one NUL. Existing wavelet_loading ASan/UBSan fixture exercised padding and free flow with a substitute decoder."
       },
       {
         "id": "mac:0x000fd152",
@@ -106847,8 +106847,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xfd152: normalized y persists across the row, x reset per texel, atan2(y,x), exact double phase constants, piecewise three lobes, acos falloff/clamps, rounding and byte order. Existing lighting_lookup compares all generated lightmap bytes to its original-client instruction model and passes."
       },
       {
         "id": "mac:0x000fd07c",
@@ -106869,8 +106869,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xfd07c: null pic failure; flag 3 setup and face/mip-zero upload; Hunk_FreeTempMemory(pic), FS_FreeFile(file), success1. Active native JPEG allocation contract is restored in R_LoadJpg. Compiled; full raw-image path not exercised."
       },
       {
         "id": "mac:0x000fc328",
@@ -106889,8 +106889,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac Image_Setup at 0xfc37a precedes cube detection0xfc3c8. Native detected before setup, decoding only one face for new cubes; detection now follows setup. Preserve native un-swapped little-endian BGRA uploads; allocate full sizeForLevel rather than Mac rounded-down allocation0xfc458 followed by larger memcpy0xfc4b6, avoiding undefined tiny L8/A8 storage. Remaining reservoir initialization, mip descent, face buffers and reverse frees compared. Compiled and reviewed; existing single-face BGRA/lookahead fixture passes with substitute decoder, six-face/tiny-format corrections not exercised."
       },
       {
         "id": "mac:0x000fccce",
@@ -106911,8 +106911,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xfccce: category5/semantic5/track9 allocation, ushort dimensions, DX7 versus L8 texture calls; native typed dvar.current access preserves LP64 field identity."
       },
       {
         "id": "mac:0x000fc8d4",
@@ -106933,8 +106933,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/r_image_load_obj.c (gfx_d3d/r_image_load_obj); whole Image_GetLightGridWeightsForVector was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to gfx_d3d/r_image_load_obj; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/r_image_load_obj.c:457; assigned universal header has no body. Mac symbol __Z34Image_GetLightGridWeightsForVectorPKfiPh at 0x000fc8d4. Whole caller not audited by universal-math."
+        "status": "fixed",
+        "evidence": "Mac 0xfc918 clears sign for major-axis magnitude;0xfc9d9-0xfca0b groups lower=(1-sv)*sw and upper=sw*sv before multiplying su or(1-su). Native regrouped terms. Restored sign clearing and SSE multiplication order under COD2_X64; transform matrix0x32b7e0 verified exactly, smoothing/submap/clamps/byte mapping compared. Compiled and reviewed; existing lighting_lookup exercised generated cubes and normalization/distinct-face invariants."
       }
     ],
     "gfx_d3d/r_image_wavelet": [
@@ -106957,8 +106957,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x10a114-0x10b818: small-dimension raw path, initialized 16-bit reservoir, refill/bit advance, alpha prepass,9/10-bit escape biases, blue then red-green deltas, parity placement, 2x2 output arithmetic and channel/alpha branches. All 4096 entries of each alpha/red-green/blue table match Mac 0x32b9c0/0x32f9c0/0x3339c0 exactly. Object compiled; codec body not executed in this unit (loader fixture substitutes it)."
       }
     ],
     "gfx_d3d/r_init": [
@@ -107467,8 +107467,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Compared Mac 0x1e9d52 fatal-error callback with retained legacy source. COD2_APPLE_SDK selects r_jpeg.c ImageIO integration plus src/platform/macos_jpeg.c (cmake/macos-arm64.cmake); this bundled-JPEG callback is excluded from the active native translation. Native ImageIO owns codec memory/error/output handling; do not reconstruct the discarded JPEG backend. Legacy branch preserved."
       },
       {
         "id": "mac:0x001e9d72",
@@ -107489,8 +107489,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Compared Mac 0x1e9d72 print callback with retained legacy source. COD2_APPLE_SDK selects r_jpeg.c ImageIO integration plus src/platform/macos_jpeg.c (cmake/macos-arm64.cmake); this bundled-JPEG callback is excluded from the active native translation. Native ImageIO owns codec memory/error/output handling; do not reconstruct the discarded JPEG backend. Legacy branch preserved."
       },
       {
         "id": "mac:0x001e9f40",
@@ -107511,8 +107511,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1ea0c9 allocates returned RGBA through ri+0x10 (Hunk_AllocateTempMemoryInternal), paired with Image_LoadRaw Hunk_FreeTempMemory at 0xfd12b. Active ImageIO integration instead used Z_MallocInternal; corrected native allocator. File ownership, output dimensions/format21 and expansion contract compared. Preserve native ImageIO replacement and its validation; bundled codec excluded. Compiled and reviewed; existing native JPEG provider roundtrip/dimension fixture passes, engine allocator integration not exercised."
       },
       {
         "id": "mac:0x001e9d98",
@@ -107533,8 +107533,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1e9d98 RGB scanline input, quality, file write and codec lifetime reviewed. Active COD2_APPLE_SDK routes to MacJpeg_Encode via ImageIO and frees provider output with free; replaces fixed-size bundled-JPEG destination callbacks and ILP32 codec layouts. cmake/macos-arm64.cmake selects that provider. Existing provider RGB roundtrip and dimension-bounds fixture passes; no screenshot command exercised."
       },
       {
         "id": "mac:0x001e9d44",
@@ -107555,8 +107555,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Compared Mac 0x1e9d44 decoder allocator-free callback with retained legacy source. COD2_APPLE_SDK selects r_jpeg.c ImageIO integration plus src/platform/macos_jpeg.c (cmake/macos-arm64.cmake); this bundled-JPEG callback is excluded from the active native translation. Native ImageIO owns codec memory/error/output handling; do not reconstruct the discarded JPEG backend. Legacy branch preserved."
       },
       {
         "id": "mac:0x001e9d36",
@@ -107577,8 +107577,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Compared Mac 0x1e9d36 decoder allocator callback with retained legacy source. COD2_APPLE_SDK selects r_jpeg.c ImageIO integration plus src/platform/macos_jpeg.c (cmake/macos-arm64.cmake); this bundled-JPEG callback is excluded from the active native translation. Native ImageIO owns codec memory/error/output handling; do not reconstruct the discarded JPEG backend. Legacy branch preserved."
       },
       {
         "id": "mac:0x001e9d16",
@@ -107599,8 +107599,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Compared Mac 0x1e9d16 fixed output-overflow callback with retained legacy source. COD2_APPLE_SDK selects r_jpeg.c ImageIO integration plus src/platform/macos_jpeg.c (cmake/macos-arm64.cmake); this bundled-JPEG callback is excluded from the active native translation. Native ImageIO owns codec memory/error/output handling; do not reconstruct the discarded JPEG backend. Legacy branch preserved."
       },
       {
         "id": "mac:0x001e9d00",
@@ -107621,8 +107621,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Compared Mac 0x1e9d00 fixed output-buffer initialization with retained legacy source. COD2_APPLE_SDK selects r_jpeg.c ImageIO integration plus src/platform/macos_jpeg.c (cmake/macos-arm64.cmake); this bundled-JPEG callback is excluded from the active native translation. Native ImageIO owns codec memory/error/output handling; do not reconstruct the discarded JPEG backend. Legacy branch preserved."
       },
       {
         "id": "mac:0x001e9d20",
@@ -107643,8 +107643,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Compared Mac 0x1e9d20 fixed output-size accounting with retained legacy source. COD2_APPLE_SDK selects r_jpeg.c ImageIO integration plus src/platform/macos_jpeg.c (cmake/macos-arm64.cmake); this bundled-JPEG callback is excluded from the active native translation. Native ImageIO owns codec memory/error/output handling; do not reconstruct the discarded JPEG backend. Legacy branch preserved."
       }
     ],
     "gfx_d3d/r_light": [
@@ -112307,8 +112307,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x10a074 MB conversion, device slot 4, zero-video-memory diagnostic and unsigned vidMem cap minus16 hand-compared. Current native MacDisplay_GetVideoMemoryInfo is src/platform/macos_display.c; COD2_APPLE_SDK uses typed DxGlobals.device instead of ILP32+8. Preserve actual-hardware native provider and existing unsigned underflow behavior, not future Metal. Compiled; hardware query not exercised."
       }
     ],
     "gfx_d3d/r_utils": [

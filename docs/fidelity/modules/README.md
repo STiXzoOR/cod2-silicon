@@ -56,7 +56,7 @@ reliable whole-project completion date.
 
 ## Current workload and estimate
 
-All of `game/` is reconciled. The ledger currently has 2,432 unchecked entries: 1,655 assigned engine entries and 777 unassigned entries. There are 4,016 equal, 793 fixed and 2,216 intentional entries. Intentional entries include the 1,360 bundled-library exclusions and documented platform or native choices. Module reports describe the evidence and runtime limits.
+All of `game/` is reconciled. The ledger currently has 2,356 unchecked entries: 1,579 assigned engine entries and 777 unassigned entries. There are 4,059 equal, 802 fixed and 2,240 intentional entries. Intentional entries include the 1,360 bundled-library exclusions and documented platform or native choices. Module reports describe the evidence and runtime limits.
 
 The original planning assumption of 20–40 entries per active hour still gives
 approximately **200–400 active hours**, before final cross-module runtime
