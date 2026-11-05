@@ -551,6 +551,9 @@ void *AIL_allocate_sample_handle(void *driver)
     for (int i = 0; i < AUDIO_SAMPLES; ++i) {
         if (!samples[i].allocated) {
             sample = &samples[i];
+            /* Fresh 2D allocation must not inherit a released 3D slot's type.
+               In-place resets still preserve the type for 3D sample setup. */
+            sample->spatial = 0;
             ResetSample(sample);
             break;
         }
