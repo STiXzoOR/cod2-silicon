@@ -97,6 +97,7 @@ target_compile_definitions(macos_cpp_abi_test PRIVATE COD2_CPP_TEST_STRINGED=1)
 add_executable(macos_threads_ring_test threads_ring.c "${PORT_ROOT}/src/platform/macos_threads.c" "${PORT_ROOT}/src/platform/macos_ring.c"
   "${PORT_ROOT}/src/Mac/Tools/MacWin32.c" "${PORT_ROOT}/src/platform/macos_system.c")
 target_link_options(macos_threads_ring_test PRIVATE -Wl,-dead_strip)
+target_link_libraries(macos_threads_ring_test PRIVATE SDL2::SDL2)
 add_executable(macos_input_test input.c "${PORT_ROOT}/src/unix/linux_input.c" "${PORT_ROOT}/src/platform/macos_rawmouse.m")
 set_source_files_properties("${PORT_ROOT}/src/unix/linux_input.c" PROPERTIES COMPILE_DEFINITIONS "SDL_PollEvent=MacTest_PollEvent;SDL_PeepEvents=MacTest_PeepEvents;SDL_PumpEvents=MacTest_PumpEvents;SDL_GetTicks=MacTest_GetTicks;SDL_GetWindowFlags=MacTest_GetWindowFlags")
 target_link_libraries(macos_input_test PRIVATE SDL2::SDL2 ${GC_FRAMEWORK} ${FOUNDATION_FRAMEWORK})
