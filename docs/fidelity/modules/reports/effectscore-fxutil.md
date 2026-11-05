@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-132 of 138 rows reconciled: 82 equal, 16 fixed, 34 intentional. Six Linux-only
+134 of 138 rows reconciled: 84 equal, 16 fixed, 34 intentional. Four Linux-only
 rows remain unchecked because their Mac identity or callsite could not be
 established. Mac 1.3 is the behavioral authority. Linux supplied names only.
 No reference source, disassembly or binaries are included in this change.
@@ -85,8 +85,8 @@ No tests were added or edited. The existing primitive fixture needs the
 FxPrimitives worker; integration owns the combined fixture run. No full CI,
 replay or live rendering was run.
 
-Unchecked rows are `FX_Save`, `FX_ArchiveEffect`, `WriteByte`, `WriteInt`,
-`FX_GetEffectVisibility` and the unknown-name `FX_UtilUnused`. No corresponding
+Unchecked rows are `FX_Save`, `FX_ArchiveEffect`, `FX_GetEffectVisibility` and
+the unknown-name `FX_UtilUnused`. No corresponding
 Mac executable identity or verified write-side callsite was found. The
 array-based server visibility entry does not prove the separate Linux
 active-list visibility helper. No missing save implementation was inferred
@@ -105,3 +105,33 @@ Parent and fresh independent source/binary reviews covered all six units. Review
 Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. Dedicated replay does not exercise client effects rendering or UI interaction.
 
 Catalog coverage passed without semantic catalog changes. Hosted ILP32 comparison remains unavailable because the unchanged reference fails to compile; no byte parity is claimed.
+
+## Scalar writer identity follow-up, 2026-11-05
+
+The two scalar writer rows are generic `FxArchive` members whose definitions
+appear in multiple reconstructed translation units. Their earlier
+“save-side-only” classification imposed a missing `FX_Save` caller requirement
+on these complete scalar operations. Original Mac STABS declares
+`FxArchive::WriteByte(unsigned char)` and `FxArchive::WriteInt(int)` with the
+same member signatures. Linux supplied the duplicate-definition identities,
+not the behavioral proof.
+
+Exact Mac `ArchiveEffect` at 0xaa22e–0xaa248 materializes an unsigned-byte local,
+passes its address and count 1, and calls `WriteData`. Native
+`FxArchive_ArchiveEffect` performs that complete operation. Exact
+`FxScheduler::Archive` at 0x625ac–0x625c9 materializes an integer local and passes
+its address and count 4 to `WriteData`; ordered Mac source metadata attributes
+the forwarding block to `FxArchive.h` line 137. Native `FxScheduler_Archive`
+matches. The same integer operation occurs in `Effect::Archive` at
+0xa83e0–0xa8400 and native `ArchiveInt`; its duplicate rows in the primitives
+and scheduler modules were already reconciled. The new classifications rest on
+these complete Mac/native scalar operations, not solely on that prior verdict
+or the existence of a `WriteData` provider.
+
+Both rows are now equal. This establishes neither `FX_Save`, `BeginWriting`,
+nor the missing live-effect save wrapper. Existing writer fixes and the
+nonfatal-overflow adaptation remain documented in the archive report. No
+production code, fixture or previously resolved verdict changed. No new
+compilation, CI, tests or replay ran; no archive runtime coverage is claimed.
+Private exact-symbol evidence and the full module ledger are retained in
+`recon-inline-effects4.noindex` and orchestration `units/inline-effects4.ledger.json`.
