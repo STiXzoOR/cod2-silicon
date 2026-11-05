@@ -95,7 +95,10 @@ endforeach()
 add_executable(macos_cpp_abi_test cpp_abi.cpp "${PORT_ROOT}/src/platform/macos_cpp_abi.cpp" "${PORT_ROOT}/src/PC/stringed/stringed_interface.c")
 target_compile_definitions(macos_cpp_abi_test PRIVATE COD2_CPP_TEST_STRINGED=1)
 add_executable(macos_threads_ring_test threads_ring.c "${PORT_ROOT}/src/platform/macos_threads.c" "${PORT_ROOT}/src/platform/macos_ring.c"
-  "${PORT_ROOT}/src/Mac/Tools/MacWin32.c" "${PORT_ROOT}/src/platform/macos_system.c")
+  "${PORT_ROOT}/src/Mac/Tools/MacWin32.c" "${PORT_ROOT}/src/platform/macos_system.c"
+  "${PORT_ROOT}/src/platform/macos_cpp_abi.cpp")
+set_property(SOURCE "${PORT_ROOT}/src/platform/macos_threads.c"
+  APPEND PROPERTY COMPILE_OPTIONS -fexceptions)
 target_link_options(macos_threads_ring_test PRIVATE -Wl,-dead_strip)
 target_link_libraries(macos_threads_ring_test PRIVATE SDL2::SDL2)
 add_executable(macos_input_test input.c "${PORT_ROOT}/src/unix/linux_input.c" "${PORT_ROOT}/src/platform/macos_rawmouse.m")

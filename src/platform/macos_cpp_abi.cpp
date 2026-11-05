@@ -1,6 +1,7 @@
 #if defined(__APPLE__) && defined(COD2_X64)
 
 #include "macos_cpp_abi.h"
+#include "macos_exception_bridge.h"
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
@@ -518,6 +519,21 @@ extern "C" void *__Znwm(size_t size) { return ::operator new(size); }
 extern "C" void *__Znam(size_t size) { return ::operator new[](size); }
 extern "C" void __ZdlPv(void *pointer) { ::operator delete(pointer); }
 extern "C" void __ZdaPv(void *pointer) { ::operator delete[](pointer); }
+
+extern "C" void Cod2Mac_RunWithCleanup(void (*body)(void *), void (*cleanup)(void *), void *context)
+{
+    struct Cleanup {
+        void (*callback)(void *);
+        void *context;
+        ~Cleanup() noexcept { callback(context); }
+    } owner = { cleanup, context };
+    body(context);
+}
+
+extern "C" void Cod2Mac_ThrowStatus(int32_t status)
+{
+    throw static_cast<long>(status);
+}
 
 static void leak(Cod2MacString *string)
 {
