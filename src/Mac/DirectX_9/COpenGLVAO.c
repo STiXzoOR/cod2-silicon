@@ -223,7 +223,11 @@ Tuple ChooseAndRemoveBestTriangle(const UInt16Deque *FIFO, TriangleNode *Triangl
     node = Triangles->next;
     while (node != Triangles) {
         node->triangle.Score = CalculateScore(FIFO, &node->triangle);
+#if defined(COD2_X64)
+        if (bestTriangleNode == Triangles || node->triangle.Score > bestTriangleNode->triangle.Score) {
+#else
         if (bestTriangleNode == Triangles || node->triangle.Score <= bestTriangleNode->triangle.Score) {
+#endif
             bestTriangleNode = node;
         }
         node = node->next;

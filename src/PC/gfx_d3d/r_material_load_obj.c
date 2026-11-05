@@ -1908,9 +1908,7 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
                 }
             }
 
-#if !defined(COD2_X64)
             ((ReleaseFn)blobVtable[2])(shaderBlob);
-#endif
 
             if (hr < 0) {
                 Com_ScriptWarning("shader creation failed for %s %s %s: %s\n",
@@ -1918,9 +1916,6 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
                 mtlShader = NULL;
                 goto cleanup_sourceName;
             }
-#if defined(COD2_X64)
-            ((ReleaseFn)blobVtable[2])(shaderBlob);
-#endif
         }
 
     cleanup_sourceName:
