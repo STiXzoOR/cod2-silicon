@@ -8,8 +8,8 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 467,
-      "intentional": 3099,
+      "unchecked": 466,
+      "intentional": 3100,
       "equal": 4718,
       "fixed": 1173
     },
@@ -30644,8 +30644,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Mac 0x1f9740 is the size-taking CCircularBufferC1Em constructor and its zero-then-malloc sequence was read exactly. Selected native macos_ring.c exposes only the zero-argument constructor and separate Alloc; no callable native identity or surviving caller for the size-taking constructor was found. Missing provider mapping is not equality; legacy recorder/playback consumers are excluded."
+        "status": "intentional",
+        "evidence": "Mac C1Em 0x001f9740 clears five fields, mallocs the requested capacity and records it even on NULL. Its concrete original playback owner DSound_NewSample 0x001f888e calls it at 0x001f88e0 for a 0x14-byte object with capacity 0xc800. Executable-section E8/E9 scan including __textcoal_nt finds no other direct caller; nlist has no C2/same-entry alias and absolute-address scan finds only symbol/STABS records. The selected native macos_voice.c DSound_NewSample replaces that heap ring with MacVoiceSample.queue/read_cursor/queued and native AIL playback ownership, drained and released by its native lifecycle; CMake excludes the old owner. The 32768-byte native queue is an intentional backend adaptation, not constructor equality. Original capture instead uses default C1Ev plus Alloc; native capture remains disabled. Fresh Release arm64 voice/audio/ring/playback units compiled cleanly; no runtime exercise. See docs/fidelity/modules/reports/mac-ring-sized-constructor.md."
       },
       {
         "id": "mac:0x001f965e",
