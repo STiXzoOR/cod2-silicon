@@ -35,3 +35,10 @@ passed, using their calloc/free allocation adapters; they do not exercise these
 unresolved helper identities or the production C++ allocator. No new tests,
 cases, assertions, full CI or replays were run. See the FxPrimitives follow-up
 for the shared ownership evidence and verification limits.
+
+
+## Original helper provenance — fx9
+
+The complete original pointer-return body is now anchored at 1.0 0x8121c40 / 1.3 0x81240d0. Its exact actual consumer is FxChannel_Copy: call 0x81236de passes source->curve and stores the returned identical pointer into target->curve. No original counter mutation occurs. This resolves the original pointer contract, but the corresponding complete Mac copy/reference owner remains missing. Hunk ownership, absence of a reference-count field, and a zero-address AddRef exception marker cannot supply that operation. The row remains unchecked.
+
+The retained direct-call scan finds the positive channel-copy-to-curve-reference chain; raw absolute address references add only unwind records. Those bounded searches are not evidence of semantic absence and close no row. No source or prior resolved verdict changed, no new defect was established, and no compilation, tests, CI, replay or runtime exercise ran. Original bodies, disambiguating neighbors, decoded table and fresh exact Mac candidates are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-fx9.noindex/`.
