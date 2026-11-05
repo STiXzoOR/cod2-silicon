@@ -8,8 +8,8 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 479,
-      "intentional": 3090,
+      "unchecked": 478,
+      "intentional": 3091,
       "equal": 4720,
       "fixed": 1168
     },
@@ -113485,8 +113485,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Mac 0x000d44d8: Mac0xd44d8 returns integer dx.gpuSyncDelay. Native API59 exports separate void RB_AdaptiveGpuSyncWait and RB_GpuWaited callbacks rather than Mac API60 budget accessor. rdtsc_lo is constant0; shared refexport_t/GetRefAPI/client elapsed-budget contract remains unresolved. No undefined callback cast or uncalled surrogate added."
+        "status": "intentional",
+        "evidence": "Mac 0xd44d8-0xd44e7 returns the unchanged signed dx.gpuSyncDelay word (dx+0x2d60); exact accessor, API60 export at re+0x154, CL_InitRef 0x148424 and CL_SyncGpu 0x14a726 plus its two callers were hand compared. Requires prior integration of 8cfdc588b47050236f77c511e3650acddab04939: actual Apple API59 typed void SyncGpu callback owns the once-only delay snapshot and Mac fence-first signed modulo32 timeout/1ms polling, using one process-stable synthetic-cycle clock shared with backend budget writes. No API layout change, callback return cast, wait credit consumption or unused getter surrogate. Static export/global state lifetime and active arm64 preprocessing checked. Intentional built-in Apple API/clock adaptation, not Mac API60 or identical Intel TSC timing; Windows adapter outside verdict. Report-only follow-up, no production build or GPU execution here."
       },
       {
         "id": "mac:0x000d45ca",
