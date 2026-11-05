@@ -17,6 +17,11 @@ typedef struct {
 } CBaseVAImpl;
 #endif
 
+#if defined(COD2_X64)
+typedef COpenGLVAONative COpenGLVAOImpl;
+#define mCode mpVAStart
+#define mReserved0C mSize
+#else
 typedef struct {
     void **vtable;
     GLuint *mpVAOID;
@@ -33,6 +38,7 @@ typedef struct {
     VertexProgramStreamState mGenericArrays[16];
 #endif
 } COpenGLVAOImpl;
+#endif
 
 typedef struct {
     UINT16 *current;
@@ -125,7 +131,11 @@ UINT32 COpenGLVAO_GetCode(const COpenGLVAO *_this)
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    return (UINT32)(uintptr_t)((const COpenGLVAOImpl *)_this)->mpVAStart;
+#else
     return ((const COpenGLVAOImpl *)_this)->mCode;
+#endif
 }
 
 bool ZNK10COpenGLVAOeqERKS_(const COpenGLVAO *_this, const COpenGLVAO *v)
@@ -137,7 +147,11 @@ bool ZNK10COpenGLVAOeqERKS_(const COpenGLVAO *_this, const COpenGLVAO *v)
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    return ((const COpenGLVAOImpl *)_this)->mpVAStart == ((const COpenGLVAOImpl *)v)->mpVAStart;
+#else
     return COpenGLVAO_GetCode(_this) == COpenGLVAO_GetCode(v);
+#endif
 }
 
 void COpenGLVAO_CreateNewBinding(const COpenGLVAO *_this)
