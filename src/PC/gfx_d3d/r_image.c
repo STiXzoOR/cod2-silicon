@@ -789,13 +789,16 @@ void R_ImageList_f(void)
 
     for (int i = 0; i < list.count; ++i) {
         GfxImage *image = first[i];
-        int desc[8];
+        union {
+            D3DSURFACE_DESC surface;
+            D3DVOLUME_DESC volume;
+        } desc;
         void *texture = image->texture.basemap;
         if (image->mapType != 3 && image->mapType != 4 && image->mapType != 5)
             return;
-        ((GetDescFunc)(*(void ***)texture)[17])(texture, 0, desc);
+        ((GetDescFunc)(*(void ***)texture)[17])(texture, 0, &desc);
         const char *format = NULL;
-        switch (desc[0]) {
+        switch (desc.surface.Format) {
         case 0x15: format = "RGBA32"; break;
         case 0x16: format = "RGB32 "; break;
         case 0x17: format = "RGB16 "; break;

@@ -15,3 +15,5 @@ A coordinated fix also changes the header-attributed GfxImage introsort partitio
 The arm64 Release object compiles. The dedicated target links but excludes renderer sources. No existing focused image-sort fixture was found; imagelist, picmip selection and failure diagnostics were compiled and reviewed, not exercised. No new tests or fixture cases were written.
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-gfx-images.noindex/`.
+
+Parent follow-up: GetLevelDesc now receives a union of the actual surface/volume descriptor types, preserving their common Format field without assuming eight 32-bit words on every x64 target. Apple storage is unchanged in size; non-Apple LP64 DWORD widening no longer makes the provider overwrite a 32-byte local array. Compiled and reviewed; the command was not executed.
