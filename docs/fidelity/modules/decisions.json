@@ -16993,7 +16993,7 @@
   },
   "linux:EffectsCore/FxChannel.cpp:53:FxChannel_Copy": {
     "status": "unchecked",
-    "evidence": "No executable Mac identity found in nm -a/-n; the native tree has neither a definition nor a caller. Linux labels this an unused copy helper. Without a Mac body or identified inlined copy site, its pointer-reference and range-copy behavior is unresolved."
+    "evidence": "No executable Mac identity found in nm -a/-n; the native tree has neither a definition nor a caller. Linux labels this an unused copy helper. Without a Mac body or identified inlined copy site, its pointer-reference and range-copy behavior is unresolved. Original provenance follow-up (fx9): Original 1.0 0x812123c uniquely maps to original 1.3 0x81236cc. The complete helper passes source->curve through FxCurve_Reference at call 0x81236de to 0x81240d0, writes the returned pointer to target, then copies both 32-bit scale-range endpoint words. This is a real reference/copy contract, not an inferred unused symbol. Fresh exact Mac FxChannelInstance_Create 0x9ff88 creates an iterator from the curve and samples one scale through FxRange::GetVal; it does not copy both endpoint fields into another FxChannel. Construction/migration owners likewise do not establish this complete copy. No positive Mac/native copy owner was recovered, so the row remains unchecked."
   },
   "mac:0x000ac458": {
     "status": "equal",
@@ -17021,7 +17021,7 @@
   },
   "linux:EffectsCore/FxCurve.cpp:23:FxCurveIterator_Release": {
     "status": "unchecked",
-    "evidence": "No executable Mac identity found: nm -a has only an absolute zero .eh marker for FxCurveIterator_Release, no text address. Native has no definition or caller. The Linux-only null-master body cannot establish the Mac behavior. Follow-up: exact Create 0xb9fc8\u20130xb9fdb stores master and zero index; pointer-free curve keys begin at +8 and are Hunk_AllocAlignInternal-owned at 0xac38e. Those producer/layout facts do not establish an inline iterator-clear/release consumer or this helper body."
+    "evidence": "No executable Mac identity found: nm -a has only an absolute zero .eh marker for FxCurveIterator_Release, no text address. Native has no definition or caller. The Linux-only null-master body cannot establish the Mac behavior. Follow-up: exact Create 0xb9fc8\u20130xb9fdb stores master and zero index; pointer-free curve keys begin at +8 and are Hunk_AllocAlignInternal-owned at 0xac38e. Those producer/layout facts do not establish an inline iterator-clear/release consumer or this helper body. Original provenance follow-up (fx9): Original 1.0 0x8121954 is a complete master-pointer clear; it maps to original 1.3 0x8123de4 between the established Create and IntegrateSegment/Integrate owners. Two bodies share the short cleared-field shape, so unique nearby integration provenance, not shape alone, disambiguates this slot. The original operation does not release hunk memory or change the current-key index. Existing Mac iterator creation and hunk-backed curve lifetime facts still do not identify a complete clear/release consumer. The row remains unchecked; the reconstructed helper name is not a recovered original name."
   },
   "mac:0x000b9fde": {
     "status": "equal",
@@ -17041,7 +17041,7 @@
   },
   "linux:EffectsCore/FxCurve_load_obj.cpp:51:FxCurve_Reference": {
     "status": "unchecked",
-    "evidence": "No executable Mac identity or native definition/caller found for Linux FxCurve_Reference. Mac has an absolute zero .eh marker named FxCurve_AddRef but no text body; that does not establish an identity or pointer-return contract. Linux's no-op reference body was not assumed equal. Follow-up: exact allocator 0xac320 (Hunk_AllocAlignInternal call 0xac38e) and Mac STABS FxCurve fields establish hunk-owned inline keys and no reference-count field. They do not prove the return-value/alias identity of Linux Reference versus the zero-address Mac AddRef marker."
+    "evidence": "No executable Mac identity or native definition/caller found for Linux FxCurve_Reference. Mac has an absolute zero .eh marker named FxCurve_AddRef but no text body; that does not establish an identity or pointer-return contract. Linux's no-op reference body was not assumed equal. Follow-up: exact allocator 0xac320 (Hunk_AllocAlignInternal call 0xac38e) and Mac STABS FxCurve fields establish hunk-owned inline keys and no reference-count field. They do not prove the return-value/alias identity of Linux Reference versus the zero-address Mac AddRef marker. Original provenance follow-up (fx9): The complete original pointer-return body is now anchored at 1.0 0x8121c40 / 1.3 0x81240d0. Its exact actual consumer is FxChannel_Copy: call 0x81236de passes source->curve and stores the returned identical pointer into target->curve. No original counter mutation occurs. This resolves the original pointer contract, but the corresponding complete Mac copy/reference owner remains missing. Hunk ownership, absence of a reference-count field, and a zero-address AddRef exception marker cannot supply that operation. The row remains unchecked."
   },
   "linux:EffectsCore/FxMemMgr.cpp:28:FxMem_AllocBlock": {
     "status": "intentional",
@@ -18145,7 +18145,7 @@
   },
   "linux:EffectsCore/FxScheduler.cpp:633:FX_SchedulerUnused": {
     "status": "unchecked",
-    "evidence": "Linux reconstruction labels an empty dedicated-only helper with an explicitly unknown original name. No Mac symbol or identifiable live caller for this helper was established; the separate Mac empty global initializer is not enough to prove identity."
+    "evidence": "Linux reconstruction labels an empty dedicated-only helper with an explicitly unknown original name. No Mac symbol or identifiable live caller for this helper was established; the separate Mac empty global initializer is not enough to prove identity. Original provenance follow-up (fx9): The original empty slot is located at 1.0 0x8128738 / 1.3 0x812ab58 immediately before the MediaHandles GetEffect/GetHandle pair; the latter is independently mapped by its complete body. Its name and purpose remain unknown. Identical empty functions elsewhere, including Mac global initializers, are not a semantic identity. The row remains unchecked."
   },
   "mac:0x00060ee2": {
     "status": "equal",
@@ -18541,7 +18541,7 @@
   },
   "linux:EffectsCore/FxUtil.cpp:1317:FX_GetEffectVisibility": {
     "status": "unchecked",
-    "evidence": "Linux-only active-list visibility algorithm; no Mac entry/caller identified. FX_GetServerVisibility is a different array-based contract and does not establish this row."
+    "evidence": "Linux-only active-list visibility algorithm; no Mac entry/caller identified. FX_GetServerVisibility is a different array-based contract and does not establish this row. Original provenance follow-up (fx9): Original 1.0 0x81315a6 uniquely maps to original 1.3 0x81339ee. Its complete body checks the active sight-blocker count, normalizes the requested segment, applies the minimum trace distance, then traverses non-bolted and bolted effect lists. Each flagged object invokes virtual slot +0x18 GetVisibility and multiplies its returned value into the result. Fresh exact Mac FX_GetServerVisibility 0x596c6 instead traverses cached 20-byte visibility records and performs point/radius/value tests. Native retains that cached-record owner. A shared segment setup is not the full active-list/virtual-call/state-timing contract, and no actual original query consumer establishes an approved replacement boundary. The row remains unchecked."
   },
   "linux:EffectsCore/FxUtil.cpp:1503:FX_GetPrimTemplate": {
     "status": "intentional",
@@ -18645,7 +18645,7 @@
   },
   "linux:EffectsCore/FxUtil.cpp:1181:FX_UtilUnused": {
     "status": "unchecked",
-    "evidence": "Linux-only empty placeholder with explicitly unknown original name; no Mac identity found. An empty Linux body is not equality evidence."
+    "evidence": "Linux-only empty placeholder with explicitly unknown original name; no Mac identity found. An empty Linux body is not equality evidence. Original provenance follow-up (fx9): The original empty slot immediately preceding the uniquely mapped kill-all-effects owner is at 1.0 0x813117a / 1.3 0x81335c2. Its reconstructed FX_UtilUnused label still does not recover a meaningful original name or complete Mac/native operation. The row remains unchecked."
   },
   "linux:EffectsCore/FxUtil.cpp:362:Get": {
     "status": "equal",
@@ -18957,7 +18957,7 @@
   },
   "linux:EffectsCore/FxTemplate.cpp:2019:FX_PrimTypeIsEmitter": {
     "status": "unchecked",
-    "evidence": "Linux-only name; no executable Mac symbol, native definition or callsite identified. Linux body was not accepted as authority."
+    "evidence": "Linux-only name; no executable Mac symbol, native definition or callsite identified. Linux body was not accepted as authority. Original provenance follow-up (fx9): Original 1.0 0x812f122 uniquely maps to original 1.3 0x813156a. The actual thirteen-entry jump table at 0x81605ec was decoded: only type 5 returns true; types 0\u20134 and 6\u201312 return false, and the unsigned range guard returns false outside 0\u201312. This establishes the original predicate, not a Mac provider. Generic primitive dispatch or emitter-specific parse branches do not establish this complete predicate identity; no positive matching owner was recovered. The row remains unchecked."
   },
   "mac:0x0005d8ec": {
     "status": "equal",
@@ -19433,7 +19433,7 @@
   },
   "linux:EffectsCore/FxSystem.cpp:299:Unused": {
     "status": "unchecked",
-    "evidence": "Linux reconstructs an empty FxHelper::Unused with unknown original name; there is no native body/caller or identifiable Mac symbol. No Mac identity or inline call site was established, so absence is not treated as equality."
+    "evidence": "Linux reconstructs an empty FxHelper::Unused with unknown original name; there is no native body/caller or identifiable Mac symbol. No Mac identity or inline call site was established, so absence is not treated as equality. Original provenance follow-up (fx9): The original FxHelper empty slot is located at 1.0 0x812ae6c / 1.3 0x812d28c between the light and camera-shake slots, with the following GetSeed owner independently mapped at 0x812d298. The reconstructed Unused label still has no recovered original name or complete Mac/native consumed role. No closure follows from its empty body or dedicated context."
   },
   "mac:0x00060d80": {
     "status": "equal",
