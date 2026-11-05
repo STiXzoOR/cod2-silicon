@@ -238,7 +238,11 @@ void Image_CreateCubeTexture(GfxImage *image, int edgeLen, int mipmapCount, DWOR
         R_Error(1, "CreateCubeTexture ( %s, %i, %i, %i ) failed: %08x = %s",
                 image->name,
                 (int)image->width,
+#if defined(COD2_X64)
+                actualMipCount, (int)imageFormat, (int)hr, R_ErrorDescription(hr));
+#else
                 mipmapCount, (int)imageFormat, (int)hr, R_ErrorDescription(hr));
+#endif
     }
 }
 
@@ -290,6 +294,51 @@ extern int R_AvailableTextureMemory(void);
 
 void R_SetPicmip(void)
 {
+#if defined(COD2_X64)
+    unsigned int texMemInMegs = (unsigned int)R_AvailableTextureMemory();
+    unsigned int sysMemInMegs = (unsigned int)ri.Dvar_GetInt("sys_sysMB");
+
+    if (r_picmip_manual->current.enabled) {
+        ri.Printf(0, "Picmip is set manually.\n");
+        IG_SCALAR(2048) = r_picmip->current.integer;
+        IG_SCALAR(2049) = r_picmip_bump->current.integer;
+        IG_SCALAR(2050) = r_picmip_spec->current.integer;
+    } else {
+        int dx7 = r_rendererInUse->current.integer == 2;
+        int minPicmip = 0;
+        int changed = 0;
+        int picmip = dx7 && texMemInMegs > 128 ? 1 : 2;
+
+        ri.Printf(0, dx7 ? "Texture detail is set automatically for DirectX 7.\n"
+                        : "Texture detail is set automatically.\n");
+#if COD2_APPLE_SDK
+        /* Retain the native high-memory policy documented in WS11. */
+        if (!dx7)
+            picmip = texMemInMegs >= 512 && sysMemInMegs >= 1024 ? 0 : texMemInMegs > 128 ? 1 : 2;
+#endif
+        IG_SCALAR(2048) = picmip;
+        IG_SCALAR(2049) = picmip;
+        IG_SCALAR(2050) = picmip;
+        if (sysMemInMegs <= 383)
+            minPicmip = dx7 ? 1 : 2;
+        else if (!dx7 && sysMemInMegs <= 479)
+            minPicmip = 1;
+        for (int i = 2048; i <= 2050; ++i) {
+            if (IG_SCALAR(i) < minPicmip) {
+                IG_SCALAR(i) = minPicmip;
+                changed = 1;
+            }
+        }
+        if (changed)
+            ri.Printf(0, "Reducing texture detail based on total system memory of %i MB to improve load times.\n", sysMemInMegs);
+    }
+
+    ri.Dvar_SetInt(r_picmip, IG_SCALAR(2048));
+    ri.Dvar_SetInt(r_picmip_bump, IG_SCALAR(2049));
+    ri.Dvar_SetInt(r_picmip_spec, IG_SCALAR(2050));
+    ri.Printf(0, "Using picmip %i on most textures, %i on normal maps, and %i on specular maps\n",
+              IG_SCALAR(2048), IG_SCALAR(2049), IG_SCALAR(2050));
+#else
     void (*ri_Printf)(int, const char *, ...) = *(void (**)(int, const char *, ...))&ri;
     void (*Cvar_SetValue)(void *, int) = (void (*)(void *, int))ri.Dvar_SetInt;
     int (*Cvar_VariableIntegerValue)(const char *) = (int (*)(const char *))ri.Dvar_GetInt;
@@ -386,6 +435,7 @@ set_cvars:
     Cvar_SetValue( (void *)(r_picmip_spec), IG_SCALAR(2050));
     ri_Printf(0, "Using picmip %i on most textures, %i on normal maps, and %i on spec maps",
               IG_SCALAR(2048), IG_SCALAR(2049), IG_SCALAR(2050));
+#endif
 }
 
 static int imagecompare(GfxImage *image1, GfxImage *image2)
@@ -692,6 +742,103 @@ GfxImage *Image_Alloc(const char *name, int category, int semantic, int imageTra
 extern int I_stricmp(const char *, const char *);
 void R_ImageList_f(void)
 {
+#if defined(COD2_X64)
+    typedef HRESULT(D3DVTCC *GetDescFunc)(void *, UINT, void *);
+    ImageList list;
+    int imageTrack[20] = {0};
+    int total[2] = {0};
+    int listAllImages = ri.Cmd_Argc() == 2 && I_stricmp(ri.Cmd_Argv(1), "all") == 0;
+
+    R_GetImageList(&list);
+    if (listAllImages) {
+        for (int i = 0; i < 12 && (unsigned int)list.count <= 0x7ff; ++i) {
+            if (g_imageProgs[i].mapType)
+                list.image[list.count++] = &g_imageProgs[i];
+        }
+    }
+
+    GfxImage **first = list.image;
+    GfxImage **last = first + list.count;
+    if (first != last) {
+        int depth = 0;
+        for (int n = list.count; n > 1; n >>= 1)
+            ++depth;
+        ZSt16__introsort_loopIPP8GfxImageiPFiS1_S1_EEvT_S5_T0_T1_(first, last, depth * 2, imagecompare);
+        /* Mac's 0x43-byte cutoff means more than sixteen image pointers. */
+        if (last - first > 16) {
+            GfxImage **threshold = first + 16;
+            ZSt16__insertion_sortIPP8GfxImagePFiS1_S1_EEvT_S5_T0_(first, threshold, imagecompare);
+            for (GfxImage **i = threshold; i != last; ++i) {
+                GfxImage *value = *i;
+                GfxImage **hole = i;
+                while (imagecompare(value, hole[-1])) {
+                    *hole = hole[-1];
+                    --hole;
+                }
+                *hole = value;
+            }
+        } else {
+            ZSt16__insertion_sortIPP8GfxImagePFiS1_S1_EEvT_S5_T0_(first, last, imagecompare);
+        }
+    }
+
+    ri.Printf(0, "\n-if-- ");
+    for (int platform = 0; platform < 2; ++platform)
+        ri.Printf(0, "%s", g_platform_name[platform]);
+    ri.Printf(0, "  --name-------\n");
+
+    for (int i = 0; i < list.count; ++i) {
+        GfxImage *image = first[i];
+        int desc[8];
+        void *texture = image->texture.basemap;
+        if (image->mapType != 3 && image->mapType != 4 && image->mapType != 5)
+            return;
+        ((GetDescFunc)(*(void ***)texture)[17])(texture, 0, desc);
+        const char *format = NULL;
+        switch (desc[0]) {
+        case 0x15: format = "RGBA32"; break;
+        case 0x16: format = "RGB32 "; break;
+        case 0x17: format = "RGB16 "; break;
+        case 0x1c: format = "A8    "; break;
+        case 0x32: format = "L8    "; break;
+        case 0x33: format = "AL16  "; break;
+        case 0x72: format = "R32F  "; break;
+        case 0x31545844: format = "DXT1  "; break;
+        case 0x33545844: format = "DXT3  "; break;
+        case 0x35545844: format = "DXT5  "; break;
+        }
+        if (format)
+            ri.Printf(0, "%s", format);
+        ri.Printf(0, "  %s", imageTypeName[image->track]);
+        for (int platform = 0; platform < 2; ++platform) {
+            int size = image->cardMemory.platform[platform];
+            float sizeKB = (float)size * 0.0009765625f;
+            ri.Printf(0, sizeKB < 10.0f ? "%7.1f" : "%7.0f", (double)sizeKB);
+            imageTrack[image->track * 2 + platform] += size;
+            if (listAllImages || image->track > 4 || !((1 << image->track) & 0x13))
+                total[platform] += size;
+        }
+        ri.Printf(0, "  %s\n", image->name);
+    }
+
+    ri.Printf(0, " ---------\n");
+    ri.Printf(0, " %i total images\n", list.count);
+    for (int platform = 0; platform < 2; ++platform)
+        ri.Printf(0, " %5.1f MB %s total image size\n",
+                  (double)((float)total[platform] * 9.5367431640625e-07f), g_platform_name[platform]);
+    ri.Printf(0, "\n");
+    ri.Printf(0, "       ");
+    for (int platform = 0; platform < 2; ++platform)
+        ri.Printf(0, "%s", g_platform_name[platform]);
+    ri.Printf(0, "\n");
+    for (int track = 0; track < 10; ++track) {
+        ri.Printf(0, "%s:", imageTypeName[track]);
+        for (int platform = 0; platform < 2; ++platform)
+            ri.Printf(0, "  %5.1f", (double)((float)imageTrack[track * 2 + platform] * 9.5367431640625e-07f));
+        ri.Printf(0, "  MB\n");
+    }
+    ri.Printf(0, "Related commands: meminfo, imagelist, gfx_world, gfx_model, cg_drawfps, com_statmon, tempmeminfo\n");
+#else
     typedef void (*PrintFunc)(int, const char *, ...);
     typedef int (*CmdArgcFunc)(void);
     typedef const char *(*CmdArgvFunc)(int);
@@ -901,6 +1048,7 @@ void R_ImageList_f(void)
         }
         Com_Printf(0, "\n");
     }
+#endif
 }
 
 extern GfxImage *Image_Load(const char *name, int semantic, int imageTrack);
@@ -1285,11 +1433,19 @@ void ZSt16__introsort_loopIPP8GfxImageiPFiS1_S1_EEvT_S5_T0_T1_(
             hi = last;
 
             for (;;) {
+#if defined(COD2_X64)
+                while (comp(*lo, pivot))
+                    lo++;
+                hi--;
+                while (comp(pivot, *hi))
+                    hi--;
+#else
                 while (!comp(pivot, *lo))
                     lo++;
                 hi--;
                 while (!comp(*hi, pivot))
                     hi--;
+#endif
                 if (lo >= hi)
                     break;
 
