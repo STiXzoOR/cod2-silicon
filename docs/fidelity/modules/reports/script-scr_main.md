@@ -31,3 +31,10 @@ Original ordered Mac source metadata and native call sites were checked again. T
 The assigned files compiled as actual configured stock and CoD2x arm64 Release client objects in a separate evidence directory, with low priority and at most two jobs. No source or fixture was edited. Previously resolved ledger evidence is preserved exactly in the full `script-remaining.ledger.json`. No full CI or replay ran.
 
 Independent source/binary review at source freeze `28e7d452399e38b2c296b8b4230e3eb8017b8c52` agreed with the two compiler overload closures and sixteen remaining gaps. Eight existing compiler/parser cases passed in each stock and CoD2x configuration: four binary-condition loop cases and four parser cases, using the existing ASan/UBSan runner. These checks do not exercise all reference-count types or the unresolved debugger APIs. No new cases or assertions were added.
+
+
+## Original boundary identities
+
+Original1.0 IDB byte bodies uniquely relocate to original1.3 `Scr_IsInScriptMemory` at 0x8075e40 and `Scr_BeginLoadScriptsRemote` at 0x8076196. The former makes two unsigned comparisons against programBuffer and endScriptBuffer; the latter sets script_loading, initializes opcode lookup, allocates loadedScripts and returns. These are original executable identities, not inferred from missing symbols.
+
+Fresh exact Mac `Scr_IsInOpcodeMemory` at 0xaed58 instead compares a programBuffer-relative offset to programLen. Mac `Scr_EndLoadAnimTrees` stores endScriptBuffer at 0xaf20e, and local load initialization clears it at 0xaf38d; these writes do not implement the two-bound predicate. Exact Mac `Scr_BeginLoadScripts` continues through the local-loading lifecycle, so the shared initialization prefix still does not establish the remote-return operation. Both rows remain unchecked. No production code, compiled objects, tests, CI or replays changed or ran.
