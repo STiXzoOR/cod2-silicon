@@ -216213,7 +216213,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No native definition or Mac text symbol/caller identity established for this Linux-only object-copy/reference helper; no behavior inferred from Linux."
+        "evidence": "Unchecked after complete original/actual-lifecycle follow-up. Original1.0 0x80b812e maps to full1.3 0x80ba706 throughRET0x80ba775: forward100-byte object copy, copied skeleton clear, conditional nonzero/non-g_empty duplicateParts retain, then supplied-tree binding. Complete original SL_AddRefToString0x8079b6e throughRET0x8079b92 and DObjSetTree0x80ba348 throughRET0x80ba3d2 establish duplicate ownership, animToModel, cache-age advance and wrap clear. Timestamp/model parents/bounds otherwise survive clone. Fresh complete Mac PlayerCmd_ClonePlayer0x1c3574 obtains source tree0x1c3676/7e, copies clientInfo0x1c3737 and calls XAnimCloneAnimTree0x1c374f; CG_ResetEntity0x1deb10 likewise copies clientInfo0x1decd5, filters selected attachments, restores persistent corpse tree and clones it0x1ded38. These actual whole-object copies are clientInfo, not DObj. Complete Mac DObjCreate0x752f0 instead clears timestamp/duplicateParts along with skeleton, rebuilds model-parent offsets/collision flags and bounds, and binds supplied tree. Native has those same selected lifecycle roles with approved typed-storage repairs preserved. No complete source-DObj state copy/duplicate-reference-retain replacement is established by clientInfo reconstruction, so no alias/intentional closure. This is a positive full-operation/ownership gap, not missing-symbol or direct-call absence proof. Full originals/sixMac owners/current source hashes retained recon-provenance-dobj40.noindex; no source change, compilation/tests/CI/full build/replay/runtime."
       },
       {
         "id": "mac:0x0007499e",
@@ -216611,7 +216611,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No native definition or Mac text symbol/caller identity established for this Linux-only creation-parameter extraction helper; no behavior inferred from Linux."
+        "evidence": "Unchecked after complete original/actual-parameter follow-up. Original1.0 0x80b821a maps to full1.3 0x80ba7f2 throughRET0x80ba956: writes16bit model count, full tree pointer,16bit tree.entnum orzero; each model result includes actual model pointer, defaultnull borrowed boneName,0/1 collision bit from the existing DObj mask, and backward prior-model/matOffset parent-name resolution via actual XModelBoneNames0x80c58f0 throughRET0x80c58fe and interned-name conversion. Fresh complete Mac BG_UpdatePlayerDObj0x182312 uses old DObj only for existence/free decisions; it reads tree from ci0x182347, resolves main/attachment models from ci strings, takes attachment tag strings directly from ci and collision bits from a separately supplied argument0x182448-0x182457. Actual final creation consumes that array/count/ci tree/es.number0x182493-0x1824b6. Native preserves these concrete sources. This supplies a full creation tuple but not the complete inverse extraction from existing DObj: resolved parent names, DObj collision mask/count and tree entnum are not bridged. Client/corpse configuration copies are not assumed identical to resolved object state. No hypothetical accessor composition or missing-symbol closure. Full original and exact Mac lifecycle/provider evidence/source hashes retained recon-provenance-dobj40.noindex. No source change, compilation/tests/CI/full build/replay/runtime."
       },
       {
         "id": "mac:0x00074b1c",
@@ -217838,7 +217838,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No matching Mac text symbol or uniquely identified complete inlined body was established; Linux definition and native/symbol inventory inspected. No equality inferred from absence."
+        "evidence": "Unchecked after complete original and actual one-/two-object update follow-up. Full original1.3 0x80c0ffc throughRET0x80c106a gates on source obj.tree, initializes sync time/count, calls XAnimUpdateOldTime0x80c104e on separately supplied serverObj.tree, then invokes full original XAnimCloneAnimTreeOldState0x80c1064 from obj.tree into serverObj.tree. The5historical-state outputs, preservation/allocation behavior and ordered two-tree effects are part of the complete operation. Fresh full actual Mac DObjInitServerTime0x3b554 throughRET0x3b59c gates on its single object tree, calls UpdateOldTime on that same tree0x3b590-0x3b592 and returns; native matches the one-tree role. Actual corpse tree clone copies full current/old info and notification ownership, not selective source-old to destination-current transfer. Neither that clone nor same-tree current-to-old update establishes a real two-object ordered server update+historical transfer. No extra hypothetical sequence/aliasing assumption/absence closure. Complete original and fresh actual Mac lifecycle/provider evidence retained recon-provenance-dobj40.noindex; no source change, compilation/tests/CI/full build/replay/runtime."
       },
       {
         "id": "linux:xanim/xanim.cpp:24:FloatLerp",
@@ -218709,7 +218709,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No matching Mac text symbol or uniquely identified complete inlined body was established; Linux definition and native/symbol inventory inspected. No equality inferred from absence."
+        "evidence": "Unchecked after complete original and actual clone-lifecycle follow-up. Full original1.3 0x80beeea throughRET0x80bf018 reconciles source/destination slot existence, frees orphan destination slots, resets newly allocated info and writes only5state fields: source.oldTime to destination.time, oldCycleCount to cycleCount, plus goalWeight/rate/goalTime. Existing other fields/notify ownership survive. Fresh full actual Mac XAnimCloneAnimTree0x3bb04 instead clears destination notification where needed, copies all40info bytes0x3bbfe-0x3bc54, then retains copied notifyName0x3bc57-0x3bc6a. Actual PlayerCmd_ClonePlayer0x1c374f and CG_ResetEntity0x1ded38 invoke this whole-info clone into persistent corpse trees; native does the same. Full clone preserves time-to-time and oldTime-to-oldTime, not the original historical-to-current field transfer, and its notification/state replacement cannot be removed by selecting a partial byte range. No actual full five-field selective-preservation operation established, no assumed oldTime==time domain or hypothetical composition. Complete original and fresh Mac owners/current source hashes retained recon-provenance-dobj40.noindex. No source change, compilation/tests/CI/full build/replay/runtime."
       },
       {
         "id": "linux:xanim/xanim.cpp:3601:XAnimCloneInfo",
