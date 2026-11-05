@@ -370,7 +370,7 @@ script/scr_vm,112,85,6,10,11
 script/scr_yacc,45,17,8,9,11
 server/sv_ccmds_mp,35,27,5,3,0
 server/sv_client_mp,43,25,8,10,0
-server/sv_game_mp,54,39,9,1,5
+server/sv_game_mp,54,40,9,1,4
 server/sv_init_mp,26,15,8,2,1
 server/sv_main_mp,24,8,10,6,0
 server/sv_main_pc_mp,7,4,2,1,0

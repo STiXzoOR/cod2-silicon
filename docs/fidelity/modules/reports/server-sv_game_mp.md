@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**49/54 reconciled: 39 equal, 9 fixed, 1 intentional, 5 unchecked.** Mac 1.3 i386 is the authority. All 43 Mac-backed functions were read by hand, plus the identified inline helpers and the matrix-array wrapper's alternate Linux name. The legacy source is preserved in the inactive branches.
+**50/54 reconciled: 40 equal, 9 fixed, 1 intentional, 4 unchecked.** Mac 1.3 i386 is the authority. All 43 Mac-backed functions were read by hand, plus the identified inline helpers and the matrix-array wrapper's alternate Linux name. The legacy source is preserved in the inactive branches.
 
 ## Corrections
 
@@ -114,3 +114,13 @@ Five rows remain unchecked. Original1.3 rotation/control wrappers0x8092260/0x809
 
 
 Private original bodies and new exact Mac/provider/state-owner evidence are retained in recon-provenance-storage5.noindex and recon-provenance-storage10.noindex. No source changes, compilation, tests, CI, replay or runtime exercise occurred. Missing names/callers are not completion evidence.
+
+## Complete registered entity-index operation (entitynum30)
+
+`SV_NumForGentity` is equal through the actual complete pointer-derived index phase in Mac spawning. Original1.3 body0x80916d8 throughRET0x80916f7 subtracts the server-registered entity base, signed-divides by its stride and returns the full quotient. The previous number-field reads and server-pointer conversions remain insufficient by themselves.
+
+New positive producer evidence supplies the missing role. G_InitGame installs g_entities as level.gentities at0x1adfe0 and registers that same base with stride0x230 at0x1ae09d. Complete SV_LocateGameData stores those fields in server state. Raw level, g_entities and sv GOT values independently establish the object identities. On the actual non-exhausted fresh-slot path, G_Spawn constructs that array element and re-registers the same base/stride before the complete0x1b6f58–0x1b6f69 conversion. It subtracts g_entities, shifts by4, multiplies by0x8af8af8b and stores the full32-bit result in s.number. For a valid element index i,560i becomes35i after the shift, and the multiplier is the inverse of35 modulo2^32, producing i. G_InitGentity also contains the same complete phase.
+
+Native uses the real typed1024-element g_entities array, registers sizeof(gentity_t), and consumes `(int)(e-g_entities)` in s.number. This preserves the complete scalar role and established native geometry. Equal classification applies to this unchanged conversion; surrounding classname, allocation, free-list and lifecycle repairs are outside its boundary. Scope is ordinary consistent engine registration, valid in-bounds element and successful preceding providers. It does not certify arbitrary alternate base/stride registration, null/unrelated/one-past destination, forged state, returned exhaustion errors, standalone ABI, whole spawning or runtime behavior.
+
+Independent review accepted this scope in units/review-provenance-entitynum30.md. Fresh full original and four Mac owners, raw data and source hashes remain in private recon-provenance-entitynum30.noindex. One equal closure; no source change or new defect. No compilation, tests, CI, full build, replay or runtime verification.
