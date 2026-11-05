@@ -17,9 +17,11 @@ fixed-offset objects. Base idle/changed no-ops have no selected virtual caller.
 The address/type/rate/block metadata setters now target typed fields consumed by
 `SampleInfo`, `DecodeInfo`, `PrepareSample` and `MixLocked`. `set_sample_info` at
 0x13f108 supplies data/length/rate/block fields. Its Mac AIL wrapper first resets
-the sample at 0x110ef6. Native setup now resets the validated slot before decode
-and leaves it DONE/empty on failure, retaining spatial. The driver ignores its
-return; the earlier claim that it checks success was incorrect.
+the sample at 0x110ef6. Native setup now resets the validated slot before decode,
+converts outside the global mixer lock and installs only if its captured payload
+generation is still current. Failure leaves that lifetime DONE/empty, retaining
+spatial; superseded decoded PCM is freed. The driver ignores its return; the
+earlier claim that it checks success was incorrect.
 The native metadata struct has the same native-width field order as
 `AILSOUNDINFO`/the initial `AILMIXINFO.Info` field.
 
@@ -50,8 +52,9 @@ entry checks and caller inspection are detailed in [MacMSS](Mac-Tools-MacMSS.md)
 Retired backend algorithms are not claimed equal. Arm64 Release dedicated build
 and actual provider/existing platform-fixture compilation pass. The unchanged
 ASan/UBSan offline output suite passes all four cases. The allocation-type
-transition and failure reset are compiled/reviewed; neither branch is directly
-exercised by those successful-setup cases.
+transition, failure reset and generation-guarded unlocked installation are
+compiled/reviewed. Failure/stale-generation branches and concurrent conversion
+output are not directly exercised by those successful-setup cases.
 Six inactive guard configurations report zero mismatches; no `__LINE__` occurs
 in the changed source. No new tests, full CI, replays, game or physical audio run.
 Original acoustic, surround, elevation, Doppler and latency parity remains a

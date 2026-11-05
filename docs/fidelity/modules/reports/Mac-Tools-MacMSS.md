@@ -23,16 +23,26 @@ queued buffers, cursor and length through 0x13f007. Native decoded first and
 returned early on failure, retaining the old playable PCM. The actual
 `SND_StartAlias3DSample` ignores that return, resets offset and resumes; my earlier
 report/ledger claim that the caller checks success was incorrect. Native now
-validates the slot and clears it before decoding under one `audio_mutex` lock.
-Failure leaves it DONE/empty, while the allocated spatial type is preserved.
+validates and clears the slot under `audio_mutex`, captures its payload generation,
+then decodes outside the mutex. Failure leaves that reset lifetime DONE/empty,
+while preserving its allocated spatial type.
 
-The decode call cannot race release/reallocation while this mutex is held.
-`DecodeInfo` calls `DecodeFile` for compressed data; SDK file callbacks are the
-local memory-only `FileRead`/`FileSize`, neither of which acquires `audio_mutex`
-or calls an AIL API. Encoded input remains the caller's sound-hunk metadata;
-reset frees only provider-owned PCM. This follows the provider's existing locked
-prepare/buffer-decode pattern. The output callback uses trylock and emits silence
-while decoding holds the lock, so no old payload is rendered during replacement.
+Decoded PCM remains local until a short installation lock revalidates the handle,
+allocation flag and captured generation. Reset/init/release/reallocation and
+source-address or successful buffer replacement invalidate the generation. The
+mutex-protected counter survives shutdown, so pool clearing and reuse cannot
+revive an old decode. If the lifetime changed, temporary PCM is freed without
+writing the newer slot. Encoded input remains caller-owned sound-hunk data valid
+for the synchronous call; unlocked decode does not access mutable sample fields.
+
+`DecodeInfo`/SDK conversion now runs without the global mixer lock. The previous
+correction held that lock for conversion, causing `Render`'s trylock to emit whole-
+output silence and mute unrelated audio during each 3D replacement. That new
+stall is removed. Trylock/silence behavior remains for the short reset/install
+phases and other existing lock owners; no concurrent timing measurement is
+claimed. SDK decoding uses only memory `FileRead`/`FileSize` callbacks. Existing
+locked preparation/buffer-decode paths were not broadened or used to justify a
+new long lock in this path.
 
 ## Active API contracts
 
@@ -134,11 +144,12 @@ the peer's reviewed driver timing fix must be combined and verified by the paren
 
 The allocation type-transition and failed-replacement reset corrections are
 compiled and reviewed. The existing fixture exercises successful in-place 3D
-setup but neither released-3D to fresh-2D slot reuse nor failed metadata setup. No new tests, full CI,
-replays, game or physical audio run. The six inactive guard configurations have
+setup but not released-3D to fresh-2D slot reuse, failed metadata setup, stale-
+generation rejection or concurrent output during conversion. No new tests, full
+CI, replays, game or physical audio run. The six inactive guard configurations have
 zero mismatches, and the changed provider contains no `__LINE__` diagnostics.
 No original-backend PCM/acoustic, surround, elevation, Doppler, codec-quality or
-latency equivalence is claimed. Those quality limits are distinct from the four unresolved stream-time contracts
-described above.
+latency equivalence is claimed. Those quality limits are distinct from the four
+unresolved stream-time contracts described above.
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-mac-audio.noindex/`.
