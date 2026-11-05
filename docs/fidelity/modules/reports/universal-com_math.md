@@ -2,7 +2,7 @@
 
 Updated 2026-11-06.
 
-**Current: 179/229 reconciled: 148 equal, 31 fixed, 0 intentional; 50 unchecked.**
+**Current: 180/229 reconciled: 149 equal, 31 fixed, 0 intentional; 49 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -588,3 +588,14 @@ Raw 0x326188 supplies tolerance 1. The selected Mac predicate at 0x64e3f–0x64e
 Native `CM_TraceTempCapsule` preserves both complete bounds pairs, the real tolerance, all six predicates and both outcomes. It retains Mac subtraction on the minimum side rather than importing the original Linux max-plus-epsilon algebra. Native interleaves axis pairs while Mac groups directions; the result agrees for stable nonvolatile valid storage without FP flags/trap observations. The selected predicate is unchanged since 88a0b288, so separate existing trace repairs do not make this row fixed.
 
 This mapping excludes arbitrary exported epsilon APIs, stale or cross-thread TLS, recursive model replacement, malformed/concurrent storage, FP traps/flags/NaN payloads, upstream bounds/transform correctness and whole collision behavior. `BoundsOverlapEpsilon2D` remains separate and unchecked. Independent review: units/review-provenance-boundsepsilon33.md; complete original, five fresh Mac bodies, raw tolerance and matching native hashes are retained in private recon-provenance-boundsepsilon33.noindex. One equal closure; no new defect, source change, compilation, tests, CI, full build, replay or runtime verification.
+
+
+## Complete perspective three-point normal (plane34)
+
+PlaneNormalFromPoints is equal through the complete actual perspective portal-side normal operation. Full original 1.3 body 0x80a54f0–RET 0x80a5569 and its providers establish three input positions and one complete normal output. The original separately normalizes both edges before their cross and final normalization; those internal steps and Linux floating-point outcomes are not Mac authority. This supersedes the geometry21 rejection only after establishing the full actual input and result roles, without assuming finite algebraic or bit equality.
+
+R_AddWorldSurfacesDpvs's actual perspective arm copies all three view-origin coordinates into eyePos and sets eyeW to one. R_VisitPortals reconstructs the real winding positions and passes that array, its count and a disjoint normal array to R_GetSidePlaneNormals. Each selected edge uses the actual eye, next point and current point; the full first-difference copy handles the final edge. Complete Mac cross and normalization produce all three output coordinates. Ordered-zero length leaves the cross words unchanged; nonzero or unordered length scales all three. Native preserves this complete operation and its degenerate selectors. The input scope is valid bounded nonempty perspective winding storage; the concrete ordinary child-plane consumer uses counts one through ten.
+
+That consumer reads all normal coordinates for the length test, copies all three unchanged to child-plane coefficients when admitted, then uses them for the separate fourth coefficient and traversal. No normal output is missing. Existing normal/cross/provider equal verdicts remain; unrelated caller bevel and area repairs are outside this phase. PlaneFromPoints stays unchecked because this normal operation supplies neither its success result nor its conditional fourth-slot contract. No arbitrary original ABI, aliasing, invalid backing, FP environment/traps/payload equivalence, whole hull/traversal correctness or runtime reachability is claimed.
+
+One equal closure, no new defect or source change. Independent review: units/review-provenance-plane34.md. Fresh complete original/provider and five Mac bodies, raw constants and source hashes remain private in recon-provenance-plane34.noindex; earlier evidence is preserved. No compilation, tests, CI, full build, replay or runtime verification.
