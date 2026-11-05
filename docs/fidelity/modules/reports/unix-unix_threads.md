@@ -12,6 +12,12 @@ Both native executables compile and link. The existing Debug `threads_ring` fixt
 
 `Sys_NullQuery4` remains unchecked: the Linux-only identity has no established executable Mac body or selected native replacement contract.
 
+## Remaining-identity audit (batch 22)
+
+The remaining `Sys_NullQuery4` row stays unchecked. The reconstruction explicitly says the original name is unknown and the function is unreferenced. The ledger supplies only source/line provenance; no original Linux executable address/caller was established, in addition to the missing Mac executable/inline identity. A constant-return helper or another no-op native provider cannot be assigned by body shape alone. The four established thread wrappers retain their exact prior ledger statuses and evidence.
+
+This follow-up changes reports only and finds no proven source defect. The full 101-row unit ledger preserves all 78 previously resolved status/evidence pairs exactly and refines the reasons for the 23 unchecked rows. No new row is certified. The existing `macos_system_network_test` and `macos_threads_ring_test` targets compiled in a private Debug build with two low-priority jobs; they were not run and do not prove any missing identity. No production build, new test/case/assertion, full CI, replay, push or external side effect was performed. Source and inactive builds are unchanged. Private inspection material is under `~/Library/Application Support/CoD2-native-decomp/recon-unix-remaining.noindex/`.
+
 ## Integrated batch verification
 
 Integrated source be41fb3 passed both dedicated and client builds. The full local CI run passed steps 02–10 and 12–13; its initial ABI stage found an SDK OSStatus return-width mismatch. The independently reviewed declaration correction passed the complete function/callback/strict ABI retry. Combined validation covers stock/CoD2x Release clients, platform sanitizers, function/callback ABI audits and existing source fixtures. Ten guard-visible production changes differ only under native port-on; other Apple-only source changes have no inactive differences. The new Apple SDK source is empty in all six inactive configurations. Actual net-channel assertion line expansions match the previous source in all five inactive configurations. The existing audio fixture expectation was corrected to the restored playback timeline, and the existing network runner handles the actual transport return signature. No new tests were added; these checks do not establish i386 byte parity.
