@@ -346,8 +346,18 @@ void ZN15CCacheInfoBlockD0Ev(void *_this)
 
 void *ZNSt4listIP6CFenceSaIS1_EE5eraseESt14_List_iteratorIS1_E(void *list, void *pos)
 {
+#if defined(COD2_X64)
+    extern void __ZNSt15_List_node_base6unhookEv(void *);
+    extern void __ZdlPv(void *);
+    void *next = *(void **)pos;
+    (void)list;
+    __ZNSt15_List_node_base6unhookEv(pos);
+    __ZdlPv(pos);
+    return next;
+#else
     (void)list;
     return pos;
+#endif
 }
 
 void ZNSt6vectorI15CCacheInfoBlockSaIS0_EEC1Em(void *vec, unsigned long n)

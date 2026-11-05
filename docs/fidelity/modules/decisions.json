@@ -25050,5 +25050,485 @@
   "mac:0x000fb970": {
     "status": "intentional",
     "evidence": "Exact-symbol Mac 0xfb970 file open/errors,16-byte header, inserted glyph pointer at+16 and payload at+20, base+4 name/material offsets and material-track registration hand-compared. Preserve native LP64 disk-to-Font marshaling, bounded strings/glyph count and short-read checks instead of ILP32 in-place pointer relocation. Existing font_disk ASan/UBSan fixture passes valid relocation plus invalid offsets/count and short reads."
+  },
+  "mac:0x001136ec": {
+    "status": "fixed",
+    "evidence": "Mac 0x1136ec: IsCached copied the generic-array scalar fields but omitted mpStream; restored the pointer copied at 0x1138be. Compared bounds lookup, code equality, VAO transfer, all 12 base arrays,16 generic arrays, erase/destruction and count decrement. Native packet fields and node sizes are typed; compiled and reviewed, not exercised."
+  },
+  "mac:0x00113602": {
+    "status": "equal",
+    "evidence": "Mac 0x113602: Read ReleaseBuffer against CVAOPacket.c: unsigned buffer-range tests over vertex and 16 generic streams, current VAO invalidation, binding release, successor-before-rebalance erasure and count decrement match. Native tree/packet offsets use typed pointer-width storage."
+  },
+  "mac:0x001139e2": {
+    "status": "equal",
+    "evidence": "Mac 0x1139e2: Read Shutdown against CVAOPacket.c: recurse into each right subtree, destroy/free node, continue left, then reset root/extrema/count/status. Its formerly missing subtree eraser is restored separately."
+  },
+  "mac:0x002f0c36": {
+    "status": "fixed",
+    "evidence": "Mac 0x2f0c36: Restored missing deque map growth/recentering: old-node count, >2*newCount in-place recenter, otherwise oldSize+max(oldSize,added)+2 allocation; at-front offset, overlap-safe copy and node updates preserve current pointers. Compared coalesced body. Compiled and reviewed, not exercised; C++ allocation-exception unwinding is not reproduced. Selected macos_cpp_abi.cpp:517 __Znwm calls throwing ::operator new; no active native catch/recovery caller was identified. Normal-path status does not establish OOM cleanup parity; unmatched tails0x113119/0x113166 remain unchecked in their owner ledger."
+  },
+  "mac:0x002ee5bc": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ee5bc: Identity is CStaticCacheInfo/CCacheInfoBlock storage or associated fence-ID vector insertion (see symbol) from original VAR vertex-buffer caching. Active CDirect3DVertexBufferClean owns a typed CPU data pointer and length, directly locks/uses/releases that memory; native draw binds GL client buffers0 and submits those CPU arrays. It never constructs a static-cache block vector/list and CFence constructor does not allocate IDs. Read lp64_buffers.h, native buffer constructor/release and draw path; this specific unused VAR-cache ownership is replaced, not the GL renderer as a whole."
+  },
+  "mac:0x001121d2": {
+    "status": "intentional",
+    "evidence": "Mac 0x1121d2: Read GameMain argument concatenation, ShowWindow/SetIsRunning and WinMain handoff. Current/pending src/unix/linux_common.c main builds the native launch command line and calls WinMain; native SDL window/context lifecycle replaces Carbon CCallOfDutyEngine/ShowWindow. No CCallOfDutyEngine_GameMain provider/caller remains in selected startup. Native argument quoting/default-launch differences are owned by the platform startup policy, not system-library attribution."
+  },
+  "mac:0x0013ce58": {
+    "status": "intentional",
+    "evidence": "Mac 0x13ce58: Identity is CD3DXConstantTable text-to-CTAB construction or the sShaderPrograms map<string,string> lookup/insert/erase/global lifetime. Read Mac constructor0x13ce58 and D3DXGetShaderConstantTable0x13d2d0 using name::program and map lookup. Selected native lp64_shader_cache.h loads external ARB/CTAB assets by #COD2CTAB marker; tools/macos-port/extract_shaders.py converts original metadata to typed-offset CTAB records outside repo. D3DXShader.c owns/free its native buffer; no runtime sShaderPrograms tree/COW string-map storage remains. This verified cache replacement is intentional, not equality of missing old helpers."
+  },
+  "mac:0x0013d094": {
+    "status": "intentional",
+    "evidence": "Mac 0x13d094: Identity is CD3DXConstantTable text-to-CTAB construction or the sShaderPrograms map<string,string> lookup/insert/erase/global lifetime. Read Mac constructor0x13ce58 and D3DXGetShaderConstantTable0x13d2d0 using name::program and map lookup. Selected native lp64_shader_cache.h loads external ARB/CTAB assets by #COD2CTAB marker; tools/macos-port/extract_shaders.py converts original metadata to typed-offset CTAB records outside repo. D3DXShader.c owns/free its native buffer; no runtime sShaderPrograms tree/COW string-map storage remains. This verified cache replacement is intentional, not equality of missing old helpers."
+  },
+  "mac:0x0001b0da": {
+    "status": "unchecked",
+    "evidence": "Mac 0x1b0da: Read shader-type switch/creation and selected CDirect3DDevice_CreatePixelShaderOpenGL. Native ignores ShaderType, accepts raw ARB text through its compact constructor and otherwise creates PixelShaderStub; full ATI/NV/register-combiner/failure parity is not established. Parent retains device-provider audit. No equality inferred from the active shader-cache path."
+  },
+  "mac:0x0000761a": {
+    "status": "intentional",
+    "evidence": "Mac 0x761a: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x0000788a": {
+    "status": "intentional",
+    "evidence": "Mac 0x788a: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x0001c8a0": {
+    "status": "fixed",
+    "evidence": "Mac 0x1c8a0: Compared ARB fragment destructor variants: native now disables the current fragment program before deleting its GL ID, corresponding to 0x1c908. Native direct draw rebinds programs every draw and has no original cached shader-pointer/ID fields to invalidate; unused COW strings were never allocated. Base invalidation and deleting-variant free remain. Compiled and reviewed, not exercised."
+  },
+  "mac:0x0001ca34": {
+    "status": "fixed",
+    "evidence": "Mac 0x1ca34: Compared ARB fragment destructor variants: native now disables the current fragment program before deleting its GL ID, corresponding to 0x1c908. Native direct draw rebinds programs every draw and has no original cached shader-pointer/ID fields to invalidate; unused COW strings were never allocated. Base invalidation and deleting-variant free remain. Compiled and reviewed, not exercised."
+  },
+  "mac:0x0001cbc8": {
+    "status": "fixed",
+    "evidence": "Mac 0x1cbc8: Compared ARB fragment destructor variants: native now disables the current fragment program before deleting its GL ID, corresponding to 0x1c908. Native direct draw rebinds programs every draw and has no original cached shader-pointer/ID fields to invalidate; unused COW strings were never allocated. Base invalidation and deleting-variant free remain. Compiled and reviewed, not exercised."
+  },
+  "mac:0x0001bdf8": {
+    "status": "fixed",
+    "evidence": "Mac 0x1bdf8: ARB fragment constructor now preserves/restores prior GL_PROGRAM_BINDING_ARB per 0x1be4b/0x1bff3 and scans full texture indices 0..15 instead of treating10..15 as1. Read constructor body and script-compared C1/C2 instruction variants. Selected native Device passes raw ARB text and no Name, and direct draw owns stream/label state, so unused original COW name/code storage remains omitted. Compiled and reviewed, not exercised."
+  },
+  "mac:0x0001c34c": {
+    "status": "fixed",
+    "evidence": "Mac 0x1c34c: ARB fragment constructor now preserves/restores prior GL_PROGRAM_BINDING_ARB per 0x1be4b/0x1bff3 and scans full texture indices 0..15 instead of treating10..15 as1. Read constructor body and script-compared C1/C2 instruction variants. Selected native Device passes raw ARB text and no Name, and direct draw owns stream/label state, so unused original COW name/code storage remains omitted. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00023538": {
+    "status": "fixed",
+    "evidence": "Mac 0x23538: Restored no-op vertex-program destructors: delete GL program, disable it if currently bound, set all 3 device validation flags; deleting variant also frees object. Added one native base-D2 call in owning CDirect3DVertexShader D1 path, reached exactly once by its D0. Compared Mac destructor variants and actual native GLuint-first baseState/GetProgramId/direct-draw ownership. Original COW labels/16 stream descriptors are bypassed by native cache/declaration providers. Compiled and reviewed, not exercised."
+  },
+  "mac:0x000236b4": {
+    "status": "fixed",
+    "evidence": "Mac 0x236b4: Restored no-op vertex-program destructors: delete GL program, disable it if currently bound, set all 3 device validation flags; deleting variant also frees object. Added one native base-D2 call in owning CDirect3DVertexShader D1 path, reached exactly once by its D0. Compared Mac destructor variants and actual native GLuint-first baseState/GetProgramId/direct-draw ownership. Original COW labels/16 stream descriptors are bypassed by native cache/declaration providers. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00023830": {
+    "status": "fixed",
+    "evidence": "Mac 0x23830: Restored no-op vertex-program destructors: delete GL program, disable it if currently bound, set all 3 device validation flags; deleting variant also frees object. Added one native base-D2 call in owning CDirect3DVertexShader D1 path, reached exactly once by its D0. Compared Mac destructor variants and actual native GLuint-first baseState/GetProgramId/direct-draw ownership. Original COW labels/16 stream descriptors are bypassed by native cache/declaration providers. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00022de0": {
+    "status": "fixed",
+    "evidence": "Mac 0x22de0: Vertex constructor now saves/restores prior GL program binding per 0x22f09/0x22f81 instead of binding0. Read normal constructor and cleanup and script-compared C1/C2. Native CDirect3DVertexShader baseState starts with GLuint read by GetProgramId; cache supplies raw ARB text without original name:: prefix, and direct draw uses its own declaration/streams. This compact storage adaptation is retained. Compiled and reviewed, not exercised."
+  },
+  "mac:0x0002318c": {
+    "status": "fixed",
+    "evidence": "Mac 0x2318c: Vertex constructor now saves/restores prior GL program binding per 0x22f09/0x22f81 instead of binding0. Read normal constructor and cleanup and script-compared C1/C2. Native CDirect3DVertexShader baseState starts with GLuint read by GetProgramId; cache supplies raw ARB text without original name:: prefix, and direct draw uses its own declaration/streams. This compact storage adaptation is retained. Compiled and reviewed, not exercised."
+  },
+  "mac:0x0013d2d0": {
+    "status": "intentional",
+    "evidence": "Mac 0x13d2d0: Identity is CD3DXConstantTable text-to-CTAB construction or the sShaderPrograms map<string,string> lookup/insert/erase/global lifetime. Read Mac constructor0x13ce58 and D3DXGetShaderConstantTable0x13d2d0 using name::program and map lookup. Selected native lp64_shader_cache.h loads external ARB/CTAB assets by #COD2CTAB marker; tools/macos-port/extract_shaders.py converts original metadata to typed-offset CTAB records outside repo. D3DXShader.c owns/free its native buffer; no runtime sShaderPrograms tree/COW string-map storage remains. This verified cache replacement is intentional, not equality of missing old helpers."
+  },
+  "mac:0x0000c75e": {
+    "status": "intentional",
+    "evidence": "Mac 0xc75e: Identity is MacWinCursor resource loading, WinIcon/WinCursor string+Carbon cursor ownership, or its sCursorList vector initialization/insertion/destruction (see symbol). Read original resource flow and searched native callers: LoadCursorFromFileA/WinCursor_Load/ReadCursor have no engine call outside that dormant unit. Native linux_input.c uses SDL relative input/capture and SDL_ShowCursor with the system cursor; no native WinCursor object/vector is constructed. Original custom-cursor API stubs are not claimed equal."
+  },
+  "mac:0x00007afa": {
+    "status": "intentional",
+    "evidence": "Mac 0x7afa: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x001039b6": {
+    "status": "fixed",
+    "evidence": "Mac 0x1039b6: Material_LoadPassShader had maximum20 instead of minimum20 at 0x103a0e\u20130x103a1d; corrected. Matched 0x103e04 low16-bit size shift before division. Preserved native unconditional blob release: Mac 0x103e50 bypasses it on device failure, leaking the separately owned buffer/data; copying shader bytes does not transfer ownership. Read lookup/profile/search/allocation/upload/cache and warning branches. Native MacD3DXCompileShader/cache input is the documented ARB/CTAB adapter rather than old std::string filename::program storage. Compiled and reviewed, not exercised."
+  },
+  "mac:0x000485e0": {
+    "status": "equal",
+    "evidence": "Mac 0x485e0: Read SE_GetFoundFile against stringed_ingame.c: return null on empty input, copy63 bytes and terminate static64-byte result, split first semicolon, remove through delimiter or whole original length with _M_mutate(0,removed,0). Valid delimiter-derived length is already within original string length."
+  },
+  "mac:0x0000cc38": {
+    "status": "intentional",
+    "evidence": "Mac 0xcc38: Identity is MacWinCursor resource loading, WinIcon/WinCursor string+Carbon cursor ownership, or its sCursorList vector initialization/insertion/destruction (see symbol). Read original resource flow and searched native callers: LoadCursorFromFileA/WinCursor_Load/ReadCursor have no engine call outside that dormant unit. Native linux_input.c uses SDL relative input/capture and SDL_ShowCursor with the system cursor; no native WinCursor object/vector is constructed. Original custom-cursor API stubs are not claimed equal."
+  },
+  "mac:0x0000cc86": {
+    "status": "intentional",
+    "evidence": "Mac 0xcc86: Identity is MacWinCursor resource loading, WinIcon/WinCursor string+Carbon cursor ownership, or its sCursorList vector initialization/insertion/destruction (see symbol). Read original resource flow and searched native callers: LoadCursorFromFileA/WinCursor_Load/ReadCursor have no engine call outside that dormant unit. Native linux_input.c uses SDL relative input/capture and SDL_ShowCursor with the system cursor; no native WinCursor object/vector is constructed. Original custom-cursor API stubs are not claimed equal."
+  },
+  "mac:0x0000c2fc": {
+    "status": "intentional",
+    "evidence": "Mac 0xc2fc: Identity is MacWinCursor resource loading, WinIcon/WinCursor string+Carbon cursor ownership, or its sCursorList vector initialization/insertion/destruction (see symbol). Read original resource flow and searched native callers: LoadCursorFromFileA/WinCursor_Load/ReadCursor have no engine call outside that dormant unit. Native linux_input.c uses SDL relative input/capture and SDL_ShowCursor with the system cursor; no native WinCursor object/vector is constructed. Original custom-cursor API stubs are not claimed equal."
+  },
+  "mac:0x0000ca8c": {
+    "status": "intentional",
+    "evidence": "Mac 0xca8c: Identity is MacWinCursor resource loading, WinIcon/WinCursor string+Carbon cursor ownership, or its sCursorList vector initialization/insertion/destruction (see symbol). Read original resource flow and searched native callers: LoadCursorFromFileA/WinCursor_Load/ReadCursor have no engine call outside that dormant unit. Native linux_input.c uses SDL relative input/capture and SDL_ShowCursor with the system cursor; no native WinCursor object/vector is constructed. Original custom-cursor API stubs are not claimed equal."
+  },
+  "mac:0x0000cb62": {
+    "status": "intentional",
+    "evidence": "Mac 0xcb62: Identity is MacWinCursor resource loading, WinIcon/WinCursor string+Carbon cursor ownership, or its sCursorList vector initialization/insertion/destruction (see symbol). Read original resource flow and searched native callers: LoadCursorFromFileA/WinCursor_Load/ReadCursor have no engine call outside that dormant unit. Native linux_input.c uses SDL relative input/capture and SDL_ShowCursor with the system cursor; no native WinCursor object/vector is constructed. Original custom-cursor API stubs are not claimed equal."
+  },
+  "mac:0x0000c9f0": {
+    "status": "intentional",
+    "evidence": "Mac 0xc9f0: Identity is MacWinCursor resource loading, WinIcon/WinCursor string+Carbon cursor ownership, or its sCursorList vector initialization/insertion/destruction (see symbol). Read original resource flow and searched native callers: LoadCursorFromFileA/WinCursor_Load/ReadCursor have no engine call outside that dormant unit. Native linux_input.c uses SDL relative input/capture and SDL_ShowCursor with the system cursor; no native WinCursor object/vector is constructed. Original custom-cursor API stubs are not claimed equal."
+  },
+  "mac:0x0000ca3e": {
+    "status": "intentional",
+    "evidence": "Mac 0xca3e: Identity is MacWinCursor resource loading, WinIcon/WinCursor string+Carbon cursor ownership, or its sCursorList vector initialization/insertion/destruction (see symbol). Read original resource flow and searched native callers: LoadCursorFromFileA/WinCursor_Load/ReadCursor have no engine call outside that dormant unit. Native linux_input.c uses SDL relative input/capture and SDL_ShowCursor with the system cursor; no native WinCursor object/vector is constructed. Original custom-cursor API stubs are not claimed equal."
+  },
+  "mac:0x0000c184": {
+    "status": "intentional",
+    "evidence": "Mac 0xc184: Identity is MacWinCursor resource loading, WinIcon/WinCursor string+Carbon cursor ownership, or its sCursorList vector initialization/insertion/destruction (see symbol). Read original resource flow and searched native callers: LoadCursorFromFileA/WinCursor_Load/ReadCursor have no engine call outside that dormant unit. Native linux_input.c uses SDL relative input/capture and SDL_ShowCursor with the system cursor; no native WinCursor object/vector is constructed. Original custom-cursor API stubs are not claimed equal."
+  },
+  "mac:0x0000c240": {
+    "status": "intentional",
+    "evidence": "Mac 0xc240: Identity is MacWinCursor resource loading, WinIcon/WinCursor string+Carbon cursor ownership, or its sCursorList vector initialization/insertion/destruction (see symbol). Read original resource flow and searched native callers: LoadCursorFromFileA/WinCursor_Load/ReadCursor have no engine call outside that dormant unit. Native linux_input.c uses SDL relative input/capture and SDL_ShowCursor with the system cursor; no native WinCursor object/vector is constructed. Original custom-cursor API stubs are not claimed equal."
+  },
+  "mac:0x002f1b0e": {
+    "status": "intentional",
+    "evidence": "Mac 0x2f1b0e: Identity is CD3DXConstantTable text-to-CTAB construction or the sShaderPrograms map<string,string> lookup/insert/erase/global lifetime. Read Mac constructor0x13ce58 and D3DXGetShaderConstantTable0x13d2d0 using name::program and map lookup. Selected native lp64_shader_cache.h loads external ARB/CTAB assets by #COD2CTAB marker; tools/macos-port/extract_shaders.py converts original metadata to typed-offset CTAB records outside repo. D3DXShader.c owns/free its native buffer; no runtime sShaderPrograms tree/COW string-map storage remains. This verified cache replacement is intentional, not equality of missing old helpers."
+  },
+  "mac:0x002ecba8": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ecba8: Identity is MacWinCursor resource loading, WinIcon/WinCursor string+Carbon cursor ownership, or its sCursorList vector initialization/insertion/destruction (see symbol). Read original resource flow and searched native callers: LoadCursorFromFileA/WinCursor_Load/ReadCursor have no engine call outside that dormant unit. Native linux_input.c uses SDL relative input/capture and SDL_ShowCursor with the system cursor; no native WinCursor object/vector is constructed. Original custom-cursor API stubs are not claimed equal."
+  },
+  "mac:0x002ef866": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ef866: Identity is CD3DXConstantTable text-to-CTAB construction or the sShaderPrograms map<string,string> lookup/insert/erase/global lifetime. Read Mac constructor0x13ce58 and D3DXGetShaderConstantTable0x13d2d0 using name::program and map lookup. Selected native lp64_shader_cache.h loads external ARB/CTAB assets by #COD2CTAB marker; tools/macos-port/extract_shaders.py converts original metadata to typed-offset CTAB records outside repo. D3DXShader.c owns/free its native buffer; no runtime sShaderPrograms tree/COW string-map storage remains. This verified cache replacement is intentional, not equality of missing old helpers."
+  },
+  "mac:0x0000848a": {
+    "status": "intentional",
+    "evidence": "Mac 0x848a: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x002ed922": {
+    "status": "fixed",
+    "evidence": "Mac 0x2ed922: Replaced void no-op char_traits<char>::eq export in CDirect3DDevice.c with typed Bool(const char*,const char*) byte equality. Original body is22 bytes and returns zero/one after byte compare. No direct native caller found. Compiled and reviewed, not exercised."
+  },
+  "mac:0x002f0e64": {
+    "status": "fixed",
+    "evidence": "Mac 0x2f0e64: Restored missing deque clear: delete blocks strictly after start.node through finish.node, retain the start block and set finish=start. The uint16 destructor walks are inert. Compiled and reviewed, not exercised. Selected macos_cpp_abi.cpp:517 __Znwm calls throwing ::operator new; no active native catch/recovery caller was identified. Normal-path status does not establish OOM cleanup parity; unmatched tails0x113119/0x113166 remain unchecked in their owner ledger."
+  },
+  "mac:0x002ee7ee": {
+    "status": "equal",
+    "evidence": "Mac 0x2ee7ee: Read coalesced FreeRequest list _M_clear against CMemoryBuffer.c: walk next pointers and free nodes only, with no allocation-payload destruction or head reset."
+  },
+  "mac:0x002ee596": {
+    "status": "fixed",
+    "evidence": "Mac 0x2ee596: Restored list<CFence*> / list<GLuint*> erase provider as appropriate to its symbol: snapshot successor, unhook node, delete node and return successor; never delete pointee. Native linked-list nodes use two pointer-sized links. Compiled and reviewed, not exercised."
+  },
+  "mac:0x002eeab2": {
+    "status": "fixed",
+    "evidence": "Mac 0x2eeab2: Restored list<CFence*> / list<GLuint*> erase provider as appropriate to its symbol: snapshot successor, unhook node, delete node and return successor; never delete pointee. Native linked-list nodes use two pointer-sized links. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00101388": {
+    "status": "equal",
+    "evidence": "Mac 0x101388: Read preload against r_material_load_obj.c: two HLSL file lists with track0x14, root then lib/ population, typed cache allocation, 2*floor(log2(count)) depth,16-element sort/insertion split and both list frees. Native record strides use sizeof(GfxCachedShaderText)."
+  },
+  "mac:0x000d2fe0": {
+    "status": "fixed",
+    "evidence": "Mac 0xd2fe0: Material_Sort omitted R_SyncRenderThread at 0xd2fe9 and derived depth/16-element cutoff from ILP32 byte counts. Restored synchronization, count-based log depth and cutoff, avoiding native9\u201316-item overrun. Compared sorting calls, final insertion pass and sortedIndex writes. Compiled and reviewed, not exercised."
+  },
+  "mac:0x002eb3f6": {
+    "status": "intentional",
+    "evidence": "Mac 0x2eb3f6: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x002eb236": {
+    "status": "intentional",
+    "evidence": "Mac 0x2eb236: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x002efbcc": {
+    "status": "equal",
+    "evidence": "Mac 0x2efbcc: Read coalesced D3DDISPLAYMODE insertion/heap helper against r_init.c as appropriate:16-byte mode copies, insertion prefix/backwards shifts or larger-child descent and parent sift match. Four32-bit mode fields retain16-byte native size."
+  },
+  "mac:0x002f0470": {
+    "status": "equal",
+    "evidence": "Mac 0x2f0470: Read coalesced pointer insertion sort against r_material.c/r_image.c as appropriate: first-element check, overlap-safe prefix move or unguarded backwards shift, final value placement and empty range. Native byte distance is still a multiple of pointer size."
+  },
+  "mac:0x002f00c8": {
+    "status": "equal",
+    "evidence": "Mac 0x2f00c8: Read coalesced pointer insertion sort against r_material.c/r_image.c as appropriate: first-element check, overlap-safe prefix move or unguarded backwards shift, final value placement and empty range. Native byte distance is still a multiple of pointer size."
+  },
+  "mac:0x002eb5a8": {
+    "status": "intentional",
+    "evidence": "Mac 0x2eb5a8: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x002efcea": {
+    "status": "fixed",
+    "evidence": "Mac 0x2efcea: r_init.c introsort partition inverted and reversed both comparisons. Restored comp(lo,&pivot) advance-on-true, predecrement hi, then comp(&pivot,hi) retreat-on-true per 0x2efed4\u20130x2eff43, preserving the rest of the median/heap/16-element recursion algorithm. Compiled and reviewed, not exercised."
+  },
+  "mac:0x002f08b4": {
+    "status": "equal",
+    "evidence": "Mac 0x2f08b4: Read full coalesced shader-text introsort against r_material_load_obj.c:16-element cutoff, heap fallback/depth handling, median value, strict partition loops and right-recursive/left-iterative ranges. Typed record copies preserve all 3 fields."
+  },
+  "mac:0x002f0510": {
+    "status": "fixed",
+    "evidence": "Mac 0x2f0510: r_image.c introsort partition inverted and reversed both comparisons. Independently read0x2f064d\u20130x2f068f: comp(*lo,pivot), advance on true; --hi then comp(pivot,*hi), retreat on true. Reviewed final native guarded hunk in gfx-images signed commit d857f51; that commit is an integration dependency. Compiled by its owner and reviewed here, not exercised."
+  },
+  "mac:0x002f0168": {
+    "status": "equal",
+    "evidence": "Mac 0x2f0168: Read full coalesced Material introsort against r_material.c:16-element cutoff, depth decrement, heap fallback, median selection, strict partition comparisons, swap/advance, right recursion then left loop. Pure Material_Compare makes equal-key pivot choices equivalent."
+  },
+  "mac:0x002eb15e": {
+    "status": "intentional",
+    "evidence": "Mac 0x2eb15e: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x002eb372": {
+    "status": "intentional",
+    "evidence": "Mac 0x2eb372: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x002eb050": {
+    "status": "intentional",
+    "evidence": "Mac 0x2eb050: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x00112c44": {
+    "status": "fixed",
+    "evidence": "Mac 0x112c44: Replaced copy-only Optimize stub with triangle-list construction, first-triangle emission, the otherwise unused remaining-tuple walk, ChooseAndRemoveBestTriangle (highest score, first tie), per-index FIFO pushes/trimming to 10 and cleanup. Read helper0x112422. Native keeps defined memmove/no-op for non-multiple-of3/zero input; Mac reads an invalid triangle there. Allocation-exception cleanup is not reproduced in C. Compiled and reviewed, not exercised. Selected macos_cpp_abi.cpp:517 __Znwm calls throwing ::operator new; no active native catch/recovery caller was identified. Normal-path status does not establish OOM cleanup parity; unmatched tails0x113119/0x113166 remain unchecked in their owner ledger."
+  },
+  "mac:0x001129c0": {
+    "status": "equal",
+    "evidence": "Mac 0x1129c0: Read Score through its normal loop and cleanup. Native bounded ring computes the same hit count before pushing every index (including hits), keeps the last10 entries, and wraps unsigned count. The ring has no heap ownership, replacing only the temporary std::deque allocation/cleanup."
+  },
+  "mac:0x002f0f1a": {
+    "status": "fixed",
+    "evidence": "Mac 0x2f0f1a: Restored missing initialize_map: count/256+1 blocks, max(8,blocks+2) map, centered block allocation, start at first and finish at count%256 in final block. Native map slots are pointer-sized. Compiled and reviewed, not exercised; allocation-exception cleanup is not reproduced in C. Selected macos_cpp_abi.cpp:517 __Znwm calls throwing ::operator new; no active native catch/recovery caller was identified. Normal-path status does not establish OOM cleanup parity; unmatched tails0x113119/0x113166 remain unchecked in their owner ledger."
+  },
+  "mac:0x002f0bda": {
+    "status": "fixed",
+    "evidence": "Mac 0x2f0bda: Restored typed deque base destructor, freeing all block pointers from start.node through finish.node then the map. This is now called by native Optimize; native pointer widths replace four-byte map slots. Compiled and reviewed, not exercised; C++ allocation-exception unwinding is not reproduced. Selected macos_cpp_abi.cpp:517 __Znwm calls throwing ::operator new; no active native catch/recovery caller was identified. Normal-path status does not establish OOM cleanup parity; unmatched tails0x113119/0x113166 remain unchecked in their owner ledger."
+  },
+  "mac:0x002f0de0": {
+    "status": "fixed",
+    "evidence": "Mac 0x2f0de0: Restored missing push_back_aux: snapshot value before possible map growth, reserve a next map slot, allocate 256 uint16 entries, store at old finish and advance finish to next block. Compiled and reviewed, not exercised; native pointer-width allocation replaces ILP32 byte sizes. Selected macos_cpp_abi.cpp:517 __Znwm calls throwing ::operator new; no active native catch/recovery caller was identified. Normal-path status does not establish OOM cleanup parity; unmatched tails0x113119/0x113166 remain unchecked in their owner ledger."
+  },
+  "mac:0x002eae10": {
+    "status": "intentional",
+    "evidence": "Mac 0x2eae10: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x002eaed0": {
+    "status": "intentional",
+    "evidence": "Mac 0x2eaed0: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x002efa3e": {
+    "status": "equal",
+    "evidence": "Mac 0x2efa3e: Read coalesced D3DDISPLAYMODE insertion/heap helper against r_init.c as appropriate:16-byte mode copies, insertion prefix/backwards shifts or larger-child descent and parent sift match. Four32-bit mode fields retain16-byte native size."
+  },
+  "mac:0x002f072a": {
+    "status": "equal",
+    "evidence": "Mac 0x2f072a: Read coalesced GfxCachedShaderText adjust_heap against r_material_load_obj.c: copy all name/text/size fields through larger-child descent, lone-child branch and parent sift. Typed records replace12-byte ILP32 strides."
+  },
+  "mac:0x002f0382": {
+    "status": "equal",
+    "evidence": "Mac 0x2f0382: Read coalesced pointer heap adjustment against r_material.c/r_image.c as appropriate: larger-child selection, lone-child case, parent sift with comparison(parent,value), then value placement. Indices are element counts and native pointer stride is typed."
+  },
+  "mac:0x002effda": {
+    "status": "equal",
+    "evidence": "Mac 0x2effda: Read coalesced pointer heap adjustment against r_material.c/r_image.c as appropriate: larger-child selection, lone-child case, parent sift with comparison(parent,value), then value placement. Indices are element counts and native pointer stride is typed."
+  },
+  "mac:0x002eb0ca": {
+    "status": "intentional",
+    "evidence": "Mac 0x2eb0ca: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x0001fd6c": {
+    "status": "equal",
+    "evidence": "Mac 0x1fd6c: Read CMemoryBuffer_Update against typed native list: zero frames frees allocation, subtracts length, unlinks/deletes node; positive frames decrement and stay for the next update. Snapshotting next before mutation matches both branches. Native malloc/free storage and lazy sentinel setup remain defined."
+  },
+  "mac:0x0011391e": {
+    "status": "fixed",
+    "evidence": "Mac 0x11391e: Cache used default constructors instead of the two copy constructors at 0x113948/0x11396c. Restored typed native copy construction, preserving packet values and base vtables; compared original copy constructor0x2f10ce and the key/value node contract. Insertions now reach the restored tree provider. Compiled and reviewed, not exercised."
+  },
+  "mac:0x002ef402": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ef402: Identity is CD3DXConstantTable text-to-CTAB construction or the sShaderPrograms map<string,string> lookup/insert/erase/global lifetime. Read Mac constructor0x13ce58 and D3DXGetShaderConstantTable0x13d2d0 using name::program and map lookup. Selected native lp64_shader_cache.h loads external ARB/CTAB assets by #COD2CTAB marker; tools/macos-port/extract_shaders.py converts original metadata to typed-offset CTAB records outside repo. D3DXShader.c owns/free its native buffer; no runtime sShaderPrograms tree/COW string-map storage remains. This verified cache replacement is intentional, not equality of missing old helpers."
+  },
+  "mac:0x002ef03a": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ef03a: Identity is CD3DXConstantTable text-to-CTAB construction or the sShaderPrograms map<string,string> lookup/insert/erase/global lifetime. Read Mac constructor0x13ce58 and D3DXGetShaderConstantTable0x13d2d0 using name::program and map lookup. Selected native lp64_shader_cache.h loads external ARB/CTAB assets by #COD2CTAB marker; tools/macos-port/extract_shaders.py converts original metadata to typed-offset CTAB records outside repo. D3DXShader.c owns/free its native buffer; no runtime sShaderPrograms tree/COW string-map storage remains. This verified cache replacement is intentional, not equality of missing old helpers."
+  },
+  "mac:0x002ef618": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ef618: Identity is CD3DXConstantTable text-to-CTAB construction or the sShaderPrograms map<string,string> lookup/insert/erase/global lifetime. Read Mac constructor0x13ce58 and D3DXGetShaderConstantTable0x13d2d0 using name::program and map lookup. Selected native lp64_shader_cache.h loads external ARB/CTAB assets by #COD2CTAB marker; tools/macos-port/extract_shaders.py converts original metadata to typed-offset CTAB records outside repo. D3DXShader.c owns/free its native buffer; no runtime sShaderPrograms tree/COW string-map storage remains. This verified cache replacement is intentional, not equality of missing old helpers."
+  },
+  "mac:0x002ef110": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ef110: Identity is CD3DXConstantTable text-to-CTAB construction or the sShaderPrograms map<string,string> lookup/insert/erase/global lifetime. Read Mac constructor0x13ce58 and D3DXGetShaderConstantTable0x13d2d0 using name::program and map lookup. Selected native lp64_shader_cache.h loads external ARB/CTAB assets by #COD2CTAB marker; tools/macos-port/extract_shaders.py converts original metadata to typed-offset CTAB records outside repo. D3DXShader.c owns/free its native buffer; no runtime sShaderPrograms tree/COW string-map storage remains. This verified cache replacement is intentional, not equality of missing old helpers."
+  },
+  "mac:0x002ef2a8": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ef2a8: Identity is CD3DXConstantTable text-to-CTAB construction or the sShaderPrograms map<string,string> lookup/insert/erase/global lifetime. Read Mac constructor0x13ce58 and D3DXGetShaderConstantTable0x13d2d0 using name::program and map lookup. Selected native lp64_shader_cache.h loads external ARB/CTAB assets by #COD2CTAB marker; tools/macos-port/extract_shaders.py converts original metadata to typed-offset CTAB records outside repo. D3DXShader.c owns/free its native buffer; no runtime sShaderPrograms tree/COW string-map storage remains. This verified cache replacement is intentional, not equality of missing old helpers."
+  },
+  "mac:0x002f1066": {
+    "status": "equal",
+    "evidence": "Mac 0x2f1066: Read coalesced CVAOPacket lower_bound against native typed tree traversal: return header if empty; key<=node selects candidate+left, otherwise right."
+  },
+  "mac:0x002f109a": {
+    "status": "equal",
+    "evidence": "Mac 0x2f109a: Read coalesced CVAOPacket upper_bound against native typed tree traversal: key<node selects candidate+left, equality descends right; header is empty/end result."
+  },
+  "mac:0x002f131e": {
+    "status": "fixed",
+    "evidence": "Mac 0x2f131e: Restored missing insert_equal: descend left for key<node key, right for equal/greater, then call restored _M_insert with null x and final parent. Compiled and reviewed, not exercised."
+  },
+  "mac:0x002f1370": {
+    "status": "fixed",
+    "evidence": "Mac 0x2f1370: Restored missing subtree eraser: recursively erase right, destroy packet, delete node and iterate left; it does not rebalance or change count, matching the coalesced body. Compiled and reviewed, not exercised."
+  },
+  "mac:0x002f12a0": {
+    "status": "fixed",
+    "evidence": "Mac 0x2f12a0: Restored missing typed CVAOPacket tree insertion: allocate sizeof(native node), copy key/packet, choose left on non-null x/header/key comparison, rebalance and increment count; one-pointer iterator result. Compared the Mac copy constructor0x2f10ce and native macos_cpp_abi node layout. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00113a6e": {
+    "status": "fixed",
+    "evidence": "Mac 0x113a6e: Compared priority65535 initialize/destroy branches. Native destruction incorrectly called Shutdown and reset status/header; now destroys the generic packet and erases the tree without the Shutdown resets. Native explicit InitializeGenericVAO owns active initial setup. Compiled and reviewed, not exercised."
+  },
+  "mac:0x0013d578": {
+    "status": "intentional",
+    "evidence": "Mac 0x13d578: Identity is CD3DXConstantTable text-to-CTAB construction or the sShaderPrograms map<string,string> lookup/insert/erase/global lifetime. Read Mac constructor0x13ce58 and D3DXGetShaderConstantTable0x13d2d0 using name::program and map lookup. Selected native lp64_shader_cache.h loads external ARB/CTAB assets by #COD2CTAB marker; tools/macos-port/extract_shaders.py converts original metadata to typed-offset CTAB records outside repo. D3DXShader.c owns/free its native buffer; no runtime sShaderPrograms tree/COW string-map storage remains. This verified cache replacement is intentional, not equality of missing old helpers."
+  },
+  "mac:0x0001e96c": {
+    "status": "intentional",
+    "evidence": "Mac 0x1e96c: Identity is CStaticCacheInfo/CCacheInfoBlock storage or associated fence-ID vector insertion (see symbol) from original VAR vertex-buffer caching. Active CDirect3DVertexBufferClean owns a typed CPU data pointer and length, directly locks/uses/releases that memory; native draw binds GL client buffers0 and submits those CPU arrays. It never constructs a static-cache block vector/list and CFence constructor does not allocate IDs. Read lp64_buffers.h, native buffer constructor/release and draw path; this specific unused VAR-cache ownership is replaced, not the GL renderer as a whole."
+  },
+  "mac:0x0001f48e": {
+    "status": "intentional",
+    "evidence": "Mac 0x1f48e: Identity is CStaticCacheInfo/CCacheInfoBlock storage or associated fence-ID vector insertion (see symbol) from original VAR vertex-buffer caching. Active CDirect3DVertexBufferClean owns a typed CPU data pointer and length, directly locks/uses/releases that memory; native draw binds GL client buffers0 and submits those CPU arrays. It never constructs a static-cache block vector/list and CFence constructor does not allocate IDs. Read lp64_buffers.h, native buffer constructor/release and draw path; this specific unused VAR-cache ownership is replaced, not the GL renderer as a whole."
+  },
+  "mac:0x0001f4f0": {
+    "status": "intentional",
+    "evidence": "Mac 0x1f4f0: Identity is CStaticCacheInfo/CCacheInfoBlock storage or associated fence-ID vector insertion (see symbol) from original VAR vertex-buffer caching. Active CDirect3DVertexBufferClean owns a typed CPU data pointer and length, directly locks/uses/releases that memory; native draw binds GL client buffers0 and submits those CPU arrays. It never constructs a static-cache block vector/list and CFence constructor does not allocate IDs. Read lp64_buffers.h, native buffer constructor/release and draw path; this specific unused VAR-cache ownership is replaced, not the GL renderer as a whole."
+  },
+  "mac:0x00004a56": {
+    "status": "intentional",
+    "evidence": "Mac 0x4a56: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x0000c090": {
+    "status": "intentional",
+    "evidence": "Mac 0xc090: Identity is MacWinCursor resource loading, WinIcon/WinCursor string+Carbon cursor ownership, or its sCursorList vector initialization/insertion/destruction (see symbol). Read original resource flow and searched native callers: LoadCursorFromFileA/WinCursor_Load/ReadCursor have no engine call outside that dormant unit. Native linux_input.c uses SDL relative input/capture and SDL_ShowCursor with the system cursor; no native WinCursor object/vector is constructed. Original custom-cursor API stubs are not claimed equal."
+  },
+  "mac:0x002ec70a": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ec70a: FSRef vector insertion belongs to legacy SearchForApplication/LaunchServices discovery in MacTools. Native source has no caller of SearchForApplication, MacTools_FindApplicationPSN or FindDiscVolume; the launcher/native URL/application paths do not construct an FSRef vector. Read pending files-tools MacTools.c and searched caller graph; no native container-layout identity claimed."
+  },
+  "mac:0x002ec944": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ec944: FFItem vector insertion belongs to the old eager file-search list. Selected Mac/Tools/MacWin32.c FindFirstFileA/FindNextFileA uses typed FFState with DIR*, pattern and direct readdir/stat, and owns/frees one state, never constructing FFItem vector storage. Read current and pending Win32 provider; the generic old export is dormant, not equal to a no-op."
+  },
+  "mac:0x002eb806": {
+    "status": "intentional",
+    "evidence": "Mac 0x2eb806: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x002eb990": {
+    "status": "intentional",
+    "evidence": "Mac 0x2eb990: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x002edf6a": {
+    "status": "intentional",
+    "evidence": "Mac 0x2edf6a: CTexStage vector insert/erase belongs to original CDirect3DDevice validation storage. Selected DeviceImpl/native renderer uses fixed g_textureStageState[8][...] and native binding arrays; no CTexStage vector object or direct helper caller exists. Read DeviceImpl, Init and native draw consumers. Original constructor default parity is separately unchecked, not inferred from this replacement."
+  },
+  "mac:0x002edc72": {
+    "status": "intentional",
+    "evidence": "Mac 0x2edc72: CTexStage vector insert/erase belongs to original CDirect3DDevice validation storage. Selected DeviceImpl/native renderer uses fixed g_textureStageState[8][...] and native binding arrays; no CTexStage vector object or direct helper caller exists. Read DeviceImpl, Init and native draw consumers. Original constructor default parity is separately unchecked, not inferred from this replacement."
+  },
+  "mac:0x002eead8": {
+    "status": "intentional",
+    "evidence": "Mac 0x2eead8: CTexUnit vector insert/erase belongs to COpenGL state ownership. Native lp64_gl_state.h defines fixed CTexUnitNative texUnits[16] in COpenGLNative; COpenGL_Init/TexUnitBase and consumers address those native entries and never construct a vector header. Read live native allocation/initialization and traversal; old generic exports are dormant."
+  },
+  "mac:0x002eef68": {
+    "status": "intentional",
+    "evidence": "Mac 0x2eef68: CTexUnit vector insert/erase belongs to COpenGL state ownership. Native lp64_gl_state.h defines fixed CTexUnitNative texUnits[16] in COpenGLNative; COpenGL_Init/TexUnitBase and consumers address those native entries and never construct a vector header. Read live native allocation/initialization and traversal; old generic exports are dormant."
+  },
+  "mac:0x002f1664": {
+    "status": "intentional",
+    "evidence": "Mac 0x2f1664: CSoundObject/CStreamSound pointer-vector helper in discarded MacMSS/Miles object backend. Native cmake excludes MacMSS files and selects platform/macos_audio.c MacAudioSample[256]/AudioUnit and native stream callbacks; no original C++ sound-object vector is allocated/called. Bundled Miles is explicitly outside reconciliation. Read actual native mixer/storage owner, not a blanket system-header exemption."
+  },
+  "mac:0x002f15d6": {
+    "status": "intentional",
+    "evidence": "Mac 0x2f15d6: CSoundObject/CStreamSound pointer-vector helper in discarded MacMSS/Miles object backend. Native cmake excludes MacMSS files and selects platform/macos_audio.c MacAudioSample[256]/AudioUnit and native stream callbacks; no original C++ sound-object vector is allocated/called. Bundled Miles is explicitly outside reconciliation. Read actual native mixer/storage owner, not a blanket system-header exemption."
+  },
+  "mac:0x002f1612": {
+    "status": "intentional",
+    "evidence": "Mac 0x2f1612: CSoundObject/CStreamSound pointer-vector helper in discarded MacMSS/Miles object backend. Native cmake excludes MacMSS files and selects platform/macos_audio.c MacAudioSample[256]/AudioUnit and native stream callbacks; no original C++ sound-object vector is allocated/called. Bundled Miles is explicitly outside reconciliation. Read actual native mixer/storage owner, not a blanket system-header exemption."
+  },
+  "mac:0x002f1e4e": {
+    "status": "intentional",
+    "evidence": "Mac 0x2f1e4e: CSoundObject/CStreamSound pointer-vector helper in discarded MacMSS/Miles object backend. Native cmake excludes MacMSS files and selects platform/macos_audio.c MacAudioSample[256]/AudioUnit and native stream callbacks; no original C++ sound-object vector is allocated/called. Bundled Miles is explicitly outside reconciliation. Read actual native mixer/storage owner, not a blanket system-header exemption."
+  },
+  "mac:0x002f1e12": {
+    "status": "intentional",
+    "evidence": "Mac 0x2f1e12: CSoundObject/CStreamSound pointer-vector helper in discarded MacMSS/Miles object backend. Native cmake excludes MacMSS files and selects platform/macos_audio.c MacAudioSample[256]/AudioUnit and native stream callbacks; no original C++ sound-object vector is allocated/called. Bundled Miles is explicitly outside reconciliation. Read actual native mixer/storage owner, not a blanket system-header exemption."
+  },
+  "mac:0x002f183a": {
+    "status": "intentional",
+    "evidence": "Mac 0x2f183a: CDirect3DVolume pointer-vector growth/reserve belongs to volume-texture mip ownership. Active CDirect3DVolumeTextureClean uses calloc(levelCount,sizeof(void*)) volumes and explicit indexed cleanup/free, not a C++ vector header/caller. Read native constructor/destructor allocation contract; actual GL volume operations remain in scope elsewhere."
+  },
+  "mac:0x002ee334": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ee334: CDirect3DSurface pointer-vector helper belongs to texture/cube mip surface ownership. Active CDirect3DTextureClean/CDirect3DCubeTextureClean allocate typed void** surface arrays with calloc(levelCount[/times6],sizeof(void*)), construct indexed surfaces and release/free arrays in their destructors. No native vector header/caller remains; read those allocation/release paths. Surface GL resources themselves remain active and are not retired here."
+  },
+  "mac:0x002ed682": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ed682: CDirect3DSurface pointer-vector helper belongs to texture/cube mip surface ownership. Active CDirect3DTextureClean/CDirect3DCubeTextureClean allocate typed void** surface arrays with calloc(levelCount[/times6],sizeof(void*)), construct indexed surfaces and release/free arrays in their destructors. No native vector header/caller remains; read those allocation/release paths. Surface GL resources themselves remain active and are not retired here."
+  },
+  "mac:0x002ed8d0": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ed8d0: CDirect3DSurface pointer-vector helper belongs to texture/cube mip surface ownership. Active CDirect3DTextureClean/CDirect3DCubeTextureClean allocate typed void** surface arrays with calloc(levelCount[/times6],sizeof(void*)), construct indexed surfaces and release/free arrays in their destructors. No native vector header/caller remains; read those allocation/release paths. Surface GL resources themselves remain active and are not retired here."
+  },
+  "mac:0x002ee646": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ee646: Identity is CStaticCacheInfo/CCacheInfoBlock storage or associated fence-ID vector insertion (see symbol) from original VAR vertex-buffer caching. Active CDirect3DVertexBufferClean owns a typed CPU data pointer and length, directly locks/uses/releases that memory; native draw binds GL client buffers0 and submits those CPU arrays. It never constructs a static-cache block vector/list and CFence constructor does not allocate IDs. Read lp64_buffers.h, native buffer constructor/release and draw path; this specific unused VAR-cache ownership is replaced, not the GL renderer as a whole."
+  },
+  "mac:0x002ee79c": {
+    "status": "equal",
+    "evidence": "Mac 0x2ee79c: Read coalesced vector<unsigned long> erase against CFence.c native GLuint vector: memmove tail over [first,last), reduce end by erased element count, return first. GLuint remains32-bit on LP64, as the original fence-ID element was."
+  },
+  "mac:0x0001a7ba": {
+    "status": "unchecked",
+    "evidence": "Mac 0x1a7ba: Read constructor and selected native CreateDevice->4096-byte static storage->CDirect3DDevice_Init path. Existing CDirect3DDevice_CDirect3DDevice only sets vtable/refcount; Init initializes a different typed DeviceImpl and many defaults differ. Exact default/state/Reset equivalence has not been established. Parent retains the broader device-initialization audit; no constructor change made here."
+  },
+  "mac:0x0001ab62": {
+    "status": "unchecked",
+    "evidence": "Mac 0x1ab62: Read constructor and selected native CreateDevice->4096-byte static storage->CDirect3DDevice_Init path. Existing CDirect3DDevice_CDirect3DDevice only sets vtable/refcount; Init initializes a different typed DeviceImpl and many defaults differ. Exact default/state/Reset equivalence has not been established. Parent retains the broader device-initialization audit; no constructor change made here."
+  },
+  "mac:0x002ebb82": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ebb82: Identity is MacDisplay CDisplayInfo/CResInfo/monitor-rectangle storage or its Carbon monitor-preview/sort helper (see symbol). cmake/macos-arm64.cmake explicitly excludes Mac/Tools/MacDisplay.c. Active platform/macos_display.c enumerates SDL_DisplayMode into typed MacMode storage and supplies window/context/mode queries, with no CDisplayInfo/CResInfo/vector/Carbon preview object. Read that provider and native mode consumers; this specific display-model replacement does not exempt active D3DDISPLAYMODE sorting in r_init.c."
+  },
+  "mac:0x002f196c": {
+    "status": "intentional",
+    "evidence": "Mac 0x2f196c: CDirect3DVolume pointer-vector growth/reserve belongs to volume-texture mip ownership. Active CDirect3DVolumeTextureClean uses calloc(levelCount,sizeof(void*)) volumes and explicit indexed cleanup/free, not a C++ vector header/caller. Read native constructor/destructor allocation contract; actual GL volume operations remain in scope elsewhere."
+  },
+  "mac:0x002ee466": {
+    "status": "intentional",
+    "evidence": "Mac 0x2ee466: CDirect3DSurface pointer-vector helper belongs to texture/cube mip surface ownership. Active CDirect3DTextureClean/CDirect3DCubeTextureClean allocate typed void** surface arrays with calloc(levelCount[/times6],sizeof(void*)), construct indexed surfaces and release/free arrays in their destructors. No native vector header/caller remains; read those allocation/release paths. Surface GL resources themselves remain active and are not retired here."
+  },
+  "mac:0x001405ce": {
+    "status": "fixed",
+    "evidence": "Mac 0x1405ce: Restored Console_Key inlined completion behavior through native helpers: preserve original argument tail, distinguish command/file and enum completion, strip file extension, trim trailing spaces for replacement, preserve multi-match cursor, restore history slot even when up cannot decrement; lowercase-only Ctrl-L and three-page Ctrl-wheel match0x1405dd/0x140bae\u20130x140bcb. PunkBuster prefix formatting is retained but discarded PB completion backend stays absent. Defensive enum/null and argument-bound checks keep native storage defined. Compiled and reviewed, not exercised."
+  },
+  "mac:0x0020df44": {
+    "status": "intentional",
+    "evidence": "Mac 0x20df44: This is a bundled libwww NEWS/rule/FTP-directory parser body, outside the explicit reconciliation scope. Native engine download owner src/PC/qcommon/dl_main.c uses SDK libcurl through CURL/CURLM; none of HTGetNewsServer/HTRule_put_block/ParseUnix has a native engine provider or caller. Bundled protocol/parser behavior is not reconstructed or labeled equal."
+  },
+  "mac:0x002133dc": {
+    "status": "intentional",
+    "evidence": "Mac 0x2133dc: This is a bundled libwww NEWS/rule/FTP-directory parser body, outside the explicit reconciliation scope. Native engine download owner src/PC/qcommon/dl_main.c uses SDK libcurl through CURL/CURLM; none of HTGetNewsServer/HTRule_put_block/ParseUnix has a native engine provider or caller. Bundled protocol/parser behavior is not reconstructed or labeled equal."
+  },
+  "mac:0x00219558": {
+    "status": "intentional",
+    "evidence": "Mac 0x219558: This is a bundled libwww NEWS/rule/FTP-directory parser body, outside the explicit reconciliation scope. Native engine download owner src/PC/qcommon/dl_main.c uses SDK libcurl through CURL/CURLM; none of HTGetNewsServer/HTRule_put_block/ParseUnix has a native engine provider or caller. Bundled protocol/parser behavior is not reconstructed or labeled equal."
+  },
+  "mac:0x00002515": {
+    "status": "intentional",
+    "evidence": "Mac 0x2515: Read Apple Csu crt.c startup/dyld registration and main/exit handoff. Native executable links the current SDK/libSystem/libc++ startup and uses src/unix/linux_common.c main; i386 dyld lookup, keymgr unwind registration and old crt entry are platform-runtime machinery, not engine bodies to port."
+  },
+  "mac:0x00002416": {
+    "status": "intentional",
+    "evidence": "Mac 0x2416: Read Apple Csu crt.c startup/dyld registration and main/exit handoff. Native executable links the current SDK/libSystem/libc++ startup and uses src/unix/linux_common.c main; i386 dyld lookup, keymgr unwind registration and old crt entry are platform-runtime machinery, not engine bodies to port."
   }
 }
