@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**Current: 172/229 reconciled: 142 equal, 30 fixed, 0 intentional; 57 unchecked.**
+**Current: 173/229 reconciled: 143 equal, 30 fixed, 0 intentional; 56 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -493,3 +493,11 @@ Independent review: review-provenance-ui2d23.md. Full original/actual Mac owners
 placement jump tables and source hashes are retained in
 recon-provenance-pointbounds22.noindex. This alias required no source change,
 compilation, tests, CI, full build, replay or runtime exercise.
+
+## Vec4ops24: complete trace sum and retained subtraction gap
+
+`VectorAdd4` is equal for the complete consumed four-component sum stored into the actual trace split vector. Exact Mac `CM_PointTraceStaticModels` at 0xb00e2 constructs distinct start XYZ/fraction-zero and end XYZ/current-fraction float4 inputs. The recursive owner at 0xafeac copies all four components to local `p`; on a split, ADDSS at 0xb003d/0xb0058/0xb0073/0xb0089 adds the corresponding actual scaled-difference value to each component and writes all four `mid` floats. The actual recursive call at 0xb00b3 consumes `mid`, and 0xb00c4–0xb00d9 copies all four words into `p` for the other child. XYZ supplies spatial split coordinates and the fourth component supplies the fraction prune. Native four-component locals and expressions preserve the complete addition/storage operation. No hypothetical second-operand array is needed: those operands are the actual generated scalar values from this common interpolation.
+
+`VectorSubtract4` remains unchecked. Four genuine float SUBSS operations at 0xb0035/0xb0050/0xb006b/0xb0081 improve the evidence beyond the prior three-component and packed-short candidates. Each difference is immediately scaled and added, however, before an interpolated component is stored. There is no established unscaled output vector or independent unscaled vector consumer. The reconstructed helper's four output writes cannot be attributed by assuming an eliminated temporary without original inline identity. The complete addition output does not resolve that separate storage gap.
+
+The reconstructed header supplies names/intent only; this closure uses complete actual Mac/native operation evidence, not a recovered standalone original helper or literal inline ancestry. The domain is the actual produced operand values and distinct local/ancestor storage. It excludes arbitrary pointer overlap, exported ABI, FP flags/trap timing/NaN payload selection, concurrent observation and whole trace/traversal equivalence. Fresh exact wrapper/recursive bodies match the retained evidence; source is unchanged. Independent split review: `units/review-provenance-vec4ops24.md`; private evidence: `recon-provenance-vec4ops24.noindex`. One closure, one refined unchecked row, no new defect or source change. Static review only; no compilation, tests, CI, replay or runtime verification.
