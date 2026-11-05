@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 343,
+      "unchecked": 341,
       "intentional": 3171,
-      "equal": 4761,
+      "equal": 4763,
       "fixed": 1182
     },
     "scopes": {
@@ -12903,8 +12903,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Linux-only save-side inline; no verified Mac save writer identity/callsite found. Native archive WriteData provider alone cannot prove this missing callsite."
+        "status": "equal",
+        "evidence": "Complete original FxArchive::WriteByte(unsigned char) operation identified, not an inferred FX_Save caller: Mac STABS declares _ZN9FxArchive9WriteByteEh; exact ArchiveEffect 0xaa22e-0xaa248 materializes the low-byte value in a local and forwards its address with byteCount 1 to WriteData. Native FxArchive_ArchiveEffect performs the same unsigned-char local/address/count call. The matching reconstruction member in FxUtil.cpp is the generic scalar writer also declared in FxArchive.cpp, not a separate save-specific API. Existing WriteData fixes and documented nonfatal-overflow adaptation remain; this closure does not establish FX_Save, BeginWriting or archive runtime coverage."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:319:WriteInt",
@@ -12922,8 +12922,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Linux-only save-side inline; no verified Mac save writer identity/callsite found. Native archive WriteData provider alone cannot prove this missing callsite."
+        "status": "equal",
+        "evidence": "Complete original FxArchive::WriteInt(int) operation identified: Mac STABS declares _ZN9FxArchive8WriteIntEi; FxArchive.h line 137 attributes the complete four-byte by-value forwarding at FxScheduler::Archive 0x625ac-0x625c9 (and Effect::Archive 0xa83e0-0xa8400). Native FxScheduler_Archive and ArchiveInt materialize int locals and call WriteData with count 4. The FxUtil.cpp row is the same C++ member defined in FxPrimitives.cpp/FxScheduler.cpp, not a separate FX_Save wrapper; the duplicate identity and complete Mac/native operations were checked directly. Existing writer adaptations remain; no save-root or runtime verification claimed."
       },
       {
         "id": "mac:0x00058de8",
