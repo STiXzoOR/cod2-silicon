@@ -291,8 +291,23 @@ void ZN10COpenGLVAOD2Ev(const COpenGLVAO *_this)
         return;
 #endif
 
+#if defined(COD2_X64)
+    COpenGLVAOImpl *vao = (COpenGLVAOImpl *)_this;
+    int i;
+
+    vao->vtable = getVtblPtr(imp___ZTV10COpenGLVAO);
+    for (i = 7; i >= 0; --i) {
+        CBaseVAImpl *array = &vao->mTexCoordArrays[i];
+        ((void (*)(const CBaseVA *))array->vtable[0])((const CBaseVA *)array);
+    }
+    vao->mVertexArray.vtable = getVtblPtr(imp___ZTV7CBaseVA);
+    vao->mNormalArray.vtable = getVtblPtr(imp___ZTV7CBaseVA);
+    vao->mSecondaryColorArray.vtable = getVtblPtr(imp___ZTV7CBaseVA);
+    vao->mColorArray.vtable = getVtblPtr(imp___ZTV7CBaseVA);
+#else
     (void)_this;
 
+#endif
 }
 
 void ZN10COpenGLVAOD1Ev(const COpenGLVAO *_this)

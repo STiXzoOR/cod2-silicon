@@ -275,18 +275,31 @@ void CVAOPacket_InitializeGenericVAO(void)
         return;
 #endif
 
+#if !defined(COD2_X64)
     CVAOPacketRbTree *allPackets;
+#endif
     CVAOPacketImpl *genericPacket;
     int i;
 
+#if !defined(COD2_X64)
     allPackets = (CVAOPacketRbTree *)CVAOPacket_sAllPackets;
+#endif
     genericPacket = CVAOPacket_GetGenericPacket(0);
 
+#if defined(COD2_X64)
+    /* Native startup does not run the old C++ initializer. This constructor
+     * only installs object metadata; the GL binding is created below. */
+    if (genericPacket->vtable == NULL)
+        CVAOPacket_CVAOPacket((const CVAOPacket *)genericPacket);
+#endif
+
+#if !defined(COD2_X64)
     allPackets->_M_node_count = 0;
     allPackets->_M_header._M_color = 0;
     allPackets->_M_header._M_parent = NULL;
     allPackets->_M_header._M_left = &allPackets->_M_header;
     allPackets->_M_header._M_right = &allPackets->_M_header;
+#endif
 
     genericPacket->mpVAOID = NULL;
     genericPacket->mCode = 0;
@@ -689,6 +702,13 @@ static void __static_initialization_and_destruction_0(int __initialize_p, int __
     }
 
     if (__initialize_p == 0) {
+#if defined(COD2_X64)
+        CVAOPacketImpl *packet = CVAOPacket_GetGenericPacket(0);
+        ((void (*)(void *))packet->vtable[0])(packet);
+        allPackets = (CVAOPacketRbTree *)CVAOPacket_sAllPackets;
+        ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(
+            allPackets, (CVAOPacketRbTreeNode *)allPackets->_M_header._M_parent);
+#else
         ZN10CVAOPacketD2Ev((const CVAOPacket *)CVAOPacket_sGenericPacket);
 #if defined(COD2_X64)
         allPackets = (CVAOPacketRbTree *)CVAOPacket_sAllPackets;
@@ -734,10 +754,41 @@ bool CVAOPacketProgrammable_IsFixedFunction(const CVAOPacket *_this)
     return 0;
 }
 
+#if defined(COD2_X64)
+extern void *imp___ZTV23CVAOPacketFixedFunction;
+extern void *imp___ZTV22CVAOPacketProgrammable;
+
+void ZN23CVAOPacketFixedFunctionD1Ev(const CVAOPacket *_this)
+{
+    ((CVAOPacketImpl *)_this)->vtable =
+        (void **)((char *)imp___ZTV23CVAOPacketFixedFunction + 2 * sizeof(void *));
+    ZN10CVAOPacketD2Ev(_this);
+}
+
+void ZN23CVAOPacketFixedFunctionD0Ev(const CVAOPacket *_this)
+{
+    ZN23CVAOPacketFixedFunctionD1Ev(_this);
+    __ZdlPv((void *)_this);
+}
+
+void ZN22CVAOPacketProgrammableD1Ev(const CVAOPacket *_this)
+{
+    ((CVAOPacketImpl *)_this)->vtable =
+        (void **)((char *)imp___ZTV22CVAOPacketProgrammable + 2 * sizeof(void *));
+    ZN10CVAOPacketD2Ev(_this);
+}
+
+void ZN22CVAOPacketProgrammableD0Ev(const CVAOPacket *_this)
+{
+    ZN22CVAOPacketProgrammableD1Ev(_this);
+    __ZdlPv((void *)_this);
+}
+#else
 void ZN23CVAOPacketFixedFunctionD1Ev(void) {}
 void ZN23CVAOPacketFixedFunctionD0Ev(void) {}
 void ZN22CVAOPacketProgrammableD1Ev(void) {}
 void ZN22CVAOPacketProgrammableD0Ev(void) {}
+#endif
 
 CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key)
 {

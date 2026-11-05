@@ -31254,5 +31254,301 @@
   "mac:0x0013d5f4": {
     "status": "intentional",
     "evidence": "Read Mac 0x0013d5f4 wrapper and its 0x13d578 static initializer/destructor: initializes/destroys sShaderPrograms string-key tree (header 0xda6504, root 0xda6508, count 0xda6514). The selected native implementation deliberately uses MacShader_ReadCache/MacD3DXCompileShader/D3DXGetShaderConstantTable in lp64_shader_cache.h with per-result owned typed buffers, replacing this embedded-data map and its global lifetime. No native map body is required. Existing ASan/UBSan shader_cache fixture passed unchanged; missing-cache failures are retained."
+  },
+  "mac:0x00112310": {
+    "status": "equal",
+    "evidence": "Read Mac 0x112310: Compare only packet word 8, matching native fixed-width mCode equality. Nonzero pointer/key production remains unresolved in the device builder rows."
+  },
+  "mac:0x00112328": {
+    "status": "equal",
+    "evidence": "Read Mac 0x112328: Allocate ID, generate one APPLE VAO, allocate/hook ownership node then store ID pointer. Native pointer-sized node and actual typed list from pending GL cd687d6 match; actual provider source inspected and Apple object compiled."
+  },
+  "mac:0x00112304": {
+    "status": "equal",
+    "evidence": "Read Mac 0x112304: Return packet word 8: native returns existing UINT32 mCode. This is field-access equality, not proof of nonzero widened VARange production."
+  },
+  "mac:0x00112382": {
+    "status": "equal",
+    "evidence": "Read Mac 0x112382: Independently mark three triangle vertices present in FIFO and sum byte flags. Native deque traversal matches 256-unsigned-short blocks and finish iterator. Read by hand and explicit-range constants checked."
+  },
+  "mac:0x00112422": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x112422: Original 0x112449-0x112496 selects the first strictly highest unsigned FIFO score. Exact pending System 5f88bd5 strict-greater correction is retained; native previously selected lower scores and replaced ties. Copy/unhook/delete match. Combined owned object compiled and reviewed, not exercised."
+  },
+  "mac:0x0000f228": {
+    "status": "unchecked",
+    "evidence": "Read Mac 0xf228: Fixed-function cached VAO builder is absent in actual pending device provider 9f05cde. Read original producer 0xf313-0xf340: buffer data+stream offset+stride*g_Low and byte count become packet words 8/12. Native DeviceImpl, buffer storage, UINT32 packet fields and multimap key have no established widened producer/allocation contract. Current direct client arrays do not prove equivalence."
+  },
+  "mac:0x0000fbac": {
+    "status": "unchecked",
+    "evidence": "Read Mac 0xfbac: Programmable cached VAO builder is absent in actual pending device provider 9f05cde. Read original range producer 0xfbde-0xfbff, cache and sixteen generic-stream branches. Native has no corresponding widened packet range/key/device-declaration contract; selected direct client-array drawing does not establish this function."
+  },
+  "mac:0x0000d6a0": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd6a0: Exact-symbol entry restarted: original DrawPrimitive is a zero-return body; actual pending device provider 9f05cde matches."
+  },
+  "mac:0x0000d6a8": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd6a8: Original DrawPrimitiveUP returns zero without reading arguments; actual pending device provider 9f05cde matches."
+  },
+  "mac:0x001133cc": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1133cc: Original D2 installs packet vtable then calls VAO D2. Native wrapper matches; its VAO-destructor dependency is corrected in this batch."
+  },
+  "mac:0x001133e2": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1133e2: Original D1 installs packet vtable then calls VAO D2. Native D1 delegates to its identical D2 sequence; VAO-destructor dependency is corrected in this batch."
+  },
+  "mac:0x001133f8": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1133f8: Original D0 installs packet vtable, calls VAO D2 and deletes storage. Native wrapper matches; VAO-destructor dependency is corrected in this batch."
+  },
+  "mac:0x002ed50a": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ed50a: Original installs the derived packet vtable, invokes packet D2. Native derived destructor was empty; restored native sequence, compiled and reviewed, not exercised."
+  },
+  "mac:0x002ed524": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ed524: Original installs the derived packet vtable, invokes packet D2 and deletes storage. Native derived destructor was empty; restored native sequence, compiled and reviewed, not exercised."
+  },
+  "mac:0x002ed4b4": {
+    "status": "equal",
+    "evidence": "Read Mac 0x2ed4b4: Fixed-function predicate returns one, matching native."
+  },
+  "mac:0x002ed4c6": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ed4c6: Original installs the derived packet vtable, invokes packet D2. Native derived destructor was empty; restored native sequence, compiled and reviewed, not exercised."
+  },
+  "mac:0x002ed4e0": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ed4e0: Original installs the derived packet vtable, invokes packet D2 and deletes storage. Native derived destructor was empty; restored native sequence, compiled and reviewed, not exercised."
+  },
+  "mac:0x002ed4be": {
+    "status": "equal",
+    "evidence": "Read Mac 0x2ed4be: Programmable predicate returns zero, matching native."
+  },
+  "mac:0x001133ae": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1133ae: Original calls COpenGLVAO base construction then installs CVAOPacket vtable. Native constructor matches with pointer-sized metadata."
+  },
+  "mac:0x002f10ce": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2f10ce: Missing copy construction is supplied by exact pending System 5f88bd5 CVAOPacket_CopyConstruct. Independently read original copy of binding/range words, twelve base-array states, sixteen complete generic stream states, and proper destination vtables. Exact System helper and Cache callers retained; compiled and reviewed, not exercised. No extra SDK ledger IDs closed."
+  },
+  "mac:0x001134c4": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x1134c4: Original resets generic packet state, creates binding, forces SetVAO(true,true), wraps selector at one and sets APPLE storage hint 0x851f/0x85bf; it does not reset packet cache tree. Removed native tree reset, preserved exact buffer e7a8148 static sentinel, and lazily constructs GL-free packet metadata when absent. Compiled and reviewed, not exercised; pending GL cd687d6 supplies selected caller/state copying."
+  },
+  "mac:0x002f105c": {
+    "status": "equal",
+    "evidence": "Read Mac 0x2f105c: Base packet fixed-function predicate returns one, matching native."
+  },
+  "mac:0x00113464": {
+    "status": "equal",
+    "evidence": "Read Mac 0x113464: Original sets generic status, forwards both flags/current packet, increments and wraps at one. Native matches with typed packet stride; actual pending GL cd687d6 provides SetVAO."
+  },
+  "mac:0x0011341e": {
+    "status": "equal",
+    "evidence": "Read Mac 0x11341e: Original chooses cached/virgin status 3/2, calls virtual fixed-function predicate, then SetVAO with force=false. Native body matches; actual pending GL cd687d6 provides selected state-copy consumer."
+  },
+  "mac:0x00113b40": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x113b40: Original priority-65535 destructor helper 0x113a8e-0x113adc invokes generic virtual D1 then erases tree without clearing metadata/status. Exact System 5f88bd5 tree erasure is preserved; refined its direct generic D2 call to virtual D1. Read required eraser against 0x2f1370-0x2f15cf. Compiled and reviewed, not exercised. Automatic exit hook is not installed without lifecycle/order proof."
+  },
+  "mac:0x00113b50": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x113b50: Original helper 0x113ae5-0x113b23 initializes tree and generic metadata at load time. Native retains exact e7a8148 static typed sentinel and lazy metadata construction in InitializeGenericVAO because selected startup lacks the old packet global hook. Constructors are GL-free on selected GL fallback; binding creation stays in GL initialization. Explicit callable initializer is retained."
+  },
+  "mac:0x002ee818": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee818: Read final base-vtable reset. Actual pending GL cd687d6 restores previously empty native destructor using pointer-sized vtables. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee82c": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee82c: Read final base-vtable reset and deleting deallocation. Actual pending GL cd687d6 restores previously empty native destructor using pointer-sized vtables and native C deallocation. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x00113174": {
+    "status": "equal",
+    "evidence": "Read Mac 0x113174: Exact-symbol constructor entry restarted at 0x113174: base vtable, disabled, validation=1, size=0, float type, stride/pointer zero match native."
+  },
+  "mac:0x001131ee": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1131ee: Store enabled=0 then disable caller-selected client-state enum; native matches."
+  },
+  "mac:0x001131d8": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1131d8: Store enabled=1 then enable caller-selected client-state enum; native matches."
+  },
+  "mac:0x00113212": {
+    "status": "equal",
+    "evidence": "Read Mac 0x113212: Use enabled byte to dispatch virtual slot 2/3, then clear validation; native pointer-sized vtable and state writes match."
+  },
+  "mac:0x001131ac": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1131ac: Reset six state fields without changing vtable; native shared reset helper matches."
+  },
+  "mac:0x002ee97c": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee97c: Read final base-vtable reset and deleting deallocation. Actual pending GL cd687d6 restores previously empty native destructor using pointer-sized vtables and native C deallocation. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee9a2": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee9a2: Read final base-vtable reset. Actual pending GL cd687d6 restores previously empty native destructor using pointer-sized vtables. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee862": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee862: Read base disable state update and glDisableClientState(0x8076). Actual pending GL cd687d6 restores this formerly empty native callback with the correct flag field/enum. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee846": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee846: Read base enable state update and glEnableClientState(0x8076). Actual pending GL cd687d6 restores this formerly empty native callback with the correct flag field/enum. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x00113246": {
+    "status": "equal",
+    "evidence": "Read Mac 0x113246: Cache type/stride/pointer/size then glColorPointer(size,type,stride,pointer); native matches."
+  },
+  "mac:0x0011327a": {
+    "status": "equal",
+    "evidence": "Read Mac 0x11327a: Cache enable/type/stride/pointer/size without GL calls or validation change; native matches."
+  },
+  "mac:0x002eea48": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2eea48: Read final base-vtable reset and deleting deallocation. Actual pending GL cd687d6 restores previously empty native destructor using pointer-sized vtables and native C deallocation. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002eea6e": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2eea6e: Read final base-vtable reset. Actual pending GL cd687d6 restores previously empty native destructor using pointer-sized vtables. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee8d2": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee8d2: Read base disable state update and glDisableClientState(0x8075). Actual pending GL cd687d6 restores this formerly empty native callback with the correct flag field/enum. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee8b6": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee8b6: Read base enable state update and glEnableClientState(0x8075). Actual pending GL cd687d6 restores this formerly empty native callback with the correct flag field/enum. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x001132a0": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1132a0: Cache type/stride/pointer and fixed size=3, then glNormalPointer(type,stride,pointer); native matches."
+  },
+  "mac:0x001132d0": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1132d0: Cache enable/type/stride/pointer and size=3 without GL calls or validation change; native matches."
+  },
+  "mac:0x001127e8": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x1127e8: Original installs VAO vtable, virtually destroys eight texcoord members in reverse order and leaves four conventional members with base vtables. Native D2 was empty; restoring it repairs D1/D0 delegation. No shared binding deletion in original or native. Compiled and reviewed, not exercised; actual pending callback provider cd687d6 inspected and compiled."
+  },
+  "mac:0x00112886": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x112886: Original installs VAO vtable, virtually destroys eight texcoord members in reverse order and leaves four conventional members with base vtables. Native D2 was empty; restoring it repairs D1/D0 delegation. No shared binding deletion in original or native. Compiled and reviewed, not exercised; actual pending callback provider cd687d6 inspected and compiled."
+  },
+  "mac:0x00112924": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x112924: Original installs VAO vtable, virtually destroys eight texcoord members in reverse order and leaves four conventional members with base vtables; D0 then deletes storage. Native D2 was empty; restoring it repairs D1/D0 delegation. No shared binding deletion in original or native. Compiled and reviewed, not exercised; actual pending callback provider cd687d6 inspected and compiled."
+  },
+  "mac:0x00112498": {
+    "status": "equal",
+    "evidence": "Read Mac 0x112498: Read normal C2 constructor separately: zero binding/range words, construct twelve conventional arrays with derived vtables, initialize sixteen generic records validation=1, disabled, size=4, float type, nonnormalized, stride/pointer zero. Native typed constructor matches; exact CBase constructor entry was restarted."
+  },
+  "mac:0x00112640": {
+    "status": "equal",
+    "evidence": "Read Mac 0x112640: Read normal C1 constructor separately: zero binding/range words, construct twelve conventional arrays with derived vtables, initialize sixteen generic records validation=1, disabled, size=4, float type, nonnormalized, stride/pointer zero. Native typed constructor matches; exact CBase constructor entry was restarted."
+  },
+  "mac:0x00022a0e": {
+    "status": "unchecked",
+    "evidence": "Read Mac 0x22a0e: Read original COpenGL C2 and actual pending GL cd687d6 constructor. Typed native singleton intentionally has no public C++ vptr; no proven replacement for original instance-matrix SetIdentity at offset 0x78. Device 9f05cde directly loads matrices and GL has per-unit texture matrices, but neither establishes this constructor contract. No unused shared fields invented."
+  },
+  "mac:0x00022b6e": {
+    "status": "unchecked",
+    "evidence": "Read Mac 0x22b6e: Read original COpenGL C1 and actual pending GL cd687d6 constructor. Typed native singleton intentionally has no public C++ vptr; no proven replacement for original instance-matrix SetIdentity at offset 0x78. Device 9f05cde directly loads matrices and GL has per-unit texture matrices, but neither establishes this constructor contract. No unused shared fields invented."
+  },
+  "mac:0x0001fede": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x1fede: Read cached-state comparison, forced/byte-flag branch and GL argument order against actual pending GL cd687d6 provider. That prerequisite replaces raw ILP32 offsets/no-op native bodies with typed native state. Actual Apple provider object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x0001ffa4": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x1ffa4: Read cached-state comparison, forced/byte-flag branch and GL argument order against actual pending GL cd687d6 provider. That prerequisite replaces raw ILP32 offsets/no-op native bodies with typed native state. Actual Apple provider object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x0001ff3a": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x1ff3a: Read cached-state comparison, forced/byte-flag branch and GL argument order against actual pending GL cd687d6 provider. That prerequisite replaces raw ILP32 offsets/no-op native bodies with typed native state. Actual Apple provider object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x0001fea4": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x1fea4: Read cached-state comparison, forced/byte-flag branch and GL argument order against actual pending GL cd687d6 provider. That prerequisite replaces raw ILP32 offsets/no-op native bodies with typed native state. Actual Apple provider object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x0001ff00": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x1ff00: Read cached-state comparison, forced/byte-flag branch and GL argument order against actual pending GL cd687d6 provider. That prerequisite replaces raw ILP32 offsets/no-op native bodies with typed native state. Actual Apple provider object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee9c0": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee9c0: Read final base-vtable reset and deleting deallocation. Actual pending GL cd687d6 restores previously empty native destructor using pointer-sized vtables and native C deallocation. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee9e6": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee9e6: Read final base-vtable reset. Actual pending GL cd687d6 restores previously empty native destructor using pointer-sized vtables. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee89a": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee89a: Read base disable state update and glDisableClientState(0x845e). Actual pending GL cd687d6 restores this formerly empty native callback with the correct flag field/enum. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee87e": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee87e: Read base enable state update and glEnableClientState(0x845e). Actual pending GL cd687d6 restores this formerly empty native callback with the correct flag field/enum. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee95e": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee95e: Read final base-vtable reset. Actual pending GL cd687d6 restores previously empty native destructor using pointer-sized vtables. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002eea8c": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2eea8c: Read final base-vtable reset and deleting deallocation. Actual pending GL cd687d6 restores previously empty native destructor using pointer-sized vtables and native C deallocation. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee942": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee942: Read base disable state update and glDisableClientState(0x8078). Actual pending GL cd687d6 restores this formerly empty native callback with the correct flag field/enum. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee926": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee926: Read base enable state update and glEnableClientState(0x8078). Actual pending GL cd687d6 restores this formerly empty native callback with the correct flag field/enum. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x00113352": {
+    "status": "equal",
+    "evidence": "Read Mac 0x113352: Cache type/stride/pointer/size then glTexCoordPointer(size,type,stride,pointer); native matches."
+  },
+  "mac:0x00113204": {
+    "status": "equal",
+    "evidence": "Read Mac 0x113204: Short overload updates only enabled byte, matching native; distinct full overload is separately fixed."
+  },
+  "mac:0x00113386": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x113386: Full CTexCoordArray::SetGuard writes enable/type/stride/pointer/size and leaves validation unchanged. Native had only enable-only overload. Added native CTexCoordArray_SetGuardFull, compiled and reviewed, not exercised. Missing device VAO builders remain unchecked."
+  },
+  "mac:0x002eea04": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2eea04: Read final base-vtable reset and deleting deallocation. Actual pending GL cd687d6 restores previously empty native destructor using pointer-sized vtables and native C deallocation. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002eea2a": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2eea2a: Read final base-vtable reset. Actual pending GL cd687d6 restores previously empty native destructor using pointer-sized vtables. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee90a": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee90a: Read base disable state update and glDisableClientState(0x8074). Actual pending GL cd687d6 restores this formerly empty native callback with the correct flag field/enum. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x002ee8ee": {
+    "status": "fixed",
+    "evidence": "Read Mac 0x2ee8ee: Read base enable state update and glEnableClientState(0x8074). Actual pending GL cd687d6 restores this formerly empty native callback with the correct flag field/enum. Provider Apple object compiled and reviewed, not exercised; no shared source edited by this unit."
+  },
+  "mac:0x001132f8": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1132f8: Cache type/stride/pointer/size then glVertexPointer(size,type,stride,pointer); native matches."
+  },
+  "mac:0x0011332c": {
+    "status": "equal",
+    "evidence": "Read Mac 0x11332c: Cache enable/type/stride/pointer/size without GL calls or validation change; native matches."
   }
 }
