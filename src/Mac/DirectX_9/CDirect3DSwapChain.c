@@ -83,7 +83,11 @@ HRESULT CDirect3DSwapChain_QueryInterface(const CDirect3DSwapChain *_this, const
     (void)iid;
 
     *ppvObj = (LPVOID)_this;
+#if defined(COD2_X64)
+    ((ULONG (*)(const void *))((CDirect3DSwapChainImpl *)_this)->vtable[1])(_this);
+#else
     CDirect3DSwapChain_AddRef(_this);
+#endif
     return 0;
 }
 
@@ -102,7 +106,11 @@ ULONG CDirect3DSwapChain_Release(const CDirect3DSwapChain *_this)
     swapChain = (CDirect3DSwapChainImpl *)_this;
     refCount = --swapChain->refCount;
     if (!refCount) {
+#if defined(COD2_X64)
+        ((void (*)(const void *))swapChain->vtable[11])(_this);
+#else
         ZN18CDirect3DSwapChainD0Ev(_this);
+#endif
     }
 
     return refCount;

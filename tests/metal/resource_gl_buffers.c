@@ -13,6 +13,15 @@
 #define vtbl_CDirect3DIndexBuffer ResourceGL_IndexTable
 #include "Mac/DirectX_9/CDirect3DVertexBuffer.c"
 #include "Mac/DirectX_9/CDirect3DIndexBuffer.c"
+#include "Mac/DirectX_9/CMemoryBuffer.c"
+
+/* The dynamic-buffer byte oracle needs real aligned memory but has no VAO
+ * cache or fences. Reject any unexpected use of those renderer boundaries. */
+CBufferFenceIds CFence_sUnusedFenceIDs;
+UINT32 COpenGL_sFrameCount;
+void CVAOPacket_ReleaseBuffer(const void *data, UINT32 length)
+{ (void)data; (void)length; abort(); }
+
 
 void ResourceGL_BufferRead(unsigned int format, const unsigned char *source,
                            unsigned int capacity, unsigned int offset,
