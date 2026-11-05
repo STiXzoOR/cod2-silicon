@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**58/64 reconciled: 37 equal, 11 fixed, 10 intentional, 6 unchecked.** Mac 1.3 is the authority. Linux was read only for helper names and intent. Behavior changes are native-only. Legacy preprocessed tokens, including all seven actual OOM line-number arguments, are identical in five OFF configurations.
+**59/64 reconciled: 37 equal, 11 fixed, 11 intentional, 5 unchecked.** Mac 1.3 is the authority. Linux was read only for helper names and intent. Behavior changes are native-only. Legacy preprocessed tokens, including all seven actual OOM line-number arguments, are identical in five OFF configurations.
 
 ## Storage and lifetime
 
@@ -58,3 +58,12 @@ The retained original Linux 1.0 IDB identifies the anonymous third free wrapper 
 Exact Mac Z_FreeInternal at0x3740c–0x37415 tail-jumps to free. The native default Z_FreeInternal likewise calls free(ptr). This closes Z_FreeRaw as equal for the complete shared free operation; it does not assert that a distinct raw wrapper was emitted on Mac. Existing optional guardheap ownership handling remains unchanged. Parent independent review is recorded in the private orchestration packet. No production source change, compilation, tests, CI, replay, or runtime exercise occurred.
 
 Original Linux identities also sharpen the remaining hunk targets: Shutdown0x80aba6e, low-permanent getter0x80abf0e, and high hide/show0x80ac500/0x80ac51e. These require complete Mac operations beyond the already documented low hide/show and high temp-clear owners. The virtual commit/decommit helpers retain different signatures/effects from the Mac exported platform shims. All six remaining rows stay unchecked. Private evidence: recon-provenance-storage5.noindex.
+
+
+## Hunk shutdown in the terminal quit operation
+
+The original executable establishes a complete consumed owner for Hunk_Shutdown. Named original 1.0 Sys_Quit and Sys_Exit bodies map uniquely to original 1.3 Sys_Quit at0x80d3a7a and Sys_Exit at0x80d3a36. The actual call at0x80d3a8a invokes Hunk_Shutdown at0x80aba6e after dvar and command cleanup. That helper frees original hunk backing, zeroes active/original pointers and total size, and clears both eight-byte permanent/temp state records. The caller then restores stdin flags and invokes Sys_Exit(0), whose complete terminal path ends in exit(status). There is no returning engine continuation within this identified quit operation.
+
+Exact Mac Sys_Quit at0xc3be0–0xc3c6d supplies the platform replacement: its shutdown calls and queued-event frees are followed by preference synchronization and exit(0). Native mac_main.c preserves that complete terminal owner, including established optional platform adaptations. Remaining hunk backing is released with process teardown. Hunk_Shutdown is therefore intentional for this consumed terminal lifecycle. This does not establish a standalone reusable shutdown API, equal reset timing before exit, or equal observations from finalizers. The verdict relies on the original owner/call sequence and complete Mac/native terminal operation, not missing symbols or callers.
+
+Independent review accepted this narrow boundary. No production source changed; no compilation, tests, CI, replay or runtime exercise occurred. The five remaining memory helpers stay unchecked. Exact original and Mac owners, unique original body maps and native hashes are preserved in recon-provenance-storage5.noindex.
