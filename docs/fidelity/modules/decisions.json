@@ -30918,5 +30918,17 @@
   "mac:0x0001d8fc": {
     "status": "equal",
     "evidence": "Mac 0x0001d8fc: Compared assignment without releasing prior buffer and unconditional surface virtual AddRef return. Read against the selected native body."
+  },
+  "mac:0x000239b8": {
+    "status": "fixed",
+    "evidence": "Mac 0x239b8\u20130x23b62: hand-read all row/column arithmetic and final 16 stores. Existing native temporary preserves either matrix alias. Native now spells Mac p3+(p2+(p0+p1)) addition operands and the separately unrolled last-column b*a multiplications. Ordinary finite-value rounded dependency chain was already equivalent; no measured finite-value error claimed. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00023b66": {
+    "status": "fixed",
+    "evidence": "Mac 0x23b66\u20130x23c3c computes all vector outputs before stores at0x23c28\u20130x23c36. Native sequential stores overwrote pV->x during an in-place transform. Restored four-result temporary before any store, retaining left-associated SSE dot products and output pointer return. No direct native source caller found. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00023c3e": {
+    "status": "equal",
+    "evidence": "Mac 0x23c3e\u20130x23c44: five-instruction body ignores HRESULT and returns zero in eax. Native DXGetErrorDescription9A ignores hr and returns NULL; read exact symbol body, not inferred from the short stub."
   }
 }

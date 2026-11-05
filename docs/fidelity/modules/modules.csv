@@ -32,7 +32,7 @@ Mac/DirectX 9/COpenGLTexture,5,0,1,4,0
 Mac/DirectX 9/COpenGLVAO,5,0,0,0,5
 Mac/DirectX 9/CVAOPacket,21,0,0,0,21
 Mac/DirectX 9/CVertexArrays,48,0,0,0,48
-Mac/DirectX 9/D3DXMath,3,0,0,0,3
+Mac/DirectX 9/D3DXMath,3,1,2,0,0
 Mac/DirectX 9/D3DXShader,39,0,0,0,39
 Mac/DirectX 9/D3DXTex,5,0,0,0,5
 Mac/DirectX 9/MacOpenGLMath,9,0,0,0,9
