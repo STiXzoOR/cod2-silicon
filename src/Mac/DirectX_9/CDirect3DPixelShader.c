@@ -440,6 +440,9 @@ void COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(const COpenGLARBFragmen
     COpenGLARBFragmentProgramImpl *program;
     const char *codeStr;
     int codeLen;
+#if defined(COD2_X64)
+    GLint previousProgram;
+#endif
 
     program = (COpenGLARBFragmentProgramImpl *)_this;
     program->vtable = vtbl_CDirect3DPixelShader_ARB;
@@ -454,6 +457,10 @@ void COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(const COpenGLARBFragmen
         return 0;
 
     codeLen = strlen(codeStr);
+#if defined(COD2_X64)
+    /* Mac 0x1be4b preserves the prior binding while uploading the new program. */
+    glGetProgramivARB(0x8804, 0x8677, &previousProgram);
+#endif
 
     {
         const char *p = codeStr;
@@ -462,10 +469,25 @@ void COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(const COpenGLARBFragmen
             while (*p == ' ')
                 p++;
             if (*p >= '0' && *p <= '9') {
+#if defined(COD2_X64)
+                unsigned int idx = 0;
+                while (*p >= '0' && *p <= '9') {
+                    if (idx < 16)
+                        idx = idx * 10 + (unsigned int)(*p - '0');
+                    ++p;
+                }
+                if (idx < 16)
+                    program->textureUsageMask |= (1u << idx);
+#else
                 int idx = *p - '0';
                 if (idx < 16)
                     program->textureUsageMask |= (1u << idx);
+#endif
             }
+#if defined(COD2_X64)
+            if (!*p)
+                break;
+#endif
             p++;
         }
     }
@@ -484,7 +506,11 @@ void COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(const COpenGLARBFragmen
         }
     }
 
+#if defined(COD2_X64)
+    glBindProgramARB(0x8804, (GLuint)previousProgram);
+#else
     glBindProgramARB(0x8804, 0);
+#endif
 
     return 0;
 }
@@ -495,6 +521,12 @@ static void COpenGLARBFragmentProgram_DestroyImpl(const COpenGLARBFragmentProgra
     program = (COpenGLARBFragmentProgramImpl *)_this;
     program->vtable = vtbl_CDirect3DPixelShader_ARB;
     if (program->programId) {
+#if defined(COD2_X64)
+        GLint currentProgram;
+        glGetProgramivARB(0x8804, 0x8677, &currentProgram);
+        if ((GLuint)currentProgram == program->programId)
+            glDisable(0x8804);
+#endif
         glDeleteProgramsARB(1, &program->programId);
         program->programId = 0;
     }

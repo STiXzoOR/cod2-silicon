@@ -125,6 +125,9 @@ void ZN21CDirect3DVertexShaderD1Ev(const CDirect3DVertexShader *_this)
     shader = (CDirect3DVertexShaderImpl *)_this;
     shader->vtablePrimary = vtbl_CDirect3DVertexShader;
     shader->vtableSecondary = vtbl_CDirect3DVertexShader_secondary;
+#if defined(COD2_X64)
+    ZN20COpenGLVertexProgramD2Ev(shader->baseState);
+#endif
 
 }
 
