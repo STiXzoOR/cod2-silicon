@@ -21801,11 +21801,11 @@
   },
   "linux:unix/unix_main.cpp:794:Sys_AppActivate": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_AppActivate identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: selected linux_input.c focus events call MacDisplay_FocusChanged and clear input state; macos_display.c also raises its SDL window. These are concrete focus owners, but no original Mac identity or call-site mapping establishes the Linux-only parameterless Sys_AppActivate row as their predecessor. A similar activation purpose is insufficient."
   },
   "linux:unix/unix_main.cpp:104:Sys_BeginProfiling": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_BeginProfiling identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: no original executable identity or caller mapping established. MacSystem_ObserveFrame and ObserveWait are optional native frame-observer hooks, not evidence for this reconstructed parameterless profiling function. Its no-op reconstruction is not Mac authority."
   },
   "mac:0x000c4ec4": {
     "status": "equal",
@@ -21813,11 +21813,11 @@
   },
   "linux:unix/unix_main.cpp:789:Sys_CheckCD": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_CheckCD identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: no executable Mac identity or selected native owner for this Linux-only media-check query was established. The reconstructed constant-success body does not justify inventing a successful native query or declaring an intentional omission."
   },
   "linux:unix/unix_main.cpp:835:Sys_Chmod": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_Chmod identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: native preference-file fchmod/chmod sites set a specific 0600 mode; they do not implement or replace the reconstructed generic stat/read-mode/OR/change-mode contract. No original Mac call-site or executable identity maps this row to those owners."
   },
   "linux:unix/unix_main.cpp:816:Sys_ConfigureFPU": {
     "status": "intentional",
@@ -21853,15 +21853,15 @@
   },
   "linux:unix/unix_main.cpp:305:Sys_FileTime": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_FileTime identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: a file-existence query, listing stat call or native preference-file write does not supply the reconstructed modification-time result and missing-file sentinel. No exact Mac executable or inline identity/native owner for this Linux-only API was established."
   },
   "linux:unix/unix_main.cpp:99:Sys_FunctionCheckSum": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_FunctionCheckSum identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: no original executable identity/caller/native owner established for the reconstructed function-pointer checksum query. Native content/configuration checksums have different inputs and ownership; the Linux constant-zero body cannot establish the Mac contract."
   },
   "linux:unix/unix_main.cpp:94:Sys_FunctionCmp": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_FunctionCmp identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: no original executable identity/caller/native owner established for the reconstructed function-pointer comparison query. Generic memcmp or function-pointer equality would be speculative replacements; the Linux constant-true body is not Mac evidence."
   },
   "mac:0x000c38f8": {
     "status": "intentional",
@@ -21897,19 +21897,19 @@
   },
   "linux:unix/unix_main.cpp:89:Sys_LowPhysicalMemory": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_LowPhysicalMemory identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: Mac Sys_SystemMemoryMB 0xc4876 returns a clamped memory quantity, and native mac_configure.c/MacSystem_MemoryBytes own that quantity. Neither establishes a boolean low-memory predicate or its threshold, so these concrete owners do not reconcile this Linux-only query."
   },
   "linux:unix/unix_main.cpp:566:Sys_NullQuery1": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_NullQuery1 identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked provenance gap: Sys_NullQuery1 is a reconstruction-assigned alias explicitly described there as unreferenced with original name unknown. The ledger supplies only source/line provenance; no original Linux executable address/caller or original Mac executable/inline identity was established. Empty/constant-return native stubs cannot be assigned by body shape alone."
   },
   "linux:unix/unix_main.cpp:571:Sys_NullQuery2": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_NullQuery2 identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked provenance gap: Sys_NullQuery2 is a reconstruction-assigned alias explicitly described there as unreferenced with original name unknown. The ledger supplies only source/line provenance; no original Linux executable address/caller or original Mac executable/inline identity was established. Empty/constant-return native stubs cannot be assigned by body shape alone."
   },
   "linux:unix/unix_main.cpp:562:Sys_NullStub": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_NullStub identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked provenance gap: Sys_NullStub is a reconstruction-assigned alias explicitly described there as unreferenced with original name unknown. The ledger supplies only source/line provenance; no original Linux executable address/caller or original Mac executable/inline identity was established. Empty/constant-return native stubs cannot be assigned by body shape alone."
   },
   "mac:0x000c37a4": {
     "status": "fixed",
@@ -21969,7 +21969,7 @@
   },
   "linux:unix/unix_main.cpp:282:Sys_Warn": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_Warn identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: selected mac_syscon.c/Conbuf_AppendText and mac_main.c/Sys_Print own ordinary terminal output, but no Mac original identity/caller establishes the reconstructed Warning-prefix plus tty hide/show wrapper as an alias of those providers. No wrapper was introduced from Linux text."
   },
   "linux:unix/unix_main.cpp:317:floating_point_exception_handler": {
     "status": "intentional",
@@ -22021,7 +22021,7 @@
   },
   "linux:unix/unix_shared.cpp:431:Sys_EnterCriticalSection": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_EnterCriticalSection identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: exact Mac CMutex constructor 0x1173fe and native macos_threads.c own individual recursive mutexes and propagate construction errors; StMutexLock owns object lock lifetimes. No original identity/index-to-object mapping establishes them as replacements for the reconstructed six-index global critical-section API. Mac Dvar_ForEach 0x4f76c directly traverses/calls without that layer; this disproves an assumed universal inline lock but does not establish the missing API."
   },
   "mac:0x000c4e24": {
     "status": "equal",
@@ -22029,19 +22029,19 @@
   },
   "linux:unix/unix_shared.cpp:385:Sys_GetCurrentUser": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_GetCurrentUser identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: Mac Sys_Init 0xc39b2 prints hardware information and initializes input; it does not register the Linux username dvar. Native CL_GetUsernameForLocalClient reads the player-name dvar, while MacSystem_HomePath uses passwd only for a directory. Neither provides the OS-login-name contract or proves a deliberate replacement for this row."
   },
   "linux:unix/unix_shared.cpp:370:Sys_GetProcessorId": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_GetProcessorId identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: nm finds only zero-valued absolute __Z18Sys_GetProcessorIdv.eh metadata, not executable code. Exact Mac CPU GHz 0xc4858, memory 0xc4876 and SSE 0xc48b4 helpers have concrete native owners in mac_configure.c, but their scalar quantities/feature Boolean do not establish the generic processor-enum query or its original caller."
   },
   "linux:unix/unix_shared.cpp:415:Sys_InitializeCriticalSections": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_InitializeCriticalSections identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: exact Mac CMutex constructor 0x1173fe and native macos_threads.c own individual recursive mutexes and propagate construction errors; StMutexLock owns object lock lifetimes. No original identity/index-to-object mapping establishes them as replacements for the reconstructed six-index global critical-section API. Mac Dvar_ForEach 0x4f76c directly traverses/calls without that layer; this disproves an assumed universal inline lock but does not establish the missing API."
   },
   "linux:unix/unix_shared.cpp:436:Sys_LeaveCriticalSection": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_LeaveCriticalSection identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: exact Mac CMutex constructor 0x1173fe and native macos_threads.c own individual recursive mutexes and propagate construction errors; StMutexLock owns object lock lifetimes. No original identity/index-to-object mapping establishes them as replacements for the reconstructed six-index global critical-section API. Mac Dvar_ForEach 0x4f76c directly traverses/calls without that layer; this disproves an assumed universal inline lock but does not establish the missing API."
   },
   "mac:0x000c4b8e": {
     "status": "fixed",
@@ -22065,7 +22065,7 @@
   },
   "linux:unix/unix_shared.cpp:376:Sys_NullQuery3": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_NullQuery3 identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked provenance gap: Sys_NullQuery3 is a reconstruction-assigned alias explicitly described there as unreferenced with original name unknown. The ledger supplies only source/line provenance; no original Linux executable address/caller or original Mac executable/inline identity was established. Empty/constant-return native stubs cannot be assigned by body shape alone."
   },
   "mac:0x000c490c": {
     "status": "equal",
@@ -22089,7 +22089,7 @@
   },
   "linux:unix/unix_shared.cpp:80:fastftol": {
     "status": "unchecked",
-    "evidence": "Linux-only fastftol identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked: no original executable or inline identity/native caller was established for this Linux-only scalar conversion. Sys_SnapVector has a separately established Windows-rounding decision; it cannot certify this helper through similar-looking float/integer arithmetic, especially without its conversion-width and invalid-input contract."
   },
   "mac:0x00025916": {
     "status": "equal",
@@ -22097,7 +22097,7 @@
   },
   "linux:unix/unix_dir.c:5:Sys_DirectoryHasEntries": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_DirectoryHasEntries identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked after candidate-contract review: exact Mac Sys_DirectoryHasContents 0xc4e62 rejects dot-prefixed names and every non-DT_REG entry; selected mac_common.c preserves that owner. That is not the reconstructed HasEntries contract (anything except dot/dot-dot). No original address/caller mapping connects this Linux-only row to that native provider."
   },
   "mac:0x0022255a": {
     "status": "equal",
@@ -22113,7 +22113,7 @@
   },
   "linux:unix/unix_threads.cpp:20:Sys_NullQuery4": {
     "status": "unchecked",
-    "evidence": "Linux-only Sys_NullQuery4 identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
+    "evidence": "Unchecked provenance gap: Sys_NullQuery4 is a reconstruction-assigned alias explicitly described there as unreferenced with original name unknown. The ledger supplies only source/line provenance; no original Linux executable address/caller or original Mac executable/inline identity was established. Empty/constant-return native stubs cannot be assigned by body shape alone."
   },
   "mac:0x00222548": {
     "status": "equal",
@@ -22141,7 +22141,7 @@
   },
   "linux:unix/unix_net.cpp:102:NET_BaseAdrToString": {
     "status": "unchecked",
-    "evidence": "No Mac executable symbol or native body/caller was found. Mac NET_AdrToString includes a port; that does not establish this Linux-only bare-address helper identity."
+    "evidence": "Unchecked: the Mac/networking native NET_AdrToString owner formats a port as well as an address. No original executable/inline identity or call-site mapping establishes this separate reconstructed bare-IPv4 formatter; matching four octet conversions does not establish its full contract."
   },
   "linux:unix/unix_net.cpp:599:NET_ErrorString": {
     "status": "equal",
@@ -22165,7 +22165,7 @@
   },
   "linux:unix/unix_net.cpp:585:NET_Shutdown": {
     "status": "unchecked",
-    "evidence": "No Mac executable symbol, native body or native caller was found. NET_Config(0) performs native descriptor cleanup, but it does not prove the identity/semantics of this Linux-only standalone helper."
+    "evidence": "Unchecked after exact-symbol review: Mac NET_Config 0x1e9640 and native win_net.c own conditional reconfiguration, including UDP/SOCKS closes; when already disabled they may return without closing. Mac Sys_Quit 0xc3be0/native mac_main.c exit the process. Neither is a returning unconditional UDP-close-and-reset replacement for the Linux-only row, and no original caller mapping was established."
   },
   "mac:0x001e8582": {
     "status": "intentional",
