@@ -20,6 +20,16 @@ extern float MacOpenGLUtils_SquareRootLowPrecision(float fp0);
 
 void RB_UploadWaterTexture(GfxImage *image, water_t *water);
 
+#if defined(COD2_X64)
+static int R_WaterTruncateFloat(float value)
+{
+    /* Mac cvttss2si returns INT_MIN for unordered or out-of-range input. */
+    if (!(value >= -2147483648.0f && value < 2147483648.0f))
+        return (-2147483647 - 1);
+    return (int)value;
+}
+#endif
+
 void RB_UploadWaterTexture(GfxImage *image, water_t *water)
 {
     int currentFrame;
@@ -79,7 +89,11 @@ void RB_UploadWaterTexture(GfxImage *image, water_t *water)
             float phaseFloat;
 
             phaseFloat = (float)((double)(w * t) * 162.97466172610083);
+#if defined(COD2_X64)
+            phase = R_WaterTruncateFloat(floorf(phaseFloat + 0.5f)) & 0x3ff;
+#else
             phase = (int)floorf(phaseFloat + 0.5f) & 0x3ff;
+#endif
 
             cosPhase = (phase + 255) & 0x3ff;
             waterData[vecKIndex].real = water->H0[vecKIndex].real * rg.sinTable[cosPhase];
@@ -160,13 +174,22 @@ void RB_UploadWaterTexture(GfxImage *image, water_t *water)
                 sqrtMag = __builtin_sqrtf(mag);
                 val = sqrtMag / dz;
 
+#if defined(COD2_X64)
+                /* Mac's jbe saturates unordered heights as well. */
+                if (!(val - 1.0f < 0.0f)) {
+#else
                 if (val - 1.0f >= 0.0f) {
+#endif
                     val = 255.0f;
                 } else {
                     val = val * 255.0f;
                 }
 
+#if defined(COD2_X64)
+                *dst = (byte)R_WaterTruncateFloat(floorf(val + 0.5f));
+#else
                 *dst = (byte)(int)floorf(val + 0.5f);
+#endif
                 dst++;
                 src++;
             }
@@ -238,9 +261,15 @@ normalmap_path:
                         float invLen = 127.5f / len;
 
                         pixels[0] = 0xff;
+#if defined(COD2_X64)
+                        pixels[1] = (byte)R_WaterTruncateFloat(floorf(dx * invLen + 127.5f + 0.5f));
+                        pixels[2] = (byte)R_WaterTruncateFloat(floorf(dy * invLen + 127.5f + 0.5f));
+                        pixels[3] = (byte)R_WaterTruncateFloat(floorf(dz_val * invLen + 127.5f + 0.5f));
+#else
                         pixels[1] = (byte)(int)floorf(dx * invLen + 127.5f + 0.5f);
                         pixels[2] = (byte)(int)floorf(dy * invLen + 127.5f + 0.5f);
                         pixels[3] = (byte)(int)floorf(dz_val * invLen + 127.5f + 0.5f);
+#endif
 
                         pixels += 4;
 
