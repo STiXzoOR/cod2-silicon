@@ -1,8 +1,8 @@
 # universal/com_memory module reconciliation
 
-Updated 2026-11-05.
+Updated 2026-11-06.
 
-**62/64 reconciled: 40 equal, 11 fixed, 11 intentional, 2 unchecked.** Mac 1.3 is the authority. Linux was read only for helper names and intent. Behavior changes are native-only. Legacy preprocessed tokens, including all seven actual OOM line-number arguments, are identical in five OFF configurations.
+**63/64 reconciled: 41 equal, 11 fixed, 11 intentional, 1 unchecked.** Mac 1.3 is the authority. Linux was read only for helper names and intent. Behavior changes are native-only. Legacy preprocessed tokens, including all seven actual OOM line-number arguments, are identical in five OFF configurations.
 
 ## Storage and lifetime
 
@@ -86,3 +86,12 @@ Hunk_GetLowPermanent is equal through the complete scalar read consumed by the a
 This supplies the complete read/result/observer that the earlier general state-reference inventory had not established. There is no conversion, missing getter branch, output arithmetic or positivity restriction. Preceding print calls must have returned before this selected operation; their effects and later output are outside its boundary. No standalone exported getter, literal inline ancestry, concurrent mutation timing, allocator/error/overflow equivalence or whole diagnostic certification is inferred. Existing source repairs outside this read are not inherited.
 
 Independent full original/Mac/native review: units/review-provenance-lowgetter25.md; private evidence recon-provenance-lowgetter25.noindex. One equal closure; high temporary hide/show helpers remain unchecked. Source unchanged; no new defect, compilation, tests, CI, replay or runtime verification.
+
+
+## Complete saved high-permanent restore (hunkrestore35)
+
+`Hunk_ShowTempMemoryHigh` is equal for the complete actual permanent-cursor restore inside `Hunk_ClearToMark`. Original 1.3 0x80ac51e through RET 0x80ac52a performs one unchanged input-word store to high.permanent and returns, with no temp update or cleanup. The actual Mac operation has a concrete marker input: `Scr_BeginLoadScripts` saves the full `Hunk_SetMark` result at 0xaf399, then allocates canonical-string storage through a provider that updates the same high-permanent word. `Scr_EndLoadScripts` reads that saved mark through the same global and passes it to the restore owner at 0xaf0d9.
+
+The selected complete effect is the full permanent store at 0x37f1b, after the separate high.temp store and before cleanup. Native `hunk_high.permanent = mark` preserves that input and state write. The restored value is immediately consumed by `Hunk_ClearData` to form its high boundary at 0x37dbe and control actual file-data comparisons. This establishes a real saved-cursor restore rather than a generic assignment or presumed no-op.
+
+The previous rejection of whole-function substitution remains correct: `Hunk_ClearToMark` additionally changes temp and cleans data. Neither surrounding effect belongs to the accepted one-state operation. The scope is a valid serialized corresponding begin/end with unchanged saved mark and defined owned storage; arbitrary marks, overflow, malformed/concurrent/reentrant lifecycle, complete allocation/loading/cleanup behavior and the separate high hide/save helper remain outside it. One equal closure, no source change or new defect. Independent review: units/review-provenance-hunkrestore35.md; complete original, fresh Mac producers/restore/consumer and allocator, raw state addresses and native hashes are retained in private recon-provenance-hunkrestore35.noindex. No compilation, tests, CI, full build, replay or runtime verification.
