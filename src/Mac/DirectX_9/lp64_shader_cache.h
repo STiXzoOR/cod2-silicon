@@ -68,7 +68,9 @@ HRESULT MacD3DXCompileShader(const char *name, const char *source, UINT length, 
     char cacheName[256];
     char constantName[256];
     char marker[280];
+#if !defined(COD2_X64)
     const char *extension = strrchr(name, '.');
+#endif
     UINT32 size;
     char *code;
     char *program;
@@ -86,12 +88,36 @@ HRESULT MacD3DXCompileShader(const char *name, const char *source, UINT length, 
     *shader = NULL;
     if (messages)
         *messages = NULL;
+#if defined(COD2_X64)
+    /* Material_LoadPassShader (Mac 0x103c50-0x103cb1) replaces the last five
+     * filename bytes with the stage extension before calling the compiler.
+     * Its native wrapper receives that original filename, not the lookup key. */
+    size_t nameLength = strlen(name);
+    if (nameLength < 5 || nameLength - 5 > sizeof(cacheName) - 5)
+        return (HRESULT)0x88760b59;
+    snprintf(cacheName, sizeof(cacheName), "%.*s.%s", (int)(nameLength - 5), name, vertex ? "vs" : "ps");
+    /* Mac 0x134129 uses substring tests, with .vs taking precedence. The
+     * selected Apple display provider returns card type zero, using the a
+     * vertex variant; the omitted n variants require the old NVIDIA backend. */
+    vertex = strstr(cacheName, ".vs") != NULL;
+    strcat(cacheName, vertex ? "a" : "e");
+    snprintf(constantName, sizeof(constantName), "%.*sc", (int)strlen(cacheName) - 2, cacheName);
+#else
     if (!extension || (size_t)(extension - name) >= sizeof(cacheName) - 4)
         return (HRESULT)0x88760b59;
     snprintf(cacheName, sizeof(cacheName), "%.*s.%s", (int)(extension - name), name, vertex ? "vsa" : "pse");
     snprintf(constantName, sizeof(constantName), "%.*s.%s", (int)(extension - name), name, vertex ? "vc" : "pc");
+#endif
     code = MacShader_ReadCache(cacheName, &size);
+#if defined(COD2_X64)
+    /* Mac 0x134325 returns S_OK with null outputs for an absent map entry.
+     * Material_LoadPassShader reports its separate NULL-shader diagnostic. */
+    if (!code)
+        return 0;
+    if (strncmp(code, vertex ? "!!ARBvp1.0" : "!!ARBfp1.0", 10)) {
+#else
     if (!code || strncmp(code, vertex ? "!!ARBvp1.0" : "!!ARBfp1.0", 10)) {
+#endif
         fprintf(stderr, "Missing or invalid native shader cache entry: %s\n", cacheName);
         free(code);
         return (HRESULT)0x88760b59;
@@ -105,7 +131,12 @@ HRESULT MacD3DXCompileShader(const char *name, const char *source, UINT length, 
     memcpy(program, code, size);
     memcpy(program + size, marker, markerSize + 1);
     if (vertex) MacShader_RemoveUnusedOutputs(program);
+#if defined(COD2_X64)
+    /* Mac 0x13423f reports the final string length, including its terminator. */
+    *shader = CD3DXBuffer_Create(program, (UINT32)strlen(program) + 1);
+#else
     *shader = CD3DXBuffer_Create(program, size + markerSize + 1);
+#endif
     free(program);
     free(code);
     return 0;
