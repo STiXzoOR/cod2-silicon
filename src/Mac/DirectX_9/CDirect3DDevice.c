@@ -3553,6 +3553,9 @@ HRESULT CDirect3DDevice_Reset(const CDirect3DDevice *_this, D3DPRESENT_PARAMETER
         parameters[7] ? MAC_WINDOWED : (borderless->current.enabled ? MAC_BORDERLESS : MAC_FULLSCREEN), parameters[12]);
     if (MacDisplay_SetMode(parameters[0], parameters[1], 32, parameters[12]))
         return (HRESULT)(int32_t)0x8876086cu;
+#if defined(COD2_X64)
+    MacDisplay_SetPresentationInterval(((DeviceImpl *)_this)->context, (uint32_t)parameters[11]);
+#endif
     extern void CDirect3DSurface_SetNativeDimensions(void *, UINT32, UINT32);
     CDirect3DSurface_SetNativeDimensions(((DeviceImpl *)_this)->backBuffer, parameters[0], parameters[1]);
     return 0;

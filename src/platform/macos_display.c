@@ -332,12 +332,25 @@ static void CreateMetalPresentation(MacContext *ctx)
 }
 #endif
 
+#if defined(COD2_X64)
+void MacDisplay_SetPresentationInterval(void *context, uint32_t interval)
+{
+    MacContext *ctx = context;
+    if (ctx && ctx->context && SDL_GL_MakeCurrent(sdl_gl_window, ctx->context) == 0) {
+        /* Mac 0x57d5: immediate is zero; every other D3D interval is one. */
+        SDL_GL_SetSwapInterval(interval == 0x80000000u ? 0 : 1);
+    }
+}
+#endif
+
 void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
                                     int quality, int interval, int *hasAux)
 {
     (void)samples;
     (void)quality;
+#if !defined(COD2_X64)
     (void)interval;
+#endif
     if (hasAux)
         *hasAux = 0;
     if (MacDisplay_Initialize() != 0)
@@ -431,7 +444,11 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
         return NULL;
     }
 #endif
+#if defined(COD2_X64)
+    MacDisplay_SetPresentationInterval(ctx, (uint32_t)interval);
+#else
     SDL_GL_SetSwapInterval(0);
+#endif
     if (!strstr((const char *)glGetString(GL_EXTENSIONS), "GL_EXT_framebuffer_blit") ||
         CreateRenderBuffer(ctx, depth, stencil) != 0) {
         fprintf(stderr, "CoD2 Silicon render framebuffer unavailable\n");
@@ -614,7 +631,13 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
         SDL_SetWindowFullscreen(sdl_gl_window, 0);
 #endif
     if (ctx->context) {
+#if defined(COD2_X64)
+        /* Mac 0x527e completes this context before destroying its resources. */
+        if (SDL_GL_MakeCurrent(sdl_gl_window, ctx->context) == 0)
+            glFinish();
+#else
         SDL_GL_MakeCurrent(sdl_gl_window, ctx->context);
+#endif
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
         MacMetal_Destroy(ctx->metal);
         ctx->metal = NULL;
