@@ -169,7 +169,7 @@ gfx_d3d/r_image,30,19,3,8,0
 gfx_d3d/r_image_load_common,5,4,1,0,0
 gfx_d3d/r_image_load_obj,16,9,4,3,0
 gfx_d3d/r_image_wavelet,1,1,0,0,0
-gfx_d3d/r_init,22,14,5,2,1
+gfx_d3d/r_init,22,14,5,3,0
 gfx_d3d/r_jpeg,9,0,1,8,0
 gfx_d3d/r_light,4,2,1,1,0
 gfx_d3d/r_light_load_obj,1,0,0,1,0
@@ -206,7 +206,7 @@ gfx_d3d/rb_imagetouch,2,2,0,0,0
 gfx_d3d/rb_light,6,1,5,0,0
 gfx_d3d/rb_shade,10,6,3,1,0
 gfx_d3d/rb_sky,4,4,0,0,0
-gfx_d3d/rb_state,39,33,3,0,3
+gfx_d3d/rb_state,39,33,6,0,0
 gfx_d3d/rb_tess,7,5,1,1,0
 groupvoice/decode,3,2,0,1,0
 groupvoice/encode,5,4,0,1,0

@@ -29628,8 +29628,8 @@
     "evidence": "Mac 0x000ccca8: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
   },
   "mac:0x000ccbc2": {
-    "status": "unchecked",
-    "evidence": "Mac 0x000ccbc2: Hand comparison found a shared provider/layout gap: Mac dx+0x2d65/+0x2d66 capability bytes and+0x2d68/+0x2d6c MIN/MAG caches are absent from native DxGlobals. Native hardcodes MAG linear and derives MIN only from anisotropy; needs coordinated header/capability-producer reconstruction. No equality claimed from sibling work."
+    "status": "fixed",
+    "evidence": "Mac 0xccbc2-0xccca8: read anisotropy clamp/disable, independent MIN/MAG capability selection at 0xccbfd/0xccc0f, filter caches, sampler count and MAXANISOTROPY writes. Added the missing typed capability bytes/caches and restored independent linear/anisotropic cache production rather than deriving MIN from anisotropy and forcing MAG linear. R_BeginRegistration produces capabilities from TextureFilterCaps bits 10/26. Compiled and reviewed, not runtime exercised."
   },
   "mac:0x000cd55e": {
     "status": "equal",
@@ -29640,8 +29640,8 @@
     "evidence": "Mac 0x000cdda4: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
   },
   "mac:0x000cf59a": {
-    "status": "unchecked",
-    "evidence": "Mac 0x000cf59a: Hand comparison found a shared provider/layout gap: Mac dx+0x2d65/+0x2d66 capability bytes and+0x2d68/+0x2d6c MIN/MAG caches are absent from native DxGlobals. Native hardcodes MAG linear and derives MIN only from anisotropy; needs coordinated header/capability-producer reconstruction. No equality claimed from sibling work."
+    "status": "fixed",
+    "evidence": "Mac 0xcf59a-0xcf8c2: read complete state clear/default sampler/inlined anisotropy setup, reference/active bits, viewport/target/fog, eight color/alpha stage caches, render-state/material writes, sixteen image/sampler caches and shader-constant invalidation. Restored the inlined anisotropy MIN/MAG cache setup at 0xcf60e/0xcf620 via the shared core and made initial render-state writes 0xcf79d/0xcf7bb single calls, matching Mac rather than alwaysfails retry wrappers. Compiled and reviewed, not runtime exercised."
   },
   "mac:0x000cd746": {
     "status": "equal",
@@ -29656,8 +29656,8 @@
     "evidence": "Mac 0x000ce9ce: 0x32ab20 is the12-word viewport behavior table; target12 deterministically reads adjacent zero at0x32ab50. Native also declared12words and indexed13targets. Extended native storage with that zero, preserving original routing, feedback unbinds, surfaces, GL buffers and depth/viewport updates; compiled and reviewed, not exercised."
   },
   "mac:0x000ce2ce": {
-    "status": "unchecked",
-    "evidence": "Mac 0x000ce2ce: Hand comparison found a shared provider/layout gap: Mac dx+0x2d65/+0x2d66 capability bytes and+0x2d68/+0x2d6c MIN/MAG caches are absent from native DxGlobals. Native hardcodes MAG linear and derives MIN only from anisotropy; needs coordinated header/capability-producer reconstruction. No equality claimed from sibling work."
+    "status": "fixed",
+    "evidence": "Mac 0xce2ce-0xce5d2: read image bind/null gates, default nibble substitution, changed-bit tests, MIN/MAG/MIP comparison and address-mode writes, and final cached byte. Native anisotropic resolution at 0xce5a3/0xce5bc now consumes the separate MIN/MAG caches produced by RB_SetAnisotropy, rather than hardcoding MAG linear or deriving MIN only from nonzero anisotropy. Decoded original filter words {0,1,2,3} at 0x32ab50 and default sampler bytes {1,2,6,10,11} at 0x32ab60; existing native tables match. Compiled and reviewed, not runtime exercised."
   },
   "mac:0x000cce94": {
     "status": "equal",
@@ -32044,8 +32044,8 @@
     "evidence": "Hand compared exact Mac GetRefAPI 0xcaa68-0xcae42 and traced built-in CL_InitRef/API59, optional DLL loaders and both version60 adapters. Mac checks60 and exports IsGpuFenceFinished/int GpuSyncDelay/SetLodOrigin at0x150/0x154/0x158. Retained established native API59 field order/version/size and typed IsGpuFenceFinished/void SyncGpu/GpuWaited(int) assignments; renderer void callback fuses the Mac delay-query/poll loop without function-return casts. Existing Windows retail version60 mapping is a separate layout, preserved and not certified as Mac API60; no built-in Apple client requests it. Compiled and reviewed; renderer/DLL calls not exercised. See renderer-gpu-sync.md."
   },
   "mac:0x000cb5f6": {
-    "status": "unchecked",
-    "evidence": "Inspected exact Mac 0xcb5f6-0xcc792 lifecycle, caps and callback sections; display-mode construction/fallback sections are not fully reconciled. Restored native cap consumption/path selection, first-device-only reset resources, resources-before-systems order, initial viewport and typed window bookkeeping from 0xcb8dd-0xcb9cc/0xcc055-0xcc28c. Native SDL creates its GL context inside CreateDevice, so native caps are consumed after that call; device9f05cde fullscreen presentation words are retained exactly. Remaining gaps: complete sorted resolution/refresh construction, display/AA fallback retries, aspect-ratio negotiation, Mac min/mag-anisotropy capability bytes absent from native DxGlobals, and full context/reinitialization lifetime. Compiled and reviewed, not renderer-exercised; no whole-function parity claim."
+    "status": "intentional",
+    "evidence": "Read full Mac R_BeginRegistration 0xcb5f6-0xcc792, including display enumeration/sorting, mode/refresh domains, requested-path diagnostics, caps, descending AA/quality fallback, device setup, failure degradation, aspect selection, resources/window setup and final asset/table/model/config work. Reconstructed missing setup in native r_init.c and restored TextureFilterCaps MIN/MAG bits at 0xcb93e-0xcb958. Retain established native dx9 preference and early expanded SDL render-size domain; explicitly update the early refresh domain because Dvar_RegisterEnum preserves an existing enum domain, and retain requested refresh for synthetic render sizes absent from physical modes. SDL creates its GL context in CreateDevice, so caps are queried afterward but before renderer resources; native presentation words/window ownership and presentation gamma remain documented replacements. Current native display advertises no MSAA; the original descending negotiation now reaches zero type/quality. Fullscreen auto-aspect obtains current dimensions through GetAdapterDisplayMode instead of the stale GetSystemMetrics stub. Mac physical-mode search assumptions do not justify out-of-bounds native reads. Compiled and reviewed; these setup paths were not runtime exercised. Follow-up review: Mac failure jumps 0xcbfbd/0xcc118 bypass publication at 0xcbfe5/0xcbfed/0xcbff5; fallback checks prior global frequency/dimensions at 0xcc162/0xcc17d/0xcc18d, not attempted locals. Original vidConfig is zerofill __DATA,__common at 0x1275600. This first-init zero-state quirk is preserved. R_CreateForInitOrReset has only return one at 0xcb462 (fatal paths rejoin), matching native; no false-result successful-device retry is reachable."
   },
   "mac:0x000ca944": {
     "status": "fixed",
