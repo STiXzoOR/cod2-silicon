@@ -5,8 +5,8 @@ EffectsCore/FxCurve,5,4,0,0,1
 EffectsCore/FxCurve_load_obj,2,1,0,0,1
 EffectsCore/FxMemMgr,5,1,0,0,4
 EffectsCore/FxPrimitives,201,162,17,7,15
-EffectsCore/FxScheduler,59,0,0,0,59
-EffectsCore/FxScheduler_load_obj,17,0,0,0,17
+EffectsCore/FxScheduler,59,44,6,8,1
+EffectsCore/FxScheduler_load_obj,17,11,4,2,0
 EffectsCore/FxSystem,20,0,0,0,20
 EffectsCore/FxTemplate,77,0,0,0,77
 EffectsCore/FxUtil,138,0,0,0,138
