@@ -12296,8 +12296,8 @@
     "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_ClearScreen was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to gfx_d3d/rb_backend; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/rb_backend.c:1056; assigned universal header has no body. Mac symbol __Z14RB_ClearScreenhPKffh at 0x000d497a. Whole caller not audited by universal-math."
   },
   "mac:0x000b25e8": {
-    "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/win32/cinematics.c (win32/cinematics); whole ROQ_DrawCinematicFromHandle was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to win32/cinematics; original Mac source-module provenance retained. Native function definition at src/PC/win32/cinematics.c:726; assigned universal header has no body. Mac symbol __Z27ROQ_DrawCinematicFromHandlei at 0x000b25e8. Whole caller not audited by universal-math."
+    "status": "equal",
+    "evidence": "Mac 0xb25e8 exact-symbol body compared by hand with native definition in cinematics.c: handle/status/buffer gates, aspect-ratio comparisons, division/multiply/subtract/0.5 order, floor/ceil extents, ClearScreen and DrawStretchRaw arguments, dirty clear, and 105/480 letterbox bar draws agree. Native MaterialHandle stays pointer-width. Only engine wrapper/call contract is claimed; D3D/Metal pixel upload implementation is separate. This supersedes the prior unchecked routing note, not a prior reconciled verdict."
   },
   "mac:0x0002cb1c": {
     "status": "equal",
@@ -22434,5 +22434,105 @@
   "mac:0x00056074": {
     "status": "equal",
     "evidence": "Hand compared Mac 0x00056074 (SND_UpdateStreamChannelReverb) with active native engine code. Read alias-null, enable-reverb and alias flag 0x10 branches selecting effect wet or zero with dry=1; native index-32 stream lookup and WS3 calls preserve Mac engine selection."
+  },
+  "mac:0x000b2b34": {
+    "status": "equal",
+    "evidence": "Mac 0xb2b34 exact-symbol body compared by hand with ROQ_CloseAllVideos: 16 slots, nonempty-name and non-EOF filters, current handle, buffer/game-state guards and shutdown call agree. Shutdown has the separately recorded native next-movie platform decision."
+  },
+  "mac:0x000b293a": {
+    "status": "equal",
+    "evidence": "Mac 0xb293a exact-symbol body compared by hand: unsigned 0..15 CL_handle gate and ROQ_DrawCinematicFromHandle argument agree. Renderer implementation is a separate provider boundary."
+  },
+  "mac:0x000b1ffa": {
+    "status": "fixed",
+    "evidence": "Mac 0xb20d2 stores the selected cin.currentHandle; native left -1. Mac 0xb24b8 writes FMV_PLAY to status; native wrote letterBox. Restored the 0xb25d8 failed-open next-movie call and the 0x249f00 handle-exhaustion diagnostic, removed extra initial VQ0/VQ1 and roqF0/roqF1 writes, and restored coefficient bits from 0xb22c0/0xb22c8. The 256 integer UG/VG table values are unchanged by those coefficient spellings. The full function was compared by hand; next-movie distributor-logo behavior intentionally follows Windows 0x4b2350, separately recorded. COD2_X64 changes compiled and reviewed, not exercised."
+  },
+  "mac:0x000b5d40": {
+    "status": "intentional",
+    "evidence": "Mac 0xb5d40 exact-symbol body compared by hand: connection-state stop/logo handling, argument-character system bits1/5/3/0x21,640x480 versus640x270 at y105, sound stop/fade and initial-buffer polling otherwise agree. Native stops polling if EOF shutdown cleared currentHandle, rather than reproducing the cinTable[-1] read reached from Mac 0xb5e4c. The restored runner owns teardown at0xb3f39. Duplicate Mac Cmd_Argv sites are branch duplication. Compiled and reviewed, not exercised; the runner remains unchecked for its listed gaps."
+  },
+  "mac:0x000b5d24": {
+    "status": "fixed",
+    "evidence": "Mac 0xb5d24 only validates CL_handle and calls ROQ_RunCinematicFromHandle. Removed the native wrapper extra EOF shutdown/SND_StopSounds/handle reset; teardown is restored in the runner at the Mac 0xb3f39 boundary. Compiled and reviewed, not exercised; the runner remains separately unchecked for its listed gaps."
+  },
+  "mac:0x000b2c82": {
+    "status": "unchecked",
+    "evidence": "Mac exact-symbol 0xb2c82 was read for the reachable 4-byte normal decoder, timing, audio, packet dispatch and EOF control; jump table at 0x32a560 decoded directly. Corrected SND_RawSamplesTime signed frame count (0xb3f70), material cvttss2si/wrap behavior (0xb2d83/0xb4977), signed tfps comparison/continued frame loop (0xb2e25/0xb300e), hold/loop/EOF teardown (0xb36ba/0xb3fb5/0xb3f39), info count/clocks (0xb335e..0xb3d68), zero-low-byte codebook counts (0xb3a44), 0x1012/0x1013/0x1030 dispatch (0xb310f/0xb31f6/0xb367f), and next-header validation/in-memory subpacket counting/played-byte order (0xb3137..0xb375a). Compiled and reviewed, not exercised. Whole-row equality is NOT established: dormant 1/2-byte, half and smoothed codebook branches remain incomplete; all writer searches show native playback chooses 4 bytes and info sets half/smoothed to zero. Malformed chunk layouts can exceed cin.file[65536] or the Mac 65536-byte decoded-audio stack area; those contracts are unresolved. Native keeps B,G,R,255 bytes for its D3D format22/Metal decoder rather than Mac FF,R,G,B at 0xb5566; Windows helper 0x4b0a10 packs R,G,B,FF. Native returns FMV_IDLE after successful teardown rather than reproducing the Mac cinTable[-1] read. Independent review confirms original Mac/Windows sound-failure watchdog behavior is retained; native wall-clock fallback is removed with no established intentional contract. Apple public CIN wrappers still bypass ROQ per WS11; these internal corrections do not enable product-path playback."
+  },
+  "mac:0x000b17fe": {
+    "status": "equal",
+    "evidence": "Mac 0xb17fe exact-symbol body compared by hand: unsigned handle <=15, non-EOF gate, x/y/w/h stores and dirty=1 agree."
+  },
+  "mac:0x000b2bda": {
+    "status": "equal",
+    "evidence": "Mac 0xb2bda exact-symbol body compared by hand: valid CL_handle gate, non-EOF stop path, buffer and alterGameState/state1 guard, shutdown, unconditional SND_StopSounds(0) for a valid handle, and CL_handle=-1 agree."
+  },
+  "mac:0x000b174c": {
+    "status": "equal",
+    "evidence": "Mac 0xb174c exact-symbol body compared by hand: invalid/EOF handle or absent buffer returns EOF; alterGameState with connection state other than1 returns current status; otherwise assigns EOF, calls shutdown, and returns EOF. Native agrees, including the separately recorded shutdown platform policy."
+  },
+  "mac:0x000b1856": {
+    "status": "equal",
+    "evidence": "Mac 0xb1856 exact-symbol body compared by hand: handle/buffer gate, dirty playonwalls 0 to -1 to -2 transition and subsequent dirty clear, and cl_inGameVideo-disabled 1 to0 transition agree. Mac likewise has no renderer upload call in this engine wrapper."
+  },
+  "mac:0x000b2956": {
+    "status": "fixed",
+    "evidence": "Mac 0xb2956..0xb2b23 reset body compared by hand: end/close/reopen stream, 16-byte header read, clocks, played=24, default30 FPS, numQuads=-1, next id/size/flags and LOOPED state agree. Removed native extra roqF0/roqF1 initialization; Mac 0xb2b1d writes only roq_flags, leaving motion bytes until the next packet header. Compiled and reviewed, not exercised."
+  },
+  "mac:0x000b15ae": {
+    "status": "intentional",
+    "evidence": "Mac 0xb15ae exact-symbol shutdown body compared by hand: buffer/non-IDLE gate, sound/file teardown, previous connection state restore, CL_handle=-1, UI gate, optional renderer synchronization, slot clear and currentHandle=-1 agree. Its next-movie call at 0xb1742 now uses the native helper following Windows 0x4b2350/0x4b244b, which queues nextmap and clears it without Mac-specific Aspyr-logo insertion. Native typed sizeof(cin_cache) preserves LP64 storage. Compiled and reviewed, not exercised."
+  },
+  "mac:0x000b14f2": {
+    "status": "intentional",
+    "evidence": "Mac 0xb14f2 helper and its inlined native shutdown equivalent were compared by hand. Added the separately callable native helper required by the missing failed-open path, following Windows 1.3 0x4b2350..0x4b2386 and failure chain 0x4b2910..0x4b2933: queue nextmap, clear it, open menu1. Mac injects cinematic aspyr_intro before IW_logo once; native deliberately follows Windows for this player-visible distributor-logo behavior. Compiled and reviewed, not exercised."
+  },
+  "mac:0x000b18ee": {
+    "status": "fixed",
+    "evidence": "Mac 0xb18ee exact-symbol body compared by hand, including all 8x8/4x4/2x2 blits, source strides, motion copies, codeword refill, five-entry quad traversal and null sentinel. Mac motion adds at 0xb1ab4 and 0xb1f7f wrap 32-bit displacement into the pointer; native LP64 previously zero-extended unsigned cin.mcomp. Cast both motion offsets to int32_t before native pointer addition, preserving negative previous-buffer offsets. Compiled and reviewed, not exercised."
+  },
+  "mac:0x000b13ca": {
+    "status": "equal",
+    "evidence": "Mac 0xb13ca exact-symbol body compared by hand: dimension clipping, centered vertical offset, two screen-buffer qStatus addresses, onQuad increment and all four child quadrants down to size4 agree. Mac tail-recurses the fourth child; source makes the equivalent fourth call."
+  },
+  "mac:0x001ea65c": {
+    "status": "intentional",
+    "evidence": "Mac 0x1ea65c exact-symbol body compared by hand: lazy Record_NewSample/Start, count, scaler comparison and 0.5..1.5 clamp, Record_Frame and zero return agree when capture exists. Native additionally returns0 before touching recorder storage when voice_recording_initialized is false. src/platform/macos_voice.c deliberately fails Record_Init before the old fixed-address recorder layout; WS110 playback-only adaptation is preserved. Capture backend is not reconstructed; compiled, not exercised in this audit."
+  },
+  "mac:0x001ea34e": {
+    "status": "intentional",
+    "evidence": "Mac 0x1ea34e exact-symbol body compared by hand: initialized gate, sampleCount%6, voicelevel /32767 then /6 SSE order, circular store/increment, and six-entry left-to-right sum agree. Native returns0 before sampling when native capture is unavailable, preserving WS110; the native Record_Init provider deliberately fails before the legacy fixed-address recorder. Compiled, not exercised in this audit."
+  },
+  "mac:0x001ea43c": {
+    "status": "intentional",
+    "evidence": "Mac 0x1ea43c exact-symbol body compared by hand with live incoming wrapper: talker byte truncation/timestamp, per-frame decode/update loop, last decoded block append and close agree for native caller CL_VoicePacket bounds (talker0..63, packet1..256; integer minimum equals the Mac float minimum in that range). Restored binary append spelling ab from cstring0x2e4b64; a/ab were already equivalent on macOS. Existing native initialized gate prevents decode after unavailable output/shutdown; real g_frame_size and <=0 return avoid fixed-address reads/zero-progress loop. Sound_UpdateSample routes through groupvoice/play.c to macos_voice.c native queue/AudioUnit; bundled Speex and Miles internals excluded. Compiled and reviewed, not exercised."
+  },
+  "mac:0x001ea1b0": {
+    "status": "intentional",
+    "evidence": "Mac 0x1ea1b0 exact-symbol body compared by hand, including all four dvar defaults/ranges/flags0x1001, bandwidth0, capture-success init/mixer order, ushort record level, zeroed64 talk timestamps, 64 output samples and historical return0. Native WS110 deliberately initializes Sound_Init, codecs and playback samples after its unavailable recorder returns0, provided output succeeds. Record_Init/DSOUNDRecord_Init are owned by src/platform/macos_voice.c; PCM playback goes through groupvoice/play.c to its65-slot,8192Hz AudioUnit adapter; mixer/capture calls are skipped. Dedicated excludes win_voice/groupvoice. No discarded recorder or bundled Speex/Miles internals reconstructed. Compiled, not exercised in this audit."
+  },
+  "mac:0x001ea584": {
+    "status": "equal",
+    "evidence": "Mac 0x1ea584 exact-symbol body compared by hand: 32-bit Sys_Milliseconds minus per-client talk timestamp and signed <=299 result agree. Native Release arm64 object independently inspected: sub w8,w0,w8 then cmp #300 and signed lt at function offsets+0x24..+0x2c."
+  },
+  "mac:0x001ea3cc": {
+    "status": "intentional",
+    "evidence": "Mac 0x1ea3cc exact-symbol body compared by hand: initialized gate, ushort microphone-level comparison/update,64 Sound_SampleFrame calls and Sound_Frame agree. Native WS110 gates only microphone mixer updates on actual recorder availability, retaining all playback calls; groupvoice/play.c routes them to the macos_voice.c native queues and AudioUnit. Bundled backend internals excluded. Compiled, not exercised in this audit."
+  },
+  "mac:0x001ea5a8": {
+    "status": "intentional",
+    "evidence": "Mac 0x1ea5a8 exact-symbol body compared by hand: initialized gate,64 output destruction calls, optional recording Stop/Destroy, recorder/codec/output shutdown order, microphone mute/level/source restore and initialized clear agree when capture exists. Native WS110 skips recorder/mixer restoration when its unavailable recorder never initialized, resets its capability flag, and always destroys playback via groupvoice/play.c -> macos_voice.c. Compiled, not exercised in this audit."
+  },
+  "mac:0x000774d0": {
+    "status": "equal",
+    "evidence": "Mac 0x774d0 exact-symbol body compared by hand: clear both pointers, open localization.txt in r mode, seek/ftell/rewind, read into language_buffer, close, zero-read fallback, terminator, first LF replacement and language-name lookup with default0 agree. Cstrings0x2476a8/0x2476ac checked directly. Native FS_File* wrappers delegate to libc in com_fileaccess.c. Existing unbounded file-size/4096-byte buffer behavior is retained; no size-hardening claim."
+  },
+  "mac:0x000775fe": {
+    "status": "equal",
+    "evidence": "Mac 0x775fe exact-symbol body compared by hand: localization parse session, alternating key/value reads, strcmp key/ref argument order, empty-token exits, matched va(%s,value) and unmatched va(%s,ref), with Com_EndParseSession on both paths, agree. Cstring localization checked directly at0x2476c0."
+  },
+  "mac:0x000775e4": {
+    "status": "equal",
+    "evidence": "Mac 0x775e4 exact-symbol body compared by hand: clears localization and localized_strings only; native agrees."
   }
 }
