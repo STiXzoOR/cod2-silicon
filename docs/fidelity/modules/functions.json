@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 486,
-      "intentional": 3085,
+      "unchecked": 479,
+      "intentional": 3090,
       "equal": 4720,
-      "fixed": 1166
+      "fixed": 1168
     },
     "scopes": {
       "unassigned": 777,
@@ -14540,7 +14540,7 @@
         ],
         "pairing": "unique module and name; semantics unchecked",
         "status": "unchecked",
-        "evidence": "Exact-symbol Mac 0xab80c-0xaba9d and native GetToken_impl were hand-compared for whitespace/comments, signed-char comparisons, quoting, 0x3ff accumulation/0x400 empty-token limit, EOL trimming and quote removal. Full-domain equality is unresolved: readUntilEOL advances through NUL at Mac 0xab95f-0xab999, and unterminated quoted reads advance the cursor past NUL at 0xaba0f-0xaba1f. Actual Mac FX_ParseEffect loader (inlined 0x5d25f-0x5d2b3) and native FX_ParseEffectFile allocate fileLength+1 and append only one NUL, with no newline guarantee. Mac temp allocator 0x38192 reserves a 16-byte header before the requested extent, not a guaranteed readable suffix; malloc fallback requests exact size. Native bounds are unchanged. No padding or out-of-storage equivalence is claimed; malformed EOF paths were not exercised."
+        "evidence": "Exact Mac 0xab80c-0xaba9e and native GetToken_impl hand-compared for whitespace/comments, signed characters, quoting, token limits, trimming and quote removal. Both still scan through NUL in readUntilEOL (0xab95f-0xab999) and leave an unterminated quoted cursor beyond NUL (0xaba0f-0xaba1f). Mac FX_ParseEffect 0x5d25f-0x5d2b3 and native FX_ParseEffectFile allocate fileLength+1 and append one NUL without a newline guarantee. Exact Hunk_AllocateTempMemoryInternal 0x38192 has a preceding header and exact-size malloc fallback, no suffix contract. No defined native malformed-EOF replacement exists; out-of-storage result equivalence remains unproved and unexercised."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:377:Parse",
@@ -111973,8 +111973,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Full Mac 0xe156a allocation/list/node/stats/frontend-command behavior and positive paired-triangle copies match. Mac 0xe170d executes at least one 12-byte triangle copy even when triCount/2 is zero, and uses equality termination for signed counts; native for-loop safely skips nonpositive pair counts. triIndices allocation validity for zero/negative pair counts is unproven; retained defined native behavior rather than adding out-of-bounds reads/writes."
+        "status": "intentional",
+        "evidence": "Complete exact Mac 0xe156a-0xe1774 and native cache body compared, including allocations/list/statistics/frontend command and positive paired copies. Mac 0xe170d-0xe172e enters the 12-byte copy unconditionally and equality-terminates, requiring counter wrap for zero/negative pair counts. Exact XModelReadSurface 0xc73df-0xc7408 requests 6*signedTriCount+6 bytes (six for zero); hunk/cache allocations cannot support that iteration count. Native deliberately skips nonpositive pairs instead of reproducing out-of-storage reads/writes. Ordinary odd-triangle padding is retained; no malformed-count output equality claimed."
       },
       {
         "id": "mac:0x000e1774",
@@ -112667,8 +112667,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Rigid and weighted positive-count paths hand-compared at Mac 0xf9bca, including normal/UV branches, 1/256 and 1/65536 weights and SSE accumulation order. Mac tests signed vertCount !=0 then uses equality-terminated loops; native skips negative counts. Loader/allocator validity for negative counts is unproven; retained defined native behavior instead of introducing out-of-bounds writes."
+        "status": "intentional",
+        "evidence": "Complete exact Mac 0xf9bca-0xf9ff8 and native rigid/weighted paths compared, including optional normal/UV branches, 1/256 and 1/65536 scales and SSE order. Mac 0xf9c04/0xf9d6a accepts nonzero signed vertCount and equality-terminates at 0xf9d49-0xf9d4f / 0xf9fd7-0xf9fe4; negative counts require counter wrap and cannot fit the output contract. XModelReadSurface 0xc73ba-0xc73c4 allocates from signed counts; the production native bounds caller supplies 0xff78 output bytes. Native deliberately performs no vertex reads/output writes for negative counts; no arbitrary storage or malformed-output equality is introduced."
       },
       {
         "id": "mac:0x000f9b2c",
@@ -158546,8 +158546,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": "Read complete Mac 0x9a0ca-0x9ab08 including includes, thread passes and linking; exact-entry disassembly confirms final 0x9a3d6 sets value.type=6 but the payload at -0x20(%ebp) has no defining store. Native writes deterministic integer 1. Left unchecked rather than claiming equality or attempting to reproduce uninitialized stack data."
+        "status": "intentional",
+        "evidence": "Complete exact Mac ScriptCompile 0x9a0ca-0x9ab08, native compiler body and marker caller/consumer graph compared. Mac 0x9a3d6-0x9a3ea sets type 6 but has no defining store for the payload at -0x20(%ebp); SetVariableValue copies it at 0x917ab-0x917b3. Native intentionally initializes integer 1. Scr_LoadScript, far-call resolution and load-table cleanup consume marker presence/type, not the integer payload. This preserves defined native initialization rather than claiming equality with prior stack bytes; no source change needed."
       },
       {
         "id": "linux:script/scr_compiler.cpp:2633:SetThreadPosition",
@@ -169653,8 +169653,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": "Read complete exact Mac 0x81cce-0x82511 and native helper graph. Notify lookup, cancellation, wait-match, queue/parameter-copy and termination paths compared. Unresolved: reallocation at 0x82407-0x82422 leaves new stack time byte uncopied; native deterministically copies old time. Mac MT_Alloc does not clear reused arena payload, so byte/time-reset behavior depends on allocation history. Retained native initialization per orchestrator; no equality claimed."
+        "status": "intentional",
+        "evidence": "Complete exact Mac 0x81cce-0x82512 and native notify cancellation/matching/termination/queue/parameter-copy helpers compared. Replacement allocation at 0x82407-0x8243b writes length/position/localId/packed values but leaves time byte +0xa unwritten. Exact MT_Alloc 0x448ea and MT_AllocIndex 0x445b6 do not clear reused payload; VM_ArchiveStack initializes original time at 0x810ac, and VM_Resume tests it for timeout reset at 0x86b56. Native intentionally copies the old initialized time when reallocating. Timeout-reset decisions may differ from Mac allocation history; no historical-byte equality claimed and no indeterminate native byte introduced."
       },
       {
         "id": "mac:0x00086b00",
@@ -219587,8 +219587,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": "Mac uses a truncated 32-bit null-minus-notify-table address when no next note is found (0x3ee7a\u20130x3ee8e, 0x42048\u20130x42059); native uses explicit -1. Loaded clips append an end sentinel, but equivalence for empty/exhausted tables and address-dependent results was not established. Full child selection and fraction arithmetic read; shared next-note scan unordered comparison corrected at 0x420d9\u20130x420e6, compiled and reviewed."
+        "status": "intentional",
+        "evidence": "Complete exact Mac 0x41eda-0x420fc and native child selection, shared next-note scan, signed cycle deltas and ordered/unordered fraction branches compared. At 0x42048-0x42059 no-match becomes the truncated short of null-minus-notify-table, potentially a nonnegative accidental index; native explicitly stores -1 and computes the end fraction. Exact XAnimLoadFile 0xba3cb-0xba415 appends end at time 1 for ordinarily allocated clips, with finite note ratios at 0xba603-0xba634, so time<=1 has a candidate. Empty/exhausted/out-of-range state follows the explicit native sentinel policy, not address-dependent ILP32 equality. SetTime/SetAnimRate/update caller graph was checked."
       },
       {
         "id": "linux:xanim/xanim.cpp:2657:XAnimGetNotifyList",
@@ -220035,8 +220035,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": "Mac uses a truncated 32-bit null-minus-notify-table address when no next note is found (0x3ee7a\u20130x3ee8e, 0x42048\u20130x42059); native uses explicit -1. Loaded clips append an end sentinel, but equivalence for empty/exhausted tables and address-dependent results was not established. Full dispatch/sorting/loop/end body read, including Mac wrapped-prefix stride-two bug at 0x4115d. Unordered insertion and next-note gates corrected; no-match storage and non-finite dispatch paths remain unproven."
+        "status": "fixed",
+        "evidence": "Exact Mac 0x406f6-0x412ae, native helper/caller graph, loader storage and all normal/wrapped/end/ordered/unordered dispatch/fraction/insertion branches compared. Mac 0x40a97-0x40b90 dispatches the accepted first note for NaN new time before the next strict comparison; native previously pretested it and emitted none. Restored the gated first dispatch under COD2_X64, plus Mac positive-zero additions after subtraction (0x40f49-0x40f5c / 0x40ff1-0x4100d). Compiled and reviewed; existing notify and seven sync fixtures pass but do not specifically exercise NaN/signed zero. Intentional native no-match return replaces truncated null-minus-table reconstruction at 0x408f6-0x40904, and existing count bounds stop wrapped stride-two scans before Mac out-of-storage reads at 0x4115d-0x41187."
       },
       {
         "id": "mac:0x0003ebbe",
@@ -220066,8 +220066,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": "Mac uses a truncated 32-bit null-minus-notify-table address when no next note is found (0x3ee7a\u20130x3ee8e, 0x42048\u20130x42059); native uses explicit -1. Loaded clips append an end sentinel, but equivalence for empty/exhausted tables and address-dependent results was not established. Full normal/wrapped/end dispatch and notify ownership read; unordered next-note scan and acceptance gates corrected at 0x3ef58/0x3ec4a/0x3ed33, compiled and reviewed, edge paths not exercised."
+        "status": "fixed",
+        "evidence": "Exact Mac 0x3ebbe-0x3ef78 and native caller/helper graph hand-compared through normal/wrapped/end dispatch, selection and ordered/unordered gates. Mac 0x3edd8-0x3ee40 dispatches the accepted first note for NaN new time then stops on the next strict comparison; native previously pretested and skipped it. Restored that gated first dispatch under COD2_X64. Compiled and reviewed; existing notify and seven sync fixtures pass but do not specifically exercise NaN. Intentional native -1/end behavior replaces address-derived no-match short at 0x3ee7a-0x3ee8e; existing bounds stop wrapped-prefix scans at table extent instead of Mac unbounded reads (0x3eca0-0x3ecfb)."
       },
       {
         "id": "linux:xanim/xanim.cpp:1512:XAnimResetInfo",
