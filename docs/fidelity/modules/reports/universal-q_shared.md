@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**Current: 71/89 reconciled: 57 equal, 7 fixed, 7 intentional; 18 unchecked.**
+**Current: 72/89 reconciled: 58 equal, 7 fixed, 7 intentional; 17 unchecked.**
 
 Original pass: 63/90 reconciled: 54 equal, 6 fixed, 3 intentional; 27 unchecked. Mac 1.3 is the authority. Every assigned row and every live shared-source function was inspected. Linux definitions were read only for identity and intent.
 
@@ -135,3 +135,48 @@ This result has an actual input and consumer. Mac `R_SkinStaticModelCachedCmd` c
 Native stores the three dot results before adding origins, whereas Mac finishes one coordinate at a time. The established disjoint storage makes that scheduling immaterial to the compared final coordinates. Arbitrary overlap, concurrent observation and floating-point trap timing are excluded, as are an exported helper ABI, literal inline ancestry and whole-renderer equivalence. This supersedes the prior rejection based only on axis pre-scaling; weighted surface transforms remain a distinct contract.
 
 The original helper identity, complete Mac provider and actual source/result chain were independently reviewed. One equal row, zero new defects, no production changes. No compilation, tests, CI, replay or runtime exercise; earlier verification is not expanded. Private exact bodies: `recon-provenance-scaledpos14.noindex`; independent review: `units/review-provenance-scaledpos14.md`.
+
+
+## Scaledlocal16 consumed uniform-model inverse position
+
+ScaledOrientationPosToLocal is equal for the complete actual uniform-model
+inverse point operation. The recovered original 1.0 identity 0x80b6c0e and 1.3
+body 0x80b91e6 establish orientation origin, axes, scalar scale and inverse-point
+intent. Linux's direct reciprocal/dot grouping does not supply Mac behavior.
+
+The explicit Mac modelscale branch converts atof once to float32 and writes the
+same scalar into all three scale slots at 0x77cbe/0x77cc3/0x77cc8. When that value
+is not superseded by a later modelscale_vec key, the actual parsed origin and
+AnglesToAxis orientation feed nine row-scaled coefficients, then MatrixInverse
+at 0x77aec writes the same model's persistent inverse storage at +0x14. The full
+provider at 0x2a79e unconditionally computes determinant, reciprocal determinant
+and all nine signed cofactors. Native cm_staticmodel_load_obj.c and com_math.c
+preserve this actual input/storage connection and the Mac arithmetic sequence;
+no hypothetical precomputed-matrix adapter is needed.
+
+CM_TraceStaticModel 0xbd750 and Complete 0xbd86e subtract that model's origin from
+both actual endpoints and pass this same inverse to MatrixTransformVector at
+0xbd7a5/0xbd7e7 and 0xbd8c0/0xbd902. The complete provider at 0x2a946 writes all
+three ordered column dots to distinct localStart/localEnd buffers, which the real
+XModelTraceLine calls consume. Native cm_staticmodel.c preserves those typed
+fields, disjoint buffers, complete coordinate outputs and consumers. The LP64
+layout uses typed fields, not copied i386 offsets.
+
+The loader's ordered zero guards send both signed zeros to Com_Error; their parity
+branches let NaN bypass those guards. Reaching stored inverse data therefore does
+not imply finite scale/angles, a nonsingular matrix or finite output. MatrixInverse
+has no status result or singular check: tiny/infinite/nonfinite inputs and an
+underflowed, zero or nonfinite determinant still follow the reviewed unconditional
+reciprocal/cofactor and endpoint-dot sequences. This mapping does not equate
+matrix inversion with the original transpose/direct-reciprocal formula, certify
+NaN payloads or trap timing, or recertify general error continuation and the whole
+loader. Nonuniform models, arbitrary input axes/overlap, a standalone helper ABI,
+Linux x87 behavior and subsequent collision result/normal handling are outside
+this consumed-operation claim.
+
+One focused equal closure; no new defects, source changes or primary overrides.
+All previous source and verdict decisions, including the loader's earlier error
+diagnostic correction, are preserved. Independent review is recorded in
+review-provenance-scaledlocal16.md; exact bodies, uniform-key string extraction
+and review receipts remain in recon-provenance-scaledlocal16.noindex. Static
+review only: no compilation, tests, CI, replay or runtime exercise.
