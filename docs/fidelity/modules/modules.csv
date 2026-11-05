@@ -395,7 +395,7 @@ speex/speex_callbacks,2,0,0,2,0
 speex/vbr,3,0,0,3,0
 speex/vq,3,0,0,3,0
 stringed/stringed_hooks,32,16,6,2,8
-stringed/stringed_ingame,32,3,12,12,5
+stringed/stringed_ingame,32,3,13,12,4
 stringed/stringed_interface,4,2,0,2,0
 system/Developer/SDKs/MacOSX10.4u.sdk/usr/include/c++/4.0.0/bits/allocator.h,5,2,2,1,0
 system/Developer/SDKs/MacOSX10.4u.sdk/usr/include/c++/4.0.0/bits/basic_string.h,34,1,11,22,0

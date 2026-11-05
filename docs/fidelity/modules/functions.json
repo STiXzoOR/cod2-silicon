@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 337,
+      "unchecked": 336,
       "intentional": 3172,
       "equal": 4764,
-      "fixed": 1184
+      "fixed": 1185
     },
     "scopes": {
       "unassigned": 777,
@@ -181948,8 +181948,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Neighboring file-setup/clear behavior is not a full identity for SE_NewLanguage."
+        "status": "fixed",
+        "evidence": "Original Linux identity: 1.0 wrapper0x8138320 and 1.3 wrapper0x813a752-0x813a766 load the global package and call Clear (1.3 0x81394f0), without other state/arguments. Original 1.3 SE_LoadLanguage0x813a81e calls it at0x813a83d between string construction and localizedstrings file-list building; corresponding Mac SE_LoadLanguage0x49804 directly loads TheStringPackage and calls CStringEdPackage::Clear at0x4981f-0x49827 before the same file-list operation. Complete Mac Clear0x4978a-0x49800 erases nodes, resets root/extrema/count/end marker, clears reference/English, and retains package name. Existing native Clear and this caller implement that corrected COW/tree operation. Maps the prior Clear repair; no new wrapper/export or source change. Existing startup guard and native ownership adaptations preserved. Compiled and reviewed previously; paths remain unexercised."
       },
       {
         "id": "mac:0x00049936",
