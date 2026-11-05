@@ -88,7 +88,7 @@ bgame/bg_slidemove,4,2,2,0,0
 bgame/bg_weapons,136,118,10,8,0
 bgame/bg_weapons_load_obj,15,13,1,1,0
 botlib/l_memory,3,0,0,3,0
-botlib/l_precomp,77,0,0,0,77
+botlib/l_precomp,77,42,10,6,19
 botlib/l_script,37,8,8,1,20
 cgame/cg_animtree_mp,6,6,0,0,0
 cgame/cg_compassfriendlies_mp,3,2,1,0,0
