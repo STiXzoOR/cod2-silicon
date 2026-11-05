@@ -46,3 +46,9 @@ Six import-unit rows remain unchecked:
 Both `cod2_macos` and `cod2_macos_ded` configured and built as arm64 Release, at low priority with at most two build jobs. Both relinked after the comparator change. The original comparator guard preserves all six inactive configurations. The subsequent AbsoluteTime type repair changes only the native port-on configuration; all five legacy configurations are identical. `git diff --check` passed. No new tests, full CI, replay, or runtime presentation was run. The comparator change is compiled and reviewed, not exercised.
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-unmatched-imports.noindex/`. All 657 import-module IDs plus the MacTools_Sleep correction are covered in the submitted unit ledger; global routing files were not changed.
+
+## Integrated batch 14 verification
+
+Integrated source c1bb3b0 passed both dedicated builds, complete local CI 02–13, native-only source guards, parent and fresh independent reviews, and both 2,000-frame replays. No changed source uses line macros. Replay players, state hashes and entities exactly match both d873794 baselines and each other; all six Linux logic fields agree, with maximum origin drift 0.11792 and velocity drift 2.0. No new tests or i386 byte-parity claim.
+
+This batch closes 880 entries. Fixes cover image metadata/mips and descriptor storage, container/sorting behavior, shader ownership, and the eight-byte AbsoluteTime caller/provider ABI. Three System constructor/factory boundaries and six import/allocation boundaries remain unchecked. Microphone capture remains unsupported. Dedicated replay does not exercise client rendering, shader/context lifetime, device output, or dormant platform wrappers. Unreached client and error paths remain compiled and reviewed; local fixtures establish only their stated cases.
