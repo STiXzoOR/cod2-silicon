@@ -39,9 +39,18 @@ UINT32 MacOpenGLUtils_GetPCPixelShaderVersion(void) { return 0; }
 uint16_t MacDisplay_GetCurrentDimensions(int *w, int *h) { *w = *h = 32; return 0; }
 bool CDirect3DSurface_IsDirty(const CDirect3DSurface *s) { return 0; }
 void CDirect3DSurface_SetDirty(void *s, int dirty) { }
+void CDirect3DSurface_MarkGPUWritten(void *s) { }
 void CDirect3DSurface_UpdateOpenGLSurfaceObject(const CDirect3DSurface *s, int recreate) { }
-void MacGL_DrawBuffer(unsigned int buffer) { glDrawBuffer(buffer); }
-void MacGL_ReadBuffer(unsigned int buffer) { glReadBuffer(buffer); }
+static GLenum FixtureBuffer(GLenum buffer)
+{
+    /* The production context maps its BACK/AUX buffers to FBO attachments. */
+    if (buffer == GL_BACK) return GL_COLOR_ATTACHMENT0_EXT;
+    if (buffer == GL_AUX0 || buffer == GL_AUX1)
+        return GL_COLOR_ATTACHMENT1_EXT + buffer - GL_AUX0;
+    return buffer;
+}
+void MacGL_DrawBuffer(unsigned int buffer) { glDrawBuffer(FixtureBuffer(buffer)); }
+void MacGL_ReadBuffer(unsigned int buffer) { glReadBuffer(FixtureBuffer(buffer)); }
 
 static ULONG SurfaceRef(void *surface) { return 1; }
 #else
