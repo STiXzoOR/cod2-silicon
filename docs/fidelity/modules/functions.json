@@ -181673,7 +181673,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Neighboring file-setup/clear behavior is not a full identity for ExtractLanguageFromPath."
+        "evidence": "Original1.0 ExtractLanguageFromPath0x813727a uniquely maps to original1.3 0x81396ac, calling actual Filename_PathOnly0x813953c at0x81396bf then Filename_WithoutPath0x813965c at0x81396ce and returning its buffer. PathOnly has a changed original1.0 body0x8137110 (not a unique masked match); the actual mapped caller identifies the1.3 provider, whose full body copies into its64-byte static buffer, finds the last slash/backslash, clears that delimiter and returns the buffer. Fresh exact Mac SetupNewFileParse0x484c4 instead composes extension removal and basename extraction before uppercase/package assignment; native keeps that distinct package operation. It is not the complete parent-directory or language-component return operation. No complete corresponding Mac/native owner established; both rows remain unchecked. Original absence searches are not used as closure evidence. Private exact bodies and maps: recon-stringed9.noindex. No source change, compilation, tests, CI, replay or runtime verification."
       },
       {
         "id": "linux:stringed/stringed_ingame.cpp:108:Filename_PathOnly",
@@ -181692,7 +181692,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Neighboring file-setup/clear behavior is not a full identity for Filename_PathOnly."
+        "evidence": "Original1.0 ExtractLanguageFromPath0x813727a uniquely maps to original1.3 0x81396ac, calling actual Filename_PathOnly0x813953c at0x81396bf then Filename_WithoutPath0x813965c at0x81396ce and returning its buffer. PathOnly has a changed original1.0 body0x8137110 (not a unique masked match); the actual mapped caller identifies the1.3 provider, whose full body copies into its64-byte static buffer, finds the last slash/backslash, clears that delimiter and returns the buffer. Fresh exact Mac SetupNewFileParse0x484c4 instead composes extension removal and basename extraction before uppercase/package assignment; native keeps that distinct package operation. It is not the complete parent-directory or language-component return operation. No complete corresponding Mac/native owner established; both rows remain unchecked. Original absence searches are not used as closure evidence. Private exact bodies and maps: recon-stringed9.noindex. No source change, compilation, tests, CI, replay or runtime verification."
       },
       {
         "id": "linux:stringed/stringed_ingame.cpp:124:Filename_WithoutExt",
