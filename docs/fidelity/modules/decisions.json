@@ -8712,8 +8712,8 @@
     "evidence": "Linux-only row: no Mac text symbol/established inline identity, and no native body by this name found. The distinct checked Scr_GetAnim API does not prove the anim-tree getter contract."
   },
   "linux:script/scr_vm.cpp:3912:Scr_GetConstIString": {
-    "status": "unchecked",
-    "evidence": "Linux-only row: no Mac text symbol/established inline identity, and no native body by this name found. Mac Scr_GetIString converts a localized-string ID to text; that is not this API result."
+    "status": "fixed",
+    "evidence": "Original1.0 helper0x808464e and caller0x80846dc; original1.3 helper0x8084c96-0x8084d23 and caller0x8084d24-0x8084d3e prove the localized string-id operation whose result is passed unchanged to SL_ConvertToString. Complete Mac inlined helper in Scr_GetIString0x8728a validates index/type3, preserves first error, repeats missing-parameter policy after returned type failure, and forwards the id or0 at0x873d8/0x8743e. Native getter now restores that missing second policy. This maps the complete helper before conversion, not the final text return; no separate native API/export invented. Compiled/reviewed in four actual configurations, not runtime exercised."
   },
   "mac:0x0008797e": {
     "status": "equal",
@@ -8744,8 +8744,8 @@
     "evidence": "Linux-only row: no Mac text symbol/established inline identity, and no native body by this name found. Interpreter function-pointer consumption does not establish the external parameter getter contract."
   },
   "mac:0x0008728a": {
-    "status": "equal",
-    "evidence": "Mac 0x8728a: read localized-string-only type handling, missing/type error results and SL_ConvertToString of value or zero."
+    "status": "fixed",
+    "evidence": "Mac complete Scr_GetIString0x8728a-0x8749f: localized-string type3 returns its id to SL_ConvertToString; missing argument returns conversion of0 after policy. On type failure, index is set and localized-type policy runs, then if it returns0x8734a-0x87355 formats missing-parameter and runs the second policy while retaining the first pending error. Native omitted this second policy; restored under COD2_X64. Complete success/error/nonlocal branches reviewed, existing policy and ownership adaptations preserved. Manual stock/CODX client/dedicated TU compilation and review only; new path unexercised."
   },
   "mac:0x0008372c": {
     "status": "equal",
