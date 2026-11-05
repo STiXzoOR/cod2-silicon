@@ -441,7 +441,7 @@ universal/q_shared,89,56,7,7,19
 universal/surfaceflags,2,2,0,0,0
 unix/unix_dir,1,0,0,0,1
 unix/unix_main,52,6,4,30,12
-unix/unix_net,17,3,2,10,2
+unix/unix_net,17,3,2,11,1
 unix/unix_shared,26,5,5,10,6
 unix/unix_threads,5,2,0,2,1
 win32/cinematics,16,8,4,4,0

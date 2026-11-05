@@ -8,8 +8,8 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 307,
-      "intentional": 3183,
+      "unchecked": 306,
+      "intentional": 3184,
       "equal": 4765,
       "fixed": 1202
     },
@@ -213157,8 +213157,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Unchecked after exact-symbol review: Mac NET_Config 0x1e9640 and native win_net.c own conditional reconfiguration, including UDP/SOCKS closes; when already disabled they may return without closing. Mac Sys_Quit 0xc3be0/native mac_main.c exit the process. Neither is a returning unconditional UDP-close-and-reset replacement for the Linux-only row, and no original caller mapping was established."
+        "status": "intentional",
+        "evidence": "Complete consumed UDP shutdown operation, independently reviewed: original 1.0 0x80d360e/1.3 0x80d5c7e conditionally close the owned ip_socket then invalidate regardless of close result. Primary Mac selected NET_Config phase 0x1e968b and 0x1e96f4\u20130x1e9706 contains both empty-state skip and current-descriptor close-then-zero paths; exact closesocket 0x282b0 forwards close. Actual NET_OpenIP descriptor provenance checked. Native same phase retains approved fd>=0/-1 sentinel adaptation including usable fd zero, hence intentional. Both selected close-phase entries established; state selection, subsequent SOCKS/relay/start operations are outside helper boundary. No unconditional NET_Config(0) alias, standalone export, literal inline ancestry, arbitrary corrupted descriptor/original -1 behavior, successful release after close error, or final errno after subsequent owner work claimed. Zero new defects/source changes; static original/Mac/native review only, no compilation/tests/CI/replay/runtime exercise."
       },
       {
         "id": "mac:0x001e8582",
