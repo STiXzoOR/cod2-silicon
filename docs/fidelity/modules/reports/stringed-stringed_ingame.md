@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**32 entries: 3 equal, 12 fixed, 12 intentional, 5 unchecked.** Exact Mac 1.3 i386 methods, helper inlines and allocation routines were compared by hand. Linux supplied names only. The reconstruction uses the existing native Apple COW/tree provider; other builds retain their previous implementation and OFF source.
+**32 entries: 3 equal, 13 fixed, 12 intentional, 4 unchecked.** Exact Mac 1.3 i386 methods, helper inlines and allocation routines were compared by hand. Linux supplied names only. The reconstruction uses the existing native Apple COW/tree provider; other builds retain their previous implementation and OFF source.
 
 The simplified linked-list parser is replaced on native Apple with a typed 80-byte package and 48-byte GCC-layout tree nodes. The original package allocates 40 bytes through Z_MallocInternal at 0x498e8; its tree allocates 24-byte nodes through operator new at coalesced 0x2ef2a8 and frees them through operator delete at 0x2ef866. Those exact allocator stubs were resolved. Native keeps the same package/node allocator distinction, widened pointers and size_t COW headers. It does not substitute libc++ containers. Shared provider files were inspected read-only.
 
@@ -12,7 +12,7 @@ ParseLine at 0x48f90 accepts every non-English LANG_ when the force-English byte
 
 Intentional native limits remain explicit: &&0 is rejected instead of reading/writing before Mac's nine-byte tracking array at 0x4936e; quote trimming stays defined when an opening quote is followed only by whitespace; filenames use dynamic strings instead of overflowing original 64-byte buffers; a missing SetString entry is created instead of writing through end(); and repeated initialization reuses its package instead of leaking it. Existing null-package startup guards remain. The Linux custom allocator spelling is not a separate Mac executable identity: Mac uses std::allocator for nodes and zone allocation for its package. The corresponding six rows record those replacements.
 
-ExtractLanguageFromPath, Filename_PathOnly, SE_NewLanguage and both Linux se_alloc constructors have no complete matching native/Mac identities established. These five rows remain unchecked.
+ExtractLanguageFromPath, Filename_PathOnly and both Linux se_alloc constructors have no complete matching native/Mac identities established. These four rows remain unchecked.
 
 The Release arm64 dedicated target links. The actual native client translation unit compiles with this worktree's production flags. Existing ASan/UBSan COW/tree fixtures pass, including the actual file-list builder; they do not link or exercise this parser, package tree, loading, lookup or shutdown. Those paths are compiled and reviewed only. Allocation-failure exception cleanup and live unwinding remain unverified; normal C ownership paths were reviewed. No new tests/cases, full game runs or replays were performed. The OFF guard checks pass, and there are no __LINE__ sites. Initial/final builds, tool limitations and private disassembly stay under recon-stringed.noindex.
 
@@ -25,3 +25,9 @@ Parent and fresh independent source/binary reviews covered all six units, includ
 Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. The first stock attempt stopped before engine launch because previous output existed; verified backed-up output was cleared and the complete replay passed. Dedicated replay does not exercise UI interaction, client sound output or microphone capture.
 
 Catalog coverage passed without semantic catalog changes. The predecessor batch 8 hosted macOS run exceeded its one-hour limit during ABI audits despite passing full local CI; that hosted run is incomplete. Hosted ILP32 comparison remains unavailable because the unchanged reference fails compilation; no byte parity is claimed.
+
+## Original new-language wrapper identity
+
+Original Linux 1.0 wrapper 0x8138320 and original 1.3 wrapper 0x813a752–0x813a766 load the global package and call Clear with no further operation. The 1.3 language loader at 0x813a81e calls the wrapper at 0x813a83d between string construction and the localizedstrings file-list operation. Mac SE_LoadLanguage directly performs that same global-package Clear at 0x4981f–0x49827. This positive caller mapping establishes SE_NewLanguage through the complete existing Mac Clear at 0x4978a–0x49800.
+
+The native Clear erases the tree, resets its root/extrema/count and end marker, clears the reference and English cache, and retains the package name. The alias inherits that existing repair and is fixed; no new export or source change is required. Existing startup guards, native ownership adaptations and exception-cleanup limitations remain. Fresh independent original/native review supports the mapping; no compilation, tests, CI, replay or runtime verification ran in this follow-up.
