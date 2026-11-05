@@ -47,7 +47,9 @@ int MacPlatform_GetRenderSize(int *w, int *h) { *w = *h = 32; return 1; }
 int MacDisplay_GetSupportsAnisotropicFiltering(void) { return 0; }
 float MacDisplay_GetMaxSupportedAnisotropy(void) { return 1; }
 D3DMATRIX *RB_GetActiveWorldMatrix(void) { assert(!"unexpected view matrix"); return NULL; }
+#if !defined(COD2_X64)
 D3DXMATRIX *D3DXMatrixMultiply(D3DXMATRIX *a, const D3DXMATRIX *b, const D3DXMATRIX *c) { assert(!"unexpected matrix multiply"); return a; }
+#endif
 
 static void EnablePixel(const void *shader)
 {

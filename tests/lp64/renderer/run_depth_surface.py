@@ -40,7 +40,7 @@ command = [*flags, '-UNDEBUG', '-DGL_SILENCE_DEPRECATION', '-I' + str(output),
            '-framework', 'OpenGL', str(ROOT / 'tests/lp64/renderer/depth_surface.c'),
            *[str(source_dir / (name + '.c')) for name in
              ['CDirect3DTexture', 'CDirect3DCubeTexture', 'CDirect3DVolumeTexture',
-              'CDirect3DSurface', 'MacOpenGLUtils', 'CVertexArrays']],
+              'CDirect3DSurface', 'MacOpenGLUtils', 'CVertexArrays', 'D3DXMath', 'MacOpenGLMath']],
            os.environ.get('COD2_OPENGL_PROVIDER_SOURCE', str(source_dir / 'COpenGL.c')),
            '-o', str(exe)]
 (output / 'compile-command.txt').write_text(shlex.join(command) + '\n')
