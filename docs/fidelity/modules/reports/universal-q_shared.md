@@ -1,8 +1,10 @@
 # universal/q_shared module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**63/90 reconciled: 54 equal, 6 fixed, 3 intentional; 27 unchecked.** Mac 1.3 is the authority. Every assigned row and every live shared-source function was inspected. Linux definitions were read only for identity and intent.
+**Current: 68/89 reconciled: 59 equal, 6 fixed, 3 intentional; 21 unchecked.**
+
+Original pass: 63/90 reconciled: 54 equal, 6 fixed, 3 intentional; 27 unchecked. Mac 1.3 is the authority. Every assigned row and every live shared-source function was inspected. Linux definitions were read only for identity and intent.
 
 ## Corrections
 
@@ -49,3 +51,17 @@ The six units closed 543 entries. Thirty-two whole callers misattributed to univ
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baselines and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. These dedicated traces do not exercise client input/rendering or every changed diagnostic, parser, sound or numeric edge; unreached corrections remain compiled and reviewed.
 
 Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile. No new tests were written; the existing formatter fixture expectation was corrected against exact Mac diagnostic bytes.
+
+## Remaining-helper consumer pass (2026-11-05)
+
+Five complete original operations were located in current native owners. `LittleShort` is the unchanged signed word write/read at Mac `MSG_WriteShort` 0x173998–0x17399b and `MSG_ReadShort` 0x1735de–0x1735e5. `LittleLong` is the unchanged full-word write/read at 0x1739c8–0x1739cb and 0x17360c–0x173612. The native message cores preserve the complete scalar results. These verdicts certify only the shared identity operators; existing caller verdicts are unchanged.
+
+`BigShort` is the complete eight-bit word rotate in `NET_StringToAdr` 0x1584e3–0x1584e7 and rotate plus signed extension in `NET_AdrToString` 0x1583b4–0x1583b9. Native narrows the parser input before its shift/or permutation and retains the signed stock formatting cast. CoD2x's later unsigned display remains its existing caller boundary. No reconstructed Big dispatch table is asserted.
+
+The complete original endian setup operators are the two branches of live `Swap_Init`: 0x29313–0x29346 assigns all five swapped targets, and 0x29347–0x2937a assigns all five no-swap targets. Native binds the same short, long, 64-bit long, typed float-read and typed float-write roles. `Com_Init_Try_Block_Function` calls the owner at Mac 0x30c82. The zero-address little-endian helper label is only a naming clue; the entire nonzero branch supplies the evidence. Linux's added Big-pointer fields and float-input table reconstruction are secondary claims absent from the authoritative Mac setup, so they impose no additional certified dispatch behavior. These split-branch identities do not certify any missing runtime wrapper or typed float consumer.
+
+Real neighboring consumers were also checked without extending the verdicts. `FX_GetBoneOrientation` composes its axes and translation using `MatrixMultiply` and `MatrixTransformVector43`, but adds translation after the dot; the q_shared position transform adds the origin first. `R_GetRigidTransform` scales axes before the dot. Weighted surface transforms scale a translated result and accumulate it. These are different float operations from the outstanding concatenate/scaled-position helpers. `FS_BuildOSPath_Internal` inserts separators and handles a fixed OS-path bound, and `FindFirstFileA` bounds a copy that excludes the slash; neither supplies the generic filepath/strip-filename contract. Dvar copy ownership does not supply the stack-plus-TLS pointer predicate. Bounded compares have a concrete libc owner, but the reconstructed inline helper's normalized result and signed-char conversion contract remain unproved.
+
+No source defect was established and no engine source changed. Release stock and CoD2x objects compiled for `q_shared.c`, `msg_mp.c` and `net_chan_mp.c` (six objects). The existing `f1_msg` source fixture passed both configurations under ASan/UBSan, exercising short/long operations through usercmd serialization. The network swap and setup branches were compiled and reviewed, not exercised by that fixture. Triage and constant scripts supplemented exact-symbol disassembly. No tests, cases or assertions were added; no full CI or replay ran.
+
+The 21 remaining unchecked entries retain explicit interface/identity gaps. This pass neither closes helpers through absence nor certifies the complete containing callers. Private follow-up evidence: `~/Library/Application Support/CoD2-native-decomp/recon-shared-remaining.noindex/`.
