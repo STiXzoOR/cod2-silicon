@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**Current: 169/229 reconciled: 140 equal, 29 fixed, 0 intentional; 60 unchecked.**
+**Current: 170/229 reconciled: 141 equal, 29 fixed, 0 intentional; 59 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -358,3 +358,36 @@ Independent mapping and source reviews are review-provenance-distance18-segment.
 and review-provenance-distance18-selector.md. Private exact evidence is in
 recon-provenance-distance18.noindex. Only changed dobj.c was manually compiled in
 four existing modes; no tests, CI, full build, replay or runtime exercise.
+
+## Complete fixed-alpha color word (provenance-packing20)
+
+ColorBytesFromRGB is equal through the actual team-color chain. Original
+0x80a810c establishes RGB conversion, fixed fourth byte255 and packed-word
+intent. Mac CL_UpdateColor 0x17b88a obtains bounded byte-derived team RGB and
+sets each alpha to1. Its real export slot0x10c resolves to RB_UpdateColor
+0xd4c92, which calls the complete four-slot converter0xd4bd8. All channels
+retain their byte offsets; multiply255/add0.5/floor/CVTT is the authoritative
+Mac rounding sequence. The persistent words are read and copied whole by
+RB_LookupColor at0xd4684/0xd4692. Native preserves that complete chain.
+
+This is a positive fixed-alpha adapter and full-word consumer, distinct from
+the earlier ARGB and isolated scalar candidates. It certifies the actual bounded
+consumed operation, not arbitrary float inputs, an exported return-register ABI,
+Linux x87 rounding, overlap, or subsequent use of alpha. No exceptional-source
+defect or runtime occurrence is claimed. ColorBytesFromRGBA remains unchecked:
+the observed caller fixes alpha1, so it does not establish a variable fourth
+input role even though the complete provider reads all four slots. Independent
+review accepted RGB only in review-provenance-packing20-color.md.
+
+The signed10-bit vector helpers remain unchecked. Complete original bodies
+confirm511 scaling, mask0x3ff, shifts10/20 and signed22-bit shifts on unpack.
+A new bounded instruction scan did not locate a complete engine format owner.
+Exact XSurfaceTransfer 0xf9b2c and its Dx7 companion instead copy all three
+normal floatwords into renderer storage; this concrete format does not establish
+a packed-word adapter. ClampShort also remains unchecked: exact32767 candidates
+ValidationProc and GetMenuBuffer use text-selection markers or file-size
+rejection, not signed saturation. External library candidates are not reused as
+engine ownership evidence. These bounded checks do not prove semantic absence.
+
+Evidence is retained in recon-provenance-packing20.noindex. No source edits,
+compilation, tests, CI, replay or runtime exercise were performed.
