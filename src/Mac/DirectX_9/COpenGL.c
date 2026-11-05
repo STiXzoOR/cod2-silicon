@@ -627,6 +627,81 @@ __attribute__((constructor)) void GLOBAL__I__ZN7COpenGL7sOpenGLE(void)
     COpenGL_COpenGL((const COpenGL *)COpenGL_sOpenGL);
 }
 
+#if defined(COD2_X64)
+/* Native CDirect3DVertexShader stores a GLuint at the start of baseState.
+ * Draw consumers read that word directly; string labels and stream state are
+ * supplied separately by the native shader-cache and vertex-declaration path. */
+unsigned int COpenGLVertexProgram_COpenGLVertexProgram(const COpenGLVertexProgram *_this, const char *pSrcData)
+{
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pSrcData };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGLVertexProgram_COpenGLVertexProgram", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+    GLuint *program = (GLuint *)_this;
+    GLint previousProgram;
+    *program = 0;
+    if (!pSrcData || pSrcData[0] != '!' || pSrcData[1] != '!')
+        return 0;
+    glGetProgramivARB(0x8620, 0x8677, &previousProgram);
+    glGenProgramsARB(1, program);
+    glBindProgramARB(0x8620, *program);
+    glProgramStringARB(0x8620, 0x8875, (GLsizei)strlen(pSrcData), pSrcData);
+    glBindProgramARB(0x8620, (GLuint)previousProgram);
+    return 0;
+}
+
+static void COpenGLVertexProgram_Destroy(void *_this)
+{
+    extern unsigned char *imp___ZN15CDirect3DDevice28mNeedsVertexShaderValidationE;
+    extern unsigned char *imp___ZN15CDirect3DDevice30mNeedsTransformationValidationE;
+    extern unsigned char *imp___ZN15CDirect3DDevice29mNeedsRasterizationValidationE;
+    GLuint program = *(GLuint *)_this;
+    GLint currentProgram;
+    glGetProgramivARB(0x8620, 0x8677, &currentProgram);
+    if ((GLuint)currentProgram == program)
+        glDisable(0x8620);
+    glDeleteProgramsARB(1, &program);
+    if (imp___ZN15CDirect3DDevice28mNeedsVertexShaderValidationE)
+        *imp___ZN15CDirect3DDevice28mNeedsVertexShaderValidationE = 1;
+    if (imp___ZN15CDirect3DDevice30mNeedsTransformationValidationE)
+        *imp___ZN15CDirect3DDevice30mNeedsTransformationValidationE = 1;
+    if (imp___ZN15CDirect3DDevice29mNeedsRasterizationValidationE)
+        *imp___ZN15CDirect3DDevice29mNeedsRasterizationValidationE = 1;
+}
+
+void ZN20COpenGLVertexProgramD1Ev(void *_this)
+{
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN20COpenGLVertexProgramD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+    COpenGLVertexProgram_Destroy(_this);
+}
+
+void ZN20COpenGLVertexProgramD0Ev(void *_this)
+{
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN20COpenGLVertexProgramD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+    COpenGLVertexProgram_Destroy(_this);
+    free(_this);
+}
+
+void ZN20COpenGLVertexProgramD2Ev(void *_this)
+{
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN20COpenGLVertexProgramD2Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+    COpenGLVertexProgram_Destroy(_this);
+}
+#else
 unsigned int COpenGLVertexProgram_COpenGLVertexProgram(const COpenGLVertexProgram *_this, const char *pSrcData)
 {
 #if MAC_METAL_NATIVE
@@ -697,6 +772,8 @@ void ZN20COpenGLVertexProgramD2Ev(void *_this)
 
     (void)_this;
 }
+
+#endif
 
 void ZN7CBaseVAD1Ev(void *_this)
 {
@@ -799,7 +876,20 @@ void ZN12CNormalArrayD1Ev(void *_this)
     (void)_this;
 }
 
+#if defined(COD2_X64)
+void *ZNSt4listIPmSaIS0_EE5eraseESt14_List_iteratorIS0_E(void *list, void *position)
+{
+    extern void __ZNSt15_List_node_base6unhookEv(void *);
+    extern void __ZdlPv(void *);
+    void *next = *(void **)position;
+    (void)list;
+    __ZNSt15_List_node_base6unhookEv(position);
+    __ZdlPv(position);
+    return next;
+}
+#else
 void ZNSt4listIPmSaIS0_EE5eraseESt14_List_iteratorIS0_E(void) {}
+#endif
 void ZNSt6vectorIN7COpenGL8CTexUnitESaIS1_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS1_S3_EERKS1_(void) {}
 void ZNSt6vectorIN7COpenGL8CTexUnitESaIS1_EE5eraseEN9__gnu_cxx17__normal_iteratorIPS1_S3_EES7_(void) {}
 

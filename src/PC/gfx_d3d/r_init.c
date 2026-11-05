@@ -1233,11 +1233,19 @@ void ZSt16__introsort_loopIP15_D3DDISPLAYMODEiPFhRKS0_S3_EEvT_S6_T0_T1_(
             lo = first;
             hi = last;
             for (;;) {
+#if defined(COD2_X64)
+                while (comp(lo, &pivot))
+                    lo++;
+                hi--;
+                while (comp(&pivot, hi))
+                    hi--;
+#else
                 while (!comp(&pivot, lo))
                     lo++;
                 hi--;
                 while (!comp(hi, &pivot))
                     hi--;
+#endif
                 if (lo >= hi)
                     break;
                 {
