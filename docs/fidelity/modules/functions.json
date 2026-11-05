@@ -57,7 +57,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only name. Mac has an absolute zero-valued exception symbol but no executable BeginWriting body; native has no definition or caller, and no inlined Mac writing initializer was identified. Writer comparison assumes a valid initialized MemoryFile/startPos."
+        "evidence": "Original 1.0 body0x8120794 uniquely maps to original1.3 0x8122c24. Complete writes assign file, clear reading, set writing, zero byte/literal/zero counters, and snapshot file bytesUsed into controlPos. Actual original FX_Save0x8133ffe calls this at0x813401c. Exact Mac constructor0xa9d9e only clears fields and leaves file NULL; BeginReading0xa9dd0 sets the opposite mode. The Mac restore owner0x5ca50 calls BeginReading at0x5cb19. Neither provides the complete writer initialization, and the actual save-side Mac/native owner remains unidentified. Original caller provenance is positive but does not close the Mac gap. Private original bytes and exact Mac entry evidence: recon-fxarchive9.noindex. No source change, compilation, tests, CI, replay or runtime verification."
       },
       {
         "id": "mac:0x000aaa08",
@@ -10928,7 +10928,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only save-side helper; no Mac executable identity or native save-side caller found. Cannot establish write/type/endtime sequence against Mac."
+        "evidence": "Original 1.0 body0x8131b58 uniquely maps to original1.3 0x8133fa0. Complete operation calls effect virtual TypeID slot+0x24, writes its byte, writes effect end time field+0xbc, then dispatches virtual Archive slot+0x28. Actual original FX_Save0x8133ffe calls it at0x813407f and0x81340c1. Exact Mac FxArchive::ArchiveEffect0xaa1b2 is a different template-name serialization operation, including its writing branch0xaa208; it does not establish this effect-instance header/virtual dispatch operation. No complete corresponding Mac/native owner identified; remains unchecked. Private original bytes and exact Mac entry evidence: recon-fxarchive9.noindex. No source change, compilation, tests, CI, replay or runtime verification."
       },
       {
         "id": "mac:0x00058ea2",
@@ -11597,7 +11597,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only named save entry; no Mac executable identity and no native FX_Save body/callers found. Not implemented from Linux claims."
+        "evidence": "Original 1.0 body0x8131bb6 uniquely maps to original1.3 0x8133ffe: actual archive constructor0x8122b98, BeginWriting0x8122c24, helper/scheduler archives, bolt and nonbolt effect loops through0x8133fa0, zero terminator and used-size return. Fresh Mac FX_Restore0x5ca50 establishes the distinct read-side owner with actual BeginReading at0x5cb19; existing writing primitives and template serialization do not supply the complete save operation. No corresponding complete Mac/native save owner identified. Bounded original call/reference search is retained as search evidence only, never as a closure argument. Private original bytes and exact Mac entry evidence: recon-fxarchive9.noindex. No source change, compilation, tests, CI, replay or runtime verification."
       },
       {
         "id": "mac:0x0005a4fc",
