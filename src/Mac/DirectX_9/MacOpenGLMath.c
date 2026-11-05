@@ -1,5 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
+#if defined(COD2_X64)
+#include <math.h>
+#endif
 
 static float *COpenGLMatrix_Data(COpenGLMatrix *matrix)
 {
@@ -77,6 +80,55 @@ void COpenGLMatrix_Transpose(const COpenGLMatrix *_this)
     }
 }
 
+#if defined(COD2_X64)
+static float Matrix4_MinorDeterminant(const float *matrix, int excludedRow, int excludedColumn)
+{
+    float minor[9];
+    int index = 0;
+
+    for (int row = 0; row < 4; ++row) {
+        if (row == excludedRow) {
+            continue;
+        }
+        for (int column = 0; column < 4; ++column) {
+            if (column != excludedColumn) {
+                minor[index++] = matrix[row * 4 + column];
+            }
+        }
+    }
+
+    float first = (minor[4] * minor[8] - minor[7] * minor[5]) * minor[0];
+    float second = (minor[8] * minor[3] - minor[5] * minor[6]) * minor[1];
+    float third = (minor[7] * minor[3] - minor[4] * minor[6]) * minor[2];
+    return (first - second) + third;
+}
+
+bool COpenGLMatrix_Inverse(const COpenGLMatrix *_this, COpenGLMatrix *mResult)
+{
+    const float *matrix = COpenGLMatrix_ConstData(_this);
+    float determinant = 0.0f;
+    float sign = 1.0f;
+
+    for (int column = 0; column < 4; ++column) {
+        float term = Matrix4_MinorDeterminant(matrix, 0, column) * matrix[column];
+        determinant = determinant + term * sign;
+        sign = -sign;
+    }
+
+    if (fabsf(determinant) < 0.0005f) {
+        return 0;
+    }
+
+    for (int row = 0; row < 4; ++row) {
+        for (int column = 0; column < 4; ++column) {
+            float cofactor = Matrix4_MinorDeterminant(matrix, row, column);
+            cofactor = cofactor * (float)(1 - 2 * ((row + column) % 2));
+            COpenGLMatrix_Data(mResult)[column * 4 + row] = cofactor / determinant;
+        }
+    }
+    return 1;
+}
+#else
 bool COpenGLMatrix_Inverse(const COpenGLMatrix *_this, COpenGLMatrix *mResult)
 {
     float augmented[4][8];
@@ -150,3 +202,4 @@ bool COpenGLMatrix_Inverse(const COpenGLMatrix *_this, COpenGLMatrix *mResult)
 
     return 1;
 }
+#endif

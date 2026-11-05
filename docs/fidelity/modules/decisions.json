@@ -32282,5 +32282,229 @@
   "mac:0x000d2936": {
     "status": "equal",
     "evidence": "Hand compared exact Mac 0xd2936: registered-slot2 previous-state copy or immediate current-fog fallback, target-slot4 copy and zero/nonzero transition timestamps match native. Compiled, not renderer-exercised."
+  },
+  "mac:0x002ed45c": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed45c coalesced complete destructor: read full vptr store sequence and return; native matches with two native-pointer Itanium header slots instead of eight i386 bytes."
+  },
+  "mac:0x002ed474": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed474 coalesced deleting destructor: read full vptr store sequence and final operator delete dispatch; native matches with two native-pointer Itanium header slots instead of eight i386 bytes."
+  },
+  "mac:0x0000cec4": {
+    "status": "equal",
+    "evidence": "Mac 0x0000cec4: read complete prologue/return body; the ABGR float conversion is deliberately empty and native leaves all outputs untouched."
+  },
+  "mac:0x0000ce04": {
+    "status": "equal",
+    "evidence": "Mac 0x0000ce04: read single 32-bit load/store; native copies exactly four bytes without channel transformation."
+  },
+  "mac:0x0000cebc": {
+    "status": "equal",
+    "evidence": "Mac 0x0000cebc: read complete prologue/return body; the ABGR float conversion is deliberately empty and native leaves all outputs untouched."
+  },
+  "mac:0x0000ce70": {
+    "status": "equal",
+    "evidence": "Mac 0x0000ce70: read complete prologue/return body; the ABGR float conversion is deliberately empty and native leaves all outputs untouched."
+  },
+  "mac:0x0000ce14": {
+    "status": "equal",
+    "evidence": "Mac 0x0000ce14: read complete prologue/return body; the ABGR float conversion is deliberately empty and native leaves all outputs untouched."
+  },
+  "mac:0x002ed396": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed396 coalesced body: read exact return constant and compared native ConverterType values (ATI ARGB0, ATI ABGR1, Std ARGB2, Std ABGR3, base4)."
+  },
+  "mac:0x002ed424": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed424 coalesced complete destructor: read full vptr store sequence and return; native matches with two native-pointer Itanium header slots instead of eight i386 bytes."
+  },
+  "mac:0x002ed43c": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed43c coalesced deleting destructor: read full vptr store sequence and final operator delete dispatch; native matches with two native-pointer Itanium header slots instead of eight i386 bytes."
+  },
+  "mac:0x0000d546": {
+    "status": "fixed",
+    "evidence": "Mac 0x0000d546: read AltiVec early return and G3 fallback; read complete G3 0xd380 loop and float clamp/255/+0.5/truncate sequence. Native retains pending Std pack ror8 (ATI ror24) and now explicitly returns low32 zero for NaN, matching invalid Mac fistpll instead of undefined float-to-unsigned conversion. Current production GetColorConverter callers use packed slot0; float packing remains a separate contract. Compiled and reviewed, float/NaN paths not exercised."
+  },
+  "mac:0x0000cdf2": {
+    "status": "equal",
+    "evidence": "Mac 0x0000cdf2: read one 32-bit load, rotate-right24 and store; compared native memcpy/rotate/memcpy sequence including overlapping word input/output."
+  },
+  "mac:0x0000ce76": {
+    "status": "fixed",
+    "evidence": "Mac 0x0000ce76: all source components are loaded before the first float destination store. Native now preloads byte components so overlapping source/destination follows Mac; retained Std012[3]/ATI321[0] order and float32 reciprocal255 at0x326184. Compiled and reviewed, overlap behavior not exercised."
+  },
+  "mac:0x0000ce1a": {
+    "status": "fixed",
+    "evidence": "Mac 0x0000ce1a: all source components are loaded before the first float destination store. Native now preloads byte components so overlapping source/destination follows Mac; retained Std012[3]/ATI321[0] order and float32 reciprocal255 at0x326184. Compiled and reviewed, overlap behavior not exercised."
+  },
+  "mac:0x002ed38e": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed38e coalesced body: read exact return constant and compared native ConverterType values (ATI ARGB0, ATI ABGR1, Std ARGB2, Std ABGR3, base4)."
+  },
+  "mac:0x002ed360": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed360 coalesced complete destructor: read full vptr store sequence and return; native matches with two native-pointer Itanium header slots instead of eight i386 bytes."
+  },
+  "mac:0x002ed374": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed374 coalesced deleting destructor: read full vptr store sequence and final operator delete dispatch; native matches with two native-pointer Itanium header slots instead of eight i386 bytes."
+  },
+  "mac:0x002ed350": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed350 coalesced body: read complete no-op implementation; native also writes nothing."
+  },
+  "mac:0x002ed34a": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed34a coalesced body: read complete no-op implementation; native also writes nothing."
+  },
+  "mac:0x002ed344": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed344 coalesced body: read complete no-op implementation; native also writes nothing."
+  },
+  "mac:0x002ed33e": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed33e coalesced body: read complete no-op implementation; native also writes nothing."
+  },
+  "mac:0x0000d5ce": {
+    "status": "fixed",
+    "evidence": "Mac0xd5ce tests card enum1 (not2), then capability byte0x800 and zero/nonzero source format. Native now uses enum1 and the actual pending cd687d68 persistent supportsATIArrayRevComps field, preserving that provider access. Compiled and reviewed with exact pending GL header overlay; live ATI path not exercised."
+  },
+  "mac:0x002ed356": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed356 coalesced body: read exact return constant and compared native ConverterType values (ATI ARGB0, ATI ABGR1, Std ARGB2, Std ABGR3, base4)."
+  },
+  "mac:0x002ed3ec": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed3ec coalesced complete destructor: read full vptr store sequence and return; native matches with two native-pointer Itanium header slots instead of eight i386 bytes."
+  },
+  "mac:0x002ed404": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed404 coalesced deleting destructor: read full vptr store sequence and final operator delete dispatch; native matches with two native-pointer Itanium header slots instead of eight i386 bytes."
+  },
+  "mac:0x0000cdec": {
+    "status": "equal",
+    "evidence": "Mac 0x0000cdec: read complete prologue/return body; the ABGR float conversion is deliberately empty and native leaves all outputs untouched."
+  },
+  "mac:0x0000ceca": {
+    "status": "equal",
+    "evidence": "Mac 0x0000ceca: read single 32-bit load/store; native copies exactly four bytes without channel transformation."
+  },
+  "mac:0x0000cde4": {
+    "status": "equal",
+    "evidence": "Mac 0x0000cde4: read complete prologue/return body; the ABGR float conversion is deliberately empty and native leaves all outputs untouched."
+  },
+  "mac:0x0000cd9a": {
+    "status": "equal",
+    "evidence": "Mac 0x0000cd9a: read complete prologue/return body; the ABGR float conversion is deliberately empty and native leaves all outputs untouched."
+  },
+  "mac:0x0000cd3e": {
+    "status": "equal",
+    "evidence": "Mac 0x0000cd3e: read complete prologue/return body; the ABGR float conversion is deliberately empty and native leaves all outputs untouched."
+  },
+  "mac:0x002ed3aa": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed3aa coalesced body: read exact return constant and compared native ConverterType values (ATI ARGB0, ATI ABGR1, Std ARGB2, Std ABGR3, base4)."
+  },
+  "mac:0x002ed3b4": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed3b4 coalesced complete destructor: read full vptr store sequence and return; native matches with two native-pointer Itanium header slots instead of eight i386 bytes."
+  },
+  "mac:0x002ed3cc": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed3cc coalesced deleting destructor: read full vptr store sequence and final operator delete dispatch; native matches with two native-pointer Itanium header slots instead of eight i386 bytes."
+  },
+  "mac:0x0000d58a": {
+    "status": "fixed",
+    "evidence": "Mac 0x0000d58a: read AltiVec early return and G3 fallback; read complete G3 0xd04a loop and float clamp/255/+0.5/truncate sequence. Native retains pending Std pack ror8 (ATI ror24) and now explicitly returns low32 zero for NaN, matching invalid Mac fistpll instead of undefined float-to-unsigned conversion. Current production GetColorConverter callers use packed slot0; float packing remains a separate contract. Compiled and reviewed, float/NaN paths not exercised."
+  },
+  "mac:0x0000cd2c": {
+    "status": "intentional",
+    "evidence": "Mac exact-symbol 0xcd2c rotates right8, but native keeps bswap for the established producer/consumer boundary. Mac R_SkinStaticModelCachedCmd0xe01ae\u20130xe01e5 and native both prepack RGBA as ARGB; native bswap yields BGRA at stride64/offset24, consumed as BGRA by lp64_color_order.h and device/shader draw conversion. Restoring ror8 here would swap R/B after that consumer. Existing static_model_cache ASan/UBSan and water vertices fixtures passed without changing their inputs/assertions."
+  },
+  "mac:0x0000cda0": {
+    "status": "fixed",
+    "evidence": "Mac 0x0000cda0: all source components are loaded before the first float destination store. Native now preloads byte components so overlapping source/destination follows Mac; retained Std012[3]/ATI321[0] order and float32 reciprocal255 at0x326184. Compiled and reviewed, overlap behavior not exercised."
+  },
+  "mac:0x0000cd44": {
+    "status": "fixed",
+    "evidence": "Mac 0x0000cd44: all source components are loaded before the first float destination store. Native now preloads byte components so overlapping source/destination follows Mac; retained Std012[3]/ATI321[0] order and float32 reciprocal255 at0x326184. Compiled and reviewed, overlap behavior not exercised."
+  },
+  "mac:0x002ed3a0": {
+    "status": "equal",
+    "evidence": "Mac 0x002ed3a0 coalesced body: read exact return constant and compared native ConverterType values (ATI ARGB0, ATI ABGR1, Std ARGB2, Std ABGR3, base4)."
+  },
+  "mac:0x0000d67c": {
+    "status": "fixed",
+    "evidence": "Mac0xd67c wrapper calls static destruction with(0,0xffff); __mod_term_func slot2@0x369210 names this wrapper. Native body already matched but was unregistered; constructor now registers it with atexit. Existing static_model_cache fixture passed with sanitizer halt-on-error after supplying the valid base-vtable import storage omitted by its stand-in."
+  },
+  "mac:0x0000d68c": {
+    "status": "equal",
+    "evidence": "Mac0xd68c wrapper calls static initialization with(1,0xffff), and __mod_init_func slot2@0x3691d0 names it. Read wrapper/registration and native constructor invocation; same initializer arguments and vtable setup."
+  },
+  "mac:0x0000d61e": {
+    "status": "equal",
+    "evidence": "Mac0xd61e: read priority0xffff guard, initialization1 derived-vtable stores and destruction0 reverse-order base-vtable stores. Native matches using widened pointers and two native Itanium header slots; compared each vtable method ordering against coalesced entries."
+  },
+  "mac:0x00019b92": {
+    "status": "unchecked",
+    "evidence": "Mac0x19b92 deleting device destructor releases five COM objects, shuts down COpenGL before context release, destroys instance-vector storage and deletes this. Actual readonly pending9f05cde D0 only invokes D1 and does not delete this; D1 has partial native ownership cleanup but lacks the complete Mac shutdown/vector contract. Cross-provider lifetime equivalence unresolved; no shared edit or parity claim."
+  },
+  "mac:0x0001af0a": {
+    "status": "unchecked",
+    "evidence": "Mac0x1af0a base device destructor releases five COM objects, shuts down COpenGL before context release and deletes vector storage. Actual readonly pending9f05cde D2 forwards to D1; its native global texture cache is a partial replacement, while full COpenGL shutdown/instance-vector ownership mapping remains unresolved. No parity claim."
+  },
+  "mac:0x0001aff2": {
+    "status": "unchecked",
+    "evidence": "Mac0x1aff2 complete device destructor releases five COM objects, calls COpenGL shutdown before context release and deletes vector storage. Actual readonly pending9f05cde D1 releases swapchain/backbuffer and native texture-cache references then context; full original resource/shutdown contract is not present or proven replaced. Shared device ownership remains unresolved; no parity claim."
+  },
+  "mac:0x00019324": {
+    "status": "unchecked",
+    "evidence": "Mac0x19324 handles transform/projected flags, TCI0/0x10000/0x20000/0x30000 and renderer-dependent texcoord arrays/matrices through0x19b91. Actual readonly pending9f05cde SetTextureCoordStream remains zero-return/no-op in selected GL mode. Native texcoord-state/provider reconstruction is outside owned files and not supplied; no parity claim."
+  },
+  "mac:0x0000ecd2": {
+    "status": "unchecked",
+    "evidence": "Mac0xecd2 checks and clears dirty byte0x4b4, multiplies matrices at0x3b0/0x474, updates GL model-view cache and loads it. No ValidateModelViewMatrix body exists in actual readonly pending9f05cde device source; global draw-time matrix setup does not establish this method dirty/cache contract. Shared provider gap remains; no parity claim."
+  },
+  "mac:0x00024b5a": {
+    "status": "fixed",
+    "evidence": "Mac0x24b5a\u20130x24e46 uses first-row cofactor determinant accumulation, abs(det)<0.0005 rejection, then row-major cofactors written transposed after multiply-by-sign/divide-by-det. Native replaced Gauss-Jordan per-pivot cutoff with that exact SSE arithmetic order, NaN continuation and unchanged result on rejection; direct output stores retain original aliasing behavior. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00024a18": {
+    "status": "equal",
+    "evidence": "Mac0x24a18: read all sixteen stores; compared native identity diagonal1 and other positive-zero elements."
+  },
+  "mac:0x00024a90": {
+    "status": "equal",
+    "evidence": "Mac0x24a90: read all source/destination element moves in temporary-copy transpose; native swaps each of the six off-diagonal pairs, retaining all sixteen float bit patterns."
+  },
+  "mac:0x00023c46": {
+    "status": "intentional",
+    "evidence": "Mac0x23c46\u20130x23e64 bit-tests the affine last column, transposes its3x3 without orthogonality validation, negates translation dot products and always writes determinant0 after output. Native now follows those paths, exact row-read/store aliasing and determinant write order. Generic Mac path ignores inverse failure and copies uninitialized stack bytes; native deliberately retains its defined input-copy fallback, with copied input protecting source/output overlap. Actual pending3accec2e unrelated math hunks were preserved in the compilation overlay. Compiled and reviewed, not exercised."
+  },
+  "mac:0x0002433e": {
+    "status": "fixed",
+    "evidence": "Mac0x2433e\u20130x2498e: restored shadow viewer GL state, reversed-Y0..1 projection,1024x768 RGBA uploads on every texture unit with preserved0xc00000-byte cookie stride,8-column grid spacing0.125/quad size0.09375, state restoration and final count reset. Native cookie memory is a full-width pointer and saved matrices follow live GL unit count. Compiled and reviewed, GL not exercised."
+  },
+  "mac:0x00023e6e": {
+    "status": "fixed",
+    "evidence": "Mac0x23e6e\u20130x24339: restored the no-op viewer: attribute/client-attribute saves, vendor program disables,0..1.5 orthographic matrices, descending saved texture matrices, per-unit bind/texgen/combiner state, unit quad, ascending matrix restore and pops. Native saves matrices for the live GL unit count instead of fixed eight storage. Compiled and reviewed, GL not exercised."
+  },
+  "mac:0x000249f4": {
+    "status": "fixed",
+    "evidence": "Mac0x249f4 calls static destruction with(0,0xffff), registered in __mod_term_func slot6@0x369220. Restored matching native global destructor and atexit registration. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00024a04": {
+    "status": "fixed",
+    "evidence": "Mac0x24a04 calls static initialization with(1,0xffff), registered in __mod_init_func slot6@0x3691e0. Restored native constructor zeroing and corresponding lifetime registration. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00024994": {
+    "status": "fixed",
+    "evidence": "Mac0x24994: restored priority0xffff and initialize1 vector begin/end/capacity zeroing, plus initialize0 operator-delete ownership for non-null vector begin. Trivial four-byte element-destruction loop has no observable work; native stores pointers at native width. Compiled and reviewed; empty-vector constructor/atexit ownership not runtime exercised."
+  },
+  "mac:0x00118aa6": {
+    "status": "unchecked",
+    "evidence": "Mac0x118aa6 initializes embedded shader map; inspected lookup tail0x134129\u20130x134353: .vs appends a (card2:n), .ps appends e, successful result contains key::payload, and missing key returns success0 with null shader while clearing other outputs. Actual readonly pending51608e5 cache selects extracted vsa/pse programs, appends a CTAB marker and returns0x88760b59 for missing/invalid cache; absent-cache route still uses generic HLSL heuristics. Complete embedded table/vendor/key/error-contract parity is unproven, not excused by future Metal plans. No shared shader edit or parity claim."
   }
 }
