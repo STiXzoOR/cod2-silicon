@@ -7,6 +7,12 @@
 
 #include "Mac/DirectX_9/CDirect3DDevice.c"
 
+#if defined(COD2_X64)
+/* SetViewport invalidates the owning GL matrix cache. */
+static COpenGLNative fixtureGL;
+void *imp__ZN7COpenGL7sOpenGLE = &fixtureGL;
+#endif
+
 CXX_BOOL g_InhibitCopy;
 static GLuint savedTexture;
 static int destinationSurface;
