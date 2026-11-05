@@ -1,6 +1,6 @@
 # script/scr_main module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
 **16/18 reconciled: 12 equal, 1 fixed, 3 intentional.** Mac 1.3 i386 is the primary authority. Every named Mac body was read, including the full load, scan and cleanup paths. The constant checker and triage ran for all assigned names. The legacy statements remain unchanged under the conditional branches; `unifdef -U COD2_X64` confirms the selected OFF source is byte-identical to the starting source.
 
@@ -23,3 +23,11 @@ Integrated source `dd6a421` passed both dedicated builds and every local macOS C
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. Those unchanged traces do not establish that every corrected edge was exercised. Allocation failures, debugger/error edges and other unreached paths remain compiled and reviewed.
 
 Generic VM recovery, allocation-dependent notify state and missing helper identities remain explicitly unchecked where evidence was insufficient. No undefined native state was introduced to claim parity. Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile; preprocessing checks are not binary-byte parity.
+
+## Remaining-helper audit, 2026-11-05
+
+Original ordered Mac source metadata and native call sites were checked again. The executable `Scr_BeginLoadScripts` has a complete local-loading lifecycle; its shared prefix does not identify a separate remote entry. `Scr_IsInOpcodeMemory` checks the program length, while the unresolved script-memory API names the separate end-of-script-buffer boundary. Its zero-address `.eh` metadata provides a signature but no executable operation. Both helpers remain unchecked; neither is closed through partial overlap or absence of callers. Native code is unchanged.
+
+The assigned files compiled as actual configured stock and CoD2x arm64 Release client objects in a separate evidence directory, with low priority and at most two jobs. No source or fixture was edited. Previously resolved ledger evidence is preserved exactly in the full `script-remaining.ledger.json`. No full CI or replay ran.
+
+Independent source/binary review at source freeze `28e7d452399e38b2c296b8b4230e3eb8017b8c52` agreed with the two compiler overload closures and sixteen remaining gaps. Eight existing compiler/parser cases passed in each stock and CoD2x configuration: four binary-condition loop cases and four parser cases, using the existing ASan/UBSan runner. These checks do not exercise all reference-count types or the unresolved debugger APIs. No new cases or assertions were added.
