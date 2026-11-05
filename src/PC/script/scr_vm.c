@@ -7046,14 +7046,24 @@ static int VM_CandidateHandleJumpBack(const char **pos, unsigned int *localId,
 }
 #endif
 
+#if defined(COD2_X64)
+static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value, Bool *negativeErrorReturned)
+#else
 static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value)
+#endif
 {
+#if defined(COD2_X64)
+    *negativeErrorReturned = 0;
+#endif
     if (value->type == VAR_FLOAT) {
         float seconds = value->u.floatValue;
         int ticks;
 
         if (seconds < 0.0f) {
             Scr_SetErrorMessageAndJump("negative wait is not allowed");
+#if defined(COD2_X64)
+            *negativeErrorReturned = 1;
+#endif
             return 0;
         }
 
@@ -7085,6 +7095,11 @@ static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value)
 }
 
 #if defined(COD2_X64)
+static int VM_CandidateHandleWaitTillFrameEnd(const char *volatile *pos, volatile unsigned int *localVarCount,
+                                              VariableValue *volatile *top, VariableValue *volatile *startTop,
+                                              volatile unsigned int *localId, unsigned int *resultLocalId,
+                                              unsigned int *threadCount);
+
 static int VM_CandidateHandleWait(const char *volatile *pos, volatile unsigned int *localVarCount,
                                   VariableValue *volatile *top, VariableValue *volatile *startTop,
                                   volatile unsigned int *localId, unsigned int *resultLocalId,
@@ -7097,17 +7112,31 @@ static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
 #endif
 {
     struct scrVarPub_t *varPub = (struct scrVarPub_t *)imp_scrVarPub;
+#if defined(COD2_X64)
+    Bool negativeErrorReturned;
+    unsigned int waitTime = VM_CandidateWaitTimeFromValue(*top, &negativeErrorReturned);
+#else
     unsigned int waitTime = VM_CandidateWaitTimeFromValue(*top);
+#endif
     VariableStackBuffer *stackValue;
     VariableValue tempValue;
     unsigned int waitArray;
     unsigned int stackId;
     const char *archivePos = *pos;
 
+#if defined(COD2_X64)
+    if (negativeErrorReturned) {
+        /* Mac 0x83cee returns into frame-end wait without popping its operand. */
+        return VM_CandidateHandleWaitTillFrameEnd(pos, localVarCount, top, startTop,
+                                                  localId, resultLocalId, threadCount);
+    }
+#endif
     if (waitTime > 0x00fffffeu) {
         ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 2;
 #if defined(COD2_X64)
         Scr_SetErrorMessageAndJump((int)waitTime < 0 ? "negative wait is not allowed" : "wait is too long");
+        return VM_CandidateHandleWaitTillFrameEnd(pos, localVarCount, top, startTop,
+                                                  localId, resultLocalId, threadCount);
 #else
         Scr_SetErrorMessageAndJump("wait time too long");
 #endif
@@ -7504,7 +7533,7 @@ static void VM_CandidateCheckFrameDepth(void)
     }
 }
 #if defined(COD2_X64)
-static void VM_CandidateCheckScriptCall(unsigned int opcode, VariableValue *volatile *top)
+static Bool VM_CandidateCheckScriptCall(unsigned int opcode, VariableValue *volatile *top)
 {
     int setDepthErrorIndex = 1;
     int popFunctionOnOverflow = 0;
@@ -7518,7 +7547,7 @@ static void VM_CandidateCheckScriptCall(unsigned int opcode, VariableValue *vola
     case VMOP_ScriptFunctionCallExpr:
     case VMOP_ScriptThreadCallExpr:
         if ((*top)->type != 9)
-            return;
+            return 0;
         break;
     case VMOP_ScriptMethodCall:
     case VMOP_ScriptMethodThreadCall:
@@ -7527,31 +7556,32 @@ static void VM_CandidateCheckScriptCall(unsigned int opcode, VariableValue *vola
                 opcode == VMOP_ScriptMethodCall ? 1 : 2;
             Scr_SetErrorMessageAndJump(va("%s is not an object",
                 ((const char *const *)imp_var_typename)[(*top)->type]));
-            return;
+            /* Only opcode 0x52's complete returned-error recovery is handled. */
+            return opcode == VMOP_ScriptMethodCall;
         }
         setDepthErrorIndex = opcode != VMOP_ScriptMethodCall;
         break;
     case VMOP_ScriptMethodCallExpr:
     case VMOP_ScriptMethodThreadCallExpr:
         if ((*top)->type != 9)
-            return;
+            return 0;
         if ((*top - 1)->type != VAR_POINTER) {
             --*top;
             ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 2;
             Scr_SetErrorMessageAndJump(va("%s is not an object",
                 ((const char *const *)imp_var_typename)[(*top)->type]));
-            return;
+            return 0;
         }
         popFunctionOnOverflow = 1;
         break;
     case VMOP_ScriptThreadCall:
         break;
     default:
-        return;
+        return 0;
     }
 
     if (scrVmPub.function_count <= 30)
-        return;
+        return 0;
 
     if (opcode == VMOP_ScriptFunctionCallPointer)
         VM_PushValue(top)->type = 8;
@@ -7560,6 +7590,7 @@ static void VM_CandidateCheckScriptCall(unsigned int opcode, VariableValue *vola
     if (setDepthErrorIndex)
         ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 1;
     Scr_SetErrorMessageAndJump("script stack overflow (too many embedded function calls)");
+    return 0;
 }
 #endif
 
@@ -7905,8 +7936,23 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             errorCheckpoint.objectId = objectId;
             errorCheckpoint.thread_count = thread_count;
         }
-        if (opcode >= VMOP_ScriptFunctionCallPointer && opcode <= VMOP_ScriptMethodThreadCallExpr)
-            VM_CandidateCheckScriptCall(opcode, &top);
+        if (opcode >= VMOP_ScriptFunctionCallPointer && opcode <= VMOP_ScriptMethodThreadCallExpr &&
+            VM_CandidateCheckScriptCall(opcode, &top)) {
+            /* Mac 0x86269/0x869ae reports the failed receiver before skipping
+             * its target and unwinding arguments to an undefined result. */
+            RuntimeError(pos, varPub->error_index, varPub->error_message,
+                         ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message);
+            varPub->error_message = NULL;
+            ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message = NULL;
+            varPub->error_index = 0;
+            pos += 4;
+            while (top->type != 8) {
+                RemoveRefToValue(top->type, top->u);
+                --top;
+            }
+            top->type = VAR_UNDEFINED;
+            continue;
+        }
 #endif
         switch ((ScrVmOpcode)opcode) {
         case VMOP_End:
