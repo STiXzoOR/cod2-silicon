@@ -2,7 +2,7 @@
 
 Updated 2026-11-04.
 
-**23/26 reconciled: 18 equal, 5 fixed; 3 unchecked.** Mac 1.3 i386 is the authority. Linux was used for helper identities, not implementation authority. Changes are under COD2_X64; the legacy preprocessed source is unchanged.
+**25/26 reconciled: 20 equal, 5 fixed; 1 unchecked.** Mac 1.3 i386 is the authority. Linux was used for helper identities, not implementation authority. Changes are under COD2_X64; the legacy preprocessed source is unchanged.
 
 ## Corrections
 
@@ -106,3 +106,37 @@ CI, replay, full build or runtime exercise occurred. No unresolved helper closes
 this repair adds evidence to the two existing fixed primary rows only. Private
 complete owner/producer packets and receipts are retained under
 recon-provenance-sequence15.noindex and manual-sequence15-compile-8806dc3ebf6d.noindex.
+
+## Complete consumed seed read/store (soundseed25)
+
+`Com_GetSoundAliasRandomSeed` and `Com_SetSoundAliasRandomSeed` are equal for
+the complete scalar operations consumed by actual sound selection. The original
+getter0x80ad312 returns the full word at0x85a9844; setter0x80ad31c stores its
+full argument there unchanged. Full original RNG0x80ad574 uses that same state,
+and actual selector calls0x80ad394/0x80ad42a establish its sound-selection role.
+Original bytes supply identity/intent, not Mac behavior authority.
+
+Exact Mac read/store pairs0xad4a0/0xad4bd,0xad532/0xad54f,0xada38/0xada55 and
+0xadad9/0xadaf6 read and write all32bits at g_sa+4. The entire prior word feeds
+the strength-reduced recurrence. The entire completed result is stored BEFORE
+the separate15-bit random extraction. A valid three-entry list has two first-pass
+updates: after the first store, the actual loop reloads that persistent word
+without an intervening call or seed write. Thus both the scalar-read consumer
+and the scalar-store input/output roles are real; no external observer or
+reseed API is invented. Native reads the same typed state and uses its already
+established memcpy to preserve the full completed representation.
+
+The read operation ends at the complete prior-state input to recurrence. The
+write operation begins after recurrence calculation and ends at persistent
+store. Existing config13 arithmetic and sequence15 history repairs remain
+untouched and are not counted as getter/store defects. This narrower complete
+operation evidence supersedes the earlier absence of standalone API identity;
+standalone/export ABI, arbitrary external reseed timing, concurrency ordering,
+literal inline ancestry and whole RNG/selector equivalence remain unclaimed.
+`Com_GetSoundAliasName` remains unchecked for its separate lookup/name-output gap.
+
+Independent review: review-provenance-soundseed25.md; parent concurred. Fresh
+complete original/Mac owners, real state backing and native source hashes are
+retained in recon-provenance-soundseed25.noindex. Two equal closures, no source
+change or new defect. No compilation, tests, CI, full build, replay or runtime
+verification.
