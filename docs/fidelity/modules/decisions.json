@@ -31734,5 +31734,269 @@
   "mac:0x0010107e": {
     "status": "fixed",
     "evidence": "Restored missing exposed-constant/texture diagnostics from Mac 0x101113/0x101178. Read name-pointer matching against material constants/textures, type 2/4 dispatch and first failure return. Compiled and reviewed; not exercised."
+  },
+  "mac:0x000c78f0": {
+    "status": "fixed",
+    "evidence": "Mac 0xc78f0-0xc7932 only gates on registered, unlocks the skinned cache and clears command usage/lastCmd. Removed the extra native temporary-skin decommit; storage stays owned until the next frame reset. Compiled and reviewed, not runtime exercised."
+  },
+  "mac:0x000c8d42": {
+    "status": "intentional",
+    "evidence": "Mac 0xc8d42 hand-read: id 25 has no payload; native emits an eight-byte aligned header instead of Mac four bytes. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c8d96": {
+    "status": "equal",
+    "evidence": "Mac 0xc8d96 hand-read against the active native body/provider: ordinary reserve/failure handling, id 26, eight-byte record and blurRadius 4. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c8b44": {
+    "status": "intentional",
+    "evidence": "Mac 0xc8b44 hand-read: id 12 copies sceneDef, view pointer, lod parameters and viewCount; native record is 64 bytes, with sceneDef 8/viewParms 32/lodParms 40/viewCount 60, rather than the i386 48-byte layout. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c8f32": {
+    "status": "intentional",
+    "evidence": "Mac 0xc8f32 hand-read: positive fade gate, ordinary reserve and id 29/fadeMsec 4 match; native record is 16 instead of12 bytes; both producers leave material untouched and the actual consumer reads its selected saved-screen material from rgp, never that field. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c8e58": {
+    "status": "intentional",
+    "evidence": "Mac 0xc8e58 hand-read: id 11 stores whichToClear/stencil bytes, depth and four color components identically; native pads the28-byte payload record to32 so following pointer-bearing commands remain aligned. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c87fa": {
+    "status": "intentional",
+    "evidence": "Mac 0xc87fa hand-read: id 20 copies material, four UV floats and converted color; native sizeof 40/material8/UV 16/color 32 replaces the i386 28-byte payload. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c86ae": {
+    "status": "intentional",
+    "evidence": "Mac 0xc86ae hand-read: id 18 copies four XY vertices in order then converts color; native sizeof 56/material8/verts 16/color 48 replaces i386 44-byte payload. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c875e": {
+    "status": "intentional",
+    "evidence": "Mac 0xc875e hand-read: id 19 copies material, packed RGBA bits, XYZ, radius, minScreenRadius and flags; native sizeof 48/material8/rgba 16/pos 20 replaces i386 36-byte payload. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c8208": {
+    "status": "intentional",
+    "evidence": "Mac 0xc8208 hand-read: id 15 copies material, XYWH and UVs in order then converts color; native sizeof 56/material8/XYWH16/UV 32/color 48 replaces i386 44-byte payload; trace hooks are opt-in only. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c8320": {
+    "status": "intentional",
+    "evidence": "Mac 0xc8320 hand-read: id 16 copies the picture payload, converts color, then normalizes the angle; native sizeof 56/material8/rotation 52 replaces i386 48-byte payload. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c83fe": {
+    "status": "intentional",
+    "evidence": "Mac 0xc83fe hand-read: id 17 copies XYWH/cols/rows/data/client/dirty; native sizeof 48/data 32/client 40/dirty 44 replaces i386 40-byte payload and preserves the full data pointer. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c8ae2": {
+    "status": "equal",
+    "evidence": "Mac 0xc8ae2 hand-read against the active native body/provider: ordinary reserve, id 24, eight-byte record, viewIndex 4 and unchecked allocation-result write on exhaustion. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c8df8": {
+    "status": "equal",
+    "evidence": "Mac 0xc8df8 hand-read against the active native body/provider: ordinary reserve/failure return, id 27, eight-byte record and viewIndex 4. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c8060": {
+    "status": "intentional",
+    "evidence": "Mac 0xc8060 hand-read: id 23 sets forward order0, drawSurfs, count and technique; native sizeof 24/drawSurfs8/count 16/technique 20 replaces i386 20-byte payload. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c85a2": {
+    "status": "intentional",
+    "evidence": "Mac 0xc85a2 hand-read: empty text returns; id 22 copies origin/font/pixel steps/color and NUL-terminated inline text; native font 16/text 52 and eight-byte command alignment replace i386font16/text 48 and four-byte alignment. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c848e": {
+    "status": "intentional",
+    "evidence": "Mac 0xc848e hand-read: empty text returns only for cursorPos<0; id 21 copies XY/font/scales/color/style/cursorPos/low cursor byte/maxChars then NUL-terminated text; native font 16/text 52 and eight-byte alignment replace i386font12/text 44. Native reserves from offsetof(text)+length+NUL rather than Mac spare tail bytes and rejects records beyond the16-bit aligned byteCount limit; initialized fields/cursor semantics match. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c8950": {
+    "status": "intentional",
+    "evidence": "Mac 0xc8950 hand-read: id 5 maps position, diffuse color, directional ambient, alpha1, RGB specular scaling and lightDef correctly; native sizeof 80/lightDef 72 replaces i386 76-byte payload; both pending producer/consumer use these declared fields. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c8ee2": {
+    "status": "intentional",
+    "evidence": "Mac 0xc8ee2 hand-read: id 10 is a critical payload-free command; native emits eight aligned bytes instead of Mac four. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c88c2": {
+    "status": "intentional",
+    "evidence": "Mac 0xc88c2 hand-read: id 4 copies four floats or zeroes all four for NULL; native pads20-byte payload record to24 for following LP64 records. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c8a84": {
+    "status": "equal",
+    "evidence": "Mac 0xc8a84 hand-read against the active native body/provider: critical reserve, id 14, eight-byte record and renderTargetId 4. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c8be0": {
+    "status": "intentional",
+    "evidence": "Mac 0xc8be0 hand-read: id 13 stores x/y/width/height in order; native pads20-byte payload record to24 for following LP64 records. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c789c": {
+    "status": "intentional",
+    "evidence": "Mac 0xc789c hand-read: ordinary allocator reserve/lastCmd behavior and id 33 match; native emits eight aligned header bytes instead of Mac four. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c7804": {
+    "status": "equal",
+    "evidence": "Mac 0xc7804 hand-read against the active native body/provider: synchronous internal dispatch with the caller type/data and isRenderThread0. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c781c": {
+    "status": "equal",
+    "evidence": "Mac 0xc781c hand-read against the active native body/provider: post-increment of viewParmCount and native typed viewParms indexing, with no limit check. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c7846": {
+    "status": "equal",
+    "evidence": "Mac 0xc7846 hand-read against the active native body/provider: registered gate; save current command/frontend pointers; set restoreSkinnedCache and unlock only when locked; select typed debug frontend and commands. Generated bss owns a full native GfxDebugFrameGlob3054928 bytes, not the i386 blob. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c80d4": {
+    "status": "intentional",
+    "evidence": "Mac 0xc80d4 hand-read: opening id 1 GOTO reserves a critical native GfxCmdCall16 bytes, subCmd at 8=NULL, returns previous usedTotal marker; Mac uses8 bytes/subCmd4. Pending df8d9cc GOTO reads the native pointer field. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c7932": {
+    "status": "equal",
+    "evidence": "Mac 0xc7932 hand-read against the active native body/provider: materialLoaded clear/sort; world-gated seven modified-light dvars and update; optional dvar sun; both modified sync dvars; forced/default four LODs; flush-debug0; skin-cache lock. Decoded import slots identify the exact dvar order and0.001 bits. Native Lock uses an extra parameter0; pending 6b40401 buffer Lock honors DISCARD, so read actual parent follow-up 33c898e: native Apple R_LockSkinnedCache ignores lockType and always passes 0x2000 as Mac 0xd0054 does. Both 6b40401 and 33c898e must integrate before this unit. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c8c62": {
+    "status": "intentional",
+    "evidence": "Mac 0xc8c62 hand-read: registered gate, terminator/reset/execute/end, restore pointers and restore-cache flag lifecycle match; native terminator rounds4 to8. Native relock uses its lockType 1 API; pending 6b40401 CDirect3DVertexBuffer_Lock honors DISCARD and retires/recreates dynamic storage. Read actual parent follow-up 33c898e: native Apple R_LockSkinnedCache ignores lockType and always passes 0x2000 as Mac 0xd0054 does. Both 6b40401 and 33c898e must integrate before this unit. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c813a": {
+    "status": "fixed",
+    "evidence": "Mac 0xc813a-0xc81a2 emits RETURN id 3 and patches the opening GOTO to the following command, including the allocation-failure target. Native appended a four-byte RETURN after eight-aligned records, misaligning subsequent LP64 GfxCmdCall and payload pointers. Use the native critical allocator (eight bytes) and patch using offsetof(GfxCmdCall,subCmd). Pending df8d9cc GOTO/CALL consumers use the same native field and byteCount. Compiled and reviewed, not runtime exercised."
+  },
+  "mac:0x000c7e8c": {
+    "status": "unchecked",
+    "evidence": "Mac 0xc7e8c-0xc8060 caller hand-read. Corrected temporary-skin decommit ordering before the next frame and pool[0] selection, compiled and reviewed but not exercised. Complete parity remains unresolved: native prepends RB_AdaptiveGpuSyncTarget, while pending df8d9cc RB_ExecuteRenderCommands lacks the Mac 0xd93b3/0xd94a2 mode3 budget logic and retains zero mode2 timing. The extra call currently tests/deletes the previous fence in mode0; without it that native tail can overwrite g_FenceID. Retained the call pending shared clock/callback/fence-ownership reconciliation; absence in this Mac entry alone does not justify removal. Pool-zero selection is restricted to native Apple, paired with unconditional DISCARD caller33c898e; non-Apple rotation/lock policy is preserved."
+  },
+  "mac:0x000c7d38": {
+    "status": "fixed",
+    "evidence": "Mac 0xc7d38-0xc7e8c initializes debug/dynamic buffers, handles existing frontEndDataOut, decommits pending temporary skin storage before incrementing the new frame, and sets dynamicBufferFrame=0/pool[0]. Native omitted that initial decommit and rotated two caches. Restored the native DxGlobals scratch-owner reset and pool[0]; pending 6b40401 dynamic-buffer Lock retires/recreates DISCARD storage with a two-frame delay, with no second-pool requirement. Parent follow-up 33c898e restores native Apple R_LockSkinnedCache flags and frame worker owns the separate allocation/release loop. Compiled and reviewed, not runtime exercised. Pool-zero selection is restricted to native Apple, paired with unconditional DISCARD caller33c898e; non-Apple rotation/lock policy is preserved."
+  },
+  "mac:0x000c7750": {
+    "status": "equal",
+    "evidence": "Mac 0xc7750 hand-read against the active native body/provider: reserve0xa00000 and store temporary-skin pointer. The live definition is inlined in r_init.c R_CreateForInitOrReset, using the native DxGlobals owner and ri.Z_VirtualReserveInternal; no separate public body or stub is selected. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c81a2": {
+    "status": "intentional",
+    "evidence": "Mac 0xc81a2 hand-read: critical id 2 CALL stores command-base+marker+sizeof(GfxCmdCall), preserving native 16-byte opening skip and full pointer; Mac uses8-byte opening skip. Pending df8d9cc CALL pushes byteCount-based return and reads the same native field. Native record layouts were obtained from the actual arm64 compiler and compared with pending df8d9cc typed consumers; no i386 pointer offsets were imported. This records the concrete LP64/storage adaptation, not byte parity."
+  },
+  "mac:0x000c779c": {
+    "status": "equal",
+    "evidence": "Mac 0xc779c hand-read against the active native body/provider: decoded the eight jump-table entries at 0x32aac0: bounds, skin entity, rigid skin, non-bolt effects, bolt effects, cached-static skin, XModel skin, XModel skin. Native dispatch arguments and SkinBuffers indexing match; default ignores invalid types. Attribute-bearing body was read directly. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c773c": {
+    "status": "equal",
+    "evidence": "Mac 0xc773c hand-read against the active native body/provider: shutdown of the same typed static backend debug entry. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c776c": {
+    "status": "equal",
+    "evidence": "Mac 0xc776c hand-read against the active native body/provider: free-if-nonnull then pointer/position zero; NULL branch leaves position. Live implementation is inlined in r_init.c R_ReleaseForShutdownOrReset using native DxGlobals and ri.Z_VirtualFreeInternal. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c7d20": {
+    "status": "equal",
+    "evidence": "Mac 0xc7d20 hand-read against the active native body/provider: internal type 1, address of entity pointer, render-thread context0. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c7816": {
+    "status": "equal",
+    "evidence": "Mac 0xc7816 hand-read against the active native body/provider: empty function; original Mac body has no work. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c7ce0": {
+    "status": "equal",
+    "evidence": "Mac 0xc7ce0 hand-read against the active native body/provider: internal type 4, g_dummyBuf, render-thread context0. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c7cf6": {
+    "status": "equal",
+    "evidence": "Mac 0xc7cf6 hand-read against the active native body/provider: internal type 3, g_dummyBuf, render-thread context0. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000c7d0c": {
+    "status": "equal",
+    "evidence": "Mac 0xc7d0c hand-read against the active native body/provider: internal type 0, address of entity pointer, render-thread context0. Triage and constant checks supplemented the comparison; external callees are not asserted equal by this caller verdict."
+  },
+  "mac:0x000ed944": {
+    "status": "equal",
+    "evidence": "Mac 0xed944 hand-read against native source: all eight min/max corners and12 calls; decoded the24 integer edge endpoints at 0x32b380 and checked exact order against iEdgePairs and inlined line writer. Constant/triage checks supplemented the comparison; native typed allocation sizes were inspected."
+  },
+  "mac:0x000ed84c": {
+    "status": "equal",
+    "evidence": "Mac 0xed84c hand-read against native source: count+1>limit gate, lazy44-byte line allocation, start/end/RGBA copy, depthTest0 and increment; read R_AddDebugLine_core used by the wrapper. Constant/triage checks supplemented the comparison; native typed allocation sizes were inspected."
+  },
+  "mac:0x000ed77e": {
+    "status": "equal",
+    "evidence": "Mac 0xed77e hand-read against native source: vertex and polygon limit gates, lazy24-byte polygon/12-byte vertex arrays, firstVert/count/color, polygon increment, vertex memcpy and count update. Constant/triage checks supplemented the comparison; native typed allocation sizes were inspected."
+  },
+  "mac:0x000ed5f2": {
+    "status": "equal",
+    "evidence": "Mac 0xed5f2 hand-read against native source: count+1>limit, lazy128-byte records, XYZ/RGBA/scale copy, strncpy 95 plus text[95]=NUL and increment; read R_AddDebugString_core used by the wrapper. Constant/triage checks supplemented the comparison; native typed allocation sizes were inspected."
+  },
+  "mac:0x000ed694": {
+    "status": "equal",
+    "evidence": "Mac 0xed694 hand-read against native source: lazy40-byte plume storage and count reset, equality-to-limit gate, origin/RGB/score/time/duration stores and increment. Mac intentionally leaves alpha untouched; native Z_MallocInternal zeroes the allocation and later producers preserve that field, so no indeterminate storage was introduced. Constant/triage checks supplemented the comparison; native typed allocation sizes were inspected."
+  },
+  "mac:0x000eda68": {
+    "status": "equal",
+    "evidence": "Mac 0xeda68 hand-read against native source: XYZ subtraction, Vec3Normalize, ordered three-term dot, subtract float0.995, multiply by distance and lower clamp1 (NaN retained), then the inlined bounded string writer. Constant/triage checks supplemented the comparison; native typed allocation sizes were inspected."
+  },
+  "mac:0x000ed8ee": {
+    "status": "equal",
+    "evidence": "Mac 0xed8ee hand-read against native source: same memset-and-limit initialization in R_InitDebugEntry_core. Constant/triage checks supplemented the comparison; native typed allocation sizes were inspected."
+  },
+  "mac:0x000ed2dc": {
+    "status": "equal",
+    "evidence": "Mac 0xed2dc hand-read against native source: zero full native 112-byte DebugGlobals rather than i386 84-byte pointer layout; vert/string/plume 4096, poly 512 and line 16384 limits. All declared fields initialized identically. Constant/triage checks supplemented the comparison; native typed allocation sizes were inspected."
+  },
+  "mac:0x000ed586": {
+    "status": "equal",
+    "evidence": "Mac 0xed586 hand-read against native source: typed frontend debug owner, non-NULL lazy allocation by maxCount*44, copy lineCount*44 and unconditional externLineCount update. Constant/triage checks supplemented the comparison; native typed allocation sizes were inspected."
+  },
+  "mac:0x000ed522": {
+    "status": "equal",
+    "evidence": "Mac 0xed522 hand-read against native source: typed frontend debug owner, non-NULL lazy allocation by maxCount*128, copy stringCount*128 and unconditional externStringCount update. Constant/triage checks supplemented the comparison; native typed allocation sizes were inspected."
+  },
+  "mac:0x000ed50e": {
+    "status": "equal",
+    "evidence": "Mac 0xed50e hand-read against native source: calls R_ShutdownDebugEntry with the private debugGlobals owner. Constant/triage checks supplemented the comparison; native typed allocation sizes were inspected."
+  },
+  "mac:0x000ed328": {
+    "status": "equal",
+    "evidence": "Mac 0xed328 hand-read against native source: seven free-if-present/null stores in polys, verts, strings, externStrings, lines, externLines, plumes order; counts are not reset. Constant/triage checks supplemented the comparison; native typed allocation sizes were inspected."
+  },
+  "mac:0x000ed3e6": {
+    "status": "equal",
+    "evidence": "Mac 0xed3e6 hand-read against native source: reject negative age or age>duration, retain equality boundary, remove by last-plume 40-byte copy and recheck same index, lazily allocate destination, copy retained plumes and set count. Constant/triage checks supplemented the comparison; native typed allocation sizes were inspected."
+  },
+  "mac:0x000f328c": {
+    "status": "equal",
+    "evidence": "Mac 0xf328c hand-read: single Material_UpdatePicmipAll call. Command strings were decoded directly from the Mac binary and checked with native literals."
+  },
+  "mac:0x000f3296": {
+    "status": "equal",
+    "evidence": "Mac 0xf3296 hand-read: R_ScreenshotCommand type 1. Command strings were decoded directly from the Mac binary and checked with native literals."
+  },
+  "mac:0x000f32aa": {
+    "status": "equal",
+    "evidence": "Mac 0xf32aa hand-read: R_ScreenshotCommand type 0. Command strings were decoded directly from the Mac binary and checked with native literals."
+  },
+  "mac:0x000f32be": {
+    "status": "equal",
+    "evidence": "Mac 0xf32be hand-read: all nine command strings, order and callback identities; decoded callback indirection slots to R_ImageList_f, R_Cmd_ReloadMaterialTextures, R_Cmd_LoadSun, R_Cmd_SaveSun, R_StaticModelCacheStats_f and R_StaticModelCacheFlush_f, matching native aliases. Command strings were decoded directly from the Mac binary and checked with native literals."
+  },
+  "mac:0x000f3394": {
+    "status": "equal",
+    "evidence": "Mac 0xf3394 hand-read: all ten command strings and order, including extra r_vc_stats removal despite no registration here. Command strings were decoded directly from the Mac binary and checked with native literals."
+  },
+  "mac:0x000ee276": {
+    "status": "equal",
+    "evidence": "Mac 0xee276 hand-read against native source: close initial glue only when active, clear glue, then create per-view marker. Opt-in native trace calls leave command/glue state unchanged. The delayed-command producers and pending typed backend GOTO/CALL/RETURN consumers were checked separately; native pointer records use full-width fields."
+  },
+  "mac:0x000ee230": {
+    "status": "equal",
+    "evidence": "Mac 0xee230 hand-read against native source: existing begin returns1; otherwise glue1/begin marker/return0. Opt-in native trace calls leave command/glue state unchanged. The delayed-command producers and pending typed backend GOTO/CALL/RETURN consumers were checked separately; native pointer records use full-width fields."
+  },
+  "mac:0x000ee2ce": {
+    "status": "equal",
+    "evidence": "Mac 0xee2ce hand-read against native source: close valid per-view marker, existing end returns1, otherwise glue1/new end marker/return0. Opt-in native trace calls leave command/glue state unchanged. The delayed-command producers and pending typed backend GOTO/CALL/RETURN consumers were checked separately; native pointer records use full-width fields."
+  },
+  "mac:0x000ee336": {
+    "status": "equal",
+    "evidence": "Mac 0xee336 hand-read against native source: close end marker only while glue active, then clear glue. Opt-in native trace calls leave command/glue state unchanged. The delayed-command producers and pending typed backend GOTO/CALL/RETURN consumers were checked separately; native pointer records use full-width fields."
+  },
+  "mac:0x000ee1e4": {
+    "status": "equal",
+    "evidence": "Mac 0xee1e4 hand-read against native source: five groups, glue0, begin/end=-1 and four per-view=-1 markers. Opt-in native trace calls leave command/glue state unchanged. The delayed-command producers and pending typed backend GOTO/CALL/RETURN consumers were checked separately; native pointer records use full-width fields."
+  },
+  "mac:0x000ee372": {
+    "status": "equal",
+    "evidence": "Mac 0xee372 hand-read against native source: five groups; issue/reset begin, each of four views in ascending order, then end; invalid=-1 markers skipped. Opt-in native trace calls leave command/glue state unchanged. The delayed-command producers and pending typed backend GOTO/CALL/RETURN consumers were checked separately; native pointer records use full-width fields."
   }
 }

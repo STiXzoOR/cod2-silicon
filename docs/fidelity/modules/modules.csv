@@ -157,8 +157,8 @@ gfx_d3d/r_bsp,11,9,1,1,0
 gfx_d3d/r_bsp_load_obj,15,9,4,2,0
 gfx_d3d/r_buffers,6,0,0,0,6
 gfx_d3d/r_caps,1,0,0,0,1
-gfx_d3d/r_cmds,5,0,0,0,5
-gfx_d3d/r_debug,13,0,0,0,13
+gfx_d3d/r_cmds,5,5,0,0,0
+gfx_d3d/r_debug,13,13,0,0,0
 gfx_d3d/r_dpvs,17,6,11,0,0
 gfx_d3d/r_dvars,2,0,0,0,2
 gfx_d3d/r_flares,1,0,0,0,1
@@ -179,7 +179,7 @@ gfx_d3d/r_material_load_obj,16,8,7,1,0
 gfx_d3d/r_model,33,27,5,1,0
 gfx_d3d/r_model_load_obj,1,1,0,0,0
 gfx_d3d/r_outdoor,2,2,0,0,0
-gfx_d3d/r_rendercmds,42,0,0,0,42
+gfx_d3d/r_rendercmds,42,17,3,21,1
 gfx_d3d/r_rendertarget,4,0,0,0,4
 gfx_d3d/r_scene,18,12,5,1,0
 gfx_d3d/r_screenshot,9,0,0,0,9
@@ -187,7 +187,7 @@ gfx_d3d/r_shadowcookie,1,0,0,0,1
 gfx_d3d/r_sky,6,0,0,0,6
 gfx_d3d/r_sky_load_obj,2,0,0,0,2
 gfx_d3d/r_specularityimage,1,0,0,0,1
-gfx_d3d/r_splitscreen,6,0,0,0,6
+gfx_d3d/r_splitscreen,6,6,0,0,0
 gfx_d3d/r_staticmodel,1,1,0,0,0
 gfx_d3d/r_staticmodel_load_obj,13,11,1,1,0
 gfx_d3d/r_staticmodelcache,11,8,1,1,1
