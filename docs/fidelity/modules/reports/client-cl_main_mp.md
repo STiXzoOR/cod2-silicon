@@ -49,3 +49,7 @@ Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` basel
 The initial catalog coverage step failed because the restored `unskippablecinematic` registration was absent from the catalog. Two deterministic generations and a structural comparison established that the only functional catalog addition was that command; other changes were revision/line metadata. The complete catalog CI step passed on rerun. The existing Swift decoder fixture initially pinned an older revision; its expected revision was updated without removing assertions, and all decoder checks passed. Original failure logs are preserved.
 
 Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile. No new tests were written. Existing clock, command, authorization, map-loading and match-lifecycle fixtures received the adapters or setup corrections needed by the reconciled interfaces; assertions were retained.
+
+## Batch 17 follow-up
+
+CL_SyncGpu and CL_RunOncePerClientFrame are now reconciled by renderer-gpu-sync.md. The API59 void callback owns the original budget snapshot/poll loop through correctly typed bindings and a shared synthetic native cycle clock. Frame clamp arithmetic follows the original unsigned delta. Earlier unresolved timing statements above describe the pre-follow-up source; no runtime wall-clock equivalence is claimed.

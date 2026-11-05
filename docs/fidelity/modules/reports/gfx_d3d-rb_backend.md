@@ -31,3 +31,7 @@ Engine c8ef702 and fixture-only follow-ups 1581779, 2c6cf4f and 7f49612 passed b
 The standard full-file guard command cannot preprocess the dispatch fixture's deliberate native-only error. A final source-only pass using the same checker confirms all five inactive configurations are identical. Engine source was unchanged by the fixture corrections. Both 2,000-frame replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six Linux logic fields agree; maximum origin/velocity drift is 0.11792/2.0. No i386 byte-parity claim is made.
 
 This batch closes 655 device, world/model, backend, texture/surface, GL and buffer entries. Fixes cover layouts, resource/context/fence lifetime, command and matrix order, lighting/culling constants and functional DISCARD flags. Constructor/reset/draw/VAO/sampler/timing gaps remain explicit. Existing local accelerated-GL raster/saved-screen, mip, volume and all 18 depth cases passed ASan/UBSan. Dedicated replays do not exercise client rendering; unreached client/error paths remain compiled and reviewed. These checks do not establish a complete rendered frame.
+
+## Batch 17 follow-up
+
+RB_ExecuteRenderCommands now follows the original mode-dependent fence ordering and adaptive budget arithmetic through renderer-gpu-sync.md. The shared native cycle clock is no longer the zero stub on Apple LP64. RB_GpuSyncDelay remains separately tracked for the typed API59 ownership verdict; no API60 query ABI or Metal fence submission parity is asserted.
