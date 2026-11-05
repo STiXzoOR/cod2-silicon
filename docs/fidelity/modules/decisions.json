@@ -8581,7 +8581,7 @@
   },
   "linux:script/scr_vm.cpp:4169:Scr_AddAnim": {
     "status": "unchecked",
-    "evidence": "Linux-only row: no Mac text symbol or established inline caller, and no native body by this name. Read Linux signature/body for identity only; cannot reconstruct or claim parity without an authoritative Mac call path. Original executable provenance: Linux1.0 0x8084b64 maps to Linux1.3 0x80851ac. Original increments input stack then writes animation tag11 and payload. Other typed pushes are different complete operations; no matching Mac animation push owner established. No closure from absent callers; no production change."
+    "evidence": "Original1.0 0x8084b64\u21921.3 AddAnim0x80851ac\u2013RET0x80851cf performs IncInParam then type11/full supplied payload store. Actual opcode0x13 tableentry0x329808\u21920x85354 copies full animation payload/type11 at0x85354\u201377 but supplies only interpreter operand push. Complete original IncInParam0x8083df8\u20130x8083e32 invokes ClearOutParams0x80800ec\u20130x808011b, releasing outgoing values/decrementing global top+outparamcount; maxstack/error policy then increments global top+inparamcount. Actual raw Mac opcode table decoded; native interpreter pushes local operand top and advances bytecode, not complete external parameter transaction. Unchecked for concrete input/state/effects gap, not absence. Settled VM/source/ownership preserved; no source/new defect/compile/tests/CI/replay/runtime. Private recon-provenance-scriptpush36.noindex."
   },
   "mac:0x000817b0": {
     "status": "equal",
@@ -8617,7 +8617,7 @@
   },
   "linux:script/scr_vm.cpp:4252:Scr_AddIString": {
     "status": "unchecked",
-    "evidence": "Linux-only row: no Mac text symbol or established inline caller, and no native body by this name. Scr_AddString has a different type tag; its checked Mac body is not sufficient identity evidence. Original executable provenance: Linux1.0 0x8084c54 maps to Linux1.3 0x808529c. Original increments stack, sets tag3, interns input with user0 and stores id. Existing Mac string push tag2 does not supply this localized-string operation. No closure from absent callers; no production change."
+    "evidence": "Original1.0 0x8084c54\u21921.3 AddIString0x808529c\u2013RET0x80852d4 performs IncInParam, type3, user0 C-string interning and returned-ID store. Actual opcode0x0b tableentry0x3297e8\u21920x85238 writes type3 then shares0x85212 U16 preinterned-ID read/store and AddRefToString0x8522b. This is not C-string interning; compiler localized constant similarly carries preinterned ID. Complete original IncInParam0x8083df8\u20130x8083e32 invokes ClearOutParams0x80800ec\u20130x808011b, releasing outgoing values/decrementing global top+outparamcount; maxstack/error policy then increments global top+inparamcount. Actual raw Mac opcode table decoded; native interpreter pushes local operand top and advances bytecode, not complete external parameter transaction. Unchecked for concrete input/state/effects gap, not absence. Settled VM/source/ownership preserved; no source/new defect/compile/tests/CI/replay/runtime. Private recon-provenance-scriptpush36.noindex."
   },
   "mac:0x00087eaa": {
     "status": "equal",
