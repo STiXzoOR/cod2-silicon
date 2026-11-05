@@ -140,7 +140,11 @@ Bool R_ValidateStaticModel(struct XModel *model)
         for (surfIndex = 0; surfIndex < surfCount; surfIndex++) {
             XSurface *surf = surfaces[surfIndex];
             if (XSurfaceGetBoneOffset(surf) == -1) {
+#if defined(COD2_X64)
+                Com_Printf("^1ERROR: model '%s' is not a valid static model, since lod %i surf %i has more than one bone.  Static models should be set to 'rigid' in asset manager.\n",
+#else
                 Com_Printf("^1ERROR: model '%s' is not a valid static model, since lod %i surface %i has bone offsets\n",
+#endif
                            XModelGetName(model), lodIndex, surfIndex);
                 return 0;
             }
