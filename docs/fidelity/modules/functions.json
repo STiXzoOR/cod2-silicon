@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 261,
+      "unchecked": 260,
       "intentional": 3184,
-      "equal": 4795,
+      "equal": 4796,
       "fixed": 1217
     },
     "scopes": {
@@ -198802,8 +198802,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no SinCosDegrees public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up float sinf/cosf pair resolves FastSinCos only. No complete native double-output pair, exact 0/90/180/270 selection table or double sine-square-to-float operation was established; float products or isolated trig calls are insufficient. Original-address provenance recovered: Linux 1.0 IDB 0x80a8972 maps to retained original Linux 1.3 ELF 0x80aacd6 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked. Fresh original1.3 body0x80aacd6 adds360 exactly once for negative input, handles exact0/90/180/270 with literal float outputs, and otherwise scales by double pi/180 then narrows to FastSinCos. Exact complete Mac AngleVectors0x2d938/AnglesToAxis0x2daea always evaluate float sine/cosine pairs for their requested axes; they have no matching negative adjustment or literal-quadrant table. This is not an arbitrary degree-pair identity; remains unchecked."
+        "status": "equal",
+        "evidence": "Complete consumed one-degree-input\u2192two-float-result phase, equal to authoritative Mac behavior. Original1.0 0x80a8972\u2192complete1.3 0x80aacd6\u2013RET0x80aadc9 identifies both sine/cosine results, negative360 addition, literal-quadrant cases and fallback; original numerical policy and overlapping-output write order are not imported. Actual admitted CG_Draw2D grenade path constructs delta, vectoyaw\u2212viewYaw\u2192AngleNormalize360 at0x1d26d6\u20130x1d2703, sign-flips the actual degree result0x1d2826 and passes it0x1d285b to CG_DrawRotatedQuadPic. Complete Mac0x1a249a converts that float degree input to double, multiplies decoded pi/180 at0x1a24a6, narrows once and passes the same rounded float to sinf0x1a24bc/cosf0x1a24ce; both complete float outputs store at0x1a24c1/0x1a24d3 before quad-specific products. Native same phase/order matches. Both results feed every x/y rotation0x1a24eb\u20130x1a2525, all8 coordinates submitted0x1a254a. Exact renderer slot0xa0\u2192R_AddCmdDrawQuadPic0xc86ae copies all4pairs into actual id18 command; raw dispatch0x36ad28\u2192RB_DrawQuadPicCmd0xdb81c loads all4pairs into actual tess vertices. Existing typed command/layout adaptation preserved, not byte parity. Ordinary admitted finite grenade/geometry inputs, valid disjoint storage, returning providers and successful command path; negative and exact-quadrant values not excluded. No standalone ABI/output aliasing, original literal-quadrant/FP equivalence, double-output SinCos, whole renderer or GPU/runtime claim. Existing pair owner equal unchanged; no unrelated repairs inherited. Private recon-provenance-sincos43.noindex; independent review-provenance-sincos43.md accepted. No source changes, new defect, tests/CI/compilation/replay/runtime."
       },
       {
         "id": "linux:universal/com_math.cpp:2075:SinSquaredDeg",

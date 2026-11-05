@@ -2,7 +2,7 @@
 
 Updated 2026-11-06.
 
-**Current: 185/229 reconciled: 154 equal, 31 fixed, 0 intentional; 44 unchecked.**
+**Current: 186/229 reconciled: 155 equal, 31 fixed, 0 intentional; 43 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -659,3 +659,13 @@ Mac R_ConvertColorToBytes0xf568c–0xf56e4 performs separate float32 multiply255
 Scope is the complete bounded conversion/packed-word role with live disjoint storage, non-fading byte-derived color, nonzero variable alpha, label0, valid material and successful selected command dispatch. The preceding HUD path must have representable coordinate conversions and selected time differences; finite geometry alone is insufficient, and fadeElapsed is evaluated even when fadeTime<=0. Color values from actual bytes are finite and small enough that the native direct float-to-int casts are defined and match CVTT truncation. No arbitrary exceptional float, overlap, null-input API, exported return ABI, original FP-environment, full renderer failure/geometry or GPU-image claim follows. Existing native format, pointer/layout, ownership and renderer adaptations remain intact. The selected packing provider/word flow is unchanged; no unrelated producer/consumer repair is inherited.
 
 Independent review accepted this one equal row in units/review-provenance-rgba41.md. Fresh full original/Mac bodies, raw constants/export/dispatch words, producer gates and source hashes are retained in recon-provenance-rgba41.noindex. No source change, new defect, compilation, tests, CI, replay or runtime verification. Other math and packing rows are unchanged.
+
+## SinCos43: complete degree pair in the grenade-pointer quad
+
+`SinCosDegrees` is equal for the complete actual one-degree-input→two-float-result phase in `CG_DrawRotatedQuadPic`. Full original1.3 0x80aacd6–RET0x80aadc9 (1.0 identity0x80a8972) establishes both output roles, including its negative360 addition, literal-quadrant branches and fallback. The actual Mac grenade warning producer constructs delta, evaluates vectoyaw minus view yaw, normalizes it at0x1d26fe, sign-flips the degree result at0x1d2826 and passes that value to the rotated-quad owner0x1d285b. Negative and exact-quadrant inputs are not excluded. This supplies a real independent scalar-degree role beyond the earlier generic AngleVectors candidate.
+
+Complete Mac `CG_DrawRotatedQuadPic`0x1a249a converts the float degree input to double, multiplies decoded pi/180, narrows once, then passes the same rounded argument to sinf0x1a24bc and cosf0x1a24ce. Both full float results store at0x1a24c1/0x1a24d3 before quad arithmetic. The unchanged native phase matches. Both results feed every x/y rotation, and all eight transformed coordinates are submitted. Actual renderer slot0xa0 selects `R_AddCmdDrawQuadPic`0xc86ae; its successful id18 command copies all four pairs, and raw dispatcher0x36ad28 selects `RB_DrawQuadPicCmd`0xdb81c, which consumes every pair into actual tess vertices. Approved typed command layout/callback adaptations remain intact.
+
+Mac's always-evaluated float pair, arithmetic order and quadrant/negative behavior remain authoritative; no Linux literal-table, floating-environment or output-overlap equivalence is claimed. The scope is ordinary admitted grenade/geometry inputs, valid disjoint storage, returning providers and selected successful command consumption, not a standalone ABI or whole renderer/GPU result. Existing pair owner is equal; no unrelated upstream or command repair is inherited. Separate double-output SinCos, SinSquaredDeg and SphericalToCartesian stay unchecked.
+
+Private `recon-provenance-sincos43.noindex` retains complete original/helper bodies, full exact Mac containers, raw constants/binding/dispatch data and unchanged source hashes. Independent review accepted both complete results, actual producer and four-pair consumption. One equal closure, no source change or new defect;155equal31fixed43unchecked. No compilation, tests, CI, builds, replay or runtime verification.
