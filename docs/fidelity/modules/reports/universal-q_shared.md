@@ -180,3 +180,53 @@ diagnostic correction, are preserved. Independent review is recorded in
 review-provenance-scaledlocal16.md; exact bodies, uniform-key string extraction
 and review receipts remain in recon-provenance-scaledlocal16.noindex. Static
 review only: no compilation, tests, CI, replay or runtime exercise.
+
+
+## Plane19 actual plane producers and remaining transform gap
+
+All four OrientationPlaneToLocal/World and ScaledOrientationPlaneToLocal/World
+rows remain unchecked. Their original 1.0/1.3 body identities retained in shared8
+establish the three-component normal transform plus translated distance; scaled
+variants additionally multiply/divide the input/output distance by scale. The
+completed position and direction mappings do not prove this fourth component.
+
+This pass followed actual camera producers beyond the prior generic matrix
+candidate. Exact Mac R_SetViewParmsForScene 0xc5a9a copies refdef origin and all
+nine axes, calls MatrixForViewer at 0xc5b51, InfinitePerspectiveMatrix at 0xc5bba,
+and MatrixMultiply44 at 0xc5be6. R_AddWorldSurfacesDpvs calls the complete
+R_FrustumClipPlanes provider at 0xf2533 with this view-projection matrix and the
+actual standard clip-space side planes. The provider transforms all four
+coefficients then normalizes all four by normal length. Its actual input is a
+projected clip-space plane; no stored orientation-local input-plane seam was
+established. This rejects an invented intermediate plane, not Mac arithmetic
+grouping. No uniform model-scale plane input is wired to this camera operation.
+
+The same owner supplies a separate concrete plane construction. Perspective
+eye normal comes directly from the first camera axis at 0xf2578–0xf25a1; distance
+is 0.1 minus its eye-position dot at 0xf25a9–0xf25d5. Far normal is the negated
+first axis at 0xf2677–0xf269c; its additive coefficient is cullDist minus the
+eye dot at 0xf26a4–0xf26c8. The actual plane records are copied into the frustum
+array at 0xf2865–0xf28d3 and consumed by culling. This is a complete construction
+from a camera axis and distance, but does not identify an existing input plane
+transformed through all original normal and distance inputs. Treating a fixed
+local unit normal as an original plane argument would add an unproved adapter.
+
+R_MarkFragments 0xf47ca is another actual complete plane producer. Its side
+planes come from polygon edge cross axis and normalization at 0xf4a0f/0xf4a17,
+then point dot at 0xf4a1e–0xf4a42. Caps copy/negate the supplied axis and form
+point dot minus radius at 0xf4a78–0xf4b1b. Native r_marks.c retains these world
+polygon/axis/radius inputs and six normal/distance pairs for clipping; these
+are constructed planes, not an identified orientation-plane transform.
+
+The checked model/collision routes transform endpoints and return normals;
+they do not emit the plane-distance output. Existing successful uniform static
+model position evidence is preserved without extending it to planes. Searches
+of model culling, renderer lighting/shading and plane/axis consumers did not
+supply a further complete candidate. This is a bounded finding about examined
+owners, not proof that no implementation or caller exists.
+
+No new defects or source changes. Only these four unchecked evidence strings
+are refined; all resolved verdicts and prior policies remain intact. Exact Mac
+camera producer, viewer/projection providers, complete frustum provider and
+DPVS/mark owner packets are retained in recon-provenance-plane19.noindex.
+Static inspection only: no compilation, tests, CI, replays or runtime exercise.
