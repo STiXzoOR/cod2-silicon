@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 308,
+      "unchecked": 307,
       "intentional": 3183,
       "equal": 4767,
-      "fixed": 1199
+      "fixed": 1200
     },
     "scopes": {
       "unassigned": 777,
@@ -214064,8 +214064,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Unchecked: no original executable or inline identity/native caller was established for this Linux-only scalar conversion. Sys_SnapVector has a separately established Windows-rounding decision; it cannot certify this helper through similar-looking float/integer arithmetic, especially without its conversion-width and invalid-input contract."
+        "status": "fixed",
+        "evidence": "Complete consumed float32-to-signed32 operation, independently reviewed: original 1.0 0x80d37fe\u20130x80d3824 and 1.3 0x80d5e6e\u20130x80d5e94 establish numeric float input and four-byte truncating integer result. Primary Mac CrashLand conversions 0x70974/0x70a50 provide the complete active scalar operation. Native PM_CrashLandFloatToInt and both consumers preserve all representable truncations, signed zero/subnormals/-2^31, and INT_MIN for NaN/infinity/out-of-range when the Mac instruction returns with the relevant exception masked, without invalid C casts. Fixed inherits the existing crashland5 correction; source hash dfd2eacbaf09fb54cc953f6070a156eb4d8015aa7088337ee5d594de6471b1c5 matches prior independently reviewed four-configuration manual compilation. No new defect/source change. No original external caller, standalone export or LP64 long ABI asserted; x87/MXCSR flags/control/trap/environment equivalence excluded. Sys_SnapVector Windows rounding preserved. Compiled/reviewed previously; no new compilation, tests, CI, replay or runtime exercise."
       },
       {
         "id": "mac:0x00025916",
