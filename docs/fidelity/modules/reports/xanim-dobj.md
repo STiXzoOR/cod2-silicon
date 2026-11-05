@@ -53,3 +53,11 @@ xanim trace fixture passes both modes under ASan/UBSan; nonfinite normals were
 not specifically exercised. Five inactive configurations and exact OFF source
 text match, and there are no `__LINE__` uses. No tests, full CI or replays were
 added or run.
+
+## Remaining-helper follow-up — 2026-11-05
+
+All three unchecked rows remain unchecked. Mac STABS establishes the 100-byte ILP32 DObj, including skeleton pointer, timestamp, duplicate-parts string, model pointers, parent indices and matrix offsets; it does not establish clone reference ownership or reverse create-parameter extraction. Exact `DObjCreate` remains a construction path, not a proven complete inverse getter or clone.
+
+Exact `DObjSkelExists` at 0x73f2e–0x73f51 confirms the mismatch write clearing the skeleton pointer. Its return predicate overlaps `DObjSkelIsValid`, but the mutation means the whole operation is not equivalent to the nonmutating helper. No missing helper was declared resolved from a shared read. All existing evidence, including the unordered-normal correction, is preserved exactly.
+
+Configured stock/CoD2x Release objects and existing xanim skeleton/mapping/trace fixtures pass both modes under ASan/UBSan. No production source or test assertion changed here; no new cases, full CI or replays. Private follow-up evidence is in `recon-animation-remaining.noindex`.

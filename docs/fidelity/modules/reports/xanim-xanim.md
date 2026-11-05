@@ -2,7 +2,7 @@
 
 Updated 2026-11-04.
 
-**133/147 reconciled: 118 equal, 11 fixed, 4 intentional; 14 unchecked.** Mac 1.3 i386 is the authority. Every assigned row was evaluated. Nontrivial exported functions were compared by hand, including the complete blend, cache, update and notify bodies and the compiler's repeated inlined recursion. Linux was used only for helper names and intent.
+**138/147 reconciled: 118 equal, 13 fixed, 7 intentional; 9 unchecked.** Mac 1.3 i386 is the authority. Every assigned row was evaluated. Nontrivial exported functions were compared by hand, including the complete blend, cache, update and notify bodies and the compiler's repeated inlined recursion. Linux was used only for helper names and intent.
 
 ## Corrections
 
@@ -18,8 +18,9 @@ The existing 64-bit animation entries, tree header and sized allocation/free cal
 
 ## Unchecked entries
 
-Five notify rows remain unchecked: `XAnimGetNextNotifyIndex`, `XAnimSetNotifyIndex`, `XAnimProcessServerNotify`, `XAnimProcessClientNotify` and `XAnimGetNotifyFracServer`. When no next note is found, Mac 0x3ee7a–0x3ee8e / 0x42048–0x42059 derives a short index from a null pointer minus the notify-table address. Native explicitly uses -1. The loader appends an end sentinel for ordinary clips, but a full equivalence claim for empty/exhausted tables and address-dependent results is not established. Non-finite dispatch beyond the corrected gates is also unproven. The Mac wrapped-prefix stride-two behavior at 0x4115d remains preserved.
+The two remaining notify helper identities are now resolved against their complete inline operations. `XAnimGetNextNotifyIndex` comprises the scan at Mac 0x3ef45–0x3ef71 / 0x420c1–0x420f6 and the short-index conversion at 0x3ee7c–0x3ee87 / 0x4204a–0x42052. `XAnimSetNotifyIndex` includes the exact-time-1 early exit, nonleaf notify-child selection and index store at 0x42012–0x42059. Existing native code implements these operations through `XAnimGetNextNotifyInfo` and the corresponding owner blocks. The scan starts at time 2, keeps the first minimum qualifying time, accepts unordered current time, and rejects unordered note time.
 
+Both helper verdicts are intentional because native explicitly stores -1 when no candidate exists. Mac instead derives a short from null minus the table address. This preserves the existing owner policy and does not claim address-dependent ILP32 equality. Exact loader 0xba3cb–0xba415 appends the time-1 end sentinel for ordinary clips; empty or exhausted tables follow the explicit native policy. The previously reconciled server/client notify and fraction-owner verdicts are unchanged.
 Nine Linux-only routines lack a matching Mac text symbol or a uniquely established complete inline identity: `DObjUpdateServerOldTime`, `XAnimClearChildGoalWeights`, `XAnimCloneAnimTreeOldState`, `XAnimCopyAnimTreeNoNotify`, `XAnimCopyInfoNoNotify`, `XAnimDisableLeakCheck`, `XAnimFreeAnims`, `XAnimSetCompleteGoalWeightKnob` and `XAnimSetGoalWeightKnob`. Their absence was not converted into equality.
 
 ## Verification and limits
@@ -39,3 +40,13 @@ Independent source/binary reviews covered all six units. Review caught an incorr
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. These unchanged traces do not exercise every corrected path. Unreached diagnostic, malformed-input and allocation edges remain compiled and reviewed. Missing helper identities and storage-dependent behavior remain explicitly unchecked or documented native adaptations.
 
 Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile. Source preprocessing checks do not establish binary-byte parity.
+
+## Remaining-helper follow-up — 2026-11-05
+
+Mac STABS confirms the eight-byte note record, byte note count, signed-short index, entry union and tree/info layouts. Exact-symbol disassembly was used for the scan and setter; no production refactoring was needed. Two helper rows changed from unchecked to intentional. All previously resolved evidence remains unchanged.
+
+The other nine helper rows remain unchecked. `DObjInitServerTime` at 0x3b554 updates one tree and does not perform the additional cross-object old-state clone required by `DObjUpdateServerOldTime`. `XAnimCloneAnimTree` at 0x3bb04 copies the full info, maintains notification references and removes absent destination nodes; that does not establish old-state-only or no-notify copy operations. `XAnimClearTreeGoalWeightsStrict` recursively clears descendants, so it is not the direct-children-only helper. The knob-all owner does not establish the two distinct wrapper contracts. `XAnimFreeList` at 0x386a0 frees debug names, but does not establish the absent sized allocation callback wrapper. Leak-check has a zero-valued exception-metadata name without an established executable state-write path. None of those partial operations or metadata records was promoted to a complete helper verdict.
+
+Configured stock/CoD2x Release objects compiled. Existing full xanim/model/skeleton fixtures and all seven synchronized notification cases pass both modes under ASan/UBSan. The full fixture initially failed its existing model-name backslash assertion; the approved expectation correction is recorded in the xmodel report, with failed logs retained. No new tests, cases, assertions, CI or replays were added or run. No production source changed, so legacy text and actual diagnostic line expansions are unchanged. Empty/exhausted/nonfinite notify states were reviewed, not specifically exercised.
+
+Private follow-up evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-animation-remaining.noindex/`.
