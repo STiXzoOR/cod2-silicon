@@ -107,3 +107,10 @@ of separately emitted Mac server exports. Primary provider verdicts remain
 unchanged. Parent and independent reviews support both classifications; no
 compilation, CI, tests or replay ran and no runtime coverage was added. Private
 exact original bodies remain in `recon-provenance-parent4.noindex`.
+
+## Original wrapper refinement (storage10)
+
+Five rows remain unchecked. Original1.3 rotation/control wrappers0x8092260/0x8092292 load the entity number, resolve the server DObj and call distinct partBits/boneIndex setters. Existing tag setters additionally perform name lookup and local-tag mutation; neither they nor isolated bit setters establish these complete server wrappers. Original1.0 code-reference follow-up adds no actual consumer. Permanent allocators0x8091d1c/0x8091d4c require the loading-state guard and error path; the settled unguarded model-precache adapters remain rejected. NumForGentity0x80916d8 returns the signed game-pointer/base/stride quotient; the previously inspected server/game pointer converters still have different inputs and results. Approved temporary allocation and native ownership adaptations stay unchanged.
+
+
+Private original bodies and new exact Mac/provider/state-owner evidence are retained in recon-provenance-storage5.noindex and recon-provenance-storage10.noindex. No source changes, compilation, tests, CI, replay or runtime exercise occurred. Missing names/callers are not completion evidence.

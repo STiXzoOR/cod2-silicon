@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 312,
+      "unchecked": 310,
       "intentional": 3182,
-      "equal": 4765,
+      "equal": 4767,
       "fixed": 1198
     },
     "scopes": {
@@ -173554,7 +173554,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux wrapper read; native name/body/caller and a Mac code symbol or identified inline use were not found. Mac behavior could not be established for this row."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x8092292\u20130x80922c4. Complete original loads ent->s.number, resolves Com_GetServerDObj, and forwards partBits/boneIndex to the control-bit setter. Existing DObjSetControlTagAngles includes name lookup and local rotation mutation, so it is not this complete wrapper. Original1.0 CodeRefsTo adds no consumer. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:700:SV_DObjSetRotTransIndex",
@@ -173573,7 +173573,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux wrapper read; native name/body/caller and a Mac code symbol or identified inline use were not found. Mac behavior could not be established for this row."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x8092260\u20130x8092292. Complete original loads ent->s.number, resolves Com_GetServerDObj, and forwards partBits/boneIndex to the rotation-bit setter. Mac/native tag setters also perform name lookup and local-tag mutation; the underlying bit setter alone does not establish the full server wrapper. Original1.0 CodeRefsTo adds no consumer. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "mac:0x0014dcae",
@@ -174014,7 +174014,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux loading-state guard and aligned-allocator wrapper read; no native wrapper/caller or Mac code symbol/inline identity found. Mac state restriction could not be established."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x8091d4c\u20130x8091d84. Original loading-state guard/error plus supplied alignment remain required. A generic aligned allocator or unguarded precache wrapper is only part of the operation; no complete guarded owner established. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:307:SV_Hunk_AllocInternal",
@@ -174033,7 +174033,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux loading-state guard and allocator wrapper read; no native wrapper/caller or Mac code symbol/inline identity found. Mac state restriction could not be established. Further exact-owner review: SV_AllocXModelPrecache 0x14dbd2-0x14dbdc and SV_AllocXModelPrecacheColl 0x14dbdc-0x14dbe6 tail-jump directly to Hunk_AllocInternal. Their native complete wrappers likewise forward directly; they do not establish the unresolved loading-state guard and error behavior."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x8091d1c\u20130x8091d4c. The complete original loading-state==1 requirement and error path precede allocation. Settled bare Mac model-precache forwarding still lacks that guard; no complete alternative guarded owner was established. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:333:SV_Hunk_AllocateTempMemoryInternal",
@@ -174245,7 +174245,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux wrapper read, but native has no body/caller and Mac has only a zero-valued exception-metadata symbol, not a located code symbol. No Mac implementation or inline range identified; not treated as equal. Further exact-owner review: SV_SvEntityForGentity 0x14d990-0x14d9de reads and validates gEnt->s.number, then indexes the server-entity array; SV_GEntityForSvEntity 0x14e40c-0x14e458 converts the reverse server-array pointer index to a game-entity pointer. Neither establishes this input game-entity-pointer subtraction/division and integer-result contract. Native corresponding complete owners preserve those distinct interfaces."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x80916d8\u20130x80916f8. Original returns the signed quotient of game-entity pointer minus game-array base divided by stride. Existing Mac number-field/server-pointer conversions have distinct inputs/results. Original1.0 CodeRefsTo does not identify a further consumer; no pointer-derived number mapping is inferred. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "mac:0x0014de7c",
@@ -174814,7 +174814,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only unused helper: no native body, Mac symbol, or identified Mac caller was found. Linux has no callers of this helper; that absence does not establish Mac semantics or equality."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x8092a48\u20130x8092abe. Full original scans a bounded key configstring range, terminates at first empty key, compares case-insensitively and returns the paired second-range value or empty string. Config setters do not supply the complete search/return operation; original1.0 CodeRefsTo adds no consumer. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "mac:0x001419a0",
@@ -176289,7 +176289,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only helper has no Mac symbol or native body. Inspected Mac NET_SendPacket 0x15852a and NET_OutOfBandData 0x1588f6 callers and symbol/string inventory; did not establish an inline block equivalent to its unconditional preparation, non-OOB diagnostic and profiling send wrapper. Missing identity is not equality."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x80976aa\u20130x809771a. Full original checks the -1 header, emits the non-OOB diagnostic, unconditionally prepares server OOB profiling, sends, then updates send profiling. NET_SendPacket/NET_OutOfBandData alone lack the complete operation. Original1.0 CodeRefsTo supplies no new actual caller. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "mac:0x00190872",
@@ -177219,7 +177219,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux wrapper read; native has no body/caller and Mac has no code symbol or identified full inline wrapper. Trace initialization/pass fields could not be established from a Mac implementation; not treated as equal."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x809e2aa\u20130x809e368. Full original resolves the supplied single entity, clears36-byte trace and initializes fraction/entity, copies extents and computes inverse delta, sets both pass fields to-1 plus contentmask/locational1/priority, then calls the entity trace provider. Fresh exact Mac SV_PointTraceToEntity0x1bf0e8 accepts preexisting clip/entity/result storage; the identified CM traversal invokes it for linked entities, not this complete single-entity initializer. Original1.0 CodeRefsTo adds no consumer. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "mac:0x001bfb02",
@@ -201427,7 +201427,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only getter has no verified Mac body or inline caller; Mac contains only an absolute zero .eh name for Hunk_SetMarkLow, which is not code identity. Native has no independent getter under this name."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x80abf0e\u20130x80abf18. The Mac state-reference follow-up distinguishes Hunk_SetMark0x37828, which returns high permanent, from this original low-permanent accessor. Low loads inside allocation/touch/info owners do not establish a complete low getter. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "mac:0x00037bf2",
@@ -201477,7 +201477,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Mac has only an absolute-zero .eh symbol, no code body; no verified inline caller tying high permanent/temp save-and-replace to this Linux helper. Native has no corresponding named body."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x80ac500\u20130x80ac51e. Fresh full Mac Hunk_HideTempMemory0x37bf2 saves/replaces low permanent; Hunk_ConvertTempToPermLowInternal0x37b2e also acts on low and has no saved-value return. Neither proves this high-state save/replace/return operation. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "mac:0x00037776",
@@ -201651,7 +201651,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Mac has only an absolute-zero .eh symbol, no code body; no verified inline caller tying high permanent restoration to this Linux helper. Native has no corresponding named body."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x80ac51e\u20130x80ac52c. Fresh full Mac Hunk_ShowTempMemory0x37c08 restores low, not high. Hunk_ClearToMark0x37f10 writes both high permanent and temp then calls Hunk_ClearData, so its extra state/cleanup effects reject it as this single high-permanent restore. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "linux:universal/com_memory.cpp:215:Hunk_Shutdown",
@@ -202134,8 +202134,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Linux explicitly labels this unreferenced one-argument calloc helper and its name unknown. Mac Z_VirtualCommitInternal has a different two-argument existing-pointer contract, so it cannot safely serve as this row identity."
+        "status": "equal",
+        "evidence": "Hand-compared complete original1.3 anonymous calloc wrapper0x80ab702\u20130x80ab71d (literal count1, unchanged size, nullable pointer return) with complete Mac Z_VirtualReserveInternal0x37498\u2192VirtualAlloc0xb120 selected NULL path\u2192calloc and native com_memory.c/MacWin32.c providers. Original identical sibling0x80ab6b2 is actually called at0x80ab6da; no direct caller of the anonymous copy is invented. Equal complete fresh-zeroed allocation operation; original name remains unknown. Preserves existing native platform size_t/pointer-width/allocator contract: no identical ILP32/LP64 negative-size raw-size behavior, allocation capacity/success or zero-size pointer outcome claimed. The rejected two-argument existing-pointer CommitInternal mapping remains rejected. No new export/source change or runtime verification; independent review accepted."
       },
       {
         "id": "mac:0x000374c4",
@@ -202175,8 +202175,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Linux explicitly labels this unreferenced memset helper and its name unknown. Mac Z_VirtualDecommitInternal calls a no-op decommit shim, so the named Linux helper cannot be assumed equivalent without a caller identity."
+        "status": "equal",
+        "evidence": "Hand-compared complete original1.3 anonymous void memset(ptr,0,size) wrapper0x80ab71e\u20130x80ab740 with full Mac Com_Memset0x47f62\u20130x47f83 and native com_shared.c provider. Original body establishes the literal-zero/default-value adapter; ptr and int size forward unchanged, no allocation/free/error/state effect. Equal complete zero-fill operation for valid storage/count under existing platform memset/size_t contract; no arbitrary negative-size cross-width behavior, invalid-buffer/null allowance or incidental EAX-return API claimed. Original name remains unknown. No-op Mac virtual decommit is a different rejected candidate and is not this mapping. No source/export change or runtime verification; independent review accepted."
       },
       {
         "id": "mac:0x0003743a",
@@ -208322,7 +208322,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac text symbol or identified inline body: only the address-zero __Z17MemFile_IsReadingP10MemoryFile.eh symbol remains. All 92 named memory-file references were scanned; none compares the read callback. Native and Linux caller scans find no calls; native has no helper body. Linux pointer-comparison source alone cannot establish Mac identity."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x80b5bd2\u20130x80b5be8. Complete original compares archiveProc to the read provider and returns the Boolean. The original1.0 IDB CodeRefsTo follow-up supplies no additional active consumer; prior Mac callback/reference and PPC source-owner audits still lack this complete comparison. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "linux:universal/memfile.cpp:53:MemFile_IsWriting",
@@ -208341,7 +208341,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac text symbol or identified inline body: only the address-zero __Z17MemFile_IsWritingP10MemoryFile.eh symbol remains. All 92 named memory-file references were scanned; none compares the write callback. Native and Linux caller scans find no calls; native has no helper body. Linux pointer-comparison source alone cannot establish Mac identity."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x80b5be8\u20130x80b5bfe. Complete original compares archiveProc to the archive-write provider and returns the Boolean. Original1.0 CodeRefsTo supplies no additional consumer; initializer callback stores do not prove a readback comparison/return. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "mac:0x0009fcc8",
@@ -208422,7 +208422,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac text symbol or identified inline body: only the address-zero __Z16MemFile_ShutdownP10MemoryFile.eh symbol remains. No native definition or callers, and no Linux callers. Linux clears sizeof(pointer), but the Mac store extent is unverified; no pointer-sized or indeterminate native storage behavior was introduced."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x80b5bae\u20130x80b5bd2. Original clears exactly4 bytes of the supplied MemoryFile address. Generic memset is insufficient here: the target is structure/pointer-width-sensitive and no Mac owner establishes the intended store extent or state reset. No speculative pointer-sized clearing was introduced. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "linux:universal/memfile.cpp:91:MemFile_SkipData",
@@ -208441,7 +208441,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac symbol or identified inline body; its unique skip-overflow diagnostic is absent from Mac strings. No native definition or callers and no Linux callers. The Linux-only cursor advance cannot be assigned a Mac identity, so it was not reconstructed or marked equal."
+        "evidence": "Unchecked after original1.3 identity/body refinement at0x80b5cd8\u20130x80b5d5e. Complete original advances bytesUsed with overflow diagnostic/state handling; generic read/write providers add transfer and distinct error semantics. Original1.0 CodeRefsTo adds no consumer bridge. Missing direct callers do not resolve the row. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
       },
       {
         "id": "mac:0x0009fdde",

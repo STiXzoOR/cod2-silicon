@@ -27,3 +27,10 @@ Integrated engine source through `868a08f` passed both dedicated builds and all 
 The first stock recording attempt stopped before map load because its isolated home had no selected player profile. The restored engine behavior requires one. Harness commit `b275adb` seeds the default profile; 38 existing harness checks and its independent review passed. Failed recording evidence is preserved. After this prerequisite correction, both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline in players, state hashes and entities, and match each other. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. Unchanged traces do not prove that each correction was reached; unreached branches remain compiled and reviewed.
 
 Hosted ILP32 byte comparison remains unavailable: its unchanged `410342a` reference fails compiling GCC `__stdcall`/`__cdecl` declarations. The workflow already documents that limitation and marks the job nonblocking. Preprocessing equality is not binary-byte parity.
+
+## Original OOB owner refinement (storage10)
+
+SV_Netchan_SendOOBPacket remains unchecked. Complete original1.3 body0x80976aa checks the -1 packet header and reports a non-OOB diagnostic, always prepares server OOB profiling, sends, then updates send profiling. Existing NET_SendPacket/NET_OutOfBandData operations do not include that whole composition. Original1.0 code-reference follow-up adds no actual consumer, and missing callers are not evidence of replacement.
+
+
+Private original bodies and new exact Mac/provider/state-owner evidence are retained in recon-provenance-storage5.noindex and recon-provenance-storage10.noindex. No source changes, compilation, tests, CI, replay or runtime exercise occurred. Missing names/callers are not completion evidence.
