@@ -875,11 +875,13 @@ void *CDirect3D_GetDirect3DInterface(void)
     vsink++;    \
     vsink++;    \
     vsink++;
+#if !defined(COD2_X64) || defined(DEDICATED)
 void CDirect3DDevice_CreateAndSetFixedFunctionVAO(void)
 {
     static volatile int vsink;
     VAO_X16 VAO_X16 VAO_X16 VAO_X16 VAO_X16 VAO_X16 VAO_X16 VAO_X16
 }
+#endif
 #undef VAO_X16
 
 #if defined(COD2_X64)
