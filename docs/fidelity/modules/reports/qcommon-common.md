@@ -2,7 +2,7 @@
 
 Updated 2026-11-04.
 
-**65/76 reconciled: 40 equal, 18 fixed, 7 intentional; 11 unchecked.** All 50 assigned Mac code entries were read by hand. The two event jump tables at 0x328600 and 0x328618 were decoded directly. Linux-only helper rows were compared in Mac callers where an identity could be established. Mac 1.3 is the authority, with the Windows checks below. Legacy preprocessor output is unchanged.
+**68/76 reconciled: 43 equal, 18 fixed, 7 intentional; 8 unchecked.** All 50 assigned Mac code entries were read by hand. The two event jump tables at 0x328600 and 0x328618 were decoded directly. Linux-only helper rows were compared in Mac callers where an identity could be established. Mac 1.3 is the authority, with the Windows checks below. Legacy preprocessor output is unchanged.
 
 ## Corrections
 
@@ -47,3 +47,13 @@ Integrated source through `12d554b` passed both dedicated builds and all local m
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline in players, state hashes and entities, and match each other. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and maximum velocity drift 2.0. Unchanged traces do not establish coverage of each correction. Branches not reached by the recording remain compiled and reviewed.
 
 The hosted ILP32 byte-comparison job cannot compare binaries: its unchanged `410342a` reference fails to compile GCC `__stdcall`/`__cdecl` declarations. The workflow already records that limitation and marks the job non-blocking; preprocessing equality is not binary-byte parity.
+
+## Cross-module animation allocator consumers — 2026-11-05
+
+Three previously unchecked common-helper operations are present in concrete client animation consumers. Exact Mac `CG_AllocAnimTree` at 0x163622–0x16363c forwards the caller size with allocator tag 5 and returns `MT_Alloc` unchanged. Native `cg_ents_mp.c` has that complete operation. This establishes the Linux name `MT_AllocAnimTree` as an allocator alias without inventing a disconnected helper.
+
+Mac `CG_PreProcess_GetDObj` at 0x164016–0x164028 passes the original animation pointer and that callback to `XAnimCreateTree`, retaining the result unchanged. The native call has the same arguments and result. This establishes the complete `Com_XAnimCreateSmallTree` wrapper operation, including its allocation callback rather than merely a similar tree allocation.
+
+The complete `Com_XAnimFreeSmallTree` operation occurs in `CG_SafeDObjFree` at 0x1e420b–0x1e4217 and the client/entity cleanup loops at 0x1e4273–0x1e4280 and 0x1e42f1–0x1e42fe. Original pointer-table entry 0x1acd9cd contains 0x44af2, the `MT_Free(void*, int)` function address. Native `cg_animtree_mp.c` forwards the same tree/callback pair. Null guards and later tree-pointer clearing remain consumer behavior; these closures do not re-certify the complete containing functions.
+
+The original common-only search had missed these cross-module consumers. Parent source/binary review only; no production changes, new tests, builds or CI runs. Existing caller verdicts remain unchanged. Eight common rows remain unchecked.
