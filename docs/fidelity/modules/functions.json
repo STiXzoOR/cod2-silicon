@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 473,
+      "unchecked": 472,
       "intentional": 3092,
       "equal": 4720,
-      "fixed": 1172
+      "fixed": 1173
     },
     "scopes": {
       "unassigned": 777,
@@ -169581,8 +169581,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Read complete exact Mac interpreter 0x8393a-0x86aff, native active helper graph, all 135 dispatch entries at 0x3297bc and error tables 0x3299d8/0x329b70. Fixed final-record-only switch default (0x84fe9-0x84ff8), pre-operand script-call overflow/type checking and error-index order (0x83e0a, 0x83e66-0x83e76, 0x83f3f-0x83f53, 0x8407d, 0x840e0, 0x841b9-0x841cd, 0x84767-0x8478f, 0x84e74-0x84e9c), and retained invalid non-method function-pointer values (0x83ed5, 0x8414f). Compiled and reviewed, not exercised. Still unchecked: generic non-checkpointed longjmp C state remains unproved against Mac scratch resets at 0x8622f-0x86262; malformed unknown-opcode continuation differs (Mac 0x839e1/0x84227 versus native fatal diagnostic). The documented builtin/setter checkpoint and monotonic timer adaptations are retained, not treated as blanket coverage."
+        "status": "fixed",
+        "evidence": "Built on the established complete 135-opcode Mac audit at 0x8393a-0x86aff and tables 0x3297bc/0x3299d8/0x329b70. Follow-up exact-symbol read proves live frame argument stores at EBP+8..+24 survive actual longjmp, while 0x8622f-0x86262 clears scratch IDs/thread count and ESI; 0x862af then bypasses opcode cleanup. Fixed native indeterminate automatic frame state with volatile fields and strictly qualified helper destinations; generic recovery now clears scratch before use. VM_ArchiveStack caller uses a temporary because its sole output-ID store follows its final call. Fixed bounded unknown-opcode stores/next-byte continuation at 0x839e1/0x84227/0x83f8d; beyond the declared 32-frame table native retains its fatal diagnostic instead of reproducing out-of-bounds writes. Preserved documented builtin/setter checkpoint and monotonic timeout adaptations. Compiled and reviewed; existing resumed root generic-error/negative-wait and 13 checkpoint cases exercised recovery, but nested-thread scratch reset and malformed unknown-opcode continuation were compiled/reviewed only. Existing ASan/UBSan f1_runtime20, f1_error_recovery13, f1_vm7, vm_semantics15, nested-array fixture and prerequisite StopGameType fixture pass; arm64 Release ded build passes. No tests changed or added; no full CI/replay. OFF unifdef byte-identical to 9f0fed4 and all five inactive body/actual-line configurations match. Optional debugger execution identities, allocation-dependent notify state and other unassigned rows are not reclassified."
       },
       {
         "id": "mac:0x00086ec6",
