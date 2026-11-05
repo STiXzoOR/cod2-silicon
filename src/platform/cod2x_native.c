@@ -38,6 +38,7 @@ static void *WatchMain(void *argument)
         uint64_t last = atomic_load_explicit(&heartbeat, memory_order_relaxed);
         uint64_t now = MacSystem_Nanoseconds();
         if (!atomic_load_explicit(&userWaitDepth, memory_order_acquire) &&
+            last == atomic_load_explicit(&heartbeat, memory_order_relaxed) &&
             atomic_load_explicit(&enabled, memory_order_relaxed) && now >= last &&
             now - last > 12000000000ULL && last != reportedHeartbeat) {
             reportedHeartbeat = last;
