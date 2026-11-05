@@ -249,7 +249,7 @@ static void CheckFullscreenMechanics(void)
     assert(MacDisplay_SetMode(800, 600, 32, 60) == 0);
     assert(screenContext->metal->layer.drawableSize.width == 800);
     MacDisplay_ReleaseContext(&context);
-    assert(!(SDL_GetWindowFlags(sdl_gl_window) & SDL_WINDOW_FULLSCREEN));
+    assert(context == NULL && screenContext == NULL && sdl_gl_window == NULL);
     MacDisplay_ReleaseDisplay();
     CGDisplayModeRef after = CGDisplayCopyDisplayMode(CGMainDisplayID());
     assert(CGDisplayModeGetWidth(before) == CGDisplayModeGetWidth(after));
@@ -323,7 +323,12 @@ int main(int argc, char **argv)
         }
         assert(glGetError() == GL_NO_ERROR);
         MacDisplay_ReleaseContext(&context);
-        CheckNativeMailbox(sdl_gl_window);
+        /* Context release retires its window; the mailbox owns a separate one. */
+        SDL_Window *mailboxWindow = SDL_CreateWindow("CoD2 mailbox fixture",
+            SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 320, 240,
+            SDL_WINDOW_HIDDEN | SDL_WINDOW_ALLOW_HIGHDPI);
+        CheckNativeMailbox(mailboxWindow);
+        SDL_DestroyWindow(mailboxWindow);
         MacDisplay_ReleaseDisplay();
         MacPlatform_ConfigurePresentation(1, 1);
         MacPlatform_ConfigureWindow(320, 240, MAC_WINDOWED, 60);
