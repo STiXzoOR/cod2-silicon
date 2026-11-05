@@ -2,7 +2,7 @@
 
 Updated 2026-11-04.
 
-**40/42 reconciled: 26 equal, 14 fixed; 2 unchecked.** Mac 1.3 i386 is the authority. Linux names were used to identify inline helpers; no reference source was copied. The legacy preprocessed source is unchanged.
+**41/42 reconciled: 26 equal, 15 fixed; 1 unchecked.** Mac 1.3 i386 is the authority. Linux names were used to identify inline helpers; no reference source was copied. The legacy preprocessed source is unchanged.
 
 All 25 exported Mac bodies were compared, including hashing, circular collision chains, move-to-head lookup, three insertion placements, string reclamation, restart traversal, user/refcount transitions and formatted string wrappers. Fourteen Linux-only rows were identified in those concrete callers. Format/error string bytes were checked directly in the Mach-O file. The hash uses signed bytes, 32-bit wrap, modulo 16383 plus one for lengths below 256, and `(len >> 2) % 16383 + 1` otherwise.
 
@@ -66,3 +66,13 @@ The complete primary Mac `SL_GetLowercaseString_` at 0x434b8–0x43555 calculate
 Original `SL_TransferSystem` is now anchored from Linux 1.0 0x80799ca to 1.3 0x807a01a. Its complete live-record scan replaces selected user bits without reference release or restart. The previously examined Mac shutdown and single-string transfer providers remain distinct. It and the C-string setter remain unchecked. The full `Scr_AddStringSet` insertion operation also remains separate and unchecked.
 
 This follow-up changed reports only. No compilation, tests, CI, replay or runtime exercise ran. Exact original bodies, the full primary provider and independent review are retained in `CoD2-native-decomp/recon-provenance-script9.noindex` and `units/review-provenance-script9-lowercase.md`.
+
+## Complete C-string destination assignment (stringchar27)
+
+`Scr_SetStringFromCharString` is fixed through the complete actual item-classname assignment. Original1.3 body0x8079e1a–0x8079e56 conditionally releases the old destination ID, interns its C-string input with user0, stores the returned16-bit ID and returns void. The new mapping supplies the full Mac operation rather than the previously rejected numeric-only setter: G_SetConstString0x1b5d06–0x1b5d3b passes its destination and0 to Scr_SetString, passes the unchanged C-string/user0 to SL_GetString, and stores returned AX through that destination. The complete providers cover old-reference release, strlen+1, type6 interning and reference acquisition. Native follows this sequence. Existing a56e4d4b release/unlink and interning/ownership corrections lie inside this complete operation, so the new row inherits fixed status without a new defect.
+
+Actual input and output roles are established by Drop_Item0x1b1414 passing dropped->classname storage to G_GetItemClassname. Its two branches forward a real local weapon-name C-string or item->classname, with the unchanged destination, at0x1af970/0x1af989. This is a complete active argument/provider chain, not a hypothetical composition or constant initialization. It does not assert that this caller exercises a nonzero old reference or previously corrected corruption edges.
+
+Mac's numeric clearing provider also writes0 between releasing the old reference and interning the replacement; the original Linux helper leaves the old numeric ID until its final store. The native operation retains Mac's intermediate zero. The mapping covers the actual returning item-classname role with valid destination/reference state, independent live NUL-terminated source/backing and successful ordinary providers. It does not claim identical original intermediate or nonlocal-failure state, a source pointer into released destination-string storage, arbitrary standalone alias/ABI behavior, reentrancy/concurrency, malformed-state safety, terminal-error continuation or whole owner equivalence. Earlier numeric-only and vector-format candidates remain insufficient on their own.
+
+Independent review accepted this scope in `units/review-provenance-stringchar27.md`; fresh complete original/Mac bodies, real callers/providers and source hashes remain in `recon-provenance-lexset27.noindex`. One closure, no source change or new defect; no compilation, tests, CI, full build, replay or runtime verification. Existing compiled/reviewed provider fixes do not establish runtime coverage of this newly mapped operation. The bulk user-transfer helper remains unchecked.
