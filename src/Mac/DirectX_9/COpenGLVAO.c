@@ -456,8 +456,12 @@ static void Optimize_Body(void *opaque)
     triangle = node->triangle;
     __ZNSt15_List_node_base6unhookEv(node);
     __ZdlPv(node);
+    /* Retail stores the whole triangle before any FIFO allocation can throw. */
+    pDst[0] = triangle.v[0];
+    pDst[1] = triangle.v[1];
+    pDst[2] = triangle.v[2];
+    pDst += 3;
     for (j = 0; j < 3; ++j) {
-        *pDst++ = triangle.v[j];
         UInt16Deque_PushBack(fifo, triangle.v[j]);
     }
     /* Preserve the otherwise unused remaining-tuple walk at 0x112dd8. */
@@ -465,8 +469,11 @@ static void Optimize_Body(void *opaque)
         triangle = node->triangle;
     for (i = 1; i < NumIndices / 3; ++i) {
         triangle = ChooseAndRemoveBestTriangle(fifo, triangles);
+        pDst[0] = triangle.v[0];
+        pDst[1] = triangle.v[1];
+        pDst[2] = triangle.v[2];
+        pDst += 3;
         for (j = 0; j < 3; ++j) {
-            *pDst++ = triangle.v[j];
             UInt16Deque_PushBack(fifo, triangle.v[j]);
             if (UInt16Deque_Size(fifo) > 10)
                 UInt16Deque_PopFront(fifo);
