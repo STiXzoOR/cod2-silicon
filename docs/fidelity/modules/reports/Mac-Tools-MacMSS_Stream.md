@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**14/16 reconciled: 14 intentional, 2 unchecked.** Mac symbols identify the complete
+**16/16 reconciled: 16 intentional, 0 unchecked.** Mac symbols identify the complete
 QuickTime-backed stream class and its static-vector lifecycle. Legacy source
 stubs are unchanged because the selected provider owns stream playback.
 
@@ -19,7 +19,7 @@ pan instead of the original .wav 3D sample/.mp3 QuickTime distinction.
 loops. Native `MixLocked` performs cursor advancement, interpolation, looping
 and completion on the AudioUnit callback. Pause/resume/end set typed state;
 playback speed uses the typed rate. Track volume/balance becomes direct
-per-channel mixer gain. Millisecond query/seek parity remains unresolved below.
+per-channel mixer gain. Millisecond query/seek now use a fixed decoded media clock as detailed below.
 
 `close_stream` at 0x13d98c stops/disposes Movie and erases its vector entry.
 Native close frees PCM and clears the pool allocation flag. Constructors,
@@ -28,19 +28,19 @@ pool initialization and explicit AIL shutdown; the generated old vector bytes
 are not native playback state. No QuickTime class object or polling dependency
 remains in selected callers.
 
-## Unresolved media-time behavior
+## Stream media clock resolved
 
-Mac .mp3 dispatch selects this class, and its millisecond get/set methods at
-0x13d714/0x13d7a2 use immutable MovieTimeScale, independently of SetMovieRate.
-The .wav stream route instead uses sample timing with current playback rate.
-Native query/seek delegates both routes to mutable sample-rate conversion, so
-pitched MP3 length, current time and seek positions differ in active driver
-start/save paths. These two method rows remain unchecked, together with the two
-public AIL query/seek entries. The Windows executable delegates those operations
-to Miles without time-base compensation; its DLL contract was not established
-within the excluded-library scope. WS3 docs/fixtures choose no explicit timing
-adaptation. See [MacMSS](Mac-Tools-MacMSS.md) for exact caller addresses and the
-outstanding evidence. The implementation is unchanged pending that contract.
+The typed native stream now retains the decoder's media rate separately from
+mutable playback pitch. Query and seek therefore preserve Mac MP3's immutable
+MovieTimeScale contract at 0x13d714/0x13d7a2. Streamed WAV intentionally follows
+the Windows file-time contract instead of Mac sample-rate timing. Narrow
+inspection of the supplied Miles6.5e DLL proves that its stream millisecond
+APIs use stream metadata independently of the separately owned sample rate.
+See [MacMSS](Mac-Tools-MacMSS.md#stream-media-clock-resolved) for vendor research,
+exact original addresses, DLL hash, native lifecycle and verification limits.
+These are intentional SDK replacement mappings, not codec-seek, padding or
+acoustic equality claims. Existing audio/voice sanitizer fixtures pass; the
+new pitched stream-time path is compiled and reviewed, not directly exercised.
 
 ## Selection and verification
 
@@ -61,8 +61,8 @@ output are not directly exercised by those successful-setup cases.
 Six inactive guard configurations report zero mismatches; no `__LINE__` occurs
 in the changed source. No new tests, full CI, replays, game or physical audio run.
 Original acoustic, surround, elevation, Doppler and latency parity remains a
-WS3 replacement limit. Four stream query/seek contracts remain unchecked in
-MacMSS/MacMSS_Stream, as detailed in the linked report.
+WS3 replacement limit. The later stream-clock follow-up above resolves the four query/seek contracts;
+this earlier validation paragraph describes the original platform batch.
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-mac-audio.noindex/`.
 
