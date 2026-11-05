@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 263,
+      "unchecked": 262,
       "intentional": 3184,
-      "equal": 4793,
+      "equal": 4794,
       "fixed": 1217
     },
     "scopes": {
@@ -198421,8 +198421,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no QuatFromPitch public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers. Original-address provenance recovered: Linux 1.0 IDB 0x80a57e8 maps to retained original Linux 1.3 ELF 0x80a7b4c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked. Original1.3 body0x80a7b4c writes literal zero to x/z and sine/cosine to y/w. Fresh complete original body confirms the positive double half-degree constant0.008726646259971648, float narrowing before FastSinCos, and literal positive-zero inactive components. Exact Mac AngleAxisToQuat0x2dc44 uses the same angle scaling but multiplies all three supplied axis components by sine (0x2dc99/0x2dca4/0x2dcae), writing cosine first. Even a hypothetical basis-vector adapter would not reproduce literal zero fields for signed-zero/NaN sine; no such complete actual adapter was established. The complete actual DObjSetControlTagAngles\u2192DObjSetLocalTagInternal0x74cbe chain instead evaluates all three Euler half-angle pairs and writes their product at0x74de8-0x74e20, with identity only for a null angle pointer. No complete single-axis helper mapping; remains unchecked."
+        "status": "equal",
+        "evidence": "Complete consumed stock pelvis pitch\u2192four-word quaternion operation, not arbitrary exported ABI. Original1.0 0x80a57e8\u2192full1.3 0x80a7b4c\u2013RET0x80a7b97 supplies scalar degree input/all4 output role. Positive actual Mac history: SV_SpawnServer three100ms warmups0x14322c/230 precede ClientConnect0x1432a6; G_RunFrame stores actual interval before ClientConnect clears complete indexed ci0x193b01. Selected successful returning post-warmup reconnect starts with real yaw/roll0 and positive100ms; subsequent normal positive frame samples without intervening time reset/foreign clock or controller mutation preserve literal zero through0x18334a. BG_Player_DoControllers controller5 uses actual waistDelta goal, smoothed pitch and raw controller_names[5]\u2192pelvis; same ci+0x438 tuple is forwarded0x182f47. Full DObjSetLocalTagInternal0x74cbe phase reads pitch,0,0, evaluates double half-degree conversion\u2192float sin/cos and complete Euler products, then stores all4 words0x74de8/0x74dfe/0x74e0f/0x74e20. Actual G_DObjCalcPose handler9/11\u2192G_PlayerController\u2192same-object SV_DObjCalcSkel chain consumes all4 in skeletal products/norm. Current native same complete output phase matches Mac; existing primary equal, no new defect. Mac zero products, signed zeros and arithmetic order authoritative; no Linux literal-zero/FP/ABI equivalence or formal all-process writer invariant. Admission/translation/weight effects and unrelated prior fixes excluded from alias; arbitrary callbacks/time resets/CoD2x state remain outside scope. Private recon-provenance-pitch42.noindex full bodies/raw/state bridge; independent review-provenance-pitch42.md accepted. No source change/compilation/tests/CI/replay/runtime."
       },
       {
         "id": "linux:universal/com_math.cpp:2148:QuatFromRoll",
