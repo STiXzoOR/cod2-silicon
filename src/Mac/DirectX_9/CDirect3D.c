@@ -3,6 +3,9 @@
 #include "imports.h"
 #include <stdlib.h>
 #include <string.h>
+#if defined(COD2_X64)
+#include "lp64_gl_state.h"
+#endif
 #if COD2_APPLE_SDK
 #include "platform/macos_display.h"
 extern dvar_t *Dvar_RegisterBool(const char *, int, int);
@@ -532,6 +535,50 @@ HRESULT CDirect3D_CreateDevice(const void *_this, UINT Adapter, int DeviceType, 
 
 #if defined(COD2_X64)
     static char deviceMem[4096] COD2_ALIGNED(sizeof(void *));
+    extern long unsigned int CDirect3DDevice_CDirect3DDevice(const CDirect3DDevice *, UINT, D3DDEVTYPE, ContextRef, D3DPRESENT_PARAMETERS *);
+    NativePresentationParameters14 parameters = {
+        .width = 640, .height = 480, .backBufferFormat = 0x16,
+        .backBufferCount = 1, .swapEffect = 1, .windowed = 1, .depthFormat = 75
+    };
+    if (!ppReturnedDeviceInterface) return (HRESULT)(int32_t)0x8876086cu;
+    *ppReturnedDeviceInterface = NULL;
+    extern int CDirect3DDevice_IsNativeLive(const void *);
+    if (CDirect3DDevice_IsNativeLive(deviceMem)) return (HRESULT)(int32_t)0x8876086cu;
+    if (pPresentationParameters) memcpy(&parameters, pPresentationParameters, sizeof(parameters));
+    if (!parameters.width) parameters.width = 640;
+    if (!parameters.height) parameters.height = 480;
+    /* The selected display advertises no multisample buffers. Reject callers
+     * that bypass capability negotiation instead of silently dropping FSAA. */
+    if (parameters.multiSampleType || parameters.multiSampleQuality)
+        return (HRESULT)(int32_t)0x8876086au;
+    int depthBits = NativePresentation_DepthBits(parameters.depthFormat);
+    if (!depthBits) return (HRESULT)(int32_t)0x88760869u;
+    (void)_this; (void)hFocusWindow; (void)BehaviorFlags;
+    extern int sdl_gl_width, sdl_gl_height;
+    sdl_gl_width = parameters.width; sdl_gl_height = parameters.height;
+#if COD2_APPLE_SDK
+    dvar_t *borderless = Dvar_RegisterBool("r_borderless", 1, 0x1001);
+    MacPlatform_ConfigureWindow(parameters.width, parameters.height,
+        parameters.windowed ? MAC_WINDOWED : (borderless->current.enabled ? MAC_BORDERLESS : MAC_FULLSCREEN), parameters.refreshRate);
+#endif
+    void *context = MacDisplay_CreateScreenContext(depthBits, parameters.depthFormat == 75,
+        parameters.multiSampleType, parameters.multiSampleQuality, parameters.presentationInterval, NULL);
+    if (!context) return (HRESULT)(int32_t)0x88760869u;
+    /* The selected renderer owns one statically allocated device. Its deleting
+     * destructor releases contents but must never free these 4096 bytes. */
+    HRESULT result = (HRESULT)CDirect3DDevice_CDirect3DDevice((const CDirect3DDevice *)deviceMem,
+        Adapter, DeviceType, (ContextRef)context, (D3DPRESENT_PARAMETERS *)&parameters);
+    if (result < 0) {
+        extern void ZN15CDirect3DDeviceD0Ev(void *);
+        ZN15CDirect3DDeviceD0Ev(deviceMem);
+        return result;
+    }
+    if (pPresentationParameters) memcpy(pPresentationParameters, &parameters, sizeof(parameters));
+    *ppReturnedDeviceInterface = deviceMem;
+    return 0;
+#else
+#if defined(COD2_X64)
+    static char deviceMem[4096] COD2_ALIGNED(sizeof(void *));
 #else
     static char deviceMem[4096];
 #endif
@@ -616,6 +663,7 @@ HRESULT CDirect3D_CreateDevice(const void *_this, UINT Adapter, int DeviceType, 
 
     *ppReturnedDeviceInterface = deviceMem;
     return 0;
+#endif
 }
 
 void ZN9CDirect3DD1Ev(const void *_this)
