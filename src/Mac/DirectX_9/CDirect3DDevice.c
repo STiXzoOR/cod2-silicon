@@ -5823,7 +5823,6 @@ void CDirect3DDevice_Init(void *device)
     memset(dev->streamStrides, 0, sizeof(dev->streamStrides));
     dev->indexBuffer = NULL; dev->_pad0A8 = 0xffffffffu;
     dev->pixelShader = NULL; dev->bVal1 = dev->bVal3 = dev->bc8Val = 0;
-    DeviceRenderState_Init(dev);
     dev->fillMode = 3; dev->shadeMode = 2;
     dev->fogEnable = dev->stencilEnable = dev->stencilRef = 0;
     dev->stencilFunc = 8; dev->stencilMask = 0xffffffffu;
@@ -5859,6 +5858,7 @@ void CDirect3DDevice_Init(void *device)
     glGetIntegerv(0x8872, (GLint *)&dev->maxTextureImageUnits);
     if (dev->maxTextureUnits > 16 || dev->maxTextureImageUnits > 16)
         abort();
+    DeviceRenderState_Init(dev);
     free(dev->texStageData);
     CTexStageNative *stages = calloc(17, sizeof(*stages));
     if (!stages)
