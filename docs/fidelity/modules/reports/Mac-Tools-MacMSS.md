@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**77/77 reconciled: 1 fixed, 76 intentional.** Mac 1.3 is the authority.
+**75/77 reconciled: 2 fixed, 73 intentional, 2 unchecked.** Mac 1.3 is the authority.
 The legacy source is unchanged. The active native provider preserves the engine's
 AIL entry points, with the documented WS3 implementation boundaries below.
 
@@ -16,6 +16,23 @@ release reused that helper. A released 3D slot could therefore be allocated as a
 2D/raw/voice/stream handle while still marked spatial. The native allocator now
 clears `spatial` before reset. The 3D allocator still explicitly sets it, and
 in-place `AIL_init_sample`/`AIL_set_3D_sample_info` retain the 3D type.
+
+`AIL_set_3D_sample_info` at 0x110ece calls `init_sample` at 0x110ef6 before
+installing replacement metadata. The latter sets DONE and clears the old source,
+queued buffers, cursor and length through 0x13f007. Native decoded first and
+returned early on failure, retaining the old playable PCM. The actual
+`SND_StartAlias3DSample` ignores that return, resets offset and resumes; my earlier
+report/ledger claim that the caller checks success was incorrect. Native now
+validates the slot and clears it before decoding under one `audio_mutex` lock.
+Failure leaves it DONE/empty, while the allocated spatial type is preserved.
+
+The decode call cannot race release/reallocation while this mutex is held.
+`DecodeInfo` calls `DecodeFile` for compressed data; SDK file callbacks are the
+local memory-only `FileRead`/`FileSize`, neither of which acquires `audio_mutex`
+or calls an AIL API. Encoded input remains the caller's sound-hunk metadata;
+reset frees only provider-owned PCM. This follows the provider's existing locked
+prepare/buffer-decode pattern. The output callback uses trylock and emits silence
+while decoding holds the lock, so no old payload is rendered during replacement.
 
 ## Active API contracts
 
@@ -48,6 +65,34 @@ feedback reverb. Mac mono gain doubling, independent master/pan fields, AUGraph
 spatial parameters and QuickTime track controls are not recreated. CPU reporting,
 error strings, provider names, redistributable no-op and preference returns follow
 the concrete selected provider and their actual callers, as detailed per row.
+
+## Unresolved stream-time contract
+
+Two public query/seek rows remain unchecked. Exact Mac dispatch at 0x110939–
+0x11095e routes .mp3 to `CStreamSound`, while .wav uses a sample object. The MP3
+get/set methods at 0x13d714/0x13d7a2 use immutable `GetMovieTimeScale`; changing
+`SetMovieRate` via 0x13da7a changes playback speed independently. WAV sample
+millisecond conversion uses its current playback rate. Native currently delegates
+all stream millisecond queries/seeks to sample timing with mutable `sample.rate`.
+A ten-second MP3 at double rate reports five seconds, and seeking one second
+advances two source seconds. Active alias start changes rate before querying
+length, rejecting `timeshift` and seeking; save paths also consume those values.
+This is an observable engine contract mismatch, not an acoustic-quality waiver.
+
+The Windows executable changes rate at 0x4b723e, queries total at 0x4b7325,
+compares timeshift at 0x4b7336 and seeks at 0x4b73ae through imported Miles APIs.
+Those callers have no time-base compensation; the executable alone does not
+establish the delegated library's millisecond contract. Bundled Miles remains
+outside this reconciliation. WS3-platform, WS3-verification and the existing
+fixtures establish predecode/output but document no intentional pitch/time-base
+choice. The [vendor history](https://www.radgametools.com/msshist.htm) describes
+stream seeking/playback features but supplies no controlling time-base contract.
+No Windows behavior is inferred from another engine's use of the SDK.
+
+The two public APIs and two corresponding CStreamSound time methods therefore
+remain unchecked pending an authoritative Windows contract or bounded reference
+behavior. No speculative stream timing change was made. Other native provider
+boundaries do not excuse these four unresolved entries.
 
 ## Selected native boundary
 
@@ -87,12 +132,13 @@ pause/completion timeline and 138 footstep event cases through MixLocked/Render.
 The current driver and its existing timeline expectation were used unchanged;
 the peer's reviewed driver timing fix must be combined and verified by the parent.
 
-The allocation type-transition correction is compiled and reviewed; the existing
-fixture does not exercise released-3D to fresh-2D slot reuse. No new tests, full CI,
+The allocation type-transition and failed-replacement reset corrections are
+compiled and reviewed. The existing fixture exercises successful in-place 3D
+setup but neither released-3D to fresh-2D slot reuse nor failed metadata setup. No new tests, full CI,
 replays, game or physical audio run. The six inactive guard configurations have
 zero mismatches, and the changed provider contains no `__LINE__` diagnostics.
 No original-backend PCM/acoustic, surround, elevation, Doppler, codec-quality or
-latency equivalence is claimed. These remain documented replacement limits,
-not unchecked function identities.
+latency equivalence is claimed. Those quality limits are distinct from the four unresolved stream-time contracts
+described above.
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-mac-audio.noindex/`.

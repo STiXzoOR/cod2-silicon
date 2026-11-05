@@ -35,11 +35,13 @@ The six-source triage/constants/view runs, native provider comparison, exact-sym
 entry checks and caller inspection are detailed in [MacMSS](Mac-Tools-MacMSS.md).
 Retired backend algorithms are not claimed equal. Arm64 Release dedicated build
 and actual provider/existing platform-fixture compilation pass. The unchanged
-ASan/UBSan offline output suite passes all four cases. The new allocation-type
-transition is compiled/reviewed but is not directly exercised by those cases.
+ASan/UBSan offline output suite passes all four cases. The allocation-type
+transition and failure reset are compiled/reviewed; neither branch is directly
+exercised by those successful-setup cases.
 Six inactive guard configurations report zero mismatches; no `__LINE__` occurs
 in the changed source. No new tests, full CI, replays, game or physical audio run.
 Original acoustic, surround, elevation, Doppler and latency parity remains a
-WS3 replacement limit. No assigned function identity remains unchecked.
+WS3 replacement limit. Four stream query/seek contracts remain unchecked in
+MacMSS/MacMSS_Stream, as detailed in the linked report.
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-mac-audio.noindex/`.

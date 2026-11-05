@@ -16,8 +16,10 @@ fixed-offset objects. Base idle/changed no-ops have no selected virtual caller.
 
 The address/type/rate/block metadata setters now target typed fields consumed by
 `SampleInfo`, `DecodeInfo`, `PrepareSample` and `MixLocked`. `set_sample_info` at
-0x13f108 supplies data/length/rate/block fields; native 3D metadata setup validates
-and decodes first, then replaces PCM while retaining the allocated spatial type.
+0x13f108 supplies data/length/rate/block fields. Its Mac AIL wrapper first resets
+the sample at 0x110ef6. Native setup now resets the validated slot before decode
+and leaves it DONE/empty on failure, retaining spatial. The driver ignores its
+return; the earlier claim that it checks success was incorrect.
 The native metadata struct has the same native-width field order as
 `AILSOUNDINFO`/the initial `AILMIXINFO.Info` field.
 
@@ -47,11 +49,13 @@ The six-source triage/constants/view runs, native provider comparison, exact-sym
 entry checks and caller inspection are detailed in [MacMSS](Mac-Tools-MacMSS.md).
 Retired backend algorithms are not claimed equal. Arm64 Release dedicated build
 and actual provider/existing platform-fixture compilation pass. The unchanged
-ASan/UBSan offline output suite passes all four cases. The new allocation-type
-transition is compiled/reviewed but is not directly exercised by those cases.
+ASan/UBSan offline output suite passes all four cases. The allocation-type
+transition and failure reset are compiled/reviewed; neither branch is directly
+exercised by those successful-setup cases.
 Six inactive guard configurations report zero mismatches; no `__LINE__` occurs
 in the changed source. No new tests, full CI, replays, game or physical audio run.
 Original acoustic, surround, elevation, Doppler and latency parity remains a
-WS3 replacement limit. No assigned function identity remains unchecked.
+WS3 replacement limit. Four stream query/seek contracts remain unchecked in
+MacMSS/MacMSS_Stream, as detailed in the linked report.
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-mac-audio.noindex/`.
