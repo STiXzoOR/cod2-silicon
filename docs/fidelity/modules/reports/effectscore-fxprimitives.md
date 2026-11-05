@@ -206,3 +206,9 @@ from dedicated targets. COD2_X64=OFF source is byte-identical after conditional
 selection. No tests, CI, replay, full build or runtime exercise was performed.
 Private evidence: recon-provenance-math4.noindex; compilation receipts are in
 manual-fx-cull-compile-4bac2b6de38b.noindex.
+
+## Original block-promotion member identity
+
+Original1.0 FxMemMgr<FxBoltFrame> MoveToFront0x8127d96 and original1.3 specialization0x812a1b8 establish the generic member recorded by the outstanding row. Actual original manager allocation/free calls at0x812a115/0x812a238 reach this unlink-and-promote operation. The complete original bolt ownership chain is now tied to the complete Mac Acquire/Release owners and the positively identified stateless Mac FxMemMgr backend. The earlier allocation follow-up lacked this original consumer bridge.
+
+MoveToFront is intentional as internal pool bookkeeping replaced by the existing direct array allocator, with the same explicit pool-capacity/reuse/accounting/failure exclusions documented in the FxMemMgr report. No standalone block-promote operation is invented, and no prior owner verdict changes. This leaves157 equal,22 fixed,22 intentional and zero unchecked entries in this module. Independent original/Mac/native review passed; no source change, compilation, tests, CI, replay or runtime exercise occurred.
