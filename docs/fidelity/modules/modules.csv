@@ -88,7 +88,7 @@ bgame/bg_slidemove,4,2,2,0,0
 bgame/bg_weapons,136,118,10,8,0
 bgame/bg_weapons_load_obj,15,13,1,1,0
 botlib/l_memory,3,0,0,3,0
-botlib/l_precomp,77,43,10,6,18
+botlib/l_precomp,77,44,10,6,17
 botlib/l_script,37,8,8,1,20
 cgame/cg_animtree_mp,6,6,0,0,0
 cgame/cg_compassfriendlies_mp,3,2,1,0,0
@@ -365,7 +365,7 @@ script/scr_memorytree,20,9,11,0,0
 script/scr_parser,47,32,2,1,12
 script/scr_stringlist,42,25,14,0,3
 script/scr_tempmemory,5,5,0,0,0
-script/scr_variable,173,144,14,4,11
+script/scr_variable,173,145,14,4,10
 script/scr_vm,112,85,4,10,13
 script/scr_yacc,45,14,7,9,15
 server/sv_ccmds_mp,35,27,5,3,0
