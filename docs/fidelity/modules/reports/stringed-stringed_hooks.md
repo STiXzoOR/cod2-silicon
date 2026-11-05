@@ -38,3 +38,60 @@ SEH_IsJapaneseChar is equal; Korean and Chinese packed predicates inherit their 
 The remaining four index operations have exact original1.3 bodies: Korean0x8138b7e, Traditional Chinese0x8138c5a, Japanese0x8138d40 and Chinese0x8138e18. Each invokes its actual original classification provider before the complete offset/gap/stride arithmetic and zero rejection. These bodies establish integer-index intent, including arithmetic on the full input word. Complete fresh Mac R_GetCharacterGlyph0xec2d8 instead directly indexes ASCII or searches stored letter codes and returns a glyph pointer/fallback. The selected native provider has the same distinct ownership and return contract; the locale byte predicates do not supply index conversion.
 
 The original spacing predicate0x81390ea calls the language provider and returns false for9..11, true otherwise. Exact Mac Language_IsAsian0x31682 simply reads g_currentAsian. That cached classification is not proof of the complete spacing predicate. All five rows remain unchecked; original caller/address searches are retained only as bounded search evidence. No source, verdict, compilation, tests, CI, replay or runtime exercise. Private bodies: recon-locale9.noindex.
+
+
+## Locale22 spacing producer and word-loop state boundary
+
+SEH_LanguageUsesSpaces remains unchecked after following the actual producer
+and consumer. The original 1.3 helper at 0x81390ea calls current-language
+provider 0x8138154, which reads loc_language.current.integer at that call, then
+returns zero for unsigned(language-9)<=2 and one otherwise. The prior original
+body remains retained in recon-locale9.noindex.
+
+Fresh exact Mac SEH_InitLanguage writes g_currentAsian at 0x317b1 after the
+unsigned(language-8)<=4 comparison at 0x317a5–0x317ae. Complete UpdateLanguageInfo
+repeats that sample/store initially at 0x318d7–0x318eb, after each fallback
+Dvar_SetInt at 0x31962–0x31976, and after final reset at 0x319a3–0x319b7. Native
+stringed_hooks.c preserves these actual sampling points. Language_IsAsian
+0x31682 reads the stored Boolean; it does not read the current language anew.
+
+Both original and Mac binary name tables were extracted directly: original
+0x8188ae0 and Mac 0x341d40 contain the same fifteen names in order, including
+8=korean, 9=taiwanese, 10=japanese, 11=chinese and 12=thai. Thus there is no enum
+renumbering that makes cached !Asian identical to the original spacing set.
+This difference alone is not grounds to reject an actual Mac operation: Mac
+behavior remains authoritative, and no source change toward Linux is proposed.
+
+There is a real negated word-space consumer, not merely a proposed negation of
+a getter. Full exact CL_ConsolePrint_AddLine 0x15ed28 first queries the cached
+flag at 0x15ed8c. Its zero branch goes to generic byte-word processing at
+0x15edb3. Only the nonzero branch and message types 1/2/3 enter the pixel path
+through 0x15f336, 0x15f1f5 or 0x15efe3. Within that path, word lookahead reads a
+character, stops at <=space, checks character/pixel limits, then calls
+Language_IsAsian at 0x15f0e7. TEST/JE at 0x15f0ec/0x15f0ee repeats lookahead at
+0x15f08b on cached false. Native cl_console_mp.c has the same initial domain and
+do/while(!Language_IsAsian()) loop.
+
+The complete intraprocedural direct CFG was checked, including shared tails:
+generic entry 0x15edb3 cannot reach the inner call; the pixel path eventually
+shares completion at 0x15eeae, not a generic-to-pixel entrance. Calls are modeled
+as returning to their following instructions for this control-flow finding,
+without assuming they cannot change state. Font/width and character-reader
+calls occur before the inner cached read. Therefore no assertion is made that
+the cached flag must remain true after the initial pixel gate, or that its
+zero branch is globally impossible.
+
+This establishes a complete cached classification and a message-domain word
+continuation use, but does not identify the fresh-current spacing-query
+operation or a complete input/state adapter to it. Equating them would assume
+a relationship between current language and the last cached sample, or broaden
+the gated inner continuation into a standalone all-language query. Neither
+relationship is established by these owners. The original arbitrary-current
+API, stale-cache/update timing and message-domain effects remain outside the
+proved mapping; no hypothetical fresh accessor or normalization is added.
+
+One unchecked evidence refinement, zero closures/defects/source changes. The
+four locale character-index rows and all previous decisions remain untouched.
+Exact producers/getter/console owner, both binary tables, original current
+accessor and direct-CFG receipt remain in recon-provenance-locale22.noindex.
+Static inspection only: no compilation, tests, CI, replays or runtime exercise.
