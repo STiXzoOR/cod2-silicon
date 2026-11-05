@@ -6253,7 +6253,7 @@
   },
   "linux:server/sv_game_mp.cpp:307:SV_Hunk_AllocInternal": {
     "status": "unchecked",
-    "evidence": "Linux loading-state guard and allocator wrapper read; no native wrapper/caller or Mac code symbol/inline identity found. Mac state restriction could not be established."
+    "evidence": "Linux loading-state guard and allocator wrapper read; no native wrapper/caller or Mac code symbol/inline identity found. Mac state restriction could not be established. Further exact-owner review: SV_AllocXModelPrecache 0x14dbd2-0x14dbdc and SV_AllocXModelPrecacheColl 0x14dbdc-0x14dbe6 tail-jump directly to Hunk_AllocInternal. Their native complete wrappers likewise forward directly; they do not establish the unresolved loading-state guard and error behavior."
   },
   "linux:server/sv_game_mp.cpp:333:SV_Hunk_AllocateTempMemoryInternal": {
     "status": "unchecked",
@@ -6285,7 +6285,7 @@
   },
   "linux:server/sv_game_mp.cpp:25:SV_NumForGentity": {
     "status": "unchecked",
-    "evidence": "Linux wrapper read, but native has no body/caller and Mac has only a zero-valued exception-metadata symbol, not a located code symbol. No Mac implementation or inline range identified; not treated as equal."
+    "evidence": "Linux wrapper read, but native has no body/caller and Mac has only a zero-valued exception-metadata symbol, not a located code symbol. No Mac implementation or inline range identified; not treated as equal. Further exact-owner review: SV_SvEntityForGentity 0x14d990-0x14d9de reads and validates gEnt->s.number, then indexes the server-entity array; SV_GEntityForSvEntity 0x14e40c-0x14e458 converts the reverse server-array pointer index to a game-entity pointer. Neither establishes this input game-entity-pointer subtraction/division and integer-result contract. Native corresponding complete owners preserve those distinct interfaces."
   },
   "mac:0x0014de7c": {
     "status": "equal",
