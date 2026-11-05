@@ -292,7 +292,12 @@ static inline __attribute__((always_inline)) void R_ResetFrameBackendData(void)
 
 static inline __attribute__((always_inline)) void R_SelectSkinnedCacheForFrame(DxGlobals *dx)
 {
+#if defined(COD2_X64) && defined(__APPLE__)
+    /* Mac 0xc7db3/0xc7f5b selects the first cache every frame. */
+    dx->dynamicBufferFrame = 0;
+#else
     dx->dynamicBufferFrame = (dx->dynamicBufferFrame + 1) % 2;
+#endif
     frontEndDataOut->skinnedCacheVb = &dx->skinnedCacheVbPool[dx->dynamicBufferFrame];
     frontEndDataOut->skinnedCacheVb->used = 0;
 }
@@ -483,6 +488,7 @@ void R_AbortRenderCommands(void)
     cl->usedCritical = 0;
     cl->lastCmd = NULL;
 
+#if !defined(COD2_X64)
     dx = (DxGlobals *)imp_dx;
     if (!dx->tempSkinPos) {
         return;
@@ -490,6 +496,7 @@ void R_AbortRenderCommands(void)
 
     ri.Z_VirtualDecommitInternal(dx->tempSkinBuf, dx->tempSkinPos);
     dx->tempSkinPos = 0;
+#endif
 }
 
 static void R_BeginFrame_impl(void)
@@ -594,6 +601,14 @@ void R_InitBackendData(void)
 
     data = (GfxBackEndData *)s_backEndData;
     frontEndDataOut = data;
+#if defined(COD2_X64)
+    /* Mac 0xc7e63 decommits pending temporary skin storage before reuse. */
+    dx = (DxGlobals *)imp_dx;
+    if (dx->tempSkinPos != 0) {
+        ri.Z_VirtualDecommitInternal(dx->tempSkinBuf, dx->tempSkinPos);
+        dx->tempSkinPos = 0;
+    }
+#endif
     data->frameCount = ++rg.frameCountInternal;
 
     R_UnlockSkinnedCache();
@@ -632,6 +647,14 @@ static void R_EndFrame_impl(void)
 
     data = (GfxBackEndData *)s_backEndData;
     frontEndDataOut = data;
+#if defined(COD2_X64)
+    /* Mac 0xc8038 releases the previous frame before selecting its cache. */
+    dx = (DxGlobals *)imp_dx;
+    if (dx->tempSkinPos != 0) {
+        ri.Z_VirtualDecommitInternal(dx->tempSkinBuf, dx->tempSkinPos);
+        dx->tempSkinPos = 0;
+    }
+#endif
     data->frameCount = ++rg.frameCountInternal;
 
     R_UnlockSkinnedCache();
@@ -639,10 +662,12 @@ static void R_EndFrame_impl(void)
     R_SelectSkinnedCacheForFrame(dx);
     R_ResetFrameBackendData();
 
+#if !defined(COD2_X64)
     if (dx->tempSkinPos != 0) {
         ri.Z_VirtualDecommitInternal(dx->tempSkinBuf, dx->tempSkinPos);
         dx->tempSkinPos = 0;
     }
+#endif
 }
 
 static const char rb_diag_cmdlist_fmt[] = "";
@@ -681,6 +706,11 @@ void R_EndDelayedDrawing(int marker)
 {
     GfxCmdArray *cl = s_cmdList;
     int used = cl->usedTotal;
+#if defined(COD2_X64)
+    /* Keep the following native pointer-bearing record aligned as well. */
+    R_AllocCriticalCmd(sizeof(GfxCmdHeader), 3);
+    used = cl->usedTotal;
+#else
     if ((int)sizeof(cl->cmds) - used > 3) {
         GfxCmdHeader *cmd = (GfxCmdHeader *)((char *)cl->cmds + used);
         cl->usedTotal = used + 4;
@@ -692,6 +722,7 @@ void R_EndDelayedDrawing(int marker)
     } else {
         cl->lastCmd = NULL;
     }
+#endif
     /* x86 wrote a 4-byte subCmd at marker+4; on x64 subCmd is an 8-byte ptr at offsetof(GfxCmdCall,subCmd) */
     *(const void **)((char *)cl->cmds + marker + __builtin_offsetof(GfxCmdCall, subCmd)) = (const void *)((char *)cl->cmds + used);
 }
