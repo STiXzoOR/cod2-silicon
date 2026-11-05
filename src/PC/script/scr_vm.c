@@ -8663,6 +8663,8 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             if (!fieldValueId) {
 #if defined(COD2_X64)
                 Scr_SetErrorMessageAndJump("cannot create a new local variable in the debugger");
+                /* Mac 0x858f1/0x84268 skips one byte after this error returns. */
+                ++pos;
 #else
                 Com_Error(1, "VM_Execute C candidate missing field variable ref");
 #endif
