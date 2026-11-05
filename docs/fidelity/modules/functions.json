@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 278,
+      "unchecked": 277,
       "intentional": 3184,
-      "equal": 4784,
+      "equal": 4785,
       "fixed": 1211
     },
     "scopes": {
@@ -55307,8 +55307,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Linux-only ledger identity: BG_GetAnimString has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone."
+        "status": "equal",
+        "evidence": "Animstring31 complete checked writable animation-name address in actual BG_LoadAnim: full original1.3 BG_GetAnimString0x80d97ce\u2013RET0x80d9804 ignores client argument, compares unsigned index against global count, calls parse-error provider on failure and returns global+index*96, the name[64] field at offset0. Actual Mac loader0x18673d/0x186742 passes bgs first-field animScriptData to parser; parser stores exact input in globalScriptData0x185a00 (firstload reload0x185e1f). Loader0x1867d9 reads same global, gets actual treecount0x1867eb and storescount0x1867fb. Entered loop index1/addressbase+0x60 advances both by1/0x60. Unsigned range check0x18683b\u20130x186849 precedes every nameuse; failure0x1869fa\u20130x186a14 calls Com_Error(1,index/count diagnostic) and0x186a19 continues if it returns. Whole EDI namepointer is passed to I_strncpyz destination0x1868c0/c3,0x1869e6/e9,0x186a3c/3f; primitive fullname hashing corroborates realfieldrole. Native typed animation/name address, guard, direct diagnostic and continuation match actual positive enteredloop and stablecount/backing, preserving native stride rather than importing Mac96bytes. Equal selected check/address phase unchanged since baseline; no inherited unrelated parser/loader correction. Complete Mac guard/error role is retained; original parse-error filename/line formatting differs and is not asserted equal. Scope stable serialized actual loader, positive entered-loop index/count and valid512-record backing; no arbitrary exported API/root0mapping, forged/negativecounts, stale/reentrantglobalchanges, returnedterminalerror state mutation, runtime bgs/global invariant, sourcecopy/hash effects beyond pointer consumer, wholeloader or ABI/ancestry claim. Earlier death-loop candidate remains insufficient to establish lasting currentbgs/cachedglobal equality. Independent math and parent accepted; units/review-provenance-animstring31-name.md, fresh exact original/Mac/provider/metadata/sourcehash receipts recon-provenance-animstring31.noindex. No source/newdefect/compile/tests/CI/fullbuild/replay/runtime."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:1944:BG_GetAnimationForIndex",
@@ -55477,7 +55477,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity: BG_IsMantleAnim has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone."
+        "evidence": "Linux-only ledger identity: BG_IsMantleAnim has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone. Animstring31 exact original0x80d9cac\u2013RET0x80d9cfe clears0x200 toggle, passes clientNum/index to original checked global animation provider0x80d99dc, tests lowmovetype0x7ff00000/highmask0 and returns full integerBoolean. New full Mac BG_RunLerpFrameRate concrete candidates have toggle removal, unsigned indexed checks and full SETNE/MOVZBL results, but0x1837e1\u20130x1837fc/0x183819\u20130x18383a select low0xc4/high0x180 while0x18384f\u20130x183862/0x183874\u20130x183884 select0x308. Those actual old/new class results control stance-transition comparison, not an identified mantle-membership role; different-predicate similarity does not establish original identity or complete same-role operation. Client condition movetype transfer and movement flags are not substitutes. Preserve unchecked; complete original and freshowner/negative note in recon-provenance-animstring31.noindex. No source/newdefect/compile/tests/CI/fullbuild/replay/runtime."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:2019:BG_IsProneAnim",
