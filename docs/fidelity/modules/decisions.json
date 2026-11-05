@@ -15248,8 +15248,8 @@
     "evidence": "Mac 0x147464-0x147470 increments the 32-bit timestamp with wrapping and replaces zero by one. Made native addition unsigned before increment to define that wrap; retained 16-byte memory alignment and position reset; compiled and reviewed, not exercised."
   },
   "mac:0x0014a764": {
-    "status": "unchecked",
-    "evidence": "Hand compared Mac 0x14a764-0x14a868 avidemo/screenshot timestep, FPS, realtime/frame timing and unsigned 200 ms clamp. Whole row remains unchecked: fullscreen branch at 0x14a842 invokes unresolved CL_SyncGpu, while native invokes only void re.SyncGpu. See private renderer-dependency.json; no unsupported return-value cast or invented timer contract."
+    "status": "fixed",
+    "evidence": "Hand compared exact Mac CL_RunOncePerClientFrame 0x14a764-0x14a868 including avidemo/screenshot, FPS, realtime and frame timing. Mac 0x14a7bf-0x14a7dd uses modulo32 subtraction and an unsigned 200ms clamp; native signed comparison left negative deltas unclamped. Restored defined modulo subtraction and unsigned comparison, and fullscreen now calls common CL_SyncGpu as 0x14a842 does. That callback's API59/synthetic-cycle adaptation is documented in renderer-gpu-sync.md. Compiled and reviewed; frame clamp and GPU path not exercised."
   },
   "mac:0x00147eb2": {
     "status": "equal",
@@ -15320,8 +15320,8 @@
     "evidence": "Hand compared Mac 0x14724e-0x1472ea: not-recording print, two -1 demo terminators, file close and recording/file flag reset match stock native. Optional COD2_CODX auto-record policy retained."
   },
   "mac:0x0014a726": {
-    "status": "unchecked",
-    "evidence": "Unresolved cross-module contract: Mac 0x14a726-0x14a764 obtains an integer cycle budget from re+0x154 then polls re+0x150 with low-TSC elapsed/rollover limits and WinSleep(1). Native refexport_t.SyncGpu and RB_AdaptiveGpuSyncWait return void, and renderer rdtsc_lo returns zero. Retained defined native call; renderer/header/timer audit belongs to later renderer owner. Private renderer-dependency.json lists exact paths and offsets."
+    "status": "intentional",
+    "evidence": "Hand compared exact Mac CL_SyncGpu 0x14a726-0x14a764: low-TSC start, integer delay query, fence-first polling, signed elapsed exit and WinSleep(1). The built-in Apple API59 retains its void SyncGpu ABI; its typed renderer callback now owns that complete loop and reads the budget directly. One process-stable synthetic-cycle clock derives from the existing monotonic nanosecond/frequency providers with 128-bit arithmetic, not invented original units or a return-value cast. Native hardware timing is intentionally not claimed equal. Compiled and reviewed; GPU loop not exercised. See renderer-gpu-sync.md."
   },
   "mac:0x0014964e": {
     "status": "equal",
@@ -29428,8 +29428,8 @@
     "evidence": "Mac 0xd44e8: Compared Present/error/deviceLost/cache flush, dynamic-index reset, projection2D reset and modified-dvar clearing. Existing native null dynamic-index guard preserves defined lazy allocation. Apple always calls R_SetColorMappings on gamma changes so its existing ignoreHwGamma branch actively restores identity gamma; Mac original skips that call when ignored. Provider body read in r_init.c, no provider edit. Compiled and reviewed, not exercised."
   },
   "mac:0x000d8958": {
-    "status": "unchecked",
-    "evidence": "Mac 0xd8958: Hand-compared command dispatch, dvars, device loss, scene and fence control. Fixed native skipBackEnd-only black clear before pending flush/debug (0xd8cde/0xd8d28 ->0xd8d39/0xd93f5) and typed fill-test material loads (0xd8dd7 onward), compiled and reviewed, not exercised. Full parity unresolved: mode3 0xd93b3/0xd94a2 decay and rdtsc-budget wait are absent; native mode2 contains duplicated wait and zero start/now/end timing. API59/API60 callback/clock-unit contract must be coordinated before replacing timing, not inferred from pending sibling work. Review follow-up: decoded all34 raw command-table slots and matched native preprocessed table; restored eight NULL mappings only after checking native records/allocator and adapting LP64 triangle payload. No current native emitters for those eight IDs were found. Timing remains unresolved as stated; no producer/header edit or runtime reachability claim."
+    "status": "intentional",
+    "evidence": "Hand compared exact Mac RB_ExecuteRenderCommands 0xd8958-0xd95a9 and fence/accessor/benchmark owners. Restored mode1 pre-draw wait/issue, mode2 post-draw wait/issue, mode3 completed max(wrapped32(delay-20000),0)/128*127 and unfinished nonnegative elapsed/32 updates with 1ms sleeps, plus no extra end fence in modes0/1. Retained Mac 0xd957d negative-elapsed issued-flag abandonment. Fixed Mac 0xd8b26/0xd8b37 fill-warning strings. Apple native intentionally uses one frozen-frequency synthetic-cycle clock with 128-bit conversion, and mode0 retires completed prior fences before early exits; physical TSC timing equality is not claimed. Compiled and reviewed; GPU loops not exercised. See renderer-gpu-sync.md."
   },
   "mac:0x000d4cba": {
     "status": "equal",
@@ -31856,8 +31856,8 @@
     "evidence": "Mac 0xc813a-0xc81a2 emits RETURN id 3 and patches the opening GOTO to the following command, including the allocation-failure target. Native appended a four-byte RETURN after eight-aligned records, misaligning subsequent LP64 GfxCmdCall and payload pointers. Use the native critical allocator (eight bytes) and patch using offsetof(GfxCmdCall,subCmd). Pending df8d9cc GOTO/CALL consumers use the same native field and byteCount. Compiled and reviewed, not runtime exercised."
   },
   "mac:0x000c7e8c": {
-    "status": "unchecked",
-    "evidence": "Mac 0xc7e8c-0xc8060 caller hand-read. Corrected temporary-skin decommit ordering before the next frame and pool[0] selection, compiled and reviewed but not exercised. Complete parity remains unresolved: native prepends RB_AdaptiveGpuSyncTarget, while pending df8d9cc RB_ExecuteRenderCommands lacks the Mac 0xd93b3/0xd94a2 mode3 budget logic and retains zero mode2 timing. The extra call currently tests/deletes the previous fence in mode0; without it that native tail can overwrite g_FenceID. Retained the call pending shared clock/callback/fence-ownership reconciliation; absence in this Mac entry alone does not justify removal. Pool-zero selection is restricted to native Apple, paired with unconditional DISCARD caller33c898e; non-Apple rotation/lock policy is preserved."
+    "status": "fixed",
+    "evidence": "Hand compared exact Mac R_EndFrame 0xc7e8c-0xc805d and seeded cache/temp-storage/command prerequisites. Removed native extra frontend RB_AdaptiveGpuSyncTarget; Mac 0xc7ea3 starts by unlocking the skinned cache. First repaired native mode0 completed-fence retirement at backend entry, before disabled/lost-device returns, so disabling sync preserves cleanup without issuing replacement fences. Existing single-pool DISCARD ownership, menu diagnostic and resource reset adaptations are preserved. Compiled and reviewed; frame/fence path not exercised. See renderer-gpu-sync.md."
   },
   "mac:0x000c7d38": {
     "status": "fixed",
@@ -32040,8 +32040,8 @@
     "evidence": "Exact-symbol Mac 0xf5b54 is a prologue/return with no effects, matching the native empty body; full-binary disassembly was misaligned."
   },
   "mac:0x000caa68": {
-    "status": "unchecked",
-    "evidence": "Hand read exact Mac 0xcaa68 and native API59 binding table plus v60 adapter. Native API59 separates void SyncGpu and GpuWaited; Mac API60 tail has IsGpuFenceFinished at 0x150 and integer GpuSyncDelay accessor at 0x154, followed by SetLodOrigin at 0x158. No defined native budget accessor/complete timer-fence contract exists, so neither a return cast nor ABI change was made. Other named callbacks and native pointer-sized slots were inspected; this does not close the table/timing contract."
+    "status": "intentional",
+    "evidence": "Hand compared exact Mac GetRefAPI 0xcaa68-0xcae42 and traced built-in CL_InitRef/API59, optional DLL loaders and both version60 adapters. Mac checks60 and exports IsGpuFenceFinished/int GpuSyncDelay/SetLodOrigin at0x150/0x154/0x158. Retained established native API59 field order/version/size and typed IsGpuFenceFinished/void SyncGpu/GpuWaited(int) assignments; renderer void callback fuses the Mac delay-query/poll loop without function-return casts. Existing Windows retail version60 mapping is a separate layout, preserved and not certified as Mac API60; no built-in Apple client requests it. Compiled and reviewed; renderer/DLL calls not exercised. See renderer-gpu-sync.md."
   },
   "mac:0x000cb5f6": {
     "status": "unchecked",

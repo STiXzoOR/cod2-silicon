@@ -119,7 +119,7 @@ client/cl_cin_mp,12,8,3,1,0
 client/cl_console_mp,48,38,7,3,0
 client/cl_input,85,78,3,4,0
 client/cl_keys_mp,25,20,3,2,0
-client/cl_main_mp,96,68,12,14,2
+client/cl_main_mp,96,68,13,15,0
 client/cl_main_pc_mp,20,14,3,3,0
 client/cl_net_chan_mp,6,4,1,1,0
 client/cl_parse_mp,6,0,5,1,0
@@ -169,7 +169,7 @@ gfx_d3d/r_image,30,19,3,8,0
 gfx_d3d/r_image_load_common,5,4,1,0,0
 gfx_d3d/r_image_load_obj,16,9,4,3,0
 gfx_d3d/r_image_wavelet,1,1,0,0,0
-gfx_d3d/r_init,22,14,5,1,2
+gfx_d3d/r_init,22,14,5,2,1
 gfx_d3d/r_jpeg,9,0,1,8,0
 gfx_d3d/r_light,4,2,1,1,0
 gfx_d3d/r_light_load_obj,1,0,0,1,0
@@ -179,7 +179,7 @@ gfx_d3d/r_material_load_obj,16,8,7,1,0
 gfx_d3d/r_model,33,27,5,1,0
 gfx_d3d/r_model_load_obj,1,1,0,0,0
 gfx_d3d/r_outdoor,2,2,0,0,0
-gfx_d3d/r_rendercmds,42,17,3,21,1
+gfx_d3d/r_rendercmds,42,17,4,21,0
 gfx_d3d/r_rendertarget,4,2,2,0,0
 gfx_d3d/r_scene,18,12,5,1,0
 gfx_d3d/r_screenshot,9,1,2,6,0
@@ -198,7 +198,7 @@ gfx_d3d/r_water,1,0,1,0,0
 gfx_d3d/r_water_load_obj,2,1,1,0,0
 gfx_d3d/r_xsurface,8,7,0,0,1
 gfx_d3d/r_xsurface_optimize,3,3,0,0,0
-gfx_d3d/rb_backend,63,31,23,7,2
+gfx_d3d/rb_backend,63,31,23,8,1
 gfx_d3d/rb_debug,5,5,0,0,0
 gfx_d3d/rb_fog,3,3,0,0,0
 gfx_d3d/rb_imagefilter,4,2,1,1,0

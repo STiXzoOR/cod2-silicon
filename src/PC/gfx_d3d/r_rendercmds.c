@@ -628,7 +628,9 @@ static void R_EndFrame_impl(void)
         return;
     }
 
+#if !defined(COD2_X64) || !defined(__APPLE__)
     RB_AdaptiveGpuSyncTarget();
+#endif
     R_UnlockSkinnedCache();
 
     ri.CL_UpdateDebugData();
