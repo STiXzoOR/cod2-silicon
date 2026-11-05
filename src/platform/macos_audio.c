@@ -1012,26 +1012,26 @@ SAMPLE_SETTER(AIL_set_3D_sample_effects_level, (void *handle, float wet), sample
 
 int AIL_set_3D_sample_info(void *handle, const void *metadata)
 {
-    float *pcm = NULL;
-    size_t frames;
-    int channels, rate;
-    if (!DecodeInfo(metadata, &pcm, &frames, &channels, &rate))
-        return 0;
     pthread_mutex_lock(&audio_mutex);
     MacAudioSample *sample = FindSample(handle);
+    int result = 0;
     if (sample) {
         ResetSample(sample);
-        sample->pcm[0] = pcm;
-        sample->frames[0] = frames;
-        sample->channels = channels;
-        sample->rate = rate;
-        sample->source_bytes = ((const MacAudioSoundInfo *)metadata)->data_len;
-        sample->prepared = 1;
-    } else {
-        free(pcm);
+        float *pcm = NULL;
+        size_t frames;
+        int channels, rate;
+        if (DecodeInfo(metadata, &pcm, &frames, &channels, &rate)) {
+            sample->pcm[0] = pcm;
+            sample->frames[0] = frames;
+            sample->channels = channels;
+            sample->rate = rate;
+            sample->source_bytes = ((const MacAudioSoundInfo *)metadata)->data_len;
+            sample->prepared = 1;
+            result = 1;
+        }
     }
     pthread_mutex_unlock(&audio_mutex);
-    return sample != NULL;
+    return result;
 }
 
 void AIL_set_3D_position(void *handle, float x, float y, float z)
