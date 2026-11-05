@@ -70,3 +70,12 @@ Catalog coverage passed without semantic catalog changes. The earlier batch 8 ho
 ## Integrated batch 21 acceptance
 
 The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.
+
+
+## Original executable provenance follow-up (platform6)
+
+Original 1.0 IDB bodies and original 1.3 executable bodies now anchor the remaining named operations: Sys_Warn at 0x80d3bdc, Sys_FileTime at 0x80d3c44, and Sys_Chmod at 0x80d4bbe. Each has a unique complete-body match after masking relocated calls and absolute addresses. The warning wrapper formats its own prefix and brackets output with tty hide/show; the timestamp query returns stat mtime or -1; chmod ORs the requested mode into the existing stat mode. These are not interchangeable with ordinary printing, existence checks or the native preference writer's mode 0600.
+
+Source order between independently anchored neighbors additionally locates the small original aliases: LowPhysicalMemory 0x80d3740, FunctionCmp 0x80d374a, FunctionCheckSum 0x80d3754, BeginProfiling 0x80d375e, NullStub 0x80d4378, NullQuery1 0x80d437e, NullQuery2 0x80d4388, CheckCD 0x80d4ac6 and AppActivate 0x80d4ad0. Identical constant/empty bodies occur elsewhere, so shape alone is not unique identity; the unnamed stubs still have unknown original names. Direct-call and raw-address-reference scans supplied no positive consumed engine operation for these twelve helpers. The few retained raw address records for nontrivial bodies are unwind metadata, not callers. All twelve remain unchecked; absence is not a closure basis.
+
+This is a report-only provenance audit. No verdict or production source changes, compilation, tests, CI, replays or runtime exercise were performed. Private original body/address/caller packets are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-platform6.noindex/`. Prior verification records above describe earlier work, not this follow-up.

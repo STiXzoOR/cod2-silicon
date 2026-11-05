@@ -53,3 +53,14 @@ Catalog coverage passed without semantic catalog changes. The earlier batch 8 ho
 ## Integrated batch 21 acceptance
 
 The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.
+
+
+## Original executable provenance follow-up (platform6)
+
+Original executable provenance now identifies fastftol at 1.0 0x80d37fe and 1.3 0x80d5e6e: save x87 control word, select truncation, FISTP to 32-bit storage, restore control word and return the integer. This does not identify a particular Mac conversion owner or reopen the established Windows-style SnapVector decision.
+
+The original 1.3 indexed critical-section API is concrete: initialization 0x80d67da creates six recursive mutexes at 0x860b340 with a 24-byte stride; Enter 0x80d6842 and Leave 0x80d6864 compute that indexed address and call pthread lock/unlock. The retained direct-call inventory has 61 calls within 29 bounded owner bodies: 48 calls with index 4 in dvar operations, eight with index 2 in error handling, two each with indices 0 and 5 in logging/output, and one initializer in startup. This refines the missing ownership contract; it does not establish equality to Mac's per-object CMutex API. A complete replacement account across these owners, including exceptional continuations, remains missing. No lock removal or new threading policy is approved here.
+
+Original Sys_Init at 0x80d3ad6 calls Sys_GetCurrentUser 0x80d6760 at 0x80d3b17 and registers the username dvar. This positive original use still does not identify Mac player-name or home-path logic as the same operation. Source-order anchors place GetProcessorId at 0x80d6746 and NullQuery3 at 0x80d6750; constant-return shape supplies no CPU-enum or anonymous-query Mac identity. All seven rows remain unchecked.
+
+This is a report-only provenance audit. No verdict or production source changes, compilation, tests, CI, replays or runtime exercise were performed. Private original body/address/caller packets are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-platform6.noindex/`. Prior verification records above describe earlier work, not this follow-up.
