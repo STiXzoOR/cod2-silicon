@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**75/77 reconciled: 2 fixed, 73 intentional, 2 unchecked.** Mac 1.3 is the authority.
+**77/77 reconciled: 2 fixed, 75 intentional, 0 unchecked.** Mac 1.3 is the authority.
 The legacy source is unchanged. The active native provider preserves the engine's
 AIL entry points, with the documented WS3 implementation boundaries below.
 
@@ -76,33 +76,51 @@ spatial parameters and QuickTime track controls are not recreated. CPU reporting
 error strings, provider names, redistributable no-op and preference returns follow
 the concrete selected provider and their actual callers, as detailed per row.
 
-## Unresolved stream-time contract
+## Stream media clock resolved
 
-Two public query/seek rows remain unchecked. Exact Mac dispatch at 0x110939–
-0x11095e routes .mp3 to `CStreamSound`, while .wav uses a sample object. The MP3
-get/set methods at 0x13d714/0x13d7a2 use immutable `GetMovieTimeScale`; changing
-`SetMovieRate` via 0x13da7a changes playback speed independently. WAV sample
-millisecond conversion uses its current playback rate. Native currently delegates
-all stream millisecond queries/seeks to sample timing with mutable `sample.rate`.
-A ten-second MP3 at double rate reports five seconds, and seeking one second
-advances two source seconds. Active alias start changes rate before querying
-length, rejecting `timeshift` and seeking; save paths also consume those values.
-This is an observable engine contract mismatch, not an acoustic-quality waiver.
+The user requested RAD Game Tools research and delegated this decision on
+2026-11-05. The [Miles product page](https://www.radgametools.com/miles.htm)
+and [vendor history](https://www.radgametools.com/msshist.htm) describe the
+library but do not specify the legacy millisecond clock. Bink's video codec
+is a separate API and does not determine the AIL stream contract. No SDK was
+acquired or middleware reconstructed.
 
-The Windows executable changes rate at 0x4b723e, queries total at 0x4b7325,
-compares timeshift at 0x4b7336 and seeks at 0x4b73ae through imported Miles APIs.
-Those callers have no time-base compensation; the executable alone does not
-establish the delegated library's millisecond contract. Bundled Miles remains
-outside this reconciliation. WS3-platform, WS3-verification and the existing
-fixtures establish predecode/output but document no intentional pitch/time-base
-choice. The [vendor history](https://www.radgametools.com/msshist.htm) describes
-stream seeking/playback features but supplies no controlling time-base contract.
-No Windows behavior is inferred from another engine's use of the SDK.
+A narrow read of the supplied Windows `mss32_original.dll` establishes the
+missing boundary. Its version string is Miles 6.5e; SHA-256 is
+`7855b8fbae917cb8449f2d4361ab61b5ecec4df0a11130d797cb0aa99b4260ea`.
+The CoD2x shim loads that DLL and forwards these named exports. Query export
+0x2111c310 reaches 0x21111850; seek export 0x2111c380 reaches 0x21111960.
+Both use stream file metadata at +0x84/+0x88 (with format/block fields for
+PCM/ADPCM and the encoded byte-rate route for ASI), not the playback sample
+rate. The data constants at 0x2114be00/0x2114be48 are 1000.0/0.001.
+Rate export 0x2111b000 changes only the sample owned at stream+0x0c;
+0x21114f30 writes the sample's +0x60 rate for a positive argument. It never
+changes the stream metadata used by query/seek. The Windows engine changes
+pitch at 0x4b723e before querying at 0x4b7325 and seeking at 0x4b73ae.
+This is static original-binary evidence, not a Windows runtime measurement.
 
-The two public APIs and two corresponding CStreamSound time methods therefore
-remain unchecked pending an authoritative Windows contract or bounded reference
-behavior. No speculative stream timing change was made. Other native provider
-boundaries do not excuse these four unresolved entries.
+Native `AIL_open_stream` now retains the decoder's media rate separately
+from mutable playback rate. Stream query/seek use that fixed rate; mixer pitch
+still uses the mutable rate. Ordinary sample query/seek remain unchanged.
+The decoded-PCM pool, cursor, mutex and reset ownership remain the existing
+SDK replacement: reset clears the retained rate and successful stream open
+installs it. A non-stream sample passed to a stream API retains the prior
+sample-rate fallback. No new allocation or decode occurs in the new setters.
+
+Mac MP3 methods 0x13d714/0x13d7a2 use immutable MovieTimeScale, so the clock
+separation also corrects their proven pitch-dependent mismatch. Mac WAV uses
+mutable sample timing; native streamed WAV deliberately follows the Windows
+file-time contract instead. All four rows are intentional native API mappings,
+including this correction; they do not assert identical QuickTime/Miles codec
+seek granularity, variable-bitrate duration estimates, encoder padding, invalid
+handle behavior or acoustic output. The existing decoded-frame/truncation and
+nonnegative-seek choices remain explicit native boundaries.
+
+The actual SDK arm64 Release provider compiles. The unchanged audio and voice
+ASan/UBSan fixtures pass; these exercise ordinary decode/mix/ownership, not
+pitched stream millisecond calls. The changed timing path is compiled and
+reviewed, not runtime verified. Six inactive guard configurations are identical;
+no changed source uses `__LINE__`. No tests, cases or assertions were added.
 
 ## Selected native boundary
 
