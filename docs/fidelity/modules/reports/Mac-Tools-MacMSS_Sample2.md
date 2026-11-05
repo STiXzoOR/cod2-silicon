@@ -36,8 +36,9 @@ entry checks and caller inspection are detailed in [MacMSS](Mac-Tools-MacMSS.md)
 Retired backend algorithms are not claimed equal. Arm64 Release dedicated build
 and actual provider/existing platform-fixture compilation pass. The unchanged
 ASan/UBSan offline output suite passes all four cases. The allocation-type
-transition and failure reset are compiled/reviewed; neither branch is directly
-exercised by those successful-setup cases.
+transition, failure reset and generation-guarded unlocked installation are
+compiled/reviewed. Failure/stale-generation branches and concurrent conversion
+output are not directly exercised by those successful-setup cases.
 Six inactive guard configurations report zero mismatches; no `__LINE__` occurs
 in the changed source. No new tests, full CI, replays, game or physical audio run.
 Original acoustic, surround, elevation, Doppler and latency parity remains a
