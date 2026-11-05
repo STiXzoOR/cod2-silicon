@@ -347,7 +347,7 @@ qcommon/cmd,36,26,0,7,3
 qcommon/com_bsp_load_obj,6,5,1,0,0
 qcommon/com_playerprofile,7,4,1,2,0
 qcommon/com_profilemapload,1,1,0,0,0
-qcommon/common,76,43,18,8,7
+qcommon/common,76,43,18,9,6
 qcommon/dl_main,11,2,1,8,0
 qcommon/dobj_management,14,11,3,0,0
 qcommon/dvar_cmds,10,5,5,0,0
