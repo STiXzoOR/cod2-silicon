@@ -2,7 +2,7 @@
 
 Updated 2026-11-04.
 
-**68/76 reconciled: 43 equal, 18 fixed, 7 intentional; 8 unchecked.** All 50 assigned Mac code entries were read by hand. The two event jump tables at 0x328600 and 0x328618 were decoded directly. Linux-only helper rows were compared in Mac callers where an identity could be established. Mac 1.3 is the authority, with the Windows checks below. Legacy preprocessor output is unchanged.
+**69/76 reconciled: 43 equal, 18 fixed, 8 intentional; 7 unchecked.** All 50 assigned Mac code entries were read by hand. The two event jump tables at 0x328600 and 0x328618 were decoded directly. Linux-only helper rows were compared in Mac callers where an identity could be established. Mac 1.3 is the authority, with the Windows checks below. Legacy preprocessor output is unchanged.
 
 ## Corrections
 
@@ -30,7 +30,7 @@ The existing native timer pacing, tracing/state-hash hooks, dedicated client exc
 
 ## Unchecked entries
 
-Eleven Linux-only rows have no established Mac callable or inline identity: `Com_CheckSyncFrame`, `Com_ErrorAbort`, `Com_ForceSafeMode`, `Com_ResetFrametime`, `Com_SetTimeScale`, `Com_StartupConfigs`, `Com_SyncThreads`, `Com_XAnimCreateSmallTree`, `Com_XAnimFreeSmallTree`, `Field_CompleteCommand` and `MT_AllocAnimTree`. The safemode/timescale names exist only as zero-address EH metadata; named text references show reads and the timescale initialization, without a corresponding arbitrary-value setter. The native debugger's `Com_CheckSyncFrame` exists in another source file, but its Mac counterpart was not identified. These rows are not called equal merely because a body is missing.
+Seven Linux-only rows remain without an established complete Mac/native identity: `Com_CheckSyncFrame`, `Com_ErrorAbort`, `Com_ForceSafeMode`, `Com_ResetFrametime`, `Com_SetTimeScale`, `Com_SyncThreads` and `Field_CompleteCommand`. The safemode/timescale names exist only as zero-address EH metadata; named text references show reads and timescale initialization, without a corresponding arbitrary-value setter. The native debugger's `Com_CheckSyncFrame` exists in another source file, but its Mac counterpart was not identified. These rows are not called equal merely because a body is missing. The cross-module follow-ups below resolve the three animation wrappers and the startup-config replacement.
 
 ## Verification and limits
 
@@ -57,3 +57,11 @@ Mac `CG_PreProcess_GetDObj` at 0x164016–0x164028 passes the original animation
 The complete `Com_XAnimFreeSmallTree` operation occurs in `CG_SafeDObjFree` at 0x1e420b–0x1e4217 and the client/entity cleanup loops at 0x1e4273–0x1e4280 and 0x1e42f1–0x1e42fe. Original pointer-table entry 0x1acd9cd contains 0x44af2, the `MT_Free(void*, int)` function address. Native `cg_animtree_mp.c` forwards the same tree/callback pair. Null guards and later tree-pointer clearing remain consumer behavior; these closures do not re-certify the complete containing functions.
 
 The original common-only search had missed these cross-module consumers. Parent source/binary review only; no production changes, new tests, builds or CI runs. Existing caller verdicts remain unchanged. Eight common rows remain unchecked.
+
+## Startup-config replacement — 2026-11-05
+
+The Linux dedicated `Com_StartupConfigs` wrapper selects the fixed `config_mp_server.cfg`. The Mac/native startup uses player profiles instead. This entry is now **intentional**, with a concrete replacement rather than an assumed missing helper.
+
+Exact Mac initialization calls `Com_InitPlayerProfiles` at 0x30f52 before executing the command buffer at 0x30f63. The complete profile initializer at 0x111aa6–0x111c06 registers its dvars, reads `players/active.txt`, parses the selected name, frees the file buffer and checks that name against the player directories. A missing file, empty name or missing directory reaches `Com_ExecStartupConfigs(NULL)` at 0x111b4b–0x111b52. A valid selection sets the profile, builds its `config_mp.cfg` path in a 64-byte buffer and executes it at 0x111ba9–0x111bd8. The actual native initializer and its two inline helpers preserve this selection and both executor outcomes.
+
+The exact executor at 0x2fd78–0x2fe05 was reread as well: selected default config, language config, optional profile config, command-buffer execution, autoexec flag on/execute/off, conditional safemode config and final execution. Original strings and the default-config import pointer were read directly. Native `common.c` already implements this sequence, including the previously repaired default-config selection. No new startup policy or source change was introduced. This closure does not claim equality to the Linux fixed-file policy or re-certify every startup path. Parent source/binary review only; no builds, tests or CI. Seven common entries remain unchecked.
