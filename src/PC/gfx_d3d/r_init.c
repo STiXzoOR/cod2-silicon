@@ -196,8 +196,12 @@ static void R_ReleaseForShutdownOrReset(void)
     R_ShutdownStaticModelCache();
     R_SafeRelease((void **)&dx.dynamicIndexBufferPool[0].buffer);
     R_SafeRelease((void **)&dx.dynamicVertexBufferPool[0].buffer);
+#if defined(__APPLE__)
+    R_SafeRelease((void **)&dx.skinnedCacheVbPool[0].buffer);
+#else
     for (i = 0; i < 2; ++i)
         R_SafeRelease((void **)&dx.skinnedCacheVbPool[i].buffer);
+#endif
     if (dx.tempSkinBuf) {
         ri.Z_VirtualFreeInternal(dx.tempSkinBuf);
         dx.tempSkinBuf = NULL;
@@ -295,7 +299,7 @@ static HRESULT R_CreateDevice_impl(HWND hwnd, DWORD behavior, void *d3dpp)
     for (;;) {
 
 #if defined(COD2_X64)
-        ri.Printf(0, "Creating D3D device...\n");
+        ri.Printf(0, "Creating Direct3D device...\n");
 #else
         ((void (*)(int, const char *))ri.Printf)(0, "Creating D3D device...\n");
 #endif
@@ -630,7 +634,7 @@ static void R_Shutdown(qboolean destroyWindow)
 #if defined(COD2_X64)
         while (dx.windowCount != 0) {
             int idx = --dx.windowCount;
-            dx.windows[idx].swapChain = NULL;
+            dx.windows[idx].hwnd = NULL;
         }
         R_SafeRelease((void **)&dx.device);
         R_SafeRelease((void **)&dx.d3d9);
@@ -689,6 +693,9 @@ extern const char *va(const char *fmt, ...);
 
 static void R_DxFatalError(const char *fmt, int size, HRESULT hr)
 {
+#if defined(COD2_X64)
+    R_FatalInitError(va(fmt, size, DXGetErrorDescription9A(hr)));
+#else
     typedef void (*ri_fn)(int, const char *, ...);
     typedef void (*ri_err_fn)(void);
     ri_fn Printf = (ri_fn)ri.Printf;
@@ -699,6 +706,7 @@ static void R_DxFatalError(const char *fmt, int size, HRESULT hr)
     Printf(0, "------- Server Initialization -------");
     Printf(0, "\n%s\n", msg);
     Error();
+#endif
 }
 
 static Bool R_CreateForInitOrReset(void)
@@ -751,7 +759,11 @@ static Bool R_CreateForInitOrReset(void)
         R_DxFatalError("Couldn't create a %i-byte dynamic vertex buffer: %s", vbSize, hr);
     dx.dynamicVertexBuffer = &dx.dynamicVertexBufferPool[0];
 
+#if defined(COD2_X64) && defined(__APPLE__)
+    for (i = 0; i < 1; i++) {
+#else
     for (i = 0; i < 2; i++) {
+#endif
         int loopVbSize = (r_rendererInUse->current.integer == 2) ? 0x480000 : 0x800000;
         dx.skinnedCacheVbPool[i].used = 0;
         dx.skinnedCacheVbPool[i].total = loopVbSize;
@@ -787,6 +799,10 @@ static Bool R_CreateForInitOrReset(void)
 
     dx.tempSkinPos = 0;
     dx.dynamicBufferFrame = 0;
+#if defined(COD2_X64)
+    dx.flushGpuQueryIssued = 0;
+    dx.flushGpuQuery = NULL;
+#endif
 
 #if defined(COD2_X64)
     SunFlareDynamic *sunFlares = (SunFlareDynamic *)imp_sunFlareArray;
@@ -834,6 +850,66 @@ extern void R_InitSystems(void);
 extern void FFT_Init(int *fftBitswap, complex_t *fftTrigTable);
 extern void *Direct3DCreate9(int sdkVersion);  /* returns a pointer; `int` truncated it on x64 */
 extern double sin(double);
+#if defined(COD2_X64)
+extern int R_CheckDxCaps(const D3DCAPS9 *caps);
+extern void RB_InitSceneViewport(void);
+#endif
+#if defined(COD2_X64) && COD2_APPLE_SDK
+static void R_InitNativeDeviceCaps(void)
+{
+    extern const dvar_t *r_rendererPreference;
+    extern const dvar_t *r_aaSamples;
+    D3DCAPS9 caps;
+    void *d3d = dx.d3d9;
+    void **methods = *(void ***)d3d;
+    HRESULT hr = 0;
+    int attempt;
+    int requested;
+    int renderer;
+    int allowed;
+
+    /* SDL creates the current GL context in CreateDevice. Query the native
+     * provider here, before material/system initialization consumes its caps. */
+    for (attempt = 0; attempt < 20; ++attempt) {
+        hr = ((HRESULT(D3DVTCC *)(void *, UINT, int, void *))methods[14])(
+            d3d, 0, 1, &caps);
+        if (hr >= 0)
+            break;
+        WinSleep(100);
+    }
+    if (hr < 0) {
+        R_FatalInitError(va("GetDeviceCaps failed: %s", R_ErrorDescription(hr)));
+        return;
+    }
+
+    ri.Printf(0, "Pixel shader version is %i.%i\n",
+              (caps.PixelShaderVersion >> 8) & 255, caps.PixelShaderVersion & 255);
+    ri.Printf(0, "Vertex shader version is %i.%i\n",
+              (caps.VertexShaderVersion >> 8) & 255, caps.VertexShaderVersion & 255);
+    allowed = R_CheckDxCaps(&caps);
+    requested = r_rendererPreference->current.integer;
+    renderer = requested && ((allowed >> requested) & 1) ? requested : 2;
+    ri.Dvar_SetInt(r_rendererInUse, renderer);
+
+    vidConfig.maxTextureSize = caps.MaxTextureWidth < caps.MaxTextureHeight
+        ? caps.MaxTextureWidth : caps.MaxTextureHeight;
+    vidConfig.maxTextureMaps = caps.MaxSimultaneousTextures;
+    vidConfig.maxTextureCoords = caps.MaxTextureBlendStages;
+    vidConfig.maxActiveLights = caps.MaxActiveLights;
+    vidConfig.deviceSupportsGamma = (caps.Caps2 >> 17) & 1;
+    dx.maxClipPlanes = caps.MaxUserClipPlanes < 6 ? caps.MaxUserClipPlanes : 6;
+    dx.maxAnisotropy = caps.MaxAnisotropy;
+    dx.stencilTwoSided = (caps.StencilCaps >> 8) & 1;
+    dx.stencilWrap = (caps.StencilCaps & 0xc0) == 0xc0;
+    dx.slopeScaleDepthBias = (caps.RasterCaps >> 25) & 1;
+    dx.canMipCubemaps = (caps.TextureCaps >> 16) & 1;
+    dx.hasBlendOp = (caps.PrimitiveMiscCaps >> 11) & 1;
+    dx.hasSeparateAlphaBlend = (caps.PrimitiveMiscCaps >> 17) & 1;
+    dx.hasTransparencyMsaa = r_aaSamples->current.integer != 1 &&
+        ((HRESULT(D3DVTCC *)(void *, UINT, int, int, DWORD, int, int))methods[10])(
+            d3d, 0, 1, 0x15, 0, 1, 0x41415353) == 0;
+}
+#endif
 static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
 {
     typedef void (*PrintFunc)(int, const char *, ...);
@@ -864,6 +940,9 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     }
     R_InitBackendData();
     R_InitDrawGroups();
+#if defined(COD2_X64)
+    Bool createResources = dx.device == NULL;
+#endif
 #if defined(COD2_X64)
     COD2_NATIVE_TRACE_ONLY(
 #endif
@@ -927,6 +1006,12 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
             d3dpp[2] = 0x15;
             d3dpp[3] = 1;
             d3dpp[6] = 1;
+#if defined(COD2_X64) && COD2_APPLE_SDK
+            {
+                extern const dvar_t *r_fullscreen;
+                d3dpp[7] = !(r_fullscreen && r_fullscreen->current.enabled);
+            }
+#endif
             d3dpp[8] = 0x4b;
             d3dpp[11] = 1;
 
@@ -947,12 +1032,32 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
         }
 #endif
 
+#if !defined(COD2_X64)
         R_InitSystems();
+#endif
     }
 
+#if defined(COD2_X64)
+    if (createResources) {
+#if COD2_APPLE_SDK
+        extern void *MacDisplay_GetMainWindow(void);
+        R_InitNativeDeviceCaps();
+        dx.windows[0].hwnd = (HWND)MacDisplay_GetMainWindow();
+#endif
+        dx.windows[0].width = vidConfig.width;
+        dx.windows[0].height = vidConfig.height;
+        dx.windowCount = 1;
+        dx.targetWindowIndex = 0;
+        R_UpdateGpuSyncType();
+        RB_InitSceneViewport();
+#endif
     if (!R_CreateForInitOrReset()) {
         ri_printf(0, "R_CreateForInitOrReset failed\n");
     }
+#if defined(COD2_X64)
+        R_InitSystems();
+    }
+#endif
 #if defined(COD2_X64) && defined(__APPLE__)
     /* Gamma belongs to presentation, including windowed native rendering. */
     vidConfig.deviceSupportsGamma = 1;
@@ -1036,7 +1141,11 @@ Bool R_RecoverLostDevice(void)
     if (hr == (HRESULT)0x88760868)
         return 0;
 
+#if defined(COD2_X64)
+    Printf(0, "Recovering lost device...\n");
+#else
     Printf(0, "Recovering lost device");
+#endif
 
     R_ReleaseAllModels();
     R_ReleaseLostImages();
@@ -1045,12 +1154,26 @@ Bool R_RecoverLostDevice(void)
     if (rgp.world)
         R_ReleaseWorld();
 
+#if defined(COD2_X64)
+    /* The native device provider takes presentation words and owns the SDL
+     * window; it does not consume the original HWND word. */
+    int displayMode = 0;
+    int backBufWidth = dx.windows[0].width;
+    int backBufHeight = dx.windows[0].height;
+#else
     int displayMode = *(int *)(dxp + 11596);
     int backBufWidth = *(int *)(dxp + 11604);
     int backBufHeight = *(int *)(dxp + 11608);
+#endif
     int refreshRate = vidConfig.displayFrequency;
     int isFullscreen = vidConfig.isFullscreen != 0;
+#if defined(COD2_X64)
+    int aaSamples = (*(const dvar_t **)imp_r_aaSamples)->current.integer;
+    dx.multiSampleType = (D3DMULTISAMPLE_TYPE)0;
+    dx.multiSampleQuality = 0;
+#else
     int aaSamples = *(int *)(*(int *)imp_r_aaSamples + 8);
+#endif
 
     if (aaSamples > 1) {
         void *d3d = (void *)dx.d3d9;
@@ -1084,7 +1207,11 @@ aa_done:;
     d3dpp[6] = 1;
     d3dpp[8] = 0x4b;
 
+#if defined(COD2_X64)
+    int swapInterval = (*(const dvar_t **)imp_r_swapInterval)->current.enabled;
+#else
     int swapInterval = *(byte *)(*(int *)imp_r_swapInterval + 8);
+#endif
     d3dpp[11] = swapInterval ? 1 : 0x80000000;
     d3dpp[10] = displayMode;
     d3dpp[9] = 0;
@@ -1104,22 +1231,31 @@ aa_done:;
     hr = ((Reset_fn)vtable[16])(d3dDevice, d3dpp);
 
     if (hr < 0) {
+#if defined(COD2_X64)
+        R_FatalInitError(va("Couldn't reset a lost Direct3D device - IDirect3DDevice9::Reset returned 0x%08x (%s)",
+                            (unsigned int)hr, DXGetErrorDescription9A(hr)));
+#else
         const char *msg = va("Couldn't reset a lost Direct3D device - IDirect3DDevice9::Reset returned %s", DXGetErrorDescription9A(hr));
         Printf(0, "------- Initializing Renderer -------");
         Printf(0, "------- Renderer Initialization -------");
         Printf(0, "------- Server Initialization -------");
         Printf(0, "\n%s\n", msg);
         Error();
+#endif
     }
 
     dx.deviceLost = 0;
 
     if (!R_CreateForInitOrReset()) {
+#if defined(COD2_X64)
+        R_FatalInitError("Couldn't reinitialize after a lost Direct3D device");
+#else
         Printf(0, "------- Initializing Renderer -------");
         Printf(0, "------- Renderer Initialization -------");
         Printf(0, "------- Server Initialization -------");
         Printf(0, "\nFailed to recreate resources after device reset\n");
         Error();
+#endif
     }
 
     if (rgp.world)
@@ -1130,7 +1266,11 @@ aa_done:;
     R_OptimizeAllModels();
     dx.sunSpriteSamples = RB_CalcSunSpriteSamples();
 
+#if defined(COD2_X64)
+    Printf(0, "Finished recovering lost device.\n");
+#else
     Printf(0, "Device recovered successfully");
+#endif
     return 1;
 }
 

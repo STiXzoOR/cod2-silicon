@@ -98,6 +98,9 @@ static void R_SelectClosestLights(const GfxLight **lights, int totalCount, int w
         pivotLight = lights[0];
         i = 0;
 
+#if defined(COD2_X64)
+    scan_front:
+#endif
         for (;;) {
             i++;
             if (i >= totalCount) {
@@ -112,7 +115,11 @@ static void R_SelectClosestLights(const GfxLight **lights, int totalCount, int w
             score_a = cutoff_a * cutoff_a * dist_b;
             score_b = cutoff_b * cutoff_b * dist_a;
 
+#if defined(COD2_X64)
+            if (!(score_a >= score_b)) {
+#else
             if (score_a < score_b) {
+#endif
                 break;
             }
         }
@@ -129,12 +136,19 @@ static void R_SelectClosestLights(const GfxLight **lights, int totalCount, int w
             score_a = cutoff_a * cutoff_a * dist_b;
             score_b = cutoff_b * cutoff_b * dist_a;
 
+#if defined(COD2_X64)
+            if (!(score_a >= score_b)) {
+#else
             if (score_a < score_b) {
+#endif
 
                 tmp = lights[i];
                 lights[i] = lights[j];
                 lights[j] = tmp;
 
+#if defined(COD2_X64)
+                goto scan_front;
+#else
                 for (;;) {
                     i++;
                     if (i >= j) {
@@ -154,6 +168,7 @@ static void R_SelectClosestLights(const GfxLight **lights, int totalCount, int w
                     }
                 }
                 continue;
+#endif
             }
             j--;
         }
@@ -209,7 +224,11 @@ static void R_AddDrawSurfsForLight(const GfxLight *light, const GfxDrawSurf *dra
         bounds = R_BoundsForDrawSurf(surf);
         if (bounds != NULL) {
             distSq = PointToBoxDistSq(origin, bounds, bounds + 3);
+#if defined(COD2_X64)
+            if (!(distSq > cutoffDistSq)) {
+#else
             if (distSq <= cutoffDistSq) {
+#endif
 
                 dsc = scene.drawSurfCount;
                 dstSurfs = scene.drawSurfs;
