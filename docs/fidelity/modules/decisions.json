@@ -21329,7 +21329,7 @@
   },
   "linux:botlib/l_script.cpp:1134:GetScriptFlags": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable caller identity for the getter or separate native body was established."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable caller identity for the getter or separate native body was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "mac:0x000c2d60": {
     "status": "fixed",
@@ -21337,7 +21337,7 @@
   },
   "linux:botlib/l_script.cpp:1260:LoadScriptMemory": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline memory-loading caller was established; native has only LoadScriptFile. Do not invent a loader from Linux."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline memory-loading caller was established; native has only LoadScriptFile. Do not invent a loader from Linux. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_script.cpp:1179:NumLinesCrossed": {
     "status": "equal",
@@ -21349,11 +21349,11 @@
   },
   "linux:botlib/l_script.cpp:950:PS_CheckTokenString": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_script.cpp:967:PS_CheckTokenType": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "mac:0x000c247c": {
     "status": "equal",
@@ -21361,19 +21361,19 @@
   },
   "linux:botlib/l_script.cpp:932:PS_ExpectAnyToken": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_script.cpp:851:PS_ExpectTokenString": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_script.cpp:874:PS_ExpectTokenType": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_script.cpp:1027:PS_NextWhiteSpaceChar": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable caller identity or separate native whitespace-iterator body was established."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable caller identity or separate native whitespace-iterator body was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "mac:0x000c2660": {
     "status": "fixed",
@@ -21381,7 +21381,7 @@
   },
   "linux:botlib/l_script.cpp:671:PS_ReadLiteral": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No executable Mac identity for Linux's single-character literal helper was established. Mac PS_ReadToken at 0xc3418 dispatches single quotes to PS_ReadString, which has different multi-character semantics; that dispatch is matched, but does not prove this helper."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No executable Mac identity for Linux's single-character literal helper was established. Mac PS_ReadToken at 0xc3418 dispatches single quotes to PS_ReadString, which has different multi-character semantics; that dispatch is matched, but does not prove this helper. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_script.cpp:465:PS_ReadName": {
     "status": "equal",
@@ -21413,31 +21413,31 @@
   },
   "linux:botlib/l_script.cpp:989:PS_SkipUntilString": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_script.cpp:1005:PS_UnreadLastToken": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline unread-last-token caller or separate native wrapper was established."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline unread-last-token caller or separate native wrapper was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_script.cpp:1015:PS_UnreadToken": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline script-token copy/unread caller or separate native wrapper was established; precompiler source-token queues are a different object."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline script-token copy/unread caller or separate native wrapper was established; precompiler source-token queues are a different object. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_script.cpp:166:PunctuationFromNum": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable punctuation-number lookup caller or separate native implementation was established."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable punctuation-number lookup caller or separate native implementation was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_script.cpp:1078:ReadSignedFloat": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline signed-float reader was established; no separate native implementation exists."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline signed-float reader was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_script.cpp:1101:ReadSignedInt": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline signed-int reader was established; no separate native implementation exists."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline signed-int reader was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_script.cpp:1144:ResetScript": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. LoadScriptFile initializes a fresh object but does not establish the complete reset of an existing token/cursor/whitespace state; no separate native body exists."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. LoadScriptFile initializes a fresh object but does not establish the complete reset of an existing token/cursor/whitespace state; no separate native body exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "mac:0x000c259e": {
     "status": "equal",
@@ -21445,7 +21445,7 @@
   },
   "linux:botlib/l_script.cpp:1189:ScriptSkipTo": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline skip-to-substring caller or separate native implementation was established."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline skip-to-substring caller or separate native implementation was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "mac:0x000c25fe": {
     "status": "equal",
@@ -21453,11 +21453,11 @@
   },
   "linux:botlib/l_script.cpp:1124:SetScriptFlags": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline setter caller or separate native implementation was established."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline setter caller or separate native implementation was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_script.cpp:218:SetScriptPunctuations": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac LoadScriptFile at 0xc2e0b-0xc2e1b establishes only the default-table setup. No executable identity for the full custom/default parameterized setter or separate native body was established."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac LoadScriptFile at 0xc2e0b-0xc2e1b establishes only the default-table setup. No executable identity for the full custom/default parameterized setter or separate native body was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "mac:0x000c2ce0": {
     "status": "intentional",
@@ -21465,7 +21465,7 @@
   },
   "linux:botlib/l_script.cpp:1061:StripSingleQuotes": {
     "status": "unchecked",
-    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No executable single-quote-strip caller or separate native implementation was established; StripDoubleQuotes does not prove it."
+    "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No executable single-quote-strip caller or separate native implementation was established; StripDoubleQuotes does not prove it. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "mac:0x000c3490": {
     "status": "intentional",
@@ -21489,15 +21489,15 @@
   },
   "linux:botlib/l_precomp.cpp:2686:LoadSourceMemory": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:531:PC_AddBuiltinDefines": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:1178:PC_AddDefine": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:438:PC_AddDefineToHash": {
     "status": "equal",
@@ -21505,7 +21505,7 @@
   },
   "linux:botlib/l_precomp.cpp:1194:PC_AddGlobalDefine": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:1289:PC_AddGlobalDefinesToSource": {
     "status": "equal",
@@ -21513,15 +21513,15 @@
   },
   "linux:botlib/l_precomp.cpp:2887:PC_CheckOpenSourceHandles": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:2554:PC_CheckTokenString": {
-    "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "status": "equal",
+    "evidence": "Complete live inline PC_CheckTokenString use in PC_Directive_define, compared by hand to Mac 0xc0a6f-0xc0a8e, 0xc0be3-0xc0c0f, 0xc0edb-0xc0f32 and fatal allocation branch 0xc0f4c-0xc0f62. Original STABS ties the source/string parameter scope at line 2810 and tok local at 2812 to SLINE 2814 (read) and 2817 (comparison), independently of absent callable symbol. Native src/PC/botlib/l_precomp.c:2658-2666 plus PC_UnreadSourceToken/PC_AllocTokenCopy preserves one read, false on failure, true on exact closing-parenthesis match, otherwise allocation/full token copy, token counter increment and front-of-queue restoration before false. Binary literal 0x24d6f8 is closing parenthesis. This covers the complete live specialized helper use, not an unobserved exported general-purpose API. No source change; actual stock and CoD2x Release production objects compiled, not exercised."
   },
   "linux:botlib/l_precomp.cpp:2571:PC_CheckTokenType": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:940:PC_ClearTokenWhiteSpace": {
     "status": "equal",
@@ -21541,7 +21541,7 @@
   },
   "linux:botlib/l_precomp.cpp:1129:PC_DefineFromString": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "mac:0x000c0772": {
     "status": "equal",
@@ -21637,19 +21637,19 @@
   },
   "linux:botlib/l_precomp.cpp:2536:PC_ExpectAnyToken": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:2460:PC_ExpectTokenString": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:2483:PC_ExpectTokenType": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:470:PC_FindDefine": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:487:PC_FindDefineParm": {
     "status": "equal",
@@ -21733,23 +21733,23 @@
   },
   "linux:botlib/l_precomp.cpp:1230:PC_RemoveAllGlobalDefines": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:1211:PC_RemoveGlobalDefine": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:2629:PC_SetIncludePath": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:2645:PC_SetPunctuations": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:2593:PC_SkipUntilString": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "mac:0x000bdb4c": {
     "status": "equal",
@@ -21761,7 +21761,7 @@
   },
   "linux:botlib/l_precomp.cpp:2609:PC_UnreadLastToken": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:254:PC_UnreadSourceToken": {
     "status": "equal",
@@ -21769,7 +21769,7 @@
   },
   "linux:botlib/l_precomp.cpp:2619:PC_UnreadToken": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
+    "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
   },
   "linux:botlib/l_precomp.cpp:930:PC_WhiteSpaceBeforeToken": {
     "status": "equal",
