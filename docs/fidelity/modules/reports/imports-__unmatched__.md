@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**657 rows audited: 650 intentional, 1 fixed, 6 unchecked.** There are 631 external-import rows and 26 lower-address entries. No external library implementation is described as equal to reconstructed engine code.
+**657 rows audited: 647 intentional, 1 fixed, 9 unchecked.** There are 631 external-import rows and 26 lower-address entries. No external library implementation is described as equal to reconstructed engine code.
 
 ## Import identity and providers
 
@@ -30,10 +30,11 @@ The low-address FUN rows were located inside their enclosing symbols. Four are M
 
 Five coal-section texture/cube/vertex-shader thunks preserve their destructor targets with native subobject offsets. The remaining PIC, CRT and loader helpers are owned by the arm64 compiler/linker/runtime, including three real 25-byte `__picsymbolstub2` imports.
 
-Six rows remain unchecked:
+Nine rows remain unchecked:
 
 - 0x01acc42e `CFBundleCopyLocalizedString`, 0x01acc429 `CFStringGetPascalString`, and 0x01acc424 `StringToNum`: Mac `GetLanguageCode` at 0x9cbc uses these, and pending VK_Map still calls native `MacResources_GetLanguageCode`, which returns zero. The retained key-language resource path has no complete native provider/storage replacement.
 - 0x00113119 and 0x00113166: Optimize's triangle-list and deque exception cleanup. The restored native normal path still allocates with throwing `__Znwm` from C and lacks matching unwind cleanup.
+- 0x01acc48d `AddDurationToAbsolute`, 0x01acc465 `MPDelayUntil`, and 0x01acc46f `UpTime`: parent review found that MacTools_Sleep uses the reconstructed two-unsigned-long AbsoluteTime (16 bytes on Apple LP64), while macos_compat.c uses two unsigned-int fields (8 bytes). Actual Clang layouts confirm incompatible value and pointed-storage contracts. The native provider alone does not prove this retained caller safe or retired.
 - 0x002f1830: the volume-texture secondary destructor thunk has no native body. The native constructor leaves its secondary vtable null, but exhaustive secondary-interface/cast caller retirement has not been established.
 
 ## Verification and limits
