@@ -17,13 +17,13 @@ Mac/DirectX 9/CDirect3D,31,6,12,3,10
 Mac/DirectX 9/CDirect3DCubeTexture,28,15,7,6,0
 Mac/DirectX 9/CDirect3DDevice,121,80,13,8,20
 Mac/DirectX 9/CDirect3DIndexBuffer,18,10,8,0,0
-Mac/DirectX 9/CDirect3DPixelShader,25,0,0,0,25
+Mac/DirectX 9/CDirect3DPixelShader,25,6,6,13,0
 Mac/DirectX 9/CDirect3DSurface,25,15,4,6,0
 Mac/DirectX 9/CDirect3DSwapChain,14,12,2,0,0
 Mac/DirectX 9/CDirect3DTexture,26,15,11,0,0
 Mac/DirectX 9/CDirect3DVertexBuffer,26,12,12,0,2
-Mac/DirectX 9/CDirect3DVertexDeclaration,9,0,0,0,9
-Mac/DirectX 9/CDirect3DVertexShader,8,0,0,0,8
+Mac/DirectX 9/CDirect3DVertexDeclaration,9,4,5,0,0
+Mac/DirectX 9/CDirect3DVertexShader,8,2,3,3,0
 Mac/DirectX 9/CDirect3DVolumeTexture,44,23,16,5,0
 Mac/DirectX 9/CFence,5,3,2,0,0
 Mac/DirectX 9/CMemoryBuffer,10,9,1,0,0
@@ -33,7 +33,7 @@ Mac/DirectX 9/COpenGLVAO,5,0,0,0,5
 Mac/DirectX 9/CVAOPacket,21,0,0,0,21
 Mac/DirectX 9/CVertexArrays,48,0,0,0,48
 Mac/DirectX 9/D3DXMath,3,1,2,0,0
-Mac/DirectX 9/D3DXShader,39,0,0,0,39
+Mac/DirectX 9/D3DXShader,39,30,7,2,0
 Mac/DirectX 9/D3DXTex,5,0,0,0,5
 Mac/DirectX 9/MacOpenGLMath,9,0,0,0,9
 Mac/DirectX 9/MacOpenGLUtils,27,15,8,3,1
