@@ -13,9 +13,9 @@ EffectsCore/FxUtil,138,82,16,34,6
 EffectsCore/Fxexport,16,9,0,7,0
 EffectsCore/GenericParser2,56,42,1,1,12
 Mac/DirectX 9/CColorConverter,41,32,8,1,0
-Mac/DirectX 9/CDirect3D,31,6,20,4,1
+Mac/DirectX 9/CDirect3D,31,6,20,5,0
 Mac/DirectX 9/CDirect3DCubeTexture,28,15,7,6,0
-Mac/DirectX 9/CDirect3DDevice,121,80,20,14,7
+Mac/DirectX 9/CDirect3DDevice,121,80,22,17,2
 Mac/DirectX 9/CDirect3DIndexBuffer,18,10,8,0,0
 Mac/DirectX 9/CDirect3DPixelShader,25,6,6,13,0
 Mac/DirectX 9/CDirect3DSurface,25,15,4,6,0
@@ -36,7 +36,7 @@ Mac/DirectX 9/D3DXMath,3,1,2,0,0
 Mac/DirectX 9/D3DXShader,39,30,7,2,0
 Mac/DirectX 9/D3DXTex,5,0,5,0,0
 Mac/DirectX 9/MacOpenGLMath,9,2,5,2,0
-Mac/DirectX 9/MacOpenGLUtils,27,15,8,3,1
+Mac/DirectX 9/MacOpenGLUtils,27,15,8,4,0
 Mac/Extras/CoreAudio/CAStreamBasicDescription,2,0,0,2,0
 Mac/Main/GameMain,7,0,0,7,0
 Mac/Main/mac_configure,4,2,1,1,0

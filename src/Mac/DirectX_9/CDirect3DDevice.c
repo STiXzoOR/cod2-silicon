@@ -10,6 +10,7 @@
 #include <math.h>
 #include "lp64_buffers.h"
 #include "lp64_gl_state.h"
+#include "lp64_surface.h"
 #endif
 
 float g_scale1 = 1.0f;
@@ -615,6 +616,10 @@ static COpenGLNative *CDirect3DDevice_GL(void)
 {
     return (COpenGLNative *)imp__ZN7COpenGL7sOpenGLE;
 }
+
+/* Temporary pixel/copy overrides must bypass the cache-writing wrappers below.
+ * Their matching restoration reads the persistent COpenGL state. */
+#include "lp64_device_targets.inc"
 
 static void CDirect3DDevice_ActiveTexture(GLenum texture)
 {
@@ -2412,6 +2417,11 @@ HRESULT CDirect3DDevice_Clear(const CDirect3DDevice *_this, DWORD Count, const D
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    (void)Count; (void)pRects;
+    return DeviceTargets_Clear((DeviceImpl *)_this, Flags, Color, Z, Stencil);
+#else
+
     DeviceImpl *dev = (DeviceImpl *)_this;
     GLbitfield glFlags = 0;
 #if defined(COD2_X64)
@@ -2471,6 +2481,7 @@ HRESULT CDirect3DDevice_Clear(const CDirect3DDevice *_this, DWORD Count, const D
         }
     }
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_Present(const CDirect3DDevice *_this, const RECT *pSourceRect,
@@ -3085,6 +3096,15 @@ HRESULT COD2_FORCE_ALIGN_ARG_POINTER CDirect3DDevice_SetRenderState(const CDirec
     DeviceImpl *dev = (DeviceImpl *)_this;
     switch (State) {
 #if defined(COD2_X64)
+    case D3DRS_DITHERENABLE:
+        COpenGL_SetDither((const COpenGL *)CDirect3DDevice_GL(), !!Value);
+        break;
+    case D3DRS_SHADEMODE:
+        if (dev->shadeMode != Value) {
+            dev->shadeMode = Value;
+            glShadeModel(Value == 1 ? 0x1d00 : Value == 2 ? 0x1d01 : 0);
+        }
+        break;
     case D3DRS_LIGHTING:
         if (dev->lighting != Value) {
             dev->lighting = Value;
@@ -4361,6 +4381,11 @@ HRESULT CDirect3DDevice_SetRenderTarget(const CDirect3DDevice *_this, DWORD Rend
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    (void)RenderTargetIndex;
+    return DeviceTargets_SetTarget((DeviceImpl *)_this, pRenderTarget);
+#else
+
     DeviceImpl *dev = (DeviceImpl *)_this;
     (void)RenderTargetIndex;
 #if defined(COD2_X64)
@@ -4394,6 +4419,7 @@ HRESULT CDirect3DDevice_SetRenderTarget(const CDirect3DDevice *_this, DWORD Rend
     }
 #endif
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_GetRenderTarget(const CDirect3DDevice *_this, DWORD RenderTargetIndex, IDirect3DSurface9 **ppRenderTarget)
@@ -4424,6 +4450,10 @@ HRESULT CDirect3DDevice_SetDepthStencilSurface(const CDirect3DDevice *_this, IDi
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    return DeviceTargets_SetDepth((DeviceImpl *)_this, pNewZStencil);
+#else
+
     DeviceImpl *dev = (DeviceImpl *)_this;
 #if defined(COD2_X64)
     if (dev->depthStencilDetached != (pNewZStencil == NULL)) {
@@ -4442,6 +4472,7 @@ HRESULT CDirect3DDevice_SetDepthStencilSurface(const CDirect3DDevice *_this, IDi
 #endif
     dev->depthStencil = pNewZStencil;
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_GetDepthStencilSurface(const CDirect3DDevice *_this, IDirect3DSurface9 **ppZStencilSurface)
@@ -4591,6 +4622,10 @@ HRESULT CDirect3DDevice_StretchRect(const CDirect3DDevice *_this, IDirect3DSurfa
 #endif
 
 #if defined(COD2_X64)
+    return DeviceTargets_Stretch((DeviceImpl *)_this, pSourceSurface, pSourceRect, pDestSurface, pDestRect, Filter);
+#else
+
+#if defined(COD2_X64)
     /* Mac 1.3 copies the backbuffer into the destination texture without
      * drawing a quad. The saved-screen blend needs this copy every frame. */
     DeviceImpl *dev = (DeviceImpl *)_this;
@@ -4694,6 +4729,7 @@ HRESULT CDirect3DDevice_StretchRect(const CDirect3DDevice *_this, IDirect3DSurfa
     glDisableClientState(0x8074);
     glDisableClientState(0x8078);
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_UpdateTexture(const CDirect3DDevice *_this, IDirect3DBaseTexture9 *pSourceTexture, IDirect3DBaseTexture9 *pDestinationTexture)
@@ -5182,8 +5218,14 @@ long unsigned int CDirect3DDevice_StartPixelOneToOneState(const CDirect3DDevice 
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceTargets_StartPixel((DeviceImpl *)_this);
+    return 0;
+#else
+
     (void)_this;
     return 0;
+#endif
 }
 
 long unsigned int CDirect3DDevice_EndPixelOneToOneState(const CDirect3DDevice *_this)
@@ -5195,8 +5237,14 @@ long unsigned int CDirect3DDevice_EndPixelOneToOneState(const CDirect3DDevice *_
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceTargets_EndPixel((DeviceImpl *)_this);
+    return 0;
+#else
+
     (void)_this;
     return 0;
+#endif
 }
 
 long unsigned int CDirect3DDevice_SetAlphaFuncAndRef(const CDirect3DDevice *_this, DWORD AlphaFuncValue, DWORD AlphaRefValue)
@@ -5272,8 +5320,14 @@ long unsigned int CDirect3DDevice_CopyColorToRenderTargetTexture(const CDirect3D
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceTargets_CopyColor((DeviceImpl *)_this);
+    return 0;
+#else
+
     (void)_this;
     return 0;
+#endif
 }
 
 #if defined(COD2_X64)

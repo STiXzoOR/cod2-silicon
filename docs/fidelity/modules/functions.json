@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 497,
-      "intentional": 3079,
+      "unchecked": 490,
+      "intentional": 3084,
       "equal": 4720,
-      "fixed": 1161
+      "fixed": 1163
     },
     "scopes": {
       "unassigned": 777,
@@ -15988,8 +15988,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0xdce0 releases previous and AddRefs new depth surface while controlling depth/stencil transition state. Native depth-detached state changes pass existing focused pixels, but COM surface ownership is absent and exact provider/cache timing remains unresolved."
+        "status": "intentional",
+        "evidence": "Mac 0xdce0: restored current-surface Release/AddRef and requested depth/stencil transition order. Native intentionally treats the SDL context initial depth as active until explicit NULL even though its default COM depth pointer is NULL, unlike Mac current-pointer checks. Existing 18 depth fixture cases exercise effective state and clear pixels; COM reference balance and arbitrary nondefault depth backing are compiled and reviewed only."
       },
       {
         "id": "mac:0x0000ea3e",
@@ -17290,8 +17290,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x141b0 restricts clear to cached viewport, restores depth-test/function/dither/masks. Native ignores rectangle count as original does but lacks viewport scissor/restoration and still skips color-only transparent-black clears. Existing fixture covers only depth-detached/mask pixels; full behavior remains divergent."
+        "status": "intentional",
+        "evidence": "Mac 0x141b0: removed transparent-black skip; restored viewport-height scissor, depth test/function and dither/mask restoration; Count/rectangles ignored as original. Native initial implicit-context depth uses !depthStencilDetached rather than Mac current COM pointer. Existing attached/detached clear pixels pass in both draw paths; full viewport/dither restoration is compiled and reviewed only."
       },
       {
         "id": "mac:0x002ed9be",
@@ -17334,8 +17334,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x14754 copies and conditionally draws/combines auxiliary render-target content with extensive GL state restoration. Native body is empty; SetRenderTarget contains only a simpler texture copy. Full behavior is unresolved, not superseded by future Metal."
+        "status": "intentional",
+        "evidence": "Mac 0x14754\u20130x154ff: reconstructed formerly empty copy plus conditional two-times-pass five-tap shadow blur and GL restoration; decoded weights 0x3267ec and tap table 0x326800, preserving repeated S-texgen and final-identity quirks. Typed native owners use logical allocation extents instead of Mac POT/client storage, and GPU writes clear CPU dirty flags. Ordinary target copy exercised; shadow path compiled and reviewed only. Native matrix-mode bookkeeping tracks final TEXTURE mode without rewriting the original persistent texture-matrix quirk. Actual GPU copies mark native Surface row provenance; CPU upload entry points reset it."
       },
       {
         "id": "mac:0x002ed960",
@@ -17774,8 +17774,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x17924 restores state from original device and COpenGL caches, including per-target texture enables. Native remains empty and does not have a complete typed persistent COpenGL cache contract."
+        "status": "intentional",
+        "evidence": "Mac 0x17924: reconstructed color/depth/stencil masks, compare state, capability/shade/cull restoration and cached per-target texture enables without overwriting persistent cache. Native implicit-context depth is considered attached until explicit NULL, unlike Mac current COM pointer. Narrow dither/shade setter prerequisites checked at 0x15fd3 and 0x1611a; lifecycle supplies original defaults. Compiled and reviewed, not directly exercised."
       },
       {
         "id": "mac:0x000138ac",
@@ -19402,8 +19402,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x15500 resolves old auxiliary target content via original CopyColorToRenderTargetTexture, releases/AddRefs target and updates default viewport. Native uses a simpler GL texture copy/viewport and omits ownership/full copy behavior."
+        "status": "fixed",
+        "evidence": "Mac 0x15500: target setter now resolves old auxiliary content unless inhibited, releases old/AddRefs new surface, preserves current target on NULL input and resets full-target viewport. Replaced partial copy with reconstructed CopyColor helper; shared lifetime initialization/cleanup delegated to lifecycle unit. Compiled and reviewed; existing saved-screen fixture exercises ordinary copy/viewport/inhibit behavior, not reference counts."
       },
       {
         "id": "mac:0x00015ac4",
@@ -19710,8 +19710,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x13774 saves no new state but overrides GL color/depth/stencil/texture/lighting/fog/cull state; native remains empty. Its matching end/validation provider contract is not established."
+        "status": "fixed",
+        "evidence": "Mac 0x13774: reconstructed formerly empty pixel-state overrides for color/stencil masks, alpha/depth/blend/dither/lighting/fog, all texture targets, depth mask/function, flat shading and cull. Raw GL temporary changes preserve typed COpenGL caches for matching End restoration. Compiled and reviewed, not directly exercised."
       },
       {
         "id": "mac:0x00013260",
@@ -28310,8 +28310,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Mac 0x17c74: actual Device StretchRect covers equal-size backbuffer copy/cinematic quad but lacks original destination-surface/rectangle/filter behavior and complete GL/client/matrix/sampler-state save/restore. Selected native fallback ignores destination/filter semantics; pending Device provider does not prove parity. No speculative private layout applied."
+        "status": "intentional",
+        "evidence": "Mac 0x17c74 ignores rectangles/Filter and uses linear filtering. Native preserves Windows cinematic rectangle/filter semantics: gfx_d3d_mp_x86_s.dll 0x1002f622\u20130x1002f663 builds destination RECT, passes filter2 and calls Device+0x88; Microsoft StretchRect primary documentation supplies external API behavior. BACK sources explicitly select BACK and restore read selection. Active AUX0/AUX1 preservation controls opposite scratch selection. Native Surface row provenance tracks actual GPU writes and CPU uploads, so inactive GPU sources retain orientation. Current AUX destinations draw into their own attachment then fully resolve, preventing later target switches from overwriting the blit. Native logical extents, dirty-only uploads, sampler/attribute/client/matrix restoration and precise INVALIDCALL boundaries replace the incomplete approximation. Partial inactive top-down or pending-CPU destinations are unsupported; full inactive writes and CPU cinematic rectangles into BACK remain supported. Existing saved-screen/raster/depth/texture-mip fixtures pass; provenance transitions, rectangle/filter and current/inactive AUX pixels are compiled and reviewed only."
       },
       {
         "id": "mac:0x00024e64",
