@@ -45,6 +45,10 @@ int main(void)
     MaterialShaderArgument arg = {0};
     unsigned short typeInfo[6] = {3, 3, 0, 0, 4, 0};
     MaterialCodeConstantRouting routing = {0, 3, (const byte *)typeInfo};
+#if defined(COD2_X64)
+    /* Whole matrices use the CTAB entry count, independently of type rows. */
+    routing.registerCount = 4;
+#endif
     CodeConstantSource sources[] = {{"test", 7, 0, 0, 0}, {0}};
     tokens[0] = "."; tokens[1] = "test";
     arg.type = 1; arg.dest = 19;
