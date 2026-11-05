@@ -846,10 +846,17 @@ static int R_PreSkinXSurface(GfxSceneEntity *sceneEnt, const struct DObj_s *obj,
                 if (offset <= capacity) {
                     InterlockedExchange((volatile int *)lockPtr, offset);
                 }
+#if defined(COD2_X64)
+                if (*(int *)fed != warnCount) {
+                    warnCount = *(int *)fed;
+                    (*(int (**)(int, const char *, ...))&ri)(2, "R_MAX_SKINNED_CACHE_VERTICES exceeded - not drawing surface\n");
+                }
+#else
                 if (*(int *)fed != warnCount) {
                     warnCount = *(int *)fed;
                     (*(int (**)(int, const char *, ...))&ri)(2, "MAX_SKINNED_CACHE_VERTICES exceeded\n");
                 }
+#endif
                 offset = -1;
             }
             *(int *)(surfPos + PSK_F2) = offset;
@@ -875,10 +882,17 @@ static int R_PreSkinXSurface(GfxSceneEntity *sceneEnt, const struct DObj_s *obj,
         int current = ((DxGlobals *)dx)->tempSkinPos;
         if (current + needed > 0xa00000) {
             GfxBackEndData *fed = frontEndDataOut;
+#if defined(COD2_X64)
+            if (*(int *)fed != warnCount_00c85b04) {
+                warnCount_00c85b04 = *(int *)fed;
+                (*(int (**)(int, const char *, ...))&ri)(2, "TEMP_SKIN_BUF_SIZE exceeded - not skinning surface\n");
+            }
+#else
             if (*(int *)fed != warnCount) {
                 warnCount = *(int *)fed;
                 (*(int (**)(int, const char *, ...))&ri)(2, "Exceeded dynamic vertex buffer limit\n");
             }
+#endif
             return 0;
         }
         *(void **)(surfPos + PSK_F3) = (char *)((DxGlobals *)dx)->tempSkinBuf + current; /* was (int)ptr -> truncated */
@@ -959,11 +973,19 @@ void R_SkinSceneDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent)
             scene.sceneEntMaterialCount = 4096 /*MAX_SCENE_SURFS_PLUS_ENTITIES; was &__mh_execute_header magic (=0x1000 on Mac), garbage on x64*/;
             {
                 GfxBackEndData *fed = frontEndDataOut;
+#if defined(COD2_X64)
+                if (*(int *)fed != warnCount_00c85b08) {
+                    warnCount_00c85b08 = *(int *)fed;
+                    typedef void (*PrintFunc)(int, const char *, ...);
+                    (*(PrintFunc *)&ri)(2, "MAX_SCENE_MATERIALS exceeded - not drawing surface\n");
+                }
+#else
                 if (*(int *)fed != warnCount) {
                     warnCount = *(int *)fed;
                     typedef void (*PrintFunc)(int, const char *, ...);
                     (*(PrintFunc *)&ri)(2, "MAX_SCENE_SURFS_PLUS_ENTITIES exceeded\n");
                 }
+#endif
             }
             ((GfxSceneEntity *)se)->cullState = 4;
             return;
@@ -992,11 +1014,19 @@ void R_SkinSceneDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent)
             int offset = InterlockedExchangeAdd((volatile int *)&fed->surfPos, size);
             if (offset + size > 0x20000) {
                 fed->surfPos = 0x20000;
+#if defined(COD2_X64)
+                if (*(int *)fed != warnCount_00c85b08) {
+                    warnCount_00c85b08 = *(int *)fed;
+                    typedef void (*PrintFunc)(int, const char *, ...);
+                    (*(PrintFunc *)&ri)(2, "MAX_SCENE_SURFS_SIZE exceeded - not drawing surface\n");
+                }
+#else
                 if (*(int *)fed != warnCount) {
                     warnCount = *(int *)fed;
                     typedef void (*PrintFunc)(int, const char *, ...);
                     (*(PrintFunc *)&ri)(2, "MAX_SKINNED_CACHE exceeded\n");
                 }
+#endif
                 ((GfxSceneEntity *)se)->cullState = 4;
                 return;
             }
@@ -1173,10 +1203,17 @@ no_smc:
             if (*(int *)lockPtr > *(int *)((char *)lockPtr + 4)) {
                 if (offset <= *(int *)((char *)lockPtr + 4))
                     InterlockedExchange((volatile int *)lockPtr, offset);
+#if defined(COD2_X64)
+                if (*(int *)fed != warnCount) {
+                    warnCount = *(int *)fed;
+                    (*(int (**)(int, const char *, ...))&ri)(2, "R_MAX_SKINNED_CACHE_VERTICES exceeded - not drawing surface\n");
+                }
+#else
                 if (*(int *)fed != warnCount) {
                     warnCount = *(int *)fed;
                     (*(int (**)(int, const char *, ...))&ri)(2, "MAX_SKINNED_CACHE_VERTICES exceeded\n");
                 }
+#endif
                 offset = -1;
             }
             *(int *)(surfPos + PSK_F2) = offset;
@@ -1198,10 +1235,17 @@ no_smc:
         int current = ((DxGlobals *)dx)->tempSkinPos;
         if (current + needed > 0xa00000) {
             GfxBackEndData *fed = frontEndDataOut;
+#if defined(COD2_X64)
+            if (*(int *)fed != warnCount_00c85b0c) {
+                warnCount_00c85b0c = *(int *)fed;
+                (*(int (**)(int, const char *, ...))&ri)(2, "TEMP_SKIN_BUF_SIZE exceeded - not skinning surface\n");
+            }
+#else
             if (*(int *)fed != warnCount) {
                 warnCount = *(int *)fed;
                 (*(int (**)(int, const char *, ...))&ri)(2, "Exceeded dynamic vertex buffer limit\n");
             }
+#endif
             return 0;
         }
         *(void **)(surfPos + PSK_F3) = (char *)((DxGlobals *)dx)->tempSkinBuf + current; /* was (int)ptr -> truncated */
@@ -1291,10 +1335,17 @@ void R_SkinXModel(GfxSceneEntity *sceneEnt, GfxEntity *ent, int smodelIndex)
         if (startIdx + surfaceCount > 4096 /*MAX_SCENE_SURFS_PLUS_ENTITIES; was &__mh_execute_header magic (=0x1000 on Mac), garbage on x64*/) {
             scene.sceneEntMaterialCount = 4096 /*MAX_SCENE_SURFS_PLUS_ENTITIES; was &__mh_execute_header magic (=0x1000 on Mac), garbage on x64*/;
             GfxBackEndData *fed = frontEndDataOut;
+#if defined(COD2_X64)
+            if (*(int *)fed != warnCount_00c85b10) {
+                warnCount_00c85b10 = *(int *)fed;
+                (*(int (**)(int, const char *, ...))&ri)(2, "MAX_SCENE_MATERIALS exceeded - not drawing surface\n");
+            }
+#else
             if (*(int *)fed != warnCount) {
                 warnCount = *(int *)fed;
                 (*(int (**)(int, const char *, ...))&ri)(2, "MAX_SCENE_SURFS_PLUS_ENTITIES exceeded\n");
             }
+#endif
             ((GfxSceneEntity *)se)->cullState = 4;
             return;
         }
@@ -1321,10 +1372,17 @@ void R_SkinXModel(GfxSceneEntity *sceneEnt, GfxEntity *ent, int smodelIndex)
             int offset = InterlockedExchangeAdd((volatile int *)&fed->surfPos, size);
             if (offset + size > 0x20000) {
                 fed->surfPos = 0x20000;
+#if defined(COD2_X64)
+                if (*(int *)fed != warnCount_00c85b10) {
+                    warnCount_00c85b10 = *(int *)fed;
+                    (*(int (**)(int, const char *, ...))&ri)(2, "MAX_SCENE_SURFS_SIZE exceeded - not drawing surface\n");
+                }
+#else
                 if (*(int *)fed != warnCount) {
                     warnCount = *(int *)fed;
                     (*(int (**)(int, const char *, ...))&ri)(2, "MAX_SKINNED_CACHE exceeded\n");
                 }
+#endif
                 ((GfxSceneEntity *)se)->cullState = 4;
                 return;
             }
@@ -1447,9 +1505,9 @@ static void R_SkinXSurfaceSkinned(struct GfxModelSkinnedSurface *skinnedSurf,
                 int w;
 
 #if defined(COD2_X64)
-                pos[0] = v->offset[0] * mat->axis[0][0] + v->offset[1] * mat->axis[1][0] + v->offset[2] * mat->axis[2][0] + mat->origin[0];
-                pos[1] = v->offset[0] * mat->axis[0][1] + v->offset[1] * mat->axis[1][1] + v->offset[2] * mat->axis[2][1] + mat->origin[1];
-                pos[2] = v->offset[0] * mat->axis[0][2] + v->offset[1] * mat->axis[1][2] + v->offset[2] * mat->axis[2][2] + mat->origin[2];
+                pos[0] = (v->offset[0] * mat->axis[0][0] + v->offset[1] * mat->axis[1][0]) + (v->offset[2] * mat->axis[2][0] + mat->origin[0]);
+                pos[1] = (v->offset[0] * mat->axis[0][1] + v->offset[1] * mat->axis[1][1]) + (v->offset[2] * mat->axis[2][1] + mat->origin[1]);
+                pos[2] = (v->offset[0] * mat->axis[0][2] + v->offset[1] * mat->axis[1][2]) + (v->offset[2] * mat->axis[2][2] + mat->origin[2]);
 #else
                 pos[0] = (v->offset[0] * mat->axis[0][0] + v->offset[1] * mat->axis[1][0]) + (v->offset[2] * mat->axis[2][0] + mat->origin[0]);
                 pos[1] = (v->offset[0] * mat->axis[0][1] + v->offset[1] * mat->axis[1][1]) + (v->offset[2] * mat->axis[2][1] + mat->origin[1]);
@@ -1470,9 +1528,15 @@ static void R_SkinXSurfaceSkinned(struct GfxModelSkinnedSurface *skinnedSurf,
                         const DObjSkelMat *m2 =
                             (const DObjSkelMat *)((const char *)boneMatrix + (short)b->boneOffset);
                         float s = (float)b->boneWeight * 1.52587890625e-05f;
+#if defined(COD2_X64)
+                        pos[0] += ((b->offset[0] * m2->axis[0][0] + b->offset[1] * m2->axis[1][0]) + (b->offset[2] * m2->axis[2][0] + m2->origin[0])) * s;
+                        pos[1] += ((b->offset[0] * m2->axis[0][1] + b->offset[1] * m2->axis[1][1]) + (b->offset[2] * m2->axis[2][1] + m2->origin[1])) * s;
+                        pos[2] += ((b->offset[0] * m2->axis[0][2] + b->offset[1] * m2->axis[1][2]) + (b->offset[2] * m2->axis[2][2] + m2->origin[2])) * s;
+#else
                         pos[0] += (b->offset[0] * m2->axis[0][0] + b->offset[1] * m2->axis[1][0] + b->offset[2] * m2->axis[2][0] + m2->origin[0]) * s;
                         pos[1] += (b->offset[0] * m2->axis[0][1] + b->offset[1] * m2->axis[1][1] + b->offset[2] * m2->axis[2][1] + m2->origin[1]) * s;
                         pos[2] += (b->offset[0] * m2->axis[0][2] + b->offset[1] * m2->axis[1][2] + b->offset[2] * m2->axis[2][2] + m2->origin[2]) * s;
+#endif
                     }
                     vp = (const char *)b;
                 } else {
