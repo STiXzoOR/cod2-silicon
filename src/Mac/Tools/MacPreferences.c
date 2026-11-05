@@ -48,6 +48,13 @@ unsigned char MacPreferences_GetString(const char *inKey, char *outString, int i
                 char *nl = strchr(val, '\n');
                 if (nl)
                     *nl = '\0';
+#if defined(COD2_X64) && defined(__APPLE__)
+                /* Mac 0x966c rejects a value that cannot fit with its terminator. */
+                if (inMaxString <= 0 || strlen(val) >= (size_t)inMaxString) {
+                    fclose(f);
+                    goto use_default;
+                }
+#endif
                 strncpy(outString, val, inMaxString - 1);
                 outString[inMaxString - 1] = '\0';
                 fclose(f);
@@ -57,6 +64,9 @@ unsigned char MacPreferences_GetString(const char *inKey, char *outString, int i
         fclose(f);
     }
 
+#if defined(COD2_X64) && defined(__APPLE__)
+use_default:
+#endif
     if (inDefault) {
         strcpy(outString, inDefault);
     } else {
