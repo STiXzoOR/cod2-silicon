@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**50/54 reconciled: 40 equal, 9 fixed, 1 intentional, 4 unchecked.** Mac 1.3 i386 is the authority. All 43 Mac-backed functions were read by hand, plus the identified inline helpers and the matrix-array wrapper's alternate Linux name. The legacy source is preserved in the inactive branches.
+**52/54 reconciled: 40 equal, 11 fixed, 1 intentional, 2 unchecked.** Mac 1.3 i386 is the authority. All 43 Mac-backed functions were read by hand, plus the identified inline helpers and the matrix-array wrapper's alternate Linux name. The legacy source is preserved in the inactive branches.
 
 ## Corrections
 
@@ -124,3 +124,18 @@ New positive producer evidence supplies the missing role. G_InitGame installs g_
 Native uses the real typed1024-element g_entities array, registers sizeof(gentity_t), and consumes `(int)(e-g_entities)` in s.number. This preserves the complete scalar role and established native geometry. Equal classification applies to this unchanged conversion; surrounding classname, allocation, free-list and lifecycle repairs are outside its boundary. Scope is ordinary consistent engine registration, valid in-bounds element and successful preceding providers. It does not certify arbitrary alternate base/stride registration, null/unrelated/one-past destination, forged state, returned exhaustion errors, standalone ABI, whole spawning or runtime behavior.
 
 Independent review accepted this scope in units/review-provenance-entitynum30.md. Fresh full original and four Mac owners, raw data and source hashes remain in private recon-provenance-entitynum30.noindex. One equal closure; no source change or new defect. No compilation, tests, CI, full build, replay or runtime verification.
+
+
+## Complete server bone-bit operations (serverbits38)
+
+`SV_DObjSetRotTransIndex` and `SV_DObjSetControlRotTransIndex` are fixed through actual controller operations. Complete original1.3 wrappers0x8092260–RET0x8092290 and0x8092292–RET0x80922c2 load the entity number, resolve its server DObj, pass partBits/index to the complete bit provider and return its Boolean. They add no null guard. The earlier whole-tag-setter substitution remains rejected.
+
+New positive wiring supplies the complete selected role. Mac turret_controller loads entity number0x1bbf17→Com_GetServerDObj0x1bbf1c and forwards the resulting object and original partBits to control-tag setters0x1bbf45/63/91. G_PlayerController0x1a297c–0x1a299c does the same through BG_Player_DoControllers, which forwards both to local-tag setter0x183018 and control-tag setter0x182f47. Actual model/hierarchy tag lookup produces the full integer bone index; it is not an assumed adapter. Native preserves these real argument chains and the approved object stride.
+
+The complete local phase0x74ebd–0x74ee2 computes the word/mask, rejects a clear requested bit or existing skeleton bit, then ORs animation state. Control phase0x74f6b–0x74f94 additionally ORs control before animation. Each false outcome returns zero and skips the angle write; the successful bit operation is consumed by entering that later write. This accounts for all original bit effects and both Boolean outcomes without claiming the entire name/angle owner or its later return timing.
+
+Both selected providers contained the same newly identified C99 defect: signed `1 << 31` was undefined even though Mac preserves0x80000000. Actual model creation permits totals through127, and hierarchy lookup permits found indices31/63/95. COD2_X64 now uses a uint32_t shift and memcpy into the existing signed mask. These two helper verdicts inherit that one shared fix; later angle arithmetic repairs are outside this mapping. The two primary setter rows change equal→fixed separately.
+
+Scope is a stable live mapped server object, successful actual tag-derived in-range index and valid partBits/skeleton backing. No arbitrary index API, negative index, lookup-failure, unmapped/null-object or later angle-failure continuation equivalence is claimed: the original provider can return on a clear requested bit before dereferencing a null object, whereas the selected actual tag lookup already accesses that object. The two permanent-loading allocator wrappers remain unchecked.
+
+Independent review: units/review-provenance-serverbits38.md. Complete originals, fresh Mac owners/providers, hashes and receipts are private in recon-provenance-serverbits38.noindex. Four actual changed-TU configurations compiled; exact OFF bytes and five inactive preprocessing outputs match. One new shared C-level defect, two closures. No tests, CI, full build, replay or runtime verification; compiled/reviewed does not mean playable.
