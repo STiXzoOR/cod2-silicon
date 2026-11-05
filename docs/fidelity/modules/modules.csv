@@ -425,7 +425,7 @@ universal/com_convexhull,2,2,0,0,0
 universal/com_file_wrapper,5,5,0,0,0
 universal/com_files,92,69,6,10,7
 universal/com_files_mp,27,19,6,2,0
-universal/com_math,229,138,27,0,64
+universal/com_math,229,139,27,0,63
 universal/com_memory,64,37,11,11,5
 universal/com_memory_high,1,1,0,0,0
 universal/com_shared,7,5,2,0,0
