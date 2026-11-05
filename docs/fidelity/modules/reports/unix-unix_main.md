@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**40/52 reconciled: 7 equal, 4 fixed, 29 intentional; 12 unchecked.** Mac 1.3 i386 is the authority. Linux supplied names only. Native changes are guarded; inactive source comparisons against `cef44cbe` pass.
+**40/52 reconciled: 6 equal, 4 fixed, 30 intentional; 12 unchecked.** Mac 1.3 i386 is the authority. Linux supplied names only. Native changes are guarded; inactive source comparisons against `cef44cbe` pass.
 
 ## Corrections
 
@@ -31,6 +31,8 @@ The selected console is `mac_syscon.c`: a 512-byte `select`/`read` stdin reader 
 Old `MacResources` functions still have incompatible integer CF declarations and remain a queued dependency. They have no native source caller or callback reference; the only external declaration is in excluded `MacDisplay.c`. None of the four compiled native generated data TUs references `MacResources` or `MacFolders`. Diagnostic `x64_gen/data.c` contains obsolete false relocations but is not compiled. This change does not approve those old resource APIs for live use.
 
 Linux DLL lifecycle helpers are replaced specifically by directly linked game functions and `GetRefAPI`/renderer shutdown. Linux tty helpers are replaced specifically by the stdin/stdout provider. Other unlocated Linux helpers were not classified by absence alone.
+
+`Sys_GetClipboardData` at 0xc38f8 returns an empty static literal in Mac and the original reconstruction. Independent lifecycle review traced all three callers: the field editor and two script-debugger paste handlers release nonnull results through `Z_FreeInternal`, which ultimately calls `free`. Native now allocates one byte through `Z_MallocInternal` and explicitly terminates it, preserving empty content and the debugger paste call while satisfying that real ownership contract. This defined-storage adaptation avoids the inherited invalid free; it does not provide OS clipboard contents. The paste paths were not exercised.
 
 ## Verification and gaps
 

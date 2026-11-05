@@ -229,8 +229,15 @@ void Sys_Print(const char *msg)
 
 char *Sys_GetClipboardData(void)
 {
-
+#if defined(COD2_X64)
+    /* Every caller releases this result through Z_FreeInternal. */
+    char *text = (char *)Z_MallocInternal(1);
+    if (text)
+        text[0] = '\0';
+    return text;
+#else
     return (char *)"";
+#endif
 }
 
 static void Sys_QueEventInternal(int time, sysEventType_t type, int value, int value2, int ptrLength, void *ptr)
