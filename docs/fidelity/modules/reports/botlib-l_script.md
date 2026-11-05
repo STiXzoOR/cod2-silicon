@@ -43,3 +43,11 @@ Parent and fresh independent source/binary review covered all six units, includi
 Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. Dedicated replay does not exercise client rendering, platform dialogs, real audio output or microphone capture.
 
 Catalog coverage passed without semantic catalog changes. The earlier batch 8 hosted macOS run exceeded its one-hour limit during ABI audits despite passing full local CI; that hosted run remains incomplete. Hosted ILP32 comparison is unavailable because the unchanged reference fails compilation; no byte parity is claimed.
+
+## Remaining-identity audit, 2026-11-05
+
+All 20 open identities remain unchecked. The original Mac SO/SLINE/FUN and lexical-scope inventory, full executable symbol inventory and actual native owner/call sites were examined. The full symbol inventory has no botlib SOL inclusion path that supplies another executable owner. Absolute-zero exception names and parameter metadata do not establish callable bodies.
+
+LoadScriptFile's punctuation setup at 0xc2e0b-0xc2e1b specializes the default table; it does not establish the complete custom/default SetScriptPunctuations contract. Initializing a new script does not establish ResetScript's existing-state behavior. The PS_ReadToken token-cache read does not establish PS_UnreadToken or PS_UnreadLastToken writes. Single quotes still dispatch to PS_ReadString, which does not prove the different single-character PS_ReadLiteral identity. No related partial operation or absence-only argument was used to close a row, and all 17 resolved verdicts are preserved exactly.
+
+Both l_script.c and l_precomp.c compiled as actual configured stock and CoD2x arm64 Release client objects with background priority and at most two jobs. Existing narrowing warnings remain. There is no focused botlib runtime fixture in this checkout. No production source changed, so inactive source and actual __LINE__ expansions are unchanged. No new tests/cases/assertions, full CI, replay or push ran. These checks do not exercise the missing APIs. Private evidence is in `~/Library/Application Support/CoD2-native-decomp/recon-botlib-remaining.noindex/`.
