@@ -11,6 +11,416 @@
 #define STRINGED_NOINLINE __attribute__((noinline))
 #endif
 
+#if defined(COD2_X64) && defined(__APPLE__)
+#include "../../platform/macos_cpp_abi.h"
+
+extern CStringEdPackage *TheStringPackage;
+extern void *Z_MallocInternal(int size);
+extern void Z_FreeInternal(void *ptr);
+extern unsigned char *SE_LoadFileData(const char *name);
+extern void SE_FreeFileDataAfterLoad(unsigned char *data);
+extern int SE_BuildFileList(const char *directory, Cod2MacString *result);
+extern const char *va(const char *format, ...);
+extern int stricmp(const char *a, const char *b);
+extern int strnicmp(const char *a, const char *b, unsigned long length);
+extern char *strupr(char *text);
+
+/* The package uses zone allocation; GCC tree nodes use operator new/delete.
+ * These are native pointer-sized GCC ABI objects, never libc++ containers. */
+typedef struct {
+    Cod2MacTreeNode node;
+    Cod2MacString key;
+    Cod2MacString value;
+} NativeStringEdEntry;
+
+typedef struct {
+    qboolean foundEndMarker;
+    Cod2MacString reference;
+    Cod2MacString english;
+    Cod2MacString package;
+    size_t treeAllocator;
+    Cod2MacTreeNode tree;
+    size_t count;
+} NativeStringEdPackage;
+
+_Static_assert(sizeof(NativeStringEdEntry) == 48, "native StringEd tree node");
+_Static_assert(sizeof(NativeStringEdPackage) == 80, "native StringEd package");
+
+static NativeStringEdPackage *SE_Package(const CStringEdPackage *package)
+{
+    return (NativeStringEdPackage *)(void *)package;
+}
+
+static void SE_Assign(Cod2MacString *string, const char *text)
+{
+    __ZNSs6assignEPKcm(string, text, strlen(text));
+}
+
+static NativeStringEdEntry *SE_FindEntry(NativeStringEdPackage *package, const char *key)
+{
+    Cod2MacTreeNode *node = package->tree.parent;
+    while (node) {
+        NativeStringEdEntry *entry = (NativeStringEdEntry *)node;
+        int comparison = strcmp(key, entry->key.data);
+        if (!comparison)
+            return entry;
+        node = comparison < 0 ? node->left : node->right;
+    }
+    return NULL;
+}
+
+static NativeStringEdEntry *SE_AddEntry(NativeStringEdPackage *package, const char *key)
+{
+    Cod2MacTreeNode *parent = &package->tree;
+    Cod2MacTreeNode *node = parent->parent;
+    NativeStringEdEntry *entry;
+    int insertLeft = 1;
+    while (node) {
+        int comparison = strcmp(key, ((NativeStringEdEntry *)node)->key.data);
+        if (!comparison)
+            return (NativeStringEdEntry *)node;
+        parent = node;
+        insertLeft = comparison < 0;
+        node = insertLeft ? node->left : node->right;
+    }
+    entry = __Znwm(sizeof(*entry));
+    __ZNSsC1EPKcRKSaIcE(&entry->key, key, NULL);
+    __ZNSsC1EPKcRKSaIcE(&entry->value, "", NULL);
+    __ZSt29_Rb_tree_insert_and_rebalancebPSt18_Rb_tree_node_baseS0_RS_(
+        insertLeft, &entry->node, parent, &package->tree);
+    ++package->count;
+    return entry;
+}
+
+static void SE_EraseEntries(Cod2MacTreeNode *node)
+{
+    while (node) {
+        NativeStringEdEntry *entry = (NativeStringEdEntry *)node;
+        Cod2MacTreeNode *left = node->left;
+        SE_EraseEntries(node->right);
+        __ZNSsD1Ev(&entry->value);
+        __ZNSsD1Ev(&entry->key);
+        __ZdlPv(entry);
+        node = left;
+    }
+}
+
+qboolean CStringEdPackage_ReadLine(const CStringEdPackage *_this, const char **position, char *dest)
+{
+    const char *p = *position;
+    const char *newline;
+    char *scan;
+    int quotes = 0;
+    size_t length;
+    (void)_this;
+    if (!*p)
+        return 0;
+    newline = strchr(p, '\n');
+    if (newline) {
+        length = (size_t)(newline - p);
+        strncpy(dest, p, length);
+        dest[length] = '\0';
+        *position += length;
+        while (**position && strchr("\r\n", **position))
+            ++*position;
+    } else {
+        strcpy(dest, p);
+        *position += strlen(p);
+    }
+    length = strlen(dest);
+    while (length && isspace((unsigned char)dest[length - 1]))
+        dest[--length] = '\0';
+    scan = dest;
+    for (;;) {
+        char *comment = strstr(scan, "//");
+        char *quote;
+        if (!comment)
+            return 1;
+        for (quote = scan; quote < comment; ++quote) {
+            if (*quote == '"')
+                ++quotes;
+        }
+        if (quotes & 1) {
+            scan = comment + 1;
+            continue;
+        }
+        *comment = '\0';
+        length = strlen(scan);
+        while (length && isspace((unsigned char)scan[length - 1]))
+            scan[--length] = '\0';
+        return 1;
+    }
+}
+
+void CStringEdPackage_SetupNewFileParse(const CStringEdPackage *_this, const char *filename)
+{
+    const char *base = filename;
+    const char *p;
+    const char *dot = strrchr(filename, '.');
+    Cod2MacString name;
+    size_t length;
+    for (p = filename; *p; ++p) {
+        if (*p == '/' || *p == '\\')
+            base = p + 1;
+    }
+    length = dot && dot >= base ? (size_t)(dot - base) : strlen(base);
+    __ZNSsC1EPKcRKSaIcE(&name, "", NULL);
+    __ZNSs6assignEPKcm(&name, base, length);
+    __ZNSs12_M_leak_hardEv(&name);
+    strupr(name.data);
+    __ZNSs6assignERKSs(&SE_Package(_this)->package, &name);
+    __ZNSsD1Ev(&name);
+}
+
+Cod2MacString CStringEdPackage_InsideQuotes(const CStringEdPackage *_this, const char *line)
+{
+    Cod2MacString result;
+    size_t length;
+    (void)_this;
+    while (*line == ' ' || *line == '\t')
+        ++line;
+    if (*line == '"')
+        ++line;
+    length = strlen(line);
+    /* The original reads before its string when trimming an all-space value.
+     * Keep native empty values defined instead of recreating that underread. */
+    while (length && (line[length - 1] == ' ' || line[length - 1] == '\t'))
+        --length;
+    if (length && line[length - 1] == '"')
+        --length;
+    __ZNSsC1EPKcRKSaIcE(&result, "", NULL);
+    __ZNSs6assignEPKcm(&result, line, length);
+    return result;
+}
+
+Cod2MacString CStringEdPackage_ConvertCRLiterals_Read(const CStringEdPackage *_this, Cod2MacString *input)
+{
+    Cod2MacString result;
+    size_t position;
+    (void)_this;
+    __ZNSsC1ERKSs(&result, input);
+    while ((position = __ZNKSs4findEPKcmm(&result, "\\n", 0, 2)) != (size_t)-1)
+        __ZNSs7replaceEmmPKcm(&result, position, 2, "\n", 1);
+    return result;
+}
+
+void CStringEdPackage_AddEntry(const CStringEdPackage *_this, const char *reference)
+{
+    NativeStringEdPackage *package = SE_Package(_this);
+    const char *key = va("%s_%s", package->package.data, reference);
+    SE_AddEntry(package, key);
+    SE_Assign(&package->reference, reference);
+}
+
+void CStringEdPackage_SetString(const CStringEdPackage *_this, const char *reference, const char *text, qboolean english)
+{
+    NativeStringEdPackage *package = SE_Package(_this);
+    NativeStringEdEntry *entry = SE_FindEntry(package, va("%s_%s", package->package.data, reference));
+    /* Engine calls add a reference before setting it. Keep the native behavior
+     * defined for an otherwise missing entry rather than writing through end(). */
+    if (!entry) {
+        entry = SE_AddEntry(package, va("%s_%s", package->package.data, reference));
+    }
+    if (english) {
+        SE_Assign(&entry->value, text);
+        SE_Assign(&package->english, text);
+    } else if (!stricmp(text, "#same")) {
+        __ZNSs6assignERKSs(&entry->value, &package->english);
+    } else {
+        SE_Assign(&entry->value, text);
+    }
+}
+
+static const char *SE_AfterKeyword(const char *line, size_t length)
+{
+    line += length;
+    while (*line == ' ' || *line == '\t')
+        ++line;
+    return line;
+}
+
+static const char *SE_FormatError(const char *text)
+{
+    unsigned char used[9] = {0};
+    const char *scan = strstr(text, "&&");
+    while (scan) {
+        unsigned int index = (unsigned char)scan[2] - '1';
+        /* Mac accepts digit zero before indexing one byte before used[].
+         * Preserve native's deterministic rejection of that invalid format. */
+        if (index >= 9 || used[index])
+            return va("Illegal string format \"%s\"\n", text);
+        used[index] = 1;
+        scan = strstr(scan + 3, "&&");
+    }
+    return NULL;
+}
+
+const char *CStringEdPackage_ParseLine(const CStringEdPackage *_this, const char *line, int forceEnglish)
+{
+    NativeStringEdPackage *package = SE_Package(_this);
+    Cod2MacString text, sentence;
+    const char *error;
+    const char *language;
+    size_t length;
+    char token[1024] = {0};
+    int english;
+    if (!line)
+        return NULL;
+    if (!strnicmp("VERSION", line, 7)) {
+        int version;
+        text = CStringEdPackage_InsideQuotes(_this, SE_AfterKeyword(line, 7));
+        version = atoi(text.data);
+        error = version == 1 ? NULL : va("Unexpected version number %d, expecting %d!\n", version, 1);
+        __ZNSsD1Ev(&text);
+        return error;
+    }
+    if (!strnicmp("CONFIG", line, 6) || !strnicmp("FILENOTES", line, 9) ||
+        !strnicmp("NOTES", line, 5) || !strnicmp("FLAGS", line, 5))
+        return NULL;
+    if (!strnicmp("REFERENCE", line, 9)) {
+        text = CStringEdPackage_InsideQuotes(_this, SE_AfterKeyword(line, 9));
+        CStringEdPackage_AddEntry(_this, text.data);
+        __ZNSsD1Ev(&text);
+        return NULL;
+    }
+    if (!strnicmp("ENDMARKER", line, 9)) {
+        package->foundEndMarker = 1;
+        return NULL;
+    }
+    if (strnicmp("LANG_", line, 5))
+        return va("Unknown keyword at linestart: \"%s\"\n", line);
+    if (!package->reference.data[0])
+        return "Error parsing file: Unexpected \"LANG_\"\n";
+    language = line + 5;
+    for (length = 0; language[length] && language[length] != ' ' && language[length] != '\t'; ++length)
+        ;
+    if (length > sizeof(token) - 1)
+        length = sizeof(token) - 1;
+    strncpy(token, language, length);
+    text = CStringEdPackage_InsideQuotes(_this, language + strlen(token));
+    sentence = CStringEdPackage_ConvertCRLiterals_Read(_this, &text);
+    __ZNSsD1Ev(&text);
+    error = SE_FormatError(sentence.data);
+    english = !stricmp(token, "english");
+    if (!error && (english || !(unsigned char)forceEnglish))
+        CStringEdPackage_SetString(_this, package->reference.data, sentence.data, english);
+    __ZNSsD1Ev(&sentence);
+    return error;
+}
+
+void CStringEdPackage_Clear(const CStringEdPackage *_this)
+{
+    NativeStringEdPackage *package = SE_Package(_this);
+    SE_EraseEntries(package->tree.parent);
+    package->tree.parent = NULL;
+    package->tree.left = &package->tree;
+    package->tree.right = &package->tree;
+    package->count = 0;
+    package->foundEndMarker = 0;
+    SE_Assign(&package->reference, "");
+    SE_Assign(&package->english, "");
+}
+
+const char *SE_Load(const char *filename, int forceEnglish)
+{
+    unsigned char *data = SE_LoadFileData(filename);
+    const char *position = (const char *)data;
+    const char *error = NULL;
+    char line[0x4000];
+    if (!data)
+        return va("Unable to load \"%s\"!", filename);
+    CStringEdPackage_SetupNewFileParse(TheStringPackage, filename);
+    while (CStringEdPackage_ReadLine(TheStringPackage, &position, line)) {
+        if (line[0]) {
+            error = CStringEdPackage_ParseLine(TheStringPackage, line, (unsigned char)forceEnglish);
+            if (error)
+                break;
+        }
+    }
+    SE_FreeFileDataAfterLoad(data);
+    if (!error && !SE_Package(TheStringPackage)->foundEndMarker)
+        error = va("Truncated file, failed to find \"%s\" at file end!", "ENDMARKER");
+    return error;
+}
+
+STRINGED_NOINLINE const char *SE_GetString(const char *reference)
+{
+    NativeStringEdEntry *entry;
+    if (!TheStringPackage)
+        return NULL;
+    entry = SE_FindEntry(SE_Package(TheStringPackage), reference);
+    return entry ? entry->value.data : NULL;
+}
+
+static const char *SE_GetFoundFile(Cod2MacString *files)
+{
+    static char filename[64];
+    char *delimiter;
+    size_t removed;
+    if (!files->data[0])
+        return NULL;
+    strncpy(filename, files->data, sizeof(filename) - 1);
+    filename[sizeof(filename) - 1] = '\0';
+    delimiter = strchr(filename, ';');
+    if (delimiter) {
+        *delimiter = '\0';
+        removed = (size_t)(delimiter - filename) + 1;
+    } else {
+        removed = ((Cod2MacStringRep *)files->data - 1)->length;
+    }
+    __ZNSs9_M_mutateEmmm(files, 0, removed, 0);
+    return filename;
+}
+
+void SE_Init(void)
+{
+    NativeStringEdPackage *package;
+    if (TheStringPackage) {
+        CStringEdPackage_Clear(TheStringPackage);
+        return;
+    }
+    package = Z_MallocInternal(sizeof(*package));
+    memset(package, 0, sizeof(*package));
+    __ZNSsC1EPKcRKSaIcE(&package->reference, "", NULL);
+    __ZNSsC1EPKcRKSaIcE(&package->english, "", NULL);
+    __ZNSsC1EPKcRKSaIcE(&package->package, "", NULL);
+    TheStringPackage = (CStringEdPackage *)(void *)package;
+    CStringEdPackage_Clear(TheStringPackage);
+}
+
+const char *SE_LoadLanguage(int forceEnglish)
+{
+    Cod2MacString files;
+    const char *filename;
+    const char *error = NULL;
+    if (!TheStringPackage)
+        SE_Init();
+    __ZNSsC1EPKcRKSaIcE(&files, "", NULL);
+    CStringEdPackage_Clear(TheStringPackage);
+    SE_BuildFileList("localizedstrings", &files);
+    while ((filename = SE_GetFoundFile(&files)) != NULL) {
+        if (error)
+            break;
+        error = SE_Load(filename, (unsigned char)forceEnglish);
+    }
+    __ZNSsD1Ev(&files);
+    return error;
+}
+
+void SE_ShutDown(void)
+{
+    NativeStringEdPackage *package;
+    if (!TheStringPackage)
+        return;
+    package = SE_Package(TheStringPackage);
+    CStringEdPackage_Clear(TheStringPackage);
+    __ZNSsD1Ev(&package->package);
+    __ZNSsD1Ev(&package->english);
+    __ZNSsD1Ev(&package->reference);
+    Z_FreeInternal(package);
+    TheStringPackage = NULL;
+}
+#else
 extern CStringEdPackage *TheStringPackage;
 static char sString[64];
 static char sString_00482f80[64];
@@ -727,3 +1137,5 @@ const unsigned char __ZZN16CStringEdPackage9ParseLineEPKchE5C_208[1120] = {
     0xea, 0x04, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
+
+#endif
