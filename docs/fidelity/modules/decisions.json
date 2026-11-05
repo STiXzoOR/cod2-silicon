@@ -11520,8 +11520,8 @@
     "evidence": "Mac 0x37c9c-0x37cf8 frees a pre-hunk malloc block, otherwise checks header at buf-16, writes 0x89537893 and subtracts stored rollback size without a top-block check. Native keeps that hunk behavior and routes pre-hunk freeing through Z_FreeInternal so optional mmap guard blocks are released by the matching backend; ordinary blocks still use free."
   },
   "linux:universal/com_memory.cpp:418:Hunk_GetLowPermanent": {
-    "status": "unchecked",
-    "evidence": "Unchecked after original1.3 identity/body refinement at0x80abf0e\u20130x80abf18. The Mac state-reference follow-up distinguishes Hunk_SetMark0x37828, which returns high permanent, from this original low-permanent accessor. Low loads inside allocation/touch/info owners do not establish a complete low getter. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
+    "status": "equal",
+    "evidence": "Complete consumed low-permanent scalar getter is equal: original1.3 0x80abf0e\u20130x80abf18 reads global0x85a9804 unchanged, corroborated by full original diagnostic and allocator. Actual Mac Com_Meminfo_f0x3752d reads _hunk_low, passes unchanged32-bit scalar0x37532 to print0x3753d with raw format0x2429f8 \"%8i low permanent\\n\". Full actual low allocator0x382a2\u20130x38358 establishes permanent offset and distinct temp field; native hunk_low.permanent and exact diagnostic argument preserve all bits/signed interpretation. Complete actual result/consumer, not high getter, low+high sum or absence claim. No standalone export/inline ancestry/concurrent timing/allocator/whole-owner guarantee. Existing repairs outside read not inherited. Independent review review-provenance-lowgetter25.md; exact original/Mac/state-provider/string/source evidence recon-provenance-lowgetter25.noindex. No source change, new defect, compilation, tests, CI, replay or runtime verification."
   },
   "mac:0x00037bf2": {
     "status": "equal",

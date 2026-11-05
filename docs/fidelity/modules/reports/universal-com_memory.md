@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**61/64 reconciled: 39 equal, 11 fixed, 11 intentional, 3 unchecked.** Mac 1.3 is the authority. Linux was read only for helper names and intent. Behavior changes are native-only. Legacy preprocessed tokens, including all seven actual OOM line-number arguments, are identical in five OFF configurations.
+**62/64 reconciled: 40 equal, 11 fixed, 11 intentional, 2 unchecked.** Mac 1.3 is the authority. Linux was read only for helper names and intent. Behavior changes are native-only. Legacy preprocessed tokens, including all seven actual OOM line-number arguments, are identical in five OFF configurations.
 
 ## Storage and lifetime
 
@@ -78,3 +78,11 @@ Three memory rows remain unchecked. The state-reference audit distinguishes comp
 
 
 Private original bodies and new exact Mac/provider/state-owner evidence are retained in recon-provenance-storage5.noindex and recon-provenance-storage10.noindex. No source changes, compilation, tests, CI, replay or runtime exercise occurred. Missing names/callers are not completion evidence.
+
+## Complete low-permanent read (lowgetter25)
+
+Hunk_GetLowPermanent is equal through the complete scalar read consumed by the actual memory diagnostic. Original0x80abf0e–0x80abf18 reads one global and returns it; the original diagnostic and low allocator corroborate that same global as the permanent low offset, distinct from temporary usage. Mac Com_Meminfo_f0x3752d reads _hunk_low and passes the unchanged32-bit result at0x37532 to the actual print call0x3753d. Its raw format at0x2429f8 is "%8i low permanent\n". Native passes hunk_low.permanent to the identical signed format. Full Mac low allocator0x382a2–0x38358 corroborates the real field and separate temporary write; it is state-role evidence only.
+
+This supplies the complete read/result/observer that the earlier general state-reference inventory had not established. There is no conversion, missing getter branch, output arithmetic or positivity restriction. Preceding print calls must have returned before this selected operation; their effects and later output are outside its boundary. No standalone exported getter, literal inline ancestry, concurrent mutation timing, allocator/error/overflow equivalence or whole diagnostic certification is inferred. Existing source repairs outside this read are not inherited.
+
+Independent full original/Mac/native review: units/review-provenance-lowgetter25.md; private evidence recon-provenance-lowgetter25.noindex. One equal closure; high temporary hide/show helpers remain unchecked. Source unchanged; no new defect, compilation, tests, CI, replay or runtime verification.
