@@ -155,6 +155,12 @@ void glColorMask(GLboolean r, GLboolean g, GLboolean b, GLboolean a)
 void glDepthMask(GLboolean mask) { (void)mask; unexpectedGL(); }
 void glStencilMask(GLuint mask) { (void)mask; unexpectedGL(); }
 void glClear(GLbitfield mask) { (void)mask; unexpectedGL(); }
+void glDepthFunc(GLenum function) { (void)function; unexpectedGL(); }
+void glEnable(GLenum capability) { (void)capability; unexpectedGL(); }
+void glDisable(GLenum capability) { (void)capability; unexpectedGL(); }
+void glScissor(GLint x, GLint y, GLsizei width, GLsizei height)
+{ (void)x; (void)y; (void)width; (void)height; unexpectedGL(); }
+void *imp__ZN7COpenGL7sOpenGLE;
 
 int main(void)
 {

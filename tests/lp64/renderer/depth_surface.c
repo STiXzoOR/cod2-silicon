@@ -48,9 +48,8 @@ void *imp___ZTV23CVAOPacketFixedFunction = fixtureFixedPacketVtable;
 void *imp___ZTV22CVAOPacketProgrammable = fixtureProgramPacketVtable;
 VAOStatus CVAOPacket_sVAOStatus;
 UINT32 CVAOPacket_sCurrentPacket;
-static Bool fixtureSpecial, fixtureDrawFlag = 1;
+static Bool fixtureSpecial;
 void *imp_g_special = &fixtureSpecial;
-void *imp__ZN7COpenGL9sDrawFlagE = &fixtureDrawFlag;
 extern GLint g_VAOID;
 void *imp_g_VAOID = &g_VAOID;
 #else
