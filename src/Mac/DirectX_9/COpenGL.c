@@ -1164,6 +1164,36 @@ unsigned int COpenGL_ReleaseTextureBinding(const COpenGL *_this, const GLuint *T
 #endif
 }
 
+#if defined(COD2_X64)
+static void COpenGL_DrawBufferNative(GLenum buffer)
+{
+#if COD2_APPLE_SDK
+    extern void MacGL_DrawBuffer(unsigned int);
+    MacGL_DrawBuffer(buffer);
+#else
+    glDrawBuffer(buffer);
+#endif
+}
+
+/* AGL Reset replaced its context. SDL Reset preserves the context to retain
+ * native shader objects, so restore its environment parameters explicitly.
+ * The selected ARB setters upload every write (Mac 0x1b778 and 0x2edf24);
+ * they do not consume the original 96 command-number cache records. */
+static void COpenGL_ResetProgramConstantsNative(void)
+{
+    const GLfloat zero[4] = {0, 0, 0, 0};
+    const GLenum targets[2] = {0x8620, 0x8804};
+    const char *extensions[2] = {"GL_ARB_vertex_program", "GL_ARB_fragment_program"};
+    for (unsigned target = 0; target < 2; ++target) {
+        if (!MacOpenGLUtils_IsGLExtensionSupported(extensions[target])) continue;
+        GLint count = 0;
+        glGetProgramivARB(targets[target], 0x88b5, &count);
+        for (GLint index = 0; index < count; ++index)
+            glProgramEnvParameter4fvARB(targets[target], index, zero);
+    }
+}
+#endif
+
 unsigned int COpenGL_Init(const COpenGL *_this, UINT32 Buffers, UINT32 MaxTextureUnits, UINT32 MaxTextureImageUnits)
 {
 #if MAC_METAL_NATIVE
@@ -1204,10 +1234,10 @@ unsigned int COpenGL_Init(const COpenGL *_this, UINT32 Buffers, UINT32 MaxTextur
     if (gl->supportsBlendSubtract || gl->supportsBlendMinMax) glBlendEquationEXT(0x8006);
     glDisable(0xb44); glEnable(0xb71); glDepthFunc(0x203); glDepthMask(1); glDepthRange(0,1);
     glDisable(0xbd0); glClearColor(0,0,0,0);
-    glDrawBuffer(0x409); glClear(0x4000); glDrawBuffer(0x40a); glClear(0x4000);
-    glDrawBuffer(0x405); glClear(0x4000);
-    if (MacDisplay_IsFullscreen()) { glDrawBuffer(0x404); glClear(0x4000); }
-    glDrawBuffer(Buffers == 1 ? 0x404 : 0x405);
+    COpenGL_DrawBufferNative(0x409); glClear(0x4000); COpenGL_DrawBufferNative(0x40a); glClear(0x4000);
+    COpenGL_DrawBufferNative(0x405); glClear(0x4000);
+    if (MacDisplay_IsFullscreen()) { COpenGL_DrawBufferNative(0x404); glClear(0x4000); }
+    COpenGL_DrawBufferNative(Buffers == 1 ? 0x404 : 0x405);
     glDisable(0xd80); glDisable(0xbe2); glDisable(0xbf2);
     gl->ditherEnabled = 0; glDisable(0xbd0); glDisable(0xb60); glFogi(0xb65, 0x2601); glDisable(0xbf1);
     if (!gl->supportsATIArrayRevComps) glEnable(0xb50);
@@ -1256,6 +1286,7 @@ unsigned int COpenGL_Init(const COpenGL *_this, UINT32 Buffers, UINT32 MaxTextur
     CBaseVA_Reset((const CBaseVA *)&gl->normalArray); COpenGL_DisableArrayNative(&gl->normalArray,0x8075);
     glDisableClientState(0x8079); glDisableClientState(0x8077);
     gl->matrixMode = 0x1700; glMatrixMode(0x1700);
+    COpenGL_ResetProgramConstantsNative();
     glDisable(0xb57); gl->colorMaterialEnabled = 0;
     gl->vertexProgram = 0;
     for (unsigned i = 0; i < 16; ++i) {
