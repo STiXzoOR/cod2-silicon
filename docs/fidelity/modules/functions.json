@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 279,
+      "unchecked": 278,
       "intentional": 3184,
-      "equal": 4783,
+      "equal": 4784,
       "fixed": 1211
     },
     "scopes": {
@@ -197188,8 +197188,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: LinearTrack is referenced at universal/com_math.cpp:441. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up native DiffTrack/DiffTrackAngle multiply target error into the step; these helpers use a constant magnitude step with the error sign. The complete constant-step tracking operation is not the native proportional tracker. Original-address provenance recovered: Linux 1.0 IDB 0x80a1866 maps to retained original Linux 1.3 ELF 0x80a3bca by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked. Fresh full original 1.3 body 0x80a3bca has the 0.001 error tolerance and compares absolute error against absolute step. Fresh complete Mac PM_UpdatePronePitch 0x6cafe uses AngleDelta first, gates on exact zero at 0x6cb75/0x6cc02, compares absolute delta with signed frametime*70 at 0x6cb93/0x6cc20, then adds a signed step or the delta. Native bg_pmove.c preserves this active tracker. Its tolerance, negative-step and scalar input contracts do not identify the complete original tracker; remains unchecked."
+        "status": "equal",
+        "evidence": "Complete consumed scalar constant-rate approach in the actual target8/nonzero-current PM_ViewHeightAdjust phase; equal, no new or inherited defect. Original1.0 0x80a1866 maps to complete1.3 LinearTrack0x80a3bca through RET0x80a3c65 (exclusive0x80a3c66), with full I_fabs provider retained. Target/current/rate/time and one complete scalar return establish intent; original tolerance, x87 arithmetic and absolute-error clamp do not override Mac behavior. Actual PM_CheckDuck pm_type>5 branch stores viewHeightTarget8 at0x6e412 and calls PM_ViewHeightAdjust0x6e41e with same player/pml. Pmove's real positive clamped msec produces pml+0x24 by conversion/multiply0x70f05-0x70f15; raw rate180 and negative branch-180 are independently decoded. The full current float at player+0xf8 is live state, with actual ClientSpawn current60 store0x19332c and player_die prior-type0/1 to6/7 transition0x1c4b5f-69 corroborating real state roles. Whole death processing calls scripts, so no universal callback preservation of60 or guaranteed gameplay lifecycle is claimed. Selected entry remains actual nonzero current. Target0/current0 initialization and standard11/40/60 waypoint interpolation are separate gates, not certified as LinearTrack. Equal-current early return retains complete result. Positive branch0x6d80e-0x6d848 adds180*time then clamps ordered at/above target; tail0x6dbb3-0x6dbd8 adds-180*time and clamps only ordered target>=new result. Initial unordered-zero check JP0x6d84a preserves normal dispatch; unordered arithmetic results remain unclamped. Both paths include result storage, target clamp and common return; native ordered predicates and arithmetic match. The complete persistent output feeds playerStateFields index21 at0x36d0fc (offset0xf8,bits0), real full-word snapshot comparison0x17888a-0x1788a3, and G_GetPlayerViewOrigin ADDSS0x1934e2/store0x1934ea before separate bob. No discarded output, invented angular target, proportional step or hypothetical composition. Existing PM_ViewHeightAdjust primary equal preserved; zero-current and AngleDelta repairs are outside selected scope. No arbitrary exported ABI/rate/time, original Linux result identity, timestamp overflow, FP trap/environment/payload equivalence, concurrent/forged state, whole movement/camera/network or runtime claim. Independent botlib accepted units/review-provenance-lineartrack31.md; fresh complete providers/producers/consumers, raw rates/fields, source hashes and exact retained original references in recon-provenance-lineartrack31.noindex. Report only, no source changes, compilation, tests, CI, full build or replay."
       },
       {
         "id": "linux:universal/com_math.cpp:432:LinearTrackAngle",
