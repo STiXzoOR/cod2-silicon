@@ -178,7 +178,7 @@ HRESULT CDirect3DVertexBuffer_Lock(const CDirect3DVertexBuffer *_this, UINT Offs
         } else if (!(vb->usage & 0x200)) {
             vb->lockPtr = vb->data + OffsetToLock;
             CDirect3DVertexBuffer_WaitFence(_this, vb->lockPtr, vb->lockSize);
-        } else if (Flags & 1) {
+        } else if ((Flags & 1) && vb->staticCache) {
             CStaticCacheInfoNative *cache = vb->staticCache;
             UINT32 end = CBuffer_CacheBlockEnd(OffsetToLock + vb->lockSize);
             for (UINT32 i = OffsetToLock >> 10; i < end; ++i)
