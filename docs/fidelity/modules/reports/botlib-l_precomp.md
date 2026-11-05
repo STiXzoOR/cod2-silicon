@@ -65,3 +65,34 @@ Both assigned production translation units compiled as actual configured arm64 R
 The authoritative Mac `PC_ReadToken` reads lookahead into its separate `newtoken` local at 0xc0531–0xc0545 and dispatches non-string lookahead into the complete inline operation at 0xc0555–0xc05a8. It allocates 0x440 bytes, checks allocation, copies the whole token, clears the next link, increments numtokens, then prepends to source->tokens and resumes the caller at 0xc0480. Allocation failure calls fatal Com_Error(0) with EXE_ERR_OUT_OF_MEMORY at 0xc0696–0xc06a5. Original STABS records the `newtoken` local and the nested token-copy scope in this same owner. Native `PC_ReadToken`, `PC_UnreadSourceToken` and `PC_AllocTokenCopy` implement this complete operation with sizeof(token_t) and typed links.
 
 This closes the emitted wrapper operation through a concrete original caller; it does not invent a standalone exported Mac API or establish `PC_UnreadLastToken`'s cached-token selection. The other 17 identities stay unchecked. All prior resolved verdicts remain unchanged. No source defect or source edit was needed. No compilation, tests, CI or replay ran, and no new runtime verification is claimed. Private original-address and exact-entry evidence is retained in `CoD2-native-decomp/recon-provenance-helpers4.noindex`.
+
+
+## Original caller follow-up — botlib8
+
+Original 1.0 IDB names and bounded source-order gaps now anchor every remaining target in these two modules. Complete original 1.3 bodies were matched or bounded by the original module sequence: 115 functions, with 78 unique masked whole-body matches and no unique-anchor contradiction. Tiny anonymous bodies are not identified by shape alone. The retained original direct-call inventory contains eleven calls into the target group; raw address records added only unwind metadata. Those bounded searches establish provenance, not absence-based equality. Mac remains sole behavior authority.
+
+| Helper | Original 1.0 | Original 1.3 | Verdict |
+|---|---|---|---|
+| `LoadSourceMemory` | 0x804f580 | 0x804f770 | unchecked |
+| `PC_AddBuiltinDefines` | 0x804b1dc | 0x804b3cc | unchecked |
+| `PC_AddDefine` | 0x804c7da | 0x804c9ca | unchecked |
+| `PC_AddGlobalDefine` | 0x804c822 | 0x804ca12 | unchecked |
+| `PC_CheckOpenSourceHandles` | 0x804faec | 0x804fcdc | unchecked |
+| `PC_CheckTokenType` | 0x804f2ee | 0x804f4de | unchecked |
+| `PC_DefineFromString` | 0x804c640 | 0x804c830 | unchecked |
+| `PC_ExpectAnyToken` | 0x804f230 | 0x804f420 | unchecked |
+| `PC_ExpectTokenString` | 0x804eeac | 0x804f09c | unchecked |
+| `PC_ExpectTokenType` | 0x804ef50 | 0x804f140 | unchecked |
+| `PC_FindDefine` | 0x804b0c0 | 0x804b2b0 | unchecked |
+| `PC_RemoveAllGlobalDefines` | 0x804c8aa | 0x804ca9a | unchecked |
+| `PC_RemoveGlobalDefine` | 0x804c866 | 0x804ca56 | unchecked |
+| `PC_SetIncludePath` | 0x804f416 | 0x804f606 | unchecked |
+| `PC_SetPunctuations` | 0x804f486 | 0x804f676 | unchecked |
+| `PC_SkipUntilString` | 0x804f380 | 0x804f570 | unchecked |
+| `PC_UnreadLastToken` | 0x804f3dc | 0x804f5cc | unchecked |
+
+The positive original graph identifies PC_AddDefine and PC_AddGlobalDefine calling PC_DefineFromString, which calls LoadScriptMemory; LoadSourceMemory separately calls that memory loader. This does not identify the complete Mac in-memory parsing/temporary source/definition ownership operation. PC_RemoveGlobalDefine calls the linear PC_FindDefine, confirming that it follows the next-list link rather than the hashed lookup's hashnext link. Existing hashed lookup and global-define copying therefore still cannot close those rows.
+
+PC_UnreadLastToken selects the source's cached token at original field +0x9c before invoking the source-token copy/prepend provider. The settled PC_UnreadToken mapping forwards a caller-supplied token and does not establish this cached selection. PC_SetPunctuations simply stores a caller's pointer at source+0x80, whereas the independently reviewed script punctuation setup operates on a different script object and builds its table. Include-path mutation, builtin-definition allocation/registration, source-handle diagnostics and the complete type/expect/skip wrappers likewise retain their distinct unresolved contracts. All 17 precompiler targets remain unchecked.
+
+No production source change or new defect. No compilation, tests, CI, replays or runtime exercise in this pass. Prior verification entries above describe earlier work only. All previously resolved verdicts remain unchanged. Private exact original/Mac bodies, address maps and actual caller packets are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-botlib8.noindex/`.
