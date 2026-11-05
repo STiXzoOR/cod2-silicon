@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**55/58 reconciled: 53 equal, 2 fixed, 3 unchecked.** Mac 1.3 i386 is the authority. All 40 Mac-backed functions were read, including skeleton composition, hierarchy traversal, duplicate parts, surface masks and both trace paths. The remaining rows were checked against their renamed or inlined Mac counterparts where an identity could be established. Linux supplied names only.
+**55/58 reconciled: 51 equal, 4 fixed, 3 unchecked.** Mac 1.3 i386 is the authority. All 40 Mac-backed functions were read, including skeleton composition, hierarchy traversal, duplicate parts, surface masks and both trace paths. The remaining rows were checked against their renamed or inlined Mac counterparts where an identity could be established. Linux supplied names only.
 
 ## Corrections
 
@@ -98,3 +98,12 @@ __LINE__/#line/assert locations. Only dobj.c was manually compiled for the exist
 stock/CoD2x client/dedicated configurations, all successfully. The new path remains
 unexercised; no tests, CI, full build or replay were run. Evidence and receipts:
 recon-provenance-distance18.noindex and provenance-distance18.compile.json.
+
+
+## Defined high-bit masks in tag setters (serverbits38)
+
+Complete fresh DObjSetLocalTag0x74e5e and DObjSetControlTagAngles0x74f0c bodies use32-bit SHL at0x74ecc/0x74f7a, followed by requested/skeleton tests and animation/control ORs. Native C99 used signed `1 << (boneIndex & 31)`, which lacks a defined result at shift31. The domain is not an invalid index: actual DObjCreate accepts up to127 bones, and XModelGetBoneIndex can return31,63 or95 from valid hierarchy names. Those bit positions require mask0x80000000.
+
+COD2_X64 now computes uint32_t masks and copies their representations into the existing signed locals before the unchanged tests/writes. The exact legacy expressions remain under #else. No field/layout, argument, failure policy, later angle calculation or ownership change was made. Both primary rows change equal→fixed for one shared C-level defect; no observed generated-code or runtime failure is claimed. The same repaired bit phases support the two complete actual server-wrapper mappings documented in server/sv_game_mp.
+
+All four actual stock/CoD2x client/dedicated dobj.c commands compiled successfully at low priority. Exact OFF source and five actual inactive preprocessing outputs, including unsuppressed line/assert expansions, are byte-identical; source has no __LINE__/#line uses. Independent review and receipts: units/review-provenance-serverbits38.md and units/provenance-serverbits38.compile.json; private recon-provenance-serverbits38.noindex. No tests, CI, replay, full build or runtime execution. These paths remain unexercised.

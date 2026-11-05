@@ -801,7 +801,14 @@ qboolean DObjSetLocalTag(const DObj *obj, int *partBits, unsigned int tagName, c
     }
 
     boneIndexHigh = boneIndex >> 5;
+#if defined(COD2_X64)
+    {
+        uint32_t boneMask = (uint32_t)1 << (boneIndex & 0x1f);
+        memcpy(&boneIndexLow, &boneMask, sizeof(boneIndexLow));
+    }
+#else
     boneIndexLow = 1 << (boneIndex & 0x1f);
+#endif
 
     if (!(partBits[boneIndexHigh] & boneIndexLow)) {
         return 0;
@@ -828,7 +835,14 @@ qboolean DObjSetControlTagAngles(const DObj *obj, int *partBits, unsigned int ta
     }
 
     boneIndexHigh = boneIndex >> 5;
+#if defined(COD2_X64)
+    {
+        uint32_t boneMask = (uint32_t)1 << (boneIndex & 0x1f);
+        memcpy(&boneIndexLow, &boneMask, sizeof(boneIndexLow));
+    }
+#else
     boneIndexLow = 1 << (boneIndex & 0x1f);
+#endif
 
     if (!(partBits[boneIndexHigh] & boneIndexLow)) {
         return 0;

@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 268,
+      "unchecked": 266,
       "intentional": 3184,
-      "equal": 4794,
-      "fixed": 1211
+      "equal": 4792,
+      "fixed": 1215
     },
     "scopes": {
       "unassigned": 777,
@@ -173553,8 +173553,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Unchecked after original1.3 identity/body refinement at0x8092292\u20130x80922c4. Complete original loads ent->s.number, resolves Com_GetServerDObj, and forwards partBits/boneIndex to the control-bit setter. Existing DObjSetControlTagAngles includes name lookup and local rotation mutation, so it is not this complete wrapper. Original1.0 CodeRefsTo adds no consumer. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
+        "status": "fixed",
+        "evidence": "Complete original1.3 wrapper 0x8092292\u2013RET0x80922c2 loads ent->s.number, resolves Com_GetServerDObj, passes unchanged partBits/index to full provider 0x80babee\u2013RET0x80bac8e and returns its Boolean; no added null/error guard. Positive actual Mac chain turret_controller0x1bbf17\u2192Com_GetServerDObj0x1bbf1c\u2192DObjSetControlTagAngles0x1bbf45/63/91 (also actual player controller0x182f47) preserves entity/object/partBits roles. The actual tag lookup produces the nonnegative full bone index from model hierarchy names and accumulated bone counts; no hypothetical name adapter. Complete selected Mac phase 0x74f6b\u20130x74f94 computes word/mask, tests requested bit and existing skeleton bit, returns false/branches around angle writes on either rejection, then ORs animation and preceding control bits and consumes true by entering the later tag-write path. No bit output or Boolean outcome omitted. Mac Com_GetServerDObj0x7354c supplies complete zero-map/null or signed-index/native-stride role. Scope: stable live mapped server object, successful actual tag-derived in-range index, backed partBits/skeleton and defined accesses; not whole tag setter, arbitrary index API, lookup failures, unmapped/null-object behavior (original clear requested bit can return before obj dereference), or return timing after later angle-write failure/nonreturn. Later angle arithmetic and its prior repair are outside this mapping. Fixed inherits only the new mask31 repair in this selected complete bit operation. Serverbits38 C99 mask correction: Mac SHL32 at0x74ecc/0x74f7a yields0x80000000 for legitimate bone indices31/63/95 within the accepted127-bone model domain. Native signed 1<<(index&31) lacked a defined C99 result for those bits. COD2_X64 now shifts uint32_t and memcpy-copies its representation into the existing int mask, preserving both gates, bit writes and legacy text. One shared C-level defect across two owners; no observed generated-code/runtime failure. Four actual stock/CoD2x client/dedicated changed-TU configurations compiled and reviewed; OFF source plus five actual inactive preprocessing outputs are byte-identical. No tests/CI/replay/runtime; new paths unexercised. Independently accepted in units/review-provenance-serverbits38.md; exact fresh originals/owners, source hashes and commands retained in recon-provenance-serverbits38.noindex."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:700:SV_DObjSetRotTransIndex",
@@ -173572,8 +173572,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Unchecked after original1.3 identity/body refinement at0x8092260\u20130x8092292. Complete original loads ent->s.number, resolves Com_GetServerDObj, and forwards partBits/boneIndex to the rotation-bit setter. Mac/native tag setters also perform name lookup and local-tag mutation; the underlying bit setter alone does not establish the full server wrapper. Original1.0 CodeRefsTo adds no consumer. Linux supplies identity/intent only; still lacks a complete matching Mac/native operation. Private evidence recon-provenance-storage5.noindex and recon-provenance-storage10.noindex; absence is not a verdict."
+        "status": "fixed",
+        "evidence": "Complete original1.3 wrapper 0x8092260\u2013RET0x8092290 loads ent->s.number, resolves Com_GetServerDObj, passes unchanged partBits/index to full provider 0x80bab64\u2013RET0x80babed and returns its Boolean; no added null/error guard. Positive actual Mac chain G_PlayerController0x1a297c\u2192Com_GetServerDObj0x1a2981\u2192BG_Player_DoControllers0x1a299c\u2192DObjSetLocalTag0x183018 preserves entity/object/partBits roles. The actual tag lookup produces the nonnegative full bone index from model hierarchy names and accumulated bone counts; no hypothetical name adapter. Complete selected Mac phase 0x74ebd\u20130x74ee2 computes word/mask, tests requested bit and existing skeleton bit, returns false/branches around angle writes on either rejection, then ORs animation bits and consumes true by entering the later tag-write path. No bit output or Boolean outcome omitted. Mac Com_GetServerDObj0x7354c supplies complete zero-map/null or signed-index/native-stride role. Scope: stable live mapped server object, successful actual tag-derived in-range index, backed partBits/skeleton and defined accesses; not whole tag setter, arbitrary index API, lookup failures, unmapped/null-object behavior (original clear requested bit can return before obj dereference), or return timing after later angle-write failure/nonreturn. Later angle arithmetic and its prior repair are outside this mapping. Fixed inherits only the new mask31 repair in this selected complete bit operation. Serverbits38 C99 mask correction: Mac SHL32 at0x74ecc/0x74f7a yields0x80000000 for legitimate bone indices31/63/95 within the accepted127-bone model domain. Native signed 1<<(index&31) lacked a defined C99 result for those bits. COD2_X64 now shifts uint32_t and memcpy-copies its representation into the existing int mask, preserving both gates, bit writes and legacy text. One shared C-level defect across two owners; no observed generated-code/runtime failure. Four actual stock/CoD2x client/dedicated changed-TU configurations compiled and reviewed; OFF source plus five actual inactive preprocessing outputs are byte-identical. No tests/CI/replay/runtime; new paths unexercised. Independently accepted in units/review-provenance-serverbits38.md; exact fresh originals/owners, source hashes and commands retained in recon-provenance-serverbits38.noindex."
       },
       {
         "id": "mac:0x0014dcae",
@@ -217254,8 +217254,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "equal",
-        "evidence": "Mac 0x74f0c\u20130x74fbe: inlined model/bone lookup, requested-bit and stale-skeleton gates, control+animation bit writes and zero-translation tag call match."
+        "status": "fixed",
+        "evidence": "Mac 0x74f0c\u20130x74fbe: inlined model/bone lookup, requested-bit and stale-skeleton gates, control+animation bit writes and zero-translation tag call match. Serverbits38 C99 mask correction: Mac SHL32 at0x74ecc/0x74f7a yields0x80000000 for legitimate bone indices31/63/95 within the accepted127-bone model domain. Native signed 1<<(index&31) lacked a defined C99 result for those bits. COD2_X64 now shifts uint32_t and memcpy-copies its representation into the existing int mask, preserving both gates, bit writes and legacy text. One shared C-level defect across two owners; no observed generated-code/runtime failure. Four actual stock/CoD2x client/dedicated changed-TU configurations compiled and reviewed; OFF source plus five actual inactive preprocessing outputs are byte-identical. No tests/CI/replay/runtime; new paths unexercised."
       },
       {
         "id": "linux:xanim/dobj.cpp:1598:DObjSetLocalBoneIndex",
@@ -217304,8 +217304,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "equal",
-        "evidence": "Mac 0x74e5e\u20130x74f0c: inlined bone lookup, requested-bit/stale-skeleton gates, animation bit write, tag argument order and success return match."
+        "status": "fixed",
+        "evidence": "Mac 0x74e5e\u20130x74f0c: inlined bone lookup, requested-bit/stale-skeleton gates, animation bit write, tag argument order and success return match. Serverbits38 C99 mask correction: Mac SHL32 at0x74ecc/0x74f7a yields0x80000000 for legitimate bone indices31/63/95 within the accepted127-bone model domain. Native signed 1<<(index&31) lacked a defined C99 result for those bits. COD2_X64 now shifts uint32_t and memcpy-copies its representation into the existing int mask, preserving both gates, bit writes and legacy text. One shared C-level defect across two owners; no observed generated-code/runtime failure. Four actual stock/CoD2x client/dedicated changed-TU configurations compiled and reviewed; OFF source plus five actual inactive preprocessing outputs are byte-identical. No tests/CI/replay/runtime; new paths unexercised."
       },
       {
         "id": "mac:0x00074cbe",
