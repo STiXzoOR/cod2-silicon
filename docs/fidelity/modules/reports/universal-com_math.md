@@ -2,7 +2,7 @@
 
 Updated 2026-11-06.
 
-**Current: 184/229 reconciled: 153 equal, 31 fixed, 0 intentional; 45 unchecked.**
+**Current: 185/229 reconciled: 154 equal, 31 fixed, 0 intentional; 44 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -374,7 +374,7 @@ This is a positive fixed-alpha adapter and full-word consumer, distinct from
 the earlier ARGB and isolated scalar candidates. It certifies the actual bounded
 consumed operation, not arbitrary float inputs, an exported return-register ABI,
 Linux x87 rounding, overlap, or subsequent use of alpha. No exceptional-source
-defect or runtime occurrence is claimed. ColorBytesFromRGBA remains unchecked:
+defect or runtime occurrence is claimed. At that stage ColorBytesFromRGBA remained unchecked:
 the observed caller fixes alpha1, so it does not establish a variable fourth
 input role even though the complete provider reads all four slots. Independent
 review accepted RGB only in review-provenance-packing20-color.md.
@@ -648,3 +648,14 @@ Private `recon-provenance-quat41.noindex` retains four complete original bodies,
 `BG_Player_DoControllers` controller5 supplies the actual smoothed waist pitch with zero yaw/roll; raw controller table index5 is pelvis, and the exact stored tuple ci+0x438 is forwarded at0x182f47. On the admitted call, unchanged equal owner `DObjSetLocalTagInternal`0x74cbe evaluates all actual double half-degree conversions, float sine/cosine pairs and Euler products, materializing all four quaternion words at0x74de8/0x74dfe/0x74e0f/0x74e20. Actual `G_DObjCalcPose` handler9/11→`G_PlayerController`→same-object `SV_DObjCalcSkel` consumes the complete result in skeletal products/norm. The selected native arithmetic/storage matches Mac. Mac's full evaluation order and zero arithmetic remain authoritative; no simplification to Linux literal zeros, arbitrary exceptional ABI equivalence, or whole setter replacement is claimed. Admission gates and later translation/weight effects are separate, so their unrelated prior repairs are not inherited.
 
 Private `recon-provenance-pitch42.noindex` retains complete originals, fresh Mac containers, positive reset/time/producer/consumer evidence, raw tables/constants and unchanged source hashes. Independent orchestrator review accepted the amended post-warmup state history. One equal closure, no source change or new defect;153equal31fixed45unchecked. QuatFromRoll/Yaw/Inverse remain unresolved. No tests, compilation, CI, build, replay or runtime verification.
+## Complete variable-alpha packed color (rgba41)
+
+ColorBytesFromRGBA is now equal through an actual variable-alpha HUD producer and complete packed-word consumer. The earlier fixed-alpha RGB route did not establish this role. Full original1.3 [0x80a817c,0x80a8202) confirms four scaled/truncated channels and a complete returned color word; its R,G,B,A byte order, x87 precision/control effects and FISTP16 conversion do not override Mac.
+
+The actual non-fading type6 HUD branch CG_GetHudElemInfo0x1e0a95–0x1e0af7 reads four bytes at elem+0x20..23, multiplies each by raw1/255 and stores all four float components. Alpha is dynamic, not forced1. CG_Draw2dHudElems selects the nonzero-alpha image route and passes that actual four-float buffer at0x1e152a. The renderer export bridge is established by raw pointer0x1acd0ed→R_AddCmdDrawStretchPic0xc8208, GetRefAPI's slot0x94 store and CL_InitRef's full export copy. Successful command15 allocation forwards the actual color and command color field to the complete converter.
+
+Mac R_ConvertColorToBytes0xf568c–0xf56e4 performs separate float32 multiply255, truncating CVTTSS2SI and low-byte stores for all four inputs. It writes alpha/red/green/blue into byte offsets0/1/2/3 at0xf56ae/bc/cc/d8. Native preserves that existing Mac ARGB format. This is not a claim of raw Linux RGBA-word equality or a new swizzle. Raw dispatcher entry15 selects RB_StretchPicCmd0xd877c, which reads the entire command word0xd8790 and passes it0xd87d5 to RB_DrawStretchPic. All four normal vertex stores0xd8289/0xd8338/0xd83fa/0xd84b7 and corresponding Dx7 stores consume the unchanged full32-bit color. Native typed command and vertex GfxColor.packed preserve every channel across the existing wider command layout.
+
+Scope is the complete bounded conversion/packed-word role with live disjoint storage, non-fading byte-derived color, nonzero variable alpha, label0, valid material and successful selected command dispatch. The preceding HUD path must have representable coordinate conversions and selected time differences; finite geometry alone is insufficient, and fadeElapsed is evaluated even when fadeTime<=0. Color values from actual bytes are finite and small enough that the native direct float-to-int casts are defined and match CVTT truncation. No arbitrary exceptional float, overlap, null-input API, exported return ABI, original FP-environment, full renderer failure/geometry or GPU-image claim follows. Existing native format, pointer/layout, ownership and renderer adaptations remain intact. The selected packing provider/word flow is unchanged; no unrelated producer/consumer repair is inherited.
+
+Independent review accepted this one equal row in units/review-provenance-rgba41.md. Fresh full original/Mac bodies, raw constants/export/dispatch words, producer gates and source hashes are retained in recon-provenance-rgba41.noindex. No source change, new defect, compilation, tests, CI, replay or runtime verification. Other math and packing rows are unchanged.
