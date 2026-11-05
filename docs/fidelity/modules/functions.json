@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 3890,
-      "intentional": 1620,
-      "equal": 3338,
-      "fixed": 609
+      "unchecked": 3758,
+      "intentional": 1654,
+      "equal": 3420,
+      "fixed": 625
     },
     "scopes": {
       "unassigned": 777,
@@ -10279,8 +10279,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac coalesced __TEXT,__textcoal_nt 0x2ef964 is empty; native Effect_AddVisibility is empty. Exact coalesced body read."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:252:Alloc",
@@ -10298,8 +10298,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only FxMemMgr pool label. Mac primitive creation, e.g. 0x5b099-0x5b0c6, calls global new[] then memset and destructor paths call delete[]. Native typed new[]/memset/delete[] preserves that verified allocation family; no Linux block/free-list allocator is introduced."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:406:ClearFlags",
@@ -10317,8 +10317,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inlined expiration clear of 0x400 at 0x5b90f/0x5ba89 and emitter model-missing clear of 0x10 at 0x5b6c7 against native typed mFlags masks."
       },
       {
         "id": "mac:0x00058d66",
@@ -10348,8 +10348,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x58d66: reverse distance comparison returns +1 only for greater, otherwise -1, including ties."
       },
       {
         "id": "mac:0x00058d06",
@@ -10379,8 +10379,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read exact Mac 0x58d06 sort-group, cluster-rank, material and reverse-distance chain. Retain documented WS12 ABI callback adaptation: full-width nonoverflowing material pointer order, typed native distSq and zero for equal distances."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:557:Cull",
@@ -10398,8 +10398,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac coalesced Flash::Cull 0x2ef96a returns false; native Flash_Cull returns zero. Coalesced body checked."
       },
       {
         "id": "mac:0x00059fec",
@@ -10429,8 +10429,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x59fec, argument stores 0x5a03c-0x5a05e: radius comes from mRadius and final time from mLife; native had swapped these two integers. Draw/calculate order and intensity match. Compiled and reviewed, not exercised in this worker."
       },
       {
         "id": "mac:0x0005a906",
@@ -10460,8 +10460,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read exact Mac 0x5a906: cloud constructor, add/delete path, particle/sequence initialization, positive late-time integration, origin, random-length blend and useLength byte. Preserve typed native sizeof allocation/zeroing, widened pointer/vtable access and C ABI constructor/destructor dispatch; allocator is native new[]/delete[], matching the Mac allocation family rather than Linux per-class pools. Shared particle math corrections are recorded separately."
       },
       {
         "id": "mac:0x0005ac9a",
@@ -10491,8 +10491,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read exact Mac 0x5ac9a: Cylinder constructor, add/delete path, particle/sequence setup, world-to-bolt normal conversion into display axis and origin copy; lateTime is unused. Preserve typed native sizeof allocation/zeroing, widened pointer/vtable access and C ABI constructor/destructor dispatch; allocator is native new[]/delete[], matching the Mac allocation family rather than Linux per-class pools. Shared particle math corrections are recorded separately."
       },
       {
         "id": "mac:0x0005a10c",
@@ -10522,8 +10522,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x5a10c: calculate origin/axis then pass scheduler, primitive template, origin and axis to decal provider."
       },
       {
         "id": "mac:0x0005b372",
@@ -10553,8 +10553,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x5b372: restore angle3,angle2,angle1 and delta3,delta2,delta1 range draw order at 0x5b45f-0x5b501. Read allocation/add/delete, late integration, vectoangles addition, model/effect/density/variance, bolt offset, initial velocity/origin, time and crandom step stores. Retain typed native allocation/pointers. Compiled and reviewed, not exercised in this worker."
       },
       {
         "id": "mac:0x0005aa6c",
@@ -10584,8 +10584,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read exact Mac 0x5aa6c: Light constructor plus Flash vtable, add/delete path, origin-or-zero copy, material, color blend, sort group and Flash_Init. Preserve typed native sizeof allocation/zeroing, widened pointer/vtable access and C ABI constructor/destructor dispatch; allocator is native new[]/delete[], matching the Mac allocation family rather than Linux per-class pools. Shared particle math corrections are recorded separately."
       },
       {
         "id": "mac:0x0005a06a",
@@ -10615,8 +10615,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x5a06a: calculate origin, select play effect and pass bolt info with null axis for bolts, supplied axis with null bolt otherwise. Native offsetof widens FxBoltFrame mBolt correctly."
       },
       {
         "id": "mac:0x0005ab9e",
@@ -10646,8 +10646,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read exact Mac 0x5ab9e: Light constructor, add/delete path, calculated origin and color/size random blend flags. Preserve typed native sizeof allocation/zeroing, widened pointer/vtable access and C ABI constructor/destructor dispatch; allocator is native new[]/delete[], matching the Mac allocation family rather than Linux per-class pools. Shared particle math corrections are recorded separately."
       },
       {
         "id": "mac:0x0005ae00",
@@ -10677,8 +10677,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read exact Mac 0x5ae00: Line constructor, add/delete path, origin/axis and origin2 calculation, endpoint bolt conversion, material and four random blend flags, refractive sort. Preserve typed native sizeof allocation/zeroing, widened pointer/vtable access and C ABI constructor/destructor dispatch; allocator is native new[]/delete[], matching the Mac allocation family rather than Linux per-class pools. Shared particle math corrections are recorded separately."
       },
       {
         "id": "mac:0x0005b6fc",
@@ -10708,8 +10708,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read exact Mac 0x5b6fc: OrientedParticle constructor, add/delete path, particle/sequence setup, positive late-time integration, world-to-bolt normal and origin copies. Preserve typed native sizeof allocation/zeroing, widened pointer/vtable access and C ABI constructor/destructor dispatch; allocator is native new[]/delete[], matching the Mac allocation family rather than Linux per-class pools. Shared particle math corrections are recorded separately."
       },
       {
         "id": "mac:0x0005b08e",
@@ -10739,8 +10739,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read exact Mac 0x5b08e: Particle constructor, add/delete path, particle/sequence setup, positive late-time integration and origin copy. Preserve typed native sizeof allocation/zeroing, widened pointer/vtable access and C ABI constructor/destructor dispatch; allocator is native new[]/delete[], matching the Mac allocation family rather than Linux per-class pools. Shared particle math corrections are recorded separately."
       },
       {
         "id": "mac:0x0005a62a",
@@ -10770,8 +10770,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x5a62a: restore com_statmon-gated StatMon_Warning(3,3000,maxeffects material) at 0x5a89c-0x5a8f9 when allocation exceeds 1800. Read bolt/nonbolt accounting, cluster allocation before failed-slot check, flags/time/template/bounds/FX/channel/bolt stores. Retain full native pointers. Compiled and reviewed; warning branch not exercised here. Fixture linkage adapters supplied by FxPrimitives worker."
       },
       {
         "id": "mac:0x000595ac",
@@ -10801,8 +10801,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read exact Mac 0x595ac: enable gate, due-time linked-list removal, seed, scheduled-count decrement, bolt orientation failure, late time/index and deletion. Retain native typed ScheduledEffect/EffectTemplate pointer strides and explicit origin/axis arguments to CreateEffect."
       },
       {
         "id": "mac:0x0005b1cc",
@@ -10832,8 +10832,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read exact Mac 0x5b1cc: Tail constructor, add/delete path, particle/sequence setup, positive late-time integration, origin-minus-forward endpoint, random length blend and InitEndPoint. Preserve typed native sizeof allocation/zeroing, widened pointer/vtable access and C ABI constructor/destructor dispatch; allocator is native new[]/delete[], matching the Mac allocation family rather than Linux per-class pools. Shared particle math corrections are recorded separately."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1350:FX_AddVisibility",
@@ -10851,8 +10851,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac inline 0x5a257-0x5a409 in FX_DrawAll: zero visibility count, gate on any nonzero sight-block count, visit nonbolt then bolt and call AddVisibility only with 0x1000. Corrected native positive-only gate. Compiled and reviewed, not exercised here."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1287:FX_AllocBolt",
@@ -10870,8 +10870,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5a652-0x5a671 and 0x5a87c-0x5a897: increment shared count, signed <=1800, undo on overflow, increment bolt count and return new pointer slot. Native typed pointer stride checked."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1302:FX_AllocNonBolt",
@@ -10889,8 +10889,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5a7d8-0x5a819: increment shared count, signed <=1800, undo on overflow, increment nonbolt count and return new pointer slot. Native typed pointer stride checked."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1964:FX_ApplyLateStart",
@@ -10908,8 +10908,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inlined positive-lateTime integration at 0x5b123-0x5b185 and cloud/tail/emitter/oriented callers: binary32 dt=milliseconds*0.001, IntegrateTotalVelocity(milliseconds), then component multiply/add to origin. Native order matches."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1471:FX_ArchiveEffect",
@@ -10928,7 +10928,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only save-side helper; no Mac executable identity or native save-side caller found. Cannot establish write/type/endtime sequence against Mac."
       },
       {
         "id": "mac:0x00058ea2",
@@ -10958,8 +10958,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read exact Mac 0x58ea2: trace/nontrace, origin2 world/axis bits, z-y-x draw order, 16384 trace distance, fraction interpolation and impact effect. Retain native normal-to-full-axis adapter for the typed five-argument FxScheduler_PlayEffect provider; Mac used the direction overload."
       },
       {
         "id": "mac:0x00059856",
@@ -10989,8 +10989,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x59856; corrected cylinder axial multiplication grouping (0x599df), right-axis cross operand order (0x59b60), and binary64 degrees-to-radians multiplication before binary32 rounding (0x59bba/0x59c06, literal 0x340c28). Read all shape/relative/bolt branches; retain native explicit origin argument. Compiled and reviewed, not exercised in this worker."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1756:FX_CollectVisibleBolt",
@@ -11008,8 +11008,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inlined 0x5a183-0x5a210: cull from saved index to private count, optional virtual Cull, effect+distance append, and advance cull count. Native typed SortedEffect stride preserves pointer layout."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1801:FX_CollectVisibleNonBolt",
@@ -11027,8 +11027,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inlined 0x5a160-0x5a17e/0x5a40b-0x5a489: camera-valid gate, cull from saved index to private count, optional virtual Cull, append distance/effect and advance count."
       },
       {
         "id": "mac:0x0005a154",
@@ -11058,8 +11058,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x5a154: restore nonzero rather than positive sight-block count gate at 0x5a257-0x5a268. Read cull/collect/merge, visibility, cluster sort, draw and debug flows; retain WS12 native pointer/SortedEffect strides and comparator adaptation. Compiled and reviewed, not exercised in this worker."
       },
       {
         "id": "mac:0x0005c37e",
@@ -11089,8 +11089,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x5c37e: start newly-added updates at previous private counts (0x5c4f2/0x5c5a7), avoiding a second update of survivors; restore both newly-removed free/cluster passes (0x5c59b/0x5c650) before drawing. Read existing removed cleanup, scheduler dispatch, time/update/death/sight branches and tail DrawAll. Compiled and reviewed, not exercised in this worker."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1282:FX_EffectLimitReached",
@@ -11108,8 +11108,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux named empty helper corresponds to Mac max-effects warning block 0x5a89c-0x5a8f9. Native now checks com_statmon and emits StatMon_Warning(3,3000,maxeffects material). Compiled and reviewed, branch not exercised here."
       },
       {
         "id": "mac:0x0005cff2",
@@ -11139,8 +11139,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x5cff2: both effect lists deleted with null checks, all five counts reset, optional scheduler Clean with low-byte remove flag, and template-removal-gated free/null of scheduler and slot."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1410:FX_FreeRemovedBolt",
@@ -11158,8 +11158,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac inlined cluster decrement/remap, destructor, active count and compaction at 0x5bc2b-0x5bd74 and 0x5c650-0x5c789. Restored missing newly-removed pass in FX_DrawScheduledEffects using the same contract. Compiled and reviewed, not exercised here."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1426:FX_FreeRemovedNonBolt",
@@ -11177,8 +11177,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac inlined cluster decrement/remap, destructor, active count and compaction at 0x5c201-0x5c34a and 0x5c7e9-0x5c916. Restored missing newly-removed pass in FX_DrawScheduledEffects. Compiled and reviewed, not exercised here."
       },
       {
         "id": "mac:0x00059230",
@@ -11208,8 +11208,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read exact Mac 0x59230: entity/bone validation, quaternion products and matrix order, translated origin and three debug axes. Retain native packing of origin-first CG orientation into Mac axis-first 4x3 scratch; typed native orientation output matches provider contract."
       },
       {
         "id": "mac:0x00058dfc",
@@ -11239,8 +11239,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x58dfc: first cluster within strict 131072 squared-distance threshold gains reference; otherwise copy origin, refcount=1, increment count and return old index. Checked binary32 literal at 0x326240."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1317:FX_GetEffectVisibility",
@@ -11259,7 +11259,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only active-list visibility algorithm; no Mac entry/caller identified. FX_GetServerVisibility is a different array-based contract and does not establish this row."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1503:FX_GetPrimTemplate",
@@ -11277,8 +11277,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac inline 0x5cbc1-0x5cbd6: signed primitive-index upper bound then native-pointer lookup/null check. Retain the existing native null-parent template guard; Mac directly dereferences the parent. Valid parent/index selection matches."
       },
       {
         "id": "mac:0x000596c6",
@@ -11308,8 +11308,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x596c6: empty/min-length exits, normalized segment, half-length projection bounds, squared radial rejection and ordered visibility product. Native 20-byte EffectVisInfo layout checked."
       },
       {
         "id": "mac:0x0005ce7a",
@@ -11339,8 +11339,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read exact Mac 0x5ce7a: one-time count reset, kill/clean/free, renderer flag, scheduler construction, template initialization, scheduler slot and helper init. Preserve native sizeof(FxScheduler)=24 allocation and typed pointers versus i386 12; same Z_MallocInternal/Z_FreeInternal family."
       },
       {
         "id": "mac:0x00059d78",
@@ -11370,8 +11370,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x59d78; explicitly draw each random velocity triplet z,y,x before passing x,y,z, matching 0x59dd6-0x59e27 and 0x59ec3-0x59f14 rather than C argument evaluation order. Read blend flags, gravity/wind, origin/axis, scale, elasticity and rotation stores. Compiled and reviewed, not exercised in this worker."
       },
       {
         "id": "mac:0x00058cf6",
@@ -11401,8 +11401,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x58cf6: resets g_effectVisArrayCount to zero."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1186:FX_KillAllEffects",
@@ -11420,8 +11420,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inlined kill in 0x5cffe-0x5d084 and native FX_Free: both lists delete nonnull objects then reset bolt/nonbolt/active/sight/cluster counts."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1262:FX_RemoveBolt",
@@ -11439,8 +11439,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inlined remove in 0x5ba93-0x5bad6 and rewind 0x5bdea-0x5be21: decrement private count, swap tail with removed slot, optionally Die, then decrement sight count. Native branches match."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1157:FX_RemoveCluster",
@@ -11458,8 +11458,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5bca6-0x5bd74: reference decrement in caller, delete-at-zero, last cluster moved into hole, remap last ID across both active lists. Native helper plus caller decrement matches combined behavior."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1253:FX_RemoveEffect",
@@ -11477,8 +11477,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5b944-0x5b95c and rewind remove branches: optional Die precedes mFlags 0x1000 sight-count decrement. Native checked for both Die=true and rewind false."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1272:FX_RemoveNonBolt",
@@ -11496,8 +11496,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inlined remove in 0x5b919-0x5b95c and rewind 0x5bfaf-0x5bfe6: decrement private count, swap tail with removed slot, optionally Die, then sight count. Native branches match."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1215:FX_Reset",
@@ -11515,8 +11515,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inlined restore reset 0x5ca64-0x5cb0f: delete both lists, reset five counts and Clean(false,NULL) when scheduler exists. Native FX_Restore performs same reset."
       },
       {
         "id": "mac:0x0005ca50",
@@ -11546,8 +11546,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x5ca50: decoded 13 jump-table words at 0x328c80; restored type mapping 1 particle,2 line,3 tail,4 cylinder,5 emitter,7 oriented,9 light,11 flash,12 cloud, others skip; add Flash vtable and invalid-template destructor; use native sizeof allocations and 32-byte typed FxArchive instead of arch[16]; return memFile->bytesUsed at 0x5cc42, preserving int API. Read clear/clean/archive/fixup/list logic. Retain existing null-template guard; malformed nonfatal-overflow reads remain outside equality. Compiled and reviewed, not exercised here."
       },
       {
         "id": "mac:0x0005bda8",
@@ -11577,8 +11577,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x5bda8: restore scheduler Clean(false,NULL) at 0x5c13b-0x5c155 after both lists are filtered/freed. Read strict future-start filtering without Die, sight count, cluster reference/remap, destructor and active count/list compaction. Compiled and reviewed, not exercised in this worker."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1479:FX_Save",
@@ -11597,7 +11597,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only named save entry; no Mac executable identity and no native FX_Save body/callers found. Not implemented from Linux claims."
       },
       {
         "id": "mac:0x0005a4fc",
@@ -11627,8 +11627,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x5a4fc: null/single-image defaults, fixed/random/batch start modes, fixed-fps/fit-life rates, loop fields, material and refractive sort group. Division order and irand(0,count) match."
       },
       {
         "id": "mac:0x00058d84",
@@ -11658,8 +11658,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x58d84: zero sort group, nonnull material and refractive query select -1."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1655:FX_SortEffects",
@@ -11677,8 +11677,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac inline FX_DrawAll 0x5a26e-0x5a31b/0x5a4b2-0x5a4f7: cluster-distance sort and rank map followed by effect sort, then clear temporary rank pointer. Retain WS12 native SortedEffect stride16/full-width material comparator and equal-distance zero result."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1118:FX_SwapBolt",
@@ -11696,8 +11696,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read three pointer moves at Mac 0x5bdf3-0x5be04 and native bolt removal/rewind swaps; typed pointer indexing replaces four-byte stride."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1128:FX_SwapNonBolt",
@@ -11715,8 +11715,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read three pointer moves at Mac 0x5bfba-0x5bfc9 and native nonbolt removal/rewind swaps; typed pointer indexing replaces four-byte stride."
       },
       {
         "id": "mac:0x0005bb8c",
@@ -11746,8 +11746,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x5bb8c: active-to-private/initial snapshots, expiration/update, swap and Die order, sight count, cluster reference decrement/remap across both lists, destructor and active-list compaction. Native pointer-sized indexing preserves the loop contract."
       },
       {
         "id": "mac:0x0005c162",
@@ -11777,8 +11777,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x5c162: active-to-private/initial snapshots, expiration/update, swap and Die order, sight count, cluster reference decrement/remap across both lists, destructor and active-list compaction. Native pointer-sized indexing preserves the loop contract."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1729:FX_UpdateNewBolt",
@@ -11796,8 +11796,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac inline 0x5c5a7-0x5c650 starts at previous private bolt count, snapshots active count, updates/removes new entries then frees removed range. Native now preserves that start and restores free pass. Compiled and reviewed, not exercised here."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1774:FX_UpdateNewNonBolt",
@@ -11815,8 +11815,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac inline 0x5c4f2-0x5c5a7 starts at previous private nonbolt count, snapshots active count, updates/removes new entries then frees removed range. Native now preserves that start and restores free pass. Compiled and reviewed, not exercised here."
       },
       {
         "id": "mac:0x0005ba24",
@@ -11846,8 +11846,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x5ba24: enable/reset, private-count update loop, strict time>end expiration and clear 0x400, swap/death/sight-count removal, then cull and collect. Bolt collection is unconditional on camera validity."
       },
       {
         "id": "mac:0x0005b8aa",
@@ -11877,8 +11877,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x5b8aa: enable/reset, private-count update loop, strict time>end expiration and clear 0x400, swap/death/sight-count removal, then cull and collect. Nonbolt collection requires camera validity."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1181:FX_UtilUnused",
@@ -11897,7 +11897,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only empty placeholder with explicitly unknown original name; no Mac identity found. An empty Linux body is not equality evidence."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:362:Get",
@@ -11915,8 +11915,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac FxBoltFramePtr inline raw frame loads in 0x5a08e-0x5a09b and 0x59d4b; native uses full-width boltFrame.value."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:483:GetDuration",
@@ -11934,8 +11934,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac mTimeEnd-mTimeStart at 0x5a982-0x5a988/0x5b107-0x5b10d; native killTime subtraction matches."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:470:GetFx",
@@ -11953,8 +11953,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac parent effect-template load at 0x5cbc4; native restores typed impactEffect parent pointer."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:475:GetPrimIndex",
@@ -11972,8 +11972,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac primitive-index load at 0x5cbc1; native field_0x38 access matches."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:465:GetTimeStart",
@@ -11991,8 +11991,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac rewind signed comparison against mTimeStart at 0x5bdde/0x5bfa3; native removes only starts strictly after rewind time."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:973:GetUsedSize",
@@ -12010,8 +12010,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac inline 0x5cc42-0x5cc45 returns arch.memFile->bytesUsed. Native FX_Restore now dereferences the native MemoryFile field instead of reinterpreting the archive pointer as int. Int API unchanged; compiled and reviewed, not exercised here."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:392:GetVisibility",
@@ -12029,8 +12029,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac coalesced __TEXT,__textcoal_nt 0x2ef95c returns 1.0; native Effect_GetVisibility returns 1.0. Exact coalesced body read."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:357:IsValid",
@@ -12048,8 +12048,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac FxBoltFramePtr inline null tests in 0x5a08e-0x5a093 and 0x59d4b; native checks full-width boltFrame.value."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:885:RandomizeEmitDist",
@@ -12067,8 +12067,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5b651-0x5b671: emitStep=stepBase+crandom()*stepVariance, stored after emit time. Native arithmetic and state stores match."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:298:ReadByte",
@@ -12086,8 +12086,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac restore type read at 0x5cb40-0x5cb58: ReadData into byte local with count1, zero terminates. Native same call/count/byte contract; malformed nonfatal-overflow archive contents not certified."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:306:ReadInt",
@@ -12105,8 +12105,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac restore discard-size read at 0x5cb60-0x5cb6f: ReadData count4 into local. Native count4 int read matches."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:640:SetAlphaBlendFactor",
@@ -12124,8 +12124,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x59fb3: particle blendWeight[1] store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:900:SetAngleDelta",
@@ -12143,8 +12143,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5b5f0-0x5b612: emitter angle-delta triplet stores; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:895:SetAngles",
@@ -12162,8 +12162,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5b5c9-0x5b5eb: emitter angle triplet stores; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:864:SetAxis",
@@ -12181,8 +12181,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5ad66-0x5ad75/0x5add2-0x5ade4: cylinder forward normal to mRefEnt.axis[0] with optional bolt transform; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:935:SetBoltOffset",
@@ -12200,8 +12200,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5b550-0x5b561/0x5b697-0x5b6e1: emitter bind offset from bolt orientation origin or zeros; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:522:SetColorBlendFactor",
@@ -12219,8 +12219,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5ac75/0x59fdb: light color blend or particle blendWeight[0] store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:635:SetColorBlendFactor",
@@ -12238,8 +12238,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5ac75/0x59fdb: light color blend or particle blendWeight[0] store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:450:SetDeathFx",
@@ -12257,8 +12257,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5a78b-0x5a796: death media handle result to death-event field (native emitEffect name); compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:605:SetElasticity",
@@ -12276,8 +12276,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x59e99-0x59ea1: elasticity range result store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:910:SetEmitDistBase",
@@ -12295,8 +12295,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5b629-0x5b62e: emitter base-distance store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:915:SetEmitDistRand",
@@ -12314,8 +12314,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5b636-0x5b63b: emitter random-distance store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:905:SetEmitFx",
@@ -12333,8 +12333,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5b620-0x5b623: emitter child effect pointer store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:925:SetEmitOrigin",
@@ -12352,8 +12352,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5b593-0x5b5ab: emitter last-origin triplet store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:920:SetEmitTime",
@@ -12371,8 +12371,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5b643-0x5b64b: emitter last-time store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:930:SetEmitVelocity",
@@ -12390,8 +12390,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5b5ae-0x5b5c6: emitter initial velocity triplet store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:763:SetEndpoint",
@@ -12409,8 +12409,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5aef5-0x5af07/0x5b305-0x5b312: line or tail endpoint component stores; native Particle-sized base offset checked; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:827:SetEndpoint",
@@ -12428,8 +12428,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5aef5-0x5af07/0x5b305-0x5b312: line or tail endpoint component stores; native Particle-sized base offset checked; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:435:SetFlags",
@@ -12447,8 +12447,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5a6e7-0x5a6ed: mFlags = mAttributeFlags; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:620:SetFrameRate",
@@ -12466,8 +12466,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5a575: sequence rate store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:455:SetFx",
@@ -12485,8 +12485,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5a728-0x5a72d: parent EffectTemplate pointer copy to native impactEffect; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:595:SetGravity",
@@ -12504,8 +12504,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x59e35-0x59e3d: gravity range result store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:440:SetGroupFlags",
@@ -12523,8 +12523,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5a736-0x5a73c: group flags copy; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:445:SetImpactFx",
@@ -12542,8 +12542,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5a799-0x5a7a4: impact media handle result to impact-event field (native deathEffect name); compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:625:SetLoopMode",
@@ -12561,8 +12561,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5a57d-0x5a583: sequence loop mode store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:630:SetLoopTimes",
@@ -12580,8 +12580,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5a589-0x5a58f: sequence loop count store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:566:SetMaterial",
@@ -12599,8 +12599,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5aaff/0x5a595: native mRefEnt.customMaterial full-width pointer store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:590:SetMaterial",
@@ -12618,8 +12618,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5aaff/0x5a595: native mRefEnt.customMaterial full-width pointer store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:419:SetMaxs",
@@ -12637,8 +12637,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5a765-0x5a788/0x5a8cf: three max components with null-source zero path; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:411:SetMins",
@@ -12656,8 +12656,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5a73f-0x5a762/0x5a8b3: three min components with null-source zero path; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:890:SetModel",
@@ -12675,8 +12675,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5b617-0x5b61a: emitter full-width model pointer store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:610:SetNonUniformScale",
@@ -12694,8 +12694,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x59e80-0x59e8a: nonuniform-scale byte store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:794:SetNormal",
@@ -12713,8 +12713,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5b811-0x5b826/0x5b877-0x5b88f: oriented-particle normal copy with optional bolt transform; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:427:SetOrigin",
@@ -12732,8 +12732,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5aaeb-0x5aafc/0x5ab58: three origin components or null-source zeros; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:460:SetPrimIndex",
@@ -12751,8 +12751,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5a730-0x5a733: parent primitive index copy; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:600:SetRotation",
@@ -12770,8 +12770,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x59eb0-0x59eb8: render rotation range result store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:655:SetRotationBlendFactor",
@@ -12789,8 +12789,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x59f3b: particle blendWeight[4] store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:650:SetSize2BlendFactor",
@@ -12808,8 +12808,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x59f63: particle blendWeight[3] store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:527:SetSizeBlendFactor",
@@ -12827,8 +12827,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5ac54/0x59f8b: light size blend or particle blendWeight[2] store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:645:SetSizeBlendFactor",
@@ -12846,8 +12846,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5ac54/0x59f8b: light size blend or particle blendWeight[2] store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:615:SetStartFrame",
@@ -12865,8 +12865,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x5a56f: sequence start-frame store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:660:SetWindModifier",
@@ -12884,8 +12884,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline 0x59e4c-0x59e54: wind range result store; compared native named field writes in FxUtil. Linux used only to identify the accessor name; no standalone Mac accessor body claimed."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:314:WriteByte",
@@ -12904,7 +12904,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only save-side inline; no verified Mac save writer identity/callsite found. Native archive WriteData provider alone cannot prove this missing callsite."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:319:WriteInt",
@@ -12923,7 +12923,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only save-side inline; no verified Mac save writer identity/callsite found. Native archive WriteData provider alone cannot prove this missing callsite."
       },
       {
         "id": "mac:0x00058de8",
@@ -12944,8 +12944,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x58de8 and target 0x58dc4: constructor dispatch with init=1/priority=65535 calls FxHelper constructor. Native C constructor folds this sole live dispatch."
       },
       {
         "id": "mac:0x00058dc4",
@@ -12966,8 +12966,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac address 0x58dc4-0x58de7 in bounded otool output; duplicate mangled symbol causes otool -p to select unrelated 0x848a. Init=1/priority=65535 dispatch calls FxHelper constructor; native C constructor folds the sole live caller at 0x58de8."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1008:operator delete",
@@ -12985,8 +12985,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac scheduler allocation at 0x5cf9b-0x5cfac and free at 0x5d0b6-0x5d0bb. Native sizeof(FxScheduler)=24 replaces i38612; Z_MallocInternal/Z_FreeInternal family is preserved. C ABI wrapper folds the Linux-labeled class operator."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:537:operator delete",
@@ -13004,8 +13004,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:670:operator delete",
@@ -13023,8 +13023,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:736:operator delete",
@@ -13042,8 +13042,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:773:operator delete",
@@ -13061,8 +13061,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:804:operator delete",
@@ -13080,8 +13080,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:837:operator delete",
@@ -13099,8 +13099,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:874:operator delete",
@@ -13118,8 +13118,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:945:operator delete",
@@ -13137,8 +13137,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:1003:operator new",
@@ -13156,8 +13156,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac scheduler allocation at 0x5cf9b-0x5cfac and free at 0x5d0b6-0x5d0bb. Native sizeof(FxScheduler)=24 replaces i38612; Z_MallocInternal/Z_FreeInternal family is preserved. C ABI wrapper folds the Linux-labeled class operator."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:532:operator new",
@@ -13175,8 +13175,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:665:operator new",
@@ -13194,8 +13194,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:731:operator new",
@@ -13213,8 +13213,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:768:operator new",
@@ -13232,8 +13232,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:799:operator new",
@@ -13251,8 +13251,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:832:operator new",
@@ -13270,8 +13270,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:869:operator new",
@@ -13289,8 +13289,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       },
       {
         "id": "linux:EffectsCore/FxUtil.cpp:940:operator new",
@@ -13308,8 +13308,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac primitive allocation/zeroing in the corresponding FX_Add* entry (0x5a906-0x5b8a9) and delete[] cleanup/destructor family. Native typed sizeof new[]/memset/delete[] replaces Linux per-class FxMemMgr pool wrappers, preserving verified Mac allocation family and full native vtables/pointers. No Linux-only pool layout imported."
       }
     ],
     "EffectsCore/Fxexport": [
