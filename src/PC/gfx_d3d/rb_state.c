@@ -978,8 +978,13 @@ void RB_UpdateViewportConstants(void)
         viewport = backEnd.sceneViewport;
     }
 
+#if defined(COD2_X64)
+    halfViewportWidth = (invRenderTargetWidth * (float)viewport.width) * 0.5f;
+    halfViewportHeight = (invRenderTargetHeight * (float)viewport.height) * 0.5f;
+#else
     halfViewportWidth = 0.5f * viewport.width * invRenderTargetWidth;
     halfViewportHeight = 0.5f * viewport.height * invRenderTargetHeight;
+#endif
     viewportCenterX = viewport.x * invRenderTargetWidth + halfViewportWidth;
     viewportCenterY = viewport.y * invRenderTargetHeight + halfViewportHeight;
 

@@ -37,7 +37,33 @@ void CFence_CFence(const CFence *_this, const void *Start, UINT32 SizeInBytes, U
     fence->start = Start;
     fence->sizeInBytes = SizeInBytes;
     fence->frameCount = FrameCount;
+#if defined(COD2_X64)
+    if (CFence_sUnusedFenceIDs.begin == CFence_sUnusedFenceIDs.end) {
+        size_t used = CFence_sUnusedFenceIDs.begin
+            ? (size_t)(CFence_sUnusedFenceIDs.end - CFence_sUnusedFenceIDs.begin) : 0;
+        size_t capacity = CFence_sUnusedFenceIDs.begin
+            ? (size_t)(CFence_sUnusedFenceIDs.capacity - CFence_sUnusedFenceIDs.begin) : 0;
+        if (capacity < used + 256) {
+            GLuint *ids = (GLuint *)realloc(CFence_sUnusedFenceIDs.begin,
+                                            (used + 256) * sizeof(*ids));
+            if (!ids)
+                abort();
+            CFence_sUnusedFenceIDs.begin = ids;
+            CFence_sUnusedFenceIDs.end = ids + used;
+            CFence_sUnusedFenceIDs.capacity = ids + used + 256;
+        }
+        for (UINT32 i = 0; i < 256; ++i) {
+            GLuint id;
+            glGenFencesAPPLE(1, &id);
+            *CFence_sUnusedFenceIDs.end++ = id;
+        }
+    }
+    fence->id = CFence_sUnusedFenceIDs.end[-1];
+    glSetFenceAPPLE(fence->id);
+    --CFence_sUnusedFenceIDs.end;
+#else
     fence->id = 0;
+#endif
 
 }
 
@@ -50,12 +76,19 @@ void CFence_Shutdown(void)
 #endif
 
 
+#if defined(COD2_X64)
+    for (GLuint *id = CFence_sUnusedFenceIDs.begin;
+         id != CFence_sUnusedFenceIDs.end; ++id)
+        glDeleteFencesAPPLE(1, id);
+    CFence_sUnusedFenceIDs.end = CFence_sUnusedFenceIDs.begin;
+#else
     if (CFence_sUnusedFenceIDs.begin) {
         free(CFence_sUnusedFenceIDs.begin);
     }
     CFence_sUnusedFenceIDs.begin = NULL;
     CFence_sUnusedFenceIDs.end = NULL;
     CFence_sUnusedFenceIDs.capacity = NULL;
+#endif
 }
 
 static void __static_initialization_and_destruction_0(int __initialize_p, int __priority)
