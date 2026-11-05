@@ -4,6 +4,9 @@
 
 #if defined(COD2_X64)
 #include "lp64_gl_state.h"
+#if defined(__APPLE__)
+#include "platform/macos_exception_bridge.h"
+#endif
 #else
 typedef struct {
     void **vtable;
@@ -421,6 +424,94 @@ static size_t UInt16Deque_Size(const UInt16Deque *deque)
         (deque->start.last - deque->start.current);
 }
 
+#if defined(__APPLE__)
+typedef struct {
+    TriangleNode triangles;
+    UInt16Deque fifo;
+    UINT16 *destination;
+    const UINT16 *source;
+    UINT32 count;
+    int fifoConstructed;
+} OptimizeContext;
+
+static void Optimize_Cleanup(void *opaque)
+{
+    OptimizeContext *context = opaque;
+    TriangleNode *node;
+    if (context->fifoConstructed)
+        ZNSt11_Deque_baseItSaItEED2Ev(&context->fifo);
+    node = context->triangles.next;
+    while (node != &context->triangles) {
+        TriangleNode *next = node->next;
+        __ZdlPv(node);
+        node = next;
+    }
+}
+
+static void Optimize_Body(void *opaque)
+{
+    OptimizeContext *context = opaque;
+    TriangleNode *triangles = &context->triangles, *node;
+    UInt16Deque *fifo = &context->fifo;
+    UINT16 *pDst = context->destination;
+    const UINT16 *pSrc = context->source;
+    UINT32 NumIndices = context->count;
+    Tuple triangle;
+    UINT32 i, j;
+
+    for (i = 0; i < NumIndices; i += 3) {
+        node = __Znwm(sizeof(*node));
+        node->triangle = (Tuple){ { pSrc[i], pSrc[i + 1], pSrc[i + 2] }, 0 };
+        __ZNSt15_List_node_base4hookEPS_(node, triangles);
+    }
+    ZNSt11_Deque_baseItSaItEE17_M_initialize_mapEm(fifo, 0);
+    context->fifoConstructed = 1;
+    node = triangles->next;
+    triangle = node->triangle;
+    __ZNSt15_List_node_base6unhookEv(node);
+    __ZdlPv(node);
+    /* Retail stores the whole triangle before any FIFO allocation can throw. */
+    pDst[0] = triangle.v[0];
+    pDst[1] = triangle.v[1];
+    pDst[2] = triangle.v[2];
+    pDst += 3;
+    for (j = 0; j < 3; ++j) {
+        UInt16Deque_PushBack(fifo, triangle.v[j]);
+    }
+    /* Preserve the otherwise unused remaining-tuple walk at 0x112dd8. */
+    for (node = triangles->next; node != triangles; node = node->next)
+        triangle = node->triangle;
+    for (i = 1; i < NumIndices / 3; ++i) {
+        triangle = ChooseAndRemoveBestTriangle(fifo, triangles);
+        pDst[0] = triangle.v[0];
+        pDst[1] = triangle.v[1];
+        pDst[2] = triangle.v[2];
+        pDst += 3;
+        for (j = 0; j < 3; ++j) {
+            UInt16Deque_PushBack(fifo, triangle.v[j]);
+            if (UInt16Deque_Size(fifo) > 10)
+                UInt16Deque_PopFront(fifo);
+        }
+    }
+    ZNSt5dequeItSaItEE5clearEv(fifo);
+}
+
+void Optimize(UINT16 *pDst, const UINT16 *pSrc, UINT32 NumIndices)
+{
+    OptimizeContext context = { 0 };
+    /* Keep the established defined handling of empty or malformed input. */
+    if (NumIndices == 0 || NumIndices % 3 != 0) {
+        if (NumIndices)
+            memmove(pDst, pSrc, (size_t)NumIndices * sizeof(*pDst));
+        return;
+    }
+    context.triangles.next = context.triangles.prev = &context.triangles;
+    context.destination = pDst;
+    context.source = pSrc;
+    context.count = NumIndices;
+    Cod2Mac_RunWithCleanup(Optimize_Body, Optimize_Cleanup, &context);
+}
+#else
 void Optimize(UINT16 *pDst, const UINT16 *pSrc, UINT32 NumIndices)
 {
     TriangleNode triangles, *node;
@@ -466,6 +557,7 @@ void Optimize(UINT16 *pDst, const UINT16 *pSrc, UINT32 NumIndices)
     ZNSt5dequeItSaItEE5clearEv(&fifo);
     ZNSt11_Deque_baseItSaItEED2Ev(&fifo);
 }
+#endif
 
 void ZNSt11_Deque_baseItSaItEED2Ev(UInt16Deque *deque)
 {
@@ -518,6 +610,56 @@ void ZNSt5dequeItSaItEE5clearEv(UInt16Deque *deque)
     deque->finish = deque->start;
 }
 
+#if defined(__APPLE__)
+typedef struct {
+    UInt16Deque *deque;
+    UINT32 count;
+    UINT16 **map;
+    UINT16 **start;
+    UINT16 **next;
+    int constructed;
+} UInt16DequeInitContext;
+
+static void UInt16Deque_InitCleanup(void *opaque)
+{
+    UInt16DequeInitContext *context = opaque;
+    if (!context->constructed && context->map) {
+        UINT16 **node;
+        for (node = context->start; node != context->next; ++node)
+            __ZdlPv(*node);
+        __ZdlPv(context->map);
+        context->deque->map = NULL;
+        context->deque->mapSize = 0;
+    }
+}
+
+static void UInt16Deque_InitBody(void *opaque)
+{
+    UInt16DequeInitContext *context = opaque;
+    UInt16Deque *deque = context->deque;
+    UINT32 count = context->count;
+    UINT32 nodes = count / 256 + 1;
+    UINT16 **finish;
+    deque->mapSize = nodes + 2 > 8 ? nodes + 2 : 8;
+    context->map = __Znwm((size_t)deque->mapSize * sizeof(*deque->map));
+    deque->map = context->map;
+    context->start = deque->map + (deque->mapSize - nodes) / 2;
+    finish = context->start + nodes;
+    for (context->next = context->start; context->next != finish; ++context->next)
+        *context->next = __Znwm(256 * sizeof(UINT16));
+    UInt16Deque_SetNode(&deque->start, context->start);
+    UInt16Deque_SetNode(&deque->finish, finish - 1);
+    deque->start.current = deque->start.first;
+    deque->finish.current = deque->finish.first + count % 256;
+    context->constructed = 1;
+}
+
+void ZNSt11_Deque_baseItSaItEE17_M_initialize_mapEm(UInt16Deque *deque, UINT32 count)
+{
+    UInt16DequeInitContext context = { .deque = deque, .count = count };
+    Cod2Mac_RunWithCleanup(UInt16Deque_InitBody, UInt16Deque_InitCleanup, &context);
+}
+#else
 void ZNSt11_Deque_baseItSaItEE17_M_initialize_mapEm(UInt16Deque *deque, UINT32 count)
 {
     UINT32 nodes = count / 256 + 1;
@@ -533,6 +675,7 @@ void ZNSt11_Deque_baseItSaItEE17_M_initialize_mapEm(UInt16Deque *deque, UINT32 c
     deque->start.current = deque->start.first;
     deque->finish.current = deque->finish.first + count % 256;
 }
+#endif
 #else
 void Optimize(UINT16 *pDst, const UINT16 *pSrc, UINT32 NumIndices)
 {
