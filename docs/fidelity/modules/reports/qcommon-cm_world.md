@@ -25,3 +25,22 @@ The hosted ILP32 byte-comparison job cannot compare binaries: its unchanged `410
 ## Routed identities
 
 Separately indexed Mac rows moved from universal headers were resolved only where the exact symbol/address and existing complete-body audit established identity with an already reconciled Linux-indexed row. The source matches that audited implementation. Both IDs and original provenance remain; these are duplicate work items, not new implementations. Current module counts: 28 equal, 0 fixed, 0 intentional, 0 unchecked.
+
+## Math-helper follow-up — 2026-11-05
+
+Current accounting is **27 equal, one fixed; none unchecked**. Complete
+`BoundsOverlap` comparison in `CM_AreaEntities_r` found that Mac
+0xaf6d2–0xaf729 rejects only strictly separated bounds with six `UCOMISS/JA`
+branches, accepting touching and unordered pairs. Native `<=` conjunctions
+rejected unordered pairs. The `COD2_X64` condition now uses the corresponding
+negated-`>` predicates, preserving all finite comparisons and their axis order.
+The complete owner row changes from equal to fixed with its historical
+evidence retained and this correction appended by explicit parent approval.
+
+The configured stock/CoD2x arm64 Release client and dedicated object compiles
+pass. The unchanged production `world_links` fixture passes both modes under
+ASan; it exercises finite queries, not the unordered correction. Five inactive
+source configurations and byte-for-byte `unifdef -UCOD2_X64` output match the
+base; this source has no `__LINE__` uses. No tests were added. The exceptional
+path is compiled and reviewed only; fresh review, full links, CI and replays
+remain with the integration owner.
