@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**45 entries: 15 equal, 7 fixed, 8 intentional, 15 unchecked.** Mac 1.3 i386 is the authority. The live scanner and parser implementation is included from `yyparse_impl.h`.
+**45 entries: 14 equal, 7 fixed, 9 intentional, 15 unchecked.** Mac 1.3 i386 is the authority. The live scanner and parser implementation is included from `yyparse_impl.h`.
 
 ## Corrections
 
@@ -55,3 +55,8 @@ Independent source/binary reviews covered all six units. Review caught an incorr
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. These unchanged traces do not exercise every corrected path. Unreached diagnostic, malformed-input and allocation edges remain compiled and reviewed. Missing helper identities and storage-dependent behavior remain explicitly unchecked or documented native adaptations.
 
 Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile. Source preprocessing checks do not establish binary-byte parity.
+
+
+## Native descriptor lifetime follow-up
+
+The ownership review above describes the original Mac automatic descriptor and the native snapshot before the follow-up. Native `ScriptParse` now retains a static descriptor across normal and nonlocal returns; its row is intentional rather than equal. This removes the expired pointer and indeterminate alias read while preserving the existing serialized scanner contract. See [scanner descriptor lifetime](scanner-lifetime.md) for exact evidence and limits. The nine runtime API conclusions remain valid under this persistent single-buffer owner.
