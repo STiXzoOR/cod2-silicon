@@ -7,6 +7,7 @@
 #include "platform/macos_display.h"
 #endif
 #if defined(COD2_X64)
+#include <math.h>
 #include "lp64_buffers.h"
 #include "lp64_gl_state.h"
 #endif
@@ -396,7 +397,11 @@ typedef struct {
     DWORD _pad5A0;
     DWORD _pad5A4;
     DWORD _pad5A8;
+#if defined(COD2_X64)
+    D3DMATERIAL9 material;
+#else
     unsigned char lights[0x44];
+#endif
     UINT32 viewportX;
     UINT32 viewportY;
     UINT32 viewportW;
@@ -407,7 +412,11 @@ typedef struct {
     void *texStageData;
     void *texStageEnd;
     void *texStageCap;
+#if defined(COD2_X64)
+    LightInfoType nativeLights[8];
+#else
     unsigned char lightData[0x5A0];
+#endif
     UINT32 bVal1;
     IDirect3DPixelShader9 *pixelShader;
     UINT32 bVal3;
@@ -416,10 +425,15 @@ typedef struct {
     unsigned char bccPad[0x100];
 #if defined(COD2_X64)
     unsigned char depthStencilDetached;
+    unsigned char hasDiffuseColor;
+    DWORD colorVertex;
+    float convertedView[16];
 #endif
 } DeviceImpl;
 #if defined(COD2_X64)
 _Static_assert(sizeof(DeviceImpl) <= 4096, "native device storage");
+_Static_assert(sizeof(D3DMATERIAL9) == 68, "native material width");
+_Static_assert(sizeof(LightInfoType) == 180, "native light width");
 typedef struct {
     uint32_t X, Y, Width, Height;
     float MinZ, MaxZ;
@@ -441,6 +455,21 @@ void CDirect3DDevice_SetNativeBackBuffer(void *device, void *backBuffer, UINT ad
         CDirect3DSwapChain_CDirect3DSwapChain((const CDirect3DSwapChain *)dev->swapChain);
         CDirect3DSwapChain_SetBackBuffer((const CDirect3DSwapChain *)dev->swapChain, dev->backBuffer);
     }
+}
+#endif
+
+#if defined(COD2_X64)
+/* Native renderer ownership is dx.device. Material_Shutdown releases shaders
+ * before R_Shutdown releases the device; R_SafeRelease then nulls dx.device. */
+int CDirect3DDevice_DetachPixelShader(const void *shader)
+{
+    extern struct DxGlobals dx;
+    DeviceImpl *device = (DeviceImpl *)dx.device;
+    if (device && device->pixelShader == shader) {
+        device->pixelShader = NULL;
+        return 1;
+    }
+    return 0;
 }
 #endif
 
@@ -533,6 +562,190 @@ static void CDirect3DDevice_LoadIdentityMatrix(float *m)
     m[10] = 1.0f;
     m[15] = 1.0f;
 }
+
+#if defined(COD2_X64)
+static COpenGLNative *CDirect3DDevice_GL(void)
+{
+    return (COpenGLNative *)imp__ZN7COpenGL7sOpenGLE;
+}
+
+static void CDirect3DDevice_ActiveTexture(GLenum texture)
+{
+    COpenGLNative *gl = CDirect3DDevice_GL();
+    UINT unit = texture - 0x84c0;
+    if (gl->activeTexUnit != unit) {
+        gl->activeTexUnit = unit;
+        glActiveTextureARB(texture);
+    }
+}
+
+static void CDirect3DDevice_SetCapability(GLenum capability, int enabled)
+{
+    COpenGLNative *gl = CDirect3DDevice_GL();
+    if (gl->activeTexUnit < 16 &&
+        (capability == 0x0de1 || capability == 0x806f || capability == 0x8513)) {
+        UINT index = capability == 0x8513 ? 2 : capability == 0x806f ? 1 : 0;
+        gl->texUnits[gl->activeTexUnit].mTargetEnabled[index] = !!enabled;
+    }
+    if (enabled) glEnable(capability); else glDisable(capability);
+}
+
+static void CDirect3DDevice_Enable(GLenum capability)
+{
+    CDirect3DDevice_SetCapability(capability, 1);
+}
+
+static void CDirect3DDevice_Disable(GLenum capability)
+{
+    CDirect3DDevice_SetCapability(capability, 0);
+}
+
+static void CDirect3DDevice_BindTexture(GLenum target, GLuint name)
+{
+    COpenGLNative *gl = CDirect3DDevice_GL();
+    UINT index = target == 0x8513 ? 2 : target == 0x806f ? 1 : 0;
+    if (gl->activeTexUnit < 16) {
+        CTexUnitNative *unit = &gl->texUnits[gl->activeTexUnit];
+        if (unit->mTexID[index] && *unit->mTexID[index] != name)
+            unit->mTexID[index] = NULL;
+    }
+    glBindTexture(target, name);
+}
+
+static void CDirect3DDevice_MatrixMode(GLenum mode)
+{
+    COpenGLNative *gl = CDirect3DDevice_GL();
+    if (gl->matrixMode != mode) {
+        gl->matrixMode = mode;
+        glMatrixMode(mode);
+    }
+}
+
+static void CDirect3DDevice_LoadMatrix(const GLfloat *matrix)
+{
+    COpenGLNative *gl = CDirect3DDevice_GL();
+    if (gl->matrixMode == 0x1700)
+        memcpy(gl->modelViewMatrix, matrix, sizeof(gl->modelViewMatrix));
+    glLoadMatrixf(matrix);
+}
+
+static void CDirect3DDevice_LoadIdentity(void)
+{
+    COpenGLNative *gl = CDirect3DDevice_GL();
+    if (gl->matrixMode == 0x1700)
+        CDirect3DDevice_LoadIdentityMatrix(gl->modelViewMatrix);
+    glLoadIdentity();
+}
+#define glEnable CDirect3DDevice_Enable
+#define glDisable CDirect3DDevice_Disable
+#define glActiveTextureARB CDirect3DDevice_ActiveTexture
+#define glBindTexture CDirect3DDevice_BindTexture
+#define glMatrixMode CDirect3DDevice_MatrixMode
+#define glLoadMatrixf CDirect3DDevice_LoadMatrix
+#define glLoadIdentity CDirect3DDevice_LoadIdentity
+
+static CTexStageNative *CDirect3DDevice_Stage(DeviceImpl *dev, UINT stage)
+{
+    CTexStageNative *begin = dev->texStageData;
+    CTexStageNative *end = dev->texStageEnd;
+    return begin && stage < (UINT)(end - begin) ? begin + stage : NULL;
+}
+
+static DWORD *CDirect3DDevice_StageField(CTexStageNative *stage, UINT type)
+{
+    switch (type) {
+    case 1: return &stage->colorOp;
+    case 2: return &stage->colorArg1;
+    case 3: return &stage->colorArg2;
+    case 4: return &stage->alphaOp;
+    case 5: return &stage->alphaArg1;
+    case 6: return &stage->alphaArg2;
+    case 11: return &stage->texCoordIndex;
+    case 24: return &stage->transformFlags;
+    case 26: return &stage->colorArg0;
+    case 27: return &stage->alphaArg0;
+    default: return NULL;
+    }
+}
+
+static DWORD *CDirect3DDevice_SamplerField(CTexStageNative *stage, UINT type)
+{
+    switch (type) {
+    case 1: return &stage->addressU;
+    case 2: return &stage->addressV;
+    case 3: return &stage->addressW;
+    case 4: return &stage->borderColor;
+    case 5: return &stage->magFilter;
+    case 6: return &stage->minFilter;
+    case 7: return &stage->mipFilter;
+    default: return NULL;
+    }
+}
+
+/* The i386 getter uses truncation to signed int64, then returns its low word.
+ * Bound exceptional float inputs instead of invoking an undefined C cast. */
+static DWORD CDirect3DDevice_TruncateSampler(float value)
+{
+    if (!(value >= -0x1p63f && value < 0x1p63f))
+        return 0;
+    return (DWORD)(uint64_t)(int64_t)value;
+}
+
+extern D3DXMATRIX *D3DXMatrixInverse(D3DXMATRIX *, FLOAT *, const D3DXMATRIX *);
+extern D3DXVECTOR4 *D3DXVec4Transform(D3DXVECTOR4 *, const D3DXVECTOR4 *, const D3DXMATRIX *);
+
+void CDirect3DDevice_ValidateLighting(const CDirect3DDevice *_this)
+{
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    COpenGLNative *gl = CDirect3DDevice_GL();
+    if (gl->supportsATIArrayRevComps) {
+        if (!dev->lighting && !dev->hasDiffuseColor)
+            glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        return;
+    }
+    if (!dev->lighting)
+        return;
+    COpenGL_SetColorMaterialEnable((const COpenGL *)gl,
+                                   dev->colorVertex && dev->hasDiffuseColor);
+    D3DXMATRIX inverse, transform;
+    int haveTransform = 0;
+    for (UINT i = 0; i < 8; ++i) {
+        const LightInfoType *light = &dev->nativeLights[i];
+        if (!light->Enabled)
+            continue;
+        D3DXVECTOR4 direction, transformed;
+        for (UINT j = 0; j < 3; ++j) {
+            uint32_t bits;
+            memcpy(&bits, (const GLfloat *)&light->Direction + j, sizeof(bits));
+            bits ^= 0x80000000u;
+            memcpy((GLfloat *)&direction + j, &bits, sizeof(bits));
+        }
+        direction.w = 0.0f;
+        if (!haveTransform) {
+            /* Mac ignores this return. The native math provider supplies its
+             * defined input-copy fallback if the generic inverse fails. */
+            D3DXMatrixInverse(&inverse, NULL, (const D3DXMATRIX *)gl->modelViewMatrix);
+            D3DXMatrixMultiply(&transform, (const D3DXMATRIX *)dev->convertedView, &inverse);
+            haveTransform = 1;
+        }
+        D3DXVec4Transform(&transformed, &direction, &transform);
+        glLightfv(0x4000 + i, 0x1203, (const GLfloat *)&transformed);
+    }
+}
+
+void CDirect3DDevice_ValidateModelViewMatrix(const CDirect3DDevice *_this)
+{
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    if (!dev->isProjDirty)
+        return;
+    dev->isProjDirty = 0;
+    D3DXMatrixMultiply((D3DXMATRIX *)dev->worldViewMatrix,
+                      (const D3DXMATRIX *)dev->worldMatrix,
+                      (const D3DXMATRIX *)dev->convertedView);
+    glMatrixMode(0x1700);
+    glLoadMatrixf(dev->worldViewMatrix);
+}
+#endif
 
 static const D3DVERTEXELEMENT9 *CDirect3DDevice_FindVertexElement(
     UINT stream, BYTE usage, BYTE usageIndex)
@@ -1081,8 +1294,28 @@ static void CDirect3DDevice_ApplyTextureStageState(UINT stage)
     CDirect3DDevice_ApplyTextureCombineAlpha(alphaOp, alphaArg0, alphaArg1, alphaArg2);
 }
 
+#if defined(COD2_X64)
+void CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState(const CDirect3DDevice *, IDirect3DBaseTexture9 *, UINT);
+static void CDirect3DDevice_ApplySamplerState(DeviceImpl *dev, UINT sampler, GLenum target)
+{
+    if (sampler < sizeof(g_boundTextures) / sizeof(g_boundTextures[0]) &&
+        CDirect3DDevice_IsRealTexture(g_boundTextures[sampler]) &&
+        CDirect3DDevice_GetTextureTarget(g_boundTextures[sampler]) == target) {
+        GLint bound;
+        GLenum query = target == 0x8513 ? 0x8514 : target == 0x806f ? 0x806a : 0x8069;
+        glGetIntegerv(query, &bound);
+        /* The fallback renderer can substitute a lightmap for its D3D stage.
+         * Only synchronize the actual selected COM texture. */
+        if ((GLuint)bound == CDirect3DDevice_GetTextureGLId(g_boundTextures[sampler])) {
+            CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState((const CDirect3DDevice *)dev,
+                                                             g_boundTextures[sampler], sampler);
+            return;
+        }
+    }
+#else
 static void CDirect3DDevice_ApplySamplerState(UINT sampler, GLenum target)
 {
+#endif
     DWORD addressU = g_samplerState[sampler][D3DSAMP_ADDRESSU];
     DWORD addressV = g_samplerState[sampler][D3DSAMP_ADDRESSV];
     DWORD addressW = g_samplerState[sampler][D3DSAMP_ADDRESSW];
@@ -1198,6 +1431,101 @@ static GfxImage *CDirect3DDevice_SelectMaterialColorImage(const Material *materi
 
     return fallback;
 }
+
+#if defined(COD2_X64)
+extern unsigned int COpenGL_SetTex(const COpenGL *, UINT32, GLenum, const COpenGLTexture *);
+extern unsigned int COpenGL_SetTexBorderColor(const COpenGL *, UINT32, GLenum, UINT32);
+
+static GLenum CDirect3DDevice_SamplerAddress(DWORD address)
+{
+    switch (address) {
+    case 1: return 0x2901;
+    case 3: return 0x812f;
+    case 4: return 0x812d;
+    default: return 0;
+    }
+}
+
+void CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState(const CDirect3DDevice *_this,
+                                                       IDirect3DBaseTexture9 *texture, UINT stageIndex)
+{
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    COpenGLNative *gl = CDirect3DDevice_GL();
+    CTexStageNative *stage = CDirect3DDevice_Stage(dev, stageIndex);
+    if (stageIndex >= 16 || !stage || !CDirect3DDevice_IsRealTexture(texture))
+        return;
+    GLenum target = CDirect3DDevice_GetTextureTarget(texture);
+    UINT index = target == 0x8513 ? 2 : target == 0x806f ? 1 : 0;
+    COpenGLTextureStateNative *info = (void *)((void **)texture + 1);
+    CTexUnitNative *unit = &gl->texUnits[stageIndex];
+    int hadName = info->name && *info->name;
+    CDirect3DDevice_UpdateTextureIfNeeded(texture);
+    if (!hadName)
+        unit->mTexID[index] = NULL;
+    COpenGL_SetTex((const COpenGL *)gl, stageIndex, target, (const COpenGLTexture *)info);
+    GLenum wrapS = CDirect3DDevice_SamplerAddress(stage->addressU);
+    GLenum wrapT = CDirect3DDevice_SamplerAddress(stage->addressV);
+    GLenum wrapR = CDirect3DDevice_SamplerAddress(stage->addressW);
+#define DEVICE_TEXTURE_INT(cache, pname, value) \
+    do { \
+        if (unit->cache[index] != (value)) { \
+            COpenGL_SetActiveTexUnit((const COpenGL *)gl, stageIndex); \
+            glTexParameteri(target, pname, value); \
+            unit->cache[index] = value; \
+        } \
+    } while (0)
+    DEVICE_TEXTURE_INT(mTexWrapS, 0x2802, wrapS); info->wrapS = wrapS;
+    DEVICE_TEXTURE_INT(mTexWrapT, 0x2803, wrapT); info->wrapT = wrapT;
+    DEVICE_TEXTURE_INT(mTexWrapR, 0x8072, wrapR); info->wrapR = wrapR;
+    if (stage->addressU == 4 || stage->addressV == 4 || stage->addressW == 4) {
+        COpenGL_SetTexBorderColor((const COpenGL *)gl, stageIndex, target, stage->borderColor);
+        info->border = stage->borderColor;
+    }
+    int base = 0;
+    UINT width = info->width, height = info->height;
+    if (width && width > 3 && height > 3) {
+        do {
+            height >>= 1;
+            ++base;
+            width >>= 1;
+        } while (width && width > 3 && height > 3);
+    }
+    void **methods = *(void ***)texture;
+    int levels = ((UINT (*)(const void *))methods[13])(texture);
+    int lastLevel = (levels >= base ? levels : base) - 1;
+    if (lastLevel < 0) lastLevel = 0;
+    GLenum mag = stage->magFilter == 3 || stage->magFilter > 1 ? 0x2601 : 0x2600;
+    DEVICE_TEXTURE_INT(mTexMagFilter, 0x2800, mag); info->magFilter = mag;
+    UINT min = stage->minFilter == 3 ? 2 : stage->minFilter;
+    GLenum minEnum = 0;
+    if (!stage->mipFilter || !lastLevel)
+        minEnum = min > 1 ? 0x2601 : 0x2600;
+    else if (stage->mipFilter == 1)
+        minEnum = min > 1 ? 0x2702 : 0x2700;
+    else if (stage->mipFilter == 2)
+        minEnum = min > 1 ? 0x2703 : 0x2701;
+    if (minEnum) {
+        DEVICE_TEXTURE_INT(mTexMinFilter, 0x2801, minEnum);
+        info->minFilter = minEnum;
+    }
+    if (gl->supportsLodBias && unit->mLodBias != stage->lodBias) {
+        COpenGL_SetActiveTexUnit((const COpenGL *)gl, stageIndex);
+        glTexEnvf(0x8500, 0x8501, stage->lodBias);
+        unit->mLodBias = stage->lodBias;
+    }
+    DEVICE_TEXTURE_INT(mTexLastLevel, 0x813d, lastLevel);
+    info->lastLevel = lastLevel;
+#undef DEVICE_TEXTURE_INT
+    if (gl->supportsAnisotropy) {
+        if (unit->mTexAnisotropicFilter[index] != stage->anisotropy) {
+            COpenGL_SetActiveTexUnit((const COpenGL *)gl, stageIndex);
+            glTexParameterf(target, 0x84fe, stage->anisotropy);
+            unit->mTexAnisotropicFilter[index] = stage->anisotropy;
+        }
+        info->anisotropy = stage->anisotropy;
+    }
+}
+#endif
 
 static unsigned int CDirect3DDevice_GetImageGLId(GfxImage *image)
 {
@@ -2135,6 +2463,10 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
 #endif
 
     DeviceImpl *dev = (DeviceImpl *)_this;
+#if defined(COD2_X64)
+    CDirect3DDevice_ValidateModelViewMatrix(_this);
+    CDirect3DDevice_ValidateLighting(_this);
+#endif
     byte *vbData, *ibData, *vertBase;
     UINT stride, offset;
     int indexCount;
@@ -2425,7 +2757,11 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
             }
             if (glTexID && colorOp != D3DTOP_DISABLE) {
                 CDirect3DDevice_BindTextureTarget(stage0Target, glTexID);
+#if defined(COD2_X64)
+                CDirect3DDevice_ApplySamplerState(dev, 0, stage0Target);
+#else
                 CDirect3DDevice_ApplySamplerState(0, stage0Target);
+#endif
                 if (usesLightmap) {
 
                     CDirect3DDevice_ApplyTextureStageState(0);
@@ -2450,7 +2786,11 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
                                     glMatrixMode(0x1702 );
                                     glLoadIdentity();
                                     glMatrixMode(0x1700 );
+#if defined(COD2_X64)
+                                    CDirect3DDevice_ApplySamplerState(dev, 1, 0x0DE1);
+#else
                                     CDirect3DDevice_ApplySamplerState(1, 0x0DE1);
+#endif
                                     if (g_textureStageState[1][D3DTSS_COLOROP] != D3DTOP_DISABLE) {
                                         CDirect3DDevice_ApplyTextureStageState(1);
                                     } else {
@@ -2646,6 +2986,19 @@ HRESULT COD2_FORCE_ALIGN_ARG_POINTER CDirect3DDevice_SetRenderState(const CDirec
 
     DeviceImpl *dev = (DeviceImpl *)_this;
     switch (State) {
+#if defined(COD2_X64)
+    case D3DRS_LIGHTING:
+        if (dev->lighting != Value) {
+            dev->lighting = Value;
+            if (!CDirect3DDevice_GL()->supportsATIArrayRevComps) {
+                if (Value) glEnable(0xb50); else glDisable(0xb50);
+            }
+        }
+        break;
+    case D3DRS_COLORVERTEX:
+        dev->colorVertex = Value;
+        break;
+#endif
     case D3DRS_ZENABLE:
         dev->zEnable = Value;
 #if defined(COD2_X64)
@@ -2858,6 +3211,8 @@ HRESULT CDirect3DDevice_SetTexture(const CDirect3DDevice *_this, DWORD Stage, ID
         if (CDirect3DDevice_IsRealTexture(previous))
             ((ULONG (*)(const void *))(*(void ***)previous)[2])(previous);
         g_boundTextures[Stage] = pTexture;
+        CTexStageNative *stage = CDirect3DDevice_Stage(dev, Stage);
+        if (stage) stage->texture = pTexture;
         CDirect3DDevice_mNeedsRasterizationValidation = 1;
         if (CDirect3DDevice_IsRealTexture(pTexture))
             ((ULONG (*)(const void *))(*(void ***)pTexture)[1])(pTexture);
@@ -2924,10 +3279,28 @@ HRESULT CDirect3DDevice_SetTextureStageState(const CDirect3DDevice *_this, DWORD
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    CTexStageNative *stage = CDirect3DDevice_Stage(dev, Stage);
+    if (Stage >= dev->maxTextureUnits || !stage)
+        return 0;
+    DWORD *field = CDirect3DDevice_StageField(stage, Type);
+    if (field && *field != Value) {
+        *field = Value;
+        CDirect3DDevice_mNeedsRasterizationValidation = 1;
+        if (Type == 11 || Type == 24)
+            CDirect3DDevice_mNeedsTransformationValidation = 1;
+        if (Stage < 8)
+            g_textureStageState[Stage][Type] = Value;
+    }
+    return 0;
+#else
+
     (void)_this;
     if (Stage < 8 && (unsigned int)Type < 33)
         g_textureStageState[Stage][Type] = Value;
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_GetTextureStageState(const CDirect3DDevice *_this, DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD *pValue)
@@ -2939,10 +3312,23 @@ HRESULT CDirect3DDevice_GetTextureStageState(const CDirect3DDevice *_this, DWORD
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    CTexStageNative *stage = CDirect3DDevice_Stage(dev, Stage);
+    /* The original getter accepts the sentinel stage at the fixed-unit limit. */
+    if (Stage <= dev->maxTextureUnits && stage && (UINT)Type <= 24) {
+        DWORD *field = CDirect3DDevice_StageField(stage, Type);
+        if (field && pValue)
+            *pValue = *field;
+    }
+    return 0;
+#else
+
     (void)_this;
     if (pValue)
         *pValue = (Stage < 8 && (unsigned int)Type < 33) ? g_textureStageState[Stage][Type] : 0;
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_SetSamplerState(const CDirect3DDevice *_this, DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value)
@@ -2954,10 +3340,47 @@ HRESULT CDirect3DDevice_SetSamplerState(const CDirect3DDevice *_this, DWORD Samp
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    UINT limit = dev->maxTextureUnits > dev->maxTextureImageUnits ? dev->maxTextureUnits : dev->maxTextureImageUnits;
+    CTexStageNative *stage = CDirect3DDevice_Stage(dev, Sampler);
+    if (Sampler >= limit || !stage)
+        return 0;
+    DWORD previous = 0;
+    DWORD *field = CDirect3DDevice_SamplerField(stage, Type);
+    if (field)
+        previous = *field;
+    else if (Type == 8)
+        previous = CDirect3DDevice_TruncateSampler(stage->lodBias * 4.0f);
+    else if (Type == 10)
+        previous = CDirect3DDevice_TruncateSampler(stage->anisotropy);
+    else
+        return 0;
+    if (previous == Value)
+        return 0;
+    CDirect3DDevice_mNeedsRasterizationValidation = 1;
+    if (field)
+        *field = Value;
+    else if (Type == 8) {
+        float value;
+        memcpy(&value, &Value, sizeof(value));
+        stage->lodBias = 0.25f * value;
+    } else {
+        if (MacDisplay_GetSupportsAnisotropicFiltering())
+            memcpy(&stage->anisotropy, &Value, sizeof(stage->anisotropy));
+        else
+            stage->anisotropy = 1.0f;
+    }
+    if (Sampler < 16)
+        g_samplerState[Sampler][Type] = Value;
+    return 0;
+#else
+
     (void)_this;
     if (Sampler < 16 && (unsigned int)Type < 14)
         g_samplerState[Sampler][Type] = Value;
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_GetSamplerState(const CDirect3DDevice *_this, DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD *pValue)
@@ -2969,10 +3392,27 @@ HRESULT CDirect3DDevice_GetSamplerState(const CDirect3DDevice *_this, DWORD Samp
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    UINT limit = dev->maxTextureUnits > dev->maxTextureImageUnits ? dev->maxTextureUnits : dev->maxTextureImageUnits;
+    CTexStageNative *stage = CDirect3DDevice_Stage(dev, Sampler);
+    if (Sampler < limit && stage && pValue) {
+        DWORD *field = CDirect3DDevice_SamplerField(stage, Type);
+        if (field)
+            *pValue = *field;
+        else if (Type == 8)
+            *pValue = CDirect3DDevice_TruncateSampler(4.0f * stage->lodBias);
+        else if (Type == 10)
+            *pValue = CDirect3DDevice_TruncateSampler(stage->anisotropy);
+    }
+    return 0;
+#else
+
     (void)_this;
     if (pValue)
         *pValue = (Sampler < 16 && (unsigned int)Type < 14) ? g_samplerState[Sampler][Type] : 0;
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_SetTransform(const CDirect3DDevice *_this, D3DTRANSFORMSTATETYPE State, const D3DMATRIX *pMatrix)
@@ -2983,6 +3423,48 @@ HRESULT CDirect3DDevice_SetTransform(const CDirect3DDevice *_this, D3DTRANSFORMS
     if (MacShim_Dispatch("CDirect3DDevice_SetTransform", _this, macArguments, &macResult, sizeof(macResult)))
         return macResult;
 #endif
+
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    const float *matrix = (const float *)pMatrix;
+    if (!matrix)
+        return 0;
+    if (State == 0x100 || State == 2) {
+        float *raw = State == 0x100 ? dev->worldMatrix : dev->viewMatrix;
+        if (memcmp(raw, matrix, 64)) {
+            memcpy(raw, matrix, 64);
+            if (State == 2) {
+                memcpy(dev->convertedView, matrix, 64);
+                for (UINT i = 2; i < 16; i += 4) {
+                    uint32_t bits;
+                    memcpy(&bits, &dev->convertedView[i], 4);
+                    bits ^= 0x80000000u;
+                    memcpy(&dev->convertedView[i], &bits, 4);
+                }
+            }
+            dev->isWorldViewDirty = dev->isProjDirty = 1;
+        }
+    } else if (State == 3) {
+        if (memcmp(dev->projMatrix, matrix, 64)) {
+            float converted[16];
+            glMatrixMode(0x1701);
+            memcpy(dev->projMatrix, matrix, 64);
+            memcpy(converted, matrix, 64);
+            MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(converted,
+                (float)dev->viewportW, (float)dev->viewportH);
+            glLoadMatrixf(converted);
+        }
+    } else if ((UINT)State >= 16 && (UINT)State - 16 < dev->maxTextureUnits) {
+        CTexStageNative *stage = CDirect3DDevice_Stage(dev, (UINT)State - 16);
+        if (stage) {
+            memcpy(stage->matrix, matrix, 64);
+            if (State == 16)
+                memcpy(dev->texMatrix, matrix, 64);
+            CDirect3DDevice_mNeedsTransformationValidation = 1;
+        }
+    }
+    return 0;
+#else
 
     DeviceImpl *dev = (DeviceImpl *)_this;
 
@@ -3002,6 +3484,7 @@ HRESULT CDirect3DDevice_SetTransform(const CDirect3DDevice *_this, D3DTRANSFORMS
         memcpy(dev->texMatrix, pMatrix, 64);
     }
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_GetTransform(const CDirect3DDevice *_this, D3DTRANSFORMSTATETYPE State, D3DMATRIX *pMatrix)
@@ -3021,8 +3504,18 @@ HRESULT CDirect3DDevice_GetTransform(const CDirect3DDevice *_this, D3DTRANSFORMS
         src = dev->viewMatrix;
     } else if (State == 3) {
         src = dev->projMatrix;
+#if defined(COD2_X64)
+    } else if ((UINT)State >= 16 && (UINT)State - 16 < dev->maxTextureUnits) {
+#else
     } else if (State >= D3DTS_TEXTURE0 && State < D3DTS_TEXTURE0 + 8) {
+#endif
+#if defined(COD2_X64)
+        CTexStageNative *stage = CDirect3DDevice_Stage(dev, (UINT)State - 16);
+        if ((UINT)State - 16 < dev->maxTextureUnits && stage)
+            src = stage->matrix;
+#else
         src = dev->texMatrix;
+#endif
     }
     if (src && pMatrix) {
         memcpy(pMatrix, src, 64);
@@ -3117,9 +3610,25 @@ HRESULT CDirect3DDevice_SetMaterial(const CDirect3DDevice *_this, const D3DMATER
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    if (CDirect3DDevice_GL()->supportsATIArrayRevComps) {
+        memcpy(&dev->material, pMaterial, sizeof(dev->material));
+    } else if (memcmp(&dev->material, pMaterial, sizeof(dev->material))) {
+        memcpy(&dev->material, pMaterial, sizeof(dev->material));
+        glMaterialfv(0x408, 0x1201, (const GLfloat *)&dev->material.Diffuse);
+        glMaterialfv(0x408, 0x1200, (const GLfloat *)&dev->material.Ambient);
+        glMaterialfv(0x408, 0x1202, (const GLfloat *)&dev->material.Specular);
+        glMaterialfv(0x408, 0x1600, (const GLfloat *)&dev->material.Emissive);
+        glMaterialf(0x408, 0x1601, dev->material.Power);
+    }
+    return 0;
+#else
+
     (void)_this;
     (void)pMaterial;
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_GetMaterial(const CDirect3DDevice *_this, char (*pMaterial)[4])
@@ -3145,10 +3654,63 @@ HRESULT CDirect3DDevice_SetLight(const CDirect3DDevice *_this, DWORD Index, cons
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    if (Index >= 8)
+        return 0;
+    LightInfoType *light = &dev->nativeLights[Index];
+    int enabled = light->Enabled;
+    memset(light, 0, sizeof(*light));
+    light->Enabled = enabled;
+    light->Type = pLight->Type;
+    light->Range = pLight->Range;
+    memcpy(&light->Direction, &pLight->Direction, sizeof(light->Direction));
+    memcpy(&light->Position, &pLight->Position, sizeof(light->Position));
+    memcpy(&light->Diffuse, &pLight->Diffuse, sizeof(light->Diffuse));
+    memcpy(&light->Specular, &pLight->Specular, sizeof(light->Specular));
+    memcpy(&light->Ambient, &pLight->Ambient, sizeof(light->Ambient));
+    light->Theta = pLight->Theta;
+    light->Phi = pLight->Phi;
+    light->Falloff = pLight->Falloff;
+    int ati = CDirect3DDevice_GL()->supportsATIArrayRevComps;
+    if (pLight->Type == 2) {
+        if (ati) {
+            light->CosHalfTheta = cosf(light->Theta * 0.5f);
+            light->CosHalfPhi = cosf(0.5f * light->Phi);
+            light->C1 = 1.0f / (light->CosHalfTheta - light->CosHalfPhi);
+        } else {
+            float angle;
+            if (pLight->Falloff == 0.0f) {
+                angle = 3.14f;
+            } else {
+                angle = pLight->Phi - pLight->Theta;
+                float divisor = pLight->Falloff + pLight->Falloff;
+                angle = angle / divisor;
+                angle = pLight->Theta + angle;
+                angle = angle < 0.0001f ? 0.00005f : angle * 0.5f;
+            }
+            light->Exponent = (float)(log(cos((double)angle)) * -0.30000001192092896);
+            float cutoff = 90.0f * pLight->Phi;
+            cutoff = cutoff / 0x1.921fb4p+1f;
+            light->Cutoff = cutoff / 1.5f;
+        }
+    } else if (!ati) {
+        light->Exponent = 0.0f;
+        light->Cutoff = 180.0f;
+    }
+    light->Attenuation0 = pLight->Attenuation0;
+    light->Attenuation1 = pLight->Attenuation1;
+    light->Attenuation2 = pLight->Attenuation2;
+    if (!ati)
+        COpenGL_SetLight((const COpenGL *)CDirect3DDevice_GL(), Index, light);
+    return 0;
+#else
+
     (void)_this;
     (void)Index;
     (void)pLight;
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_GetLight(const CDirect3DDevice *_this, DWORD Index)
@@ -3174,10 +3736,26 @@ HRESULT CDirect3DDevice_LightEnable(const CDirect3DDevice *_this, DWORD Index, B
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    /* The original assumes an eight-light caller; bound the native object. */
+    if (Index < 8 && dev->nativeLights[Index].Enabled != !!Enable) {
+        dev->nativeLights[Index].Enabled = !!Enable;
+        if (!CDirect3DDevice_GL()->supportsATIArrayRevComps) {
+            if (Enable)
+                glEnable(0x4000 + Index);
+            else
+                glDisable(0x4000 + Index);
+        }
+    }
+    return 0;
+#else
+
     (void)_this;
     (void)Index;
     (void)Enable;
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_GetLightEnable(const CDirect3DDevice *_this, DWORD Index, BOOL *pEnable)
@@ -3303,9 +3881,18 @@ HRESULT CDirect3DDevice_SetVertexDeclaration(const CDirect3DDevice *_this, IDire
 #endif
 
 #if defined(COD2_X64)
-    (void)_this;
+    DeviceImpl *dev = (DeviceImpl *)_this;
     if (g_activeVertexDeclaration != pDecl) {
         g_activeVertexDeclaration = pDecl;
+        dev->hasDiffuseColor = 0;
+        const CDirect3DVertexDeclarationImpl *declaration = (const void *)pDecl;
+        if (declaration) {
+            for (UINT i = 0; i + 1 < declaration->elementCount; ++i) {
+                const D3DVERTEXELEMENT9 *element = &declaration->elements[i];
+                if (element->Usage == 10 && element->UsageIndex == 0)
+                    dev->hasDiffuseColor = 1;
+            }
+        }
         /* The native draw consumes the retained D3D elements directly. */
         CDirect3DDevice_mNeedsTransformationValidation = 1;
         CDirect3DDevice_mNeedsRasterizationValidation = 1;
@@ -3341,7 +3928,11 @@ HRESULT CDirect3DDevice_SetFVF(const CDirect3DDevice *_this, DWORD FVF)
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    ((DeviceImpl *)_this)->hasDiffuseColor = !!(FVF & 0x40);
+#else
     (void)_this;
+#endif
     g_currentFVF = FVF;
     return 0;
 }
@@ -4553,7 +5144,11 @@ long unsigned int CDirect3DDevice_CopyColorToRenderTargetTexture(const CDirect3D
     return 0;
 }
 
+#if defined(COD2_X64)
+bool CDirect3DDevice_CTexStage_GetUsesTexture(const CTexStage *_this, CXX_BOOL *UsesTexFactor)
+#else
 bool CDirect3DDevice_CTexStage_GetUsesTexture(const CTexStage *_this, bool *UsesTexFactor)
+#endif
 {
 #if MAC_METAL_NATIVE
     const void *macArguments[] = { &_this, &UsesTexFactor };
@@ -4562,9 +5157,52 @@ bool CDirect3DDevice_CTexStage_GetUsesTexture(const CTexStage *_this, bool *Uses
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    const CTexStageNative *stage = (const CTexStageNative *)_this;
+    UINT c0 = stage->colorArg0 & 15, c1 = stage->colorArg1 & 15, c2 = stage->colorArg2 & 15;
+    UINT a0 = stage->alphaArg0 & 15, a1 = stage->alphaArg1 & 15, a2 = stage->alphaArg2 & 15;
+    int texture = 0, factor = 0;
+    switch (stage->colorOp) {
+    case 2: texture = c1 == 2; factor = c1 == 3; break;
+    case 3: texture = c2 == 2; factor = c2 == 3; break;
+    case 4: case 5: case 6: case 7: case 10: case 12: case 14: case 16: case 18: case 24:
+        texture = c1 == 2 || c2 == 2; factor = c1 == 3 || c2 == 3; break;
+    case 13:
+        texture = 1; factor = c1 == 3 || c2 == 3 || c0 == 3; break;
+    case 25: case 26:
+        texture = c1 == 2 || c2 == 2 || c0 == 2;
+        factor = c1 == 3 || c2 == 3 || c0 == 3; break;
+    default: break;
+    }
+    if (!texture) {
+        switch (stage->alphaOp) {
+        case 1: factor = 0; break;
+        case 2: texture = a1 == 2; break;
+        case 3: texture = a2 == 2; break;
+        case 4: case 5: case 7: case 12: texture = a1 == 2 || a2 == 2; break;
+        case 24: texture = a1 == 2 || a2 == 2 || a0 == 2; break;
+        default: break;
+        }
+    }
+    if (!factor) {
+        switch (stage->alphaOp) {
+        case 1: factor = 0; break;
+        case 2: factor = a1 == 3; break;
+        case 3: factor = a2 == 3; break;
+        case 4: case 5: case 7: case 12: factor = a1 == 3 || a2 == 3; break;
+        /* Mac compares texture selectors here, including this deterministic quirk. */
+        case 24: factor = a1 == 2 || a2 == 2 || a0 == 2; break;
+        default: break;
+        }
+    }
+    *UsesTexFactor = !!factor;
+    return !!texture;
+#else
+
     (void)_this;
     (void)UsesTexFactor;
     return 0;
+#endif
 }
 
 long unsigned int CDirect3DDevice_SetTextureCoordStream(const CDirect3DDevice *_this,
@@ -4781,10 +5419,33 @@ long unsigned int CDirect3DDevice_CTexStage_Init(const CTexStage *_this, UINT32 
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    CTexStageNative *stage = (CTexStageNative *)_this;
+    stage->programmableOnly = !!IsProgrammableStage;
+    stage->texture = NULL;
+    if (!IsProgrammableStage) {
+        stage->colorOp = Stage == 0 ? 4 : 1;
+        stage->colorArg0 = 3; stage->colorArg1 = 2; stage->colorArg2 = 1;
+        stage->alphaOp = Stage == 0 ? 2 : 1;
+        stage->alphaArg0 = 3; stage->alphaArg1 = 0; stage->alphaArg2 = 1;
+        stage->transformFlags = 0; stage->texCoordIndex = Stage;
+    }
+    stage->addressU = stage->addressV = stage->addressW = 1;
+    stage->borderColor = 0;
+    stage->minFilter = stage->magFilter = 1;
+    stage->mipFilter = 0; stage->lodBias = 0.0f;
+    stage->anisotropy = 1.0f;
+    for (UINT i = 0; i < 4; ++i)
+        stage->factor[i] = 1.0f;
+    CDirect3DDevice_LoadIdentityMatrix(stage->matrix);
+    return 0;
+#else
+
     (void)_this;
     (void)Stage;
     (void)IsProgrammableStage;
     return 0;
+#endif
 }
 
 #if defined(COD2_X64)
@@ -4855,9 +5516,23 @@ void CDirect3DDevice_Init(void *device)
     dev->alphaSrcBlend = 1;
     dev->isWorldViewDirty = 1;
     dev->isProjDirty = 1;
+    CDirect3DDevice_LoadIdentityMatrix(dev->convertedView);
+    memset(&dev->material, 0, sizeof(dev->material));
+    memset(dev->nativeLights, 0, sizeof(dev->nativeLights));
+    dev->lighting = 1; dev->colorVertex = 1; dev->hasDiffuseColor = 0;
     glGetIntegerv(0x0d33, (GLint *)&dev->maxTextureSize);
     glGetIntegerv(0x84e2, (GLint *)&dev->maxTextureUnits);
     glGetIntegerv(0x8872, (GLint *)&dev->maxTextureImageUnits);
+    if (dev->maxTextureUnits > 16 || dev->maxTextureImageUnits > 16)
+        abort();
+    free(dev->texStageData);
+    CTexStageNative *stages = calloc(17, sizeof(*stages));
+    if (!stages)
+        abort();
+    dev->texStageData = stages;
+    dev->texStageEnd = dev->texStageCap = stages + 17;
+    for (UINT i = 0; i < 17; ++i)
+        CDirect3DDevice_CTexStage_Init((const CTexStage *)&stages[i], i, i >= dev->maxTextureUnits);
     g_activeVertexShader = NULL;
     g_activeVertexDeclaration = NULL;
     g_currentFVF = 0;
@@ -4969,6 +5644,8 @@ void ZN15CDirect3DDeviceD1Ev(void *_this)
             ((ULONG (*)(const void *))(*(void ***)texture)[2])(texture);
         g_boundTextures[stage] = NULL;
     }
+    free(dev->texStageData);
+    dev->texStageData = dev->texStageEnd = dev->texStageCap = NULL;
     g_prebind_texID = 0;
     g_activeVertexShader = NULL;
     g_activeVertexDeclaration = NULL;
@@ -5281,3 +5958,13 @@ const unsigned char __ZZN15CDirect3DDeviceC4Ej11_D3DDEVTYPEP16OpaqueContextRefP2
     0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
+
+#if defined(COD2_X64)
+#undef glEnable
+#undef glDisable
+#undef glActiveTextureARB
+#undef glBindTexture
+#undef glMatrixMode
+#undef glLoadMatrixf
+#undef glLoadIdentity
+#endif
