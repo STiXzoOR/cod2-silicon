@@ -46,6 +46,7 @@ static int exclusiveSuspended;
 static int exclusiveResumeArmed;
 extern int MacWindow_IsVisible(SDL_Window *window);
 extern void MacWindow_SetBorderless(int enabled);
+extern void MacWindow_HideSplash(void);
 #endif
 static int refreshRate;
 static int initialized;
@@ -414,6 +415,9 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
         *hasAux = 0;
     if (MacDisplay_Initialize() != 0)
         return NULL;
+#if defined(__APPLE__) && defined(COD2_X64)
+    MacWindow_HideSplash();
+#endif
     if (screenContext)
         MacDisplay_ReleaseContext((void **)&screenContext);
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)

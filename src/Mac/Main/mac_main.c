@@ -513,7 +513,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Sys_CreateConsole(hInstance);
 #ifndef DEDICATED
     Sys_CreateSplashWindow();
+#if defined(COD2_X64) && defined(__APPLE__)
+    /* Com_Init shows it once the existing parser has applied fs_basepath. */
+#else
     Sys_ShowSplashWindow();
+#endif
 #endif
     Sys_Milliseconds();
     Sys_InitStreamThread();
