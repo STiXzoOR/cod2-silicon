@@ -9,7 +9,21 @@ extern GfxBackEndData *backEndData;
 
 extern float floorf(float x);
 
+#if defined(COD2_X64)
+/* Mac 1.3 table at 0x32b2c0. */
+static const vec3_t gridBasisDirs[8] = {
+    { 0.0f, 0.0f, -1.0f },
+    { 0.9428090453147888f, 0.0f, 0.3333333432674408f },
+    { -0.4714045226573944f, 0.8164965510368347f, 0.3333333432674408f },
+    { 0.4714045226573944f, 0.8164965510368347f, 0.3333333432674408f },
+    { -0.4714045226573944f, -0.8164965510368347f, -0.3333333432674408f },
+    { 0.4714045226573944f, -0.8164965510368347f, -0.3333333432674408f },
+    { -0.9428090453147888f, 0.0f, -0.3333333432674408f },
+    { 0.0f, 0.0f, 1.0f }
+};
+#else
 static vec3_t gridBasisDirs[8];
+#endif
 #if defined(COD2_X64)
 static void *s_vc_log;
 #else
@@ -26,6 +40,9 @@ extern const float colorRed[];
 extern const float colorGreen[];
 extern const float colorYellow[];
 extern const float colorWhite[];
+#if defined(COD2_X64)
+extern const float colorBlue[];
+#endif
 extern const float vec3_origin[];
 
 extern void Com_StripExtension(const char *src, char *dest);
@@ -55,7 +72,11 @@ static inline __attribute__((always_inline)) void BuildGridFilename(const char *
     Com_StripExtension(baseName, filename);
     len = strlen(filename) + 5;
     if (len > 63) {
+#if defined(COD2_X64)
+        Com_Error(1, "\x15light grid log filename '%s.grid' is too long\n", filename);
+#else
         Com_Error(1, "light grid log filename '%s.grid' is too long\n", filename);
+#endif
     }
     strcat(filename, ".grid");
 }
@@ -275,7 +296,11 @@ fallback:
 
     for (;;) {
         lightCount++;
+#if defined(COD2_X64)
+        if (lightCount >= maxLights)
+#else
         if (lightCount > maxLights)
+#endif
             break;
 
         errorDirAvg[0] = 0.0f;
@@ -385,7 +410,11 @@ fallback:
                 newError += dot * dot;
             }
 
+#if defined(COD2_X64)
+            if (errorTotal - newError < 0.020000001415610313f) {
+#else
             if (errorTotal - newError < 0.02f) {
+#endif
                 goto deriveLightDone;
             }
         }
@@ -400,7 +429,11 @@ fallback:
 
         {
             float lenSq = errorDirAvg[0] * errorDirAvg[0] + errorDirAvg[1] * errorDirAvg[1] + errorDirAvg[2] * errorDirAvg[2];
+#if defined(COD2_X64)
+            if (lenSq < 1.0000001111620804e-06f) {
+#else
             if (lenSq < 0.000001f) {
+#endif
                 light->Direction.x = 0.0f;
                 light->Direction.y = 0.0f;
                 light->Direction.z = 1.0f;
@@ -528,7 +561,11 @@ void RB_ShowLightVisCachePoints(const vec_t *viewOrigin, const DpvsPlane *clipPl
                 if ((unsigned int)dz <= 1) {
                     debugColor = colorGreen;
                 } else {
+#if defined(COD2_X64)
+                    debugColor = colorYellow;
+#else
                     debugColor = colorRed;
+#endif
                 }
 
                 debugGlobals = &backEndData->debugGlobals;
@@ -551,7 +588,11 @@ static int GridPointLookup(const GfxLightGrid *lightGrid, unsigned int keyHigh, 
         int cmp;
         GfxLightGridPoint *p = &points[mid];
 
+#if defined(COD2_X64)
+        cmp = (int)((unsigned int)p->xyzHighBits - keyHigh);
+#else
         cmp = (int)p->xyzHighBits - (int)keyHigh;
+#endif
         if (cmp == 0) {
             cmp = ((int)p->xyzLowBitsAndSunVisible - (int)keyLow) & ~1;
             if (cmp == 0) {
@@ -571,7 +612,12 @@ static int GridPointLookup(const GfxLightGrid *lightGrid, unsigned int keyHigh, 
 
 static inline __attribute__((always_inline)) void PackGridKey(int gridX, int gridY, int gridZ, unsigned int *keyHigh, unsigned char *keyLow)
 {
+#if defined(COD2_X64)
+    *keyHigh = (((unsigned int)gridX & ~3u) << 19) |
+               (((unsigned int)gridY & ~3u) << 8) | (unsigned int)(gridZ >> 2);
+#else
     *keyHigh = ((gridX & ~3) << 19) | ((gridY & ~3) << 8) | (gridZ >> 2);
+#endif
     *keyLow = ((gridX & 3) << 6) | ((gridY & 3) << 4) | ((gridZ & 3) << 2);
 }
 
@@ -605,15 +651,27 @@ float RB_GetLightingAtPoint(const GfxLightGrid *lightGrid, const vec_t *samplePo
         float fy = samplePos[1] + 131072.0f;
         float fz = samplePos[2] + 131072.0f;
 
+#if defined(COD2_X64)
+        x0 = ((int)fx) >> 5;
+#else
         x0 = ((int)floorf(fx)) >> 5;
+#endif
         wx1 = fx * 0.03125f - (float)x0;
         wx0 = 1.0f - wx1;
 
+#if defined(COD2_X64)
+        y0 = ((int)fy) >> 5;
+#else
         y0 = ((int)floorf(fy)) >> 5;
+#endif
         wy1 = fy * 0.03125f - (float)y0;
         wy0 = 1.0f - wy1;
 
+#if defined(COD2_X64)
+        z0 = ((int)fz) >> 6;
+#else
         z0 = ((int)floorf(fz)) >> 6;
+#endif
         wz1 = fz * 0.015625f - (float)z0;
         wz0 = 1.0f - wz1;
     }
@@ -640,7 +698,11 @@ float RB_GetLightingAtPoint(const GfxLightGrid *lightGrid, const vec_t *samplePo
         sampleBoxMaxs[0] = samplePos[0] + 0.5f;
         sampleBoxMaxs[1] = samplePos[1] + 0.5f;
         sampleBoxMaxs[2] = samplePos[2] + 0.5f;
+#if defined(COD2_X64)
+        R_AddDebugBox(debugGlobals, sampleBoxMins, sampleBoxMaxs, colorBlue);
+#else
         R_AddDebugBox(debugGlobals, sampleBoxMins, sampleBoxMaxs, colorYellow);
+#endif
     }
 
     memset(colorForDir, 0, 0x60);
@@ -759,7 +821,11 @@ float RB_GetLightingAtPoint(const GfxLightGrid *lightGrid, const vec_t *samplePo
                 bmax[0] = gridPosX + 1.0f;
                 bmax[1] = gridPosY + 1.0f;
                 bmax[2] = gridPosZ + 1.0f;
+#if defined(COD2_X64)
+                R_AddDebugBox(&backEndData->debugGlobals, bmin, bmax, colorYellow);
+#else
                 R_AddDebugBox(&backEndData->debugGlobals, bmin, bmax, colorRed);
+#endif
             }
         } else {
 
@@ -792,7 +858,11 @@ float RB_GetLightingAtPoint(const GfxLightGrid *lightGrid, const vec_t *samplePo
         }
     }
 
+#if defined(COD2_X64)
+    if (!(maxWeight < 0.98f))
+#else
     if (maxWeight >= 0.98f)
+#endif
         return sunWeight;
 
     if (maxWeight == 0.0f) {
@@ -826,7 +896,11 @@ float RB_GetLightingAtPoint(const GfxLightGrid *lightGrid, const vec_t *samplePo
                 GfxLightGridPoint *p = &points[mid];
                 int cmp;
 
+#if defined(COD2_X64)
+                cmp = (int)((unsigned int)p->xyzHighBits - keyHigh);
+#else
                 cmp = (int)p->xyzHighBits - (int)keyHigh;
+#endif
                 if (cmp == 0) {
                     cmp = ((int)p->xyzLowBitsAndSunVisible - (int)keyLow) & ~1;
                     if (cmp == 0) {
@@ -840,7 +914,14 @@ float RB_GetLightingAtPoint(const GfxLightGrid *lightGrid, const vec_t *samplePo
                     top = mid - 1;
                 }
             }
+#if defined(COD2_X64)
+            /* Mac 0xec095 chooses the predecessor after an unsuccessful
+               search. Keep the native first-point fallback when no predecessor
+               exists instead of reading before the allocated point array. */
+            gridIndex = top < 0 ? 0 : top;
+#else
             gridIndex = bot;
+#endif
         }
 
         {

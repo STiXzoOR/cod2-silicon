@@ -12,6 +12,9 @@ extern const dvar_t *r_outdoorDownBias;
 #if defined(COD2_X64)
 extern const dvar_t *sc_enable;
 extern const dvar_t *r_lightMap;
+extern const dvar_t *r_colorMap;
+extern const dvar_t *r_normalMap;
+extern const dvar_t *r_specularMap;
 #endif
 extern const dvar_t *r_debugShader;
 extern const dvar_t *r_drawPrimFloor;
@@ -287,7 +290,11 @@ int RB_SetIndexData(const r_index_t *indices, int indexCount)
     baseIndex = byteOffset >> 1;
     ib = *(IDirect3DIndexBuffer9 **)(lockState + 8);
 
+#if defined(COD2_X64)
+    if (byteOffset != 0)
+#else
     if (!overflow && (((DxGlobals *)dx)->gpuSync != 0 || byteOffset != 0))
+#endif
         lockFlags = 0x1000;
     else
         lockFlags = 0x2000;
@@ -871,10 +878,18 @@ void RB_SetVertexData(unsigned int streamIndex, const void *data, int vertexCoun
     byte *bufferData;
     HRESULT hr;
 
+#if defined(COD2_X64)
+    if (writeOffset == 0)
+#else
     if (writeOffset == 0 || ((DxGlobals *)dx)->gpuSync == 0)
+#endif
         lockFlags = 0x2000;
     else
+#if defined(COD2_X64)
+        lockFlags = 0x1000;
+#else
         lockFlags = 0;
+#endif
 
     hr = ((HRESULT(__attribute__((stdcall)) *)(IDirect3DVertexBuffer9 *, UINT, UINT, void **, DWORD))(*(void ***)(dxVb))[0x2c / 4])(dxVb, (UINT)writeOffset, (UINT)totalSize, (void **)&bufferData, lockFlags);
 
@@ -916,7 +931,9 @@ void RB_SetVertexData(unsigned int streamIndex, const void *data, int vertexCoun
             break;
 
         default:
+#if !defined(COD2_X64)
             Com_Memcpy(bufferData, data, totalSize);
+#endif
             break;
         }
     }
@@ -1030,12 +1047,18 @@ static const float *RB_GetCodeMatrix_impl(int source, int firstRow)
     case 0xCC:
         codeMatrix = ((char *)am + offsetof(GfxCodeMatrices, viewProjection));
         if (!((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0]) {
+#if defined(COD2_X64)
+            MatrixMultiply44((vec4_t *)((char *)am + offsetof(GfxCodeMatrices, view)),
+                             (vec4_t *)((char *)am + offsetof(GfxCodeMatrices, projection)),
+                             (vec4_t *)codeMatrix);
+#else
             if (!*(byte *)((char *)am + offsetof(GfxCodeMatrices, worldView.valid[0]))) {
 
                 MatrixMultiply44((vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, world))), (vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, view))), (vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, worldView))));
                 *(byte *)((char *)am + offsetof(GfxCodeMatrices, worldView.valid[0])) = 1;
             }
             MatrixMultiply44((vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, worldView))), (vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, projection))), (vec4_t *)(codeMatrix));
+#endif
             ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0] = 1;
         }
         break;
@@ -1159,7 +1182,11 @@ static const float *RB_GetCodeMatrix_impl(int source, int firstRow)
             biasVec[3] = 0.0f;
 
             MatrixTransformVector44((float *)(biasVec), (vec4_t *)(viewProj), (float *)(biasWorld));
+#if defined(COD2_X64)
+            biasWorld[2] = downBias + biasWorld[2];
+#else
             biasWorld[1] += downBias;
+#endif
 
             MatrixTransformVector44((float *)(biasWorld),
 #if defined(COD2_X64)
@@ -1242,6 +1269,17 @@ static GfxImage *RB_PrepareMaterialTexture(const MaterialTextureDef *texture, by
     if (image && image->mapType == 3 && texture->semantic == 5) {
         RB_UploadWaterTexture(image, texture->u.water->map);
         *samplerState = 6;
+    } else if (image && image->mapType == 3) {
+        if (texture->semantic == 3 && r_normalMap->current.integer == 1) {
+            image = rgp.identityNormalMapImage;
+            *samplerState = 1;
+        } else if (texture->semantic == 2 || texture->semantic == 4) {
+            int mode = texture->semantic == 2 ? r_colorMap->current.integer : r_specularMap->current.integer;
+            if (mode == 1 || mode == 2) {
+                image = mode == 1 ? rgp.whiteImage : rgp.blackImage;
+                *samplerState = 1;
+            }
+        }
     }
     return image;
 }
@@ -1262,7 +1300,11 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
         technique = (byte *)((MaterialTechniqueSet *)material->techniqueSet)->techniques[techType];
     }
 
+#if defined(COD2_X64)
+    if (techType == 0x21) {
+#else
     if (vertDeclType == 0x21) {
+#endif
         byte *g_special = (byte *)imp_g_special;
         int debugLevel = r_debugShader->current.integer;
         byte *debugConst = (byte *)debugShaderConsts + debugLevel * 16;
@@ -1272,7 +1314,11 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
 
     {
         byte *g_special = (byte *)imp_g_special;
+#if defined(COD2_X64)
+        *g_special = vertDeclType == 3;
+#else
         *g_special = (args == (const GfxDrawPrimArgs *)3) ? 1 : 0;
+#endif
     }
 
     passCount = ((MaterialTechnique *)technique)->passCount;   /* was technique + 6 (x86) */
@@ -1342,8 +1388,13 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
 
                     if (!matched) {
                         const Material *mat2 = ((materialCommands_t *)RB_TessBase())->material;
+#if defined(COD2_X64)
+                        R_Error(0, "No rule in stateMap '%s' rule set %i matched the current material state for material '%s'",
+                                *(char **)stateMap, rsi, mat2->info.name);
+#else
                         R_Error(0, "No rule in stateMap '%s' rule set %i matched the current mat",
                                 *(char **)stateMap, rsi, mat2->info.name);
+#endif
                     }
                 }
             }
@@ -1371,7 +1422,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
 
             {
 #if defined(COD2_X64)
-                int fogSrc = (((MaterialPassDx7 *)pass)->fogToBlack == 1) ? 0 : 2;
+                int fogSrc = ((MaterialPassDx7 *)pass)->fogToBlack ? 2 : 0;
 #else
                 int fogSrc = (*(byte *)(pass + 8) == 1) ? 0 : 2;
 #endif
@@ -1442,7 +1493,11 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                 float t;
                 {
                     float frac = phase - floorf(phase);
+#if defined(COD2_X64)
+                    float angle = (float)((double)frac * 6.283185307179586);
+#else
                     float angle = frac * 6.283185307179586f;
+#endif
                     float s = sinf(angle);
                     t = s * -0.5f + 0.5f;
                 }
@@ -1598,8 +1653,13 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
 
                     if (!matched) {
                         const Material *mat4 = ((materialCommands_t *)RB_TessBase())->material;
+#if defined(COD2_X64)
+                        R_Error(0, "No rule in stateMap '%s' rule set %i matched the current material state for material '%s'",
+                                *(char **)stateMap, rsi, mat4->info.name);
+#else
                         R_Error(0, "No rule in stateMap '%s' rule set %i matched the current mat",
                                 *(char **)stateMap, rsi, mat4->info.name);
+#endif
                     }
                 }
             }
@@ -1934,6 +1994,10 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
             }
         }
 
+#if defined(COD2_X64)
+        if (isDx7 && ((MaterialPassDx7 *)pass)->projectToInfinity)
+            RB_SetViewMatrixForWDx7(0.0f);
+#endif
         { extern volatile int g_rigid_step; g_rigid_step = 13; }
         if (!((r_backEndGlobals_t *)backEnd)->projection2D) {
             int primCount = args->primCount;
@@ -1952,11 +2016,16 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
         { extern volatile int g_rigid_step; g_rigid_step = 15; }
 
         if (isDx7) {
+#if defined(COD2_X64)
+            if (((MaterialPassDx7 *)pass)->projectToInfinity)
+                RB_SetViewMatrixForWDx7(1.0f);
+#else
             if (((MaterialTechnique *)technique)->passArray.dx7[0].projectToInfinity) {
                 RB_SetViewMatrixForWDx7(0.0f);
 
                 RB_SetViewMatrixForWDx7(1.0f);
             }
+#endif
         }
     }
 
