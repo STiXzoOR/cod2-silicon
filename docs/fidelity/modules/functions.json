@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 310,
+      "unchecked": 309,
       "intentional": 3182,
       "equal": 4767,
-      "fixed": 1198
+      "fixed": 1199
     },
     "scopes": {
       "unassigned": 777,
@@ -197524,8 +197524,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no MatrixMultiplyInPlace public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native MatrixMultiply/MatrixMultiply43/MatrixTransformVector43 use different matrix layouts or sequential output writes; the special 3x4 layout and alias-preserving temporary/store order are not established by those APIs or their distinct-buffer callers. Original-address provenance recovered: Linux 1.0 IDB 0x80a379a maps to retained original Linux 1.3 ELF 0x80a5afe by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
+        "status": "fixed",
+        "evidence": "Complete consumed in-place left multiplication identified in CG_PerturbCamera, inheriting its existing contiguous-basis repair. Original full MatrixMultiplyInPlace identity 1.0 0x80a379a / 1.3 0x80a5afe retains six output floats temporarily, writes the final row and copies the first two rows back, establishing inout=left*old-inout. Exact Mac camera 0x1d6ca6\u20130x1d6cbd snapshots all nine view-axis floats through AxisCopy 0x2c320 into a separate local; the SAME saved view-axis pointer in EBX is then the MatrixMultiply output at 0x1d6ccd, with the snapshot as right input and the complete contiguous perturb basis as left input. Full Mac MatrixMultiply 0x29baa\u20130x29d6d and native provider preserve all nine ordered dot products. Native CG_PerturbCamera implements that actual snapshot/overwrite sequence, not merely a hypothetical use of a three-buffer provider. Existing correction 3ef61de8 made the native left basis one contiguous 3x3 object, matching Mac stack rows -0x3c/-0x30/-0x24 instead of reading unrelated locals after a three-float vector. The primary owner is already fixed; this alias inherits that correction, with no new defect, source change or owner override. Scope is the complete consumed operation with separate left basis and saved right input; no arbitrary overlapping-left/right API, exact original temporary-store timing, whole-camera recertification or Linux x87/FP-environment equivalence is claimed. Existing correction is compiled and reviewed, not exercised by this operation audit. Independent review: review-provenance-math11-inplace.md. No new compilation, tests, CI, replays or runtime exercise."
       },
       {
         "id": "linux:universal/com_math.cpp:2175:MatrixRotationX",
