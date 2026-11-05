@@ -25,12 +25,19 @@ void Com_Error(int level, const char *fmt, ...)
 void Com_Memcpy(void *to, const void *from, int n) { memcpy(to, from, n); }
 int Com_sprintf(char *dest, int size, const char *fmt, ...) { *dest = 0; return 0; }
 int Sys_Milliseconds(void) { return 1; }
+#if F1_TRANSPORT_SEND_RETURNS_BOOL
+Bool Sys_SendPacket(int n, const void *data, netadr_t adr)
+#else
 void Sys_SendPacket(int n, const void *data, netadr_t adr)
+#endif
 {
     assert(n <= sizeof(wire));
     memcpy(wire, data, n);
     wireLength = n;
     sent++;
+#if F1_TRANSPORT_SEND_RETURNS_BOOL
+    return 1;
+#endif
 }
 void MSG_Init(msg_t *msg, byte *data, int n)
 {
