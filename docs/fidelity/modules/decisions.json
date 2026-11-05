@@ -11705,7 +11705,7 @@
   },
   "linux:universal/com_math.cpp:2684:AddPointToBounds2D": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no AddPointToBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper."
+    "evidence": "Native body/caller gap: no AddPointToBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper. Original-address provenance recovered: Linux 1.0 IDB 0x80a66f4 maps to retained original Linux 1.3 ELF 0x80a8a58 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002dc44": {
     "status": "equal",
@@ -11761,7 +11761,7 @@
   },
   "linux:universal/com_math.cpp:1093:AxisFromForwardYaw": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no AxisFromForwardYaw public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
+    "evidence": "Native body/caller gap: no AxisFromForwardYaw public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers. Original-address provenance recovered: Linux 1.0 IDB 0x80a28d8 maps to retained original Linux 1.3 ELF 0x80a4c3c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2958:AxisIdentity": {
     "status": "equal",
@@ -11773,11 +11773,11 @@
   },
   "linux:universal/com_math.cpp:3763:AxisToQuat": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no AxisToQuat public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
+    "evidence": "Native body/caller gap: no AxisToQuat public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers. Original-address provenance recovered: Linux 1.0 IDB 0x80a87d8 maps to retained original Linux 1.3 ELF 0x80aab3c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:3095:AxisToSignedAngles": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no AxisToSignedAngles public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native AxisToAngles begins with unsigned vectoangles; vectoangles/vectopitch wrap negative angles into 0..360. The complete signed three-angle output, vertical case and roll construction are not established by those unsigned routines."
+    "evidence": "Native body/caller gap: no AxisToSignedAngles public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native AxisToAngles begins with unsigned vectoangles; vectoangles/vectopitch wrap negative angles into 0..360. The complete signed three-angle output, vertical case and roll construction are not established by those unsigned routines. Original-address provenance recovered: Linux 1.0 IDB 0x80a7338 maps to retained original Linux 1.3 ELF 0x80a969c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:3008:AxisTransformComponents": {
     "status": "equal",
@@ -11793,15 +11793,15 @@
   },
   "linux:universal/com_math.cpp:2782:BoundsOverlap2D": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no BoundsOverlap2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper."
+    "evidence": "Native body/caller gap: no BoundsOverlap2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper. Original-address provenance recovered: Linux 1.0 IDB 0x80a697e maps to retained original Linux 1.3 ELF 0x80a8ce2 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2802:BoundsOverlapEpsilon": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no BoundsOverlapEpsilon public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper."
+    "evidence": "Native body/caller gap: no BoundsOverlapEpsilon public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper. Original-address provenance recovered: Linux 1.0 IDB 0x80a69fe maps to retained original Linux 1.3 ELF 0x80a8d62 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2827:BoundsOverlapEpsilon2D": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no BoundsOverlapEpsilon2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper."
+    "evidence": "Native body/caller gap: no BoundsOverlapEpsilon2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper. Original-address provenance recovered: Linux 1.0 IDB 0x80a6ac4 maps to retained original Linux 1.3 ELF 0x80a8e28 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002c540": {
     "status": "fixed",
@@ -11881,7 +11881,7 @@
   },
   "linux:universal/com_math.cpp:582:ClampShort": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no ClampShort public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native gamepad conversion divides a signed short by 32767; it is not a complete signed-int-to-saturated-short clamp. Bundled codec clamping is outside engine reconciliation and was not reused as ownership evidence."
+    "evidence": "Native body/caller gap: no ClampShort public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native gamepad conversion divides a signed short by 32767; it is not a complete signed-int-to-saturated-short clamp. Bundled codec clamping is outside engine reconciliation and was not reused as ownership evidence. Original-address provenance recovered: Linux 1.0 IDB 0x80a1bf4 maps to retained original Linux 1.3 ELF 0x80a3f58 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002c830": {
     "status": "equal",
@@ -11889,15 +11889,15 @@
   },
   "linux:universal/com_math.cpp:2652:ClearBounds2D": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no ClearBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper."
+    "evidence": "Native body/caller gap: no ClearBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper. Original-address provenance recovered: Linux 1.0 IDB 0x80a65c8 maps to retained original Linux 1.3 ELF 0x80a892c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2299:ColorBytesFromRGB": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no ColorBytesFromRGB public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native packing owners are not aliases: R_ConvertColorToBytes writes A,R,G,B ordering, while FlashColorByte rounds and clamps. Neither proves the complete unclamped R,G,B,A raw truncation/packed-return operation (including fixed alpha in RGB)."
+    "evidence": "Native body/caller gap: no ColorBytesFromRGB public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native packing owners are not aliases: R_ConvertColorToBytes writes A,R,G,B ordering, while FlashColorByte rounds and clamps. Neither proves the complete unclamped R,G,B,A raw truncation/packed-return operation (including fixed alpha in RGB). Original-address provenance recovered: Linux 1.0 IDB 0x80a5da8 maps to retained original Linux 1.3 ELF 0x80a810c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2316:ColorBytesFromRGBA": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no ColorBytesFromRGBA public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native packing owners are not aliases: R_ConvertColorToBytes writes A,R,G,B ordering, while FlashColorByte rounds and clamps. Neither proves the complete unclamped R,G,B,A raw truncation/packed-return operation (including fixed alpha in RGB)."
+    "evidence": "Native body/caller gap: no ColorBytesFromRGBA public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native packing owners are not aliases: R_ConvertColorToBytes writes A,R,G,B ordering, while FlashColorByte rounds and clamps. Neither proves the complete unclamped R,G,B,A raw truncation/packed-return operation (including fixed alpha in RGB). Original-address provenance recovered: Linux 1.0 IDB 0x80a5e18 maps to retained original Linux 1.3 ELF 0x80a817c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002c7a6": {
     "status": "equal",
@@ -11917,7 +11917,7 @@
   },
   "linux:universal/com_math.cpp:698:DistSqToSegment": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no DistSqToSegment public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up FX visibility projection uses a supplied unit direction and a centered half-length gate; it is not a proven complete arbitrary start/end projection, zero-length fallback or endpoint-clamped segment-distance operation."
+    "evidence": "Native body/caller gap: no DistSqToSegment public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up FX visibility projection uses a supplied unit direction and a centered half-length gate; it is not a proven complete arbitrary start/end projection, zero-length fallback or endpoint-clamped segment-distance operation. Original-address provenance recovered: Linux 1.0 IDB 0x80a1dea maps to retained original Linux 1.3 ELF 0x80a414e by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.h:445:Dot2Product": {
     "status": "equal",
@@ -11941,11 +11941,11 @@
   },
   "linux:universal/com_math.cpp:2885:ExpandBounds2D": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no ExpandBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper."
+    "evidence": "Native body/caller gap: no ExpandBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper. Original-address provenance recovered: Linux 1.0 IDB 0x80a6c32 maps to retained original Linux 1.3 ELF 0x80a8f96 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2569:ExpandBoundsByDelta": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no ExpandBoundsByDelta public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Further candidate review: exact Mac SV_SightTraceToEntity 0x1bf986-0x1bf9d1 and 0x1bfab2-0x1bfad5 constructs fresh swept bounds from start/end, supplied extents and one-unit padding; native server_mp/sv_world_mp.c preserves that structure. It is not the in-place signed-delta addition to preexisting minima/maxima required by this helper. No complete original helper identity established."
+    "evidence": "Native body/caller gap: no ExpandBoundsByDelta public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Further candidate review: exact Mac SV_SightTraceToEntity 0x1bf986-0x1bf9d1 and 0x1bfab2-0x1bfad5 constructs fresh swept bounds from start/end, supplied extents and one-unit padding; native server_mp/sv_world_mp.c preserves that structure. It is not the in-place signed-delta addition to preexisting minima/maxima required by this helper. No complete original helper identity established. Original-address provenance recovered: Linux 1.0 IDB 0x80a638a maps to retained original Linux 1.3 ELF 0x80a86ee by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002c452": {
     "status": "fixed",
@@ -11965,7 +11965,7 @@
   },
   "linux:universal/com_math.h:208:FloatIdentity": {
     "status": "unchecked",
-    "evidence": "Searched reference FloatNoSwap (q_shared.cpp:268) and LittleFloat-style q_shared.h:381. Native q_shared.c has no FloatNoSwap/FloatIdentity body, and the Mac symbol inventory has no corresponding full identity routine; this complete bit-preserving float return still lacks a located native/Mac caller identity. New direct owner FloatWriteNoSwap establishes FloatAsInt, but FloatReadNoSwap accepts integer bits and FloatWriteNoSwap returns integer bits. No actual native float-input/float-output identity call was located; merely composing those distinct APIs is not a proof of this row."
+    "evidence": "Searched reference FloatNoSwap (q_shared.cpp:268) and LittleFloat-style q_shared.h:381. Native q_shared.c has no FloatNoSwap/FloatIdentity body, and the Mac symbol inventory has no corresponding full identity routine; this complete bit-preserving float return still lacks a located native/Mac caller identity. New direct owner FloatWriteNoSwap establishes FloatAsInt, but FloatReadNoSwap accepts integer bits and FloatWriteNoSwap returns integer bits. No actual native float-input/float-output identity call was located; merely composing those distinct APIs is not a proof of this row. Original IDB/ELF header-chain provenance is now recorded in recon-provenance-math4.noindex/linux-header-chain-maps.json. Identity is no longer based only on reconstruction references; complete Mac consumed-operation proof remains incomplete (I_clamp/I_sel include CrashLand exceptional conversion and nested selection; FloatIdentity/SinCos need their complete Mac owner identity)."
   },
   "linux:universal/com_math.h:272:FloatIsNegative": {
     "status": "equal",
@@ -11989,7 +11989,7 @@
   },
   "linux:universal/com_math.h:228:I_clamp": {
     "status": "unchecked",
-    "evidence": "Searched helper-use inventory: I_clamp is referenced at EffectsCore/FxPrimitives.cpp:945, bgame/bg_pmove.cpp:1411. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. New lead: inlined crash-land clamp in PM_GroundTrace 0x7097d-0x70991 uses wrapping value-100 sign selection followed by original-value negation/sign test. Native crash-land uses ordinary >100/<0 tests. Ordinary bounded damage agrees; complete exceptional conversion/caller-domain behavior is not established, so this generic helper remains unchecked and no disconnected implementation was added."
+    "evidence": "Searched helper-use inventory: I_clamp is referenced at EffectsCore/FxPrimitives.cpp:945, bgame/bg_pmove.cpp:1411. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. New lead: inlined crash-land clamp in PM_GroundTrace 0x7097d-0x70991 uses wrapping value-100 sign selection followed by original-value negation/sign test. Native crash-land uses ordinary >100/<0 tests. Ordinary bounded damage agrees; complete exceptional conversion/caller-domain behavior is not established, so this generic helper remains unchecked and no disconnected implementation was added. Original IDB/ELF header-chain provenance is now recorded in recon-provenance-math4.noindex/linux-header-chain-maps.json. Identity is no longer based only on reconstruction references; complete Mac consumed-operation proof remains incomplete (I_clamp/I_sel include CrashLand exceptional conversion and nested selection; FloatIdentity/SinCos need their complete Mac owner identity)."
   },
   "linux:universal/com_math.h:97:I_fabs": {
     "status": "equal",
@@ -12016,12 +12016,12 @@
     "evidence": "Complete three-value select inline in Mac ExpandBoundsToWidth 0x2c481-0x2c490 uses CMPNLTSS and masks: unordered selector chooses the second argument. Native width selection now uses !(selector<0) rather than an ordered >= comparison. COD2_X64-only change; compiled and reviewed, not exercised."
   },
   "linux:universal/com_math.h:168:I_max": {
-    "status": "unchecked",
-    "evidence": "Searched helper-use inventory: I_max is referenced at bgame/bg_weapons.cpp:2835. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. New owner candidates (weapon timer lower clamp and FX integer selections) expose specialized constant/derived operands, not a proven independent complete generic selector with all input/overflow cases. Their parent arithmetic was not certified from those fragments."
+    "status": "equal",
+    "evidence": "Original Linux IDB/ELF establishes I_max copies 0x80f292e and 0x812991c and actual calls PM_Weapon_WeaponTimeAdjust 0x80eece8 and four Byte4PackRgba channels 0x81297e6/9824/9864/98a4; Flash::Draw original call0x81291c0 reaches Byte4PackRgba0x81297ac. Complete Mac consumed operations read: PM_Weapon0x7cd9a-0x7cdaf guards positive kick timer, subtracts pml.msec then selects zero by sign, matching native PM_UpdateWeaponTimers; Pmove bounds msec1..200 so timer subtraction is defined. Flash::Draw0xa0e98 onward uses wrapped upper subtraction and negation/lower sign tests for all four channel outputs, already retained in FxNative_FlashColorByte/FlashColorByte including invalid-conversion sentinel. Actual original caller identities replace prior speculative owner association; no independent arbitrary-argument Mac entry is claimed. Source/exact binary review only; no runtime exercise."
   },
   "linux:universal/com_math.h:178:I_min": {
-    "status": "unchecked",
-    "evidence": "Searched helper-use inventory: I_min is referenced at qcommon/cm_load_obj.cpp:246. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. New lead: CMod_PartionLeafBrushes_r 0x7800f-0x78012 and 0x780df-0x780e2 selects by the subtraction sign (CMOVNS). Native countAbove>=countBelow selection agrees for bounded nonnegative brush counts, but it is not a located complete arbitrary-int helper with the Mac sign-only overflow behavior; no generic identity is claimed."
+    "status": "fixed",
+    "evidence": "Original Linux IDB/ELF establishes I_min copies 0x805525e and 0x81293be and actual calls from partition score 0x8052ca9, GetCullPlaneCount 0x81247d2 and four Byte4PackRgba channels 0x81297d6/9814/9854/9894. Mac complete consumed operations: CMod_PartionLeafBrushes_r 0x7800f/0x780df sign-select bounded counters ([-1,N-1], signed N>0, difference cannot overflow); Flash::Draw 0xa0e98 onward already preserves wrapped upper/lower selection; seven FX cull owners 0xa0758,0xa07e4,0xa0870,0xa090a,0xa097e,0xa09f2,0xa0a6c now preserve wrapped numPlanes-minus-five sign selection, differing at INT_MIN..INT_MIN+4. Actual original FX parent call graph joins helper to those operations; no independent arbitrary-argument Mac entry is claimed. COD2_X64-only repair, OFF bytes identical, compiled and reviewed in stock/CODX clients; not exercised. Ordinary producer counts5/6 unchanged; exceptional reachability not demonstrated."
   },
   "linux:universal/com_math.h:302:I_rsqrt": {
     "status": "equal",
@@ -12029,7 +12029,7 @@
   },
   "linux:universal/com_math.h:117:I_sel": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no I_sel public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. New owner candidates (weapon timer lower clamp and FX integer selections) expose specialized constant/derived operands, not a proven independent complete generic selector with all input/overflow cases. Their parent arithmetic was not certified from those fragments."
+    "evidence": "Native body/caller gap: no I_sel public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. New owner candidates (weapon timer lower clamp and FX integer selections) expose specialized constant/derived operands, not a proven independent complete generic selector with all input/overflow cases. Their parent arithmetic was not certified from those fragments. Original IDB/ELF header-chain provenance is now recorded in recon-provenance-math4.noindex/linux-header-chain-maps.json. Identity is no longer based only on reconstruction references; complete Mac consumed-operation proof remains incomplete (I_clamp/I_sel include CrashLand exceptional conversion and nested selection; FloatIdentity/SinCos need their complete Mac owner identity)."
   },
   "linux:universal/com_math.h:87:I_sgn": {
     "status": "equal",
@@ -12057,7 +12057,7 @@
   },
   "linux:universal/com_math.cpp:3138:IntersectPlanes": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no IntersectPlanes public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+    "evidence": "Native body/caller gap: no IntersectPlanes public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Original-address provenance recovered: Linux 1.0 IDB 0x80a747c maps to retained original Linux 1.3 ELF 0x80a97e0 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002b9ce": {
     "status": "equal",
@@ -12065,11 +12065,11 @@
   },
   "linux:universal/com_math.cpp:404:LinearTrack": {
     "status": "unchecked",
-    "evidence": "Searched helper-use inventory: LinearTrack is referenced at universal/com_math.cpp:441. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up native DiffTrack/DiffTrackAngle multiply target error into the step; these helpers use a constant magnitude step with the error sign. The complete constant-step tracking operation is not the native proportional tracker."
+    "evidence": "Searched helper-use inventory: LinearTrack is referenced at universal/com_math.cpp:441. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up native DiffTrack/DiffTrackAngle multiply target error into the step; these helpers use a constant magnitude step with the error sign. The complete constant-step tracking operation is not the native proportional tracker. Original-address provenance recovered: Linux 1.0 IDB 0x80a1866 maps to retained original Linux 1.3 ELF 0x80a3bca by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:432:LinearTrackAngle": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no LinearTrackAngle public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native DiffTrack/DiffTrackAngle multiply target error into the step; these helpers use a constant magnitude step with the error sign. The complete constant-step tracking operation is not the native proportional tracker."
+    "evidence": "Native body/caller gap: no LinearTrackAngle public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native DiffTrack/DiffTrackAngle multiply target error into the step; these helpers use a constant magnitude step with the error sign. The complete constant-step tracking operation is not the native proportional tracker. Original-address provenance recovered: Linux 1.0 IDB 0x80a1902 maps to retained original Linux 1.3 ELF 0x80a3c66 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002d24e": {
     "status": "equal",
@@ -12101,7 +12101,7 @@
   },
   "linux:universal/com_math.cpp:1624:MatrixMultiply34": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no MatrixMultiply34 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native MatrixMultiply/MatrixMultiply43/MatrixTransformVector43 use different matrix layouts or sequential output writes; the special 3x4 layout and alias-preserving temporary/store order are not established by those APIs or their distinct-buffer callers."
+    "evidence": "Native body/caller gap: no MatrixMultiply34 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native MatrixMultiply/MatrixMultiply43/MatrixTransformVector43 use different matrix layouts or sequential output writes; the special 3x4 layout and alias-preserving temporary/store order are not established by those APIs or their distinct-buffer callers. Original-address provenance recovered: Linux 1.0 IDB 0x80a39b8 maps to retained original Linux 1.3 ELF 0x80a5d1c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002a02c": {
     "status": "fixed",
@@ -12113,19 +12113,19 @@
   },
   "linux:universal/com_math.cpp:1601:MatrixMultiplyInPlace": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no MatrixMultiplyInPlace public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native MatrixMultiply/MatrixMultiply43/MatrixTransformVector43 use different matrix layouts or sequential output writes; the special 3x4 layout and alias-preserving temporary/store order are not established by those APIs or their distinct-buffer callers."
+    "evidence": "Native body/caller gap: no MatrixMultiplyInPlace public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native MatrixMultiply/MatrixMultiply43/MatrixTransformVector43 use different matrix layouts or sequential output writes; the special 3x4 layout and alias-preserving temporary/store order are not established by those APIs or their distinct-buffer callers. Original-address provenance recovered: Linux 1.0 IDB 0x80a379a maps to retained original Linux 1.3 ELF 0x80a5afe by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2175:MatrixRotationX": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no MatrixRotationX public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up inspected native YawToAxis and RotatePointAroundVector zrot construction. Their Z rotation off-diagonal signs/transposed layout differ from this helper contract; X/Y full outputs were not located. Matching sine/cosine subexpressions do not close these matrices."
+    "evidence": "Native body/caller gap: no MatrixRotationX public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up inspected native YawToAxis and RotatePointAroundVector zrot construction. Their Z rotation off-diagonal signs/transposed layout differ from this helper contract; X/Y full outputs were not located. Matching sine/cosine subexpressions do not close these matrices. Original-address provenance recovered: Linux 1.0 IDB 0x80a5918 maps to retained original Linux 1.3 ELF 0x80a7c7c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2197:MatrixRotationY": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no MatrixRotationY public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up inspected native YawToAxis and RotatePointAroundVector zrot construction. Their Z rotation off-diagonal signs/transposed layout differ from this helper contract; X/Y full outputs were not located. Matching sine/cosine subexpressions do not close these matrices."
+    "evidence": "Native body/caller gap: no MatrixRotationY public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up inspected native YawToAxis and RotatePointAroundVector zrot construction. Their Z rotation off-diagonal signs/transposed layout differ from this helper contract; X/Y full outputs were not located. Matching sine/cosine subexpressions do not close these matrices. Original-address provenance recovered: Linux 1.0 IDB 0x80a59b0 maps to retained original Linux 1.3 ELF 0x80a7d14 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2219:MatrixRotationZ": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no MatrixRotationZ public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up inspected native YawToAxis and RotatePointAroundVector zrot construction. Their Z rotation off-diagonal signs/transposed layout differ from this helper contract; X/Y full outputs were not located. Matching sine/cosine subexpressions do not close these matrices."
+    "evidence": "Native body/caller gap: no MatrixRotationZ public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up inspected native YawToAxis and RotatePointAroundVector zrot construction. Their Z rotation off-diagonal signs/transposed layout differ from this helper contract; X/Y full outputs were not located. Matching sine/cosine subexpressions do not close these matrices. Original-address provenance recovered: Linux 1.0 IDB 0x80a5a48 maps to retained original Linux 1.3 ELF 0x80a7dac by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x00029f6e": {
     "status": "equal",
@@ -12141,7 +12141,7 @@
   },
   "linux:universal/com_math.cpp:1934:MatrixTransformVector43Equals": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no MatrixTransformVector43Equals public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native MatrixMultiply/MatrixMultiply43/MatrixTransformVector43 use different matrix layouts or sequential output writes; the special 3x4 layout and alias-preserving temporary/store order are not established by those APIs or their distinct-buffer callers."
+    "evidence": "Native body/caller gap: no MatrixTransformVector43Equals public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native MatrixMultiply/MatrixMultiply43/MatrixTransformVector43 use different matrix layouts or sequential output writes; the special 3x4 layout and alias-preserving temporary/store order are not established by those APIs or their distinct-buffer callers. Original-address provenance recovered: Linux 1.0 IDB 0x80a523a maps to retained original Linux 1.3 ELF 0x80a759e by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002b2ce": {
     "status": "equal",
@@ -12173,7 +12173,7 @@
   },
   "linux:universal/com_math.cpp:2259:OrthographicMatrix": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no OrthographicMatrix public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Further candidate review: native device 2D projections use top-left-origin matrices with negative Y, fixed negative Z and XY translation, not the centered width/height/depth operation. Exact Mac MacOpenGLUtils::ConvertD3DProjectionMatrixToOpenGL 0x254f6-0x2562c mutates an existing full projection, including device-dependent offsets; it does not initialize this matrix. No complete original helper identity established."
+    "evidence": "Native body/caller gap: no OrthographicMatrix public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Further candidate review: native device 2D projections use top-left-origin matrices with negative Y, fixed negative Z and XY translation, not the centered width/height/depth operation. Exact Mac MacOpenGLUtils::ConvertD3DProjectionMatrixToOpenGL 0x254f6-0x2562c mutates an existing full projection, including device-dependent offsets; it does not initialize this matrix. No complete original helper identity established. Original-address provenance recovered: Linux 1.0 IDB 0x80a5b9c maps to retained original Linux 1.3 ELF 0x80a7f00 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002d38e": {
     "status": "equal",
@@ -12189,27 +12189,27 @@
   },
   "linux:universal/com_math.cpp:3353:PlaneFromPoints": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no PlaneFromPoints public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up R_GetSidePlaneNormals forms edge/eye cross products and normalizes the result. It does not establish the two separately normalized edges plus final normalization, or the complete plane[3]/success-result operation of these helpers."
+    "evidence": "Native body/caller gap: no PlaneFromPoints public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up R_GetSidePlaneNormals forms edge/eye cross products and normalizes the result. It does not establish the two separately normalized edges plus final normalization, or the complete plane[3]/success-result operation of these helpers. Original-address provenance recovered: Linux 1.0 IDB 0x80a7ce6 maps to retained original Linux 1.3 ELF 0x80aa04a by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:1422:PlaneNormalFromPoints": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no PlaneNormalFromPoints public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up R_GetSidePlaneNormals forms edge/eye cross products and normalizes the result. It does not establish the two separately normalized edges plus final normalization, or the complete plane[3]/success-result operation of these helpers."
+    "evidence": "Native body/caller gap: no PlaneNormalFromPoints public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up R_GetSidePlaneNormals forms edge/eye cross products and normalizes the result. It does not establish the two separately normalized edges plus final normalization, or the complete plane[3]/success-result operation of these helpers. Original-address provenance recovered: Linux 1.0 IDB 0x80a318c maps to retained original Linux 1.3 ELF 0x80a54f0 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2712:PointInBounds": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no PointInBounds public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native candidate CM_PointContents uses strict interior tests (leaf->mins>=point or point>=leaf->maxs), unlike these inclusive-boundary helper contracts. No complete inclusive two-/three-dimensional native/Mac identity was established."
+    "evidence": "Native body/caller gap: no PointInBounds public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native candidate CM_PointContents uses strict interior tests (leaf->mins>=point or point>=leaf->maxs), unlike these inclusive-boundary helper contracts. No complete inclusive two-/three-dimensional native/Mac identity was established. Original-address provenance recovered: Linux 1.0 IDB 0x80a678a maps to retained original Linux 1.3 ELF 0x80a8aee by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2737:PointInBounds2D": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no PointInBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native candidate CM_PointContents uses strict interior tests (leaf->mins>=point or point>=leaf->maxs), unlike these inclusive-boundary helper contracts. No complete inclusive two-/three-dimensional native/Mac identity was established."
+    "evidence": "Native body/caller gap: no PointInBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native candidate CM_PointContents uses strict interior tests (leaf->mins>=point or point>=leaf->maxs), unlike these inclusive-boundary helper contracts. No complete inclusive two-/three-dimensional native/Mac identity was established. Original-address provenance recovered: Linux 1.0 IDB 0x80a6842 maps to retained original Linux 1.3 ELF 0x80a8ba6 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:233:PointInCircleFromUniformDeviates": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no PointInCircleFromUniformDeviates public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established."
+    "evidence": "Native body/caller gap: no PointInCircleFromUniformDeviates public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established. Original-address provenance recovered: Linux 1.0 IDB 0x80a14ba maps to retained original Linux 1.3 ELF 0x80a381e by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:3496:PointInCylinderArc": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no PointInCylinderArc public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+    "evidence": "Native body/caller gap: no PointInCylinderArc public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Original-address provenance recovered: Linux 1.0 IDB 0x80a81f8 maps to retained original Linux 1.3 ELF 0x80aa55c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:3316:PointInPolygon": {
     "status": "fixed",
@@ -12217,11 +12217,11 @@
   },
   "linux:universal/com_math.cpp:276:PointOnHemisphereFromUniformDeviates": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no PointOnHemisphereFromUniformDeviates public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established."
+    "evidence": "Native body/caller gap: no PointOnHemisphereFromUniformDeviates public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established. Original-address provenance recovered: Linux 1.0 IDB 0x80a158c maps to retained original Linux 1.3 ELF 0x80a38f0 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:254:PointOnSphereFromUniformDeviates": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no PointOnSphereFromUniformDeviates public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established."
+    "evidence": "Native body/caller gap: no PointOnSphereFromUniformDeviates public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established. Original-address provenance recovered: Linux 1.0 IDB 0x80a1516 maps to retained original Linux 1.3 ELF 0x80a387a by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x00029e6e": {
     "status": "equal",
@@ -12229,7 +12229,7 @@
   },
   "linux:universal/com_math.cpp:1467:PointToLineDistSq": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no PointToLineDistSq public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up FX visibility projection uses a supplied unit direction and a centered half-length gate; it is not a proven complete arbitrary start/end projection, zero-length fallback or endpoint-clamped segment-distance operation."
+    "evidence": "Native body/caller gap: no PointToLineDistSq public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up FX visibility projection uses a supplied unit direction and a centered half-length gate; it is not a proven complete arbitrary start/end projection, zero-length fallback or endpoint-clamped segment-distance operation. Original-address provenance recovered: Linux 1.0 IDB 0x80a32b4 maps to retained original Linux 1.3 ELF 0x80a5618 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002bcea": {
     "status": "equal",
@@ -12237,7 +12237,7 @@
   },
   "linux:universal/com_math.cpp:1440:ProjectPointOntoLine": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no ProjectPointOntoLine public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up FX visibility projection uses a supplied unit direction and a centered half-length gate; it is not a proven complete arbitrary start/end projection, zero-length fallback or endpoint-clamped segment-distance operation."
+    "evidence": "Native body/caller gap: no ProjectPointOntoLine public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up FX visibility projection uses a supplied unit direction and a centered half-length gate; it is not a proven complete arbitrary start/end projection, zero-length fallback or endpoint-clamped segment-distance operation. Original-address provenance recovered: Linux 1.0 IDB 0x80a3206 maps to retained original Linux 1.3 ELF 0x80a556a by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x00029a1c": {
     "status": "equal",
@@ -12245,7 +12245,7 @@
   },
   "linux:universal/com_math.cpp:522:Q_log2": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no Q_log2 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native water log2 counters search powers of two by left-shifting a count; this is not the generic signed right-shift-until-zero operation or its full input/termination contract."
+    "evidence": "Native body/caller gap: no Q_log2 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native water log2 counters search powers of two by left-shifting a count; this is not the generic signed right-shift-until-zero operation or its full input/termination contract. Original-address provenance recovered: Linux 1.0 IDB 0x80a1b42 maps to retained original Linux 1.3 ELF 0x80a3ea6 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.h:218:Q_rint": {
     "status": "equal",
@@ -12257,11 +12257,11 @@
   },
   "linux:universal/com_math.cpp:2046:QuatAxisLengthSq": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no QuatAxisLengthSq public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
+    "evidence": "Native body/caller gap: no QuatAxisLengthSq public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers. Original-address provenance recovered: Linux 1.0 IDB 0x80a5662 maps to retained original Linux 1.3 ELF 0x80a79c6 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2090:QuatDiffAxisLengthSq": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no QuatDiffAxisLengthSq public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
+    "evidence": "Native body/caller gap: no QuatDiffAxisLengthSq public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers. Original-address provenance recovered: Linux 1.0 IDB 0x80a5736 maps to retained original Linux 1.3 ELF 0x80a7a9a by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2161:QuatFromAxisAngle": {
     "status": "equal",
@@ -12269,19 +12269,19 @@
   },
   "linux:universal/com_math.cpp:2122:QuatFromPitch": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no QuatFromPitch public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
+    "evidence": "Native body/caller gap: no QuatFromPitch public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers. Original-address provenance recovered: Linux 1.0 IDB 0x80a57e8 maps to retained original Linux 1.3 ELF 0x80a7b4c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2148:QuatFromRoll": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no QuatFromRoll public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
+    "evidence": "Native body/caller gap: no QuatFromRoll public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers. Original-address provenance recovered: Linux 1.0 IDB 0x80a5880 maps to retained original Linux 1.3 ELF 0x80a7be4 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2135:QuatFromYaw": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no QuatFromYaw public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
+    "evidence": "Native body/caller gap: no QuatFromYaw public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers. Original-address provenance recovered: Linux 1.0 IDB 0x80a5834 maps to retained original Linux 1.3 ELF 0x80a7b98 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:1980:QuatInverse": {
     "status": "unchecked",
-    "evidence": "Searched helper-use inventory: QuatInverse is referenced at universal/com_math.cpp:2095. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
+    "evidence": "Searched helper-use inventory: QuatInverse is referenced at universal/com_math.cpp:2095. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers. Original-address provenance recovered: Linux 1.0 IDB 0x80a5494 maps to retained original Linux 1.3 ELF 0x80a77f8 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002b504": {
     "status": "equal",
@@ -12337,47 +12337,47 @@
   },
   "linux:universal/com_math.h:345:SinCos": {
     "status": "unchecked",
-    "evidence": "Searched helper-use inventory: SinCos is referenced at universal/com_math.cpp:3646. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up float sinf/cosf pair resolves FastSinCos only. No complete native double-output pair, exact 0/90/180/270 selection table or double sine-square-to-float operation was established; float products or isolated trig calls are insufficient."
+    "evidence": "Searched helper-use inventory: SinCos is referenced at universal/com_math.cpp:3646. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up float sinf/cosf pair resolves FastSinCos only. No complete native double-output pair, exact 0/90/180/270 selection table or double sine-square-to-float operation was established; float products or isolated trig calls are insufficient. Original IDB/ELF header-chain provenance is now recorded in recon-provenance-math4.noindex/linux-header-chain-maps.json. Identity is no longer based only on reconstruction references; complete Mac consumed-operation proof remains incomplete (I_clamp/I_sel include CrashLand exceptional conversion and nested selection; FloatIdentity/SinCos need their complete Mac owner identity)."
   },
   "linux:universal/com_math.cpp:3814:SinCosDegrees": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no SinCosDegrees public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up float sinf/cosf pair resolves FastSinCos only. No complete native double-output pair, exact 0/90/180/270 selection table or double sine-square-to-float operation was established; float products or isolated trig calls are insufficient."
+    "evidence": "Native body/caller gap: no SinCosDegrees public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up float sinf/cosf pair resolves FastSinCos only. No complete native double-output pair, exact 0/90/180/270 selection table or double sine-square-to-float operation was established; float products or isolated trig calls are insufficient. Original-address provenance recovered: Linux 1.0 IDB 0x80a8972 maps to retained original Linux 1.3 ELF 0x80aacd6 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2075:SinSquaredDeg": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no SinSquaredDeg public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up float sinf/cosf pair resolves FastSinCos only. No complete native double-output pair, exact 0/90/180/270 selection table or double sine-square-to-float operation was established; float products or isolated trig calls are insufficient."
+    "evidence": "Native body/caller gap: no SinSquaredDeg public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up float sinf/cosf pair resolves FastSinCos only. No complete native double-output pair, exact 0/90/180/270 selection table or double sine-square-to-float operation was established; float products or isolated trig calls are insufficient. Original-address provenance recovered: Linux 1.0 IDB 0x80a5706 maps to retained original Linux 1.3 ELF 0x80a7a6a by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:3852:SnapFloatBits": {
     "status": "unchecked",
-    "evidence": "Searched helper-use inventory: SnapFloatBits is referenced at universal/com_math.cpp:3890. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up native g_missile SnapFloat truncates through int; it does not implement low-mantissa tolerance rounding, candidate snapping or plane-error acceptance. Complete matching native/Mac owners remain unlocated."
+    "evidence": "Searched helper-use inventory: SnapFloatBits is referenced at universal/com_math.cpp:3890. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up native g_missile SnapFloat truncates through int; it does not implement low-mantissa tolerance rounding, candidate snapping or plane-error acceptance. Complete matching native/Mac owners remain unlocated. Original-address provenance recovered: Linux 1.0 IDB 0x80a8a66 maps to retained original Linux 1.3 ELF 0x80aadca by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:3885:SnapFloatToGrid": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no SnapFloatToGrid public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native g_missile SnapFloat truncates through int; it does not implement low-mantissa tolerance rounding, candidate snapping or plane-error acceptance. Complete matching native/Mac owners remain unlocated."
+    "evidence": "Native body/caller gap: no SnapFloatToGrid public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native g_missile SnapFloat truncates through int; it does not implement low-mantissa tolerance rounding, candidate snapping or plane-error acceptance. Complete matching native/Mac owners remain unlocated. Original-address provenance recovered: Linux 1.0 IDB 0x80a8acc maps to retained original Linux 1.3 ELF 0x80aae30 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:3181:SnapPointToIntersectingPlanes": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no SnapPointToIntersectingPlanes public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native g_missile SnapFloat truncates through int; it does not implement low-mantissa tolerance rounding, candidate snapping or plane-error acceptance. Complete matching native/Mac owners remain unlocated."
+    "evidence": "Native body/caller gap: no SnapPointToIntersectingPlanes public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native g_missile SnapFloat truncates through int; it does not implement low-mantissa tolerance rounding, candidate snapping or plane-error acceptance. Complete matching native/Mac owners remain unlocated. Original-address provenance recovered: Linux 1.0 IDB 0x80a77da maps to retained original Linux 1.3 ELF 0x80a9b3e by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:3242:SnapPointToPlanes": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no SnapPointToPlanes public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native g_missile SnapFloat truncates through int; it does not implement low-mantissa tolerance rounding, candidate snapping or plane-error acceptance. Complete matching native/Mac owners remain unlocated."
+    "evidence": "Native body/caller gap: no SnapPointToPlanes public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native g_missile SnapFloat truncates through int; it does not implement low-mantissa tolerance rounding, candidate snapping or plane-error acceptance. Complete matching native/Mac owners remain unlocated. Original-address provenance recovered: Linux 1.0 IDB 0x80a797c maps to retained original Linux 1.3 ELF 0x80a9ce0 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:3677:SphericalToCartesian": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no SphericalToCartesian public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established."
+    "evidence": "Native body/caller gap: no SphericalToCartesian public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established. Original-address provenance recovered: Linux 1.0 IDB 0x80a8664 maps to retained original Linux 1.3 ELF 0x80aa9c8 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:300:SpiralPointsInCircle": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no SpiralPointsInCircle public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established."
+    "evidence": "Native body/caller gap: no SpiralPointsInCircle public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established. Original-address provenance recovered: Linux 1.0 IDB 0x80a15fa maps to retained original Linux 1.3 ELF 0x80a395e by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:332:SpiralPointsOnHemisphere": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no SpiralPointsOnHemisphere public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established."
+    "evidence": "Native body/caller gap: no SpiralPointsOnHemisphere public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established. Original-address provenance recovered: Linux 1.0 IDB 0x80a16b2 maps to retained original Linux 1.3 ELF 0x80a3a16 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:367:SpiralPointsOnSphere": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no SpiralPointsOnSphere public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established."
+    "evidence": "Native body/caller gap: no SpiralPointsOnSphere public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established. Original-address provenance recovered: Linux 1.0 IDB 0x80a1788 maps to retained original Linux 1.3 ELF 0x80a3aec by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:2916:TransformBounds": {
     "status": "fixed",
@@ -12385,7 +12385,7 @@
   },
   "linux:universal/com_math.cpp:2945:TransformBoundsExpand": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no TransformBoundsExpand public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+    "evidence": "Native body/caller gap: no TransformBoundsExpand public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Original-address provenance recovered: Linux 1.0 IDB 0x80a6f20 maps to retained original Linux 1.3 ELF 0x80a9284 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:3753:TransformVectorByAnimMat": {
     "status": "equal",
@@ -12413,7 +12413,7 @@
   },
   "linux:universal/com_math.cpp:926:Vec2NormalizeTo": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no Vec2NormalizeTo public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native Vec2Normalize is in place and leaves zero-length inputs untouched; XAnimCalc uses approximate reciprocal square root and a different return/accumulation contract. Neither establishes the complete separate-output clear-zero normalizer or four-component sqrt-length-return helper."
+    "evidence": "Native body/caller gap: no Vec2NormalizeTo public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native Vec2Normalize is in place and leaves zero-length inputs untouched; XAnimCalc uses approximate reciprocal square root and a different return/accumulation contract. Neither establishes the complete separate-output clear-zero normalizer or four-component sqrt-length-return helper. Original-address provenance recovered: Linux 1.0 IDB 0x80a2342 maps to retained original Linux 1.3 ELF 0x80a46a6 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.h:423:Vec2Scale": {
     "status": "equal",
@@ -12453,7 +12453,7 @@
   },
   "linux:universal/com_math.cpp:993:Vec3MaxComponent": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no Vec3MaxComponent public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Full ColorNormalize owner resolves Vec3ScaleToUnitMax only. Its maximum-selection tie/unordered order and zero-output ones/reciprocal multiplication do not prove the separate >= maximum helper or zero-output-zero/direct-division normalization helper."
+    "evidence": "Native body/caller gap: no Vec3MaxComponent public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Full ColorNormalize owner resolves Vec3ScaleToUnitMax only. Its maximum-selection tie/unordered order and zero-output ones/reciprocal multiplication do not prove the separate >= maximum helper or zero-output-zero/direct-division normalization helper. Original-address provenance recovered: Linux 1.0 IDB 0x80a24b6 maps to retained original Linux 1.3 ELF 0x80a481a by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.h:608:Vec3Mul": {
     "status": "equal",
@@ -12465,7 +12465,7 @@
   },
   "linux:universal/com_math.cpp:2333:Vec3NormalizeByMax": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no Vec3NormalizeByMax public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Full ColorNormalize owner resolves Vec3ScaleToUnitMax only. Its maximum-selection tie/unordered order and zero-output ones/reciprocal multiplication do not prove the separate >= maximum helper or zero-output-zero/direct-division normalization helper."
+    "evidence": "Native body/caller gap: no Vec3NormalizeByMax public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Full ColorNormalize owner resolves Vec3ScaleToUnitMax only. Its maximum-selection tie/unordered order and zero-output ones/reciprocal multiplication do not prove the separate >= maximum helper or zero-output-zero/direct-division normalization helper. Original-address provenance recovered: Linux 1.0 IDB 0x80a5e9e maps to retained original Linux 1.3 ELF 0x80a8202 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002cc8a": {
     "status": "equal",
@@ -12473,7 +12473,7 @@
   },
   "linux:universal/com_math.cpp:955:Vec3PackUnitVec": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no Vec3PackUnitVec public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+    "evidence": "Native body/caller gap: no Vec3PackUnitVec public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Original-address provenance recovered: Linux 1.0 IDB 0x80a23c8 maps to retained original Linux 1.3 ELF 0x80a472c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x00029b16": {
     "status": "equal",
@@ -12485,7 +12485,7 @@
   },
   "linux:universal/com_math.cpp:973:Vec3UnpackUnitVec": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no Vec3UnpackUnitVec public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+    "evidence": "Native body/caller gap: no Vec3UnpackUnitVec public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Original-address provenance recovered: Linux 1.0 IDB 0x80a243e maps to retained original Linux 1.3 ELF 0x80a47a2 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.h:807:Vec4LengthSq": {
     "status": "equal",
@@ -12493,7 +12493,7 @@
   },
   "linux:universal/com_math.cpp:874:Vec4Normalize": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no Vec4Normalize public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native Vec2Normalize is in place and leaves zero-length inputs untouched; XAnimCalc uses approximate reciprocal square root and a different return/accumulation contract. Neither establishes the complete separate-output clear-zero normalizer or four-component sqrt-length-return helper."
+    "evidence": "Native body/caller gap: no Vec4Normalize public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native Vec2Normalize is in place and leaves zero-length inputs untouched; XAnimCalc uses approximate reciprocal square root and a different return/accumulation contract. Neither establishes the complete separate-output clear-zero normalizer or four-component sqrt-length-return helper. Original-address provenance recovered: Linux 1.0 IDB 0x80a21d6 maps to retained original Linux 1.3 ELF 0x80a453a by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:756:VecLargestAxis": {
     "status": "equal",
@@ -12597,11 +12597,11 @@
   },
   "linux:universal/com_math.cpp:3621:VectorRotate": {
     "status": "unchecked",
-    "evidence": "Searched helper-use inventory: VectorRotate is referenced at universal/com_math.cpp:3668. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+    "evidence": "Searched helper-use inventory: VectorRotate is referenced at universal/com_math.cpp:3668. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Original-address provenance recovered: Linux 1.0 IDB 0x80a84c6 maps to retained original Linux 1.3 ELF 0x80aa82a by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.cpp:3662:VectorRotateAroundOrigin": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no VectorRotateAroundOrigin public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+    "evidence": "Native body/caller gap: no VectorRotateAroundOrigin public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Original-address provenance recovered: Linux 1.0 IDB 0x80a8610 maps to retained original Linux 1.3 ELF 0x80aa974 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/com_math.h:596:VectorScale": {
     "status": "equal",
@@ -12661,7 +12661,7 @@
   },
   "linux:universal/com_math.cpp:1287:vectoanglessigned": {
     "status": "unchecked",
-    "evidence": "Searched helper-use inventory: vectoanglessigned is referenced at universal/com_math.cpp:3104. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up native AxisToAngles begins with unsigned vectoangles; vectoangles/vectopitch wrap negative angles into 0..360. The complete signed three-angle output, vertical case and roll construction are not established by those unsigned routines."
+    "evidence": "Searched helper-use inventory: vectoanglessigned is referenced at universal/com_math.cpp:3104. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up native AxisToAngles begins with unsigned vectoangles; vectoangles/vectopitch wrap negative angles into 0..360. The complete signed three-angle output, vertical case and roll construction are not established by those unsigned routines. Original-address provenance recovered: Linux 1.0 IDB 0x80a2dbe maps to retained original Linux 1.3 ELF 0x80a5122 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002c922": {
     "status": "equal",
@@ -13389,7 +13389,7 @@
   },
   "linux:universal/q_shared.cpp:164:BigLong": {
     "status": "unchecked",
-    "evidence": "Linux dispatches through _BigLong, but native/Mac Swap_Init retain only five Little* pointers; no native BigLong body, callers, or corresponding Mac Big* dispatch table was identified."
+    "evidence": "Linux dispatches through _BigLong, but native/Mac Swap_Init retain only five Little* pointers; no native BigLong body, callers, or corresponding Mac Big* dispatch table was identified. Original-address provenance recovered: Linux 1.0 IDB 0x80b4fb8 maps to retained original Linux 1.3 ELF 0x80b7590 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/q_shared.cpp:159:BigShort": {
     "status": "equal",
@@ -13401,7 +13401,7 @@
   },
   "linux:universal/q_shared.cpp:614:CanKeepStringPointer": {
     "status": "unchecked",
-    "evidence": "Current-consumer follow-up examined Dvar_CanonicalizeValueString and Dvar_RegisterNew: current ownership paths canonicalize constants or allocate explicit copies through CopyStringInternal. They do not establish the complete stack-range plus TLS-va-buffer predicate, including both false ranges and true result. No complete original Mac/native predicate identity or demonstrated replacement of its interface established."
+    "evidence": "Current-consumer follow-up examined Dvar_CanonicalizeValueString and Dvar_RegisterNew: current ownership paths canonicalize constants or allocate explicit copies through CopyStringInternal. They do not establish the complete stack-range plus TLS-va-buffer predicate, including both false ranges and true result. No complete original Mac/native predicate identity or demonstrated replacement of its interface established. Original-address provenance recovered: Linux 1.0 IDB 0x80b5970 maps to retained original Linux 1.3 ELF 0x80b7f48 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x00028314": {
     "status": "equal",
@@ -13409,7 +13409,7 @@
   },
   "linux:universal/q_shared.cpp:52:Com_AssembleFilepath": {
     "status": "unchecked",
-    "evidence": "Current-consumer follow-up examined FS_BuildOSPath_Internal in universal/com_files.c: it inserts two slashes, uses a fixed OS-path bound and has a stream-thread failure return before slash normalization. That complete active owner is not the generic folder/name/extension length-check-and-three-copy operation. No complete original Mac/native Com_AssembleFilepath identity established; no closure from three-copy similarity."
+    "evidence": "Current-consumer follow-up examined FS_BuildOSPath_Internal in universal/com_files.c: it inserts two slashes, uses a fixed OS-path bound and has a stream-thread failure return before slash normalization. That complete active owner is not the generic folder/name/extension length-check-and-three-copy operation. No complete original Mac/native Com_AssembleFilepath identity established; no closure from three-copy similarity. Original-address provenance recovered: Linux 1.0 IDB 0x80b4d74 maps to retained original Linux 1.3 ELF 0x80b734c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/q_shared.h:522:Com_BitCheck": {
     "status": "equal",
@@ -13449,11 +13449,11 @@
   },
   "linux:universal/q_shared.cpp:116:Com_StripFilename": {
     "status": "unchecked",
-    "evidence": "Current-consumer follow-up examined FindFirstFileA in Mac/Tools/MacWin32.c: it bounds the directory copy, excludes the final slash and separately stores a wildcard pattern. The required basename-offset copy includes that slash and has a different output contract. Com_SkipPath remains only the basename subhelper; no complete Mac/native Com_StripFilename identity established."
+    "evidence": "Current-consumer follow-up examined FindFirstFileA in Mac/Tools/MacWin32.c: it bounds the directory copy, excludes the final slash and separately stores a wildcard pattern. The required basename-offset copy includes that slash and has a different output contract. Com_SkipPath remains only the basename subhelper; no complete Mac/native Com_StripFilename identity established. Original-address provenance recovered: Linux 1.0 IDB 0x80b4ed6 maps to retained original Linux 1.3 ELF 0x80b74ae by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/q_shared.cpp:670:Com_WideToNarrow": {
     "status": "unchecked",
-    "evidence": "Read Linux odd-byte UTF-16 narrowing and final len-1 NUL. Native has no named body/callsite and no complete matching Mac narrowing loop was identified."
+    "evidence": "Read Linux odd-byte UTF-16 narrowing and final len-1 NUL. Native has no named body/callsite and no complete matching Mac narrowing loop was identified. Original-address provenance recovered: Linux 1.0 IDB 0x80b5af0 maps to retained original Linux 1.3 ELF 0x80b80c8 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x00028718": {
     "status": "equal",
@@ -13465,7 +13465,7 @@
   },
   "linux:universal/q_shared.cpp:266:FloatNoSwap": {
     "status": "unchecked",
-    "evidence": "Linux float-to-float identity has no native callable body/callsite identified. Mac FloatReadNoSwap is an int-bits-to-float API, which alone does not establish the float-input interface."
+    "evidence": "Linux float-to-float identity has no native callable body/callsite identified. Mac FloatReadNoSwap is an int-bits-to-float API, which alone does not establish the float-input interface. Original-address provenance recovered: Linux 1.0 IDB 0x80b5290 maps to retained original Linux 1.3 ELF 0x80b7868 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/q_shared.cpp:289:FloatNoSwapAsInt": {
     "status": "equal",
@@ -13481,7 +13481,7 @@
   },
   "linux:universal/q_shared.cpp:249:FloatSwap": {
     "status": "unchecked",
-    "evidence": "Linux float-to-float byte reversal has no native body/callsite identified. Mac FloatReadSwap and FloatWriteSwap establish permutations but differ in typed input/output contracts; a complete float-to-float caller identity remains missing."
+    "evidence": "Linux float-to-float byte reversal has no native body/callsite identified. Mac FloatReadSwap and FloatWriteSwap establish permutations but differ in typed input/output contracts; a complete float-to-float caller identity remains missing. Original-address provenance recovered: Linux 1.0 IDB 0x80b525c maps to retained original Linux 1.3 ELF 0x80b7834 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/q_shared.cpp:271:FloatSwapAsInt": {
     "status": "equal",
@@ -13549,7 +13549,7 @@
   },
   "linux:universal/q_shared.cpp:445:I_stricmpwild": {
     "status": "unchecked",
-    "evidence": "Read complete Linux recursive star/question-mark matcher; native has no named body/callsite and a complete corresponding Mac recursive wildcard comparison was not identified."
+    "evidence": "Read complete Linux recursive star/question-mark matcher; native has no named body/callsite and a complete corresponding Mac recursive wildcard comparison was not identified. Original-address provenance recovered: Linux 1.0 IDB 0x80b5664 maps to retained original Linux 1.3 ELF 0x80b7c3c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002920c": {
     "status": "equal",
@@ -13609,11 +13609,11 @@
   },
   "linux:universal/q_shared.cpp:185:LittleFloat": {
     "status": "unchecked",
-    "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleFloat body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient."
+    "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleFloat body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient. Original-address provenance recovered: Linux 1.0 IDB 0x80b502a maps to retained original Linux 1.3 ELF 0x80b7602 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/q_shared.cpp:190:LittleFloatAsInt": {
     "status": "unchecked",
-    "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleFloatAsInt body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient."
+    "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleFloatAsInt body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient. Original-address provenance recovered: Linux 1.0 IDB 0x80b5040 maps to retained original Linux 1.3 ELF 0x80b7618 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/q_shared.h:373:LittleLong": {
     "status": "equal",
@@ -13621,11 +13621,11 @@
   },
   "linux:universal/q_shared.cpp:169:LittleLong64": {
     "status": "unchecked",
-    "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleLong64 body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient."
+    "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleLong64 body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient. Original-address provenance recovered: Linux 1.0 IDB 0x80b4fce maps to retained original Linux 1.3 ELF 0x80b75a6 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/q_shared.cpp:180:LittleLongRuntime": {
     "status": "unchecked",
-    "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleLongRuntime body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient."
+    "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleLongRuntime body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient. Original-address provenance recovered: Linux 1.0 IDB 0x80b5014 maps to retained original Linux 1.3 ELF 0x80b75ec by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/q_shared.h:368:LittleShort": {
     "status": "equal",
@@ -13633,7 +13633,7 @@
   },
   "linux:universal/q_shared.cpp:175:LittleShortRuntime": {
     "status": "unchecked",
-    "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleShortRuntime body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient."
+    "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleShortRuntime body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient. Original-address provenance recovered: Linux 1.0 IDB 0x80b4ff6 maps to retained original Linux 1.3 ELF 0x80b75ce by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x0002850a": {
     "status": "equal",
@@ -13653,7 +13653,7 @@
   },
   "linux:universal/q_shared.cpp:1250:OrientationConcatenate": {
     "status": "unchecked",
-    "evidence": "Current-consumer follow-up examined FX_GetBoneOrientation composition at Mac 0x593c4-0x593f4 and native EffectsCore/FxUtil.c: MatrixMultiply forms all three axes, then MatrixTransformVector43 forms translation. The latter Mac/native operator adds translation after the dot (0x2b474-0x2b4fa); q_shared OrientationPosToWorldPos adds the origin before successive products. This candidate does not establish the complete q_shared concatenate operation/order, despite matching real rigid composition intent."
+    "evidence": "Current-consumer follow-up examined FX_GetBoneOrientation composition at Mac 0x593c4-0x593f4 and native EffectsCore/FxUtil.c: MatrixMultiply forms all three axes, then MatrixTransformVector43 forms translation. The latter Mac/native operator adds translation after the dot (0x2b474-0x2b4fa); q_shared OrientationPosToWorldPos adds the origin before successive products. This candidate does not establish the complete q_shared concatenate operation/order, despite matching real rigid composition intent. Original-address provenance recovered: Linux 1.0 IDB 0x80b6a34 maps to retained original Linux 1.3 ELF 0x80b900c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x000290d2": {
     "status": "equal",
@@ -13673,11 +13673,11 @@
   },
   "linux:universal/q_shared.cpp:1258:OrientationPlaneToLocal": {
     "status": "unchecked",
-    "evidence": "Read Linux direction transform plus plane distance subtraction. Native has no body/callsite and no complete Mac plane-distance block was identified; the direction helper alone is insufficient."
+    "evidence": "Read Linux direction transform plus plane distance subtraction. Native has no body/callsite and no complete Mac plane-distance block was identified; the direction helper alone is insufficient. Original-address provenance recovered: Linux 1.0 IDB 0x80b6ab2 maps to retained original Linux 1.3 ELF 0x80b908a by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/q_shared.cpp:1224:OrientationPlaneToWorld": {
     "status": "unchecked",
-    "evidence": "Read Linux direction transform plus plane distance addition. Native has no body/callsite and no complete Mac plane-distance block was identified; the direction helper alone is insufficient."
+    "evidence": "Read Linux direction transform plus plane distance addition. Native has no body/callsite and no complete Mac plane-distance block was identified; the direction helper alone is insufficient. Original-address provenance recovered: Linux 1.0 IDB 0x80b68a2 maps to retained original Linux 1.3 ELF 0x80b8e7a by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x00029042": {
     "status": "equal",
@@ -13701,19 +13701,19 @@
   },
   "linux:universal/q_shared.cpp:1293:ScaledOrientationPlaneToLocal": {
     "status": "unchecked",
-    "evidence": "Read full Linux direction transform and scaled distance division; native has no named body/callsite and complete Mac plane/scale identity remains missing."
+    "evidence": "Read full Linux direction transform and scaled distance division; native has no named body/callsite and complete Mac plane/scale identity remains missing. Original-address provenance recovered: Linux 1.0 IDB 0x80b6cce maps to retained original Linux 1.3 ELF 0x80b92a6 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/q_shared.cpp:1271:ScaledOrientationPlaneToWorld": {
     "status": "unchecked",
-    "evidence": "Read full Linux direction transform and scaled distance addition; native has no named body/callsite and complete Mac plane/scale identity remains missing."
+    "evidence": "Read full Linux direction transform and scaled distance addition; native has no named body/callsite and complete Mac plane/scale identity remains missing. Original-address provenance recovered: Linux 1.0 IDB 0x80b6bbc maps to retained original Linux 1.3 ELF 0x80b9194 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/q_shared.cpp:1277:ScaledOrientationPosToLocal": {
     "status": "unchecked",
-    "evidence": "Read full Linux origin deltas, reciprocal scale and three ordered dot products; native has no body/callsite and complete Mac scaled-position identity remains missing."
+    "evidence": "Read full Linux origin deltas, reciprocal scale and three ordered dot products; native has no body/callsite and complete Mac scaled-position identity remains missing. Original-address provenance recovered: Linux 1.0 IDB 0x80b6c0e maps to retained original Linux 1.3 ELF 0x80b91e6 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/q_shared.cpp:1264:ScaledOrientationPosToWorld": {
     "status": "unchecked",
-    "evidence": "Current-consumer follow-up examined native R_GetRigidTransform (gfx_d3d/r_model.c) and weighted XSurfaceTransformPos: R_GetRigidTransform scales each axis component before dot products, while the weighted surface operator scales the translated result and accumulates it. Neither is the complete q_shared scale-after-dot then origin-add operation. No complete authoritative Mac/native scaled-position helper identity established."
+    "evidence": "Current-consumer follow-up examined native R_GetRigidTransform (gfx_d3d/r_model.c) and weighted XSurfaceTransformPos: R_GetRigidTransform scales each axis component before dot products, while the weighted surface operator scales the translated result and accumulates it. Neither is the complete q_shared scale-after-dot then origin-add operation. No complete authoritative Mac/native scaled-position helper identity established. Original-address provenance recovered: Linux 1.0 IDB 0x80b6afe maps to retained original Linux 1.3 ELF 0x80b90d6 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x000283bc": {
     "status": "equal",
@@ -13729,11 +13729,11 @@
   },
   "linux:universal/q_shared.cpp:305:Swap_InitBigEndian": {
     "status": "unchecked",
-    "evidence": "Mac/native Swap_Init swapped branch was compared, but Linux helper additionally binds two Big* pointers and uses a float-input wrapper. No complete identity for those additional dispatch contracts was identified."
+    "evidence": "Mac/native Swap_Init swapped branch was compared, but Linux helper additionally binds two Big* pointers and uses a float-input wrapper. No complete identity for those additional dispatch contracts was identified. Original-address provenance recovered: Linux 1.0 IDB 0x80b5332 maps to retained original Linux 1.3 ELF 0x80b790a by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "linux:universal/q_shared.cpp:294:Swap_InitLittleEndian": {
     "status": "unchecked",
-    "evidence": "Mac/native Swap_Init no-swap branch was compared, but Linux helper additionally binds two Big* pointers and uses a float-input wrapper. No complete identity for those additional dispatch contracts was identified."
+    "evidence": "Mac/native Swap_Init no-swap branch was compared, but Linux helper additionally binds two Big* pointers and uses a float-input wrapper. No complete identity for those additional dispatch contracts was identified. Original-address provenance recovered: Linux 1.0 IDB 0x80b52e6 maps to retained original Linux 1.3 ELF 0x80b78be by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
   },
   "mac:0x00028ef4": {
     "status": "equal",
@@ -17337,7 +17337,7 @@
   },
   "mac:0x000a0870": {
     "status": "fixed",
-    "evidence": "Mac 0xa08b5\u20130xa08ce selects the extent by radius[0]-radius[1]<0, retaining radius[0] on unordered comparisons; native used the opposite comparison and selected radius[1]. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge."
+    "evidence": "Mac 0xa08b5\u20130xa08ce selects the extent by radius[0]-radius[1]<0, retaining radius[0] on unordered comparisons; native used the opposite comparison and selected radius[1]. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge. New original-helper provenance review: Mac Cloud::Cull at 0x000a0870 tests sign after wrapping 32-bit camera numPlanes minus5 when flag0x2000000 is set. Native ordinary signed comparison differed for INT_MIN..INT_MIN+4; COD2_X64 shared selector now uses unsigned subtraction/sign-bit, preserving all other owner arguments. FxCamera owns six plane records; producer normally sets5/6 (Mac0xab55c/0xab5aa), so exceptional input reachability is not demonstrated. OFF source byte-identical; manually compiled and reviewed in stock/CODX client configurations; not exercised."
   },
   "mac:0x000a0218": {
     "status": "equal",
@@ -17373,7 +17373,7 @@
   },
   "mac:0x000a09f2": {
     "status": "fixed",
-    "evidence": "Mac 0xa0a23\u20130xa0a33 passes radius[1] before radius[0]; native reversed the two callback radius arguments. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge."
+    "evidence": "Mac 0xa0a23\u20130xa0a33 passes radius[1] before radius[0]; native reversed the two callback radius arguments. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge. New original-helper provenance review: Mac Cylinder::Cull at 0x000a09f2 tests sign after wrapping 32-bit camera numPlanes minus5 when flag0x2000000 is set. Native ordinary signed comparison differed for INT_MIN..INT_MIN+4; COD2_X64 shared selector now uses unsigned subtraction/sign-bit, preserving all other owner arguments. FxCamera owns six plane records; producer normally sets5/6 (Mac0xab55c/0xab5aa), so exceptional input reachability is not demonstrated. OFF source byte-identical; manually compiled and reviewed in stock/CODX client configurations; not exercised."
   },
   "mac:0x000a97de": {
     "status": "equal",
@@ -17676,8 +17676,8 @@
     "evidence": "Exact Mac 0x000a0300: compared template channel 0/1/4/5 mappings to color/color-random/size/size-random instances."
   },
   "mac:0x000a0a6c": {
-    "status": "equal",
-    "evidence": "Exact Mac 0x000a0a6c: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five."
+    "status": "fixed",
+    "evidence": "Exact Mac 0x000a0a6c: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five. New original-helper provenance review: Mac Light::Cull at 0x000a0a6c tests sign after wrapping 32-bit camera numPlanes minus5 when flag0x2000000 is set. Native ordinary signed comparison differed for INT_MIN..INT_MIN+4; COD2_X64 shared selector now uses unsigned subtraction/sign-bit, preserving all other owner arguments. FxCamera owns six plane records; producer normally sets5/6 (Mac0xab55c/0xab5aa), so exceptional input reachability is not demonstrated. OFF source byte-identical; manually compiled and reviewed in stock/CODX client configurations; not exercised."
   },
   "mac:0x000a0374": {
     "status": "equal",
@@ -17720,8 +17720,8 @@
     "evidence": "Exact Mac 0x000a90d8: compared particle base and endpoint vector read/write order."
   },
   "mac:0x000a090a": {
-    "status": "equal",
-    "evidence": "Exact Mac 0x000a090a: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five."
+    "status": "fixed",
+    "evidence": "Exact Mac 0x000a090a: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five. New original-helper provenance review: Mac Line::Cull at 0x000a090a tests sign after wrapping 32-bit camera numPlanes minus5 when flag0x2000000 is set. Native ordinary signed comparison differed for INT_MIN..INT_MIN+4; COD2_X64 shared selector now uses unsigned subtraction/sign-bit, preserving all other owner arguments. FxCamera owns six plane records; producer normally sets5/6 (Mac0xab55c/0xab5aa), so exceptional input reachability is not demonstrated. OFF source byte-identical; manually compiled and reviewed in stock/CODX client configurations; not exercised."
   },
   "mac:0x000a027a": {
     "status": "equal",
@@ -17760,8 +17760,8 @@
     "evidence": "Exact Mac 0x000a8eca: compared particle base and normal vector read/write order."
   },
   "mac:0x000a07e4": {
-    "status": "equal",
-    "evidence": "Exact Mac 0x000a07e4: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five."
+    "status": "fixed",
+    "evidence": "Exact Mac 0x000a07e4: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five. New original-helper provenance review: Mac OrientedParticle::Cull at 0x000a07e4 tests sign after wrapping 32-bit camera numPlanes minus5 when flag0x2000000 is set. Native ordinary signed comparison differed for INT_MIN..INT_MIN+4; COD2_X64 shared selector now uses unsigned subtraction/sign-bit, preserving all other owner arguments. FxCamera owns six plane records; producer normally sets5/6 (Mac0xab55c/0xab5aa), so exceptional input reachability is not demonstrated. OFF source byte-identical; manually compiled and reviewed in stock/CODX client configurations; not exercised."
   },
   "mac:0x000a06b0": {
     "status": "equal",
@@ -17816,8 +17816,8 @@
     "evidence": "Exact Mac 0x0009ffba: compared 22 ordered template/instance mappings: template channels 0\u20137 and 10\u201323."
   },
   "mac:0x000a0758": {
-    "status": "equal",
-    "evidence": "Exact Mac 0x000a0758: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five."
+    "status": "fixed",
+    "evidence": "Exact Mac 0x000a0758: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five. New original-helper provenance review: Mac Particle::Cull at 0x000a0758 tests sign after wrapping 32-bit camera numPlanes minus5 when flag0x2000000 is set. Native ordinary signed comparison differed for INT_MIN..INT_MIN+4; COD2_X64 shared selector now uses unsigned subtraction/sign-bit, preserving all other owner arguments. FxCamera owns six plane records; producer normally sets5/6 (Mac0xab55c/0xab5aa), so exceptional input reachability is not demonstrated. OFF source byte-identical; manually compiled and reviewed in stock/CODX client configurations; not exercised."
   },
   "mac:0x000a10fe": {
     "status": "intentional",
@@ -17932,8 +17932,8 @@
     "evidence": "Exact Mac 0x000a028a: compared particle channels then template channels 8/9 into length/length-random instances."
   },
   "mac:0x000a097e": {
-    "status": "equal",
-    "evidence": "Exact Mac 0x000a097e: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five."
+    "status": "fixed",
+    "evidence": "Exact Mac 0x000a097e: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five. New original-helper provenance review: Mac Tail::Cull at 0x000a097e tests sign after wrapping 32-bit camera numPlanes minus5 when flag0x2000000 is set. Native ordinary signed comparison differed for INT_MIN..INT_MIN+4; COD2_X64 shared selector now uses unsigned subtraction/sign-bit, preserving all other owner arguments. FxCamera owns six plane records; producer normally sets5/6 (Mac0xab55c/0xab5aa), so exceptional input reachability is not demonstrated. OFF source byte-identical; manually compiled and reviewed in stock/CODX client configurations; not exercised."
   },
   "mac:0x000a067a": {
     "status": "equal",

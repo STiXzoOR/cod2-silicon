@@ -156,3 +156,48 @@ compilation, tests, CI or replay ran. Private exact-entry evidence is retained
 in `CoD2-native-decomp/recon-identity-math3.noindex`. The 23 outstanding
 `q_shared` identities also retain their prior verdicts; review of the previous
 consumer investigations supplied no new complete-operation lead.
+
+## Retained original-address provenance and integer selectors
+
+Original Linux addresses have now been recovered instead of relying on names in
+the reconstruction. The retained 1.0 IDA database supplies function boundaries
+and bytes. Masked whole-body comparisons against the original 1.3 ELF identify
+all 155 math bodies with a common relocation of +0x2364; 14 identical-body
+ambiguities are disambiguated by the surrounding module sequence. This maps
+61 of the 69 remaining math identities to concrete original addresses. For
+example, OrthographicMatrix maps 0x80a5b9c to 0x80a7f00, QuatInverse 0x80a5494 to
+0x80a77f8, Vec3PackUnitVec 0x80a23c8 to 0x80a472c and TransformBoundsExpand
+0x80a6f20 to 0x80a9284. These mappings supply identity and intent only, and do
+not close those rows without corresponding complete Mac operations.
+
+I_min is now fixed and I_max equal based on original caller chains and complete
+consumed Mac operations. Original I_min copies at 0x805525e and 0x81293be serve
+partition scoring, FX cull-plane selection and four-channel byte packing.
+Original I_max copies at 0x80f292e and 0x812991c serve the weapon kick timer and
+that byte packing. The original Flash caller at 0x812915e reaches byte packing
+at 0x81291c0; the original FX cull wrappers reach their shared selector through
+seven explicit calls. This replaces the earlier speculative name association.
+
+Mac partition selection at 0x7800f/0x780df chooses by subtraction sign. Both
+counters start at -1 and increment at most N times for positive signed N, so
+their difference cannot overflow and native comparison agrees. Mac weapon
+selection at 0x7cd9a–0x7cdaf first requires a positive kick timer, subtracts
+pml.msec and selects zero by sign. Pmove bounds that duration to 1–200, making
+the subtraction defined; the native timer operation agrees. Flash Draw's four
+upper/lower selections already preserve wrapped subtraction and negation,
+including the integer-indefinite conversion sentinel. The seven FX cull owners
+needed the wrapped count-minus-five correction described in the FxPrimitives
+report. The helper verdicts cover these original consumed operations, not a
+newly invented arbitrary-argument Mac function.
+
+I_clamp and I_sel remain unchecked: original header-copy identities were
+recovered, but their additional CrashLand exceptional conversion and nested
+selection contract is still incomplete. FloatIdentity and SinCos now have
+original addresses but need their complete Mac owner identity. Narrow semantic
+Mac scans for unit-vector packing constants and quaternion conjugation did not
+establish a new complete owner and do not count as absence evidence.
+
+Private address maps, original caller packets and exact Mac entries are retained
+in recon-provenance-math4.noindex. Only the FX translation unit changed and was
+manually compiled in its two configured client variants. No runtime behavior,
+tests, CI, full build or replay was exercised. There are 67 unchecked math rows.

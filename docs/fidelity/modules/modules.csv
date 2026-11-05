@@ -4,7 +4,7 @@ EffectsCore/FxChannel,6,4,1,0,1
 EffectsCore/FxCurve,5,4,0,0,1
 EffectsCore/FxCurve_load_obj,2,1,0,0,1
 EffectsCore/FxMemMgr,5,1,0,0,4
-EffectsCore/FxPrimitives,201,162,17,21,1
+EffectsCore/FxPrimitives,201,157,22,21,1
 EffectsCore/FxScheduler,59,44,6,8,1
 EffectsCore/FxScheduler_load_obj,17,11,4,2,0
 EffectsCore/FxSystem,20,14,5,0,1
@@ -425,7 +425,7 @@ universal/com_convexhull,2,2,0,0,0
 universal/com_file_wrapper,5,5,0,0,0
 universal/com_files,92,69,6,10,7
 universal/com_files_mp,27,19,6,2,0
-universal/com_math,229,136,24,0,69
+universal/com_math,229,137,25,0,67
 universal/com_memory,64,36,11,10,7
 universal/com_memory_high,1,1,0,0,0
 universal/com_shared,7,5,2,0,0
