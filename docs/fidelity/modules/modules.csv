@@ -340,9 +340,9 @@ qcommon/cm_polylib,6,0,0,6,0
 qcommon/cm_staticmodel,5,5,0,0,0
 qcommon/cm_staticmodel_load_obj,3,1,2,0,0
 qcommon/cm_test,9,9,0,0,0
-qcommon/cm_trace,38,37,1,0,0
+qcommon/cm_trace,38,36,2,0,0
 qcommon/cm_tracebox,2,2,0,0,0
-qcommon/cm_world,28,28,0,0,0
+qcommon/cm_world,28,27,1,0,0
 qcommon/cmd,36,25,0,7,4
 qcommon/com_bsp_load_obj,6,5,1,0,0
 qcommon/com_playerprofile,7,4,1,2,0
@@ -370,7 +370,7 @@ script/scr_vm,112,85,2,9,16
 script/scr_yacc,45,14,7,0,24
 server/sv_ccmds_mp,35,27,5,3,0
 server/sv_client_mp,43,25,8,10,0
-server/sv_game_mp,54,40,7,0,7
+server/sv_game_mp,54,39,8,0,7
 server/sv_init_mp,26,15,8,2,1
 server/sv_main_mp,24,8,10,6,0
 server/sv_main_pc_mp,7,4,2,1,0
@@ -425,7 +425,7 @@ universal/com_convexhull,2,2,0,0,0
 universal/com_file_wrapper,5,5,0,0,0
 universal/com_files,92,68,6,10,8
 universal/com_files_mp,27,19,6,2,0
-universal/com_math,229,101,22,0,106
+universal/com_math,229,136,24,0,69
 universal/com_memory,64,36,11,10,7
 universal/com_memory_high,1,1,0,0,0
 universal/com_shared,7,5,2,0,0
@@ -449,7 +449,7 @@ win32/snd_driver,55,45,7,3,0
 win32/win_localize,3,3,0,0,0
 win32/win_net,3,2,0,1,0
 win32/win_voice,7,1,0,6,0
-xanim/dobj,58,54,1,0,3
+xanim/dobj,58,53,2,0,3
 xanim/xanim,147,118,13,5,11
 xanim/xanim_load,4,3,1,0,0
 xanim/xanim_public,10,7,3,0,0

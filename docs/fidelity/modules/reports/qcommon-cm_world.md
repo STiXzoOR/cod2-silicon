@@ -1,8 +1,8 @@
 # qcommon/cm_world module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**24/24 reconciled: 24 equal.** Read the Mac 1.3 bodies at 0xaf49c-0xb13ca alongside native source, including the recursive helpers that have Mac symbols but Linux-only ledger rows. Call/string triage and literal checks were used as prompts for that comparison. No code changes were needed.
+**28/28 reconciled: 27 equal, 1 fixed.** The original 24-row pass read the Mac 1.3 bodies at 0xaf49c-0xb13ca alongside native source, including the recursive helpers that have Mac symbols but Linux-only ledger rows. Call/string triage and literal checks were prompts for that comparison. No code changes were needed in that initial pass; the 2026-11-05 follow-up below records the overlap correction.
 
 The comparison covers unlinking and content propagation, area bounds and capacity exits, all point/sight/move traversals, insertion, sector allocation, sorting and initial world linkage. The Linux names `CM_AddEntityToNode` and `CM_AddStaticModelToNode` map to native insertion helpers and Mac inline blocks. `CM_ClearWorld`, `CM_LinkStaticModel` and `CM_LinkAllStaticModels` are inlined into `CM_LinkWorld` at 0xb0cc2.
 
@@ -24,4 +24,23 @@ The hosted ILP32 byte-comparison job cannot compare binaries: its unchanged `410
 
 ## Routed identities
 
-Separately indexed Mac rows moved from universal headers were resolved only where the exact symbol/address and existing complete-body audit established identity with an already reconciled Linux-indexed row. The source matches that audited implementation. Both IDs and original provenance remain; these are duplicate work items, not new implementations. Current module counts: 28 equal, 0 fixed, 0 intentional, 0 unchecked.
+Separately indexed Mac rows moved from universal headers were resolved only where the exact symbol/address and existing complete-body audit established identity with an already reconciled Linux-indexed row. The source matches that audited implementation. Both IDs and original provenance remain; these are duplicate work items, not new implementations. Counts after routing, before the 2026-11-05 follow-up: 28 equal, 0 fixed, 0 intentional, 0 unchecked.
+
+## Math-helper follow-up — 2026-11-05
+
+Current accounting is **27 equal, one fixed; none unchecked**. Complete
+`BoundsOverlap` comparison in `CM_AreaEntities_r` found that Mac
+0xaf6d2–0xaf729 rejects only strictly separated bounds with six `UCOMISS/JA`
+branches, accepting touching and unordered pairs. Native `<=` conjunctions
+rejected unordered pairs. The `COD2_X64` condition now uses the corresponding
+negated-`>` predicates, preserving all finite comparisons and their axis order.
+The complete owner row changes from equal to fixed with its historical
+evidence retained and this correction appended by explicit parent approval.
+
+The configured stock/CoD2x arm64 Release client and dedicated object compiles
+pass. The unchanged production `world_links` fixture passes both modes under
+ASan; it exercises finite queries, not the unordered correction. Five inactive
+source configurations and byte-for-byte `unifdef -UCOD2_X64` output match the
+base; this source has no `__LINE__` uses. No tests were added. The exceptional
+path is compiled and reviewed only; fresh review, full links, CI and replays
+remain with the integration owner.

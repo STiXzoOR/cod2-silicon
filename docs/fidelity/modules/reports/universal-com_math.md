@@ -1,8 +1,8 @@
 # universal/com_math module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**123/245 reconciled: 101 equal, 22 fixed; 122 unchecked.** The 82 native math definitions and 41 complete inline or alias identities were compared by hand with Mac 1.3 symbol-start disassembly. The 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
+**160/229 reconciled: 136 equal, 24 fixed; 69 unchecked.** The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
 ## Corrections
 
@@ -26,7 +26,7 @@ Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-univer
 
 ## Ownership correction
 
-16 unchecked whole-caller rows were moved to their actual engine modules after integration. Original Mac attribution, IDs and unchecked verdicts are preserved. The preceding audit totals describe the original assignment. This module now holds 229 rows: 101 equal, 22 fixed, 0 intentional, 106 unchecked. The destination owners must audit each complete caller; matching a shared inline helper does not certify it.
+16 unchecked whole-caller rows were moved to their actual engine modules after integration. Original Mac attribution, IDs and unchecked verdicts are preserved. The preceding audit totals describe the original assignment. After that ownership correction, before the 2026-11-05 follow-up, this module held 229 rows: 101 equal, 22 fixed, 0 intentional, 106 unchecked. The destination owners must audit each complete caller; matching a shared inline helper does not certify it.
 
 ## Integrated batch verification
 
@@ -39,3 +39,93 @@ The six units closed 543 entries. Thirty-two whole callers misattributed to univ
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baselines and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. These dedicated traces do not exercise client input/rendering or every changed diagnostic, parser, sound or numeric edge; unreached corrections remain compiled and reviewed.
 
 Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile. No new tests were written; the existing formatter fixture expectation was corrected against exact Mac diagnostic bytes.
+
+## Remaining-helper follow-up — 2026-11-05
+
+**160/229 reconciled: 136 equal, 24 fixed; 69 unchecked.** This pass closes 37
+of the 106 remaining Linux-only helper rows: 35 equal and two fixed. The original
+123 reconciled statuses/evidence remain unchanged. Linux supplied helper names;
+Mac symbol-start disassembly supplied behavior. Every new closure accounts for
+the complete helper operation, including every component, branch and result.
+It does not certify the unrelated caller around an inline operation.
+
+Two corrections were required in actual native owners. `FastCeil` in the HUD
+timer/clock code used a C float-to-int cast. Mac 0x1b3d4f, 0x1b3f03 and 0x1b3f39
+use `CVTTSS2SI`, whose invalid result is `INT_MIN`. A connected native helper now
+preserves that result after `ceilf` at all three uses. `BoundsOverlap` in
+`CM_AreaEntities_r` used six `<=` tests, rejecting unordered pairs; Mac
+0xaf6d2–0xaf729 rejects only strictly separated pairs with `UCOMISS/JA`. The
+native predicates now preserve that unordered-inclusive behavior and finite
+axis/order behavior. Both corrections are guarded by `COD2_X64`. Their complete
+owner rows receive explicit parent-approved evidence overrides.
+
+The new identity evidence includes:
+
+- `FloatAsInt` is the complete native `FloatWriteNoSwap` operation, Mac
+  0x28590–0x28597, returning the entire float word. This resolves the previous
+  sign-only evidence gap. `FloatIdentity` remains distinct and unchecked.
+- `Q_rint`/`I_fround`, `Q_round` and four-component byte packing use the complete
+  `Flash::Draw` sequence at 0xa0e83–0xa0f71. Later native FX conversion helpers
+  already preserve invalid integer conversion and the wrapping clamp paths.
+- `AxisClear`/`AxisIdentity` match the full nine-word camera identity block at
+  0x1d4826–0x1d4867; the decoded cubemap table selects it for case 4.
+  `Vec3ScaleToUnitMax` is the complete `ColorNormalize` operation at
+  0x2c7a6–0x2c82e, including output ones on zero and its returned maximum.
+- Paired float sine/cosine, reciprocal square root, float sign, integer sign,
+  side predicate, three-operand float clamp and accumulated plane-sign bits
+  were read in their exact owners. Mac's comparison-based signs and unordered
+  side result take precedence over the Linux header expressions.
+- Complete two-/three-/four-component copies, sets, clears, sums, differences,
+  averages, scales, multiply-adds, interpolation, negation and squared length
+  were established in Dvar, collision, animation, camera, item and movement
+  owners. Private ledger evidence names each exact range and native owner.
+
+The 69 unchecked rows retain real identity or input-contract gaps. New leads
+were evaluated without converting an absent symbol or partial operator into a
+closure. In particular, the partition integer minimum uses sign-only selection
+while native brush counts are bounded; the generic integer clamp has a located
+wrapping crash-land block but no established complete exceptional caller/input
+contract. Separate-output normalizers are not in-place normalizers, unsigned
+angle routines do not prove signed angles, matrix APIs do not establish the
+special alias/store contracts, and the FX random sphere sampler does not prove
+uniform-deviate or golden-angle samplers. Existing float-bit, plane snapping,
+projection, quaternion and remaining geometry gaps stay explicit. No unused
+standalone helper was added.
+
+Both changed translation units compile with the configured arm64 Release
+client and dedicated commands in stock and CoD2x modes (eight objects). All ten
+existing HUD module groups pass both modes under ASan/UBSan; the existing
+production `world_links` fixture passes both modes under ASan. No tests were
+added or changed. Five inactive preprocessing configurations match the base;
+`unifdef -UCOD2_X64` output is byte-identical for both sources, and neither uses
+`__LINE__`. These are source-preservation checks, not i386 byte parity.
+
+The exceptional conversion and unordered-overlap corrections are compiled and
+reviewed, not specifically exercised. Full links, CI and replays remain with
+the integration owner. Parent/fresh source review is pending at this worker
+commit. Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-math-remaining.noindex/`.
+
+## Fresh caller-review corrections — 2026-11-05
+
+Independent review confirmed the 37 helper identities and the original HUD
+ceiling/area-overlap corrections. It also found four complete-caller defects
+around the helper scopes: unordered child/prune/parallel gates in
+`CM_TraceThroughTree`, the cylinder vertical gate in `SV_EntityContact`,
+start-solid horizontal normalization in `DObjTraceline`, and compass range/alpha
+selection in `CG_DrawCompassFriendlies`. Their guarded repairs and exact Mac
+ranges are recorded in the respective owner reports. Three owner rows change
+from equal to fixed; the compass row remains fixed. Original evidence is
+retained and appended through explicit parent-approved overrides. The math
+module's 136 equal, 24 fixed and 69 unchecked totals are unchanged.
+
+Four additional translation units compile with the actual stock/CoD2x Release
+commands: 14 client/dedicated objects where applicable. All five existing
+collision suites, the existing server-contact fixture and the existing xanim
+trace case pass both modes under ASan/UBSan. No existing fixture executes the
+full compass-friendlies caller, and no new test was added. Exceptional numeric
+paths remain compiled and reviewed only. All six changed source files preserve
+five inactive configurations and byte-identical OFF text, with no `__LINE__`
+uses. Final source is frozen for independent reread; full links, CI and replays
+remain with the integration owner. The historical point-triangle NaN-`s` gap
+in `cm_mesh.c` is explicitly outside these repairs and was flagged to the
+parent with its current ledger owners.

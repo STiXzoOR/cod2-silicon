@@ -1,8 +1,8 @@
 # xanim/dobj module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**55/58 reconciled: 54 equal, 1 fixed, 3 unchecked.** Mac 1.3 i386 is the authority. All 40 Mac-backed functions were read, including skeleton composition, hierarchy traversal, duplicate parts, surface masks and both trace paths. The remaining rows were checked against their renamed or inlined Mac counterparts where an identity could be established. Linux supplied names only.
+**55/58 reconciled: 53 equal, 2 fixed, 3 unchecked.** Mac 1.3 i386 is the authority. All 40 Mac-backed functions were read, including skeleton composition, hierarchy traversal, duplicate parts, surface masks and both trace paths. The remaining rows were checked against their renamed or inlined Mac counterparts where an identity could be established. Linux supplied names only.
 
 ## Corrections
 
@@ -35,3 +35,21 @@ Independent source/binary reviews covered all six units. Review caught an incorr
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. These unchanged traces do not exercise every corrected path. Unreached diagnostic, malformed-input and allocation edges remain compiled and reviewed. Missing helper identities and storage-dependent behavior remain explicitly unchecked or documented native adaptations.
 
 Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile. Source preprocessing checks do not establish binary-byte parity.
+
+## Independent math-caller follow-up — 2026-11-05
+
+Current accounting is **53 equal, two fixed, three unchecked**. The start-solid
+horizontal normal path in `DObjTraceline` calls `Vec2Normalize` at Mac
+0x7708f–0x770af. That callee takes its normalization path for unordered lengths
+and skips only ordered zero (0x2c8e9–0x2c911). Native had tested `lenSq > 0`,
+leaving an unaffected component finite when the other was NaN. The guarded
+path now computes the float square root, tests `len != 0`, and preserves the
+reciprocal and sequential multiply/store order. Existing model guards and
+scratch-sign behavior are unchanged. The owner changes from equal to fixed;
+its finite-input historical evidence is retained with this correction appended.
+
+Configured stock/CoD2x Release client/dedicated objects compile. The unchanged
+xanim trace fixture passes both modes under ASan/UBSan; nonfinite normals were
+not specifically exercised. Five inactive configurations and exact OFF source
+text match, and there are no `__LINE__` uses. No tests, full CI or replays were
+added or run.
