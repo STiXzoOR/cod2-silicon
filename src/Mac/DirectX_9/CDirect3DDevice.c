@@ -167,6 +167,7 @@ extern D3DMATRIX *RB_GetActiveWorldMatrix(void);
 #if defined(COD2_X64)
 HRESULT CDirect3DDevice_CreatePixelShaderOpenGL(const CDirect3DDevice *, OpenGLPixelShaderType,
                                                const unsigned long *, IDirect3DPixelShader9 **);
+extern IDirect3DPixelShader9 *CDirect3DPixelShader_CreateARBNative(const char *name, const char *code);
 #endif
 
 extern void COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(
@@ -1923,43 +1924,56 @@ HRESULT CDirect3DDevice_CreatePixelShaderOpenGL(const CDirect3DDevice *_this,
     const char *source = (const char *)pSrcData;
     const char *separator;
     const char *code;
+    size_t nameLength;
     char *name;
-    void *program;
+    IDirect3DPixelShader9 *program;
     GLint errorPosition = -1;
     (void)_this;
     if (!ppShader)
         return (HRESULT)(int32_t)0x8876086cu;
-    *ppShader = NULL;
-    if (!source)
+    if ((unsigned int)ShaderType <= ARBFragmentProgram)
+        *ppShader = NULL;
+    if (!source || !*source)
         return (HRESULT)(int32_t)0x8876086cu;
-    /* The selected Apple capability policy uses ARB. ATI text shaders and
-     * NV register combiners have no native provider, so cannot report success. */
-    if (ShaderType != 2)
+    switch (ShaderType) {
+    case ATITextFragmentProgram:
+    case NVidiaRegisterCombinersProgram:
+        /* The selected Apple capability policy uses ARB. The ATI/NV methods
+         * do not provide supported native shader activation. */
         return (HRESULT)(int32_t)0x8876086au;
+    case ARBFragmentProgram:
+        break;
+    default:
+        /* Mac 0x1b179/0x1b19f leaves the output alone for an unknown type,
+         * then returns only the current program-error-position status. */
+        glGetIntegerv(0x864b, &errorPosition);
+        return errorPosition == -1 ? 0 : (HRESULT)(int32_t)0x8876086cu;
+    }
+    /* Native shader-cache entries are bare ARB text, without Mac's name
+     * prefix. Preserve the entire cached program, including any :: comments. */
     separator = source[0] == '!' && source[1] == '!' ? NULL : strstr(source, "::");
-    code = separator ? separator + 2 : source;
-    if (!*code)
-        return (HRESULT)(int32_t)0x8876086cu;
-    /* Native shader-cache entries are bare ARB text, without Mac's name prefix. */
-    if (!separator && (source[0] != '!' || source[1] != '!'))
-        return (HRESULT)(int32_t)0x8876086cu;
-    name = (char *)malloc(separator ? (size_t)(separator - source) + 1 : 1);
+    if (separator) {
+        nameLength = (size_t)(separator - source);
+        code = separator + 2;
+    } else if (source[0] == '!' && source[1] == '!') {
+        nameLength = 0;
+        code = source;
+    } else {
+        /* Mac's 32-bit string::npos + 2 wraps to one at 0x1b12a. A
+         * nonempty string without a separator therefore loses its first
+         * code byte and uses the whole source as its name. */
+        nameLength = strlen(source);
+        code = source + 1;
+    }
+    name = (char *)malloc(nameLength + 1);
     if (!name)
         return (HRESULT)(int32_t)0x8007000eu;
-    if (separator)
-        memcpy(name, source, (size_t)(separator - source));
-    name[separator ? (size_t)(separator - source) : 0] = 0;
-    /* CDirect3DPixelShader.c: vtable/refcount/mask, two string pointers, GLuint.
-     * Apple ULONG is 32-bit: the native provider is 40 bytes (48 without SDK).
-     * 0x80 covers either native layout without importing the i386 object size. */
-    program = calloc(1, 0x80);
-    if (!program) {
-        free(name);
+    memcpy(name, source, nameLength);
+    name[nameLength] = 0;
+    program = CDirect3DPixelShader_CreateARBNative(name, code);
+    free(name); /* Provider uploads synchronously and retains neither argument. */
+    if (!program)
         return (HRESULT)(int32_t)0x8007000eu;
-    }
-    COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(
-        (const COpenGLARBFragmentProgram *)program, (const string *)&name, (const string *)&code);
-    free(name); /* Provider uploads/copies source synchronously; it retains neither argument. */
     glGetIntegerv(0x864b, &errorPosition);
     if (errorPosition != -1) {
         /* Material_LoadPassShader discards its header on failure without
@@ -1967,7 +1981,7 @@ HRESULT CDirect3DDevice_CreatePixelShaderOpenGL(const CDirect3DDevice *_this,
         ((ULONG (*)(const void *))(*(void ***)program)[2])(program);
         return (HRESULT)(int32_t)0x8876086cu;
     }
-    *ppShader = (IDirect3DPixelShader9 *)program;
+    *ppShader = program;
 #if COD2_APPLE_SDK
     MacTrace_Label(program, source);
 #endif

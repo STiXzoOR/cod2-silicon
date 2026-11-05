@@ -8,8 +8,8 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 477,
-      "intentional": 3091,
+      "unchecked": 476,
+      "intentional": 3092,
       "equal": 4720,
       "fixed": 1169
     },
@@ -182459,8 +182459,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Mac 0x1b0da: Read shader-type switch/creation and selected CDirect3DDevice_CreatePixelShaderOpenGL. Native ignores ShaderType, accepts raw ARB text through its compact constructor and otherwise creates PixelShaderStub; full ATI/NV/register-combiner/failure parity is not established. Parent retains device-provider audit. No equality inferred from the active shader-cache path."
+        "status": "intentional",
+        "evidence": "Mac 0x1b0da\u20130x1b3f5: entire exact-symbol factory read by hand, including first-:: parsing, direct 0/1/2 ATI/NV/ARB construction, unknown-type output/status, publication before GL failure and C++ cleanup; separator bytes checked at 0x241084. Restored nonempty no-separator npos+2 wrap at 0x1b12a, unknown-type unchanged output plus GL status at 0x1b179/0x1b19f, and empty code upload through exact ARB C1 0x1c4ea\u20130x1c542; compiled and reviewed, not GL-exercised. Native intentionally retains bare-ARB cache/generic-compiler representation, explicit unsupported ATI/NV NOTAVAILABLE, defined null/empty-input and OOM results, synchronous no-retention provider strings, and ownership until success with release on failure because the live material caller discards failed output without releasing it. LP64 allocation now uses the shader implementation sizeof through a narrow helper. Both actual Apple client objects compile; five inactive guards and twelve actual-line preprocessing comparisons pass against c1d2ada4ebdb4123dc48583f777041ec7881db50. No new tests/cases/assertions, GL/game execution, full CI or replays; prerequisite/parent integration gates pending. See renderer-pixel-factory.md for full boundary and coverage."
       },
       {
         "id": "mac:0x0000761a",
