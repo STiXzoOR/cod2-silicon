@@ -231,6 +231,16 @@ static int SetSurfaceSize(int width, int height)
 }
 #endif
 
+#if defined(COD2_X64)
+static GLenum DepthStencilStorageFormat(int depthBits, int stencil)
+{
+    if (stencil) return GL_DEPTH24_STENCIL8_EXT;
+    if (depthBits == 16) return GL_DEPTH_COMPONENT16;
+    if (depthBits == 32) return GL_DEPTH_COMPONENT32;
+    return GL_DEPTH_COMPONENT24;
+}
+#endif
+
 static int CreateRenderBuffer(MacContext *ctx, int depthBits, int stencil)
 {
     glGenFramebuffersEXT(1, &ctx->framebuffer);
@@ -243,8 +253,12 @@ static int CreateRenderBuffer(MacContext *ctx, int depthBits, int stencil)
     }
     glGenRenderbuffersEXT(1, &ctx->depth);
     glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, ctx->depth);
+#if defined(COD2_X64)
+    glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, DepthStencilStorageFormat(depthBits, stencil), ctx->width, ctx->height);
+#else
     glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, stencil ? GL_DEPTH24_STENCIL8_EXT :
                              (depthBits == 16 ? GL_DEPTH_COMPONENT16 : GL_DEPTH_COMPONENT24), ctx->width, ctx->height);
+#endif
     glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, ctx->depth);
     if (stencil)
         glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, ctx->depth);
@@ -338,6 +352,44 @@ int MacDisplay_MakeContextCurrent(void *context)
     MacContext *ctx = context;
     return ctx && ctx->context && ctx->drawable &&
         SDL_GL_MakeCurrent(ctx->drawable, ctx->context) == 0;
+}
+
+/* Reset keeps the SDL context (and shader resources) alive. Replace only its
+ * implicit depth attachment; failed formats leave the old complete FBO intact. */
+int MacDisplay_SetDepthStencilFormat(void *context, int depthBits, int stencil)
+{
+    MacContext *ctx = context;
+    if (!ctx || !ctx->context || !ctx->framebuffer) return -1;
+    if (ctx->depthBits == depthBits && ctx->stencil == stencil) return 0;
+    if (!MacDisplay_MakeContextCurrent(ctx)) return -1;
+    GLint drawFramebuffer, readFramebuffer, renderbuffer;
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING_EXT, &drawFramebuffer);
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING_EXT, &readFramebuffer);
+    glGetIntegerv(GL_RENDERBUFFER_BINDING_EXT, &renderbuffer);
+    GLuint replacement = 0;
+    glGenRenderbuffersEXT(1, &replacement);
+    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, replacement);
+    glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, DepthStencilStorageFormat(depthBits, stencil), ctx->width, ctx->height);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, ctx->framebuffer);
+    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, replacement);
+    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, stencil ? replacement : 0);
+    int result = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE_EXT ? 0 : -1;
+    if (result) {
+        glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, ctx->depth);
+        glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, ctx->stencil ? ctx->depth : 0);
+        glDeleteRenderbuffersEXT(1, &replacement);
+    } else {
+        GLuint previous = ctx->depth;
+        ctx->depth = replacement;
+        ctx->depthBits = depthBits;
+        ctx->stencil = stencil;
+        if ((GLuint)renderbuffer == previous) renderbuffer = replacement;
+        glDeleteRenderbuffersEXT(1, &previous);
+    }
+    glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, drawFramebuffer);
+    glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, readFramebuffer);
+    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, renderbuffer);
+    return result;
 }
 
 void MacDisplay_SetPresentationInterval(void *context, uint32_t interval)

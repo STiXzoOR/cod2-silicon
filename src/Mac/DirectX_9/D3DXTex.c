@@ -43,7 +43,12 @@ static void D3DXTex_SetupView(double right, double bottom, double top)
     glDisable(0x0b71);
     glDisable(0x0bd0);
     glColorMask(1, 1, 1, 1);
+#if COD2_APPLE_SDK
+    extern void MacGL_DrawBuffer(unsigned int);
+    MacGL_DrawBuffer(0x0405);
+#else
     glDrawBuffer(0x0405);
+#endif
     glDepthMask(1);
     glDisable(0x0b44);
     glDisable(0x0b60);

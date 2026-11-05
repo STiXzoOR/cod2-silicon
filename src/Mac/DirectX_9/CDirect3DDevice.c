@@ -428,10 +428,13 @@ typedef struct {
     unsigned char hasDiffuseColor;
     DWORD colorVertex;
     float convertedView[16];
+    struct DeviceStreamsNative *streamState;
 #endif
 } DeviceImpl;
 #if defined(COD2_X64)
 _Static_assert(sizeof(DeviceImpl) <= 4096, "native device storage");
+static HRESULT CDirect3DDevice_ResetNative(DeviceImpl *dev, const void *presentation);
+void CDirect3DDevice_ResetStreamsNative(const CDirect3DDevice *_this);
 _Static_assert(sizeof(D3DMATERIAL9) == 68, "native material width");
 _Static_assert(sizeof(LightInfoType) == 180, "native light width");
 typedef struct {
@@ -444,12 +447,19 @@ _Static_assert(offsetof(DeviceImpl, viewportMaxZ) - offsetof(DeviceImpl, viewpor
 #endif
 
 #if defined(COD2_X64)
+int CDirect3DDevice_IsNativeLive(const void *device)
+{
+    return ((const DeviceImpl *)device)->context != NULL;
+}
+
 void CDirect3DDevice_SetNativeBackBuffer(void *device, void *backBuffer, UINT adapter)
 {
     typedef struct { void **vtable; ULONG refCount; IDirect3DSurface9 *backBuffer; } NativeSwapChain;
     DeviceImpl *dev = (DeviceImpl *)device;
     dev->cardType = adapter;
     dev->backBuffer = dev->renderTarget = (IDirect3DSurface9 *)backBuffer;
+    if (dev->renderTarget)
+        ((ULONG (*)(const void *))(*(void ***)dev->renderTarget)[1])(dev->renderTarget);
     dev->swapChain = (IDirect3DSwapChain9 *)calloc(1, sizeof(NativeSwapChain));
     if (dev->swapChain) {
         CDirect3DSwapChain_CDirect3DSwapChain((const CDirect3DSwapChain *)dev->swapChain);
@@ -2409,6 +2419,18 @@ HRESULT CDirect3DDevice_Present(const CDirect3DDevice *_this, const RECT *pSourc
     (void)pDestRect;
     (void)hDestWindowOverride;
     (void)pDirtyRegion;
+#if defined(COD2_X64)
+    extern GLuint COpenGL_sShowTextureID;
+    extern void ViewSingleTexture(GLuint);
+    extern void ShowShadowCookies(void);
+#if COD2_APPLE_SDK
+    if (!MacDisplay_MakeContextCurrent(((DeviceImpl *)_this)->context))
+        return (HRESULT)(int32_t)0x88760869u;
+#endif
+    COpenGL_sShowTextureID = g_showtexid;
+    if (g_showtexid) ViewSingleTexture(g_showtexid);
+    if (g_ShowShadowCookies) ShowShadowCookies();
+#endif
     R_CapturePendingScreenshotBeforePresent();
 #if COD2_APPLE_SDK
     MacTrace_EndFrame();
@@ -4387,6 +4409,9 @@ HRESULT CDirect3DDevice_Reset(const CDirect3DDevice *_this, D3DPRESENT_PARAMETER
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    return CDirect3DDevice_ResetNative((DeviceImpl *)_this, pPresentationParameters);
+#else
     (void)_this;
 #if COD2_APPLE_SDK
     if (!pPresentationParameters)
@@ -4408,6 +4433,7 @@ HRESULT CDirect3DDevice_Reset(const CDirect3DDevice *_this, D3DPRESENT_PARAMETER
 #else
     (void)pPresentationParameters;
     return 0;
+#endif
 #endif
 }
 
@@ -5472,6 +5498,17 @@ long unsigned int CDirect3DDevice_CDirect3DDevice(const CDirect3DDevice *_this,
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    memset(dev, 0, sizeof(*dev));
+    dev->vtable = vtbl_CDirect3DDevice;
+    dev->context = Context;
+    dev->cardType = Adapter;
+    dev->_pad010 = DeviceType;
+    HRESULT result = CDirect3DDevice_Reset(_this, pPresentationParameters);
+    dev->refCount = 1;
+    return (unsigned long)result;
+#else
     DeviceImpl *dev = (DeviceImpl *)_this;
     (void)Adapter;
     (void)DeviceType;
@@ -5482,6 +5519,7 @@ long unsigned int CDirect3DDevice_CDirect3DDevice(const CDirect3DDevice *_this,
     dev->refCount = 1;
 
     return 0;
+#endif
 }
 
 void CDirect3DDevice_Init(void *device)
@@ -5507,6 +5545,24 @@ void CDirect3DDevice_Init(void *device)
     dev->videoMemory = (UINT32)videoMemory;
     dev->textureMemory = (UINT32)textureMemory;
 #if defined(COD2_X64)
+    memset(dev->streams, 0, sizeof(dev->streams));
+    memset(dev->streamOffsets, 0, sizeof(dev->streamOffsets));
+    memset(dev->streamStrides, 0, sizeof(dev->streamStrides));
+    dev->indexBuffer = NULL; dev->_pad0A8 = 0xffffffffu;
+    dev->pixelShader = NULL; dev->bVal1 = dev->bVal3 = dev->bc8Val = 0;
+    dev->fillMode = 3; dev->shadeMode = 2;
+    dev->fogEnable = dev->stencilEnable = dev->stencilRef = 0;
+    dev->stencilFunc = 8; dev->stencilMask = 0xffffffffu;
+    dev->stencilZFail = dev->stencilFail = dev->stencilPass = 1;
+    dev->sRGBWriteEnable = dev->depthBias = dev->colorWriteEnable1 = dev->colorWriteEnable2 = 0;
+    dev->fogTableMode = dev->fogStart = dev->tweenFactor = 0;
+    dev->fogEnd = dev->fogDensity = 0x3f800000u;
+    memset(g_vsConst, 0, sizeof(g_vsConst));
+#if COD2_APPLE_SDK
+    memset(macPixelConstants, 0, sizeof(macPixelConstants));
+#endif
+    g_depthBias = g_slopeScaleDepthBias = 0.0f;
+    g_prebind_texID = 0;
     dev->srcBlend = 2;
     dev->destBlend = 1;
     dev->srcBlendAlpha = 2;
@@ -5519,6 +5575,10 @@ void CDirect3DDevice_Init(void *device)
     CDirect3DDevice_LoadIdentityMatrix(dev->convertedView);
     memset(&dev->material, 0, sizeof(dev->material));
     memset(dev->nativeLights, 0, sizeof(dev->nativeLights));
+    D3DLIGHT9 defaultLight = {0};
+    defaultLight.Type = 3;
+    for (UINT i = 0; i < 8; ++i)
+        CDirect3DDevice_SetLight((const CDirect3DDevice *)device, i, &defaultLight);
     dev->lighting = 1; dev->colorVertex = 1; dev->hasDiffuseColor = 0;
     glGetIntegerv(0x0d33, (GLint *)&dev->maxTextureSize);
     glGetIntegerv(0x84e2, (GLint *)&dev->maxTextureUnits);
@@ -5530,12 +5590,15 @@ void CDirect3DDevice_Init(void *device)
     if (!stages)
         abort();
     dev->texStageData = stages;
-    dev->texStageEnd = dev->texStageCap = stages + 17;
+    UINT stageCount = dev->maxTextureUnits > dev->maxTextureImageUnits ? dev->maxTextureUnits : dev->maxTextureImageUnits;
+    dev->texStageEnd = stages + stageCount;
+    dev->texStageCap = stages + 17;
     for (UINT i = 0; i < 17; ++i)
         CDirect3DDevice_CTexStage_Init((const CTexStage *)&stages[i], i, i >= dev->maxTextureUnits);
     g_activeVertexShader = NULL;
     g_activeVertexDeclaration = NULL;
     g_currentFVF = 0;
+    CDirect3DDevice_ResetStreamsNative((const CDirect3DDevice *)device);
     CDirect3DDevice_mNeedsVertexShaderValidation = 1;
     CDirect3DDevice_mNeedsTransformationValidation = 1;
     CDirect3DDevice_mNeedsRasterizationValidation = 1;
@@ -5566,6 +5629,7 @@ void CDirect3DDevice_Init(void *device)
 #endif
     glDepthRange(0.0, 1.0);
 #if defined(COD2_X64)
+    memset(&dev->viewportX, 0, sizeof(NativeViewport));
     dev->depthStencilDetached = 0;
     dev->stencilWriteMask = 0xffffffffu;
 #endif
@@ -5574,7 +5638,11 @@ void CDirect3DDevice_Init(void *device)
     dev->cullMode = 1;
     dev->zFunc = 4;
     dev->colorWriteEnable = 0xF;
+#if defined(COD2_X64)
+    dev->fogColor = 0;
+#else
     dev->fogColor = 0xFF000000u;
+#endif
     dev->blendOp = 1;
     g_alphaTestEnable = 0;
     g_textureFactor = 0xFFFFFFFFu;
@@ -5613,6 +5681,105 @@ void CDirect3DDevice_Init(void *device)
     }
 }
 
+#if defined(COD2_X64)
+static void CDirect3DDevice_ReleaseNativeObject(void *object)
+{
+    if (object) ((ULONG (*)(const void *))(*(void ***)object)[2])(object);
+}
+
+static void CDirect3DDevice_ReleaseNativeContents(DeviceImpl *dev)
+{
+    CDirect3DDevice_ReleaseNativeObject(dev->swapChain); dev->swapChain = NULL;
+    CDirect3DDevice_ReleaseNativeObject(dev->backBuffer); dev->backBuffer = NULL;
+    CDirect3DDevice_ReleaseNativeObject(dev->renderTarget); dev->renderTarget = NULL;
+    CDirect3DDevice_ReleaseNativeObject(dev->depthStencil); dev->depthStencil = NULL;
+    /* Default depth storage belongs to the display context. COM overrides and
+     * the two backbuffer aliases each retain their own native reference. */
+    CDirect3DDevice_ReleaseNativeObject(dev->depthBuffer); dev->depthBuffer = NULL;
+    CDirect3DDevice_ReleaseNativeObject(dev->saveSurface); dev->saveSurface = NULL;
+    CDirect3DDevice_ReleaseNativeObject(dev->saveSurface2); dev->saveSurface2 = NULL;
+    dev->renderTarget = dev->depthStencil = NULL;
+    for (UINT stage = 0; stage < sizeof(g_boundTextures) / sizeof(g_boundTextures[0]); ++stage) {
+        if (CDirect3DDevice_IsRealTexture(g_boundTextures[stage]))
+            CDirect3DDevice_ReleaseNativeObject(g_boundTextures[stage]);
+        g_boundTextures[stage] = NULL;
+    }
+}
+
+static HRESULT CDirect3DDevice_ResetNative(DeviceImpl *dev, const void *presentation)
+{
+    if (!presentation) return (HRESULT)(int32_t)0x8876086cu;
+    NativePresentationParameters14 parameters;
+    memcpy(&parameters, presentation, sizeof(parameters));
+    /* The selected display advertises no multisample buffers. Reject callers
+     * that bypass capability negotiation instead of silently dropping FSAA. */
+    if (parameters.multiSampleType || parameters.multiSampleQuality)
+        return (HRESULT)(int32_t)0x8876086au;
+    int depthBits = NativePresentation_DepthBits(parameters.depthFormat);
+    if (!depthBits) return (HRESULT)(int32_t)0x88760869u;
+    if (!parameters.backBufferFormat) {
+#if COD2_APPLE_SDK
+        int width, height;
+        MacPlatform_GetRenderSize(&width, &height);
+        parameters.width = width; parameters.height = height;
+#endif
+        parameters.backBufferFormat = 0x16;
+        memcpy((void *)presentation, &parameters, sizeof(parameters));
+    }
+#if COD2_APPLE_SDK
+    if (!MacDisplay_MakeContextCurrent(dev->context)) return (HRESULT)(int32_t)0x88760869u;
+#endif
+    if (CDirect3DDevice_GL()->texUnitCount)
+        COpenGL_Shutdown((const COpenGL *)CDirect3DDevice_GL());
+    CDirect3DDevice_ReleaseNativeContents(dev);
+#if COD2_APPLE_SDK
+    extern dvar_t *Dvar_RegisterBool(const char *, int, int);
+    dvar_t *borderless = Dvar_RegisterBool("r_borderless", 1, 0x1001);
+    MacPlatform_ConfigureWindow(parameters.width, parameters.height,
+        parameters.windowed ? MAC_WINDOWED : (borderless->current.enabled ? MAC_BORDERLESS : MAC_FULLSCREEN), parameters.refreshRate);
+    if (MacDisplay_SetMode(parameters.width, parameters.height,
+            parameters.backBufferFormat == 21 || parameters.backBufferFormat == 22 ? 32 : 16, parameters.refreshRate) ||
+        MacDisplay_SetDepthStencilFormat(dev->context, depthBits, parameters.depthFormat == 75))
+        return (HRESULT)(int32_t)0x88760869u;
+    MacDisplay_SetPresentationInterval(dev->context, parameters.presentationInterval);
+#endif
+    UINT fixedUnits = MacDisplay_GetMaxTextureUnits(), imageUnits = MacDisplay_GetMaxTextureImageUnits();
+    COpenGL_Init((const COpenGL *)CDirect3DDevice_GL(), 2, fixedUnits, imageUnits);
+#if COD2_APPLE_SDK
+    SDL_GL_SwapWindowDirect();
+#endif
+    ULONG referenceCount = dev->refCount;
+    CDirect3DDevice_Init(dev);
+    dev->refCount = referenceCount;
+    void *backBuffer = calloc(1, 0x80);
+    if (!backBuffer) return (HRESULT)(int32_t)0x8007000eu;
+    CXX_BOOL previousNoTextureID = g_NoTextureID;
+    /* Mac's default surface has no owner. SDL's FBO backing needs the native
+     * surface's owned staging texture for scaled framebuffer copies. */
+    g_NoTextureID = 0;
+    CDirect3DSurface_CDirect3DSurface((const CDirect3DSurface *)backBuffer, 0, 0, 0,
+        parameters.width, parameters.height, parameters.backBufferFormat, NULL, NULL);
+    g_NoTextureID = previousNoTextureID;
+    CDirect3DDevice_SetNativeBackBuffer(dev, backBuffer, dev->cardType);
+    if (!dev->swapChain) return (HRESULT)(int32_t)0x8007000eu;
+    /* Mac 0x19fc1 creates the default 1x1 texture, writes the exact 0x000000ff
+     * word at 0x1a03b and binds it to every fixed/image unit. */
+    IDirect3DTexture9 *fallback;
+    CDirect3DDevice_CreateTexture((const CDirect3DDevice *)dev, 1, 1, 1, 0, 21, 1, &fallback, NULL);
+    dev->saveSurface = (IDirect3DSurface9 *)fallback;
+    D3DLOCKED_RECT locked;
+    void **methods = *(void ***)fallback;
+    ((HRESULT (*)(const void *, UINT, D3DLOCKED_RECT *, const RECT *, DWORD))methods[19])(fallback, 0, &locked, NULL, 0);
+    *(uint32_t *)locked.pBits = 0xff;
+    ((HRESULT (*)(const void *, UINT))methods[20])(fallback, 0);
+    CDirect3DDevice_UpdateTextureIfNeeded((IDirect3DBaseTexture9 *)fallback);
+    UINT limit = fixedUnits > imageUnits ? fixedUnits : imageUnits;
+    for (UINT unit = 0; unit < limit; ++unit)
+        COpenGL_SetTex((const COpenGL *)CDirect3DDevice_GL(), unit, 0xde1, (const COpenGLTexture *)((void **)fallback + 1));
+    return 0;
+}
+#endif
+
 void ZN15CDirect3DDeviceD1Ev(void *_this)
 {
 #if MAC_METAL_NATIVE
@@ -5621,6 +5788,28 @@ void ZN15CDirect3DDeviceD1Ev(void *_this)
         return;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    dev->vtable = vtbl_CDirect3DDevice;
+#if COD2_APPLE_SDK
+    if (dev->context) MacDisplay_MakeContextCurrent(dev->context);
+#endif
+    g_activeVertexShader = NULL;
+    g_activeVertexDeclaration = NULL;
+    memset(dev->streams, 0, sizeof(dev->streams));
+    dev->indexBuffer = NULL;
+    CDirect3DDevice_ResetStreamsNative((const CDirect3DDevice *)dev);
+    CDirect3DDevice_ReleaseNativeContents(dev);
+    if (dev->context) {
+        COpenGL_Shutdown((const COpenGL *)CDirect3DDevice_GL());
+        MacDisplay_ReleaseContext(&dev->context);
+    }
+    free(dev->texStageData);
+    dev->texStageData = dev->texStageEnd = dev->texStageCap = NULL;
+    g_prebind_texID = 0;
+    g_activeVertexShader = NULL;
+    g_activeVertexDeclaration = NULL;
+#else
     DeviceImpl *dev = (DeviceImpl *)_this;
     dev->vtable = vtbl_CDirect3DDevice;
 
@@ -5659,6 +5848,7 @@ void ZN15CDirect3DDeviceD1Ev(void *_this)
 #endif
         MacDisplay_ReleaseContext(&dev->context);
     }
+#endif
 }
 
 void ZN15CDirect3DDeviceD0Ev(void *_this)
