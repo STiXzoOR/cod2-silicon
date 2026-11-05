@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 321,
+      "unchecked": 320,
       "intentional": 3178,
-      "equal": 4761,
+      "equal": 4762,
       "fixed": 1197
     },
     "scopes": {
@@ -170323,8 +170323,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Mac yy_create_buffer 0x10be39-0x10be68 allocates a descriptor and owned character storage; yyparse lazy creation 0x10fa8e-0x10faaa / 0x10ffb5-0x10ffd4 and growth 0x1100bb-0x110126 retain genuine heap paths. Normal ScriptParse uses stack/static storage, but that alone cannot establish the heap deletion/free operation. No native production deletion owner or equivalent original body was established; yy_delete_buffer has only an absolute-zero .eh symbol, not executable code. Left unresolved rather than using the stack-teardown boundary for this older helper."
+        "status": "equal",
+        "evidence": "Original Linux1.3 yyfree at 0x808b9ca-0x808b9dc forwards its unchanged pointer directly to free@plt0x804a4b4 and returns, with no guards, scanner state, metadata or ownership effects; original1.0 sub_80871EE has the same complete operation. Positive scanner callers at 0x808b33a/0x808b345 separately select owned character storage and the descriptor before calling this helper. Mac uses the direct libc provider _free at import0x1acc4dd, paired with malloc0x1acc514 and realloc0x1acc98d: exact yy_create_buffer0x10be40/0x10be58 and yyparse0x1100dc use that ordinary allocation family, matched by native direct stdlib allocation/reallocation. The complete helper maps to the existing direct libc free provider, without Z_FreeInternal guards/header subtraction or a new exported alias. This resolves only the strict pointer-release operation; yy_delete_buffer, memory scanning, switching and scanner lifetime remain separately unresolved/adapted. Read and reviewed; no source change or runtime exercise."
       },
       {
         "id": "linux:script/scr_yacc.c:3236:yyget_debug",
