@@ -77,8 +77,42 @@ typedef struct {
     LightInfoType lights[8];
     CBaseVAImpl colorArray, secondaryColorArray, normalArray, vertexArray;
     VertexProgramStreamStateNative genericArrays[16];
+    GLfloat modelViewMatrix[16];
 
 } COpenGLNative;
+
+/* Flat secondary base used by Texture, CubeTexture and VolumeTexture. The
+ * last four bytes of sizeof are tail padding reused by each owner's refcount;
+ * access fields individually, never copy this rounded extent into an owner. */
+typedef struct {
+    void **vtable;
+    GLuint *name;
+    GLenum wrapS, wrapT, wrapR;
+    GLuint border;
+    GLenum minFilter, magFilter;
+    GLint lastLevel;
+    GLfloat anisotropy;
+    GLint width, height, depth;
+} COpenGLTextureStateNative;
+_Static_assert(offsetof(COpenGLTextureStateNative, name) == sizeof(void *), "native texture name pointer");
+_Static_assert(offsetof(COpenGLTextureStateNative, lastLevel) == 40, "native texture last level");
+_Static_assert(offsetof(COpenGLTextureStateNative, anisotropy) == 44, "native texture anisotropy");
+_Static_assert(offsetof(COpenGLTextureStateNative, depth) + sizeof(GLint) == 60, "native texture field extent");
+
+/* Device stages have a widened COM pointer; never use the imported placeholder
+ * or the original 164-byte stride as native storage. */
+typedef struct {
+    unsigned char programmableOnly;
+    IDirect3DBaseTexture9 *texture;
+    DWORD addressU, addressV, addressW;
+    DWORD minFilter, magFilter, mipFilter;
+    GLfloat anisotropy, lodBias;
+    DWORD borderColor;
+    DWORD colorOp, colorArg0, colorArg1, colorArg2;
+    DWORD alphaOp, alphaArg0, alphaArg1, alphaArg2;
+    DWORD transformFlags, texCoordIndex;
+    GLfloat factor[4], matrix[16];
+} CTexStageNative;
 
 void *COpenGL_GetVAOBindingList(const COpenGL *gl);
 #endif
