@@ -978,7 +978,11 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
                     int li;
 
                     for (li = 0; li < lightCount; li++) {
+#if defined(COD2_X64)
+                        float *lightData = (float *)&lights[li].Ambient;
+#else
                         float *lightData = (float *)&lights[li];
+#endif
                         float dot;
 
                         r += lightData[0];
@@ -1003,6 +1007,36 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
                         float oneOver255 = 0.003921568859368563f;
                         int ch;
 
+#if defined(COD2_X64)
+                        /* Mac 0xe04d1 emits ARGB for the color converter. */
+                        ch = (intptr_t)floorf((float)srcColor[3] * oneOver255 * 255.0f + 0.5f);
+                        if (ch > 255)
+                            ch = 255;
+                        if (ch < 0)
+                            ch = 0;
+                        dstColor[0] = (byte)ch;
+
+                        ch = (intptr_t)floorf((float)srcColor[2] * r * oneOver255 * 255.0f + 0.5f);
+                        if (ch > 255)
+                            ch = 255;
+                        if (ch < 0)
+                            ch = 0;
+                        dstColor[1] = (byte)ch;
+
+                        ch = (intptr_t)floorf(g * (float)srcColor[1] * oneOver255 * 255.0f + 0.5f);
+                        if (ch > 255)
+                            ch = 255;
+                        if (ch < 0)
+                            ch = 0;
+                        dstColor[2] = (byte)ch;
+
+                        ch = (intptr_t)floorf(b * (float)srcColor[0] * oneOver255 * 255.0f + 0.5f);
+                        if (ch > 255)
+                            ch = 255;
+                        if (ch < 0)
+                            ch = 0;
+                        dstColor[3] = (byte)ch;
+#else
                         ch = (intptr_t)floorf(r * (float)srcColor[2] * oneOver255 * 255.0f + 0.5f);
                         if (ch > 255)
                             ch = 255;
@@ -1030,6 +1064,7 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
                         if (ch < 0)
                             ch = 0;
                         dstColor[3] = (byte)ch;
+#endif
                     }
                 }
             }
