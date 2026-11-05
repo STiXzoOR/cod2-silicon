@@ -902,6 +902,16 @@ static void R_InitNativeDeviceCaps(void)
     allowed = R_CheckDxCaps(&caps);
     requested = r_rendererPreference->current.integer;
     renderer = requested && ((allowed >> requested) & 1) ? requested : 2;
+    if (!requested) {
+        ri.Printf(0, "Using %s code path because it is the best available path on this hardware.\n", "Direct3D 7");
+    } else if (renderer == requested) {
+        ri.Printf(0, "Using %s code path because r_rendererPreference is set to %s.\n",
+                  renderer == 1 ? "Direct3D 9" : "Direct3D 7",
+                  ri.Dvar_EnumToString((dvar_t *)r_rendererPreference));
+    } else {
+        ri.Printf(0, "Using %s code path because the requested %s code path is unavailable.\n",
+                  "Direct3D 7", requested == 1 ? "Direct3D 9" : "Direct3D 7");
+    }
     ri.Dvar_SetInt(r_rendererInUse, renderer);
 
     vidConfig.maxTextureSize = caps.MaxTextureWidth < caps.MaxTextureHeight
@@ -911,6 +921,8 @@ static void R_InitNativeDeviceCaps(void)
     vidConfig.maxActiveLights = caps.MaxActiveLights;
     vidConfig.deviceSupportsGamma = (caps.Caps2 >> 17) & 1;
     dx.maxClipPlanes = caps.MaxUserClipPlanes < 6 ? caps.MaxUserClipPlanes : 6;
+    dx.anisotropicMinSupported = (caps.TextureFilterCaps >> 10) & 1;
+    dx.anisotropicMagSupported = (caps.TextureFilterCaps >> 26) & 1;
     dx.maxAnisotropy = caps.MaxAnisotropy;
     dx.stencilTwoSided = (caps.StencilCaps >> 8) & 1;
     dx.stencilWrap = (caps.StencilCaps & 0xc0) == 0xc0;
@@ -921,6 +933,277 @@ static void R_InitNativeDeviceCaps(void)
     dx.hasTransparencyMsaa = r_aaSamples->current.integer != 1 &&
         ((HRESULT(D3DVTCC *)(void *, UINT, int, int, DWORD, int, int))methods[10])(
             d3d, 0, 1, 0x15, 0, 1, 0x41415353) == 0;
+}
+
+static Bool R_InitNativeDisplayModes(void)
+{
+    extern const dvar_t *r_mode;
+    extern const dvar_t *r_displayRefresh;
+    void *d3d = dx.d3d9;
+    void **methods = *(void ***)d3d;
+    UINT modeCount;
+    UINT modeIndex;
+    int resolutions[256][2];
+    int refreshRates[256];
+    int resolutionCount = 0;
+    int refreshCount = 0;
+    int defaultMode = 0;
+    int defaultRefresh = 0;
+    int requestedRefresh = 60;
+    int selectedRefresh;
+    int i;
+    char *text = dx.modeText;
+
+    modeCount = ((UINT(D3DVTCC *)(void *, UINT, int))methods[6])(d3d, dx.adapterIndex, 0x16);
+    dx.displayModeCount = 0;
+    for (modeIndex = 0; modeIndex < modeCount && dx.displayModeCount < 256; ++modeIndex) {
+        D3DDISPLAYMODE *mode = &dx.displayModes[dx.displayModeCount];
+        HRESULT hr = ((HRESULT(D3DVTCC *)(void *, UINT, int, UINT, D3DDISPLAYMODE *))methods[7])(
+            d3d, dx.adapterIndex, 0x16, modeIndex, mode);
+        if (hr >= 0) {
+            if (!mode->RefreshRate)
+                mode->RefreshRate = 60;
+            ++dx.displayModeCount;
+        }
+    }
+
+    /* All enumerated modes have the same format. The Mac comparator orders
+     * width, height, then refresh; equal entries are interchangeable. */
+    for (i = 1; i < dx.displayModeCount; ++i) {
+        D3DDISPLAYMODE mode = dx.displayModes[i];
+        int at = i;
+        while (at && R_DisplayModeLess((const _D3DDISPLAYMODE *)&mode,
+                                      (const _D3DDISPLAYMODE *)&dx.displayModes[at - 1])) {
+            dx.displayModes[at] = dx.displayModes[at - 1];
+            --at;
+        }
+        dx.displayModes[at] = mode;
+    }
+    for (i = 0; i < dx.displayModeCount; ++i) {
+        const D3DDISPLAYMODE *mode = &dx.displayModes[i];
+        int at;
+        if ((!resolutionCount || resolutions[resolutionCount - 1][0] != (int)mode->Width ||
+             resolutions[resolutionCount - 1][1] != (int)mode->Height) &&
+            mode->Width >= 640 && mode->Height >= 480) {
+            resolutions[resolutionCount][0] = mode->Width;
+            resolutions[resolutionCount++][1] = mode->Height;
+        }
+        for (at = 0; at < refreshCount && refreshRates[at] < (int)mode->RefreshRate; ++at) {}
+        if (at == refreshCount || refreshRates[at] != (int)mode->RefreshRate) {
+            memmove(&refreshRates[at + 1], &refreshRates[at], (refreshCount - at) * sizeof(refreshRates[0]));
+            refreshRates[at] = mode->RefreshRate;
+            ++refreshCount;
+        }
+    }
+    if (!resolutionCount) {
+        R_FatalInitError(va("No valid resolutions of %i x %i or above found", 640, 480));
+        return 0;
+    }
+    for (i = 0; i < resolutionCount; ++i) {
+        dx.resolutionNameTable[i] = text;
+        text += sprintf(text, "%ix%i", resolutions[i][0], resolutions[i][1]) + 1;
+        if (resolutions[i][0] < 640 || resolutions[i][1] < 480)
+            defaultMode = i;
+    }
+    dx.resolutionNameTable[resolutionCount] = NULL;
+    r_mode = ri.Dvar_RegisterEnum("r_mode", dx.resolutionNameTable, defaultMode, 0x2021);
+    for (i = 0; i < refreshCount; ++i) {
+        dx.refreshRateNameTable[i] = text;
+        text += sprintf(text, "%i Hz", refreshRates[i]) + 1;
+        if (refreshRates[defaultRefresh] < 60)
+            defaultRefresh = i;
+    }
+    dx.refreshRateNameTable[refreshCount] = NULL;
+    /* Native registration already supplies the SDL render-size domain, which
+     * also permits sizes absent from the physical display modes. Keep it.
+     * Re-registering an enum does not replace its domain, so refresh needs an
+     * explicit update after the native early registration. */
+    sscanf(ri.Dvar_EnumToString((dvar_t *)r_displayRefresh), "%i", &requestedRefresh);
+    r_displayRefresh = ri.Dvar_RegisterEnum("r_displayRefresh", dx.refreshRateNameTable, defaultRefresh, 0x2021);
+    ri.Dvar_UpdateEnumDomain(r_displayRefresh, dx.refreshRateNameTable);
+    selectedRefresh = defaultRefresh;
+    for (i = 0; i < refreshCount; ++i) {
+        if (refreshRates[i] == requestedRefresh) {
+            selectedRefresh = i;
+            break;
+        }
+    }
+    {
+        DvarValue resetValue = {0};
+        resetValue.integer = defaultRefresh;
+        ri.Dvar_ChangeResetValue(r_displayRefresh, resetValue);
+    }
+    ri.Dvar_SetInt(r_displayRefresh, selectedRefresh);
+    return 1;
+}
+
+static int R_ChooseNativeRefresh(int width, int height, int refresh)
+{
+    int low = 0;
+    int high = dx.displayModeCount - 1;
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        const D3DDISPLAYMODE *mode = &dx.displayModes[mid];
+        int diff = (int)mode->Width - width;
+        if (!diff)
+            diff = (int)mode->Height - height;
+        if (!diff)
+            diff = (int)mode->RefreshRate - refresh;
+        if (!diff)
+            return refresh;
+        if (diff < 0)
+            low = mid + 1;
+        else
+            high = mid - 1;
+    }
+    if (high >= 0 && dx.displayModes[high].Width == (UINT)width &&
+        dx.displayModes[high].Height == (UINT)height)
+        return dx.displayModes[high].RefreshRate;
+    if (low < dx.displayModeCount && dx.displayModes[low].Width == (UINT)width &&
+        dx.displayModes[low].Height == (UINT)height)
+        return dx.displayModes[low].RefreshRate;
+    /* SDL can render sizes that do not occur in the physical mode list. */
+    return refresh;
+}
+
+static void R_SetNativeAspectRatio(void)
+{
+    extern const dvar_t *r_aspectRatio;
+    int aspect = r_aspectRatio->current.integer;
+    if (!aspect) {
+        int width = vidConfig.width;
+        int height = vidConfig.height;
+        if (vidConfig.isFullscreen) {
+            /* The original GetSystemMetrics facade reads the current display
+             * dimensions. Use the native display provider, not its old stub. */
+            D3DDISPLAYMODE mode;
+            void *d3d = dx.d3d9;
+            void **methods = *(void ***)d3d;
+            if (((HRESULT(D3DVTCC *)(void *, UINT, D3DDISPLAYMODE *))methods[8])(
+                    d3d, dx.adapterIndex, &mode) >= 0 && mode.Width > 0 && mode.Height > 0) {
+                width = mode.Width;
+                height = mode.Height;
+            }
+        }
+        int ratio = (int)floorf(((float)height * 16.0f) / (float)width + 0.5f);
+        aspect = ratio == 10 ? 2 : ratio > 9 ? 1 : 3;
+    }
+    if (aspect == 1)
+        vidConfig.aspectRatioWindow = 1.3333333730697632f;
+    else if (aspect == 2)
+        vidConfig.aspectRatioWindow = 1.600000023841858f;
+    else if (aspect == 3)
+        vidConfig.aspectRatioWindow = 1.7777777910232544f;
+    vidConfig.aspectRatioPixel = ((float)vidConfig.height * vidConfig.aspectRatioWindow) / (float)vidConfig.width;
+}
+
+static Bool R_InitNativeHardware(void)
+{
+    extern const dvar_t *r_mode;
+    extern const dvar_t *r_displayRefresh;
+    extern const dvar_t *r_fullscreen;
+    extern const dvar_t *r_aaSamples;
+    extern const dvar_t *r_swapInterval;
+    extern const dvar_t *r_gamma;
+    extern void *MacDisplay_GetMainWindow(void);
+    void *d3d;
+    void **methods;
+
+    if (!dx.d3d9) {
+        ri.Printf(0, "Getting Direct3D 9 interface...\n");
+        dx.d3d9 = (IDirect3D9 *)Direct3DCreate9(0x20);
+        if (!dx.d3d9) {
+            ri.Printf(0, "Direct3D 9 failed to initialize\n");
+            R_FatalInitError("Couldn't initialize renderer");
+            return 0;
+        }
+    }
+    dx.adapterIndex = 0;
+    if (!R_InitNativeDisplayModes())
+        return 0;
+    d3d = dx.d3d9;
+    methods = *(void ***)d3d;
+    for (;;) {
+        int width = 640;
+        int height = 480;
+        int refresh = 60;
+        int fullscreen = r_fullscreen->current.enabled;
+        int samples;
+        int parameters[14] = {0};
+        HRESULT hr;
+
+        sscanf(ri.Dvar_EnumToString((dvar_t *)r_mode), "%ix%i", &width, &height);
+        sscanf(ri.Dvar_EnumToString((dvar_t *)r_displayRefresh), "%i Hz", &refresh);
+        refresh = R_ChooseNativeRefresh(width, height, refresh);
+        ri.Printf(0, "Game window successfully created.\n");
+        dx.multiSampleType = (D3DMULTISAMPLE_TYPE)0;
+        dx.multiSampleQuality = 0;
+        for (samples = r_aaSamples->current.integer; samples > 1; --samples) {
+            DWORD qualityLevels;
+            dx.multiSampleType = (D3DMULTISAMPLE_TYPE)samples;
+            hr = ((HRESULT(D3DVTCC *)(void *, UINT, int, int, int, int, DWORD *))methods[11])(
+                d3d, 0, 1, 0x15, !fullscreen, samples, &qualityLevels);
+            if (hr >= 0) {
+                dx.multiSampleQuality = qualityLevels - 1;
+                break;
+            }
+        }
+        if (samples <= 1) {
+            dx.multiSampleType = (D3DMULTISAMPLE_TYPE)0;
+            dx.multiSampleQuality = 0;
+        }
+
+        /* This is the existing native device/reset word contract: its SDL
+         * provider owns the window pointer. It is not D3DPRESENT_PARAMETERS. */
+        parameters[0] = width;
+        parameters[1] = height;
+        parameters[2] = 0x15;
+        parameters[3] = 1;
+        parameters[4] = dx.multiSampleType;
+        parameters[5] = dx.multiSampleQuality;
+        parameters[6] = 1;
+        parameters[7] = !fullscreen;
+        parameters[8] = 0x4b;
+        parameters[11] = r_swapInterval->current.enabled ? 1 : (int)0x80000000u;
+        parameters[12] = fullscreen ? refresh : 0;
+        hr = R_CreateDevice_impl(NULL, 0x40, parameters);
+        if (hr >= 0) {
+            /* Unlike AGL, SDL creates the current GL context in CreateDevice.
+             * Query its capabilities before any renderer resources use them. */
+            R_InitNativeDeviceCaps();
+            dx.deviceLost = 0;
+            R_UpdateGpuSyncType();
+            vidConfig.width = width;
+            vidConfig.height = height;
+            vidConfig.displayFrequency = refresh;
+            vidConfig.isFullscreen = fullscreen;
+            R_SetNativeAspectRatio();
+            RB_InitSceneViewport();
+            if (R_CreateForInitOrReset()) {
+                ri.Dvar_ClearModified(r_gamma);
+                R_InitSystems();
+                dx.windows[0].hwnd = (HWND)MacDisplay_GetMainWindow();
+                dx.windows[0].width = width;
+                dx.windows[0].height = height;
+                dx.windowCount = 1;
+                ri.Sys_HideSplashWindow();
+                dx.targetWindowIndex = 0;
+                return 1;
+            }
+        } else {
+            ri.Printf(0, "Couldn't create a Direct3D device: %s\n", DXGetErrorDescription9A(hr));
+        }
+        if (r_aaSamples->current.integer > 1) {
+            ri.Dvar_SetInt(r_aaSamples, r_aaSamples->current.integer - 1);
+        } else if (r_displayRefresh->current.integer > 0 && vidConfig.displayFrequency > 60) {
+            ri.Dvar_SetInt(r_displayRefresh, r_displayRefresh->current.integer - 1);
+        } else if (r_mode->current.integer > 0 && (vidConfig.width > 640 || vidConfig.height > 480)) {
+            ri.Dvar_SetInt(r_mode, r_mode->current.integer - 1);
+        } else {
+            R_FatalInitError("Couldn't initialize renderer");
+            return 0;
+        }
+    }
 }
 #endif
 static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
@@ -953,7 +1236,7 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     }
     R_InitBackendData();
     R_InitDrawGroups();
-#if defined(COD2_X64)
+#if defined(COD2_X64) && !COD2_APPLE_SDK
     Bool createResources = dx.device == NULL;
 #endif
 #if defined(COD2_X64)
@@ -964,6 +1247,12 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     )
 #endif
 
+#if defined(COD2_X64) && COD2_APPLE_SDK
+    if (dx.device)
+        R_InitSystems();
+    else if (!R_InitNativeHardware())
+        return;
+#else
     if (dx.device) {
 
         R_InitSystems();
@@ -1071,6 +1360,7 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
         R_InitSystems();
     }
 #endif
+#endif
 #if defined(COD2_X64) && defined(__APPLE__)
     /* Gamma belongs to presentation, including windowed native rendering. */
     vidConfig.deviceSupportsGamma = 1;
@@ -1086,7 +1376,11 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
         int i;
         float *sinTable = rg.sinTable;
         for (i = 0; i < 1024; i++) {
+#if defined(COD2_X64)
+            double angle = (double)((float)i * 0.3515625f) * 0.017453292519943295;
+#else
             double angle = (double)i * 0.3515625 * 0.017453292519943295;
+#endif
             sinTable[i] = (float)sin(angle);
         }
     }
