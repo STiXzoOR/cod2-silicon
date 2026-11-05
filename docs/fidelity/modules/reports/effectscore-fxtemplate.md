@@ -43,3 +43,10 @@ Parent and fresh independent source/binary reviews covered all six units. Review
 Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. Dedicated replay does not exercise client effects rendering or UI interaction.
 
 Catalog coverage passed without semantic catalog changes. Hosted ILP32 comparison remains unavailable because the unchanged reference fails to compile; no byte parity is claimed.
+
+
+## Original helper provenance — fx9
+
+Original 1.0 0x812f122 uniquely maps to original 1.3 0x813156a. The actual thirteen-entry jump table at 0x81605ec was decoded: only type 5 returns true; types 0–4 and 6–12 return false, and the unsigned range guard returns false outside 0–12. This establishes the original predicate, not a Mac provider. Generic primitive dispatch or emitter-specific parse branches do not establish this complete predicate identity; no positive matching owner was recovered. The row remains unchecked.
+
+The retained direct-call scan finds the positive channel-copy-to-curve-reference chain; raw absolute address references add only unwind records. Those bounded searches are not evidence of semantic absence and close no row. No source or prior resolved verdict changed, no new defect was established, and no compilation, tests, CI, replay or runtime exercise ran. Original bodies, disambiguating neighbors, decoded table and fresh exact Mac candidates are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-fx9.noindex/`.

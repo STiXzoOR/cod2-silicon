@@ -41,3 +41,10 @@ Parent and fresh independent source/binary reviews covered all six units. Review
 Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. Dedicated replay does not exercise client effects rendering or UI interaction.
 
 Catalog coverage passed without semantic catalog changes. Hosted ILP32 comparison remains unavailable because the unchanged reference fails to compile; no byte parity is claimed.
+
+
+## Original helper provenance — fx9
+
+The original empty slot is located at 1.0 0x8128738 / 1.3 0x812ab58 immediately before the MediaHandles GetEffect/GetHandle pair; the latter is independently mapped by its complete body. Its name and purpose remain unknown. Identical empty functions elsewhere, including Mac global initializers, are not a semantic identity. The row remains unchecked.
+
+The retained direct-call scan finds the positive channel-copy-to-curve-reference chain; raw absolute address references add only unwind records. Those bounded searches are not evidence of semantic absence and close no row. No source or prior resolved verdict changed, no new defect was established, and no compilation, tests, CI, replay or runtime exercise ran. Original bodies, disambiguating neighbors, decoded table and fresh exact Mac candidates are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-fx9.noindex/`.
