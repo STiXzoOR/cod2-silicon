@@ -614,7 +614,13 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
         SDL_SetWindowFullscreen(sdl_gl_window, 0);
 #endif
     if (ctx->context) {
+#if defined(COD2_X64)
+        /* Mac 0x527e completes this context before destroying its resources. */
+        if (SDL_GL_MakeCurrent(sdl_gl_window, ctx->context) == 0)
+            glFinish();
+#else
         SDL_GL_MakeCurrent(sdl_gl_window, ctx->context);
+#endif
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
         MacMetal_Destroy(ctx->metal);
         ctx->metal = NULL;
