@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 289,
+      "unchecked": 287,
       "intentional": 3184,
-      "equal": 4777,
+      "equal": 4779,
       "fixed": 1207
     },
     "scopes": {
@@ -202754,8 +202754,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Linux-only getter read; no native body/caller. Mac has an absolute .eh symbol named Com_GetSoundAliasSeed but no identified executable getter body or inline site. Seed-read identity remains unresolved. Original provenance recovered: original Linux 1.0 IDB 0x80aaf7a maps to retained original Linux 1.3 ELF 0x80ad312 through module order corroborated by unique masked whole-body matches and exact target inspection. Original address/body evidence supplies identity and intent only; it does not establish a Mac operation. The prior complete Mac-operation gap remains; neither original symbol identity nor absent callers closes this row."
+        "status": "equal",
+        "evidence": "Full original1.3 getter0x80ad312\u20130x80ad31c (from original1.0 0x80aaf7a) reads the entire seed word into result EAX with no branch/arithmetic/side effect. Complete actual Mac scalar read loads prior seed into EDX before the recurrence; every bit feeds the full-width LEA/SHL/ADD/SUB multiplication/addition, not merely a masked random-bit use. Native reads the full int representation and converts to unsigned32 for its actual recurrence consumer. Selected getter operation ends at that complete prior-state input; subsequent mutation/extraction are not getter effects. Original getter/setter share global0x85a9844 with full original RNG0x80ad574 (read,IMUL214013,ADD2531011,full store,reload,15-bit extraction), called by actual selector0x80ad394/0x80ad42a. Mac seed0x1227424 is g_sa+4 in zero-fill backing; native typed static-duration g_sa.randSeed is the same32-bit state role. Four exact Mac pairs0xad4a0/0xad4bd,0xad532/0xad54f,0xada38/0xada55,0xadad9/0xadaf6 operate on that same full word. Actual valid count3 first-pass selection stores then loops to next prior-word read in the same invocation, without intervening call or seed write. No independent external observer or reseed caller is invented. Complete consumed scalar role only: no standalone/export ABI, arbitrary external reseed timing, concurrency ordering, literal inline ancestry or whole RNG/selector claim. Existing config13 recurrence arithmetic and sequence15 history fixes are preserved; they do not constitute a new getter/store defect. Original provides identity/intent; Mac supplies operation authority. Independent review-provenance-soundseed25.md accepted equal and parent concurred. Fresh complete original/Mac owners,state backing and native hashes retained recon-provenance-soundseed25.noindex. No source change, compilation, tests, CI, full build, replay or runtime."
       },
       {
         "id": "mac:0x000acc12",
@@ -203022,8 +203022,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Linux-only setter read; no native body/caller. Mac has an absolute .eh symbol named Com_SetSoundAliasSeed but no identified executable setter body or inline site. Seed-write identity remains unresolved. Original provenance recovered: original Linux 1.0 IDB 0x80aaf84 maps to retained original Linux 1.3 ELF 0x80ad31c through module order corroborated by unique masked whole-body matches and exact target inspection. Original address/body evidence supplies identity and intent only; it does not establish a Mac operation. The prior complete Mac-operation gap remains; neither original symbol identity nor absent callers closes this row."
+        "status": "equal",
+        "evidence": "Full original1.3 setter0x80ad31c through ret0x80ad328 (end0x80ad329 exclusive; followingNOP padding; from original1.0 0x80aaf84) stores its full scalar argument unchanged into seed state and returns void, with no filtering/arithmetic/other effect. Complete actual Mac selected store begins after the recurrence has produced its full32-bit result and writes EAX to persistent seed BEFORE shift16/mask0x7fff. Native existing memcpy preserves the completed unsigned32 representation in int randSeed. Actual next-loop read consumes that stored word; input and persistent-output roles are complete. Earlier recurrence calculation and subsequent random extraction are outside the selected setter operation. Original getter/setter share global0x85a9844 with full original RNG0x80ad574 (read,IMUL214013,ADD2531011,full store,reload,15-bit extraction), called by actual selector0x80ad394/0x80ad42a. Mac seed0x1227424 is g_sa+4 in zero-fill backing; native typed static-duration g_sa.randSeed is the same32-bit state role. Four exact Mac pairs0xad4a0/0xad4bd,0xad532/0xad54f,0xada38/0xada55,0xadad9/0xadaf6 operate on that same full word. Actual valid count3 first-pass selection stores then loops to next prior-word read in the same invocation, without intervening call or seed write. No independent external observer or reseed caller is invented. Complete consumed scalar role only: no standalone/export ABI, arbitrary external reseed timing, concurrency ordering, literal inline ancestry or whole RNG/selector claim. Existing config13 recurrence arithmetic and sequence15 history fixes are preserved; they do not constitute a new getter/store defect. Original provides identity/intent; Mac supplies operation authority. Independent review-provenance-soundseed25.md accepted equal and parent concurred. Fresh complete original/Mac owners,state backing and native hashes retained recon-provenance-soundseed25.noindex. No source change, compilation, tests, CI, full build, replay or runtime."
       },
       {
         "id": "linux:universal/com_sndalias.cpp:13:Com_SoundAliasHash",
