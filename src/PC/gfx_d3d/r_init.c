@@ -80,6 +80,11 @@ static void R_CreateParticleCloudBuffer(void);
 static void R_ReleaseForShutdownOrReset(void);
 static Bool R_DisplayModeLess(const _D3DDISPLAYMODE *mode0, const _D3DDISPLAYMODE *mode1);
 void R_UpdateGpuSyncType(void);
+#if defined(COD2_X64) && defined(__APPLE__)
+extern qboolean RB_IsGpuFenceFinished(void);
+extern void RB_AdaptiveGpuSyncWait(void);
+extern void RB_GpuWaited(int ticks);
+#endif
 void R_EndRegistration(void);
 static void R_EndView(int viewIndex);
 static void R_DoneRenderingViews(void);
@@ -507,9 +512,17 @@ refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp)
 #endif
     RE(328, imp_R_SyncRenderThread);
     RE(332, imp_R_AbortRenderCommands);
+#if defined(COD2_X64) && defined(__APPLE__)
+    /* Keep API59's layout and void wait ABI. Its native wait callback owns
+     * Mac CL_SyncGpu's delay query and polling, with one renderer clock. */
+    re.IsGpuFenceFinished = RB_IsGpuFenceFinished;
+    re.SyncGpu = RB_AdaptiveGpuSyncWait;
+    re.GpuWaited = RB_GpuWaited;
+#else
     RE(336, imp_RB_IsGpuFenceFinished);
     RE(340, imp_RB_AdaptiveGpuSyncWait);
     RE(344, imp_RB_GpuWaited);
+#endif
     RE(348, imp_R_SetLodOrigin);
 
 #undef RE
