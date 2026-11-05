@@ -57,3 +57,9 @@ identity anchors and exact Mac bodies remain in
 ## Remaining original command anchors
 
 Original Linux 1.0 anonymous bodies 0x08060118 and 0x0805ff92 correspond to the 1.3 argument-copy wrapper at 0x0806031c and echo loop at 0x08060196. The copy operation joins from argument one and then copies to the supplied destination/length. Original Mac argument joining is established separately, but a reliable-command writer, menu-name consumer or console-say concatenation does not establish the whole destination-copy wrapper. The native caller alone supplies no original Mac identity. The candidate empty original 1.3 body at 0x0805fc5c lies between a four-word copy helper and `Cmd_Wait_f`; its empty body and reconstruction placement do not establish its unknown original name or a Mac counterpart. All three remain unchecked. Exact original bodies are retained privately in `recon-provenance-parser5.noindex`; no source or resolved verdict changed and no compilation, tests, CI or replay ran.
+
+## Complete argument-operation follow-up (parser12)
+
+The three helpers remain unchecked. Original Cmd_ArgsBuffer0x806031c composes argument joining from index1 with caller-supplied destination/length copying; a generic copy provider or joined-text consumer alone leaves part of the operation unproved. Current menu, reliable-command and console-concatenation owners have different output/state contracts. Original Cmd_Echo_f0x8060196 prints each argument followed by a space, then a separate newline, not the same print sequence as a joined string. The unknown empty helper still has no positive identity; no new absence scan or empty-body closure was used.
+
+Private original evidence remains in recon-provenance-parser5.noindex and recon-provenance-config7.noindex; new complete provider packets are in recon-provenance-parser12.noindex. No production source changes, compilation, tests, CI, replay or runtime exercise occurred.
