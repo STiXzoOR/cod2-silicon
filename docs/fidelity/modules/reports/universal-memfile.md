@@ -50,3 +50,13 @@ All four remaining rows stay unchecked. Original1.3 IsReading0x80b5bd2 and IsWri
 
 
 Private original bodies and new exact Mac/provider/state-owner evidence are retained in recon-provenance-storage5.noindex and recon-provenance-storage10.noindex. No source changes, compilation, tests, CI, replay or runtime exercise occurred. Missing names/callers are not completion evidence.
+
+## Actual state-owner challenge (memstate28)
+
+The four remaining rows stay unchecked after reading a distinct complete callback and cursor-owner chain. CL_ArchiveClientState0x17b790 forwards its MemoryFile to CG_ArchiveState and the renderer fog archive. Complete CG_ArchiveState0x18b568–0x18b640 invokes archiveProc eight times; R_ArchiveFogState0xd2a9e–0xd2ae5 invokes it twice. They transfer actual state through the supplied callback without constructing or consuming an IsReading/IsWriting Boolean. Video restart explicitly installs write state0x14b670 and read state0x14b7ff around the shared owner. Direction dispatch and callback provenance do not establish the missing comparison/result role.
+
+The complete video-restart lifecycle saves bytesUsed, copies data and frees temporary backing0x14b67d–0x14b6af, later reinitializes the same MemoryFile for reading and releases saved backing0x14b63a. This does not establish original Shutdown's4-byte live-object reset. No terminal-lifecycle replacement is inferred from stack lifetime end, backing release or overwriting fields during complete initialization.
+
+FxArchive::WriteData supplies another concrete bytesUsed mutation, but0xaa073 subtracts1 only after run-control tests and encoded-buffer rewrites0xaa047–0xaa063; it also moves its own startPos by−3. Its logical byteCounter update0xa9f1d is a different object field. Neither operation is the original caller-count skip with complete overflow/error state and no transfer. The existing native compression guards and storage adaptations are preserved; this focused role comparison does not reopen their settled verdicts.
+
+Full original bodies, fresh complete selected Mac owners and source hashes remain in `recon-provenance-memstate28.noindex`. These are bounded rejected routes, not proof from missing names/callers. Four unchecked refinements, no closures, source changes or new defects; no compilation, tests, CI, full build, replay or runtime verification. The animation reverse-pointer lookup was not reclassified from the already rejected forward-index/name-ID operations.
