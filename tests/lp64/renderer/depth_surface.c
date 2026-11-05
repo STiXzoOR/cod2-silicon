@@ -35,7 +35,27 @@ void *imp_backEnd;
 GfxWorld s_world;
 Bool g_NoTextureID, g_WarmOff;
 /* Isolate generated ABI import data; exercise real vertex-array initialization. */
+#if defined(COD2_X64)
+static void FixtureArrayDtor(const void *array) { (void)array; }
+static void *fixtureArrayVtables[16] = { [2] = FixtureArrayDtor };
+void *imp___ZTV14CTexCoordArray = fixtureArrayVtables;
+void *imp___ZTV10COpenGLVAO = fixtureArrayVtables;
+extern bool CVAOPacketFixedFunction_IsFixedFunction(const CVAOPacket *);
+extern bool CVAOPacketProgrammable_IsFixedFunction(const CVAOPacket *);
+static void *fixtureFixedPacketVtable[5] = { [4] = CVAOPacketFixedFunction_IsFixedFunction };
+static void *fixtureProgramPacketVtable[5] = { [4] = CVAOPacketProgrammable_IsFixedFunction };
+void *imp___ZTV23CVAOPacketFixedFunction = fixtureFixedPacketVtable;
+void *imp___ZTV22CVAOPacketProgrammable = fixtureProgramPacketVtable;
+VAOStatus CVAOPacket_sVAOStatus;
+UINT32 CVAOPacket_sCurrentPacket;
+static Bool fixtureSpecial, fixtureDrawFlag = 1;
+void *imp_g_special = &fixtureSpecial;
+void *imp__ZN7COpenGL9sDrawFlagE = &fixtureDrawFlag;
+extern GLint g_VAOID;
+void *imp_g_VAOID = &g_VAOID;
+#else
 static void *fixtureArrayVtables[16];
+#endif
 void *imp___ZTV7CBaseVA = fixtureArrayVtables;
 void *imp___ZTV11CColorArray = fixtureArrayVtables;
 void *imp___ZTV20CSecondaryColorArray = fixtureArrayVtables;
@@ -47,7 +67,11 @@ int MacPlatform_GetRenderSize(int *w, int *h) { *w = *h = 32; return 1; }
 int MacDisplay_GetSupportsAnisotropicFiltering(void) { return 0; }
 float MacDisplay_GetMaxSupportedAnisotropy(void) { return 1; }
 D3DMATRIX *RB_GetActiveWorldMatrix(void) { assert(!"unexpected view matrix"); return NULL; }
+#if defined(COD2_X64)
+int MacDisplay_GetCardType(void) { return 0; }
+#else
 D3DXMATRIX *D3DXMatrixMultiply(D3DXMATRIX *a, const D3DXMATRIX *b, const D3DXMATRIX *c) { assert(!"unexpected matrix multiply"); return a; }
+#endif
 
 static void EnablePixel(const void *shader)
 {
@@ -141,11 +165,34 @@ int main(int argc, char **argv)
     D3DVERTEXELEMENT9 elements[] = {{0, 0, 2, 0, 0, 0}, {0, 12, 4, 0, 10, 0}, {255, 0, 17, 0, 0, 0}};
     CDirect3DVertexDeclarationImpl declaration = { .elementCount = 3, .elements = elements };
     void *pixelMethods[8] = { [7] = EnablePixel };
+#if defined(COD2_X64)
+    struct { void **vtable; ULONG refCount; UINT32 textureUsageMask; } pixel = {pixelMethods, 1, 0};
+#else
     struct { void **vtable; } pixel = {pixelMethods};
+#endif
     /* CreateDevice zeroes its storage then calls Init, with implicit GL depth. */
     assert(sizeof(DeviceImpl) <= 4096);
     DeviceImpl dev = {0};
     CDirect3DDevice_Init(&dev);
+#if defined(COD2_X64)
+    /* Reset normally owns the 1x1 fallback texture; this Init-only fixture
+     * supplies the same widened secondary-base contract for raster validation. */
+    fprintf(stderr, "native texture units: fixed=%u image=%u\n", dev.maxTextureUnits, dev.maxTextureImageUnits);
+    COpenGLNative *fixtureGL = CDirect3DDevice_GL();
+    fixtureGL->texUnitCount = dev.maxTextureUnits > dev.maxTextureImageUnits
+        ? dev.maxTextureUnits : dev.maxTextureImageUnits;
+    for (UINT i = 0; i < fixtureGL->texUnitCount; ++i)
+        fixtureGL->texUnits[i].mIsProgramableOnly = i >= dev.maxTextureUnits;
+    GLuint defaultTextureName;
+    UINT32 defaultPixel = 0x000000ff;
+    glGenTextures(1, &defaultTextureName);
+    glBindTexture(GL_TEXTURE_2D, defaultTextureName);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_BGRA, GL_UNSIGNED_BYTE, &defaultPixel);
+    struct { void **vtable; COpenGLTextureStateNative gl; } defaultTexture = {
+        .gl = { .name = &defaultTextureName, .width = 1, .height = 1, .depth = 1 }
+    };
+    dev.saveSurface = (void *)&defaultTexture;
+#endif
     dev.streams[0] = (void *)&vb;
     dev.streamStrides[0] = sizeof(vertices[0]);
     dev.indexBuffer = (void *)&ib;
@@ -241,6 +288,10 @@ int main(int argc, char **argv)
         }
     }
     assert(glGetError() == GL_NO_ERROR);
+#if defined(COD2_X64)
+    CDirect3DDevice_ResetStreamsNative((const void *)&dev);
+    glDeleteTextures(1, &defaultTextureName);
+#endif
     glDeleteProgramsARB(1, &vertexProgram); glDeleteProgramsARB(1, &fragmentProgram);
     glDeleteRenderbuffersEXT(2, buffers); glDeleteFramebuffersEXT(1, &framebuffer);
     CGLSetCurrentContext(NULL); CGLDestroyContext(context);

@@ -87,14 +87,7 @@ _Static_assert(offsetof(COpenGLTexturePrefixNative, lastLevel) == offsetof(COpen
 _Static_assert(offsetof(COpenGLTexturePrefixNative, anisotropy) == offsetof(COpenGLTextureStateNative, anisotropy), "native anisotropy contract");
 _Static_assert(offsetof(COpenGLTexturePrefixNative, depth) == offsetof(COpenGLTextureStateNative, depth), "native texture field extent");
 
-typedef struct {
-    void **vtable;
-    GLuint *name;
-    UINT32 rangeCode, rangeSize;
-    CBaseVAImpl color, secondaryColor, normal, vertex;
-    CBaseVAImpl texCoord[8];
-    VertexProgramStreamStateNative generic[16];
-} COpenGLVAOPrefixNative;
+typedef COpenGLVAONative COpenGLVAOPrefixNative;
 
 typedef struct COpenGLBindingNodeNative {
     struct COpenGLBindingNodeNative *next, *prev;
@@ -429,6 +422,10 @@ unsigned int COpenGL_CTexUnit_SetTex(const CTexUnit *_this, GLenum Target, const
     unit->mTexMagFilter[index] = texture->magFilter;
     unit->mTexAnisotropicFilter[index] = texture->anisotropy;
     unit->mTexLastLevel[index] = texture->lastLevel;
+    /* Modern GL can expose image units beyond the fixed-function limit.
+     * Their sampler binding is valid; fixed-function target enables are not. */
+    if (unit->mIsProgramableOnly)
+        return 0;
     if (Target == 0xde1) {
         if (!unit->mTargetEnabled[0]) { glEnable(0xde1); unit->mTargetEnabled[0] = 1; }
         if (unit->mTargetEnabled[1]) { glDisable(0x806f); unit->mTargetEnabled[1] = 0; }
@@ -623,28 +620,24 @@ unsigned int COpenGL_SetVAO(const COpenGL *_this, const COpenGLVAO *VAO,
 #if defined(COD2_X64)
     COpenGLNative *gl = (COpenGLNative *)_this;
     const COpenGLVAOPrefixNative *vao = (const COpenGLVAOPrefixNative *)VAO;
-    if (g_VAOID == (GLint)*vao->name && !ForceValidation)
+    if (g_VAOID == (GLint)*vao->mpVAOID && !ForceValidation)
         return 0;
-    g_VAOID = (GLint)*vao->name;
-    glBindVertexArrayAPPLE(*vao->name);
-    /* The selected native VAO provider currently assigns only a zero range code.
-     * A nonzero 32-bit code is not a proven native pointer. */
-    if (!vao->rangeCode) {
-        gl->vertexArrayStart = NULL;
-        gl->vertexArraySize = vao->rangeSize;
-    }
+    g_VAOID = (GLint)*vao->mpVAOID;
+    glBindVertexArrayAPPLE(*vao->mpVAOID);
+    gl->vertexArrayStart = vao->mpVAStart;
+    gl->vertexArraySize = vao->mSize;
     if (IsFixedFunction || ForceValidation) {
-        COpenGL_CopyArrayNative(&gl->colorArray, &vao->color);
-        COpenGL_CopyArrayNative(&gl->secondaryColorArray, &vao->secondaryColor);
-        COpenGL_CopyArrayNative(&gl->normalArray, &vao->normal);
-        COpenGL_CopyArrayNative(&gl->vertexArray, &vao->vertex);
+        COpenGL_CopyArrayNative(&gl->colorArray, &vao->mColorArray);
+        COpenGL_CopyArrayNative(&gl->secondaryColorArray, &vao->mSecondaryColorArray);
+        COpenGL_CopyArrayNative(&gl->normalArray, &vao->mNormalArray);
+        COpenGL_CopyArrayNative(&gl->vertexArray, &vao->mVertexArray);
         for (UINT32 i = 0; i < gl->texUnitCount && !gl->texUnits[i].mIsProgramableOnly; ++i)
-            COpenGL_CopyArrayNative(&gl->texUnits[i].mTexCoordArray, &vao->texCoord[i]);
+            COpenGL_CopyArrayNative(&gl->texUnits[i].mTexCoordArray, &vao->mTexCoordArrays[i]);
         for (unsigned i = 0; i < 16; ++i)
             gl->genericArrays[i].mNeedsValidation = 1;
     }
     if (!IsFixedFunction || ForceValidation) {
-        memcpy(gl->genericArrays, vao->generic, sizeof(gl->genericArrays));
+        memcpy(gl->genericArrays, vao->mGenericArrays, sizeof(gl->genericArrays));
         for (unsigned i = 0; i < 16; ++i)
             gl->genericArrays[i].mNeedsValidation = 0;
         gl->colorArray.mNeedsValidation = gl->secondaryColorArray.mNeedsValidation = 1;
