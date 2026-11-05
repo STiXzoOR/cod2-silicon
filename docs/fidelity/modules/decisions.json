@@ -32506,5 +32506,33 @@
   "mac:0x00118aa6": {
     "status": "unchecked",
     "evidence": "Mac0x118aa6 initializes embedded shader map; inspected lookup tail0x134129\u20130x134353: .vs appends a (card2:n), .ps appends e, successful result contains key::payload, and missing key returns success0 with null shader while clearing other outputs. Actual readonly pending51608e5 cache selects extracted vsa/pse programs, appends a CTAB marker and returns0x88760b59 for missing/invalid cache; absent-cache route still uses generic HLSL heuristics. Complete embedded table/vendor/key/error-contract parity is unproven, not excused by future Metal plans. No shared shader edit or parity claim."
+  },
+  "mac:0x000fb7e8": {
+    "status": "intentional",
+    "evidence": "Hand-read exact Mac R_LoadLightDef 0xfb7e8: failure/empty-file returns, packed type/samplers, both Image_Register(name,1,5) calls, lowercase name and freeing match for complete records, with typed LP64 allocation. Existing native bounds checks intentionally require both string terminators and second sampler inside fileLen; Mac relies on unbounded scans (FS_ReadFile provides only one extra trailing zero). No missing-default fallback in either native or Mac. Actual client object compiled; asset loading not exercised."
+  },
+  "mac:0x000faf04": {
+    "status": "equal",
+    "evidence": "Hand-read exact Mac R_LoadSun 0xfaf04: whole-record clearing (native sizeof widened sunflare_t), last slash/backslash basename, 64-byte bounded copy, first-dot termination and nonempty-only load match. Actual client object compiled; loading not exercised."
+  },
+  "mac:0x000fae78": {
+    "status": "equal",
+    "evidence": "Hand-read exact Mac R_LoadSunThroughDvars 0xfae78: sun/%s.sun path, read-failure warning, imported array table and reported dvar count, success-only sun update and successful-read freeing match. Actual client object compiled; dvar loading not exercised."
+  },
+  "mac:0x00109f2c": {
+    "status": "fixed",
+    "evidence": "Hand-read exact Mac Image_BuildSpecularityMap 0x109f2c: 32x256 traversal, float normalization, double exponent math, widened 0.1f and final-column exponent match. Restored unordered upper-clamp multiplication at 0x109f5a/0x109f62 and negative-zero lower clamp; explicit NaN byte zero preserves invalid cvttss2si low byte at 0x10a01a with defined native C. COD2_X64 only; compiled and reviewed, not exercised."
+  },
+  "mac:0x000fa340": {
+    "status": "fixed",
+    "evidence": "Hand-read full exact Mac RB_UploadWaterTexture 0xfa340: cache/enable order, zero-frequency clearing, phase+255, row/column FFTs, magnitude scaling, normal predecessor carry, both formats/mips and upload flag match. Restored unordered height saturation at 0xfaa0c/0xfaa0f. Native-only guarded conversion preserves Mac invalid cvttss2si INT_MIN at 0xfa478 (masked phase 0 rather than ARM64 positive-overflow saturation phase 1023) and zero low bytes at 0xfa8d9/0xfa915/0xfa94a. Current image/mip/sqrt providers and pending eecc169/cd687d6 inspected; no whole-frame claim. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00109c00": {
+    "status": "fixed",
+    "evidence": "Hand-read exact Mac R_CreateWaterSetup 0x109c00: typed record copy, element allocations, windvel squaring/gravity division, mixed float/double spectrum order, Gaussian calls, repeated amplitude factor and unsigned-short map dimensions match. Restored unordered-dot spectrum branch at 0x109e81/0x109e8c instead of clearing coefficients. COD2_X64 only; compiled and reviewed, not exercised."
+  },
+  "mac:0x00109afc": {
+    "status": "equal",
+    "evidence": "Hand-read exact Mac R_WatersEquivalent 0x109afc: ordered dimension/domain rejection, float amplitude/direction 0.001 thresholds, widened gravity/speed differences against double 0.1, wind dot/magnitude order and double 1e-10 addition before float denominator division match, including unordered tolerance comparisons. Actual client object compiled; not exercised."
   }
 }

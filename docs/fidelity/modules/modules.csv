@@ -172,7 +172,7 @@ gfx_d3d/r_image_wavelet,1,1,0,0,0
 gfx_d3d/r_init,22,14,5,1,2
 gfx_d3d/r_jpeg,9,0,1,8,0
 gfx_d3d/r_light,4,2,1,1,0
-gfx_d3d/r_light_load_obj,1,0,0,0,1
+gfx_d3d/r_light_load_obj,1,0,0,1,0
 gfx_d3d/r_marks,4,3,1,0,0
 gfx_d3d/r_material,30,21,6,3,0
 gfx_d3d/r_material_load_obj,16,8,7,1,0
@@ -185,8 +185,8 @@ gfx_d3d/r_scene,18,12,5,1,0
 gfx_d3d/r_screenshot,9,1,2,6,0
 gfx_d3d/r_shadowcookie,1,1,0,0,0
 gfx_d3d/r_sky,6,6,0,0,0
-gfx_d3d/r_sky_load_obj,2,0,0,0,2
-gfx_d3d/r_specularityimage,1,0,0,0,1
+gfx_d3d/r_sky_load_obj,2,2,0,0,0
+gfx_d3d/r_specularityimage,1,0,1,0,0
 gfx_d3d/r_splitscreen,6,6,0,0,0
 gfx_d3d/r_staticmodel,1,1,0,0,0
 gfx_d3d/r_staticmodel_load_obj,13,11,1,1,0
@@ -194,8 +194,8 @@ gfx_d3d/r_staticmodelcache,11,8,1,1,1
 gfx_d3d/r_surfbounds,4,4,0,0,0
 gfx_d3d/r_texturemem,1,0,0,1,0
 gfx_d3d/r_utils,7,7,0,0,0
-gfx_d3d/r_water,1,0,0,0,1
-gfx_d3d/r_water_load_obj,2,0,0,0,2
+gfx_d3d/r_water,1,0,1,0,0
+gfx_d3d/r_water_load_obj,2,1,1,0,0
 gfx_d3d/r_xsurface,8,7,0,0,1
 gfx_d3d/r_xsurface_optimize,3,3,0,0,0
 gfx_d3d/rb_backend,63,31,23,7,2
