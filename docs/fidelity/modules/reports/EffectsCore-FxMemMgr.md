@@ -19,3 +19,19 @@ Parent inspection covered all six units; independent reviews covered protocol/sn
 Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. Dedicated replay does not exercise client HUD, camera, sound or weapon rendering; unreached corrections remain compiled and reviewed.
 
 Catalog coverage passed without semantic catalog changes. Hosted ILP32 comparison remains unavailable because the unchanged reference fails to compile; no byte parity is claimed.
+
+## Allocation identity follow-up
+
+The four block helpers remain unchecked. Mac STABS now positively identifies
+the live FxMemMgr specializations as one-byte, fieldless classes; source-line
+records tie their allocation/free behavior to direct array-new, zeroing and
+array-delete. This settles the separate primitive allocation-wrapper identities,
+but provides no FxMemBlock layout, arena or executable block-helper mapping.
+The FxMem_Init verdict is preserved exactly.
+
+No production source changed. The assigned sources compiled with exact stock
+and CoD2x arm64 Release commands. Both existing primitive ASan/UBSan fixtures
+passed, using their calloc/free allocation adapters; they do not exercise these
+unresolved helper identities or the production C++ allocator. No new tests,
+cases, assertions, full CI or replays were run. See the FxPrimitives follow-up
+for the shared ownership evidence and verification limits.

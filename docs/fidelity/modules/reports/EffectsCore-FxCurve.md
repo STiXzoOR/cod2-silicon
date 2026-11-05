@@ -19,3 +19,19 @@ Parent inspection covered all six units; independent reviews covered protocol/sn
 Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. Dedicated replay does not exercise client HUD, camera, sound or weapon rendering; unreached corrections remain compiled and reviewed.
 
 Catalog coverage passed without semantic catalog changes. Hosted ILP32 comparison remains unavailable because the unchanged reference fails to compile; no byte parity is claimed.
+
+## Allocation identity follow-up
+
+The Release row remains unchecked. Exact Create at 0xb9fc8–0xb9fdb stores
+master and zero index; Mac type records show the two-field iterator and inline
+curve keys. The hunk allocation at 0xac38e establishes curve storage ownership,
+but does not identify a release/clear consumer or the Release body. The
+absolute-zero exception marker is not executable proof. All existing resolved
+verdicts are preserved exactly.
+
+No production source changed. The assigned sources compiled with exact stock
+and CoD2x arm64 Release commands. Both existing primitive ASan/UBSan fixtures
+passed, using their calloc/free allocation adapters; they do not exercise these
+unresolved helper identities or the production C++ allocator. No new tests,
+cases, assertions, full CI or replays were run. See the FxPrimitives follow-up
+for the shared ownership evidence and verification limits.
