@@ -2,7 +2,7 @@
 
 Updated 2026-11-04.
 
-**129 entries: 95 equal, 7 fixed, 18 intentional, 9 unchecked.** All complete Mac dvar bodies were read, including the real static symbols omitted from the initial ledger pairing. The type dispatch tables were decoded directly from the binary. Linux 1.3 was used to identify helper names and inline operations; Mac 1.3 remains the authority.
+**124/130 reconciled: 96 equal, 7 fixed, 21 intentional; 6 unchecked.** All complete Mac dvar bodies were read, including the real static symbols omitted from the initial ledger pairing. The type dispatch tables were decoded directly from the binary. Linux 1.3 was used to identify helper names and inline operations; Mac 1.3 remains the authority.
 
 ## Corrections
 
@@ -16,7 +16,7 @@ The string paths of `Dvar_GetString`, `Dvar_GetFloat`, `Dvar_GetInt` and `Dvar_G
 
 Existing native adaptations remain: bounded domain-description output instead of cursor escape after truncation; null guards; temporary string storage and delayed old-current release during string rebuilding; zero-initialized pointer-sized records; and the optional CoD2x 4096-dvar pool instead of the stock 1280. Each affected row describes the specific adaptation. The existing promotion cleanup at Mac 0x52c48/0x52c67 is preserved.
 
-Nine entries remain unchecked for precise reasons:
+The original nine gaps were recorded below; three Mac dvar storage/varargs rows are now resolved by the native-boundary follow-up. The six Linux-only identities remain unchecked:
 
 - `Dvar_SetVec2`, `Dvar_SetVec2ByName` and the Linux `Dvar_SetVec2FromSource` identity compare against type 4, then give the vec4 setter only two floats. Mac 0x54c16 reads the following saved-register words; the ByName branch at 0x551d0 reads additional uninitialized locals. The native source has the same two-float shape, but the extra values have no established native stack contract. No indeterminate storage was added to imitate them.
 - `Dvar_SetColorByName` passes four integers to four `%g` conversions on its missing-name path at Mac 0x557fb. The double reads exceed the supplied argument area. Native has the same format/type mismatch on a different variadic ABI. The existing-name color path was compared, but equality of the missing-name output is unresolved.
@@ -46,3 +46,8 @@ The six units closed 543 entries. Thirty-two whole callers misattributed to univ
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baselines and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. These dedicated traces do not exercise client input/rendering or every changed diagnostic, parser, sound or numeric edge; unreached corrections remain compiled and reviewed.
 
 Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile. No new tests were written; the existing formatter fixture expectation was corrected against exact Mac diagnostic bytes.
+
+
+## Defined native boundary follow-up
+
+See [native-invalid-boundaries](native-invalid-boundaries.md) for the exact native contracts, original addresses, source corrections and limits. Earlier open statements for the six named Mac rows describe the prior checkpoint. Current module counts are 96 equal, 7 fixed, 21 intentional, 6 unchecked. All other original identity gaps remain open.
