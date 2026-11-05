@@ -66,3 +66,8 @@ All three unchecked rows remain unchecked. Mac STABS establishes the 100-byte IL
 Exact `DObjSkelExists` at 0x73f2e–0x73f51 confirms the mismatch write clearing the skeleton pointer. Its return predicate overlaps `DObjSkelIsValid`, but the mutation means the whole operation is not equivalent to the nonmutating helper. No missing helper was declared resolved from a shared read. All existing evidence, including the unordered-normal correction, is preserved exactly.
 
 Configured stock/CoD2x Release objects and existing xanim skeleton/mapping/trace fixtures pass both modes under ASan/UBSan. No production source or test assertion changed here; no new cases, full CI or replays. Private follow-up evidence is in `recon-animation-remaining.noindex`.
+
+
+## Original-address follow-up (inline-effects4)
+
+Original Linux 1.3 executable ranges0x80ba706–0x80ba776 (DObjClone) and0x80ba7f2–0x80ba957 (DObjGetCreateParms; upper bounds exclusive) establish stronger identity anchors than the reconstruction alone. Clone copies100 bytes, clears the skeleton, conditionally retains the duplicate-parts string, then binds the supplied tree. GetCreateParms also reconstructs parent bone names and per-model collision flags; a simple model accessor cannot establish its complete operation. Neither anchor supplies Mac behavior authority. No complete Mac clone/extraction operation was identified, so both rows remain unchecked. Direct-call absence is not a completion argument. No source changes or runtime verification.
