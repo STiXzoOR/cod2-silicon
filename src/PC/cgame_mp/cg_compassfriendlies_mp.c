@@ -440,7 +440,11 @@ draw_friendlies:
             actorColor[1] = color[1];
             actorColor[2] = color[2];
 
+#if defined(COD2_X64)
+            actorColor[3] = compassFadeOutAlpha < color[3] ? compassFadeOutAlpha : color[3];
+#else
             actorColor[3] = color[3] < compassFadeOutAlpha ? color[3] : compassFadeOutAlpha;
+#endif
 
 #if defined(COD2_X64)
             iconAlpha = compassFadeOutAlpha < iconAlpha ? compassFadeOutAlpha : iconAlpha;
@@ -488,7 +492,11 @@ draw_friendlies:
         float alphaClampedDist;
         if (dist > clampDistVal) {
             alphaClampedDist = clampDistVal;
+#if defined(COD2_X64)
+        } else if (!(dist < maxRangeVal)) {
+#else
         } else if (dist >= maxRangeVal) {
+#endif
             alphaClampedDist = dist;
         } else {
             alphaClampedDist = maxRangeVal;
@@ -565,7 +573,11 @@ draw_friendlies:
         actorColor2[0] = color[0];
         actorColor2[1] = color[1];
         actorColor2[2] = color[2];
+#if defined(COD2_X64)
+        actorColor2[3] = compassFadeOutAlpha < color[3] ? compassFadeOutAlpha : color[3];
+#else
         actorColor2[3] = color[3] < compassFadeOutAlpha ? color[3] : compassFadeOutAlpha;
+#endif
 
 #if defined(COD2_X64)
         iconAlpha2 = compassFadeOutAlpha < iconAlpha2 ? compassFadeOutAlpha : iconAlpha2;

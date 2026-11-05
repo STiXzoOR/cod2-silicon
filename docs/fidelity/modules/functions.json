@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 453,
+      "unchecked": 416,
       "intentional": 3113,
-      "equal": 4718,
-      "fixed": 1173
+      "equal": 4749,
+      "fixed": 1179
     },
     "scopes": {
       "unassigned": 777,
@@ -65487,7 +65487,7 @@
         ],
         "linux": [],
         "status": "fixed",
-        "evidence": "Read whole Mac0x18f13e-0x18fea4. Restored float size*rect extent before half multiplication (0x18f206-0x18f24a), team0 enemy-only path (0x18f28e-0x18f29c), max/min radius branch ordering, firing-fade end inclusivity and elapsed direction (0x18fb97-0x18fd98), and computed alpha passed through fadedColor for normal/directional friend icons. Directional path alpha is initialized from clamp saturation as Mac0x18fda7-0x18fe28, eliminating uninitialized native local. Whole packed friend decode, actor update/ping, range/radius, geometry/material/flash and enemy fade loops compared. Compiled and reviewed, not exercised. Also fixed all actor/entity/packed-friend/local-client snapshot reads to nextSnap as the Mac cg+0x24 accesses at0x18f1b9/0x18f589/0x18f6f4/0x18f8a1 require; these current-snapshot reads originated in initial63de35a. Normal HUD painting follows CG_Draw2D next-snapshot gate."
+        "evidence": "Read whole Mac0x18f13e-0x18fea4. Restored float size*rect extent before half multiplication (0x18f206-0x18f24a), team0 enemy-only path (0x18f28e-0x18f29c), max/min radius branch ordering, firing-fade end inclusivity and elapsed direction (0x18fb97-0x18fd98), and computed alpha passed through fadedColor for normal/directional friend icons. Directional path alpha is initialized from clamp saturation as Mac0x18fda7-0x18fe28, eliminating uninitialized native local. Whole packed friend decode, actor update/ping, range/radius, geometry/material/flash and enemy fade loops compared. Compiled and reviewed, not exercised. Also fixed all actor/entity/packed-friend/local-client snapshot reads to nextSnap as the Mac cg+0x24 accesses at0x18f1b9/0x18f589/0x18f6f4/0x18f8a1 require; these current-snapshot reads originated in initial63de35a. Normal HUD painting follows CG_Draw2D next-snapshot gate. Follow-up independent whole-caller review corrected the distance-alpha lower clamp to accept unordered dist as Mac 0x18f980/0x18fd53-0x18fd77 does, using !(dist<maxRangeVal). Both actor-color alpha selections now use fade<color[3]?fade:color[3], preserving the MINSS source-color equal/unordered choice at 0x18fbc0-0x18fbd0. Configured stock/CoD2x arm64 Release client objects compile; dedicated excludes cgame. No existing fixture executes this full compass draw caller, so the corrections are compiled and reviewed only; no new tests were added."
       }
     ],
     "cgame/cg_consolecmds_mp": [
@@ -86351,7 +86351,7 @@
         ],
         "pairing": "unique module and name; semantics unchecked",
         "status": "fixed",
-        "evidence": "All651 bytes0x1b3e86-0x1b4110 compared. Count3/5 usage, binary32*1000/ceilf/trunc for time and duration, time exception only CLOCK_UP12, mandatory positive duration, correct parameter-index errors, shader parameter2, optional width3/height4 nonnegative checks and default0 match. Reset and selected type/time/duration/material/dimensions stores match except Mac clears value at0x1b3feb. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native type reset now clears value while preserving movement and fade timing."
+        "evidence": "All651 bytes0x1b3e86-0x1b4110 compared. Count3/5 usage, binary32*1000/ceilf/trunc for time and duration, time exception only CLOCK_UP12, mandatory positive duration, correct parameter-index errors, shader parameter2, optional width3/height4 nonnegative checks and default0 match. Reset and selected type/time/duration/material/dimensions stores match except Mac clears value at0x1b3feb. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native type reset now clears value while preserving movement and fade timing. Follow-up math-helper reconciliation corrected the invalid ceil-to-int conversion at Mac 0x1b3f03/0x1b3f39: native COD2_X64 now returns INT_MIN for nonfinite/out-of-int-range ceilf results, preserving the complete CVTTSS2SI result before existing timer/clock validation. The guarded correction compiles with the configured arm64 Release client and dedicated commands; all ten existing HUD module groups pass in stock and CoD2x under ASan/UBSan. Exceptional conversion is compiled and reviewed, not specifically exercised."
       },
       {
         "id": "mac:0x001b3a50",
@@ -86661,7 +86661,7 @@
         ],
         "pairing": "unique module and name; semantics unchecked",
         "status": "fixed",
-        "evidence": "All340 bytes0x1b3cda-0x1b3e2d compared. Class check, exactly one parameter, formatted usage, binary32 seconds*1000 then ceilf then truncating integer conversion match. Nonpositive milliseconds allowed only for TIMER_UP8, including the original rejection for TENTHS_TIMER_UP10. Error converts integer back through float*0.001 then double for formatting. Type reset, selected type and level.time+milliseconds match except Mac value-zero at0x1b3db1. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native type reset now clears value while preserving movement and fade timing."
+        "evidence": "All340 bytes0x1b3cda-0x1b3e2d compared. Class check, exactly one parameter, formatted usage, binary32 seconds*1000 then ceilf then truncating integer conversion match. Nonpositive milliseconds allowed only for TIMER_UP8, including the original rejection for TENTHS_TIMER_UP10. Error converts integer back through float*0.001 then double for formatting. Type reset, selected type and level.time+milliseconds match except Mac value-zero at0x1b3db1. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native type reset now clears value while preserving movement and fade timing. Follow-up math-helper reconciliation corrected the invalid ceil-to-int conversion at Mac 0x1b3d4f: native COD2_X64 now returns INT_MIN for nonfinite/out-of-int-range ceilf results, preserving the complete CVTTSS2SI result before existing timer/clock validation. The guarded correction compiles with the configured arm64 Release client and dedicated commands; all ten existing HUD module groups pass in stock and CoD2x under ASan/UBSan. Exceptional conversion is compiled and reviewed, not specifically exercised."
       },
       {
         "id": "mac:0x001b413e",
@@ -145435,8 +145435,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "equal",
-        "evidence": "All 1,060 Mac bytes 0x63f90-0x643b3 compared against the live native body and its helpers. No correction required."
+        "status": "fixed",
+        "evidence": "All 1,060 Mac bytes 0x63f90-0x643b3 compared against the live native body and its helpers. No correction required. Follow-up independent whole-caller review found four unordered branch differences in CM_TraceThroughTree: Mac 0x63fee-0x64010 and 0x640c1-0x640ee traverse child 0/1 unless the opposite strict comparison holds, 0x64160-0x6416f prunes unless trace->fraction>p1[3], and 0x64171-0x64182 takes the parallel path unless aspread>epsilon. COD2_X64 now uses the corresponding negated strict predicates while preserving selected operands and finite control flow. Stock/CoD2x Release client/dedicated objects compile and all five existing collision suites pass both modes under ASan/UBSan. Unordered inputs are compiled and reviewed, not specifically exercised."
       },
       {
         "id": "mac:0x0006620e",
@@ -145770,8 +145770,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "equal",
-        "evidence": "Read Mac 0xaf624-0xaf7c4 and attribute-decorated native body: content mask, inclusive AABB checks, maxcount diagnostic/return, zero-based entity result and child traversal order match."
+        "status": "fixed",
+        "evidence": "Read Mac 0xaf624-0xaf7c4 and attribute-decorated native body: content mask, inclusive AABB checks, maxcount diagnostic/return, zero-based entity result and child traversal order match. Follow-up math-helper reconciliation found the six overlap comparisons at Mac 0xaf6d2-0xaf729 reject only strictly separated bounds (UCOMISS/JA), accepting unordered pairs. Native <= tests rejected unordered pairs; COD2_X64 now uses the matching negated-> predicates with the same axis/order and finite behavior. Compiled and reviewed with configured arm64 Release client/dedicated commands in stock and CoD2x; the existing production world_links fixture passes both modes under ASan. The unordered case is compiled and reviewed, not specifically exercised."
       },
       {
         "id": "linux:qcommon/cm_world.cpp:60:CM_ClearWorld",
@@ -173634,8 +173634,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "equal",
-        "evidence": "Mac 0x0014e262: Read brush tracing, cylinder vertical rejection, center/radius operation order, and strict cylinder/inclusive disk distance predicates. Existing COD2_X64 predicates agree."
+        "status": "fixed",
+        "evidence": "Mac 0x0014e262: Read brush tracing, cylinder vertical rejection, center/radius operation order, and strict cylinder/inclusive disk distance predicates. Existing COD2_X64 predicates agree. Follow-up independent whole-caller review corrected the svFlags&0x20 vertical gate: Mac 0x14e292-0x14e296 rejects only ordered entZ>=maxs[2], whereas native entZ<maxs[2] skipped unordered candidates. COD2_X64 now uses !(entZ>=maxs[2]); the subsequent mins>=topZ test and center/radius paths are unchanged. Stock/CoD2x Release client/dedicated objects compile and the existing production server-contact fixture passes both modes under ASan/UBSan. The unordered gate is compiled and reviewed, not specifically exercised."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:799:SV_FreeWeaponInfoMemory",
@@ -195405,7 +195405,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no AddPointToBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no AddPointToBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper."
       },
       {
         "id": "mac:0x0002dc44",
@@ -195755,8 +195755,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no AxisClear public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Mac RotatePointAroundVector 0x2d82b-0x2d848 initializes an identity temporary, but its first two diagonal stores are overwritten before use; that observation alone does not establish a standalone AxisClear implementation."
+        "status": "equal",
+        "evidence": "Complete output identity, not absence: Mac CG_CalcViewValues 0x1d4826-0x1d4867 writes every word of the 3x3 identity, including positive-zero off-diagonals. Decoded table 0x33c150 selects that block for cubemap case 4. Native cg_view_mp.c case 4 writes the same nine words; the two Linux helper names denote that complete output operation. The surrounding camera caller is not newly certified."
       },
       {
         "id": "mac:0x0002c320",
@@ -195806,7 +195806,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no AxisFromForwardYaw public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no AxisFromForwardYaw public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
       },
       {
         "id": "linux:universal/com_math.cpp:2958:AxisIdentity",
@@ -195824,8 +195824,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no AxisIdentity public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Searched native FxScheduler_PlayEffect identity construction and Mac 0x6174f-0x6178c; the Mac block copies the supplied axis instead, so that caller does not certify this helper."
+        "status": "equal",
+        "evidence": "Complete output identity, not absence: Mac CG_CalcViewValues 0x1d4826-0x1d4867 writes every word of the 3x3 identity, including positive-zero off-diagonals. Decoded table 0x33c150 selects that block for cubemap case 4. Native cg_view_mp.c case 4 writes the same nine words; the two Linux helper names denote that complete output operation. The surrounding camera caller is not newly certified."
       },
       {
         "id": "mac:0x0002dcc2",
@@ -195875,7 +195875,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no AxisToQuat public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no AxisToQuat public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
       },
       {
         "id": "linux:universal/com_math.cpp:3095:AxisToSignedAngles",
@@ -195894,7 +195894,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no AxisToSignedAngles public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no AxisToSignedAngles public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native AxisToAngles begins with unsigned vectoangles; vectoangles/vectopitch wrap negative angles into 0..360. The complete signed three-angle output, vertical case and roll construction are not established by those unsigned routines."
       },
       {
         "id": "linux:universal/com_math.cpp:3008:AxisTransformComponents",
@@ -195950,8 +195950,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no BoundsOverlap public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "status": "fixed",
+        "evidence": "Complete six-comparison overlap operation in Mac CM_AreaEntities_r 0xaf6d2-0xaf729 rejects strictly separated bounds via UCOMISS/JA and accepts touching or unordered pairs. Native <= conjunction rejected unordered pairs. COD2_X64 now uses negated-> predicates in the same axis/order. Configured stock/CoD2x arm64 Release client/dedicated object compiles and existing world_links ASan fixture pass; unordered input is compiled and reviewed, not specifically exercised. Existing owner verdict is explicitly overridden separately."
       },
       {
         "id": "linux:universal/com_math.cpp:2782:BoundsOverlap2D",
@@ -195970,7 +195970,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no BoundsOverlap2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no BoundsOverlap2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper."
       },
       {
         "id": "linux:universal/com_math.cpp:2802:BoundsOverlapEpsilon",
@@ -195989,7 +195989,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no BoundsOverlapEpsilon public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no BoundsOverlapEpsilon public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper."
       },
       {
         "id": "linux:universal/com_math.cpp:2827:BoundsOverlapEpsilon2D",
@@ -196008,7 +196008,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no BoundsOverlapEpsilon2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no BoundsOverlapEpsilon2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper."
       },
       {
         "id": "mac:0x0002c540",
@@ -196126,8 +196126,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: Byte4PackRgba is referenced at EffectsCore/FxPrimitives.cpp:2503. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Hand-compared all four native Flash_Draw/FlashColorByte conversions with Mac Flash::Draw 0xa0e76-0xa0f71 and lower-clamp continuations 0xa100d-0xa1054: binary32 *255 then +0.5, floorf, CVTTSS2SI, wrapping subtract/negate clamp and four consecutive byte stores. FxNative_FloatToInt and FxNative_FlashColorByte preserve the invalid-conversion and wrapping paths. Complete four-component packing only; no new whole-Flash claim."
       },
       {
         "id": "mac:0x0002c2e0",
@@ -196227,7 +196227,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no ClampShort public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no ClampShort public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native gamepad conversion divides a signed short by 32767; it is not a complete signed-int-to-saturated-short clamp. Bundled codec clamping is outside engine reconciliation and was not reused as ownership evidence."
       },
       {
         "id": "mac:0x0002c830",
@@ -196277,7 +196277,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no ClearBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no ClearBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper."
       },
       {
         "id": "linux:universal/com_math.cpp:2299:ColorBytesFromRGB",
@@ -196296,7 +196296,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no ColorBytesFromRGB public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no ColorBytesFromRGB public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native packing owners are not aliases: R_ConvertColorToBytes writes A,R,G,B ordering, while FlashColorByte rounds and clamps. Neither proves the complete unclamped R,G,B,A raw truncation/packed-return operation (including fixed alpha in RGB)."
       },
       {
         "id": "linux:universal/com_math.cpp:2316:ColorBytesFromRGBA",
@@ -196315,7 +196315,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no ColorBytesFromRGBA public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no ColorBytesFromRGBA public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native packing owners are not aliases: R_ConvertColorToBytes writes A,R,G,B ordering, while FlashColorByte rounds and clamps. Neither proves the complete unclamped R,G,B,A raw truncation/packed-return operation (including fixed alpha in RGB)."
       },
       {
         "id": "mac:0x0002c7a6",
@@ -196449,7 +196449,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no DistSqToSegment public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no DistSqToSegment public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up FX visibility projection uses a supplied unit direction and a centered half-length gate; it is not a proven complete arbitrary start/end projection, zero-length fallback or endpoint-clamped segment-distance operation."
       },
       {
         "id": "linux:universal/com_math.h:445:Dot2Product",
@@ -196556,7 +196556,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no ExpandBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no ExpandBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper."
       },
       {
         "id": "linux:universal/com_math.cpp:2569:ExpandBoundsByDelta",
@@ -196624,8 +196624,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: FastCeil is referenced at game/g_hudelem_mp.cpp:838, game/g_hudelem_mp.cpp:874, game/g_hudelem_mp.cpp:881. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "fixed",
+        "evidence": "Mac HECmd_SetTimer_Internal 0x1b3d37-0x1b3d4f and HECmd_SetClock_Internal 0x1b3ef3-0x1b3f03/0x1b3f29-0x1b3f39 perform ceilf followed by CVTTSS2SI. Native C casts lacked the invalid-conversion result. Guarded HECmd_MillisecondsFromSecondsCeiled now preserves INT_MIN for nonfinite/out-of-int-range results at all three uses. Configured stock/CoD2x client/dedicated objects compile and all ten existing HUD groups pass both modes under ASan/UBSan; exceptional inputs are compiled and reviewed, not specifically exercised."
       },
       {
         "id": "linux:universal/com_math.h:334:FastSinCos",
@@ -196643,8 +196643,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: FastSinCos is referenced at universal/com_math.cpp:244, universal/com_math.cpp:265, universal/com_math.cpp:287. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Hand-compared complete paired float sine/cosine evaluation in Mac AngleAxisToQuat 0x2dc68-0x2dc8e: the same rounded float argument goes to sinf then cosf, each result rounds to float; native AngleAxisToQuat performs those same two calls. The sine and cosine results are both accounted for before quaternion-specific multiplication. No double-output SinCos identity is inferred."
       },
       {
         "id": "linux:universal/com_math.h:198:FloatAsInt",
@@ -196662,8 +196662,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Partial identity located: Mac GetRotatedBounds 0x2c6d0-0x2c6dc loads the 32-bit float representation and consumes only its sign. Native signbit matches that consumed predicate, but no native FloatNoSwapAsInt or complete raw-integer-return helper was found; the unconsumed result bits are not certified."
+        "status": "equal",
+        "evidence": "Complete raw result identity: native FloatWriteNoSwap in universal/q_shared.c assigns float to a union then returns its full 32-bit integer representation. Exact Mac FloatWriteNoSwap 0x28590-0x28597 returns the entire argument word with MOVL; no sign masking or numeric conversion occurs. This is the actual native owner already also named FloatNoSwapAsInt by the q_shared alias row; all 32 result bits, not only the sign predicate, are established."
       },
       {
         "id": "linux:universal/com_math.h:208:FloatIdentity",
@@ -196682,7 +196682,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Searched reference FloatNoSwap (q_shared.cpp:268) and LittleFloat-style q_shared.h:381. Native q_shared.c has no FloatNoSwap/FloatIdentity body, and the Mac symbol inventory has no corresponding full identity routine; this complete bit-preserving float return still lacks a located native/Mac caller identity."
+        "evidence": "Searched reference FloatNoSwap (q_shared.cpp:268) and LittleFloat-style q_shared.h:381. Native q_shared.c has no FloatNoSwap/FloatIdentity body, and the Mac symbol inventory has no corresponding full identity routine; this complete bit-preserving float return still lacks a located native/Mac caller identity. New direct owner FloatWriteNoSwap establishes FloatAsInt, but FloatReadNoSwap accepts integer bits and FloatWriteNoSwap returns integer bits. No actual native float-input/float-output identity call was located; merely composing those distinct APIs is not a proof of this row."
       },
       {
         "id": "linux:universal/com_math.h:272:FloatIsNegative",
@@ -196719,8 +196719,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: FloatSign is referenced at bgame/bg_pmove.cpp:3097, bgame/bg_pmove.cpp:3107, bgame/bg_pmove.cpp:3504. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete Mac sign operation in PM_UpdatePronePitch 0x6cb9c-0x6cbab (repeated at 0x6cc29-0x6cc38): zero-versus-delta UCOMISS/SETA, double/negate/add-one, and CVTSI2SS yields delta<0 ? -1 : +1. Native PM_UpdatePronePitch uses that exact comparison-based sign expression. Linux raw-sign-bit text is not the Mac authority; negative zero/unordered select +1 in the inspected operation. The surrounding pitch caller is not newly certified."
       },
       {
         "id": "mac:0x0002cf48",
@@ -196823,7 +196823,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Searched helper-use inventory: I_clamp is referenced at EffectsCore/FxPrimitives.cpp:945, bgame/bg_pmove.cpp:1411. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "evidence": "Searched helper-use inventory: I_clamp is referenced at EffectsCore/FxPrimitives.cpp:945, bgame/bg_pmove.cpp:1411. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. New lead: inlined crash-land clamp in PM_GroundTrace 0x7097d-0x70991 uses wrapping value-100 sign selection followed by original-value negation/sign test. Native crash-land uses ordinary >100/<0 tests. Ordinary bounded damage agrees; complete exceptional conversion/caller-domain behavior is not established, so this generic helper remains unchecked and no disconnected implementation was added."
       },
       {
         "id": "linux:universal/com_math.h:97:I_fabs",
@@ -196860,8 +196860,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: I_fclamp is referenced at universal/com_sndalias_load_obj.cpp:423, universal/com_math.cpp:707, game/g_misc_mp.cpp:425. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Hand-compared complete arbitrary lower/value/upper selection in Mac turret_use 0x1bc68a-0x1bc6cb and 0x1bc6fd-0x1bc73f: rounded value-upper and lower-value subtractions followed by CMPNLTSS/CMPLTSS masks. Native turret_use computes the same two subtractions and selects upper/lower for unordered differences using <0 predicates. Both stages and all three operands are accounted for; no whole-turret closure is inferred."
       },
       {
         "id": "linux:universal/com_math.h:142:I_fmax",
@@ -196917,8 +196917,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "A complete rounding block was located in Mac CG_DeactivateChannelVolCmd 0x1e2961-0x1e297b: add 0.5f, floorf, CVTTSS2SI. Native caller has the same ordinary-range expression but its C float-to-int cast does not establish Mac invalid-conversion behavior for NaN/out-of-int-range input. Caller is routed to cgame_mp/cg_servercmds_mp; no unrelated caller code was changed."
+        "status": "equal",
+        "evidence": "Complete rounding expression located in Mac Flash::Draw 0xa0e83-0xa0e98 and repeated component blocks: add float 0.5, floorf with float result, then CVTTSS2SI. Native FlashColorByte feeds floorf(f*255+0.5) into FxNative_FloatToInt, whose explicit [-2^31,2^31) predicate returns INT_MIN for every invalid conversion. Both ordinary and invalid integer results are established before clamping; this supersedes the earlier CG caller-only conversion gap."
       },
       {
         "id": "linux:universal/com_math.h:77:I_fsel",
@@ -196956,7 +196956,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Searched helper-use inventory: I_max is referenced at bgame/bg_weapons.cpp:2835. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "evidence": "Searched helper-use inventory: I_max is referenced at bgame/bg_weapons.cpp:2835. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. New owner candidates (weapon timer lower clamp and FX integer selections) expose specialized constant/derived operands, not a proven independent complete generic selector with all input/overflow cases. Their parent arithmetic was not certified from those fragments."
       },
       {
         "id": "linux:universal/com_math.h:178:I_min",
@@ -196975,7 +196975,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Searched helper-use inventory: I_min is referenced at qcommon/cm_load_obj.cpp:246. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "evidence": "Searched helper-use inventory: I_min is referenced at qcommon/cm_load_obj.cpp:246. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. New lead: CMod_PartionLeafBrushes_r 0x7800f-0x78012 and 0x780df-0x780e2 selects by the subtraction sign (CMOVNS). Native countAbove>=countBelow selection agrees for bounded nonnegative brush counts, but it is not a located complete arbitrary-int helper with the Mac sign-only overflow behavior; no generic identity is claimed."
       },
       {
         "id": "linux:universal/com_math.h:302:I_rsqrt",
@@ -196993,8 +196993,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: I_rsqrt is referenced at xanim/xanim.cpp:2139, xanim/xanim.cpp:2158, xanim/xanim.cpp:2431. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Hand-compared entire reciprocal-square-root operation in Mac BG_LerpOffset 0x182542-0x18257b with native BG_LerpOffset: raw float word, arithmetic right shift by one, 0x5f3759df subtract, reinterpretation, and one Newton step y*(1.5-((x*0.5)*y)*y) in SSE order. The complete result is formed before multiplication by maxOffsetChange. No approximate xanim caller was substituted for an exact sqrt normalizer."
       },
       {
         "id": "linux:universal/com_math.h:117:I_sel",
@@ -197013,7 +197013,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no I_sel public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no I_sel public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. New owner candidates (weapon timer lower clamp and FX integer selections) expose specialized constant/derived operands, not a proven independent complete generic selector with all input/overflow cases. Their parent arithmetic was not certified from those fragments."
       },
       {
         "id": "linux:universal/com_math.h:87:I_sgn",
@@ -197031,8 +197031,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: I_sgn is referenced at xanim/dobj.cpp:1400. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete negated sign result in Mac DObjTraceline 0x7749c-0x774c4 uses CMPNLTSS against zero to select -1 for nonnegative/unordered delta and +1 for negative delta. Native DObjTraceSetStartSolidNormalLocal uses delta[2]<0 ? +1 : -1, exactly the same complete -I_sgn operation, including unordered and signed-zero selection. Negation is bijective on these two results; the surrounding trace function is not newly certified."
       },
       {
         "id": "linux:universal/com_math.h:132:I_side",
@@ -197050,8 +197050,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: I_side is referenced at qcommon/cm_trace.cpp:808, qcommon/cm_trace.cpp:1273, qcommon/cm_trace.cpp:1816. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete boolean result in Mac CM_TraceThroughTree 0x6430c-0x64315 is zero-versus-spread UCOMISS/SETBE: zero for strictly negative, one for nonnegative or unordered. Native nearSide = spread < CM_SPLIT_EPS ? 0 : 1 (CM_SPLIT_EPS is +0) matches all predicate outcomes. Linux ordered >= text was not substituted for the Mac unordered behavior; no new whole-tree claim."
       },
       {
         "id": "linux:universal/com_math.h:107:I_sqrt",
@@ -197189,7 +197189,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Searched helper-use inventory: LinearTrack is referenced at universal/com_math.cpp:441. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "evidence": "Searched helper-use inventory: LinearTrack is referenced at universal/com_math.cpp:441. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up native DiffTrack/DiffTrackAngle multiply target error into the step; these helpers use a constant magnitude step with the error sign. The complete constant-step tracking operation is not the native proportional tracker."
       },
       {
         "id": "linux:universal/com_math.cpp:432:LinearTrackAngle",
@@ -197208,7 +197208,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no LinearTrackAngle public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no LinearTrackAngle public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native DiffTrack/DiffTrackAngle multiply target error into the step; these helpers use a constant magnitude step with the error sign. The complete constant-step tracking operation is not the native proportional tracker."
       },
       {
         "id": "mac:0x0002d24e",
@@ -197444,7 +197444,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no MatrixMultiply34 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no MatrixMultiply34 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native MatrixMultiply/MatrixMultiply43/MatrixTransformVector43 use different matrix layouts or sequential output writes; the special 3x4 layout and alias-preserving temporary/store order are not established by those APIs or their distinct-buffer callers."
       },
       {
         "id": "mac:0x0002a02c",
@@ -197525,7 +197525,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no MatrixMultiplyInPlace public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no MatrixMultiplyInPlace public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native MatrixMultiply/MatrixMultiply43/MatrixTransformVector43 use different matrix layouts or sequential output writes; the special 3x4 layout and alias-preserving temporary/store order are not established by those APIs or their distinct-buffer callers."
       },
       {
         "id": "linux:universal/com_math.cpp:2175:MatrixRotationX",
@@ -197544,7 +197544,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no MatrixRotationX public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no MatrixRotationX public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up inspected native YawToAxis and RotatePointAroundVector zrot construction. Their Z rotation off-diagonal signs/transposed layout differ from this helper contract; X/Y full outputs were not located. Matching sine/cosine subexpressions do not close these matrices."
       },
       {
         "id": "linux:universal/com_math.cpp:2197:MatrixRotationY",
@@ -197563,7 +197563,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no MatrixRotationY public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no MatrixRotationY public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up inspected native YawToAxis and RotatePointAroundVector zrot construction. Their Z rotation off-diagonal signs/transposed layout differ from this helper contract; X/Y full outputs were not located. Matching sine/cosine subexpressions do not close these matrices."
       },
       {
         "id": "linux:universal/com_math.cpp:2219:MatrixRotationZ",
@@ -197582,7 +197582,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no MatrixRotationZ public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no MatrixRotationZ public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up inspected native YawToAxis and RotatePointAroundVector zrot construction. Their Z rotation off-diagonal signs/transposed layout differ from this helper contract; X/Y full outputs were not located. Matching sine/cosine subexpressions do not close these matrices."
       },
       {
         "id": "mac:0x00029f6e",
@@ -197694,7 +197694,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no MatrixTransformVector43Equals public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no MatrixTransformVector43Equals public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native MatrixMultiply/MatrixMultiply43/MatrixTransformVector43 use different matrix layouts or sequential output writes; the special 3x4 layout and alias-preserving temporary/store order are not established by those APIs or their distinct-buffer callers."
       },
       {
         "id": "mac:0x0002b2ce",
@@ -198006,7 +198006,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no PlaneFromPoints public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no PlaneFromPoints public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up R_GetSidePlaneNormals forms edge/eye cross products and normalizes the result. It does not establish the two separately normalized edges plus final normalization, or the complete plane[3]/success-result operation of these helpers."
       },
       {
         "id": "linux:universal/com_math.cpp:1422:PlaneNormalFromPoints",
@@ -198025,7 +198025,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no PlaneNormalFromPoints public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no PlaneNormalFromPoints public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up R_GetSidePlaneNormals forms edge/eye cross products and normalizes the result. It does not establish the two separately normalized edges plus final normalization, or the complete plane[3]/success-result operation of these helpers."
       },
       {
         "id": "linux:universal/com_math.cpp:2712:PointInBounds",
@@ -198044,7 +198044,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no PointInBounds public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no PointInBounds public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native candidate CM_PointContents uses strict interior tests (leaf->mins>=point or point>=leaf->maxs), unlike these inclusive-boundary helper contracts. No complete inclusive two-/three-dimensional native/Mac identity was established."
       },
       {
         "id": "linux:universal/com_math.cpp:2737:PointInBounds2D",
@@ -198063,7 +198063,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no PointInBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no PointInBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native candidate CM_PointContents uses strict interior tests (leaf->mins>=point or point>=leaf->maxs), unlike these inclusive-boundary helper contracts. No complete inclusive two-/three-dimensional native/Mac identity was established."
       },
       {
         "id": "linux:universal/com_math.cpp:233:PointInCircleFromUniformDeviates",
@@ -198082,7 +198082,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no PointInCircleFromUniformDeviates public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no PointInCircleFromUniformDeviates public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established."
       },
       {
         "id": "linux:universal/com_math.cpp:3496:PointInCylinderArc",
@@ -198139,7 +198139,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no PointOnHemisphereFromUniformDeviates public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no PointOnHemisphereFromUniformDeviates public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established."
       },
       {
         "id": "linux:universal/com_math.cpp:254:PointOnSphereFromUniformDeviates",
@@ -198158,7 +198158,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no PointOnSphereFromUniformDeviates public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no PointOnSphereFromUniformDeviates public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established."
       },
       {
         "id": "mac:0x00029e6e",
@@ -198208,7 +198208,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no PointToLineDistSq public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no PointToLineDistSq public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up FX visibility projection uses a supplied unit direction and a centered half-length gate; it is not a proven complete arbitrary start/end projection, zero-length fallback or endpoint-clamped segment-distance operation."
       },
       {
         "id": "mac:0x0002bcea",
@@ -198258,7 +198258,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no ProjectPointOntoLine public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no ProjectPointOntoLine public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up FX visibility projection uses a supplied unit direction and a centered half-length gate; it is not a proven complete arbitrary start/end projection, zero-length fallback or endpoint-clamped segment-distance operation."
       },
       {
         "id": "mac:0x00029a1c",
@@ -198308,7 +198308,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no Q_log2 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no Q_log2 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native water log2 counters search powers of two by left-shifting a count; this is not the generic signed right-shift-until-zero operation or its full input/termination contract."
       },
       {
         "id": "linux:universal/com_math.h:218:Q_rint",
@@ -198326,8 +198326,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "A complete rounding block was located in Mac CG_DeactivateChannelVolCmd 0x1e2961-0x1e297b: add 0.5f, floorf, CVTTSS2SI. Native caller has the same ordinary-range expression but its C float-to-int cast does not establish Mac invalid-conversion behavior for NaN/out-of-int-range input. Caller is routed to cgame_mp/cg_servercmds_mp; no unrelated caller code was changed."
+        "status": "equal",
+        "evidence": "Complete rounding expression located in Mac Flash::Draw 0xa0e83-0xa0e98 and repeated component blocks: add float 0.5, floorf with float result, then CVTTSS2SI. Native FlashColorByte feeds floorf(f*255+0.5) into FxNative_FloatToInt, whose explicit [-2^31,2^31) predicate returns INT_MIN for every invalid conversion. Both ordinary and invalid integer results are established before clamping; this supersedes the earlier CG caller-only conversion gap."
       },
       {
         "id": "linux:universal/com_math.cpp:3578:Q_round",
@@ -198345,8 +198345,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no Q_round public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "status": "equal",
+        "evidence": "Complete float-return rounding operation is the intermediate in Mac Flash::Draw 0xa0e83-0xa0e95 and native FlashColorByte: float +0.5 followed by floorf, with the floor result rounded to float before the separate integer conversion/clamp. No integer-conversion behavior is attributed to this float-result helper."
       },
       {
         "id": "linux:universal/com_math.cpp:2046:QuatAxisLengthSq",
@@ -198365,7 +198365,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no QuatAxisLengthSq public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no QuatAxisLengthSq public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
       },
       {
         "id": "linux:universal/com_math.cpp:2090:QuatDiffAxisLengthSq",
@@ -198384,7 +198384,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no QuatDiffAxisLengthSq public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no QuatDiffAxisLengthSq public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
       },
       {
         "id": "linux:universal/com_math.cpp:2161:QuatFromAxisAngle",
@@ -198422,7 +198422,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no QuatFromPitch public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no QuatFromPitch public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
       },
       {
         "id": "linux:universal/com_math.cpp:2148:QuatFromRoll",
@@ -198441,7 +198441,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no QuatFromRoll public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no QuatFromRoll public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
       },
       {
         "id": "linux:universal/com_math.cpp:2135:QuatFromYaw",
@@ -198460,7 +198460,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no QuatFromYaw public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no QuatFromYaw public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
       },
       {
         "id": "linux:universal/com_math.cpp:1980:QuatInverse",
@@ -198479,7 +198479,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Searched helper-use inventory: QuatInverse is referenced at universal/com_math.cpp:2095. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "evidence": "Searched helper-use inventory: QuatInverse is referenced at universal/com_math.cpp:2095. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up native quaternion owners inspected: AngleAxisToQuat uses angle+axis input, DObjSetControlTagAngles constructs a full Euler product, and xanim frame corrections negate all four or only the stored two components. These do not establish the complete matrix-candidate selection, single-axis outputs, conjugate, or normalized vector-part metrics of these helpers."
       },
       {
         "id": "mac:0x0002b504",
@@ -198733,8 +198733,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no SetPlaneSignbits public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "status": "equal",
+        "evidence": "Complete three-component mask in Mac CMod_LoadPlanes 0x77e36-0x77e61, branch 0x77e9c-0x77ea8 and final store 0x77e7b-0x77e7f: initialize byte mask zero, test each of three normals strictly below zero, OR 1<<axis, then store the accumulated byte. Native CMod_LoadPlanes has the same zero/test/OR/store operation and treats signed zero/NaN as nonnegative. Plane-loading work outside this helper is not newly certified."
       },
       {
         "id": "mac:0x0002c4c2",
@@ -198784,7 +198784,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Searched helper-use inventory: SinCos is referenced at universal/com_math.cpp:3646. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "evidence": "Searched helper-use inventory: SinCos is referenced at universal/com_math.cpp:3646. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up float sinf/cosf pair resolves FastSinCos only. No complete native double-output pair, exact 0/90/180/270 selection table or double sine-square-to-float operation was established; float products or isolated trig calls are insufficient."
       },
       {
         "id": "linux:universal/com_math.cpp:3814:SinCosDegrees",
@@ -198803,7 +198803,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no SinCosDegrees public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no SinCosDegrees public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up float sinf/cosf pair resolves FastSinCos only. No complete native double-output pair, exact 0/90/180/270 selection table or double sine-square-to-float operation was established; float products or isolated trig calls are insufficient."
       },
       {
         "id": "linux:universal/com_math.cpp:2075:SinSquaredDeg",
@@ -198822,7 +198822,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no SinSquaredDeg public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no SinSquaredDeg public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up float sinf/cosf pair resolves FastSinCos only. No complete native double-output pair, exact 0/90/180/270 selection table or double sine-square-to-float operation was established; float products or isolated trig calls are insufficient."
       },
       {
         "id": "linux:universal/com_math.cpp:3852:SnapFloatBits",
@@ -198841,7 +198841,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Searched helper-use inventory: SnapFloatBits is referenced at universal/com_math.cpp:3890. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "evidence": "Searched helper-use inventory: SnapFloatBits is referenced at universal/com_math.cpp:3890. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up native g_missile SnapFloat truncates through int; it does not implement low-mantissa tolerance rounding, candidate snapping or plane-error acceptance. Complete matching native/Mac owners remain unlocated."
       },
       {
         "id": "linux:universal/com_math.cpp:3885:SnapFloatToGrid",
@@ -198860,7 +198860,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no SnapFloatToGrid public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no SnapFloatToGrid public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native g_missile SnapFloat truncates through int; it does not implement low-mantissa tolerance rounding, candidate snapping or plane-error acceptance. Complete matching native/Mac owners remain unlocated."
       },
       {
         "id": "linux:universal/com_math.cpp:3181:SnapPointToIntersectingPlanes",
@@ -198879,7 +198879,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no SnapPointToIntersectingPlanes public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no SnapPointToIntersectingPlanes public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native g_missile SnapFloat truncates through int; it does not implement low-mantissa tolerance rounding, candidate snapping or plane-error acceptance. Complete matching native/Mac owners remain unlocated."
       },
       {
         "id": "linux:universal/com_math.cpp:3242:SnapPointToPlanes",
@@ -198898,7 +198898,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no SnapPointToPlanes public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no SnapPointToPlanes public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native g_missile SnapFloat truncates through int; it does not implement low-mantissa tolerance rounding, candidate snapping or plane-error acceptance. Complete matching native/Mac owners remain unlocated."
       },
       {
         "id": "linux:universal/com_math.cpp:3677:SphericalToCartesian",
@@ -198917,7 +198917,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no SphericalToCartesian public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no SphericalToCartesian public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established."
       },
       {
         "id": "linux:universal/com_math.cpp:300:SpiralPointsInCircle",
@@ -198936,7 +198936,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no SpiralPointsInCircle public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no SpiralPointsInCircle public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established."
       },
       {
         "id": "linux:universal/com_math.cpp:332:SpiralPointsOnHemisphere",
@@ -198955,7 +198955,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no SpiralPointsOnHemisphere public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no SpiralPointsOnHemisphere public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established."
       },
       {
         "id": "linux:universal/com_math.cpp:367:SpiralPointsOnSphere",
@@ -198974,7 +198974,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no SpiralPointsOnSphere public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no SpiralPointsOnSphere public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native FX_CalcOriginAndAxis sphere sampling uses independently random polar/azimuth angles and radius/height factors, rather than these uniform-height/deviate or repeated golden-angle recurrence operations. No complete matching native/Mac sampler was established."
       },
       {
         "id": "linux:universal/com_math.cpp:2916:TransformBounds",
@@ -199049,8 +199049,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no Vec2Distance public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "status": "equal",
+        "evidence": "Complete two-point distance operation in Mac CG_DrawCompassFriendlies 0x18f2f5-0x18f314 plus 0x18f347-0x18f35d (also 0x18f8f8-0x18f917/0x18f954-0x18f96a): subtract both XY coordinates, square each rounded delta, add, SQRTSS. Native CG_DrawCompassFriendlies computes both posDelta coordinates then sqrtf(x*x+y*y) in the same order. The full scalar distance is accounted for before compass clamping."
       },
       {
         "id": "mac:0x00029a80",
@@ -199169,7 +199169,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no Vec2NormalizeTo public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no Vec2NormalizeTo public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native Vec2Normalize is in place and leaves zero-length inputs untouched; XAnimCalc uses approximate reciprocal square root and a different return/accumulation contract. Neither establishes the complete separate-output clear-zero normalizer or four-component sqrt-length-return helper."
       },
       {
         "id": "linux:universal/com_math.h:423:Vec2Scale",
@@ -199187,8 +199187,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: Vec2Scale is referenced at server/sv_game_mp.cpp:260, server/sv_game_mp.cpp:272, xanim/xanim.cpp:2431. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete two-component add followed by scale in Mac SV_EntityContact 0x14e2bb-0x14e2e2 and 0x14e395-0x14e3bc: both mins+maxs sums round before multiplication by the mapped 0.5f constant, and both center components are stored. Native SV_EntityContact uses the same binary32 sums/products and both stored outputs. This certifies the two helper operations, not the complete entity-contact caller."
       },
       {
         "id": "linux:universal/com_math.h:572:Vec3Avg",
@@ -199206,8 +199206,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: Vec3Avg is referenced at xanim/xmodel_load.cpp:442, game/g_items_mp.cpp:1007. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete three-component average in Mac Drop_Weapon 0x1b181c-0x1b1850: each min+max sum followed by the mapped 0.5f multiply. Native Drop_Weapon computes the same three parenthesized averages before adding currentOrigin at each axis. All three average results are established; subsequent tag/trace/item behavior is not newly certified."
       },
       {
         "id": "linux:universal/com_math.h:511:Vec3CopyOrClear",
@@ -199225,8 +199225,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: Vec3CopyOrClear is referenced at EffectsCore/FxPrimitives.cpp:1234, EffectsCore/FxPrimitives.cpp:1235, EffectsCore/FxPrimitives.cpp:1236. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete first-vector operation in Mac Particle::SetAxis: pointer test 0xa0d75-0xa0d77, all three raw copies 0xa0d79-0xa0d8a, or all three +0 stores 0xa0dd5-0xa0de0. Native Particle_SetAxis first displayAxis branch matches both paths and store order. Mac later accesses 0xc/0x18 for a null whole axis; that separate caller fault remains the existing documented native null adaptation, not part of this completed three-component helper."
       },
       {
         "id": "mac:0x00029ab4",
@@ -199337,8 +199337,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: Vec3Lerp is referenced at game/g_cmds_mp.cpp:745, game/g_misc_mp.cpp:388, game/g_scr_main_mp.cpp:2672. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete three-component interpolation in Mac Trace_CalcBounds 0x1de48b-0x1de4c7 and StopFollowing 0x1a69cd-0x1a6a19: each end-start subtraction, multiply by fraction, then addition to original start; the latter stores all three results in place. Native Trace_CalcBounds and StopFollowing express the same complete operations and preserve the input components until their uses. No full camera/spectator caller is certified by this helper comparison."
       },
       {
         "id": "linux:universal/com_math.h:584:Vec3LerpFrom",
@@ -199356,8 +199356,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: Vec3LerpFrom is referenced at xanim/xanim.cpp:746, xanim/xanim.cpp:919, EffectsCore/FxPrimitives.cpp:265. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete three-component interpolation in Mac Trace_CalcBounds 0x1de48b-0x1de4c7 and StopFollowing 0x1a69cd-0x1a6a19: each end-start subtraction, multiply by fraction, then addition to original start; the latter stores all three results in place. Native Trace_CalcBounds and StopFollowing express the same complete operations and preserve the input components until their uses. No full camera/spectator caller is certified by this helper comparison."
       },
       {
         "id": "mac:0x0002cd1e",
@@ -199398,7 +199398,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no Vec3MaxComponent public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no Vec3MaxComponent public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Full ColorNormalize owner resolves Vec3ScaleToUnitMax only. Its maximum-selection tie/unordered order and zero-output ones/reciprocal multiplication do not prove the separate >= maximum helper or zero-output-zero/direct-division normalization helper."
       },
       {
         "id": "linux:universal/com_math.h:608:Vec3Mul",
@@ -199467,7 +199467,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no Vec3NormalizeByMax public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no Vec3NormalizeByMax public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Full ColorNormalize owner resolves Vec3ScaleToUnitMax only. Its maximum-selection tie/unordered order and zero-output ones/reciprocal multiplication do not prove the separate >= maximum helper or zero-output-zero/direct-division normalization helper."
       },
       {
         "id": "mac:0x0002cc8a",
@@ -199557,8 +199557,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no Vec3ScaleToUnitMax public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "status": "equal",
+        "evidence": "Full naming alias: native ColorNormalize and exact Mac ColorNormalize 0x2c7a6-0x2c82e implement the complete helper operation: choose maximum with two ordered greater comparisons (MAXSS operand/tie order inspected), output three ones and return +0 when maximum is zero, otherwise compute one reciprocal then multiply/store all three components and return maximum. Zero output, return value and nonzero operation order all match; Vec3NormalizeByMax has a different zero/divide contract and stays unchecked."
       },
       {
         "id": "linux:universal/com_math.cpp:973:Vec3UnpackUnitVec",
@@ -199595,8 +199595,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: Vec4LengthSq is referenced at universal/com_math.cpp:3794, xanim/xanim.cpp:2136, xanim/xanim.cpp:2155. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete four-component squared length in Mac XAnimCalc 0x3d4ca-0x3d4f5 and 0x3d626-0x3d651: four squares and left-associated three additions. Native XAnimCalcNormalizeRotTransLocal and the additive normalization path compute exactly those four squares/left-associated adds before any reciprocal approximation. The reciprocal-square-root/animation caller is not inferred from this helper."
       },
       {
         "id": "linux:universal/com_math.cpp:874:Vec4Normalize",
@@ -199615,7 +199615,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no Vec4Normalize public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no Vec4Normalize public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native Vec2Normalize is in place and leaves zero-length inputs untouched; XAnimCalc uses approximate reciprocal square root and a different return/accumulation contract. Neither establishes the complete separate-output clear-zero normalizer or four-component sqrt-length-return helper."
       },
       {
         "id": "linux:universal/com_math.cpp:756:VecLargestAxis",
@@ -199683,8 +199683,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: Vector2Add is referenced at server/sv_game_mp.cpp:259, server/sv_game_mp.cpp:271, server/sv_world_mp.cpp:243. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete two-component add followed by scale in Mac SV_EntityContact 0x14e2bb-0x14e2e2 and 0x14e395-0x14e3bc: both mins+maxs sums round before multiplication by the mapped 0.5f constant, and both center components are stored. Native SV_EntityContact uses the same binary32 sums/products and both stored outputs. This certifies the two helper operations, not the complete entity-contact caller."
       },
       {
         "id": "linux:universal/com_math.h:358:Vector2Clear",
@@ -199702,8 +199702,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: Vector2Clear is referenced at universal/dvar.cpp:284, universal/com_math.cpp:942, xanim/xanim.cpp:2345. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Decoded Dvar_StringToValue table 0x328b60 index 2 targets 0x51464. The complete two-component zeroing is 0x51488-0x51493, before sscanf; native Dvar_StringToValue_impl calls Dvar_AllocTempVector(2), whose loop stores +0 to exactly two elements. Pool allocation/dispatch outside the completed clear operation is not newly certified."
       },
       {
         "id": "linux:universal/com_math.h:391:Vector2Compare",
@@ -199740,8 +199740,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: Vector2Copy is referenced at universal/dvar.cpp:689, universal/dvar.cpp:772, universal/dvar.cpp:773. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete two-word copy in Mac Dvar_SetLatchedValue 0x5164c-0x51656: sequential raw reads and writes at offsets 0,4 before return. Native Dvar_SetLatchedValue VEC2 case copies exactly those two float words in the same order. All component bits and same-buffer behavior of the operation are accounted for; other dvar variants are not newly certified."
       },
       {
         "id": "linux:universal/com_math.h:369:Vector2Set",
@@ -199759,8 +199759,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: Vector2Set is referenced at universal/dvar.cpp:1356, universal/dvar.cpp:1487, universal/com_math.cpp:2654. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete pair assignment in Mac Dvar_SetVec2 0x54c16-0x54c1b: the two supplied float arguments are stored at offsets 0,4 before Dvar_SetVariant. Native Dvar_SetVec2 assigns x,y to its two-element local vector in the same order; no arithmetic or missing component is inferred."
       },
       {
         "id": "linux:universal/com_math.h:412:Vector2Subtract",
@@ -199778,8 +199778,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: Vector2Subtract is referenced at universal/com_math.cpp:722, universal/com_math.cpp:735, game/g_active_mp.cpp:1326. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete two-output subtraction in Mac CG_DrawCompassFriendlies 0x18f2f5-0x18f314 and 0x18f8f8-0x18f917: target XY minus camera XY, both rounded results stored before later yaw/distance use. Native CG_DrawCompassFriendlies constructs both posDelta elements with the same operand order. Subsequent compass arithmetic does not certify its whole caller."
       },
       {
         "id": "linux:universal/com_math.h:686:Vector4Clear",
@@ -199854,8 +199854,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: VectorAdd is referenced at universal/com_math.cpp:3669, server/sv_world_mp.cpp:174, server/sv_world_mp.cpp:175. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete three-component sum in Mac G_TryPushingEntity 0x1ba65a-0x1ba684: currentOrigin+move at offsets 0,4,8, stored to the three-element temporary in axis order. Native G_TryPushingEntity forms the same three vOrigin components before rotation. This is the full vector-add operation, not a new whole-pusher verdict."
       },
       {
         "id": "linux:universal/com_math.h:755:VectorAdd4",
@@ -199874,7 +199874,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no VectorAdd4 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no VectorAdd4 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up XAnimCalc four-component owners establish scaling, squared length and scaled accumulation. They do not establish an independent full unscaled float vector add/subtract helper; integer-frame interpolation differences were not treated as that identity."
       },
       {
         "id": "mac:0x0002dbc6",
@@ -199990,8 +199990,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: VectorInverse is referenced at game/g_mover_mp.cpp:78, qcommon/cm_trace.cpp:157. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete in-place three-component sign flip in Mac G_TryPushingEntity 0x1ba6a9-0x1ba6d3: the mapped 0x80000000 mask XORs and stores all three right-vector components. Native G_TryPushingEntity negates exactly right[0..2] in place. All three sign flips, signed-zero handling and store order are accounted for; the rest of pushing is not newly certified."
       },
       {
         "id": "linux:universal/com_math.h:662:VectorLength",
@@ -200066,8 +200066,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: VectorMA2 is referenced at xanim/xanim.cpp:1034, xanim/xanim.cpp:2444, bgame/bg_pmove.cpp:315. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete two-component multiply-add in Mac XAnimCalcDeltaTree 0x3aa9e-0x3aabd: common scale multiplies both source components then adds/stores to their corresponding destination components. Native XAnimSimpleRotPosAddScaledRot uses those same two scalar operations/stores. Scalar factor calculation and complete animation-tree behavior are outside this helper closure."
       },
       {
         "id": "linux:universal/com_math.h:794:VectorMA4",
@@ -200085,8 +200085,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: VectorMA4 is referenced at xanim/xanim.cpp:2158. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete four-component multiply-add in Mac XAnimCalc 0x3d6ae-0x3d6f1: common factor times each source quaternion component, then corresponding destination addition/store in offsets 0,4,8,12. Native XAnimCalc additive normalization branch updates all four mat->quat components with the same operations/store order. This does not claim the entire blend caller or substitute for an unscaled add helper."
       },
       {
         "id": "linux:universal/com_math.h:524:VectorNegate",
@@ -200104,8 +200104,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: VectorNegate is referenced at EffectsCore/FxSystem.cpp:189, bgame/bg_pmove.cpp:3670, bgame/bg_pmove.cpp:3743. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete out-of-place three-component negation in the inlined ladder block of exact-symbol Pmove 0x72f1a-0x72f47 (repeated at 0x73301-0x7332b): each vLadderVec word is XORed with mapped 0x80000000 and stored in direction[0..2]. Native PM_CheckLadderMove fellOff branch writes the same three negated components. Complete negation only; no new whole-Pmove claim."
       },
       {
         "id": "linux:universal/com_math.cpp:3621:VectorRotate",
@@ -200180,8 +200180,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: VectorScale4 is referenced at universal/com_math.cpp:3804, xanim/xanim.cpp:2124, xanim/xanim.cpp:2139. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete four-component scaling in Mac XAnimCalc 0x3d54e-0x3d578: same factor times quaternion offsets 0,4,8,12 with all four in-place stores. Native XAnimCalcNormalizeRotTransLocal scales exactly mat->quat[0..3] with that common factor. The complete scale operation is established independently of its approximate-normalization caller."
       },
       {
         "id": "linux:universal/com_math.h:487:VectorSet",
@@ -200218,8 +200218,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: VectorSubtract is referenced at universal/com_math.cpp:674, universal/com_math.cpp:687, universal/com_math.cpp:705. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete three-component difference in Mac BG_LerpOffset 0x1824fb-0x182515: goal[0..2]-offset[0..2], all three rounded results retained for length and update. Native BG_LerpOffset assigns those exact three delta components before the norm. No complete BG_LerpOffset verdict is inferred solely from subtraction."
       },
       {
         "id": "linux:universal/com_math.h:768:VectorSubtract4",
@@ -200238,7 +200238,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Native body/caller gap: no VectorSubtract4 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+        "evidence": "Native body/caller gap: no VectorSubtract4 public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up XAnimCalc four-component owners establish scaling, squared length and scaled accumulation. They do not establish an independent full unscaled float vector add/subtract helper; integer-frame interpolation differences were not treated as that identity."
       },
       {
         "id": "mac:0x0002d0ee",
@@ -200433,8 +200433,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: lerp is referenced at server/sv_snapshot_mp.cpp:1127, game/g_weapon_mp.cpp:211. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "status": "equal",
+        "evidence": "Complete scalar interpolation in Mac SV_GetClientPositionAtTime: 0x195f0b-0x195f13 forms 1-t, then 0x195eb2-0x195ec4 computes (1-t)*start+t*end with the two products rounded before addition. Native caller forms startWeight=1-endWeight and stores each startWeight*startPos+endWeight*endPos in that order. This establishes the entire scalar helper expression, not unrelated archive lookup/time arithmetic."
       },
       {
         "id": "mac:0x00029954",
@@ -200515,7 +200515,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Searched helper-use inventory: vectoanglessigned is referenced at universal/com_math.cpp:3104. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison."
+        "evidence": "Searched helper-use inventory: vectoanglessigned is referenced at universal/com_math.cpp:3104. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up native AxisToAngles begins with unsigned vectoangles; vectoangles/vectopitch wrap negative angles into 0..360. The complete signed three-angle output, vertical case and roll construction are not established by those unsigned routines."
       },
       {
         "id": "mac:0x0002c922",
@@ -217600,8 +217600,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "equal",
-        "evidence": "Mac 0x76600\u20130x774d0: reviewed output reset, finite-input sphere broad phase, priority inheritance, ignored models, inverse transforms, six-plane AABB clip, start-solid handling and final normal. Native shared hitSign retains the Mac scratch-sign behavior across later rejected candidates; model/parts guards preserve defined native handling outside valid loaded-model inputs."
+        "status": "fixed",
+        "evidence": "Mac 0x76600\u20130x774d0: reviewed output reset, finite-input sphere broad phase, priority inheritance, ignored models, inverse transforms, six-plane AABB clip, start-solid handling and final normal. Native shared hitSign retains the Mac scratch-sign behavior across later rejected candidates; model/parts guards preserve defined native handling outside valid loaded-model inputs. Follow-up independent whole-caller review corrected start-solid horizontal normal normalization: Mac 0x7708f-0x770af calls Vec2Normalize, whose 0x2c8e9-0x2c911 sqrt/ordered-zero branch normalizes unordered lengths. Native lenSq>0 skipped them. COD2_X64 now rounds sqrtf(lenSq) to float and skips only len==0, retaining sequential reciprocal/multiply stores. Stock/CoD2x Release client/dedicated objects compile and the unchanged existing xanim trace case passes both modes under ASan/UBSan. Nonfinite normals are compiled and reviewed, not specifically exercised; existing valid-model guards and scratch-sign handling remain unchanged."
       },
       {
         "id": "linux:xanim/dobj.cpp:1138:InvMatrixTransformVectorQuatTrans",

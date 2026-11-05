@@ -1576,8 +1576,14 @@ static void DObjTraceSetStartSolidNormalLocal(const vec3_t start, const vec3_t d
         trace->normal[0] = start[0];
         trace->normal[1] = start[1];
         lenSq = trace->normal[0] * trace->normal[0] + trace->normal[1] * trace->normal[1];
+#if defined(COD2_X64)
+        float len = sqrtf(lenSq);
+        if (len != 0.0f) {
+            float invLen = 1.0f / len;
+#else
         if (lenSq > 0.0f) {
             float invLen = 1.0f / sqrtf(lenSq);
+#endif
             trace->normal[0] *= invLen;
             trace->normal[1] *= invLen;
         }
