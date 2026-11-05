@@ -450,7 +450,7 @@ win32/win_localize,3,3,0,0,0
 win32/win_net,3,2,0,1,0
 win32/win_voice,7,1,0,6,0
 xanim/dobj,58,53,2,0,3
-xanim/xanim,147,118,13,7,9
+xanim/xanim,147,118,14,7,8
 xanim/xanim_load,4,3,1,0,0
 xanim/xanim_public,10,7,3,0,0
 xanim/xmodel,30,24,0,1,5
