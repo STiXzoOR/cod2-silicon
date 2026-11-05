@@ -2183,7 +2183,16 @@ int PC_ReadLineHandle(int handle, pc_token_t *pc_token)
     }
 
     ret = PC_ReadLine(sourceFiles[handle], &token);
-    strcpy(pc_token->string, token.string);
+    {
+        size_t length = 0;
+        /* A primitive may fill token.string; public output needs its own NUL. */
+        while (length < sizeof(token.string) && token.string[length])
+            ++length;
+        if (length >= sizeof(pc_token->string))
+            length = sizeof(pc_token->string) - 1;
+        memcpy(pc_token->string, token.string, length);
+        pc_token->string[length] = '\0';
+    }
     pc_token->type = token.type;
     pc_token->subtype = token.subtype;
     pc_token->intvalue = (int)token.intvalue;
@@ -2516,7 +2525,15 @@ int PC_ReadTokenHandle(int handle, pc_token_t *pc_token)
         return 0;
     }
 
-    strcpy(pc_token->string, token.string);
+    {
+        size_t length = 0;
+        while (length < sizeof(token.string) && token.string[length])
+            ++length;
+        if (length >= sizeof(pc_token->string))
+            length = sizeof(pc_token->string) - 1;
+        memcpy(pc_token->string, token.string, length);
+        pc_token->string[length] = '\0';
+    }
     pc_token->type = token.type;
     pc_token->subtype = token.subtype;
     pc_token->intvalue = (int32_t)(uint32_t)token.intvalue;
