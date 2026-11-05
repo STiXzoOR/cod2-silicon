@@ -9,8 +9,8 @@
     "matched_pairs": 2473,
     "statuses": {
       "unchecked": 357,
-      "intentional": 3168,
-      "equal": 4752,
+      "intentional": 3169,
+      "equal": 4751,
       "fixed": 1180
     },
     "scopes": {
@@ -169874,8 +169874,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "equal",
-        "evidence": "Mac 0x110220-0x110308: compared position/user/dummy/init globals, buffer fields and sentinels, current-buffer alias path, start state=3, yyparse call and yaccResult write. Native pointer fields remain full width."
+        "status": "intentional",
+        "evidence": "Mac 0x110220-0x110308: compared position/user/dummy/init globals, buffer fields and sentinels, current-buffer alias path, start state=3, yyparse call and yaccResult write. Native pointer fields remain full width. Native lifetime adaptation (scanner-lifetime): Mac 0x110299 compares the address of its automatic descriptor to retained yy_current_buffer; its alias path reads yy_input_file at 0x1102f6 before assignment at 0x1102a1, and return 0x1102d6-0x1102d7 leaves that descriptor address retained. Native COD2_X64 now gives the existing single descriptor static storage duration, making both pointer lifetime and that input-file read defined after normal return or nonlocal CompileError/Com_Error recovery. All ten fields still initialize before yyparse, and existing global scanner/ch_buf non-reentrancy is unchanged. yy_create_buffer remains unchanged: the retained pointer now names this live static object or an allocated descriptor with no production free path, so a fresh successful allocation cannot alias it. No demonstrated parser-output failure is claimed; transient alias-path yyin is overwritten before scanner I/O. Compiled and reviewed; existing nodes/growth/syntax/EOF fixtures pass stock and CoD2x ASan/UBSan, but repeated parse after recovery is not directly exercised."
       },
       {
         "id": "linux:script/scr_yacc.c:1776:StringValue",
