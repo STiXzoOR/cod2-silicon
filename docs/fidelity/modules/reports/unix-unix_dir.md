@@ -8,6 +8,12 @@ The active native filesystem uses `mac_common.c:Sys_DirectoryHasContents`, whose
 
 No source changes were made for this module. Both native executables compile; no directory probe was added or run.
 
+## Remaining-identity audit (batch 22)
+
+The remaining `Sys_DirectoryHasEntries` row stays unchecked. Exact-symbol disassembly of Mac `Sys_DirectoryHasContents` at 0xc4e62 confirms its complete loop: skip every dot-prefixed name, accept only type 8 (`DT_REG`), close the directory on completion and return false on open failure. The selected `mac_common.c` provider implements that contract. The Linux-only row describes a broader query that includes hidden files and subdirectories. No original address/caller mapping establishes that row as the same function or a deliberately replaced API. The similar name is not sufficient.
+
+This follow-up changes reports only and finds no proven source defect. The full 101-row unit ledger preserves all 78 previously resolved status/evidence pairs exactly and refines the reasons for the 23 unchecked rows. No new row is certified. The existing `macos_system_network_test` and `macos_threads_ring_test` targets compiled in a private Debug build with two low-priority jobs; they were not run and do not prove any missing identity. No production build, new test/case/assertion, full CI, replay, push or external side effect was performed. Source and inactive builds are unchanged. Private inspection material is under `~/Library/Application Support/CoD2-native-decomp/recon-unix-remaining.noindex/`.
+
 ## Integrated batch verification
 
 Integrated source be41fb3 passed both dedicated and client builds. The full local CI run passed steps 02–10 and 12–13; its initial ABI stage found an SDK OSStatus return-width mismatch. The independently reviewed declaration correction passed the complete function/callback/strict ABI retry. Combined validation covers stock/CoD2x Release clients, platform sanitizers, function/callback ABI audits and existing source fixtures. Ten guard-visible production changes differ only under native port-on; other Apple-only source changes have no inactive differences. The new Apple SDK source is empty in all six inactive configurations. Actual net-channel assertion line expansions match the previous source in all five inactive configurations. The existing audio fixture expectation was corrected to the restored playback timeline, and the existing network runner handles the actual transport return signature. No new tests were added; these checks do not establish i386 byte parity.

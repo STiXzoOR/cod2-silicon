@@ -26,6 +26,20 @@ Seven Linux-only identities remain unchecked: the three critical-section functio
 
 Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-unix-runtime.noindex/`.
 
+## Remaining-identity audit (batch 22)
+
+All seven remaining rows stay unchecked after reviewing actual candidate owners:
+
+- The three critical-section aliases describe an indexed global mutex layer. Mac `CMutex` construction at 0x1173fe and selected `macos_threads.c` own individual recursive mutexes with construction-error propagation, and `StMutexLock` owns per-object lock lifetimes. No index-to-object or original caller mapping was established. Exact Mac `Dvar_ForEach` at 0x4f76c directly traverses and invokes callbacks without the Linux critical-section layer. That prevents inferring a universal inline lock; it does not establish the missing functions.
+- `Sys_GetCurrentUser`: exact Mac `Sys_Init` at 0xc39b2 initializes input and prints hardware information rather than registering the Linux username dvar. Native `CL_GetUsernameForLocalClient` uses the player-name dvar; `MacSystem_HomePath` uses passwd only to obtain a directory. Neither proves an OS-login-name replacement.
+- `Sys_GetProcessorId`: the Mac symbol table has only zero-valued absolute `__Z18Sys_GetProcessorIdv.eh` metadata. The executable CPU-frequency, memory-size and SSE queries at 0xc4858, 0xc4876 and 0xc48b4 have concrete selected owners in `mac_configure.c`, but their quantities/Boolean do not identify a processor-enum API.
+- `Sys_NullQuery3` is explicitly a reconstruction-assigned unknown name. No original Linux executable address/caller or Mac executable identity was established.
+- `fastftol` has no established original scalar-conversion identity. The separately approved `Sys_SnapVector` rounding decision cannot certify it: width, exceptional-input behavior and original call sites remain unproved.
+
+Existing reconciled statuses and evidence, including `Sys_SnapVector`, are preserved exactly in the unit ledger.
+
+This follow-up changes reports only and finds no proven source defect. The full 101-row unit ledger preserves all 78 previously resolved status/evidence pairs exactly and refines the reasons for the 23 unchecked rows. No new row is certified. The existing `macos_system_network_test` and `macos_threads_ring_test` targets compiled in a private Debug build with two low-priority jobs; they were not run and do not prove any missing identity. No production build, new test/case/assertion, full CI, replay, push or external side effect was performed. Source and inactive builds are unchanged. Private inspection material is under `~/Library/Application Support/CoD2-native-decomp/recon-unix-remaining.noindex/`.
+
 ## Integrated batch verification
 
 Integrated source be41fb3 passed both dedicated and client builds. The full local CI run passed steps 02–10 and 12–13; its initial ABI stage found an SDK OSStatus return-width mismatch. The independently reviewed declaration correction passed the complete function/callback/strict ABI retry. Combined validation covers stock/CoD2x Release clients, platform sanitizers, function/callback ABI audits and existing source fixtures. Ten guard-visible production changes differ only under native port-on; other Apple-only source changes have no inactive differences. The new Apple SDK source is empty in all six inactive configurations. Actual net-channel assertion line expansions match the previous source in all five inactive configurations. The existing audio fixture expectation was corrected to the restored playback timeline, and the existing network runner handles the actual transport return signature. No new tests were added; these checks do not establish i386 byte parity.
