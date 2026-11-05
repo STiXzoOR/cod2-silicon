@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 478,
+      "unchecked": 477,
       "intentional": 3091,
       "equal": 4720,
-      "fixed": 1168
+      "fixed": 1169
     },
     "scopes": {
       "unassigned": 777,
@@ -18413,7 +18413,7 @@
         ],
         "linux": [],
         "status": "fixed",
-        "evidence": "Mac 0x13c53 in GetRenderState 0x13b84 falls through and returns CULLMODE for state 206; restored this deterministic quirk. Existing defined native extended state/default outputs are retained as an explicit storage adaptation, including the stencil queries used by the current depth fixture. Compiled and reviewed; existing depth cases passed."
+        "evidence": "Mac 0x13c53 in GetRenderState 0x13b84 falls through and returns CULLMODE for state 206; restored this deterministic quirk. Existing defined native extended state/default outputs are retained as an explicit storage adaptation, including the stencil queries used by the current depth fixture. Compiled and reviewed; existing depth cases passed. Follow-up: Mac 0x13c04 loads the full DWORD alpha-blend cache at +0x548; native now returns alphaBlendValue while its byte fallback enable is normalized separately. All other getter branches and native extended/default adaptations are unchanged. Actual Apple object compiled and reviewed; full-width alpha getter not separately exercised. This checked-row follow-up adds no closure."
       },
       {
         "id": "mac:0x002ed9ce",
@@ -19380,8 +19380,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x15e18 implements many GL state cases and operation-specific cache ordering. Native handles a subset and defers some state to draw. Depth/stencil subset is exercised by existing fixture; complete original state behavior is unresolved."
+        "status": "fixed",
+        "evidence": "Read complete Mac 0x15e18\u20130x174eb, decoded outer 0x326a74 and sixteen nested jump tables, checked STABS/native layouts, COpenGL providers and renderer callers. Restored all 56 handled state IDs, immediate GL calls, exact cache/return order, typed mapped blend/stencil caches, material/fog/point/color/stage-factor behavior, capability-gated blend equations and scaled polygon-offset ordering. Preserved invalid-factor cache retention and alpha-equation-to-RGB fallthrough. Native implicit SDL depth attachment and existing fallback storage remain explicit adaptations. Actual Apple SDK arm64 Release device object and dedicated Release compiled; five inactive/actual-line configurations match. Existing 18 depth cases pass with ASan/UBSan after parent viewport fixture prerequisite81223dd. Other cases compiled and reviewed, not separately exercised; final draw/provider integration and CI are parent-owned. Retained-context review follow-up: independently checked original Reset context release/create at 0x19d85/0x19e50, COpenGL Init at 0x19e94, default stencil writes 0x1a4f3\u20130x1a539 and lighting enable at 0xe91a. Restore stencil func/op/mask and confirmed fresh-context fog/point/sprite/color-material defaults during native Init; keep process-static sPointScale unchanged. Actual Apple SDK arm64 Release Device object compiled; existing 18 ASan/UBSan depth cases passed; five OFF body and five actual-line comparisons match ba51b19. Changed-state-then-Reset and fog/point/material rendering compiled and reviewed, not separately exercised; no tests/cases/assertions added and no new closure."
       },
       {
         "id": "mac:0x00015500",
