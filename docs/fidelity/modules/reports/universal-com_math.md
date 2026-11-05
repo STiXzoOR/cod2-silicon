@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**Current: 170/229 reconciled: 141 equal, 29 fixed, 0 intentional; 59 unchecked.**
+**Current: 171/229 reconciled: 141 equal, 30 fixed, 0 intentional; 58 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -439,3 +439,30 @@ Focused packet: provenance-geometry21. Private exact bodies, discovery inventory
 and source hashes: recon-provenance-geometry21.noindex. No source edits,
 compilation, tests, CI, replay or runtime exercise. Counts remain141equal,
 29fixed and59unchecked; all previously settled evidence is preserved.
+
+## Actual point-query bounds adapter (provenance-pointbounds22)
+
+PointInBounds is fixed through the existing unordered-comparison repair in
+CM_AreaEntities_r. Original0x80a8aee establishes the complete six-comparison
+inclusive point/min/max predicate and membership result. Mac SV_PointContents
+0x1bfb3c–0x1bfb46 passes the same point pointer as both bounds to CM_AreaEntities;
+the wrapper preserves both pointers. The actual entity predicate0xaf6d2–0xaf729
+therefore checks all three point coordinates against entity minima/maxima, in
+X-min/X-max,Y-min/Y-max,Z-min/Z-max order. Each UCOMISS/JA rejects only ordered
+greater-than; touching and unordered comparisons continue. Success reaches the
+separate capacity gate and actual entity-list store/count0xaf763/0xaf766.
+
+Native preserves that full adapter and predicate. Existing repair a826bfe0
+replaced legacy <= tests with negated greater-than predicates; this closure
+inherits that fix without a new source change or defect. It is a complete
+consumed point-membership operation, unlike the earlier rejected strict-interior
+CM_PointContents leaf candidate. It does not certify whole tree traversal,
+capacity/query results, subsequent collision, malformed-point enumeration,
+standalone helper ABI or floating exception/payload behavior. In particular,
+unordered point values can affect earlier traversal; no runtime occurrence is
+claimed. PointInBounds2D remains outside this packet.
+
+Independent review: review-provenance-pointbounds22.md. Exact original and Mac
+caller/wrapper/provider bodies and source hashes are retained in
+recon-provenance-pointbounds22.noindex. Existing provider verification remains
+historical; no compilation, tests, CI, full build, replay or runtime was run.
