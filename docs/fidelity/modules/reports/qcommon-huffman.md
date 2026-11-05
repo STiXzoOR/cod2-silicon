@@ -41,3 +41,10 @@ All six entries remain unchecked. No production defect was established, and no s
 Stock and CoD2x Release objects for both translation units compiled from their configured client commands. Existing message and transport fixtures and the four existing message/Huffman regression inputs passed in both configurations under low-priority execution with at most two build jobs. These checks exercise the existing codecs, not the absent standalone interfaces. No tests, cases or assertions were added; no full CI or replay ran. Source is byte-identical to base a52e5e27175e86cf0ee0d6dc7c571ab848261ac5, so legacy/OFF diagnostics and line expansions are unchanged.
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-message-remaining.noindex/`.
+
+
+## Original standalone operations
+
+Original1.0 IDB bytes uniquely map the six unresolved helpers to original1.3: putBit/getBit at 0x8066158/0x80661c8, Receive at 0x8066854, transmit at 0x806698c, Decompress at 0x8066a4e and Compress at 0x8066cf8. Positive calls connect adaptive decompression to Receive at 0x8066c09 and adaptive compression to transmit at 0x8066e7f; transmit recursively sends NYT at 0x80669b4 before its literal bits. The complete compression bodies establish framing, temporary storage, new-tree initialization, per-symbol updates, copy-back and final-size behavior. They are distinct from the checked fixed-tree Mac message wrappers.
+
+Fresh exact Mac offsetReceive and offsetTransmit bodies confirm the remaining API differences. Original Receive uses the existing global cursor and leaves output untouched on null while returning zero; Mac offsetReceive imports an offset and writes zero on null. The original bit wrappers synchronize cursor/offset for one arbitrary-bit argument or returned bit. Whole-symbol Mac wrappers do not establish that contract. Original transmit also owns the missing-symbol/NYT branch; Mac offsetTransmit sends a known-symbol parent path. All six remain unchecked, with no inference from missing calls. No source, native bounded-decoder policy or resolved verdict changed; no compilation, tests, CI or replay ran.
