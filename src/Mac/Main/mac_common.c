@@ -23,7 +23,11 @@ extern void Z_FreeInternal(void *ptr);
 extern int I_stricmp(const char *s1, const char *s2);
 extern int FS_Read(void *buffer, int len, fileHandle_t f);
 extern int FS_Seek(fileHandle_t f, long int offset, int origin);
+#if defined(__APPLE__) && defined(COD2_X64)
+extern int MacFiles_RemoveDirectoryA(const char *inPath);
+#else
 extern OSStatus MacFiles_RemoveDirectoryA(const char *inPath);
+#endif
 
 void Sys_Mkdir(const char *path)
 {

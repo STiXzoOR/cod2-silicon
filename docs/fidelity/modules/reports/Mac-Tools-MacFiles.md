@@ -17,3 +17,5 @@ Six matching no-op exports in `link_stubs.c` are excluded only on Apple with `CO
 Both arm64 Release targets compile and link; client symbols verify SDK ownership. Inactive source comparisons pass and these files contain no `__LINE__` uses. Removal, path-error and lock/symlink cases were compiled and reviewed only. No deletion, URL, app launch or user-activity assertion was executed; no relevant existing deletion fixture was found, and no new tests were written. The existing clock/network/thread fixtures do not exercise these corrections.
 
 Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-unix-runtime.noindex/`.
+
+Integrated ABI follow-up: the SDK-backed MacFiles_RemoveDirectoryA returns 32-bit OSStatus, while mac_common inherited the project's 64-bit OSStatus declaration. Its Apple x64 declaration now uses 32-bit int to match the actual provider; legacy declarations are preserved. Actual caller objects compiled and inactive guards passed. Filesystem deletion was not executed.
