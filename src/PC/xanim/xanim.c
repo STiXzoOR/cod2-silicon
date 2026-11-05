@@ -2594,12 +2594,24 @@ static void __attribute_regparm__(3) __attribute_sseregparm__
         return;
     }
 
+#if defined(COD2_X64)
+    /* Mac 0x3edeb dispatches the accepted first note even for unordered time. */
+    if (notifyIndex < parts->notifyCount) {
+        do {
+            Scr_AddConstString(notifyInfo->name);
+            Scr_NotifyNum(tree_s->entnum - 1, 0, info->notifyName, 1);
+            ++notifyIndex;
+            ++notifyInfo;
+        } while (notifyIndex < parts->notifyCount && time > notifyInfo->time);
+    }
+#else
     while (notifyIndex < parts->notifyCount && time > notifyInfo->time) {
         Scr_AddConstString(notifyInfo->name);
         Scr_NotifyNum(tree_s->entnum - 1, 0, info->notifyName, 1);
         ++notifyIndex;
         ++notifyInfo;
     }
+#endif
 }
 
 static float XAnimSiblingGoalBlendTime(const XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime)
@@ -3107,13 +3119,21 @@ static float XAnimClientNotifyFrac(const XAnimState *state, float notetrackTime,
             return (notetrackTime - oldTime + 1.0f) / dtime;
         }
         if (notetrackTime >= oldTime) {
+#if defined(COD2_X64)
+            return (notetrackTime - oldTime + 0.0f) / dtime;
+#else
             return (notetrackTime - oldTime) / dtime;
+#endif
         }
         return 1.0f;
     }
 
     if ((time > notetrackTime || time == 1.0f) && notetrackTime >= oldTime) {
+#if defined(COD2_X64)
+        return (notetrackTime - oldTime + 0.0f) / dtime;
+#else
         return (notetrackTime - oldTime) / dtime;
+#endif
     }
 
     return 1.0f;
@@ -3176,9 +3196,15 @@ static void __attribute_regparm__(2) __attribute_sseregparm__
                 }
             }
         } else if (!(state->oldTime > next->time)) {
-            for (i = first; i < notifyCount && (state->time == 1.0f || state->time > notify[i].time); ++i) {
-                XAnimInsertClientNotify(notify[i].name, notifyType, XAnimClientNotifyFrac(state, notify[i].time, dtime));
+            if (state->time != 1.0f && next->time >= state->time) {
+                return;
             }
+            /* Mac 0x40aae accepts the first note before testing later times. */
+            i = first;
+            do {
+                XAnimInsertClientNotify(notify[i].name, notifyType, XAnimClientNotifyFrac(state, notify[i].time, dtime));
+                ++i;
+            } while (i < notifyCount && (state->time == 1.0f || state->time > notify[i].time));
         }
         return;
     }
