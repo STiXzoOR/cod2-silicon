@@ -1,6 +1,6 @@
 # Mac/Tools/MacTools reconciliation
 
-Updated 2026-11-05. **16/17 reconciled: 2 equal, 1 fixed, 13 intentional; 1 unchecked.**
+Updated 2026-11-05. **17/17 reconciled: 2 equal, 2 fixed, 13 intentional.**
 
 `CenterRect` was empty. Mac 0xa409-0xa47d wraps all four extents to signed 16 bits before subtracting and dividing the width/height delta by two toward zero. The Apple native implementation now preserves this arithmetic and wrapped coordinates, including aliased rectangle inputs. Its only source caller is the excluded legacy MacDisplay provider. Compiled and reviewed, not exercised.
 
@@ -8,9 +8,9 @@ The visibility-byte read at 0xa3ee and saved-visibility destructor branch/call a
 
 The four alert overloads at 0xa8be/0xa9f0/0xaa14/0xaa9e were read for string conversion, forwarding and release. They are dormant; the CF alert bodies at 0xa7f4/0xa95e were already audited by mac-lifecycle/MacGlobals. Native errors/sys-info use MessageBoxA/stderr and launcher UI. No alert body was edited.
 
-## Unresolved retained sleep ABI
+## Retained sleep ABI follow-up
 
-Mac 0xa48c calls UpTime, AddDurationToAbsolute and MPDelayUntil in order. The wrapper source matches that sequence, but project `AbsoluteTime` uses two `UInt32` fields (LP64 unsigned long, 16 bytes) while `macos_compat.c` separately defines two unsigned-int fields (8 bytes). No source/generated-data caller reaches `MacTools_Sleep`, and live scheduling uses MacSystem clocks, but its exported ABI cannot be called equal. Clang record-layout dumps with the actual native client compilation flags independently confirm the mismatch: imported `AbsoluteTime` has size 16/alignment 8 and `hi` at offset 8; the provider type has size 8/alignment 4 and `hi` at offset 4. Matching field names/order alone does not resolve this ABI. Shared type/provider ownership was reported to the parent; no speculative shared-header change was made.
+The unmatched-imports follow-up repaired the native AbsoluteTime definitions to two unsigned-int fields. Actual Apple caller and provider now both use size 8, alignment 4, and high-word offset 4, replacing the previous 16-byte caller mismatch. Mac 0xa48c preserves the UpTime, AddDurationToAbsolute and MPDelayUntil call sequence. The exact row is now fixed; see [unmatched imports](imports-__unmatched__.md). The dormant wrapper and delay boundary remain compiled and reviewed, not runtime exercised; live scheduling continues through MacSystem clocks. Legacy type definitions remain unchanged.
 
 Only Apple `COD2_X64` code changed. Six inactive preprocessor configurations compare identically with base 3d9df23; neither changed file contains `__LINE__`.
 
@@ -23,3 +23,9 @@ Exact-symbol Mac disassembly was read by hand; triage and address-ranged constan
 Engine source 28b9601 passed both dedicated builds, local CI 02–07/09–13, native-only source guards, parent/fresh independent review and both 2,000-frame replays. Initial CI 08 failed three existing display smoke assertions: interval 0 now requests synchronized interval 1. The isolated fixture correction passed fresh independent review and all three sanitizer cases; after integration the complete CI 08 retry passed both client-variable modes. Only that fixture changed after the engine builds/replays. Its six expected guard differences are separate from the native-only source changes. No changed source uses __LINE__. Replays exactly match both d873794 baselines and each other in players/state hashes/entities; all six Linux logic fields agree, with maximum origin drift 0.11792 and velocity drift 2.0. Existing audio/voice/thread sanitizer fixtures support their tested paths; the existing thread target required SDL linkage. No new tests or i386 byte-parity claim.
 
 This platform batch closes 471 entries and leaves 11 explicit timing/splash/lighting/mutex/ring/FBO boundaries unchecked. The separately reviewed AbsoluteTime follow-up is not included in this source revision. Dedicated replay does not exercise client audio, dialogs, display hardware or lifecycle/error branches; unreached corrections remain compiled and reviewed. Hosted optional ILP32 comparison fails compiling its unchanged reference; native validation is distinct.
+
+## Integrated batch 14 verification
+
+Integrated source c1bb3b0 passed both dedicated builds, complete local CI 02–13, native-only source guards, parent and fresh independent reviews, and both 2,000-frame replays. No changed source uses line macros. Replay players, state hashes and entities exactly match both d873794 baselines and each other; all six Linux logic fields agree, with maximum origin drift 0.11792 and velocity drift 2.0. No new tests or i386 byte-parity claim.
+
+This batch closes 880 entries. Fixes cover image metadata/mips and descriptor storage, container/sorting behavior, shader ownership, and the eight-byte AbsoluteTime caller/provider ABI. Three System constructor/factory boundaries and six import/allocation boundaries remain unchecked. Microphone capture remains unsupported. Dedicated replay does not exercise client rendering, shader/context lifetime, device output, or dormant platform wrappers. Unreached client and error paths remain compiled and reviewed; local fixtures establish only their stated cases.
