@@ -44,3 +44,11 @@ Configured stock/CoD2x Release objects and existing game-animation fixtures pass
 ## Original-address follow-up (inline-effects4)
 
 The original Linux 1.3 range0x80d97ce–0x80d9805 (exclusive end), anchored by its exact range-error string, establishes BG_GetAnimString's original index-check/name-return identity. The original BG_IsMantleAnim body at0x80d9cac–0x80d9cff clears the animation toggle bit, resolves the animation and tests the movetype mask0x7ff00000. These Linux identities do not establish a corresponding complete Mac getter/predicate. A Mac semantic immediate search did not supply a new complete operation; missing constants, strings or direct calls are not closure evidence. All six unresolved rows remain unchecked. No source changes or runtime verification.
+
+## Original selection and name-helper bodies
+
+Four additional original bodies now have exact address anchors. Linux 1.0 0x80d4832 maps to 1.3 0x80d6f56 for the name-to-animation-pointer search. Its own error and null-return path differ from the exact Mac index provider at 0x184cd6, which also has a load-time insertion path. Original `BG_PlayAnimName` at 0x80d92a0 performs name-to-index lookup followed by `BG_PlayAnim` with duration zero. That concrete original two-call sequence still requires a complete Mac/native combined owner; it is not a strict alias to either separately verified provider.
+
+Original state change at 0x80d9600 is mislabeled `BG_AnimScriptCannedAnimation` in the 1.0 database. Its actual table indexing, dead-state checks, random selection and execution flags identify the old-state/new-state operation. Original event lookup at 0x80d9920 instead returns a sign-extended animation index after selection. Exact Mac `BG_AnimScriptEvent` at 0x18729a calls `BG_ExecuteCommand` at 0x1873b1 and returns its execution result, so its selection prefix does not close the non-playing getter. All six remaining rows stay unchecked.
+
+The complete original bodies, relocation receipts, fresh exact Mac candidates and targeted PPC source/owner comparison are retained in `CoD2-native-decomp/recon-provenance-animation10.noindex`. Static callback-pointer and direct-call inventories supply no completion argument. No source changes, compilation, tests, CI, replay or runtime exercise ran.
