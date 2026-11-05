@@ -66,7 +66,38 @@ static HRESULT MacShader_DrawIndexed(DeviceImpl *dev, INT baseVertex, UINT minVe
                     CDirect3DDevice_GetTextureTarget(g_boundTextures[0]), primitiveCount);
     }
     MacShader_CheckGL("before draw");
+#if defined(COD2_X64)
+    int nativePackets = 1;
+    for (UINT i = 0; i + 1 < decl->elementCount; ++i)
+        if (decl->elements[i].Type > 7) nativePackets = 0;
+    if (nativePackets) {
+        *(Bool *)imp__ZN7COpenGL9sDrawFlagE = 1;
+        DeviceStreamsNative *state = CDirect3DDevice_StreamsNative((const void *)dev);
+        state->low = (UINT32)baseVertex + minVertex;
+        state->high = state->low + vertexCount - 1;
+        if (*(const Bool *)imp_g_special) {
+            const UINT16 *element = (const void *)(indices->data + startIndex * 2);
+            UINT low = 0xffffffff, high = 0;
+            for (UINT i = 0; i < primitiveCount * 3; ++i) {
+                if (element[i] < low) low = element[i];
+                if (element[i] > high) high = element[i];
+            }
+            state->low = (UINT32)baseVertex + low;
+            state->high = (UINT32)baseVertex + high;
+        }
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+        CDirect3DDevice_ValidateTransformation((const void *)dev, baseVertex, state->high - state->low + 1,
+                                             indices->data + startIndex * 2, primitiveCount * 3);
+        for (UINT i = 0; i < 16; ++i)
+            if (state->programmable[i].used) enabled |= 1u << i;
+        CDirect3DDevice_mNeedsTransformationValidation = 0;
+    } else {
+#endif
     glBindVertexArrayAPPLE(0);
+#if defined(COD2_X64)
+    *(GLint *)imp_g_VAOID = -1;
+#endif
     glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
     glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
@@ -132,12 +163,22 @@ static HRESULT MacShader_DrawIndexed(DeviceImpl *dev, INT baseVertex, UINT minVe
         glEnableVertexAttribArrayARB(attribute);
         enabled |= 1u << attribute;
     }
+#if defined(COD2_X64)
+    }
+#endif
     for (UINT i = 1; i < 16; ++i) {
         if (!(enabled & (1u << i)))
             glVertexAttrib4fARB(i, 0, 0, 0, 1);
     }
     MacShader_CheckGL("vertex declaration");
 
+#if defined(COD2_X64)
+    if (nativePackets) {
+        CDirect3DDevice_ValidateRasterization((const void *)dev, baseVertex,
+                                             (UINT32)baseVertex + dev->streamState->high - dev->streamState->low + 1);
+        CDirect3DDevice_mNeedsRasterizationValidation = 0;
+    } else {
+#endif
     for (UINT i = 0; i < 16; ++i) {
         IDirect3DBaseTexture9 *texture = g_boundTextures[i];
         GLenum target = CDirect3DDevice_GetTextureTarget(texture);
@@ -162,6 +203,9 @@ static HRESULT MacShader_DrawIndexed(DeviceImpl *dev, INT baseVertex, UINT minVe
             MacShader_CheckGL("sampler state");
         }
     }
+#if defined(COD2_X64)
+    }
+#endif
     glActiveTextureARB(GL_TEXTURE0_ARB);
     MacShader_CheckGL("textures");
     glEnable(GL_VERTEX_PROGRAM_ARB);
@@ -206,18 +250,40 @@ static HRESULT MacShader_DrawIndexed(DeviceImpl *dev, INT baseVertex, UINT minVe
     MacShader_ApplyRasterEquations(dev->cullMode, dev->blendOp,
                                   dev->separateAlphaBlendEnable ? dev->alphaSrcBlend : dev->blendOp);
     MacShader_CheckGL("render state");
+#if defined(COD2_X64)
+    if (nativePackets) {
+        DeviceStreamsNative *state = dev->streamState;
+        UINT count = primitiveCount * 3;
+        const byte *index = indices->data + startIndex * 2;
+        while (count && *(Bool *)imp__ZN7COpenGL9sDrawFlagE) {
+            UINT batch = count > 65534 ? 65535 : count;
+            glDrawRangeElements(GL_TRIANGLES, state->low, state->high, batch, GL_UNSIGNED_SHORT, index);
+            index += batch * 2;
+            count -= batch;
+        }
+    } else {
+#endif
     glDrawElements(GL_TRIANGLES, primitiveCount * 3, GL_UNSIGNED_SHORT,
                     indices->data + startIndex * 2);
+#if defined(COD2_X64)
+    }
+#endif
     if (MacShader_Diagnostics()) {
         GLenum error = glGetError();
         static int reports;
         if (error && reports++ < 16)
             fprintf(stderr, "Native ARB draw GL error: 0x%x, vertex program %u\n", error, program);
     }
+#if defined(COD2_X64)
+    if (!nativePackets) {
+#endif
     for (UINT i = 0; i < 16; ++i)
         glDisableVertexAttribArrayARB(i);
     glDisable(GL_VERTEX_PROGRAM_ARB);
     glDisable(GL_FRAGMENT_PROGRAM_ARB);
+#if defined(COD2_X64)
+    }
+#endif
     glActiveTextureARB(GL_TEXTURE0_ARB);
     return 0;
 }

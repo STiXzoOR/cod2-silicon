@@ -428,6 +428,7 @@ typedef struct {
     unsigned char hasDiffuseColor;
     DWORD colorVertex;
     float convertedView[16];
+    struct DeviceStreamsNative *streamState;
 #endif
 } DeviceImpl;
 #if defined(COD2_X64)
@@ -461,10 +462,13 @@ void CDirect3DDevice_SetNativeBackBuffer(void *device, void *backBuffer, UINT ad
 #if defined(COD2_X64)
 /* Native renderer ownership is dx.device. Material_Shutdown releases shaders
  * before R_Shutdown releases the device; R_SafeRelease then nulls dx.device. */
+static void CDirect3DDevice_ForgetPixelShaderNative(DeviceImpl *, const void *);
+
 int CDirect3DDevice_DetachPixelShader(const void *shader)
 {
     extern struct DxGlobals dx;
     DeviceImpl *device = (DeviceImpl *)dx.device;
+    if (device) CDirect3DDevice_ForgetPixelShaderNative(device, shader);
     if (device && device->pixelShader == shader) {
         device->pixelShader = NULL;
         return 1;
@@ -493,6 +497,40 @@ static byte *g_colorArrayScratch = NULL;
 static UINT g_colorArrayScratchCapacity = 0;
 #if COD2_APPLE_SDK
 static void MacTrace_Label(const void *shader, const char *source);
+#endif
+
+#if defined(COD2_X64)
+typedef struct {
+    unsigned char used, byteColor;
+    UINT32 stream, offset;
+    GLint size;
+    GLenum type;
+    GLboolean normalized;
+    GLsizei stride;
+    const float *pointer;
+} DeviceStreamNative;
+
+typedef struct DeviceStreamsNative {
+    DeviceStreamNative programmable[16];
+    DeviceStreamNative position, normal, color, texCoord[8];
+    UINT32 tokens[1024];
+    UINT32 low, high;
+    COpenGLVAONative *genericPacket;
+    IDirect3DPixelShader9 *pixelShader;
+    const UINT16 *indices;
+    UINT32 elementCount;
+    byte *convertedColors[16];
+    size_t convertedColorBytes[16];
+    unsigned char tokensSet;
+} DeviceStreamsNative;
+
+static DeviceStreamsNative *CDirect3DDevice_StreamsNative(const CDirect3DDevice *);
+void CDirect3DDevice_ResetStreamsNative(const CDirect3DDevice *);
+void CDirect3DDevice_ParseShaderDeclaration(const CDirect3DDevice *, Bool, Bool *);
+Bool CDirect3DDevice_GetStreamPtrs(const CDirect3DDevice *, UINT32);
+Bool CDirect3DDevice_GetCanUseVAOWithTexCoordStreams(const CDirect3DDevice *, Bool);
+void CDirect3DDevice_ValidateTransformation(const CDirect3DDevice *, UINT32, UINT32, const void *, UINT32);
+void CDirect3DDevice_ValidateRasterization(const CDirect3DDevice *, UINT32, UINT32);
 #endif
 
 typedef struct {
@@ -753,6 +791,39 @@ static const D3DVERTEXELEMENT9 *CDirect3DDevice_FindVertexElement(
     CDirect3DVertexDeclarationImpl *declaration;
     UINT32 i;
 
+#if defined(COD2_X64)
+    if (g_currentFVF) {
+        static D3DVERTEXELEMENT9 element;
+        UINT offset = 0;
+        if (g_currentFVF & 2) {
+            if (!stream && usage == 0 && !usageIndex) {
+                element = (D3DVERTEXELEMENT9){ 0, offset, 2, 0, 0, 0 }; return &element;
+            }
+            offset += 12;
+        }
+        if (g_currentFVF & 0x10) {
+            if (!stream && usage == 3 && !usageIndex) {
+                element = (D3DVERTEXELEMENT9){ 0, offset, 2, 0, 3, 0 }; return &element;
+            }
+            offset += 12;
+        }
+        if (g_currentFVF & 0x40) {
+            if (!stream && usage == 10 && !usageIndex) {
+                element = (D3DVERTEXELEMENT9){ 0, offset, 4, 0, 10, 0 }; return &element;
+            }
+            offset += 4;
+        }
+        for (UINT i = 0; i < ((g_currentFVF & 0xf00) >> 8); ++i) {
+            UINT dimensions = (g_currentFVF >> ((16 + i * 2) & 31)) & 3;
+            BYTE type = dimensions == 0 ? 1 : dimensions == 1 ? 2 : dimensions == 2 ? 3 : 0;
+            if (!stream && usage == 5 && usageIndex == i) {
+                element = (D3DVERTEXELEMENT9){ 0, offset, type, 0, 5, i }; return &element;
+            }
+            offset += (type + 1) * 4;
+        }
+        return NULL;
+    }
+#endif
     if (!g_activeVertexDeclaration)
         return NULL;
 
@@ -2495,6 +2566,12 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
     if (MacShader_DrawEnabled() && g_activeVertexShader && dev->pixelShader && g_activeVertexDeclaration)
         return MacShader_DrawIndexed(dev, BaseVertexIndex, MinVertexIndex, NumVertices, startIndex, primCount);
 #endif
+#if defined(COD2_X64)
+    /* The fallback writes client arrays directly. Keep those writes in VAO0,
+     * so a later packet hit can still rely on its retained GL array state. */
+    glBindVertexArrayAPPLE(0);
+    *(GLint *)imp_g_VAOID = -1;
+#endif
 
 #if defined(COD2_X64)
     vbData = ((const CDirect3DVertexBufferClean *)dev->streams[0])->data;
@@ -3814,6 +3891,15 @@ HRESULT CDirect3DDevice_SetStreamSource(const CDirect3DDevice *_this, UINT Strea
 #endif
 
     DeviceImpl *dev = (DeviceImpl *)_this;
+#if defined(COD2_X64)
+    CDirect3DVertexBufferClean *buffer = (void *)pStreamData;
+    unsigned char wasLocked = buffer ? buffer->isLocked : 1;
+    if (buffer)
+        buffer->isLocked = 0;
+    if (dev->streams[StreamNumber] == pStreamData &&
+        dev->streamOffsets[StreamNumber] == OffsetInBytes && !wasLocked)
+        return 0;
+#endif
     dev->streams[StreamNumber] = (IDirect3DVertexBuffer9 *)pStreamData;
     dev->streamOffsets[StreamNumber] = OffsetInBytes;
     dev->streamStrides[StreamNumber] = Stride;
@@ -3884,6 +3970,8 @@ HRESULT CDirect3DDevice_SetVertexDeclaration(const CDirect3DDevice *_this, IDire
     DeviceImpl *dev = (DeviceImpl *)_this;
     if (g_activeVertexDeclaration != pDecl) {
         g_activeVertexDeclaration = pDecl;
+        CDirect3DDevice_StreamsNative(_this)->tokensSet = 0;
+        g_currentFVF = 0;
         dev->hasDiffuseColor = 0;
         const CDirect3DVertexDeclarationImpl *declaration = (const void *)pDecl;
         if (declaration) {
@@ -3893,7 +3981,8 @@ HRESULT CDirect3DDevice_SetVertexDeclaration(const CDirect3DDevice *_this, IDire
                     dev->hasDiffuseColor = 1;
             }
         }
-        /* The native draw consumes the retained D3D elements directly. */
+        /* A same-pointer call retains the current tokens even after SetFVF,
+         * as the comparison at Mac 0x14032 does. */
         CDirect3DDevice_mNeedsTransformationValidation = 1;
         CDirect3DDevice_mNeedsRasterizationValidation = 1;
     }
@@ -3929,7 +4018,25 @@ HRESULT CDirect3DDevice_SetFVF(const CDirect3DDevice *_this, DWORD FVF)
 #endif
 
 #if defined(COD2_X64)
+    DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
+    UINT32 *token = state->tokens;
+    if (FVF) {
+        *token++ = 0x20000000;
+        if (FVF & 2) *token++ = 0x40020000;
+        if (FVF & 0x10) *token++ = 0x40020003;
+        if (FVF & 0x40) *token++ = 0x40040005;
+        UINT32 count = (FVF & 0xf00) >> 8;
+        for (UINT32 i = 0; i < count; ++i) {
+            UINT32 dimensions = (FVF >> ((16 + i * 2) & 31)) & 3;
+            UINT32 type = dimensions == 0 ? 1 : dimensions == 1 ? 2 : dimensions == 2 ? 3 : 0;
+            *token++ = 0x40000000 | (type << 16) | (8 + i);
+        }
+    }
+    *token = 0xffffffff;
+    state->tokensSet = 1;
     ((DeviceImpl *)_this)->hasDiffuseColor = !!(FVF & 0x40);
+    CDirect3DDevice_mNeedsTransformationValidation = 1;
+    CDirect3DDevice_mNeedsRasterizationValidation = 1;
 #else
     (void)_this;
 #endif
@@ -5205,6 +5312,11 @@ bool CDirect3DDevice_CTexStage_GetUsesTexture(const CTexStage *_this, bool *Uses
 #endif
 }
 
+#if defined(COD2_X64)
+extern VAOStatus CVAOPacket_sVAOStatus;
+extern void CTexCoordArray_SetGuardFull(const CTexCoordArray *, int, GLenum, GLsizei, const void *, GLint);
+#endif
+
 long unsigned int CDirect3DDevice_SetTextureCoordStream(const CDirect3DDevice *_this,
                                                         UINT32 TexUnit, UINT32 TransformFlags, const D3DMATRIX *OriginalTexTransform,
                                                         GLint VSize, UINT32 Tci, UINT32 StartVertex, UINT32 EndVertex,
@@ -5217,6 +5329,94 @@ long unsigned int CDirect3DDevice_SetTextureCoordStream(const CDirect3DDevice *_
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
+    COpenGL *gl = (COpenGL *)CDirect3DDevice_GL();
+    float matrix[16], modelView[16], combined[16];
+    const float *original = (const float *)OriginalTexTransform;
+    Bool projected = (TransformFlags & 0x100) != 0;
+    UINT32 count = TransformFlags & ~0x100u;
+    Bool setMatrix = 0, bindArray = 0;
+    (void)StartVertex; (void)EndVertex; (void)pSrc2Coords; (void)Src2Stride;
+    if (Tci == 0) {
+        if (count) {
+            memcpy(matrix, original, sizeof(matrix));
+            if (count == 2) {
+                matrix[12] = matrix[8]; matrix[13] = matrix[9];
+                matrix[8] = matrix[9] = matrix[2] = matrix[6] = matrix[10] = matrix[14] = 0.0f;
+            }
+            setMatrix = 1;
+        }
+        bindArray = 1;
+    } else if (Tci == 0x20000) {
+        if (projected || count == 3 || count == 2) {
+            memcpy(matrix, original, sizeof(matrix));
+            if (!projected && count == 2) {
+                matrix[2] = matrix[6] = matrix[10] = matrix[14] = 0.0f;
+                matrix[3] = matrix[7] = matrix[11] = 0.0f;
+                matrix[15] = 1.0f;
+            }
+            D3DXMatrixMultiply((D3DXMATRIX *)modelView, (const D3DXMATRIX *)dev->worldMatrix,
+                              (const D3DXMATRIX *)dev->viewMatrix);
+            D3DXMatrixMultiply((D3DXMATRIX *)combined, (const D3DXMATRIX *)modelView,
+                              (const D3DXMATRIX *)matrix);
+            memcpy(matrix, combined, sizeof(matrix));
+            setMatrix = 1;
+        }
+        bindArray = 1;
+    } else if (Tci == 0x10000) {
+        if (count != 2) {
+            *(Bool *)imp__ZN7COpenGL9sDrawFlagE = 0;
+        } else if (MacDisplay_GetCardType() != 2) {
+            memcpy(matrix, original, sizeof(matrix));
+            matrix[2] = matrix[6] = matrix[10] = matrix[14] = 0.0f;
+            matrix[3] = matrix[7] = matrix[11] = 0.0f;
+            matrix[15] = 1.0f;
+            D3DXMatrixMultiply((D3DXMATRIX *)modelView, (const D3DXMATRIX *)dev->worldMatrix,
+                              (const D3DXMATRIX *)dev->viewMatrix);
+            COpenGL_SetActiveTexUnit(gl, TexUnit);
+            /* The first plane's first component is loaded from the owning
+             * model-view cache in Mac; the remaining plane values share it. */
+            for (UINT32 i = 0; i < 3; ++i) {
+                float plane[4] = { modelView[i], modelView[i + 4], modelView[i + 8], modelView[i + 12] };
+                glTexGenfv(0x2000 + i, 0x2501, plane);
+            }
+            setMatrix = 1;
+        }
+    } else if (Tci == 0x30000) {
+        if (count == 2) {
+            memcpy(matrix, original, sizeof(matrix));
+            matrix[2] = matrix[6] = matrix[10] = matrix[14] = 0.0f;
+            matrix[3] = matrix[7] = matrix[11] = 0.0f;
+            matrix[15] = 1.0f;
+            setMatrix = 1;
+        } else if (count == 3) {
+            memcpy(combined, dev->convertedView, sizeof(combined));
+            if (projected) combined[2] = combined[6] = combined[10] = combined[14] = 0.0f;
+            for (UINT32 row = 0; row < 4; ++row)
+                for (UINT32 column = 0; column < 4; ++column)
+                    matrix[row * 4 + column] = combined[column * 4 + row];
+            matrix[3] = matrix[7] = matrix[11] = 0.0f;
+            matrix[12] = matrix[13] = matrix[14] = 0.0f;
+            matrix[15] = 1.0f;
+            setMatrix = 1;
+        } else if (count != 0) {
+            *(Bool *)imp__ZN7COpenGL9sDrawFlagE = 0;
+        }
+    } else {
+        *(Bool *)imp__ZN7COpenGL9sDrawFlagE = 0;
+    }
+    if (bindArray && CVAOPacket_sVAOStatus == USING_GENERIC_VAO) {
+        COpenGLVAONative *packet = state->genericPacket;
+        if (packet)
+            CTexCoordArray_SetGuardFull((const void *)&packet->mTexCoordArrays[TexUnit],
+                                        1, 0x1406, SrcStride, pSrcCoords, VSize);
+        COpenGL_EnableTexCoordArray(gl, TexUnit, VSize, 0x1406, SrcStride, (const void *)pSrcCoords);
+    }
+    if (setMatrix) return COpenGL_SetTexMatrix(gl, TexUnit, matrix);
+    return COpenGL_SetTexMatrixIdentity(gl, TexUnit);
+#else
     (void)_this;
     (void)TexUnit;
     (void)TransformFlags;
@@ -5230,6 +5430,7 @@ long unsigned int CDirect3DDevice_SetTextureCoordStream(const CDirect3DDevice *_
     (void)pSrc2Coords;
     (void)Src2Stride;
     return 0;
+#endif
 }
 
 extern unsigned char *COpenGL_TexUnitBase(const COpenGL *_this, UINT32 Unit);
@@ -5683,6 +5884,638 @@ void ZN15CDirect3DDeviceD2Ev(void *_this)
 
     ZN15CDirect3DDeviceD1Ev(_this);
 }
+
+#if defined(COD2_X64)
+extern int MacOpenGLUtils_GetDeclarationInfo(GLint *, GLenum *, UINT32 *, GLboolean *, UINT32);
+extern int CDirect3DVertexDeclaration_GetShaderDeclaration(const CDirect3DVertexDeclaration *, const UINT32 *);
+
+static void CDirect3DDevice_ForgetPixelShaderNative(DeviceImpl *dev, const void *shader)
+{
+    if (dev->streamState && dev->streamState->pixelShader == shader)
+        dev->streamState->pixelShader = NULL;
+}
+
+static DeviceStreamsNative *CDirect3DDevice_StreamsNative(const CDirect3DDevice *_this)
+{
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    if (!dev->streamState) {
+        dev->streamState = calloc(1, sizeof(*dev->streamState));
+        if (!dev->streamState) abort();
+        dev->streamState->tokens[0] = 0xffffffff;
+    }
+    return dev->streamState;
+}
+
+/* This owns only widened stream metadata. COM buffers/declarations remain
+ * borrowed, as in the Mac setters; packet bindings belong to CVAOPacket. */
+void CDirect3DDevice_ResetStreamsNative(const CDirect3DDevice *_this)
+{
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    if (dev->streamState)
+        for (UINT32 i = 0; i < 16; ++i) free(dev->streamState->convertedColors[i]);
+    free(dev->streamState);
+    dev->streamState = NULL;
+}
+
+void CDirect3DDevice_SetStream(const CDirect3DDevice *_this, Bool *other,
+                               UINT32 stream, UINT32 reg, UINT32 offset,
+                               UINT32 stride, GLint size, GLenum type)
+{
+    DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
+    DeviceStreamNative *value;
+    if (reg == 0) value = &state->position;
+    else if (reg == 3) value = &state->normal;
+    else if (reg == 5) value = &state->color;
+    else {
+        if (reg < 8 || reg >= 16) { *other = 1; return; }
+        value = &state->texCoord[reg - 8];
+        *other = 1;
+    }
+    value->used = 1;
+    value->stream = stream;
+    value->offset = offset;
+    value->stride = stride;
+    if (reg != 3) value->size = size;
+    if (reg < 8) value->type = type;
+}
+
+void CDirect3DDevice_ParseShaderDeclaration(const CDirect3DDevice *_this,
+                                            Bool fixedFunction, Bool *canUseVAO)
+{
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
+    UINT32 stream = 0xffffffff, offset = 0, stride = 0;
+    if (!state->tokensSet && g_activeVertexDeclaration)
+        CDirect3DVertexDeclaration_GetShaderDeclaration((const void *)g_activeVertexDeclaration, state->tokens);
+    for (UINT32 i = 0; i < 1024; ++i) {
+        UINT32 token = state->tokens[i];
+        UINT32 operation = token >> 29;
+        if (operation == 7) break;
+        if (operation == 1) {
+            stream = token & 15;
+            offset = 0;
+            stride = dev->streamStrides[stream];
+        } else if (operation == 2) {
+            if (token & 0x10000000) {
+                offset += (token >> 16) & 15;
+                continue;
+            }
+            UINT32 reg = token & 31, type = (token >> 16) & 15, componentSize = 0;
+            GLint size = 0;
+            GLenum glType = 0;
+            GLboolean normalized = 0;
+            Bool other = 0;
+            /* The original declaration table has eight entries. Retain defined
+             * native handling for malformed tokens instead of reading past it. */
+            if (stream >= 16 || type >= 8 || reg >= 16) { *canUseVAO = 0; continue; }
+            MacOpenGLUtils_GetDeclarationInfo(&size, &glType, &componentSize, &normalized, type);
+            if (fixedFunction) {
+                CDirect3DDevice_SetStream(_this, &other, stream, reg,
+                                         dev->streamOffsets[stream] + offset, stride, size, glType);
+                if (reg == 5) state->color.byteColor = type == 4;
+            } else {
+                DeviceStreamNative *value = &state->programmable[reg];
+                value->used = 1;
+                value->stream = stream;
+                value->offset = dev->streamOffsets[stream] + offset;
+                value->size = size;
+                value->type = glType;
+                value->normalized = normalized;
+                value->stride = stride;
+                value->byteColor = type == 4;
+            }
+            const CDirect3DVertexBufferClean *buffer = (const void *)dev->streams[stream];
+            if (!other && buffer && (buffer->usage & 0x200)) *canUseVAO = 0;
+            offset += size * componentSize;
+        }
+    }
+}
+
+static const float *CDirect3DDevice_StreamPointerNative(DeviceImpl *dev,
+                                                       DeviceStreamNative *stream, UINT32 base)
+{
+    const CDirect3DVertexBufferClean *buffer = (const void *)dev->streams[stream->stream];
+    return (const void *)(buffer->data + stream->offset + (intptr_t)(int32_t)base * stream->stride);
+}
+
+Bool CDirect3DDevice_GetStreamPtrs(const CDirect3DDevice *_this, UINT32 base)
+{
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
+    state->position.pointer = CDirect3DDevice_StreamPointerNative(dev, &state->position, base);
+    Bool normals = 0;
+    if (state->normal.used) {
+        normals = dev->lighting != 0;
+        if (!normals) {
+            for (UINT32 i = 0; i < dev->maxTextureUnits; ++i) {
+                CTexStageNative *stage = CDirect3DDevice_Stage(dev, i);
+                if (!stage) break;
+                UINT32 generation = stage->texCoordIndex & 0xffff0000;
+                if (generation == 0x10000 || generation == 0x30000) { normals = 1; break; }
+                if (stage->colorOp == 1) break;
+            }
+        }
+        state->normal.pointer = normals ? CDirect3DDevice_StreamPointerNative(dev, &state->normal, base) : NULL;
+    }
+    state->color.pointer = state->color.used ? CDirect3DDevice_StreamPointerNative(dev, &state->color, base) : NULL;
+    return normals;
+}
+
+Bool CDirect3DDevice_GetCanUseVAOWithTexCoordStreams(const CDirect3DDevice *_this, Bool canUseVAO)
+{
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
+    for (UINT32 i = 0; i < dev->maxTextureUnits; ++i) {
+        CTexStageNative *stage = CDirect3DDevice_Stage(dev, i);
+        if (!stage || stage->colorOp == 1) break;
+        Bool factor = 0;
+        if (CDirect3DDevice_CTexStage_GetUsesTexture((const CTexStage *)stage, &factor)) {
+            UINT32 tci = stage->texCoordIndex;
+            UINT32 generation = tci & 0xffff0000;
+            if (generation == 0x10000 || generation == 0x30000 || generation == 0x40000 ||
+                (tci & 0xffff) >= 8 || !state->texCoord[tci & 0xffff].used)
+                return 0;
+        }
+    }
+    return canUseVAO;
+}
+#endif
+
+#if defined(COD2_X64)
+extern void CVAOPacket_CVAOPacket(const CVAOPacket *);
+extern void CVAOPacket_SetVAO(const CVAOPacket *, int);
+extern void CVAOPacket_SetGenericVAO(int, int);
+extern void CVAOPacket_InitializeGenericVAO(void);
+extern bool CVAOPacket_IsCached(CVAOPacket *);
+extern void CVAOPacket_Cache(CVAOPacket *);
+extern VAOStatus CVAOPacket_sVAOStatus;
+extern void COpenGLVAO_CreateNewBinding(const COpenGLVAO *);
+extern void ZN10CVAOPacketD2Ev(const CVAOPacket *);
+extern void *imp___ZTV23CVAOPacketFixedFunction, *imp___ZTV22CVAOPacketProgrammable;
+extern void CVertexArray_SetGuard(const CVertexArray *, int, GLenum, GLsizei, const void *, GLint);
+extern void CNormalArray_SetGuard(const CNormalArray *, int, GLenum, GLsizei, const void *);
+extern void CColorArray_SetGuard(const CColorArray *, int, GLenum, GLsizei, const void *, GLint);
+extern void CTexCoordArray_SetGuardFull(const CTexCoordArray *, int, GLenum, GLsizei, const void *, GLint);
+extern void CTexCoordArray_SetGuard(const CTexCoordArray *, int);
+extern unsigned int COpenGL_SetVARInfo(const COpenGL *, const unsigned int *, UINT32);
+extern unsigned int COpenGL_EnableVertexArray(const COpenGL *, GLint, GLenum, GLsizei, const unsigned int *);
+extern unsigned int COpenGL_DisableNormalArray(const COpenGL *);
+extern unsigned int COpenGL_EnableNormalArray(const COpenGL *, GLenum, GLsizei, const unsigned int *);
+extern unsigned int COpenGL_DisableColorArray(const COpenGL *);
+extern unsigned int COpenGL_EnableColorArray(const COpenGL *, GLint, GLenum, GLsizei, const unsigned int *);
+extern unsigned int COpenGL_DisableTexCoordArray(const COpenGL *, UINT32);
+extern unsigned int COpenGL_SetVertexProgramStreamInfo(const COpenGL *, UINT32, GLint, GLenum, int, GLsizei, const unsigned int *);
+extern unsigned int COpenGL_DisableVertexProgramStream(const COpenGL *, UINT32);
+extern void CStaticCacheInfo_Flush(const CStaticCacheInfo *, void (*)(), void (*)());
+
+static int CDirect3DDevice_StreamColorOrderNative(DeviceImpl *dev, DeviceStreamNative *stream, Bool programmable)
+{
+    DeviceStreamsNative *state = dev->streamState;
+    GLint positionSize = programmable ? state->programmable[0].size : state->position.size;
+    return MacShader_ColorByteOrder(stream->stride, stream->offset - dev->streamOffsets[stream->stream], positionSize);
+}
+
+static const void *CDirect3DDevice_StreamColorNative(DeviceImpl *dev, DeviceStreamNative *stream,
+                                                    const void *pointer, UINT32 reg, Bool programmable)
+{
+    DeviceStreamsNative *state = dev->streamState;
+    if (!stream->byteColor || !state->elementCount) return pointer;
+    int order = CDirect3DDevice_StreamColorOrderNative(dev, stream, programmable);
+    if (order == COLOR_BYTES_RGBA) return pointer;
+    UINT32 first = 0xffffffff, last = 0;
+    for (UINT32 i = 0; i < state->elementCount; ++i) {
+        UINT32 index = state->indices[i];
+        if (index < first) first = index;
+        if (index > last) last = index;
+    }
+    size_t bytes = ((size_t)last + 1) * 4;
+    if (bytes > state->convertedColorBytes[reg]) {
+        byte *allocation = realloc(state->convertedColors[reg], bytes);
+        if (!allocation) abort();
+        state->convertedColors[reg] = allocation;
+        state->convertedColorBytes[reg] = bytes;
+    }
+    for (UINT32 i = first; i <= last; ++i) {
+        const byte *src = (const byte *)pointer + i * stream->stride;
+        byte *dst = state->convertedColors[reg] + i * 4;
+        if (order == COLOR_BYTES_ARGB) {
+            dst[0] = src[1]; dst[1] = src[2]; dst[2] = src[3]; dst[3] = src[0];
+        } else {
+            dst[0] = src[2]; dst[1] = src[1]; dst[2] = src[0]; dst[3] = src[3];
+        }
+    }
+    return state->convertedColors[reg];
+}
+
+static void CDirect3DDevice_PacketRangeNative(DeviceImpl *dev, COpenGLVAONative *packet,
+                                              const CDirect3DVertexBufferClean *buffer, UINT32 count)
+{
+    DeviceStreamsNative *state = dev->streamState;
+    packet->mpVAStart = buffer->data + dev->streamOffsets[0] + state->low * dev->streamStrides[0];
+    packet->mSize = count * dev->streamStrides[0];
+}
+
+static void CDirect3DDevice_FlushRangeNative(DeviceImpl *dev, COpenGLVAONative *packet,
+                                             const CDirect3DVertexBufferClean *buffer, Bool generic)
+{
+    COpenGLNative *gl = CDirect3DDevice_GL();
+    COpenGL_SetVARInfo((const COpenGL *)gl, packet->mpVAStart, packet->mSize);
+    if (gl->supportsVAR) {
+        if (generic && *(const Bool *)imp_g_special) {
+            CStaticCacheInfo_Flush((const void *)buffer->staticCache,
+                (void (*)())packet->mpVAStart, (void (*)())((const byte *)packet->mpVAStart + packet->mSize));
+        } else {
+            glFlushVertexArrayRangeAPPLE(packet->mSize, packet->mpVAStart);
+        }
+    }
+}
+
+static void CDirect3DDevice_ProgramArraysNative(DeviceImpl *dev, COpenGLVAONative *packet,
+                                                UINT32 base, Bool disableUnused)
+{
+    DeviceStreamsNative *state = dev->streamState;
+    COpenGL *gl = (COpenGL *)CDirect3DDevice_GL();
+    for (UINT32 i = 0; i < 16; ++i) {
+        DeviceStreamNative *stream = &state->programmable[i];
+        VertexProgramStreamStateNative *array = &packet->mGenericArrays[i];
+        if (stream->used || disableUnused) {
+            array->mEnabled = stream->used;
+            array->mVSize = stream->size;
+            array->mVType = stream->type;
+            array->mNormalized = stream->normalized;
+            array->mStride = stream->stride;
+            array->mpStream = stream->used ? CDirect3DDevice_StreamPointerNative(dev, stream, base) : NULL;
+        }
+        if (stream->used) {
+            const void *pointer = CDirect3DDevice_StreamColorNative(dev, stream, array->mpStream, i, 1);
+            if (pointer != array->mpStream) { array->mpStream = pointer; array->mStride = 0; }
+            COpenGL_SetVertexProgramStreamInfo(gl, i, stream->size, stream->type,
+                stream->normalized, array->mStride, array->mpStream);
+        } else if (disableUnused) {
+            COpenGL_DisableVertexProgramStream(gl, i);
+        }
+    }
+}
+
+static void CDirect3DDevice_FixedArraysNative(DeviceImpl *dev, COpenGLVAONative *packet,
+                                              Bool normals, Bool setGuards, Bool setGL, Bool unusedGuards, Bool disableUnused)
+{
+    DeviceStreamsNative *state = dev->streamState;
+    COpenGL *gl = (COpenGL *)CDirect3DDevice_GL();
+    DeviceStreamNative *position = &state->position, *normal = &state->normal, *color = &state->color;
+    const void *colorPointer = color->used ? CDirect3DDevice_StreamColorNative(dev, color, color->pointer, 5, 0) : color->pointer;
+    GLsizei colorStride = colorPointer == color->pointer ? color->stride : 0;
+    if (setGuards) {
+        CVertexArray_SetGuard((const void *)&packet->mVertexArray, 1,
+            position->type, position->stride, position->pointer, position->size);
+        if (normals || unusedGuards)
+            CNormalArray_SetGuard((const void *)&packet->mNormalArray, normals,
+                normal->type, normal->stride, normal->pointer);
+        if (color->used || unusedGuards)
+            CColorArray_SetGuard((const void *)&packet->mColorArray, color->used,
+                color->type, colorStride, colorPointer, color->size);
+    }
+    if (setGL) {
+        COpenGL_EnableVertexArray(gl, position->size, position->type, position->stride, (const void *)position->pointer);
+        if (normals)
+            COpenGL_EnableNormalArray(gl, normal->type, normal->stride, (const void *)normal->pointer);
+        else if (disableUnused)
+            COpenGL_DisableNormalArray(gl);
+        if (color->used)
+            COpenGL_EnableColorArray(gl, color->size, color->type, colorStride, colorPointer);
+        else if (disableUnused)
+            COpenGL_DisableColorArray(gl);
+    }
+}
+
+void CDirect3DDevice_CreateAndSetGenericProgrammableVAO(const CDirect3DDevice *_this,
+                                                       UINT32 base, UINT32 count, const void *indices, UINT32 elements)
+{
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
+    (void)indices; (void)elements;
+    if (CVAOPacket_sVAOStatus == UNINITIALIZED_VAO_STATUS) CVAOPacket_InitializeGenericVAO();
+    COpenGLVAONative *packet = CVAOPacket_GetCurrentGenericNative();
+    state->genericPacket = packet;
+    CVAOPacket_SetGenericVAO(0, 0);
+    const CDirect3DVertexBufferClean *buffer = (const void *)dev->streams[0];
+    CDirect3DDevice_PacketRangeNative(dev, packet, buffer, count);
+    CDirect3DDevice_FlushRangeNative(dev, packet, buffer, 1);
+    CDirect3DDevice_ProgramArraysNative(dev, packet, base, 1);
+}
+
+void CDirect3DDevice_CreateAndSetGenericFixedFunctionVAO(const CDirect3DDevice *_this,
+                                                        UINT32 base, UINT32 count, const void *indices,
+                                                        UINT32 elements, Bool normals)
+{
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
+    (void)base; (void)indices; (void)elements;
+    if (CVAOPacket_sVAOStatus == UNINITIALIZED_VAO_STATUS) CVAOPacket_InitializeGenericVAO();
+    COpenGLVAONative *packet = CVAOPacket_GetCurrentGenericNative();
+    state->genericPacket = packet;
+    const CDirect3DVertexBufferClean *buffer = (const void *)dev->streams[0];
+    CVAOPacket_SetGenericVAO(1, 0);
+    CDirect3DDevice_PacketRangeNative(dev, packet, buffer, count);
+    CDirect3DDevice_FlushRangeNative(dev, packet, buffer, 1);
+    CDirect3DDevice_FixedArraysNative(dev, packet, normals, 1, 1, 1, 1);
+}
+
+void CDirect3DDevice_CreateAndSetProgrammableVAO(const CDirect3DDevice *_this,
+                                                UINT32 base, UINT32 count, const void *indices, UINT32 elements)
+{
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    COpenGLVAONative packet, virgin;
+    const CDirect3DVertexBufferClean *buffer = (const void *)dev->streams[0];
+    (void)indices; (void)elements;
+    CVAOPacket_CVAOPacket((const void *)&packet);
+    packet.vtable = (void **)((byte *)imp___ZTV22CVAOPacketProgrammable + 2 * sizeof(void *));
+    CDirect3DDevice_PacketRangeNative(dev, &packet, buffer, count);
+    if (CVAOPacket_IsCached((void *)&packet)) {
+        CVAOPacket_SetVAO((const void *)&packet, 1);
+        CDirect3DDevice_ProgramArraysNative(dev, &packet, base, 1);
+        CVAOPacket_Cache((void *)&packet);
+    } else {
+        CVAOPacket_CVAOPacket((const void *)&virgin);
+        virgin.vtable = packet.vtable;
+        COpenGLVAO_CreateNewBinding((const void *)&virgin);
+        CVAOPacket_SetVAO((const void *)&virgin, 0);
+        virgin.mpVAStart = packet.mpVAStart;
+        virgin.mSize = packet.mSize;
+        CDirect3DDevice_FlushRangeNative(dev, &virgin, buffer, 0);
+        CDirect3DDevice_ProgramArraysNative(dev, &virgin, base, 0);
+        CVAOPacket_Cache((void *)&virgin);
+        ZN10CVAOPacketD2Ev((const void *)&virgin);
+    }
+    ZN10CVAOPacketD2Ev((const void *)&packet);
+}
+
+static void CDirect3DDevice_FixedTexArraysNative(DeviceImpl *dev, COpenGLVAONative *packet,
+                                                UINT32 base, Bool setGuards, Bool setGL)
+{
+    DeviceStreamsNative *state = dev->streamState;
+    COpenGL *gl = (COpenGL *)CDirect3DDevice_GL();
+    for (UINT32 i = 0; i < dev->maxTextureUnits; ++i) {
+        CTexStageNative *stage = CDirect3DDevice_Stage(dev, i);
+        if (!stage || stage->colorOp == 1) break;
+        Bool factor = 0;
+        if (CDirect3DDevice_CTexStage_GetUsesTexture((const void *)stage, &factor)) {
+            DeviceStreamNative *stream = (stage->texCoordIndex & 0xffff0000) == 0x20000
+                ? &state->position : &state->texCoord[stage->texCoordIndex & 7];
+            UINT32 stride = dev->streamStrides[stream->stream];
+            const float *pointer = CDirect3DDevice_StreamPointerNative(dev, stream, base);
+            GLint size = stream == &state->position ? 3 : stream->size;
+            if (setGuards)
+                CTexCoordArray_SetGuardFull((const void *)&packet->mTexCoordArrays[i], 1, 0x1406, stride, pointer, size);
+            if (setGL)
+                COpenGL_EnableTexCoordArray(gl, i, size, 0x1406, stride, (const void *)pointer);
+        } else if (setGL) {
+            COpenGL_DisableTexCoordArray(gl, i);
+        }
+    }
+}
+
+void CDirect3DDevice_CreateAndSetFixedFunctionVAO(const CDirect3DDevice *_this, Bool *canUseVAO,
+                                                 UINT32 base, UINT32 count, const void *indices,
+                                                 UINT32 elements, Bool normals)
+{
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    DeviceStreamsNative *state = dev->streamState;
+    COpenGLVAONative packet, virgin;
+    const CDirect3DVertexBufferClean *buffer = (const void *)dev->streams[0];
+    (void)indices; (void)elements;
+    CVAOPacket_CVAOPacket((const void *)&packet);
+    packet.vtable = (void **)((byte *)imp___ZTV23CVAOPacketFixedFunction + 2 * sizeof(void *));
+    for (UINT32 i = 0; i < dev->maxTextureUnits; ++i) {
+        CTexStageNative *stage = CDirect3DDevice_Stage(dev, i);
+        if (!stage || stage->colorOp == 1) break;
+        Bool factor = 0;
+        if (CDirect3DDevice_CTexStage_GetUsesTexture((const void *)stage, &factor) &&
+            (stage->texCoordIndex & 0xffff0000) != 0x20000) {
+            buffer = (const void *)dev->streams[state->texCoord[stage->texCoordIndex & 7].stream];
+            if (buffer->usage & 0x200) {
+                *canUseVAO = 0;
+                ZN10CVAOPacketD2Ev((const void *)&packet);
+                return;
+            }
+        }
+    }
+    CDirect3DDevice_PacketRangeNative(dev, &packet, buffer, count);
+    if (CVAOPacket_IsCached((void *)&packet)) {
+        CVAOPacket_SetVAO((const void *)&packet, 1);
+        CDirect3DDevice_FixedArraysNative(dev, &packet, normals, 1, 1, 0, 1);
+        CDirect3DDevice_FixedTexArraysNative(dev, &packet, base, 1, 1);
+        CVAOPacket_Cache((void *)&packet);
+    } else {
+        CVAOPacket_CVAOPacket((const void *)&virgin);
+        virgin.vtable = packet.vtable;
+        COpenGLVAO_CreateNewBinding((const void *)&virgin);
+        CVAOPacket_SetVAO((const void *)&virgin, 0);
+        virgin.mpVAStart = packet.mpVAStart;
+        virgin.mSize = packet.mSize;
+        CDirect3DDevice_FixedArraysNative(dev, &virgin, normals, 1, 0, 0, 0);
+        CDirect3DDevice_FixedTexArraysNative(dev, &virgin, base, 1, 0);
+        CDirect3DDevice_FlushRangeNative(dev, &virgin, buffer, 0);
+        CDirect3DDevice_FixedArraysNative(dev, &virgin, normals, 0, 1, 0, 0);
+        CDirect3DDevice_FixedTexArraysNative(dev, &virgin, base, 0, 1);
+        CVAOPacket_Cache((void *)&virgin);
+        ZN10CVAOPacketD2Ev((const void *)&virgin);
+    }
+    ZN10CVAOPacketD2Ev((const void *)&packet);
+}
+
+void CDirect3DDevice_ValidateTransformation(const CDirect3DDevice *_this,
+                                          UINT32 base, UINT32 count, const void *indices, UINT32 elements)
+{
+    DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
+    Bool canUseVAO = 1;
+    state->indices = indices;
+    state->elementCount = elements;
+    if (g_activeVertexShader) {
+        for (UINT32 i = 0; i < 16; ++i) state->programmable[i].used = 0;
+        CDirect3DDevice_ParseShaderDeclaration(_this, 0, &canUseVAO);
+        for (UINT32 i = 0; i < 16; ++i)
+            if (state->programmable[i].used && state->programmable[i].byteColor &&
+                CDirect3DDevice_StreamColorOrderNative((DeviceImpl *)_this, &state->programmable[i], 1) != COLOR_BYTES_RGBA)
+                canUseVAO = 0;
+        if (canUseVAO)
+            CDirect3DDevice_CreateAndSetProgrammableVAO(_this, base, count, indices, elements);
+        else
+            CDirect3DDevice_CreateAndSetGenericProgrammableVAO(_this, base, count, indices, elements);
+    } else {
+        state->position.used = state->normal.used = state->color.used = 0;
+        for (UINT32 i = 0; i < 8; ++i) state->texCoord[i].used = 0;
+        CDirect3DDevice_ParseShaderDeclaration(_this, 1, &canUseVAO);
+        Bool normals = CDirect3DDevice_GetStreamPtrs(_this, base);
+        if (state->color.used && state->color.byteColor &&
+            CDirect3DDevice_StreamColorOrderNative((DeviceImpl *)_this, &state->color, 0) != COLOR_BYTES_RGBA)
+            canUseVAO = 0;
+        if (canUseVAO) canUseVAO = CDirect3DDevice_GetCanUseVAOWithTexCoordStreams(_this, 1);
+        if (canUseVAO)
+            CDirect3DDevice_CreateAndSetFixedFunctionVAO(_this, &canUseVAO, base, count, indices, elements, normals);
+        if (!canUseVAO)
+            CDirect3DDevice_CreateAndSetGenericFixedFunctionVAO(_this, base, count, indices, elements, normals);
+    }
+}
+#endif
+
+#if defined(COD2_X64)
+extern unsigned int COpenGL_SetTexGenEnable(const COpenGL *, UINT32, int, int, int);
+extern unsigned int COpenGL_DisableTexUnit(const COpenGL *, UINT32);
+extern int MacOpenGLUtils_GetOpenGLTextureOp(GLenum *, GLenum *, UINT32);
+extern int MacOpenGLUtils_GetOpenGLTextureAlphaOp(GLenum *, GLenum *, UINT32);
+
+static void CDirect3DDevice_CombinerNative(COpenGL *gl, UINT32 unit, CTexStageNative *stage)
+{
+    GLenum source[3], operand[3];
+    MacOpenGLUtils_GetOpenGLTextureOp(&source[0], &operand[0], stage->colorArg1);
+    MacOpenGLUtils_GetOpenGLTextureOp(&source[1], &operand[1], stage->colorArg2);
+    switch (stage->colorOp) {
+    case 2: COpenGL_SetTexCombinerRGB1(gl, unit, 0x1e01, source[0], operand[0], 1.0f); break;
+    case 3: COpenGL_SetTexCombinerRGB1(gl, unit, 0x1e01, source[1], operand[1], 1.0f); break;
+    case 4: case 5: case 6:
+        COpenGL_SetTexCombinerRGB2(gl, unit, 0x2100, source[0], operand[0], source[1], operand[1],
+                                  stage->colorOp == 4 ? 1.0f : stage->colorOp == 5 ? 2.0f : 4.0f); break;
+    case 7: case 10:
+        COpenGL_SetTexCombinerRGB2(gl, unit, stage->colorOp == 7 ? 0x104 : 0x84e7,
+                                  source[0], operand[0], source[1], operand[1], 1.0f); break;
+    case 12: case 13: case 14: case 16:
+        COpenGL_SetTexCombinerRGB3(gl, unit, 0x8575, source[0], operand[0], source[1], operand[1],
+            stage->colorOp == 12 ? 0x8577 : stage->colorOp == 13 ? 0x1702 : stage->colorOp == 14 ? 0x8576 : 0x8578,
+            0x302, 1.0f); break;
+    case 18:
+        COpenGL_SetTexCombinerRGB3(gl, unit, 0x8744, source[0], (stage->colorArg1 & 0x10) ? 0x303 : 0x302,
+            source[0], (stage->colorArg1 & 0x10) ? 0x301 : 0x300,
+            source[1], (stage->colorArg2 & 0x10) ? 0x301 : 0x300, 1.0f); break;
+    case 24:
+        COpenGL_SetTexCombinerRGB2(gl, unit, 0x86af, source[0], operand[0], source[1], operand[1], 1.0f);
+        return;
+    case 25: case 26:
+        MacOpenGLUtils_GetOpenGLTextureOp(&source[2], &operand[2], stage->colorArg0);
+        COpenGL_SetTexCombinerRGB3(gl, unit, stage->colorOp == 25 ? 0x8744 : 0x8575,
+            source[0], operand[0], source[1], operand[1], source[2], operand[2], 1.0f); break;
+    default: break;
+    }
+    MacOpenGLUtils_GetOpenGLTextureAlphaOp(&source[0], &operand[0], stage->alphaArg1);
+    MacOpenGLUtils_GetOpenGLTextureAlphaOp(&source[1], &operand[1], stage->alphaArg2);
+    switch (stage->alphaOp) {
+    case 1: COpenGL_SetTexCombinerAlpha1(gl, unit, 0x1e01, 0x8578, 0x302, 1.0f); break;
+    case 2: COpenGL_SetTexCombinerAlpha1(gl, unit, 0x1e01, source[0], operand[0], 1.0f); break;
+    case 3: COpenGL_SetTexCombinerAlpha1(gl, unit, 0x1e01, source[1], operand[1], 1.0f); break;
+    case 4: case 5: case 7:
+        COpenGL_SetTexCombinerAlpha2(gl, unit, stage->alphaOp == 7 ? 0x104 : 0x2100,
+            source[0], operand[0], source[1], operand[1], stage->alphaOp == 5 ? 2.0f : 1.0f); break;
+    case 12:
+        COpenGL_SetTexCombinerAlpha3(gl, unit, 0x8575, source[0], operand[0], source[1], operand[1], 0x8577, 0x302, 1.0f); break;
+    default: break;
+    }
+}
+
+void CDirect3DDevice_ValidateRasterization(const CDirect3DDevice *_this, UINT32 base, UINT32 end)
+{
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
+    COpenGLNative *gl = CDirect3DDevice_GL();
+    /* The real native shader providers also bind outside this cache; their
+     * Enable methods query the GL context. Keep that ownership contract. */
+    if (dev->pixelShader) {
+        void **vtable = *(void ***)dev->pixelShader;
+        ((void (*)(const void *))vtable[7])(dev->pixelShader);
+    } else if (state->pixelShader) {
+        void **vtable = *(void ***)state->pixelShader;
+        ((void (*)(const void *))vtable[8])(state->pixelShader);
+    }
+    state->pixelShader = dev->pixelShader;
+    typedef struct { void **vtable; ULONG references; UINT32 textureMask; } NativePixelPrefix;
+    UINT32 textureMask = dev->pixelShader && *(void ***)dev->pixelShader != ps_stub_vtbl
+        ? ((const NativePixelPrefix *)dev->pixelShader)->textureMask : 0;
+    UINT32 units = dev->maxTextureUnits > dev->maxTextureImageUnits ? dev->maxTextureUnits : dev->maxTextureImageUnits;
+    UINT32 i;
+    for (i = 0; i < units; ++i) {
+        CTexStageNative *stage = CDirect3DDevice_Stage(dev, i);
+        if (!stage || (!dev->pixelShader && stage->colorOp == 1)) break;
+        Bool usesFactor = 0;
+        Bool usesTexture = dev->pixelShader ? !!(textureMask & (1u << i))
+            : CDirect3DDevice_CTexStage_GetUsesTexture((const void *)stage, &usesFactor);
+        if (!g_activeVertexShader) {
+            Bool enableGen = 0, reflection = 0, normalMap = 0, arraySet = 0;
+            if (usesTexture) {
+                UINT32 tci = stage->texCoordIndex & 0xffff0000;
+                const float *source = NULL, *source2 = NULL;
+                UINT32 stride = 0, stride2 = 0;
+                GLint size = 0;
+                if (tci == 0) {
+                    UINT32 index = stage->texCoordIndex & 0xffff;
+                    if (index < 8 && state->texCoord[index].used) {
+                        DeviceStreamNative *stream = &state->texCoord[index];
+                        source = CDirect3DDevice_StreamPointerNative(dev, stream, base);
+                        stride = dev->streamStrides[stream->stream];
+                        size = stream->size;
+                        arraySet = 1;
+                    } else {
+                        COpenGL_SetActiveTexUnit((const void *)gl, i);
+                        if (gl->matrixMode != 0x1702) { gl->matrixMode = 0x1702; glMatrixMode(0x1702); }
+                        glPushMatrix(); glLoadIdentity(); glTexCoord2f(0.0f, 0.0f); glPopMatrix();
+                    }
+                } else if (tci == 0x20000) {
+                    source = state->position.pointer; stride = state->position.stride; arraySet = 1;
+                } else if (tci == 0x30000) {
+                    source = state->position.pointer; stride = state->position.stride;
+                    source2 = state->normal.pointer; stride2 = state->normal.stride;
+                    enableGen = reflection = 1;
+                } else if (tci == 0x10000) {
+                    source = state->normal.pointer; stride = state->normal.stride;
+                    if (MacDisplay_GetCardType() == 2) arraySet = 1;
+                    else enableGen = normalMap = 1;
+                }
+                if (tci || arraySet)
+                    CDirect3DDevice_SetTextureCoordStream(_this, i, stage->transformFlags,
+                        (const D3DMATRIX *)stage->matrix, size, tci, base, end, source, stride, source2, stride2);
+            }
+            if (!arraySet && CVAOPacket_sVAOStatus != USING_CACHED_VAO) {
+                if (state->genericPacket)
+                    CTexCoordArray_SetGuard((const void *)&state->genericPacket->mTexCoordArrays[i], 0);
+                COpenGL_DisableTexCoordArray((const void *)gl, i);
+            }
+            COpenGL_SetTexGenEnable((const void *)gl, i, enableGen, reflection, normalMap);
+        }
+        if (!stage->programmableOnly && !dev->pixelShader) {
+            CDirect3DDevice_CombinerNative((void *)gl, i, stage);
+            CTexUnitNative *unit = &gl->texUnits[i];
+            if (usesFactor && memcmp(unit->mTexFactor, stage->factor, sizeof(stage->factor))) {
+                COpenGL_SetActiveTexUnit((const void *)gl, i);
+                glTexEnvfv(0x2300, 0x2201, stage->factor);
+                memcpy(unit->mTexFactor, stage->factor, sizeof(stage->factor));
+            }
+        }
+        if (stage->texture) {
+            if (usesTexture)
+                CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState(_this, stage->texture, i);
+        } else {
+            const void *defaultTexture = dev->saveSurface ? (const void *)((void **)dev->saveSurface + 1) : NULL;
+            COpenGL_SetTex((const void *)gl, i, 0xde1, defaultTexture);
+            if (!dev->pixelShader && usesTexture && !stage->programmableOnly) {
+                GLenum source, operand;
+                MacOpenGLUtils_GetOpenGLTextureOp(&source, &operand, stage->colorArg1);
+                if (source == 0x1702) {
+                    COpenGL_SetTex((const void *)gl, i, 0xde1, defaultTexture);
+                    COpenGL_SetTexCombinerRGB1((const void *)gl, i, 0x1e01, 0x8578, 0x300, 1.0f);
+                    COpenGL_SetTexCombinerAlpha1((const void *)gl, i, 0x1e01, 0x8578, 0x302, 1.0f);
+                }
+            }
+        }
+    }
+    if (dev->pixelShader) return;
+    for (; i < dev->maxTextureUnits; ++i) {
+        if (CVAOPacket_sVAOStatus != USING_CACHED_VAO) {
+            if (CVAOPacket_sVAOStatus == USING_GENERIC_VAO && state->genericPacket)
+                CTexCoordArray_SetGuard((const void *)&state->genericPacket->mTexCoordArrays[i], 0);
+            COpenGL_DisableTexCoordArray((const void *)gl, i);
+        }
+        COpenGL_DisableTexUnit((const void *)gl, i);
+    }
+}
+#endif
 
 fnptr_t vtbl_CDirect3DDevice[] = { (fnptr_t)CDirect3DDevice_QueryInterface, (fnptr_t)CDirect3DDevice_AddRef, (fnptr_t)CDirect3DDevice_Release, (fnptr_t)CDirect3DDevice_TestCooperativeLevel, (fnptr_t)CDirect3DDevice_GetAvailableTextureMem, (fnptr_t)CDirect3DDevice_EvictManagedResources, (fnptr_t)CDirect3DDevice_GetDirect3D, (fnptr_t)CDirect3DDevice_GetDeviceCaps, (fnptr_t)CDirect3DDevice_GetDisplayMode, (fnptr_t)CDirect3DDevice_GetCreationParameters, (fnptr_t)CDirect3DDevice_SetCursorProperties, (fnptr_t)CDirect3DDevice_SetCursorPosition, (fnptr_t)CDirect3DDevice_ShowCursor, (fnptr_t)CDirect3DDevice_CreateAdditionalSwapChain, (fnptr_t)CDirect3DDevice_GetSwapChain, (fnptr_t)CDirect3DDevice_GetNumberOfSwapChains, (fnptr_t)CDirect3DDevice_Reset, (fnptr_t)CDirect3DDevice_Present, (fnptr_t)CDirect3DDevice_GetBackBuffer, (fnptr_t)CDirect3DDevice_GetRasterStatus, (fnptr_t)CDirect3DDevice_SetDialogBoxMode, (fnptr_t)CDirect3DDevice_SetGammaRamp, (fnptr_t)CDirect3DDevice_GetGammaRamp, (fnptr_t)CDirect3DDevice_CreateTexture, (fnptr_t)CDirect3DDevice_CreateVolumeTexture, (fnptr_t)CDirect3DDevice_CreateCubeTexture, (fnptr_t)CDirect3DDevice_CreateVertexBuffer, (fnptr_t)CDirect3DDevice_CreateIndexBuffer, (fnptr_t)CDirect3DDevice_CreateRenderTarget, (fnptr_t)CDirect3DDevice_CreateDepthStencilSurface, (fnptr_t)CDirect3DDevice_UpdateSurface, (fnptr_t)CDirect3DDevice_UpdateTexture, (fnptr_t)CDirect3DDevice_GetRenderTargetData, (fnptr_t)CDirect3DDevice_GetFrontBufferData, (fnptr_t)CDirect3DDevice_StretchRect, (fnptr_t)CDirect3DDevice_ColorFill, (fnptr_t)CDirect3DDevice_CreateOffscreenPlainSurface, (fnptr_t)CDirect3DDevice_SetRenderTarget, (fnptr_t)CDirect3DDevice_GetRenderTarget, (fnptr_t)CDirect3DDevice_SetDepthStencilSurface, (fnptr_t)CDirect3DDevice_GetDepthStencilSurface, (fnptr_t)CDirect3DDevice_BeginScene, (fnptr_t)CDirect3DDevice_EndScene, (fnptr_t)CDirect3DDevice_Clear, (fnptr_t)CDirect3DDevice_SetTransform, (fnptr_t)CDirect3DDevice_GetTransform, (fnptr_t)CDirect3DDevice_MultiplyTransform, (fnptr_t)CDirect3DDevice_SetViewport, (fnptr_t)CDirect3DDevice_GetViewport, (fnptr_t)CDirect3DDevice_SetMaterial, (fnptr_t)CDirect3DDevice_GetMaterial, (fnptr_t)CDirect3DDevice_SetLight, (fnptr_t)CDirect3DDevice_GetLight, (fnptr_t)CDirect3DDevice_LightEnable, (fnptr_t)CDirect3DDevice_GetLightEnable, (fnptr_t)CDirect3DDevice_SetClipPlane, (fnptr_t)CDirect3DDevice_GetClipPlane, (fnptr_t)CDirect3DDevice_SetRenderState, (fnptr_t)CDirect3DDevice_GetRenderState, (fnptr_t)CDirect3DDevice_CreateStateBlock, (fnptr_t)CDirect3DDevice_BeginStateBlock, (fnptr_t)CDirect3DDevice_EndStateBlock, (fnptr_t)CDirect3DDevice_SetClipStatus, (fnptr_t)CDirect3DDevice_GetClipStatus, (fnptr_t)CDirect3DDevice_GetTexture, (fnptr_t)CDirect3DDevice_SetTexture, (fnptr_t)CDirect3DDevice_GetTextureStageState, (fnptr_t)CDirect3DDevice_SetTextureStageState, (fnptr_t)CDirect3DDevice_GetSamplerState, (fnptr_t)CDirect3DDevice_SetSamplerState, (fnptr_t)CDirect3DDevice_ValidateDevice, (fnptr_t)CDirect3DDevice_SetPaletteEntries, (fnptr_t)CDirect3DDevice_GetPaletteEntries, (fnptr_t)CDirect3DDevice_SetCurrentTexturePalette, (fnptr_t)CDirect3DDevice_GetCurrentTexturePalette, (fnptr_t)CDirect3DDevice_SetScissorRect, (fnptr_t)CDirect3DDevice_GetScissorRect, (fnptr_t)CDirect3DDevice_SetSoftwareVertexProcessing, (fnptr_t)CDirect3DDevice_GetSoftwareVertexProcessing, (fnptr_t)CDirect3DDevice_SetNPatchMode, (fnptr_t)CDirect3DDevice_GetNPatchMode, (fnptr_t)CDirect3DDevice_DrawPrimitive, (fnptr_t)CDirect3DDevice_DrawIndexedPrimitive, (fnptr_t)CDirect3DDevice_DrawPrimitiveUP, (fnptr_t)CDirect3DDevice_DrawIndexedPrimitiveUP, (fnptr_t)CDirect3DDevice_ProcessVertices, (fnptr_t)CDirect3DDevice_CreateVertexDeclaration, (fnptr_t)CDirect3DDevice_SetVertexDeclaration, (fnptr_t)CDirect3DDevice_GetVertexDeclaration, (fnptr_t)CDirect3DDevice_SetFVF, (fnptr_t)CDirect3DDevice_GetFVF, (fnptr_t)CDirect3DDevice_CreateVertexShader, (fnptr_t)CDirect3DDevice_SetVertexShader, (fnptr_t)CDirect3DDevice_GetVertexShader, (fnptr_t)CDirect3DDevice_SetVertexShaderConstantF, (fnptr_t)CDirect3DDevice_GetVertexShaderConstantF, (fnptr_t)CDirect3DDevice_SetVertexShaderConstantI, (fnptr_t)CDirect3DDevice_GetVertexShaderConstantI, (fnptr_t)CDirect3DDevice_SetVertexShaderConstantB, (fnptr_t)CDirect3DDevice_GetVertexShaderConstantB, (fnptr_t)CDirect3DDevice_SetStreamSource, (fnptr_t)CDirect3DDevice_GetStreamSource, (fnptr_t)CDirect3DDevice_SetStreamSourceFreq, (fnptr_t)CDirect3DDevice_GetStreamSourceFreq, (fnptr_t)CDirect3DDevice_SetIndices, (fnptr_t)CDirect3DDevice_GetIndices, (fnptr_t)CDirect3DDevice_CreatePixelShader, (fnptr_t)CDirect3DDevice_SetPixelShader, (fnptr_t)CDirect3DDevice_GetPixelShader, (fnptr_t)CDirect3DDevice_SetPixelShaderConstantF, (fnptr_t)CDirect3DDevice_GetPixelShaderConstantF, (fnptr_t)CDirect3DDevice_SetPixelShaderConstantI, (fnptr_t)CDirect3DDevice_GetPixelShaderConstantI, (fnptr_t)CDirect3DDevice_SetPixelShaderConstantB, (fnptr_t)CDirect3DDevice_GetPixelShaderConstantB, (fnptr_t)CDirect3DDevice_DrawRectPatch, (fnptr_t)CDirect3DDevice_DrawTriPatch, (fnptr_t)CDirect3DDevice_DeletePatch, (fnptr_t)CDirect3DDevice_CreateQuery, (fnptr_t)ZN15CDirect3DDeviceD1Ev, (fnptr_t)ZN15CDirect3DDeviceD0Ev, (fnptr_t)0 };
 
