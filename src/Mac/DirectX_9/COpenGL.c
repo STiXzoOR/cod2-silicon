@@ -175,7 +175,12 @@ static void COpenGL_CopyArrayNative(CBaseVAImpl *dst, const CBaseVAImpl *src)
 #endif
 
 UINT32 COpenGL_sFrameCount = 0;
+#if defined(COD2_X64)
+Bool COpenGL_sDrawFlag = 1;
+void *imp__ZN7COpenGL9sDrawFlagE = &COpenGL_sDrawFlag;
+#else
 bool COpenGL_sDrawFlag = 0;
+#endif
 GLuint COpenGL_sShowTextureID = 0;
 GLint g_VAOID = 0;
 
@@ -1244,7 +1249,18 @@ unsigned int COpenGL_Init(const COpenGL *_this, UINT32 Buffers, UINT32 MaxTextur
         if (!i) for (unsigned j = 0; j < 4; ++j)
             ((GLfloat *)&light->Diffuse)[j] = ((GLfloat *)&light->Specular)[j] = 1.0f;
         light->Cutoff = 180.0f; light->Attenuation0 = 1.0f;
-        glDisable(0x4000 + i); COpenGL_SetLight(_this, i, light);
+        /* Mac Reset created a fresh context. SDL retains it, so the cache
+         * defaults must also overwrite the previous context's light state. */
+        GLenum name = 0x4000 + i;
+        glDisable(name);
+        glLightfv(name, 0x1201, (const GLfloat *)&light->Diffuse);
+        glLightfv(name, 0x1202, (const GLfloat *)&light->Specular);
+        glLightfv(name, 0x1200, (const GLfloat *)&light->Ambient);
+        glLightf(name, 0x1205, light->Exponent);
+        glLightf(name, 0x1206, light->Cutoff);
+        glLightf(name, 0x1207, light->Attenuation0);
+        glLightf(name, 0x1208, light->Attenuation1);
+        glLightf(name, 0x1209, light->Attenuation2);
     }
     glDisable(0xb20); glDisable(0xb24);
     for (unsigned i = 0; i < 9; ++i) glDisable(0xd90 + i);
