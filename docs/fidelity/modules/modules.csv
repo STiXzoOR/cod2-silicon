@@ -174,8 +174,8 @@ gfx_d3d/r_jpeg,9,0,1,8,0
 gfx_d3d/r_light,4,0,0,0,4
 gfx_d3d/r_light_load_obj,1,0,0,0,1
 gfx_d3d/r_marks,4,0,0,0,4
-gfx_d3d/r_material,30,0,0,0,30
-gfx_d3d/r_material_load_obj,16,0,0,0,16
+gfx_d3d/r_material,30,21,6,3,0
+gfx_d3d/r_material_load_obj,16,8,7,1,0
 gfx_d3d/r_model,33,27,5,1,0
 gfx_d3d/r_model_load_obj,1,1,0,0,0
 gfx_d3d/r_outdoor,2,2,0,0,0

@@ -31550,5 +31550,189 @@
   "mac:0x0011332c": {
     "status": "equal",
     "evidence": "Read Mac 0x11332c: Cache enable/type/stride/pointer/size without GL calls or validation change; native matches."
+  },
+  "mac:0x000d3a64": {
+    "status": "fixed",
+    "evidence": "Mac 0xd3b3f shifts the last element into slot numElems before walking backward; native started one slot early. Four declaration kinds, source rejection, terminator and device slot 86 compared. Compiled and reviewed; not exercised."
+  },
+  "mac:0x000d2ae8": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd2ae8: direct renderer Hunk_AllocInternal dispatch with the requested size matches."
+  },
+  "mac:0x000d31d0": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd31d0: two-byte routing hash weighted by index+119, 32-slot probing, stream-count/byte equality, 31-entry limit, copy and existing flag match with native-width storage."
+  },
+  "mac:0x000d2be2": {
+    "status": "intentional",
+    "evidence": "Read Mac 0xd2be2: sort-key comparison matches. Native uses a full-width uintptr_t total order for technique pointers instead of signed interpretation of a wrapped i386 subtraction; this retains deterministic ordering without truncating LP64 pointers."
+  },
+  "mac:0x000d3dfc": {
+    "status": "fixed",
+    "evidence": "Mac 0xd3ee7/0xd3f00 saves/restores the destination name around copying an existing material. Native overwrote that name. New-entry allocation, hash/index insertion and 1024-material limit also compared. Compiled and reviewed; not exercised."
+  },
+  "mac:0x000d3408": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd3408: hash plus type*97 plus version, 256-slot linear probing and exact type/version/name checks match."
+  },
+  "mac:0x000d32e4": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd32e4: 32-slot hash/probing, case-sensitive name equality and null miss match."
+  },
+  "mac:0x000d33a4": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd33a4: 1024-slot hash/probing, case-insensitive name equality and null miss match."
+  },
+  "mac:0x000d3340": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd3340: 1024-slot hash/probing, case-insensitive name equality and null miss match."
+  },
+  "mac:0x000d2e74": {
+    "status": "equal",
+    "evidence": "Mac 0xd2e74 is an empty return, matching the native body."
+  },
+  "mac:0x000d409c": {
+    "status": "fixed",
+    "evidence": "Mac 0xd4198 copies the texture name into the preinitialized raw texdef. Native copied four bytes of an LP64 pointer; now copies its typed name only. Restored 0xd4171 diagnostic. All 28 built-in/12 fill names and registration order checked. Compiled and reviewed; not exercised."
+  },
+  "mac:0x000d2e10": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd2e10: textures, constants and technique-set pointer identity checks match."
+  },
+  "mac:0x000d2f74": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd2f74: 64-byte materials/%s path and renderer FS_FOpenFileRead with uniqueFILE=1 match."
+  },
+  "mac:0x000d3f3e": {
+    "status": "intentional",
+    "evidence": "Read Mac 0xd3f3e through 0xd4075: probing, load/default duplication, index insertion and capacity error match. Retains the existing COD2_HUNKGUARD opt-in probe; com_memory.c confirms it is inert unless enabled and reports/rearms native allocation canaries."
+  },
+  "mac:0x000d4078": {
+    "status": "intentional",
+    "evidence": "Read Mac 0xd4078: empty-name default and ordinary name/imageTrack registration match. Retains native null-name handling and the g_gfxV60DllActive external-renderer forwarding boundary; current Apple GL uses local registration."
+  },
+  "mac:0x000d2af8": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd2af8: four SSE float comparisons, 16-literal error and component copy match. The original never increments literalCount here; that quirk is preserved."
+  },
+  "mac:0x000d310a": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd310a: 64-slot case-sensitive intern lookup, pre-incremented count/63-entry error and nul-terminated hunk copy match."
+  },
+  "mac:0x000d2e7a": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd2e7a: release bound vertex declaration, visit 32 declarations with four release/null slots each, then all 256 cached shader objects. Native GL vtable slot 2 matches."
+  },
+  "mac:0x000d36be": {
+    "status": "fixed",
+    "evidence": "Mac 0xd39b5 visits all 256 shader slots; native stopped at 255. Mac 0xd37e2 also exposes the declaration insertion error, and 0xd3a29 gives the complete recovery diagnostic, both corrected. Device creation/error callback order compared. Compiled and reviewed; not exercised."
+  },
+  "mac:0x000d2d58": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd2d58: count increment and 256 error, type*97/version hash, type/version/case-sensitive name collision checks and replacement match."
+  },
+  "mac:0x000d2cfe": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd2cfe: case-sensitive 32-slot hash insertion/replacement matches."
+  },
+  "mac:0x000d2c0e": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd2c0e: 1023 precheck, case-insensitive 1024-slot lookup, count increment and insertion/replacement match."
+  },
+  "mac:0x000d2c9e": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd2c9e: case-insensitive 1024-slot hash insertion/replacement matches."
+  },
+  "mac:0x000d3482": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd3482: current Apple GL release/null loops for 32 declarations and 256 shaders, then complete registry/hash-table clearing and materialCount=0 match. GFX_REAL_D3D9-only alternate ownership is outside the selected Apple provider."
+  },
+  "mac:0x000d2efe": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd2efe: set picmip first, visit material hash entries and non-water nonnull images, rechecking textureCount during iteration. Typed native tables retain the iteration/control behavior."
+  },
+  "mac:0x000d3ccc": {
+    "status": "fixed",
+    "evidence": "Restored command usage and missing-material diagnostics from Mac 0xd3ce6/0xd3d50. Hash lookup, default-image bind and descending distinct non-water image reloads compared through 0xd3dfa, using native-width pointer ordering. Compiled and reviewed; not exercised."
+  },
+  "mac:0x000d2fc0": {
+    "status": "equal",
+    "evidence": "Mac 0xd2fc0 returns the material name field; native typed pointer returns the same field."
+  },
+  "mac:0x000d2fca": {
+    "status": "equal",
+    "evidence": "Mac 0xd2fca zero-extends atlas row/column bytes and multiplies them; native byte fields match."
+  },
+  "mac:0x000d2e46": {
+    "status": "equal",
+    "evidence": "Read Mac 0xd2e46: renderer !=2 and technique slot 21 flags bit 1 match. Successful material loading supplies the nonnull technique-set contract; native also defines a null-set return."
+  },
+  "mac:0x000d3624": {
+    "status": "fixed",
+    "evidence": "Mac 0xd3634 resolves the global default for empty names; native dereferenced an uninitialized local rgp. Initialized it from imp_rgp before that branch. Default-material identity and release/load/failure paths compared. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00101074": {
+    "status": "equal",
+    "evidence": "Exact-symbol otool entry 0x101074 returns HRESULT zero without freeing cached shader text; native matches."
+  },
+  "mac:0x00101290": {
+    "status": "equal",
+    "evidence": "Exact-symbol entry 0x101290: case-insensitive binary lookup of filename then lib/%s, cached text/size outputs and HRESULT 1 miss/0 success match with native-width cached records."
+  },
+  "mac:0x0010126e": {
+    "status": "equal",
+    "evidence": "Read Mac 0x10126e: signed strcmp(name0,name1)<0 matches the native cached-text ordering predicate."
+  },
+  "mac:0x00102146": {
+    "status": "equal",
+    "evidence": "Read Mac 0x102146: dot/name lookup, required bounded array index, stride accumulation, recursive subtable and leaf source addition match. All sampler source tables were decoded and compared with native declarations."
+  },
+  "mac:0x0010413a": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x10413a-0x1057d0 and native Material_Marshal32To64/Material_ResolveTechniqueSet: image/water/constant relocation, technique selection, Dx7/Dx9 pass parsing and argument validation were compared. Native marshals fixed 68/12/20-byte disk records to LP64 allocations, validates ranges/strings and FFT widths, and zero-initializes native pass storage instead of importing unspecified stack bytes. Current GL shader provider remains selected; no Metal substitution."
+  },
+  "mac:0x001057d0": {
+    "status": "fixed",
+    "evidence": "Mac 0x10585f suppresses missing-file errors only for names beginning with $; native additionally suppressed UI/alias names. Restored that filter. Retains defined LP64 marshaling, bounded short-read rejection and NULL on failed relocation instead of exposing a raw 32-bit blob. Compiled and reviewed; not exercised."
+  },
+  "mac:0x001035a0": {
+    "status": "fixed",
+    "evidence": "Mac 0x103903/0x103929 and 0x103975/0x10399e operate on rule-set base+0x14 set-bits; native used base+0x0c condition values for unsupported RGB/alpha blend operations. Corrected both and restored missing-filename/error-prefix text. All 11 parse calls, masks and capability branches compared. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00101bfe": {
+    "status": "fixed",
+    "evidence": "Mac 0x101c34-0x101c56 requires stage[index]; native continued after a failed opening bracket. Corrected failure propagation and original warnings. Function/argument packing and all 21 function-table rows compared with binary data. Compiled and reviewed; not exercised."
+  },
+  "mac:0x001017d2": {
+    "status": "fixed",
+    "evidence": "Mac 0x101aa5-0x101aac takes whole-matrix rowCount from the constant-entry registerCount; native used the type elementCount. Private routing now carries registerCount. Recursive names, arrays/ranges, source>186 transpose xor and row selection compared. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00103020": {
+    "status": "fixed",
+    "evidence": "Restored Mac 0x1032d6 failed-conditional-after-&& warning. Read 0x103020-0x1035a0: grouped conditions/defaults, values/passthrough, propagation, count cap, allocation and complemented clear masks otherwise match. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00102ed4": {
+    "status": "equal",
+    "evidence": "Read Mac 0x102ed4: source/value lookup, == match, no-match/error/success codes and source-word mask/value ORs match the native body for the existing state-map tables."
+  },
+  "mac:0x001022aa": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1022aa: sampler recursion/type 3, material dot-name intern/type 4, unknown-source warning and failure propagation match."
+  },
+  "mac:0x00101b5c": {
+    "status": "equal",
+    "evidence": "Read Mac 0x101b5c: initial (, comma-separated Com_ParseFloat stores, closing ) and token-failure returns match, including the original do-while behavior."
+  },
+  "mac:0x0010118e": {
+    "status": "equal",
+    "evidence": "Read Mac 0x10118e: 64-byte path, unique open, name+text+2 allocation at alignment 1, concatenated name, exact read/close and terminating nul/size stores match."
+  },
+  "mac:0x001023a2": {
+    "status": "fixed",
+    "evidence": "Mac 0x1023e9 uses the CTAB count low byte; restored the safe 256=>0 empty-block case. Mac 0x102b58 retains an explicitly selected firstRow; native reset it. Compared CTAB explicit/default mappings and cleanup; matrix registerCount now reaches the corrected recursive helper. Retains native no-CTAB generic-ARB mappings, >256 rejection and typed LP64 allocations. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0010107e": {
+    "status": "fixed",
+    "evidence": "Restored missing exposed-constant/texture diagnostics from Mac 0x101113/0x101178. Read name-pointer matching against material constants/textures, type 2/4 dispatch and first failure return. Compiled and reviewed; not exercised."
   }
 }

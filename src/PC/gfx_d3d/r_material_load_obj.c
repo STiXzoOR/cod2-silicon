@@ -128,6 +128,7 @@ void Material_PreLoadAllShaderText(void);
 typedef struct {
     byte firstRow, rowCount;
     const byte *typeInfo;
+    unsigned short registerCount;
 } MaterialCodeConstantRouting;
 #endif
 
@@ -187,7 +188,11 @@ static Bool MATERIAL_REGPARM3_ABI Material_ValidatePassArguments_impl(const Mate
                 }
             }
             if (!found) {
+#if defined(COD2_X64)
+                Com_Printf("material '%s' using technique '%s' from techniqueSet '%s' doesn't expose a '%s' constant\n",
+#else
                 Com_Printf("material '%s' using technique '%s' from techniqueSet '%s' doesn't have constant '%s'\n",
+#endif
                            material->info.name, techniqueName, techniqueSetName, argName);
                 return 0;
             }
@@ -203,7 +208,11 @@ static Bool MATERIAL_REGPARM3_ABI Material_ValidatePassArguments_impl(const Mate
                 }
             }
             if (!found) {
+#if defined(COD2_X64)
+                Com_Printf("material '%s' using technique '%s' from techniqueSet '%s' doesn't expose a '%s' texture\n",
+#else
                 Com_Printf("material '%s' using technique '%s' from techniqueSet '%s' doesn't have texture '%s'\n",
+#endif
                            material->info.name, techniqueName, techniqueSetName, argName);
                 return 0;
             }
@@ -528,13 +537,10 @@ found:;
         *(arg + 6) = 0;
 #endif
 #if defined(COD2_X64)
-        const byte *routingShader = ((const MaterialCodeConstantRouting *)routing)->typeInfo;
+        ((MaterialShaderArgument *)arg)->u.codeConst.rowCount =
+            (byte)((const MaterialCodeConstantRouting *)routing)->registerCount;
 #else
         byte *routingShader = *(byte **)(routing + 8);
-#endif
-#if defined(COD2_X64)
-        ((MaterialShaderArgument *)arg)->u.codeConst.rowCount = (byte)*(const unsigned short *)(routingShader + 8);
-#else
         *(arg + 7) = (byte) * (unsigned short *)(routingShader + 8);
 #endif
         return 1;
@@ -607,7 +613,13 @@ static Bool MATERIAL_REGPARM3_ABI Material_LoadPassTextureStateDx7_impl(const ch
 
     if (!Com_MatchToken(text, "stage", 1))
         return 0;
+#if defined(COD2_X64)
+    if (!Com_MatchToken(text, "[", 1))
+        return 0;
+    {
+#else
     if (Com_MatchToken(text, "[", 1)) {
+#endif
         int idx = Com_ParseInt(text);
         if (idx != samplerIndex) {
             Com_ScriptWarning("expected %i, found %i instead\n", samplerIndex, idx);
@@ -663,7 +675,11 @@ static Bool MATERIAL_REGPARM3_ABI Material_LoadPassTextureStateDx7_impl(const ch
 #endif
         if (!(validTest & funcValidMask)) {
             const char *desc = (validTest == 1) ? "alpha" : "color";
+#if defined(COD2_X64)
+            Com_ScriptWarning("%s is only valid for %s", token, desc);
+#else
             Com_ScriptWarning("%s is only valid for %s\n", token, desc);
+#endif
             return 0;
         }
 #if defined(COD2_X64)
@@ -721,7 +737,11 @@ static Bool MATERIAL_REGPARM3_ABI Material_LoadPassTextureStateDx7_impl(const ch
             texArg |= 5;
         } else if (strcmp(token, "stage") == 0) {
             if (samplerIndex == 0) {
+#if defined(COD2_X64)
+                Com_ScriptWarning("'stage' is not valid for the first texture.  Use 'vertex.color' instead.\n");
+#else
                 Com_ScriptWarning("first stage cannot reference the previous stage\n");
+#endif
                 return 0;
             }
             if (!Com_MatchToken(text, "[", 1))
@@ -889,7 +909,18 @@ static Bool MATERIAL_REGPARM3_ABI Material_SetPassShaderArguments_impl(const cha
         goto fail;
     }
 #endif
+#if defined(COD2_X64)
+    *argCount = (byte)constantCount;
+    /* Mac tests the low byte before allocating or visiting CTAB records. */
+    if (constantCount == 256) {
+        *args = NULL;
+        if (!Com_MatchToken(text, "{", 1) || !Com_MatchToken(text, "}", 1))
+            goto fail;
+        goto succeed;
+    }
+#else
     *argCount = (unsigned short)constantCount;
+#endif
 
     if (constantCount == 0) {
         MaterialShaderArgument fallbackArgs[16];
@@ -917,7 +948,7 @@ static Bool MATERIAL_REGPARM3_ABI Material_SetPassShaderArguments_impl(const cha
             const char *source = Com_Parse(text);
             if (strcmp(source, "constant") == 0) {
                 unsigned short typeInfo[6] = {1, 3, 1, 4, 1, 0};
-                MaterialCodeConstantRouting routing = {0, 1, (const byte *)typeInfo};
+                MaterialCodeConstantRouting routing = {0, 1, (const byte *)typeInfo, 1};
                 arg.type = 1;
                 if (!Material_ParseCodeConstantSource_r_impl(text, (const byte *)&routing, 0,
                                                               s_codeConsts, (byte *)&arg))
@@ -1030,7 +1061,9 @@ static Bool MATERIAL_REGPARM3_ABI Material_SetPassShaderArguments_impl(const cha
                 }
                 const char *next = Com_Parse(text);
                 if (next[0] == ']') {
+#if !defined(COD2_X64)
                     firstRow = 0;
+#endif
                     rowCount = 1;
                 } else if (next[0] == ',') {
                     int endRow = Com_ParseInt(text);
@@ -1060,6 +1093,7 @@ static Bool MATERIAL_REGPARM3_ABI Material_SetPassShaderArguments_impl(const cha
         routingStorage.firstRow = firstRow;
         routingStorage.rowCount = rowCount;
         routingStorage.typeInfo = typeInfo;
+        routingStorage.registerCount = *(const unsigned short *)(constEntry + 8);
 #else
         routing[4] = firstRow;
         routing[5] = rowCount;
@@ -1368,7 +1402,11 @@ static Bool MATERIAL_REGPARM3_ABI Material_ParseRuleSet_impl(const char **text, 
                 if (r2 == MTL_PARSE_SUCCESS)
                     goto parse_operator;
                 if (r2 == MTL_PARSE_NO_MATCH) {
+#if defined(COD2_X64)
+                    Com_ScriptWarning("failed parsing conditional after '&&'\n");
+#else
                     Com_ScriptWarning("can't use '==' for multiple conditions\n");
+#endif
                     return 0;
                 }
                 return 0;
@@ -1509,7 +1547,11 @@ static Bool MATERIAL_REGPARM2_ABI Material_LoadPassStateMap_impl(const char **te
 
     token = Com_Parse(text);
     if (token[0] == '\0' || token[0] == ';') {
+#if defined(COD2_X64)
+        Com_ScriptWarning("missing stateMap filename\n");
+#else
         Com_ScriptWarning("missing stateMap name\n");
+#endif
         return 0;
     }
 
@@ -1529,7 +1571,11 @@ static Bool MATERIAL_REGPARM2_ABI Material_LoadPassStateMap_impl(const char **te
             memcpy((void *)(sm + 1), token, nameLen);
 
             Com_BeginParseSession(filename);
+#if defined(COD2_X64)
+            Com_SetScriptWarningPrefix("^1ERROR: ");
+#else
             Com_SetScriptWarningPrefix("");
+#endif
             Com_SetSpaceDelimited(0);
 
             if (!Material_ParseRuleSet_impl(&smText, "alphaTest",
@@ -1553,10 +1599,20 @@ static Bool MATERIAL_REGPARM2_ABI Material_LoadPassStateMap_impl(const char **te
                 for (i = 0; i < rc; i++, rule += 0x20) {
                     unsigned int v1c = ((MaterialStateMapRule *)rule)->stateBitsClear[1];
                     if (((v1c >> 8) & 7) != 0) {
+#if defined(COD2_X64)
+                        /* The cursor includes the rule-count word: Mac +0x14. */
+                        MaterialStateMapRule *nativeRule = &((MaterialStateMapRuleSet *)rule)->rules[0];
+                        unsigned int v14 = nativeRule->stateBitsSet[0];
+#else
                         unsigned int v14 = ((MaterialStateMapRule *)rule)->stateBitsValue[1];
+#endif
                         if ((v14 & 0x700) > 0x100) {
                             ((MaterialStateMapRule *)rule)->stateBitsClear[1] = v1c | 0x7ff;
+#if defined(COD2_X64)
+                            nativeRule->stateBitsSet[0] = (v14 & 0xfffff800) | 0x111;
+#else
                             ((MaterialStateMapRule *)rule)->stateBitsValue[1] = (v14 & 0xfffff800) | 0x111;
+#endif
                         }
                     }
                 }
@@ -1596,10 +1652,19 @@ static Bool MATERIAL_REGPARM2_ABI Material_LoadPassStateMap_impl(const char **te
                     for (i = 0; i < rc; i++, rule += 0x20) {
                         unsigned int v1c = ((MaterialStateMapRule *)rule)->stateBitsClear[1];
                         if ((v1c & 0x7000000) != 0) {
+#if defined(COD2_X64)
+                            MaterialStateMapRule *nativeRule = &((MaterialStateMapRuleSet *)rule)->rules[0];
+                            unsigned int v14 = nativeRule->stateBitsSet[0];
+#else
                             unsigned int v14 = ((MaterialStateMapRule *)rule)->stateBitsValue[1];
+#endif
                             if ((v14 & 0x7000000) > 0x1000000) {
                                 ((MaterialStateMapRule *)rule)->stateBitsClear[1] = v1c | 0x7ff0000;
+#if defined(COD2_X64)
+                                nativeRule->stateBitsSet[0] = (v14 & 0xf800ffff) | 0x01110000;
+#else
                                 ((MaterialStateMapRule *)rule)->stateBitsValue[1] = (v14 & 0xf800ffff) | 0x01110000;
+#endif
                             }
                         }
                     }
@@ -2874,7 +2939,11 @@ Material *Material_Load(const char *name, int imageTrack)
     int fileSize = Material_LoadFile(name, &fileHandle);
 
     if (fileSize < 0) {
+#if defined(COD2_X64)
+        if (name[0] != '$')
+#else
         if (Material_ShouldPrintMissingMaterial(name))
+#endif
             Com_Printf("^1ERROR: Couldn't find material '%s'\n", name);
         return NULL;
     }
