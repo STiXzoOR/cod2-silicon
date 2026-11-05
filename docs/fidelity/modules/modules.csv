@@ -378,7 +378,7 @@ server/sv_net_chan_mp,8,6,1,0,1
 server/sv_snapshot_mp,21,11,10,0,0
 server/sv_voice_mp,7,7,0,0,0
 server/sv_world_mp,14,10,3,0,1
-snd,46,0,0,0,46
+snd,46,39,6,1,0
 speex/bits,10,0,0,10,0
 speex/cb_search,4,0,0,4,0
 speex/filters,14,0,0,14,0
