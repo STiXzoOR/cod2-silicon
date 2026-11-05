@@ -180647,7 +180647,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_ChineseCharToIndex; no equality inferred from its name or neighboring helpers."
+        "evidence": "Original1.3 executable body0x8138e18 positively specifies packed predicate, subtract0x8140, shifted high word times95 plus low byte. The four index bodies branch through the original locale predicates and return zero on rejection; full input-word arithmetic is retained rather than assumed to be a byte-only result. Exact complete Mac R_GetCharacterGlyph0xec2d8 directly indexes ASCII or binary-searches stored letter codes and returns a glyph pointer/fallback. It is not the complete locale arithmetic integer-index operation; existing byte classification also supplies no index conversion. No complete corresponding Mac/native index provider established. Original bounded call/address searches yielded no positive consumer; absence is not used as a verdict. Private exact bodies: recon-locale9.noindex. No source change, compilation, tests, CI, replay or runtime verification."
       },
       {
         "id": "mac:0x000315bc",
@@ -181030,7 +181030,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_JapaneseCharToIndex; no equality inferred from its name or neighboring helpers."
+        "evidence": "Original1.3 executable body0x8138d40 positively specifies packed predicate, subtract0x8140, trail decrement and lead-gap correction, shifted high word times188 plus low byte. The four index bodies branch through the original locale predicates and return zero on rejection; full input-word arithmetic is retained rather than assumed to be a byte-only result. Exact complete Mac R_GetCharacterGlyph0xec2d8 directly indexes ASCII or binary-searches stored letter codes and returns a glyph pointer/fallback. It is not the complete locale arithmetic integer-index operation; existing byte classification also supplies no index conversion. No complete corresponding Mac/native index provider established. Original bounded call/address searches yielded no positive consumer; absence is not used as a verdict. Private exact bodies: recon-locale9.noindex. No source change, compilation, tests, CI, replay or runtime verification."
       },
       {
         "id": "linux:stringed/stringed_hooks.cpp:349:SEH_KoreanCharToIndex",
@@ -181049,7 +181049,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_KoreanCharToIndex; no equality inferred from its name or neighboring helpers."
+        "evidence": "Original1.3 executable body0x8138b7e positively specifies packed predicate, subtract0xb0a0, unsigned shifted high word times96 plus low byte. The four index bodies branch through the original locale predicates and return zero on rejection; full input-word arithmetic is retained rather than assumed to be a byte-only result. Exact complete Mac R_GetCharacterGlyph0xec2d8 directly indexes ASCII or binary-searches stored letter codes and returns a glyph pointer/fallback. It is not the complete locale arithmetic integer-index operation; existing byte classification also supplies no index conversion. No complete corresponding Mac/native index provider established. Original bounded call/address searches yielded no positive consumer; absence is not used as a verdict. Private exact bodies: recon-locale9.noindex. No source change, compilation, tests, CI, replay or runtime verification."
       },
       {
         "id": "linux:stringed/stringed_hooks.cpp:520:SEH_LanguageUsesSpaces",
@@ -181068,7 +181068,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_LanguageUsesSpaces; no equality inferred from its name or neighboring helpers."
+        "evidence": "Original1.3 executable body0x81390ea positively specifies call current-language provider, subtract9, unsigned compare2, return0 for languages9..11 and1 otherwise. The four index bodies branch through the original locale predicates and return zero on rejection; full input-word arithmetic is retained rather than assumed to be a byte-only result. Exact Mac Language_IsAsian0x31682 merely returns g_currentAsian, not this language-set predicate; no complete corresponding Mac/native owner established. Original bounded call/address searches yielded no positive consumer; absence is not used as a verdict. Private exact bodies: recon-locale9.noindex. No source change, compilation, tests, CI, replay or runtime verification."
       },
       {
         "id": "mac:0x00031d6c",
@@ -181304,7 +181304,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_TraditionalChineseCharToIndex; no equality inferred from its name or neighboring helpers."
+        "evidence": "Original1.3 executable body0x8138c5a positively specifies packed predicate, subtract0xa140, conditional0x20 gap correction, shifted high word times160 plus low byte. The four index bodies branch through the original locale predicates and return zero on rejection; full input-word arithmetic is retained rather than assumed to be a byte-only result. Exact complete Mac R_GetCharacterGlyph0xec2d8 directly indexes ASCII or binary-searches stored letter codes and returns a glyph pointer/fallback. It is not the complete locale arithmetic integer-index operation; existing byte classification also supplies no index conversion. No complete corresponding Mac/native index provider established. Original bounded call/address searches yielded no positive consumer; absence is not used as a verdict. Private exact bodies: recon-locale9.noindex. No source change, compilation, tests, CI, replay or runtime verification."
       },
       {
         "id": "mac:0x00031880",
