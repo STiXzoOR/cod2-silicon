@@ -99,7 +99,12 @@ void R_CreateWaterSetup(const water_t *source, int waterMapSetupIndex, water_t *
 
             dot = kx * destination->winddir[0] + ky * destination->winddir[1];
 
+#if defined(COD2_X64)
+            /* Mac's jb takes the spectrum branch for unordered dot products. */
+            if (!(dot <= 0.0f)) {
+#else
             if (dot > 0.0f) {
+#endif
 
                 Ph = (double)destination->amplitude * exp((double)(-1.0f / (k_sq * L)));
                 Ph = Ph / (double)(k_sq * k_sq * k_sq);
