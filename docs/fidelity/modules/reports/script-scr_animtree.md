@@ -34,3 +34,9 @@ Independent source/binary review at source freeze `28e7d452399e38b2c296b8b4230e3
 ## Original reverse-lookup identity
 
 Original1.0 IDB body 0x806d034 uniquely relocates to original1.3 0x806d67c: start at the server animation count, compare animation pointers while descending, and return a matching index or zero. This establishes the original reverse helper's complete contract. Fresh exact Mac `Scr_UsingTreeInternal` at 0x9c020 instead searches ushort variable IDs upward at 0x9c0db–0x9c11e, and `Scr_GetAnims` at 0x9bdca only indexes the animation table forward. Neither supplies the descending animation-pointer search. `Scr_GetAnimsIndex` remains unchecked; no source or settled verdict changed, and no compilation, tests, CI or replay ran.
+
+## Actual selected-index compatibility route — 2026-11-06
+
+`Scr_GetAnimsIndex` remains unchecked. The complete original reverse lookup at 0x806d67c descends from the server tree count, returning the first matching animation-pointer index or zero. A fresh complete Mac `Scr_GetAnim` inspection supplies an actual pointer comparison at 0x8763a–0x8764e, but its index already came from the external packed animation value at 0x87620–0x87626. Its result at 0x87716–0x87725 repacks that same index with the animation index. This selected-index compatibility operation does not establish a pointer-only reverse lookup, descending duplicate precedence or the no-match result. The prior ascending tree-ID search rejection is preserved.
+
+Private evidence: `recon-provenance-scriptget32.noindex`. Source and settled verdicts are unchanged; no compilation, tests, CI, replay or runtime execution ran.

@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 273,
+      "unchecked": 272,
       "intentional": 3184,
-      "equal": 4789,
+      "equal": 4790,
       "fixed": 1211
     },
     "scopes": {
@@ -154256,7 +154256,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Mac nm exposes only a zero-address absolute .eh symbol; no executable text symbol or attributable inline caller was found. Native has no body or callers. The Linux reverse pointer search was read for identity only and cannot establish Mac equality. Original executable provenance follow-up: Linux1.0 0x806d034 maps to Linux1.3 0x806d67c. Descends server xanim count, compares animation pointers and returns matching index or zero. Fresh exact Mac UsingTreeInternal0x9c020 has a different ascending ushort id lookup at0x9c0db-0x9c11e; GetAnims0x9bdca is forward indexing. No absence-based closure; Mac remains primary."
+        "evidence": "Original1.0 0x806d034 maps to complete original1.3 0x806d67c\u20130x806d6bb descending server-count pointer search, first matching index or0. Fresh complete Mac Scr_GetAnim0x874a4 obtains a preselected high16 index at0x87620\u201326, forward-loads and compares pointers0x8763a\u20134e, and repacks that same index0x87716\u201325. Actual compatibility check does not provide pointer-only reverse search, descending duplicate precedence or not-found result. Prior ascending ushort tree-ID lookup rejection preserved. Unchecked; no absence-based closure. Private recon-provenance-scriptget32.noindex; no source/compile/tests/CI/replay/runtime."
       },
       {
         "id": "mac:0x0009c928",
@@ -159004,7 +159004,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Mac nm exposes only a zero-address absolute .eh symbol for this name, no executable body. Native contains neither the function nor callers. No specific Mac inline range was established for the Linux-only endScriptBuffer predicate; equality is not claimed. Original executable provenance follow-up: Linux1.0 0x80757f8 maps to Linux1.3 0x8075e40. Two unsigned pointer comparisons against programBuffer and endScriptBuffer. Fresh exact Mac IsInOpcodeMemory uses programLen; EndLoadAnimTrees only assigns endScriptBuffer. Those are distinct operations. No absence-based closure; Mac remains primary."
+        "evidence": "Complete original1.0 0x80757f8\u21921.3 0x8075e40\u20130x8075e6e makes unsigned lower programBuffer/upper endScriptBuffer comparisons and returns full Boolean. Retained script7 exact bounds/producer evidence reread: IsInOpcodeMemory uses programLen; EndLoadAnimTrees only writes endScriptBuffer. Fresh complete named-function owner0xaf28e likewise filters result by programLen0xaf332, not script-memory end state. No complete actual endScriptBuffer query or producer-backed upper-bound equivalence established. Unchecked for concrete state/operation gap, not missing names/callers. Approved offset representation preserved. Private recon-provenance-scriptget32.noindex and retained script7; no source/compile/tests/CI/replay/runtime."
       },
       {
         "id": "mac:0x000aef34",
@@ -167895,7 +167895,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only row: no Mac text symbol/established inline identity, and no native body by this name found. The distinct checked Scr_GetAnim API does not prove the anim-tree getter contract. Original executable provenance: Linux1.0 0x808423e maps to Linux1.3 0x8084886. Original integer-tag/tree-index/pointer check plus cleanup, parameter error policy and fallback index0 recovered. Distinct Scr_GetAnim value getter cannot establish complete tree getter result/error contract. No closure from absent callers; no production change."
+        "evidence": "Complete original1.0 0x808423e\u21921.3 0x8084886\u20130x8084964 validates external count/type6, unsigned tree index and nonnull pointer, writes hidden pointer-valued result, and on failure releases/clears value before error policy; returned policy continues missing-parameter error and lookup[0]. Fresh full Mac GScr_GetAnimLength0x197ad0/AnimHasNotetrack0x197b3e consume type11 packed Scr_GetAnim then high16 forward Scr_GetAnims, with genuine animation-pointer consumers but no integer-parameter/error/fallback contract. Unchecked; no narrowing away error effects or standalone ABI claim. Private recon-provenance-scriptget32.noindex; source unchanged, no compile/tests/CI/replay/runtime."
       },
       {
         "id": "linux:script/scr_vm.cpp:3912:Scr_GetConstIString",
@@ -168119,7 +168119,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only row: no Mac text symbol/established inline identity, and no native body by this name found. Interpreter function-pointer consumption does not establish the external parameter getter contract. Original executable provenance: Linux1.0 0x8084788 maps to Linux1.3 0x8084dd0. Original tag9 getter returns code pointer minus programBuffer; mismatch sets error index and reports type, followed by missing-parameter error if returning, then0. Interpreter function consumption is not this external getter contract. No closure from absent callers; no production change."
+        "evidence": "Complete original1.0 0x8084788\u21921.3 0x8084dd0\u20130x8084e65 validates external count/type9, returns codepos-programBuffer, or sets error_index and reports type; returning error continues missing-parameter error and0. Fresh full Mac Scr_GetFunctionHandle0xaf28e selects canonical filename/name/object/code-variable, computes offset0xaf32f and programLen bound0xaf332. Real scalar handle does not establish external parameter selection/error/result role. Prior interpreter-gate rejection and approved native stored-offset adaptation preserved. Unchecked; private recon-provenance-scriptget32.noindex; no source/compile/tests/CI/replay/runtime."
       },
       {
         "id": "mac:0x0008728a",
@@ -168666,8 +168666,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native optional debugger implementation is in scr_debugger_eval.c outside owned files. No Mac text symbol/established inline identity found. The checked terminate-thread type dispatch does not establish this query. Original executable provenance: Linux1.0 0x8082e74 maps to Linux1.3 0x80834bc. Original checks notify type, startLocalId equality, waittill stack lookup and undefined final type. Existing termination type dispatch is not this complete boolean query. No closure from absent callers; no production change."
+        "status": "equal",
+        "evidence": "Equal complete consumed registered-notify classifier. Original1.0 0x8082e74\u21921.3 0x80834bc\u2013RET0x8083528 checks type16/root identity, full wait-slot resolver0x80833e2 and undefined slot type. Actual Mac endon producer0x84be8\u20130x84c84 writes undefined keyed slot and inverse pauseArray owner/name links; waittill0x84a9c\u20130x84b03 writes same structure with type10 stack. Successful stable type16 registration establishes both guards (GetStartLocalId0x885f0 follows only type18); actual nonzero-name inverse links make original resolver select exact slot traversed by VM_Notify0x81cf7\u20130x81d63. GetVarType0x81d98 plus TEST/JNE0x81d9d/9f consumes full Boolean with actual endon and wait-stack outcomes; native selected reads/branch match. Live valid backing, successful registration, nonzero interned name and stable consistent links required; no arbitrary-ID/zero-name/returned-allocation-error/debugger-API/whole-VM claim. Equal providers; later notifier time-byte adaptation0x82407\u201343b outside selected phase. Independently reviewed units/review-provenance-scriptget32-endon.md; private recon-provenance-scriptget32.noindex. Source unchanged; zero new defects; no compile/tests/CI/replay/runtime."
       },
       {
         "id": "mac:0x00081790",
