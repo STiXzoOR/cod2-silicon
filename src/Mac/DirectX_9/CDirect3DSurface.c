@@ -3,6 +3,10 @@
 #include "imports.h"
 #include <stdlib.h>
 #include <string.h>
+#if defined(COD2_X64)
+#include "lp64_gl_state.h"
+#include "lp64_surface.h"
+#endif
 
 #if defined(COD2_X64)
 /* C++ bool flags: one byte in the Mac binary and in the typed native data. */
@@ -46,7 +50,14 @@ typedef struct {
     unsigned char pad0[3];
     void *owner;
     unsigned char releaseOwnerOnDestroy;
+#if defined(COD2_X64)
+    /* Reuses native padding; CPU uploads and framebuffer copies have opposite
+     * row origins. This is live storage metadata, not an i386 class overlay. */
+    unsigned char pixelsBottomUp;
+    unsigned char pad1[2];
+#else
     unsigned char pad1[3];
+#endif
     GLenum openGLInternalFormat;
     GLenum openGLFormat;
     GLenum openGLElementType;
@@ -72,6 +83,28 @@ void CDirect3DSurface_SetNativeDimensions(void *surface, UINT32 width, UINT32 he
 static GLuint CDirect3DSurface_GetOwnerGLName(const CDirect3DSurfaceImpl *surface)
 {
     return COpenGLTexture_GetGLNameNative(surface->owner);
+}
+
+int CDirect3DSurface_GetNativeInfo(const void *object, CDirect3DSurfaceNativeInfo *info)
+{
+    const CDirect3DSurfaceImpl *surface = object;
+    if (!surface || surface->vtable != (void **)vtbl_CDirect3DSurface || !surface->owner)
+        return 0;
+    info->owner = surface->owner;
+    info->name = COpenGLTexture_GetGLNameNative(surface->owner);
+    info->target = surface->surfaceType == 1 ? surface->cubemapTarget : 0x0de1;
+    info->level = surface->level;
+    info->width = surface->width;
+    info->height = surface->height;
+    info->pixelsBottomUp = surface->pixelsBottomUp;
+    return info->name != 0;
+}
+
+void CDirect3DSurface_MarkGPUWritten(void *object)
+{
+    CDirect3DSurfaceImpl *surface = object;
+    surface->isDirty = 0;
+    surface->pixelsBottomUp = 1;
 }
 #endif
 
@@ -358,12 +391,14 @@ void CDirect3DSurface_CreateOpenGLSurfaceObject(const CDirect3DSurface *_this)
         UINT32 size = MacOpenGLUtils_GetLevelSizeInBytes(surface->width, surface->height, 1, &surface->format);
         glCompressedTexImage2DARB(target, surface->level, surface->openGLInternalFormat,
                                   surface->width, surface->height, 0, size, surface->surfaceMemory);
+        surface->pixelsBottomUp = 0;
     } else {
         /* Synchronous native uploads use proven logical extents. Mac's client
          * storage path rounds these up and requires a different backing contract. */
         glTexImage2D(target, surface->level, surface->openGLInternalFormat, width, height, 0,
                      surface->openGLFormat, surface->openGLElementType,
                      surface->openGLInternalFormat == 0x1902 ? NULL : surface->surfaceMemory);
+        surface->pixelsBottomUp = 0;
     }
 #else
 
@@ -412,12 +447,15 @@ void CDirect3DSurface_UpdateOpenGLSurfaceObject(const CDirect3DSurface *_this, i
     if (surface->format == D3DFMT_DXT1 || surface->format == D3DFMT_DXT2 ||
         surface->format == D3DFMT_DXT3 || surface->format == D3DFMT_DXT5) {
         UINT32 size = MacOpenGLUtils_GetLevelSizeInBytes(surface->width, surface->height, 1, &surface->format);
-        if (surface->width > 3 && surface->height > 3)
+        if (surface->width > 3 && surface->height > 3) {
             glCompressedTexSubImage2D(target, surface->level, 0, 0, surface->width, surface->height,
                                       surface->openGLInternalFormat, size, surface->surfaceMemory);
+            surface->pixelsBottomUp = 0;
+        }
     } else {
         glTexSubImage2D(target, surface->level, 0, 0, surface->width, surface->height,
                         surface->openGLFormat, surface->openGLElementType, surface->surfaceMemory);
+        surface->pixelsBottomUp = 0;
     }
 #else
 

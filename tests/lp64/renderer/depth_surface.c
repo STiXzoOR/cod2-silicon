@@ -84,11 +84,28 @@ static void Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, DWORD value)
     assert(!CDirect3DDevice_SetRenderState((const void *)dev, state, value));
 }
 
+#if defined(COD2_X64)
+static void *FixtureSurface(void)
+{
+    static void *surface;
+    if (!surface) {
+        surface = calloc(1, 128);
+        CDirect3DSurface_CDirect3DSurface(surface, 0, 0, 0, 32, 32, D3DFMT_A8R8G8B8, NULL, NULL);
+    }
+    return surface;
+}
+#endif
+
 static void Surface(DeviceImpl *dev, int present)
 {
+#if defined(COD2_X64)
+    assert(!CDirect3DDevice_SetDepthStencilSurface((const void *)dev,
+        present ? FixtureSurface() : NULL));
+#else
     static int surface;
     assert(!CDirect3DDevice_SetDepthStencilSurface((const void *)dev,
         present ? (IDirect3DSurface9 *)&surface : NULL));
+#endif
 }
 
 static void State(int depth, int write, int stencil, unsigned mask)
@@ -192,6 +209,7 @@ int main(int argc, char **argv)
         .gl = { .name = &defaultTextureName, .width = 1, .height = 1, .depth = 1 }
     };
     dev.saveSurface = (void *)&defaultTexture;
+    dev.renderTarget = FixtureSurface();
 #endif
     dev.streams[0] = (void *)&vb;
     dev.streamStrides[0] = sizeof(vertices[0]);
