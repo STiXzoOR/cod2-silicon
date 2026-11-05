@@ -10,6 +10,10 @@ extern fnptr_t vtbl_CMemoryBuffer[];
 int CMemoryBuffer_sDelayedFreeRequests = 0;
 UINT32 CMemoryBuffer_sMemoryDesignatedForDelayedFree = 0;
 
+#if defined(COD2_X64)
+#include "lp64_buffers.h"
+typedef CMemoryBufferNative CMemoryBufferImpl;
+#else
 typedef struct {
 #if defined(COD2_X64)
     fnptr_t *vptr;
@@ -21,6 +25,7 @@ typedef struct {
     UINT32 length;
     int freedLater;
 } CMemoryBufferImpl;
+#endif
 
 typedef struct CMemoryBufferFreeRequestNode {
     struct CMemoryBufferFreeRequestNode *next;
@@ -262,6 +267,9 @@ void CMemoryBuffer_Reset(void)
     CMemoryBuffer_EnsureDelayedFreeListInitialized();
     head = CMemoryBuffer_GetDelayedFreeHead();
 
+#if defined(COD2_X64)
+    glFinish();
+#endif
     for (node = head->next; node != head; node = next) {
         next = node->next;
         CMemoryBuffer_sMemoryDesignatedForDelayedFree -= node->length;

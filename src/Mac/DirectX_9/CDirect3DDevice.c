@@ -104,6 +104,11 @@ extern unsigned int COpenGL_SetTexMatrixIdentity(const COpenGL *_this, UINT32 Un
 extern unsigned int COpenGL_EnableTexCoordArray(const COpenGL *_this, UINT32 Unit, GLint Size, GLenum Type, GLsizei Stride, const unsigned int *Pointer);
 extern unsigned int COpenGL_Shutdown(const COpenGL *_this);
 extern unsigned int COpenGL_Init(const COpenGL *_this, UINT32 Buffers, UINT32 MaxTextureUnits, UINT32 MaxTextureImageUnits);
+#if defined(COD2_X64)
+extern void CMemoryBuffer_Update(void);
+extern void CMemoryBuffer_Reset(void);
+extern UINT32 COpenGL_sFrameCount;
+#endif
 
 extern void *imp___ZN7COpenGL7sOpenGLE;
 extern void *imp___ZN13COpenGLMatrix9sIdentityE;
@@ -2091,6 +2096,10 @@ HRESULT CDirect3DDevice_Present(const CDirect3DDevice *_this, const RECT *pSourc
 #endif
         SDL_GL_SwapWindowDirect();
     }
+#if defined(COD2_X64)
+    CMemoryBuffer_Update();
+    ++COpenGL_sFrameCount;
+#endif
     return 0;
 }
 
@@ -4966,6 +4975,11 @@ void ZN15CDirect3DDeviceD1Ev(void *_this)
 #endif
 
     if (dev->context) {
+#if defined(COD2_X64) && COD2_APPLE_SDK
+        /* Mac 0x1b05f drains delayed storage before releasing this context. */
+        if (MacDisplay_MakeContextCurrent(dev->context))
+            CMemoryBuffer_Reset();
+#endif
         MacDisplay_ReleaseContext(&dev->context);
     }
 }

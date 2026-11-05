@@ -333,6 +333,13 @@ static void CreateMetalPresentation(MacContext *ctx)
 #endif
 
 #if defined(COD2_X64)
+int MacDisplay_MakeContextCurrent(void *context)
+{
+    MacContext *ctx = context;
+    return ctx && ctx->context && ctx->drawable &&
+        SDL_GL_MakeCurrent(ctx->drawable, ctx->context) == 0;
+}
+
 void MacDisplay_SetPresentationInterval(void *context, uint32_t interval)
 {
     MacContext *ctx = context;

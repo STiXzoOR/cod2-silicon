@@ -29177,7 +29177,7 @@
   },
   "mac:0x000d0030": {
     "status": "intentional",
-    "evidence": "Mac 0xd0030 locks with 0x2000 and checks 16-byte alignment/error/unlock exactly as native. Existing native lockType/gpuSync selection can use 0x1000 and skips null buffers; retained portability adaptation. Selected CDirect3DVertexBuffer_Lock ignores Flags and SizeToLock and returns data+offset, so both valid flag paths have the same current GL behavior."
+    "evidence": "Mac 0xd0030 / 0xd0054 always passes DISCARD 0x2000 before error/alignment handling. The pending native GL buffer owner now honors DISCARD by retiring/recreating backing, invalidating the earlier ignored-Flags justification. Native Apple R_LockSkinnedCache now always passes 0x2000. Its existing typed lockType API and null-buffer skip remain native adaptations; non-Apple/legacy selection is preserved. Actual Apple object and five OFF/actual-line comparisons pass; discard behavior through this caller is compiled and reviewed, not exercised."
   },
   "mac:0x000cffe2": {
     "status": "equal",
@@ -30646,5 +30646,277 @@
   "mac:0x0001faee": {
     "status": "equal",
     "evidence": "Mac 0x1faee selected by address (otool-p name collides): priority0xffff guard, initialize1 triple-pointer zero and initialize0 allocation free match actual native helper; native retains defined post-free begin zero."
+  },
+  "mac:0x0001b47e": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001b47e: Restore embedded aligned CMemoryBuffer destruction rather than free the draw-facing data pointer. Compiled and reviewed; not exercised. Fresh-review correction: the actual MacShim constructor records the inline memory address separately, while D0-only automatic cleanup removes only outer addresses. Native owner D1 now explicitly forgets the constructed member after non-deleting memory D1, before owner free; direct/borrowed fallback is unchanged. Actual Apple owners compile and existing GL/resource fixtures pass, but no installed-hook fixture exercises real registry cleanup; that path remains compiled and reviewed only."
+  },
+  "mac:0x0001b496": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001b496: Restore embedded aligned CMemoryBuffer destruction before deleting the index-buffer owner. Compiled and reviewed; not exercised. Fresh-review correction: the actual MacShim constructor records the inline memory address separately, while D0-only automatic cleanup removes only outer addresses. Native owner D1 now explicitly forgets the constructed member after non-deleting memory D1, before owner free; direct/borrowed fallback is unchanged. Actual Apple owners compile and existing GL/resource fixtures pass, but no installed-hook fixture exercises real registry cleanup; that path remains compiled and reviewed only."
+  },
+  "mac:0x0001b46c": {
+    "status": "equal",
+    "evidence": "Mac 0x0001b46c: Compared increment/store/return of the 32-bit reference count. Read against the selected native body."
+  },
+  "mac:0x0001b580": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001b580: Restore 32-byte-aligned CMemoryBuffer backing and the GetFormatSizeInBits(format)>>3 index width; retain deterministic zero-filled initial native bytes. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0001b5fa": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001b5fa: C2 has the same construction sequence as C1: aligned backing and format-derived width restored; deterministic initial native bytes retained. Compiled and reviewed; not exercised."
+  },
+  "mac:0x002ee1e0": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee1e0: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x002ee208": {
+    "status": "fixed",
+    "evidence": "Mac 0x002ee208: GetDesc is a no-write success stub in __textcoal_nt; remove invented descriptor writes. Compiled and reviewed; not exercised."
+  },
+  "mac:0x002ee1c8": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee1c8: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x002ee1f0": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee1f0: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x002ee1d8": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee1d8: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x002ee1fe": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee1fe: Compared resource-type constant return (7). Read against the selected native body."
+  },
+  "mac:0x0001b508": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001b508: Restore usage0x200 plus DISCARD0x2000 delayed-free(2)/recreate branch, lock state and data-pointer mirroring. Compiled and reviewed; not exercised. Selected native Present now invokes Update then increments the frame count, matching Mac0x157f3/0x157fd; teardown drains only after successful typed context activation."
+  },
+  "mac:0x002ee1f8": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee1f8: Compared empty __textcoal_nt body. Read against the selected native body."
+  },
+  "mac:0x0001b4be": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001b4be: QueryInterface must dispatch AddRef through vtable slot1 rather than a direct class call. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0001b4d8": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001b4d8: Release must dispatch the deleting destructor through vtable slot15 at zero references. Compiled and reviewed; not exercised."
+  },
+  "mac:0x002ee1e8": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee1e8: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x002ee1d0": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee1d0: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x0001b500": {
+    "status": "equal",
+    "evidence": "Mac 0x0001b500: Compared no-write success stub. Read against the selected native body."
+  },
+  "mac:0x002ee528": {
+    "status": "fixed",
+    "evidence": "Mac 0x002ee528: Restore cache-block destructor vtable reset, using the pointer-width native vtable replacing the i386 import table. Compiled and reviewed; not exercised."
+  },
+  "mac:0x002ee53c": {
+    "status": "fixed",
+    "evidence": "Mac 0x002ee53c: Restore cache-block vtable reset before deleting the owner. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0000e4b0": {
+    "status": "unchecked",
+    "evidence": "Mac 0x0000e4b0 body read: generic packet selection, range/cache flush and stream/array guards. No selected native function exists in baseline or pending device9f05cde; current direct-array/program draw providers do not establish cached packet/VAR control parity. Requires pending VAO/vertex-array and device provider reconciliation; no out-of-scope draw replacement attempted."
+  },
+  "mac:0x0000de60": {
+    "status": "unchecked",
+    "evidence": "Mac 0x0000de60 body read: generic packet selection, range/cache flush and stream/array guards. No selected native function exists in baseline or pending device9f05cde; current direct-array/program draw providers do not establish cached packet/VAR control parity. Requires pending VAO/vertex-array and device provider reconciliation; no out-of-scope draw replacement attempted."
+  },
+  "mac:0x0001eca0": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001eca0: Restore optional cache destruction, nondynamic VAO packet release, fence-ID recycling/list cleanup and embedded memory destruction before owner deletion. Compiled and reviewed; not exercised. Fresh-review correction: the actual MacShim constructor records the inline memory address separately, while D0-only automatic cleanup removes only outer addresses. Native owner D1 now explicitly forgets the constructed member after non-deleting memory D1, before owner free; direct/borrowed fallback is unchanged. Actual Apple owners compile and existing GL/resource fixtures pass, but no installed-hook fixture exercises real registry cleanup; that path remains compiled and reviewed only."
+  },
+  "mac:0x0001edfe": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001edfe: Restore optional cache destruction, nondynamic VAO packet release, fence-ID recycling/list cleanup and embedded memory destruction. Compiled and reviewed; not exercised. Fresh-review correction: the actual MacShim constructor records the inline memory address separately, while D0-only automatic cleanup removes only outer addresses. Native owner D1 now explicitly forgets the constructed member after non-deleting memory D1, before owner free; direct/borrowed fallback is unchanged. Actual Apple owners compile and existing GL/resource fixtures pass, but no installed-hook fixture exercises real registry cleanup; that path remains compiled and reviewed only."
+  },
+  "mac:0x0001ef50": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001ef50: D2 repeats complete-destruction behavior: cache, VAO release, fence recycle/list cleanup and memory backing. Compiled and reviewed; not exercised. Fresh-review correction: the actual MacShim constructor records the inline memory address separately, while D0-only automatic cleanup removes only outer addresses. Native owner D1 now explicitly forgets the constructed member after non-deleting memory D1, before owner free; direct/borrowed fallback is unchanged. Actual Apple owners compile and existing GL/resource fixtures pass, but no installed-hook fixture exercises real registry cleanup; that path remains compiled and reviewed only."
+  },
+  "mac:0x0001e8dc": {
+    "status": "equal",
+    "evidence": "Mac 0x0001e8dc: Compared increment/store/return of the 32-bit reference count. Read against the selected native body."
+  },
+  "mac:0x0001f21a": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001f21a: Restore aligned backing, lock state, empty fence list and usage0x400000 static cache with dirty 1024-byte blocks; retain deterministic initial native bytes. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0001f354": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001f354: C2 matches C1: aligned backing, lock/fence state and optional dirty-block cache construction restored. Compiled and reviewed; not exercised."
+  },
+  "mac:0x002ee56e": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee56e: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x0001e938": {
+    "status": "equal",
+    "evidence": "Mac 0x0001e938: Compared all six descriptor writes: format0, type6, usage, pool0, length and FVF0. Read against the selected native body."
+  },
+  "mac:0x002ee556": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee556: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x002ee57e": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee57e: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x002ee566": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee566: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x002ee58c": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee58c: Compared resource-type constant return (6). Read against the selected native body."
+  },
+  "mac:0x0001eb66": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001eb66: Restore lock-state/zero-size handling, dynamic discard retirement, nondynamic fence waits and flags1 dirty-block marking with Mac SSE unsigned ceil conversion. Compiled and reviewed; not exercised. Caller repair: native Apple R_InitStaticModelCache restores usage0x400208 from Mac0xe07ec before flags0x1001 locks at0xdff5f/0xe02fe; absent optional caches retain defined pointer locks. Existing GL/Metal/water fixtures exercise ordinary/no-cache borrowed locks; discard/fence/cache-flush branches remain compiled-only."
+  },
+  "mac:0x002ee586": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee586: Compared empty __textcoal_nt body. Read against the selected native body."
+  },
+  "mac:0x0001e8ee": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001e8ee: QueryInterface must dispatch AddRef through vtable slot1 rather than a direct class call. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0001e908": {
+    "status": "equal",
+    "evidence": "Mac 0x0001e908: Compared decrement, zero test and virtual deleting-destructor slot15. Read against the selected native body."
+  },
+  "mac:0x0001f0a2": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001f0a2: Replace stub with frame-age pruning, same-range replacement, fence-ID recycle and front-inserted new CFence. Compiled and reviewed; not exercised."
+  },
+  "mac:0x002ee576": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee576: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x002ee55e": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee55e: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x0001e930": {
+    "status": "equal",
+    "evidence": "Mac 0x0001e930: Compared no-write success stub. Read against the selected native body."
+  },
+  "mac:0x0001eab8": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001eab8: Replace stub with unsigned two-frame age pruning, strict range overlap, glFinishFenceAPPLE and fence-ID recycling. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0001e9de": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001e9de: Replace stub with dirty 1024-byte-block iteration, glFlushVertexArrayRangeAPPLE and dirty clearing; preserve Mac float conversion/order. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0001fc1a": {
+    "status": "equal",
+    "evidence": "Mac 0x0001fc1a: Compared destructor vtable reset, freedLater/allocation guards, conditional allocation free and pointer clearing; D0 additionally deletes owner. Read against the selected native body."
+  },
+  "mac:0x0001fc54": {
+    "status": "equal",
+    "evidence": "Mac 0x0001fc54: Compared destructor vtable reset, freedLater/allocation guards, conditional allocation free and pointer clearing; D0 additionally deletes owner. Read against the selected native body."
+  },
+  "mac:0x0001fb72": {
+    "status": "equal",
+    "evidence": "Mac 0x0001fb72: Compared zero-length/null case, ((length+31)&~31)+31 allocation size, 32-byte data alignment, stored length and freed flag; native backing pointers are widened. Read against the selected native body."
+  },
+  "mac:0x0001fcf6": {
+    "status": "equal",
+    "evidence": "Mac 0x0001fcf6: Compared freed flag early return, tail request insertion with allocation/length/frames, delayed-byte accounting, pointer clearing and freed flag; native request/list storage is pointer-sized. Read against the selected native body."
+  },
+  "mac:0x0001fbe0": {
+    "status": "equal",
+    "evidence": "Mac 0x0001fbe0: Compared aligned allocation size from stored length, data alignment and freed flag clearing. Read against the selected native body."
+  },
+  "mac:0x0001fdd6": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001fdd6: Restore unconditional glFinish before releasing delayed allocation payloads and clearing the request list. Compiled and reviewed; not exercised. Existing real-memory fixture exercises CPU list reset with no-context glFinish stub; native device teardown now activates its typed context before calling Reset. GPU synchronization remains unexercised."
+  },
+  "mac:0x0001fc96": {
+    "status": "equal",
+    "evidence": "Mac 0x0001fc96: Compared conditional prior-allocation free, pointer clearing, aligned new allocation, length store and freed flag clearing. Read against the selected native body."
+  },
+  "mac:0x0001fe80": {
+    "status": "equal",
+    "evidence": "Mac 0x0001fe80: Compared wrapper arguments (initialize0, priority0xffff) and the memory-module static initializer at0x1fe42; list node cleanup intentionally does not free payloads here, matching Mac. Read against the selected native body."
+  },
+  "mac:0x0001fe90": {
+    "status": "equal",
+    "evidence": "Mac 0x0001fe90: Compared wrapper arguments (initialize1, priority0xffff) and sentinel self-link initialization at0x1fe42. Read against the selected native body."
+  },
+  "mac:0x0001fe42": {
+    "status": "equal",
+    "evidence": "Mac 0x0001fe42: Compared actual memory-module body0x1fe42 (duplicate mangled static names require address selection): priority guard, init self-links and destroy node-only clear. Read against the selected native body."
+  },
+  "mac:0x0001d84e": {
+    "status": "equal",
+    "evidence": "Mac 0x0001d84e: Compared vtable reset, optional back-buffer virtual Release and D0 owner deletion. Read against the selected native body."
+  },
+  "mac:0x0001d86e": {
+    "status": "equal",
+    "evidence": "Mac 0x0001d86e: Compared vtable reset, optional back-buffer virtual Release and D0 owner deletion. Read against the selected native body."
+  },
+  "mac:0x0001d83c": {
+    "status": "equal",
+    "evidence": "Mac 0x0001d83c: Compared increment/store/return of the 32-bit reference count. Read against the selected native body."
+  },
+  "mac:0x0001d916": {
+    "status": "equal",
+    "evidence": "Mac 0x0001d916: Compared vtable, null back buffer and initial reference count1. Read against the selected native body."
+  },
+  "mac:0x0001d8dc": {
+    "status": "equal",
+    "evidence": "Mac 0x0001d8dc: Compared output assignment and unconditional surface virtual AddRef; buffer/type arguments unused. Read against the selected native body."
+  },
+  "mac:0x002ee2a8": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee2a8: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x002ee2a0": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee2a0: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x002ee290": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee290: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x002ee2b0": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee2b0: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x002ee298": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee298: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x002ee288": {
+    "status": "equal",
+    "evidence": "Mac 0x002ee288: Compared __textcoal_nt no-write success/zero-return stub; caller output arguments remain untouched. Read against the selected native body."
+  },
+  "mac:0x0001d89a": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001d89a: QueryInterface must dispatch AddRef through vtable slot1 rather than a direct class call. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0001d8b4": {
+    "status": "fixed",
+    "evidence": "Mac 0x0001d8b4: Release must dispatch the deleting destructor through vtable slot11 at zero references. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0001d8fc": {
+    "status": "equal",
+    "evidence": "Mac 0x0001d8fc: Compared assignment without releasing prior buffer and unconditional surface virtual AddRef return. Read against the selected native body."
   }
 }
