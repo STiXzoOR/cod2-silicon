@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**657 rows audited: 647 intentional, 5 fixed, 5 unchecked.** There are 631 external-import rows and 26 lower-address entries. No external library implementation is described as equal to reconstructed engine code.
+**657 rows audited: 650 intentional, 5 fixed, 2 unchecked.** There are 631 external-import rows and 26 lower-address entries. No external library implementation is described as equal to reconstructed engine code.
 
 ## Import identity and providers
 
@@ -35,9 +35,10 @@ The low-address FUN rows were located inside their enclosing symbols. Four are M
 
 Five coal-section texture/cube/vertex-shader thunks preserve their destructor targets with native subobject offsets. The remaining PIC, CRT and loader helpers are owned by the arm64 compiler/linker/runtime, including three real 25-byte `__picsymbolstub2` imports.
 
-Five import-unit rows remain unchecked:
+The key-resource follow-up closes 0x01acc42e `CFBundleCopyLocalizedString`, 0x01acc429 `CFStringGetPascalString`, and 0x01acc424 `StringToNum` as intentional. At native base `6ae3bd57`, the retained VK translator is reached only by unregistered Carbon key callbacks; the selected SDL key/text path queues engine events directly, and the four native generated-data payloads contain no callback/resource reference. This supersedes the earlier pending-VK_Map gap, without approving the zero language helper, placeholder CF providers or keyboard-layout parity. Original import identities and consumers, including the separate key-alert consumer, are documented in [Mac key-resource imports](mac-key-resource-imports.md). This follow-up is report/ledger-only source proof; it ran no build or runtime check.
 
-- 0x01acc42e `CFBundleCopyLocalizedString`, 0x01acc429 `CFStringGetPascalString`, and 0x01acc424 `StringToNum`: Mac `GetLanguageCode` at 0x9cbc uses these, and pending VK_Map still calls native `MacResources_GetLanguageCode`, which returns zero. The retained key-language resource path has no complete native provider/storage replacement.
+Two import-unit rows remain unchecked:
+
 - 0x00113119 and 0x00113166: Optimize's triangle-list and deque exception cleanup. The restored native normal path still allocates with throwing `__Znwm` from C and lacks matching unwind cleanup.
 The texture follow-up closes0x002f1830: the native constructor installs the volume secondary vtable and its deleting-destructor slot subtracts one pointer to reach the primary object, then follows D1/free ownership. Exact Mac coalesced thunk adjusts this by four bytes and jumps to D0; the native pointer-sized adjustment is verified against the actual adjacent fields. This boundary is fixed, compiled and reviewed; no secondary-interface runtime coverage is claimed.
 
