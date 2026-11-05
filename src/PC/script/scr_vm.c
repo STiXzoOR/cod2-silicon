@@ -265,6 +265,9 @@ extern unsigned int GetVariableKeyObject(unsigned int id);
 extern VariableUnion *GetVariableValueAddress(unsigned int id);
 extern void Scr_ClearWaitTime(unsigned int startLocalId);
 extern void ClearVariableValue(unsigned int id);
+#if defined(COD2_X64)
+extern unsigned int GetObjectA(unsigned int id);
+#endif
 extern unsigned int GetVariable(unsigned int parentId, unsigned int name);
 extern unsigned int GetArray(unsigned int id);
 extern unsigned int GetNewObjectVariable(unsigned int parentId, unsigned int id);
@@ -8096,7 +8099,22 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 
         case VMOP_IsDefinedSelfField:
             objectId = Scr_GetSelf(localId);
+#if defined(COD2_X64)
+            if (!IsFieldObject(objectId)) {
+                Scr_SetErrorMessageAndJump(va("%s is not an object", ((const char *const *)imp_var_typename)[GetVarType(objectId)]));
+                /* Mac 0x86269/0x86695 retains the opcode when this error
+                 * returns during evaluation or script loading. */
+                RuntimeError(pos, varPub->error_index, varPub->error_message,
+                             ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message);
+                varPub->error_message = NULL;
+                ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message = NULL;
+                varPub->error_index = 0;
+                ClearVariableValue(varPub->tempVariable);
+                objectId = GetObjectA(varPub->tempVariable);
+            }
+#else
             VM_CandidateFieldObjectCheck(objectId);
+#endif
             break;
 
         case VMOP_IsDefinedLevelField:
