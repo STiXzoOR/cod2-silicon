@@ -70,3 +70,39 @@ The COD2_X64 helper now uses unsigned32 multiplication/addition and memcpy for t
 The changed translation unit manually compiled in all four actual production configurations. Inactive unifdef output and five full preprocessing comparisons, including an assertions-enabled variant, are byte-identical without replacing __LINE__; source assertions precede the added guard and retain their positions. Source SHA2564d5c07b53deb09accc2cdea45fcc8cd670b6701eb633b88cc156c2c4bc0c2ef0 and receipts are retained in units/provenance-config13.compile.json and recon-provenance-config13.noindex. No tests, CI, replay or runtime exercise occurred. Compiled/reviewed does not establish sound-path coverage.
 
 Independent final review accepted the exact source hash, complete Mac arithmetic,32-bit native types and all four compile receipts. No additional compilation or runtime check was needed or performed.
+
+
+## Sequence15 playback-history wrap repair
+
+The two primary selectors remain fixed, now with one additional shared C-level
+arithmetic defect corrected. Exact Mac Com_PickSoundAliasFromList adds/stores the
+32-bit sequence at 0xad503/0xad506; Com_PickSoundAlias does so at 0xadab1/0xadab4.
+The selected alias receives the signed maximum's incremented bit pattern,
+including INT_MAX wrapping to INT_MIN. Native previously evaluated the increment
+as signed int, while the four actual optimized arm64 compile commands contain no
+signed-wrap option. COD2_X64 now increments an unsigned value and copies its
+representation into the existing int field. Signed comparisons, repeat avoidance,
+RNG operation, alias selection and the approved seed fix stay unchanged. Legacy
+source remains exact.
+
+The overflow input has a defined producer and a valid repeated-call path.
+Com_MakeSoundAliasesPermanent writes zero history at Mac 0xb6e50 and native
+com_sndalias_load_obj.c; CSV sequence belongs to temporary build ordering and is
+not the playback-history initializer. A valid one-entry list follows
+0xad494->0xad4fb->0xad500 without RNG or repeat avoidance. Starting at zero, its
+first 2147483647 selections have representable history; the next selection wraps
+on Mac. Neither complete selector requires an intervening reset. Reconstructing
+aliases resets new storage, but this is not required by selection. The full
+SND_PlayLocalSoundAlias/ByName owners at 0x4c17a/0x4c124 select before playback and
+supply no sequence cap. This is a finite call-contract proof, not a claim of a
+practical session reaching that many selections or an observed optimizer failure.
+
+The unchanged source hash reviewed for compilation is
+8806dc3ebf6d03a3561eb4d05d15f1646901e323c4cb0182ce8936832e380056.
+Four manual changed-TU compilations succeeded (stock/CoD2x client/dedicated).
+Exact OFF bytes and five full inactive preprocessing comparisons, including the
+assertion-enabled variant and actual line expansions, are identical. No tests,
+CI, replay, full build or runtime exercise occurred. No unresolved helper closes;
+this repair adds evidence to the two existing fixed primary rows only. Private
+complete owner/producer packets and receipts are retained under
+recon-provenance-sequence15.noindex and manual-sequence15-compile-8806dc3ebf6d.noindex.
