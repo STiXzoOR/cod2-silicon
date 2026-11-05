@@ -1,8 +1,8 @@
 # qcommon/common module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-06.
 
-**69/76 reconciled: 43 equal, 18 fixed, 8 intentional; 7 unchecked.** All 50 assigned Mac code entries were read by hand. The two event jump tables at 0x328600 and 0x328618 were decoded directly. Linux-only helper rows were compared in Mac callers where an identity could be established. Mac 1.3 is the authority, with the Windows checks below. Legacy preprocessor output is unchanged.
+**Current: 71/76 reconciled: 44 equal, 18 fixed, 9 intentional; 5 unchecked.** All 50 assigned Mac code entries were read by hand. The two event jump tables at 0x328600 and 0x328618 were decoded directly. Linux-only helper rows were compared in Mac callers where an identity could be established. Mac 1.3 is the authority, with the Windows checks below. Legacy preprocessor output is unchanged.
 
 ## Corrections
 
@@ -92,3 +92,12 @@ No production source changes, defects, compilation, tests, CI or replays in this
 The startup frame-time write does not close Com_ResetFrametime. Fresh exact Mac Com_Init_Try_Block_Function0x30be6 contains the complete inlined event-time operation at0x31222–0x312fc: Sys_GetEvent, queue writes and head/tail advancement, overflow diagnostic/payload free, then event-time storage. Complete Com_Milliseconds0x307c4 implements that same operation; native initialization calls it. Original ResetFrametime0x80627dc only calls Sys_Milliseconds and stores its result. The complete operations differ even though both update time. All six common helpers remain unchecked; arbitrary setters, error-abort locking/TLS and dedicated empty hooks retain their prior unresolved boundaries.
 
 Private original evidence remains in recon-provenance-parser5.noindex and recon-provenance-config7.noindex; new complete provider packets are in recon-provenance-parser12.noindex. No production source changes, compilation, tests, CI, replay or runtime exercise occurred.
+
+
+## Complete actual code-timescale assignment (timescale34)
+
+`Com_SetTimeScale` is equal through the complete constant-one assignment in actual initialization. Original 1.3 0x8060ede through RET 0x8060eea loads the input word and stores it unchanged to the code-timescale global, with no clamp, old-value result or additional state effect. Module-neighbor provenance disambiguates the small body. Independent original initialization and frame references corroborate this specific global's role; Linux supplies identity and intent only.
+
+Fresh full Mac `Com_Init` contains the actual input and complete effect at 0x30fbe: immediate float-one bits are written to `_com_codeTimeScale` at 0x375804. Native performs the same finite assignment to its corresponding static float. The selected store has remained unchanged since 88a0b288. Actual `Com_Frame` reads the full same state in its equality gate at 0x3037c and scaling multiply at 0x30425. These consumers establish the stored scalar's role without claiming that the complete timing pipeline has been recertified.
+
+The earlier arbitrary-value setter gap remains outside this accepted initialization operation. No exported runtime setter, arbitrary external values, literal inlining ancestry, concurrent mutation, FP cases outside the finite input, whole initialization/frame correctness or observed gameplay is claimed. Adjacent dvar-flag clearing is a separate operation. One equal closure; no new defect or source change. Independent review: units/review-provenance-timescale34.md; full original, two fresh Mac owners, raw store/constant bytes, original same-state corroboration and source hash are retained in private recon-provenance-timescale34.noindex. No compilation, tests, CI, full build, replay or runtime verification.
