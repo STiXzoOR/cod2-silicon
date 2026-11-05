@@ -8,8 +8,8 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 470,
-      "intentional": 3096,
+      "unchecked": 467,
+      "intentional": 3099,
       "equal": 4718,
       "fixed": 1173
     },
@@ -41484,8 +41484,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Mach-O __IMPORT,__jump_table 0x01acc42e is a 5-byte external stub for _CFBundleCopyLocalizedString, indirect-table slot 223 -> nlist index 413937, library Carbon; no external library body is in this executable. MacResources::GetLanguageCode at 0x9cbc uses localized CFString -> Pascal bytes -> StringToNum; pending VK_Map.c still calls MacResources_GetLanguageCode for key naming. Native MacResources_GetLanguageCode returns zero and these retained helpers have placeholder/missing providers. No complete native key-resource caller/storage replacement was established; must not retire this dependency with the startup-alert path."
+        "status": "intentional",
+        "evidence": "Mach-O __IMPORT,__jump_table 0x01acc42e is a five-byte Carbon _CFBundleCopyLocalizedString import, indirect-table slot 223 -> nlist index 413937; on-disk bytes are f4 placeholders, with no external library body. Original direct inventory has 15 calls in eight MacResources bodies (game strings, product family, language and startup errors) plus MacTools::MessageAlertFromKey at 0xaa9e. All corresponding native resource/alert wrappers have no selected live incoming graph; the excluded MacDisplay file only declares GetProductFamily. Selected native base 6ae3bd57 keeps MacResources/VK_Map compiled but only unregistered CCallOfDutyEngine_DoKeyDown/Up call TranslateKeyCodeToVK, the only external source consumer of MacResources_GetLanguageCode. Sys_GetEvent -> IN_Frame -> SDL_PumpInputEvents queues SDL key symbols as SE_KEY and decoded UTF-8 text as SE_CHAR directly; it bypasses those callbacks. The four selected LP64 generated C payloads contain no resource/translator/key-callback reference; typed_types.h has only an unused MacResources extern, and legacy data.S is not compiled. Native localization uses loc_language; error prompts use Win_LocalizeRef/localization.txt and MacWin32 MessageBoxA SDL/stderr. Dormant zero/int-typed CF providers and language return zero remain unapproved for live use; no French/German detection or keyboard-layout parity claim. Report/ledger-only original import/exact-consumer and current source/build/storage proof; no compile, tests, replay or runtime. See reports/mac-key-resource-imports.md."
       },
       {
         "id": "mac:0x01acc09b",
@@ -41792,8 +41792,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Mach-O __IMPORT,__jump_table 0x01acc429 is a 5-byte external stub for _CFStringGetPascalString, indirect-table slot 222 -> nlist index 413951, library Carbon; no external library body is in this executable. MacResources::GetLanguageCode at 0x9cbc uses localized CFString -> Pascal bytes -> StringToNum; pending VK_Map.c still calls MacResources_GetLanguageCode for key naming. Native MacResources_GetLanguageCode returns zero and these retained helpers have placeholder/missing providers. No complete native key-resource caller/storage replacement was established; must not retire this dependency with the startup-alert path."
+        "status": "intentional",
+        "evidence": "Mach-O __IMPORT,__jump_table 0x01acc429 is a five-byte Carbon _CFStringGetPascalString import, indirect-table slot 222 -> nlist index 413951; on-disk bytes are f4 placeholders, with no external library body. Exact original consumers are MacResources::GetGameString at 0x9c54 and GetLanguageCode at 0x9d2a, each passing a 256-byte Pascal buffer and encoding zero; the language body releases the copied CF string before StringToNum. Selected native base 6ae3bd57 keeps MacResources/VK_Map compiled but only unregistered CCallOfDutyEngine_DoKeyDown/Up call TranslateKeyCodeToVK, the only external source consumer of MacResources_GetLanguageCode. Sys_GetEvent -> IN_Frame -> SDL_PumpInputEvents queues SDL key symbols as SE_KEY and decoded UTF-8 text as SE_CHAR directly; it bypasses those callbacks. The four selected LP64 generated C payloads contain no resource/translator/key-callback reference; typed_types.h has only an unused MacResources extern, and legacy data.S is not compiled. Native localization uses loc_language; error prompts use Win_LocalizeRef/localization.txt and MacWin32 MessageBoxA SDL/stderr. Dormant zero/int-typed CF providers and language return zero remain unapproved for live use; no French/German detection or keyboard-layout parity claim. Report/ledger-only original import/exact-consumer and current source/build/storage proof; no compile, tests, replay or runtime. See reports/mac-key-resource-imports.md."
       },
       {
         "id": "mac:0x01acc406",
@@ -47380,8 +47380,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Mach-O __IMPORT,__jump_table 0x01acc424 is a 5-byte external stub for _StringToNum, indirect-table slot 221 -> nlist index 414194, library Carbon; no external library body is in this executable. MacResources::GetLanguageCode at 0x9cbc uses localized CFString -> Pascal bytes -> StringToNum; pending VK_Map.c still calls MacResources_GetLanguageCode for key naming. Native MacResources_GetLanguageCode returns zero and these retained helpers have placeholder/missing providers. No complete native key-resource caller/storage replacement was established; must not retire this dependency with the startup-alert path."
+        "status": "intentional",
+        "evidence": "Mach-O __IMPORT,__jump_table 0x01acc424 is a five-byte Carbon _StringToNum import, indirect-table slot 221 -> nlist index 414194; on-disk bytes are f4 placeholders, with no external library body. Its sole original direct consumer is MacResources::GetLanguageCode at 0x9d42, passing the Pascal buffer and separate cached integer (sentinel 0x7fff at function 0x9cbc). StringToNum has no native source call. Selected native base 6ae3bd57 keeps MacResources/VK_Map compiled but only unregistered CCallOfDutyEngine_DoKeyDown/Up call TranslateKeyCodeToVK, the only external source consumer of MacResources_GetLanguageCode. Sys_GetEvent -> IN_Frame -> SDL_PumpInputEvents queues SDL key symbols as SE_KEY and decoded UTF-8 text as SE_CHAR directly; it bypasses those callbacks. The four selected LP64 generated C payloads contain no resource/translator/key-callback reference; typed_types.h has only an unused MacResources extern, and legacy data.S is not compiled. Native localization uses loc_language; error prompts use Win_LocalizeRef/localization.txt and MacWin32 MessageBoxA SDL/stderr. Dormant zero/int-typed CF providers and language return zero remain unapproved for live use; no French/German detection or keyboard-layout parity claim. Report/ledger-only original import/exact-consumer and current source/build/storage proof; no compile, tests, replay or runtime. See reports/mac-key-resource-imports.md."
       },
       {
         "id": "mac:0x01acc91a",
