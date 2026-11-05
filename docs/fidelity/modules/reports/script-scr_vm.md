@@ -49,3 +49,11 @@ Generic VM recovery, allocation-dependent notify state and missing helper identi
 ## Batch 19 follow-up
 
 The remaining generic nonlocal live-frame/scratch and bounded unknown-opcode continuation gaps are addressed in script-scr_vm-recovery.md. The retained builtin/setter checkpoint is an intentional native adaptation and must not be described as original longjmp equality.
+
+## Internal interpreter alias bookkeeping — 2026-11-05
+
+Current totals: **97/112 reconciled: 85 equal, 9 intentional, 3 fixed; 15 unchecked**. The Linux-named `VM_ExecuteInternal(function_stack_t)` is the same internal interpreter covered by Mac row 0x8393a and the batch19 [recovery follow-up](script-scr_vm-recovery.md). Its evidence still cited two blockers that had already been repaired under that primary row. Native `VM_Execute(function_stack_t)` directly selects the reviewed C interpreter; this is distinct from the three-argument external-call overload.
+
+Reread the active forwarding path, volatile live frame fields, scratch resets and bounded unknown-opcode continuation against the exact original entry/recovery ranges. The alias now carries the established fixed verdict, including the preserved builtin/setter checkpoint, timeout and frame-table bounds adaptations and prior runtime limitations. This is an update to the duplicate identity, not a fresh claim that every interpreter path was exercised. The two dummy helpers and optional debugger identities remain separately unresolved.
+
+No engine code changed and no CI, builds or tests were run. Earlier evidence and independent review apply only to their documented scope; the parent performed this alias reconciliation directly after the worker usage cutoff.
