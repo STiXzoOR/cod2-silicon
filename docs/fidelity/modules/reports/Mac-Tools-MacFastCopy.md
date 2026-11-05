@@ -1,0 +1,5 @@
+# Mac/Tools/MacFastCopy reconciliation
+
+Updated 2026-11-05. **0/1 reconciled; 1 unchecked.** This source-attribution bucket contains COpenGL::SetLight, not a generic copy routine. Exact Mac 0x20fcc–0x21286 compares cached four-component light vectors and scalar fields, updates changed storage, then calls glLightfv/glLightf for GL_LIGHT0 + index. The original per-light cache is addressed from this + 0xbc with a 180-byte stride; several scalar fields extend through +0x7c from that cache base.
+
+The native COpenGL_SetLight in DirectX_9/COpenGL.c is a zero-return stub outside the optional Metal dispatcher. The selected native COpenGL type exposes only a vtable-sized placeholder, so copying the original offsets into it would write beyond declared storage. No source caller beyond a declaration in CDirect3DDevice.c was found, but that alone does not prove this API replaced. Its complete object allocation/cache and current renderer caller contract must be audited with COpenGL/CDirect3DDevice. Metal planning does not close the row. No renderer source was changed and no equality is claimed.

@@ -1,0 +1,5 @@
+# Mac/Tools/MacSavers reconciliation
+
+Updated 2026-11-05. **2/2 intentional.** Exact Mac StPortState constructor 0xa10e saves the QuickDraw port through GetPort then selects the window port; destructor 0xa132 restores the saved port through SetPort. The reconstructed wrappers live in MacBuilder.c and retain that call order.
+
+Native window ownership is instead in platform/macos_display.c, which creates SDL windows and GL contexts. The launcher has its separate native UI. Neither path uses QuickDraw port switching. Source and compiled-native generated-data searches found no caller/callback reference to these two helpers. They remain compiled but dormant beside the retired MacBuilder window path, whose BuildWindow currently returns NULL. The GetPort/SetPort placeholders are not approved for future use; calling these dormant wrappers would require a real port-storage/provider contract. This verdict names the current window replacement, not equality of those placeholders. No source change or new tests; dedicated build passed.
