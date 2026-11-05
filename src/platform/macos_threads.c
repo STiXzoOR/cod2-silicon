@@ -1,6 +1,9 @@
 #include "common_types.h"
 #include <errno.h>
 #include <stdlib.h>
+#if defined(__APPLE__) && defined(COD2_X64)
+#include "macos_exception_bridge.h"
+#endif
 
 static int CThread_Execute(CThread *self, void *argument) { (void)self; (void)argument; return 0; }
 void ZN7CThreadD1Ev(CThread *self);
@@ -9,12 +12,28 @@ static void *threadVtable[] = { (void *)ZN7CThreadD1Ev, (void *)ZN7CThreadD0Ev, 
 
 void CMutex_CMutex(const CMutex *object)
 {
+#if defined(__APPLE__) && defined(COD2_X64)
+    CMutex *self = (CMutex *)object;
+    pthread_mutexattr_t attr;
+    int status = pthread_mutexattr_init(&attr);
+    if (status)
+        Cod2Mac_ThrowStatus(status);
+    status = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    if (status)
+        Cod2Mac_ThrowStatus(status);
+    status = pthread_mutex_init(&self->mutex, &attr);
+    if (status)
+        Cod2Mac_ThrowStatus(status);
+    /* Like retail, only the successful construction destroys the attributes. */
+    pthread_mutexattr_destroy(&attr);
+#else
     CMutex *self = (CMutex *)object;
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(&self->mutex, &attr);
     pthread_mutexattr_destroy(&attr);
+#endif
 }
 void ZN6CMutexD1Ev(void *object) { pthread_mutex_destroy(&((CMutex *)object)->mutex); }
 void CThread_CThread(const CThread *object)
