@@ -55,3 +55,12 @@ Catalog coverage passed without semantic catalog changes. The earlier batch 8 ho
 ## Integrated batch 21 acceptance
 
 The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.
+
+
+## Original executable provenance follow-up (platform6)
+
+The original bare-address formatter is now anchored at original 1.0 0x80d2c0e and original 1.3 0x80d520a by a unique complete-body masked match. It formats four octets into its own 64-byte static buffer without a port. This is not the complete NET_AdrToString output/ownership contract.
+
+NET_Shutdown is anchored at original 1.0 0x80d360e and original 1.3 0x80d5c7e. Its short cleanup shape also matches four unrelated original bodies; the actual ip_socket field 0x8608e34, close import and placement immediately before NET_ErrorString disambiguate it. It conditionally closes a nonzero descriptor and clears that field, without the NET_Config state guard. No positive original caller or function-pointer use was recovered to relate this returning helper to Mac's terminal quit operation. Both rows remain unchecked; no conclusion is drawn from missing callers.
+
+This is a report-only provenance audit. No verdict or production source changes, compilation, tests, CI, replays or runtime exercise were performed. Private original body/address/caller packets are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-platform6.noindex/`. Prior verification records above describe earlier work, not this follow-up.

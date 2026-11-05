@@ -27,3 +27,10 @@ Catalog coverage passed without semantic catalog changes. The earlier batch 8 ho
 ## Integrated batch 21 acceptance
 
 The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.
+
+
+## Original executable provenance follow-up (platform6)
+
+The original 1.0 named Sys_DirectoryHasContents at 0x80d416a, consumed by FS_AddGameDirectoryInternal at 0x80a04b4, is the allocating, path-normalizing universal/unix_shared wrapper. It is not the separate thin Sys_DirectoryHasEntries reconstruction in unix_dir.c. Treating that named original as the unresolved thin helper would conflate two ledger identities. No positive original executable anchor for the thin helper was recovered; its any-entry contract also remains distinct from the Mac provider's filtering. The one row remains unchecked.
+
+This is a report-only provenance audit. No verdict or production source changes, compilation, tests, CI, replays or runtime exercise were performed. Private original body/address/caller packets are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-platform6.noindex/`. Prior verification records above describe earlier work, not this follow-up.
