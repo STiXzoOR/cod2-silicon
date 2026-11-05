@@ -62,6 +62,22 @@ typedef struct {
     GLenum blendSrcRGB, blendDstRGB, blendSrcAlpha, blendDstAlpha;
     CTexUnitNative texUnits[16];
     COpenGLBindingList vaoBindings;
+    UINT32 clientActiveTexUnit;
+    UINT32 texUnitCount;
+    const void *vertexArrayStart;
+    UINT32 vertexArraySize;
+    unsigned char supportsVAR, supportsAnisotropy, supportsLodBias;
+    GLuint vertexProgram;
+    GLenum matrixMode;
+    COpenGLBindingList textureBindings;
+    unsigned char colorMaterialEnabled, ditherEnabled;
+    unsigned char supportsATIArrayRevComps;
+    unsigned char supportsBlendSubtract, supportsBlendMinMax, supportsBlendSeparate, supportsStencilWrap;
+    GLfloat maxAnisotropy;
+    LightInfoType lights[8];
+    CBaseVAImpl colorArray, secondaryColorArray, normalArray, vertexArray;
+    VertexProgramStreamStateNative genericArrays[16];
+
 } COpenGLNative;
 
 void *COpenGL_GetVAOBindingList(const COpenGL *gl);

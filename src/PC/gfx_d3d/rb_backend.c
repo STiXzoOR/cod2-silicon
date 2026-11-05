@@ -3707,8 +3707,13 @@ static void RB_BlendSavedScreenCmd(GfxRenderCommandExecState *execState)
         unsigned int sh = (unsigned int)dxState.renderTargetHeight;
         screenWidth = (float)sw;
         screenHeight = (float)sh;
+#if defined(COD2_X64) && COD2_APPLE_SDK
+        pow2Width = screenWidth;
+        pow2Height = screenHeight;
+#else
         pow2Width = (float)nextPow2(sw);
         pow2Height = (float)nextPow2(sh);
+#endif
     }
 
     RB_DrawStretchPic(blendMaterial,
@@ -4097,13 +4102,19 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
         *(int *)&backEnd.codeConsts[32][3] = bloomDesat;
 
         {
+#if defined(COD2_X64)
+            float glowRadii[2] = { 0.0f, 0.0f };
+#else
             int glowRadii[2] = { 0, 0 };
+#endif
             int p;
             for (p = 0; p < 2; p++) {
 #if defined(COD2_X64)
                 float intensity = ((const dvar_t **)imp_r_glowBloomIntensity)[p]->current.value;
-                if (intensity > 0.0f)
-                    glowRadii[p] = ((const dvar_t **)imp_r_glowRadius)[p]->current.integer;
+                if (intensity > 0.0f ||
+                    (((r_global_permanent_t *)rgp)->world && ((r_global_permanent_t *)rgp)->world->skyImage &&
+                     ((const dvar_t **)imp_r_glowSkyBleedIntensity)[p]->current.value > 0.0f))
+                    glowRadii[p] = ((const dvar_t **)imp_r_glowRadius)[p]->current.value;
 #else
                 float intensity = *(float *)(*(char **)imp_r_glowBloomIntensity + 8 + p * 4);
                 if (intensity > 0.0f)
@@ -4111,6 +4122,15 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
 #endif
             }
 
+#if defined(COD2_X64)
+            backEnd.glowIndexFirst = 0;
+            if (glowRadii[1] != 0.0f && (glowRadii[0] == 0.0f || glowRadii[0] > glowRadii[1])) {
+                float radius = glowRadii[0];
+                glowRadii[0] = glowRadii[1];
+                glowRadii[1] = radius;
+                backEnd.glowIndexFirst = 1;
+            }
+#else
             if (glowRadii[1] != 0 && glowRadii[0] == 0) {
                 glowRadii[0] = glowRadii[1];
                 glowRadii[1] = 0;
@@ -4119,6 +4139,7 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
             int glowAxisCount = (glowRadii[1] != 0) ? 2 : (glowRadii[0] != 0) ? 1
                                                                               : 0;
             backEnd.glowIndexFirst = glowAxisCount;
+#endif
             *(int *)imp_g_TotalFilterPasses = 0;
             RB_GlowFilterImage( (float *)(glowRadii));
         }
@@ -4134,7 +4155,8 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
 
             for (pass = 0; pass < glowCount; pass++) {
 #if defined(COD2_X64)
-                float skyBleed = ((const dvar_t **)imp_r_glowSkyBleedIntensity)[glowIndex]->current.value;
+                float skyBleed = ((r_global_permanent_t *)rgp)->world && ((r_global_permanent_t *)rgp)->world->skyImage
+                    ? ((const dvar_t **)imp_r_glowSkyBleedIntensity)[glowIndex]->current.value : 0.0f;
                 int bloomIntensity = ((const dvar_t **)imp_r_glowBloomIntensity)[glowIndex]->current.integer;
 #else
                 float skyBleed = *(float *)(*(char **)imp_r_glowSkyBleedIntensity + 8 + glowIndex * 4);
@@ -4142,7 +4164,11 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
 #endif
                 const Material *glowMaterial;
 
+#if defined(COD2_X64)
+                if (skyBleed != 0.0f)
+#else
                 if (skyBleed > 0.0f)
+#endif
                     glowMaterial = ((r_global_permanent_t *)rgp)->glowApplySkyBleedMaterial;
                 else
                     glowMaterial = ((r_global_permanent_t *)rgp)->glowApplyBloomMaterial;
@@ -4152,7 +4178,11 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
                 backEnd.codeConsts[33][2] = 0.0f;
                 *(int *)&backEnd.codeConsts[33][3] = bloomIntensity;
 
+#if defined(COD2_X64)
+                backEnd.currentFeedbackImage = backEnd.glowImage[pass];
+#else
                 backEnd.currentFeedbackImage = backEnd.glowImage[glowIndex];
+#endif
 
                 {
 #if defined(COD2_X64) && COD2_APPLE_SDK
