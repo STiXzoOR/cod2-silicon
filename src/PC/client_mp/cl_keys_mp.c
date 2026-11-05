@@ -974,10 +974,15 @@ static void Console_ExecuteLine(void)
 
 static void Console_HistoryUp(void)
 {
+#if defined(COD2_X64)
+    if (nextHistoryLine - historyLine <= 31 && historyLine > 0)
+        historyLine--;
+#else
     if (nextHistoryLine - historyLine > 31 || historyLine <= 0)
         return;
 
     historyLine--;
+#endif
     memcpy(&g_consoleField,
            &historyEditLines[Console_HistoryIndex(historyLine)],
            sizeof(g_consoleField));
@@ -996,6 +1001,108 @@ static void Console_HistoryDown(void)
     Field_AdjustScroll(&g_consoleField);
 }
 
+#if defined(COD2_X64)
+static void Console_CompleteArgument(const char *argument, const char *completed)
+{
+    if (completed[0]) {
+        size_t length = strlen(g_consoleField.buffer);
+        size_t argumentLength = strlen(argument);
+        while (length && isspace((unsigned char)g_consoleField.buffer[length - 1]))
+            --length;
+        /* Valid tokenized input has room for its last argument. */
+        if (length >= argumentLength) {
+            size_t offset = length - argumentLength;
+            I_strncpyz(g_consoleField.buffer + offset, completed,
+                       (int)(sizeof(g_consoleField.buffer) - offset));
+        }
+    }
+}
+
+static void Console_CompleteCommand(void)
+{
+    const char *command = g_consoleField.buffer;
+    field_t original;
+    size_t commandMatchLength;
+    const char *tail;
+    if (*command == '/' || *command == '\\')
+        ++command;
+    if (I_strnicmp(command, "pb_", 3) == 0) {
+        char completed[256];
+        strncpy(completed, command, 255);
+        completed[255] = 0;
+        /* The native PunkBuster null adapter has no completion backend. */
+        Com_sprintf(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\\%s", completed);
+        Console_UpdateFieldCursor();
+        return;
+    }
+    completionString = Con_TokenizeInput();
+    matchCount = 0;
+    shortestMatch[0] = 0;
+    if (!completionString[0])
+        return;
+    Cmd_ForEach(FindMatches);
+    commandMatchLength = strlen(shortestMatch);
+    Dvar_ForEach(FindMatches);
+    if (!matchCount)
+        return;
+    original = g_consoleField;
+    if (matchCount == 1 || (hasExactMatch && Con_AnySpaceAfterCommand())) {
+        int commandMatchUnchanged = commandMatchLength == strlen(shortestMatch);
+        Com_sprintf(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\\%s", shortestMatch);
+        if (Cmd_Argc() == 1) {
+            I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), " ");
+        } else {
+            tail = strstr(original.buffer, completionString);
+            if (tail)
+                I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), tail + strlen(completionString));
+            else
+                keyConcatArgs();
+            if (Cmd_Argc() == 2) {
+                extern dvar_t *Dvar_FindVar(const char *);
+                extern void Con_AutoCompleteFromList(const char **, int, const char *, char *, int);
+                extern const char **Cmd_GetAutoCompleteFileList(const char *, int *, int);
+                extern void FS_FreeFileList(const char **, int);
+                extern void Com_StripExtension(const char *, char *);
+                const char *name = Con_TokenizeInput();
+                const char *argument = Cmd_Argv(1);
+                char completed[256];
+                if (argument[0]) {
+                    if (!commandMatchUnchanged) {
+                        dvar_t *dvar = Dvar_FindVar(name);
+                        if (dvar && dvar->type == 6) {
+                            Con_AutoCompleteFromList(dvar->domain.enumeration.strings,
+                                dvar->domain.enumeration.stringCount, argument, completed, sizeof(completed));
+                            Console_CompleteArgument(argument, completed);
+                        }
+                    } else {
+                        int count;
+                        const char **files = Cmd_GetAutoCompleteFileList(name, &count, 10);
+                        if (count) {
+                            Con_AutoCompleteFromList(files, count, argument, completed, sizeof(completed));
+                            FS_FreeFileList(files, 10);
+                            Com_StripExtension(completed, completed);
+                            Console_CompleteArgument(argument, completed);
+                        }
+                    }
+                }
+            }
+        }
+        Console_UpdateFieldCursor();
+        return;
+    }
+    Com_sprintf(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\\%s", shortestMatch);
+    g_consoleField.cursor = (int)strlen(g_consoleField.buffer);
+    tail = strstr(original.buffer, completionString);
+    if (tail)
+        I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), tail + strlen(completionString));
+    else
+        keyConcatArgs();
+    Field_AdjustScroll(&g_consoleField);
+    Com_Printf("]%s\n", g_consoleField.buffer);
+    Cmd_ForEach(PrintMatches);
+    Dvar_ForEach(PrintMatches);
+}
+#else
 static void Console_CompleteCommand(void)
 {
     completionString = Con_TokenizeInput();
@@ -1026,9 +1133,15 @@ static void Console_CompleteCommand(void)
     Dvar_ForEach(PrintMatches);
 }
 
+#endif
+
 void Console_Key(int key)
 {
+#if defined(COD2_X64)
+    if (key == 0x6c && Key_IsDown(K_CTRL)) {
+#else
     if (tolower(key) == 0x6c && Key_IsDown(K_CTRL)) {
+#endif
         Cbuf_AddText("clear\n");
         return;
     }
@@ -1057,15 +1170,29 @@ void Console_Key(int key)
 
     if (key == K_PGUP || key == K_MWHEELUP) {
         Con_PageUp();
+#if defined(COD2_X64)
+        if (key == K_MWHEELUP && Key_IsDown(K_CTRL)) {
+            Con_PageUp();
+            Con_PageUp();
+        }
+#else
         if (key == K_MWHEELUP && Key_IsDown(K_CTRL))
             Con_PageUp();
+#endif
         return;
     }
 
     if (key == K_PGDN || key == K_MWHEELDOWN) {
         Con_PageDown();
+#if defined(COD2_X64)
+        if (key == K_MWHEELDOWN && Key_IsDown(K_CTRL)) {
+            Con_PageDown();
+            Con_PageDown();
+        }
+#else
         if (key == K_MWHEELDOWN && Key_IsDown(K_CTRL))
             Con_PageDown();
+#endif
         return;
     }
 

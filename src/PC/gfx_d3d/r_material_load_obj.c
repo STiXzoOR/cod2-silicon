@@ -1694,8 +1694,13 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
 
     fversion = Com_ParseFloat(text);
     version = (int)floorf(fversion * 10.0f + 0.5f);
+#if defined(COD2_X64)
+    if (version < 20)
+        version = 20;
+#else
     if (version > 20)
         version = 20;
+#endif
 
     filename = Com_Parse(text);
 
@@ -1886,7 +1891,11 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
                 mtlShader->name = (const char *)(mtl + hdr + shaderSize);
                 memcpy(mtl + hdr + shaderSize, filename, nameLen);
                 memcpy(mtl + hdr, shaderDataPtr, shaderSize);
+#if defined(COD2_X64)
+                mtlShader->programLen = (unsigned short)shaderSize >> 2;
+#else
                 mtlShader->programLen = (unsigned short)(shaderSize >> 2);   /* was *(u16*)(mtl+8) */
+#endif
                 mtlShader->shaderType = (byte)shaderType;
                 mtlShader->shaderVersion = (byte)version;
 
@@ -1899,7 +1908,9 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
                 }
             }
 
+#if !defined(COD2_X64)
             ((ReleaseFn)blobVtable[2])(shaderBlob);
+#endif
 
             if (hr < 0) {
                 Com_ScriptWarning("shader creation failed for %s %s %s: %s\n",
@@ -1907,6 +1918,9 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
                 mtlShader = NULL;
                 goto cleanup_sourceName;
             }
+#if defined(COD2_X64)
+            ((ReleaseFn)blobVtable[2])(shaderBlob);
+#endif
         }
 
     cleanup_sourceName:

@@ -496,6 +496,10 @@ int R_GetMaterialSubimageCount(MaterialHandle handle)
 
 void Material_Sort(void)
 {
+#if defined(COD2_X64)
+    extern void R_SyncRenderThread(void);
+    R_SyncRenderThread();
+#endif
     r_global_permanent_t *rgpPtr = (r_global_permanent_t *)imp_rgp;
     int count = rgpPtr->materialCount;
     Material **first = rgpPtr->sortedMaterials;
@@ -504,7 +508,11 @@ void Material_Sort(void)
 
     if (first != last) {
         int byteRange = (int)((byte *)last - (byte *)first);
+#if defined(COD2_X64)
+        int n = count;
+#else
         int n = byteRange >> 2;
+#endif
         int depthLimit = 0;
 
         if (n != 1) {
@@ -519,7 +527,11 @@ void Material_Sort(void)
         ZSt16__introsort_loopIPP8MaterialiPFhPKS0_S4_EEvT_S7_T0_T1_(
             first, last, depthLimit, Material_Compare);
 
+#if defined(COD2_X64)
+        if (count <= 16) {
+#else
         if (byteRange <= 0x43) {
+#endif
 
             ZSt16__insertion_sortIPP8MaterialPFhPKS0_S4_EEvT_S7_T0_(
                 first, last, Material_Compare);

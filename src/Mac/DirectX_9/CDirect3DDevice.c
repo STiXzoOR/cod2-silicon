@@ -4490,7 +4490,14 @@ long unsigned int CDirect3DDevice_CTexStage_Init(const CTexStage *_this, UINT32 
     return 0;
 }
 
+#if defined(COD2_X64)
+Bool ZNSt11char_traitsIcE2eqERKcS2_(const char *left, const char *right)
+{
+    return *left == *right;
+}
+#else
 void ZNSt11char_traitsIcE2eqERKcS2_(void) {}
+#endif
 
 void ZNSt6vectorIN15CDirect3DDevice9CTexStageESaIS1_EE5eraseEN9__gnu_cxx17__normal_iteratorIPS1_S3_EES7_(void) {}
 
