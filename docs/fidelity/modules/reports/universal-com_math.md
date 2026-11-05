@@ -2,7 +2,7 @@
 
 Updated 2026-11-06.
 
-**Current: 181/229 reconciled: 150 equal, 31 fixed, 0 intentional; 48 unchecked.**
+**Current: 182/229 reconciled: 151 equal, 31 fixed, 0 intentional; 47 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -610,3 +610,14 @@ The actual caller supplies a successful muzzle-position local and unchanged impa
 The later radius gate, directional position shift and sound emission are downstream consumers, not a substituted squared-distance result. This resolves the prior whizby assessment only through the complete scalar and actual producer/consumer boundary. It supplies no hypothetical serialized-axis endpoint adapter or arbitrary exported projection API. Existing WhizbySound and Vec3NormalizeTo equal verdicts remain; no repair is inherited. Valid live disjoint storage and stable view state are required; FP environment/traps/payload identity, original exceptional outcomes, upstream event/camera/tag correctness and whole sound/gameplay behavior remain outside scope.
 
 One equal closure, no new defect or source change. Independent review: units/review-provenance-linedistance35.md. Fresh original and Mac bodies, raw constants/GOT/field displacements and source hashes remain private in recon-provenance-linedistance35.noindex. No compilation, tests, CI, full build, replay or runtime verification.
+
+
+## Complete maximum normalization and scalar result (maxnormalize36)
+
+`Vec3NormalizeByMax` is equal through the complete actual `ColorNormalize` operation and its ambient-light consumer. Original 1.3 0x80a8202 through RET 0x80a82ae, including its full zero-clear provider, establishes three normalized output components and a returned maximum. Original zeroes at zero, direct division and selected-zero representation remain documented differences. They do not override Mac behavior once the complete input and both result roles are established.
+
+Mac `ColorNormalize` at 0x2c7a6–0x2c82e selects the maximum with source-prior MAXSS operations. Ordered zero writes three ones and returns canonical positive zero; nonzero or unordered computes one reciprocal, writes all three products and returns the maximum. Native preserves every branch and result. The actual identical input/output vector is valid: maximum reads precede writes, and each later component remains untouched until its own read. No partial-overlap or Linux arithmetic equivalence is assumed.
+
+The concrete world loader passes the same sunParse object to `R_ParseSunLight` at 0xe5189 and the interpreter at 0xe519d. The actual `_color` branch initializes and parses the three ambient fields; the `ambient` key supplies the scale selecting the call. The interpreter passes the exact ambient vector at 0xe26b6, consumes the complete scalar return in its zero/unordered gate, and reads all three normalized components at 0xe26d4/0xe26db/0xe26e3 for the actual ambient RGB result. On ordered zero the persistent vector still receives white while the scalar selects zero ambient lighting. No output has been replaced by a maximum-only fragment.
+
+This supersedes the earlier rejection based on zero policy and direct division, while preserving those original facts and the existing `Vec3ScaleToUnitMax` mapping. The selected provider is unchanged and equal; surrounding parser, light-layout and world-loader repairs are outside its boundary. Arbitrary ABI, malformed/partially overlapping/concurrent storage, FP flags/traps/signaling payload identity, whole parsing/lighting correctness and runtime behavior remain outside scope. One equal closure, no new defect or source change. Independent review: units/review-provenance-maxnormalize36.md; complete original/helper, four fresh Mac owners, raw keys/format/constants and source hashes are retained in private recon-provenance-maxnormalize36.noindex. No compilation, tests, CI, full build, replay or runtime verification.
