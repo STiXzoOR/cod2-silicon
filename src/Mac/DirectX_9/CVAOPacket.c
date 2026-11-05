@@ -85,7 +85,17 @@ extern UINT32 CVAOPacket_sCurrentPacket;
 #if defined(COD2_X64)
 /* The current-packet selector wraps at one. Stub globals have ILP32 storage. */
 static CVAOPacketImpl s_nativeGenericPacket[1];
-static CVAOPacketRbTree s_nativeAllPackets;
+/* Mac's load-time initializer installs the empty-tree sentinel. Native
+ * buffer destruction can release cached ranges before any GL initialization. */
+static CVAOPacketRbTree s_nativeAllPackets = {
+    ._M_header = {
+        ._M_color = 0,
+        ._M_parent = NULL,
+        ._M_left = &s_nativeAllPackets._M_header,
+        ._M_right = &s_nativeAllPackets._M_header
+    },
+    ._M_node_count = 0
+};
 #define CVAOPacket_sGenericPacket ((unsigned char *)s_nativeGenericPacket)
 #define CVAOPacket_sAllPackets ((unsigned char *)&s_nativeAllPackets)
 #else
@@ -157,7 +167,11 @@ static void GLOBAL__I__ZN10CVAOPacket10sVAOStatusE(void);
 bool CVAOPacket_IsFixedFunction(const CVAOPacket *_this);
 CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key);
 CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key);
+#if defined(COD2_X64)
+CVAOPacketRbTreeIterator ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_(CVAOPacketRbTree *tree, CVAOPacketRbTreeNodeBase *x, CVAOPacketRbTreeNodeBase *parent, const CVAOPacketKeyValue *kv);
+#else
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_(void);
+#endif
 #if defined(COD2_X64)
 CVAOPacketRbTreeIterator ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_(CVAOPacketRbTree *tree, const CVAOPacketKeyValue *kv);
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(CVAOPacketRbTree *tree, CVAOPacketRbTreeNode *node);
@@ -261,18 +275,31 @@ void CVAOPacket_InitializeGenericVAO(void)
         return;
 #endif
 
+#if !defined(COD2_X64)
     CVAOPacketRbTree *allPackets;
+#endif
     CVAOPacketImpl *genericPacket;
     int i;
 
+#if !defined(COD2_X64)
     allPackets = (CVAOPacketRbTree *)CVAOPacket_sAllPackets;
+#endif
     genericPacket = CVAOPacket_GetGenericPacket(0);
 
+#if defined(COD2_X64)
+    /* Native startup does not run the old C++ initializer. This constructor
+     * only installs object metadata; the GL binding is created below. */
+    if (genericPacket->vtable == NULL)
+        CVAOPacket_CVAOPacket((const CVAOPacket *)genericPacket);
+#endif
+
+#if !defined(COD2_X64)
     allPackets->_M_node_count = 0;
     allPackets->_M_header._M_color = 0;
     allPackets->_M_header._M_parent = NULL;
     allPackets->_M_header._M_left = &allPackets->_M_header;
     allPackets->_M_header._M_right = &allPackets->_M_header;
+#endif
 
     genericPacket->mpVAOID = NULL;
     genericPacket->mCode = 0;
@@ -328,7 +355,30 @@ static void CopyGenericArray(VertexProgramStreamState *dst, const VertexProgramS
     dst->mVType = src->mVType;
     dst->mNormalized = src->mNormalized;
     dst->mStride = src->mStride;
+#if defined(COD2_X64)
+    dst->mpStream = src->mpStream;
+#endif
 }
+
+#if defined(COD2_X64)
+/* Mac copy constructor 0x2f10ce copies values but installs each base vtable. */
+static void CVAOPacket_CopyConstruct(CVAOPacketImpl *dst, const CVAOPacketImpl *src)
+{
+    int i;
+    CVAOPacket_CVAOPacket((const CVAOPacket *)dst);
+    dst->mpVAOID = src->mpVAOID;
+    dst->mCode = src->mCode;
+    dst->mReserved0C = src->mReserved0C;
+    CopyBaseVA(&dst->mColorArray, &src->mColorArray);
+    CopyBaseVA(&dst->mSecondaryColorArray, &src->mSecondaryColorArray);
+    CopyBaseVA(&dst->mNormalArray, &src->mNormalArray);
+    CopyBaseVA(&dst->mVertexArray, &src->mVertexArray);
+    for (i = 0; i < 8; ++i)
+        CopyBaseVA(&dst->mTexCoordArrays[i], &src->mTexCoordArrays[i]);
+    for (i = 0; i < 16; ++i)
+        CopyGenericArray(&dst->mGenericArrays[i], &src->mGenericArrays[i]);
+}
+#endif
 
 void CVAOPacket_ReleaseBuffer(const void *p, UINT32 Length)
 {
@@ -539,7 +589,11 @@ void CVAOPacket_Cache(CVAOPacket *v)
 #else
     newPacket = (CVAOPacketImpl *)(NewPacketBuf + 4);
 #endif
+#if defined(COD2_X64)
+    CVAOPacket_CopyConstruct(newPacket, (const CVAOPacketImpl *)v);
+#else
     CVAOPacket_CVAOPacket((const CVAOPacket *)newPacket);
+#endif
 
     codePtr = (UINT32 *)NewPacketBuf;
     *codePtr = Code;
@@ -549,7 +603,11 @@ void CVAOPacket_Cache(CVAOPacket *v)
 #else
     insertPacket = (CVAOPacketImpl *)(InsertBuf + 4);
 #endif
+#if defined(COD2_X64)
+    CVAOPacket_CopyConstruct(insertPacket, newPacket);
+#else
     CVAOPacket_CVAOPacket((const CVAOPacket *)insertPacket);
+#endif
 
     *(UINT32 *)InsertBuf = Code;
 
@@ -644,8 +702,16 @@ static void __static_initialization_and_destruction_0(int __initialize_p, int __
     }
 
     if (__initialize_p == 0) {
+#if defined(COD2_X64)
+        CVAOPacketImpl *packet = CVAOPacket_GetGenericPacket(0);
+        ((void (*)(void *))packet->vtable[0])(packet);
+        allPackets = (CVAOPacketRbTree *)CVAOPacket_sAllPackets;
+        ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(
+            allPackets, (CVAOPacketRbTreeNode *)allPackets->_M_header._M_parent);
+#else
         ZN10CVAOPacketD2Ev((const CVAOPacket *)CVAOPacket_sGenericPacket);
         CVAOPacket_Shutdown();
+#endif
     }
 }
 
@@ -684,10 +750,41 @@ bool CVAOPacketProgrammable_IsFixedFunction(const CVAOPacket *_this)
     return 0;
 }
 
+#if defined(COD2_X64)
+extern void *imp___ZTV23CVAOPacketFixedFunction;
+extern void *imp___ZTV22CVAOPacketProgrammable;
+
+void ZN23CVAOPacketFixedFunctionD1Ev(const CVAOPacket *_this)
+{
+    ((CVAOPacketImpl *)_this)->vtable =
+        (void **)((char *)imp___ZTV23CVAOPacketFixedFunction + 2 * sizeof(void *));
+    ZN10CVAOPacketD2Ev(_this);
+}
+
+void ZN23CVAOPacketFixedFunctionD0Ev(const CVAOPacket *_this)
+{
+    ZN23CVAOPacketFixedFunctionD1Ev(_this);
+    __ZdlPv((void *)_this);
+}
+
+void ZN22CVAOPacketProgrammableD1Ev(const CVAOPacket *_this)
+{
+    ((CVAOPacketImpl *)_this)->vtable =
+        (void **)((char *)imp___ZTV22CVAOPacketProgrammable + 2 * sizeof(void *));
+    ZN10CVAOPacketD2Ev(_this);
+}
+
+void ZN22CVAOPacketProgrammableD0Ev(const CVAOPacket *_this)
+{
+    ZN22CVAOPacketProgrammableD1Ev(_this);
+    __ZdlPv((void *)_this);
+}
+#else
 void ZN23CVAOPacketFixedFunctionD1Ev(void) {}
 void ZN23CVAOPacketFixedFunctionD0Ev(void) {}
 void ZN22CVAOPacketProgrammableD1Ev(void) {}
 void ZN22CVAOPacketProgrammableD0Ev(void) {}
+#endif
 
 CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key)
 {
@@ -741,6 +838,26 @@ CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS
     return y;
 }
 
+#if defined(COD2_X64)
+CVAOPacketRbTreeIterator ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_(CVAOPacketRbTree *tree, CVAOPacketRbTreeNodeBase *x, CVAOPacketRbTreeNodeBase *parent, const CVAOPacketKeyValue *kv)
+{
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &tree, &x, &parent, &kv };
+    CVAOPacketRbTreeIterator macResult = { 0 };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_", tree, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+    CVAOPacketRbTreeNode *node = __Znwm(sizeof(*node));
+    node->first = kv->first;
+    CVAOPacket_CopyConstruct(&node->second, &kv->second);
+    int insertLeft = x != NULL || parent == &tree->_M_header ||
+        kv->first < CVAOPacket_GetConstTreeNode(parent)->first;
+    __ZSt29_Rb_tree_insert_and_rebalancebPSt18_Rb_tree_node_baseS0_RS_(
+        insertLeft, node, parent, &tree->_M_header);
+    ++tree->_M_node_count;
+    return (CVAOPacketRbTreeIterator){ &node->_M_base };
+}
+#else
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_(void)
 {
 #if MAC_METAL_NATIVE
@@ -753,6 +870,8 @@ void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE
     return;
 }
 
+#endif
+
 #if defined(COD2_X64)
 CVAOPacketRbTreeIterator ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_(CVAOPacketRbTree *tree, const CVAOPacketKeyValue *kv)
 {
@@ -763,9 +882,14 @@ CVAOPacketRbTreeIterator ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3
         return macResult;
 #endif
 
-    (void)tree;
-    (void)kv;
-    return (CVAOPacketRbTreeIterator){ NULL };
+    CVAOPacketRbTreeNodeBase *parent = &tree->_M_header;
+    CVAOPacketRbTreeNodeBase *node = tree->_M_header._M_parent;
+    while (node) {
+        parent = node;
+        node = kv->first < CVAOPacket_GetConstTreeNode(node)->first
+            ? node->_M_left : node->_M_right;
+    }
+    return ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_(tree, NULL, parent, kv);
 }
 
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(CVAOPacketRbTree *tree, CVAOPacketRbTreeNode *node)
@@ -776,8 +900,14 @@ void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE
         return;
 #endif
 
-    (void)tree;
-    (void)node;
+    while (node) {
+        ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(tree, (CVAOPacketRbTreeNode *)node->_M_base._M_right);
+        CVAOPacketRbTreeNode *left = (CVAOPacketRbTreeNode *)node->_M_base._M_left;
+        node->second.vtable = vtbl_CVAOPacket;
+        ZN10COpenGLVAOD2Ev((const COpenGLVAO *)&node->second);
+        __ZdlPv(node);
+        node = left;
+    }
 }
 #else
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_(void)
