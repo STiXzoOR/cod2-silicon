@@ -213615,7 +213615,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Unchecked: exact Mac CMutex constructor 0x1173fe and native macos_threads.c own individual recursive mutexes and propagate construction errors; StMutexLock owns object lock lifetimes. No original identity/index-to-object mapping establishes them as replacements for the reconstructed six-index global critical-section API. Mac Dvar_ForEach 0x4f76c directly traverses/calls without that layer; this disproves an assumed universal inline lock but does not establish the missing API."
+        "evidence": "Unchecked: recovered original 0x80d6842 computes global+24*index and calls pthread_mutex_lock without a checked index. Original1.3 six recursive mutexes at 0x860b340 are used by 61 direct calls across 29 owners. Complete recovered owners establish nested index4 ResetDvars->Reset, index0 logfile Com_Printf recursion, index5 redirect callback, index2 unlock-before-longjmp in Error/Abort, lock-held frame cleanup and terminal quit. Fresh exact Mac PrintMessage 0x2df82, Error 0x2e33a, Frame 0x306c4, Quit 0x2f940 and ResetDvars/Reset 0x547c0/0x53792 supply those selected operations directly; they do not establish indexed mutual exclusion or a universal replacement. Com_ErrorAbort, arbitrary-source Vec2 setter and binary Save/Load still lack complete mapped owners. Per-object CMutex construction/error handling and StMutexLock lifetimes cannot establish the missing six-index identity/storage/continuation contract. Keep open; no new thread policy or source change. See provenance-platform14 private owner-boundaries and report."
       },
       {
         "id": "mac:0x000c4e24",
@@ -213703,7 +213703,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Unchecked: exact Mac CMutex constructor 0x1173fe and native macos_threads.c own individual recursive mutexes and propagate construction errors; StMutexLock owns object lock lifetimes. No original identity/index-to-object mapping establishes them as replacements for the reconstructed six-index global critical-section API. Mac Dvar_ForEach 0x4f76c directly traverses/calls without that layer; this disproves an assumed universal inline lock but does not establish the missing API."
+        "evidence": "Unchecked: recovered original 0x80d67da initializes six 24-byte recursive mutexes, ignores pthread result codes and destroys its attribute. Original1.3 six recursive mutexes at 0x860b340 are used by 61 direct calls across 29 owners. Complete recovered owners establish nested index4 ResetDvars->Reset, index0 logfile Com_Printf recursion, index5 redirect callback, index2 unlock-before-longjmp in Error/Abort, lock-held frame cleanup and terminal quit. Fresh exact Mac PrintMessage 0x2df82, Error 0x2e33a, Frame 0x306c4, Quit 0x2f940 and ResetDvars/Reset 0x547c0/0x53792 supply those selected operations directly; they do not establish indexed mutual exclusion or a universal replacement. Com_ErrorAbort, arbitrary-source Vec2 setter and binary Save/Load still lack complete mapped owners. Per-object CMutex construction/error handling and StMutexLock lifetimes cannot establish the missing six-index identity/storage/continuation contract. Keep open; no new thread policy or source change. See provenance-platform14 private owner-boundaries and report."
       },
       {
         "id": "linux:unix/unix_shared.cpp:436:Sys_LeaveCriticalSection",
@@ -213722,7 +213722,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Unchecked: exact Mac CMutex constructor 0x1173fe and native macos_threads.c own individual recursive mutexes and propagate construction errors; StMutexLock owns object lock lifetimes. No original identity/index-to-object mapping establishes them as replacements for the reconstructed six-index global critical-section API. Mac Dvar_ForEach 0x4f76c directly traverses/calls without that layer; this disproves an assumed universal inline lock but does not establish the missing API."
+        "evidence": "Unchecked: recovered original 0x80d6864 computes global+24*index and calls pthread_mutex_unlock without a checked index. Original1.3 six recursive mutexes at 0x860b340 are used by 61 direct calls across 29 owners. Complete recovered owners establish nested index4 ResetDvars->Reset, index0 logfile Com_Printf recursion, index5 redirect callback, index2 unlock-before-longjmp in Error/Abort, lock-held frame cleanup and terminal quit. Fresh exact Mac PrintMessage 0x2df82, Error 0x2e33a, Frame 0x306c4, Quit 0x2f940 and ResetDvars/Reset 0x547c0/0x53792 supply those selected operations directly; they do not establish indexed mutual exclusion or a universal replacement. Com_ErrorAbort, arbitrary-source Vec2 setter and binary Save/Load still lack complete mapped owners. Per-object CMutex construction/error handling and StMutexLock lifetimes cannot establish the missing six-index identity/storage/continuation contract. Keep open; no new thread policy or source change. See provenance-platform14 private owner-boundaries and report."
       },
       {
         "id": "mac:0x000c4b8e",
