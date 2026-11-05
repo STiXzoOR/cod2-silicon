@@ -686,6 +686,17 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
     MacContext *ctx = reference ? *reference : NULL;
     if (!ctx)
         return 0;
+#if defined(__APPLE__) && defined(COD2_X64)
+    /* Windows 0x10012eb6 retires the window before releasing its device.
+     * Use that visible lifetime boundary in place of AGL's odd-count flip:
+     * retire our owned drawable before discarding its retained FBO image.
+     * Reset retains this context, while recreation creates a fresh window. */
+    SDL_Window *retiredWindow = ctx == screenContext ? ctx->drawable : NULL;
+    if (retiredWindow) {
+        MacWindow_SetBorderless(0);
+        SDL_HideWindow(retiredWindow);
+    }
+#endif
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
     if (ctx->nativeRenderer) MacMetalBackend_Stop();
 #endif
@@ -717,6 +728,13 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
         glDeleteRenderbuffersEXT(1, &ctx->depth);
         SDL_GL_DeleteContext(ctx->context);
     }
+#if defined(__APPLE__) && defined(COD2_X64)
+    if (retiredWindow) {
+        SDL_DestroyWindow(retiredWindow);
+        if (sdl_gl_window == retiredWindow)
+            sdl_gl_window = NULL;
+    }
+#endif
     if (ctx == screenContext)
         screenContext = NULL;
     free(ctx);
