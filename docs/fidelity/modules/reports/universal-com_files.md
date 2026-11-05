@@ -55,3 +55,22 @@ The callee's original STABS names `FS_OpenFileOverwrite` at 0x342a2 and gives it
 The other seven identities remain unchecked. In particular, `FS_FileCompare` claims file-content comparison, so the path-string comparator is a different contract. Mac `FS_SV_Rename` at `[0x466c0,0x467ba)` uses root-relative paths and one rename followed by copy/remove; it does not establish the gamedir-relative rename/remove/retry API. Mac `FS_ShiftStr` at `[0x467ba,0x46820)` returns shifted static storage without a substring search, and the complete `CL_InitDownloads` caller discards that return. Ordinary `FS_ListFiles` passes the existing search chain directly; it does not construct and free the directory-type-filtered chain. The overwrite helper's read-only-bit operation likewise does not establish the separate writable setter's full contract.
 
 This follow-up used source and binary review only. No source changes, builds, tests, CI, replays or Actions were run; the newly mapped operation is uncompiled and unexercised in this pass. Private exact-symbol evidence is retained under `~/Library/Application Support/CoD2-native-decomp/recon-fast-files-sound.noindex/`.
+
+
+## Original identity follow-up — provenance-config7
+
+Original Linux 1.0 IDB addresses were mapped to retained original 1.3 ELF bodies using source order, independent decompiler anchors and masked whole-body comparisons. Every unique whole-body match agrees with the mapped module order; ambiguous tiny bodies and changed implementations were located from neighboring unique anchors and inspected separately. An ambiguous non-target `FS_Path_f` comparison was not used as an anchor. The private packet retains the mapping alternatives and exact bodies. These addresses establish original identity and intent only; Mac i386 remains behavior authority.
+
+| Helper | Original 1.0 | Original 1.3 | Verdict |
+|---|---|---|---|
+| `FS_FileCompare` | 0x809d1c6 | 0x809f3c8 | unchecked |
+| `FS_IsBaseGameDirOfType` | 0x809f830 | 0x80a1a3a | unchecked |
+| `FS_ListFilesOfDirType` | 0x809f7f2 | 0x80a19fc | unchecked |
+| `FS_ListFilteredFilesOfDirType` | 0x809f98a | 0x80a1b94 | unchecked |
+| `FS_Rename` | 0x809cb58 | 0x809ed5a | unchecked |
+| `FS_SetWritable` | 0x809e256 | 0x80a0458 | unchecked |
+| `FS_ShiftedStrStr` | 0x809d424 | 0x809f626 | unchecked |
+
+Positive original chain: 0x80a19fc calls FS_ListFilteredFilesOfDirType 0x80a1b94 at 0x80a1a33, which calls FS_IsBaseGameDirOfType 0x80a1a3a at 0x80a1c02. All three exact original bodies are retained, but the complete Mac directory-type-filtering owner is still unresolved. The seven rows remain unchecked. Original bodies do not settle the Mac full-path comparison, game-directory rename/remove/retry, shifted substring search or writable-policy operations. Related FS_SV_Rename, generic listing and overwrite read-only-bit handling cannot stand in for those full contracts.
+
+No production source changes, defects, compilation, tests, CI or replays in this follow-up. No runtime behavior is certified. Private evidence: `recon-provenance-config7.noindex`; focused ledger preserves all previously resolved rows unchanged.
