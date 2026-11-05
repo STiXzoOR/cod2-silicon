@@ -1,6 +1,11 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
+#if defined(COD2_X64) && defined(__APPLE__)
+#include "platform/macos_system.h"
+extern float MacFeatures_GetCPUSpeedInGHz(void);
+extern void WinSleep(DWORD milliseconds);
+#endif
 extern struct DxGlobals dx;
 /* File-scope alias: bound where no local can shadow `dx`, so uses below
    always reach the global even inside functions that declare their own `dx`. */
@@ -1205,15 +1210,49 @@ void RB_UpdateColor(const vec_t *color_allies, const vec_t *color_axis)
     RB_UpdateColorInternal(color_axis, (byte *)&backEnd.color_axis);
 }
 
+#if defined(COD2_X64) && defined(__APPLE__)
+static pthread_once_t gpuSyncClockOnce = PTHREAD_ONCE_INIT;
+static uint64_t gpuSyncClockHz;
+
+static void RB_InitGpuSyncClock(void)
+{
+    /* The native provider includes its established 800 MHz fallback. Snapshot
+     * it once: changing the scale between reads would invalidate elapsed ticks. */
+    double hertz = (double)MacFeatures_GetCPUSpeedInGHz() * 1000000000.0;
+    gpuSyncClockHz = hertz >= 1.0 && hertz < 18446744073709551616.0
+        ? (uint64_t)hertz : 800000000u;
+}
+#endif
+
 static inline unsigned int rdtsc_lo(void)
 {
+#if defined(COD2_X64) && defined(__APPLE__)
+    /* Native synthetic cycles, not a measurement of the original Intel TSC.
+     * Widen before multiplying, then retain the original modulo-32 counter. */
+    pthread_once(&gpuSyncClockOnce, RB_InitGpuSyncClock);
+    return (uint32_t)((__uint128_t)MacSystem_Nanoseconds() * gpuSyncClockHz / 1000000000u);
+#else
     unsigned int lo;
     lo = 0;
     return lo;
+#endif
 }
 
 void RB_AdaptiveGpuSyncWait(void)
 {
+#if defined(COD2_X64) && defined(__APPLE__)
+    /* API59 retains its void callback. Implement Mac CL_SyncGpu 0x14a726
+     * behind that boundary instead of casting a void callback to a query. */
+    uint32_t startTime = rdtsc_lo();
+    int syncDelay = dx.gpuSyncDelay;
+
+    while (!RB_IsGpuFenceFinished()) {
+        int32_t elapsed = (int32_t)(rdtsc_lo() - startTime);
+        if (elapsed < 0 || elapsed >= syncDelay)
+            return;
+        WinSleep(1);
+    }
+#else
     byte *dx = (byte *)dx_g;
     long long startTime;
     long long waitedTime;
@@ -1259,6 +1298,7 @@ void RB_AdaptiveGpuSyncWait(void)
     diff = syncTarget - (int)waitedTime;
     syncTarget -= (diff + ((unsigned int)diff >> 31)) >> 1;
     ((DxGlobals *)dx)->gpuSyncDelay = syncTarget;
+#endif
 }
 
 void RB_AdaptiveGpuSyncTarget(void)
@@ -1275,9 +1315,17 @@ void RB_AdaptiveGpuSyncTarget(void)
         ((DxGlobals *)dx)->flushGpuQueryIssued = 0;
     }
 
+#if defined(COD2_X64) && defined(__APPLE__)
+    /* Mac 0xd93c0-0xd93e7 truncates before multiplying by 127. */
+    val = (int32_t)((uint32_t)((DxGlobals *)dx)->gpuSyncDelay - 0x4e20u);
+    if (val < 0)
+        val = 0;
+    ((DxGlobals *)dx)->gpuSyncDelay = (val / 128) * 127;
+#else
     val = ((DxGlobals *)dx)->gpuSyncDelay - 0x4e20;
     val &= ~(val >> 31);
     ((DxGlobals *)dx)->gpuSyncDelay = val;
+#endif
 }
 
 static void RB_BACKEND_REGPARM1_ABI RB_EndBenchmarkGpu_impl(void *time)
@@ -3257,6 +3305,13 @@ void RB_ExecuteRenderCommands(const void *data)
 
     backEndData = 0;
 
+#if defined(COD2_X64) && defined(__APPLE__)
+    /* Retire a completed fence after switching sync off, including disabled or
+     * lost-device frames. This native cleanup was previously in R_EndFrame. */
+    if (((DxGlobals *)dx_g)->gpuSync == 0)
+        (void)RB_IsGpuFenceFinished();
+#endif
+
     {
         extern void Com_Printf(const char *, ...);
         extern int g_disableRendering;
@@ -3336,6 +3391,16 @@ void RB_ExecuteRenderCommands(const void *data)
 
     dx = (char *)dx_g;
     deviceState = ((DxGlobals *)dx)->gpuSync;
+#if defined(COD2_X64) && defined(__APPLE__)
+    /* Mac 0xd8a04 waits before drawing only in mode 1. */
+    if (deviceState == 1) {
+        while (!RB_IsGpuFenceFinished()) {
+        }
+        glGenFencesAPPLE(1, (unsigned int *)(&g_FenceID));
+        glSetFenceAPPLE(g_FenceID);
+        ((DxGlobals *)dx_g)->flushGpuQueryIssued = 1;
+    }
+#else
     if (deviceState == 3) {
 
         while (((DxGlobals *)dx)->flushGpuQueryIssued) {
@@ -3366,6 +3431,7 @@ void RB_ExecuteRenderCommands(const void *data)
         dx = (char *)dx_g;
         ((DxGlobals *)dx)->flushGpuQueryIssued = 1;
     }
+#endif
 
     dx = (char *)dx_g;
     ((DxGlobals *)dx)->inScene = 1;
@@ -3488,8 +3554,13 @@ post_render:
             if (!RB_DVAR(imp_r_testFillEnable)->current.enabled) {
                 typedef void (*PrintFunc)(int, const char *, ...);
                 PrintFunc ri_printf = *(PrintFunc *)&ri;
+#if defined(COD2_X64)
+                ri_printf(0, "Fill testing uses extra textures and materials, so it is usually unavailable.\n");
+                ri_printf(0, "You must set 'r_testFillEnable' to 1 and vid_restart to test fill rates.\n");
+#else
                 ri_printf(0, "Fill testing uses extra textures and materials, so it is usu");
                 ri_printf(0, "ally only useful if r_testFillEnable is set before starting the game.\n");
+#endif
             } else {
 
                 typedef void (*PrintFunc)(int, const char *, ...);
@@ -3563,6 +3634,42 @@ post_render:
 
     dx = (char *)dx_g;
     deviceState = ((DxGlobals *)dx)->gpuSync;
+#if defined(COD2_X64) && defined(__APPLE__)
+    if (deviceState == 3) {
+        if (RB_IsGpuFenceFinished()) {
+            RB_AdaptiveGpuSyncTarget();
+        } else {
+            uint32_t startTime = rdtsc_lo();
+            while (((DxGlobals *)dx_g)->flushGpuQueryIssued) {
+                if (RB_IsGpuFenceFinished())
+                    break;
+                if ((int32_t)(rdtsc_lo() - startTime) < 0) {
+                    /* Mac 0xd957d clears the issued flag on negative elapsed
+                     * without deleting the abandoned fence. Preserve it. */
+                    ((DxGlobals *)dx_g)->flushGpuQueryIssued = 0;
+                    break;
+                }
+                WinSleep(1);
+            }
+            int32_t elapsed = (int32_t)(rdtsc_lo() - startTime);
+            if (elapsed >= 0) {
+                ((DxGlobals *)dx_g)->gpuSyncDelay =
+                    (int32_t)((uint32_t)((DxGlobals *)dx_g)->gpuSyncDelay +
+                              (uint32_t)(elapsed / 32));
+            }
+        }
+    } else {
+        ((DxGlobals *)dx_g)->gpuSyncDelay = 0;
+        if (deviceState != 2)
+            goto done;
+        while (!RB_IsGpuFenceFinished()) {
+        }
+    }
+
+    glGenFencesAPPLE(1, (unsigned int *)(&g_FenceID));
+    glSetFenceAPPLE(g_FenceID);
+    ((DxGlobals *)dx_g)->flushGpuQueryIssued = 1;
+#else
     if (deviceState == 3) {
         glGenFencesAPPLE(1, (unsigned int *)(&g_FenceID));
         glSetFenceAPPLE(g_FenceID);
@@ -3617,6 +3724,7 @@ post_render:
     glSetFenceAPPLE(g_FenceID);
     dx = (char *)dx_g;
     ((DxGlobals *)dx)->flushGpuQueryIssued = 1;
+#endif
 
 done:
     return;
