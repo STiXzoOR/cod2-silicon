@@ -444,7 +444,7 @@ unix/unix_main,52,6,4,30,12
 unix/unix_net,17,3,2,10,2
 unix/unix_shared,26,5,4,10,7
 unix/unix_threads,5,2,0,2,1
-win32/cinematics,16,8,4,3,1
+win32/cinematics,16,8,4,4,0
 win32/snd_driver,55,45,7,3,0
 win32/win_localize,3,3,0,0,0
 win32/win_net,3,2,0,1,0
