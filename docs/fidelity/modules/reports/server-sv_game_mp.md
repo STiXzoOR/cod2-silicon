@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**47/54 reconciled: 39 equal, 8 fixed, 7 unchecked.** Mac 1.3 i386 is the authority. All 43 Mac-backed functions were read by hand, plus the identified inline helpers and the matrix-array wrapper's alternate Linux name. The legacy source is preserved in the inactive branches.
+**49/54 reconciled: 39 equal, 9 fixed, 1 intentional, 5 unchecked.** Mac 1.3 i386 is the authority. All 43 Mac-backed functions were read by hand, plus the identified inline helpers and the matrix-array wrapper's alternate Linux name. The legacy source is preserved in the inactive branches.
 
 ## Corrections
 
@@ -76,3 +76,34 @@ identities; they neither close the missing helpers nor prove dead operations.
 No source defect was established. No source changed, and no compilation, tests,
 CI or replay ran. Exact-entry evidence remains in the private
 `CoD2-native-decomp/recon-identity-parent3.noindex` directory.
+
+## Temporary-memory forwarding identities — 2026-11-05
+
+Two more rows are reconciled: `SV_Hunk_AllocateTempMemoryInternal` is fixed
+through the existing generic allocator correction; `SV_Hunk_FreeTempMemoryInternal`
+is intentional through the established matching-backend release adaptation.
+Current accounting is 39 equal, nine fixed, one intentional and five unchecked.
+No new production defect or source edit was introduced in this follow-up.
+
+Original Linux 1.0 address provenance identifies the wrappers at
+0x08090470/0x08090484. The original 1.3 ELF independently places them at
+0x08091d84–0x08091d98 and 0x08091d98–0x08091dac. Each forwards its unchanged
+single argument, makes one allocator/release call and returns without adding
+guards, state, cleanup or result conversion. The neighboring guarded permanent
+allocators are distinct and remain unresolved. Linux provides original wrapper
+identity; Mac remains the operation authority.
+
+The complete Mac allocator at 0x38192–0x382a2 preserves the pre-hunk zeroed
+allocation fallback, 16-byte alignment/header, low-temp update, overflow error,
+magic value and rollback size including alignment padding. Native
+`Hunk_AllocateTempMemoryInternal` has the prior missing 0x15 diagnostic marker
+repair. The complete Mac release at 0x37c9c–0x37cf8 validates the header, marks
+it released and subtracts the stored rollback without checking top-of-stack.
+Native preserves this hunk behavior and the already approved pre-hunk
+`Z_FreeInternal` path, which pairs optional guard allocations with their backend.
+
+These are complete-operation mappings to existing native providers, not claims
+of separately emitted Mac server exports. Primary provider verdicts remain
+unchanged. Parent and independent reviews support both classifications; no
+compilation, CI, tests or replay ran and no runtime coverage was added. Private
+exact original bodies remain in `recon-provenance-parent4.noindex`.
