@@ -565,7 +565,13 @@ void COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(const COpenGLARBFragmen
     program->programId = 0;
 
     codeStr = *(const char **)Code;
+#if defined(COD2_X64)
+    /* Mac 0x1c4ea-0x1c542 uploads even an empty Code string. The factory's
+     * name:: input must let GL determine the compilation failure. */
+    if (!codeStr)
+#else
     if (!codeStr || !codeStr[0])
+#endif
         return 0;
 
     codeLen = strlen(codeStr);
@@ -626,6 +632,17 @@ void COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(const COpenGLARBFragmen
 
     return 0;
 }
+
+#if defined(COD2_X64)
+IDirect3DPixelShader9 *CDirect3DPixelShader_CreateARBNative(const char *name, const char *code)
+{
+    COpenGLARBFragmentProgramImpl *program = calloc(1, sizeof(*program));
+    if (program)
+        COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(
+            (const COpenGLARBFragmentProgram *)program, (const string *)&name, (const string *)&code);
+    return (IDirect3DPixelShader9 *)program;
+}
+#endif
 
 static void COpenGLARBFragmentProgram_DestroyImpl(const COpenGLARBFragmentProgram *_this)
 {
