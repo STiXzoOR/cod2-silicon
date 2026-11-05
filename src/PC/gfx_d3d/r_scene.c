@@ -289,9 +289,80 @@ void R_DefaultVertexFrames(int vertCount, GfxWorldVertex *verts)
 
 void qsortDrawSurfs(GfxDrawSurf *drawSurfs, int drawSurfCount)
 {
+#if defined(COD2_X64)
+    GfxDrawSurf *loStack[30], *hiStack[30];
+    GfxDrawSurf *lo = drawSurfs, *hi;
+    int top = 0;
+    if (drawSurfCount <= 1)
+        return;
+    hi = drawSurfs + drawSurfCount - 1;
+    for (;;) {
+        /* Mac divides the element span by eight again before choosing its pivot. */
+        int span = (int)(hi - lo);
+        int pivotSpan = (int)((unsigned int)span >> 3) + 1;
+        if (pivotSpan <= 8) {
+            while (lo < hi) {
+                GfxDrawSurf *scan, *max = lo;
+                GfxDrawSurf tmp;
+                for (scan = lo + 1; scan <= hi; scan++) {
+                    if (scan->sort > max->sort)
+                        max = scan;
+                }
+                tmp = *max;
+                *max = *hi;
+                *hi-- = tmp;
+            }
+        } else {
+            GfxDrawSurf *left = lo + 1, *right = hi + 1;
+            GfxDrawSurf *pivot = lo + pivotSpan / 2;
+            GfxDrawSurf tmp = *pivot;
+            *pivot = *lo;
+            *lo = tmp;
+            for (;;) {
+                while (left <= hi && left->sort <= lo->sort)
+                    left++;
+                do {
+                    right--;
+                } while (right > lo && right->sort >= lo->sort);
+                if (left > right)
+                    break;
+                tmp = *left;
+                *left++ = *right;
+                *right = tmp;
+            }
+            tmp = *lo;
+            *lo = *right;
+            *right = tmp;
+            if (right - lo - 1 < hi - left) {
+                if (left < hi) {
+                    loStack[top] = left;
+                    hiStack[top++] = hi;
+                }
+                if (right - lo > 1) {
+                    hi = right - 1;
+                    continue;
+                }
+            } else {
+                if (right - lo > 1) {
+                    loStack[top] = lo;
+                    hiStack[top++] = right - 1;
+                }
+                if (left < hi) {
+                    lo = left;
+                    continue;
+                }
+            }
+        }
+        if (!top)
+            break;
+        lo = loStack[--top];
+        hi = hiStack[top];
+    }
+#else
     if (drawSurfCount > 1) {
         qsort(drawSurfs, (unsigned int)drawSurfCount, sizeof(*drawSurfs), R_CompareDrawSurfs);
     }
+#endif
 }
 
 void R_AddXModelSurfaces(int entIndex)
@@ -454,7 +525,12 @@ void R_AddPolyToScene(MaterialHandle materialHandle, int lmapIndex, int vertCoun
     poly->verts = destVerts;
     memcpy(destVerts, verts, vc * sizeof(GfxWorldVertex));
 
+#if defined(COD2_X64)
+    lmapIndex = (unsigned short)lmapIndex;
+    entIndex = (scene.polyCount % 0x800) + 0x800;
+#else
     entIndex = (scene.polyCount & 0x7FF) + 0x800;
+#endif
 
     buf = frontEndDataOut;
     if (buf->drawSurfCount <= 0xffff) {
@@ -550,9 +626,13 @@ static void __attribute_regparm__(2)
     zNear = refdef->zNear;
     if (!(zNear > 0.0f)) {
         zNear = (r_znear)->current.value;
+#if defined(COD2_X64)
+        zNear = zNear > 0.01f ? zNear : 0.01f;
+#else
         if (zNear < 0.01f) {
             zNear = 0.01f;
         }
+#endif
     }
 
     InfinitePerspectiveMatrix((float (*)[4]) & viewParms->projectionMatrix, refdef->fov_x, refdef->fov_y, zNear);
@@ -717,12 +797,17 @@ void R_RenderScene(const refdef_t *refdef)
     blurRadius = ((const refdef_t *)refdef)->blurRadius;
 
     {
+#if defined(COD2_X64)
+        isSplitscreen = refdef->width == ((const vidConfig_t *)imp_vidConfig)->width &&
+                        refdef->height == ((const vidConfig_t *)imp_vidConfig)->height;
+#else
         char *vidCfg = (char *)imp_vidConfig;
         if (((const refdef_t *)refdef)->width == ((const vidConfig_t *)imp_vidConfig)->width)
             isSplitscreen = 0;
         else
             isSplitscreen = 0;
         (void)isSplitscreen;
+#endif
     }
 
     viewParmsDraw = viewParms;
@@ -742,10 +827,19 @@ void R_RenderScene(const refdef_t *refdef)
             memcpy(fogActive, fogTarget, sizeof(GfxFog));
         } else {
             int prevTime = fogTarget->startTime;
+#if defined(COD2_X64)
+            if (fogPrev->techniqueOffset == fogTarget->techniqueOffset) {
+#else
             if (prevTime != fogTarget->techniqueOffset) {
+#endif
 
                 int duration = sunTime - prevTime;
                 float frac;
+#if defined(COD2_X64)
+                frac = (float)(sceneTime - prevTime) / (duration > 0 ? (float)duration : 1.0f);
+                if (frac > 1.0f)
+                    frac = 1.0f;
+#else
                 if (duration <= 0) {
                     frac = 1.0f;
                 } else {
@@ -753,6 +847,7 @@ void R_RenderScene(const refdef_t *refdef)
                     if (frac > 1.0f)
                         frac = 1.0f;
                 }
+#endif
 
                 int i;
                 for (i = 0; i < 3; i++) {
@@ -764,7 +859,11 @@ void R_RenderScene(const refdef_t *refdef)
                 for (i = 0; i < 4; i++) {
                     byte prev = ((byte *)&fogPrev->color)[i];
                     byte curr = ((byte *)&fogTarget->color)[i];
+#if defined(COD2_X64)
+                    ((byte *)&fogActive->color)[i] = (byte)(int)(prev + (int)(curr - prev) * frac);
+#else
                     ((byte *)&fogActive->color)[i] = (byte)(prev + (int)(curr - prev) * frac);
+#endif
                 }
                 fogActive->techniqueOffset = fogTarget->techniqueOffset;
                 fogActive->registered = 1;
@@ -879,9 +978,14 @@ void R_RenderScene(const refdef_t *refdef)
             R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)1);
             R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)6);
             R_AddCmdDrawSun(viewIndex);
+#if defined(COD2_X64)
+            if (!R_EndDrawGroupLoop(2, viewIndex) && isSplitscreen)
+                R_AddCmdApplyEarlyPostEffects();
+#else
             R_EndDrawGroupLoop(2, viewIndex);
             if (!isSplitscreen)
                 R_AddCmdApplyEarlyPostEffects();
+#endif
             R_EndDrawGroupSection(2);
 
             R_BeginDrawGroupSection(3);
@@ -915,8 +1019,13 @@ void R_RenderScene(const refdef_t *refdef)
             }
             R_BeginDrawGroupLoop((GfxDrawGroupType)4, viewIndex);
             R_AddCmdBeginView(scene.viewCount, &scene.def, (const GfxViewParms *)(viewParms), lodParms);
+#if defined(COD2_X64)
+            if (isSplitscreen)
+                R_AddCmdApplyLatePostEffects(blurRadius);
+#else
             if (!isSplitscreen)
                 R_AddCmdApplyLatePostEffects(blurRadius);
+#endif
             R_AddCmdDrawSunPostEffects(viewIndex);
         }
 
@@ -937,6 +1046,36 @@ void R_RenderScene(const refdef_t *refdef)
         if (debugEntCounts && debugEntCounts < scene.def.entityCount) {
 
             ri.Dvar_SetInt(r_debugEntCounts, 0);
+#if defined(COD2_X64)
+            {
+                static const char *const typeNames[10] = {
+                    "dobj", "xmodel", "smodel", "bmodel", "sprite", "rail core",
+                    "cloud", "oriented", "line", "cylinder"
+                };
+                int i, end;
+                for (i = 0; i < scene.def.entityCount; i++)
+                    debugEntIndices[i] = i;
+                qsort(debugEntIndices, scene.def.entityCount, sizeof(debugEntIndices[0]), R_CompareDumpSceneEntities);
+                for (i = 0; i < scene.def.entityCount; i = end) {
+                    int index = debugEntIndices[i];
+                    GfxEntity *ent = &frontEndDataOut->entities[index];
+                    GfxSceneEntity *sceneEnt = &scene.sceneEnts[index];
+                    for (end = i + 1; end < scene.def.entityCount; end++) {
+                        if (R_CompareDumpSceneEntities(&debugEntIndices[i], &debugEntIndices[end]))
+                            break;
+                    }
+                    Com_Printf("%3i: %-8s: ", end - i, typeNames[ent->reType]);
+                    if (ent->reType == 0)
+                        Com_Printf("%s\n", XModelGetName((void *)DObjGetModel(sceneEnt->u.obj, 0)));
+                    else if (ent->reType == 1 || ent->reType == 2)
+                        Com_Printf("%s\n", XModelGetName(sceneEnt->u.model));
+                    else if (ent->reType == 3)
+                        Com_Printf("*%i\n", (int)(sceneEnt->u.bmodel - rgp_p->world->models));
+                    else
+                        Com_Printf("%s\n", ent->customMaterial ? ent->customMaterial->info.name : "(null)");
+                }
+            }
+#endif
 
         }
     }
@@ -961,7 +1100,11 @@ int R_AddStaticModelToScene(int smodelIndex)
         if (buf->frameCount == warnCount_007f1dcc)
             return -1;
         warnCount_007f1dcc = buf->frameCount;
+#if defined(COD2_X64)
+        rii->Printf(2, "too many scene entities (more than %i)\n", 0x7fe);
+#else
         rii->Printf(2, "too many scene entities (more than %%i)\n", 0x7fe);
+#endif
         return -1;
     }
 
@@ -994,7 +1137,11 @@ int R_AddStaticModelToScene(int smodelIndex)
 
     if (r_rendererInUse->current.integer == 2) {
 
+#if defined(COD2_X64)
+        backEndRefEnt->lighting.dx7.colorForDir = (FxMemMgr_Emitter * (*)[2])(world->smodelLightingColorTable + smodelIndex);
+#else
         backEndRefEnt->lighting.dx7.colorForDir = (FxMemMgr_Emitter * (*)[2])((intptr_t)smodelIndex + (intptr_t)world->smodelLightingColorTable);
+#endif
         *(int *)&backEndRefEnt->lighting.dx7.sunVisibility = ((int *)world->smodelLightingSunVisTable)[smodelIndex];
     } else {
         backEndRefEnt->lighting.baseCoords[0] = smodelInst->baseLightingCoords[0];
