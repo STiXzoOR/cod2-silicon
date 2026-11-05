@@ -1,8 +1,10 @@
 # script/scr_vm module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**94/112 reconciled: 85 equal, 8 intentional, 1 fixed; 18 unchecked.** The main interpreter has additional local corrections but remains unchecked because its remaining error-state differences are unresolved. All pre-existing rows were unchecked. Legacy `COD2_X64=OFF` source is unchanged.
+**Current: 100/112 reconciled: 84 equal, 10 intentional, 6 fixed; 12 unchecked.** The interpreter and its established native ownership adaptations are complete under the later acceptance notes below.
+
+Initial pass: 94/112 reconciled: 85 equal, 8 intentional, 1 fixed; 18 unchecked. The main interpreter has additional local corrections but remains unchecked because its remaining error-state differences are unresolved. All pre-existing rows were unchecked. Legacy `COD2_X64=OFF` source is unchanged.
 
 Exact-symbol Mac 1.3 disassembly was used for every exported body. The complete interpreter and notify bodies were read, along with the native active helper graph. Tables at `0x329360`, `0x32957c`, `0x329798`, `0x3297bc`, `0x3299d8` and `0x329b70` were decoded from the binary. The constant checker and call/string triage were supporting checks, not equality evidence by themselves.
 
@@ -218,3 +220,11 @@ The user explicitly approved the native ownership differences: omit invalid-inte
 The exact combined VM source (SHA256 `b4d5a96ed8cc23b1068c4a60398fa81577a2599c0a3b56bff3301445a05138b6`) compiled in all four stock/CoD2x client/dedicated configurations. Five inactive source and actual diagnostic-line maps remain identical against `e6a70269`. These are manual object compilations only: **no linking, runtime tests, replay or CI**, and the latest corrected paths remain unexercised. Prior execution evidence applies to its earlier source revisions.
 
 The primary interpreter and its Linux internal alias return to **fixed**, based on the established complete 135-opcode audit, recovery audit and these reviewed follow-ups. This is inherited source evidence plus current compilation, not a fresh whole-VM runtime verification or claim of full client playability. Current module totals are **99/112 reconciled: 85 equal, 10 intentional, 4 fixed; 13 unchecked**. The remaining Linux helper identities are separate; neither this closure nor the intentional dummy-field/notify decisions supplies their missing original identities.
+
+## Original localized-string getter identity and returned error
+
+Original Linux1.0 Scr_GetConstIString0x808464e and caller0x80846dc, plus original1.3 helper0x8084c96–0x8084d23 and caller0x8084d24–0x8084d3e, establish the string-id result passed unchanged to SL_ConvertToString. Mac Scr_GetIString contains the complete corresponding helper before its conversion tail at0x873d8 or0x8743e. This positive caller/result mapping resolves the earlier identity gap; the returned text itself is not mistaken for a string id.
+
+Fresh complete Mac review found one additional defect in this getter. If its localized-string type-error policy returns,0x8734a–0x87355 formats the missing-parameter diagnostic and runs a second policy before converting id0. Native skipped that second operation. The native-only correction restores it after Scr_ParamTypeError, preserving the first pending message, error index, evaluate/loading behavior, terminal flag and nonlocal exits. The success and initially missing-index paths retain their existing operations. Scr_GetConstIString is now fixed, and the formerly equal whole getter is fixed for this correction. The interpreter, prior ownership decisions and other settled bodies are unchanged.
+
+Fresh independent source/original review passed. The changed scr_vm.c translation unit manually compiled in stock/CoD2x client and dedicated configurations. Conditional OFF source bytes and all five inactive preprocessing bodies, including actual line/field-assert expansions, remain identical. No CI, tests, new tests, full build or replay ran. The new returned-error path remains unexercised; this does not establish runtime verification or playability. Private evidence and compile commands/results are retained under recon-provenance-parent4.noindex and manual-vm-compile-01bbd310dc55.noindex.

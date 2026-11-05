@@ -9586,6 +9586,10 @@ const char *Scr_GetIString(unsigned int index)
     }
     if (value->type != VAR_LOCALIZED_STRING) {
         Scr_ParamTypeError(index, "type %s is not a localized string", value->type);
+#if defined(COD2_X64)
+        /* Mac 0x8734a repeats the missing-parameter policy if type error returns. */
+        Scr_SetErrorMessageAndJump(va("parameter %d does not exist", index + 1));
+#endif
         return SL_ConvertToString(0);
     }
 
