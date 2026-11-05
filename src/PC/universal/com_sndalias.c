@@ -576,7 +576,14 @@ static inline __attribute__((always_inline)) snd_alias_t *Com_PickSoundAliasFrom
         }
     }
 
+#if defined(COD2_X64)
+    {
+        unsigned int nextSequence = (unsigned int)maxSequence + 1u;
+        memcpy(&bestAlias->iSequence, &nextSequence, sizeof(nextSequence));
+    }
+#else
     bestAlias->iSequence = maxSequence + 1;
+#endif
     return bestAlias;
 }
 
