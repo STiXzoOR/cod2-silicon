@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 357,
+      "unchecked": 355,
       "intentional": 3169,
-      "equal": 4751,
+      "equal": 4753,
       "fixed": 1180
     },
     "scopes": {
@@ -154507,8 +154507,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Offsource overload: Linux row names AddRefToValue(VariableValue *), while this source imports the separate two-argument value module function. Mac caller field loads at 0x92860-0x9287f were checked, but no standalone overload identity was established."
+        "status": "equal",
+        "evidence": "Complete inline overload operation read in exact Mac EvalBinaryOperatorExpression: 0x92860-0x92883 loads each VariableCompileValue.value payload/type and calls AddRefToValue(int, VariableUnion), without a value store or extra branch. Original Mac stabs positively attribute this range to scr_variable.h line 246, returning to scr_compiler.cpp at 0x92884; named locals constValue1/2 at -0x24/-0x30 and VariableCompileValue.value offset 0 identify both operands. Native scr_compiler.c:699-700 performs the same complete operation with native-width fields. Linux supplied only the helper overload name. No standalone wrapper is required and no source change was made."
       },
       {
         "id": "mac:0x0009215e",
@@ -157631,8 +157631,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Offsource overload: Linux row names RemoveRefToValue(VariableValue *), while this source imports the separate two-argument value module function. Mac analysis calls at 0x9400b-0x94015/0x94825-0x9482f were checked, but no standalone overload identity was established."
+        "status": "equal",
+        "evidence": "Complete inline overload operation read in exact Mac Scr_CalcLocalVarsStatement: 0x9400b-0x94019 and 0x94825-0x94833 pass the evaluated value payload/type to RemoveRefToValue(int, VariableUnion), then resume the caller. Original Mac stabs positively attribute both ranges to scr_variable.h line 252; preceding constant evaluation and optional Scr_CastBool leave the value type in edx and payload at -0x2c. Native Scr_CalcLocalVarsIsConstantTrue scr_compiler.c:714-735 performs the complete release at line 734 after both constant evaluation branches, including false and nonnumeric values. Linux supplied only the helper overload name. No standalone wrapper is required and no source change was made."
       },
       {
         "id": "linux:script/scr_compiler.cpp:3724:Scr_AddBreakBlock",
@@ -159954,7 +159954,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac identity or matching typed-source-position caller found for the Linux debugger search API; absent as a native standalone body."
+        "evidence": "Whole Mac helper identity remains unresolved. Native feature-gated scr_debugger_glue.c:280-286 has a live same-named stub that ignores all arguments and returns NULL; the watch caller at scr_debugger_ui_watch.c:600 consumes its result. Neither original source metadata nor an executable Mac range established the complete typed nearest-source lookup. Do not infer a replacement or equality from the stub name."
       },
       {
         "id": "linux:script/scr_parser.cpp:920:Scr_GetCodePos",
@@ -160030,7 +160030,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "The shared NUL-line count primitive was checked in Scr_PrintSourcePos; a Mac caller/identity for this buffer-index wrapper was not established."
+        "evidence": "Mac NUL-line-count primitive is established in Scr_PrintSourcePos, but no complete original buffer-index wrapper range was identified. Native scr_debugger_glue.c:178-196 has a live guarded buffer-index wrapper with pointer-typed offset argument and UI callers. Zero-address Mac .eh metadata gives a signature only; complete wrapper equality and its argument/guard adaptations remain unproven."
       },
       {
         "id": "linux:script/scr_parser.cpp:492:Scr_GetLineNumInternal",
@@ -160087,7 +160087,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac identity/caller found for the Linux typed-opcode debugger search API; absent as a native standalone body."
+        "evidence": "Whole Mac helper identity remains unresolved; the zero-address .eh signature supplies no executable range. Native scr_debugger_glue.c:268-278 is a feature-gated same-named stub that ignores source range/type and returns NULL, zeroing optional output. Live script-window callers at 443 and 661 require returned positions. Unfiltered predecessor search is not the typed range search, and absence-based closure is rejected."
       },
       {
         "id": "linux:script/scr_parser.cpp:482:Scr_GetPrevSourcePos",
@@ -160175,7 +160175,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac identity/caller found for the Linux source-line formatting API; absent as a native standalone body."
+        "evidence": "Whole Mac formatter identity remains unresolved. Native scr_debugger_glue.c:198-244 provides a live filename(line) formatter used by call-stack/watch UI; it is not absent. Original Mac executable/source metadata did not establish the complete source-text/filename/savegame formatting operation associated with this helper name. Linux naming/intent does not prove a Mac defect or equality."
       },
       {
         "id": "linux:script/scr_parser.cpp:535:Scr_GetSourcePosOfType",
@@ -160194,7 +160194,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac identity/caller found for the Linux typed-source-position lookup API; absent as a native standalone body."
+        "evidence": "Whole Mac helper identity remains unresolved. Native scr_debugger_glue.c:258-266 is a live feature-gated stub, ignoring inputs, clearing optional output and returning NULL; the window caller is at 673. Its four-argument declaration differs from the original Mac .eh signature (const char*, int, Scr_SourcePos_t*). No complete primary implementation or justified replacement boundary was found."
       },
       {
         "id": "linux:script/scr_parser.cpp:445:Scr_GetSourcePosOpcodeLookup",
