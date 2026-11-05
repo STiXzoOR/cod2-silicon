@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 2644,
-      "intentional": 2051,
-      "equal": 3981,
-      "fixed": 781
+      "unchecked": 2586,
+      "intentional": 2098,
+      "equal": 3989,
+      "fixed": 784
     },
     "scopes": {
       "unassigned": 777,
@@ -32546,8 +32546,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2848 against src/Mac/Tools/MacAppleEvents.c: dispose existing AEDesc, reset null, AECreateDesc and sign-extended short status throw. The source flow is recognizable but Carbon providers are retained stubs and the 4-byte exception allocation is not a verified LP64 long payload. No external native source/generated-data caller reaches this descriptor graph. Native launch URLs/queued shutdown replace it; no functioning Carbon exception ABI is claimed."
       },
       {
         "id": "mac:0x00002a5c",
@@ -32568,8 +32568,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2a5c against src/Mac/Tools/MacAppleEvents.c: dispose/reset descriptor, AECreateAppleEvent with return ID -1/transaction 0 and short status throw. The source flow is recognizable but Carbon providers are retained stubs and the 4-byte exception allocation is not a verified LP64 long payload. No external native source/generated-data caller reaches this descriptor graph. Native launch URLs/queued shutdown replace it; no functioning Carbon exception ABI is claimed."
       },
       {
         "id": "mac:0x00002a06",
@@ -32590,8 +32590,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2a06 against src/Mac/Tools/MacAppleEvents.c: AEPutParamDesc and sign-extended short status throw. The source flow is recognizable but Carbon providers are retained stubs and the 4-byte exception allocation is not a verified LP64 long payload. No external native source/generated-data caller reaches this descriptor graph. Native launch URLs/queued shutdown replace it; no functioning Carbon exception ABI is claimed."
       },
       {
         "id": "mac:0x00026166",
@@ -32612,8 +32612,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x26166: window/fullscreen Carbon event arrays, dispatcher/application/window/menu targets, toggle menu item, aevt/quit handler and status throws. Native has no CMacGameEngine object or callback root; src/unix/linux_input.c polls SDL into engine events and native mac_main owns the frame loop. The unused mac_splash event constants do not install callbacks. Old Carbon event wiring is intentionally replaced."
       },
       {
         "id": "mac:0x0002641a",
@@ -32634,8 +32634,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2641a: locate/chdir data folder, setup 640x480 display, install Carbon handlers, hide cursor and invoke engine virtual startup, throwing on display failure. Native launcher supplies fs_basepath/fs_homepath, native mac_main owns startup, and SDL display/input providers own the window/event lifecycle. No native OneShotTimer body, callback or generated-data root remains; Carbon timer startup is retired."
       },
       {
         "id": "mac:0x001173fe",
@@ -32657,7 +32657,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read exact Mac 0x1173fe: recursive pthread setup matches native macos_threads.c on success, but Mac checks mutexattr_init/settype/mutex_init and throws signed 32-bit status at 0x117451; native ignores those failures. mac-win32 owner independently confirmed this and found no live native CMutex/CThread users after Miles/voice replacement. The retained constructor error contract is unresolved; no shared-provider edit or speculative C++ exception ABI was introduced."
       },
       {
         "id": "mac:0x00115fa0",
@@ -32678,8 +32678,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x115fa0-0x116192: current AudioUnit device, preferred surround channel layout, explicit labels/bitmap/tag counts, clamp/default and status throws. cmake/macos-arm64.cmake excludes MacMSS_Engine.c; native macos_audio.c instead owns the SDK default-output AudioUnit with a two-channel float mixer and typed sample pool (WS3). No CSoundEngine object/callback root calls this legacy query; device-dependent 4/5-channel Miles parity is not claimed."
       }
     ],
     "Mac/Tools/MacFastCopy": [
@@ -32726,8 +32726,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x88a2-0x88c3 falls back to 800 MHz and divides by 1000 when sysctl fails. The live native wrapper previously returned 0 when all SDK/IOKit queries were exhausted; it now returns 800.0f/1000.0f for an unavailable/nonpositive query while retaining modern positive frequency results and the public signature. Sys_CpuGHz feeds sys_info and Com_SetRecommended positive CSV CPU thresholds. Compiled and reviewed, not exercised; modern successful-query precision remains intentional."
       },
       {
         "id": "mac:0x000088d4",
@@ -32748,8 +32748,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x88d4: 32-bit HW_PHYSMEM sysctl, shift20 and 128 MiB fallback. Native intentionally retains typed 64-bit MacSystem_MemoryBytes/hw.memsize for Sys_SystemMemoryMB, supporting memory above 4 GiB and returning 0 if unavailable. Actual Com_SetRecommended clamps <128 to 128, but adds 8 to measured >=128; keeping unavailable memory at 0 therefore selects conservative 128 MiB rather than the 136 MiB a restored wrapper fallback would produce. Diagnostic/threshold parity on query failure is not claimed; public project UInt32 signature is retained."
       },
       {
         "id": "mac:0x00008780",
@@ -32770,8 +32770,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x8780: one-shot Gestalt sysv cache and short result. Native no native caller uses the historical 0x1040 shim; packaging/deployment and launcher enforce native supported macOS startup. Public project UInt32/Boolean signatures are preserved; these are platform capability/provider adaptations, not i386 equality claims."
       },
       {
         "id": "mac:0x000087ca",
@@ -32792,8 +32792,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x87ca: Gestalt selector, low-byte shift and attribute bit result. Native the only source caller requests x86 feature selector/bit25 for the compatibility Sys_SupportsSSE flag; native compiler-owned code has no Gestalt API requirement and the port preserves that enabled engine capability. Public project UInt32/Boolean signatures are preserved; these are platform capability/provider adaptations, not i386 equality claims."
       },
       {
         "id": "mac:0x00008802",
@@ -32814,8 +32814,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x8802: cached Gestalt ppcf AltiVec bit4. Native arm64 has no PowerPC AltiVec; live CColorConverter chooses the scalar conversion paths via the false shim, with its three ignored native arguments explicitly supplied. Public project UInt32/Boolean signatures are preserved; these are platform capability/provider adaptations, not i386 equality claims."
       }
     ],
     "Mac/Tools/MacFiles": [
@@ -32950,8 +32950,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x8c9e: process bundle parent FSRef/path lookup, separator append and path cleanup. Native has no external source or active LP64 generated-data caller of the MacFolders graph. Launcher/Core.swift passes fs_basepath/fs_homepath and src/Mac/Main/mac_common.c enumerates POSIX paths; HFS IDs/FSRefs are retired. The apparent virtualKeyConvert relocation to GetDataFolderItemRef exists only in the pointer-size-4 branch. Retained stubs and int CF declarations are not asserted equivalent; launch URL ownership is unix-runtime."
       },
       {
         "id": "mac:0x00008d82",
@@ -32972,8 +32972,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x8d82: 0x400-byte application-path wrapper, status propagation and FSPathMakeRef. Native has no external source or active LP64 generated-data caller of the MacFolders graph. Launcher/Core.swift passes fs_basepath/fs_homepath and src/Mac/Main/mac_common.c enumerates POSIX paths; HFS IDs/FSRefs are retired. The apparent virtualKeyConvert relocation to GetDataFolderItemRef exists only in the pointer-size-4 branch. Retained stubs and int CF declarations are not asserted equivalent; launch URL ownership is unix-runtime."
       },
       {
         "id": "mac:0x000094d8",
@@ -32994,8 +32994,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x94d8: lazy application bundle/volume/catalog lookup and 0x50-byte FSRef copy. Native has no external source or active LP64 generated-data caller of the MacFolders graph. Launcher/Core.swift passes fs_basepath/fs_homepath and src/Mac/Main/mac_common.c enumerates POSIX paths; HFS IDs/FSRefs are retired. The apparent virtualKeyConvert relocation to GetDataFolderItemRef exists only in the pointer-size-4 branch. Retained stubs and int CF declarations are not asserted equivalent; launch URL ownership is unix-runtime."
       },
       {
         "id": "mac:0x00009438",
@@ -33016,8 +33016,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x9438: lazy process bundle/catalog lookup and signed volume-reference return. Native has no external source or active LP64 generated-data caller of the MacFolders graph. Launcher/Core.swift passes fs_basepath/fs_homepath and src/Mac/Main/mac_common.c enumerates POSIX paths; HFS IDs/FSRefs are retired. The apparent virtualKeyConvert relocation to GetDataFolderItemRef exists only in the pointer-size-4 branch. Retained stubs and int CF declarations are not asserted equivalent; launch URL ownership is unix-runtime."
       },
       {
         "id": "mac:0x00008dce",
@@ -33038,8 +33038,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x8dce: cached HFS directory discovery beside the executable and application, catalog directory flags and failure fallbacks. Native has no external source or active LP64 generated-data caller of the MacFolders graph. Launcher/Core.swift passes fs_basepath/fs_homepath and src/Mac/Main/mac_common.c enumerates POSIX paths; HFS IDs/FSRefs are retired. The apparent virtualKeyConvert relocation to GetDataFolderItemRef exists only in the pointer-size-4 branch. Retained stubs and int CF declarations are not asserted equivalent; launch URL ownership is unix-runtime."
       },
       {
         "id": "mac:0x0000929c",
@@ -33060,8 +33060,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x929c: lazy volume lookup, FSSpec-to-FSRef conversion, separator handling and path cleanup. Native has no external source or active LP64 generated-data caller of the MacFolders graph. Launcher/Core.swift passes fs_basepath/fs_homepath and src/Mac/Main/mac_common.c enumerates POSIX paths; HFS IDs/FSRefs are retired. The apparent virtualKeyConvert relocation to GetDataFolderItemRef exists only in the pointer-size-4 branch. Retained stubs and int CF declarations are not asserted equivalent; launch URL ownership is unix-runtime."
       },
       {
         "id": "mac:0x000093ec",
@@ -33082,8 +33082,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x93ec: 0x400-byte data-item wrapper, status propagation and FSPathMakeRef. Native has no external source or active LP64 generated-data caller of the MacFolders graph. Launcher/Core.swift passes fs_basepath/fs_homepath and src/Mac/Main/mac_common.c enumerates POSIX paths; HFS IDs/FSRefs are retired. The apparent virtualKeyConvert relocation to GetDataFolderItemRef exists only in the pointer-size-4 branch. Retained stubs and int CF declarations are not asserted equivalent; launch URL ownership is unix-runtime."
       },
       {
         "id": "mac:0x000091b2",
@@ -33104,8 +33104,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x91b2: lazy application volume lookup, data-directory FSSpec conversion and bounded FSRefMakePath. Native has no external source or active LP64 generated-data caller of the MacFolders graph. Launcher/Core.swift passes fs_basepath/fs_homepath and src/Mac/Main/mac_common.c enumerates POSIX paths; HFS IDs/FSRefs are retired. The apparent virtualKeyConvert relocation to GetDataFolderItemRef exists only in the pointer-size-4 branch. Retained stubs and int CF declarations are not asserted equivalent; launch URL ownership is unix-runtime."
       },
       {
         "id": "mac:0x00008bf6",
@@ -33126,8 +33126,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x8bf6: cached executable URL-to-FSRef conversion and catalog parent-directory extraction. Native has no external source or active LP64 generated-data caller of the MacFolders graph. Launcher/Core.swift passes fs_basepath/fs_homepath and src/Mac/Main/mac_common.c enumerates POSIX paths; HFS IDs/FSRefs are retired. The apparent virtualKeyConvert relocation to GetDataFolderItemRef exists only in the pointer-size-4 branch. Retained stubs and int CF declarations are not asserted equivalent; launch URL ownership is unix-runtime."
       }
     ],
     "Mac/Tools/MacGameEngine": [
@@ -38402,8 +38402,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xb408: HFS path normalization/fallback, catalog batches, FFItem vector state, wildcard dispatch and first-result cleanup. Native FindFirstFileA uses POSIX FFState/dirent/stat and is not called by the native engine; only the Windows-only MSVC dirent shim calls this name. Live native filesystem enumeration is Sys_ListFiles/Sys_ListFilteredFiles in src/Mac/Main/mac_common.c, reached by com_files/files. No active generated-data callback references FindFirstFileA. Old HFS fallback and metadata parity are not claimed."
       },
       {
         "id": "mac:0x000047b2",
@@ -38424,8 +38424,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x47b2: fullscreen-only CG display transfer-table save/set, 256 high-byte-normalized entries and cleanup. Native CDirect3DDevice_SetGammaRamp calls the typed src/platform/macos_display.c provider, which copies all 3x256 RGB16 entries to the presentation LUT, tracks identity/revision and does not mutate the desktop gamma. This established native presentation boundary replaces the excluded MacDisplay implementation; not exercised here."
       },
       {
         "id": "mac:0x000e87f4",
@@ -38446,8 +38446,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand-read Mac 0xe87f4-0xe8b2d: GL state save, legacy vendor disables, front packed BGRA readback, 3/4-byte row reversal and free. Native screenshot readback intentionally supplies RGBA/UNSIGNED_BYTE then RGB to MacJpeg_Encode, with TGA channel conversion at serialization (documented F2-screenshot report), engine-FBO read routing and back/front failure fallback. Native card-type provider returns 0, retiring the old vendor branches. Active screenshot/cubemap callers and buffer ownership were inspected; no whole-renderer parity or runtime readback is claimed."
       },
       {
         "id": "mac:0x0000aafe",
@@ -38468,8 +38468,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xaafe: batched FSRef directory walk, LaunchServices item flags/creator matching, recursive child search, vector and array cleanup. Native has no source or active generated-data caller of SearchForApplication; the apparent virtualKeyConvert relocation is pointer-size-4 only. Stock application launching is owned by the unix-runtime SDK URL provider (pending b8facc4 handles packaged outer-app layout), not the retained two-argument stub with a different signature. No change to that other unit is included."
       },
       {
         "id": "mac:0x0000ae28",
@@ -38490,8 +38490,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xae28: save prior cursor visibility, conditionally associate mouse, InitCursor and set visible. Native StShowCursor constructor is dormant with the retired Carbon alerts; no source/generated-data caller instantiates it. Live cursor capture/visibility is owned by SDL input in src/unix/linux_input.c. No native effect is claimed for the empty retained constructor."
       }
     ],
     "Mac/Tools/MacPreferences": [
@@ -38514,8 +38514,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x9bb4 with the native wrapper: 256-byte GetString, low-byte default, empty check, atoi and nonzero Boolean result. String storage is supplied by the separately documented native file-preferences backend. The rectangle wrapper return byte is unused by native callers; Mac signatures are void."
       },
       {
         "id": "mac:0x000096f4",
@@ -38536,8 +38536,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x96f4 with the native wrapper: 256-byte GetString, empty/default branch and atoi. String storage is supplied by the separately documented native file-preferences backend. The rectangle wrapper return byte is unused by native callers; Mac signatures are void."
       },
       {
         "id": "mac:0x00009942",
@@ -38558,8 +38558,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x9942 with the native wrapper: origin.x/origin.y/size.width/size.height suffixes in order, empty-to-zero and double atof-to-float stores in the project 16-byte CGRect. String storage is supplied by the separately documented native file-preferences backend. The rectangle wrapper return byte is unused by native callers; Mac signatures are void."
       },
       {
         "id": "mac:0x000095c4",
@@ -38580,8 +38580,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x966c-0x9673 treats CFStringGetCString buffer exhaustion as failure and takes the default/empty branch. Native file preferences returned success after truncation; native Apple reads now reject a value whose terminator cannot fit, close the file and follow that fallback. The intentional ~/.cod2/preferences backend remains shared with the launcher (WS21); compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00009b72",
@@ -38602,8 +38602,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x9b72 with the native wrapper: zero-extended input byte, decimal %d formatting and PutString. String storage is supplied by the separately documented native file-preferences backend. The rectangle wrapper return byte is unused by native callers; Mac signatures are void."
       },
       {
         "id": "mac:0x0000974a",
@@ -38624,8 +38624,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x974a with the native wrapper: decimal %d formatting and PutString. String storage is supplied by the separately documented native file-preferences backend. The rectangle wrapper return byte is unused by native callers; Mac signatures are void."
       },
       {
         "id": "mac:0x000097a2",
@@ -38646,8 +38646,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x97a2 with the native wrapper: four ordered rectangle suffixes, float-to-double promotion, %f formatting and PutString. String storage is supplied by the separately documented native file-preferences backend. The rectangle wrapper return byte is unused by native callers; Mac signatures are void."
       },
       {
         "id": "mac:0x00009684",
@@ -38668,8 +38668,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x9684: create MacRoman CF key/value, set current-application preference, release both. WS21 native first-run/key contract instead shares ~/.cod2/preferences with the launcher, rewrites a temporary file with mode 0600, closes and renames it. Live callers are Com_WriteCDKey and launcher preference persistence; CFPreferences storage is intentionally replaced, not declared equal."
       },
       {
         "id": "mac:0x0000978a",
@@ -38690,8 +38690,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x978a: CFPreferencesAppSynchronize(current application). Native Apple PutString has already flushed/closed its temporary file and renamed it; Synchronize has no CF store to flush. Sys_Quit still invokes this wrapper. This preserves the WS21 file-preferences replacement boundary, without claiming crash-durable fsync semantics."
       }
     ],
     "Mac/Tools/MacResources": [
@@ -38714,8 +38714,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xa058: cached localized format with product-name substitution and release. No active native caller reaches this graph; pending VK_Map restoration adds a compiled call to GetLanguageCode only from dormant Carbon callbacks, bypassed by active SDL input. The zero language provider does not restore French/German selection there; native startup does not enforce the old optical-disc startup check. Retained int-typed CF references, literal i386 keys and merged sResult cache are dormant compatibility code, not working LP64 resource providers. The generated MissingDataFolderError reference is pointer-size-4 only; the real SDK CFBundleGetMainBundle used by unix-runtime launch code does not make these exports live."
       },
       {
         "id": "mac:0x00009c0c",
@@ -38736,8 +38736,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x9c0c: GameStrings lookup, key fallback, 256-byte MacRoman Pascal conversion, release and Boolean conversion. No active native caller reaches this graph; pending VK_Map restoration adds a compiled call to GetLanguageCode only from dormant Carbon callbacks, bypassed by active SDL input. The zero language provider does not restore French/German selection there; game-data discovery uses launcher paths rather than localized bundle folder names. Retained int-typed CF references, literal i386 keys and merged sResult cache are dormant compatibility code, not working LP64 resource providers. The generated MissingDataFolderError reference is pointer-size-4 only; the real SDK CFBundleGetMainBundle used by unix-runtime launch code does not make these exports live."
       },
       {
         "id": "mac:0x00009cbc",
@@ -38758,8 +38758,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x9cbc: 0x7fff sentinel cache, localized Pascal numeric language and StringToNum. No active native caller reaches this graph; pending VK_Map restoration adds a compiled call to GetLanguageCode only from dormant Carbon callbacks, bypassed by active SDL input. The zero language provider does not restore French/German selection there; StringEd reads the loc_language dvar in src/PC/stringed/stringed_hooks.c. Retained int-typed CF references, literal i386 keys and merged sResult cache are dormant compatibility code, not working LP64 resource providers. The generated MissingDataFolderError reference is pointer-size-4 only; the real SDK CFBundleGetMainBundle used by unix-runtime launch code does not make these exports live."
       },
       {
         "id": "mac:0x00009e56",
@@ -38780,8 +38780,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x9e56: independent short/product/data-folder caches and three format substitutions. No active native caller reaches this graph; pending VK_Map restoration adds a compiled call to GetLanguageCode only from dormant Carbon callbacks, bypassed by active SDL input. The zero language provider does not restore French/German selection there; launcher data selection and fs_basepath own missing-data handling. Retained int-typed CF references, literal i386 keys and merged sResult cache are dormant compatibility code, not working LP64 resource providers. The generated MissingDataFolderError reference is pointer-size-4 only; the real SDK CFBundleGetMainBundle used by unix-runtime launch code does not make these exports live."
       },
       {
         "id": "mac:0x00009fa4",
@@ -38802,8 +38802,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x9fa4: cached localized format with product-name substitution and release. No active native caller reaches this graph; pending VK_Map restoration adds a compiled call to GetLanguageCode only from dormant Carbon callbacks, bypassed by active SDL input. The zero language provider does not restore French/German selection there; native display startup replaces the old 32-bit display-depth requirement. Retained int-typed CF references, literal i386 keys and merged sResult cache are dormant compatibility code, not working LP64 resource providers. The generated MissingDataFolderError reference is pointer-size-4 only; the real SDK CFBundleGetMainBundle used by unix-runtime launch code does not make these exports live."
       },
       {
         "id": "mac:0x00009d60",
@@ -38824,8 +38824,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x9d60: cached localized format with product-name substitution and release. No active native caller reaches this graph; pending VK_Map restoration adds a compiled call to GetLanguageCode only from dormant Carbon callbacks, bypassed by active SDL input. The zero language provider does not restore French/German selection there; packaging/deployment target and native launcher own supported-system startup. Retained int-typed CF references, literal i386 keys and merged sResult cache are dormant compatibility code, not working LP64 resource providers. The generated MissingDataFolderError reference is pointer-size-4 only; the real SDK CFBundleGetMainBundle used by unix-runtime launch code does not make these exports live."
       },
       {
         "id": "mac:0x00009e14",
@@ -38846,8 +38846,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x9e14: independent NoQuickTime localized-string cache. No active native caller reaches this graph; pending VK_Map restoration adds a compiled call to GetLanguageCode only from dormant Carbon callbacks, bypassed by active SDL input. The zero language provider does not restore French/German selection there; the native media/audio backends replace QuickTime startup. Retained int-typed CF references, literal i386 keys and merged sResult cache are dormant compatibility code, not working LP64 resource providers. The generated MissingDataFolderError reference is pointer-size-4 only; the real SDK CFBundleGetMainBundle used by unix-runtime launch code does not make these exports live."
       },
       {
         "id": "mac:0x00009c7a",
@@ -38868,8 +38868,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x9c7a: independent ProductFamily localized-string cache. No active native caller reaches this graph; pending VK_Map restoration adds a compiled call to GetLanguageCode only from dormant Carbon callbacks, bypassed by active SDL input. The zero language provider does not restore French/German selection there; native window naming and launcher metadata replace bundle product-family lookup. Retained int-typed CF references, literal i386 keys and merged sResult cache are dormant compatibility code, not working LP64 resource providers. The generated MissingDataFolderError reference is pointer-size-4 only; the real SDK CFBundleGetMainBundle used by unix-runtime launch code does not make these exports live."
       }
     ],
     "Mac/Tools/MacSavers": [
@@ -39272,8 +39272,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xa409-0xa47d subtracts each rectangle extent in 16 bits, sign-extends those extents, divides the delta by two toward zero and writes wrapped 16-bit coordinates. Native MacTools_CenterRect was empty; native Apple now implements those operations including aliased rectangle inputs. Only the excluded legacy MacDisplay source calls it currently; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0000a54a",
@@ -39294,8 +39294,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xa54a: clear PSN, GetNextProcess/GetProcessInformation loop and APPL creator match. No external native source or active generated-data caller reaches this helper; native application URL launching replaces process-creator discovery; no current caller asks to find another process. Retained stubs are not asserted equivalent."
       },
       {
         "id": "mac:0x0000a5c2",
@@ -39316,8 +39316,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xa5c2: CFDictionaryGetValue, CFNumber int conversion, double/lround fallback and -1 on failure. No external native source or active generated-data caller reaches this helper; excluded legacy MacDisplay refresh dictionaries are replaced by SDL display-mode enumeration in macos_display.c. Retained stubs are not asserted equivalent."
       },
       {
         "id": "mac:0x0000a640",
@@ -39338,8 +39338,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xa640: IORegistry CFData property, strcpy payload, CFRelease and Boolean result. No external native source or active generated-data caller reaches this helper; native hardware queries use typed MacSystem sysctl/IOKit providers rather than the old raw string property helper. Retained stubs are not asserted equivalent."
       },
       {
         "id": "mac:0x0000a6a2",
@@ -39360,8 +39360,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xa6a2: IORegistry CFData property, first 32-bit numeric word and Boolean result (Mac does not release this overload). No external native source or active generated-data caller reaches this helper; native hardware queries use typed MacSystem sysctl/IOKit providers; the reconstructed file has no separate numeric overload. Retained stubs are not asserted equivalent."
       },
       {
         "id": "mac:0x0000a2ec",
@@ -39382,8 +39382,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xa2ec: visibility guard, HideCursor, optional saved-position/centering warp, dissociation and state clear. No external native source or active generated-data caller reaches this helper; SDL relative-mode/cursor ownership in src/unix/linux_input.c replaces Carbon cursor control. Retained stubs are not asserted equivalent."
       },
       {
         "id": "mac:0x0000a3ee",
@@ -39404,8 +39404,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xa3ee with native MacTools_IsCursorVisible: both zero-extend the first byte of sSystemCursorVisible, initialized to 1. This is the dormant Carbon-state query; live SDL visibility is owned separately."
       },
       {
         "id": "mac:0x0000a9f0",
@@ -39426,8 +39426,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xa9f0: single CF string overload forwards a null second message and byte stop flag. These overloads have no external native source/generated-data callers. The CF alert bodies at 0xa95e/0xa7f4 were already audited in mac-lifecycle/MacGlobals; native sys-info/error dialogs use MacWin32 MessageBoxA/stderr and launcher UI. Carbon modal alert/cursor restoration is retired; its stubs were not changed."
       },
       {
         "id": "mac:0x0000aa14",
@@ -39448,8 +39448,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xaa14: UTF-8 char-string creation, null optional second message, alert and balanced release. These overloads have no external native source/generated-data callers. The CF alert bodies at 0xa95e/0xa7f4 were already audited in mac-lifecycle/MacGlobals; native sys-info/error dialogs use MacWin32 MessageBoxA/stderr and launcher UI. Carbon modal alert/cursor restoration is retired; its stubs were not changed."
       },
       {
         "id": "mac:0x0000aa9e",
@@ -39470,8 +39470,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xaa9e: bundle localized key fallback, alert and release. These overloads have no external native source/generated-data callers. The CF alert bodies at 0xa95e/0xa7f4 were already audited in mac-lifecycle/MacGlobals; native sys-info/error dialogs use MacWin32 MessageBoxA/stderr and launcher UI. Carbon modal alert/cursor restoration is retired; its stubs were not changed."
       },
       {
         "id": "mac:0x0000a6e6",
@@ -39492,8 +39492,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xa6e6: Priv event, target/Pone/Ptwo parameters, main-queue post, release and status result. No external native source or active generated-data caller reaches this helper; native SDL event polling, engine Sys_QueEvent and command queue replace Carbon window events. Retained stubs are not asserted equivalent."
       },
       {
         "id": "mac:0x0000a8be",
@@ -39514,8 +39514,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xa8be: UTF-8 char-string conversion, question alert, releases and byte result. These overloads have no external native source/generated-data callers. The CF alert bodies at 0xa95e/0xa7f4 were already audited in mac-lifecycle/MacGlobals; native sys-info/error dialogs use MacWin32 MessageBoxA/stderr and launcher UI. Carbon modal alert/cursor restoration is retired; its stubs were not changed."
       },
       {
         "id": "mac:0x0000a4be",
@@ -39536,8 +39536,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xa4be: construct target/event, aevt/quit create/send, dispose and caught-error path. No external native source or active generated-data caller reaches this helper; native shutdown is queued through the engine and dedicated signal handler, without sending another-process AppleEvents. Retained stubs are not asserted equivalent."
       },
       {
         "id": "mac:0x0000a238",
@@ -39558,8 +39558,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xa238: GetCursor and null-checked SetCursor. No external native source or active generated-data caller reaches this helper; native SDL input/window layer owns the system cursor; no native resource-cursor ID caller remains. Retained stubs are not asserted equivalent."
       },
       {
         "id": "mac:0x0000a25c",
@@ -39580,8 +39580,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xa25c: visibility guard, mouse association, optional explicit/saved warp, InitCursor and state set. No external native source or active generated-data caller reaches this helper; SDL relative-mode/cursor ownership in src/unix/linux_input.c replaces Carbon cursor control. Retained stubs are not asserted equivalent."
       },
       {
         "id": "mac:0x0000a48c",
@@ -39603,7 +39603,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read Mac 0xa48c: UpTime -> AddDurationToAbsolute(milliseconds) -> MPDelayUntil(deadline). Native source call order matches, but its project AbsoluteTime has two LP64 unsigned-long fields (16 bytes), while the macos_compat.c providers independently define two unsigned-int fields (8 bytes). No source/generated-data caller reaches MacTools_Sleep; live scheduling uses MacSystem clocks. The dormant exported ABI is unresolved and requires shared type/provider ownership, so equality is not claimed. Independently confirmed with Clang record-layout dumps using actual client compilation flags: imported type size16/align8, hi offset8; provider type size8/align4, hi offset4. Matching lo/hi names and order do not repair the ABI."
       },
       {
         "id": "mac:0x0000a944",
@@ -39624,8 +39624,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xa944 with ZN12StShowCursorD1Ev: return if the saved first byte is nonzero, otherwise call MacTools_HideCursor(1). The native constructor/alert graph is separately classified as retired; this destructor branch and argument match."
       }
     ],
     "Mac/Tools/MacWin32": [

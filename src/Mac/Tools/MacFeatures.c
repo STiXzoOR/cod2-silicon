@@ -31,7 +31,9 @@ Boolean MacFeatures_IsAltiVecAvailable(UInt8 *outMajor, UInt8 *outMinor, UInt8 *
 float MacFeatures_GetCPUSpeedInGHz(void)
 {
 #if COD2_APPLE_SDK
-    return MacSystem_CPUFrequencyGHz();
+    float ghz = MacSystem_CPUFrequencyGHz();
+    /* Mac 0x88a2-0x88c3 falls back to 800 MHz when the query fails. */
+    return ghz > 0.0f ? ghz : 800.0f / 1000.0f;
 #else
     FILE *f = fopen("/proc/cpuinfo", "r");
     char line[256];
