@@ -157,6 +157,11 @@ extern void D3DXMatrixMultiply(float *out, const float *a, const float *b);
 extern int MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(float *m, float ViewportWidth, float ViewportHeight);
 extern D3DMATRIX *RB_GetActiveWorldMatrix(void);
 
+#if defined(COD2_X64)
+HRESULT CDirect3DDevice_CreatePixelShaderOpenGL(const CDirect3DDevice *, OpenGLPixelShaderType,
+                                               const unsigned long *, IDirect3DPixelShader9 **);
+#endif
+
 extern void COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(
     const COpenGLARBFragmentProgram *_this, const string *Name, const string *Code);
 
@@ -408,6 +413,31 @@ typedef struct {
     unsigned char depthStencilDetached;
 #endif
 } DeviceImpl;
+#if defined(COD2_X64)
+_Static_assert(sizeof(DeviceImpl) <= 4096, "native device storage");
+typedef struct {
+    uint32_t X, Y, Width, Height;
+    float MinZ, MaxZ;
+} NativeViewport;
+_Static_assert(sizeof(NativeViewport) == 24, "native viewport cache width");
+_Static_assert(offsetof(DeviceImpl, viewportMaxZ) - offsetof(DeviceImpl, viewportX) + sizeof(float) == 24,
+               "device viewport cache layout");
+#endif
+
+#if defined(COD2_X64)
+void CDirect3DDevice_SetNativeBackBuffer(void *device, void *backBuffer, UINT adapter)
+{
+    typedef struct { void **vtable; ULONG refCount; IDirect3DSurface9 *backBuffer; } NativeSwapChain;
+    DeviceImpl *dev = (DeviceImpl *)device;
+    dev->cardType = adapter;
+    dev->backBuffer = dev->renderTarget = (IDirect3DSurface9 *)backBuffer;
+    dev->swapChain = (IDirect3DSwapChain9 *)calloc(1, sizeof(NativeSwapChain));
+    if (dev->swapChain) {
+        CDirect3DSwapChain_CDirect3DSwapChain((const CDirect3DSwapChain *)dev->swapChain);
+        CDirect3DSwapChain_SetBackBuffer((const CDirect3DSwapChain *)dev->swapChain, dev->backBuffer);
+    }
+}
+#endif
 
 static DWORD g_currentFVF = 0;
 static float g_vsConst[256 * 4];
@@ -1024,6 +1054,7 @@ static void CDirect3DDevice_ApplyTextureStageState(UINT stage)
     DWORD alphaArg1 = g_textureStageState[stage][D3DTSS_ALPHAARG1];
     DWORD alphaArg2 = g_textureStageState[stage][D3DTSS_ALPHAARG2];
 
+#if !defined(COD2_X64)
     if (!colorOp)
         colorOp = D3DTOP_MODULATE;
     if (!alphaOp)
@@ -1036,6 +1067,8 @@ static void CDirect3DDevice_ApplyTextureStageState(UINT stage)
         alphaArg1 = 2;
     if (!alphaArg2)
         alphaArg2 = 1;
+
+#endif
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
     CDirect3DDevice_SetTextureFactorColor();
@@ -1373,6 +1406,20 @@ HRESULT CDirect3DDevice_CreatePixelShader(const CDirect3DDevice *_this,
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    GLint errorPosition = -1;
+    HRESULT result = CDirect3DDevice_CreatePixelShaderOpenGL(_this, 2,
+        (const unsigned long *)pFunction, ppShader);
+    if (result)
+        return result;
+    glGetIntegerv(0x864b, &errorPosition);
+    if (errorPosition != -1) {
+        ((ULONG (*)(const void *))(*(void ***)(*ppShader))[2])(*ppShader);
+        *ppShader = NULL;
+        return (HRESULT)(int32_t)0x8876086cu;
+    }
+    return 0;
+#else
     (void)_this;
 
     if (pFunction) {
@@ -1399,6 +1446,7 @@ HRESULT CDirect3DDevice_CreatePixelShader(const CDirect3DDevice *_this,
         *ppShader = (IDirect3DPixelShader9 *)ps;
     }
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_CreatePixelShaderOpenGL(const CDirect3DDevice *_this,
@@ -1412,6 +1460,60 @@ HRESULT CDirect3DDevice_CreatePixelShaderOpenGL(const CDirect3DDevice *_this,
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    const char *source = (const char *)pSrcData;
+    const char *separator;
+    const char *code;
+    char *name;
+    void *program;
+    GLint errorPosition = -1;
+    (void)_this;
+    if (!ppShader)
+        return (HRESULT)(int32_t)0x8876086cu;
+    *ppShader = NULL;
+    if (!source)
+        return (HRESULT)(int32_t)0x8876086cu;
+    /* The selected Apple capability policy uses ARB. ATI text shaders and
+     * NV register combiners have no native provider, so cannot report success. */
+    if (ShaderType != 2)
+        return (HRESULT)(int32_t)0x8876086au;
+    separator = source[0] == '!' && source[1] == '!' ? NULL : strstr(source, "::");
+    code = separator ? separator + 2 : source;
+    if (!*code)
+        return (HRESULT)(int32_t)0x8876086cu;
+    /* Native shader-cache entries are bare ARB text, without Mac's name prefix. */
+    if (!separator && (source[0] != '!' || source[1] != '!'))
+        return (HRESULT)(int32_t)0x8876086cu;
+    name = (char *)malloc(separator ? (size_t)(separator - source) + 1 : 1);
+    if (!name)
+        return (HRESULT)(int32_t)0x8007000eu;
+    if (separator)
+        memcpy(name, source, (size_t)(separator - source));
+    name[separator ? (size_t)(separator - source) : 0] = 0;
+    /* CDirect3DPixelShader.c: vtable/refcount/mask, two string pointers, GLuint.
+     * Apple ULONG is 32-bit: the native provider is 40 bytes (48 without SDK).
+     * 0x80 covers either native layout without importing the i386 object size. */
+    program = calloc(1, 0x80);
+    if (!program) {
+        free(name);
+        return (HRESULT)(int32_t)0x8007000eu;
+    }
+    COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(
+        (const COpenGLARBFragmentProgram *)program, (const string *)&name, (const string *)&code);
+    free(name); /* Provider uploads/copies source synchronously; it retains neither argument. */
+    glGetIntegerv(0x864b, &errorPosition);
+    if (errorPosition != -1) {
+        /* Material_LoadPassShader discards its header on failure without
+         * releasing a published shader. Keep ownership until success. */
+        ((ULONG (*)(const void *))(*(void ***)program)[2])(program);
+        return (HRESULT)(int32_t)0x8876086cu;
+    }
+    *ppShader = (IDirect3DPixelShader9 *)program;
+#if COD2_APPLE_SDK
+    MacTrace_Label(program, source);
+#endif
+    return 0;
+#else
     (void)_this;
     (void)ShaderType;
 
@@ -1438,6 +1540,7 @@ HRESULT CDirect3DDevice_CreatePixelShaderOpenGL(const CDirect3DDevice *_this,
         *ppShader = (IDirect3DPixelShader9 *)ps;
     }
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_CreateDepthStencilSurface(const CDirect3DDevice *_this,
@@ -1464,10 +1567,18 @@ HRESULT CDirect3DDevice_CreateDepthStencilSurface(const CDirect3DDevice *_this,
     if (!g_NoTextureID) {
         UINT allocW = 1, allocH = 1;
         UINT imageSize;
+#if defined(COD2_X64)
+        unsigned int remaining;
+        for (remaining = 32; allocH < Height && remaining; --remaining)
+            allocH <<= 1;
+        for (remaining = 32; allocW < Width && remaining; --remaining)
+            allocW <<= 1;
+#else
         while (allocH < Height)
             allocH <<= 1;
         while (allocW < Width)
             allocW <<= 1;
+#endif
         imageSize = MacOpenGLUtils_GetImageSizeInBytes(allocW, allocH, 1, 1, &Format);
         surfMem = malloc(imageSize);
     }
@@ -1504,10 +1615,18 @@ HRESULT CDirect3DDevice_CreateRenderTarget(const CDirect3DDevice *_this,
     if (!g_NoTextureID) {
         UINT allocW = 1, allocH = 1;
         UINT imageSize;
+#if defined(COD2_X64)
+        unsigned int remaining;
+        for (remaining = 32; allocH < Height && remaining; --remaining)
+            allocH <<= 1;
+        for (remaining = 32; allocW < Width && remaining; --remaining)
+            allocW <<= 1;
+#else
         while (allocH < Height)
             allocH <<= 1;
         while (allocW < Width)
             allocW <<= 1;
+#endif
         imageSize = MacOpenGLUtils_GetImageSizeInBytes(allocW, allocH, 1, 1, &Format);
         surfMem = malloc(imageSize);
     }
@@ -2656,7 +2775,12 @@ HRESULT CDirect3DDevice_GetRenderState(const CDirect3DDevice *_this, D3DRENDERST
         *pValue = dev->blendOp;
         break;
     case D3DRS_SEPARATEALPHABLENDENABLE:
+#if defined(COD2_X64)
+        /* Mac 0x13c53 falls through to the CULLMODE store at 0x13bcf. */
+        *pValue = dev->cullMode;
+#else
         *pValue = dev->separateAlphaBlendEnable;
+#endif
         break;
     case D3DRS_SRCBLENDALPHA:
         *pValue = dev->srcBlendAlpha;
@@ -2683,6 +2807,24 @@ HRESULT CDirect3DDevice_SetTexture(const CDirect3DDevice *_this, DWORD Stage, ID
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    UINT limit = dev->maxTextureUnits > dev->maxTextureImageUnits ? dev->maxTextureUnits : dev->maxTextureImageUnits;
+    if (Stage < limit && Stage < sizeof(g_boundTextures) / sizeof(g_boundTextures[0]) && g_boundTextures[Stage] != pTexture) {
+        IDirect3DBaseTexture9 *previous = g_boundTextures[Stage];
+        if (CDirect3DDevice_IsRealTexture(previous))
+            ((ULONG (*)(const void *))(*(void ***)previous)[2])(previous);
+        g_boundTextures[Stage] = pTexture;
+        CDirect3DDevice_mNeedsRasterizationValidation = 1;
+        if (CDirect3DDevice_IsRealTexture(pTexture))
+            ((ULONG (*)(const void *))(*(void ***)pTexture)[1])(pTexture);
+        if (Stage == 0 && !pTexture) {
+            g_prebind_texID = 0;
+            g_prebind_texTarget = 0x0DE1;
+        }
+    }
+    return 0;
+#else
     (void)_this;
 #if COD2_APPLE_SDK
     if (Stage < 16) {
@@ -2696,6 +2838,7 @@ HRESULT CDirect3DDevice_SetTexture(const CDirect3DDevice *_this, DWORD Stage, ID
         }
     }
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_GetTexture(const CDirect3DDevice *_this, DWORD Stage, IDirect3DBaseTexture9 **ppTexture)
@@ -2707,6 +2850,17 @@ HRESULT CDirect3DDevice_GetTexture(const CDirect3DDevice *_this, DWORD Stage, ID
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    IDirect3DBaseTexture9 *texture = NULL;
+    if (Stage < dev->maxTextureUnits && Stage < sizeof(g_boundTextures) / sizeof(g_boundTextures[0]))
+        texture = g_boundTextures[Stage];
+    if (CDirect3DDevice_IsRealTexture(texture))
+        ((ULONG (*)(const void *))(*(void ***)texture)[1])(texture);
+    if (ppTexture)
+        *ppTexture = texture;
+    return 0;
+#else
     (void)_this;
     if (ppTexture)
 #if COD2_APPLE_SDK
@@ -2715,6 +2869,7 @@ HRESULT CDirect3DDevice_GetTexture(const CDirect3DDevice *_this, DWORD Stage, ID
         *ppTexture = (Stage < 8) ? g_boundTextures[Stage] : NULL;
 #endif
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_SetTextureStageState(const CDirect3DDevice *_this, DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD Value)
@@ -2841,6 +2996,28 @@ HRESULT CDirect3DDevice_SetViewport(const CDirect3DDevice *_this, const D3DVIEWP
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    D3DSURFACE_DESC target;
+    NativeViewport viewport;
+    viewport.X = (uint32_t)pViewport->X;
+    viewport.Y = (uint32_t)pViewport->Y;
+    viewport.Width = (uint32_t)pViewport->Width;
+    viewport.Height = (uint32_t)pViewport->Height;
+    memcpy(&viewport.MinZ, &pViewport->MinZ, sizeof(float));
+    memcpy(&viewport.MaxZ, &pViewport->MaxZ, sizeof(float));
+    if (memcmp(&dev->viewportX, &viewport, sizeof(viewport)) == 0)
+        return 0;
+    memcpy(&dev->viewportX, &viewport, sizeof(viewport));
+    if (dev->renderTarget) {
+        void **methods = *(void ***)dev->renderTarget;
+        ((HRESULT (*)(const void *, D3DSURFACE_DESC *))methods[12])(dev->renderTarget, &target);
+        glViewport(viewport.X, target.Height - (viewport.Y + viewport.Height),
+                   viewport.Width, viewport.Height);
+    }
+    glDepthRange((double)viewport.MinZ, (double)viewport.MaxZ);
+    return 0;
+#else
     DeviceImpl *dev = (DeviceImpl *)_this;
 
     dev->viewportX = pViewport->X;
@@ -2853,6 +3030,7 @@ HRESULT CDirect3DDevice_SetViewport(const CDirect3DDevice *_this, const D3DVIEWP
     glViewport(pViewport->X, pViewport->Y, pViewport->Width, pViewport->Height);
     glDepthRange((double)pViewport->MinZ, (double)pViewport->MaxZ);
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_GetViewport(const CDirect3DDevice *_this, IDirect3DIndexBuffer9 *(*pViewport)[10])
@@ -2864,6 +3042,17 @@ HRESULT CDirect3DDevice_GetViewport(const CDirect3DDevice *_this, IDirect3DIndex
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    D3DVIEWPORT9 *viewport = (D3DVIEWPORT9 *)pViewport;
+    viewport->X = dev->viewportX;
+    viewport->Y = dev->viewportY;
+    viewport->Width = dev->viewportW;
+    viewport->Height = dev->viewportH;
+    memcpy(&viewport->MinZ, &dev->viewportMinZ, sizeof(float));
+    memcpy(&viewport->MaxZ, &dev->viewportMaxZ, sizeof(float));
+    return 0;
+#else
     DeviceImpl *dev = (DeviceImpl *)_this;
     UINT32 *dst = (UINT32 *)pViewport;
     dst[0] = dev->viewportX;
@@ -2873,6 +3062,7 @@ HRESULT CDirect3DDevice_GetViewport(const CDirect3DDevice *_this, IDirect3DIndex
     *(float *)&dst[4] = dev->viewportMinZ;
     *(float *)&dst[5] = dev->viewportMaxZ;
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_SetMaterial(const CDirect3DDevice *_this, const D3DMATERIAL9 *pMaterial)
@@ -3069,9 +3259,20 @@ HRESULT CDirect3DDevice_SetVertexDeclaration(const CDirect3DDevice *_this, IDire
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    (void)_this;
+    if (g_activeVertexDeclaration != pDecl) {
+        g_activeVertexDeclaration = pDecl;
+        /* The native draw consumes the retained D3D elements directly. */
+        CDirect3DDevice_mNeedsTransformationValidation = 1;
+        CDirect3DDevice_mNeedsRasterizationValidation = 1;
+    }
+    return 0;
+#else
     (void)_this;
     g_activeVertexDeclaration = pDecl;
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_GetVertexDeclaration(const CDirect3DDevice *_this, IDirect3DVertexDeclaration9 **ppDecl)
@@ -3125,11 +3326,22 @@ HRESULT CDirect3DDevice_SetVertexShader(const CDirect3DDevice *_this, IDirect3DV
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    (void)_this;
+    if (g_activeVertexShader != pShader) {
+        g_activeVertexShader = pShader;
+        CDirect3DDevice_mNeedsVertexShaderValidation = 1;
+        CDirect3DDevice_mNeedsTransformationValidation = 1;
+        CDirect3DDevice_mNeedsRasterizationValidation = 1;
+    }
+    return 0;
+#else
     (void)_this;
     g_activeVertexShader = pShader;
     CDirect3DDevice_mNeedsVertexShaderValidation = 1;
 
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_GetVertexShader(const CDirect3DDevice *_this, IDirect3DVertexShader9 **ppShader)
@@ -3785,9 +3997,15 @@ BOOL CDirect3DDevice_ShowCursor(const CDirect3DDevice *_this, BOOL bShow)
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    (void)_this;
+    (void)bShow;
+    return 1;
+#else
     (void)_this;
     (void)bShow;
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_CreateAdditionalSwapChain(const CDirect3DDevice *_this, D3DPRESENT_PARAMETERS *pPresentationParameters, IDirect3DSwapChain9 **pSwapChain)
@@ -3813,10 +4031,19 @@ HRESULT CDirect3DDevice_GetSwapChain(const CDirect3DDevice *_this, UINT iSwapCha
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    (void)iSwapChain;
+    *pSwapChain = dev->swapChain;
+    if (dev->swapChain)
+        ((ULONG (*)(const void *))(*(void ***)dev->swapChain)[1])(dev->swapChain);
+    return 0;
+#else
     (void)_this;
     (void)iSwapChain;
     (void)pSwapChain;
     return 0;
+#endif
 }
 UINT CDirect3DDevice_GetNumberOfSwapChains(const CDirect3DDevice *_this)
 {
@@ -3827,8 +4054,13 @@ UINT CDirect3DDevice_GetNumberOfSwapChains(const CDirect3DDevice *_this)
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    (void)_this;
+    return 0;
+#else
     (void)_this;
     return 1;
+#endif
 }
 HRESULT CDirect3DDevice_GetRasterStatus(const CDirect3DDevice *_this, UINT iSwapChain, D3DRASTER_STATUS *pRasterStatus)
 {
@@ -4210,10 +4442,29 @@ long unsigned int CDirect3DDevice_SetAlphaFuncAndRef(const CDirect3DDevice *_thi
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    int changed = 0;
+    if (dev->alphaRefVal != AlphaRefValue) {
+        dev->alphaRefVal = AlphaRefValue;
+        dev->alphaRef = (float)AlphaRefValue / 255.0f;
+        changed = 1;
+    }
+    if (dev->alphaFuncVal != AlphaFuncValue) {
+        dev->alphaFuncVal = AlphaFuncValue;
+        if (AlphaFuncValue >= 1 && AlphaFuncValue <= 8)
+            dev->alphaFunc = 0x1ff + AlphaFuncValue;
+        changed = 1;
+    }
+    if (changed)
+        glAlphaFunc(dev->alphaFunc, dev->alphaRef);
+    return 0;
+#else
     (void)_this;
     (void)AlphaFuncValue;
     (void)AlphaRefValue;
     return 0;
+#endif
 }
 
 GLenum CDirect3DDevice_GetStencilOpFunc(const CDirect3DDevice *_this, UINT32 Value)
@@ -4544,10 +4795,31 @@ void CDirect3DDevice_Init(void *device)
     MacDisplay_GetVideoMemoryInfo(&videoMemory, &textureMemory);
     dev->videoMemory = (UINT32)videoMemory;
     dev->textureMemory = (UINT32)textureMemory;
+#if defined(COD2_X64)
+    dev->srcBlend = 2;
+    dev->destBlend = 1;
+    dev->srcBlendAlpha = 2;
+    dev->destBlendAlpha = 1;
+    dev->alphaBlendEnable = 0;
+    dev->separateAlphaBlendEnable = 0;
+    dev->alphaSrcBlend = 1;
+    dev->isWorldViewDirty = 1;
+    dev->isProjDirty = 1;
+    glGetIntegerv(0x0d33, (GLint *)&dev->maxTextureSize);
+    glGetIntegerv(0x84e2, (GLint *)&dev->maxTextureUnits);
+    glGetIntegerv(0x8872, (GLint *)&dev->maxTextureImageUnits);
+    g_activeVertexShader = NULL;
+    g_activeVertexDeclaration = NULL;
+    g_currentFVF = 0;
+    CDirect3DDevice_mNeedsVertexShaderValidation = 1;
+    CDirect3DDevice_mNeedsTransformationValidation = 1;
+    CDirect3DDevice_mNeedsRasterizationValidation = 1;
+#else
     dev->srcBlend = 5;
     dev->destBlend = 6;
     dev->srcBlendAlpha = 5;
     dev->destBlendAlpha = 6;
+#endif
     dev->alphaRef = 0.0f;
     dev->alphaFunc = 0x0207;
     dev->alphaRefVal = 0;
@@ -4588,17 +4860,30 @@ void CDirect3DDevice_Init(void *device)
         g_textureStageState[stage][D3DTSS_COLOROP] = (stage == 0) ? D3DTOP_MODULATE : D3DTOP_DISABLE;
         g_textureStageState[stage][D3DTSS_COLORARG1] = 2;
         g_textureStageState[stage][D3DTSS_COLORARG2] = 1;
+#if defined(COD2_X64)
+        g_textureStageState[stage][D3DTSS_COLORARG0] = 3;
+        g_textureStageState[stage][D3DTSS_ALPHAOP] = (stage == 0) ? D3DTOP_SELECTARG1 : D3DTOP_DISABLE;
+        g_textureStageState[stage][D3DTSS_ALPHAARG0] = 3;
+        g_textureStageState[stage][D3DTSS_ALPHAARG1] = 0;
+#else
         g_textureStageState[stage][D3DTSS_ALPHAOP] = (stage == 0) ? D3DTOP_MODULATE : D3DTOP_DISABLE;
         g_textureStageState[stage][D3DTSS_ALPHAARG1] = 2;
+#endif
         g_textureStageState[stage][D3DTSS_ALPHAARG2] = 1;
         g_textureStageState[stage][D3DTSS_TEXCOORDINDEX] = stage;
         g_textureStageState[stage][D3DTSS_TEXTURETRANSFORMFLAGS] = D3DTTFF_DISABLE;
         g_samplerState[stage][D3DSAMP_ADDRESSU] = D3DTADDRESS_WRAP;
         g_samplerState[stage][D3DSAMP_ADDRESSV] = D3DTADDRESS_WRAP;
         g_samplerState[stage][D3DSAMP_ADDRESSW] = D3DTADDRESS_WRAP;
+#if defined(COD2_X64)
+        g_samplerState[stage][D3DSAMP_MINFILTER] = D3DTEXF_POINT;
+        g_samplerState[stage][D3DSAMP_MAGFILTER] = D3DTEXF_POINT;
+        g_samplerState[stage][D3DSAMP_MIPFILTER] = D3DTEXF_NONE;
+#else
         g_samplerState[stage][D3DSAMP_MINFILTER] = D3DTEXF_LINEAR;
         g_samplerState[stage][D3DSAMP_MAGFILTER] = D3DTEXF_LINEAR;
         g_samplerState[stage][D3DSAMP_MIPFILTER] = D3DTEXF_LINEAR;
+#endif
         g_samplerState[stage][D3DSAMP_MAXANISOTROPY] = 1;
     }
 }
@@ -4613,6 +4898,31 @@ void ZN15CDirect3DDeviceD1Ev(void *_this)
 
     DeviceImpl *dev = (DeviceImpl *)_this;
     dev->vtable = vtbl_CDirect3DDevice;
+
+#if defined(COD2_X64)
+    /* Mac 0x1b003 releases the swapchain before the device's backbuffer
+     * reference, while their GL context is still current. */
+    if (dev->swapChain) {
+        ((ULONG (*)(const void *))(*(void ***)dev->swapChain)[2])(dev->swapChain);
+        dev->swapChain = NULL;
+    }
+    if (dev->backBuffer) {
+        ((ULONG (*)(const void *))(*(void ***)dev->backBuffer)[2])(dev->backBuffer);
+        dev->backBuffer = NULL;
+    }
+    dev->renderTarget = NULL;
+    /* The native texture cache is global rather than an instance vector.
+     * Reclaim its owned COM references before SDL destroys this context. */
+    for (UINT stage = 0; stage < sizeof(g_boundTextures) / sizeof(g_boundTextures[0]); ++stage) {
+        IDirect3DBaseTexture9 *texture = g_boundTextures[stage];
+        if (CDirect3DDevice_IsRealTexture(texture))
+            ((ULONG (*)(const void *))(*(void ***)texture)[2])(texture);
+        g_boundTextures[stage] = NULL;
+    }
+    g_prebind_texID = 0;
+    g_activeVertexShader = NULL;
+    g_activeVertexDeclaration = NULL;
+#endif
 
     if (dev->context) {
         MacDisplay_ReleaseContext(&dev->context);

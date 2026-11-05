@@ -845,10 +845,12 @@ int g_dip_vs_bound = 0;
 int g_dip_vs_skip = 0;
 int g_draw_count = 0;
 
+#if !defined(COD2_X64)
 void *CDirect3D_GetDirect3DInterface(void)
 {
     return (void *)0;
 }
+#endif
 
 #define VAO_X16 \
     vsink++;    \
