@@ -246,6 +246,7 @@ if not args.test or 'console_hints' in args.test:
 
 if not args.test or 'numeric_fields' in args.test:
     run('numeric_fields', function('src/PC/qcommon/common.c', 'Com_LocalizedFloatToString') +
+        function('src/PC/ui_mp/ui_shared_mp.c', 'LerpColor') +
         function('src/PC/ui_mp/ui_shared_mp.c', 'Item_TextField_Paint'))
 
 if not args.test or 'corpse_trees' in args.test:
