@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**Current: 167/229 reconciled: 139 equal, 28 fixed, 0 intentional; 62 unchecked.**
+**Current: 168/229 reconciled: 140 equal, 28 fixed, 0 intentional; 61 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -318,3 +318,13 @@ exclude a different undiscovered owner. No source change or new defect.
 
 Private exact packets are in recon-provenance-inplace17.noindex. No tests, CI,
 compilation, replay or runtime exercise were performed.
+
+## Actual projected two-coordinate bounds (bounds2d15)
+
+`AddPointToBounds2D` is equal for the complete disjoint point-accumulation operation in Mac `R_VisitPortals`. Original 1.0 0x80a66f4 and 1.3 0x80a8a58 establish all four strict min/max updates for one two-coordinate point. Primary Mac 0xf219b–0xf21d5 performs exactly those four updates for actual projected portal points; old bounds are the second MINSS/MAXSS operands, preserving old values on ties (including signed zero) and unordered candidates. Native `r_dpvs.c` retains the same four strict comparisons. No third coordinate, reset or extra result is attributed to this operation. The actual loop carries the four bounds and the bevel path consumes both minima/maxima in four inverse-projected rectangle corners.
+
+This is a complete observed disjoint consumer, not a hypothetical 3D prefix or exported arbitrary-aliasing API. Quiet unordered projected candidates retain the prior bounds; initial finite bounds cannot become NaN through these updates. Signaling/exception timing, concurrent observation and literal original inline ancestry are not certified. The separate area-consumer correction in portalarea15 changes the later use of maxY, not these four already-correct updates, and does not change this equal verdict.
+
+The other three helpers remain unchecked. `ClearBounds2D` original 0x80a892c resets both coordinates to +/-131072, whereas the actual screen owner initializes +/-1 and uses a distinct near-clip viewport reset. `ExpandBounds2D` original 0x80a8f96 accepts independent input minimum/maximum vectors; using the same point for both ends is not that full operation. `BoundsOverlap2D` original 0x80a8ce2 returns the result of four strict rectangle-separation comparisons, accepting touching/unordered boundaries. The inspected portal owner instead clips polygons through side planes and computes projected area. Integer scissor APIs supply no demonstrated replacement for that float rectangle contract. These are bounded candidate limits, not absence-based conclusions.
+
+Independent review: units/review-provenance-bounds2d15.md. One equal closure, three refined unchecked rows, zero new defects in these helpers and no source changes in this packet. Original complete bodies, fresh Mac owner and native state/consumer paths were reviewed. No compilation, tests, CI, replay or runtime verification for this packet; separate portalarea15 compilation does not add exercise coverage. Private evidence: recon-provenance-bounds2d15.noindex.
