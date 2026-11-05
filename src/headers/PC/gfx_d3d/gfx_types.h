@@ -791,6 +791,13 @@ struct DxGlobals {
     int gpuSyncDelay;
     int gpuSyncAlreadyWaited;
     Bool flushGpuQueryIssued;
+#if defined(COD2_X64)
+    /* Mac dx+0x2d65/+0x2d66 and +0x2d68/+0x2d6c. */
+    Bool anisotropicMinSupported;
+    Bool anisotropicMagSupported;
+    DWORD anisotropicMinFilter;
+    DWORD anisotropicMagFilter;
+#endif
     int anisotropy;
     int maxAnisotropy;
     int maxClipPlanes;
