@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 929,
-      "intentional": 3007,
-      "equal": 4492,
-      "fixed": 1029
+      "unchecked": 848,
+      "intentional": 3025,
+      "equal": 4534,
+      "fixed": 1050
     },
     "scopes": {
       "unassigned": 777,
@@ -20242,8 +20242,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001b7bc installs the base vtable, clears matching COpenGL::sOpenGL+0x818 and dirties vertex/transformation/rasterization bytes; D0 also deletes. Native current shader ownership is DeviceImpl::pixelShader on dx.device: the guarded detach helper clears only a matching pointer, never releases it, then existing dirty flags run. R_Shutdown calls Material_Shutdown before device release. No raw i386 COpenGL offset is imported; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0001b93c",
@@ -20264,8 +20264,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001b93c installs the base vtable, clears matching COpenGL::sOpenGL+0x818 and dirties vertex/transformation/rasterization bytes; D0 also deletes. Native current shader ownership is DeviceImpl::pixelShader on dx.device: the guarded detach helper clears only a matching pointer, never releases it, then existing dirty flags run. R_Shutdown calls Material_Shutdown before device release. No raw i386 COpenGL offset is imported; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0001b994",
@@ -20286,8 +20286,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001b994 installs the base vtable, clears matching COpenGL::sOpenGL+0x818 and dirties vertex/transformation/rasterization bytes; D0 also deletes. Native current shader ownership is DeviceImpl::pixelShader on dx.device: the guarded detach helper clears only a matching pointer, never releases it, then existing dirty flags run. R_Shutdown calls Material_Shutdown before device release. No raw i386 COpenGL offset is imported; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0001b674",
@@ -20308,8 +20308,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x0001b674 and native body: increment/return of refcount match; native pointer-sized object fields are accessed through the local implementation type."
       },
       {
         "id": "mac:0x002ee210",
@@ -20330,8 +20330,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee210 and native body: coalesced null device output and success return match; native pointer-sized object fields are accessed through the local implementation type."
       },
       {
         "id": "mac:0x002ee220",
@@ -20352,8 +20352,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee220 and native body: coalesced zero byte-count output and success return match; native pointer-sized object fields are accessed through the local implementation type."
       },
       {
         "id": "mac:0x0001b686",
@@ -20374,8 +20374,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1b686 stores this then calls virtual AddRef at vtable+4. Native called the base AddRef directly; native QueryInterface now dispatches slot 1. Compiled and reviewed."
       },
       {
         "id": "mac:0x0001b6a0",
@@ -20396,8 +20396,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x0001b6a0 and native body: decrement, virtual deleting destructor slot 6 at zero, and returned saved count match; native pointer-sized object fields are accessed through the local implementation type."
       },
       {
         "id": "mac:0x0001b750",
@@ -20418,8 +20418,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001b750 uses COpenGL cached binding/enabled fields +0x81c/+0x820 for target 0x8804; Enable binds before enabling and Disable leaves binding intact. Native uses current-context glGetProgramivARB(0x8804,0x8677) and glIsEnabled to suppress redundant calls because current draw/constructors also bind directly. No persistent cache or context-reset hooks. Selected Apple device rejects ATI/NV creation and uses ARB; ATI target query/upload identity is independently established by Mac ctor 0x1bad4 and SDK declarations. Compiled and reviewed, no GL exercise."
       },
       {
         "id": "mac:0x0001b8de",
@@ -20440,8 +20440,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001b8de uses COpenGL cached binding/enabled fields +0x81c/+0x820 for target 0x8804; Enable binds before enabling and Disable leaves binding intact. Native uses current-context glGetProgramivARB(0x8804,0x8677) and glIsEnabled to suppress redundant calls because current draw/constructors also bind directly. No persistent cache or context-reset hooks. Selected Apple device rejects ATI/NV creation and uses ARB; ATI target query/upload identity is independently established by Mac ctor 0x1bad4 and SDK declarations. Compiled and reviewed, no GL exercise."
       },
       {
         "id": "mac:0x0001b778",
@@ -20462,8 +20462,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x0001b778 and native body: 0x8804 vector uploads, register increment, 16-byte data stride and zero-count exit match; native pointer-sized object fields are accessed through the local implementation type."
       },
       {
         "id": "mac:0x0001b9ec",
@@ -20484,8 +20484,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001b9ec disables active ATI target 0x8200, deletes one program even for ID zero, then runs base cleanup (D0 deletes object). Native restores deletion and queries the current context binding/enabled state instead of COpenGL cached current-object/enabled fields. Base detaches matching selected dx.device shader. Native C lifetime has no C++ exception-unwind path; current capability policy rejects ATI creation. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0001ba5c",
@@ -20506,8 +20506,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001ba5c disables active ATI target 0x8200, deletes one program even for ID zero, then runs base cleanup (D0 deletes object). Native restores deletion and queries the current context binding/enabled state instead of COpenGL cached current-object/enabled fields. Base detaches matching selected dx.device shader. Native C lifetime has no C++ exception-unwind path; current capability policy rejects ATI creation. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0001bad4",
@@ -20528,8 +20528,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001bad4 initializes count/mask/program and uploads source with target 0x8200, ASCII 0x8875, preserving GL_PROGRAM_BINDING_ARB 0x8677. Replaced native no-upload constructor with that sequence using typed native storage. Native C GL calls do not reproduce C++ unwind cleanup; selected Apple device rejects ATI creation. Compiled and reviewed, no hardware exercise."
       },
       {
         "id": "mac:0x0001bb9a",
@@ -20550,8 +20550,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001bb9a initializes count/mask/program and uploads source with target 0x8200, ASCII 0x8875, preserving GL_PROGRAM_BINDING_ARB 0x8677. Replaced native no-upload constructor with that sequence using typed native storage. Native C GL calls do not reproduce C++ unwind cleanup; selected Apple device rejects ATI creation. Compiled and reviewed, no hardware exercise."
       },
       {
         "id": "mac:0x0001b880",
@@ -20572,8 +20572,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001b880 uses COpenGL cached binding/enabled fields +0x81c/+0x820 for target 0x8200; Enable binds before enabling and Disable leaves binding intact. Native uses current-context glGetProgramivARB(0x8200,0x8677) and glIsEnabled to suppress redundant calls because current draw/constructors also bind directly. No persistent cache or context-reset hooks. Selected Apple device rejects ATI/NV creation and uses ARB; ATI target query/upload identity is independently established by Mac ctor 0x1bad4 and SDK declarations. Compiled and reviewed, no GL exercise."
       },
       {
         "id": "mac:0x0001b822",
@@ -20594,8 +20594,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001b822 uses COpenGL cached binding/enabled fields +0x81c/+0x820 for target 0x8200; Enable binds before enabling and Disable leaves binding intact. Native uses current-context glGetProgramivARB(0x8200,0x8677) and glIsEnabled to suppress redundant calls because current draw/constructors also bind directly. No persistent cache or context-reset hooks. Selected Apple device rejects ATI/NV creation and uses ARB; ATI target query/upload identity is independently established by Mac ctor 0x1bad4 and SDK declarations. Compiled and reviewed, no GL exercise."
       },
       {
         "id": "mac:0x0001b6c8",
@@ -20616,8 +20616,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1b6c8 uploads each vector to glProgramEnvParameter4fvARB(0x8200, Register+i, data+4*i), ignoring CommandNumber. Replaced empty native body; zero count still makes no calls. Compiled and reviewed; ATI creation remains rejected by the selected native device policy, no hardware exercise."
       },
       {
         "id": "mac:0x0001bc8c",
@@ -20638,8 +20638,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001bc8c disables 0x86de then 0x8522 only for the cached current shader, then runs base cleanup (D0 deletes). Native maps current ownership to matching DeviceImpl::pixelShader on dx.device and current-context capability state, detaching that pointer before the non-reentrant GL disable calls. No cached GL IDs survive context replacement. Native C has no C++ unwind path; selected native device rejects NV creation. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0001bd00",
@@ -20660,8 +20660,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001bd00 disables 0x86de then 0x8522 only for the cached current shader, then runs base cleanup (D0 deletes). Native maps current ownership to matching DeviceImpl::pixelShader on dx.device and current-context capability state, detaching that pointer before the non-reentrant GL disable calls. No cached GL IDs survive context replacement. Native C has no C++ unwind path; selected native device rejects NV creation. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0001bd74",
@@ -20682,8 +20682,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001bd74 disables 0x86de then 0x8522 only for the cached current shader, then runs base cleanup (D0 deletes). Native maps current ownership to matching DeviceImpl::pixelShader on dx.device and current-context capability state, detaching that pointer before the non-reentrant GL disable calls. No cached GL IDs survive context replacement. Native C has no C++ unwind path; selected native device rejects NV creation. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0001bc62",
@@ -20704,8 +20704,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1bc62 installs NV vtable, refcount 1, mask 0, source pointer at i386+0xc and stageCount 0. Native truncated source into UINT32. Native field now preserves the pointer width and typed stageCount, retaining the initialization sequence. Compiled and reviewed."
       },
       {
         "id": "mac:0x0001b8a8",
@@ -20726,8 +20726,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1b8a8 clears cached enabled byte and disables GL_TEXTURE_SHADER_NV 0x86de then GL_REGISTER_COMBINERS_NV 0x8522. Native restores both calls when either current-context capability is enabled, rather than reading the missing Mac singleton byte. No ARB binding query is used for NV. Selected native device rejects NV creation. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0001b70c",
@@ -20748,8 +20748,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x0001b70c and native body: true empty NV Enable body match; native pointer-sized object fields are accessed through the local implementation type."
       },
       {
         "id": "mac:0x0001b712",
@@ -20770,8 +20770,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1b712 uses stageCount<=2 to call glCombinerParameterfvNV(0x852a+CommandNumber,data), otherwise glCombinerStageParameterfvNV(0x8550+CommandNumber,0x852a,data); Register/count are ignored. Replaced empty native body with that dispatch. Compiled and reviewed; selected native device rejects NV creation, no hardware exercise."
       }
     ],
     "Mac/DirectX 9/CDirect3DSurface": [
@@ -22804,8 +22804,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x0001f568 and native body: vtable install and conditional element-array deletion match, using native malloc/free array ownership and pointer-sized fields."
       },
       {
         "id": "mac:0x0001f586",
@@ -22826,8 +22826,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x0001f586 and native body: vtable install, conditional element-array deletion then object deletion match, using native malloc/free array ownership and pointer-sized fields."
       },
       {
         "id": "mac:0x0001f554",
@@ -22848,8 +22848,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x0001f554 and native body: refcount increment/return match, using native malloc/free array ownership and pointer-sized fields."
       },
       {
         "id": "mac:0x0001f820",
@@ -22870,8 +22870,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1f820 scans all four sentinel words: Stream=0xff, Offset=0, Type/Method=0x0011, Usage/UsageIndex=0. Native omitted the last word; restored it. Count includes sentinel; typed eight-byte elements and copy order match. Existing defined malloc/free null-allocation behavior is retained instead of native C++ allocation exceptions. Compiled and reviewed."
       },
       {
         "id": "mac:0x0001f5f4",
@@ -22892,8 +22892,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1f5f4 / copy loop 0x1f609 copies caller pElement INTO stored elements, including sentinel, then writes elementCount. Native copied in the opposite direction and skipped null input. Restored the Mac direction/loop without correcting that Mac bug; compiled and reviewed."
       },
       {
         "id": "mac:0x002ee778",
@@ -22914,8 +22914,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee778 and native body: coalesced true success-return no-op leaving device output untouched match, using native malloc/free array ownership and pointer-sized fields."
       },
       {
         "id": "mac:0x0001f632",
@@ -22936,8 +22936,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1f632 was read with raw jump tables 0x328060/0x328080 decoded. Type sizes/tokens, stream reset, byte-based skip chunks before stream token, terminator and usage registers match. Missing repeated Usage=2 behavior now tests used register 2 and routes later occurrences to 6 without marking 6 (0x1f7d0/0x1f75e). Existing defined native handling of out-of-range texture usage registers remains instead of reproducing Mac stack writes beyond its 16-byte used array. Compiled and reviewed."
       },
       {
         "id": "mac:0x0001f5b2",
@@ -22958,8 +22958,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1f5b2 stores this then calls virtual AddRef slot 1. Replaced native direct base AddRef dispatch; compiled and reviewed."
       },
       {
         "id": "mac:0x0001f5cc",
@@ -22980,8 +22980,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1f5cc decrements count and invokes virtual deleting destructor slot 6 when zero. Replaced native direct destructor call; compiled and reviewed."
       }
     ],
     "Mac/DirectX 9/CDirect3DVertexShader": [
@@ -23004,8 +23004,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001f8cc writes both wrapper vtables then destroys the COpenGLVertexProgram base at this+4 (D0 deletes outer object). Pending System source f8a3c70, read directly at 5f88bd5, restores wrapper D1->D2 and native GL deletion/dirty flags. Native base stores a GLuint in baseState; declaration/cache/draw providers own streams and labels separately instead of the i386 C++ string/base layout. This unit preserves those pending hunks; compiled and reviewed, not exercised; integration must include System dependency."
       },
       {
         "id": "mac:0x0001f8ec",
@@ -23026,8 +23026,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001f8ec writes both wrapper vtables then destroys the COpenGLVertexProgram base at this+4 (D0 deletes outer object). Pending System source f8a3c70, read directly at 5f88bd5, restores wrapper D1->D2 and native GL deletion/dirty flags. Native base stores a GLuint in baseState; declaration/cache/draw providers own streams and labels separately instead of the i386 C++ string/base layout. This unit preserves those pending hunks; compiled and reviewed, not exercised; integration must include System dependency."
       },
       {
         "id": "mac:0x0001f8b4",
@@ -23048,8 +23048,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x1f8b4 refcount at i386+0x194 and native typed refCount field: increment then return matches; native field follows pointer-sized vtables/baseState."
       },
       {
         "id": "mac:0x0001f96c",
@@ -23070,8 +23070,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x1f96c base-constructor call, both vtable stores, bound byte zero and refcount one. Native typed wrapper preserves those stores around the reduced COpenGLVertexProgram provider: a GLuint at baseState, bare ARB cache text, and separate declaration/draw stream state. Pending System f8a3c70 supplies binding-preserving base upload/lifetime; no Mac string object is overlaid on native memory. Compiled and reviewed, not exercised; dependency must be integrated."
       },
       {
         "id": "mac:0x0001f964",
@@ -23092,8 +23092,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x1f964 and native GetDevice: both return success and leave device output untouched."
       },
       {
         "id": "mac:0x002ee780",
@@ -23114,8 +23114,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac coalesced 0x2ee780 is a true success-return no-op with GetFunction(void*,UINT*) arguments. Native wrapper omitted the destination argument; restored the three-argument native method/dispatch signature while preserving untouched outputs. Compiled and reviewed."
       },
       {
         "id": "mac:0x0001f91c",
@@ -23136,8 +23136,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1f91c stores this and invokes virtual AddRef slot 1; native QueryInterface used direct base AddRef. Restored the virtual dispatch in the native branch. Compiled and reviewed."
       },
       {
         "id": "mac:0x0001f936",
@@ -23158,8 +23158,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1f936 decrements refcount and invokes virtual deleting destructor slot 6 at zero; native Release directly called its own destructor. Restored the virtual dispatch and saved-count return. Compiled and reviewed."
       }
     ],
     "Mac/DirectX 9/CDirect3DVolumeTexture": [
@@ -27094,8 +27094,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x00118826 (including __textcoal_nt when applicable) and native CD3DXBuffer: installs its vtable, conditionally deletes owned data, zeroes the data pointer; D0 also deletes the object. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x00118852",
@@ -27116,8 +27116,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x00118852 (including __textcoal_nt when applicable) and native CD3DXBuffer: installs its vtable, conditionally deletes owned data, zeroes the data pointer; D0 also deletes the object. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x00118814",
@@ -27138,8 +27138,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x00118814 (including __textcoal_nt when applicable) and native CD3DXBuffer_AddRef: increments and returns the typed refcount. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1a2e",
@@ -27160,8 +27160,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1a2e (including __textcoal_nt when applicable) and native CD3DXBuffer_GetBufferPointer: returns the owned data pointer (Mac i386 field +0xc). Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1a3a",
@@ -27182,8 +27182,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1a3a (including __textcoal_nt when applicable) and native CD3DXBuffer_GetBufferSize: returns byte size (Mac i386 field +8). Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x00118886",
@@ -27204,8 +27204,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00118886: QueryInterface omitted virtual AddRef slot 1 after storing this. Native guarded body restored and obsolete native link stub disabled where applicable; compiled and reviewed. Existing ASan/UBSan shader_cache fixture exercises buffer/table Release and passes; the index helper and no-op output methods were not exercised."
       },
       {
         "id": "mac:0x001188a0",
@@ -27226,8 +27226,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x001188a0: buffer Release bypassed virtual deleting destructor slot 6. Native guarded body restored and obsolete native link stub disabled where applicable; compiled and reviewed. Existing ASan/UBSan shader_cache fixture exercises buffer/table Release and passes; the index helper and no-op output methods were not exercised."
       },
       {
         "id": "mac:0x001188da",
@@ -27248,8 +27248,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x001188da (including __textcoal_nt when applicable) and native CD3DXConstantTable: installs its vtable, conditionally deletes owned data, zeroes the data pointer; D0 also deletes the object. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x00118906",
@@ -27270,8 +27270,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x00118906 (including __textcoal_nt when applicable) and native CD3DXConstantTable: installs its vtable, conditionally deletes owned data, zeroes the data pointer; D0 also deletes the object. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x001188c8",
@@ -27292,8 +27292,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x001188c8 (including __textcoal_nt when applicable) and native CD3DXConstantTable_AddRef: increments and returns the typed refcount. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1a46",
@@ -27314,8 +27314,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1a46 (including __textcoal_nt when applicable) and native CD3DXConstantTable_GetBufferPointer: returns the owned data pointer (Mac i386 field +0xc). Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1a52",
@@ -27336,8 +27336,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1a52 (including __textcoal_nt when applicable) and native CD3DXConstantTable_GetBufferSize: returns byte size (Mac i386 field +8). Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1a76",
@@ -27358,8 +27358,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1a76 (including __textcoal_nt when applicable) and native CD3DXConstantTable_GetConstant: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1a7e",
@@ -27380,8 +27380,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1a7e (including __textcoal_nt when applicable) and native CD3DXConstantTable_GetConstantByName: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1a66",
@@ -27402,8 +27402,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x002f1a66: GetConstantDesc wrote pCount=0 despite the true Mac no-op leaving all outputs untouched. Native guarded body restored and obsolete native link stub disabled where applicable; compiled and reviewed. Existing ASan/UBSan shader_cache fixture exercises buffer/table Release and passes; the index helper and no-op output methods were not exercised."
       },
       {
         "id": "mac:0x002f1a86",
@@ -27424,8 +27424,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1a86 (including __textcoal_nt when applicable) and native CD3DXConstantTable_GetConstantElement: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1a5e",
@@ -27446,8 +27446,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x002f1a5e: GetDesc wrote zeroes despite the true Mac no-op leaving the output untouched. Native guarded body restored and obsolete native link stub disabled where applicable; compiled and reviewed. Existing ASan/UBSan shader_cache fixture exercises buffer/table Release and passes; the index helper and no-op output methods were not exercised."
       },
       {
         "id": "mac:0x002f1a6e",
@@ -27468,8 +27468,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1a6e (including __textcoal_nt when applicable) and native CD3DXConstantTable_GetSamplerIndex: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x0011893a",
@@ -27490,8 +27490,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0011893a: constant-table QueryInterface omitted virtual AddRef slot 1 after storing this. Native guarded body restored and obsolete native link stub disabled where applicable; compiled and reviewed. Existing ASan/UBSan shader_cache fixture exercises buffer/table Release and passes; the index helper and no-op output methods were not exercised."
       },
       {
         "id": "mac:0x00118954",
@@ -27512,8 +27512,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00118954: constant-table Release bypassed virtual deleting destructor slot 28 (Mac vtable+0x70). Native guarded body restored and obsolete native link stub disabled where applicable; compiled and reviewed. Existing ASan/UBSan shader_cache fixture exercises buffer/table Release and passes; the index helper and no-op output methods were not exercised."
       },
       {
         "id": "mac:0x002f1a9e",
@@ -27534,8 +27534,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1a9e (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetBool: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1aa6",
@@ -27556,8 +27556,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1aa6 (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetBoolArray: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1a8e",
@@ -27578,8 +27578,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1a8e (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetDefaults: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1abe",
@@ -27600,8 +27600,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1abe (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetFloat: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1ac6",
@@ -27622,8 +27622,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1ac6 (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetFloatArray: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1aae",
@@ -27644,8 +27644,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1aae (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetInt: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1ab6",
@@ -27666,8 +27666,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1ab6 (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetIntArray: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1ade",
@@ -27688,8 +27688,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1ade (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetMatrix: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1ae6",
@@ -27710,8 +27710,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1ae6 (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetMatrixArray: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1aee",
@@ -27732,8 +27732,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1aee (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetMatrixPointerArray: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1af6",
@@ -27754,8 +27754,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1af6 (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetMatrixTranspose: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1afe",
@@ -27776,8 +27776,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1afe (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetMatrixTransposeArray: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1b06",
@@ -27798,8 +27798,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1b06 (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetMatrixTransposePointerArray: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1a96",
@@ -27820,8 +27820,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1a96 (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetValue: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1ace",
@@ -27842,8 +27842,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1ace (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetVector: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x002f1ad6",
@@ -27864,8 +27864,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1ad6 (including __textcoal_nt when applicable) and native CD3DXConstantTable_SetVectorArray: is a genuine coalesced success/null/zero no-op and does not write caller outputs. Native pointer/size getters follow the typed native allocation layout; payloads remain fixed-width."
       },
       {
         "id": "mac:0x0011897c",
@@ -27886,8 +27886,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0011897c: GetHighAndLowIndices was a return-zero link stub; restored min in first output/max in second, initial indices[0] load even at count zero, all count values, and initial/final store order. Native guarded body restored and obsolete native link stub disabled where applicable; compiled and reviewed. Existing ASan/UBSan shader_cache fixture exercises buffer/table Release and passes; the index helper and no-op output methods were not exercised."
       },
       {
         "id": "mac:0x0013d5e4",
@@ -27908,8 +27908,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x0013d5e4 wrapper and its 0x13d578 static initializer/destructor: initializes/destroys sShaderPrograms string-key tree (header 0xda6504, root 0xda6508, count 0xda6514). The selected native implementation deliberately uses MacShader_ReadCache/MacD3DXCompileShader/D3DXGetShaderConstantTable in lp64_shader_cache.h with per-result owned typed buffers, replacing this embedded-data map and its global lifetime. No native map body is required. Existing ASan/UBSan shader_cache fixture passed unchanged; missing-cache failures are retained."
       },
       {
         "id": "mac:0x0013d5f4",
@@ -27930,8 +27930,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x0013d5f4 wrapper and its 0x13d578 static initializer/destructor: initializes/destroys sShaderPrograms string-key tree (header 0xda6504, root 0xda6508, count 0xda6514). The selected native implementation deliberately uses MacShader_ReadCache/MacD3DXCompileShader/D3DXGetShaderConstantTable in lp64_shader_cache.h with per-result owned typed buffers, replacing this embedded-data map and its global lifetime. No native map body is required. Existing ASan/UBSan shader_cache fixture passed unchanged; missing-cache failures are retained."
       }
     ],
     "Mac/DirectX 9/D3DXTex": [
