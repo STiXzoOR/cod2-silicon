@@ -47,7 +47,8 @@ command = [*flags, '-UNDEBUG', '-DGL_SILENCE_DEPRECATION', '-I' + str(output),
            *[str(source_dir / (name + '.c')) for name in
              ['CDirect3DTexture', 'CDirect3DCubeTexture', 'CDirect3DVolumeTexture',
               'CDirect3DSurface', 'MacOpenGLUtils', 'CVertexArrays',
-              'CDirect3DVertexDeclaration', 'CDirect3DVertexBuffer', 'COpenGLVAO', 'CVAOPacket', 'D3DXMath', 'MacOpenGLMath']],
+              'CDirect3DVertexDeclaration', 'CDirect3DVertexBuffer', 'COpenGLVAO', 'CVAOPacket', 'D3DXMath', 'MacOpenGLMath', 'D3DXShader', 'CFence']],
+           str(ROOT / 'src/Mac/Metal/metal_dispatch.m'), '-framework', 'CoreFoundation',
            str(abi_object), '-lc++',
            os.environ.get('COD2_OPENGL_PROVIDER_SOURCE', str(source_dir / 'COpenGL.c')),
            '-o', str(exe)]
