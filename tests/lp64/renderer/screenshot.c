@@ -55,10 +55,19 @@ static byte Sample(const byte *pixels, int oldSize, int newSize, int stride, int
     return (byte)floorf((float)sum * (0.5f / newSize) + 0.5f);
 }
 
+#if defined(COD2_X64)
+static void PrepareExpected(int width, int height, int header)
+#else
 static void PrepareExpected(int width, int height)
+#endif
 {
     int oldWidth = vidConfig.width, oldHeight = vidConfig.height;
+#if defined(COD2_X64)
+    size_t sourceSize = (size_t)oldWidth * oldHeight * 3;
+    byte *source = calloc(1, sourceSize + header);
+#else
     byte *source = malloc((size_t)oldWidth * oldHeight * 3);
+#endif
     byte *horizontal = malloc((size_t)width * oldHeight * 3);
     expectedPixels = malloc((size_t)width * height * 3);
     expectedWidth = width;
@@ -67,6 +76,11 @@ static void PrepareExpected(int width, int height)
         for (int x = 0; x < oldWidth; ++x)
             for (int c = 0; c < 3; ++c)
                 source[(y * oldWidth + x) * 3 + c] = Pattern(x, y, c);
+#if defined(COD2_X64)
+    /* Mac reads at allocation base, then resamples from base + header.
+       The real Z_MallocInternal supplies zeroes after the captured pixels. */
+    memmove(source, source + header, sourceSize);
+#endif
     for (int y = 0; y < oldHeight; ++y)
         for (int x = 0; x < width; ++x)
             for (int c = 0; c < 3; ++c)
@@ -140,8 +154,12 @@ uint16_t MacDisplay_GetCurrentDimensions(int *width, int *height)
 static void *Allocate(int size)
 {
     allocationSize = size;
+#if defined(COD2_X64)
+    void *data = calloc(1, (size_t)size);
+#else
     void *data = malloc((size_t)size);
     memset(data, 0xa5, (size_t)size);
+#endif
     return data;
 }
 static void Release(void *data) { ++frees; free(data); }
@@ -220,7 +238,11 @@ static void ResampleCase(const char *name)
     } else {
         assert(!strcmp(name, "levelshot"));
     }
+#if defined(COD2_X64)
+    PrepareExpected(width, height, header);
+#else
     PrepareExpected(width, height);
+#endif
     if (!strcmp(name, "levelshot") || !strcmp(name, "savegame")) {
         commandCount = header ? 2 : 3;
         commandArgs[0] = "screenshotJPEG";
@@ -242,8 +264,17 @@ static void ResampleCase(const char *name)
             assert(!result && reads == 2 && frees == 1 && !writes && !jpegs);
         } else {
             assert(result);
+#if defined(COD2_X64)
+            for (int i = 0; i < header; ++i) {
+                byte expected = i < vidConfig.width * vidConfig.height * 3
+                    ? Pattern((i / 3) % vidConfig.width,
+                              (i / 3) / vidConfig.width, i % 3) : 0;
+                assert(result[i] == expected);
+            }
+#else
             for (int i = 0; i < header; ++i)
                 assert(result[i] == 0xa5);
+#endif
             CheckPixels(result + header, 0);
             ri.Z_FreeInternal(result);
         }
