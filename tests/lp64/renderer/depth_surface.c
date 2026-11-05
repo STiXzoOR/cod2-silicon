@@ -11,6 +11,12 @@
 #define glBindVertexArray TraceBindVertexArray
 #include "CDirect3DDevice.c"
 #undef glBindVertexArray
+#if defined(COD2_X64)
+/* The production initializer invalidates these original device caches. */
+CXX_BOOL CDirect3DDevice_mNeedsVertexShaderValidation;
+CXX_BOOL CDirect3DDevice_mNeedsTransformationValidation;
+CXX_BOOL CDirect3DDevice_mNeedsRasterizationValidation;
+#endif
 void TraceBindVertexArray(unsigned int array)
 {
     extern void glBindVertexArray(unsigned int);

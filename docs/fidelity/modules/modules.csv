@@ -13,9 +13,9 @@ EffectsCore/FxUtil,138,82,16,34,6
 EffectsCore/Fxexport,16,9,0,7,0
 EffectsCore/GenericParser2,56,42,1,1,12
 Mac/DirectX 9/CColorConverter,41,0,0,0,41
-Mac/DirectX 9/CDirect3D,31,0,0,0,31
+Mac/DirectX 9/CDirect3D,31,6,12,3,10
 Mac/DirectX 9/CDirect3DCubeTexture,28,0,0,0,28
-Mac/DirectX 9/CDirect3DDevice,121,0,0,0,121
+Mac/DirectX 9/CDirect3DDevice,121,80,13,8,20
 Mac/DirectX 9/CDirect3DIndexBuffer,18,0,0,0,18
 Mac/DirectX 9/CDirect3DPixelShader,25,0,0,0,25
 Mac/DirectX 9/CDirect3DSurface,25,0,0,0,25

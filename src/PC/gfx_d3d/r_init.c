@@ -927,6 +927,12 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
             d3dpp[2] = 0x15;
             d3dpp[3] = 1;
             d3dpp[6] = 1;
+#if defined(COD2_X64) && COD2_APPLE_SDK
+            {
+                extern const dvar_t *r_fullscreen;
+                d3dpp[7] = !(r_fullscreen && r_fullscreen->current.enabled);
+            }
+#endif
             d3dpp[8] = 0x4b;
             d3dpp[11] = 1;
 
