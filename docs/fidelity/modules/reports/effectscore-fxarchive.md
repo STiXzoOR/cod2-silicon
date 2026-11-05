@@ -35,3 +35,10 @@ Parent and fresh independent source/binary reviews covered all six units. Review
 Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. Dedicated replay does not exercise client effects rendering or UI interaction.
 
 Catalog coverage passed without semantic catalog changes. Hosted ILP32 comparison remains unavailable because the unchanged reference fails to compile; no byte parity is claimed.
+
+
+## Original save-side ownership evidence
+
+Original 1.0 body0x8120794 uniquely maps to original1.3 0x8122c24. Complete writes assign file, clear reading, set writing, zero byte/literal/zero counters, and snapshot file bytesUsed into controlPos. Actual original FX_Save0x8133ffe calls this at0x813401c. Exact Mac constructor0xa9d9e only clears fields and leaves file NULL; BeginReading0xa9dd0 sets the opposite mode. The Mac restore owner0x5ca50 calls BeginReading at0x5cb19. Neither provides the complete writer initialization, and the actual save-side Mac/native owner remains unidentified. Original caller provenance is positive but does not close the Mac gap.
+
+These original executable identities refine the unresolved contracts. No verdict or source change, compilation, tests, CI, replay or runtime exercise. Private evidence remains outside Git in recon-fxarchive9.noindex.

@@ -135,3 +135,12 @@ production code, fixture or previously resolved verdict changed. No new
 compilation, CI, tests or replay ran; no archive runtime coverage is claimed.
 Private exact-symbol evidence and the full module ledger are retained in
 `recon-inline-effects4.noindex` and orchestration `units/inline-effects4.ledger.json`.
+
+
+## Original save-side ownership evidence
+
+Original 1.0 body0x8131b58 uniquely maps to original1.3 0x8133fa0. Complete operation calls effect virtual TypeID slot+0x24, writes its byte, writes effect end time field+0xbc, then dispatches virtual Archive slot+0x28. Actual original FX_Save0x8133ffe calls it at0x813407f and0x81340c1. Exact Mac FxArchive::ArchiveEffect0xaa1b2 is a different template-name serialization operation, including its writing branch0xaa208; it does not establish this effect-instance header/virtual dispatch operation. No complete corresponding Mac/native owner identified; remains unchecked.
+
+Original 1.0 body0x8131bb6 uniquely maps to original1.3 0x8133ffe: actual archive constructor0x8122b98, BeginWriting0x8122c24, helper/scheduler archives, bolt and nonbolt effect loops through0x8133fa0, zero terminator and used-size return. Fresh Mac FX_Restore0x5ca50 establishes the distinct read-side owner with actual BeginReading at0x5cb19; existing writing primitives and template serialization do not supply the complete save operation. No corresponding complete Mac/native save owner identified. Bounded original call/reference search is retained as search evidence only, never as a closure argument.
+
+These original executable identities refine the unresolved contracts. No verdict or source change, compilation, tests, CI, replay or runtime exercise. Private evidence remains outside Git in recon-fxarchive9.noindex.
