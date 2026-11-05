@@ -1,0 +1,31 @@
+# Mac/Tools/MacGameEngine startup splash reconciliation
+
+Updated 2026-11-05.
+
+**3/3 reconciled: 3 intentional.** `CMacGameEngine_DrawSplashScreen` at Mac 0x25cbc is one new closure; its two consequential hide/destroy wrapper verdicts are authorized revisions of existing equal rows, not additional closures. The live no-op is replaced with a native bootstrap bitmap window following Windows. Changes are compiled and reviewed; the startup splash itself was not exercised.
+
+## Original behavior
+
+Read the complete exact-symbol Mac body at 0x25cbc–0x25e65. It resolves the supplied filename in the Mac data folder, creates a URL/provider/PNG image, obtains the current dimensions/main port and, only after successful `QDBeginCGContext`, clears/draws the entire rectangle, flushes and ends the context. Every successfully created image/provider/URL is released, including on context failure. Missing data or an invalid image silently skips drawing. It creates no window or renderer context.
+
+The original owner exists before `WinMain`: `Run` calls display initialization at 0x25b6a; `OneShotTimer` resolves/chdirs to the data root at 0x26439–0x26441 and calls `SetupDisplay(640, 480)` at 0x26455; that routine creates the Carbon main window at 0x452f. `GameMain` shows it at 0x112250 before entering `WinMain` at 0x112283. Native main bypasses that Carbon bootstrap, and its later SDL renderer owns the game window. The prior empty drawing provider therefore had neither a replacement splash nor a valid early main port.
+
+The presentation is platform-specific and player-visible, so Windows was checked. `CoD2MP_s.exe` 0x4681e0 loads external `cod.bmp` with `LoadImageA(..., IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE)` at 0x468287, creates a popup/static bitmap child, assigns `STM_SETIMAGE` at 0x468322 and sizes/centers the parent from the resulting bitmap-control rectangle. Missing image/window creation silently returns. Show/update is 0x4683f0, hide is 0x468410 and hide/destroy/null-owner is 0x4683c0. The startup call at 0x466555 also inlines show/update. No licensed image or binary content was copied into the checkout.
+
+## Native replacement and root ownership
+
+Native `MacWindow_DrawSplash` loads the user's `cod.bmp` through the existing AppKit bitmap decoder and shows an unscaled, bitmap-sized borderless popup with the thin border and desktop centering of Windows. The existing engine-only AppKit bootstrap pattern initializes the application when absent. SDL video remains at its original renderer initialization point, preserving its video-time fullscreen hints; no game window or renderer context is constructed for the splash. Missing/unreadable/invalid bitmap and allocation failures leave no splash. The image/view/window have explicit ownership. Hide retains the owner for a later show; destroy closes/releases/nulls it. Synchronous display followed by an explicit buffered-window flush precedes blocking startup work, without waiting for a future event loop.
+
+The native-only show call moves from `WinMain` to just after the existing `Com_StartupVariable` calls, before filesystem and renderer initialization. This is the narrow timing adaptation required by the real launcher: it launches from the writable home and passes the data root as `+set fs_basepath`, with unrestricted forwarded arguments able to override that root. Its packaged helper deliberately lacks a bundle-root property; the separate engine-only setup also produces startup command strings. Reusing the actual engine parser establishes their final precedence without another parser, environment setting, root cache or launcher change. The provider reads that string, falling back to the existing default install path when empty, and deliberately selects Windows `cod.bmp` instead of Mac `cod.png`.
+
+The existing error/quit destroy and runtime-dedicated hide hooks now reach the native owner. Show, normal command-buffer quit and initialization-error cleanup run on the main thread. Recursive fatal errors and exit callbacks have no such guarantee: off-main hide/destroy requests are forwarded asynchronously to the main queue, without accessing window state on the worker or blocking on a potentially waiting main thread. Idempotent exit cleanup handles direct exits; if a worker exits the process before the main queue drains, process teardown releases its remaining UI. Renderer context creation hides the splash after display initialization and before creating/taking over the game window. Early renderer failures still reach the existing error cleanup. A dedicated build retains all original empty providers and never links this Cocoa owner.
+
+The scoped ledger also contains two parent-authorized changes from equal to intentional for the native Windows lifecycle: `Sys_DestroySplashWindow` at Mac 0xc4836 follows Windows 0x4683c0, and `Sys_HideSplashWindow` at Mac 0xc4850 follows Windows 0x468410. The exact previous verdicts are retained in the packet override metadata; no shared catalog was edited here.
+
+## Verification and limits
+
+An arm64 Release `COD2_X64=ON` SDK build using the committed typed-data snapshot compiled the actual `linux_common.c`, `mac_main.c`, `mac_splash.c`, `common.c`, `macos_display.c` and `macos_window.m` client objects, plus the shared dedicated objects. Builds used `taskpolicy -b nice -n 19` and at most two jobs. The final Objective-C owner compiles without new warnings. Existing Debug `jpeg` and `app_hide` fixtures pass (2/2); they exercise image decoding and application/window visibility separately, not startup splash drawing/flush, forwarded-root selection, renderer takeover or off-main fatal cleanup.
+
+Five changed C files match the assignment base in all six inactive guard configurations. The Objective-C owner was checked with the same six configurations after treating its SDK import like an include: zero mismatches. No changed source uses `__LINE__`; no actual OFF diagnostic line expansion changed. No new tests/cases/assertions, dependencies, settings, assets, full target link, full CI, replay, game launch or original-runtime comparison were added or run. Native Cocoa/DPI appearance and real startup rendering remain unexercised; no pixel or i386 byte parity is claimed.
+
+Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-startup-splash.noindex/`.
