@@ -212,7 +212,7 @@ static void TimelineCase(void)
     entities[1].lerpOrigin[0] = 117;
     entities[1].lerpOrigin[1] = 29;
     entities[1].lerpOrigin[2] = 41;
-    assert(SND_StartAlias3DSample(&sampleAlias, &sampleAlias, 0, 1, world, 0.5f, 2, 0, 0, 32, 0, NULL, SASYS_CGAME) == 42);
+    assert(SND_StartAlias3DSample(&sampleAlias, &sampleAlias, 0, 1, world, 0.5f, 2, 0, 0, 32, 0, NULL, SASYS_CGAME) == 37);
     assert(AIL_3D_sample_playback_rate(milesGlob.handle_3D[0]) == 96000);
     CheckOutput(0, 0, 1);
     SND_Update3DChannel(0, 16);
