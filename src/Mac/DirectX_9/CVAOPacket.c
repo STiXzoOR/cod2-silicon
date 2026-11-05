@@ -85,7 +85,17 @@ extern UINT32 CVAOPacket_sCurrentPacket;
 #if defined(COD2_X64)
 /* The current-packet selector wraps at one. Stub globals have ILP32 storage. */
 static CVAOPacketImpl s_nativeGenericPacket[1];
-static CVAOPacketRbTree s_nativeAllPackets;
+/* Mac's load-time initializer installs the empty-tree sentinel. Native
+ * buffer destruction can release cached ranges before any GL initialization. */
+static CVAOPacketRbTree s_nativeAllPackets = {
+    ._M_header = {
+        ._M_color = 0,
+        ._M_parent = NULL,
+        ._M_left = &s_nativeAllPackets._M_header,
+        ._M_right = &s_nativeAllPackets._M_header
+    },
+    ._M_node_count = 0
+};
 #define CVAOPacket_sGenericPacket ((unsigned char *)s_nativeGenericPacket)
 #define CVAOPacket_sAllPackets ((unsigned char *)&s_nativeAllPackets)
 #else
