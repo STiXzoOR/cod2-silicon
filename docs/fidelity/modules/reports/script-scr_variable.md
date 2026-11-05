@@ -2,7 +2,7 @@
 
 Updated 2026-11-04.
 
-**163/173 reconciled: 145 equal, 14 fixed, 4 intentional; 10 unchecked.** All 124 named Mac functions were compared in full. Linux-only rows were identified as complete operations in Mac callers, including both `Scr_GetEntryUsage` overloads; the provenance follow-up below also establishes an alternate-name dump helper. Linux was used for helper names and intent only. The live changes are confined to `COD2_X64`; preprocessing with it undefined is identical to the starting source.
+**165/173 reconciled: 146 equal, 15 fixed, 4 intentional; 8 unchecked.** All 124 named Mac functions were compared in full. Linux-only rows were identified as complete operations in Mac callers, including both `Scr_GetEntryUsage` overloads; the provenance follow-up below also establishes an alternate-name dump helper. Linux was used for helper names and intent only. The live changes are confined to `COD2_X64`; preprocessing with it undefined is identical to the starting source.
 
 The operator tables at 0x329d40 and 0x329d70 and debug-string table at 0x329d00 were decoded from the binary. All dispatch cases match. The 24 type names, five class-map records, float absolute-value mask and equality epsilon were also read from binary data. The epsilon is exactly `9.999999974752427e-07f`. Full-binary disassembly misaligned `GetVarType`; exact-symbol disassembly confirmed its actual entry at 0x8837c. Exact-symbol disassembly also confirmed the unusual paths below.
 
@@ -80,3 +80,13 @@ coverage. Private exact-symbol bodies, ordered symbol metadata and the full
 Mac's two corresponding string-exhaustion branches call `Scr_DumpScriptVariables` at 0x43418 and 0x4343b, after the thread dump and before the same string-limit error. The terminal-error prefix calls the same target at 0x828e5, between the thread dump and terminal-error flag. Its exact complete body at 0x88442–0x88447 has no side effects and returns; the native body is also empty and the corresponding callers use it. The mapping rests on these original caller sequences, not merely on two empty bodies or similar names. No interpreter behavior was reopened.
 
 The ten other identities stay unchecked. The established Mac primary verdict and all other resolved records remain exact. No code changed, no compilation, tests, CI or replay ran, and these diagnostic paths were not exercised. Private original-address and exact-entry evidence is retained in `CoD2-native-decomp/recon-provenance-helpers4.noindex`.
+
+## String-set forwarding operations — 2026-11-05
+
+Two further Linux-named wrappers map to complete existing operations. The original Linux 1.0 address database has no-argument forwarding at 0x0807f740 and one-argument forwarding at 0x0807f7e0. Original Linux 1.3 confirms the exact wrappers at 0x0807fd92–0x0807fda0 and 0x0807fe32–0x0807fe46: the former returns the result of Scr_AllocArray without additional state or conversion; the latter forwards its object ID unchanged to RemoveRefToObject with no extra guard, ownership change or result processing. Source reconstruction supplies the string-set names and intent only.
+
+The authoritative complete allocation operation is Mac Scr_AllocArray at 0x8c816–0x8c8f8, including free-list extraction/relocation, the exhaustion error, status 0x76, zero initial reference count and zero array size. Native Scr_AllocArray delegates to its matching allocation core and AllocVariable. `Scr_InitStringSet` is therefore equal as a complete forwarding operation. This does not assert a separately emitted Mac string-set wrapper or identify the still-unresolved AddStringSet operation.
+
+The authoritative release operation is Mac RemoveRefToObject at 0x8cd30–0x8d050: reference decrement, entity final-reference conversion, child unlink/release and final free-list return. Native RemoveRefToObject and its existing cleanup helpers preserve those paths, including the previously corrected full status clears at Mac 0x8cf25/0x8cfb1. `Scr_ShutdownStringSet` is fixed through that already corrected complete provider; no new source correction was needed. Existing primary verdicts, reference/storage adaptations and opt-in instrumentation remain unchanged.
+
+These are complete-operation mappings supported by original forwarding bodies, not conclusions from absent callers or merely similar purpose. Eight identities remain unchecked. Exact original bodies and current-source hashes are retained privately. No compilation, tests, CI, replay or runtime exercise ran in this follow-up.
