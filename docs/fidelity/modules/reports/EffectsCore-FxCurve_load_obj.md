@@ -1,12 +1,12 @@
 # EffectsCore/FxCurve_load_obj module reconciliation
 
-Updated 2026-11-05.
+Updated 2026-11-06.
 
-**1/2 reconciled: 1 equal; 1 unchecked.** No source change.
+**2/2 reconciled: 2 equal; 0 unchecked.** No source change.
 
 The complete allocator at Mac 0xac320 was compared by hand, using a disassembly restarted at the exact symbol to avoid a misdecoded prologue. Allocation, endpoint padding and key copying match. Two unusual details are retained: a padded final key copies values from the first input key, and stored `keyCount` excludes added endpoint keys. The allocator uses the matching pointer-free 8-byte curve header, so native pointer widening requires no adjustment here.
 
-`FxCurve_Reference` remains unchecked. There is no executable Mac identity or native definition/caller; Mac's absolute-zero `FxCurve_AddRef.eh` marker does not identify the Linux pointer-return helper.
+The initial review left `FxCurve_Reference` unchecked: the absolute-zero `FxCurve_AddRef.eh` marker did not identify the Linux pointer-return helper. The complete consumed pointer operation is established in the reference36 follow-up below.
 
 No new tests were added. All four assigned sources compile cleanly with the configured arm64 Release dedicated-server commands. The low-priority `cod2_macos_ded` arm64 Release build passed with two jobs. No runtime effect path, CI suite or replay was run by this worker. Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-fx-foundation.noindex/`.
 
@@ -22,7 +22,7 @@ Catalog coverage passed without semantic catalog changes. Hosted ILP32 compariso
 
 ## Allocation identity follow-up
 
-The Reference row remains unchecked. Exact allocation calls
+At this earlier follow-up, the Reference row remained unchecked. Exact allocation calls
 Hunk_AllocAlignInternal at 0xac38e; Mac type records place inline keys after the
 two integer fields, with no reference-count member. This establishes storage
 ownership, but not a return-value/alias identity between Linux Reference and
@@ -39,6 +39,16 @@ for the shared ownership evidence and verification limits.
 
 ## Original helper provenance — fx9
 
-The complete original pointer-return body is now anchored at 1.0 0x8121c40 / 1.3 0x81240d0. Its exact actual consumer is FxChannel_Copy: call 0x81236de passes source->curve and stores the returned identical pointer into target->curve. No original counter mutation occurs. This resolves the original pointer contract, but the corresponding complete Mac copy/reference owner remains missing. Hunk ownership, absence of a reference-count field, and a zero-address AddRef exception marker cannot supply that operation. The row remains unchecked.
+The complete original pointer-return body is now anchored at 1.0 0x8121c40 / 1.3 0x81240d0. Its exact actual consumer is FxChannel_Copy: call 0x81236de passes source->curve and stores the returned identical pointer into target->curve. No original counter mutation occurs. This resolved the original pointer contract, but at fx9 the corresponding complete Mac copy/reference owner remained missing. Hunk ownership, absence of a reference-count field, and a zero-address AddRef exception marker cannot supply that operation. The row therefore remained unchecked at that stage.
 
 The retained direct-call scan finds the positive channel-copy-to-curve-reference chain; raw absolute address references add only unwind records. Those bounded searches are not evidence of semantic absence and close no row. No source or prior resolved verdict changed, no new defect was established, and no compilation, tests, CI, replay or runtime exercise ran. Original bodies, disambiguating neighbors, decoded table and fresh exact Mac candidates are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-fx9.noindex/`.
+
+## Complete consumed curve reference — reference36
+
+`FxCurve_Reference` is now equal for the complete unchanged curve-pointer value operation consumed by actual iterator construction. Fresh original 1.3 0x81240d0–RET0x81240d7 returns its incoming pointer unchanged, with no pointee access, ownership mutation or other effect. Its original `FxChannel_Copy` caller consumes the returned full pointer at0x81236e3 before separately copying both range endpoints.
+
+Actual Mac `GetDecalSize` passes its template channel4 and disjoint local iterator to `FxChannelInstance_Create` at0x61f24. The constructor loads the entire curve pointer at0x9ff96 and forwards it unchanged; `FxCurveIterator_Create` reads it at0xb9fce and stores that same pointer into `master` at0xb9fd1. Native typed pointer assignment preserves this full value. The real consumer then reloads the stored master at0x61f37 and dereferences its curve header/keys; the alternate random-size branch likewise consumes both actual curve pointers. `CreateDecalEffect` receives the resulting size and passes it to `CG_ImpactMark` at0x621f9. Template initialization and the complete default/allocator providers establish live scalar curve storage; neither hunk ownership nor the absence of a reference-count member substitutes for this value-flow proof.
+
+This is the complete consumed pointer identity, not equivalence of the entire constructor with a return-pointer API. Index initialization at0xb9fd3 and scale sampling/store at0x9ffaa–0x9ffaf are separate effects. Scope is valid constructed live scalar curves, valid template/channel storage, disjoint iterator storage and ordinary returning providers. No null/error/malformed-key/hunk-after-release, arbitrary caller replacement, reference-count policy, or entire decal-evaluation contract is claimed. Approved full-width native pointers and hunk ownership remain unchanged. The selected pointer flow has no inherited repair or new defect.
+
+`FxChannel_Copy` remains unchecked because sampled instance scale does not supply both range endpoints; iterator release remains separately unchecked. Independent review accepted this one reference row. No production source or previous resolved verdict changed; no compilation, tests, CI, replay, full build or runtime exercise ran. Private complete original/Mac bodies and source hashes are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-fxreference36.noindex/`. Earlier verification paragraphs above are historical, not checks run for this follow-up.
