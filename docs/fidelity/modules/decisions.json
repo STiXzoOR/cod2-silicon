@@ -5829,7 +5829,7 @@
   },
   "mac:0x0015852a": {
     "status": "fixed",
-    "evidence": "Mac 0x158561 shows only OOB packets whose first word is -1; native reversed that test. Mac 0x15866d selects reply queue from destination port and 0x158676 retains client source index; native always chose queue zero for replies. Corrected both; whole body compared. Existing void native Sys_SendPacket intentionally reports dispatch success rather than the Mac boolean. Compiled and reviewed, not exercised."
+    "evidence": "Mac 0x158561 shows only OOB packets whose first word is -1; native reversed that test. Mac 0x15866d selects reply queue from destination port and 0x158676 retains client source index; native always chose queue zero for replies. Corrected both; whole body compared. Parent-authorized provider follow-up: native now propagates the restored Bool Sys_SendPacket result, matching Mac 0x1585c4-0x1585c9 and hard-error return 0x1e89f0; the old void/dispatch-success adaptation is superseded. Compiled and reviewed; existing ASan/UBSan transport fixture and loopback system/network fixtures passed. Hard-error propagation not exercised."
   },
   "mac:0x00158430": {
     "status": "fixed",
@@ -22138,5 +22138,85 @@
   "mac:0x000089ea": {
     "status": "fixed",
     "evidence": "Reconstructed missing native body from exact Mac0x89ea-0x8b15: FSOpenIterator(kFSIterateDelete), one-item FSGetCatalogInfoBulk(kFSCatInfoNodeFlags), directory recursion before child deletion, saved original flags, clear locked bit with ignored FSSetCatalogInfo status, stop on stored errors, clear errFSNoMoreItems(-1417), ignore FSCloseIterator result. Real SDK FSRef/FSCatalogInfo/ItemCount replace i386 storage; exactly the six local FS no-op symbols are excluded in Apple+COD2_X64 builds. Compiled and reviewed; deletion not exercised."
+  },
+  "linux:unix/unix_net.cpp:102:NET_BaseAdrToString": {
+    "status": "unchecked",
+    "evidence": "No Mac executable symbol or native body/caller was found. Mac NET_AdrToString includes a port; that does not establish this Linux-only bare-address helper identity."
+  },
+  "linux:unix/unix_net.cpp:599:NET_ErrorString": {
+    "status": "equal",
+    "evidence": "Compared the Linux helper semantics against inline Mac errno/strerror sequences in Sys_GetPacket 0x1e88cc-0x1e88db, Sys_SendPacket 0x1e89d1-0x1e89e0 and NET_OpenIP error blocks. Native uses the same direct errno/strerror sequence; no standalone wrapper has native callers."
+  },
+  "linux:unix/unix_net.cpp:431:NET_GetLocalAddress": {
+    "status": "intentional",
+    "evidence": "Compared the inline Mac NET_OpenIP interface block at 0x1e8d72-0x1e8f48 and error tails. Native retains the selected getifaddrs provider: up IPv4 interfaces including loopback, at most 16 entries, freeifaddrs cleanup; Mac pairs AF_LINK/AF_INET records and excludes IFT_LOOP. localIP consumers Sys_IsLANAddress/Sys_ShowIP were separately compared."
+  },
+  "linux:unix/unix_net.cpp:525:NET_IPSocket": {
+    "status": "intentional",
+    "evidence": "Compared the inline Mac NET_OpenIP nonblocking/broadcast socket, resolver, bind and retry blocks at 0x1e8be9-0x1e8d48 plus 0x1e8f4d-0x1e90e6. Native preserves the ordinary socket/address algorithm with zeroed SDK sockaddr_in/sin_len, four-byte IPv4 storage, -1 invalid descriptors and existing failed-descriptor cleanup; original Mac padding/resource-leak behavior is not recreated."
+  },
+  "mac:0x001e9708": {
+    "status": "intentional",
+    "evidence": "Compared full Mac 0x1e9708-0x1e9762: WSAStartup(0x101), failure/success diagnostic, initialized flag, GetDvars then Config(1). Native selects unix/linux_net.c POSIX shim, whose sizeof(WSADATA) initialization matches the selected native winsockdata allocation rather than a fixed i386 400-byte layout; original shim at Mac 0x282c4 was read. Existing initialization fixture passed."
+  },
+  "mac:0x001e8b7a": {
+    "status": "fixed",
+    "evidence": "Mac 0x1e925c/0x1e934d checks the actual SOCKS greeting send and leaves setup on error; native discarded that result and checked a zero-byte send. Restored actual send-result handling and exact wrong-family warning at 0x1e9190. Socket/retry, DNS, auth/associate and interface blocks manually compared. Existing SDK descriptor/address, getifaddrs, failed-socket cleanup and truncated-relay guards retained as documented adaptations. The existing unassigned authenticated-greeting fourth byte and overlong credential/large SOCKS payload storage contracts remain unresolved; no equality is claimed for those bytes/inputs. Compiled and reviewed; existing loopback fixture passed, SOCKS/error branches not exercised."
+  },
+  "linux:unix/unix_net.cpp:585:NET_Shutdown": {
+    "status": "unchecked",
+    "evidence": "No Mac executable symbol, native body or native caller was found. NET_Config(0) performs native descriptor cleanup, but it does not prove the identity/semantics of this Linux-only standalone helper."
+  },
+  "mac:0x001e8582": {
+    "status": "intentional",
+    "evidence": "Compared full Mac 0x1e8582-0x1e8640: IP guard, descriptor bit, signed msec/1000 seconds, remainder*1000 microseconds, select(socket+1). Native keeps SDK fd_set/timeval and -1 invalid sentinel to support descriptor zero. Existing wait/closed-stdin fixture passed."
+  },
+  "linux:unix/unix_net.cpp:75:NetadrToSockadr": {
+    "status": "intentional",
+    "evidence": "Compared inline Mac Sys_SendPacket 0x1e8948-0x1e8a24: zeroed sockaddr, broadcast/IP family and network-order port/address fields. Native keeps SDK sockaddr_in/sin_len and four-byte IPv4 copies; extended typed native netadr_t is not the i386 12-byte object. Existing wire-payload/address fixture passed."
+  },
+  "linux:unix/unix_net.cpp:95:SockadrToNetadr": {
+    "status": "intentional",
+    "evidence": "Compared inline Mac Sys_StringToAdr 0x1e86c1-0x1e86d5 and Sys_GetPacket 0x1e8895-0x1e88ac: NA_IP, four address bytes and network-order port. Native writes typed fields with port at offset 0x12 instead of Mac 0x8 because retained IPX storage changes native layout; adjacent storage is preserved. Existing address/port fixture passed."
+  },
+  "mac:0x001e86e2": {
+    "status": "intentional",
+    "evidence": "Compared full Mac 0x1e86e2-0x1e8900: IP then IPX, ignored would-block/reset errors, zeroed peer padding, SOCKS relay/header filtering, ten-byte readcount, IPv4 conversion, exact-maxsize rejection and accepted cursize. Native retains -1 descriptor support and typed native address/msg layouts with fixed-width IPv4 writes; same ordinary engine branches. Existing loopback and descriptor-zero fixture passed; SOCKS and error branches not exercised."
+  },
+  "mac:0x001e82d4": {
+    "status": "equal",
+    "evidence": "Compared exact-symbol Mac 0x1e82d4-0x1e837e, correcting the full-binary prologue misdecode: BOT/LOOPBACK acceptance, IP-only gate, 10/8,127/8,169.254/16,172.16/12,192.168/16 and local three-octet scan all match native. Triage and constant checks supplement the manual branch comparison."
+  },
+  "mac:0x001e8aae": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x1e8aae-0x1e8b7a: resolve PB server address, swap host-order port and call engine Sys_SendPacket. No native definition/caller remains after the documented bundled PunkBuster null-adapter replacement in PC/punkbuster/pb_null_adapter.c and WS44. This is the removed PB integration callback boundary; ordinary engine send/resolve paths were separately compared."
+  },
+  "mac:0x001e8900": {
+    "status": "fixed",
+    "evidence": "Mac 0x1e89f0 returns false after a hard send error; native provider was void and NET_SendPacket forced success. Restored native Bool return, true success/ignored-error/unavailable-socket paths, false hard-error path, and caller propagation matching 0x1585c4-0x1585c9; restore diagnostic 0x15 prefix from 0x1e8914. Full ordinary address/SOCKS framing/error flow compared; SDK layout/descriptor adaptations and existing oversized-SOCKS storage uncertainty retained explicitly. Compiled and reviewed; loopback success exercised, hard-error/SOCKS branches not exercised."
+  },
+  "mac:0x001e837e": {
+    "status": "equal",
+    "evidence": "Compared full Mac 0x1e837e-0x1e83de: numIP loop, four unsigned address octets, print order and IP format string match native. Triage/string checks supplement the manual comparison."
+  },
+  "mac:0x001e8640": {
+    "status": "intentional",
+    "evidence": "Compared full Mac 0x1e8640-0x1e86e2: zero sockaddr, family/port, signed first-character digit check, inet_addr or first gethostbyname address, failed lookup return, and NA_IP/IP/port output. Native retains SDK sin_len and four-byte copies into extended native netadr_t; invalid numeric inet_addr behavior is preserved. Existing numeric/address-storage fixture passed; DNS failure not exercised."
+  },
+  "linux:unix/unix_net.cpp:119:Sys_StringToSockaddr": {
+    "status": "intentional",
+    "evidence": "Identified helper inline in Mac Sys_StringToAdr 0x1e864f-0x1e86bf and NET_OpenIP resolver 0x1e9040-0x1e908f. Compared zero/family/port initialization, signed-character digit branch, inet_addr, first gethostbyname address and null-host failure. Native retains SDK sin_len and fixed four-byte IPv4 copy; selected native callers inline the helper rather than exporting it."
+  },
+  "mac:0x001e9640": {
+    "status": "intentional",
+    "evidence": "Compared full Mac 0x1e9640-0x1e9708: modified-state return, noudp/noipx override, enable transitions, close/restart ordering and conditional IP open. Native retains -1 invalid descriptor/support for descriptor zero and usingSocks reset on stop/restart; no active IPX provider. Existing initialization/disable/descriptor-zero fixture passed; modified reopen and SOCKS restart only compiled and reviewed."
+  },
+  "mac:0x001e83de": {
+    "status": "equal",
+    "evidence": "Compared full Mac 0x1e83de-0x1e8582: all seven previous-pointer modified checks and registration order, names, bool/string defaults, flags 0x1021 and socksPort default 1080/bounds 0-65535 match native. Constant/triage checks supplemented manual review."
+  },
+  "mac:0x001e9762": {
+    "status": "equal",
+    "evidence": "Compared full exact-symbol Mac 0x1e9762-0x1e9778: passes networkingEnabled into NET_Config and returns; native matches. Triage and constant checks are clean apart from stack/layout constants."
   }
 }

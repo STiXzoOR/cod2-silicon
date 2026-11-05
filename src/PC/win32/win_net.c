@@ -85,7 +85,11 @@ static qboolean NET_GetDvars(void);
 void NET_Sleep(int msec);
 qboolean Sys_StringToAdr(const char *s, netadr_t *a);
 qboolean Sys_GetPacket(netadr_t *net_from, msg_t *net_message);
+#if defined(COD2_X64)
+Bool Sys_SendPacket(int length, const void *data, netadr_t to);
+#else
 void Sys_SendPacket(int length, const void *data, netadr_t to);
+#endif
 void NET_OpenIP(void);
 void NET_Config(qboolean enableNetworking);
 void NET_Init(void);
@@ -356,7 +360,11 @@ qboolean Sys_GetPacket(netadr_t *net_from, msg_t *net_message)
     return 0;
 }
 
+#if defined(COD2_X64)
+Bool Sys_SendPacket(int length, const void *data, netadr_t to)
+#else
 void Sys_SendPacket(int length, const void *data, netadr_t to)
+#endif
 {
     int net_socket;
     struct sockaddr_in addr;
@@ -364,8 +372,16 @@ void Sys_SendPacket(int length, const void *data, netadr_t to)
     int err;
 
     if (to.type != NA_BROADCAST && to.type != NA_IP) {
+#if defined(COD2_X64)
+        Com_Error(0, "\x15" "Sys_SendPacket: bad address type");
+#else
         Com_Error(0, "Sys_SendPacket: bad address type");
+#endif
+#if defined(COD2_X64)
+        return 1;
+#else
         return;
+#endif
     }
 
     net_socket = ip_socket;
@@ -375,7 +391,11 @@ void Sys_SendPacket(int length, const void *data, netadr_t to)
 #else
     if (!net_socket) {
 #endif
+#if defined(COD2_X64)
+        return 1;
+#else
         return;
+#endif
     }
 
     memset(&addr, 0, sizeof(addr));
@@ -415,21 +435,36 @@ void Sys_SendPacket(int length, const void *data, netadr_t to)
     }
 
     if (ret != -1) {
+#if defined(COD2_X64)
+        return 1;
+#else
         return;
+#endif
     }
 
     err = WSAGetLastError();
     if (err == 10035) {
+#if defined(COD2_X64)
+        return 1;
+#else
         return;
+#endif
     }
 
     if (err == 10049) {
         if (to.type == NA_BROADCAST) {
+#if defined(COD2_X64)
+            return 1;
+#else
             return;
+#endif
         }
     }
 
     Com_Printf("Sys_SendPacket: %s\n", strerror(errno));
+#if defined(COD2_X64)
+    return 0;
+#endif
 }
 
 void NET_OpenIP(void)
@@ -585,7 +620,11 @@ void NET_OpenIP(void)
                         goto do_local_address;
                     }
                     if (hp->h_addrtype != AF_INET) {
+#if defined(COD2_X64)
+                        Com_Printf("WARNING: NET_OpenSocks: gethostbyname: address type was not AF_INET\n");
+#else
                         Com_Printf("WARNING: NET_OpenSocks: address type not AF_INET.\n");
+#endif
                         goto do_local_address;
                     }
 
@@ -623,16 +662,32 @@ void NET_OpenIP(void)
                         if (useAuth) {
                             buf[1] = 2;
                             buf[2] = (-useAuth) & 2;
+#if defined(COD2_X64)
+                            rlen = send(socks_socket, buf, 4, 0);
+#else
                             send(socks_socket, buf, 4, 0);
+#endif
                         } else {
                             buf[1] = 1;
                             buf[2] = (-useAuth) & 2;
+#if defined(COD2_X64)
+                            rlen = send(socks_socket, buf, 3, 0);
+#else
                             send(socks_socket, buf, 3, 0);
+#endif
                         }
 
+#if defined(COD2_X64)
+                        if (rlen == -1) {
+                            WSAGetLastError();
+                            Com_Printf("NET_OpenSocks: send: %s\n", strerror(errno));
+                            goto do_local_address;
+                        }
+#else
                         if (send(socks_socket, buf, 0, 0) == -1) {
 
                         }
+#endif
 
                         rlen = recv(socks_socket, buf, 64, 0);
                         if (rlen == -1) {
