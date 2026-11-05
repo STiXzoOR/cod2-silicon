@@ -49,7 +49,7 @@ list(FILTER MACOS_C EXCLUDE REGEX "/stubs/(agl_stubs|audio_stubs|cpp_compat|cpp_
 list(FILTER MACOS_C EXCLUDE REGEX "/stubs/(iokit_stubs|corefoundation_stubs)\\.c$")
 list(APPEND MACOS_C src/unix/linux_common.c src/unix/linux_net.c src/unix/sysdiff_statehash.c
   src/platform/macos_system.c src/platform/macos_threads.c src/platform/macos_ring.c
-  src/platform/macos_cpp_abi.cpp src/platform/macos_abs_symbols.c)
+  src/platform/macos_cpp_abi.cpp src/platform/macos_abs_symbols.c src/platform/macos_launch.c)
 list(FILTER MACOS_C EXCLUDE REGEX "/Mac/Main/(mac_play_dsound|mac_record_dsound)\\.c$")
 list(FILTER MACOS_C EXCLUDE REGEX "/PC/groupvoice/record\\.c$")
 set(MACOS_DED_C ${MACOS_C})
@@ -101,7 +101,7 @@ foreach(target cod2_macos cod2_macos_ded)
     -Wint-conversion -Wincompatible-pointer-types -Wvoid-pointer-to-int-cast
     -Wno-typedef-redefinition -Wno-duplicate-decl-specifier
     -ferror-limit=0)
-  target_link_libraries(${target} PRIVATE ZLIB::ZLIB c++ "-framework IOKit" "-framework CoreFoundation")
+  target_link_libraries(${target} PRIVATE ZLIB::ZLIB c++ "-framework IOKit" "-framework CoreFoundation" "-framework CoreServices")
   target_compile_features(${target} PRIVATE cxx_std_17)
   target_compile_definitions(${target} PRIVATE COD2_RELEASE_VERSION="${COD2_RELEASE_VERSION}")
   # ld64 equivalents of the MinGW --defsym seam aliases in CMakeLists.txt.

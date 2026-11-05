@@ -162,7 +162,23 @@ void Sys_OutOfMemErrorInternal(const char *filename, int line)
 
 void Sys_StartProcess(const char *exeName, qboolean doexit)
 {
+#if defined(__APPLE__) && defined(COD2_X64)
+    extern int MacLaunch_Application(const char *bundleName);
+    extern void game_dprintf(const char *format, ...);
+    const char *application;
+    if (strstr(exeName, "cod2sp"))
+        application = "Call of Duty 2.app";
+    else if (strstr(exeName, "cod2mp"))
+        application = "Call of Duty 2 Multiplayer.app";
+    else {
+        game_dprintf("Trying to start unknown process: %s", exeName);
+        return;
+    }
+    if (MacLaunch_Application(application) && doexit)
+        Cbuf_ExecuteText(2, "quit\n");
+#else
     Com_Printf("Sys_StartProcess: not supported on Linux (%s)\n", exeName);
+#endif
 }
 
 void Sys_Error(const char *error, ...)
@@ -170,6 +186,10 @@ void Sys_Error(const char *error, ...)
     char text[4096];
     va_list argptr;
 
+#if defined(COD2_X64)
+    extern qboolean com_errorEntered;
+    com_errorEntered = 1;
+#endif
     va_start(argptr, error);
     vsnprintf(text, sizeof(text), error, argptr);
     va_end(argptr);
@@ -209,8 +229,15 @@ void Sys_Print(const char *msg)
 
 char *Sys_GetClipboardData(void)
 {
-
+#if defined(COD2_X64)
+    /* Every caller releases this result through Z_FreeInternal. */
+    char *text = (char *)Z_MallocInternal(1);
+    if (text)
+        text[0] = '\0';
+    return text;
+#else
     return (char *)"";
+#endif
 }
 
 static void Sys_QueEventInternal(int time, sysEventType_t type, int value, int value2, int ptrLength, void *ptr)
@@ -580,9 +607,11 @@ sysEvent_t Sys_GetEvent(void)
     msg_t netmsg;
     netadr_t adr;
 
+#if !defined(COD2_X64)
 #if !COD2_APPLE_SDK || !defined(DEDICATED)
     extern void IN_Frame(void);
     IN_Frame();
+#endif
 #endif
 
     if (eventTail < eventHead) {
@@ -591,6 +620,12 @@ sysEvent_t Sys_GetEvent(void)
         return eventQue[idx];
     }
 
+#if defined(COD2_X64)
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
+    extern void IN_Frame(void);
+    IN_Frame();
+#endif
+#endif
     s = Sys_ConsoleInput();
     if (s) {
         len = strlen(s);
