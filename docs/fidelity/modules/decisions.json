@@ -20950,5 +20950,277 @@
   "mac:0x00049cae": {
     "status": "equal",
     "evidence": "Mac 0x00049cae SND_ValidateSoundAliasBlend: Hand-reviewed identical-pointer fast return, sound-file/curve identities, all seven flag masks, slave/start-delay equality, looping pitch/volume restrictions, secondary-alias rejection and reporting/nonreporting returns. All fourteen diagnostic strings match Mac; static attribute required direct source inspection."
+  },
+  "mac:0x00031682": {
+    "status": "equal",
+    "evidence": "Mac 0x31682: compared the cached Asian-language flag return by hand."
+  },
+  "linux:stringed/stringed_hooks.cpp:48:Language_UpdateCurrentAsian": {
+    "status": "equal",
+    "evidence": "No standalone body: compared the complete native cached-flag expression with Mac inlines at 0x3179d-0x317b1, 0x318d7-0x318eb, 0x31962-0x31976 and 0x319a3-0x319b7; unsigned language-8 <= 4 matches."
+  },
+  "linux:stringed/stringed_hooks.cpp:444:SEH_ChineseCharToIndex": {
+    "status": "unchecked",
+    "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_ChineseCharToIndex; no equality inferred from its name or neighboring helpers."
+  },
+  "mac:0x000315bc": {
+    "status": "equal",
+    "evidence": "Mac 0x315bc: compared the current integer load by hand against the native dvar field."
+  },
+  "mac:0x0003168c": {
+    "status": "equal",
+    "evidence": "Mac 0x3168c: compared all 15 case-insensitive probes, success index/true and failure zero/false. Binary table extraction confirms english through czech and null sentinel."
+  },
+  "mac:0x0003163c": {
+    "status": "equal",
+    "evidence": "Mac 0x3163c: unsigned bounds check accepts 0..14, otherwise returns English; all 15 table names checked against original data."
+  },
+  "linux:stringed/stringed_hooks.cpp:195:SEH_GetLocalizedTokenReference": {
+    "status": "fixed",
+    "evidence": "Mac inline 0x321c8-0x322d1: native treated a one-character token as a missing translation; now bypasses lookup/warnings as the original 0x32247-0x3224e branch does. Warning/error and LOCMSG_NOERR paths compared by hand. Compiled and reviewed; existing placeholder fixture passes but does not exercise this correction."
+  },
+  "mac:0x000316e2": {
+    "status": "equal",
+    "evidence": "Mac 0x316e2: compared five registrations, defaults, language max 14, flags 0x1021/0x1020/4096 and cached Asian flag. __mh_execute_header is original absolute 4096; native keeps the documented explicit constant. Existing language fixture passes."
+  },
+  "mac:0x00031628": {
+    "status": "equal",
+    "evidence": "Mac 0x31628: direct SE_Init delegation compared by hand."
+  },
+  "linux:stringed/stringed_hooks.cpp:598:SEH_IsChineseChar": {
+    "status": "unchecked",
+    "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_IsChineseChar; no equality inferred from its name or neighboring helpers."
+  },
+  "linux:stringed/stringed_hooks.cpp:427:SEH_IsChineseLeadTrail": {
+    "status": "fixed",
+    "evidence": "Mac inline 0x31b54-0x31b70: language 11 requires lead 0x81..0xfe and trail 0x41..0xfe. Native helper (historically named SEH_IsThaiDoubleByte) incorrectly required 0xa1..0xf7 and 0xa1..0xfe. Corrected under COD2_X64; compiled and reviewed, not exercised."
+  },
+  "linux:stringed/stringed_hooks.cpp:437:SEH_IsChinesePunctuation": {
+    "status": "fixed",
+    "evidence": "Mac inline 0x31b83-0x31b8f: language 11 punctuation is 0x8141..0x814d; native used 0xa1a1..0xa1ad. Corrected under COD2_X64; compiled and reviewed, not exercised."
+  },
+  "linux:stringed/stringed_hooks.cpp:593:SEH_IsJapaneseChar": {
+    "status": "unchecked",
+    "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_IsJapaneseChar; no equality inferred from its name or neighboring helpers."
+  },
+  "linux:stringed/stringed_hooks.cpp:395:SEH_IsJapaneseLeadTrail": {
+    "status": "equal",
+    "evidence": "Mac inline 0x31afb-0x31b18: compared language 10 lead ranges 0x81..0x9f/0xe0..0xef and trail ranges 0x40..0x7e/0x80..0xfc with native SEH_IsChineseDoubleByte. Native helper name is historical and does not change the dispatch identity."
+  },
+  "linux:stringed/stringed_hooks.cpp:405:SEH_IsJapanesePunctuation": {
+    "status": "equal",
+    "evidence": "Mac inline 0x31b31-0x31b3d: compared complete language 10 unsigned punctuation test 0x8140..0x8151 and output store in SEH_ReadCharFromString."
+  },
+  "linux:stringed/stringed_hooks.cpp:588:SEH_IsKoreanChar": {
+    "status": "unchecked",
+    "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_IsKoreanChar; no equality inferred from its name or neighboring helpers."
+  },
+  "linux:stringed/stringed_hooks.cpp:578:SEH_IsKoreanLeadTrail": {
+    "status": "fixed",
+    "evidence": "Mac inline 0x31a64-0x31a78/0x31ba9-0x31bc0: language 8 permits lead 0xb0..0xc8, trail 0xa1..0xfe. Native SEH_IsJapaneseDoubleByte also accepted 0xe0..0xef leads; removed that extra range. Compiled and reviewed, not exercised."
+  },
+  "linux:stringed/stringed_hooks.cpp:360:SEH_IsTraditionalChineseChar": {
+    "status": "equal",
+    "evidence": "Mac inline 0x31aa2-0x31ac5: compared the full language 9 byte-pair predicate, including disjoint lead/trail ranges, with native SEH_IsKoreanDoubleByte."
+  },
+  "linux:stringed/stringed_hooks.cpp:375:SEH_IsTraditionalChinesePunctuation": {
+    "status": "equal",
+    "evidence": "Mac inline 0x31ad8-0x31ae7: compared the complete unsigned language 9 punctuation test 0xa140..0xa153 and result store."
+  },
+  "linux:stringed/stringed_hooks.cpp:412:SEH_JapaneseCharToIndex": {
+    "status": "unchecked",
+    "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_JapaneseCharToIndex; no equality inferred from its name or neighboring helpers."
+  },
+  "linux:stringed/stringed_hooks.cpp:349:SEH_KoreanCharToIndex": {
+    "status": "unchecked",
+    "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_KoreanCharToIndex; no equality inferred from its name or neighboring helpers."
+  },
+  "linux:stringed/stringed_hooks.cpp:520:SEH_LanguageUsesSpaces": {
+    "status": "unchecked",
+    "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_LanguageUsesSpaces; no equality inferred from its name or neighboring helpers."
+  },
+  "mac:0x00031d6c": {
+    "status": "fixed",
+    "evidence": "Mac 0x31d6c: compared delimiter state, lookup and warnings, length diagnostics, placeholder count/search/insert and final marker restoration by hand. Fixed one-character lookup bypass at 0x32247-0x3224e. Existing native rune adapter supplies both 0x400 and alias 4 digit flags; mask 4 is intentionally retained. Compiled and reviewed; existing ASan/UBSan placeholder fixture passes but does not exercise the corrected branch or unsafe oversize/missing-placeholder paths."
+  },
+  "mac:0x00031bca": {
+    "status": "equal",
+    "evidence": "Mac 0x31bca: compared null handling, character consumption, color-code skip for ^0..^9, doubled caret handling and CR/LF exclusion by hand."
+  },
+  "mac:0x000319d6": {
+    "status": "fixed",
+    "evidence": "Mac 0x319d6: compared all dispatch branches and scalar punctuation, pointer increments and optional output stores. Corrected language 8 lead range (0x31a64/0x31ba9), language 11 byte ranges (0x31b54) and punctuation base (0x31b83). Language 12 remains scalar exactly as Mac. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00031c48": {
+    "status": "equal",
+    "evidence": "Mac 0x31c48: compared lookup bypass, success, fatal/warning formatting, UNLOCALIZED wrapper and bounded fallback copy. Retains documented native I_strncat(dest,size,source) ABI; both calls match Mac argument order."
+  },
+  "mac:0x00031632": {
+    "status": "equal",
+    "evidence": "Mac 0x31632: direct SE_ShutDown delegation compared by hand."
+  },
+  "mac:0x00031658": {
+    "status": "equal",
+    "evidence": "Mac 0x31658: compared absent/disabled loc_translate, empty/one-character bypass and normal SE_GetString delegation."
+  },
+  "mac:0x000317ba": {
+    "status": "intentional",
+    "evidence": "Mac 0x317ba: asset-presence gate, force-English load, developer suppression and warning/error paths match by hand. Retains existing native null guards for loc_forceEnglish/com_developer during startup; Mac directly dereferences both. Native language-name helper replaces the inlined 0..14 bounds check."
+  },
+  "linux:stringed/stringed_hooks.cpp:382:SEH_TraditionalChineseCharToIndex": {
+    "status": "unchecked",
+    "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_TraditionalChineseCharToIndex; no equality inferred from its name or neighboring helpers."
+  },
+  "mac:0x00031880": {
+    "status": "intentional",
+    "evidence": "Mac 0x31880: registrations, 15 asset probes, no-assets diagnostic, selected-language try, ordered fallback attempts and final English/cached-flag reset match by hand. Retains existing native early SEH_InitLanguage when loc_language is null; Mac assumes prior initialization. Existing language fixture passes."
+  },
+  "mac:0x000315ca": {
+    "status": "equal",
+    "evidence": "Mac 0x315ca: compared present-language early return, 15 cyclic probes using signed remainder, and zero fallback; native count 15 matches the original modulo sequence. Existing language fixture passes."
+  },
+  "mac:0x0004890a": {
+    "status": "fixed",
+    "evidence": "Mac 0x4890a: reconstructed full-reference lookup, absent-key-only insertion, empty initial value and current-reference assignment. Native Apple now uses documented COW strings and 48-byte GCC-layout tree nodes instead of the simplified linked list; original node new/delete confirmed at 0x2ef2a8/0x2ef866. Existing references keep their value and English cache. Compiled and reviewed, not exercised; allocation-failure unwinding remains unverified."
+  },
+  "mac:0x0004978a": {
+    "status": "fixed",
+    "evidence": "Mac 0x4978a: reconstructed right-first tree destruction, reset root/extrema/count/end flag and clear current reference/English while retaining package name. Native COW/tree provider inspected read-only; package is 80 bytes and nodes 48 bytes rather than i386 40/24. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00048678": {
+    "status": "fixed",
+    "evidence": "Mac 0x48678: previously absent native body now copies the COW string, repeatedly finds backslash-n from the beginning and replaces each pair with LF. Uses native COW provider rather than i386 header offsets. Compiled and reviewed, not exercised; exception cleanup not validated."
+  },
+  "mac:0x0004876a": {
+    "status": "intentional",
+    "evidence": "Mac 0x4876a: previously absent native body reconstructed with native COW return storage, leading space/tab skip, optional opening quote, trailing space/tab trimming and optional closing quote. Native keeps empty trimming defined instead of reproducing the original pre-buffer read when an opened quote is followed only by whitespace. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00048f90": {
+    "status": "fixed",
+    "evidence": "Mac 0x48f90: reconstructed null input, prefix order, VERSION, ignored metadata, REFERENCE/ENDMARKER and dynamic quoted language values. At 0x49560 Mac accepts every non-English LANG_ when forceEnglish byte is zero; removed the invented current-language filter. Preserved the existing deterministic rejection of &&0 instead of copying the original one-byte-before-array access at 0x4936e. Compiled and reviewed, not exercised; allocation-failure unwinding unverified."
+  },
+  "mac:0x0004832a": {
+    "status": "fixed",
+    "evidence": "Mac 0x4832a: compared line copy/advance, CR/LF skipping, trailing whitespace and comment removal. Native reset quote parity after a quoted //; Mac 0x483ff/0x4843b carries parity across continued searches. Reconstructed cumulative count. Native unsigned-char isspace remains defined for high bytes. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00048e32": {
+    "status": "fixed",
+    "evidence": "Mac 0x48e32: native COW tree lookup, English value/cache assignments and case-insensitive #same copy now follow original field ownership without fixed 4096-byte truncation. Native retains creation of a missing reference instead of Mac end-iterator write; normal callers add it first. Compiled and reviewed, not exercised; allocation-failure unwinding unverified."
+  },
+  "mac:0x000484c4": {
+    "status": "fixed",
+    "evidence": "Mac 0x484c4: compare extension removal after the last slash/backslash, basename extraction, uppercase and package assignment. Native wrongly reset reference, English cache and end marker per file; removed those resets. Native COW filename avoids reproducing original 64-byte static/stack overflow for long names. Compiled and reviewed, not exercised."
+  },
+  "linux:stringed/stringed_ingame.cpp:178:CheckLineForKeyword": {
+    "status": "equal",
+    "evidence": "Mac ParseLine inlines at 0x48fab-0x4904b and 0x490d7-0x49190: compared fixed-length case-insensitive prefix tests and space/tab cursor skip with SE_AfterKeyword and native dispatch. No extra token-boundary requirement added."
+  },
+  "linux:stringed/stringed_ingame.cpp:77:EndMarkerFoundDuringParse": {
+    "status": "equal",
+    "evidence": "Mac inline 0x49697-0x496a0: complete end-marker flag getter compared with native package->foundEndMarker check in SE_Load."
+  },
+  "linux:stringed/stringed_ingame.cpp:163:ExtractLanguageFromPath": {
+    "status": "unchecked",
+    "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Neighboring file-setup/clear behavior is not a full identity for ExtractLanguageFromPath."
+  },
+  "linux:stringed/stringed_ingame.cpp:108:Filename_PathOnly": {
+    "status": "unchecked",
+    "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Neighboring file-setup/clear behavior is not a full identity for Filename_PathOnly."
+  },
+  "linux:stringed/stringed_ingame.cpp:124:Filename_WithoutExt": {
+    "status": "intentional",
+    "evidence": "Mac inline 0x484cc-0x48533/0x485cc-0x485db: last dot is removed only after both slash types. Native dynamic COW filename keeps that rule, without copying an arbitrary path into the original 64-byte static buffer."
+  },
+  "linux:stringed/stringed_ingame.cpp:145:Filename_WithoutPath": {
+    "status": "intentional",
+    "evidence": "Mac inline 0x48533-0x4858a: compared complete slash/backslash scan and basename selection. Native COW substring replaces the original 64-byte static and stack copies so long paths remain defined."
+  },
+  "linux:stringed/stringed_ingame.cpp:440:GetCurrentReference_ParseOnly": {
+    "status": "equal",
+    "evidence": "Mac inline 0x4919d-0x491ac: compared current-reference COW data load and empty-reference guard with the native ParseLine package field."
+  },
+  "linux:stringed/stringed_ingame.cpp:195:IsStringFormatCorrect": {
+    "status": "intentional",
+    "evidence": "Mac inline 0x49274-0x492c0/0x4935e-0x4939a: compared && search, digit validation, duplicate tracking and error text. Mac admits zero before indexing one byte before its nine-byte used array at 0x4936e; native deliberately retains deterministic rejection of &&0 rather than introducing that indeterminate read/write."
+  },
+  "linux:stringed/stringed_ingame.cpp:234:REMKill": {
+    "status": "fixed",
+    "evidence": "Mac inline 0x483ff-0x4848b: reconstructed cumulative quote parity, scanning after quoted //, comment termination and trailing-whitespace removal in ReadLine. Native previously reset parity on every continued search. Compiled and reviewed, not exercised."
+  },
+  "linux:stringed/stringed_ingame.cpp:480:SE_GetFoundFile": {
+    "status": "fixed",
+    "evidence": "Exact Mac symbol recovered at 0x485e0 despite missing ledger pairing. Reconstructed 63-byte static filename copy, first-semicolon termination and erase-through-delimiter; with no delimiter in the copied prefix it clears the whole file-list string and returns that prefix. Native uses COW size_t header/mutate API. Compiled and reviewed, not exercised."
+  },
+  "mac:0x000496f4": {
+    "status": "intentional",
+    "evidence": "Mac 0x496f4: case-sensitive tree lookup and value data/null result compared by hand; native COW/tree representation restored. Retains existing native null-package guard, whereas Mac assumes SE_Init. Compiled and reviewed; no parser lookup fixture available."
+  },
+  "mac:0x000498e2": {
+    "status": "intentional",
+    "evidence": "Mac 0x498e2 plus tree allocation 0x2ef2a8: native allocates a zero-initialized 80-byte package through Z_MallocInternal, constructs native COW fields and initializes native tree via Clear; nodes use provider operator new/delete. Retains existing repeated-init reuse instead of copying Mac repeated-init package leak. Compiled and reviewed, not exercised."
+  },
+  "mac:0x000495e4": {
+    "status": "fixed",
+    "evidence": "Mac 0x495e4: compared load failure, per-file setup, 0x4000 line buffer, nonempty-line parse loop, early parse error, data release and end-marker check. Native now uses original va error storage and corrected package state, preserving Mac cross-file end-marker behavior. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00049804": {
+    "status": "fixed",
+    "evidence": "Mac 0x49804: restored build-entire-semicolon-file-list before any load, SE_GetFoundFile consumption, first-error stop and COW list destruction. Removed invented recursive depth/path checks and interleaved listing/loading. Existing native null-package initialization retained. Native file-list COW fixture passes; full loader compiled and reviewed, not exercised."
+  },
+  "linux:stringed/stringed_ingame.cpp:551:SE_NewLanguage": {
+    "status": "unchecked",
+    "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Neighboring file-setup/clear behavior is not a full identity for SE_NewLanguage."
+  },
+  "mac:0x00049936": {
+    "status": "fixed",
+    "evidence": "Mac 0x49936: compared null gate, Clear, package/English/reference COW destruction, zone free and global pointer reset. Native restored field ownership and tree node allocator pairing rather than global linked-string storage. Compiled and reviewed, not exercised; unwind cleanup not validated."
+  },
+  "linux:stringed/stringed_ingame.cpp:46:allocate": {
+    "status": "intentional",
+    "evidence": "The Linux se_alloc template is not the Mac map allocator: Mac AddEntry symbol names std::allocator, and coalesced 0x2ef2a8 allocates 24-byte nodes via __Znwm, copies both COW strings and rebalances; 0x2ef866 destroys both strings and calls __ZdlPv. Native uses those provider operations with documented 48-byte nodes, not a Linux-template implementation. Existing provider fixture passes; StringEd allocation/error cleanup itself is compiled and reviewed only."
+  },
+  "linux:stringed/stringed_ingame.cpp:48:construct": {
+    "status": "intentional",
+    "evidence": "The Linux se_alloc template is not the Mac map allocator: Mac AddEntry symbol names std::allocator, and coalesced 0x2ef2a8 allocates 24-byte nodes via __Znwm, copies both COW strings and rebalances; 0x2ef866 destroys both strings and calls __ZdlPv. Native uses those provider operations with documented 48-byte nodes, not a Linux-template implementation. Existing provider fixture passes; StringEd allocation/error cleanup itself is compiled and reviewed only."
+  },
+  "linux:stringed/stringed_ingame.cpp:47:deallocate": {
+    "status": "intentional",
+    "evidence": "The Linux se_alloc template is not the Mac map allocator: Mac AddEntry symbol names std::allocator, and coalesced 0x2ef2a8 allocates 24-byte nodes via __Znwm, copies both COW strings and rebalances; 0x2ef866 destroys both strings and calls __ZdlPv. Native uses those provider operations with documented 48-byte nodes, not a Linux-template implementation. Existing provider fixture passes; StringEd allocation/error cleanup itself is compiled and reviewed only."
+  },
+  "linux:stringed/stringed_ingame.cpp:49:destroy": {
+    "status": "intentional",
+    "evidence": "The Linux se_alloc template is not the Mac map allocator: Mac AddEntry symbol names std::allocator, and coalesced 0x2ef2a8 allocates 24-byte nodes via __Znwm, copies both COW strings and rebalances; 0x2ef866 destroys both strings and calls __ZdlPv. Native uses those provider operations with documented 48-byte nodes, not a Linux-template implementation. Existing provider fixture passes; StringEd allocation/error cleanup itself is compiled and reviewed only."
+  },
+  "linux:stringed/stringed_ingame.cpp:67:operator delete": {
+    "status": "intentional",
+    "evidence": "Mac SE_ShutDown 0x49990-0x49993 uses Z_FreeInternal for package storage after string/tree destruction. Native retains that zone allocator/free pairing for its 80-byte native package; node free separately follows 0x2ef866 via provider operator delete. Compiled and reviewed, not exercised."
+  },
+  "linux:stringed/stringed_ingame.cpp:63:operator new": {
+    "status": "intentional",
+    "evidence": "Mac SE_Init 0x498e8-0x498f4 uses Z_MallocInternal(40) for the package, independently of std::allocator tree nodes. Native package allocation is Z_MallocInternal(sizeof 80-byte native package), with defined initialization. Linux class operator spelling is not treated as a separate Mac executable identity. Compiled and reviewed, not exercised."
+  },
+  "linux:stringed/stringed_ingame.cpp:43:se_alloc<T>": {
+    "status": "unchecked",
+    "evidence": "Linux-only templated allocator constructor has no executable Mac identity or native constructor call established. Mac std::allocator node operations do not establish this constructor body."
+  },
+  "linux:stringed/stringed_ingame.cpp:44:se_alloc<T>": {
+    "status": "unchecked",
+    "evidence": "Linux-only templated allocator constructor has no executable Mac identity or native constructor call established. Mac std::allocator node operations do not establish this constructor body."
+  },
+  "mac:0x000bca88": {
+    "status": "intentional",
+    "evidence": "Mac 0xbca88: counter reset, assign empty, recurse with str extension and returned count match by hand. Existing native Apple Cod2MacString is the documented 8-byte COW object with 24-byte size_t representation, replacing i386 header offsets. Existing ASan/UBSan cpp_abi fixture passes actual production function."
+  },
+  "mac:0x000bc8e2": {
+    "status": "equal",
+    "evidence": "Mac 0xbc8e2: direct FS_FreeFile delegation compared by hand."
+  },
+  "mac:0x000bc8bc": {
+    "status": "equal",
+    "evidence": "Mac 0xbc8bc: compared FS_ReadFile output pointer only when returned length > 0, otherwise null. No allocation/layout change."
+  },
+  "mac:0x000bc8ec": {
+    "status": "intentional",
+    "evidence": "Mac 0xbc8ec: compared all recursion/filtering, directory-before-file order, formatted path, append/count, and file-list release order. Existing native Apple uses Cod2MacString and append(\";\",1) rather than i386 -12/-8/-4 header writes; provider size_t/COW detach contract checked. Existing ASan/UBSan cpp_abi fixture exercises actual recursive listing, delimiters and COW detach."
   }
 }
