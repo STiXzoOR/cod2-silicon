@@ -366,7 +366,7 @@ script/scr_parser,47,32,2,1,12
 script/scr_stringlist,42,25,14,0,3
 script/scr_tempmemory,5,5,0,0,0
 script/scr_variable,173,144,14,4,11
-script/scr_vm,112,85,3,9,15
+script/scr_vm,112,85,4,9,14
 script/scr_yacc,45,14,7,9,15
 server/sv_ccmds_mp,35,27,5,3,0
 server/sv_client_mp,43,25,8,10,0
