@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 3161,
-      "intentional": 1712,
-      "equal": 3843,
-      "fixed": 741
+      "unchecked": 3103,
+      "intentional": 1718,
+      "equal": 3885,
+      "fixed": 751
     },
     "scopes": {
       "unassigned": 777,
@@ -62523,8 +62523,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xbea8e\u20130xbebdc against native script/token teardown, all 1024 hash buckets, define parameter/body lists, indent teardown, and final source frees; pointer-sized allocations retain the native layout."
       },
       {
         "id": "mac:0x000c114c",
@@ -62554,8 +62554,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc114c\u20130xc12b0: script load/failure, zeroed source, 64-byte filename copy, cleared 1024-entry hash, and global define deep-copy/hash insertion order match."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2686:LoadSourceMemory",
@@ -62574,7 +62574,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:531:PC_AddBuiltinDefines",
@@ -62593,7 +62593,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:1178:PC_AddDefine",
@@ -62612,7 +62612,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:438:PC_AddDefineToHash",
@@ -62630,8 +62630,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified inline Mac 0xc1207\u20130xc1289 and 0xc08d9\u20130xc0912 against native hash-head insertion: signed name hash, copy->hashnext=old bucket, then bucket=copy. No standalone Mac body claimed."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:1194:PC_AddGlobalDefine",
@@ -62650,7 +62650,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:1289:PC_AddGlobalDefinesToSource",
@@ -62668,8 +62668,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified inline Mac LoadSourceFile 0xc11f8\u20130xc1290 against native globaldefines iteration, PC_CopyDefine call, hash insertion, and next linkage. No standalone Mac body claimed."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2887:PC_CheckOpenSourceHandles",
@@ -62688,7 +62688,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2554:PC_CheckTokenString",
@@ -62707,7 +62707,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2571:PC_CheckTokenType",
@@ -62726,7 +62726,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:940:PC_ClearTokenWhiteSpace",
@@ -62744,8 +62744,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified inline Mac 0xc097e\u20130xc0992 and 0xc0b2c\u20130xc0b40 against native macro token copies: both whitespace pointers and linescrossed cleared. No standalone Mac body claimed."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:789:PC_ConvertPath",
@@ -62763,8 +62763,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified inline Mac include 0xbf032\u20130xbf10f and 0xbf169\u20130xbf175 against native PC_CollapseIncludePathSeparators: collapse adjacent mixed slash/backslash with same overlap-copy operation, then normalize to slash. No standalone Mac body claimed."
       },
       {
         "id": "mac:0x000c0f96",
@@ -62794,8 +62794,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc0f96\u20130xc114c: inline name allocation, flags/builtin/parameter count, zeroed linkage, body-token copies before parameter-token copies, and allocation accounting match."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:173:PC_CopyToken",
@@ -62813,8 +62813,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified native PC_AllocTokenCopy against inline Mac 0xbec52\u20130xbec93 and 0xc1010\u20130xc1030: allocate complete native-sized token, copy fields, null next, increment numtokens, fatal allocation failure. No standalone Mac body claimed."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:1129:PC_DefineFromString",
@@ -62833,7 +62833,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "mac:0x000c0772",
@@ -62863,8 +62863,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc0772\u20130xc0f96: skip/name/redefinition paths, hash insertion, whitespace-dependent function-macro detection, empty parameters, duplicate/name/separator errors, cleared token whitespace, recursive-token omission, and leading/trailing ## rejection match."
       },
       {
         "id": "mac:0x000c1b36",
@@ -62894,8 +62894,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc1b36\u20130xc1c04: current-script indent pop, skip subtraction, rejection of missing/else indent, evaluation, and type-4 push match; Mac reevaluates elif without remembering an earlier taken branch."
       },
       {
         "id": "mac:0x000bdd1c",
@@ -62925,8 +62925,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xbdd1c\u20130xbddde: current-script indent checks/pop, skip subtraction, duplicate-else rejection, and type-2 push with inverted previous skip match."
       },
       {
         "id": "mac:0x000bddde",
@@ -62956,8 +62956,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xbddde\u20130xbde44: current-script indent validation, pop/free and skip subtraction, missing-type diagnostic, and success match."
       },
       {
         "id": "mac:0x000bdcd4",
@@ -62987,8 +62987,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xbdcd4\u20130xbdd1c: initialize only token text, attempt one raw token read, report #error directive text, and return failure match."
       },
       {
         "id": "mac:0x000c18fa",
@@ -63018,8 +63018,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xc18fa\u20130xc1ac0: integer evaluation, signed-32 absolute formatting (including INT_MIN wrap), number subtype 0x3008, and optional separate minus match. Native intentionally retains zero-initialized unwritten numeric/padding fields; Mac copies indeterminate stack bytes. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000c172c",
@@ -63049,8 +63049,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc1788\u20130xc1794 clears the sign of the rounded float before %1.2f formatting, including negative zero; native now uses fabsf after float narrowing. Retains defined zero initialization for numeric fields Mac never assigns in #evalfloat. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000c1ac0",
@@ -63080,8 +63080,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc1ac0\u20130xc1b36: integer evaluation failure, value==0 skip, type-1 indent fields/linkage, and source skip accumulation match."
       },
       {
         "id": "mac:0x000c0058",
@@ -63111,8 +63111,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc018e reports \"#ifdef without name\"; restored that diagnostic. Read hash lookup, wrong-type unread path, type-8/type-16 XOR skip, indent allocation/linking and accumulation. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000c020a",
@@ -63142,8 +63142,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc020a\u20130xc0226: forwards source and type 8 to PC_Directive_if_def."
       },
       {
         "id": "mac:0x000c01ee",
@@ -63173,8 +63173,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc01ee\u20130xc020a: forwards source and type 0x10 to PC_Directive_if_def."
       },
       {
         "id": "mac:0x000bef28",
@@ -63204,8 +63204,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xbef28\u20130xbf282: skipped source, quoted filename/fallback, angle token accumulation and unread-newline path, slash collapse/conversion, recursion warning that returns success without pushing, and load errors match. Existing 64-byte path/string overflow and overlapping strcpy behavior are not claimed safe or exercised."
       },
       {
         "id": "mac:0x000bdb2c",
@@ -63235,8 +63235,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xbdb2c\u20130xbdb4c: unsupported #line diagnostic and zero return match."
       },
       {
         "id": "mac:0x000c0018",
@@ -63266,8 +63266,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc0018\u20130xc0058: unsupported #pragma warning, drain PC_ReadLine until failure, and nonzero success match."
       },
       {
         "id": "mac:0x000c0226",
@@ -63297,8 +63297,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc0343 reports \"undef without name\"; restored that diagnostic. Read skip/wrong-type unread, signed-byte hash, fixed-define warning, predecessor/bucket unlink, and both token-list destruction paths. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000c20ac",
@@ -63328,8 +63328,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc2108\u20130xc2114 clears the rounded float sign for formatting; 0xc215b\u20130xc2178 truncates to int64 then stores only low32 plus the original float value. Native now matches these defined conversions, including x87 indefinite low32=0 outside int64 range, and preserves initialized synthetic unused fields. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000c22ac",
@@ -63359,8 +63359,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read exact-entry Mac 0xc22ac\u20130xc247c, including push/fild at 0xc2343: signed integer numeric payload, absolute text, subtype 0x3008, and separate negative sign match. Native now zero-extends the unsigned 32-bit integer field; unused synthetic/minus fields remain initialized rather than copying indeterminate Mac stack bytes. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000c1c04",
@@ -63390,8 +63390,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc1c04\u20130xc20ac: zero outputs, two initial raw reads (first token is deliberately not validated as opening parenthesis), string-first-character nesting for numeric/punctuation tokens, defined-name state/expansion, evaluator call, and success-only list free match."
       },
       {
         "id": "mac:0x000c1300",
@@ -63421,8 +63421,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc1300\u20130xc172c: output reset, first-line failure, defined-name state, number/punctuation copy, undefined/error paths, macro expansion back into source, evaluator dispatch, and success-only token-list free match."
       },
       {
         "id": "mac:0x000bde44",
@@ -63452,8 +63452,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xbde44\u20130xbea8e uses scanner operator IDs, signed 32-bit values, 64-entry linked value/operator pools, deferred parenthesis/priority reduction, value-only unary minus, independent integer/double channels, and ?: state; replaced the incompatible native stack evaluator. Decoded all three 39-entry dispatch tables at 0x32a750/0x32a7ec/0x32a888. Retains defined rejection of absent operands/names and defined INT_MIN/-1 wrapping instead of null access or x86 arithmetic trap. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000bf676",
@@ -63483,8 +63483,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xbf676\u20130xbf8de. Corrected __FILE__ at 0xbf792 to active script filename, not root source filename; __LINE__ now stores unsigned low32. Date/time text layout and token types match, but native omits the free calls at 0xbf75d/0xbf862 because ctime returns libc-owned static storage, with no GetMemory ownership. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000bf8de",
@@ -63514,8 +63514,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xbf931 tests exact # followed by NUL and 0xbf97e warns then omits invalid #; native tested only first character, misclassified ##, and copied invalid #. Corrected both. Read argument substitution, stringize, token-paste type matrix/link removals, output pointers, and parameter-list teardown; native initializes stringized-token unused fields instead of copying indeterminate Mac bytes. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:769:PC_ExpandDefineIntoSource",
@@ -63533,8 +63533,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; read native helper and verified inline Mac 0xc166e\u20130xc16bf and 0xc05d7\u20130xc0622: expand, reject failure or absent endpoints, prepend result list. No standalone Mac body claimed."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2536:PC_ExpectAnyToken",
@@ -63553,7 +63553,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2460:PC_ExpectTokenString",
@@ -63572,7 +63572,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2483:PC_ExpectTokenType",
@@ -63591,7 +63591,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:470:PC_FindDefine",
@@ -63610,7 +63610,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:487:PC_FindDefineParm",
@@ -63628,8 +63628,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified native PC_FindDefineParmIndex against inline Mac 0xbfb33\u20130xbfb68 and 0xc0ab5\u20130xc0ae9: ordered strcmp over parameter tokens, zero-based index, absence -1. No standalone Mac body claimed."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:452:PC_FindHashedDefine",
@@ -63647,8 +63647,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified native PC_FindDefineInSource against inline Mac 0xc0493\u20130xc04d5 and 0xc00f5\u20130xc0139: 1024-bucket hash, strcmp, hashnext traversal. Native retains null-table guard. No standalone Mac body claimed."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:506:PC_FreeDefine",
@@ -63666,8 +63666,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified inline Mac 0xbeb1c\u20130xbeb67 and 0xc039f\u20130xc03ea: free parameter tokens, then replacement tokens, decrement numtokens for each, then free define; native FreeSource/PC_Directive_undef match. No standalone Mac body claimed."
       },
       {
         "id": "mac:0x000bebdc",
@@ -63697,8 +63697,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xbebdc\u20130xbec22: unsigned handle-1 range 0..62, occupied-slot requirement, free/clear, and success return match."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:197:PC_FreeToken",
@@ -63716,8 +63716,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified native FreeMemory/--numtokens sequence against inline Mac 0xbeae7\u20130xbeaef and 0xc1442\u20130xc1450, including saving next before free in lists. No standalone Mac body claimed."
       },
       {
         "id": "mac:0x000c12b0",
@@ -63747,8 +63747,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc12b0\u20130xc1300: scan slots 1..63, first-free load/failure and store, exhausted-table zero return match."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:390:PC_MergeTokens",
@@ -63766,8 +63766,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified native PC_MergeTokenPaste against inline Mac 0xbfa37\u20130xbfa65, 0xbfcfb\u20130xbfd19, 0xbfd54\u20130xbfd7e: name+name/number and string+string only, quote removal, error otherwise. Native retains empty-string quote-removal guard. No standalone Mac body claimed."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:418:PC_NameHash",
@@ -63785,8 +63785,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified native PC_DefineHash against inline Mac 0xc05ad\u20130xc05d2 and 0xc1250\u20130xc1279: signed bytes, weights starting 119, arithmetic shifts 10/20, XOR and mask 1023. No standalone Mac body claimed."
       },
       {
         "id": "mac:0x000bdabe",
@@ -63816,8 +63816,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xbdabe\u20130xbdb2c and decoded jump table 0x32a6a0; all 39 native priority entries and out-of-range zero match. Also checked the evaluator inlines the same priority table."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:126:PC_PopIndent",
@@ -63835,8 +63835,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified inline Mac 0xbdd28\u20130xbdd77, 0xbde17\u20130xbde34, and 0xc1b41\u20130xc1b8c against native current-script check, pop, source skip subtraction, free and retained type/skip. No standalone Mac body claimed."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:108:PC_PushIndent",
@@ -63854,8 +63854,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified inline Mac 0xc1af7\u20130xc1b24, 0xc013b\u20130xc0178 and 0xbdd85\u20130xbddb9 against native allocation, type/script/skip, source skip add and stack linkage. No standalone Mac body claimed."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:151:PC_PushScript",
@@ -63873,8 +63873,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified inline Mac include 0xbf127\u20130xbf15f and 0xbf1a9\u20130xbf1bd against native PC_PushScriptToSource: case-insensitive active filename recursion check, warning/error with success and no push on recursion, otherwise prepend script. No standalone Mac body claimed."
       },
       {
         "id": "mac:0x000bf282",
@@ -63904,8 +63904,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xbf282\u20130xbf676: initial read, count cap/clear, missing-( unread, zero/max-count rejection, nested-parenthesis omission and early close quirk, comma warnings/count limits, copied lists, too-few warning, and return paths match."
       },
       {
         "id": "mac:0x000bede0",
@@ -63935,8 +63935,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xbee63 reports \"found # at end of line\" after unreading a token crossing lines; corrected diagnostic. Read missing/type/name/table dispatch and unknown-directive paths. All 14 table names/handler addresses match Mac 0x349ec0. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000bec22",
@@ -63966,8 +63966,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xbeca5 reports \"found $ at end of line\" after unreading a token crossing lines; corrected diagnostic. Read missing/type/name paths including unreading unknown tokens; both dispatch entries match Mac 0x349e20. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000bfdc8",
@@ -63997,8 +63997,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xbfdc8\u20130xbff76: raw read/cross-line unread, name hash expansion once then raw read, empty-expansion failure, and backslash continuation allowance match."
       },
       {
         "id": "mac:0x000bff76",
@@ -64028,8 +64028,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xbff76\u20130xc0018: handle validation, one line read, copy output fields even when it returns failure, float narrowing and quote stripping match. Native now initializes its local token to zero so immediate EOF cannot copy uninitialized stack text/numeric fields. UI_ParseOptionalIntLine checks failure and ignores this output. Compiled and reviewed, not exercised. Independent review identified the combined exact-1024 primitive/public-token boundary. Native wrapper now scans within the input string extent and copies at most 1023 bytes plus NUL into public storage; ordinary token content is unchanged. This defined oversized-primitive truncation is intentional; compiled/reviewed, boundary not exercised."
       },
       {
         "id": "mac:0x000bdbc2",
@@ -64059,8 +64059,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xbdc80 reports \"missing #endif\"; restored diagnostic. Read pending-token memcpy/pop/accounting, scanner/end checks, all current-script indent pops, include-stack advance/free, and root EOF return. Native retains its existing null-script guard. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000c0442",
@@ -64090,8 +64090,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc0442\u20130xc06ce: raw token loop, #/$ dispatch before skip, recursive adjacent-string joining with MAX_TOKEN check and unread lookahead, skip, hash expansion with empty-result failure, and source last-token copy match for scanner-produced tokens. Native retains its existing empty-string guard before removing a quote."
       },
       {
         "id": "mac:0x000c06ce",
@@ -64121,8 +64121,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc06ce\u20130xc0772 calls PC_ReadToken once at 0xc0700; removed native backtick skipping/retry, which could silently consume invalid input. Retains defined existing native success-only output copying instead of Mac failed-read indeterminate stack payload; inspected UI parser callers, which check failure before reading output. Handle range, field conversion and quote stripping match. Compiled and reviewed, not exercised. Independent review identified the combined exact-1024 primitive/public-token boundary. Native wrapper now scans within the input string extent and copies at most 1023 bytes plus NUL into public storage; ordinary token content is unchanged. This defined oversized-primitive truncation is intentional; compiled/reviewed, boundary not exercised."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:1230:PC_RemoveAllGlobalDefines",
@@ -64141,7 +64141,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:1211:PC_RemoveGlobalDefine",
@@ -64160,7 +64160,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2629:PC_SetIncludePath",
@@ -64179,7 +64179,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2645:PC_SetPunctuations",
@@ -64198,7 +64198,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2593:PC_SkipUntilString",
@@ -64217,7 +64217,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "mac:0x000bdb4c",
@@ -64247,8 +64247,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xbdb4c\u20130xbdbc2: handle-1 range 0..62, empty slot failure, active-script filename/line, root-filename/zero fallback, and return value match."
       },
       {
         "id": "mac:0x000bda08",
@@ -64278,8 +64278,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xbda08\u20130xbdabe: string token, cleared whitespace, quoted concatenation without inserted spaces match. Mac concatenates up to length 1024 and can put NUL into adjacent token.type at offset 1024; inspected caller token_t stack object and native storage, then bounded native concatenation to 1023 bytes rather than reproducing that field overwrite. Caller synthetic token is initialized. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2609:PC_UnreadLastToken",
@@ -64298,7 +64298,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:254:PC_UnreadSourceToken",
@@ -64316,8 +64316,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; read native helper and inline Mac 0xbec52\u20130xbec9f, 0xbff0c\u20130xbff52: complete token copy, next=old source tokens, source tokens=copy, and allocation count match. No standalone Mac body claimed."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2619:PC_UnreadToken",
@@ -64336,7 +64336,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:930:PC_WhiteSpaceBeforeToken",
@@ -64354,8 +64354,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only name; verified inline Mac define 0xc0931\u20130xc0939 against native endwhitespace_p-whitespace_p>0 function-macro whitespace check for scanner-produced pointers. No standalone Mac body claimed."
       },
       {
         "id": "mac:0x000bd94c",
@@ -64385,8 +64385,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xbd94c\u20130xbd9aa: bounded 1024-byte vsnprintf, active script filename/line and exact red Error print format match."
       },
       {
         "id": "mac:0x000bd9aa",
@@ -64416,8 +64416,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xbd9aa\u20130xbda08: bounded 1024-byte vsnprintf, active script filename/line and exact yellow Warning print format match."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2164:UnreadSignToken",
@@ -64435,8 +64435,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only name; verified inline Mac 0xc19ef\u20130xc1a80 and 0xc21f5\u20130xc2286 against native PC_UnreadEvalMinusToken: source line/script pointer metadata, zero linescrossed, \"-\", type 5, subtype 0x1e, prepend copy. Native intentionally initializes unused numeric/storage fields rather than copying unwritten Mac stack bytes. Compiled and reviewed, not exercised."
       }
     ],
     "botlib/l_script": [
