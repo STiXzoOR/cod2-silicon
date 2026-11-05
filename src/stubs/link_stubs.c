@@ -876,8 +876,20 @@ void *CDirect3D_GetDirect3DInterface(void)
     vsink++;    \
     vsink++;
 #if !defined(COD2_X64) || defined(DEDICATED)
+#if defined(COD2_X64)
+void CDirect3DDevice_CreateAndSetFixedFunctionVAO(const CDirect3DDevice *device,
+    Bool *canUseVAO, UINT32 base, UINT32 count, const void *indices,
+    UINT32 elements, Bool normals)
+#else
 void CDirect3DDevice_CreateAndSetFixedFunctionVAO(void)
+#endif
 {
+#if defined(COD2_X64)
+    /* Dedicated targets retain this unused link provider, with the same ABI
+     * as the real client renderer implementation. */
+    (void)device; (void)canUseVAO; (void)base; (void)count;
+    (void)indices; (void)elements; (void)normals;
+#endif
     static volatile int vsink;
     VAO_X16 VAO_X16 VAO_X16 VAO_X16 VAO_X16 VAO_X16 VAO_X16 VAO_X16
 }
