@@ -71,3 +71,56 @@ This is a report-only provenance audit. No verdict or production source changes,
 Primary Mac conversions at 0x70974 and 0x70a50 consume scalar single-precision values and return signed32 integers before separate damage/view-dip selection. Native `PM_CrashLandFloatToInt` accepts exactly [-2^31,2^31), truncates valid values and returns INT_MIN for NaN, infinity or out-of-range values without an invalid C cast. This matches the complete returned conversion result, including signed zero, subnormals and -2^31, when the Mac instruction returns with the relevant exception masked. The fixed classification inherits the earlier CrashLand repair; no additional source defect or change is counted.
 
 This bounded consumed-operation mapping claims no standalone export, 64-bit long ABI, x87/MXCSR flags, control-word side effects, trap mode or floating-point environment equivalence. The approved Windows-style `Sys_SnapVector` rounding is unchanged. Current movement source matches the independently reviewed four-configuration manual compilation receipt; no compilation, tests, CI, replay or runtime exercise ran for this follow-up. Compiled/reviewed does not mean runtime verified or playable. Exact evidence and independent review are retained in `recon-provenance-fastftol12.noindex` and `units/review-provenance-fastftol12.md`.
+
+
+## Platform14 indexed critical-section ownership
+
+The three indexed critical-section rows remain unchecked. This pass expands the
+platform6 call inventory into complete original bodies for 28 named owners and a
+29-owner map retaining the startup call. There are 61 direct calls: 48 using dvar
+index 4, eight using error index 2, two each using logging index 0 and redirect
+index 5, and one initializer. Original 1.3 initialization at 0x80d67da constructs
+six recursive mutexes, 24 bytes apart at 0x860b340, ignores pthread result codes,
+and destroys the attribute. Enter 0x80d6842 and Leave 0x80d6864 compute the indexed
+address and pass it to pthread lock/unlock. Generic per-object CMutex construction,
+including its checked error propagation, is not that complete ownership contract.
+
+The recovered continuations make several proposed shortcuts invalid:
+
+- Com_PrintMessage holds index 5 through its redirect callback at 0x8060c92 and
+  index 0 through the recursive logfile-opening Com_Printf at 0x8060d83. Its
+  normal exits release the respective lock. Fresh exact Mac 0x2df82 and native
+  common.c preserve the callback, buffer reload, opening guard and recursive
+  print directly. Those operation owners do not identify a global mutex array.
+- Com_Error releases index 2 at 0x80611d3 before obtaining TLS key 2 and jumping;
+  Com_ErrorAbort snapshots the error flag under that lock and releases it at
+  0x8061215 before its conditional jump. Com_Frame instead acquires index 2 after
+  setjmp and holds it through error cleanup, releasing on either normal branch.
+  Com_Quit_f acquires it at 0x8061257 and reaches terminal Sys_Quit without a
+  release. Fresh Mac Error 0x2e33a, Frame 0x306c4 and Quit 0x2f940 have concrete
+  direct flag/TLS/cleanup/exit owners, with the established returning-error and
+  native platform adaptations preserved. They cannot certify ErrorAbort's
+  separately unresolved operation or imply a common lock lifetime.
+- Dvar_ResetDvars 0x80b53e4 holds index 4 and calls Dvar_Reset 0x80b5092, which
+  acquires the same recursive lock. Dvar_LoadDvarsFromBuffer 0x80b52ee likewise
+  holds it while calling the locking lookup at 0x80b5350. RegisterNew releases
+  before its capacity-error call at 0x80b3caa. Fresh exact Mac ResetDvars 0x547c0
+  and Reset 0x53792 directly pass the reset value and source to SetVariant; their
+  native implementations do the same. This positive consumed operation accounts
+  for reset behavior, not all indexed dvar ownership.
+
+Four named owners in that map remain independently unresolved: Com_ErrorAbort,
+Dvar_SetVec2FromSource, Dvar_SaveDvars and Dvar_LoadDvarsFromBuffer. The latter
+binary serialization pair is not the settled named text-loader operation. Neither
+existing verdicts on other owners nor a single-thread assumption can fill those
+specific gaps. No new synchronization policy is proposed and no source defect was
+proved. A future complete replacement must account for storage identity, recursion,
+callback reentry, error continuations and terminal ownership for the actual owners;
+otherwise these three entries remain open.
+
+The settled fastftol12 consumed conversion verdict is preserved unchanged.
+
+Private evidence is retained in recon-provenance-platform14.noindex, including the
+full original owner bodies, fresh exact Mac owners and owner-boundaries.json.
+Three focused unchecked refinements; zero closures or defects. Static review only;
+no source change, compilation, tests, CI, replay or runtime verification.
