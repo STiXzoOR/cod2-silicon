@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 932,
+      "unchecked": 929,
       "intentional": 3007,
-      "equal": 4491,
-      "fixed": 1027
+      "equal": 4492,
+      "fixed": 1029
     },
     "scopes": {
       "unassigned": 777,
@@ -27026,8 +27026,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x239b8\u20130x23b62: hand-read all row/column arithmetic and final 16 stores. Existing native temporary preserves either matrix alias. Native now spells Mac p3+(p2+(p0+p1)) addition operands and the separately unrolled last-column b*a multiplications. Ordinary finite-value rounded dependency chain was already equivalent; no measured finite-value error claimed. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00023b66",
@@ -27048,8 +27048,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x23b66\u20130x23c3c computes all vector outputs before stores at0x23c28\u20130x23c36. Native sequential stores overwrote pV->x during an in-place transform. Restored four-result temporary before any store, retaining left-associated SSE dot products and output pointer return. No direct native source caller found. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00023c3e",
@@ -27070,8 +27070,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x23c3e\u20130x23c44: five-instruction body ignores HRESULT and returns zero in eax. Native DXGetErrorDescription9A ignores hr and returns NULL; read exact symbol body, not inferred from the short stub."
       }
     ],
     "Mac/DirectX 9/D3DXShader": [
