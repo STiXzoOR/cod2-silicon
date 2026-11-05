@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**Current: 70/89 reconciled: 56 equal, 7 fixed, 7 intentional; 19 unchecked.**
+**Current: 71/89 reconciled: 57 equal, 7 fixed, 7 intentional; 18 unchecked.**
 
 Original pass: 63/90 reconciled: 54 equal, 6 fixed, 3 intentional; 27 unchecked. Mac 1.3 is the authority. Every assigned row and every live shared-source function was inspected. Linux definitions were read only for identity and intent.
 
@@ -125,3 +125,13 @@ The complete Mac `MacStrings::GetCString` at 0xa144–0xa1ac consumes a length-p
 Exact Mac `R_FrustumClipPlanes` at 0xeef0e–0xef030 computes four-coefficient matrix products, normalizes the plane and emits culling metadata. It does not establish the four missing orientation-plane helpers' direction-plus-distance operations. A hypothetical matrix adapter with normalization removed would not be a concrete existing owner. The separate scaled-position, filepath, ownership-predicate and endian-wrapper gaps retain their earlier evidence and decisions.
 
 These six refined entries remain unchecked. Orientation concatenation is handled by a separate complete-owner review. No source changes, compilation, tests, CI, replay or runtime exercise ran. Fresh exact candidate bodies and the focused owner review are retained in `CoD2-native-decomp/recon-provenance-shared11.noindex`; prior original bodies/callers remain in `recon-provenance-shared8.noindex` and `recon-provenance-shared9.noindex`.
+
+## Complete consumed scaled point transform (scaledpos14)
+
+`ScaledOrientationPosToWorld` is equal for the actual disjoint three-coordinate point transform consumed as the fourth row of `R_GetRigidTransform`. Original 1.0 0x80b6afe and 1.3 0x80b90d6 identify the complete point/axis/uniform-scale/origin operation. Fresh complete primary Mac `R_GetRigidTransform` scales all nine axis components into float locals at 0xcfd4d–0xcfdbf, then at 0xcff4c–0xcffd6 transforms bone position +0x30/+0x34/+0x38 with those axis columns, adds the corresponding origin and stores all three results at output +0x24/+0x28/+0x2c. No other bone row, weight, normalization or extra translation enters this point result. Native `r_model.c` preserves the complete Mac calculation. Linux dot-then-scale grouping supplies intent only, not behavioral authority.
+
+This result has an actual input and consumer. Mac `R_SkinStaticModelCachedCmd` copies the base-pose translation directly into a separate stack bone matrix at 0xdfdd4–0xdfdec, then at 0xdfe21 passes it with the instance origin/axis/scale and a distinct output matrix. Both normal and DX7 vertex paths consume all three output translation coordinates at 0xe00f7–0xe0181 and 0xe03a3–0xe042e. Native uses separate boneMatrix/useAxis/normAxis arrays and the same typed instance fields. Its typed origin/layout adapter predates this reconciliation baseline; this identifies no new defect or adaptation. The complete vertex transform also uses bone rotation and source vertex coordinates and is not equated with the helper. The earlier transformed position row itself is the complete consumed operation.
+
+Native stores the three dot results before adding origins, whereas Mac finishes one coordinate at a time. The established disjoint storage makes that scheduling immaterial to the compared final coordinates. Arbitrary overlap, concurrent observation and floating-point trap timing are excluded, as are an exported helper ABI, literal inline ancestry and whole-renderer equivalence. This supersedes the prior rejection based only on axis pre-scaling; weighted surface transforms remain a distinct contract.
+
+The original helper identity, complete Mac provider and actual source/result chain were independently reviewed. One equal row, zero new defects, no production changes. No compilation, tests, CI, replay or runtime exercise; earlier verification is not expanded. Private exact bodies: `recon-provenance-scaledpos14.noindex`; independent review: `units/review-provenance-scaledpos14.md`.

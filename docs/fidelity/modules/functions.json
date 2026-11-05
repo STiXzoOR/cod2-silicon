@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 306,
+      "unchecked": 305,
       "intentional": 3184,
-      "equal": 4765,
+      "equal": 4766,
       "fixed": 1202
     },
     "scopes": {
@@ -211502,8 +211502,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Current-consumer follow-up examined native R_GetRigidTransform (gfx_d3d/r_model.c) and weighted XSurfaceTransformPos: R_GetRigidTransform scales each axis component before dot products, while the weighted surface operator scales the translated result and accumulates it. Neither is the complete q_shared scale-after-dot then origin-add operation. No complete authoritative Mac/native scaled-position helper identity established. Original-address provenance recovered: Linux 1.0 IDB 0x80b6afe maps to retained original Linux 1.3 ELF 0x80b90d6 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
+        "status": "equal",
+        "evidence": "Complete disjoint consumed point transform, independently reviewed: original 1.0 0x80b6afe/1.3 0x80b90d6 identifies point+axis+uniform scale+origin and all three outputs. Primary Mac R_GetRigidTransform scales all nine axis values at 0xcfd4d\u20130xcfdbf and transforms the actual bone-position row at 0xcff4c\u20130xcffd6, adding origin and storing all three world coordinates. Native r_model.c matches complete Mac arithmetic; Linux grouping is intent only. Actual R_SkinStaticModelCachedCmd copies base-pose trans into separate boneMatrix storage and passes disjoint useAxis plus instance fields at 0xdfe21; both vertex paths consume the three translated coordinates at 0xe00f7\u20130xe0181/0xe03a3\u20130xe042e. No bone rotation/weight/extra translation enters this earlier point result; the broader vertex operation is not mapped. Native typed layout adapter predates reconciliation; no new defect/source change. Inter-coordinate stores differ in scheduling but not final results under established disjoint storage; arbitrary overlap, concurrent observation, FP trap timing, exported ABI, literal inline ancestry and whole-renderer claims excluded. No compilation/tests/CI/replay/runtime exercise."
       },
       {
         "id": "mac:0x000283bc",
