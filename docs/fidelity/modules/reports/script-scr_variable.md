@@ -1,8 +1,8 @@
 # script/scr_variable module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**165/173 reconciled: 146 equal, 15 fixed, 4 intentional; 8 unchecked.** All 124 named Mac functions were compared in full. Linux-only rows were identified as complete operations in Mac callers, including both `Scr_GetEntryUsage` overloads; the provenance follow-up below also establishes an alternate-name dump helper. Linux was used for helper names and intent only. The live changes are confined to `COD2_X64`; preprocessing with it undefined is identical to the starting source.
+**166/173 reconciled: 147 equal, 15 fixed, 4 intentional; 7 unchecked.** All 124 named Mac functions were compared in full. Linux-only rows were identified as complete operations in Mac callers, including both `Scr_GetEntryUsage` overloads; the provenance follow-up below also establishes an alternate-name dump helper. Linux was used for helper names and intent only. The live changes are confined to `COD2_X64`; preprocessing with it undefined is identical to the starting source.
 
 The operator tables at 0x329d40 and 0x329d70 and debug-string table at 0x329d00 were decoded from the binary. All dispatch cases match. The 24 type names, five class-map records, float absolute-value mask and equality epsilon were also read from binary data. The epsilon is exactly `9.999999974752427e-07f`. Full-binary disassembly misaligned `GetVarType`; exact-symbol disassembly confirmed its actual entry at 0x8837c. Exact-symbol disassembly also confirmed the unusual paths below.
 
@@ -100,3 +100,12 @@ Original `Scr_FindAllVariableField` at 0x807c35e enumerates names: canonical non
 Original `Scr_AddStringSet` at 0x807fda0 lowercases with type 6, releases the temporary name and returns zero on duplicate, otherwise inserts an integer-zero field, releases the name and returns one. Its positive lowercase-wrapper call at 0x807fdb4 establishes that separate strict wrapper, not the full insertion operation. The previously recovered thread-alive, entity-number and class-character getters retain their exact result-contract gaps; the packed Mac entity tuple is insufficient. All eight remain unchecked.
 
 Original bodies and caller evidence are retained in `CoD2-native-decomp/recon-provenance-script9.noindex`; earlier getter bodies remain in `recon-provenance-helpers4.noindex`. No source or settled verdict changed, no new Mac defect was established, and no compilation, tests, CI, replay or runtime exercise ran.
+
+
+## Complete consumed entity-number read (entnum23)
+
+Scr_GetEntNum is equal through the actual entity-field selector read. Original0x807d522–0x807d533 contains only id times16, unsigned16 load at offset6 and return. Mac Scr_EvalVariableEntityField forms the same object pointer at0x8d547–0x8d54f, reloads it at0x8d634, and zero-extends its +6 word at0x8d637. The complete scalar is passed to GetEntityFieldValue at0x8d642, then forwarded to Scr_GetObjectField. That actual consumer uses it as a game-entity array index or a HUD entity selector. The typed entity branch in Scr_FindVariableField establishes the input role.
+
+Native VG_SIBLING(entId) reads that same unsigned-short field. ObjectInfo's entnum union and existing layout assertions establish the16-byte record and +6 offset. This supplies a complete observed id-to-entity-number operation; the earlier packed-entref return alone did not. The surrounding field lookup decides when the read occurs and does not form part of this getter. Downstream field dispatch and result ownership, including their existing fixes, remain separate.
+
+One equal closure, no source change or new defect. Scope is valid allocated entity storage and actual scalar consumption, excluding standalone ABI, invalid ids/types, concurrent mutation, class-character extraction and whole VM/owner certification. Full original and fresh exact Mac caller/owner/consumer packets and native hash are retained in recon-provenance-entnum23.noindex; independent review is review-provenance-entnum23.md. No compilation, tests, CI, replay or runtime verification.
