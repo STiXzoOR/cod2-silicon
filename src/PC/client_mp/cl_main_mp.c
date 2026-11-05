@@ -2269,7 +2269,11 @@ void CL_RunOncePerClientFrame(int msec)
 {
 
     if (UI_IsFullscreen()) {
+#if defined(COD2_X64)
+        CL_SyncGpu();
+#else
         re.SyncGpu();
+#endif
     }
 
     int avidemoVal = cl_avidemo->current.integer;
@@ -2292,9 +2296,17 @@ void CL_RunOncePerClientFrame(int msec)
     cls.realtime += msec;
 
     int curFrameTime = com_frameTime;
+#if defined(COD2_X64)
+    int delta = (int32_t)((uint32_t)curFrameTime - (uint32_t)old_com_frameTime);
+#else
     int delta = curFrameTime - old_com_frameTime;
+#endif
     frame_msec = (delta != 0) ? delta : 1;
+#if defined(COD2_X64)
+    if ((uint32_t)frame_msec > 200u)
+#else
     if (frame_msec > 200)
+#endif
         frame_msec = 200;
     old_com_frameTime = curFrameTime;
 }
