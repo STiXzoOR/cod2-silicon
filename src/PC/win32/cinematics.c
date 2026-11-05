@@ -312,6 +312,51 @@ void ROQ_UploadCinematicFromHandle(int handle)
     }
 }
 
+#if defined(COD2_X64)
+static void RoQ_CopyRows(const byte *src, byte *dst, int srcStride, int dstStride,
+                         int rows, int words)
+{
+    int row, word;
+    for (row = 0; row < rows; row++) {
+        for (word = 0; word < words; word++) {
+            uint64_t value;
+            /* Keep the original eight-byte read/write order, including
+             * overlapping motion copies, without aligned double lvalues. */
+            memcpy(&value, src + word * 8, 8);
+            memcpy(dst + word * 8, &value, 8);
+        }
+        if (row + 1 < rows) {
+            src += srcStride;
+            dst += dstStride;
+        }
+    }
+}
+
+static void move8_32(byte *src, byte *dst, int spl)
+{
+    RoQ_CopyRows(src, dst, (spl >> 3) * 8, (spl >> 3) * 8, 8, 4);
+}
+
+static void move4_32(byte *src, byte *dst, int spl)
+{
+    RoQ_CopyRows(src, dst, (spl >> 3) * 8, (spl >> 3) * 8, 4, 2);
+}
+
+static void blit8_32(byte *src, byte *dst, int spl)
+{
+    RoQ_CopyRows(src, dst, 32, (spl >> 3) * 8, 8, 4);
+}
+
+static void blit4_32(byte *src, byte *dst, int spl)
+{
+    RoQ_CopyRows(src, dst, 16, (spl >> 3) * 8, 4, 2);
+}
+
+static void blit2_32(byte *src, byte *dst, int spl)
+{
+    RoQ_CopyRows(src, dst, 8, (spl >> 3) * 8, 2, 1);
+}
+#else
 static void move8_32(byte *src, byte *dst, int spl)
 {
     double *dsrc;
@@ -493,6 +538,8 @@ static void blit2_32(byte *src, byte *dst, int spl)
     ddst[0] = dsrc[0];
     ddst[dspl] = dsrc[1];
 }
+
+#endif
 
 static void blitVQQuad32fs(byte **status, unsigned char *data)
 {
@@ -1058,6 +1105,103 @@ static void RoQ_DecodeCodebook(cin_cache *slot, const byte *input, int numY, int
     }
 }
 
+/* These checks bound actual object storage rather than requiring packet
+ * padding to be zero or rejecting the original reads across chunk boundaries. */
+static qboolean RoQ_InputRange(const byte *data, size_t length)
+{
+    uintptr_t begin = (uintptr_t)&cin;
+    uintptr_t address = (uintptr_t)data;
+    return address >= begin && address - begin <= sizeof(cin) &&
+           length <= sizeof(cin) - (address - begin);
+}
+
+static qboolean RoQ_ImageSize(unsigned int width, unsigned int height, long bpp)
+{
+    uint64_t area = (uint64_t)width * height;
+    uint64_t sentinels = (area >> 4) + (area >> 6) + 64;
+    return (bpp == 1 || bpp == 2 || bpp == 4) &&
+           area * bpp <= sizeof(cin.linbuf) / 2 &&
+           sentinels <= sizeof(cin.qStatus[0]) / sizeof(cin.qStatus[0][0]);
+}
+
+static qboolean RoQ_VQRange(const byte *destination, int displacement, int size, int stride)
+{
+    uintptr_t base = (uintptr_t)cin.linbuf;
+    uintptr_t address = (uintptr_t)destination;
+    int64_t offset, length;
+    if (address < base || address - base > sizeof(cin.linbuf))
+        return 0;
+    offset = (int64_t)(address - base) + displacement;
+    length = (int64_t)(size - 1) * stride + size * 4;
+    return offset >= 0 && length <= sizeof(cin.linbuf) &&
+           offset <= (int64_t)sizeof(cin.linbuf) - length;
+}
+
+static qboolean RoQ_VQCode(const byte **data, unsigned short *word, int *remaining, int *code)
+{
+    if (!*remaining) {
+        if (!RoQ_InputRange(*data, 2))
+            return 0;
+        *word = (*data)[0] | ((*data)[1] << 8);
+        *data += 2;
+        *remaining = 7;
+    } else {
+        --*remaining;
+    }
+    *code = *word >> 14;
+    *word <<= 2;
+    return 1;
+}
+
+static qboolean RoQ_ValidateVQ(byte **status, const byte *data, int spl)
+{
+    size_t index = 0, count = sizeof(cin.qStatus[0]) / sizeof(cin.qStatus[0][0]);
+    unsigned short word = 0;
+    int remaining = 0, code, child;
+    int stride = (spl >> 3) * 8;
+
+    if (spl < 0)
+        return 0;
+    do {
+        if (index >= count || !RoQ_VQCode(&data, &word, &remaining, &code))
+            return 0;
+        if (code == 3) {
+            ++index;
+            for (child = 0; child < 4; child++, index++) {
+                int bytes;
+                if (index >= count || !RoQ_VQCode(&data, &word, &remaining, &code))
+                    return 0;
+                bytes = code == 3 ? 4 : code != 0;
+                if (!RoQ_InputRange(data, bytes))
+                    return 0;
+                if (code == 3) {
+                    if (!RoQ_VQRange(status[index], 0, 2, stride) ||
+                        !RoQ_VQRange(status[index], 8, 2, stride) ||
+                        !RoQ_VQRange(status[index], spl * 2, 2, stride) ||
+                        !RoQ_VQRange(status[index], spl * 2 + 8, 2, stride))
+                        return 0;
+                } else if (code != 0) {
+                    if (!RoQ_VQRange(status[index], 0, 4, stride) ||
+                        (code == 1 && !RoQ_VQRange(status[index], (int32_t)cin.mcomp[*data], 4, stride)))
+                        return 0;
+                }
+                data += bytes;
+            }
+        } else {
+            if (code != 0) {
+                if (!RoQ_InputRange(data, 1) || !RoQ_VQRange(status[index], 0, 8, stride) ||
+                    (code == 1 && !RoQ_VQRange(status[index], (int32_t)cin.mcomp[*data], 8, stride)))
+                    return 0;
+                ++data;
+            }
+            index += 5;
+        }
+        if (index >= count)
+            return 0;
+    } while (status[index] != NULL);
+    return 1;
+}
+
 e_status ROQ_RunCinematicFromHandle(int handle)
 {
     unsigned int thisTime;
@@ -1186,6 +1330,20 @@ parse_roq:
     h = currentHandle;
     {
         unsigned int roqId = cinTable[h].roq_id;
+        size_t required = cinTable[h].RoQFrameSize;
+        if (roqId == 0x1001 && required < 8)
+            required = 8;
+        else if (roqId == 0x1002) {
+            unsigned int flags = (unsigned short)cinTable[h].roq_flags;
+            unsigned int cells = flags >> 8 ? flags >> 8 : 256;
+            unsigned int strips = flags == 0 ? 512 : (flags & 255) * 2;
+            if (required < cells * 6 + strips * 2)
+                required = cells * 6 + strips * 2;
+        } else if (roqId == 0x1021 && (required & 1)) {
+            ++required;
+        }
+        if (cinTable[h].RoQFrameSize > 65536 || !RoQ_InputRange(framedata, required))
+            goto invalid_packet;
         if (roqId < 0x1001 || roqId > 0x1030) {
             cinTable[h].status = FMV_EOF;
             handle = h;
@@ -1251,15 +1409,27 @@ parse_roq:
             }
             h = currentHandle;
 
+            if (cinTable[h].samplesPerPixel != 4 ||
+                !RoQ_ImageSize(cinTable[h].xsize, cinTable[h].ysize, 4) ||
+                cinTable[h].samplesPerLine != (long)cinTable[h].xsize * 4 ||
+                cinTable[h].screenDelta != cinTable[h].samplesPerLine * cinTable[h].ysize)
+                goto invalid_packet;
+
             if (cinTable[h].numQuads & 1) {
                 cinTable[h].normalBuffer0 = cinTable[h].t[1];
                 RoQPrepMcomp(cinTable[h].roqF0, cinTable[h].roqF1);
+                if (cinTable[h].VQ1 != blitVQQuad32fs ||
+                    !RoQ_ValidateVQ(cin.qStatus[1], framedata, (int)cinTable[h].samplesPerLine))
+                    goto invalid_packet;
                 cinTable[h].VQ1(cin.qStatus[1], framedata);
                 h = currentHandle;
                 cinTable[h].buf = (byte *)&cin + cinTable[h].screenDelta;
             } else {
                 cinTable[h].normalBuffer0 = cinTable[h].t[0];
                 RoQPrepMcomp(cinTable[h].roqF0, cinTable[h].roqF1);
+                if (cinTable[h].VQ0 != blitVQQuad32fs ||
+                    !RoQ_ValidateVQ(cin.qStatus[0], framedata, (int)cinTable[h].samplesPerLine))
+                    goto invalid_packet;
                 cinTable[h].VQ0(cin.qStatus[0], framedata);
                 h = currentHandle;
                 cinTable[h].buf = (byte *)&cin;
@@ -1288,6 +1458,10 @@ parse_roq:
             if (cinTable[h].numQuads == -1) {
 
                 if (h >= 0) {
+                    unsigned int width = framedata[0] | (framedata[1] << 8);
+                    unsigned int height = framedata[2] | (framedata[3] << 8);
+                    if (!RoQ_ImageSize(width, height, cinTable[h].samplesPerPixel))
+                        goto invalid_packet;
                     cinTable[h].xsize = framedata[0] | (framedata[1] << 8);
                     cinTable[h].ysize = framedata[2] | (framedata[3] << 8);
                     cinTable[h].maxsize = framedata[4] | (framedata[5] << 8);
@@ -1415,6 +1589,8 @@ do_packet_advance:
         goto after_parse;
     }
     {
+        if (!RoQ_InputRange(framedata, (size_t)cinTable[h].RoQFrameSize + 8))
+            goto invalid_packet;
         byte *nextHeader = framedata + cinTable[h].RoQFrameSize;
         cinTable[h].roq_id = nextHeader[0] | (nextHeader[1] << 8);
         cinTable[h].RoQFrameSize = nextHeader[2] | (nextHeader[3] << 8) | (nextHeader[4] << 16);
@@ -1450,6 +1626,12 @@ after_parse:
         start = cinTable[h].startTime;
     }
     goto frame_loop;
+
+invalid_packet:
+    /* Malformed native input ends playback instead of accessing unowned
+     * packet, image or quad-table storage. Original overflow is not emulated. */
+    h = currentHandle;
+    cinTable[h].status = FMV_EOF;
 
 frame_done_time:
     cinTable[h].lastTime = thisTime;
