@@ -426,7 +426,7 @@ universal/com_file_wrapper,5,5,0,0,0
 universal/com_files,92,69,6,10,7
 universal/com_files_mp,27,19,6,2,0
 universal/com_math,229,137,27,0,65
-universal/com_memory,64,37,11,10,6
+universal/com_memory,64,37,11,11,5
 universal/com_memory_high,1,1,0,0,0
 universal/com_shared,7,5,2,0,0
 universal/com_sndalias,26,20,3,0,3

@@ -8,8 +8,8 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 327,
-      "intentional": 3172,
+      "unchecked": 326,
+      "intentional": 3173,
       "equal": 4761,
       "fixed": 1197
     },
@@ -201669,8 +201669,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Linux-only body has no Mac code symbol and no verified Mac inline caller, and native has no implementation under that name. Cannot infer whether freeing s_origHunkData and resetting all state is part of the Mac runtime contract."
+        "status": "intentional",
+        "evidence": "Positive original terminal-owner identity: retained1.0 IDB named Hunk_Shutdown0x80a96d6, Sys_Quit0x80d148e and Sys_Exit0x80d144a map by complete body comparison to original1.3 Hunk_Shutdown0x80aba6e, Sys_Quit0x80d3a7a and Sys_Exit0x80d3a36. Hunk_Shutdown frees original hunk backing, zeros active/original pointers and total, and clears both8-byte permanent/temp states. Actual Sys_Quit call0x80d3a8a follows dvar/command cleanup; continuation restores stdin flags then calls Sys_Exit(0), which ends in exit(status), so this identified operation has no returning engine continuation requiring reset state. Exact complete Mac Sys_Quit0xc3be0\u20130xc3c6d performs its platform shutdowns, queued-event frees, preference sync and exit(0); native mac_main.c568 preserves that terminal owner and established optional platform adaptations. Existing Mac/native terminal process teardown replaces explicit Linux hunk release/reset in this consumed quit lifecycle. This is not equality of a standalone reusable Hunk_Shutdown API, and is not inferred from missing symbols or callers. No source changes or runtime exercise."
       },
       {
         "id": "mac:0x00037834",
