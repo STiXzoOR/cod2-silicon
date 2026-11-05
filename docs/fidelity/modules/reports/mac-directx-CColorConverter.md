@@ -1,0 +1,15 @@
+# Mac/DirectX 9/CColorConverter reconciliation
+
+Updated 2026-11-05.
+
+41 entries: 32 equal, 8 fixed, 1 intentional. Every assigned ordinary and coalesced body was read. The ABGR float methods and base conversion methods really are no-ops. The five type constants, destructor stores/deletion and static initialization order match.
+
+The float packer keeps the exact pending GL correction from cd687d68: standard ARGB rotates right eight at Mac 0xceda/0xd04a. ATI rotates right 24. Clamp, float32 multiply by 255, add 0.5 and truncate were compared; native now gives the defined low-word zero that Mac's invalid fistpll produces for NaN. The four inverse byte-to-float methods at 0xcd44, 0xcda0, 0xce1a and 0xce76 now read all source components before their first output store, preserving overlapping buffers. GetColorConverter at 0xd5ce now tests card enum 1 and preserves cd687d68's persistent native supportsATIArrayRevComps provider.
+
+Packed StdConverterARGB::Convert deliberately remains a native byte swap. Exact-symbol disassembly at 0xcd2c shows the original rotate-right-eight; linear otool output was misaligned there. Original R_SkinStaticModelCachedCmd at 0xe01ae–0xe01e5 and native both prepack source RGBA as ARGB. Native byte swap produces BGRA at stride 64/offset 24, and lp64_color_order.h plus the device/shader draw consumers interpret it as BGRA. For source [11,37,109,241], the complete native chain returns [11,37,109,241]; restoring the isolated rotate would produce [109,37,11,241] after the existing consumer. R_LoadSurfaces also uses packed conversion with its distinct reverse-byte producer and stride 68 RGBA consumer. Those production callers use vtable slot zero; the separately audited float packer is not that packed-byte boundary.
+
+The Mac module initializer and finalizer slots point to 0xd68c/0xd67c. Native now registers its existing destruction wrapper with atexit. The isolated static_model_cache fixture omitted the engine's real imported base-vtable storage; it now supplies two native Itanium header slots plus eight virtual slots. No virtual call uses that stand-in, and every fixture input/assertion is unchanged.
+
+The arm64 Release dedicated target and the Apple CColorConverter object compiled. Focused compilation used a byte-for-byte copy of this source beside the actual cd687d68 lp64_gl_state.h, whose SHA-256 is 14ee64071f271afd187106b2048a616484d431e82254d265da0f96fe199a7816. Input hashes and the actual compiler command are in private focused-compilation.json. This isolates the pending GL prerequisite without changing the shared header. The combined integration build belongs to the parent task.
+
+The existing static_model_cache and water vertices fixtures pass ASan/UBSan with halt-on-error. Twenty inactive source-body comparisons against fc57edb pass; these files have no __LINE__ expansions to remap. Float/NaN conversion, overlapping inverse buffers and the live ATI capability path were compiled and reviewed, not exercised. No new tests, full CI or replays were run. Private evidence: ~/Library/Application Support/CoD2-native-decomp/recon-mac-color-math.noindex/.
