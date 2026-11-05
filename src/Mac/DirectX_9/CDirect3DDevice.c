@@ -1116,6 +1116,39 @@ static void CDirect3DDevice_ApplySamplerState(UINT sampler, GLenum target)
 
 static void CDirect3DDevice_UpdateTextureIfNeeded(IDirect3DBaseTexture9 *texture)
 {
+#if defined(COD2_X64)
+    extern int COpenGLTexture_EnsureNameNative(void *);
+    extern void CDirect3DTexture_UpdateOpenGLSurfacesNative(const CDirect3DTexture *, int);
+    extern void CDirect3DCubeTexture_UpdateOpenGLSurfacesNative(const CDirect3DCubeTexture *, int);
+    extern void CDirect3DVolumeTexture_UpdateOpenGLSurfacesNative(const CDirect3DVolumeTexture *, int);
+    if (!CDirect3DDevice_IsRealTexture(texture))
+        return;
+    GLenum target = GL_TEXTURE_2D, query = GL_TEXTURE_BINDING_2D;
+    void **vtable = *(void ***)texture;
+    if (vtable == (void **)vtbl_CDirect3DCubeTexture) {
+        target = GL_TEXTURE_CUBE_MAP;
+        query = GL_TEXTURE_BINDING_CUBE_MAP;
+    }
+#if COD2_APPLE_SDK
+    else if (vtable == vtbl_CDirect3DVolumeTexture) {
+        target = GL_TEXTURE_3D;
+        query = GL_TEXTURE_BINDING_3D;
+    }
+#endif
+    int recreate = COpenGLTexture_EnsureNameNative((void **)texture + 1);
+    GLint previous;
+    glGetIntegerv(query, &previous);
+    glBindTexture(target, CDirect3DDevice_GetTextureGLId(texture));
+    if (vtable == (void **)vtbl_CDirect3DTexture)
+        CDirect3DTexture_UpdateOpenGLSurfacesNative((void *)texture, recreate);
+    else if (vtable == (void **)vtbl_CDirect3DCubeTexture)
+        CDirect3DCubeTexture_UpdateOpenGLSurfacesNative((void *)texture, recreate);
+#if COD2_APPLE_SDK
+    else
+        CDirect3DVolumeTexture_UpdateOpenGLSurfacesNative((void *)texture, recreate);
+#endif
+    glBindTexture(target, previous);
+#else
     extern void CDirect3DTexture_UpdateOpenGLSurfaces(const CDirect3DTexture *_this);
 
     if (!CDirect3DDevice_IsRealTexture(texture))
@@ -1127,6 +1160,7 @@ static void CDirect3DDevice_UpdateTextureIfNeeded(IDirect3DBaseTexture9 *texture
         extern void CDirect3DVolumeTexture_UpdateOpenGLSurfaces(const CDirect3DVolumeTexture *);
         CDirect3DVolumeTexture_UpdateOpenGLSurfaces((const void *)texture);
     }
+#endif
 #endif
 }
 

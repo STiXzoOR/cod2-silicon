@@ -29,6 +29,12 @@ bool CDirect3DSurface_IsDirty(const CDirect3DSurface *_this);
 #define GL_TEXTURE_BINDING_2D 0x8069
 #define MAX_MIP_LEVELS 16
 
+#if defined(COD2_X64)
+void COpenGLTexture_InitNative(void *info, GLuint *name, UINT32 width, UINT32 height, UINT32 depth);
+void ZN14COpenGLTextureD1Ev(void *info);
+void CDirect3DSurface_SetDirty(void *surface, int dirty);
+UINT32 MacOpenGLUtils_GetImageSizeInBytes(UINT32 width, UINT32 height, UINT32 depth, UINT32 levels, const D3DFORMAT *format);
+#endif
 typedef struct {
     void **primaryVtable;
     void **secondaryVtable;
@@ -39,8 +45,13 @@ typedef struct {
     GLuint mTexBorderColor;
     GLenum mTexMinFilter;
     GLenum mTexMagFilter;
+#if defined(COD2_X64)
+    GLint mTexLastLevel;
+    GLfloat mTexAniso;
+#else
     GLfloat mTexAniso;
     UINT32 reserved;
+#endif
     GLint glWidth;
     GLint glHeight;
     GLint glDepth;
@@ -53,6 +64,9 @@ typedef struct {
     byte *pixelData;
     GLuint texIDStorage;
     UINT32 dirtyMask;
+#if defined(COD2_X64)
+    UINT32 surfaceCount;
+#endif
 } CDirect3DTextureClean;
 
 #if defined(COD2_X64)
@@ -95,10 +109,18 @@ HRESULT CDirect3DTexture_QueryInterface(const CDirect3DTexture *_this, const IID
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    (void)iid;
+    *ppvObj = (void *)_this;
+    ((ULONG (*)(const void *))(*(void ***)_this)[1])(_this);
+    return 0;
+#else
+
     (void)iid;
     *ppvObj = (void *)_this;
     CDirect3DTexture_AddRef(_this);
     return 0;
+#endif
 }
 
 ULONG CDirect3DTexture_Release(const CDirect3DTexture *_this)
@@ -110,12 +132,21 @@ ULONG CDirect3DTexture_Release(const CDirect3DTexture *_this)
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    CDirect3DTextureClean *tex = (void *)_this;
+    ULONG count = --tex->refCount;
+    if (!count)
+        ((void (*)(void *))tex->primaryVtable[23])(tex);
+    return count;
+#else
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     ULONG rc = --tex->refCount;
     if (!rc) {
         ZN16CDirect3DTextureD0Ev((void *)_this);
     }
     return rc;
+#endif
 }
 
 HRESULT CDirect3DTexture_GetLevelDesc(const CDirect3DTexture *_this, UINT Level, D3DSURFACE_DESC *pDesc)
@@ -127,11 +158,22 @@ HRESULT CDirect3DTexture_GetLevelDesc(const CDirect3DTexture *_this, UINT Level,
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    IDirect3DSurface9 *surface;
+    HRESULT result = ((HRESULT (*)(const void *, UINT, IDirect3DSurface9 **))(*(void ***)_this)[18])(_this, Level, &surface);
+    if (result < 0)
+        return (HRESULT)0x8876086cu;
+    result = ((HRESULT (*)(void *, D3DSURFACE_DESC *))(*(void ***)surface)[12])(surface, pDesc);
+    ((ULONG (*)(void *))(*(void ***)surface)[2])(surface);
+    return result;
+#else
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     HRESULT CDirect3DSurface_GetDesc(const CDirect3DSurface *_this, D3DSURFACE_DESC *pDesc);
     if (Level >= tex->levelCount)
         return -1;
     return CDirect3DSurface_GetDesc((CDirect3DSurface *)tex->surfaces[Level], pDesc);
+#endif
 }
 
 HRESULT CDirect3DTexture_GetSurfaceLevel(const CDirect3DTexture *_this, UINT Level, IDirect3DSurface9 **ppSurfaceLevel)
@@ -143,6 +185,16 @@ HRESULT CDirect3DTexture_GetSurfaceLevel(const CDirect3DTexture *_this, UINT Lev
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    CDirect3DTextureClean *tex = (void *)_this;
+    if (Level >= tex->surfaceCount)
+        return (HRESULT)0x8876086cu;
+    void *surface = tex->surfaces[Level];
+    *ppSurfaceLevel = surface;
+    ((ULONG (*)(void *))(*(void ***)surface)[1])(surface);
+    return 0;
+#else
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     if (Level >= tex->levelCount)
         return -1;
@@ -150,6 +202,7 @@ HRESULT CDirect3DTexture_GetSurfaceLevel(const CDirect3DTexture *_this, UINT Lev
     CDirect3DSurface_AddRef(surface);
     *ppSurfaceLevel = (IDirect3DSurface9 *)surface;
     return 0;
+#endif
 }
 
 HRESULT CDirect3DTexture_LockRect(const CDirect3DTexture *_this, UINT Level, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
@@ -161,6 +214,14 @@ HRESULT CDirect3DTexture_LockRect(const CDirect3DTexture *_this, UINT Level, D3D
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    CDirect3DTextureClean *tex = (void *)_this;
+    if (Level >= tex->surfaceCount)
+        return (HRESULT)0x8876086cu;
+    void *surface = tex->surfaces[Level];
+    return ((HRESULT (*)(void *, D3DLOCKED_RECT *, const RECT *, DWORD))(*(void ***)surface)[13])(surface, pLockedRect, pRect, Flags);
+#else
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     HRESULT hr;
     HRESULT CDirect3DSurface_LockRect(const CDirect3DSurface *_this, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags);
@@ -170,6 +231,7 @@ HRESULT CDirect3DTexture_LockRect(const CDirect3DTexture *_this, UINT Level, D3D
     if (hr == 0)
         tex->dirtyMask |= 1u << Level;
     return hr;
+#endif
 }
 
 HRESULT CDirect3DTexture_UnlockRect(const CDirect3DTexture *_this, UINT Level)
@@ -180,6 +242,14 @@ HRESULT CDirect3DTexture_UnlockRect(const CDirect3DTexture *_this, UINT Level)
     if (MacShim_Dispatch("CDirect3DTexture_UnlockRect", _this, macArguments, &macResult, sizeof(macResult)))
         return macResult;
 #endif
+
+#if defined(COD2_X64)
+    CDirect3DTextureClean *tex = (void *)_this;
+    if (Level >= tex->surfaceCount)
+        return (HRESULT)0x8876086cu;
+    void *surface = tex->surfaces[Level];
+    return ((HRESULT (*)(void *))(*(void ***)surface)[14])(surface);
+#else
 
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     CDirect3DSurface *surface;
@@ -199,6 +269,7 @@ HRESULT CDirect3DTexture_UnlockRect(const CDirect3DTexture *_this, UINT Level)
     tex->dirtyMask &= ~(1u << Level);
 
     return 0;
+#endif
 }
 
 HRESULT CDirect3DTexture_AddDirtyRect(const CDirect3DTexture *_this, const RECT *pDirtyRect)
@@ -210,9 +281,18 @@ HRESULT CDirect3DTexture_AddDirtyRect(const CDirect3DTexture *_this, const RECT 
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    CDirect3DTextureClean *tex = (void *)_this;
+    (void)pDirtyRect;
+    for (UINT32 level = 0; level < tex->surfaceCount; ++level)
+        CDirect3DSurface_SetDirty(tex->surfaces[level], 1);
+    return 0;
+#else
+
     (void)_this;
     (void)pDirtyRect;
     return 0;
+#endif
 }
 
 DWORD CDirect3DTexture_SetLOD(const CDirect3DTexture *_this, DWORD LODNew)
@@ -310,6 +390,19 @@ void ZN16CDirect3DTextureD1Ev(void *_this)
         return;
 #endif
 
+#if defined(COD2_X64)
+    CDirect3DTextureClean *tex = _this;
+    tex->primaryVtable = (void **)vtbl_CDirect3DTexture;
+    tex->secondaryVtable = vtbl_CDirect3DTexture_secondary;
+    for (UINT32 level = 0; level < tex->surfaceCount; ++level) {
+        void *surface = tex->surfaces[level];
+        ((ULONG (*)(void *))(*(void ***)surface)[2])(surface);
+    }
+    free(tex->surfaces);
+    free(tex->pixelData);
+    ZN14COpenGLTextureD1Ev(&tex->secondaryVtable);
+#else
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     UINT32 i;
 
@@ -332,6 +425,7 @@ void ZN16CDirect3DTextureD1Ev(void *_this)
 
     free(tex->pixelData);
     tex->pixelData = NULL;
+#endif
 }
 
 void ZN16CDirect3DTextureD0Ev(void *_this)
@@ -364,6 +458,61 @@ void CDirect3DTexture_CDirect3DTexture(const CDirect3DTexture *_this, UINT32 Wid
     if (MacShim_Dispatch("CDirect3DTexture_CDirect3DTexture", _this, macArguments, NULL, 0))
         return;
 #endif
+
+#if defined(COD2_X64)
+    CDirect3DTextureClean *tex = (void *)_this;
+    UINT32 totalSize = 0, offset = 0, width = Width, height = Height;
+    GLint previous;
+    memset(tex, 0, sizeof(*tex));
+    COpenGLTexture_InitNative(&tex->secondaryVtable, &tex->texIDStorage, Width, Height, 1);
+    tex->primaryVtable = (void **)vtbl_CDirect3DTexture;
+    tex->secondaryVtable = vtbl_CDirect3DTexture_secondary;
+    tex->width = Width;
+    tex->height = Height;
+    tex->format = Format;
+    tex->levelCount = Levels ? Levels : MacOpenGLUtils_GetNumTextureLevels(Width, Height, 1);
+    tex->surfaceCount = Usage == 1 ? 1 : tex->levelCount;
+    tex->surfaces = calloc(tex->surfaceCount, sizeof(*tex->surfaces));
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &previous);
+    glBindTexture(GL_TEXTURE_2D, tex->texIDStorage);
+    if (Usage == 1) {
+        UINT32 allocationWidth = 1, allocationHeight = 1;
+        for (UINT32 count = 0; allocationWidth < Width && count < 32; ++count)
+            allocationWidth <<= 1;
+        for (UINT32 count = 0; allocationHeight < Height && count < 32; ++count)
+            allocationHeight <<= 1;
+        totalSize = MacOpenGLUtils_GetImageSizeInBytes(allocationWidth, allocationHeight, 1, tex->levelCount, &Format);
+    } else {
+        for (UINT32 level = 0; level < tex->levelCount; ++level) {
+            totalSize += (MacOpenGLUtils_GetImageSizeInBytes(width ? width : 1, height ? height : 1, 1, 1, &Format) + 31u) & ~31u;
+            width >>= 1;
+            height >>= 1;
+        }
+    }
+    tex->pixelData = calloc(1, totalSize ? totalSize : 1);
+    width = Width;
+    height = Height;
+    for (UINT32 level = 0; level < tex->surfaceCount; ++level) {
+        UINT32 levelSize = (MacOpenGLUtils_GetImageSizeInBytes(width ? width : 1, height ? height : 1, 1, 1, &Format) + 31u) & ~31u;
+        if (Usage != 1) {
+            if (!width) width = 1;
+            if (!height) height = 1;
+        }
+        void *surface = calloc(1, 128);
+        CDirect3DSurface_CDirect3DSurface(surface, 0, 0, level, width, height, Format,
+                                        tex->pixelData + offset, (void *)&tex->secondaryVtable);
+        tex->surfaces[level] = surface;
+        offset += levelSize;
+        width >>= 1;
+        height >>= 1;
+    }
+#if COD2_APPLE_SDK
+    /* Native GL requires an explicit end for the engine's truncated chains. */
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, tex->surfaceCount - 1);
+#endif
+    glBindTexture(GL_TEXTURE_2D, previous);
+    tex->refCount = 1;
+#else
 
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     UINT32 i, w, h, totalSize, offset;
@@ -451,6 +600,7 @@ void CDirect3DTexture_CDirect3DTexture(const CDirect3DTexture *_this, UINT32 Wid
     }
 
     glBindTexture(GL_TEXTURE_2D, prevTex);
+#endif
 }
 
 void CDirect3DTexture_UpdateOpenGLSurfaces(const CDirect3DTexture *_this)
@@ -461,8 +611,21 @@ void CDirect3DTexture_UpdateOpenGLSurfaces(const CDirect3DTexture *_this)
         return;
 #endif
 
+#if defined(COD2_X64)
+    extern void CDirect3DTexture_UpdateOpenGLSurfacesNative(const CDirect3DTexture *, int);
+    CDirect3DTextureClean *tex = (void *)_this;
+    GLint previous;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &previous);
+    glBindTexture(GL_TEXTURE_2D, tex->texIDStorage);
+    CDirect3DTexture_UpdateOpenGLSurfacesNative(_this, 0);
+    glBindTexture(GL_TEXTURE_2D, previous);
+#else
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     UINT32 dirtyMask;
+#if defined(COD2_X64)
+    UINT32 surfaceCount;
+#endif
     unsigned int i;
     int prevTex = 0;
 
@@ -484,6 +647,7 @@ void CDirect3DTexture_UpdateOpenGLSurfaces(const CDirect3DTexture *_this)
     }
 
     glBindTexture(GL_TEXTURE_2D, prevTex);
+#endif
 }
 
 HRESULT CDirect3DTexture_GetDevice(const CDirect3DTexture *_this, IDirect3DDevice9 **ppDevice)
@@ -580,3 +744,24 @@ void CDirect3DTexture_PreLoad(const CDirect3DTexture *_this)
 }
 
 fnptr_t vtbl_CDirect3DTexture[] = { (fnptr_t)CDirect3DTexture_QueryInterface, (fnptr_t)CDirect3DTexture_AddRef, (fnptr_t)CDirect3DTexture_Release, (fnptr_t)CDirect3DTexture_GetDevice, (fnptr_t)CDirect3DTexture_SetPrivateData, (fnptr_t)CDirect3DTexture_GetPrivateData, (fnptr_t)CDirect3DTexture_FreePrivateData, (fnptr_t)CDirect3DTexture_SetPriority, (fnptr_t)CDirect3DTexture_GetPriority, (fnptr_t)CDirect3DTexture_PreLoad, (fnptr_t)CDirect3DTexture_GetType, (fnptr_t)CDirect3DTexture_SetLOD, (fnptr_t)CDirect3DTexture_GetLOD, (fnptr_t)CDirect3DTexture_GetLevelCount, (fnptr_t)CDirect3DTexture_SetAutoGenFilterType, (fnptr_t)CDirect3DTexture_GetAutoGenFilterType, (fnptr_t)CDirect3DTexture_GenerateMipSubLevels, (fnptr_t)CDirect3DTexture_GetLevelDesc, (fnptr_t)CDirect3DTexture_GetSurfaceLevel, (fnptr_t)CDirect3DTexture_LockRect, (fnptr_t)CDirect3DTexture_UnlockRect, (fnptr_t)CDirect3DTexture_AddDirtyRect, (fnptr_t)ZN16CDirect3DTextureD1Ev, (fnptr_t)ZN16CDirect3DTextureD0Ev };
+
+#if defined(COD2_X64)
+void CDirect3DTexture_UpdateOpenGLSurfacesNative(const CDirect3DTexture *_this, int recreate)
+{
+    CDirect3DTextureClean *tex = (void *)_this;
+#if COD2_APPLE_SDK
+    if (recreate)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, tex->surfaceCount - 1);
+#endif
+    for (UINT32 level = 0; level < tex->surfaceCount; ++level) {
+        void *surface = tex->surfaces[level];
+        int dirty = CDirect3DSurface_IsDirty(surface);
+        if (dirty || recreate) {
+            CDirect3DSurface_UpdateOpenGLSurfaceObject(surface, recreate != 0);
+            CDirect3DSurface_SetDirty(surface, 0);
+        }
+    }
+}
+_Static_assert(sizeof(CDirect3DTextureClean) <= 0x168, "device texture allocation");
+_Static_assert(__builtin_offsetof(CDirect3DTextureClean, refCount) == 3 * sizeof(void *) + 11 * sizeof(UINT32), "native texture prefix extent");
+#endif

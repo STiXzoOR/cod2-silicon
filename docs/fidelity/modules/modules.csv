@@ -14,21 +14,21 @@ EffectsCore/Fxexport,16,9,0,7,0
 EffectsCore/GenericParser2,56,42,1,1,12
 Mac/DirectX 9/CColorConverter,41,0,0,0,41
 Mac/DirectX 9/CDirect3D,31,6,12,3,10
-Mac/DirectX 9/CDirect3DCubeTexture,28,0,0,0,28
+Mac/DirectX 9/CDirect3DCubeTexture,28,15,7,6,0
 Mac/DirectX 9/CDirect3DDevice,121,80,13,8,20
 Mac/DirectX 9/CDirect3DIndexBuffer,18,0,0,0,18
 Mac/DirectX 9/CDirect3DPixelShader,25,0,0,0,25
-Mac/DirectX 9/CDirect3DSurface,25,0,0,0,25
+Mac/DirectX 9/CDirect3DSurface,25,15,4,6,0
 Mac/DirectX 9/CDirect3DSwapChain,14,0,0,0,14
-Mac/DirectX 9/CDirect3DTexture,26,0,0,0,26
+Mac/DirectX 9/CDirect3DTexture,26,15,11,0,0
 Mac/DirectX 9/CDirect3DVertexBuffer,26,0,0,0,26
 Mac/DirectX 9/CDirect3DVertexDeclaration,9,0,0,0,9
 Mac/DirectX 9/CDirect3DVertexShader,8,0,0,0,8
-Mac/DirectX 9/CDirect3DVolumeTexture,44,0,0,0,44
+Mac/DirectX 9/CDirect3DVolumeTexture,44,23,16,5,0
 Mac/DirectX 9/CFence,5,0,0,0,5
 Mac/DirectX 9/CMemoryBuffer,10,0,0,0,10
 Mac/DirectX 9/COpenGL,36,0,0,0,36
-Mac/DirectX 9/COpenGLTexture,5,0,0,0,5
+Mac/DirectX 9/COpenGLTexture,5,0,1,4,0
 Mac/DirectX 9/COpenGLVAO,5,0,0,0,5
 Mac/DirectX 9/CVAOPacket,21,0,0,0,21
 Mac/DirectX 9/CVertexArrays,48,0,0,0,48
@@ -78,7 +78,7 @@ Mac/Tools/MacWinCursor,8,2,0,6,0
 Mac/Tools/MacWinSock,4,3,0,1,0
 Mac/Tools/VK_Map,1,0,1,0,0
 Mac/Tools/i5stdlib,4,4,0,0,0
-__unmatched__,657,0,4,647,6
+__unmatched__,657,0,5,647,5
 bgame/bg_animation_mp,48,37,5,0,6
 bgame/bg_jump,14,14,0,0,0
 bgame/bg_mantle,19,19,0,0,0

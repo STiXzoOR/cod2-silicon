@@ -37,7 +37,12 @@ exe = output / 'depth_surface'
 command = [*flags, '-UNDEBUG', '-DGL_SILENCE_DEPRECATION', '-I' + str(output),
            '-I' + str(source_dir), '-ffunction-sections', '-fdata-sections',
            '-fsanitize=address,undefined', '-fno-omit-frame-pointer', '-Wl,-dead_strip',
-           '-framework', 'OpenGL', str(ROOT / 'tests/lp64/renderer/depth_surface.c'), '-o', str(exe)]
+           '-framework', 'OpenGL', str(ROOT / 'tests/lp64/renderer/depth_surface.c'),
+           *[str(source_dir / (name + '.c')) for name in
+             ['CDirect3DTexture', 'CDirect3DCubeTexture', 'CDirect3DVolumeTexture',
+              'CDirect3DSurface', 'MacOpenGLUtils', 'CVertexArrays']],
+           os.environ.get('COD2_OPENGL_PROVIDER_SOURCE', str(source_dir / 'COpenGL.c')),
+           '-o', str(exe)]
 (output / 'compile-command.txt').write_text(shlex.join(command) + '\n')
 with (output / 'compile.log').open('w') as log:
     subprocess.run(command, cwd=ROOT, stdout=log, stderr=log, check=True)
