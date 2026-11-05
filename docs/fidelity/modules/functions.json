@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 1465,
-      "intentional": 2966,
-      "equal": 4164,
-      "fixed": 862
+      "unchecked": 1330,
+      "intentional": 2973,
+      "equal": 4264,
+      "fixed": 890
     },
     "scopes": {
       "unassigned": 777,
@@ -103853,8 +103853,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e1a72 with current r_bsp body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000e1988",
@@ -103875,8 +103875,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e1988 with current r_bsp body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000e19de",
@@ -103897,8 +103897,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e19de with current r_bsp body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000e1cf6",
@@ -103919,8 +103919,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xe1e36\u20130xe1ed9: seven SetModified calls replaced by ChangeResetValue(dvar, current); import-slot identity confirmed at CL_InitRef 0x14811b and pointer 0x1acd591 -> 0x5312e; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000e1952",
@@ -103941,8 +103941,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e1952 with current r_bsp body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000e1b36",
@@ -103963,8 +103963,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e1b36 with current r_bsp body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000e191c",
@@ -103985,8 +103985,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e191c with current r_bsp body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000e1fe8",
@@ -104007,8 +104007,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e1fe8 with current r_bsp body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000e1a36",
@@ -104029,8 +104029,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e1a36 with current r_bsp body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000e1b64",
@@ -104051,8 +104051,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e1b64 with current r_bsp body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000e1ba8",
@@ -104073,8 +104073,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xe1ba8 reads the same dvars, normalizes the same three colors, builds the same sun parameters and copies the resulting color. Existing native null-world guard avoids Mac 0xe1cb0 null-derived writes while the main menu has no world; defined native no-world behavior retained. Loaded-world operation order matches."
       }
     ],
     "gfx_d3d/r_bsp_load_obj": [
@@ -104097,8 +104097,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e21f6 against attributed native body and helpers. Clearing/expanding leaf and child bounds, depth-first child allocation and totalTreesUsed return match."
       },
       {
         "id": "mac:0x000e25de",
@@ -104119,8 +104119,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e25de with current r_bsp_load_obj body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000e26f6",
@@ -104141,8 +104141,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e26f6 with current r_bsp_load_obj body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000e3e10",
@@ -104163,8 +104163,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e3e10 against attributed native body and helpers. 12-byte AABB disk records, strict lump checks, surface start/count and child-count conversion, and root iteration match."
       },
       {
         "id": "mac:0x000e3c1c",
@@ -104185,8 +104185,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e3c1c against attributed native body and helpers. 52-byte disk cells, six bounds floats, native tree/portal/cull-group/occluder references and zero-count branches match."
       },
       {
         "id": "mac:0x000e4522",
@@ -104207,8 +104207,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e4522 against attributed native body and helpers. 32-byte cull records, bounds, zero-surface start=-1 and surface counts match."
       },
       {
         "id": "mac:0x000e2b6c",
@@ -104229,8 +104229,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared full Mac R_LoadEntities 0xe2b6c\u20130xe3728: two entity parse passes, classname slot, static-model validation/fallback, angle precedence, vector/scalar scale defaults and scale[2], unsigned ground-light conversion/debug colors, grid/ground selection, direct/indirect scale checks, cache finalization, tree allocation/sorting and temp-memory cleanup match native. Fixed-width entity lump lookup maps to header->lumps[37]."
       },
       {
         "id": "mac:0x000e3728",
@@ -104251,8 +104251,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xe3728 node/leaf conversion, signed child selection, cluster/cell fields and recursive cell propagation match. Native mnode_t.parent remains a 32-bit integer and receives truncated parent addresses. All selected mnode users (r_dpvs, r_marks, r_staticmodel_load_obj and this loader) have no parent reader; dormant metadata retained without claiming pointer-layout parity."
       },
       {
         "id": "mac:0x000e3f5e",
@@ -104273,8 +104273,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xe41a1 restarts each occluder input-edge cursor at the disk lump start while firstEdge positions output; restored that bounded deterministic quirk. All three lump checks, signed counts, plane conversion/side bytes, vertex/edge pointers, output strides and state resets hand-compared. Native pointer-sized storage retained. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000e4408",
@@ -104295,8 +104295,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e4408 against attributed native body and helpers. 12-byte portal vertices, strict validation, allocation and all coordinate copies match."
       },
       {
         "id": "mac:0x000e39d6",
@@ -104317,8 +104317,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xe3b5a\u20130xe3b96 uses signed coefficient bits for side bytes, including NaN, not floating comparisons. Strict lump offset/negative-size rejection restored. Native portal allocations/references, negated distance, vertex count, hull reset, axes and per-cell portal fixups hand-compared. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000e4672",
@@ -104339,8 +104339,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xe4aa2 tests MaterialInfo.gameFlags bit 8 for sky surfaces; native incorrectly tested surfaceFlags. Allocation, color converter, vertex/tangent/binormal copies, aligned indices, bounds/lightmap transforms, material sort groups, sky texture validation and world buffer upload hand-compared. Existing native disk range guards and unsigned index-allocation sizes retained to avoid Mac signed-count underallocation on invalid/oversized records. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000e4fa0",
@@ -104361,8 +104361,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac R_LoadWorldInternal 0xe4fa0 fully hand-compared against actual provider r_loadworld_new.c. Restored optimization dvar/texture-cap merge dimensions (0xe552e/0xe6272), globally strongest unused pair and reversed pair emission (0xe55dc\u20130xe5709), explicit coupling wrap behavior, strict empty-offset/negative lump rejection and unconditional occluder loading. Selected GL coefficient/RGB fallback and native BGRA upload conversion retained; typed native allocation/rgl resets preserve pointer relationships. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000e22e4",
@@ -104383,8 +104383,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e22e4 with current r_bsp_load_obj body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000e292c",
@@ -104405,8 +104405,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xe292c recursion and uniform-cell propagation match; native stores truncated parent addresses in the existing int field. All selected mnode users have no parent reader; dormant metadata retained without claiming pointer-layout parity."
       }
     ],
     "gfx_d3d/r_buffers": [
@@ -104987,8 +104987,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xef24c\u20130xef24f rejects unordered frustum bounds, while 0xef39c\u20130xef39f treats unordered far-corner distances as contained; native comparisons differed. Corrected shared frustum/far tests. Full 1182-byte body compared including ancestor frontal markers, occluder updates, child/leaf recursion and direct submission; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000eec7e",
@@ -105009,8 +105009,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xeed3a\u20130xeed3d rejects unordered frustum bounds; corrected shared bounds predicate. Full body compared: view stamp, distance cull, stack-level markers, occluders, debug name and skin/submission match; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000efa8a",
@@ -105031,8 +105031,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xefab3\u20130xefae5 submits static models in leaf/coarse paths; native omitted them. Mac 0xefc51/f0408 selects bounds by scene cullState, updates pose only when needed and retests current bounds; native read lighting data and skipped the second test. Restored draw-BModel skip, removed extra brush debug box and preserved unconditional cull-group surface submission at 0xf003e. Full body compared, shared unordered frustum predicate corrected; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000ef030",
@@ -105053,8 +105053,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xef092\u20130xef0fa tests occluders when fine culling is enabled even with zero frustum planes; native skipped both tests. Restored and corrected unordered frustum rejection. Full body compared, existing null-storage guards retained; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000f2418",
@@ -105075,8 +105075,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xf2424 allocates 1024 active occluder pointer slots; native byte allocation held only 512 on x64. Resized by sizeof(pointer). Mac 0xf2847 clears the orthographic far plane and bypasses far-distance setup; native re-enabled it. Corrected SSE max/unordered far selection and frustum rejection. Full 3700-byte body compared: flags, frusta, entity and eight-corner brush bounds, 1536 threshold, BSP cell filter, traversal, sky surfaces, lights and cleanup. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000ee772",
@@ -105097,8 +105097,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000ee772 with current r_dpvs body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000ee7fe",
@@ -105119,8 +105119,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xeea02\u20130xeea34 copies an on-plane vertex and skips intersection creation; native also emitted an edge intersection. Corrected branch and provided the wraparound distance slot for 128 vertices. Full epsilon classification, copy/intersection order, limits and return paths compared; compiled and reviewed, not exercised. Oversized/expanding windings beyond caller storage remain outside the established valid winding contract."
       },
       {
         "id": "mac:0x000ee4d2",
@@ -105141,8 +105141,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000ee4d2 with current r_dpvs body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000ee404",
@@ -105163,8 +105163,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000ee404 with current r_dpvs body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000ee54e",
@@ -105185,8 +105185,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xee68b\u20130xee690 prints a model-reference-capacity warning and returns, while native called fatal R_Error. Restored ri.Printf(1,...), retaining native >= capacity guard. Full 548-byte body compared: axial clipping, child order, shared-cell return, duplicate refs, bounds expansion and pointer-sized links; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000eef0e",
@@ -105207,8 +105207,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xeefdb\u20130xef00e: use signed coefficient bits for side bytes, including positive NaNs; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000ee474",
@@ -105229,8 +105229,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000ee474 with current r_dpvs body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000ef68a",
@@ -105251,8 +105251,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared full Mac 0xef68a\u20130xefa8a: destination deduplication and ancestor/backface rejection, original-winding occlusion, parent/far/frustum clipping, ping-pong buffers and recursive list append match for defined convex winding inputs. Native performs its equivalent frustum clipping before occluder rejection; Mac also has an early all-vertices-outside optimization. Selected callers supply the parent plane."
       },
       {
         "id": "mac:0x000eea9c",
@@ -105273,8 +105273,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared full Mac 0xeea9c\u20130xeec7e: perspective eye-relative vectors and cross(next,current), orthographic edge delta and cross(eye,delta), normalization and winding wrap match. Compared for the nonempty bounded windings supplied by portal traversal."
       },
       {
         "id": "mac:0x000ee526",
@@ -105295,8 +105295,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xee535: preserve unordered distances instead of converting NaN to zero; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000f14c0",
@@ -105317,8 +105317,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xf1bc0\u20130xf1e69 constructs inverse-projected bevel rectangles and planes, rejects redundant normals and draws debug edges; native left this empty. Restored full projected bounds/polygon area control (including last-y bbox quirk at 0xf21ee), near-plane minimum scan 0xf1949\u20130xf1a55, debug polygon color and conditional projection when bevels are disabled. Full 3928-byte body hand compared including pool/queue cleanup, walk limit and normal/frustum planes; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000f042e",
@@ -105339,8 +105339,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xf117d\u20130xf142c chooses a winding maximum for queue priority; native helper chose a minimum with wrong scan order. Restored monotonic maximum and separate minimum, unordered occluder-face rejection 0xf0675, exact diagnostics, and 1024 native pointer slots for the further-cell list. Full 4242-byte body compared including occluder silhouette orientation, near-eye recursion, clipping, hull compaction, ancestor bits and queue insertion; compiled and reviewed, not exercised."
       }
     ],
     "gfx_d3d/r_dvars": [
@@ -108887,8 +108887,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfa98 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000cfaa2",
@@ -108909,8 +108909,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfaa2 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000cfd00",
@@ -108931,8 +108931,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfd00 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000d0114",
@@ -108953,8 +108953,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000d0114 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000cfbd8",
@@ -108975,8 +108975,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfbd8 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000d00d8",
@@ -108997,8 +108997,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000d00d8 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000cfb98",
@@ -109019,8 +109019,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfb98 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000cfb38",
@@ -109041,8 +109041,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfb38 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000cfd34",
@@ -109063,8 +109063,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfd34 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000d01dc",
@@ -109085,8 +109085,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000d01dc with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000d0030",
@@ -109107,8 +109107,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xd0030 locks with 0x2000 and checks 16-byte alignment/error/unlock exactly as native. Existing native lockType/gpuSync selection can use 0x1000 and skips null buffers; retained portability adaptation. Selected CDirect3DVertexBuffer_Lock ignores Flags and SizeToLock and returns data+offset, so both valid flag paths have the same current GL behavior."
       },
       {
         "id": "mac:0x000cffe2",
@@ -109129,8 +109129,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cffe2 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000cfc98",
@@ -109151,8 +109151,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfc98 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000cfd0a",
@@ -109173,8 +109173,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfd0a with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000d134e",
@@ -109195,8 +109195,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xd134e uses its own warning counter at 0xd40b0c and full skinned-cache/temp-buffer diagnostics; native shared warning state. Restored under COD2_X64. Full cache/rigid/skinned branches and command layouts compared; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000d0d3c",
@@ -109217,8 +109217,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xd0d3c uses warning counter 0xd40b04 for temp skin allocation and counter 0xd40b00 for cached vertices, with full diagnostics. Restored under COD2_X64. Full branches/part masks/allocations compared; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000cfb06",
@@ -109239,8 +109239,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfb06 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000cfaac",
@@ -109261,8 +109261,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfaac with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000cfcd4",
@@ -109283,8 +109283,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfcd4 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000cfc6e",
@@ -109305,8 +109305,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfc6e with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000cfb24",
@@ -109327,8 +109327,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfb24 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000d00ac",
@@ -109349,8 +109349,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000d00ac with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000d2642",
@@ -109371,8 +109371,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared the full Mac 0xd2642 command: quaternion transform order, one-bone matrix, surface stride and rigid/skinned dispatch match the native pointer-sized command layout."
       },
       {
         "id": "mac:0x000d0f78",
@@ -109393,8 +109393,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xd0f78 uses warning counter 0xd40b08 for material/surface overflow and distinct full messages; native shared state and truncated text. Full command/payload walk compared; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000d1b24",
@@ -109415,8 +109415,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000d1b24 with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000d1b1a",
@@ -109437,8 +109437,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000d1b1a with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000d164a",
@@ -109459,8 +109459,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xd164a uses warning counter 0xd40b10 for material/surface overflow and distinct full messages; native shared state and truncated text. Full LOD/part-mask/command paths compared; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000d23de",
@@ -109481,8 +109481,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xd23de command: zero-bone surface dispatch, part-bit tests, matrix offsets, quaternion/translation order and per-surface advancement match."
       },
       {
         "id": "mac:0x000d1b58",
@@ -109503,8 +109503,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xd2324\u20130xd232b and 0xd23b8\u20130xd23bf group weighted DX7 position as (x+y)+(z+translation); native sequential additions differed. Restored under COD2_X64; full DX7/DX9 rigid/weighted bodies compared, including first-bone frame rotation and fourth DX9 position component. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000cfb4c",
@@ -109525,8 +109525,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000cfb4c with current r_model body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000d077a",
@@ -109547,8 +109547,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared full Mac 0xd077a body: cull-state CAS/wait, LSB bone mask, quaternion matrices, scale/origin transforms and signed-axis bounds contributions match."
       },
       {
         "id": "mac:0x000d0544",
@@ -109569,8 +109569,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xd0544: per-bone transformed origin, six axis endpoints, scale 6, colors and debug-line calls match."
       },
       {
         "id": "mac:0x000d02cc",
@@ -109591,8 +109591,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xd02cc: LSB bone masks, transformed bone bounds and 12 box edges match; binary corner table checked separately."
       }
     ],
     "gfx_d3d/r_model_load_obj": [
@@ -109615,8 +109615,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000d4248 with current r_model_load_obj body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       }
     ],
     "gfx_d3d/r_outdoor": [
@@ -109639,8 +109639,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x00108460 with current r_outdoor body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x00108248",
@@ -109661,8 +109661,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x00108248 with current r_outdoor body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       }
     ],
     "gfx_d3d/r_rendercmds": [
@@ -110701,8 +110701,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xc574c: draw gate, surface/index/material extraction, both sort-key forms, 65536 draw limit and counter increments match."
       },
       {
         "id": "mac:0x000c5d44",
@@ -110723,8 +110723,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000c5d44 with current r_scene body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000c5a04",
@@ -110745,8 +110745,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000c5a04 with current r_scene body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000c51ba",
@@ -110767,8 +110767,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000c51ba with current r_scene body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000c5858",
@@ -110789,8 +110789,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc5937 truncates the lightmap index to unsigned short for sort keys; native used raw int. Mac signed remainder for polygon entity slots also restored. Full capacity/copy/counter path compared; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000c6f94",
@@ -110811,8 +110811,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared full Mac 0xc6f94: reType branches, 2046/8184 limits and separate warning counters, default unit scale, model/cent assignment and effect sort keys match. Optional Windows v60 forwarding remains an inactive native bridge."
       },
       {
         "id": "mac:0x000c6d56",
@@ -110833,8 +110833,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc6f07\u20130xc6f09 indexes 96-byte DX7 lighting records; native advanced by bytes. Corrected typed indexing and %%i diagnostic typo (Mac 0xc6f6c). Full body compared; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000c5558",
@@ -110855,8 +110855,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xc5558: null-material skip, cached entity 2047 key, debug count precedence and native pointer-sized surface strides match."
       },
       {
         "id": "mac:0x000c5146",
@@ -110877,8 +110877,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000c5146 with current r_scene body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000c4f10",
@@ -110899,8 +110899,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc4f10 subtracts 32-bit pointers (and divides material/brush-model deltas). Native orders uintptr_t keys to avoid truncating live 64-bit pointers; identity grouping and type precedence retained. Full body hand compared; ordering between unrelated allocations follows native addresses."
       },
       {
         "id": "mac:0x000c50a2",
@@ -110921,8 +110921,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000c50a2 with current r_scene body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000c5260",
@@ -110943,8 +110943,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000c5260 with current r_scene body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000c5e5c",
@@ -110965,8 +110965,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc69bc checks both window dimensions, 0xc6592/0xc6699 gates post-effects on a full window and early-loop completion; native always used zero/inverted gates. Corrected fog technique comparison 0xc6451 and duration denominator 0xc66b8, restored full debug entity-count dump 0xc61b4\u20130xc6430. Full 3834-byte body compared; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000c5c06",
@@ -110987,8 +110987,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000c5c06 with current r_scene body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000c5a9a",
@@ -111009,8 +111009,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc5b7b\u20130xc5b94 selects 0.01 when the dvar near clip is unordered; native preserved NaN. Full viewport/matrix/default/depthhack body compared; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000c5044",
@@ -111031,8 +111031,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000c5044 with current r_scene body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000c4ffe",
@@ -111053,8 +111053,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000c4ffe with current r_scene body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000c52c6",
@@ -111075,8 +111075,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc52c6\u20130xc5558 uses an unstable iterative partition/selection sort, with element span divided by eight for its cutoff/pivot. Replaced libc qsort to preserve tie order and partition behavior. Full body compared; compiled and reviewed, not exercised."
       }
     ],
     "gfx_d3d/r_screenshot": [
@@ -111661,8 +111661,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000fbd7a with current r_staticmodel body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       }
     ],
     "gfx_d3d/r_staticmodel_load_obj": [
@@ -111685,8 +111685,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x00106960 with current r_staticmodel_load_obj body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x00106bf8",
@@ -111707,8 +111707,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x00106bf8 and native attributed body/helpers. Model-index list power-of-two growth, contained-child descent, first empty-surface child expansion and new-child allocation/bounds copy match; Hunk_AllocAlignInternal zeros the returned allocation directly."
       },
       {
         "id": "mac:0x00107d96",
@@ -111729,8 +111729,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x00107d96 and native attributed body/helpers. Depth-first permanent replacement of each nonempty static-model index list and child traversal match the heavily unrolled Mac recursion."
       },
       {
         "id": "mac:0x00107512",
@@ -111751,8 +111751,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Full Mac 0x107512 lighting cache arithmetic, atlas indexing, six-direction coefficient packing, saturation/floor order, DX7 tables and lookup coords match. Existing COD2_X64 branch emits BGRA instead of Mac ARGB bytes because selected native A8R8G8B8 GL uploads consume BGRA; retained native renderer conversion."
       },
       {
         "id": "mac:0x001070ba",
@@ -111773,8 +111773,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x001070ba and native attributed body/helpers. Quaternion-to-axis intermediate products/addition order, homogeneous entries, 0x2000/0xff78 temp buffers, transformed per-surface bounds, scale/origin application, LOD cull distance, cell filtering and LIFO frees match."
       },
       {
         "id": "mac:0x00106e24",
@@ -111795,8 +111795,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x00106e24 and native attributed body/helpers. Uniform/nonuniform cell split, duplicate-last-model suppression, plane-side child dispatch, axial bounds splitting and both nonaxial branches match; incidental integer pointer returns are ignored by native callers."
       },
       {
         "id": "mac:0x00106f82",
@@ -111817,8 +111817,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x00106f82 with current r_staticmodel_load_obj body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x001069cc",
@@ -111839,8 +111839,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x001069cc with current r_staticmodel_load_obj body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x00107070",
@@ -111861,8 +111861,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x00107070 with current r_staticmodel_load_obj body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x00106a42",
@@ -111883,8 +111883,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x00106a42 with current r_staticmodel_load_obj body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x00106970",
@@ -111905,8 +111905,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x00106970 with current r_staticmodel_load_obj body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x0010781e",
@@ -111927,8 +111927,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x0010781e and native attributed body/helpers. Full Mac qsort/child recursion, FLT_MAX bounds, >7 split threshold, ordered four half-box partitions with >1 members, swap partition order, child counts, carried surface child and remainder tail recursion match."
       },
       {
         "id": "mac:0x00106b56",
@@ -111949,8 +111949,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x106be2: restore the complete rigid-model diagnostic from string 0x253fb8; compiled and reviewed, not exercised."
       }
     ],
     "gfx_d3d/r_staticmodelcache": [
@@ -111974,7 +111974,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Full Mac 0xe156a allocation/list/node/stats/frontend-command behavior and positive paired-triangle copies match. Mac 0xe170d executes at least one 12-byte triangle copy even when triCount/2 is zero, and uses equality termination for signed counts; native for-loop safely skips nonpositive pair counts. triIndices allocation validity for zero/negative pair counts is unproven; retained defined native behavior rather than adding out-of-bounds reads/writes."
       },
       {
         "id": "mac:0x000e1774",
@@ -111995,8 +111995,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e1774 and native attributed body. Full used-list eviction, free-node unlinking, cached-LOD clearing, stats decrements, recursive child release, cache zeroing and 5-list/128-tree reconstruction match."
       },
       {
         "id": "mac:0x000e0792",
@@ -112017,8 +112017,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xe0792 buffer sizing, create/retry, cache zeroing and all list initialization match. Native deliberately omits Mac-private usage bit 0x400000 (0x208 versus Mac 0x400208 at 0xe07ec) for real D3D9 portability; selected CDirect3DVertexBuffer constructor merely stores Usage, and only GetDesc reads it. Current GL allocation/locking behavior does not depend on that bit."
       },
       {
         "id": "mac:0x000dfb20",
@@ -112039,8 +112039,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000dfb20 with current r_staticmodelcache body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000e1158",
@@ -112061,8 +112061,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e1158 and native attributed body. Full cache eviction/reset and conditional vertex-buffer release/retry match for valid COM objects. Existing null-vtable guard retains defined native failure behavior."
       },
       {
         "id": "mac:0x000dfc30",
@@ -112083,8 +112083,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Full Mac 0xdfc30\u20130xe0792 hand-compared. At 0xe064e the DX7 light cursor starts at D3DLIGHT9.Ambient (+0x24); native started at the struct base and read Diffuse at negative offsets outside the array. Restored Ambient base and Mac 0xe04d1\u20130xe0605 temporary ARGB packing with correct green/blue accumulators. Quaternion intermediates, rigid transform/normalization, DX9 64-byte and DX7 24-byte vertex construction, lighting coords, buffer locks, converter calls and unlock loops reviewed. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000e0fb0",
@@ -112105,8 +112105,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e0fb0 and native attributed body. Full console flush matches Mac eviction and complete cache/list reconstruction, including early null-list return."
       },
       {
         "id": "mac:0x000dfb44",
@@ -112127,8 +112127,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000dfb44 with current r_staticmodelcache body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000dfbc6",
@@ -112149,8 +112149,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000dfbc6 with current r_staticmodelcache body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000e089c",
@@ -112171,8 +112171,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e089c and native attributed body. Full heavily unrolled Mac recursion matches native heap-node/leaf-index mapping, zero-used free-list unlink, in-use cached LOD clearing, allocation/used stats and left/right recursive descent."
       },
       {
         "id": "mac:0x000e133e",
@@ -112193,8 +112193,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000e133e with current r_staticmodelcache body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       }
     ],
     "gfx_d3d/r_surfbounds": [
@@ -112217,8 +112217,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000fb788 with current r_surfbounds body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000fb740",
@@ -112239,8 +112239,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000fb740 with current r_surfbounds body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000fb75c",
@@ -112261,8 +112261,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000fb75c with current r_surfbounds body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000fb6e4",
@@ -112283,8 +112283,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000fb6e4 with current r_surfbounds body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       }
     ],
     "gfx_d3d/r_texturemem": [
@@ -112557,8 +112557,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000f9abe with current r_xsurface body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000f9a24",
@@ -112579,8 +112579,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000f9a24 with current r_xsurface body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000f9a18",
@@ -112601,8 +112601,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000f9a18 with current r_xsurface body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000f9a30",
@@ -112623,8 +112623,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000f9a30 with current r_xsurface body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000f9ab2",
@@ -112645,8 +112645,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000f9ab2 with current r_xsurface body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000f9bca",
@@ -112668,7 +112668,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Rigid and weighted positive-count paths hand-compared at Mac 0xf9bca, including normal/UV branches, 1/256 and 1/65536 weights and SSE accumulation order. Mac tests signed vertCount !=0 then uses equality-terminated loops; native skips negative counts. Loader/allocator validity for negative counts is unproven; retained defined native behavior instead of introducing out-of-bounds writes."
       },
       {
         "id": "mac:0x000f9b2c",
@@ -112689,8 +112689,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000f9b2c with current r_xsurface body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000f9aca",
@@ -112711,8 +112711,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000f9aca with current r_xsurface body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       }
     ],
     "gfx_d3d/r_xsurface_optimize": [
@@ -112735,8 +112735,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000fbb8c with current r_xsurface_optimize body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000fbcbc",
@@ -112757,8 +112757,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000fbcbc with current r_xsurface_optimize body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       },
       {
         "id": "mac:0x000fba74",
@@ -112779,8 +112779,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x000fba74 with current r_xsurface_optimize body: calls, branches, loop limits, field accesses and arithmetic order match; native typed pointer-sized storage preserves the data relationships. Triage and literal checks were used only as prompts, not semantic proof."
       }
     ],
     "gfx_d3d/rb_backend": [

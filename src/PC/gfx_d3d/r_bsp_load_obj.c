@@ -94,6 +94,10 @@ static int R_ValidateLump(const GfxBspLoad *load, int lumpOfs, int elemSize, con
 
     if (lumpFileOfs + lumpSize > load->fileSize)
         R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
+#if defined(COD2_X64)
+    if (lumpFileOfs <= 3)
+        R_Error(1, "LoadMap: funny lump offset in %s", s_world.name);
+#else
     if (lumpFileOfs <= 3) {
 
         if (lumpSize == 0) {
@@ -104,11 +108,20 @@ static int R_ValidateLump(const GfxBspLoad *load, int lumpOfs, int elemSize, con
         R_Error(1, "LoadMap: funny lump offset in %s", s_world.name);
     }
 
+#endif
+
+#if defined(COD2_X64)
+    count = lumpSize / elemSize;
+    if (lumpSize < 0 || count * elemSize != lumpSize)
+        R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
+#else
     count = lumpSize / elemSize;
     if (lumpSize < 0)
         count = (lumpSize + elemSize - 1) / elemSize;
     if (count * elemSize != lumpSize)
         R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
+
+#endif
 
     if (outData)
         *outData = load->fileBase + lumpFileOfs;
@@ -881,9 +894,15 @@ static void R_LoadPortals_impl(const GfxBspLoad *load)
 
         (*(int *)&((GfxPortal *)d)->plane.coeffs[3]) = *(int *)&plane[3] ^ 0x80000000;
 
+#if defined(COD2_X64)
+        ((GfxPortal *)d)->plane.side[0] = (*(const int *)&plane[0] > 0) ? 0x0c : 0x00;
+        ((GfxPortal *)d)->plane.side[1] = (*(const int *)&plane[1] > 0) ? 0x10 : 0x04;
+        ((GfxPortal *)d)->plane.side[2] = (*(const int *)&plane[2] > 0) ? 0x14 : 0x08;
+#else
         ((GfxPortal *)d)->plane.side[0] = (plane[0] > 0.0f) ? 0x0c : 0x00;
         ((GfxPortal *)d)->plane.side[1] = (plane[1] > 0.0f) ? 0x10 : 0x04;
         ((GfxPortal *)d)->plane.side[2] = (plane[2] > 0.0f) ? 0x14 : 0x08;
+#endif
 
         {
             int cellIdx = src[1];
@@ -1104,7 +1123,8 @@ static void R_LoadOccluders_impl(const GfxBspLoad *load)
         out->edgeCount = *(short *)(diskOcc + 6);
         out->edges = edgeBase;
         for (j = 0; j < out->edgeCount; j++) {
-            const byte *de = diskEdges + (firstEdge + j) * 4;
+            /* Mac 0xe41a1 restarts the input edge cursor for each occluder. */
+            const byte *de = diskEdges + j * 4;
             edgeBase[j].plane[0] = &planeBase[de[0]];
             edgeBase[j].plane[1] = &planeBase[de[1]];
             edgeBase[j].vertex[0] = &out->vertices[de[2]];
@@ -1422,7 +1442,11 @@ void __attribute_regparm__(1) R_LoadSurfaces(GfxBspLoad *load)
         surf->sortGroup = sortGroup;
         surf->tris = tri;
 
+#if defined(COD2_X64)
+        if (material && (material->info.gameFlags & 8)) {
+#else
         if (material && (material->info.surfaceFlags & 8)) {
+#endif
             if (skyMaterial && skyMaterial != material)
                 R_Error(1, "map has at least two different skies: %s and %s\nOnly one sky per map is supported\n",
                         skyMaterial->info.name, material->info.name);
