@@ -2,7 +2,7 @@
 
 Updated 2026-11-06.
 
-**Current: 177/229 reconciled: 146 equal, 31 fixed, 0 intentional; 52 unchecked.**
+**Current: 178/229 reconciled: 147 equal, 31 fixed, 0 intentional; 51 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -568,3 +568,12 @@ The new Mac owner supplies real move[3] from trajectory output minus current ori
 The complete output pair is consumed: both exact local array addresses pass at0x1bafcd–0x1bafd7 into CM_AreaEntities, whose wrapper and recursive consumer preserve the pointers and use all six endpoint comparisons before entity-list insertion. The intervening unlink receives only the entity pointer. This establishes an actual disjoint-storage bounds update, rather than a partial dimension, discarded scalar or hypothetical adapter. The selected operation has no inherited repair or new defect. It does not certify arbitrary aliasing, invalid storage, FP traps/NaN payloads, preceding trajectory/radius work, collision traversal, later pushing or the whole mover.
 
 Independent review: units/review-provenance-expanddelta32.md. Fresh complete original/four Mac bodies, original identity map and source hash are retained in private recon-provenance-expanddelta32.noindex. One equal closure; no source change, compilation, tests, CI, full build, replay or runtime verification. Settled native policies remain unchanged.
+
+
+## Complete scalar view-height tracking operation (lineartrack31)
+
+LinearTrack is equal through the complete actual constant-rate approach in PM_ViewHeightAdjust's target-eight, nonzero-current phase. Full original 1.3 LinearTrack 0x80a3bca–RET 0x80a3c65 and its I_fabs provider establish the target/current/rate/time-to-scalar role. Linux tolerance, clamp ordering and x87 behavior supply intent only. PM_CheckDuck's actual pm_type>5 path sets target 8 and passes the same player/pml to the owner; Pmove produces its positive frame time. The real rate is 180, with a negative-step branch using -180. This is independent of angular tracking, with neither a synthetic target nor a proportional error factor.
+
+The complete Mac positive and negative branches add the signed step, store current, and clamp on their respective ordered comparisons; native preserves all result branches, including equal-current retention and unordered non-clamping. Initial zero-current/direct-target behavior and standard 11/40/60 waypoint interpolation remain separate gates. Actual ClientSpawn initializes current 60, and player_die derives type 6/7 from prior 0/1 without changing height in that selected transition. Whole death processing invokes scripts, so no universal callback preservation of 60 or guaranteed lifecycle is inferred; the accepted entry remains the actual nonzero-current state selected by the owner.
+
+The entire persistent viewHeightCurrent result feeds the real full-word snapshot comparison through field index 21 and the actual G_GetPlayerViewOrigin z addition before bob work. No scalar output is discarded. Existing PM_ViewHeightAdjust primary equal remains; unrelated zero-current and angular conversion repairs are outside this operation. This closes one equal row, without source change or new defect. Original arbitrary ABI/rates/times, FP control/traps/payloads, timestamp overflow, corrupted/concurrent state, whole movement/camera/network behavior and gameplay reachability remain outside scope. Independent review: units/review-provenance-lineartrack31.md; full original, exact Mac producers/operation/consumers, raw constants/field records, source hashes and state-domain receipts are retained privately in recon-provenance-lineartrack31.noindex. No compilation, tests, CI, full build, replay or runtime verification.
