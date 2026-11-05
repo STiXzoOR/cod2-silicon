@@ -429,7 +429,7 @@ universal/com_math,229,139,28,0,62
 universal/com_memory,64,39,11,11,3
 universal/com_memory_high,1,1,0,0,0
 universal/com_shared,7,5,2,0,0
-universal/com_sndalias,26,20,3,0,3
+universal/com_sndalias,26,18,5,0,3
 universal/com_sndalias_load_obj,34,25,7,2,0
 universal/com_vector,0,0,0,0,0
 universal/dvar,130,96,7,21,6

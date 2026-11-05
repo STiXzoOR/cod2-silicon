@@ -10,8 +10,8 @@
     "statuses": {
       "unchecked": 307,
       "intentional": 3183,
-      "equal": 4767,
-      "fixed": 1200
+      "equal": 4765,
+      "fixed": 1202
     },
     "scopes": {
       "unassigned": 777,
@@ -192902,7 +192902,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_FileCompare were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal. Original provenance recovered: original Linux 1.0 IDB 0x809d1c6 maps to retained original Linux 1.3 ELF 0x809f3c8 through module order corroborated by unique masked whole-body matches and exact target inspection. Original address/body evidence supplies identity and intent only; it does not establish a Mac operation. The prior complete Mac-operation gap remains; neither original symbol identity nor absent callers closes this row."
+        "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_FileCompare were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal. Original provenance recovered: original Linux 1.0 IDB 0x809d1c6 maps to retained original Linux 1.3 ELF 0x809f3c8 through module order corroborated by unique masked whole-body matches and exact target inspection. Original address/body evidence supplies identity and intent only; it does not establish a Mac operation. The prior complete Mac-operation gap remains; neither original symbol identity nor absent callers closes this row. Config13 full-operation review preserves the opening/error cases, both file positions/lengths, allocation/read, byte comparison, closes and frees as required; a path comparator or memcmp cannot supply the whole contract."
       },
       {
         "id": "mac:0x0003333c",
@@ -194126,7 +194126,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_SetWritable were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal. Original provenance recovered: original Linux 1.0 IDB 0x809e256 maps to retained original Linux 1.3 ELF 0x80a0458 through module order corroborated by unique masked whole-body matches and exact target inspection. Original address/body evidence supplies identity and intent only; it does not establish a Mac operation. The prior complete Mac-operation gap remains; neither original symbol identity nor absent callers closes this row."
+        "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_SetWritable were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal. Original provenance recovered: original Linux 1.0 IDB 0x809e256 maps to retained original Linux 1.3 ELF 0x80a0458 through module order corroborated by unique masked whole-body matches and exact target inspection. Original address/body evidence supplies identity and intent only; it does not establish a Mac operation. The prior complete Mac-operation gap remains; neither original symbol identity nor absent callers closes this row. Config13 full original operation includes startup/path resolution, stat failure, conditional mode-bit mutation, chmod and Boolean return. Existing overwrite read-only handling is only a selected operation and does not establish arbitrary writable policy; Linux mode conventions do not override Mac."
       },
       {
         "id": "linux:universal/com_files.cpp:707:FS_ShiftedStrStr",
@@ -194145,7 +194145,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_ShiftedStrStr were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal. Original provenance recovered: original Linux 1.0 IDB 0x809d424 maps to retained original Linux 1.3 ELF 0x809f626 through module order corroborated by unique masked whole-body matches and exact target inspection. Original address/body evidence supplies identity and intent only; it does not establish a Mac operation. The prior complete Mac-operation gap remains; neither original symbol identity nor absent callers closes this row."
+        "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_ShiftedStrStr were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal. Original provenance recovered: original Linux 1.0 IDB 0x809d424 maps to retained original Linux 1.3 ELF 0x809f626 through module order corroborated by unique masked whole-body matches and exact target inspection. Original address/body evidence supplies identity and intent only; it does not establish a Mac operation. The prior complete Mac-operation gap remains; neither original symbol identity nor absent callers closes this row. Config13 strict-provider review retains decode-plus-substring-search and returned haystack pointer as one required operation. The complete existing FS_ShiftStr provider returns different static storage and its established download owner discards it; no generic shifted-string/strstr composition is invented."
       },
       {
         "id": "mac:0x00033398",
@@ -202941,8 +202941,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "equal",
-        "evidence": "Compared Mac 0xad97e-0xadb38: inlined lookup and both probability-selection passes match native core, including strict greater-than, 32768.0f scale, sequence avoidance only above two entries, RNG consumption, and final sequence increment."
+        "status": "fixed",
+        "evidence": "Compared Mac 0xad97e-0xadb38: inlined lookup and both probability-selection passes match native core, including strict greater-than, 32768.0f scale, sequence avoidance only above two entries, RNG consumption, and final sequence increment. Config13 defined-arithmetic correction: exact Mac seed updates at0xada38\u20130xada60 and0xadad9\u20130xadb01 wrap214013*seed+2531011 modulo2^32, store all32bits, then extract bits16\u201330. Native shared helper used signed int multiplication/addition without wrap flags in all4actual Mac production configurations. Defined zero seed and ordinary two-entry selections reach overflow on the second recurrence (541671788154\u21920x1e278e7a). COD2_X64 now computes unsigned32 arithmetic and memcpy-stores the representation; all selection rules/consumption remain unchanged. Existing inspected arm64 output already used matching MADD/UBFX; this fixes C-level undefined overflow, not an observed generated-code failure. OFF source and5actual preprocessing outputs byte-identical. Manually compiled and reviewed in stock/CoD2x client/dedicated; not exercised. One shared defect across2owners; no seed/name helper closure."
       },
       {
         "id": "mac:0x000ad450",
@@ -202972,8 +202972,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "equal",
-        "evidence": "Compared Mac 0xad450-0xad595 for non-NULL lists with their established positive count: cumulative SSE additions, RNG recurrence and scaling, strict greater-than selection, maximum sequence, repeat avoidance, and selected sequence update match; NULL returns NULL."
+        "status": "fixed",
+        "evidence": "Compared Mac 0xad450-0xad595 for non-NULL lists with their established positive count: cumulative SSE additions, RNG recurrence and scaling, strict greater-than selection, maximum sequence, repeat avoidance, and selected sequence update match; NULL returns NULL. Config13 defined-arithmetic correction: exact Mac seed updates at0xad4a0\u20130xad4c5 and0xad532\u20130xad557 wrap214013*seed+2531011 modulo2^32, store all32bits, then extract bits16\u201330. Native shared helper used signed int multiplication/addition without wrap flags in all4actual Mac production configurations. Defined zero seed and ordinary two-entry selections reach overflow on the second recurrence (541671788154\u21920x1e278e7a). COD2_X64 now computes unsigned32 arithmetic and memcpy-stores the representation; all selection rules/consumption remain unchanged. Existing inspected arm64 output already used matching MADD/UBFX; this fixes C-level undefined overflow, not an observed generated-code failure. OFF source and5actual preprocessing outputs byte-identical. Manually compiled and reviewed in stock/CoD2x client/dedicated; not exercised. One shared defect across2owners; no seed/name helper closure."
       },
       {
         "id": "mac:0x000acfc6",
