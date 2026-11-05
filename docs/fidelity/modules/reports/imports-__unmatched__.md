@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**657 rows audited: 647 intentional, 4 fixed, 6 unchecked.** There are 631 external-import rows and 26 lower-address entries. No external library implementation is described as equal to reconstructed engine code.
+**657 rows audited: 647 intentional, 5 fixed, 5 unchecked.** There are 631 external-import rows and 26 lower-address entries. No external library implementation is described as equal to reconstructed engine code.
 
 ## Import identity and providers
 
@@ -35,11 +35,11 @@ The low-address FUN rows were located inside their enclosing symbols. Four are M
 
 Five coal-section texture/cube/vertex-shader thunks preserve their destructor targets with native subobject offsets. The remaining PIC, CRT and loader helpers are owned by the arm64 compiler/linker/runtime, including three real 25-byte `__picsymbolstub2` imports.
 
-Six import-unit rows remain unchecked:
+Five import-unit rows remain unchecked:
 
 - 0x01acc42e `CFBundleCopyLocalizedString`, 0x01acc429 `CFStringGetPascalString`, and 0x01acc424 `StringToNum`: Mac `GetLanguageCode` at 0x9cbc uses these, and pending VK_Map still calls native `MacResources_GetLanguageCode`, which returns zero. The retained key-language resource path has no complete native provider/storage replacement.
 - 0x00113119 and 0x00113166: Optimize's triangle-list and deque exception cleanup. The restored native normal path still allocates with throwing `__Znwm` from C and lacks matching unwind cleanup.
-- 0x002f1830: the volume-texture secondary destructor thunk has no native body. The native constructor leaves its secondary vtable null, but exhaustive secondary-interface/cast caller retirement has not been established.
+The texture follow-up closes0x002f1830: the native constructor installs the volume secondary vtable and its deleting-destructor slot subtracts one pointer to reach the primary object, then follows D1/free ownership. Exact Mac coalesced thunk adjusts this by four bytes and jumps to D0; the native pointer-sized adjustment is verified against the actual adjacent fields. This boundary is fixed, compiled and reviewed; no secondary-interface runtime coverage is claimed.
 
 ## Verification and limits
 
@@ -52,3 +52,11 @@ Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/re
 Integrated source c1bb3b0 passed both dedicated builds, complete local CI 02–13, native-only source guards, parent and fresh independent reviews, and both 2,000-frame replays. No changed source uses line macros. Replay players, state hashes and entities exactly match both d873794 baselines and each other; all six Linux logic fields agree, with maximum origin drift 0.11792 and velocity drift 2.0. No new tests or i386 byte-parity claim.
 
 This batch closes 880 entries. Fixes cover image metadata/mips and descriptor storage, container/sorting behavior, shader ownership, and the eight-byte AbsoluteTime caller/provider ABI. Three System constructor/factory boundaries and six import/allocation boundaries remain unchecked. Microphone capture remains unsupported. Dedicated replay does not exercise client rendering, shader/context lifetime, device output, or dormant platform wrappers. Unreached client and error paths remain compiled and reviewed; local fixtures establish only their stated cases.
+
+## Integrated batch 15 verification
+
+Engine c8ef702 and fixture-only follow-ups 1581779, 2c6cf4f and 7f49612 passed both dedicated builds, complete local CI steps 02–13, source guards, actual legacy line-map comparisons, parent/per-unit independent reviews and an additional combined-source review. Steps 07, 08 and 13 passed complete reruns after correcting six existing fixtures. Initial failures exposed stale GL/portal plumbing, an outdoor matrix expectation, a missing display provider, the DX7 skinning result and a missing sprite extraction dependency. Exact Mac 0xd2324–0xd232b confirms paired skinning addition; the fixture now expects that result. The sprite fixture retains its type-4 case and aborts if its out-of-scope cylinder helper is reached. No cases or assertions were added.
+
+The standard full-file guard command cannot preprocess the dispatch fixture's deliberate native-only error. A final source-only pass using the same checker confirms all five inactive configurations are identical. Engine source was unchanged by the fixture corrections. Both 2,000-frame replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six Linux logic fields agree; maximum origin/velocity drift is 0.11792/2.0. No i386 byte-parity claim is made.
+
+This batch closes 655 device, world/model, backend, texture/surface, GL and buffer entries. Fixes cover layouts, resource/context/fence lifetime, command and matrix order, lighting/culling constants and functional DISCARD flags. Constructor/reset/draw/VAO/sampler/timing gaps remain explicit. Existing local accelerated-GL raster/saved-screen, mip, volume and all 18 depth cases passed ASan/UBSan. Dedicated replays do not exercise client rendering; unreached client/error paths remain compiled and reviewed. These checks do not establish a complete rendered frame.
