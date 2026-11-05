@@ -52,3 +52,7 @@ These are rejected candidate identities, not newly discovered production
 defects or proof that the missing APIs are dead. No source, established verdict,
 or fixture changed. No compilation, CI, tests or replay ran. Private evidence
 is in `CoD2-native-decomp/recon-identity-script3.noindex`.
+
+## Original C-string setter provenance
+
+The original Linux 1.0 anonymous body at 0x080797ca and the original 1.3 entry at 0x08079e1a identify the missing `Scr_SetStringFromCharString` operation: remove the old destination reference when nonzero, intern the incoming C string with user zero, then store the resulting 16-bit id. This supplies an original address anchor, but no complete Mac owner has been established. The existing `Scr_SetString` takes an id and adds its reference before removing the old one; it cannot cover this different ordering and input contract. Mac vector-to-string branches found by a bounded call-order search also do not cover arbitrary C-string input. The row remains unchecked. This follow-up changes documentation only; no compilation, tests, CI or replay ran.

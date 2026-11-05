@@ -26,7 +26,7 @@ Native encoded vector/code-position storage, pointer-sized thread-debug records 
 
 ## Unchecked identities
 
-These Linux-only rows have no established Mac implementation or caller identity: `CopyEntity`, `Scr_CopyEntityNum`, `Scr_AddStringSet`, `Scr_InitStringSet`, `Scr_ShutdownStringSet`, `Scr_DumpScriptVariablesDefault`, `Scr_FindAllVariableField`, `Scr_GetChecksum`, `Scr_GetEntClassId`, `Scr_GetEntNum` and `Scr_IsThreadAlive`. They remain unchecked; Linux similarity alone is insufficient. `Scr_FindAllVariableField` has a native debugger implementation outside this unit. The separately named debugger `Scr_GetArrayIndexValue` also lacks an established Mac identity; its behavior is not covered by the inlined array-name decoder verdict.
+These Linux-only rows have no established Mac implementation or caller identity: `CopyEntity`, `Scr_CopyEntityNum`, `Scr_AddStringSet`, `Scr_FindAllVariableField`, `Scr_GetChecksum`, `Scr_GetEntClassId`, `Scr_GetEntNum` and `Scr_IsThreadAlive`. They remain unchecked; Linux similarity alone is insufficient. `Scr_FindAllVariableField` has a native debugger implementation outside this unit. The separately named debugger `Scr_GetArrayIndexValue` also lacks an established Mac identity; its behavior is not covered by the inlined array-name decoder verdict.
 
 ## Verification and limits
 
