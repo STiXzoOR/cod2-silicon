@@ -8129,7 +8129,25 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 
         case VMOP_EvalSelfFieldVariable:
             objectId = Scr_GetSelf(localId);
+#if defined(COD2_X64)
+            if (!IsFieldObject(objectId)) {
+                /* Mac 0x867ab advances both live fields before raising the
+                 * error; a returned error reaches 0x86652/0x866eb. */
+                ++top;
+                pos += 2;
+                Scr_SetErrorMessageAndJump(va("%s is not an object", ((const char *const *)imp_var_typename)[GetVarType(objectId)]));
+                varPub->error_index = 0;
+                RuntimeError(pos, varPub->error_index, varPub->error_message,
+                             ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message);
+                varPub->error_message = NULL;
+                ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message = NULL;
+                varPub->error_index = 0;
+                top->type = VAR_UNDEFINED;
+                break;
+            }
+#else
             VM_CandidateFieldObjectCheck(objectId);
+#endif
             VM_PushPackedValue(&top, Scr_FindVariableField(objectId, VM_ReadU16(&pos)));
             break;
 
@@ -8211,6 +8229,10 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             if (top->type != 8) {
 #if defined(COD2_X64)
                 Scr_SetErrorMessageAndJump("function called with too many parameters");
+                /* Mac 0x84542 keeps the supplied top unchanged when the
+                 * direct error policy returns. */
+                fieldValueId = VM_LocalVarCacheId(0);
+                break;
 #else
                 Com_Error(1, "VM_Execute C candidate expected void codepos for EndOn");
 #endif
