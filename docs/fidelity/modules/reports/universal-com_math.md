@@ -201,3 +201,23 @@ Private address maps, original caller packets and exact Mac entries are retained
 in recon-provenance-math4.noindex. Only the FX translation unit changed and was
 manually compiled in its two configured client variants. No runtime behavior,
 tests, CI, full build or replay was exercised. There are 67 unchecked math rows.
+
+## Complete I_clamp and I_sel caller operations
+
+The remaining original I_clamp copies are now tied to complete operations by
+actual original executable calls: PM_CrashLand 0x80e30c4 calls 0x80e95f8 at
+0x80e3263, while Particle UpdateRGB 0x81264a2 calls FX_ColorToBytes 0x812430c at
+0x8126529, which calls 0x8129422 at 0x8124367. Mac RGB's three-channel conversion
+loop at 0xa1e62–0xa1e89 already agrees with native FloatToByte, including the
+wrapped upper selection followed by the lower test on the original integer.
+The CrashLand correction and its conversion/branch limits are described in the
+bg_pmove report. I_clamp becomes fixed.
+
+Original I_sel copies at 0x80553d2, 0x80e9a50, 0x80f2b14 and 0x81298fc are now
+linked by their actual calls to the complete I_min/I_max/I_clamp operation set:
+partition scoring, weapon timer, FX culling, Flash packing, RGB packing and
+CrashLand. With the FX culling and CrashLand wrapping selections corrected,
+I_sel also becomes fixed. These are consumed-operation verdicts; no independent
+arbitrary-argument Mac entry or new public API is claimed. This leaves 65 math
+rows unchecked. Only the changed bg_pmove translation unit was manually compiled
+in its four configured modes; no tests, CI, replay or runtime behavior ran.
