@@ -6723,8 +6723,19 @@ static void VM_CandidateCallBuiltin(const char **pos, VariableValue **top, unsig
 }
 
 #if defined(COD2_X64)
-static Bool VM_CandidateCallBuiltinMethod(const char *volatile *pos, VariableValue *volatile *top,
-                                         unsigned int paramCount, Bool fixedZeroCount)
+typedef enum VM_BuiltinMethodContinuation_e {
+    VM_BUILTIN_METHOD_COMPLETE,
+    VM_BUILTIN_METHOD_WAIT,
+    VM_BUILTIN_METHOD_WAIT_CONSUMED
+} VM_BuiltinMethodContinuation;
+
+typedef struct VM_BuiltinMethodResult_s {
+    VM_BuiltinMethodContinuation continuation;
+    unsigned int receiverType;
+} VM_BuiltinMethodResult;
+
+static VM_BuiltinMethodResult VM_CandidateCallBuiltinMethod(const char *volatile *pos, VariableValue *volatile *top,
+                                                            unsigned int paramCount, Bool fixedZeroCount)
 #else
 static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top, unsigned int paramCount)
 #endif
@@ -6737,9 +6748,16 @@ static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top,
     BuiltinMethod method;
 
 #if defined(COD2_X64)
-    /* Opcode 0x45 has no original count store. Preserve its supplied count
-     * before the scalar receiver error; other receiver paths are unchanged. */
-    if (!(fixedZeroCount && ((*top)->type == VAR_FLOAT || (*top)->type == VAR_INTEGER)))
+    unsigned int receiverType = (*top)->type;
+    VM_BuiltinMethodResult result = { VM_BUILTIN_METHOD_COMPLETE, receiverType };
+    Bool preserveCount = fixedZeroCount && receiverType < 24u;
+    Bool consumedReference = receiverType == VAR_STRING || receiverType == VAR_LOCALIZED_STRING;
+    if (receiverType == VAR_VECTOR)
+        consumedReference = !*((const byte *)SCR_VEC_PTR((*top)->u) - 1);
+
+    /* Opcode 0x45 has no original count store. Validate receivers
+     * before retaining the native successful-call count-zero adaptation. */
+    if (!preserveCount)
         scrVmPub.outparamcount = paramCount;
 #else
     scrVmPub.outparamcount = paramCount;
@@ -6750,11 +6768,11 @@ static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top,
         RemoveRefToValue((*top)->type, (*top)->u);
         ((struct scrVarPub_t *)imp_scrVarPub)->error_index = (unsigned int)-1;
 #if defined(COD2_X64)
-        Scr_SetErrorMessageAndJump(va("%s is not an entity", ((const char *const *)imp_var_typename)[(*top)->type]));
-        /* Mac 0x83a77 falls into wait. Numeric receivers own no reference;
-         * reference-bearing receiver fallthrough remains a separate gap. */
-        if ((*top)->type == VAR_FLOAT || (*top)->type == VAR_INTEGER)
-            return 1;
+        Scr_SetErrorMessageAndJump(va("%s is not an entity", ((const char *const *)imp_var_typename)[receiverType]));
+        if (receiverType < 24u) {
+            result.continuation = consumedReference ? VM_BUILTIN_METHOD_WAIT_CONSUMED : VM_BUILTIN_METHOD_WAIT;
+            return result;
+        }
 #else
         Com_Error(1, "VM_Execute C candidate method target is not an entity");
 #endif
@@ -6767,11 +6785,24 @@ static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top,
         ((struct scrVarPub_t *)imp_scrVarPub)->error_index = (unsigned int)-1;
 #if defined(COD2_X64)
         Scr_SetErrorMessageAndJump(va("%s is not an entity", ((const char *const *)imp_var_typename)[objectType]));
+        if (receiverType == VAR_POINTER) {
+            /* Approved native ownership adaptation: the receiver was already
+             * released once. Replay the second policy without another release. */
+            ((struct scrVarPub_t *)imp_scrVarPub)->error_index = (unsigned int)-1;
+            Scr_SetErrorMessageAndJump(va("%s is not an entity",
+                                         ((const char *const *)imp_var_typename)[receiverType]));
+            result.continuation = VM_BUILTIN_METHOD_WAIT_CONSUMED;
+            return result;
+        }
 #else
         Com_Error(1, "VM_Execute C candidate method target type %d is not an entity", objectType);
 #endif
     }
 
+#if defined(COD2_X64)
+    if (preserveCount)
+        scrVmPub.outparamcount = paramCount;
+#endif
     entRefValue = Scr_GetEntityIdRef(objectId);
     entref.entnum = (unsigned short)(entRefValue & 0xffff);
     entref.classnum = (unsigned short)(entRefValue >> 16);
@@ -6787,7 +6818,7 @@ static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top,
     COD2_DEBUG_ONLY({ extern void dbg_check439(void); dbg_check439(); })
     VM_CandidateCompleteCall(pos, top);
 #if defined(COD2_X64)
-    return 0;
+    return result;
 #endif
 }
 
@@ -7075,13 +7106,21 @@ static int VM_CandidateHandleJumpBack(const char **pos, unsigned int *localId,
 
 #if defined(COD2_X64)
 static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value, unsigned int previousWaitTime,
-                                                  Bool *negativeErrorReturned)
+                                                  int capturedReceiverType, Bool *negativeErrorReturned)
 #else
 static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value)
 #endif
 {
 #if defined(COD2_X64)
     *negativeErrorReturned = 0;
+    if (capturedReceiverType >= 0 && capturedReceiverType < 24 &&
+        capturedReceiverType != VAR_FLOAT && capturedReceiverType != VAR_INTEGER) {
+        /* Read only metadata captured before the builtin receiver release. */
+        ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 2;
+        Scr_SetErrorMessageAndJump(va("type %s is not a float",
+                                     ((const char *const *)imp_var_typename)[capturedReceiverType]));
+        return previousWaitTime;
+    }
 #endif
     if (value->type == VAR_FLOAT) {
         float seconds = value->u.floatValue;
@@ -7130,6 +7169,12 @@ static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value)
 }
 
 #if defined(COD2_X64)
+static void VM_CandidateClearConsumedWaitOperand(VariableValue *value)
+{
+    memset(&value->u, 0, sizeof(value->u));
+    value->type = VAR_UNDEFINED;
+}
+
 static int VM_CandidateHandleWaitTillFrameEnd(const char *volatile *pos, volatile unsigned int *localVarCount,
                                               VariableValue *volatile *top, VariableValue *volatile *startTop,
                                               volatile unsigned int *localId, unsigned int *resultLocalId,
@@ -7138,7 +7183,8 @@ static int VM_CandidateHandleWaitTillFrameEnd(const char *volatile *pos, volatil
 static int VM_CandidateHandleWait(const char *volatile *pos, volatile unsigned int *localVarCount,
                                   VariableValue *volatile *top, VariableValue *volatile *startTop,
                                   volatile unsigned int *localId, unsigned int *resultLocalId,
-                                  unsigned int *threadCount, unsigned int *waitTimeScratch)
+                                  unsigned int *threadCount, unsigned int *waitTimeScratch,
+                                  int capturedReceiverType, Bool consumedReceiver)
 #else
 static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
                                   VariableValue **top, VariableValue **startTop,
@@ -7149,7 +7195,8 @@ static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
     struct scrVarPub_t *varPub = (struct scrVarPub_t *)imp_scrVarPub;
 #if defined(COD2_X64)
     Bool negativeErrorReturned;
-    unsigned int waitTime = VM_CandidateWaitTimeFromValue(*top, *waitTimeScratch, &negativeErrorReturned);
+    unsigned int waitTime = VM_CandidateWaitTimeFromValue(*top, *waitTimeScratch,
+                                                         capturedReceiverType, &negativeErrorReturned);
 #else
     unsigned int waitTime = VM_CandidateWaitTimeFromValue(*top);
 #endif
@@ -7163,6 +7210,8 @@ static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
     *waitTimeScratch = waitTime;
     if (negativeErrorReturned) {
         /* Mac 0x83cee returns into frame-end wait without popping its operand. */
+        if (consumedReceiver)
+            VM_CandidateClearConsumedWaitOperand(*top);
         return VM_CandidateHandleWaitTillFrameEnd(pos, localVarCount, top, startTop,
                                                   localId, resultLocalId, threadCount);
     }
@@ -7171,6 +7220,10 @@ static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
         ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 2;
 #if defined(COD2_X64)
         Scr_SetErrorMessageAndJump((int)waitTime < 0 ? "negative wait is not allowed" : "wait is too long");
+        /* Only after returned policies, prevent the archive from acquiring
+         * a reference whose ownership the builtin check already consumed. */
+        if (consumedReceiver)
+            VM_CandidateClearConsumedWaitOperand(*top);
         return VM_CandidateHandleWaitTillFrameEnd(pos, localVarCount, top, startTop,
                                                   localId, resultLocalId, threadCount);
 #else
@@ -8640,7 +8693,8 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 
         case VMOP_Wait:
 #if defined(COD2_X64)
-            if (VM_CandidateHandleWait(&pos, &localVarCount, &top, &startTop, &localId, &resultLocalId, &thread_count, &waitTime))
+            if (VM_CandidateHandleWait(&pos, &localVarCount, &top, &startTop, &localId,
+                                       &resultLocalId, &thread_count, &waitTime, -1, 0))
 #else
             if (VM_CandidateHandleWait(&pos, &localVarCount, &top, &startTop, &localId, &resultLocalId, &thread_count))
 #endif
@@ -8684,11 +8738,16 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         case VMOP_CallBuiltinMethod4:
         case VMOP_CallBuiltinMethod5:
 #if defined(COD2_X64)
-            if (VM_CandidateCallBuiltinMethod(&pos, &top, opcode - VMOP_CallBuiltinMethod0,
-                                              opcode == VMOP_CallBuiltinMethod0)) {
-                if (VM_CandidateHandleWait(&pos, &localVarCount, &top, &startTop, &localId,
-                                           &resultLocalId, &thread_count, &waitTime))
-                    return resultLocalId;
+            {
+                VM_BuiltinMethodResult methodResult =
+                    VM_CandidateCallBuiltinMethod(&pos, &top, opcode - VMOP_CallBuiltinMethod0,
+                                                   opcode == VMOP_CallBuiltinMethod0);
+                if (methodResult.continuation != VM_BUILTIN_METHOD_COMPLETE) {
+                    if (VM_CandidateHandleWait(&pos, &localVarCount, &top, &startTop, &localId,
+                                               &resultLocalId, &thread_count, &waitTime, methodResult.receiverType,
+                                               methodResult.continuation == VM_BUILTIN_METHOD_WAIT_CONSUMED))
+                        return resultLocalId;
+                }
             }
 #else
             VM_CandidateCallBuiltinMethod(&pos, &top, opcode - VMOP_CallBuiltinMethod0);
@@ -8701,9 +8760,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         case VMOP_CallBuiltinMethod: {
             unsigned int paramCount = *(const unsigned char *)pos++;
 #if defined(COD2_X64)
-            if (VM_CandidateCallBuiltinMethod(&pos, &top, paramCount, 0)) {
+            VM_BuiltinMethodResult methodResult = VM_CandidateCallBuiltinMethod(&pos, &top, paramCount, 0);
+            if (methodResult.continuation != VM_BUILTIN_METHOD_COMPLETE) {
                 if (VM_CandidateHandleWait(&pos, &localVarCount, &top, &startTop, &localId,
-                                           &resultLocalId, &thread_count, &waitTime))
+                                           &resultLocalId, &thread_count, &waitTime, methodResult.receiverType,
+                                           methodResult.continuation == VM_BUILTIN_METHOD_WAIT_CONSUMED))
                     return resultLocalId;
             }
 #else
