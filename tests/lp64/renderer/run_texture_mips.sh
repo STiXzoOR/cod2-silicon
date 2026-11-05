@@ -8,5 +8,7 @@ clang -arch arm64 -std=c11 -ffp-contract=off -DCOD2_X64=1 -DGL_SILENCE_DEPRECATI
     -Wno-duplicate-decl-specifier -Wl,-dead_strip -framework OpenGL \
     -fsanitize=address,undefined tests/lp64/renderer/texture_mips.c \
     src/Mac/DirectX_9/CDirect3DTexture.c src/Mac/DirectX_9/CDirect3DSurface.c \
+    src/Mac/DirectX_9/CDirect3DCubeTexture.c src/Mac/DirectX_9/CVertexArrays.c \
+    "${COD2_OPENGL_PROVIDER_SOURCE:-src/Mac/DirectX_9/COpenGL.c}" \
     src/Mac/DirectX_9/MacOpenGLUtils.c -o build-macos/ws6-tests/texture_mips
 build-macos/ws6-tests/texture_mips

@@ -4,6 +4,14 @@
 #include <stdlib.h>
 #include "Mac/DirectX_9/CDirect3DVolumeTexture.c"
 #include "PC/gfx_d3d/r_image_load_common.c"
+Bool g_NoTextureID, g_WarmOff;
+/* Isolate generated ABI import data; exercise real vertex-array initialization. */
+static void *fixtureArrayVtables[16];
+void *imp___ZTV7CBaseVA = fixtureArrayVtables;
+void *imp___ZTV11CColorArray = fixtureArrayVtables;
+void *imp___ZTV20CSecondaryColorArray = fixtureArrayVtables;
+void *imp___ZTV12CNormalArray = fixtureArrayVtables;
+void *imp___ZTV12CVertexArray = fixtureArrayVtables;
 DxGlobals dx;
 int alwaysfails;
 void __ZdlPv(void *p) { free(p); }

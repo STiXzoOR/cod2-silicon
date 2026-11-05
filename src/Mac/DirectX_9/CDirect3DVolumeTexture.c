@@ -221,18 +221,7 @@ HRESULT CDirect3DVolume_UnlockBox(const void *_this)
 #endif
 
 #if defined(COD2_X64)
-    CDirect3DVolumeClean *volume = (void *)_this;
-    if (volume->isDirty && volume->volumeMemory && volume->owner) {
-        GLuint name = COpenGLTexture_GetGLNameNative(volume->owner);
-        if (name) {
-            GLint previous;
-            glGetIntegerv(GL_TEXTURE_BINDING_3D, &previous);
-            glBindTexture(GL_TEXTURE_3D, name);
-            CDirect3DVolume_UpdateOpenGLSurfaceObject(_this, 1);
-            volume->isDirty = 0;
-            glBindTexture(GL_TEXTURE_3D, previous);
-        }
-    }
+    (void)_this;
     return 0;
 #else
 
@@ -626,7 +615,20 @@ HRESULT CDirect3DVolumeTexture_UnlockBox(const CDirect3DVolumeTexture *_this, UI
     if (Level >= tex->levelCount)
         return (HRESULT)0x8876086cu;
     void *volume = tex->volumes[Level];
-    return ((HRESULT (*)(void *))(*(void ***)volume)[10])(volume);
+    HRESULT result = ((HRESULT (*)(void *))(*(void ***)volume)[10])(volume);
+    CDirect3DVolumeClean *child = volume;
+    if (result >= 0 && child->isDirty && child->volumeMemory && child->owner) {
+        GLuint name = COpenGLTexture_GetGLNameNative(child->owner);
+        if (name) {
+            GLint previous;
+            glGetIntegerv(GL_TEXTURE_BINDING_3D, &previous);
+            glBindTexture(GL_TEXTURE_3D, name);
+            CDirect3DVolume_UpdateOpenGLSurfaceObject(child, 1);
+            child->isDirty = 0;
+            glBindTexture(GL_TEXTURE_3D, previous);
+        }
+    }
+    return result;
 #else
 
     CDirect3DVolumeTextureClean *tex = (CDirect3DVolumeTextureClean *)_this;
@@ -984,7 +986,12 @@ void CDirect3DVolumeTexture_UpdateOpenGLSurfaces(const CDirect3DVolumeTexture *_
 
 #if defined(COD2_X64)
     extern void CDirect3DVolumeTexture_UpdateOpenGLSurfacesNative(const CDirect3DVolumeTexture *, int);
+    CDirect3DVolumeTextureClean *tex = (void *)_this;
+    GLint previous;
+    glGetIntegerv(GL_TEXTURE_BINDING_3D, &previous);
+    glBindTexture(GL_TEXTURE_3D, tex->texIDStorage);
     CDirect3DVolumeTexture_UpdateOpenGLSurfacesNative(_this, 0);
+    glBindTexture(GL_TEXTURE_3D, previous);
 #else
 
 #if COD2_APPLE_SDK
