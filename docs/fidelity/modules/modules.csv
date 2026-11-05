@@ -50,9 +50,9 @@ Mac/Shaders/lprobe_sm_a_s_lfog,1,0,0,0,1
 Mac/Tools/CAudioRecorder,15,0,0,0,15
 Mac/Tools/CCircularBuffer,8,2,3,2,1
 Mac/Tools/MacAppleEvents,15,0,0,15,0
-Mac/Tools/MacBuilder,18,0,0,0,18
+Mac/Tools/MacBuilder,18,0,0,18,0
 Mac/Tools/MacDebug,1,1,0,0,0
-Mac/Tools/MacDisplay,47,0,0,0,47
+Mac/Tools/MacDisplay,47,2,1,42,2
 Mac/Tools/MacExceptions,7,0,0,6,1
 Mac/Tools/MacFastCopy,1,0,0,0,1
 Mac/Tools/MacFeatures,5,0,1,4,0
@@ -76,7 +76,7 @@ Mac/Tools/MacTools,17,2,1,13,1
 Mac/Tools/MacWin32,18,7,3,8,0
 Mac/Tools/MacWinCursor,8,2,0,6,0
 Mac/Tools/MacWinSock,4,3,0,1,0
-Mac/Tools/VK_Map,1,0,0,0,1
+Mac/Tools/VK_Map,1,0,1,0,0
 Mac/Tools/i5stdlib,4,4,0,0,0
 __unmatched__,657,0,0,0,657
 bgame/bg_animation_mp,48,37,5,0,6
