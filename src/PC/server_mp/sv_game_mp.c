@@ -515,7 +515,11 @@ qboolean SV_EntityContact(const vec_t *mins, const vec_t *maxs, const gentity_t 
     if (svFlags & 0x20) {
 
         float entZ = gEnt->r.currentOrigin[2];
+#if defined(COD2_X64)
+        if (!(entZ >= maxs[2])) {
+#else
         if (entZ < maxs[2]) {
+#endif
             float topZ = entZ + gEnt->r.maxs[2];
             if (mins[2] >= topZ) {
                 return 0;
