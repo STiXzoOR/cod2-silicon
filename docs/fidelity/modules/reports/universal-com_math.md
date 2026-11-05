@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**Current: 174/229 reconciled: 144 equal, 30 fixed, 0 intentional; 55 unchecked.**
+**Current: 175/229 reconciled: 145 equal, 30 fixed, 0 intentional; 54 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -530,3 +530,11 @@ Independent review: review-provenance-math24-log2.md. Exact original/Mac bodies,
 raw target bytes and source hashes remain in recon-provenance-math24.noindex.
 One equal closure, no source change or new defect. No compilation, tests, CI,
 full build, replay or runtime verification.
+
+## Complete scalar maximum phase (maxcomponent26)
+
+Vec3MaxComponent is equal through ColorNormalize's complete float3 maximum phase. Mac loads all three components and MAXSS0x2c7bf/0x2c7cb leaves the selected scalar in XMM2 before any output write. Source-prior operand priorities retain the earlier component on equality/unordered; native initializes from component0 and uses two strict-greater updates in exactly that order. Actual zero testing0x2c7d3 and reciprocal division0x2c800 consume the completed scalar. Original Linux >=/unordered behavior supplies intent, not authority over the Mac operation.
+
+Actual R_InterpretSunLightParseParamsIntoLights0xe25de passes its ambientColor float3 at0xe26b6. R_ParseSunLight's real _color branch supplies all three fields to its three-float conversion. Thus this is a coherent vector maximum and real scalar result, not unrelated comparisons or a hypothetical adapter. The boundary ends before zero-return canonicalization, reciprocal arithmetic and normalization output writes. It does not claim whole ColorNormalize return bits, standalone ABI, literal inline ancestry, malformed storage, FP exception/payload behavior, concurrent state or whole lighting correctness. Existing Vec3ScaleToUnitMax classification remains; Vec3NormalizeByMax still requires its separate complete normalization contract.
+
+Independent full original/Mac/native/caller/provider review and raw key/format evidence: units/review-provenance-maxcomponent26.md, private recon-provenance-maxcomponent26.noindex. One equal closure, no new defect or source change. No compilation, tests, CI, replay or runtime verification.
