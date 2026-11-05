@@ -121,7 +121,11 @@ qboolean Item_EnableShowViaDvar(const itemDef_t *item, int flag)
             return 1;
         }
 
+#if defined(COD2_X64)
+        while (val[0] == ';' && val[1] == '\0') {
+#else
         if (val[0] == ';' && val[1] == '\0') {
+#endif
             if (!String_Parse(&p, val, 1024)) {
                 if (item->dvarFlags & flag)
                     return 0;
@@ -145,7 +149,11 @@ qboolean Item_IsEditFieldDef(itemDef_t *item)
 {
     int type = item->dataType;
 
+#if defined(COD2_X64)
+    if ((unsigned int)type > 0x12u)
+#else
     if (type > 0x12)
+#endif
         return 0;
     if ((1 << type) & 0x74e11)
         return 1;

@@ -19498,5 +19498,153 @@
   "mac:0x00060e30": {
     "status": "equal",
     "evidence": "Mac 0x60e30: exact-symbol body returns immediately; native empty entry matches."
+  },
+  "mac:0x001cbcf0": {
+    "status": "intentional",
+    "evidence": "Mac 0x1cbcf0 negative-dimension reversal, UVs, and draw arguments compared by hand. Existing native COD2_NATIVE_TRACE_ONLY probe is retained: absent from Mac, disabled by default, first four calls printed only when tracing is enabled."
+  },
+  "mac:0x001cbd98": {
+    "status": "equal",
+    "evidence": "Mac 0x1cbd98 compared by hand: com_expectedHunkUsage lookup, positive expected-size gate, float Hunk_Used division, upper clamp to 1, and width/UV scaling and draw arguments match."
+  },
+  "mac:0x001cbe9c": {
+    "status": "equal",
+    "evidence": "Mac 0x1cbe9c compared by hand: nonnull white-material gate and CL_DrawStretchPic coordinates, alignments, color, material, and four zero UV arguments match."
+  },
+  "mac:0x001cbe3a": {
+    "status": "equal",
+    "evidence": "Mac 0x1cbe3a compared by hand: nonnull white-material gate and CL_DrawStretchPicPhysical coordinates, color, material, and four zero UV arguments match."
+  },
+  "mac:0x001b54f6": {
+    "status": "equal",
+    "evidence": "Exact-symbol Mac 0x1b54f6 compared by hand after full-dump prologue misalignment: uiStarted gate, whole typed state reset, video size conversion, 8/16/16 metrics, developer gate, and two material names/0x30 flags/track 1 match."
+  },
+  "mac:0x00180bee": {
+    "status": "fixed",
+    "evidence": "Mac 0x180bee: 0x180dd8 reads gametype (binary string 0x2d5f58), not type; 0x180ea9 continues scanning after a matching game-type bit rather than breaking. Native now matches and uses an unsigned 32-bit mask shift. Full loader, limits, names, registrations, and parse-session flow compared by hand; compiled and reviewed, not exercised."
+  },
+  "mac:0x00180a0c": {
+    "status": "equal",
+    "evidence": "Exact-symbol Mac 0x180a0c compared by hand: braces/errors, count cap, 1024-byte buffers, <NULL> values, strlen(info)+strlen(va(\"%d\",64))+6 allocation, null-allocation retry, copy, and count update match."
+  },
+  "mac:0x00192216": {
+    "status": "equal",
+    "evidence": "Mac 0x192216 compared by hand: Com_ParseOnLine null/empty failure, atof double-to-float conversion, output write, and success result match."
+  },
+  "mac:0x001921e4": {
+    "status": "equal",
+    "evidence": "Mac 0x1921e4 compared by hand: Com_ParseOnLine null/empty failure, atoi output write, and success result match."
+  },
+  "mac:0x00192036": {
+    "status": "fixed",
+    "evidence": "Mac 0x192036: successful separator parsing at 0x19213f returns to 0x1920d5, repeatedly skipping standalone semicolons. Native skipped only one; now loops. Null/empty gates, dvar lookup, bounded copy, matching and flag-dependent exhaustion compared by hand; compiled and reviewed, not exercised."
+  },
+  "mac:0x001923aa": {
+    "status": "equal",
+    "evidence": "Mac 0x1923aa compared by hand: positive/negative movement, bounds, null guards, signed byte digit comparisons, ^0..^9 skipping without consuming delta, and zero-delta/color ordering match."
+  },
+  "mac:0x001924bc": {
+    "status": "equal",
+    "evidence": "Mac 0x1924bc compared by hand: unsigned range and mask 0x74e11 select exactly types 0,4,9,10,11,14,16,17,18; pointer result, complete error string, and null failure match."
+  },
+  "mac:0x0019217e": {
+    "status": "equal",
+    "evidence": "Mac 0x19217e compared by hand: type 6 gate, list-box pointer, complete diagnostic string, and null failure match."
+  },
+  "mac:0x001921a8": {
+    "status": "equal",
+    "evidence": "Mac 0x1921a8 compared by hand: returns the typeData union pointer without a type check."
+  },
+  "mac:0x00192150": {
+    "status": "fixed",
+    "evidence": "Mac 0x192150 uses unsigned ja at 0x19215d to reject types outside 0..18 before applying mask 0x74e11. Native signed comparison admitted negatives before an undefined shift; now uses unsigned range. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00192398": {
+    "status": "equal",
+    "evidence": "Mac 0x192398 compared by hand: writes only the first client cursorPos entry."
+  },
+  "mac:0x00192612": {
+    "status": "equal",
+    "evidence": "Mac 0x192612 compared by hand: null gate, border offset, client rectangle translation, fallback alignment only when both client alignments are zero, all six rectangle words, and zeroing only text width/height match."
+  },
+  "mac:0x0019235e": {
+    "status": "equal",
+    "evidence": "Mac 0x19235e compared by hand: copies all six 32-bit words into the first text rectangle, preserving the same word order."
+  },
+  "mac:0x00192468": {
+    "status": "equal",
+    "evidence": "Mac 0x192468 compared by hand: signed first-client cursor >= startPos and cursor < endPos bounds match."
+  },
+  "mac:0x0019243e": {
+    "status": "equal",
+    "evidence": "Mac 0x19243e compared by hand: writes only the first client list-box cursor position."
+  },
+  "mac:0x0019245a": {
+    "status": "equal",
+    "evidence": "Mac 0x19245a compared by hand: writes only the first client list-box end position."
+  },
+  "mac:0x0019244c": {
+    "status": "equal",
+    "evidence": "Mac 0x19244c compared by hand: writes only the first client list-box start position."
+  },
+  "mac:0x0019234c": {
+    "status": "equal",
+    "evidence": "Mac 0x19234c compared by hand: writes only the first client menu cursor item."
+  },
+  "mac:0x00192720": {
+    "status": "equal",
+    "evidence": "Mac 0x192720 compared by hand: null and positive item-count gates, menu origin/border arithmetic, item traversal, and forwarding rectangle alignments to Item_SetScreenCoords match."
+  },
+  "mac:0x001927ce": {
+    "status": "equal",
+    "evidence": "Mac 0x1927ce compared by hand: four ordered Com_ParseOnLine/atof double-to-float conversions, null/empty early returns, partial writes, and final success match; alignments are untouched."
+  },
+  "mac:0x001924fa": {
+    "status": "intentional",
+    "evidence": "Mac 0x1924fa compared by hand: null/empty, signed-character lowercase weighted hash (index+119)&2047, exact string lookup, allocations, and predecessor-link insertion quirk match. Retain documented native low-permanent-hunk pool and pointer-sized node/alignment so UI strings survive high-hunk mark rollback; Mac allocates high-hunk 8-byte/4-aligned nodes. Allocator and mark-reset contracts inspected."
+  },
+  "mac:0x001921c0": {
+    "status": "equal",
+    "evidence": "Mac 0x1921c0 compared by hand: clears all 2048 hash bucket pointers; sizeof native pointer table corresponds to the Mac 8192-byte table."
+  },
+  "mac:0x001921b6": {
+    "status": "equal",
+    "evidence": "Mac 0x1921b6 compared by hand: forwards size and alignment unchanged to Hunk_AllocAlignInternal."
+  },
+  "mac:0x00192488": {
+    "status": "equal",
+    "evidence": "Mac 0x192488 compared by hand: ORs new flags into the first client dynamicFlags entry."
+  },
+  "mac:0x0019249a": {
+    "status": "equal",
+    "evidence": "Mac 0x19249a compared by hand: extends removal mask with bit 2 when bit 4 is set, then ANDs its inverse into first-client dynamicFlags."
+  },
+  "mac:0x0019233a": {
+    "status": "equal",
+    "evidence": "Mac 0x19233a compared by hand: overwrites only the first client dynamicFlags entry."
+  },
+  "mac:0x00192252": {
+    "status": "equal",
+    "evidence": "Mac 0x192252 compared by hand: writes only the first client offsetTime entry."
+  },
+  "mac:0x00192264": {
+    "status": "equal",
+    "evidence": "Mac 0x192264 compared by hand: copies six 32-bit words in order to the first window rectangle."
+  },
+  "mac:0x00192292": {
+    "status": "equal",
+    "evidence": "Mac 0x192292 compared by hand: copies six 32-bit words in order to the first client rectangle."
+  },
+  "mac:0x001922c6": {
+    "status": "equal",
+    "evidence": "Mac 0x1922c6 compared by hand: copies six 32-bit words in order to the first effects0 rectangle."
+  },
+  "mac:0x00192300": {
+    "status": "equal",
+    "evidence": "Mac 0x192300 compared by hand: copies six 32-bit words in order to the first effects1 rectangle."
+  },
+  "mac:0x00192024": {
+    "status": "equal",
+    "evidence": "Mac 0x192024 compared by hand: directly overwrites window staticFlags."
   }
 }
