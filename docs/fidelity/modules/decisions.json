@@ -19354,5 +19354,149 @@
   "linux:EffectsCore/FxArchive.cpp:287:WriteModel": {
     "status": "equal",
     "evidence": "Inline Mac ArchiveModel 0xaa7a8-0xaa802 resolves XModelGetName and writes byte length plus full name bytes; NULL uses empty string."
+  },
+  "mac:0x000ab004": {
+    "status": "equal",
+    "evidence": "Mac 0xab004: compared forwarding of entity/model and null centity to R_AddRefEntityToScene; native uses the widened GfxModel union."
+  },
+  "mac:0x000ab07e": {
+    "status": "equal",
+    "evidence": "Mac 0xab07e: compared org/radius/red/green/blue forwarding to renderer slot 0x54, corresponding to native refexport_t.AddLightToScene."
+  },
+  "mac:0x000ab628": {
+    "status": "fixed",
+    "evidence": "Mac 0xab6a3-0xab6af: half-FOV uses mulss before cvtss2sd and the double radians multiplication. Native widened fov_x before halving. Preserve the float intermediate, including subnormal rounding; constants and surrounding branch/division order compared; compiled and reviewed, not exercised."
+  },
+  "mac:0x000aae64": {
+    "status": "equal",
+    "evidence": "Mac 0xaae64: compared freeze handling, zero first frame, signed delta clamp to [0,200], old/current time updates, time/seed assignment and 0x70-byte camera copy; native uses the typed freeze dvar."
+  },
+  "mac:0x000ab6e2": {
+    "status": "fixed",
+    "evidence": "Mac 0xab6f1/0xab718/0xab73c/0xab75c/0xab77c: mode tests refer to isReading after the i386 memFile pointer. Native byte offset 4 addressed the widened pointer instead. Use arch->isReading for all four integer transfers and final time reset; compiled and reviewed, not exercised."
+  },
+  "mac:0x000ab324": {
+    "status": "fixed",
+    "evidence": "Mac 0xab3bb-0xab44d and 0xab4c5-0xab557: restore cosine-product-first addition, and negate cosine before opposite-plane multiplication/addition. Native instead added sine first and subtracted positive cosine products. Other plane counts, far-plane test and dot/subtract order compared; compiled and reviewed, not exercised."
+  },
+  "mac:0x000ab0b0": {
+    "status": "equal",
+    "evidence": "Mac 0xab0b0: exact-symbol body returns without work; native empty helper matches."
+  },
+  "mac:0x000ab256": {
+    "status": "fixed",
+    "evidence": "Mac 0xab2dc-0xab305: ja skips the second point and jbe culls after the second point, including unordered comparisons. Native <= predicates lost unordered branches. Use !(dot > -radius) for both tests; loop/arithmetic order compared; compiled and reviewed, not exercised."
+  },
+  "mac:0x000ab0d0": {
+    "status": "equal",
+    "evidence": "Mac 0xab0d0: compared global current-camera lookup, plane-count loop, left-associated three-term float dot minus plane distance, and strict ordered dot < -radius test."
+  },
+  "mac:0x000ab18a": {
+    "status": "equal",
+    "evidence": "Mac 0xab18a: compared previous-camera numPlanes/plane lookup, three-term dot/subtract order and strict ordered dot < -radius test."
+  },
+  "mac:0x000aae0c": {
+    "status": "equal",
+    "evidence": "Mac 0xaae0c: compared four zero stores to mTime, mOldTime, mFrameTime and mTimeFrozen; time/camera/seed are left untouched."
+  },
+  "mac:0x000ab03c": {
+    "status": "equal",
+    "evidence": "Mac 0xab03c: compared material forwarding and return from renderer slot 0x34, corresponding to native GetMaterialName."
+  },
+  "mac:0x000ab050": {
+    "status": "equal",
+    "evidence": "Mac 0xab050: compared material forwarding and integer return from renderer slot 0x38, corresponding to native GetMaterialSubimageCount."
+  },
+  "mac:0x000ab0b6": {
+    "status": "fixed",
+    "evidence": "Mac 0xab0c2: imull wraps the 0x369d035 seed product to 32 bits and returns the previous seed. Native signed multiplication had undefined overflow; use unsigned multiplication before storing the int bit pattern; compiled and reviewed, not exercised."
+  },
+  "mac:0x000aae30": {
+    "status": "equal",
+    "evidence": "Mac 0xaae30: compared zero stores to time, mTime, mOldTime, mFrameTime, mTimeFrozen and mSeed; no camera initialization."
+  },
+  "mac:0x000ab064": {
+    "status": "equal",
+    "evidence": "Mac 0xab064: compared material forwarding to renderer slot 0x3c and byte return; native Bool is unsigned char."
+  },
+  "mac:0x000ab026": {
+    "status": "equal",
+    "evidence": "Mac 0xab026: compared low-byte widening and renderer slot 0x28 dispatch; native explicitly converts ignore to unsigned char."
+  },
+  "mac:0x000aafa2": {
+    "status": "equal",
+    "evidence": "Mac 0xaafa2: compared trace/start/end/mins/maxs/world-model-zero/flags argument order, ignored skip entity and fraction==1 selecting entity 1023 versus 1022."
+  },
+  "mac:0x000aaee8": {
+    "status": "equal",
+    "evidence": "Mac 0xaaee8: compared frozen/initial/negative-delta exits, 200ms chunk loop, AddScheduledEffects then NonBolt then Bolt updates, mOldTime update placement and final time/seed writes. Native NULL scheduler parameters are ignored by FX_AddScheduledEffects."
+  },
+  "linux:EffectsCore/FxSystem.cpp:299:Unused": {
+    "status": "unchecked",
+    "evidence": "Linux reconstructs an empty FxHelper::Unused with unknown original name; there is no native body/caller or identifiable Mac symbol. No Mac identity or inline call site was established, so absence is not treated as equality."
+  },
+  "mac:0x00060d80": {
+    "status": "equal",
+    "evidence": "Mac 0x60d80: compared helper dispatch with refdef/zfar and subsequent fx_camera_valid=1 store."
+  },
+  "mac:0x00060db0": {
+    "status": "equal",
+    "evidence": "Mac 0x60db0: compared fx_camera_valid=0 before helper dispatch, then active Bolt/NonBolt counter copies to their private counters."
+  },
+  "mac:0x00060d6c": {
+    "status": "equal",
+    "evidence": "Mac 0x60d6c: compared forwarding zero to FX_Free."
+  },
+  "mac:0x00060d58": {
+    "status": "equal",
+    "evidence": "Mac 0x60d58: compared forwarding one to FX_Free."
+  },
+  "mac:0x00060c52": {
+    "status": "equal",
+    "evidence": "Mac 0x60c52: compared Com_GetClientDObj(entNum,0), null returning -1, and object/bone forwarding to DObjGetBoneIndex."
+  },
+  "mac:0x00060e12": {
+    "status": "equal",
+    "evidence": "Mac 0x60e12: compared scheduler lookup and effect forwarding to GetEffectLength; native return preserves the float result."
+  },
+  "mac:0x00060d48": {
+    "status": "equal",
+    "evidence": "Mac 0x60d48: compared low-byte widening and dispatch to FX_Init; native explicitly converts rendererExists to unsigned char."
+  },
+  "linux:EffectsCore/Fxexport.cpp:81:FX_PlayEffect": {
+    "status": "intentional",
+    "evidence": "Matched the three-argument export to Mac 0x60cb4 and scheduler overload 0x61802: native copies forward and calls MakeNormalVectors before the main scheduler call with null bolt. Native arm64 Apple SDK path compared; optional COD2_NATIVE_TRACE combat receipt is retained as a native diagnostic."
+  },
+  "linux:EffectsCore/Fxexport.cpp:86:FX_PlayEffect": {
+    "status": "intentional",
+    "evidence": "Matched the four-argument export to Mac 0x60ce0 and scheduler overload 0x6178e: native FX_PlayOrientedEffect copies forward/up and forms right=forward cross up before the main scheduler call with null bolt. Native arm64 Apple SDK path compared; optional COD2_NATIVE_TRACE combat receipt is retained as a native diagnostic."
+  },
+  "mac:0x00060cb4": {
+    "status": "intentional",
+    "evidence": "Matched the three-argument export to Mac 0x60cb4 and scheduler overload 0x61802: native copies forward and calls MakeNormalVectors before the main scheduler call with null bolt. Native arm64 Apple SDK path compared; optional COD2_NATIVE_TRACE combat receipt is retained as a native diagnostic."
+  },
+  "mac:0x00060ce0": {
+    "status": "intentional",
+    "evidence": "Matched the four-argument export to Mac 0x60ce0 and scheduler overload 0x6178e: native FX_PlayOrientedEffect copies forward/up and forms right=forward cross up before the main scheduler call with null bolt. Native arm64 Apple SDK path compared; optional COD2_NATIVE_TRACE combat receipt is retained as a native diagnostic."
+  },
+  "mac:0x00060d14": {
+    "status": "intentional",
+    "evidence": "Mac 0x60d14: compared effect/origin/axis/bolt forwarding to scheduler main overload. Native typed-pointer adaptation is equivalent for the native arm64 build; optional COD2_NATIVE_TRACE combat receipt is retained as a native diagnostic."
+  },
+  "mac:0x00060c8e": {
+    "status": "intentional",
+    "evidence": "Mac wrapper 0x60c8e and scheduler overload 0x61862 were compared through explicit {+Z,+X,+Y} basis construction and null bolt. Native keeps its NULL-axis sentinel; Mac basis requires FxScheduler commit 67360de (unit tip 187988dc25ab3310367e68165285caed62795526), inspected read-only and to merge first. Optional COD2_NATIVE_TRACE combat receipt is retained as a native diagnostic. No code change here; not exercised in this worktree."
+  },
+  "linux:EffectsCore/Fxexport.cpp:48:FX_SwitchToScheduler": {
+    "status": "intentional",
+    "evidence": "Linux-only reconstructed dedicated-server helper is empty. Mac Server_SwitchToValidFxScheduler at 0x60e30 is also empty; native preserves that Mac no-op directly without the discarded dedicated scheduler-selection loop/helper."
+  },
+  "mac:0x00060df4": {
+    "status": "equal",
+    "evidence": "Mac 0x60df4: compared helper lookup and time forwarding to WarpTime."
+  },
+  "mac:0x00060e30": {
+    "status": "equal",
+    "evidence": "Mac 0x60e30: exact-symbol body returns immediately; native empty entry matches."
   }
 }
