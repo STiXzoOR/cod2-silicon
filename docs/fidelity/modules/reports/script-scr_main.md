@@ -48,3 +48,9 @@ Full providers were read, including developer-off return and developer-on opcode
 The resulting array has a real consumer: Mac `GScr_LoadScripts` calls initialization at0x1a0353 and `Scr_LoadScript` at0x1a035f; the latter reads loadedScripts at0xaef54/0xaef92 for lookup and insertion. Native startup reaches the same typed state and consumer under its existing loading schedule. This establishes consumed state initialization, not remote transport or the whole later lifecycle.
 
 Independent review is recorded in units/review-provenance-remote22.md; fresh complete original and Mac providers/owners are retained in recon-provenance-remote22.noindex. No source changed. No compilation, tests, CI or replay ran. Inherited corrections remain compiled and reviewed, not runtime verified.
+
+## Script-range state boundary — 2026-11-06
+
+`Scr_IsInScriptMemory` remains unchecked. Its complete original 0x8075e40 body reads programBuffer and endScriptBuffer and returns the conjunction of two unsigned comparisons. The retained exact script7 producer/bounds evidence was reread; the endScriptBuffer store does not supply this query. Fresh full Mac `Scr_GetFunctionHandle` 0xaf28e instead resolves filename/name state and filters its offset against programLen at 0xaf332. No actual complete endScriptBuffer-based predicate or producer-backed equivalence between those upper-bound roles was established. This is a specific state/operation gap, not closure from a missing name or caller. The approved native offset representation remains unchanged.
+
+Private evidence: `recon-provenance-scriptget32.noindex`, with prior `recon-provenance-script7.noindex` retained. No source change, compilation, tests, CI, replay or runtime execution ran.
