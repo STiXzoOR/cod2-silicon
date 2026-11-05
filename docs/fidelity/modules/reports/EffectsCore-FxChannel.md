@@ -21,3 +21,10 @@ Parent inspection covered all six units; independent reviews covered protocol/sn
 Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. Dedicated replay does not exercise client HUD, camera, sound or weapon rendering; unreached corrections remain compiled and reviewed.
 
 Catalog coverage passed without semantic catalog changes. Hosted ILP32 comparison remains unavailable because the unchanged reference fails to compile; no byte parity is claimed.
+
+
+## Original helper provenance — fx9
+
+Original 1.0 0x812123c uniquely maps to original 1.3 0x81236cc. The complete helper passes source->curve through FxCurve_Reference at call 0x81236de to 0x81240d0, writes the returned pointer to target, then copies both 32-bit scale-range endpoint words. This is a real reference/copy contract, not an inferred unused symbol. Fresh exact Mac FxChannelInstance_Create 0x9ff88 creates an iterator from the curve and samples one scale through FxRange::GetVal; it does not copy both endpoint fields into another FxChannel. Construction/migration owners likewise do not establish this complete copy. No positive Mac/native copy owner was recovered, so the row remains unchecked.
+
+The retained direct-call scan finds the positive channel-copy-to-curve-reference chain; raw absolute address references add only unwind records. Those bounded searches are not evidence of semantic absence and close no row. No source or prior resolved verdict changed, no new defect was established, and no compilation, tests, CI, replay or runtime exercise ran. Original bodies, disambiguating neighbors, decoded table and fresh exact Mac candidates are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-fx9.noindex/`.

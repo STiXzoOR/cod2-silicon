@@ -135,3 +135,12 @@ production code, fixture or previously resolved verdict changed. No new
 compilation, CI, tests or replay ran; no archive runtime coverage is claimed.
 Private exact-symbol evidence and the full module ledger are retained in
 `recon-inline-effects4.noindex` and orchestration `units/inline-effects4.ledger.json`.
+
+
+## Original helper provenance — fx9
+
+The original empty slot immediately preceding the uniquely mapped kill-all-effects owner is at 1.0 0x813117a / 1.3 0x81335c2. Its reconstructed FX_UtilUnused label still does not recover a meaningful original name or complete Mac/native operation. The row remains unchecked.
+
+Original 1.0 0x81315a6 uniquely maps to original 1.3 0x81339ee. Its complete body checks the active sight-blocker count, normalizes the requested segment, applies the minimum trace distance, then traverses non-bolted and bolted effect lists. Each flagged object invokes virtual slot +0x18 GetVisibility and multiplies its returned value into the result. Fresh exact Mac FX_GetServerVisibility 0x596c6 instead traverses cached 20-byte visibility records and performs point/radius/value tests. Native retains that cached-record owner. A shared segment setup is not the full active-list/virtual-call/state-timing contract, and no actual original query consumer establishes an approved replacement boundary. The row remains unchecked.
+
+The retained direct-call scan finds the positive channel-copy-to-curve-reference chain; raw absolute address references add only unwind records. Those bounded searches are not evidence of semantic absence and close no row. No source or prior resolved verdict changed, no new defect was established, and no compilation, tests, CI, replay or runtime exercise ran. Original bodies, disambiguating neighbors, decoded table and fresh exact Mac candidates are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-fx9.noindex/`.
