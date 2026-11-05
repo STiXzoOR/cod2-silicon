@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 297,
+      "unchecked": 296,
       "intentional": 3184,
-      "equal": 4770,
+      "equal": 4771,
       "fixed": 1206
     },
     "scopes": {
@@ -198062,8 +198062,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no PointInBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native candidate CM_PointContents uses strict interior tests (leaf->mins>=point or point>=leaf->maxs), unlike these inclusive-boundary helper contracts. No complete inclusive two-/three-dimensional native/Mac identity was established. Original-address provenance recovered: Linux 1.0 IDB 0x80a6842 maps to retained original Linux 1.3 ELF 0x80a8ba6 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
+        "status": "equal",
+        "evidence": "Complete original1.3 0x80a8ba6\u20130x80a8c21, uniquely mapped from original1.0 0x80a6842, identifies two-coordinate inclusive point/min/max membership. New complete actual Mac UI role: Display_MouseMove0x16e5dd/0x16e5e7 converts cursor coordinates and calls Menu_HandleMouseMove0x16e622. The owner reads actual item.window.rect x/y/w/h, transforms cursor with alignment4 CalcScreenX/Y and rectangle through all-field CalcScreenPlacement, then forms actual upper endpoints with ADDSS rx+rw/ry+rh at0x16e107/0x16e128. Complete four comparisons0x16e0fe\u20130x16e130 consume both point and both bounds coordinates in X-lower/X-upper/Y-lower/Y-upper order; Mac UCOMISS/JB rejects unordered, equality passes. Native Rect_ContainsPoint and the initial item branch preserve that complete produced-bounds operation and result: reject reaches actual mouse-leave/next-item handling, success permits subsequent mouse-enter/focus gates. Mac unordered behavior is authority; no arbitrary original Linux exceptional/ABI equivalence is claimed. Full actual origin/extent adapter and all four comparisons, not a projected three-dimensional slice or hypothetical matrix. Scope is the initial item-window membership with valid storage and actual producer/state gates, not whole menu behavior, corrected text rectangle, parser/data reachability, FP exceptions/payloads or runtime. Independent review-provenance-ui2d23.md accepted equal; complete original/Mac providers, raw placement tables and hashes retained recon-provenance-pointbounds22.noindex. No source change, compilation, tests, CI, full build, replay or runtime for this alias; separate text-specific defect does not change this classification."
       },
       {
         "id": "linux:universal/com_math.cpp:233:PointInCircleFromUniformDeviates",

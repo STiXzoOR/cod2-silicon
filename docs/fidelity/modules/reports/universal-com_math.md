@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**Current: 171/229 reconciled: 141 equal, 30 fixed, 0 intentional; 58 unchecked.**
+**Current: 172/229 reconciled: 142 equal, 30 fixed, 0 intentional; 57 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -466,3 +466,30 @@ Independent review: review-provenance-pointbounds22.md. Exact original and Mac
 caller/wrapper/provider bodies and source hashes are retained in
 recon-provenance-pointbounds22.noindex. Existing provider verification remains
 historical; no compilation, tests, CI, full build, replay or runtime was run.
+
+## Actual UI point/rectangle membership (provenance-ui2d23)
+
+PointInBounds2D is equal through the complete initial item-window membership
+operation. Original0x80a8ba6 identifies both point coordinates, both lower/upper
+bounds and the membership result. Actual Mac Display_MouseMove supplies cursor
+coordinates to Menu_HandleMouseMove. The owner reads item.window.rect x/y/w/h,
+transforms cursor and all rectangle fields through the actual screen-placement
+providers, and forms upper endpoints with ADDSS at0x16e107/0x16e128. All four
+comparisons0x16e0fe–0x16e130 have actual lower/upper X/Y input roles and reject
+through mouse-leave/next-item handling; success permits subsequent enter/focus
+gates. Native Rect_ContainsPoint preserves those additions, order and comparisons.
+
+Mac UCOMISS/JB rejects unordered pairs and accepts equality. That is the
+authoritative consumed operation; original Linux unordered behavior is not an
+ABI or exceptional-behavior promise. No finite/positive extent condition is
+silently assumed. This is an actual origin/extent-to-bounds producer, not a
+hypothetical adapter or a slice of a three-dimensional predicate. The scope
+excludes whole menu behavior, corrected text bounds, invalid storage, floating
+exception/payload behavior, data reachability and runtime verification. The
+separate text-rectangle selector defect does not affect this initial item-rectangle
+classification.
+
+Independent review: review-provenance-ui2d23.md. Full original/actual Mac owners,
+placement jump tables and source hashes are retained in
+recon-provenance-pointbounds22.noindex. This alias required no source change,
+compilation, tests, CI, full build, replay or runtime exercise.
