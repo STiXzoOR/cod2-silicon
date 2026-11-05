@@ -24346,5 +24346,269 @@
   "linux:punkbuster/pbsv.cpp:346:~stPbSv": {
     "status": "intentional",
     "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x000045a6": {
+    "status": "equal",
+    "evidence": "Mac 0x45a6 and retained BuilderCallback both return false without inspecting arguments or changing state. The callback belongs to the retired display-selection nib, and legacy MacDisplay.c is excluded from the selected native macOS targets."
+  },
+  "mac:0x00006040": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x6040 scalar, vector and four string assignments. The i386 CDisplayInfo object and its 100-byte layout are excluded with MacDisplay.c. Selected macos_display.c owns typed SDL MacMode records and direct current-context GL queries; no native caller assigns a CDisplayInfo object."
+  },
+  "mac:0x0000613a": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x0000613a renderer admission, mode filtering/sorting, IOKit identity and temporary CGL capability queries; compared both constructor variants and their eight register-allocation differences. Native MacDisplay_Initialize uses SDL display modes with 32-bit color; current-context GL getters, unified-memory budget and generic Apple card/shader policy replace this excluded CDisplayInfo cache. No old object-layout equivalence is claimed."
+  },
+  "mac:0x00006baa": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x00006baa renderer admission, mode filtering/sorting, IOKit identity and temporary CGL capability queries; compared both constructor variants and their eight register-allocation differences. Native MacDisplay_Initialize uses SDL display modes with 32-bit color; current-context GL getters, unified-memory budget and generic Apple card/shader policy replace this excluded CDisplayInfo cache. No old object-layout equivalence is claimed."
+  },
+  "mac:0x000043cc": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x43cc available-position-bounds/device fallback and signed centering arithmetic. Native SetWindowMode in macos_display.c uses SDL_SetWindowPosition with SDL_WINDOWPOS_CENTERED for windowed mode and SDL fullscreen transitions otherwise. Only excluded legacy SetupDisplay/SetMode called this Carbon helper; SDL owns the selected window geometry."
+  },
+  "mac:0x00004124": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4124 QuickDraw device rect extraction and MacTools_CenterRect call. Native cursor capture in linux_input.c/MacRawMouse replaces MacTools_HideCursor, the former external caller; SDL window positioning replaces device-rect centering. The selected native graph has no caller or provider requiring this QuickDraw GDHandle dereference."
+  },
+  "mac:0x0000542a": {
+    "status": "fixed",
+    "evidence": "Mac 0x57d5..0x57f6 maps presentation interval 0x80000000 to AGL interval 0 and every other value to 1; native creation discarded the argument and forced SDL interval 0, while CreateDevice passed literal 0. Native CreateDevice now forwards its actual private presentation word 11; CreateScreenContext and Reset share MacDisplay_SetPresentationInterval after making the GL context current. Original Reset reads original pp+0x34 at 0x19e30; the native 14-int record instead stores interval at +0x2c, windowed at word 7 and refresh at word 12, so the imported LP64 D3D struct must not be used. Original AGL call is fullscreen-only; native SDL applies the supplied request to its selected GL context in either window mode. Setter errors remain ignored as in Mac. Typed SDL/FBO creation replaces AGL attributes/depth fallback and has no multisampling. Stock/CoDx actual client callers/provider compiled and assembly-reviewed, not exercised; startup r_init still supplies constant 1 and its reset path supplies r_swapInterval."
+  },
+  "mac:0x00004152": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4152 fullscreen/fade-token guards, CGDisplayFade and reservation release. Selected native CDirect3DDevice_Reset changes SDL mode/framebuffer without display-wide CoreGraphics fading; macos_display.c FadeIn is intentionally inert and owns no reservation token. No native caller attempts an AGL-era fade transition."
+  },
+  "mac:0x000041bc": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x41bc release/reacquire of an existing fade reservation, 15-second reservation and fade-to-black call. Selected native Reset uses SDL window/framebuffer transitions and does not acquire display-wide fade reservations. macos_display.c FadeOut remains inert as part of that concrete replacement, not a claim that the missing legacy body matches."
+  },
+  "mac:0x000046f8": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x46f8 five CDisplayInfo outputs at 0x58/0x5c/0x60..0x62 and constructor CGL sample queries. Selected native GetAntiAliasingMultiSampleInfo reports zero buffers/samples and false flags, matching its non-multisampled CreateRenderBuffer implementation; no current engine caller consumes legacy sample-cache fields. Native FSAA is not claimed supported."
+  },
+  "mac:0x000045f4": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x45f4 card-cache load and constructor ATI/Nvidia/Intel detection. Selected native GetCardType returns generic 0 for Apple rather than an obsolete vendor workaround class. Inspected active CColorConverter, MacOpenGLUtils and screenshot callers; they retain generic paths while capability flags are queried independently from GL. No blanket renderer exemption is used."
+  },
+  "mac:0x000042d0": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x42d0 lazy CGDisplayBitsPerPixel cache. Native macos_display.c reports 32, consistent with its SDL MacMode records and 8-bit RGBA context attributes; depth-buffer bits are configured separately by CreateScreenContext. The old desktop color-depth cache and Carbon callers are not selected."
+  },
+  "mac:0x00004256": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4256 window-port dimensions clamped to 640x480 or desktop pixel fallback. Active screenshot/device callers use selected macos_display.c GetCurrentDimensions, which returns the fixed engine render framebuffer dimensions through MacPlatform_GetRenderSize rather than Retina window/desktop bounds. This preserves the chosen render resolution under native presentation scaling."
+  },
+  "mac:0x00005dd8": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x5dd8 dimensions, lazy desktop depth and dictionary refresh cache. Native GetCurrentMode reports configured render dimensions, fixed color depth 32 and configured refreshRate. macos_display.c owns mode configuration and SDL transitions; there is no selected native caller relying on the old QuickDraw/CGDisplayCurrentMode cache."
+  },
+  "mac:0x00004016": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4016 CGRect-to-short conversion, device enumeration, rect comparison and main-device fallback. Selected GetDeviceHandle returns NULL because native SDL/CGL context creation and positioning use display indexes/window objects, never QuickDraw GDHandles. All original helper callers were audited: excluded centering/context bodies and replaced cursor capture. No live engine caller dereferences this compatibility result."
+  },
+  "mac:0x00004648": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x00004648 CDisplayInfo string load at 0x38 and constructor glGetString acquisition. The selected GL provider macos_display.c GetGLExtensions queries GL_EXTENSIONS from the current SDL GL context instead of retaining an i386 std::string in a temporary-context cache. Inspected native device/capability consumers; optional Metal responses are not used to exempt the GL path."
+  },
+  "mac:0x0000462c": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x0000462c CDisplayInfo string load at 0x34 and constructor glGetString acquisition. The selected GL provider macos_display.c GetGLRenderer queries GL_RENDERER from the current SDL GL context instead of retaining an i386 std::string in a temporary-context cache. Inspected native device/capability consumers; optional Metal responses are not used to exempt the GL path."
+  },
+  "mac:0x00004610": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x00004610 CDisplayInfo string load at 0x30 and constructor glGetString acquisition. The selected GL provider macos_display.c GetGLVendor queries GL_VENDOR from the current SDL GL context instead of retaining an i386 std::string in a temporary-context cache. Inspected native device/capability consumers; optional Metal responses are not used to exempt the GL path."
+  },
+  "mac:0x00003ff0": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3ff0 screen-context drawable or GetWindowPort fallback. Selected GetMainPort returns the SDL window compatibility handle; SDL/CGL own actual rendering, not QuickDraw. The original external consumer was CMacGameEngine_DrawSplashScreen; its absent native drawing is a separate lifecycle gap, not supplied or certified by this getter."
+  },
+  "mac:0x00003fe6": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3fe6 main-window global load. Selected native GetMainWindow returns sdl_gl_window instead of WindowRef. CDirect3D_CreateDevice ignores hFocusWindow and lets the SDL adapter own the window; original Carbon event installation and audio-window ownership are not selected. This is an opaque platform-handle adaptation, not QuickDraw/Carbon interoperability."
+  },
+  "mac:0x00004794": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4794 cached float load and constructor extension guard/default 1.0/GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT query. Selected macos_display.c performs the same guard/default/query against its current context. Active CDirect3DDevice_GetDeviceCaps consumes the result; only ownership/timing of the capability cache changed with the SDL provider."
+  },
+  "mac:0x000046dc": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x000046dc cached 0x48 field and constructor capability query. Selected GL macos_display.c GetMaxTextureImageUnits calls glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS) against the current SDL context; CDirect3DDevice_GetDeviceCaps is the active consumer. SDL GL 2.1 replaces the temporary CGL/i386 cache and obsolete OS gate, not the renderer responsibility."
+  },
+  "mac:0x000046c0": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x000046c0 cached 0x44 field and constructor capability query. Selected GL macos_display.c GetMaxTextureUnits calls glGetIntegerv(GL_MAX_TEXTURE_UNITS) against the current SDL context; CDirect3DDevice_GetDeviceCaps is the active consumer. SDL GL 2.1 replaces the temporary CGL/i386 cache and obsolete OS gate, not the renderer responsibility."
+  },
+  "mac:0x000045ae": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x45ae direct 16-byte resolution record load. Native GetNthMode bounds-checks an index and copies width/height/fixed depth/refresh from SDL MacMode records created by native Initialize. Audited the selected CDirect3D adapter-mode implementation and MacPlatform_ModeNames path; neither reads the excluded CDisplayInfo vector layout. Separate CDirect3D_EnumAdapterModes still has no output body and is a downstream renderer gap, not certified by this provider verdict."
+  },
+  "mac:0x00004a32": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4a32 (end-begin)>>4 mode count. Selected GetNumModes initializes and counts native SDL MacMode records; MacPlatform_ModeNames supplies native display choices with defaults and deduplication. Old CDisplayInfo sorting/admission and vector storage are excluded; no native caller reads that vector directly. Separate CDirect3D_GetAdapterModeCount returns one and is not claimed to reflect this native list."
+  },
+  "mac:0x0000473c": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x473c cached shader-version load and constructor ARB/vendor/old-OS decisions. Selected GetPCPixelShaderVersion advertises 0xffff0200 for the explicitly requested native GL 2.1 compatibility path. MacOpenGLUtils_GetPCPixelShaderVersion remains the engine consumer; this is the existing native capability policy, not proof for legacy ATI/Nvidia hardware or optional Metal."
+  },
+  "mac:0x00004776": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x00004776 cached boolean at 0x52 and constructor gluCheckExtension for GL_EXT_texture_filter_anisotropic. Selected GL macos_display.c GetSupportsAnisotropicFiltering checks that exact extension token from its current-context GL string. Audited CDirect3DDevice capability consumers; the query replaces the excluded temporary-context cache, while actual renderer state remains in scope."
+  },
+  "mac:0x00004758": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x00004758 cached boolean at 0x51 and constructor gluCheckExtension for GL_EXT_blend_func_separate. Selected GL macos_display.c GetSupportsSeparateBlendFunc checks that exact extension token from its current-context GL string. Audited CDirect3DDevice capability consumers; the query replaces the excluded temporary-context cache, while actual renderer state remains in scope."
+  },
+  "mac:0x00004696": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4696 two 32-bit byte-budget loads and constructor CGL renderer-memory probes. Native GetVideoMemoryInfo reserves one eighth of unified memory capped at 1 GiB, returning MiB for video and bytes for texture. Verified R_CheckDxCaps adapts its native threshold to >64 MiB; CDirect3DDevice stores the texture byte budget and GetAvailableTextureMem returns that field. No LP64 long or i386 object offsets are reused."
+  },
+  "mac:0x000049ca": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x49ca initialized/fullscreen/context drawable selection and QDGlobalToLocalPoint. The original callers were CMacGameEngine_HandleEvent mouse cases; selected linux_input.c consumes SDL window-relative points directly and MacPlatform_MapWindowPoint maps drawable/render coordinates. No native caller or QuickDraw port provider uses the excluded conversion helper."
+  },
+  "mac:0x00003fda": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3fda sInWindowMode getter. Selected macos_display.c derives this query from explicit MAC_WINDOWED/MAC_FULLSCREEN/MAC_BORDERLESS configuration and maintains sInWindowMode for compatibility. Native SDL focus/input uses fullscreen/window state directly rather than the removed Carbon initialization lifecycle."
+  },
+  "mac:0x00003fbc": {
+    "status": "equal",
+    "evidence": "Read Mac 0x3fbc: return false in window mode, otherwise test screen context non-null. Selected macos_display.c MacDisplay_IsFullscreen implements the same predicate over screenContext and windowMode != MAC_WINDOWED, including borderless as a non-windowed native mode. Its active linux_input.c capture-policy caller was inspected."
+  },
+  "mac:0x00004664": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4664 gluCheckExtension over the cached GL extension string. Selected macos_display.c uses token-boundary scanning over the current-context GL_EXTENSIONS string, rejects null/empty/space-containing names, and avoids the zero-returning carbon_stubs.c gluCheckExtension provider. Active MacOpenGLUtils extension queries therefore use the concrete native replacement."
+  },
+  "mac:0x000040d4": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x40d4 pre-initialization true return and later sInWindowMode query. Selected macos_display.c IsWindowMode reports explicit native window configuration, even before SDL initialization; native configuration/creation happens through CDirect3D_CreateDevice and MacPlatform_ConfigureWindow. No current native caller depends on the old Carbon pre-init override."
+  },
+  "mac:0x00004962": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4962 drawable selection and QDLocalToGlobalPoint. Original MacTools_HideCursor converted/clamped a QuickDraw point; native linux_input.c and MacRawMouse own SDL relative/raw capture and render-coordinate mapping without global QuickDraw coordinates. No selected native caller needs this excluded helper; it is not backed by the inert Carbon conversion stub."
+  },
+  "mac:0x000040f0": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x40f0 GetWindowPortBounds/PtInRect. Former CMacGameEngine_HandleEvent hit tests are replaced by SDL window events and window-relative mouse delivery in linux_input.c. Native MacPlatform_MapWindowPoint handles presentation bounds and render mapping; no native source calls this excluded Carbon helper or its zero-returning PtInRect provider."
+  },
+  "mac:0x000052ea": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x52ea screen-context identity clear, destructor/delete and caller-reference zeroing. Selected MacDisplay_ReleaseContext owns a typed SDL MacContext and its GL framebuffer/gamma resources, then frees and nulls the caller reference. CDirect3DDevice_Release calls it. The missing original destructor glFinish was separately restored and recorded at the OpaqueContextRef row; no AGL object-layout equivalence is claimed. The callee destructor final odd-count swap remains unchecked at mac:0x0000526e; this verdict covers typed pointer/resource ownership only."
+  },
+  "mac:0x0000532c": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x532c initialized guard, QuickTime capture stop, fullscreen gamma-table restoration/free, Carbon window disposal and menu/UI restoration. Native ReleaseDisplay releases the selected SDL context/window/modes/video subsystem, native borderless observer and presentation-local gamma state. Native gamma never changes system transfer tables and no native movie-capture owner exists; old Carbon cleanup providers are not called."
+  },
+  "mac:0x00005eea": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x5eea visible-size early return, hide/resize/center, cached depth/refresh and paint/show. Active CDirect3DDevice_Reset uses selected MacDisplay_SetMode: SDL window/fullscreen transitions, CGL backing-size adjustment and offscreen framebuffer replacement with failure cleanup. Fixed render size/color and borderless presentation replace QuickDraw window resizing; no Metal future-work exemption is used."
+  },
+  "mac:0x00004492": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4492 initialization guard, CG bounds conversion, Carbon window class/attributes, content color/title and centering. Selected native SetupDisplay seeds render size and initializes SDL; actual window/context creation belongs to CDirect3D_CreateDevice -> CreateScreenContext. Native SDL title, centering and explicit fullscreen configuration replace the excluded Carbon window provider."
+  },
+  "mac:0x00004322": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4322 EndMediaEdits/track insertion/movie-resource write/close sequence and movie clear. Selected macos_display.c StopCapture is inert because its SDL/GL presentation owns no QuickTime Movie/Track/Media or movie-file capture lifecycle; the only original call was old ReleaseDisplay. Native screenshot capture uses renderer screenshot code, not this unsupported movie recorder."
+  },
+  "mac:0x000042fa": {
+    "status": "unchecked",
+    "evidence": "Read Mac 0x42fa enable-byte guard, aglSwapBuffers and increment of global sSwapCount. Active native CDirect3DDevice_Present goes directly through SDL_GL_SwapWindowDirect, which copies the offscreen FBO into the default drawable and does not track original swap parity. The count also controls the original destructor final swap at 0x5283/0x52c7; its effect under SDL/FBO backing is unproved. Existing regular FBO presentation is inspected, but omission of count/final-swap semantics cannot be declared intentional solely because AGL is replaced. No speculative parity behavior or runtime check was added."
+  },
+  "mac:0x0000526e": {
+    "status": "unchecked",
+    "evidence": "Mac 0x527e glFinish omission was corrected and compiled, but the whole destructor remains unresolved: Mac 0x5283 tests global swap parity and 0x52c7..0x52e7 performs a final aglSwapBuffers for odd count, double buffering and enabled swapping. Native renders into offscreen FBOs and blits to the SDL default back buffer at each present. A raw final SDL swap can expose an old or undefined default back buffer; presenting the FBO again instead exposes current content. No allocator, drawable/back-buffer retention or visible lifecycle evidence establishes which matches Mac, and the native provider tracks neither original global parity nor final swap. No speculative swap was added. The glFinish fix is compiled and reviewed, not exercised; whole-frame synchronization elsewhere is not certified."
+  },
+  "mac:0x000051f2": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x51f2 rect-list hit scan, selected display-index update and user-pane redraw. This is the old MacDisplay_Initialize nib display picker. Native SDL enumeration plus MacPlatform_ModeNames/launcher resolution and window configuration replace the picker; no Carbon user pane, sRectList or associated tracking callback is selected."
+  },
+  "mac:0x002ebd4a": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x2ebd4a in __TEXT,__textcoal_nt: 100-byte CDisplayInfo insert/shift, allocation growth, copy assignment, string/vector destruction and exception cleanup. The entire CDisplayInfo container is excluded with MacDisplay.c. Native Initialize allocates typed SDL MacMode records and direct GL getters own capabilities, so no native caller constructs or inserts a legacy display object."
+  },
+  "mac:0x0000875c": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x875c destructor wrapper passing (0,65535) into helper 0x848a; helper releases rect storage and CDisplayInfo strings/vectors. Those excluded C++ globals have no native ownership. Native explicit ReleaseDisplay frees SDL mode records/window/context instead; the selected program does not register this legacy global destructor."
+  },
+  "mac:0x0000876c": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x876c initialization wrapper passing (1,65535) into helper 0x848a; helper zeros display and rect vectors. Native globals are statically zeroed and explicit MacDisplay_Initialize allocates SDL mode storage. The removed C++ vector initialization is not a native provider dependency."
+  },
+  "mac:0x00003618": {
+    "status": "intentional",
+    "evidence": "Read command OK/cancel refcon/modal exit, callback commands, close event, mouse cursor selection and private focus advance at Mac 0x3618. Native SDL event pumping, terminal console input and launcher setup own these consumers; no selected nib installs this handler. Carbon event/control providers remain inert."
+  },
+  "mac:0x0000383a": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x383a edit hook rejection, command/control-character exceptions, selection-adjusted signed-short length cap, alert and private advance-focus event. Former console/serial edit controls are replaced by terminal input and launcher KeyStore/SetupView validation. No selected native edit control installs this Carbon key filter."
+  },
+  "mac:0x00003386": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3386 default nib name, bundle nib/window creation, four event specifications, callback storage and resize-limit adjustment. Original consumers were Mac display selection, CreateConsoleWindow and CCallOfDutyEngine serial entry. Native SDL window/mode setup, mac_syscon terminal and launcher KeyStore/SetupView replace these owners; placeholder nib function arrays are not called."
+  },
+  "mac:0x0000352a": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x352a Item signature/control-ID lookup and error-to-null result; retained lookup logic matches structurally. Native console no longer requests a Carbon control, and launcher/SDL own the former nib consumers. GetControlByID is an inert link stub, so no usable native Carbon-control equality is claimed."
+  },
+  "mac:0x00003a44": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3a44 output initialization, Item lookup, signed-short buffer size minus one, text-tag GetControlData and success terminator. Former console hook and serial-entry consumers use terminal buffers or launcher key state instead. GetControlData does not implement native controls; this dormant helper is intentionally outside selected UI ownership."
+  },
+  "mac:0x00003f42": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3f42 Item lookup, control-kind success, hitx kind check and HITextViewGetTXNObject. Former console text-view consumer is replaced by mac_syscon stdout/terminal input. Selected TXN provider is a placeholder array, not an SDK text object; no native caller requests this old object."
+  },
+  "mac:0x0000350c": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x350c DisposeWindow followed by builder-callback clear. Native SDL owns display windows, mac_syscon owns no console window, and launcher owns setup windows; none calls this retired Carbon nib release. Its retained DisposeWindow provider is inert, so this is retirement rather than native window cleanup equality."
+  },
+  "mac:0x000034d8": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x34d8 InitCursor/show/modal-loop/hide/refcon order. Former display picker and serial dialogs are replaced by native mode configuration and launcher setup; console input uses terminal. No selected native path enters this Carbon modal loop; its link providers are placeholders."
+  },
+  "mac:0x00003bb8": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3bb8 Item lookup/null guard and Boolean enable/disable calls. Original display-selection nib consumer is replaced by SDL mode enumeration and native configuration. The retained control providers do not supply native controls; the helper is not selected for native window state."
+  },
+  "mac:0x00003c8e": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3c8e Item lookup and GetControlKind guard, etxt/eutx kinds and focus part 5. Former serial nib focus selection belongs to launcher SetupView; SDL owns game focus. No selected native caller invokes this Carbon control helper, and no functional Carbon focus provider is claimed."
+  },
+  "mac:0x00003c20": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3c20 Item lookup and font-style flags 5 with signed-short font/size stores; retained body matches the old call contract. Original console styling is replaced by terminal/stdout, with setup styling owned by launcher. Inert Carbon control providers are not a native font implementation."
+  },
+  "mac:0x00003ad0": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3ad0 Item lookup/null guard and text-tag SetControlData(strlen). Former console EditTextHook uses mac_syscon terminal buffer; serial entry uses launcher KeyStore. No native source calls this API and no selected native Carbon text control exists."
+  },
+  "mac:0x00003b50": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3b50 Item lookup/null guard and Boolean ShowControl/HideControl. Original display picker control visibility is replaced by native SDL/launcher configuration rather than a nib. The inert selected control providers are not treated as equivalent window behavior."
+  },
+  "mac:0x00003e04": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3e04 lazy filter/validation UPP creation, fltr/vali callback tags, callback reference and positive-short char limit. Former console and five serial controls are replaced by terminal input and launcher validation. Native never installs these UPPs; NewControl and SetControlReference/Maximum names include unusable placeholders."
+  },
+  "mac:0x00003974": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3974 Item lookup/hitx kind/TXN object guards and font/size attributes over the whole text range. Original console text view is replaced by mac_syscon terminal output; no selected native caller creates a TXN object. HITextView/TXN names are placeholders, so the missing legacy body is not claimed equal."
+  },
+  "mac:0x00003d12": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3d12 Item lookup, mandatory draw UPP and optional hit-test/tracking UPPs with draw/hitt/trak tags and 4-byte i386 pointers. Original display selection is replaced by SDL enumeration/native configuration. No native Carbon pane installs these callbacks; retained 4-byte tags are not asserted LP64-safe or usable with placeholder providers."
+  },
+  "mac:0x00003350": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x3350 bounds acquisition and PtInRect normalized to 0/1. Retained body has the same call structure, but GetControlBounds does not initialize bounds and Carbon PtInRect returns zero. Original display-picker pane is retired for SDL/native configuration; this is not a functional native hit test."
+  },
+  "mac:0x0000356a": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x356a zero-limit return, text size converted to signed short versus unsigned limit, selection of excess text and backspace key dispatch. Former console/serial controls use terminal buffers or launcher validation. No selected native edit control installs this callback and Carbon edit providers are inert."
+  },
+  "mac:0x0000ccd4": {
+    "status": "fixed",
+    "evidence": "Mac 0xccd4 caches French table for language 1, German for 2, otherwise ANSI, then returns the indexed byte; native returned zero. Reconstructed cache/query order and restored 12 wrong table bytes. Scripted full comparison verifies 384/384 bytes at Mac 0x341240/0x3412c0/0x341340. Compiled and reviewed, not exercised. This is the dormant mac_input Carbon callback contract: selected linux_input.c queues SDL key symbols directly and MacResources_GetLanguageCode remains a dormant zero-returning provider."
   }
 }
