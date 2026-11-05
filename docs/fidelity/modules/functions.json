@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 3205,
-      "intentional": 1700,
-      "equal": 3819,
+      "unchecked": 3181,
+      "intentional": 1708,
+      "equal": 3835,
       "fixed": 733
     },
     "scopes": {
@@ -115969,8 +115969,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1ea9e0 exact-entry hand review: 0/1/2 mode dispatch, invalid print, enhancement/sample-rate/frame controls (including encoder_ctl on the decoder), state stores and bits initialization match. GOT mode targets and g_encoder_samplerate=8192 resolved against the binary; typed native imports preserve them. Compiled actual client TU; existing ASan/UBSan playback fixture exercises narrowband initialization."
       },
       {
         "id": "mac:0x001eaaec",
@@ -115991,8 +115991,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1eaaec reads packet bits, decodes once, returns zero on error, otherwise converts frame_size*2 floats and returns that number as PCM bytes. Existing WS110 native adaptation converts only the frame_size floats actually produced by Speex, preserving consumed PCM/byte count and avoiding reads of unproduced stack floats. Caller submits only 320 bytes for a 160-sample frame. Hand-reviewed provider/caller storage contracts; actual client TU compiled and existing ASan/UBSan playback fixture passed its produced-sample sentinel and byte count."
       },
       {
         "id": "mac:0x001eaab8",
@@ -116013,8 +116013,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1eaab8 exact-entry hand review: non-null decoder gates bits destruction then decoder destruction; pointer always cleared. Compiled actual client TU; existing ASan/UBSan playback fixture exercises two lifecycle shutdowns."
       }
     ],
     "groupvoice/encode": [
@@ -116037,8 +116037,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1eadaa exact-entry hand review: returns g_frame_size unchanged. Actual client TU compiled; existing playback fixture exercises frame-size retrieval."
       },
       {
         "id": "mac:0x001eac1c",
@@ -116059,8 +116059,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1eac1c exact-entry hand review: mode selection/error path, encoder/bits initialization, initialized flag, option call, repeated frame-size control, bandwidth store and non-null result match. Binary GOT mode identities and initial samplerate=8192/quality=1 verified against typed data. Actual client TU compiled; existing ASan/UBSan playback fixture exercises narrowband initialization."
       },
       {
         "id": "mac:0x001ead26",
@@ -116081,8 +116081,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1ead26 exact-entry hand review: sv_voiceQuality integer read and conditional request 4, bits reset, integer encoding with ignored status, bounded bit-write result match. Mac quality GOT target resolved to sv_voiceQuality; native typed dvar access preserves identity. Actual client TU compiled and reviewed; actual outgoing encoding/quality changes not exercised, and the dormant queue fixture models this service."
       },
       {
         "id": "mac:0x001eab70",
@@ -116103,8 +116103,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1eab70 control order 24/4/3/30/34 and final quality/rate stores match. Existing WS110 native adaptation passes integer one to VAD/DTX controls instead of the Mac one-byte local; inspected bundled narrowband provider reads four-byte ints. Avoids overreading adjacent stack storage without claiming the original surrounding bytes were zero. Actual client TU compiled; existing ASan/UBSan playback initialization fixture exercises options."
       },
       {
         "id": "mac:0x001eacdc",
@@ -116125,8 +116125,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1eacdc exact-entry hand review: conditional encoder destruction, unconditional pointer clear, independent initialized-bits destruction/flag clear, return one match. Actual client TU compiled; existing ASan/UBSan playback fixture exercises two lifecycle shutdowns."
       }
     ],
     "groupvoice/play": [
@@ -116149,8 +116149,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1eaf90 exact-entry hand review: preserves the unusual Record_DestroySample target and returns its result. Active native Record/DSOUNDRecord destruction reaches DestroyVoice, which releases the allocated mixer sample and clears its owned slot. Wrapper equality only; native audio backend is the documented replacement. Actual client TU compiled; existing ASan/UBSan playback fixture exercises teardown."
       },
       {
         "id": "mac:0x001eaf9a",
@@ -116171,8 +116171,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1eaf9a exact-entry hand review: forwards to DSound_Frame with no additional work. Active native provider services allocated playback queues; backend equivalence is not claimed. Actual client TU compiled; existing playback fixture exercises production playback/render path."
       },
       {
         "id": "mac:0x001eafb0",
@@ -116193,8 +116193,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1eafb0 exact-entry hand review: forwards constant one and caller handle to DSound_Init and returns its result. Native provider initializes the documented mixer replacement at voice rate; backend equivalence is not claimed. Actual client TU compiled; existing ASan/UBSan playback fixture covers initialization and output-device failure."
       },
       {
         "id": "mac:0x001eaf86",
@@ -116215,8 +116215,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1eaf86 exact-entry hand review: returns DSound_NewSample. Inspected active provider: native voice owns 65 persistent slots and allocates mixer handles. Wrapper equality only, not historical allocator equality. Actual client TU compiled; existing ASan/UBSan fixture allocates all 64 talker samples across two lifecycles."
       },
       {
         "id": "mac:0x001eafa6",
@@ -116237,8 +116237,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1eafa6 exact-entry hand review: forwards the sample to DSound_SampleFrame. Inspected native provider drains owned queued PCM into native mixer buffers. Wrapper equality only; original resampler/backend parity not claimed. Actual client TU compiled; existing ASan/UBSan playback fixture exercises sample servicing."
       },
       {
         "id": "mac:0x001eafcc",
@@ -116259,8 +116259,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1eafcc exact-entry hand review: forwards to DSound_Shutdown. Inspected native provider releases every allocated voice slot and clears initialization. Wrapper equality only; backend equivalence not claimed. Actual client TU compiled; existing ASan/UBSan playback fixture exercises two teardowns."
       },
       {
         "id": "mac:0x001eaf7c",
@@ -116281,8 +116281,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1eaf7c exact-entry hand review: forwards sample/data/unsigned byte count to DSound_UpdateSample and returns its result. Inspected native provider copies PCM into bounded 32768-byte per-sample storage, preserving ownership after the caller stack buffer expires. Wrapper equality only; queue-overflow/backend returns not claimed equal. Actual client TU compiled; existing ASan/UBSan fixture exercises 64 queues."
       }
     ],
     "groupvoice/record": [
@@ -116305,8 +116305,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1ea9ba tail-calls Record_QueueAudioDataForEncoding; dormant engine wrapper matches. Active native macos_voice.c returns zero because capture is unavailable, no callback is installed and Voice_GetLocalVoiceData gates recorder polling. This specific disabled-capture boundary is documented in WS12/WS110. Both production/dormant TUs compiled; real callback capture not exercised."
       },
       {
         "id": "mac:0x001ea722",
@@ -116327,8 +116327,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1ea722 exact-entry hand review: forwards sample destruction/result to DSOUNDRecord_DestroySample. Active native Record and DSOUNDRecord destruction both resolve to DestroyVoice; inspected owned-slot lookup, mixer-handle release and slot clearing. Wrapper equality only; the native playback allocator replaces historical shared recording/playback storage. Existing ASan/UBSan playback fixture exercises teardown; dormant TU compiled."
       },
       {
         "id": "mac:0x001ea73e",
@@ -116349,8 +116349,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1ea73e delegates to DSOUNDRecord_Frame; dormant engine wrapper matches. Active native wrapper/provider are empty because Record_Init fails and Voice_GetLocalVoiceData returns before recorder polling while capture is unavailable. Existing WS12/WS110 disabled-capture replacement retained after caller/provider review. Existing ASan/UBSan playback fixture verifies capture exclusion; actual recording not exercised."
       },
       {
         "id": "mac:0x001ea9c4",
@@ -116371,8 +116371,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1ea9c4 installs Record_AudioCallback through the GOT target current_audioCallback then forces initialize one into DSOUNDRecord_Init; dormant engine source matches. Active native provider omits callback installation, reports capture unavailable once, clears recording state and returns zero. WS12/WS110 documented native replacement; inspected Voice_Init fallback and local-data gates. Existing ASan/UBSan playback fixture exercises unavailable capture and two lifecycles; real capture unavailable."
       },
       {
         "id": "mac:0x001ea718",
@@ -116393,8 +116393,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1ea718 delegates to DSOUNDRecord_NewSample; dormant engine wrapper matches. Active native wrapper returns null because capture initialization is unavailable. Inspected historical initialized-recording requirement/shared sample layout and native 65-slot playback ownership; no capture allocation is made. Existing WS12/WS110 replacement retained. Dormant/active TUs compiled; real recording allocation not exercised."
       },
       {
         "id": "mac:0x001ea748",
@@ -116415,8 +116415,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1ea748 entire exact-entry body compared with dormant engine source: gain/level order, transmission/talk gates, offset reset/validation, partial-frame clamp/copies, byte offsets, encode/send order and byte totals match within valid mono 16-bit storage contracts. Existing exact-size ASan/UBSan fixture passed 90 synthetic cases with modeled codec/network services; paired Mac execution unavailable (no existing Unicorn). Active native provider deliberately returns zero, with no installed callback or active capture caller, under documented WS12/WS110 unavailable-recording boundary. Native partial=640 shorts/encoded=4096 bytes and actual Client_SendVoiceData packet-copy ownership inspected. No real outgoing capture/codec/network exercise."
       },
       {
         "id": "mac:0x001ea72c",
@@ -116437,8 +116437,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1ea72c calls Encode_Shutdown then DSOUNDRecord_Shutdown; dormant engine source matches. Active native wrapper only clears disabled recorder state. Inspected sole production caller Voice_Shutdown: it skips recorder teardown when unavailable and independently calls Encode_Shutdown, preserving actual codec ownership without enabling capture. WS12/WS110 documented native replacement. Existing ASan/UBSan fixture covers two complete voice lifecycles; dormant TU compiled."
       },
       {
         "id": "mac:0x001ea704",
@@ -116459,8 +116459,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1ea704 exact-entry hand review: forwards sample to DSOUNDRecord_Start and returns its result; active native wrapper retains this call. Inspected native provider returns -1 because capture is unavailable, an existing documented backend substitution rather than a missing engine wrapper. Dormant and active TUs compiled; real recording start unexercised."
       },
       {
         "id": "mac:0x001ea70e",
@@ -116481,8 +116481,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1ea70e exact-entry hand review: forwards sample to DSOUNDRecord_Stop and returns its result; active native wrapper retains this call. Inspected native provider returns -1 because capture is unavailable, an existing documented backend substitution rather than a missing engine wrapper. Dormant and active TUs compiled; real recording stop unexercised."
       }
     ],
     "jpeg-6/jcapimin": [
