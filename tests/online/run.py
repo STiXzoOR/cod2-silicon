@@ -77,7 +77,7 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
                 protocol = (root / 'src/PC/qcommon/cod2x_protocol.c').read_text()
                 functions.append(protocol[protocol.index('size_t Cod2x_EncodeConnect('):
                                           protocol.index('int Cod2x_HwidValid(')])
-        if name in ('netchan_decode', 'scheduled_fx'):
+        if name in ('netchan_decode', 'scheduled_fx', 'ui_text_color'):
             # These functions have alternative opening braces in native/legacy
             # branches. Resolve them with the engine flags before extraction.
             source = subprocess.check_output(
