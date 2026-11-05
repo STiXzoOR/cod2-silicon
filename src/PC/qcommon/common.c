@@ -2589,6 +2589,11 @@ void Com_Init_Try_Block_Function(char *commandLine)
     Cmd_Init();
     Com_StartupVariable(NULL);
     Com_StartupVariable("developer");
+#if defined(COD2_X64) && defined(__APPLE__) && !defined(DEDICATED)
+    /* The native launcher keeps cwd writable; startup variables own the data
+     * root, including forwarded overrides. Draw before filesystem/renderer init. */
+    { extern void Sys_ShowSplashWindow(void); Sys_ShowSplashWindow(); }
+#endif
 #if !(COD2_APPLE_SDK && defined(DEDICATED))
     CL_InitKeyCommands();
 #else
