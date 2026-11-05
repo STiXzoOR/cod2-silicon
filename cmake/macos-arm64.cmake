@@ -50,6 +50,9 @@ list(FILTER MACOS_C EXCLUDE REGEX "/stubs/(iokit_stubs|corefoundation_stubs)\\.c
 list(APPEND MACOS_C src/unix/linux_common.c src/unix/linux_net.c src/unix/sysdiff_statehash.c
   src/platform/macos_system.c src/platform/macos_threads.c src/platform/macos_ring.c
   src/platform/macos_cpp_abi.cpp src/platform/macos_abs_symbols.c src/platform/macos_launch.c)
+# These C frames propagate native C++ exceptions to their owning bridge/caller.
+set_property(SOURCE src/platform/macos_threads.c src/Mac/DirectX_9/COpenGLVAO.c
+  APPEND PROPERTY COMPILE_OPTIONS -fexceptions)
 list(FILTER MACOS_C EXCLUDE REGEX "/Mac/Main/(mac_play_dsound|mac_record_dsound)\\.c$")
 list(FILTER MACOS_C EXCLUDE REGEX "/PC/groupvoice/record\\.c$")
 set(MACOS_DED_C ${MACOS_C})
