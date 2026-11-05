@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**Current: 100/112 reconciled: 84 equal, 10 intentional, 6 fixed; 12 unchecked.** The interpreter and its established native ownership adaptations are complete under the later acceptance notes below.
+**Current: 101/112 reconciled: 85 equal, 10 intentional, 6 fixed; 11 unchecked.** The interpreter and its established native ownership adaptations are complete under the later acceptance notes below.
 
 Initial pass: 94/112 reconciled: 85 equal, 8 intentional, 1 fixed; 18 unchecked. The main interpreter has additional local corrections but remains unchecked because its remaining error-state differences are unresolved. All pre-existing rows were unchecked. Legacy `COD2_X64=OFF` source is unchanged.
 
@@ -237,3 +237,13 @@ The twelve unresolved helper contracts now have original1.0 IDB and original1.3 
 Original outer thread enumeration at 0x80843ca calls its internal walker at 0x8084446/0x80844c1 with different self filters. The recovered full walkers specify archived-stack traversal and output counts, but no complete Mac enumeration owner is established. Other anchored bodies distinguish animation/localized-string pushes, the integer-to-animation-tree getter, function-offset getter, debugger execution cleanup, endon query, decrement-time mask and unconditional error/dialog replacement from the already checked neighboring operations. The small top=stack body candidate at 0x8085648 is anchored by its actual globals and neighboring unique body; a matching initialization assignment alone does not prove the standalone helper.
 
 All twelve remain unchecked. Positive original identities and caller chains refine the remaining evidence gaps; Linux code does not become Mac behavior authority. No production code, resolved verdict or native adaptation changed, and no compilation, tests, CI or replay ran. Private body mappings and caller receipts are retained under `recon-provenance-message8.noindex`.
+
+## Complete initialization top reset (stackclear24)
+
+`Scr_StackClear` is equal through the complete actual top-to-own-stack-base reset at Mac `Scr_Init`0x818f9. The original1.0 helper0x8084ff2 and complete original1.3 body0x8085648–0x8085656 have exactly that one state effect, with no old-pointer read, reference release, count reset, allocation, argument or result. Original VM initialization writes the identical global/base pair, corroborating the state identity beyond the nonunique small-body byte pattern. Linux supplies identity and roles only.
+
+The fresh complete Mac owner reaches the reset after its not-initialized gate and preceding providers; the next independent state store begins0x81903. Native `scrVmPub.top = scrVmPub.stack` preserves the complete operation using the actual typed embedded2048-value storage. Full Mac `Scr_AddInt` reads the same top at0x87eb9 on its empty-outparam path and advances/stores it before the integer tag/payload; native `IncInParam` and `Scr_AddInt` preserve that actual stack-position consumer. This does not assert AddInt is the immediate next call at runtime.
+
+The former evidence rejected initialization/resume writes as standalone helper identity. This closure establishes the narrower complete consumed operation, not a standalone clear API or equivalence of whole `Scr_Init`: already-initialized owners bypass the phase, and nonreturning preceding providers never reach it. Frame/count/tag initialization, arbitrary live-stack cleanup, repeated-init behavior, reference ownership and missing exports are outside the mapped reset. Existing LP64 storage/layout and ownership adaptations are preserved. The interpreter and all other settled verdicts remain unchanged.
+
+Independently accepted in `units/review-provenance-stackclear24.md`; fresh full Mac bodies, original helper/init receipts and source hashes remain in private `recon-provenance-stackclear24.noindex`. One unchecked row becomes equal; no source change or new defect. No compilation, tests, CI, replay or runtime exercise.

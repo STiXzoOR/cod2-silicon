@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 294,
+      "unchecked": 293,
       "intentional": 3184,
-      "equal": 4772,
+      "equal": 4773,
       "fixed": 1207
     },
     "scopes": {
@@ -169259,8 +169259,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Mac nm contains only zero-valued exception metadata, no text symbol or established inline caller. Native top=stack assignments exist in init/resume but their distinct contexts do not establish this standalone Linux helper identity. Original executable provenance: Linux1.0 0x8084ff2 maps to Linux1.3 0x8085648. Original writes top=stack only. Small masked body is nonunique; actual VM global addresses and adjacent unique traverse body anchor this candidate. Initialization/resume writes alone still do not establish standalone helper identity. No closure from absent callers; no production change."
+        "status": "equal",
+        "evidence": "Original Linux1.0 helper0x8084ff2\u20130x8085000 and original1.3 complete15-byte body0x8085648\u20130x8085656 only store top=own embedded stack base and return void; actual same-global assignments in original VM_Init corroborate state identity beyond the nonunique small masked pattern. Linux supplies identity/roles only. Fresh full Mac Scr_Init0x818ce\u20130x819e6 contains the complete selected state operation at0x818f9: stackbase0x10e14a0\u2192top0x10e1190, after the not-initialized gate and preceding providers, before unrelated store0x81903. Native scr_vm.c1061 performs the same typed top=stack assignment on the actual owned embedded2048-value storage. No old-top read, reference cleanup, count clear, allocation, branch or result is missing from the original operation. Fresh full Mac Scr_AddInt reads that exact top at0x87eb9 on its empty-outparam path, advances one value, stores top and writes integer tag/payload; native IncInParam/Scr_AddInt supplies the concrete same-state consumer. Equal is the complete consumed reset, not whole Scr_Init or a standalone clear API; already-initialized owners bypass it and failed preceding providers need not reach it. No arbitrary live-stack cleanup, repeated-init lifecycle, reference release, missing export implementation or whole interpreter claim. Existing LP64 typed storage/layout and ownership adaptations remain. Independently accepted units/review-provenance-stackclear24.md; fresh full bodies/original receipts/source hashes in recon-provenance-stackclear24.noindex. No source change, new defect, compilation, tests, CI, replay or runtime verification."
       },
       {
         "id": "mac:0x000828da",
