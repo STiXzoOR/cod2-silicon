@@ -115,8 +115,16 @@ static char *__attribute_regparm__(3) GetToken_impl(char **text, char allowLineB
                 pointer++;
                 if (ch == '"')
                     break;
+#if defined(COD2_X64)
+                if (!ch) {
+                    /* Keep the cursor on the allocated terminator at malformed EOF. */
+                    pointer--;
+                    break;
+                }
+#else
                 if (!ch)
                     break;
+#endif
                 if (length <= 0x3ff) {
                     token[length] = ch;
                     length++;
@@ -141,6 +149,11 @@ static char *__attribute_regparm__(3) GetToken_impl(char **text, char allowLineB
                     length++;
                 }
                 ch = *pointer;
+#if defined(COD2_X64)
+                /* FX text has exactly one trailing NUL, not a padded suffix. */
+                if (!ch)
+                    break;
+#endif
                 if (ch == '\n' || ch == '\r')
                     break;
             }
