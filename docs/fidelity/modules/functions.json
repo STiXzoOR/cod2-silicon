@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 330,
+      "unchecked": 328,
       "intentional": 3172,
       "equal": 4760,
-      "fixed": 1195
+      "fixed": 1197
     },
     "scopes": {
       "unassigned": 777,
@@ -58062,7 +58062,7 @@
         ],
         "pairing": "unique module and name; semantics unchecked",
         "status": "fixed",
-        "evidence": "All 4,246 Mac bytes 0x6fbe8-0x70c7d compared against the live native body and its helpers. Fixed the start-solid retry after all-solid recovery: Mac 0x702fb traces to the first end held at -0x30. Native had overwritten that point. Compiled and reviewed; the replay does not reach this path."
+        "evidence": "All 4,246 Mac bytes 0x6fbe8-0x70c7d compared against the live native body and its helpers. Fixed the start-solid retry after all-solid recovery: Mac 0x702fb traces to the first end held at -0x30. Native had overwritten that point. Compiled and reviewed; the replay does not reach this path. Follow-up original I_clamp caller review found missed CrashLand exceptional paths: Mac unordered discriminant0x706c6 and damage gate0x7072c, CVTTSS2SI0x70974 plus wrapped original-value sign clamp0x7097d-0x70991, and unordered viewDip branch0x70770/conversion0x70a50. Native now preserves unordered branches and explicit integer-indefinite conversion without undefined C float-to-int casts; unsigned subtraction/negation preserve clamp semantics. Fully backed playerState/pml scalar fields and existing event/velocity paths retained. Ordinary finite bounded cases unchanged; extreme/nonfinite input gameplay reachability not asserted. COD2_X64-only, OFF source byte-identical; manually compiled/reviewed stock/CODX client/dedicated, not exercised."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:1517:PM_GroundTraceMissed",
@@ -196822,8 +196822,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: I_clamp is referenced at EffectsCore/FxPrimitives.cpp:945, bgame/bg_pmove.cpp:1411. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. New lead: inlined crash-land clamp in PM_GroundTrace 0x7097d-0x70991 uses wrapping value-100 sign selection followed by original-value negation/sign test. Native crash-land uses ordinary >100/<0 tests. Ordinary bounded damage agrees; complete exceptional conversion/caller-domain behavior is not established, so this generic helper remains unchecked and no disconnected implementation was added. Original IDB/ELF header-chain provenance is now recorded in recon-provenance-math4.noindex/linux-header-chain-maps.json. Identity is no longer based only on reconstruction references; complete Mac consumed-operation proof remains incomplete (I_clamp/I_sel include CrashLand exceptional conversion and nested selection; FloatIdentity/SinCos need their complete Mac owner identity)."
+        "status": "fixed",
+        "evidence": "Original executable caller identity: Linux1.3 PM_CrashLand0x80e30c4 callsI_clamp0x80e95f8 at0x80e3263; ParticleUpdateRGB0x81264a2 callsFX_ColorToBytes0x812430c at0x8126529, which callsI_clamp0x8129422 at0x8124367. Original IDB1.0 caller/header bytes map to these addresses. Complete Mac consumed operations compared: PM_GroundTrace0x70678-0x70c78 CrashLand and Particle::UpdateRGB three-channel conversion loop0xa1e62-0xa1e89. RGB native FloatToByte already preserves CVTT sentinel, wrapped upper selection and original-value lower sign test. CrashLand now preserves unordered branch gates, explicit CVTT sentinel, and wrapped upper100/lower0 selection. Prior native plain conversion could be undefined and ordered comparisons suppressed Mac paths. Fully backed scalar inputs, existing surface/event/velocity flow retained. No independent arbitrary-argument Mac export claimed. COD2_X64-only; compiled and reviewed four configured modes, OFF bytes preserved; not exercised."
       },
       {
         "id": "linux:universal/com_math.h:97:I_fabs",
@@ -197012,8 +197012,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no I_sel public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. New owner candidates (weapon timer lower clamp and FX integer selections) expose specialized constant/derived operands, not a proven independent complete generic selector with all input/overflow cases. Their parent arithmetic was not certified from those fragments. Original IDB/ELF header-chain provenance is now recorded in recon-provenance-math4.noindex/linux-header-chain-maps.json. Identity is no longer based only on reconstruction references; complete Mac consumed-operation proof remains incomplete (I_clamp/I_sel include CrashLand exceptional conversion and nested selection; FloatIdentity/SinCos need their complete Mac owner identity)."
+        "status": "fixed",
+        "evidence": "Original I_sel identity recovered from IDB header bodies and retained ELF copies0x80553d2,0x80e9a50,0x80f2b14,0x81298fc; each selects second argument for nonnegative first, third for negative first. Actual original calls link all four copies through I_min/I_max/I_clamp to partition scoring, weapon timer, FXcull, Flash byte packing, RGB byte packing and CrashLand. Mac complete consumed selections and operand domains established across provenance-math4 and crashland5 packets; FXcull and CrashLand repairs retain original wrapping sign semantics, RGB/Flash already do, partition counters and positive timer subtraction are bounded. This closes the original consumed-operation identity, not an invented standalone arbitrary-argument Mac API. Compiled/reviewed current CrashLand TU in four modes and priorFX TU in two applicable client modes; OFF bytes preserved, no runtime exercise."
       },
       {
         "id": "linux:universal/com_math.h:87:I_sgn",

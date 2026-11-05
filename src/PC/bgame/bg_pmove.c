@@ -2269,6 +2269,14 @@ static void PM_REGPARM2_ABI PM_Footsteps(pmove_t *pm, pml_t *pml)
 #endif
 }
 
+#if defined(COD2_X64)
+static int PM_CrashLandFloatToInt(float value)
+{
+    /* CVTTSS2SI returns integer-indefinite for unordered/out-of-range input. */
+    return value >= -2147483648.0f && value < 2147483648.0f
+        ? (int)value : (-2147483647 - 1);
+}
+#endif
 static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
 {
     playerState_t *ps = pm->ps;
@@ -2443,7 +2451,7 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
         float acc = -grav;
         float halfg = acc * 0.5f;
         float disc = vz * vz + (pml->previous_origin[2] - ps->origin[2]) * (halfg * -4.0f);
-        if (disc >= 0.0f) {
+        if (!(disc < 0.0f)) {
             float t = (float)((-(double)vz - sqrt((double)disc)) / (double)(halfg + halfg));
             float landVel = -(t * acc + vz);
             float fallHeight = landVel * landVel / (grav + grav);
@@ -2453,13 +2461,18 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
             int surf = PM_GroundSurfaceType(pml);
             if (minH >= maxH)
                 Com_Printf("bg_fallDamageMaxHeight must be greater than bg_fallDamageMinHeight\n");
-            else if (fallHeight > minH && !(pml->groundTrace.surfaceFlags & 1) && ps->pm_type <= 5) {
-                damage = fallHeight >= maxH ? 100 : (int)((fallHeight - minH) / (maxH - minH) * 100.0f);
-                if (damage > 100) damage = 100;
-                if (damage < 0) damage = 0;
+            else if (!(minH >= fallHeight) && !(pml->groundTrace.surfaceFlags & 1) && ps->pm_type <= 5) {
+                if (fallHeight >= maxH) {
+                    damage = 100;
+                } else {
+                    int value = PM_CrashLandFloatToInt((fallHeight - minH) / (maxH - minH) * 100.0f);
+                    int upper = (((unsigned int)value - 100u) & 0x80000000u) ? value : 100;
+                    /* The lower sign test uses the original converted value. */
+                    damage = ((0u - (unsigned int)value) & 0x80000000u) ? upper : 0;
+                }
             }
-            if (fallHeight > 12.0f) {
-                viewDip = (int)((fallHeight - 12.0f) / 26.0f * 4.0f + 4.0f);
+            if (!(fallHeight <= 12.0f)) {
+                viewDip = PM_CrashLandFloatToInt((fallHeight - 12.0f) / 26.0f * 4.0f + 4.0f);
                 if (viewDip > 24) viewDip = 24;
                 BG_AnimScriptEvent(ps, ANIM_ET_LAND, 0, 1);
             }
