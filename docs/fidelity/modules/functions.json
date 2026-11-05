@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 328,
+      "unchecked": 327,
       "intentional": 3172,
-      "equal": 4760,
+      "equal": 4761,
       "fixed": 1197
     },
     "scopes": {
@@ -201953,8 +201953,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Linux explicitly labels this unreferenced helper and its name unknown. A malloc/free primitive is insufficient to prove a distinct Mac identity; no native body or verified Mac caller for this row."
+        "status": "equal",
+        "evidence": "Original1.0 IDB function sub_80a927c at 0x80a927c\u20130x80a928f and original1.3 executable0x80ab5e0\u20130x80ab5f3 (exclusive ends) establish the anonymous reconstructed raw-free helper by module order between named Z_VirtualFreeInternal and OOM handler, corroborated by complete byte/instruction comparison to adjacent named Z_FreeInternal. All three original wrappers forward the single pointer unchanged to the same free import, with no guard or other operation. Exact Mac Z_FreeInternal0x3740c\u20130x37415 likewise tail-jumps free; native default Z_FreeInternal delegates free(ptr). This identifies the complete shared operation, not a separately emitted Mac raw-wrapper name. Existing optional guardheap ownership adaptation preserved; no new native wrapper/source change. Source and binary review only; no runtime verification."
       },
       {
         "id": "linux:universal/com_memory.cpp:36:Z_MallocFailed",
