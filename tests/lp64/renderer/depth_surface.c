@@ -210,6 +210,9 @@ int main(int argc, char **argv)
     };
     dev.saveSurface = (void *)&defaultTexture;
     dev.renderTarget = FixtureSurface();
+    /* Init retains the original zero cached viewport; the renderer sets it. */
+    D3DVIEWPORT9 fixtureViewport = {0, 0, 32, 32, 0.0f, 1.0f};
+    (void)CDirect3DDevice_SetViewport((const void *)&dev, &fixtureViewport);
 #endif
     dev.streams[0] = (void *)&vb;
     dev.streamStrides[0] = sizeof(vertices[0]);
