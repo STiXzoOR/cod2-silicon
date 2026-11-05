@@ -104,3 +104,28 @@ The exceptional conversion and unordered-overlap corrections are compiled and
 reviewed, not specifically exercised. Full links, CI and replays remain with
 the integration owner. Parent/fresh source review is pending at this worker
 commit. Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-math-remaining.noindex/`.
+
+## Fresh caller-review corrections — 2026-11-05
+
+Independent review confirmed the 37 helper identities and the original HUD
+ceiling/area-overlap corrections. It also found four complete-caller defects
+around the helper scopes: unordered child/prune/parallel gates in
+`CM_TraceThroughTree`, the cylinder vertical gate in `SV_EntityContact`,
+start-solid horizontal normalization in `DObjTraceline`, and compass range/alpha
+selection in `CG_DrawCompassFriendlies`. Their guarded repairs and exact Mac
+ranges are recorded in the respective owner reports. Three owner rows change
+from equal to fixed; the compass row remains fixed. Original evidence is
+retained and appended through explicit parent-approved overrides. The math
+module's 136 equal, 24 fixed and 69 unchecked totals are unchanged.
+
+Four additional translation units compile with the actual stock/CoD2x Release
+commands: 14 client/dedicated objects where applicable. All five existing
+collision suites, the existing server-contact fixture and the existing xanim
+trace case pass both modes under ASan/UBSan. No existing fixture executes the
+full compass-friendlies caller, and no new test was added. Exceptional numeric
+paths remain compiled and reviewed only. All six changed source files preserve
+five inactive configurations and byte-identical OFF text, with no `__LINE__`
+uses. Final source is frozen for independent reread; full links, CI and replays
+remain with the integration owner. The historical point-triangle NaN-`s` gap
+in `cm_mesh.c` is explicitly outside these repairs and was flagged to the
+parent with its current ledger owners.

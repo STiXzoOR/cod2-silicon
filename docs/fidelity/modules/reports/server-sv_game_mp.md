@@ -35,3 +35,18 @@ Integrated engine source through `868a08f` passed both dedicated builds and all 
 The first stock recording attempt stopped before map load because its isolated home had no selected player profile. The restored engine behavior requires one. Harness commit `b275adb` seeds the default profile; 38 existing harness checks and its independent review passed. Failed recording evidence is preserved. After this prerequisite correction, both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline in players, state hashes and entities, and match each other. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. Unchanged traces do not prove that each correction was reached; unreached branches remain compiled and reviewed.
 
 Hosted ILP32 byte comparison remains unavailable: its unchanged `410342a` reference fails compiling GCC `__stdcall`/`__cdecl` declarations. The workflow already documents that limitation and marks the job nonblocking. Preprocessing equality is not binary-byte parity.
+
+## Independent math-caller follow-up — 2026-11-05
+
+Current accounting is **39 equal, eight fixed, seven unchecked**. Fresh review
+found the cylinder vertical gate at Mac 0x14e292–0x14e296 rejects only ordered
+`entZ >= maxs[2]`. Native `entZ < maxs[2]` skipped unordered candidates. The
+`COD2_X64` branch now uses `!(entZ >= maxs[2])`, leaving the subsequent top-Z
+rejection and center/radius arithmetic intact. The owner changes from equal to
+fixed with its original evidence retained and the correction appended.
+
+Configured stock/CoD2x Release client/dedicated objects compile, and the
+unchanged production server-contact fixture passes both modes under
+ASan/UBSan. The unordered gate is compiled and reviewed, not specifically
+exercised. Five inactive configurations and exact OFF source text match; there
+are no `__LINE__` uses. No tests were added, and no full CI or replay was run.

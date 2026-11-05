@@ -27,3 +27,18 @@ The command/settings catalog was regenerated twice from the clean engine revisio
 Hosted ILP32 comparison remains unavailable because the unchanged reference fails to compile; no byte parity is claimed.
 
 The original step 13 failure is preserved. Its existing player-animation fixture incorrectly expected eFlags bit 2 to suppress a weapon, while Mac 0x1e6fec tests bit 0x20000. The existing case now checks the weapon-call arguments and call order; no test case was added. Independent focused review and the complete step 13 rerun passed. This fixture-only correction does not change the engine source used for builds, ABI audits or replays.
+
+## Independent math-caller follow-up — 2026-11-05
+
+The **two equal, one fixed** accounting is unchanged. Fresh review corrected
+the distance-alpha lower clamp to retain unordered `dist` as Mac
+0x18f980/0x18fd53–0x18fd77 does. Both actor-color alpha selections now use
+`fade < color[3] ? fade : color[3]`, preserving the source-color tie/unordered
+choice of `MINSS` at 0x18fbc0–0x18fbd0. The existing fixed owner evidence is
+retained with these specific corrections appended.
+
+Configured stock/CoD2x arm64 Release client objects compile. Dedicated builds
+exclude cgame. No existing fixture executes the whole compass-friendlies
+caller, so these changes are compiled and reviewed only. Five inactive
+configurations and exact OFF source text match; there are no `__LINE__` uses.
+No new tests, full CI or replay was run.

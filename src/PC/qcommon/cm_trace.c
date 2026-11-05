@@ -657,17 +657,25 @@ static int CM_TraceThroughTree(const traceWork_t *tw, int num,
             offset = tw->isPoint ? CM_AXIAL_EPS : CM_DIAG_OFFSET;
         }
 
+#if defined(COD2_X64)
+        if (!(offset > (d2 - d1 < CM_SPLIT_EPS ? d2 : d1))) {
+#else
         if ((d2 - d1 < CM_SPLIT_EPS ? d2 : d1) >= offset) {
+#endif
             num = node->children[0];
             continue;
         }
+#if defined(COD2_X64)
+        if (!((d1 - d2 < CM_SPLIT_EPS ? d2 : d1) > -offset)) {
+#else
         if ((d1 - d2 < CM_SPLIT_EPS ? d2 : d1) <= -offset) {
+#endif
             num = node->children[1];
             continue;
         }
 
 #if defined(COD2_X64)
-        if (trace->fraction <= p1[3])
+        if (!(trace->fraction > p1[3]))
 #else
         if (trace->fraction < p1[3])
 #endif
@@ -676,7 +684,11 @@ static int CM_TraceThroughTree(const traceWork_t *tw, int num,
         spread = d2 - d1;
         aspread = fabsf(spread);
 
+#if defined(COD2_X64)
+        if (!(aspread > CM_PARALLEL_EP)) {
+#else
         if (aspread <= CM_PARALLEL_EP) {
+#endif
             fracA = 0.0f;
             fracB = CM_ONE;
             nearSide = 0;
