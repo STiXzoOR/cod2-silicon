@@ -6591,7 +6591,7 @@ static void VM_CandidatePushEntityObject(VariableValue **top, int classnum, int 
 }
 
 #if defined(COD2_X64)
-static void VM_CandidateIncDecField(unsigned int fieldValueId, VariableValue *volatile *top, int delta)
+static Bool VM_CandidateIncDecField(unsigned int fieldValueId, VariableValue *volatile *top, int delta)
 #else
 static void VM_CandidateIncDecField(unsigned int fieldValueId, VariableValue **top, int delta)
 #endif
@@ -6605,6 +6605,12 @@ static void VM_CandidateIncDecField(unsigned int fieldValueId, VariableValue **t
         Scr_SetErrorMessageAndJump(va("%s must be applied to an int (applied to %s)",
                                      delta > 0 ? "++" : "--",
                                      ((const char *const *)imp_var_typename)[(*top)->type]));
+        /* Mac 0x85bf7 enters decrement after a returned increment error;
+         * decrement's returned error enters the OR operation at 0x843e8. */
+        if (delta > 0)
+            return VM_CandidateIncDecField(fieldValueId, top, -1);
+        VM_EvalBinaryAndPop(top, Scr_EvalOr);
+        return 0;
 #else
         Com_Error(1, "VM_Execute C candidate expected integer field for inc/dec");
 #endif
@@ -6616,6 +6622,9 @@ static void VM_CandidateIncDecField(unsigned int fieldValueId, VariableValue **t
 #endif
     SetVariableFieldValue(fieldValueId, *top);
     --*top;
+#if defined(COD2_X64)
+    return 1;
+#endif
 }
 
 static void VM_CandidateDumpOpcodeRing(void)
@@ -6711,7 +6720,8 @@ static void VM_CandidateCallBuiltin(const char **pos, VariableValue **top, unsig
 }
 
 #if defined(COD2_X64)
-static void VM_CandidateCallBuiltinMethod(const char *volatile *pos, VariableValue *volatile *top, unsigned int paramCount)
+static Bool VM_CandidateCallBuiltinMethod(const char *volatile *pos, VariableValue *volatile *top,
+                                         unsigned int paramCount, Bool fixedZeroCount)
 #else
 static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top, unsigned int paramCount)
 #endif
@@ -6723,7 +6733,14 @@ static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top,
     scr_entref_t entref;
     BuiltinMethod method;
 
+#if defined(COD2_X64)
+    /* Opcode 0x45 has no original count store. Preserve its supplied count
+     * before the scalar receiver error; other receiver paths are unchanged. */
+    if (!(fixedZeroCount && ((*top)->type == VAR_FLOAT || (*top)->type == VAR_INTEGER)))
+        scrVmPub.outparamcount = paramCount;
+#else
     scrVmPub.outparamcount = paramCount;
+#endif
     scrVmPub.top = *top - 1;
 
     if ((*top)->type != VAR_POINTER) {
@@ -6731,6 +6748,10 @@ static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top,
         ((struct scrVarPub_t *)imp_scrVarPub)->error_index = (unsigned int)-1;
 #if defined(COD2_X64)
         Scr_SetErrorMessageAndJump(va("%s is not an entity", ((const char *const *)imp_var_typename)[(*top)->type]));
+        /* Mac 0x83a77 falls into wait. Numeric receivers own no reference;
+         * reference-bearing receiver fallthrough remains a separate gap. */
+        if ((*top)->type == VAR_FLOAT || (*top)->type == VAR_INTEGER)
+            return 1;
 #else
         Com_Error(1, "VM_Execute C candidate method target is not an entity");
 #endif
@@ -6762,6 +6783,9 @@ static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top,
     ((void (*)(scr_entref_t))method)(entref);
     COD2_DEBUG_ONLY({ extern void dbg_check439(void); dbg_check439(); })
     VM_CandidateCompleteCall(pos, top);
+#if defined(COD2_X64)
+    return 0;
+#endif
 }
 
 static unsigned int VM_CandidateFinishOutermost(VariableValue *startTop, unsigned int localId)
@@ -7047,7 +7071,8 @@ static int VM_CandidateHandleJumpBack(const char **pos, unsigned int *localId,
 #endif
 
 #if defined(COD2_X64)
-static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value, Bool *negativeErrorReturned)
+static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value, unsigned int previousWaitTime,
+                                                  Bool *negativeErrorReturned)
 #else
 static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value)
 #endif
@@ -7063,8 +7088,10 @@ static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value)
             Scr_SetErrorMessageAndJump("negative wait is not allowed");
 #if defined(COD2_X64)
             *negativeErrorReturned = 1;
-#endif
+            return previousWaitTime;
+#else
             return 0;
+#endif
         }
 
 #if defined(COD2_X64)
@@ -7091,7 +7118,12 @@ static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value)
 
     ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 2;
     Scr_SetErrorMessageAndJump(va("type %s is not a float", ((const char *const *)imp_var_typename)[value->type]));
+#if defined(COD2_X64)
+    /* Mac 0x859c7 reloads the interpreter's defined persistent wait scratch. */
+    return previousWaitTime;
+#else
     return 0;
+#endif
 }
 
 #if defined(COD2_X64)
@@ -7103,7 +7135,7 @@ static int VM_CandidateHandleWaitTillFrameEnd(const char *volatile *pos, volatil
 static int VM_CandidateHandleWait(const char *volatile *pos, volatile unsigned int *localVarCount,
                                   VariableValue *volatile *top, VariableValue *volatile *startTop,
                                   volatile unsigned int *localId, unsigned int *resultLocalId,
-                                  unsigned int *threadCount)
+                                  unsigned int *threadCount, unsigned int *waitTimeScratch)
 #else
 static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
                                   VariableValue **top, VariableValue **startTop,
@@ -7114,7 +7146,7 @@ static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
     struct scrVarPub_t *varPub = (struct scrVarPub_t *)imp_scrVarPub;
 #if defined(COD2_X64)
     Bool negativeErrorReturned;
-    unsigned int waitTime = VM_CandidateWaitTimeFromValue(*top, &negativeErrorReturned);
+    unsigned int waitTime = VM_CandidateWaitTimeFromValue(*top, *waitTimeScratch, &negativeErrorReturned);
 #else
     unsigned int waitTime = VM_CandidateWaitTimeFromValue(*top);
 #endif
@@ -7125,6 +7157,7 @@ static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
     const char *archivePos = *pos;
 
 #if defined(COD2_X64)
+    *waitTimeScratch = waitTime;
     if (negativeErrorReturned) {
         /* Mac 0x83cee returns into frame-end wait without popping its operand. */
         return VM_CandidateHandleWaitTillFrameEnd(pos, localVarCount, top, startTop,
@@ -7147,6 +7180,9 @@ static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
     }
 
     waitTime = (waitTime + (unsigned int)varPub->time) & 0x00ffffffu;
+#if defined(COD2_X64)
+    *waitTimeScratch = waitTime;
+#endif
     --*top;
 
 #if defined(COD2_X64)
@@ -7872,6 +7908,9 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
     g_script_error_level++;
     if (setjmp(g_script_error[g_script_error_level])) {
 #if defined(COD2_X64)
+        /* Mac 0x8623d resets this scratch on every interpreter longjmp,
+         * including the native checkpoint path, before any later read. */
+        waitTime = 0;
         if (errorCheckpoint.active) {
             pos = errorCheckpoint.frame.pos;
             localId = errorCheckpoint.frame.localId;
@@ -7886,7 +7925,6 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
              * Its zeroed opcode bypasses the recovery table at 0x862af. */
             fieldValueId = 0;
             objectId = 0;
-            waitTime = 0;
             caseCount = 0;
             caseValue = 0;
             currentCaseValue = 0;
@@ -8504,7 +8542,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             break;
 
         case VMOP_Wait:
+#if defined(COD2_X64)
+            if (VM_CandidateHandleWait(&pos, &localVarCount, &top, &startTop, &localId, &resultLocalId, &thread_count, &waitTime))
+#else
             if (VM_CandidateHandleWait(&pos, &localVarCount, &top, &startTop, &localId, &resultLocalId, &thread_count))
+#endif
                 return resultLocalId;
             break;
 
@@ -8544,7 +8586,16 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         case VMOP_CallBuiltinMethod3:
         case VMOP_CallBuiltinMethod4:
         case VMOP_CallBuiltinMethod5:
+#if defined(COD2_X64)
+            if (VM_CandidateCallBuiltinMethod(&pos, &top, opcode - VMOP_CallBuiltinMethod0,
+                                              opcode == VMOP_CallBuiltinMethod0)) {
+                if (VM_CandidateHandleWait(&pos, &localVarCount, &top, &startTop, &localId,
+                                           &resultLocalId, &thread_count, &waitTime))
+                    return resultLocalId;
+            }
+#else
             VM_CandidateCallBuiltinMethod(&pos, &top, opcode - VMOP_CallBuiltinMethod0);
+#endif
 #if defined(COD2_X64)
             errorCheckpoint.active = 0;
 #endif
@@ -8552,7 +8603,15 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 
         case VMOP_CallBuiltinMethod: {
             unsigned int paramCount = *(const unsigned char *)pos++;
+#if defined(COD2_X64)
+            if (VM_CandidateCallBuiltinMethod(&pos, &top, paramCount, 0)) {
+                if (VM_CandidateHandleWait(&pos, &localVarCount, &top, &startTop, &localId,
+                                           &resultLocalId, &thread_count, &waitTime))
+                    return resultLocalId;
+            }
+#else
             VM_CandidateCallBuiltinMethod(&pos, &top, paramCount);
+#endif
 #if defined(COD2_X64)
             errorCheckpoint.active = 0;
 #endif
@@ -8639,16 +8698,26 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         }
 
         case VMOP_Inc:
+#if defined(COD2_X64)
+            if (VM_CandidateIncDecField(fieldValueId, &top, 1))
+                pos++;
+#else
             VM_CandidateIncDecField(fieldValueId, &top, 1);
             pos++;
+#endif
 #if defined(COD2_X64)
             errorCheckpoint.active = 0;
 #endif
             break;
 
         case VMOP_Dec:
+#if defined(COD2_X64)
+            if (VM_CandidateIncDecField(fieldValueId, &top, -1))
+                pos++;
+#else
             VM_CandidateIncDecField(fieldValueId, &top, -1);
             pos++;
+#endif
 #if defined(COD2_X64)
             errorCheckpoint.active = 0;
 #endif
