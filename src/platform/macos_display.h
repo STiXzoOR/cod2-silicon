@@ -9,6 +9,9 @@ void MacPlatform_ConfigureWindow(int width, int height, int mode, int refresh);
 void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
                                     int quality, int interval, int *hasAux);
 uint16_t MacDisplay_ReleaseContext(void **context);
+#if defined(COD2_X64)
+void MacDisplay_SetPresentationInterval(void *context, uint32_t interval);
+#endif
 void MacDisplay_ReleaseDisplay(void);
 void SDL_GL_SwapWindowDirect(void);
 int MacPlatform_GetRenderSize(int *width, int *height);
