@@ -7640,7 +7640,8 @@ typedef enum VM_CallErrorContinuation_e {
     VM_CALL_UNWIND_SKIP_TARGET,
     VM_CALL_THREAD_CLEANUP,
     VM_CALL_THREAD_CLEANUP_SKIP_TARGET,
-    VM_CALL_POP_TOP
+    VM_CALL_POP_TOP,
+    VM_CALL_ENTER_NEIGHBOR
 } VM_CallErrorContinuation;
 
 static void VM_CandidateCallDepthError(Bool setErrorIndex)
@@ -7685,8 +7686,8 @@ static VM_CallErrorContinuation VM_CandidateCallObjectError(unsigned int opcode,
 static VM_CallErrorContinuation VM_CandidateCheckScriptCall(unsigned int opcode,
                                                             VariableValue *volatile *top)
 {
-    /* Follow only the proved error-only chains. Their shared-policy returns
-     * invoke no VM callback before the next neighboring type/depth check. */
+    /* Shared-policy returns invoke no VM callback before the next neighboring
+     * type/depth check. Keep the fetched opcode for eventual recovery. */
     switch (opcode) {
     case VMOP_ScriptFunctionCallPointer:
         if (scrVmPub.function_count <= 30)
@@ -7713,11 +7714,13 @@ static VM_CallErrorContinuation VM_CandidateCheckScriptCall(unsigned int opcode,
             if (scrVmPub.function_count <= 30)
                 return VM_CALL_NO_RECOVERY;
             VM_CandidateCallDepthError(1);
-        } else if ((*top)->type == VAR_POINTER) {
-            /* This failure can enter a successful neighboring method call. */
-            return VM_CALL_NO_RECOVERY;
         }
         VM_CandidateFunctionPointerError((*top)->type);
+        if ((*top)->type == VAR_POINTER) {
+            if (scrVmPub.function_count <= 30)
+                return VM_CALL_ENTER_NEIGHBOR;
+            VM_CandidateCallDepthError(opcode == VMOP_ScriptThreadCallExpr);
+        }
         return VM_CandidateCallObjectError(opcode, *top,
                                            opcode == VMOP_ScriptFunctionCallExpr ? 1 : 2);
 
@@ -7735,12 +7738,21 @@ static VM_CallErrorContinuation VM_CandidateCheckScriptCall(unsigned int opcode,
     case VMOP_ScriptMethodThreadCallExpr:
         if ((*top)->type != 9) {
             unsigned int badType = (*top)->type;
-            if (opcode == VMOP_ScriptMethodCallExpr)
-                return VM_CALL_NO_RECOVERY;
             RemoveRefToValue((*top)->type, (*top)->u);
             --*top;
             VM_CandidateFunctionPointerError(badType);
-            return VM_CALL_POP_TOP;
+            if (opcode == VMOP_ScriptMethodThreadCallExpr)
+                return VM_CALL_POP_TOP;
+            if (scrVmPub.function_count <= 30)
+                return VM_CALL_ENTER_NEIGHBOR;
+            /* Mac 0x840be enters the thread-expression checks, but ESI is53. */
+            VM_CandidateCallDepthError(1);
+            if ((*top)->type == 9)
+                VM_CandidateCallDepthError(1);
+            VM_CandidateFunctionPointerError((*top)->type);
+            if ((*top)->type == VAR_POINTER)
+                VM_CandidateCallDepthError(1);
+            return VM_CandidateCallObjectError(opcode, *top, 2);
         }
         if ((*top - 1)->type == VAR_POINTER && scrVmPub.function_count <= 30)
             return VM_CALL_NO_RECOVERY;
@@ -7786,6 +7798,61 @@ static const char *VM_CandidateReadScriptCallTarget(const char **pos)
     return target;
 }
 
+#if defined(COD2_X64)
+static void VM_CandidateEnterCallNeighbor(unsigned int opcode, const char *volatile *pos,
+                                           volatile unsigned int *localId,
+                                           volatile unsigned int *localVarCount,
+                                           VariableValue *volatile *top,
+                                           VariableValue *volatile *startTop,
+                                           unsigned int *threadCount)
+{
+    function_frame_t *frame;
+
+    /* Mac 0x83f65/0x841d8/0x85dd2 allocates before popping the receiver or
+     * reading target/count immediates. A provider jump must retain that state. */
+    if (opcode == VMOP_ScriptFunctionCallExpr) {
+        *localId = AllocChildThread((*top)->u.pointerValue, *localId);
+        --*top;
+    } else if (opcode == VMOP_ScriptThreadCallExpr) {
+        *localId = AllocThread((*top)->u.pointerValue);
+        --*top;
+    } else {
+        unsigned int selfId = Scr_GetSelf(*localId);
+        AddRefToObject(selfId);
+        *localId = AllocThread(selfId);
+    }
+
+    frame = scrVmPub.function_frame;
+    frame->fs.pos = *pos;
+    if (opcode != VMOP_ScriptFunctionCallExpr)
+        frame->fs.startTop = *startTop;
+    *pos = VM_CandidateReadScriptCallTarget(&frame->fs.pos);
+
+    if (opcode != VMOP_ScriptFunctionCallExpr) {
+        VariableValue *threadTop = *top;
+        unsigned int slots = (unsigned int)VM_ReadI32(&frame->fs.pos) & 0x1fffffffU;
+        int displacement = (int)slots;
+
+        /* Mac 0x8421d/0x84220 wraps both SHL32 and SUB32. Large raw counts
+         * can therefore map to a nearby backed slot, including top+1. */
+        if (slots & 0x10000000U)
+            displacement -= 0x20000000;
+        *startTop = threadTop - displacement;
+        frame->fs.top = *startTop;
+        frame->topType = (*startTop)->type;
+        (*startTop)->type = 8;
+        ++*threadCount;
+    }
+
+    /* Mac 0x83f8d leaves the other new-frame fields at their prior contents. */
+    frame->fs.localVarCount = *localVarCount;
+    *localVarCount = 0;
+    ++scrVmPub.function_count;
+    ++scrVmPub.function_frame;
+    scrVmPub.function_frame->fs.localId = *localId;
+}
+
+#endif
 #if defined(COD2_X64)
 static const char *VM_CandidatePopCodepos(VariableValue *volatile *top, int popBadValue)
 #else
@@ -8118,6 +8185,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         }
         if (opcode >= VMOP_ScriptFunctionCallPointer && opcode <= VMOP_ScriptMethodThreadCallExpr) {
             VM_CallErrorContinuation continuation = VM_CandidateCheckScriptCall(opcode, &top);
+            if (continuation == VM_CALL_ENTER_NEIGHBOR) {
+                VM_CandidateEnterCallNeighbor(opcode, &pos, &localId, &localVarCount,
+                                               &top, &startTop, &thread_count);
+                continue;
+            }
             if (continuation == VM_CALL_POP_TOP) {
                 /* Mac 0x85d44/0x84593 returns directly, without reporting or
                  * consuming a thread parameter count. */
