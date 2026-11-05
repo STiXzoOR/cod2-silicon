@@ -8,8 +8,8 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 315,
-      "intentional": 3181,
+      "unchecked": 314,
+      "intentional": 3182,
       "equal": 4763,
       "fixed": 1198
     },
@@ -210669,8 +210669,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Current-consumer follow-up located bounded compares in native Dvar_StringToEnumIndex, SV_UnbanClient and FX_RegisterEffect. They call strnicmp; complete Mac/native i5stdlib strnicmp at 0x25902 tail-calls strncasecmp. The Linux original-name-unknown helper instead normalizes to -1/0/1 after signed-char tolower calls. The actual consumer-owned libc interface is concrete, but its full return/locale/input contract is not established as this reconstructed helper identity; sign/zero consumption alone does not certify the full helper."
+        "status": "intentional",
+        "evidence": "Intentional existing libc comparison backend for the positively identified prefix operation consumed by Com_LoadSoundAliases. Complete original 1.0 anonymous comparator bodies 0x80ab144/0x80b3458 map to four retained original 1.3 copies by masked whole-body comparison; the actual sound owner 0x80ad0aa uniquely calls 0x80ad4dc at 0x80ad0c9 with maps/mp/, count8 and at 0x80ad0ff with maps/, count5. Full original helper includes signed-byte tolower, normalized -1/0/1 returns and bounded/NUL tail. Fresh complete Mac Com_LoadSoundAliases 0xacc20 replaces those same comparisons with direct strncasecmp calls at 0xacc4f/0xacd97; success selects the +8/+5 input before Com_StripExtension at 0xacc6c/0xace67, while neither match copies the full name at 0xacdb1. Native com_sndalias.c uses the same counts, literals and result-selected paths; Mac/Tools/i5stdlib.c strnicmp forwards the exact arguments to strncasecmp, as does complete Mac strnicmp 0x25902. Original and Mac literal bytes independently checked. This certifies the concrete selected library backend in that consumed prefix role, not equality inferred only from zero/sign use or full normalized-helper/locale/signed-char/all-count return contracts, arbitrary reusable API, other callers or the whole sound loader. No new locale policy or source change. Independent parent review: review-provenance-shared9-strnicmp.md. Static binary/source review only; no compilation, tests, CI, replay or runtime verification."
       },
       {
         "id": "mac:0x000291da",
