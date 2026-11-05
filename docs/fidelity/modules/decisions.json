@@ -12324,8 +12324,8 @@
     "evidence": "Mac 0x0002b728 symbol-start disassembly read by hand against native. Compared two-square reciprocal scale, separately scaled xx/xy and double atan2/degrees multiplication."
   },
   "mac:0x00057806": {
-    "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/win32/snd_driver.c (win32/snd_driver); whole SND_StartAlias3DSample was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to win32/snd_driver; original Mac source-module provenance retained. Native function definition at src/PC/win32/snd_driver.c:1290; assigned universal header has no body. Mac symbol __Z22SND_StartAlias3DSamplePK11snd_alias_tS1_fiPKfffifihPi18snd_alias_system_t at 0x00057806. Whole caller not audited by universal-math."
+    "status": "fixed",
+    "evidence": "Hand compared Mac 0x00057806 (SND_StartAlias3DSample) with active native engine code. Mac 0x579bf-0x57a3b uses the rounded pitch/timescale-adjusted playback rate for duration, and wraps sample_count*1000 in unsigned 32-bit before float conversion; native retained original rate and used signed-overflowing multiplication. Restored both and unsigned data-length conversion at 0x57a8e-0x57a9d. Existing timeline expected 42 instead of Mac 37; corrected that assertion, observed it fail before the fix, then all output fixtures passed. Native min,max distance API intentionally adapts the bundled Miles max,min ABI; no backend/header change. Compiled and reviewed; high-bit/wrap inputs not exercised."
   },
   "linux:universal/com_math.cpp:3391:SetPlaneSignbits": {
     "status": "unchecked",
@@ -22218,5 +22218,221 @@
   "mac:0x001e9762": {
     "status": "equal",
     "evidence": "Compared full exact-symbol Mac 0x1e9762-0x1e9778: passes networkingEnabled into NET_Config and returns; native matches. Triage and constant checks are clean apart from stack/layout constants."
+  },
+  "mac:0x00055a6c": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055a6c (MSS_FileCloseCallback) with active native engine code. Tail call to FS_FCloseFile with the engine file handle matches; native callback handle is narrowed to the file API integer."
+  },
+  "mac:0x00055a44": {
+    "status": "intentional",
+    "evidence": "Hand compared Mac 0x00055a44 (MSS_FileOpenCallback) with active native engine code. Mac passes a 32-bit unsigned-long output directly to FS_FOpenFileReadStream and returns its nonnegative-length test. The WS3 native callback uses a typed fileHandle_t temporary, then widens it into the 64-bit callback handle, avoiding a partial-width output write while retaining uniqueFILE=1 and the success predicate."
+  },
+  "mac:0x00055afe": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055afe (MSS_FileReadCallback) with active native engine code. Compared the FS_Read argument shuffle: buffer, requested byte count, engine file handle. Native retains this order at the WS3 file callback boundary."
+  },
+  "mac:0x00055a76": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055a76 (MSS_FileSeekCallback) with active native engine code. Read all branches: callback origins 0/1/2 map to FS_Seek origins 2/0/1, followed by FS_FTell; unknown origin returns zero."
+  },
+  "mac:0x00056a5a": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00056a5a (MSS_SpatializeStream) with active native engine code. Compared the active MSS_SpatializeStreamImpl body, not the unused two-argument reconstruction placeholder. Mac register argument is a stream slot; its 0xa0 scaled bias adds 32 channel records, while native callers pass the full channel index. Nearest listener, normalized delta length, axis[1] dot, interpolated near/far attenuation, volume multiplication and (1-dot)*0.5 pan match."
+  },
+  "mac:0x00058c20": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00058c20 (SND_DriverPostUpdate) with active native engine code. Read raw-handle/ready-buffer gates, half master volume, sample-buffer readiness, double sampleTime increment, one buffer handoff, ready-byte clear and signed modulo-32 read cursor. Native invokes the WS3 raw-sample adapter at the same boundaries."
+  },
+  "mac:0x00056818": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00056818 (SND_DriverPreUpdate) with active native engine code. Read the complete six-byte Mac body: no operation. Native pre-update is also empty."
+  },
+  "mac:0x000564d4": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x000564d4 (SND_EndRawSamples) with active native engine code. Read the null gate, sample end/release order, handle clear and zone-buffer free. Native retains the same engine ownership around WS3 sample handles."
+  },
+  "mac:0x000560f6": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x000560f6 (SND_Get2DChannelLength) with active native engine code. Compared total-ms output request with null current-position output and returned low 32-bit length; Mac absolute channel table maps to native channel-45 in the WS3 sample-handle array."
+  },
+  "mac:0x00055ff0": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055ff0 (SND_Get2DChannelPlaybackRate) with active native engine code. Compared table lookup and AIL_sample_playback_rate forwarding; Mac absolute 2D channel maps to native channel-45."
+  },
+  "mac:0x00056164": {
+    "status": "fixed",
+    "evidence": "Hand compared Mac 0x00056164 (SND_Get2DChannelSaveInfo) with active native engine code. Mac 0x56196-0x561b4 converts both position and total length as unsigned 32-bit values. Native unsigned long was 64-bit, so negative/high-word callback values had different fractions. Added native-only unsigned-int narrowing; remaining pitch, volume/pan query and zero-master fallback match. Compiled and reviewed; high-bit inputs not exercised."
+  },
+  "mac:0x00055ef6": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055ef6 (SND_Get2DChannelVolume) with active native engine code. Read sample level outputs and srcChannelCount test: stereo returns left, other formats return left+right. Native preserves the engine reduction of WS3 mixer levels."
+  },
+  "mac:0x00056122": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00056122 (SND_Get3DChannelLength) with active native engine code. Compared direct 3D-handle lookup and AIL_3D_sample_length return. This is the adapter source-byte length query, not a millisecond conversion."
+  },
+  "mac:0x0005601c": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0005601c (SND_Get3DChannelPlaybackRate) with active native engine code. Compared direct 3D-handle lookup and AIL_3D_sample_playback_rate forwarding into the WS3 adapter."
+  },
+  "mac:0x00056260": {
+    "status": "fixed",
+    "evidence": "Hand compared Mac 0x00056260 (SND_Get3DChannelSaveInfo) with active native engine code. Mac 0x56288-0x562a2 treats both sample offset and length as unsigned 32-bit values; native divided by signed int sampleLength. Restored both unsigned 32-bit conversions. Read pitch, master-volume division/basevolume fallback and adapter-coordinate outputs. Compiled and reviewed; high-bit length/offset inputs not exercised."
+  },
+  "mac:0x00055f5e": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055f5e (SND_Get3DChannelVolume) with active native engine code. Compared direct 3D-handle lookup and AIL_3D_sample_volume forwarding into the WS3 adapter."
+  },
+  "mac:0x00055b50": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055b50 (SND_GetDriverCPUPercentage) with active native engine code. Compared driver_2D lookup and AIL_digital_CPU_percent forwarding. Native adapter measures AudioUnit CPU load; bundled Miles measurement implementation is outside this engine-wrapper comparison."
+  },
+  "mac:0x0005680a": {
+    "status": "intentional",
+    "evidence": "Hand compared Mac 0x0005680a (SND_GetSoundFileSize) with active native engine code. Mac adds its 0x24-byte ILP32 sound header to data_len. WS3 native storage has widened metadata/pointers and adds offsetof(MssSound,data), consistently with SND_LoadSoundFile allocations and the AudioUnit adapter metadata reader."
+  },
+  "mac:0x00056138": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00056138 (SND_GetStreamChannelLength) with active native engine code. Compared total-ms output request, null current-position output and returned integer length. Mac table channel-relative addressing maps to native stream slot index-32."
+  },
+  "mac:0x00056048": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00056048 (SND_GetStreamChannelPlaybackRate) with active native engine code. Compared stream-handle lookup and rate forwarding into the WS3 adapter; native stream slot is index-32."
+  },
+  "mac:0x00056388": {
+    "status": "fixed",
+    "evidence": "Hand compared Mac 0x00056388 (SND_GetStreamChannelSaveInfo) with active native engine code. Mac 0x563b4-0x563d2 converts offset and length as unsigned 32-bit before division; native unsigned long widened negative values to 64 bits. Restored 32-bit narrowing. Rate/timescale rounding, basevolume, volume/pan master fallback and saved engine origin match. Compiled and reviewed; high-bit inputs not exercised."
+  },
+  "mac:0x00055f76": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055f76 (SND_GetStreamChannelVolume) with active native engine code. Read levels query, stereo-source check and alias channel mask 0x780>>7: nonspatial stereo returns left, spatial/mono returns left+right. Native preserves the engine reduction of WS3 stream levels."
+  },
+  "mac:0x000585c2": {
+    "status": "fixed",
+    "evidence": "Hand compared Mac 0x000585c2 (SND_InitDriver) with active native engine code. Mac 0x5894d clears its live 2D sample table inside milesGlob on failure. Native allocation used a separate array that the same memset missed; native table now aliases milesGlob.handle_2D. Read dvar defaults/flags, 11/22/44 kHz selection, bits/channel validation, provider fallback, sample caps and allocation loops. Existing WS3 bits-not-bytes driver ABI and synthetic native provider are preserved. Compiled and reviewed; actual device initialization/failure not exercised."
+  },
+  "mac:0x00055c1a": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055c1a (SND_Is2DChannelFree) with active native engine code. Read paused/startDelay rejection, both-alias-null shortcut and backend status==2 test. Native channel-45 handles feed the WS3 adapter with the same done status contract."
+  },
+  "mac:0x00055d2e": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055d2e (SND_Is3DChannelFree) with active native engine code. Read paused/startDelay rejection, both-alias-null shortcut and 3D status==2 test; same engine gates around WS3 sample status."
+  },
+  "mac:0x00055e64": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055e64 (SND_IsStreamChannelFree) with active native engine code. Read null-handle shortcut, paused/delay gates, alias-null shortcut and status==2 close-and-clear sequence. Native stream slot index-32 preserves those engine ownership transitions."
+  },
+  "mac:0x000570b4": {
+    "status": "intentional",
+    "evidence": "Hand compared Mac 0x000570b4 (SND_LoadSoundFile) with active native engine code. Read all Mac loader branches: initialization/missing/invalid handling, source metadata copy, halved conversion-rate selection, format decision tree, allocation and file-buffer free. WS3 intentionally uses offsetof(MssSound,data), rejects zero payload, retains converter input sample count, checks conversion success and rewrites converted PCM format/bits/channels/block-size/sample-count for macos_audio.c. Those documented native storage/converter contracts are preserved; bundled Miles conversion is excluded."
+  },
+  "mac:0x00055ba2": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055ba2 (SND_Pause2DChannel) with active native engine code. Compared sample-stop call before paused=1; Mac absolute 2D channel maps to native channel-45 in the WS3 table."
+  },
+  "mac:0x00055cb6": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055cb6 (SND_Pause3DChannel) with active native engine code. Compared 3D sample-stop call before paused=1; native preserves engine pause metadata around the WS3 handle."
+  },
+  "mac:0x00055ddc": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055ddc (SND_PauseStreamChannel) with active native engine code. Compared stream pause(1) call before paused=1; native stream slot index-32 matches Mac table addressing."
+  },
+  "mac:0x00056552": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00056552 (SND_RawSamples) with active native engine code. Read complete raw initialization and ring copy loops: 1/2-byte mono/stereo formats, minimum 8192-byte buffer, 32 slots, float bytes-to-ms before widening to double, SND_Update wait loop, chunked copies and modulo cursors match. Native keeps defined typed storage and hands the same engine buffers to WS3."
+  },
+  "mac:0x00056512": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00056512 (SND_RawSamplesTime) with active native engine code. Read null-handle zero return and unsigned sample-position to double multiply/add before truncating to int; native WS3 sample cursor supplies the position query."
+  },
+  "mac:0x00058540": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00058540 (SND_Set2DChannelFromSaveInfo) with active native engine code. Read saved volume*master calculation: stereo duplicates the level, mono splits (1-pan)*volume and pan*volume into left/right. Native channel-45 mapping matches Mac."
+  },
+  "mac:0x00056006": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00056006 (SND_Set2DChannelPlaybackRate) with active native engine code. Compared sample-rate setter argument forwarding and native channel-45 mapping at the WS3 boundary."
+  },
+  "mac:0x00056032": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00056032 (SND_Set3DChannelPlaybackRate) with active native engine code. Compared 3D handle/rate setter argument forwarding into WS3."
+  },
+  "mac:0x0005696c": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0005696c (SND_Set3DPosition) with active native engine code. Read nearest-listener selection, origin subtraction, three left-associated axis dot products and negative axis[1]. Mac passes right=-left, up, forward; existing native y,z,x argument order reproduces that WS3 coordinate contract. Existing 18-direction mixer/output fixture passes."
+  },
+  "mac:0x0005681e": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0005681e (SND_SetRoomtype) with active native engine code. Compared digital room type, dry=1/effect wet-level update, then 3D room type in that order; native invokes the documented WS3 simple-reverb adapter."
+  },
+  "mac:0x00058b68": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00058b68 (SND_SetStreamChannelFromSaveInfo) with active native engine code. Read saved volume*master, stereo nonspatial duplication, spatial/mono left=(1-pan)*volume/right=pan*volume split. Native stream-slot mapping and WS3 level calls match."
+  },
+  "mac:0x0005605e": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0005605e (SND_SetStreamChannelPlaybackRate) with active native engine code. Compared stream handle/rate setter argument forwarding, using native slot index-32."
+  },
+  "mac:0x00055b1a": {
+    "status": "fixed",
+    "evidence": "Hand compared Mac 0x00055b1a (SND_ShutdownDriver) with active native engine code. Mac 0x55b32 clears all live handle tables inside milesGlob after provider close and shutdown. Native kept 2D handles in a separate static array outside that reset. Native-only alias now stores them in milesGlob.handle_2D, so the existing typed memset clears the live table. Compiled and reviewed; complete shutdown/reinitialization not exercised."
+  },
+  "mac:0x0005741a": {
+    "status": "fixed",
+    "evidence": "Hand compared Mac 0x0005741a (SND_StartAlias2DSample) with active native engine code. Mac 0x574df-0x574ee converts sound metadata rate as unsigned 32-bit; native cast it to signed int before float. Restored unsigned conversion. Read channel allocation, PCM/ADPCM format tree, pitch/timescale rounding, volume/slave factors, loop/reverb gates, timeshift/fraction/startDelay, pause settings and channel-info arguments. Compiled and reviewed; high-bit metadata rates not exercised."
+  },
+  "mac:0x00057c52": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00057c52 (SND_StartAliasStreamOnChannel) with active native engine code. Read full body: found-file gate, prior stream close, callback/path fallback open, format output argument, rate rounding, volume/slave order, loop/reverb, duration/start-position/delay and channel metadata. Existing native full-channel spatializer input equals Mac stream-slot+32 addressing; transformed 3D positions and left/right levels match. WS3 stream decoding replaces bundled Miles only."
+  },
+  "mac:0x00055b66": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055b66 (SND_Stop2DChannel) with active native engine code. Compared AIL_end_sample before paused/startDelay clears; Mac absolute channel table maps to native channel-45 in the live milesGlob table."
+  },
+  "mac:0x00055c7a": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055c7a (SND_Stop3DChannel) with active native engine code. Compared AIL_end_3D_sample before paused/startDelay clears; same engine metadata changes around WS3 handles."
+  },
+  "mac:0x00055d8e": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055d8e (SND_StopStreamChannel) with active native engine code. Compared stream close, handle clear, then paused/startDelay clears. Native index-32 slot preserves Mac engine ownership order."
+  },
+  "mac:0x00055bd4": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055bd4 (SND_Unpause2DChannel) with active native engine code. Read startDelay==0 resume gate, endtime+=timeshift, then paused=0; native channel-45 sample mapping matches Mac for the engine timing domain."
+  },
+  "mac:0x00055ce8": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055ce8 (SND_Unpause3DChannel) with active native engine code. Read startDelay==0 3D resume gate, endtime+=timeshift, then paused=0; same engine timing order around WS3 handles."
+  },
+  "mac:0x00055e16": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00055e16 (SND_UnpauseStreamChannel) with active native engine code. Read startDelay==0 pause-stream(0) gate, endtime+=timeshift and paused=0; native index-32 slot matches Mac engine timing order."
+  },
+  "mac:0x00056f64": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00056f64 (SND_Update2DChannel) with active native engine code. Read paused/missing-alias gates, slave attenuation, channel*3 volume then master multiplication, mono half-level, and delayed-resume countdown. Native channel-45/WS3 output boundary preserves Mac arithmetic order and gates."
+  },
+  "mac:0x00056878": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00056878 (SND_Update2DChannelReverb) with active native engine code. Read alias-null, dvar and alias flag 0x10 branches: wet effect unless an alias disables it; dry stays 1. Existing native guard matches Mac, and all corresponding existing reverb fixture cases pass."
+  },
+  "mac:0x00058318": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00058318 (SND_Update3DChannel) with active native engine code. Read paused/alias gates, entity offset update, listener transform, distance-lerp attenuation, slave/channel/master volume order and delay resume. Existing native ci->offset repair matches Mac +0x370 addressing; moving-emitter and timeline fixtures pass through WS3 render output."
+  },
+  "mac:0x000568fa": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x000568fa (SND_Update3DChannelReverb) with active native engine code. Read alias-null, enable-reverb and flag 0x10 branches selecting effect wet or zero for the WS3 3D sample adapter. Existing native guard matches Mac; existing reverb fixture cases pass."
+  },
+  "mac:0x00056be0": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00056be0 (SND_UpdateStreamChannel) with active native engine code. Read paused/background/alias gates, world position update, stream-slot+32 spatializer mapping, optional 3D transform, slave/channel/master volume order, stereo versus spatial left/right split and delayed unpause. Native full-channel helper indexing is equivalent to the Mac helper bias; underlying stream decoder is WS3, not bundled Miles."
+  },
+  "mac:0x00056074": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00056074 (SND_UpdateStreamChannelReverb) with active native engine code. Read alias-null, enable-reverb and alias flag 0x10 branches selecting effect wet or zero with dry=1; native index-32 stream lookup and WS3 calls preserve Mac engine selection."
   }
 }
