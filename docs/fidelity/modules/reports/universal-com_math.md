@@ -2,7 +2,7 @@
 
 Updated 2026-11-06.
 
-**Current: 178/229 reconciled: 147 equal, 31 fixed, 0 intentional; 51 unchecked.**
+**Current: 179/229 reconciled: 148 equal, 31 fixed, 0 intentional; 50 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -577,3 +577,14 @@ LinearTrack is equal through the complete actual constant-rate approach in PM_Vi
 The complete Mac positive and negative branches add the signed step, store current, and clamp on their respective ordered comparisons; native preserves all result branches, including equal-current retention and unordered non-clamping. Initial zero-current/direct-target behavior and standard 11/40/60 waypoint interpolation remain separate gates. Actual ClientSpawn initializes current 60, and player_die derives type 6/7 from prior 0/1 without changing height in that selected transition. Whole death processing invokes scripts, so no universal callback preservation of 60 or guaranteed lifecycle is inferred; the accepted entry remains the actual nonzero-current state selected by the owner.
 
 The entire persistent viewHeightCurrent result feeds the real full-word snapshot comparison through field index 21 and the actual G_GetPlayerViewOrigin z addition before bob work. No scalar output is discarded. Existing PM_ViewHeightAdjust primary equal remains; unrelated zero-current and angular conversion repairs are outside this operation. This closes one equal row, without source change or new defect. Original arbitrary ABI/rates/times, FP control/traps/payloads, timestamp overflow, corrupted/concurrent state, whole movement/camera/network behavior and gameplay reachability remain outside scope. Independent review: units/review-provenance-lineartrack31.md; full original, exact Mac producers/operation/consumers, raw constants/field records, source hashes and state-domain receipts are retained privately in recon-provenance-lineartrack31.noindex. No compilation, tests, CI, full build, replay or runtime verification.
+
+
+## Complete epsilon-overlap trace predicate (boundsepsilon33)
+
+`BoundsOverlapEpsilon` is equal through the complete actual six-comparison gate in temporary-model `CM_Trace`. Original 1.3 0x80a8d62 through RET 0x80a8e27 establishes two full min/max float3 pairs, epsilon and the Boolean overlap role. Mac supplies those complete inputs: `SV_ClipMoveToEntity` passes actual entity bounds and contents to `CM_TempBoxModel`, whose TLS3 model and handle 1023 flow through `CM_TransformedBoxTrace` into the moving trace. The trace constructs its full swept bounds and reads the same thread model before the handle/content gates.
+
+Raw 0x326188 supplies tolerance 1. The selected Mac predicate at 0x64e3f–0x64ed6 compares all trace minima against model maxima plus 1, then all model minima minus 1 against trace maxima. Every ordered separation reaches the immediate return at 0x648c9; equality and unordered comparisons continue. Passing all six reaches real capsule processing at 0x64edc. Both Boolean outcomes are consumed directly as control flow; passing is permission for narrow-phase work, not a claim of collision.
+
+Native `CM_TraceTempCapsule` preserves both complete bounds pairs, the real tolerance, all six predicates and both outcomes. It retains Mac subtraction on the minimum side rather than importing the original Linux max-plus-epsilon algebra. Native interleaves axis pairs while Mac groups directions; the result agrees for stable nonvolatile valid storage without FP flags/trap observations. The selected predicate is unchanged since 88a0b288, so separate existing trace repairs do not make this row fixed.
+
+This mapping excludes arbitrary exported epsilon APIs, stale or cross-thread TLS, recursive model replacement, malformed/concurrent storage, FP traps/flags/NaN payloads, upstream bounds/transform correctness and whole collision behavior. `BoundsOverlapEpsilon2D` remains separate and unchecked. Independent review: units/review-provenance-boundsepsilon33.md; complete original, five fresh Mac bodies, raw tolerance and matching native hashes are retained in private recon-provenance-boundsepsilon33.noindex. One equal closure; no new defect, source change, compilation, tests, CI, full build, replay or runtime verification.
