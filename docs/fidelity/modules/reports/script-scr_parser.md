@@ -1,6 +1,6 @@
 # script/scr_parser module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
 **47 entries: 32 equal, 2 fixed, 1 intentional, 12 unchecked.** Mac 1.3 i386 is the authority. Linux source was used only to identify helper names. The AST constructors assigned to this ledger live in `scr_parsetree.c`; they were checked there.
 
@@ -37,3 +37,11 @@ Independent source/binary reviews covered all six units. Review caught an incorr
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. These unchanged traces do not exercise every corrected path. Unreached diagnostic, malformed-input and allocation edges remain compiled and reviewed. Missing helper identities and storage-dependent behavior remain explicitly unchecked or documented native adaptations.
 
 Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile. Source preprocessing checks do not establish binary-byte parity.
+
+## Remaining-helper audit, 2026-11-05
+
+Original ordered Mac stabs, executable symbols and the native debugger caller graph were checked for the twelve remaining helper identities. The debugger extension actually calls `Scr_Debugger_CodePosToLine` and `Scr_ResolveSourcePos`; those use a preceding-opcode lookup and the first source entry. Its glue also contains live same-named typed-source stubs, a guarded `Scr_GetLineNum` wrapper and a filename(line) `Scr_GetSourcePos` formatter. Older unchecked evidence that described these as absent native bodies was inaccurate and is corrected. That does not establish the omitted typed searches, exact-match lookup, formatter contracts or standalone developer accessor. The line-count primitive does not establish the buffer-index wrapper. The AST constructors and grammar calls provide no positive attribution for `node3_`, `node4_` or `concat_list`; treating typed constructors as the untyped helpers would discard their different argument contracts. All twelve remain unchecked. No replacement boundary or equality is inferred from absent symbols. Native code is unchanged.
+
+The assigned files compiled as actual configured stock and CoD2x arm64 Release client objects in a separate evidence directory, with low priority and at most two jobs. No source or fixture was edited. Previously resolved ledger evidence is preserved exactly in the full `script-remaining.ledger.json`. No full CI or replay ran.
+
+Independent source/binary review at source freeze `28e7d452399e38b2c296b8b4230e3eb8017b8c52` agreed with the two compiler overload closures and sixteen remaining gaps. Eight existing compiler/parser cases passed in each stock and CoD2x configuration: four binary-condition loop cases and four parser cases, using the existing ASan/UBSan runner. These checks do not exercise all reference-count types or the unresolved debugger APIs. No new cases or assertions were added.
