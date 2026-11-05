@@ -19646,5 +19646,265 @@
   "mac:0x00192024": {
     "status": "equal",
     "evidence": "Mac 0x192024 compared by hand: directly overwrites window staticFlags."
+  },
+  "mac:0x0014f276": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f276: file-open failure and >32767 limit, close/read/terminator ordering and diagnostics."
+  },
+  "mac:0x0014f31a": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f31a: ui_mp/scriptmenus/ prefix, bounded name and .menu concatenation, image track, null load and add-list result."
+  },
+  "mac:0x0014fb7c": {
+    "status": "fixed",
+    "evidence": "Mac 0x14fbd1-0x14fbf8 formats the translated added message with the server address; restored the missing va/format pass. Compared all empty/error/success cases and favorite-message dvars. Compiled and reviewed; not exercised independently."
+  },
+  "mac:0x00151686": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00151686: direct Menus_AnyFullScreenVisible call with uiDC."
+  },
+  "mac:0x0014ed30": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014ed30: all material/font/sound registrations, names, flags and destination asset fields."
+  },
+  "mac:0x0015401c": {
+    "status": "fixed",
+    "evidence": "Mac 0x154317-0x154351 returns completed/timed-out slots to cancellation/refill in the same pass; native skipped refill and could stall or stop early. Restored both paths and summary destination at 0x1544d8 (slot numResults, not numResults-1). Compared all 16 slots, matching, cap, counters and completion. Compiled and reviewed; not exercised independently."
+  },
+  "mac:0x0014f5e2": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f5e2: client-state query, sv_maxclients loop, 256-byte -1 client-number reset, 32-byte names and clean/count ordering."
+  },
+  "mac:0x001520b4": {
+    "status": "fixed",
+    "evidence": "Mac 0x15221f uses version 1.3; 0x1524e8 reads pb after killcam; 0x15257d-0x152711 retains the tested midpoint and inserts equal servers there. Restored all three. Compared refresh/reset/filter/sort/favorite/dirty branches. Native shifts only live display entries; Mac additionally copies one inactive slot, which can exceed declared storage at the array limit, and that inactive-storage write is intentionally not recreated. Compiled and reviewed; existing browser predicate fixture exercises default and both PB choices in stock/CoD2x, but full list/insertion flow was not exercised."
+  },
+  "mac:0x001545f2": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x001545f2: force and timer gates, count-change rebuild, selectedServer > count quirk, status polling, cancellation and 500 ms retry through UI_BuildServerStatus_impl."
+  },
+  "mac:0x0014f9ae": {
+    "status": "fixed",
+    "evidence": "Mac 0x14f9ae accepts editing fields or matching onKey nodes, with menu/key<=256 gates. Removed native unconditional navigation/action-key acceptance. Compiled and reviewed; not exercised independently."
+  },
+  "mac:0x00151898": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00151898: direct Menus_CloseAll call with uiDC."
+  },
+  "mac:0x001518ae": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x001518ae: menu count/focus/fullscreen gates and UI catcher clearing."
+  },
+  "mac:0x00150694": {
+    "status": "intentional",
+    "evidence": "Hand compared Mac 0x150694 argument/close-menu path. Existing opt-in native trace adds only the sweep close print after the close operation; retained for diagnostics."
+  },
+  "mac:0x00156aa6": {
+    "status": "fixed",
+    "evidence": "Mac 0x157052 positions pre-transfer copied text at yStart+340, other paths at +320, and uses centerPoint at 0x156f8c/0x15707d. Restored these and explicit minutes/hours and seconds/minutes translation order (0x157176/0x15762a). Compared bar geometry, rate/ETA math, 80-sample smoothing and all text branches. Existing CoD2x 0.35 scale and 230/250 label positions remain intentional. Compiled and reviewed; not exercised independently. Independent review correction: Mac 0x156fb2\u20130x156fec always includes copied/of/total text before transfer start, even with total size zero; native now selects the two-field form only for started unknown-size transfers (0x1575c9\u20130x1575ee). Compiled and reviewed; this message branch was not exercised."
+  },
+  "mac:0x001576a4": {
+    "status": "fixed",
+    "evidence": "Mac 0x157719-0x157733 draws detached WWW downloads, 0x157d0f selects mapName after matching mapLoadName, and 0x15795e-0x157cc8 wraps/draws server messages at y=299 with +22 rows and yellow. Restored all omitted paths. Compared game-type/font, connection-state, localhost and download branches; native null-legacy guard retained. Compiled and reviewed; not exercised independently."
+  },
+  "mac:0x0014f6c4": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f6c4: connect-menu paint/blur reset and 640x480 black fallback."
+  },
+  "mac:0x0014f3c4": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f3c4: net/local dvar selection, invalid-map reset, unknown material fallback and rectangle/alignment arguments."
+  },
+  "mac:0x00151a4c": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00151a4c: voice gate, ordered width*level-4 arithmetic, fill coordinates and four border draws."
+  },
+  "mac:0x00153356": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00153356: four stretch-pic calls in top/bottom/left/right order, alignment, material and addition/subtraction order."
+  },
+  "mac:0x0014eeda": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014eeda: both side calls, texture/color/material arguments and (x+w)-size order."
+  },
+  "mac:0x00151caa": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00151caa: normalized scales, split-screen offset, placement, floor(x+0.5)/floor(y+0.5), integer conversion and physical text arguments; native diag_drawtext has an empty body."
+  },
+  "mac:0x00151da0": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00151da0: scale/placement/pixel rounding and physical cursor draw, including signed-byte cursor conversion."
+  },
+  "mac:0x0014efb2": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014efb2: both horizontal border calls and (y+h)-size order."
+  },
+  "mac:0x00156946": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00156946: all seven feeder IDs, type-bit active-map mutation, count-change rebuild, player list 3000 ms refresh and profile count."
+  },
+  "mac:0x00151c0e": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00151c0e: visible map selection/fallback zero, map-count check and lazy mapLoadName material cache."
+  },
+  "mac:0x00152e8a": {
+    "status": "intentional",
+    "evidence": "Hand compared Mac 0x152e8a-0x153356 and decoded server-column table 0x33af34, including PB column 9, ping column 10, map/player/mod/profile/status text, muted names and the unusual cache timer comparison. Native null status-line guard is retained; Mac 0x152f58 dereferences that line without a null test on malformed/incomplete status input."
+  },
+  "mac:0x0015020e": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0015020e: feeder 4 map/cinematic selection, feeder 2 server preview lowercase/cinematic handling, player/mod/profile branches."
+  },
+  "mac:0x0015117c": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0015117c: currentMenuType return; exact-symbol disassembly confirms ret at 0x15118b and following bytes are padding."
+  },
+  "mac:0x00151678": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00151678: uiDC.blurRadiusOut return."
+  },
+  "mac:0x0014f108": {
+    "status": "fixed",
+    "evidence": "Mac 0x14f1ac selects bold for fontEnum 4 when realHeight>=ui_bigFont. Native reversed the threshold. Restored it and compared all font enums/threshold paths. Compiled and reviewed; not exercised independently."
+  },
+  "mac:0x0014f58c": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f58c: case-insensitive gameType lookup, display-name result and input fallback."
+  },
+  "mac:0x0015040e": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0015040e: All join entry, 4096-byte file list, underscore/.gsc filtering, 32-entry caps, metadata fallback and empty-list error."
+  },
+  "mac:0x0014f4a4": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f4a4: case-insensitive mapLoadName lookup, mapName result and input fallback."
+  },
+  "mac:0x0014f508": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f508: load-name length write, bounded prefix compare, first-match result and null fallback."
+  },
+  "mac:0x0014fd0c": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014fd0c: three 1024-byte parses, parse-specific diagnostics and boolean result."
+  },
+  "mac:0x0014fdbe": {
+    "status": "fixed",
+    "evidence": "Mac 0x150074 keeps the parser cursor at the missing separator/null, 0x150084 advances it to the value even when empty, and 0x150165-0x150178 continues scanning duplicate dvar rows. Restored cursor handling and full scan. Compared status/player parsing, row limits, ordering/renames/boolean conversion and all 24 serverStatusDvars entries. Inactive partial-row bytes are left zeroed rather than imitating inaccessible partial-pointer stores. Compiled and reviewed; not exercised independently."
+  },
+  "mac:0x001506ba": {
+    "status": "fixed",
+    "evidence": "Mac 0x150c10 registers the PB browser dvar after killcam and 0x150ec4 starts sorting at column 10. Restored order/column and removed eager native ingame loading absent at 0x150e0a. Inspected root introducing commit and real remote/vid-restart lifecycle: CL_StartHunkUsers->CL_InitUI->UI_Init precedes CL_InitCGame->CG_Init->UI_LoadIngameMenus before SCR_UpdateScreen. All registrations/assets/state initialization compared. Trace command and optional gamepad additions retained. Compiled and reviewed; not exercised independently."
+  },
+  "mac:0x001514f0": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x001514f0: direct Menus_AnyFullScreenVisible call with uiDC."
+  },
+  "mac:0x00150fac": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00150fac: UI_KeyEvent_impl menu/focus gates, bypassKeyClear persistence, ESC close path, key delivery and final catcher/pause cleanup."
+  },
+  "mac:0x0014f74e": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f74e: one-time flag, ingame.txt image track 3 and add-menu ordering."
+  },
+  "mac:0x001510b6": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x001510b6: relative cursor accumulation, 0..640/0..480 clamps and menu-gated mouse delivery."
+  },
+  "mac:0x0015066e": {
+    "status": "intentional",
+    "evidence": "Hand compared Mac 0x15066e command argument/open-menu path. Existing COD2_NATIVE_TRACE_ENABLED branch adds an opt-in sweep result print after the same open operation; retained for native diagnostics."
+  },
+  "mac:0x00151914": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00151914: visible-map index and server-list cursor delta, start/end/cursor adjustment and max-scroll clamping; list-box integer offsets 0x10/0x24 remain valid in native layout."
+  },
+  "mac:0x001536b2": {
+    "status": "unchecked",
+    "evidence": "Mac identity 0x1536b2-0x15401c and dispatch table 0x33af60 established and body read. Fixed ordinary text alignments (0x153ab3), double 0.8 dimming (0x153d14), talker text-Y addition order (0x153a18) and serverFilters initialization. Compiled and reviewed. Unresolved: 0x154012 uses playerNames[-1] when a talking client is absent from the rebuilt player list; this reads preceding asset bytes and no equivalent LP64 valid-string contract is established. Existing fallback left unchanged; no runtime claim."
+  },
+  "mac:0x0015295c": {
+    "status": "fixed",
+    "evidence": "Decoded Mac jump table 0x33ae70: net-game-type handler is 0xf5, not native 0xf4. Restored 1.3 dispatch and compared every populated case, keys, wrap rules, map visibility and rebuild/selection effects. Existing native map-index bounds guard retained rather than reproducing a pre-array/out-of-array active-field read for malformed dvars. Compiled and reviewed; not exercised independently."
+  },
+  "mac:0x0014f7fc": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f7fc: flags 4/0x1000 and favorite-source predicates."
+  },
+  "mac:0x001534e8": {
+    "status": "fixed",
+    "evidence": "Mac data 0x36cf80 supplies EXE_ALL/empty for serverFilters[0], but native static storage was all zero. Restored initialization. Index 1 is accepted at 0x153526 and reads Mac zero padding at 0x36cf88/0x36cf8c; native explicitly declares a zero second row, an intentional padding-to-defined-storage adaptation. Verified private static ownership/no generated provider and compared all width cases/scaling. Compiled and reviewed; not exercised independently."
+  },
+  "mac:0x00150614": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00150614: pause dvar/catcher order and unpause catcher/state cleanup."
+  },
+  "mac:0x0014f878": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f878: same-index result, names, comparison argument order and sortDir zero negation."
+  },
+  "mac:0x00151506": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00151506: strict unit thresholds, shifts, formats, suffixes and UI_ReadableSizeFraction wrapped multiply/sign correction."
+  },
+  "mac:0x0015470a": {
+    "status": "fixed",
+    "evidence": "Mac 0x15481d reloads the current source for dirty-ping updates and 0x1548b4 reloads source/count for filtered-server reporting after callbacks. Restored reloads and compared complete browser timing/refresh, status/find-player and cursor flow. Existing opt-in trace and optional gamepad hooks retained. Compiled and reviewed; not exercised independently."
+  },
+  "mac:0x00151860": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00151860: zeroed argument record, count 1 and first replacement pointer; native typed ConversionArguments preserves the LP64 pointer."
+  },
+  "mac:0x0015169c": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0015169c: && scan, signed-byte digit/locale predicate, argument indexing, copy loops and final va call; native macos_compat Rune table uses corresponding 4-byte entries."
+  },
+  "mac:0x001548e8": {
+    "status": "fixed",
+    "evidence": "Hand compared complete Mac 0x1548e8-0x156946 dispatcher. Restored PB start/join gates and setPbClStatus (0x154938,0x155e2f,0x1564cd), profile allocation/free type 3 (0x155215/0x155251), new-profile feeder reset (0x155840), post-delete state reload, and 4096-byte movie-list buffer matching 0x155a16. Native LAN_GetServerInfo emits pb at cl_ui_mp.c; PB engine callers use existing no-op pb_null_adapter. Existing defensive >=64 profile cap and cached valid favorite index after count refresh remain intentional rather than recreating out-of-array paths. Compiled and reviewed; not exercised independently."
+  },
+  "mac:0x0014fa82": {
+    "status": "fixed",
+    "evidence": "Mac 0x14faa3 strips 0x15 and skips translation lookup; native looked up the stripped text. Restored bypass and compared lookup/fallback, warning/error and wrapper strings. Compiled and reviewed; not exercised independently."
+  },
+  "mac:0x0014f8cc": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f8cc: active client state, mapname lookup, active-map filtering and visible feeder index; retained Mac comparison against mapName."
+  },
+  "mac:0x0014f83c": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f83c: source/sort-key/sort-direction and server-index argument order."
+  },
+  "mac:0x0015118e": {
+    "status": "fixed",
+    "evidence": "Mac 0x1512bb popup cases 9/10 do not force displayHUDWithKeycatchUI; removed native extra write, preserving case 8 at 0x151357. Decoded table 0x33ae40 and compared every menu path/focus guard/state transition. Extra write originated pre-native root commit with no native requirement; optional trace output retained. Compiled and reviewed; not exercised independently."
+  },
+  "mac:0x0014f78e": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f78e: 64-byte copies, nonempty-map gate and maps/mp/%s.csv load."
+  },
+  "mac:0x0014f252": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f252: menu close, white material reset and cache save ordering."
+  },
+  "mac:0x00151ea6": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x00151ea6: date/month formatting, full/partial reset, dirty/ping reset, 1000/5000 ms timers and protocol 118 master query."
+  },
+  "mac:0x0014f0d0": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f0d0: normalized scale, integer font height multiplication and truncation."
+  },
+  "mac:0x0014f08a": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f08a: normalized scale, text/maxChars/font argument order, multiplication and truncation."
+  },
+  "mac:0x0014f1ba": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014f1ba: frame delta, signed modulo-four slot, four-frame warmup/sum and integer 4000/sum FPS including zero-sum fallback."
+  },
+  "mac:0x0014fa08": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0x0014fa08: language query/verification, ui_language correction and changed flag compared to the requested language."
   }
 }
