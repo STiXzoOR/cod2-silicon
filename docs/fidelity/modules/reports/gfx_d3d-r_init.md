@@ -25,3 +25,7 @@ This batch closes 334 math, shader, array, material, command and frame/setup ent
 ## Batch 17 follow-up
 
 GetRefAPI timing ownership is now reconciled by renderer-gpu-sync.md through typed API59 callbacks; the COpenGL lifecycle is restored by renderer-device-lifecycle.md. The original API60 budget getter remains separately tracked until the one-row budget follow-up. R_BeginRegistration capability/mode negotiation remains open for renderer-caps; this batch does not close it.
+
+## Batch 19 follow-up
+
+Renderer capability and registration negotiation are now reconciled by renderer-capabilities.md; native render-dimension,60Hz placeholder and unavailable MSAA boundaries remain explicit. The GPU budget getter is reconciled by renderer-gpu-budget.md through API59 folded ownership. Earlier open statements above describe the pre-follow-up source.

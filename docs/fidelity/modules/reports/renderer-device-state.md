@@ -45,3 +45,7 @@ This combined batch closes 108 color/math, asset, GPU timing, shader compiler an
 ## Batch 17 follow-up
 
 The separate ValidateRasterization row is now reconciled by renderer-device-streams.md, with typed packet/declaration ownership and explicit fixed/image-unit limits. Earlier open-validator statements above describe its prerequisite stage. Full indexed draw and render-state dispatch remain separate follow-ups.
+
+## Batch 19 follow-up
+
+Full native render-state dispatch/getter follow-up is recorded in renderer-device-render-state.md. DrawIndexedPrimitive now has an explicit intentional native boundary in renderer-device-draw.md, including scoped state restoration, original driver sequencing and independent color storage. No claim of complete renderer behavior follows from individual setter closure.
