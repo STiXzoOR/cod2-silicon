@@ -292,7 +292,7 @@ static inline __attribute__((always_inline)) void R_ResetFrameBackendData(void)
 
 static inline __attribute__((always_inline)) void R_SelectSkinnedCacheForFrame(DxGlobals *dx)
 {
-#if defined(COD2_X64)
+#if defined(COD2_X64) && defined(__APPLE__)
     /* Mac 0xc7db3/0xc7f5b selects the first cache every frame. */
     dx->dynamicBufferFrame = 0;
 #else
