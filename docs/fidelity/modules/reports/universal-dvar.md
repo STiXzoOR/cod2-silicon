@@ -55,3 +55,21 @@ See [native-invalid-boundaries](native-invalid-boundaries.md) for the exact nati
 ## Integrated batch 21 acceptance
 
 The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.
+
+
+## Original identity follow-up — provenance-config7
+
+Original Linux 1.0 IDB addresses were mapped to retained original 1.3 ELF bodies using source order, independent decompiler anchors and masked whole-body comparisons. Every unique whole-body match agrees with the mapped module order; ambiguous tiny bodies and changed implementations were located from neighboring unique anchors and inspected separately. An ambiguous non-target `FS_Path_f` comparison was not used as an anchor. The private packet retains the mapping alternatives and exact bodies. These addresses establish original identity and intent only; Mac i386 remains behavior authority.
+
+| Helper | Original 1.0 | Original 1.3 | Verdict |
+|---|---|---|---|
+| `Dvar_GetVec2` | 0x80b0cac | 0x80b30a0 | unchecked |
+| `Dvar_GetVec3` | 0x80b0cfa | 0x80b30ee | unchecked |
+| `Dvar_GetVec4` | 0x80b0d48 | 0x80b313c | unchecked |
+| `Dvar_LoadDvarsFromBuffer` | 0x80b2d56 | 0x80b52ee | unchecked |
+| `Dvar_SaveDvars` | 0x80b2c82 | 0x80b5202 | unchecked |
+| `Dvar_SetVec2FromSource` | 0x80b20f0 | 0x80b4598 | unchecked |
+
+The positive original caller Dvar_SetVec2 0x80b49ee passes source 0 at call 0x80b4a10. The complete 1.3 helper forwards its arbitrary source argument to SetVariant and brackets that call with critical section 4; the exact lock providers 0x80d6842/0x80d6864 invoke pthread mutex lock/unlock. Mac SetVec2 0x54bba and ByName 0x550f6 establish only source-0 operations without that wrapper lock contract. The previously approved native z/w-zero policy remains settled and preserved; it does not resolve arbitrary-source forwarding or ownership/locking. This row remains unchecked. The three vector getters still lack complete Mac name-lookup/default/return-storage identities. Original SaveDvars/LoadDvarsFromBuffer use name-NUL/value-NUL blobs; the Mac named-text Com_Save/Load operations remain distinct. All six rows remain unchecked.
+
+No production source changes, defects, compilation, tests, CI or replays in this follow-up. No runtime behavior is certified. Private evidence: `recon-provenance-config7.noindex`; focused ledger preserves all previously resolved rows unchanged.
