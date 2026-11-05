@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**657 rows audited: 647 intentional, 1 fixed, 9 unchecked.** There are 631 external-import rows and 26 lower-address entries. No external library implementation is described as equal to reconstructed engine code.
+**657 rows audited: 647 intentional, 4 fixed, 6 unchecked.** There are 631 external-import rows and 26 lower-address entries. No external library implementation is described as equal to reconstructed engine code.
 
 ## Import identity and providers
 
@@ -24,21 +24,25 @@ Pending platform sources were read independently where this worktree predates th
 
 The local `glVertexArrayParameteriAPPLE` no-op is a separate, intentional boundary: its sole engine call requests `GL_VERTEX_ARRAY_STORAGE_HINT_APPLE` / `GL_STORAGE_SHARED_APPLE`; native draws submit CPU arrays without registering an APPLE VAR range. It does not establish general GL or VAO equivalence.
 
+
+**The retained timing caller used an incompatible structure.** Parent review found that MacTools_Sleep passed and returned a reconstructed AbsoluteTime containing two unsigned-long words (16 bytes on Apple LP64), while the selected macos_compat.c helpers used two unsigned-int words (8 bytes). Both reconstructed native definitions now match the provider’s eight-byte lo/hi layout. Actual caller and provider object compilation confirms size8/alignment4 on both sides; legacy definitions remain unchanged. The native monotonic clock/nanosleep implementation remains an explicit Carbon replacement.
+
+This closes the three UpTime/AddDurationToAbsolute/MPDelayUntil import boundaries and the additional MacTools_Sleep row at 0xa48c. Its exact Mac body passes both returned words through the same three-call sequence. The import module still contains 657 rows; the submitted ledger has one additional cross-module Sleep correction. Sleep timing and failure paths were not exercised. Both native client and dedicated targets rebuilt successfully; fresh source-only follow-up review is pending.
+
 ## Lower-address entries and remaining gaps
 
 The low-address FUN rows were located inside their enclosing symbols. Four are MacDisplay initialization cleanup fragments; 0xc157 belongs to the unused cursor vector's static cleanup. TextPool 0xabd76 uses a native fatal-allocation boundary, and screenshot 0xe8b1a uses C allocation with explicit frees. Score 0x112c31 has no native heap deque to destroy. D3DX compiler tails 0x13ce0c/0x13ce4e destroy GCC strings absent from the selected C buffer/cache paths; those paths use malloc/calloc and stdio, not throwing C++ allocation. This does not approve generic shader output or unchecked calloc failure behavior.
 
 Five coal-section texture/cube/vertex-shader thunks preserve their destructor targets with native subobject offsets. The remaining PIC, CRT and loader helpers are owned by the arm64 compiler/linker/runtime, including three real 25-byte `__picsymbolstub2` imports.
 
-Nine rows remain unchecked:
+Six import-unit rows remain unchecked:
 
 - 0x01acc42e `CFBundleCopyLocalizedString`, 0x01acc429 `CFStringGetPascalString`, and 0x01acc424 `StringToNum`: Mac `GetLanguageCode` at 0x9cbc uses these, and pending VK_Map still calls native `MacResources_GetLanguageCode`, which returns zero. The retained key-language resource path has no complete native provider/storage replacement.
 - 0x00113119 and 0x00113166: Optimize's triangle-list and deque exception cleanup. The restored native normal path still allocates with throwing `__Znwm` from C and lacks matching unwind cleanup.
-- 0x01acc48d `AddDurationToAbsolute`, 0x01acc465 `MPDelayUntil`, and 0x01acc46f `UpTime`: parent review found that MacTools_Sleep uses the reconstructed two-unsigned-long AbsoluteTime (16 bytes on Apple LP64), while macos_compat.c uses two unsigned-int fields (8 bytes). Actual Clang layouts confirm incompatible value and pointed-storage contracts. The native provider alone does not prove this retained caller safe or retired.
 - 0x002f1830: the volume-texture secondary destructor thunk has no native body. The native constructor leaves its secondary vtable null, but exhaustive secondary-interface/cast caller retirement has not been established.
 
 ## Verification and limits
 
-Both `cod2_macos` and `cod2_macos_ded` configured and built as arm64 Release, at low priority with at most two build jobs. Both relinked after the comparator change. The inactive guard checker passed all six configurations with zero mismatches; `git diff --check` passed. No new tests, full CI, replay, or runtime presentation was run. The comparator change is compiled and reviewed, not exercised.
+Both `cod2_macos` and `cod2_macos_ded` configured and built as arm64 Release, at low priority with at most two build jobs. Both relinked after the comparator change. The original comparator guard preserves all six inactive configurations. The subsequent AbsoluteTime type repair changes only the native port-on configuration; all five legacy configurations are identical. `git diff --check` passed. No new tests, full CI, replay, or runtime presentation was run. The comparator change is compiled and reviewed, not exercised.
 
-Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-unmatched-imports.noindex/`. All 657 exact IDs are covered in the submitted unit ledger; global routing files were not changed.
+Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-unmatched-imports.noindex/`. All 657 import-module IDs plus the MacTools_Sleep correction are covered in the submitted unit ledger; global routing files were not changed.

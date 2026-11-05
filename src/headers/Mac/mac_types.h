@@ -260,8 +260,13 @@ struct ATI4CompsConverterARGB {
 };
 
 struct AbsoluteTime {
+#if defined(COD2_X64)
+    unsigned int lo;
+    unsigned int hi;
+#else
     UInt32 lo;
     UInt32 hi;
+#endif
 };
 
 struct AlertStdCFStringAlertParamRec {
