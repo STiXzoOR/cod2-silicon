@@ -23716,8 +23716,8 @@
     "evidence": "Exact-symbol Mac 0x3fb4\u20130x3fbb is a no-op variadic diagnostic; native game_dprintf has the same empty behavior and void/variadic contract. Dedicated compiled; no runtime call claimed."
   },
   "mac:0x00020fcc": {
-    "status": "unchecked",
-    "evidence": "Read complete Mac 0x20fcc\u20130x21286 cached light vector/scalar comparisons and glLightfv/glLightf calls. Native COpenGL_SetLight is a stub; declared native COpenGL has only placeholder vtable storage, insufficient for original per-light cache at this+0xbc with 180-byte stride. Need coordinated COpenGL/CDirect3DDevice allocation/caller audit; absent direct calls or future Metal plan does not prove replacement."
+    "status": "fixed",
+    "evidence": "Mac0x20fcc complete exact-symbol comparison: three four-component bitwise cache compares/copies issue diffuse1201/specular1202/ambient1200; exponent1205/cutoff1206/attenuation1207-1209 compare bits and update individually. Native COpenGL_SetLight now implements these branches in typed COpenGLNative lights[8], replacing the stub and resolving the earlier MacFastCopy attribution. Original Init self-comparison retained. Provider compiled and reviewed; update branches not runtime exercised, device lighting remains separately unresolved."
   },
   "mac:0x0000a132": {
     "status": "intentional",
@@ -30374,5 +30374,277 @@
   "mac:0x0001d4f4": {
     "status": "fixed",
     "evidence": "Mac 0x0001d4f4: restored recreate dispatch through RecreateSurface, DXT1/2/3/5 selection, compressed width/height>3 threshold and no callee dirty clearing; native previously treated DXT4 as compressed and uploaded all small levels. Compiled and reviewed; not exercised."
+  },
+  "mac:0x000100ce": {
+    "status": "unchecked",
+    "evidence": "Exact Mac 0x100ce compared with actual native Device UpdateTextureIfNeeded/ApplySamplerState and texture worker providers: target/name recreation and typed dirty uploads are covered, but full sampler LOD/filter transitions, shared texture-cache updates and original Device caller identity remain unproved. Not exempted by future Metal."
+  },
+  "mac:0x00022950": {
+    "status": "fixed",
+    "evidence": "Mac 0x22950: restored native deleting destructor through object cleanup and free, preserving typed singleton/list/array storage; compiled and reviewed, not exercised."
+  },
+  "mac:0x00022cd0": {
+    "status": "fixed",
+    "evidence": "Mac 0x22cd0: restored native binding-node cleanup and base-array vtable teardown; native fixed tex-unit storage replaces the Mac vector, texture embedded-name ownership retained; compiled and reviewed, not exercised."
+  },
+  "mac:0x00020328": {
+    "status": "fixed",
+    "evidence": "Mac 0x20328: replaced empty native Reset with three target enables, error-inhibition bracket, name caches, fixed matrix/combiner state, wraps/filters/maxlevel/optional anisotropy and LOD bias, texgen and coordinate-array reset; compiled and reviewed, not exercised."
+  },
+  "mac:0x0002007a": {
+    "status": "fixed",
+    "evidence": "Mac 0x2007a: replaced empty native bind/copy body, preserving target enable priority and copying sampler/name/lastlevel/anisotropy from the proven native secondary texture prefix; border is not copied, matching Mac; compiled and reviewed, not exercised."
+  },
+  "mac:0x00020e48": {
+    "status": "fixed",
+    "evidence": "Mac 0x20e48: restored cached color-array disable and validation-bit clear; native typed CBaseVA storage and actual callbacks inspected; compiled and reviewed, not exercised."
+  },
+  "mac:0x00020f02": {
+    "status": "fixed",
+    "evidence": "Mac 0x20f02: restored cached normal-array disable and validation-bit clear; native typed CBaseVA storage and actual callbacks inspected; compiled and reviewed, not exercised."
+  },
+  "mac:0x00021370": {
+    "status": "fixed",
+    "evidence": "Mac 0x21370: restored client texture-unit selection, cached coordinate-array disable and validation clear; compiled and reviewed, not exercised."
+  },
+  "mac:0x00021a92": {
+    "status": "fixed",
+    "evidence": "Mac 0x21a92: restored conditional 2D/3D/cube disable calls and active-unit/cache updates in original order; compiled and reviewed, not exercised."
+  },
+  "mac:0x00020042": {
+    "status": "fixed",
+    "evidence": "Mac 0x20042: restored generic-attribute enabled/validation tests, both-byte clear and glDisableVertexAttribArrayARB; compiled and reviewed, not exercised."
+  },
+  "mac:0x00020db6": {
+    "status": "fixed",
+    "evidence": "Mac 0x20db6: restored color-array enable/pointer guards and generic attribute5 validation; actual native CVertexArrays provider inspected; compiled and reviewed, not exercised."
+  },
+  "mac:0x00020e7e": {
+    "status": "fixed",
+    "evidence": "Mac 0x20e7e: restored normal-array enable/pointer guards and generic attribute3 validation; actual native CVertexArrays provider inspected; compiled and reviewed, not exercised."
+  },
+  "mac:0x00021286": {
+    "status": "fixed",
+    "evidence": "Mac 0x21286: restored client active-unit selection, coordinate enable/pointer guards and generic attribute Unit+8 validation; compiled and reviewed, not exercised."
+  },
+  "mac:0x00020f38": {
+    "status": "fixed",
+    "evidence": "Mac 0x20f38: restored vertex-array enable/pointer guards and generic attribute0 validation; actual native CVertexArrays provider inspected; compiled and reviewed, not exercised."
+  },
+  "mac:0x00021c10": {
+    "status": "unchecked",
+    "evidence": "Mac 0x21c10: substantial empty-body restoration compiled/reviewed (extensions, GL defaults, owned lights/arrays/texture units/VAO). Original 96 shader-constant dirty caches and remaining private cache provider are not proven; native fixed16 unit storage differs from dynamic Mac vector. Selected Device has no Init/Shutdown caller beyond extern declarations. Full native initialization/lifecycle parity is not established."
+  },
+  "mac:0x00021ba6": {
+    "status": "fixed",
+    "evidence": "Mac 0x21ba6: restored immediate GL texture deletion/registry removal. Proven native embedded name cells are not freed; pointer caches are invalidated, name zeroed, and zero-name nodes removed by identity. Checked actual texture constructor/destructor/recreation providers; compiled and reviewed, combined lifecycle not exercised."
+  },
+  "mac:0x00021b3c": {
+    "status": "fixed",
+    "evidence": "Mac 0x21b3c: restored actual VAO registration-list traversal by numeric name, immediate delete, owned heap-name free and node unlink/free; COpenGLVAO_CreateNewBinding native provider inspected; compiled and reviewed, not exercised."
+  },
+  "mac:0x0000e930": {
+    "status": "fixed",
+    "evidence": "Mac 0xe930: restored numeric cached-name comparison and target-enable guards, active texture selection and CTexUnit SetTex call; typed texture prefix checked against actual 2D/cube/volume providers; compiled and reviewed, not exercised."
+  },
+  "mac:0x0000e024": {
+    "status": "fixed",
+    "evidence": "Mac 0xe024: restored absent native border-color provider with per-target cache, active unit, ARGB-channel normalization and GL_TEXTURE_BORDER_COLOR update; compiled and reviewed, not exercised."
+  },
+  "mac:0x00019048": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x00019048: compared the actual CDirect3DDevice.c provider, typed CTexUnit member offsets, operation/float-scale changes, higher source/operand pairs before source0, active-unit caching and GL enums; matches."
+  },
+  "mac:0x00019178": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x00019178: compared the actual CDirect3DDevice.c provider, typed CTexUnit member offsets, operation/float-scale changes, higher source/operand pairs before source0, active-unit caching and GL enums; matches."
+  },
+  "mac:0x000174ec": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x000174ec: compared the actual CDirect3DDevice.c provider, typed CTexUnit member offsets, operation/float-scale changes, higher source/operand pairs before source0, active-unit caching and GL enums; matches."
+  },
+  "mac:0x00018d9e": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x00018d9e: compared the actual CDirect3DDevice.c provider, typed CTexUnit member offsets, operation/float-scale changes, higher source/operand pairs before source0, active-unit caching and GL enums; matches."
+  },
+  "mac:0x00018eb4": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x00018eb4: compared the actual CDirect3DDevice.c provider, typed CTexUnit member offsets, operation/float-scale changes, higher source/operand pairs before source0, active-unit caching and GL enums; matches."
+  },
+  "mac:0x00017714": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x00017714: compared the actual CDirect3DDevice.c provider, typed CTexUnit member offsets, operation/float-scale changes, higher source/operand pairs before source0, active-unit caching and GL enums; matches."
+  },
+  "mac:0x0002172e": {
+    "status": "fixed",
+    "evidence": "Mac 0x2172e: restored all-disabled, reflection, normal-map and object-linear texgen branches with three/four-coordinate modes and Q disable behavior; compiled and reviewed, not exercised."
+  },
+  "mac:0x000213d0": {
+    "status": "fixed",
+    "evidence": "Mac 0x213d0: restored bitwise matrix change detection, texture unit/matrix-mode caching, copy and glLoadMatrixf; compiled and reviewed, not exercised."
+  },
+  "mac:0x000214e0": {
+    "status": "fixed",
+    "evidence": "Mac 0x214e0: restored identity comparison, texture unit/matrix-mode caching, identity copy and glLoadIdentity; compiled and reviewed, not exercised."
+  },
+  "mac:0x00020b00": {
+    "status": "unchecked",
+    "evidence": "Mac 0x20b00: native bind/cache-copy/invalidation body restored and compiled/reviewed. Original fields8/c are VARange start/size, while actual native COpenGLVAO/CVAOPacket provider exposes UINT32 mCode/mReserved0C and currently assigns onlyzero. The proven zero range is handled; a nonzero scalar is not cast to native pointer. Widened range-provider contract remains unproved."
+  },
+  "mac:0x0002000c": {
+    "status": "fixed",
+    "evidence": "Mac 0x2000c: restored cached native range pointer/size comparison and optional glVertexArrayRangeAPPLE using appended typed state; compiled and reviewed, nonzero VAO range provider remains separately unchecked."
+  },
+  "mac:0x0001ffe0": {
+    "status": "fixed",
+    "evidence": "Mac 0x1ffe0: restored program-ID cache and glBindProgramARB; native ID read from first word per actual COpenGLVertexProgram constructor/CDirect3DVertexShader_GetProgramId provider, rather than original private offset0xc; compiled and reviewed, not exercised."
+  },
+  "mac:0x000201b8": {
+    "status": "fixed",
+    "evidence": "Mac 0x201b8: restored generic attribute enable/complete pointer-state comparisons, fixed-array aliases0/3/5/8+ invalidation, glVertexAttribPointerARB and validation clear; compiled and reviewed, not exercised."
+  },
+  "mac:0x000215f0": {
+    "status": "fixed",
+    "evidence": "Mac 0x215f0: restored glFinish, memory reset, active-unit walk, deletion/zeroing of registered texture/VAO names, packet/fence shutdown and VAR release. Native embedded-name registry retained without owning names and all texture name-pointer caches invalidated for recreation; compiled and reviewed, no selected Device lifecycle caller or runtime exercise established."
+  },
+  "mac:0x00022dbc": {
+    "status": "fixed",
+    "evidence": "Mac 0x22dbc: restored native global destructor path into actual singleton destructor; OFF source preserved; compiled and reviewed, not exercised."
+  },
+  "mac:0x00022dcc": {
+    "status": "fixed",
+    "evidence": "Mac 0x22dcc and constructor0x22b6e: global initialization now routes through restored priority helper and native singleton constructor with actual array vtables and initialized lists/generic state; compiled and reviewed, startup not exercised."
+  },
+  "mac:0x00022d86": {
+    "status": "fixed",
+    "evidence": "Mac 0x22d86: added missing native priority0xffff helper with initialize1 constructor and initialize0 destructor dispatch, read by address because mangled static-helper symbol repeats; compiled and reviewed, not exercised."
+  },
+  "mac:0x0000d380": {
+    "status": "equal",
+    "evidence": "Mac 0xd380: actual ATI ARGB array converter compared with selected CColorConverter.c helper: clamp/scale/round, four-float stride, count guard and rotate-right24 match."
+  },
+  "mac:0x0000d210": {
+    "status": "equal",
+    "evidence": "Mac 0xd210: actual ATI ARGB scalar converter clamp/scale/round, channel packing and rotate-right24 match CColorConverter.c."
+  },
+  "mac:0x00017c74": {
+    "status": "unchecked",
+    "evidence": "Mac 0x17c74: actual Device StretchRect covers equal-size backbuffer copy/cinematic quad but lacks original destination-surface/rectangle/filter behavior and complete GL/client/matrix/sampler-state save/restore. Selected native fallback ignores destination/filter semantics; pending Device provider does not prove parity. No speculative private layout applied."
+  },
+  "mac:0x00024e64": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x00024e64: hand compared all16 raw32-bit XOR/OR words and nonzero result with actual MacOpenGLUtils.c provider; constants/table checks also read."
+  },
+  "mac:0x000254f6": {
+    "status": "fixed",
+    "evidence": "Mac 0x254f6/0x255c6: m[10] now evaluates negative product then adds m[11], preserving SSE order. Existing native +1/-1 projection numerator is intentional integer-pixel-center adaptation per F2 reports; remaining matrix entries/signs compared. Compiled and reviewed, this correction not exercised."
+  },
+  "mac:0x000250d6": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x000250d6: hand compared all8 binary declaration words and size/type/component/normalized bit extraction with actual MacOpenGLUtils.c provider; constants/table checks also read."
+  },
+  "mac:0x00025064": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x00025064: hand compared all32 binary translation bytes and high-nibble multiply/low-nibble add with actual MacOpenGLUtils.c provider; constants/table checks also read."
+  },
+  "mac:0x00024ee8": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x00024ee8: hand compared entire format decision tree, DXT1=4,DXT2\u20135=8 and unsupported zero with actual MacOpenGLUtils.c provider; constants/table checks also read."
+  },
+  "mac:0x00025632": {
+    "status": "fixed",
+    "evidence": "Mac 0x25632/0x25788: stop image-size summation when all dimensions are zero; native previously counted artificial extra1x1 levels. Checked dimension shifting, DXT and uncompressed UINT32 arithmetic; compiled and reviewed, not exercised."
+  },
+  "mac:0x000252f6": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x000252f6: hand compared zero-dimension clamps, DXT block rounding/8-or16 byte size and wrapped UINT32 product before shift3 with actual MacOpenGLUtils.c provider; constants/table checks also read."
+  },
+  "mac:0x0002508e": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x0002508e: hand compared complete zero-dimension branch loop and per-dimension shift/count behavior with actual MacOpenGLUtils.c provider; constants/table checks also read."
+  },
+  "mac:0x00025036": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x00025036: hand compared all16 binary source words, low-nibble selection and complement-alpha operand with actual MacOpenGLUtils.c provider; constants/table checks also read."
+  },
+  "mac:0x00024ff0": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x00024ff0: hand compared all16 binary source words, low-nibble selection and complement/alpha-replicate operand bits with actual MacOpenGLUtils.c provider; constants/table checks also read."
+  },
+  "mac:0x00025148": {
+    "status": "fixed",
+    "evidence": "Mac 0x25148: preserve incoming CreateOpenGLResources except unsupported depth clears; native wrongly forced true. Keep proven native null-output scratch handling and byte-oriented BGRA/A8/A8L8 upload adaptations. Actual texture callers initialize true; compiled and reviewed, not exercised."
+  },
+  "mac:0x00025084": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x00025084: hand compared tail forwarding to the selected MacDisplay provider with actual MacOpenGLUtils.c provider; constants/table checks also read."
+  },
+  "mac:0x00025116": {
+    "status": "intentional",
+    "evidence": "Mac 0x25116 returns GPU-specific -0.15/-0.075 or -0.3 offsets. Native zero offsets complement its measured +1/-1 projection pixel-center adaptation, documented in F2 post-processing edge report and existing pixel-center fixture; preserved intentionally."
+  },
+  "mac:0x00024eb0": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x00024eb0: hand compared all five DXT cases and false default with actual MacOpenGLUtils.c provider; constants/table checks also read."
+  },
+  "mac:0x00024e48": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x00024e48: hand compared forwarded extension string and Boolean result through actual MacDisplay provider with actual MacOpenGLUtils.c provider; constants/table checks also read."
+  },
+  "mac:0x000254a0": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x000254a0: hand compared signed magic-bit estimate0x5f375a86 and SSE half/product/Newton/final-product operation order with actual MacOpenGLUtils.c provider; constants/table checks also read."
+  },
+  "mac:0x001060de": {
+    "status": "intentional",
+    "evidence": "Exact Mac 0x1060de independently compared with df8d9cc actual rb_imagefilter.c provider: radius X/Y scaling, optional setup pass,16-pass budget, early return, accounting/ping-pong/last-pass flip match. Existing exact-target UV extent and -0.5 pixel-edge compensation follow measured native target/projection adaptation; no blanket renderer exemption."
+  },
+  "mac:0x000da2f6": {
+    "status": "fixed",
+    "evidence": "Mac 0xda2f6,0xda6ae\u20130xda6e1,0xdb06a and0xda81f: restored float radius sorting, original dvar index0/1, pass-ordinal feedback images and typed world.skyImage skybleed gate. Existing native target/orientation adaptations and defined debug colors retained where Mac scratch bytes are indeterminate. Actual object compiled/reviewed; existing three blur fixture cases pass, corrected glow branches not exercised."
+  },
+  "mac:0x000d51f4": {
+    "status": "equal",
+    "evidence": "Exact Mac 0xd51f4 compared independently with actual df8d9cc rb_backend.c BeginViewCmd: flush, scene/lod/view/matrix copies, viewport fields and condition, projection-distance constants15\u201317 with same normalization order, Set3D and command advance match."
+  },
+  "mac:0x000d968e": {
+    "status": "fixed",
+    "evidence": "Exact Mac 0xd968e fade/pow/clamp/alpha-byte packing/advance compared. Native Apple saved-screen UVs now use actual exact target extent from R_InitFullscreenRenderTargetImage/Image_SetupRenderTarget, avoiding POT cropping on NPOT targets; legacy Mac POT path preserved. Compiled/reviewed; saved-screen CGL fixture covers copy only, this blend command not exercised."
+  },
+  "mac:0x00105ac0": {
+    "status": "intentional",
+    "evidence": "Exact Mac 0x105ac0 independently compared with actual df8d9cc rb_imagefilter.c provider: two2-tap calls, eight symmetric offsets/products, material7/count8/destination fields match. Native Apple exact-size render targets require UV extent1 instead of original POT ratios; adaptation preserved."
+  },
+  "mac:0x000ce6c6": {
+    "status": "fixed",
+    "evidence": "Mac 0xce6c6/0xce73f\u20130xce76c: native now multiplies inverse render-target dimension by viewport dimension before halving. Viewport choice/centers/subpixel addition/constantsab/ae/af compared; existing native exact-target extent adaptation retained. Actual renderer object compiled and reviewed, not exercised."
+  },
+  "mac:0x0000d04a": {
+    "status": "fixed",
+    "evidence": "Mac 0xd04a/0xd16a: native Std ARGB helper byte-swapped instead of rotate-right8; corrected shared helper used by this count/stride loop. Actual renderer object compiled and reviewed, not exercised."
+  },
+  "mac:0x0000ceda": {
+    "status": "fixed",
+    "evidence": "Mac 0xceda/0xcfbe: native Std ARGB helper byte-swapped instead of rotate-right8; corrected shared helper after checking clamp/scale/round and packing. Actual renderer object compiled and reviewed, not exercised."
+  },
+  "mac:0x0001f9c0": {
+    "status": "fixed",
+    "evidence": "Mac 0x1f9c0: replaced zero-ID constructor with256 single-ID generations when empty, LIFO reuse, glSetFenceAPPLE then pool pop. Native record24bytes/pointer shape independently checked by buffer worker; actual renderer object compiled and reviewed, GPU path not exercised."
+  },
+  "mac:0x0001fa90": {
+    "status": "fixed",
+    "evidence": "Mac 0x1fa90: delete each unused fence then erase to end=begin retaining capacity; native formerly just freed/reset vector. Actual renderer object compiled and reviewed, GPU path not exercised."
+  },
+  "mac:0x0001fb4e": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x1fb4e: global destruction wrapper passes initialize0,priority0xffff; actual local helper frees native unused-ID storage. Native additionally zeroes freed begin, preserving defined existing teardown behavior."
+  },
+  "mac:0x0001fb5e": {
+    "status": "equal",
+    "evidence": "Exact Mac 0x1fb5e: global initialization wrapper passes initialize1,priority0xffff; actual helper clears all three unused-ID vector pointers."
+  },
+  "mac:0x0001faee": {
+    "status": "equal",
+    "evidence": "Mac 0x1faee selected by address (otool-p name collides): priority0xffff guard, initialize1 triple-pointer zero and initialize0 allocation free match actual native helper; native retains defined post-free begin zero."
   }
 }

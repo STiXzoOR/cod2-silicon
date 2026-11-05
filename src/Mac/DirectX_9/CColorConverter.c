@@ -1,5 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
+#if defined(COD2_X64)
+#include "lp64_gl_state.h"
+#endif
 
 extern unsigned char sStdConverterARGB[];
 extern unsigned char sStdConverterABGR[];
@@ -59,7 +62,11 @@ static UINT32 CColorConverter_PackStdARGB(float r, float g, float b, float a)
     UINT32 packed;
 
     packed = (CColorConverter_FloatToByte(b) << 24) | (CColorConverter_FloatToByte(g) << 16) | (CColorConverter_FloatToByte(r) << 8) | CColorConverter_FloatToByte(a);
+#if defined(COD2_X64)
+    return CColorConverter_RotateRight32(packed, 8);
+#else
     return CColorConverter_ByteSwap32(packed);
+#endif
 }
 
 static UINT32 CColorConverter_PackATI4CompsARGB(float r, float g, float b, float a)
@@ -339,7 +346,11 @@ const CColorConverter *CColorConverter_GetColorConverter(Format SrcFormat)
     const unsigned char *openGlState;
 
     openGlState = (const unsigned char *)imp___ZN7COpenGL7sOpenGLE;
+#if defined(COD2_X64)
+    if (MacDisplay_GetCardType() == 2 && ((const COpenGLNative *)openGlState)->supportsATIArrayRevComps) {
+#else
     if (MacDisplay_GetCardType() == 2 && openGlState[0x800] != 0) {
+#endif
         return (const CColorConverter *)(SrcFormat ? sATI4CompsConverterABGR : sATI4CompsConverterARGB);
     }
 

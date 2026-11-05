@@ -25,9 +25,9 @@ Mac/DirectX 9/CDirect3DVertexBuffer,26,0,0,0,26
 Mac/DirectX 9/CDirect3DVertexDeclaration,9,0,0,0,9
 Mac/DirectX 9/CDirect3DVertexShader,8,0,0,0,8
 Mac/DirectX 9/CDirect3DVolumeTexture,44,23,16,5,0
-Mac/DirectX 9/CFence,5,0,0,0,5
+Mac/DirectX 9/CFence,5,3,2,0,0
 Mac/DirectX 9/CMemoryBuffer,10,0,0,0,10
-Mac/DirectX 9/COpenGL,36,0,0,0,36
+Mac/DirectX 9/COpenGL,36,6,27,0,3
 Mac/DirectX 9/COpenGLTexture,5,0,1,4,0
 Mac/DirectX 9/COpenGLVAO,5,0,0,0,5
 Mac/DirectX 9/CVAOPacket,21,0,0,0,21
@@ -36,7 +36,7 @@ Mac/DirectX 9/D3DXMath,3,0,0,0,3
 Mac/DirectX 9/D3DXShader,39,0,0,0,39
 Mac/DirectX 9/D3DXTex,5,0,0,0,5
 Mac/DirectX 9/MacOpenGLMath,9,0,0,0,9
-Mac/DirectX 9/MacOpenGLUtils,27,0,0,0,27
+Mac/DirectX 9/MacOpenGLUtils,27,15,8,3,1
 Mac/Extras/CoreAudio/CAStreamBasicDescription,2,0,0,2,0
 Mac/Main/GameMain,7,0,0,7,0
 Mac/Main/mac_configure,4,2,1,1,0
@@ -54,7 +54,7 @@ Mac/Tools/MacBuilder,18,0,0,18,0
 Mac/Tools/MacDebug,1,1,0,0,0
 Mac/Tools/MacDisplay,47,2,1,42,2
 Mac/Tools/MacExceptions,7,0,0,6,1
-Mac/Tools/MacFastCopy,1,0,0,0,1
+Mac/Tools/MacFastCopy,1,0,1,0,0
 Mac/Tools/MacFeatures,5,0,1,4,0
 Mac/Tools/MacFiles,5,1,3,1,0
 Mac/Tools/MacFolders,9,0,0,9,0
