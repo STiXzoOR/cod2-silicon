@@ -23492,12 +23492,12 @@
     "evidence": "Read Mac 0xc4830: empty return. Native Sys_CreateSplashWindow is empty, matching exactly at this boundary; live non-dedicated WinMain still calls it."
   },
   "mac:0x000c4836": {
-    "status": "equal",
-    "evidence": "Read Mac 0xc4836: empty return. Native Sys_DestroySplashWindow is empty; shutdown/error callers remain safe no-op boundaries."
+    "status": "intentional",
+    "evidence": "Read Mac 0xc4836 empty return. Parent-authorized revision of an existing equal row, not a new closure: the restored independent native splash window needs real destruction, following Windows 0x4683c0 hide/destroy/null-owner. Sys_DestroySplashWindow forwards under Apple COD2_X64 client guards to MacWindow_DestroySplash, which closes/releases/nulls owned UI; existing error/quit hooks and an idempotent atexit callback cover cleanup. Off-main fatal/exit requests queue main-thread destruction without blocking; process exit can preempt that queue and OS teardown then owns remaining UI. OFF/dedicated empty body is preserved. Compiled and reviewed in actual client/shared dedicated objects; real startup/error/worker-exit cleanup not exercised."
   },
   "mac:0x000c4850": {
-    "status": "equal",
-    "evidence": "Read Mac 0xc4850 through ret at 0xc4854: empty return. Native Sys_HideSplashWindow is empty; trailing padding/disassembler bytes were not treated as instructions in the function."
+    "status": "intentional",
+    "evidence": "Read Mac 0xc4850\u20130xc4854 empty return, excluding trailing padding. Parent-authorized revision of an existing equal row, not a new closure: the independent native Windows-style bootstrap window requires hide behavior following Windows 0x468410. Sys_HideSplashWindow forwards under Apple COD2_X64 client guards to main-thread MacWindow_HideSplash; renderer context creation also hides the popup at takeover, while retaining its image/window until destroy. Off-main hide requests are queued on the main thread without blocking. OFF/dedicated empty body is preserved. Compiled and reviewed; existing app_hide fixture tests general application visibility, not splash hide/takeover."
   },
   "mac:0x000c483c": {
     "status": "equal",
@@ -23644,8 +23644,8 @@
     "evidence": "Read Mac 0x260c4: default text-input virtual is empty. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Apple linux_input SDL_PumpInputEvents/IN_Frame directly owns key/text/button/wheel/focus/relative/rawmouse delivery (WS3/WS38); no old base virtual callback is installed."
   },
   "mac:0x00025cbc": {
-    "status": "unchecked",
-    "evidence": "Mac 0x25cbc was read: resolve cod.png in the data folder, create URL/provider/PNG, draw and clear over full display through QuickDraw CGContext, release owned resources. Live native non-dedicated WinMain -> Sys_ShowSplashWindow -> linux_common CMacGameEngine_DrawSplashScreen is a no-op. No launcher/bootstrap code or report establishes an equivalent splash/replacement. Native drawing implementation and intended rendering owner remain unresolved; do not classify absence as equality or intentional."
+    "status": "intentional",
+    "evidence": "Read full exact-symbol Mac 0x25cbc\u20130x25e65: data-folder URL/provider/PNG lookup, full-current-port clear/draw/flush/end only on successful context, balanced releases; its original OneShotTimer 0x26439\u20130x26455 provides data-root chdir and Carbon window before WinMain. Native restores the live missing provider with an AppKit-owned bitmap popup following Windows 0x4681e0 (external cod.bmp, bitmap-size centering, silent missing-image failure), rather than manufacturing a renderer context. Native-only Show is deferred until the existing Com_StartupVariable parser establishes final fs_basepath, including forwarded overrides, before filesystem/renderer init. AppKit bootstrap preserves the renderer-owned SDL video initialization/hints. Explicit display/window flush shows before blocking startup; hide/destroy and idempotent exit cleanup own lifetime, with off-main cleanup queued without blocking. Actual arm64 Release launch/common/display/window objects compiled and reviewed; existing jpeg/app_hide 2/2 passed but startup rendering/flush/root/takeover/fatal paths were not exercised. Six inactive guard configurations match; no new tests/assets/dependencies."
   },
   "mac:0x0002612c": {
     "status": "intentional",

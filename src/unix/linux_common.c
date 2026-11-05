@@ -115,7 +115,17 @@ void CMacGameEngine_Quit(void)
 
 void CMacGameEngine_DrawSplashScreen(const char *inFileName)
 {
+#if defined(COD2_X64) && defined(__APPLE__) && !defined(DEDICATED)
+    extern const char *Dvar_GetString(const char *name);
+    extern char *Sys_DefaultInstallPath(void);
+    extern void MacWindow_DrawSplash(const char *directory);
+    const char *directory = Dvar_GetString("fs_basepath");
     (void)inFileName;
+    /* Windows loads the user's cod.bmp, rather than the Mac-only cod.png. */
+    MacWindow_DrawSplash(directory[0] ? directory : Sys_DefaultInstallPath());
+#else
+    (void)inFileName;
+#endif
 }
 
 int UpdateSystemActivity(int activity)
