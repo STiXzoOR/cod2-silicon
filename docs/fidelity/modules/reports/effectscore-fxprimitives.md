@@ -2,12 +2,10 @@
 
 Updated 2026-11-05.
 
-**201 rows examined: 162 equal, 17 fixed, 7 intentional, 15 unchecked.**
+**201 rows examined: 162 equal, 17 fixed, 21 intentional, 1 unchecked.**
 All 127 Mac entries were compared. Linux supplied names and inline identities;
-its implementations were not the behavior authority. The 15 unchecked entries
-are Linux-only FxMemMgr template and class allocation/deallocation identities.
-Mac executable callers use general array new/delete, but that does not establish
-those particular Linux helper identities.
+its implementations were not the behavior authority. The follow-up below resolves 14 allocator identities using Mac ownership, layout
+and source-line metadata. `MoveToFront(FxMemBlock *)` remains unchecked.
 
 ## Corrections
 
@@ -117,3 +115,64 @@ Parent and fresh independent source/binary reviews covered all six units. Review
 Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. Dedicated replay does not exercise client effects rendering or UI interaction.
 
 Catalog coverage passed without semantic catalog changes. Hosted ILP32 comparison remains unavailable because the unchanged reference fails to compile; no byte parity is claimed.
+
+## Allocation identity follow-up
+
+The follow-up on base `053afddc` closes 14 previously unchecked rows without
+changing production source: the manager constructor, Alloc, Free, FxBoltFrame
+new/delete, and nine primitive class delete operators. Existing resolved
+status/evidence is retained exactly.
+
+This rests on positive Mac metadata as well as executable consumers. STABS
+defines each relevant `FxMemMgr<T>` as a one-byte class with no data fields and
+names its constructor, Alloc and Free. Owning class records name their new/delete
+operators. The primitive global initializer at 0xa04b4–0xa04b8 has no work. Raw
+SLINE/SOL records attribute the allocation at 0xa109c–0xa10c1 to FxMemMgr.h lines
+24/25/27 and the free at 0x9fe9d/0x9fea5 to line 35 of that header. Thus the
+manager in this Mac build is a stateless array allocator, not an unidentified
+32KB block pool.
+
+The hand-read allocation portions of FX_AddCloud, Flash, Light, Cylinder, Line,
+Particle, Tail, Emitter and OrientedParticle allocate their exact Mac object
+sizes, conditionally zero the allocation, then enter their constructors. Native
+FxUtil uses the corresponding `sizeof` sizes and full-width class layouts.
+FxBoltFrame acquisition allocates and clears 0x44 Mac bytes; native uses
+`sizeof(FxBoltFrame)`. Its list owns a separate allocation, retains it through
+reference increments, unlinks it at zero references and array-deletes its base.
+No object pointer is masked into a block.
+
+Each owning class delete boundary was checked separately:
+
+| Owner | Mac deleting destructor | Object array-delete site |
+| --- | --- | --- |
+| FxBoltFrame | Release 0x9fe6c | 0x9fea5 |
+| Effect | 0xa1b82 | 0xa1bdf |
+| Light | 0xa28bc | 0xa2919 |
+| Particle | 0xa27c0 | 0xa281d |
+| Cloud | 0xa9a6a | 0xa9ac7 |
+| Line | 0xa9b56 | 0xa9bb3 |
+| OrientedParticle | 0xa9876 | 0xa98d3 |
+| Tail | 0xa9c42 | 0xa9c9f |
+| Cylinder | 0xa9712 | 0xa976f |
+| Emitter | 0xa9d2e | 0xa9d8b |
+
+Flash's coalesced destructor at 0x2ef972–0x2ef9e1 was also read directly from
+`__textcoal_nt`; its final delete at 0x2ef9cf reaches the same array-delete
+stub. This does not add a Flash ledger row. Native deleting-destructor vtable
+slots, bolt release and `macos_cpp_abi.cpp` array-new/array-delete adapters
+preserve these ownership boundaries with native pointer widths. Only these
+allocation boundaries are certified by this follow-up, not complete FX_Add
+callers or the unverified Linux block helpers. `MoveToFront` stays unchecked:
+there is no established Mac block-layout/consumer identity for that helper.
+
+Exact stock and CoD2x arm64 Release commands compiled all four assigned source
+files, FxUtil and macos_cpp_abi.cpp. Both existing primitive ASan/UBSan fixtures
+passed, including nine primitive lifecycles and bolting. Their allocation
+adapters use calloc/free, so the production C++ allocator was compiled and
+reviewed, not runtime exercised. Archive allocation, exceptional allocation
+failure and the unresolved helpers were not exercised. No tests, cases,
+assertions, full CI or replays were added or run. Triage and constant checks
+were advisory; the Release helper name did not resolve in the constant tool,
+so its exact-symbol disassembly was used. Production source is unchanged,
+including OFF text and actual `__LINE__` expansions. Private evidence is in
+`~/Library/Application Support/CoD2-native-decomp/recon-fx-alloc-remaining.noindex/`.

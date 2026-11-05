@@ -17021,7 +17021,7 @@
   },
   "linux:EffectsCore/FxCurve.cpp:23:FxCurveIterator_Release": {
     "status": "unchecked",
-    "evidence": "No executable Mac identity found: nm -a has only an absolute zero .eh marker for FxCurveIterator_Release, no text address. Native has no definition or caller. The Linux-only null-master body cannot establish the Mac behavior."
+    "evidence": "No executable Mac identity found: nm -a has only an absolute zero .eh marker for FxCurveIterator_Release, no text address. Native has no definition or caller. The Linux-only null-master body cannot establish the Mac behavior. Follow-up: exact Create 0xb9fc8\u20130xb9fdb stores master and zero index; pointer-free curve keys begin at +8 and are Hunk_AllocAlignInternal-owned at 0xac38e. Those producer/layout facts do not establish an inline iterator-clear/release consumer or this helper body."
   },
   "mac:0x000b9fde": {
     "status": "equal",
@@ -17041,19 +17041,19 @@
   },
   "linux:EffectsCore/FxCurve_load_obj.cpp:51:FxCurve_Reference": {
     "status": "unchecked",
-    "evidence": "No executable Mac identity or native definition/caller found for Linux FxCurve_Reference. Mac has an absolute zero .eh marker named FxCurve_AddRef but no text body; that does not establish an identity or pointer-return contract. Linux's no-op reference body was not assumed equal."
+    "evidence": "No executable Mac identity or native definition/caller found for Linux FxCurve_Reference. Mac has an absolute zero .eh marker named FxCurve_AddRef but no text body; that does not establish an identity or pointer-return contract. Linux's no-op reference body was not assumed equal. Follow-up: exact allocator 0xac320 (Hunk_AllocAlignInternal call 0xac38e) and Mac STABS FxCurve fields establish hunk-owned inline keys and no reference-count field. They do not prove the return-value/alias identity of Linux Reference versus the zero-address Mac AddRef marker."
   },
   "linux:EffectsCore/FxMemMgr.cpp:28:FxMem_AllocBlock": {
     "status": "unchecked",
-    "evidence": "No Mac text symbol or identified inline implementation for the Linux-named block allocator; native has no definition, caller, FxMemBlock layout, or fx_memBlocks arena. Mac FxMem_Init at 0xacbd8 is a no-op and native effects use existing __Znam/__ZdaPv allocation paths. No Linux 32KB arena or 32-bit free-list writes were introduced without a Mac allocator/layout contract."
+    "evidence": "No Mac text symbol or identified inline implementation for the Linux-named block allocator; native has no definition, caller, FxMemBlock layout, or fx_memBlocks arena. Mac FxMem_Init at 0xacbd8 is a no-op and native effects use existing __Znam/__ZdaPv allocation paths. No Linux 32KB arena or 32-bit free-list writes were introduced without a Mac allocator/layout contract. Follow-up: Mac STABS fieldless one-byte manager types and FxMemMgr.h-attributed direct array allocation/free now positively establish the live class allocation boundary, but identify no FxMemBlock layout, block arena, or equivalent body for this particular helper. It remains unchecked rather than inferred from removal of a pool."
   },
   "linux:EffectsCore/FxMemMgr.cpp:65:FxMem_FreeBlock": {
     "status": "unchecked",
-    "evidence": "No Mac text symbol or identified inline implementation for the Linux-named block free helper; native has no definition/caller or shared FxMemBlock arena contract. The Linux unlink-and-freeCount=-1 behavior cannot be assigned to a Mac body."
+    "evidence": "No Mac text symbol or identified inline implementation for the Linux-named block free helper; native has no definition/caller or shared FxMemBlock arena contract. The Linux unlink-and-freeCount=-1 behavior cannot be assigned to a Mac body. Follow-up: Mac STABS fieldless one-byte manager types and FxMemMgr.h-attributed direct array allocation/free now positively establish the live class allocation boundary, but identify no FxMemBlock layout, block arena, or equivalent body for this particular helper. It remains unchecked rather than inferred from removal of a pool."
   },
   "linux:EffectsCore/FxMemMgr.cpp:72:FxMem_FreeItem": {
     "status": "unchecked",
-    "evidence": "No Mac text symbol or identified inline implementation for the Linux-named item free helper; native has no definition/caller or shared FxMemBlock arena contract. The Linux 0x7fff pointer mask and embedded free-list write were not transplanted into native pointer-sized allocations without Mac identity/layout evidence."
+    "evidence": "No Mac text symbol or identified inline implementation for the Linux-named item free helper; native has no definition/caller or shared FxMemBlock arena contract. The Linux 0x7fff pointer mask and embedded free-list write were not transplanted into native pointer-sized allocations without Mac identity/layout evidence. Follow-up: Mac STABS fieldless one-byte manager types and FxMemMgr.h-attributed direct array allocation/free now positively establish the live class allocation boundary, but identify no FxMemBlock layout, block arena, or equivalent body for this particular helper. It remains unchecked rather than inferred from removal of a pool."
   },
   "mac:0x000acbd8": {
     "status": "equal",
@@ -17061,7 +17061,7 @@
   },
   "linux:EffectsCore/FxMemMgr.cpp:55:FxMem_UnlinkBlock": {
     "status": "unchecked",
-    "evidence": "No Mac text symbol or identified inline implementation for the Linux-named unlink helper; native has no definition/caller or shared FxMemBlock layout. The Linux doubly linked block mutations cannot establish Mac behavior."
+    "evidence": "No Mac text symbol or identified inline implementation for the Linux-named unlink helper; native has no definition/caller or shared FxMemBlock layout. The Linux doubly linked block mutations cannot establish Mac behavior. Follow-up: Mac STABS fieldless one-byte manager types and FxMemMgr.h-attributed direct array allocation/free now positively establish the live class allocation boundary, but identify no FxMemBlock layout, block arena, or equivalent body for this particular helper. It remains unchecked rather than inferred from removal of a pool."
   },
   "linux:EffectsCore/GenericParser2.cpp:619:AddGroup": {
     "status": "equal",
@@ -17292,8 +17292,8 @@
     "evidence": "FxBoltFrame AddRef is inlined in Mac Acquire at 0xa108b and 0xa10ec: increment refcount before returning/storing frame. Native Acquire performs the same increment."
   },
   "linux:EffectsCore/FxPrimitives.cpp:181:Alloc": {
-    "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (Alloc(unsigned int), line 181): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "status": "intentional",
+    "evidence": "Positive Mac template identity: one-byte fieldless FxMemMgr<T> STABS declarations name Alloc(unsigned long), and raw SLINE/SOL records attribute Acquire 0xa109c\u20130xa10c1 to FxMemMgr.h lines 24/25/27. Hand-read allocation prefixes in FX_AddCloud 0x5a911\u20130x5a936, Light 0x5aba9\u20130x5abce, Cylinder 0x5aca9\u20130x5acce, Line 0x5ae0c\u20130x5ae31, Particle 0x5b099\u20130x5b0be, Tail 0x5b1db\u20130x5b200, Emitter 0x5b381\u20130x5b3a6 and OrientedParticle 0x5b70b\u20130x5b730 all allocate exact class bytes with __Znam then zero them. Native FxUtil/FxBoltFrame owners retain this boundary with sizeof(native class), full-width links and size_t C++ array-new adapter. This does not certify the remaining creation callers or Linux block-pool behavior."
   },
   "linux:EffectsCore/FxPrimitives.cpp:858:ArchiveByte": {
     "status": "equal",
@@ -17536,8 +17536,8 @@
     "evidence": "Exact Mac 0x000a2038: compared time normalization/clamps followed only by light RGB update."
   },
   "linux:EffectsCore/FxPrimitives.cpp:219:Free": {
-    "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (Free(void *), line 219): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "status": "intentional",
+    "evidence": "Positive Mac template identity: fieldless one-byte FxMemMgr<T> STABS declarations name Free(void*), and raw source lines attribute Release 0x9fe9d/0x9fea5 and class D0 terminal deletes to FxMemMgr.h line 35. Hand-read release and Effect/Light/Particle/Cloud/Line/OrientedParticle/Tail/Cylinder/Emitter D0 bodies pass the owned allocation base to __ZdaPv, with no masked block lookup or embedded free-list write. Native full-width owners, FxBoltFrame_ReleaseHelper and class D0 wrappers pass the same allocation base to the production C++ array-delete adapter. No pool layout is imported from Linux."
   },
   "linux:EffectsCore/FxPrimitives.cpp:986:FxBoltFrame": {
     "status": "equal",
@@ -17612,8 +17612,8 @@
     "evidence": "FxCurve_Interpolate3d is inlined in Mac Light::UpdateRGB around 0xa1610\u20130xa1698: fraction=(t-t0)/(t1-t0), then v0+(v1-v0)*fraction per component. Native EvalCurve3 matches."
   },
   "linux:EffectsCore/FxPrimitives.cpp:175:FxMemMgr<T>": {
-    "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (FxMemMgr<T>(), line 175): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "status": "intentional",
+    "evidence": "Mac STABS defines the primitive/FxBoltFrame FxMemMgr specializations as one-byte classes with no data fields, naming constructor/Alloc/Free. The exact primitive global initializer __GLOBAL__I__ZN11FxBoltFrame12g_mFrameListE at 0xa04b4\u20130xa04b8 returns without stores or calls; FxMem_Init 0xacbd8\u20130xacbdc is also empty. Native direct sizeof-based array allocation/deallocation has no manager constructor state to initialize. This is the stateless Mac allocation boundary, not the Linux mHead/items-per-block pool contract."
   },
   "mac:0x0009ff1e": {
     "status": "equal",
@@ -17745,7 +17745,7 @@
   },
   "linux:EffectsCore/FxPrimitives.cpp:241:MoveToFront": {
     "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (MoveToFront(FxMemBlock *), line 241): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "evidence": "Unresolved Linux-only allocator identity (MoveToFront(FxMemBlock *), line 241): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity. Follow-up: Mac STABS fieldless one-byte manager types and FxMemMgr.h-attributed direct array allocation/free now positively establish the live class allocation boundary, but identify no FxMemBlock layout, block arena, or equivalent body for this particular helper. It remains unchecked rather than inferred from removal of a pool."
   },
   "mac:0x000a981a": {
     "status": "equal",
@@ -18000,48 +18000,48 @@
     "evidence": "Exact Mac 0x000a04b4: compared constant return/no-op body with native implementation."
   },
   "linux:EffectsCore/FxPrimitives.cpp:377:operator delete": {
-    "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 377): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "status": "intentional",
+    "evidence": "FxBoltFrame class-delete identity established from Mac ownership metadata and exact FxBoltFrame::Release 0x9fe6c\u20130x9feb8: the original object pointer reaches __ZdaPv at 0x9fea5, after bolt reference release where applicable. Mac STABS identifies the owning class operator and a one-byte, fieldless FxMemMgr specialization with Alloc/Free methods. Raw source-line records attribute the array-delete site to FxMemMgr.h line 35. Native uses full-width object pointers and the __ZdaPv adapter to C++ array delete, with no per-class pool state. This resolves only the allocation/deallocation boundary, not the complete caller."
   },
   "linux:EffectsCore/FxPrimitives.cpp:512:operator delete": {
-    "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 512): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "status": "intentional",
+    "evidence": "Effect class-delete identity established from Mac ownership metadata and exact Effect::~Effect D0 0xa1b82\u20130xa1bf1: the original object pointer reaches __ZdaPv at 0xa1bdf, after bolt reference release where applicable. Mac STABS identifies the owning class operator and a one-byte, fieldless FxMemMgr specialization with Alloc/Free methods. Raw source-line records attribute the array-delete site to FxMemMgr.h line 35. Native uses full-width object pointers and the __ZdaPv adapter to C++ array delete, with no per-class pool state. This resolves only the allocation/deallocation boundary, not the complete caller."
   },
   "linux:EffectsCore/FxPrimitives.cpp:541:operator delete": {
-    "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 541): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "status": "intentional",
+    "evidence": "Light class-delete identity established from Mac ownership metadata and exact Light::~Light D0 0xa28bc\u20130xa292b: the original object pointer reaches __ZdaPv at 0xa2919, after bolt reference release where applicable. Mac STABS identifies the owning class operator and a one-byte, fieldless FxMemMgr specialization with Alloc/Free methods. Raw source-line records attribute the array-delete site to FxMemMgr.h line 35. Native uses full-width object pointers and the __ZdaPv adapter to C++ array delete, with no per-class pool state. This resolves only the allocation/deallocation boundary, not the complete caller."
   },
   "linux:EffectsCore/FxPrimitives.cpp:589:operator delete": {
-    "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 589): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "status": "intentional",
+    "evidence": "Particle class-delete identity established from Mac ownership metadata and exact Particle::~Particle D0 0xa27c0\u20130xa282f: the original object pointer reaches __ZdaPv at 0xa281d, after bolt reference release where applicable. Mac STABS identifies the owning class operator and a one-byte, fieldless FxMemMgr specialization with Alloc/Free methods. Raw source-line records attribute the array-delete site to FxMemMgr.h line 35. Native uses full-width object pointers and the __ZdaPv adapter to C++ array delete, with no per-class pool state. This resolves only the allocation/deallocation boundary, not the complete caller."
   },
   "linux:EffectsCore/FxPrimitives.cpp:669:operator delete": {
-    "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 669): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "status": "intentional",
+    "evidence": "Cloud class-delete identity established from Mac ownership metadata and exact Cloud::~Cloud D0 0xa9a6a\u20130xa9ad9: the original object pointer reaches __ZdaPv at 0xa9ac7, after bolt reference release where applicable. Mac STABS identifies the owning class operator and a one-byte, fieldless FxMemMgr specialization with Alloc/Free methods. Raw source-line records attribute the array-delete site to FxMemMgr.h line 35. Native uses full-width object pointers and the __ZdaPv adapter to C++ array delete, with no per-class pool state. This resolves only the allocation/deallocation boundary, not the complete caller."
   },
   "linux:EffectsCore/FxPrimitives.cpp:701:operator delete": {
-    "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 701): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "status": "intentional",
+    "evidence": "Line class-delete identity established from Mac ownership metadata and exact Line::~Line D0 0xa9b56\u20130xa9bc5: the original object pointer reaches __ZdaPv at 0xa9bb3, after bolt reference release where applicable. Mac STABS identifies the owning class operator and a one-byte, fieldless FxMemMgr specialization with Alloc/Free methods. Raw source-line records attribute the array-delete site to FxMemMgr.h line 35. Native uses full-width object pointers and the __ZdaPv adapter to C++ array delete, with no per-class pool state. This resolves only the allocation/deallocation boundary, not the complete caller."
   },
   "linux:EffectsCore/FxPrimitives.cpp:723:operator delete": {
-    "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 723): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "status": "intentional",
+    "evidence": "OrientedParticle class-delete identity established from Mac ownership metadata and exact OrientedParticle::~OrientedParticle D0 0xa9876\u20130xa98e5: the original object pointer reaches __ZdaPv at 0xa98d3, after bolt reference release where applicable. Mac STABS identifies the owning class operator and a one-byte, fieldless FxMemMgr specialization with Alloc/Free methods. Raw source-line records attribute the array-delete site to FxMemMgr.h line 35. Native uses full-width object pointers and the __ZdaPv adapter to C++ array delete, with no per-class pool state. This resolves only the allocation/deallocation boundary, not the complete caller."
   },
   "linux:EffectsCore/FxPrimitives.cpp:744:operator delete": {
-    "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 744): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "status": "intentional",
+    "evidence": "Tail class-delete identity established from Mac ownership metadata and exact Tail::~Tail D0 0xa9c42\u20130xa9cb1: the original object pointer reaches __ZdaPv at 0xa9c9f, after bolt reference release where applicable. Mac STABS identifies the owning class operator and a one-byte, fieldless FxMemMgr specialization with Alloc/Free methods. Raw source-line records attribute the array-delete site to FxMemMgr.h line 35. Native uses full-width object pointers and the __ZdaPv adapter to C++ array delete, with no per-class pool state. This resolves only the allocation/deallocation boundary, not the complete caller."
   },
   "linux:EffectsCore/FxPrimitives.cpp:775:operator delete": {
-    "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 775): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "status": "intentional",
+    "evidence": "Cylinder class-delete identity established from Mac ownership metadata and exact Cylinder::~Cylinder D0 0xa9712\u20130xa9781: the original object pointer reaches __ZdaPv at 0xa976f, after bolt reference release where applicable. Mac STABS identifies the owning class operator and a one-byte, fieldless FxMemMgr specialization with Alloc/Free methods. Raw source-line records attribute the array-delete site to FxMemMgr.h line 35. Native uses full-width object pointers and the __ZdaPv adapter to C++ array delete, with no per-class pool state. This resolves only the allocation/deallocation boundary, not the complete caller."
   },
   "linux:EffectsCore/FxPrimitives.cpp:799:operator delete": {
-    "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 799): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "status": "intentional",
+    "evidence": "Emitter class-delete identity established from Mac ownership metadata and exact Emitter::~Emitter D0 0xa9d2e\u20130xa9d9d: the original object pointer reaches __ZdaPv at 0xa9d8b, after bolt reference release where applicable. Mac STABS identifies the owning class operator and a one-byte, fieldless FxMemMgr specialization with Alloc/Free methods. Raw source-line records attribute the array-delete site to FxMemMgr.h line 35. Native uses full-width object pointers and the __ZdaPv adapter to C++ array delete, with no per-class pool state. This resolves only the allocation/deallocation boundary, not the complete caller."
   },
   "linux:EffectsCore/FxPrimitives.cpp:372:operator new": {
-    "status": "unchecked",
-    "evidence": "Unresolved Linux-only allocator identity (operator new(unsigned int), line 372): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
+    "status": "intentional",
+    "evidence": "FxBoltFrame class-new identity established by its Mac STABS operator-new/manager declarations plus Acquire 0xa109c\u20130xa10c1: allocate 0x44 bytes with __Znam and zero that range before constructor stores. Raw line records identify FxMemMgr.h lines 24/25/27. Native FxBoltFrame_Acquire_impl uses __Znam(sizeof(FxBoltFrame)), zeroes the same native size, and the size_t ABI adapter calls C++ array new. The matching Release 0x9fea5 array-delete boundary and native full-width next pointer are preserved; no Linux pool is introduced."
   },
   "linux:EffectsCore/FxPrimitives.cpp:430:operator=": {
     "status": "equal",
