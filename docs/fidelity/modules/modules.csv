@@ -9,7 +9,7 @@ EffectsCore/FxScheduler,59,44,6,8,1
 EffectsCore/FxScheduler_load_obj,17,11,4,2,0
 EffectsCore/FxSystem,20,0,0,0,20
 EffectsCore/FxTemplate,77,0,0,0,77
-EffectsCore/FxUtil,138,0,0,0,138
+EffectsCore/FxUtil,138,82,16,34,6
 EffectsCore/Fxexport,16,0,0,0,16
 EffectsCore/GenericParser2,56,42,1,1,12
 Mac/DirectX 9/CColorConverter,41,0,0,0,41
