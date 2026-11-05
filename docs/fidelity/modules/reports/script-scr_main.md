@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**16/18 reconciled: 12 equal, 1 fixed, 3 intentional.** Mac 1.3 i386 is the primary authority. Every named Mac body was read, including the full load, scan and cleanup paths. The constant checker and triage ran for all assigned names. The legacy statements remain unchanged under the conditional branches; `unifdef -U COD2_X64` confirms the selected OFF source is byte-identical to the starting source.
+**17/18 reconciled: 12 equal, 2 fixed, 3 intentional; 1 unchecked.** Mac 1.3 i386 is the primary authority. Every named Mac body was read, including the full load, scan and cleanup paths. The constant checker and triage ran for all assigned names. The legacy statements remain unchanged under the conditional branches; `unifdef -U COD2_X64` confirms the selected OFF source is byte-identical to the starting source.
 
 `Scr_LoadScript` called `GetArray` for a script's thread table. Mac 0xaf066 calls `GetObjectA`. The two allocate different parent types (array 0x16 versus object 0x13), so native now creates the object under `COD2_X64`. Its existing NULL-filename early return remains a defined invalid-input boundary.
 
@@ -10,7 +10,7 @@ The three intentional rows describe LP64 representation: full-width opcode-addre
 
 `Scr_InitEvaluate` is inlined in `Scr_BeginLoadScripts` at 0xaf394–0xaf3ab; `Scr_EndLoadEvaluate` is inlined in `Scr_EndLoadScripts` at 0xaf0c7–0xaf0de. Their caller implementations match.
 
-Two rows remain unchecked. No executable Mac identity was established for `Scr_BeginLoadScriptsRemote` or `Scr_IsInScriptMemory`. The latter has only a zero-address absolute `.eh` symbol. Native has no body or callers for either. Similarity to a caller prefix does not establish the missing remote entry.
+`Scr_IsInScriptMemory` remains unchecked: no complete two-bound script-memory predicate has been established. `Scr_BeginLoadScriptsRemote` now maps to the complete consumed initialization phase documented below; this does not establish a separate remote entry or lifecycle.
 
 The arm64 Release `cod2_macos_ded` target compiled and linked with `taskpolicy -b nice -n 19` and two jobs, including a final incremental compile of both assigned files. The correction is compiled and reviewed, not exercised. No new tests, CI or replays ran. No shared headers or other units were edited.
 
@@ -38,3 +38,13 @@ Independent source/binary review at source freeze `28e7d452399e38b2c296b8b4230e3
 Original1.0 IDB byte bodies uniquely relocate to original1.3 `Scr_IsInScriptMemory` at 0x8075e40 and `Scr_BeginLoadScriptsRemote` at 0x8076196. The former makes two unsigned comparisons against programBuffer and endScriptBuffer; the latter sets script_loading, initializes opcode lookup, allocates loadedScripts and returns. These are original executable identities, not inferred from missing symbols.
 
 Fresh exact Mac `Scr_IsInOpcodeMemory` at 0xaed58 instead compares a programBuffer-relative offset to programLen. Mac `Scr_EndLoadAnimTrees` stores endScriptBuffer at 0xaf20e, and local load initialization clears it at 0xaf38d; these writes do not implement the two-bound predicate. Exact Mac `Scr_BeginLoadScripts` continues through the local-loading lifecycle, so the shared initialization prefix still does not establish the remote-return operation. Both rows remain unchecked. No production code, compiled objects, tests, CI or replays changed or ran.
+
+## Complete initial script-load phase (remote22)
+
+`Scr_BeginLoadScriptsRemote` is fixed through the complete initial state operation consumed by actual Mac/native `Scr_BeginLoadScripts`. Original1.0 0x8075b54–0x8075b71 maps uniquely to the full30-byte original1.3 body0x8076196–0x80761b3: set script_loading, initialize opcode lookup, allocate/store loadedScripts, return void. Mac performs all three operations contiguously at0xaf348–0xaf358, before the next allocation at0xaf359. Native has that exact phase. The later three arrays, program/canonical resets and animtree initialization belong to the local loader and are excluded. This supersedes the earlier whole-local-versus-remote rejection only for the complete selected state phase; no standalone remote API is invented.
+
+Full providers were read, including developer-off return and developer-on opcode/source table allocation and clearing, all free-list allocation branches, array status0x76 and returned id. Fixed inherits the existing `Z_MallocInternal` guard-heap OOM reporting correction reached through the developer-on provider. No new defect was found. Existing native pointer-sized record allocation, diagnostics, terminal UI and ownership adaptations remain. Terminal variable exhaustion first dumps state, preserves the first error message and takes the loading-state Com_Error policy; continuation after a returned fatal handler is not equated (Mac resumes the allocator through index0, native returns0). Failed-allocation continuation and repeated-initialization cleanup are likewise not claimed.
+
+The resulting array has a real consumer: Mac `GScr_LoadScripts` calls initialization at0x1a0353 and `Scr_LoadScript` at0x1a035f; the latter reads loadedScripts at0xaef54/0xaef92 for lookup and insertion. Native startup reaches the same typed state and consumer under its existing loading schedule. This establishes consumed state initialization, not remote transport or the whole later lifecycle.
+
+Independent review is recorded in units/review-provenance-remote22.md; fresh complete original and Mac providers/owners are retained in recon-provenance-remote22.noindex. No source changed. No compilation, tests, CI or replay ran. Inherited corrections remain compiled and reviewed, not runtime verified.
