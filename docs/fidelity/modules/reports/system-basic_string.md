@@ -11,3 +11,5 @@ Changed or unresolved examples: `CDirect3DDevice_CreatePixelShaderOpenGL` at 0x0
 The Mac binary and actual native owners were read directly; no other worker’s verdict replaced binary evidence. The arm64 Release cod2_macos_ded target builds. Changed client sources were compiled separately because the dedicated target excludes them. No new tests, full CI or replays ran; changes are compiled and reviewed, not exercised. All COD2_X64=OFF bodies pass the baseline guard comparison, and no changed file uses __LINE__.
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-system-runtime.noindex/`. The per-entry unit ledger is maintained outside the repository under the assigned orchestration directory.
+
+Native shader-blob cleanup remains unconditional after device creation. Mac 0x103e50 bypasses the release on failure; retaining the native release prevents a leak of the separately owned CD3DXBuffer and its data. Independent review identified this lifetime boundary; copying shader bytes into material storage does not transfer blob ownership. Compiled and reviewed only.
