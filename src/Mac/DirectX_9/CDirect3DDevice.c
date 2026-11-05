@@ -722,10 +722,9 @@ void CDirect3DDevice_ValidateLighting(const CDirect3DDevice *_this)
         }
         direction.w = 0.0f;
         if (!haveTransform) {
-            /* Mac leaves inverse storage undefined for a singular matrix.
-             * Preserve the previous driver light state in that native case. */
-            if (!D3DXMatrixInverse(&inverse, NULL, (const D3DXMATRIX *)gl->modelViewMatrix))
-                return;
+            /* Mac ignores this return. The native math provider supplies its
+             * defined input-copy fallback if the generic inverse fails. */
+            D3DXMatrixInverse(&inverse, NULL, (const D3DXMATRIX *)gl->modelViewMatrix);
             D3DXMatrixMultiply(&transform, (const D3DXMATRIX *)dev->convertedView, &inverse);
             haveTransform = 1;
         }
