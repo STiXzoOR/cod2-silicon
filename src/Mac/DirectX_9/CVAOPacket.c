@@ -710,10 +710,6 @@ static void __static_initialization_and_destruction_0(int __initialize_p, int __
             allPackets, (CVAOPacketRbTreeNode *)allPackets->_M_header._M_parent);
 #else
         ZN10CVAOPacketD2Ev((const CVAOPacket *)CVAOPacket_sGenericPacket);
-#if defined(COD2_X64)
-        allPackets = (CVAOPacketRbTree *)CVAOPacket_sAllPackets;
-        ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(allPackets, (CVAOPacketRbTreeNode *)allPackets->_M_header._M_parent);
-#else
         CVAOPacket_Shutdown();
 #endif
     }
