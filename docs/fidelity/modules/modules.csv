@@ -72,13 +72,13 @@ Mac/Tools/MacResources,8,0,0,8,0
 Mac/Tools/MacSavers,2,0,0,2,0
 Mac/Tools/MacStrings,2,0,2,0,0
 Mac/Tools/MacThreads,13,7,0,6,0
-Mac/Tools/MacTools,17,2,1,13,1
+Mac/Tools/MacTools,17,2,2,13,0
 Mac/Tools/MacWin32,18,7,3,8,0
 Mac/Tools/MacWinCursor,8,2,0,6,0
 Mac/Tools/MacWinSock,4,3,0,1,0
 Mac/Tools/VK_Map,1,0,1,0,0
 Mac/Tools/i5stdlib,4,4,0,0,0
-__unmatched__,657,0,0,0,657
+__unmatched__,657,0,4,647,6
 bgame/bg_animation_mp,48,37,5,0,6
 bgame/bg_jump,14,14,0,0,0
 bgame/bg_mantle,19,19,0,0,0
