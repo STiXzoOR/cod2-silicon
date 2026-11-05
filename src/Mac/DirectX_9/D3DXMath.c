@@ -105,11 +105,29 @@ D3DXMATRIX *D3DXMatrixMultiply(D3DXMATRIX *pOut, const D3DXMATRIX *pM1, const D3
         int column;
 
         for (column = 0; column < 4; ++column) {
+#if defined(COD2_X64)
+            const float *a = D3DXMatrix_ConstData(pM1) + row * 4;
+            const float *b = D3DXMatrix_ConstData(pM2) + column;
+            float p0, p1, p2, p3;
+            if (column == 3) {
+                p0 = b[0] * a[0];
+                p1 = b[4] * a[1];
+                p2 = b[8] * a[2];
+                p3 = b[12] * a[3];
+            } else {
+                p0 = a[0] * b[0];
+                p1 = a[1] * b[4];
+                p2 = a[2] * b[8];
+                p3 = a[3] * b[12];
+            }
+            temp[row * 4 + column] = p3 + (p2 + (p0 + p1));
+#else
             temp[row * 4 + column] =
                 D3DXMatrix_ConstData(pM1)[row * 4 + 0] * D3DXMatrix_ConstData(pM2)[0 * 4 + column] +
                 D3DXMatrix_ConstData(pM1)[row * 4 + 1] * D3DXMatrix_ConstData(pM2)[1 * 4 + column] +
                 D3DXMatrix_ConstData(pM1)[row * 4 + 2] * D3DXMatrix_ConstData(pM2)[2 * 4 + column] +
                 D3DXMatrix_ConstData(pM1)[row * 4 + 3] * D3DXMatrix_ConstData(pM2)[3 * 4 + column];
+#endif
         }
     }
 
@@ -129,10 +147,22 @@ int D3DXVec4Transform(float (*pOut)[10][16], const D3DXVECTOR4 *pV, const D3DXMA
     out = (float *)pOut;
     matrix = D3DXMatrix_ConstData(pM);
 
+#if defined(COD2_X64)
+    float result[4];
+    int component;
+    for (component = 0; component < 4; ++component) {
+        result[component] =
+            pV->x * matrix[component] + pV->y * matrix[4 + component] +
+            pV->z * matrix[8 + component] + pV->w * matrix[12 + component];
+    }
+    for (component = 0; component < 4; ++component)
+        out[component] = result[component];
+#else
     out[0] = pV->x * matrix[0] + pV->y * matrix[4] + pV->z * matrix[8] + pV->w * matrix[12];
     out[1] = pV->x * matrix[1] + pV->y * matrix[5] + pV->z * matrix[9] + pV->w * matrix[13];
     out[2] = pV->x * matrix[2] + pV->y * matrix[6] + pV->z * matrix[10] + pV->w * matrix[14];
     out[3] = pV->x * matrix[3] + pV->y * matrix[7] + pV->z * matrix[11] + pV->w * matrix[15];
+#endif
 
 #if defined(COD2_X64)
     return pOut;
