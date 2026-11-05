@@ -147,10 +147,12 @@ int CFStringCompare()
 {
     return 0;
 }
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int CFStringCreateWithCharacters()
 {
     return 0;
 }
+#endif
 int CFStringCreateWithFormat()
 {
     return 0;

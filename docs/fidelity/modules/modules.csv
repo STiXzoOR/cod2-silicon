@@ -51,7 +51,7 @@ Mac/Tools/CAudioRecorder,15,0,0,0,15
 Mac/Tools/CCircularBuffer,8,0,0,0,8
 Mac/Tools/MacAppleEvents,15,0,0,15,0
 Mac/Tools/MacBuilder,18,0,0,0,18
-Mac/Tools/MacDebug,1,0,0,0,1
+Mac/Tools/MacDebug,1,1,0,0,0
 Mac/Tools/MacDisplay,47,0,0,0,47
 Mac/Tools/MacExceptions,7,0,0,0,7
 Mac/Tools/MacFastCopy,1,0,0,0,1
@@ -69,8 +69,8 @@ Mac/Tools/MacMSS_Stream,16,0,0,14,2
 Mac/Tools/MacMemory,5,0,0,0,5
 Mac/Tools/MacPreferences,9,0,0,0,9
 Mac/Tools/MacResources,8,0,0,0,8
-Mac/Tools/MacSavers,2,0,0,0,2
-Mac/Tools/MacStrings,2,0,0,0,2
+Mac/Tools/MacSavers,2,0,0,2,0
+Mac/Tools/MacStrings,2,0,2,0,0
 Mac/Tools/MacThreads,13,0,0,0,13
 Mac/Tools/MacTools,17,0,0,0,17
 Mac/Tools/MacWin32,18,0,0,0,18
