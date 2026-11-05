@@ -2,7 +2,7 @@
 
 Updated 2026-11-06.
 
-**Current: 180/229 reconciled: 149 equal, 31 fixed, 0 intentional; 49 unchecked.**
+**Current: 181/229 reconciled: 150 equal, 31 fixed, 0 intentional; 48 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -599,3 +599,14 @@ R_AddWorldSurfacesDpvs's actual perspective arm copies all three view-origin coo
 That consumer reads all normal coordinates for the length test, copies all three unchanged to child-plane coefficients when admitted, then uses them for the separate fourth coefficient and traversal. No normal output is missing. Existing normal/cross/provider equal verdicts remain; unrelated caller bevel and area repairs are outside this phase. PlaneFromPoints stays unchecked because this normal operation supplies neither its success result nor its conditional fourth-slot contract. No arbitrary original ABI, aliasing, invalid backing, FP environment/traps/payload equivalence, whole hull/traversal correctness or runtime reachability is claimed.
 
 One equal closure, no new defect or source change. Independent review: units/review-provenance-plane34.md. Fresh complete original/provider and five Mac bodies, raw constants and source hashes remain private in recon-provenance-plane34.noindex; earlier evidence is preserved. No compilation, tests, CI, full build, replay or runtime verification.
+
+
+## Complete point-to-line squared-distance phase (linedistance35)
+
+PointToLineDistSq is equal through the complete selected squared-distance operation in CG_WhizbySound. Fresh full original 1.3 helper 0x80a5618–RET 0x80a56bb and its providers establish point/start/end inputs and one squared-distance result. It has no zero-length fallback; the separate ProjectPointOntoLine contract remains unchecked. Original unnormalized projection, residual sign and x87 outcomes do not override the actual Mac operation.
+
+The actual caller supplies a successful muzzle-position local and unchanged impact position as endpoints. Whizby reads all three actual view-position fields; raw GOT and displacement bytes confirm the state identity despite an incidental otool symbol label on the third offset. Full endpoint normalization and both 64-unit margin gates are preserved. Rejected finite degenerate/short paths are outside this selected result; unordered values are not silently excluded. Once selected, Mac materializes all three projection coordinates, all three residuals and their complete left-associated squared sum. XMM0 holds the full scalar at 0x1d9b0b, and the actual next SQRTSS consumes it. Native preserves that complete operation.
+
+The later radius gate, directional position shift and sound emission are downstream consumers, not a substituted squared-distance result. This resolves the prior whizby assessment only through the complete scalar and actual producer/consumer boundary. It supplies no hypothetical serialized-axis endpoint adapter or arbitrary exported projection API. Existing WhizbySound and Vec3NormalizeTo equal verdicts remain; no repair is inherited. Valid live disjoint storage and stable view state are required; FP environment/traps/payload identity, original exceptional outcomes, upstream event/camera/tag correctness and whole sound/gameplay behavior remain outside scope.
+
+One equal closure, no new defect or source change. Independent review: units/review-provenance-linedistance35.md. Fresh original and Mac bodies, raw constants/GOT/field displacements and source hashes remain private in recon-provenance-linedistance35.noindex. No compilation, tests, CI, full build, replay or runtime verification.
