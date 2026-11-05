@@ -20,6 +20,9 @@
 #include <time.h>
 #if defined(COD2_X64) && !defined(DEDICATED)
 #include <SDL_messagebox.h>
+#if defined(COD2_CODX) && COD2_CODX
+#include "platform/cod2x_native.h"
+#endif
 #endif
 #endif
 
@@ -116,9 +119,18 @@ int MessageBoxA(void *hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
         flags, NULL, lpCaption ? lpCaption : "", lpText ? lpText : "", count, buttons, NULL
     };
     int result = fallback;
-    /* These startup/error callers run on main, including before SDL_Init. */
-    if (pthread_main_np() && SDL_ShowMessageBox(&message, &result) == 0)
-        return result == -1 ? fallback : result;
+    /* Startup and profile-change prompts can both wait for user input. */
+    if (pthread_main_np()) {
+#if defined(COD2_CODX) && COD2_CODX
+        Cod2xNative_BeginUserWait();
+#endif
+        int shown = SDL_ShowMessageBox(&message, &result);
+#if defined(COD2_CODX) && COD2_CODX
+        Cod2xNative_EndUserWait();
+#endif
+        if (shown == 0)
+            return result == -1 ? fallback : result;
+    }
 #endif
     fprintf(stderr, "MessageBox: %s\n", lpText ? lpText : "(null)");
     if (lpCaption && lpCaption[0])
