@@ -42,3 +42,60 @@ The original Linux 1.3 replacement-error string anchors XModelReplace at0x80c574
 Original Linux 1.0 0x80c33d6 maps uniquely to 1.3 0x80c59b2: `XModelGetCollLod` returns the sign-extended short at offset 0x7e. Existing Mac model writes establish the storage but not that complete read/result operation. The input-to-global helper at 0x80c5330, integer-zero body at 0x80c5e4c and byte-consuming body at 0x80c5e56 now also have original anchors. Identical tiny bodies alone are ambiguous; full adjacent original model blocks uniquely bind their locations. Those anchors do not establish a Mac global-write, result or no-op identity, and reconstruction names do not prove deadness. All five remain unchecked, including the previously anchored replacement operation.
 
 Evidence and full-block relocation receipts are retained in `recon-provenance-animation10.noindex`. Targeted PPC source/owner comparison adds no new xmodel pairs. No source changes, compilation, tests, CI, replay or runtime exercise ran.
+
+
+## Model21 original replacement identity and actual cache ownership
+
+XModelReplace remains unchecked, but the original identity is now independently
+bounded. Original 1.0 IDB sub_80C3172 is 0x80c3172–0x80c3263 exclusive: 241
+executable bytes ending in RET at 0x80c3262. Matching the entire body against
+original 1.3 gives one result, 0x80c574e–0x80c583f. The comparison retains 221
+bytes, including all internal branch displacements; only four relocated call
+operands and one diagnostic address are masked. The replacement-error string,
+model bad/free providers and full structure/reference sequence support the
+reconstruction name; the original IDB label remains unnamed. Linux supplies
+identity and intent, not behavior authority.
+
+The complete original operation checks replacement validity, calls Com_Error
+on a bad model, then saves the destination name at +0x88, calls XModelFree on
+the destination, copies 0x90 bytes from the replacement, restores the old name,
+and acquires every referenced surface-name string from four nonnull LOD name
+arrays using signed-short surface counts. The diagnostic is not an early return
+if the error handler returns. This is in-place object mutation plus reference
+ownership, not just a cache-address update. No arbitrary overlap/error contract
+or original incidental EAX value is promoted into a new native API.
+
+A concrete actual Mac replacement candidate was followed completely:
+G_OverrideModel 0x1b5eac gets the old model configstring, obtains the selected
+model through SV_XModelGet at 0x1b5ecd, writes cached_models at 0x1b5ed2, then
+calls Hunk_OverrideDataForFile at 0x1b5eeb with type 4 and configstring+7. The
+complete cache provider at 0x37776 scans the hash chain by type/name and replaces
+only the matching record's data pointer at 0x377c7, or returns without a match.
+Native g_utils_mp.c and com_memory.c preserve this actual pointer-rebinding
+operation. It neither mutates the old model nor transfers its LOD references
+and old name. No original call/ownership bridge identifies it as the consumed
+XModelReplace operation.
+
+The object distinction has a real consumer: Mac DObjCreate loads each supplied
+model pointer at 0x75411 and retains it in the DObj at 0x75413; native dobj.c
+likewise assigns obj->models from dobjModel->model. This is evidence that model
+pointers are stored independently of the cache, not a claim that a particular
+gameplay override occurs with a live alias. Cache rebinding cannot silently be
+substituted for mutation of that pointed-to model.
+
+The surrounding actual lifecycle was also inspected. Mac XModelPrecache 0x458b0
+returns existing cached data or loads/inserts a newly allocated model, storing
+the newly allocated cache name at 0x45911. XModelLoad allocates and acquires its
+own surface-name IDs through SL_GetString_ at 0xbb9d7; failure branches call
+XModelFree at 0xbbfe0/0xbc0d1 and return null. Full XModelFree 0x45b56 skips bad
+models, releases each LOD name and clears each name-array pointer. Hunk_ClearData
+unlinks matching records before model cleanup at 0x37e7e/0x37eb1. These are real
+load/cache/free paths, but combining their fragments would invent the missing
+replacement operation. Existing primary verdicts and ownership decisions are
+preserved.
+
+One unchecked row refined; no closures, new defects or source changes. The
+related DObj and no-notify animation wrappers were not reopened without a new
+complete owner lead. Exact Mac owner/provider packets, original binary/body
+identity script and relocation receipt remain in recon-provenance-model21.noindex.
+Static review only: no compilation, tests, CI, replay or runtime verification.
