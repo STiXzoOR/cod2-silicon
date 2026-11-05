@@ -35,7 +35,7 @@ const char *GPValue_GetTopValue(const GPValue *p)
     return p->valueList ? p->valueList->name : p->name;
 }
 
-void FX_Print(const char *fmt, ...)
+void Com_Printf(const char *fmt, ...)
 {
     abort();
 }
