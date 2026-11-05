@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 536,
-      "intentional": 3067,
+      "unchecked": 523,
+      "intentional": 3075,
       "equal": 4719,
-      "fixed": 1135
+      "fixed": 1140
     },
     "scopes": {
       "unassigned": 777,
@@ -16054,8 +16054,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0xedd6 maintains raw and converted projection plus per-stage texture matrices and invalidation. Native stores one projection and one shared texture matrix, with conversion deferred into draw. Full per-stage/state/cache equivalence is unresolved."
+        "status": "fixed",
+        "evidence": "Mac exact entry 0xedd6\u20130xf1d4: restored bitwise world/view/projection comparisons, raw view plus sign-bit-flipped converted view, both world/modelview invalidations, immediate converted projection load, fixed-unit bounds and independent native texture-stage matrices. GetTransform reads the matching native stages. Existing null guard retained. Device 3480 bytes remains within 4096 storage; compiled and reviewed, nonidentity setter paths not exercised."
       },
       {
         "id": "mac:0x0000e784",
@@ -16076,8 +16076,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0xe784 restores material/light/transform state. No matching native body and COpenGL light provider remains empty; native shader selection is not a valid persistent original enabled-state flag."
+        "status": "intentional",
+        "evidence": "Mac exact entry 0xe784\u20130xe930: restored capability-gated white color, color-material enable, enabled-light loop, sign-bit negated direction/w0, lazy inverse(modelview), converted-view*inverse and transformed GL_POSITION. Original+0x800 is GL_ATI_array_rev_comps_in_4_bytes (Init 0x21c50\u20130x21c5f; string 0x2410ec), already supportsATIArrayRevComps, not selected/enabled vertex shader. Typed material/light/declaration/color-vertex contracts restored. Exact Mac call 0xe8ae ignores the D3DXMatrixInverse return. The selected f585fce native provider always returns pOut: affine transpose has no singular check; failed generic inversion uses its existing defined input-copy fallback. Lighting continues with that result, adding no determinant policy. Existing 18 depth cases exercise validation with no enabled lights; enabled-light math compiled and reviewed only."
       },
       {
         "id": "mac:0x00010ff2",
@@ -16099,7 +16099,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": "Original 0x10ff2 validates shader programs, sampler/stage combines, texture targets and cached render states. Native helper/draw path covers a subset; full original lighting/combine/target/cache behavior is unresolved."
+        "evidence": "Exact entry 0x10ff2\u20130x12094 hand compared against native draw, ApplyTextureStageState and actual selected GL/array/shader providers. Typed stages, sampler synchronization and modelview/light validation are restored. Full validator remains absent: original packet/declaration stream fields, SetTextureCoordStream, generated coordinate modes 0x10000/0x20000/0x30000, full combine operation dispatch, fixed-stage termination/disable ordering and pixel-shader texture mask orchestration are not established by the native draw approximation. No raw ILP32 offsets or VARange integer-to-pointer aliases introduced; not retired by Metal."
       },
       {
         "id": "mac:0x0000ff3e",
@@ -17246,8 +17246,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x15590 has operation-specific color/alpha argument checks and writes UsesTexFactor. Native is empty and CTexStage storage is still a placeholder; no safe native object/layout for implementing this body has been established."
+        "status": "intentional",
+        "evidence": "Mac exact entry 0x15590\u20130x157c0 and all three decoded jump tables 0x326814/0x326880/0x3268e4: restored operation-specific color/alpha argument selection and one-byte C++ UsesTexFactor output on CTexStageNative. Preserved color-op13 unconditional texture use and alpha-op24 factor comparison against texture selectors2. Unsupported color operations can carry an uninitialized original register; native retains defined false initial outputs for those cases. Compiled and reviewed; no direct existing fixture exercises the body."
       },
       {
         "id": "mac:0x002edd06",
@@ -17268,8 +17268,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x2edd06 initializes the164-byte stage (byte programmable flag, pointer, sampler/combiner/identity defaults). Native body remains empty and imported CTexStage is a 4-byte placeholder. A real widened storage/provider contract must precede writes; selected global state defaults were corrected only for their existing storage."
+        "status": "fixed",
+        "evidence": "Mac coalesced __textcoal_nt entry 0x2edd06\u20130x2edeca hand compared: restored byte programmable flag, null texture, conditional color/alpha/coordinate defaults, wrap/filter/anisotropy/LOD/border/factor and identity matrix initialization. Native vector allocates 17 widened CTexStageNative records with calloc; only typed allocation reaches Init, Init reinitialization frees/replaces it and destructor frees/nulls it. No writes into imported4-byte CTexStage or original164-byte stride. Compiled and reviewed; allocation/Init exercised by existing 18 depth cases."
       },
       {
         "id": "mac:0x000141b0",
@@ -18478,8 +18478,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x15ba6 bounds by device limits, leaves unsupported output unchanged and converts stored float anisotropy/LOD values to integers. Native raw array reads and zero-for-invalid behavior differ."
+        "status": "fixed",
+        "evidence": "Mac exact entry 0x15ba6\u20130x15ca8 and decoded table 0x326974: restored max(fixed,image)-unit bound, supported sampler fields1\u20138/10, unchanged unsupported output, anisotropy float truncation and float32(LOD*4) then int64 truncation/low-word output. Exceptional conversions return original integer-indefinite low word0 without undefined native casts. Compiled and reviewed; getter not directly exercised."
       },
       {
         "id": "mac:0x002edab8",
@@ -18654,8 +18654,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x15d84 leaves unsupported outputs unchanged and has original<=fixed-unit bound. Native raw cache getter returns values/zero for unsupported cases, and shared stage object storage remains unresolved."
+        "status": "intentional",
+        "evidence": "Mac exact entry 0x15d84\u20130x15e18 and decoded table 0x326a10: restored supported color/alpha/coordinate/transform cases and unchanged unsupported outputs, including unsupported arg0 getters26/27. Original accepts Stage<=fixed limit and may read uninitialized/out-of-vector programmable fields; native reserves a zero-initialized seventeenth record and bounds every lookup, preserving defined native storage. Compiled and reviewed; getter not directly exercised."
       },
       {
         "id": "mac:0x000138b4",
@@ -18830,8 +18830,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x146ec caches per-light enable and conditionally calls GL according to persistent COpenGL vertex-program mode. Native empty and no typed persistent mode accessor exists; selected draw enables then disables its own ARB shader per draw."
+        "status": "intentional",
+        "evidence": "Mac exact entry 0x146ec\u20130x14754: restored per-light enable comparison/cache and GL enable/disable conditional on the proven ATI reversed-components capability. Typed180-byte light records initialized/reset as a group; normalized enables preserve original byte semantics. Native rejects indices >= 8 rather than writing beyond the light array as unchecked original callers can. Compiled and reviewed; enable transitions not directly exercised."
       },
       {
         "id": "mac:0x002ed9ee",
@@ -19204,8 +19204,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x1580e preserves enable state, builds180-byte LightInfoType and calculates spotlight/attenuation values, conditionally calling COpenGL_SetLight. Native empty and selected COpenGL_SetLight is also empty; enabled-state/timing provider is absent."
+        "status": "intentional",
+        "evidence": "Mac exact entry 0x1580e\u20130x15ac4: restored180-byte record clear preserving enable; all type/range/vector/color/theta/phi/falloff/attenuation stores; ATI cosine/C1 branch; non-ATI log(cos) exponent and ordered90*phi/pi/1.5 cutoff with original constants, zero-falloff3.14 and tiny-angle quirks; conditional existing COpenGL_SetLight call. Native bounds indices to 8 instead of out-of-object writes. Existing COpenGL_SetLight three vector/five scalar bitwise behavior is preserved. Compiled and reviewed, spotlight paths not exercised."
       },
       {
         "id": "mac:0x000145c6",
@@ -19226,8 +19226,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x145c6 caches68 material bytes and conditionally sends five GL material updates depending on COpenGL vertex-program-enabled state. Native body empty; original+0x800 cannot be read from widened native COpenGLNative, which lacks an equivalent typed field/provider."
+        "status": "fixed",
+        "evidence": "Mac exact entry 0x145c6\u20130x146ec: restored68-byte material cache; ATI capability cache-only branch; otherwise bitwise change comparison and ordered diffuse/ambient/specular/emission/shininess GL updates. Reused typed native storage of the same68-byte extent. The original+0x800 capability is proven by Init/string and all light/material/color consumers, not inferred from shader selection. Compiled and reviewed; material changes not directly exercised."
       },
       {
         "id": "mac:0x002edad0",
@@ -19424,8 +19424,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x15ac4 bounds by device limits, compares cached state, marks rasterization and applies special float-bit/anisotropy handling. Native caches raw values only; original quarter-scale LOD/anisotropy getter/setter contract and validation are incomplete."
+        "status": "intentional",
+        "evidence": "Mac exact entry 0x15ac4\u20130x15ba6 and decoded table 0x326948: restored max-unit bound, getter-value comparison, raster invalidation, supported stores, float-bit LOD*0.25 and anisotropy float bits/capability fallback1.0. Unsupported getters leave original setter comparison stack uninitialized; native deterministically ignores unsupported setters instead. Typed stage is authoritative and mirrors existing draw arrays. Compiled and reviewed; sampler setter body not directly exercised."
       },
       {
         "id": "mac:0x002edab0",
@@ -19534,8 +19534,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x15ca8 checks fixed-unit count and operation-specific fields, invalidates rasterization and some transformations. Native raw 8x33 cache lacks complete supported-case/limit/validation behavior."
+        "status": "intentional",
+        "evidence": "Mac exact entry 0x15ca8\u20130x15d84 and decoded table 0x3269a0: restored fixed-unit bound, operation-specific fields1\u20136/11/24/26/27, change comparison, raster invalidation and coordinate/transform invalidation. Arg0 getters26/27 intentionally remain unsupported as Mac; their setters compare the initialized typed field rather than uninitialized original getter output. Unsupported types are ignored. Compiled and reviewed; caller enum fixture passes, direct setters not exercised."
       },
       {
         "id": "mac:0x00014024",
@@ -24486,8 +24486,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Exact Mac 0x100ce compared with actual native Device UpdateTextureIfNeeded/ApplySamplerState and texture worker providers: target/name recreation and typed dirty uploads are covered, but full sampler LOD/filter transitions, shared texture-cache updates and original Device caller identity remain unproved. Not exempted by future Metal."
+        "status": "intentional",
+        "evidence": "Mac exact entry 0x100ce\u20130x10ff2 hand compared: restored real device/stage synchronization with typed secondary texture prefix; per-target wrap1/3/4 (including original unsupported mirror->0), border path, dimension/level-count max mip, original min/mip combinations, quarter LOD, max level, anisotropy and both unit/object caches. Existing typed EnsureName/dirty-upload/embedded-name lifetime adapter replaces original separately allocated GLuint/list storage; native bound-texture fallback substitutions are preserved. Requires exact texturee692f10 owner layouts (compiled offset audit for all three; refcount reuses prefix tail padding). Device raw GL calls keep caches coherent; shader helper passes real dev. Compiled/reviewed only; existing fixtures own no textures and do not exercise this body."
       },
       {
         "id": "mac:0x00022950",
@@ -28154,8 +28154,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Mac0xecd2 checks and clears dirty byte0x4b4, multiplies matrices at0x3b0/0x474, updates GL model-view cache and loads it. No ValidateModelViewMatrix body exists in actual readonly pending9f05cde device source; global draw-time matrix setup does not establish this method dirty/cache contract. Shared provider gap remains; no parity claim."
+        "status": "fixed",
+        "evidence": "Mac exact entry 0xecd2\u20130xedd6: restored dirty test/clear, world*converted-view matrix multiply, GL modelview cache and load. Native draw calls the real helper before stream decisions; COpenGL constructor/Init/Shutdown reset its appended cache, every Device direct modelview load/identity updates it, and existing texture-only GL matrix writers preserve it. Existing 18 depth-surface cases pass with real D3DX math under ASan/UBSan; nonidentity matrices compiled and reviewed only."
       },
       {
         "id": "mac:0x00024b5a",
