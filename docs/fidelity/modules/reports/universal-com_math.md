@@ -2,7 +2,7 @@
 
 Updated 2026-11-06.
 
-**Current: 182/229 reconciled: 151 equal, 31 fixed, 0 intentional; 47 unchecked.**
+**Current: 183/229 reconciled: 152 equal, 31 fixed, 0 intentional; 46 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -621,3 +621,14 @@ Mac `ColorNormalize` at 0x2c7a6–0x2c82e selects the maximum with source-prior 
 The concrete world loader passes the same sunParse object to `R_ParseSunLight` at 0xe5189 and the interpreter at 0xe519d. The actual `_color` branch initializes and parses the three ambient fields; the `ambient` key supplies the scale selecting the call. The interpreter passes the exact ambient vector at 0xe26b6, consumes the complete scalar return in its zero/unordered gate, and reads all three normalized components at 0xe26d4/0xe26db/0xe26e3 for the actual ambient RGB result. On ordered zero the persistent vector still receives white while the scalar selects zero ambient lighting. No output has been replaced by a maximum-only fragment.
 
 This supersedes the earlier rejection based on zero policy and direct division, while preserving those original facts and the existing `Vec3ScaleToUnitMax` mapping. The selected provider is unchanged and equal; surrounding parser, light-layout and world-loader repairs are outside its boundary. Arbitrary ABI, malformed/partially overlapping/concurrent storage, FP flags/traps/signaling payload identity, whole parsing/lighting correctness and runtime behavior remain outside scope. One equal closure, no new defect or source change. Independent review: units/review-provenance-maxnormalize36.md; complete original/helper, four fresh Mac owners, raw keys/format/constants and source hashes are retained in private recon-provenance-maxnormalize36.noindex. No compilation, tests, CI, full build, replay or runtime verification.
+
+
+## Complete screen-bounds reset (bounds37)
+
+ClearBounds2D is equal through the complete actual four-endpoint reset in R_VisitPortals. Full original1.3 0x80a892c–RET0x80a896d and its two-store provider establish a two-dimensional bounds reset with both minima and both maxima written, without an old-state input or extra result. Its ±131072 constants establish original intent, not the actual Mac screen-domain sentinels. This supersedes the prior constant-only rejection after establishing the whole actual operation.
+
+On the selected normal-projection route, Mac writes minX=minY=1 at0xf20ba/0xf20c4 and maxX=maxY=-1 at0xf20ce/0xf20d6 before any point update. Native supplies those same four complete values. Native initializes before its first-w gate while this selected Mac reset follows the gate; no whole initialization/gate timing equivalence is claimed. All four values feed the real projected-point loop, then width/height and the optional four-corner bevel construction. No output is omitted or discarded. The opposite near-clip viewport assignment and later fallback are distinct operations. No projected[-1,1] premise, mathematical unbounded empty-set claim, original constant equality or invented scaling adapter is required.
+
+The reset is already correct. Later area and bevel repairs are consumers outside its boundary and are not inherited. ExpandBounds2D stays unchecked: the point accumulator does not supply independent source minima/maxima, and newly read CM cell-bound descent only replaces a selected split endpoint. The 2D overlap helpers remain untouched. Scope requires valid owned bounded nonempty actual projection storage; arbitrary public ABI/aliasing, invalid backing/counts, FP environment/traps/payload identity, whole projection/traversal and runtime behavior are excluded.
+
+One equal closure, no new defect or source change. Parent and independent script review accepted units/review-provenance-bounds37.md. Fresh complete original/provider and Mac owner, raw constants/instructions and source hash remain private in recon-provenance-bounds37.noindex. No compilation, tests, CI, full build, replay or runtime verification.
