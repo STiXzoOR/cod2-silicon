@@ -23710,5 +23710,29 @@
   "mac:0x0000a7f4": {
     "status": "intentional",
     "evidence": "Read Mac 0xa7f4: reject off-main/fullscreen, lock, initialize question-alert params, run alert, return button1 result and unlock including unwind. No native source/generated-data caller uses the dormant MacTools_QuestionAlert wrapper. Live autoconfigure decisions use MessageBoxA via the selected terminal adapter, not the Carbon alert class."
+  },
+  "mac:0x00003fb4": {
+    "status": "equal",
+    "evidence": "Exact-symbol Mac 0x3fb4\u20130x3fbb is a no-op variadic diagnostic; native game_dprintf has the same empty behavior and void/variadic contract. Dedicated compiled; no runtime call claimed."
+  },
+  "mac:0x00020fcc": {
+    "status": "unchecked",
+    "evidence": "Read complete Mac 0x20fcc\u20130x21286 cached light vector/scalar comparisons and glLightfv/glLightf calls. Native COpenGL_SetLight is a stub; declared native COpenGL has only placeholder vtable storage, insufficient for original per-light cache at this+0xbc with 180-byte stride. Need coordinated COpenGL/CDirect3DDevice allocation/caller audit; absent direct calls or future Metal plan does not prove replacement."
+  },
+  "mac:0x0000a132": {
+    "status": "intentional",
+    "evidence": "Read Mac 0xa132 destructor: restore saved object port through SetPort. Native wrapper is dormant with its constructor; source/generated-native searches found no callers. Native SDL window/context ownership replaces QuickDraw port save/restore. The placeholder provider is not semantically certified."
+  },
+  "mac:0x0000a10e": {
+    "status": "intentional",
+    "evidence": "Read Mac 0xa10e constructor: GetPort into object, then SetPortWindowPort. Native MacBuilder wrapper retains order but is dormant: no source/generated-native callback callers. Selected platform/macos_display.c owns SDL windows/contexts instead of QuickDraw ports. Existing GetPort placeholder is not approved for future calls; this is the explicit retired Carbon window boundary."
+  },
+  "mac:0x0000a1ac": {
+    "status": "fixed",
+    "evidence": "Reconstructed empty native CopyAndClean from Mac 0xa1ac\u20130xa235: LF discard, independent CR/space state, first-CR space, subsequent-CR pair, repeated-space collapse and signed-short capacity. Native deliberately caps the CR pair to remaining positive capacity and ignores nonpositive capacity instead of reproducing out-of-storage writes. Ordinary bounded paths manually compared; compiled and reviewed, not exercised. Overlap behavior not certified."
+  },
+  "mac:0x0000a144": {
+    "status": "fixed",
+    "evidence": "Mac 0xa144\u20130xa1aa creates CFString from HFS UTF-16, converts using signed-short size/encoding zero, then releases. Native constructor was intercepted by a NULL stub and declared as int. Apple COD2_X64 now uses direct SDK types and excludes exactly that stub; original field/size/order retained. Production object compiles and link-only artifact imports CoreFoundation; dedicated builds. Compiled and reviewed, not exercised; malformed HFS lengths not certified."
   }
 }
