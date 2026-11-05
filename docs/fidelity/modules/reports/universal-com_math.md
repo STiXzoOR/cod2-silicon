@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**Current: 168/229 reconciled: 140 equal, 28 fixed, 0 intentional; 61 unchecked.**
+**Current: 169/229 reconciled: 140 equal, 29 fixed, 0 intentional; 60 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -328,3 +328,33 @@ This is a complete observed disjoint consumer, not a hypothetical 3D prefix or e
 The other three helpers remain unchecked. `ClearBounds2D` original 0x80a892c resets both coordinates to +/-131072, whereas the actual screen owner initializes +/-1 and uses a distinct near-clip viewport reset. `ExpandBounds2D` original 0x80a8f96 accepts independent input minimum/maximum vectors; using the same point for both ends is not that full operation. `BoundsOverlap2D` original 0x80a8ce2 returns the result of four strict rectangle-separation comparisons, accepting touching/unordered boundaries. The inspected portal owner instead clips polygons through side planes and computes projected area. Integer scissor APIs supply no demonstrated replacement for that float rectangle contract. These are bounded candidate limits, not absence-based conclusions.
 
 Independent review: units/review-provenance-bounds2d15.md. One equal closure, three refined unchecked rows, zero new defects in these helpers and no source changes in this packet. Original complete bodies, fresh Mac owner and native state/consumer paths were reviewed. No compilation, tests, CI, replay or runtime verification for this packet; separate portalarea15 compilation does not add exercise coverage. Private evidence: recon-provenance-bounds2d15.noindex.
+
+## Complete segment-distance operation (provenance-distance18)
+
+DistSqToSegment is fixed through the actual DObjTraceline sphere broad phase.
+The complete original helper at 0x80a414e and all called providers establish
+point projection, endpoint clamping and three-component squared distance. Mac
+0x76600 produces the real endpoint delta and reciprocal squared length, transforms
+the actual bone collision center, and selects all three end/start/interior
+residuals before the squared sum feeds radius rejection at 0x76ba4.
+
+This complete endpoint-defined operation identifies the original segment intent;
+it is not a hypothetical normalized-direction adapter. Its newly found unordered
+selector is corrected in the DObj owner. Ordered zero-length segments return
+before the operation, so no standalone zero-length helper result is certified.
+Arbitrary nonunit directions, negative lengths, exported ABI, Linux x87 equality,
+NaN payloads/FP flags and whole-owner equivalence are also outside this verdict.
+
+PointToLineDistSq remains unchecked: the complete triangle-edge residual at
+0x66925–0x669c9 uses a serialized/rescaled direction; the loader's copied edge
+fields at 0x79503–0x795b5 do not establish an actual endpoint-to-axis bridge.
+ProjectPointOntoLine remains unchecked: original 0x80a556a copies start on ordered
+zero length, whereas CG_WhizbySound gates by 64-unit endpoint margins before its
+projection and later shifts the sound position by 16 units. FX visibility also
+has its own minimum-length and centered-segment gates. No partial dot or invented
+input adapter closes either row.
+
+Independent mapping and source reviews are review-provenance-distance18-segment.md
+and review-provenance-distance18-selector.md. Private exact evidence is in
+recon-provenance-distance18.noindex. Only changed dobj.c was manually compiled in
+four existing modes; no tests, CI, full build, replay or runtime exercise.
