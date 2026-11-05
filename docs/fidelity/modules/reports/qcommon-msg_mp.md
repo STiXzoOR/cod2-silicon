@@ -39,3 +39,15 @@ Integrated source through `12d554b` passed both dedicated builds and all local m
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline in players, state hashes and entities, and match each other. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and maximum velocity drift 2.0. Unchanged traces do not establish coverage of each correction. Branches not reached by the recording remain compiled and reviewed.
 
 The hosted ILP32 byte-comparison job cannot compare binaries: its unchanged `410342a` reference fails to compile GCC `__stdcall`/`__cdecl` declarations. The workflow already records that limitation and marks the job non-blocking; preprocessing equality is not binary-byte parity.
+
+## Remaining-interface audit, 2026-11-05
+
+The native source and test tree has no definition, declaration or caller for the six names. Mac symbol and STABS inspection found only zero-address absolute `.eh` names for `MSG_GetUsedBitCount`, `MSG_WriteAngle` and both byte-key helpers; neither Int64 name has that metadata. None has an executable or `FUN` identity.
+
+The candidate usercmd codecs at 0x1757bc–0x17640a and 0x17640a–0x1778de use short-angle and 4/18/7-bit keyed payloads. The seven-bit loops at 0x175f35/0x175fd2 and counts at 0x176e91/0x176f50 do not identify a byte-helper contract. The four-byte primitives at 0x1735fa and 0x1739b2 establish their own bounds and cursor effects, but do not establish the ordering, partial transfer or failure semantics of an eight-byte operation. No exact consumer for the used-bit-count or byte-angle interface was identified.
+
+All six entries remain unchecked. No production defect was established, and no source or existing resolved verdict changed. Missing executable identities are not a claim that no inlined operation could exist elsewhere. No behavior was reconstructed from Linux; names and signatures served only as the search scope.
+
+Stock and CoD2x Release objects for both translation units compiled from their configured client commands. Existing message and transport fixtures and the four existing message/Huffman regression inputs passed in both configurations under low-priority execution with at most two build jobs. These checks exercise the existing codecs, not the absent standalone interfaces. No tests, cases or assertions were added; no full CI or replay ran. Source is byte-identical to base a52e5e27175e86cf0ee0d6dc7c571ab848261ac5, so legacy/OFF diagnostics and line expansions are unchanged.
+
+Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-message-remaining.noindex/`.
