@@ -74,11 +74,23 @@ static int GammaCreate(MacPresentationGamma *gamma)
     return 1;
 }
 
+static int GammaUsesShader(const MacPresentationGamma *gamma)
+{
+    if (!presentationGammaIdentity) return 1;
+    if (!gamma->program) return 0;
+    /* Apple's software identity blit has reported use-after-free after gamma
+     * drawing and resizing. Keep the initialized shader with the identity
+     * ramp on that renderer; hardware and initial identity presentation keep
+     * their existing blit path. */
+    const char *renderer = (const char *)glGetString(GL_RENDERER);
+    return renderer && strcmp(renderer, "Apple Software Renderer") == 0;
+}
+
 /* The scene FBO stays unchanged for screenshots, AUX reads and later draws. */
 static int GammaPresent(MacPresentationGamma *gamma, int width, int height,
                         int x, int y, int destWidth, int destHeight)
 {
-    if (presentationGammaIdentity || gamma->failed)
+    if (!GammaUsesShader(gamma) || gamma->failed)
         return 0;
     if (!gamma->program && !GammaCreate(gamma))
         return 0;

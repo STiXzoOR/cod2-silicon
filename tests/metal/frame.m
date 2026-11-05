@@ -10,9 +10,24 @@ extern unsigned int MacMetalTest_Cancellations;
  * the lifecycle boundary without adding an API used only by tests. */
 #include "../../src/platform/macos_metal_present.m"
 static void PendingWorkDestroy(MacMetalPresenter *p);
+static uint64_t CountProducerCommit(MacMetalSubmission *slot, void *drawable,
+                                    MacMetalCompletion completion, void *context);
+#define MacMetalGPU_Commit CountProducerCommit
 #define MacMetal_Destroy PendingWorkDestroy
 #include "../../src/Mac/Metal/metal_frame.m"
 #undef MacMetal_Destroy
+#undef MacMetalGPU_Commit
+
+/* Presentation commits asynchronously on the same GPU timeline. Fence tests
+ * count only the real producer commits, without changing that shared queue. */
+static uint64_t producerCommitCount;
+static uint64_t CountProducerCommit(MacMetalSubmission *slot, void *drawable,
+                                    MacMetalCompletion completion, void *context)
+{
+    uint64_t value = MacMetalGPU_Commit(slot, drawable, completion, context);
+    if (value) ++producerCommitCount;
+    return value;
+}
 
 static dispatch_semaphore_t pendingDestroyEntered, pendingDestroyReturned;
 static atomic_int pendingCallbacks, pendingReleases;
@@ -253,20 +268,20 @@ int main(void)
             assert(pixels[i * 4] == 79 && pixels[i * 4 + 1] == 107 && pixels[i * 4 + 2] == 211 && pixels[i * 4 + 3] == 255);
         /* A tail fence and Present share one producer submission. Testing a
          * fence before Present still submits it without waiting for the GPU. */
-        previous = MacMetalGPU_Submitted(gpu);
+        previous = producerCommitCount;
         MacMetalBackend_Clear(1, 0xff258744, 1, 0);
         unsigned int fence;
         MacMetalFence_Gen(1, &fence);
         MacMetalFence_Set(fence);
-        assert(MacMetalGPU_Submitted(gpu) == previous);
+        assert(producerCommitCount == previous);
         MacMetalBackend_Present(NULL, 0, 1);
-        assert(MacMetalGPU_Submitted(gpu) == previous + 1);
+        assert(producerCommitCount == previous + 1);
         assert(MacMetalGPU_Drain(gpu) && MacMetalFence_Test(fence));
-        previous = MacMetalGPU_Submitted(gpu);
+        previous = producerCommitCount;
         assert(MacMetalBackend_Submission());
         MacMetalFence_Set(fence);
         MacMetalFence_Test(fence);
-        assert(MacMetalGPU_Submitted(gpu) == previous + 1);
+        assert(producerCommitCount == previous + 1);
         assert(MacMetalGPU_Drain(gpu) && MacMetalFence_Test(fence));
         MacMetalFence_Delete(1, &fence);
         /* Slot retirement during a rejected frame must not admit its suffix. */
@@ -276,9 +291,9 @@ int main(void)
         assert(!MacMetalBackend_Submission());
         MacMetalGPU_Cancel(a); MacMetalGPU_Cancel(b);
         assert(!MacMetalBackend_Submission());
-        previous = MacMetalGPU_Submitted(gpu);
+        previous = producerCommitCount;
         MacMetalBackend_Present(NULL, 0, 1);
-        assert(MacMetalGPU_Submitted(gpu) == previous);
+        assert(producerCommitCount == previous);
         MacMetalBackend_BeginScene();
         assert(MacMetalBackend_Submission());
         MacMetalBackend_Present(NULL, 0, 1);
