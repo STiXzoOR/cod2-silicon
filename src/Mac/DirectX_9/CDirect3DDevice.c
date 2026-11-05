@@ -539,8 +539,11 @@ typedef struct DeviceStreamsNative {
     UINT32 elementCount;
     byte *convertedColors[16];
     size_t convertedColorBytes[16];
+    /* VAO0 extra-format colors must not realloc storage retained by normal
+     * generic packets or the COpenGL array caches. */
+    byte *extendedColors[16];
+    size_t extendedColorBytes[16];
     unsigned char tokensSet;
-    unsigned char directStateDirty;
 } DeviceStreamsNative;
 
 static DeviceStreamsNative *CDirect3DDevice_StreamsNative(const CDirect3DDevice *);
@@ -629,6 +632,7 @@ static COpenGLNative *CDirect3DDevice_GL(void)
 /* Temporary pixel/copy overrides must bypass the cache-writing wrappers below.
  * Their matching restoration reads the persistent COpenGL state. */
 #include "lp64_device_targets.inc"
+#include "lp64_device_draw_scope.inc"
 
 static void CDirect3DDevice_ActiveTexture(GLenum texture)
 {
@@ -1401,11 +1405,13 @@ static void CDirect3DDevice_ApplySamplerState(DeviceImpl *dev, UINT sampler, GLe
         /* The fallback renderer can substitute a lightmap for its D3D stage.
          * Only synchronize the actual selected COM texture. */
         if ((GLuint)bound == CDirect3DDevice_GetTextureGLId(g_boundTextures[sampler])) {
+            DeviceDraw_SaveSampler(target, (void *)((void **)g_boundTextures[sampler] + 1));
             CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState((const CDirect3DDevice *)dev,
                                                              g_boundTextures[sampler], sampler);
             return;
         }
     }
+    DeviceDraw_SaveSampler(target, NULL);
 #else
 static void CDirect3DDevice_ApplySamplerState(UINT sampler, GLenum target)
 {
@@ -6199,7 +6205,10 @@ void CDirect3DDevice_ResetStreamsNative(const CDirect3DDevice *_this)
 {
     DeviceImpl *dev = (DeviceImpl *)_this;
     if (dev->streamState)
-        for (UINT32 i = 0; i < 16; ++i) free(dev->streamState->convertedColors[i]);
+        for (UINT32 i = 0; i < 16; ++i) {
+            free(dev->streamState->convertedColors[i]);
+            free(dev->streamState->extendedColors[i]);
+        }
     free(dev->streamState);
     dev->streamState = NULL;
 }

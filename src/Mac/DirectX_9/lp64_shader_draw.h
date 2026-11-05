@@ -1,3 +1,4 @@
+#if !defined(COD2_X64)
 #if COD2_APPLE_SDK
 #include "lp64_shader_state.h"
 extern GLuint CDirect3DVertexShader_GetProgramId(const CDirect3DVertexShader *shader);
@@ -301,3 +302,5 @@ static HRESULT MacShader_DrawIndexed(DeviceImpl *dev, INT baseVertex, UINT minVe
     return 0;
 }
 #endif
+
+#endif /* preserved legacy draw helper */

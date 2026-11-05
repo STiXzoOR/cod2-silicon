@@ -129,10 +129,8 @@ static HRESULT CDirect3DDevice_DrawApproximateNative(const CDirect3DDevice *_thi
 
     vertBase = vbData + offset + (intptr_t)BaseVertexIndex * stride;
 
-    {
-        extern void glBindVertexArray(unsigned int);
-        glBindVertexArray(0);
-    }
+    glBindBufferARB(0x8892, 0);
+    glBindBufferARB(0x8893, 0);
     glActiveTextureARB(GL_TEXTURE0_ARB);
     glClientActiveTextureARB(GL_TEXTURE0_ARB);
     if (!usesLightmap) {
@@ -543,6 +541,128 @@ static int CDirect3DDevice_DrawStreamsValidNative(DeviceImpl *dev)
     return position;
 }
 
+static UINT32 DeviceDraw_Attribute(const D3DVERTEXELEMENT9 *element)
+{
+    switch (element->Usage) {
+    case 0: case 9: return 0;
+    case 1: return 1;
+    case 2: return 2;
+    case 3: return 3;
+    case 4: return 4;
+    case 5: return 8 + element->UsageIndex;
+    case 6: return 7;
+    case 7: return 6;
+    case 10: return 5 + element->UsageIndex;
+    default: return 16;
+    }
+}
+
+/* The existing converter preserves raw index offsets in one global buffer.
+ * Copy its written span before another attribute can overwrite/realloc it.
+ * These banks are independent of the converted colors retained by normal
+ * packet arrays; only the VAO0 extended path can grow or write them. */
+static const byte *DeviceDraw_ExtendedColor(DeviceStreamsNative *state, UINT32 attribute,
+    const byte *stream, UINT32 stride, UINT32 offset, UINT32 vertices, int order)
+{
+    const byte *converted = CDirect3DDevice_ConvertColorArray(stream, stride, offset,
+        vertices, order, state->indices, state->elementCount);
+    if (!converted) return NULL;
+    UINT32 first = vertices, last = 0;
+    for (UINT32 i = 0; i < state->elementCount; ++i) {
+        if (state->indices[i] < first) first = state->indices[i];
+        if (state->indices[i] > last) last = state->indices[i];
+    }
+    size_t bytes = ((size_t)last + 1) * 4;
+    if (bytes > state->extendedColorBytes[attribute]) {
+        byte *allocation = realloc(state->extendedColors[attribute], bytes);
+        if (!allocation) return NULL;
+        memset(allocation + state->extendedColorBytes[attribute], 0,
+               bytes - state->extendedColorBytes[attribute]);
+        state->extendedColors[attribute] = allocation;
+        state->extendedColorBytes[attribute] = bytes;
+    }
+    /* Match first=min(requested count,index minimum) through index maximum;
+     * untouched prefixes are not read from the converter's scratch storage. */
+    memcpy(state->extendedColors[attribute] + (size_t)first * 4,
+           converted + (size_t)first * 4, ((size_t)last - first + 1) * 4);
+    return state->extendedColors[attribute];
+}
+
+/* Extra native declaration formats use VAO0 client arrays. They share the
+ * original program/raster/blend driver and never override its server state. */
+static HRESULT DeviceDraw_ExtendedArrays(DeviceImpl *dev, INT base, UINT32 minVertex,
+    UINT32 vertexCount, UINT32 startIndex, UINT32 elements, UINT32 *enabled)
+{
+    const CDirect3DVertexDeclarationImpl *decl = (const void *)g_activeVertexDeclaration;
+    const CDirect3DIndexBufferClean *indices = (const void *)dev->indexBuffer;
+    DeviceStreamsNative *state = dev->streamState;
+    if (indices->indexSizeBytes != 2) return (HRESULT)0x8876086c;
+    for (UINT32 i = 0; i + 1 < decl->elementCount; ++i) {
+        const D3DVERTEXELEMENT9 *element = &decl->elements[i];
+        if (DeviceDraw_Attribute(element) < 16 && element->Stream < 16 &&
+            dev->streams[element->Stream] && element->Type > 12)
+            return (HRESULT)0x8876086c;
+    }
+    glBindVertexArrayAPPLE(0);
+    *(GLint *)imp_g_VAOID = -1;
+    glBindBufferARB(0x8892, 0); glBindBufferARB(0x8893, 0);
+    glDisableClientState(0x8074); glDisableClientState(0x8076); glDisableClientState(0x8075);
+    for (UINT32 i = 0; i < dev->maxTextureUnits; ++i) {
+        glClientActiveTextureARB(0x84c0 + i);
+        glDisableClientState(0x8078);
+    }
+    glClientActiveTextureARB(0x84c0);
+    CDirect3DDevice_GL()->clientActiveTexUnit = 0;
+    for (UINT32 i = 0; i < 16; ++i) {
+        glDisableVertexAttribArrayARB(i);
+        state->programmable[i].used = 0;
+    }
+    state->indices = (const void *)(indices->data + (size_t)startIndex * 2);
+    state->elementCount = elements;
+    *enabled = 0;
+    for (UINT32 i = 0; i + 1 < decl->elementCount; ++i) {
+        const D3DVERTEXELEMENT9 *element = &decl->elements[i];
+        UINT32 attribute = DeviceDraw_Attribute(element);
+        /* Preserve the existing native extra-format skip policy; unlike the
+         * original token path, these formats need not declare register zero. */
+        if (attribute >= 16 || element->Stream >= 16 || !dev->streams[element->Stream]) continue;
+        const CDirect3DVertexBufferClean *buffer = (const void *)dev->streams[element->Stream];
+        if (!buffer->data) continue;
+        UINT32 stride = dev->streamStrides[element->Stream];
+        const byte *stream = buffer->data + dev->streamOffsets[element->Stream] + (intptr_t)base * stride;
+        const byte *pointer = stream + element->Offset;
+        GLint components;
+        GLenum type;
+        GLboolean normalized = 0;
+        if (element->Type <= 3) { components = element->Type + 1; type = 0x1406; }
+        else if (element->Type == 4 || element->Type == 5 || element->Type == 8) {
+            components = 4; type = 0x1401; normalized = element->Type != 5;
+            if (element->Type == 4) {
+                const D3DVERTEXELEMENT9 *position = CDirect3DDevice_FindVertexElement(element->Stream, 0, 0);
+                int order = MacShader_ColorByteOrder(stride, element->Offset, position && position->Type == 3 ? 4 : 3);
+                const byte *converted = DeviceDraw_ExtendedColor(state, attribute, stream, stride,
+                    element->Offset, minVertex + vertexCount, order);
+                if (converted) { pointer = converted; stride = 0; }
+            }
+        } else if (element->Type == 6 || element->Type == 7 || element->Type == 9 || element->Type == 10) {
+            components = element->Type == 6 || element->Type == 9 ? 2 : 4;
+            type = 0x1402; normalized = element->Type >= 9;
+        } else {
+            components = element->Type == 11 ? 2 : 4;
+            type = 0x1403; normalized = 1;
+        }
+        DeviceStreamNative *metadata = &state->programmable[attribute];
+        metadata->used = 1; metadata->stream = element->Stream;
+        metadata->offset = dev->streamOffsets[element->Stream] + element->Offset;
+        metadata->stride = dev->streamStrides[element->Stream];
+        metadata->size = components; metadata->type = type; metadata->normalized = normalized;
+        glVertexAttribPointerARB(attribute, components, type, normalized, stride, pointer);
+        glEnableVertexAttribArrayARB(attribute);
+        *enabled |= 1u << attribute;
+    }
+    return 0;
+}
+
 static HRESULT CDirect3DDevice_DrawIndexedNative(const CDirect3DDevice *_this,
     D3DPRIMITIVETYPE primitive, INT base, UINT32 minVertex, UINT32 vertexCount,
     UINT32 startIndex, UINT32 primitiveCount)
@@ -592,17 +712,16 @@ static HRESULT CDirect3DDevice_DrawIndexedNative(const CDirect3DDevice *_this,
         int programs = CDirect3DDevice_UsePrograms();
         int shaderReplacement = programs && g_activeVertexShader && dev->pixelShader &&
             g_activeVertexDeclaration;
+        if (shaderReplacement && !CDirect3DVertexShader_GetProgramId((const void *)g_activeVertexShader)) {
+            result = (HRESULT)0x8876086c;
+            goto done;
+        }
         int approximate = (!programs && (g_activeVertexShader || dev->pixelShader)) ||
-            (g_activeVertexShader && !(dev->pixelShader && g_activeVertexDeclaration &&
-                CDirect3DVertexShader_GetProgramId((const void *)g_activeVertexShader)));
-        int direct = state->directStateDirty || approximate ||
-            (g_activeVertexShader && CDirect3DDevice_ExtendedDeclarationNative());
-#if !COD2_APPLE_SDK
-        shaderReplacement = 0;
-#endif
-        if (direct) approximate = !shaderReplacement;
-        if (!direct) {
-            if (!CDirect3DDevice_DrawStreamsValidNative(dev)) goto done;
+            (g_activeVertexShader && !shaderReplacement);
+        int extended = shaderReplacement && CDirect3DDevice_ExtendedDeclarationNative();
+        UINT32 extendedEnabled = 0;
+        if (!approximate) {
+            if (!extended && !CDirect3DDevice_DrawStreamsValidNative(dev)) goto done;
             if (CDirect3DDevice_mNeedsVertexShaderValidation) {
                 if (g_activeVertexShader) {
                     /* Native shader providers can bind outside COpenGL's
@@ -617,8 +736,15 @@ static HRESULT CDirect3DDevice_DrawIndexedNative(const CDirect3DDevice *_this,
             }
             glBindBufferARB(0x8892, 0);
             glBindBufferARB(0x8893, 0);
-            if (CDirect3DDevice_mNeedsTransformationValidation)
-                CDirect3DDevice_ValidateTransformation(_this, base, count, indices, elements);
+            if (CDirect3DDevice_mNeedsTransformationValidation) {
+                if (extended) {
+                    result = DeviceDraw_ExtendedArrays(dev, base, minVertex, vertexCount,
+                        startIndex, elements, &extendedEnabled);
+                    if (result) goto done;
+                } else {
+                    CDirect3DDevice_ValidateTransformation(_this, base, count, indices, elements);
+                }
+            }
             if (!*draw) goto done;
             if (CDirect3DDevice_mNeedsRasterizationValidation ||
                 CDirect3DDevice_mNeedsTransformationValidation) {
@@ -655,28 +781,24 @@ static HRESULT CDirect3DDevice_DrawIndexedNative(const CDirect3DDevice *_this,
         Bool point = g_activeVertexShader &&
             CDirect3DVertexShader_GetDrawPointFlag((const void *)g_activeVertexShader);
         if (point) glPointSize(2.0f);
-        if (approximate)
+        if (approximate) {
+            DeviceDrawScope scope;
+            DeviceDraw_BeginScope(&scope, dev);
             result = CDirect3DDevice_DrawApproximateNative(_this, primitive, base,
                 minVertex, vertexCount, startIndex, primitiveCount);
-#if COD2_APPLE_SDK
-        else if (direct)
-            result = MacShader_DrawIndexed(dev, base, minVertex, vertexCount, startIndex, primitiveCount);
-#endif
-        else
+            DeviceDraw_EndScope(&scope);
+        } else {
+            if (extended) {
+                /* Native extra formats supply default unused attributes only
+                 * for this draw; preserve current values and color materials. */
+                glPushAttrib(0x41);
+                for (UINT32 i = 1; i < 16; ++i)
+                    if (!(extendedEnabled & (1u << i))) glVertexAttrib4fARB(i, 0, 0, 0, 1);
+            }
             CDirect3DDevice_SubmitIndexedNative(dev, indices, elements);
-        if (point) glPointSize(1.0f);
-        if (direct) {
-            /* The direct replacement's server-state restoration is incomplete.
-             * Until ResetStreamsNative, retain its established routing for
-             * later draws rather than enter cache-only validators with stale
-             * cull/fog/light/matrix/combiner state. */
-            state->directStateDirty = 1;
-            /* Programs and blend functions also bypass these native caches. */
-            CDirect3DDevice_GL()->vertexProgram = 0;
-            CDirect3DDevice_mNeedsVertexShaderValidation = 1;
-            CDirect3DDevice_mNeedsRasterizationValidation = 1;
-            dev->blendStateChanged = 1;
+            if (extended) glPopAttrib();
         }
+        if (point) glPointSize(1.0f);
     } else if (!*draw) {
         goto done;
     }
