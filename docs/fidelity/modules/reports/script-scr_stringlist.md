@@ -2,7 +2,7 @@
 
 Updated 2026-11-04.
 
-**39/42 reconciled: 25 equal, 14 fixed; 3 unchecked.** Mac 1.3 i386 is the authority. Linux names were used to identify inline helpers; no reference source was copied. The legacy preprocessed source is unchanged.
+**40/42 reconciled: 26 equal, 14 fixed; 2 unchecked.** Mac 1.3 i386 is the authority. Linux names were used to identify inline helpers; no reference source was copied. The legacy preprocessed source is unchanged.
 
 All 25 exported Mac bodies were compared, including hashing, circular collision chains, move-to-head lookup, three insertion placements, string reclamation, restart traversal, user/refcount transitions and formatted string wrappers. Fourteen Linux-only rows were identified in those concrete callers. Format/error string bytes were checked directly in the Mach-O file. The hash uses signed bytes, 32-bit wrap, modulo 16383 plus one for lengths below 256, and `(len >> 2) % 16383 + 1` otherwise.
 
@@ -16,7 +16,7 @@ All 25 exported Mac bodies were compared, including hashing, circular collision 
 
 ## Unchecked identities
 
-`SL_GetLowercaseString` (the two-argument Linux wrapper), `SL_TransferSystem` and `Scr_SetStringFromCharString` have no Mac symbols or native definitions/calls under those names. The underscore lowercase implementation is verified, but no concrete Mac inline caller was established for these three distinct functions. Their Linux bodies do not establish equality or prove a missing native implementation.
+`SL_TransferSystem` and `Scr_SetStringFromCharString` still lack complete Mac operation mappings. The lowercase default-argument wrapper is now reconciled through the original forwarding seam described below. Missing symbols or callers do not establish equality or prove a missing native implementation.
 
 ## Verification and limits
 
@@ -56,3 +56,13 @@ is in `CoD2-native-decomp/recon-identity-script3.noindex`.
 ## Original C-string setter provenance
 
 The original Linux 1.0 anonymous body at 0x080797ca and the original 1.3 entry at 0x08079e1a identify the missing `Scr_SetStringFromCharString` operation: remove the old destination reference when nonzero, intern the incoming C string with user zero, then store the resulting 16-bit id. This supplies an original address anchor, but no complete Mac owner has been established. The existing `Scr_SetString` takes an id and adds its reference before removing the old one; it cannot cover this different ordering and input contract. Mac vector-to-string branches found by a bounded call-order search also do not cover arbitrary C-string input. The row remains unchecked. This follow-up changes documentation only; no compilation, tests, CI or replay ran.
+
+## Original default-argument wrapper and transfer provenance
+
+`SL_GetLowercaseString` is equal through an original strict forwarding body. Original Linux 1.0 0x80793d2 and 1.3 0x8079a22 forward string and user unchanged, supply type 6, call the lowercase provider, and return its result. The actual original `Scr_AddStringSet` call at 0x807fdb4 and provider chain distinguish it from a similarly shaped ordinary-string wrapper. This supplies the concrete adapter that the earlier type-4 animation callers did not establish.
+
+The complete primary Mac `SL_GetLowercaseString_` at 0x434b8–0x43555 calculates NUL-inclusive length, applies the unsigned 8192 bound, lowercases signed bytes including the NUL, forwards user/type/length, and returns the interned result or zero if the oversize error returns. At 0x434e3–0x434e6 it reads and forwards its generic type argument unchanged. Native preserves that complete provider. This mapping claims neither a separately emitted Mac wrapper nor a new native export; existing nested storage corrections and ownership adaptations remain intact. Independent review accepted this one-row closure.
+
+Original `SL_TransferSystem` is now anchored from Linux 1.0 0x80799ca to 1.3 0x807a01a. Its complete live-record scan replaces selected user bits without reference release or restart. The previously examined Mac shutdown and single-string transfer providers remain distinct. It and the C-string setter remain unchecked. The full `Scr_AddStringSet` insertion operation also remains separate and unchecked.
+
+This follow-up changed reports only. No compilation, tests, CI, replay or runtime exercise ran. Exact original bodies, the full primary provider and independent review are retained in `CoD2-native-decomp/recon-provenance-script9.noindex` and `units/review-provenance-script9-lowercase.md`.
