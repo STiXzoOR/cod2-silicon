@@ -370,7 +370,7 @@ script/scr_vm,112,86,6,10,10
 script/scr_yacc,45,17,8,9,11
 server/sv_ccmds_mp,35,27,5,3,0
 server/sv_client_mp,43,25,8,10,0
-server/sv_game_mp,54,40,9,1,4
+server/sv_game_mp,54,40,11,1,2
 server/sv_init_mp,26,15,8,2,1
 server/sv_main_mp,24,8,10,6,0
 server/sv_main_pc_mp,7,4,2,1,0
@@ -449,7 +449,7 @@ win32/snd_driver,55,45,7,3,0
 win32/win_localize,3,3,0,0,0
 win32/win_net,3,2,0,1,0
 win32/win_voice,7,1,0,6,0
-xanim/dobj,58,53,2,0,3
+xanim/dobj,58,51,4,0,3
 xanim/xanim,147,118,14,7,8
 xanim/xanim_load,4,3,1,0,0
 xanim/xanim_public,10,7,3,0,0
