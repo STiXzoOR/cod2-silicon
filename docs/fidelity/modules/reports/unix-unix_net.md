@@ -34,6 +34,14 @@ The two production files have identical normalized preprocessing in all five COD
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-platform-network.noindex/`.
 
+## Remaining-identity audit (batch 22)
+
+Both remaining rows stay unchecked. The exact Mac `NET_Config` body at 0x1e9640 owns conditional networking reconfiguration: unchanged disabled state can return immediately; state changes/restarts can close both UDP and SOCKS sockets. The selected `win_net.c` preserves that state machine with its already documented native descriptor adaptations. Mac `Sys_Quit` at 0xc3be0 and selected `mac_main.c` instead terminate the process. These are positive cleanup owners, but neither is a returning unconditional UDP-close-and-reset helper. No original caller mapping establishes the Linux-only `NET_Shutdown` identity.
+
+The native `NET_AdrToString` owner includes a port. Sharing octet formatting does not prove the bare-address `NET_BaseAdrToString` identity, output contract or static-buffer ownership. It also remains unchecked.
+
+This follow-up changes reports only and finds no proven source defect. The full 101-row unit ledger preserves all 78 previously resolved status/evidence pairs exactly and refines the reasons for the 23 unchecked rows. No new row is certified. The existing `macos_system_network_test` and `macos_threads_ring_test` targets compiled in a private Debug build with two low-priority jobs; they were not run and do not prove any missing identity. No production build, new test/case/assertion, full CI, replay, push or external side effect was performed. Source and inactive builds are unchanged. Private inspection material is under `~/Library/Application Support/CoD2-native-decomp/recon-unix-remaining.noindex/`.
+
 ## Integrated batch verification
 
 Integrated source be41fb3 passed both dedicated and client builds. The full local CI run passed steps 02–10 and 12–13; its initial ABI stage found an SDK OSStatus return-width mismatch. The independently reviewed declaration correction passed the complete function/callback/strict ABI retry. Combined validation covers stock/CoD2x Release clients, platform sanitizers, function/callback ABI audits and existing source fixtures. Ten guard-visible production changes differ only under native port-on; other Apple-only source changes have no inactive differences. The new Apple SDK source is empty in all six inactive configurations. Actual net-channel assertion line expansions match the previous source in all five inactive configurations. The existing audio fixture expectation was corrected to the restored playback timeline, and the existing network runner handles the actual transport return signature. No new tests were added; these checks do not establish i386 byte parity.
