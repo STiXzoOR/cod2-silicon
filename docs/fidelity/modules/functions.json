@@ -154256,7 +154256,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Mac nm exposes only a zero-address absolute .eh symbol; no executable text symbol or attributable inline caller was found. Native has no body or callers. The Linux reverse pointer search was read for identity only and cannot establish Mac equality."
+        "evidence": "Mac nm exposes only a zero-address absolute .eh symbol; no executable text symbol or attributable inline caller was found. Native has no body or callers. The Linux reverse pointer search was read for identity only and cannot establish Mac equality. Original executable provenance follow-up: Linux1.0 0x806d034 maps to Linux1.3 0x806d67c. Descends server xanim count, compares animation pointers and returns matching index or zero. Fresh exact Mac UsingTreeInternal0x9c020 has a different ascending ushort id lookup at0x9c0db-0x9c11e; GetAnims0x9bdca is forward indexing. No absence-based closure; Mac remains primary."
       },
       {
         "id": "mac:0x0009c928",
@@ -158761,7 +158761,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac text symbol or attributable caller body was found for this Linux-only row, and native has no implementation or callers. The prefix of Scr_BeginLoadScripts at 0xaf342-0xaf356 is insufficient to establish the separate remote entry identity."
+        "evidence": "No Mac text symbol or attributable caller body was found for this Linux-only row, and native has no implementation or callers. The prefix of Scr_BeginLoadScripts at 0xaf342-0xaf356 is insufficient to establish the separate remote entry identity. Original executable provenance follow-up: Linux1.0 0x8075b54 maps to Linux1.3 0x8076196. Sets script_loading, initializes opcode lookup and allocates/stores loadedScripts, then returns. Fresh exact Mac BeginLoadScripts continues through local lifecycle; no complete remote-return seam proven. No absence-based closure; Mac remains primary."
       },
       {
         "id": "mac:0x000af1ba",
@@ -159004,7 +159004,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Mac nm exposes only a zero-address absolute .eh symbol for this name, no executable body. Native contains neither the function nor callers. No specific Mac inline range was established for the Linux-only endScriptBuffer predicate; equality is not claimed."
+        "evidence": "Mac nm exposes only a zero-address absolute .eh symbol for this name, no executable body. Native contains neither the function nor callers. No specific Mac inline range was established for the Linux-only endScriptBuffer predicate; equality is not claimed. Original executable provenance follow-up: Linux1.0 0x80757f8 maps to Linux1.3 0x8075e40. Two unsigned pointer comparisons against programBuffer and endScriptBuffer. Fresh exact Mac IsInOpcodeMemory uses programLen; EndLoadAnimTrees only assigns endScriptBuffer. Those are distinct operations. No absence-based closure; Mac remains primary."
       },
       {
         "id": "mac:0x000aef34",
@@ -159954,7 +159954,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Whole Mac helper identity remains unresolved. Native feature-gated scr_debugger_glue.c:280-286 has a live same-named stub that ignores all arguments and returns NULL; the watch caller at scr_debugger_ui_watch.c:600 consumes its result. Neither original source metadata nor an executable Mac range established the complete typed nearest-source lookup. Do not infer a replacement or equality from the stub name."
+        "evidence": "Whole Mac helper identity remains unresolved. Native feature-gated scr_debugger_glue.c:280-286 has a live same-named stub that ignores all arguments and returns NULL; the watch caller at scr_debugger_ui_watch.c:600 consumes its result. Neither original source metadata nor an executable Mac range established the complete typed nearest-source lookup. Do not infer a replacement or equality from the stub name. Original executable provenance follow-up: Linux1.0 0x8077234 maps to Linux1.3 0x8077874. Maximum matching source position not beyond target, with type filter. Complete Mac typed search not established. No absence-based closure; Mac remains primary."
       },
       {
         "id": "linux:script/scr_parser.cpp:920:Scr_GetCodePos",
@@ -159973,7 +159973,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac identity/caller found for the Linux formatted code-position API; absent as a native standalone body."
+        "evidence": "No Mac identity/caller found for the Linux formatted code-position API; absent as a native standalone body. Original executable provenance follow-up: Linux1.0 0x8077ef6 maps to Linux1.3 0x8078536. Developer branch calls typed thread-start source lookup then full source formatter. Nondeveloper branch writes offset format. Complete operation differs from diagnostic printing. No absence-based closure; Mac remains primary."
       },
       {
         "id": "linux:script/scr_parser.cpp:940:Scr_GetFileAndLine",
@@ -159992,7 +159992,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac identity/caller established for this Linux API. Native debugger line mapping is a separate extension, not proof of this routine."
+        "evidence": "No Mac identity/caller established for this Linux API. Native debugger line mapping is a separate extension, not proof of this routine. Original executable provenance follow-up: Linux1.0 0x8077f6c maps to Linux1.3 0x80785ac. Preceding lookup then first source entry, source buffer, line+1 and filename, or empty filename/zero line. Original positive primitive calls retained; complete Mac wrapper/result contract remains unproven. No absence-based closure; Mac remains primary."
       },
       {
         "id": "linux:script/scr_parser.cpp:778:Scr_GetLineInfo",
@@ -160030,7 +160030,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Mac NUL-line-count primitive is established in Scr_PrintSourcePos, but no complete original buffer-index wrapper range was identified. Native scr_debugger_glue.c:178-196 has a live guarded buffer-index wrapper with pointer-typed offset argument and UI callers. Zero-address Mac .eh metadata gives a signature only; complete wrapper equality and its argument/guard adaptations remain unproven."
+        "evidence": "Mac NUL-line-count primitive is established in Scr_PrintSourcePos, but no complete original buffer-index wrapper range was identified. Native scr_debugger_glue.c:178-196 has a live guarded buffer-index wrapper with pointer-typed offset argument and UI callers. Zero-address Mac .eh metadata gives a signature only; complete wrapper equality and its argument/guard adaptations remain unproven. Original executable provenance follow-up: Linux1.0 0x80775a6 maps to Linux1.3 0x8077be6. Selects source buffer then calls full line primitive with local outputs. Positive calls0x8077cc1/0x80785fd belong to typed source helper and GetFileAndLine; those complete Mac owners remain unproven. No absence-based closure; Mac remains primary."
       },
       {
         "id": "linux:script/scr_parser.cpp:492:Scr_GetLineNumInternal",
@@ -160087,7 +160087,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Whole Mac helper identity remains unresolved; the zero-address .eh signature supplies no executable range. Native scr_debugger_glue.c:268-278 is a feature-gated same-named stub that ignores source range/type and returns NULL, zeroing optional output. Live script-window callers at 443 and 661 require returned positions. Unfiltered predecessor search is not the typed range search, and absence-based closure is rejected."
+        "evidence": "Whole Mac helper identity remains unresolved; the zero-address .eh signature supplies no executable range. Native scr_debugger_glue.c:268-278 is a feature-gated same-named stub that ignores source range/type and returns NULL, zeroing optional output. Live script-window callers at 443 and 661 require returned positions. Unfiltered predecessor search is not the typed range search, and absence-based closure is rejected. Original executable provenance follow-up: Linux1.0 0x8077062 maps to Linux1.3 0x80776a2. Minimum matching opcode in requested source buffer/range, with all requested type bits. Complete Mac typed search not established. No absence-based closure; Mac remains primary."
       },
       {
         "id": "linux:script/scr_parser.cpp:482:Scr_GetPrevSourcePos",
@@ -160175,7 +160175,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Whole Mac formatter identity remains unresolved. Native scr_debugger_glue.c:198-244 provides a live filename(line) formatter used by call-stack/watch UI; it is not absent. Original Mac executable/source metadata did not establish the complete source-text/filename/savegame formatting operation associated with this helper name. Linux naming/intent does not prove a Mac defect or equality."
+        "evidence": "Whole Mac formatter identity remains unresolved. Native scr_debugger_glue.c:198-244 provides a live filename(line) formatter used by call-stack/watch UI; it is not absent. Original Mac executable/source metadata did not establish the complete source-text/filename/savegame formatting operation associated with this helper name. Linux naming/intent does not prove a Mac defect or equality. Original executable provenance follow-up: Linux1.0 0x8077c92 maps to Linux1.3 0x80782d2. Full source line extraction plus line/file/savegame formatting and return of zero-based line. Positive original caller0x80785a5 in GetCodePos. Native debugger filename(line) formatter differs; no matching complete Mac format owner proven. No absence-based closure; Mac remains primary."
       },
       {
         "id": "linux:script/scr_parser.cpp:535:Scr_GetSourcePosOfType",
@@ -160194,7 +160194,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Whole Mac helper identity remains unresolved. Native scr_debugger_glue.c:258-266 is a live feature-gated stub, ignoring inputs, clearing optional output and returning NULL; the window caller is at 673. Its four-argument declaration differs from the original Mac .eh signature (const char*, int, Scr_SourcePos_t*). No complete primary implementation or justified replacement boundary was found."
+        "evidence": "Whole Mac helper identity remains unresolved. Native scr_debugger_glue.c:258-266 is a live feature-gated stub, ignoring inputs, clearing optional output and returning NULL; the window caller is at 673. Its four-argument declaration differs from the original Mac .eh signature (const char*, int, Scr_SourcePos_t*). No complete primary implementation or justified replacement boundary was found. Original executable provenance follow-up: Linux1.0 0x80775e4 maps to Linux1.3 0x8077c24. Exact opcode lookup, all-type-bits selection, source buffer and line resolution. Positive original caller0x8078585 in GetCodePos; not the existing preceding lookup/first-source wrapper. No absence-based closure; Mac remains primary."
       },
       {
         "id": "linux:script/scr_parser.cpp:445:Scr_GetSourcePosOpcodeLookup",
@@ -160213,7 +160213,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Mac preceding-range lookup was checked; no identity/caller established for this distinct exact-match Linux lookup."
+        "evidence": "Mac preceding-range lookup was checked; no identity/caller established for this distinct exact-match Linux lookup. Original executable provenance follow-up: Linux1.0 0x8077474 maps to Linux1.3 0x8077ab4. Exact binary search called at0x8077c31 by original GetSourcePosOfType. Existing Mac preceding search is different at upper/lower boundaries. No absence-based closure; Mac remains primary."
       },
       {
         "id": "mac:0x0009ad50",
@@ -160263,7 +160263,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No distinct Mac identity or caller established for the Linux accessor; direct developer-field gates alone do not establish its identity."
+        "evidence": "No distinct Mac identity or caller established for the Linux accessor; direct developer-field gates alone do not establish its identity. Original executable provenance follow-up: Linux1.0 0x80776ac maps to Linux1.3 0x8077cec. Returns developer byte; relocated byte-body pattern also matches another accessor0x80b1268. Source-order neighborhood identifies original candidate, but Mac developer condition checks do not establish arbitrary byte-return helper identity. No absence-based closure; Mac remains primary."
       },
       {
         "id": "mac:0x0009b86c",
@@ -160425,7 +160425,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac identity or concat action in the decoded 131-entry reduction table; no native standalone body to compare."
+        "evidence": "No Mac identity or concat action in the decoded 131-entry reduction table; no native standalone body to compare. Original executable provenance follow-up: Linux1.0 0x8078844 maps to Linux1.3 0x8078e94. Links old tail to second head, replaces first tail and returns first list, without allocation. Native append/prepend allocate and manipulate one node, so are not complete equivalents. No absence-based closure; Mac remains primary."
       },
       {
         "id": "mac:0x000aeb64",
@@ -160661,7 +160661,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac identity or call in the decoded reduction table; no native standalone body to compare."
+        "evidence": "No Mac identity or call in the decoded reduction table; no native standalone body to compare. Original executable provenance follow-up: Linux1.0 0x80784cc maps to Linux1.3 ambiguous body matches 0x8078a62 / 0x8078b1c. Original full three-word allocation body is identical to typed node2 on ILP32. Native typed node2 first arg is int while untyped sval may carry full pointer; complete native operation cannot be mapped by erasing that distinction. No absence-based closure; Mac remains primary."
       },
       {
         "id": "mac:0x000aea2e",
@@ -160711,7 +160711,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac identity or call in the decoded reduction table; no native standalone body to compare."
+        "evidence": "No Mac identity or call in the decoded reduction table; no native standalone body to compare. Original executable provenance follow-up: Linux1.0 0x807855c maps to Linux1.3 ambiguous body matches 0x8078ad4 / 0x8078bac. Original full four-word allocation body is identical to typed node3 on ILP32. Native typed first argument does not preserve arbitrary full-width untyped sval payload. No absence-based closure; Mac remains primary."
       },
       {
         "id": "mac:0x000aea60",
@@ -169913,7 +169913,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Reviewed the actual g_parse_user consumers in Mac yyparse and native yyparse_impl.h: string actions intern with user 0 or g_parse_user, and reductions call SL_ConvertToLowercase with g_parse_user. No SL_TransferRefToUser operation or standalone TransferRefToParseUser identity was established in this owner. Unlike the generated stack/debug APIs, this is an engine string-reference helper; no version-boundary exemption is claimed."
+        "evidence": "Reviewed the actual g_parse_user consumers in Mac yyparse and native yyparse_impl.h: string actions intern with user 0 or g_parse_user, and reductions call SL_ConvertToLowercase with g_parse_user. No SL_TransferRefToUser operation or standalone TransferRefToParseUser identity was established in this owner. Unlike the generated stack/debug APIs, this is an engine string-reference helper; no version-boundary exemption is claimed. Original executable provenance follow-up: Linux1.0 0x808529a maps to Linux1.3 0x8085902. Loads g_parse_user byte and calls SL_TransferRefToUser with the input string id. Existing Mac parser interning/lowercase operations do not perform that transfer contract. No absence-based closure; Mac remains primary."
       },
       {
         "id": "linux:script/scr_yacc.c:2768:input",
