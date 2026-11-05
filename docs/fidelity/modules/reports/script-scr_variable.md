@@ -2,7 +2,7 @@
 
 Updated 2026-11-04.
 
-**162/173 reconciled: 144 equal, 14 fixed, 4 intentional; 11 unchecked.** All 124 named Mac functions were compared in full. Another 38 Linux-only rows were identified as complete operations in Mac callers, including both `Scr_GetEntryUsage` overloads. Linux was used for helper names and intent only. The live changes are confined to `COD2_X64`; preprocessing with it undefined is identical to the starting source.
+**163/173 reconciled: 145 equal, 14 fixed, 4 intentional; 10 unchecked.** All 124 named Mac functions were compared in full. Linux-only rows were identified as complete operations in Mac callers, including both `Scr_GetEntryUsage` overloads; the provenance follow-up below also establishes an alternate-name dump helper. Linux was used for helper names and intent only. The live changes are confined to `COD2_X64`; preprocessing with it undefined is identical to the starting source.
 
 The operator tables at 0x329d40 and 0x329d70 and debug-string table at 0x329d00 were decoded from the binary. All dispatch cases match. The 24 type names, five class-map records, float absolute-value mask and equality epsilon were also read from binary data. The epsilon is exactly `9.999999974752427e-07f`. Full-binary disassembly misaligned `GetVarType`; exact-symbol disassembly confirmed its actual entry at 0x8837c. Exact-symbol disassembly also confirmed the unusual paths below.
 
@@ -72,3 +72,11 @@ coverage. Private exact-symbol bodies, ordered symbol metadata and the full
 546-row unchanged-or-refined script packet are in
 `CoD2-native-decomp/recon-identity-script3.noindex` and the orchestration
 `units/identity-script3.ledger.json`.
+
+## Original caller provenance — 2026-11-05
+
+`Scr_DumpScriptVariablesDefault` is now equal through an original caller-backed alternate name: Mac/native `Scr_DumpScriptVariables`. The retained Linux 1.0 address database labels the empty function at 0x0807a298 and calls it after Scr_DumpScriptThreads in both SL_GetStringOfLen exhaustion branches and Scr_TerminalError. The original Linux 1.3 ELF independently anchors the same target at 0x0807a8e8, called at 0x08079649, 0x080797cb and 0x08085443. The named reconstruction provides identity/intent, not the authoritative behavior.
+
+Mac's two corresponding string-exhaustion branches call `Scr_DumpScriptVariables` at 0x43418 and 0x4343b, after the thread dump and before the same string-limit error. The terminal-error prefix calls the same target at 0x828e5, between the thread dump and terminal-error flag. Its exact complete body at 0x88442–0x88447 has no side effects and returns; the native body is also empty and the corresponding callers use it. The mapping rests on these original caller sequences, not merely on two empty bodies or similar names. No interpreter behavior was reopened.
+
+The ten other identities stay unchecked. The established Mac primary verdict and all other resolved records remain exact. No code changed, no compilation, tests, CI or replay ran, and these diagnostic paths were not exercised. Private original-address and exact-entry evidence is retained in `CoD2-native-decomp/recon-provenance-helpers4.noindex`.
