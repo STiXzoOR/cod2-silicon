@@ -409,6 +409,21 @@ typedef struct {
 #endif
 } DeviceImpl;
 
+#if defined(COD2_X64)
+/* Native renderer ownership is dx.device. Material_Shutdown releases shaders
+ * before R_Shutdown releases the device; R_SafeRelease then nulls dx.device. */
+int CDirect3DDevice_DetachPixelShader(const void *shader)
+{
+    extern struct DxGlobals dx;
+    DeviceImpl *device = (DeviceImpl *)dx.device;
+    if (device && device->pixelShader == shader) {
+        device->pixelShader = NULL;
+        return 1;
+    }
+    return 0;
+}
+#endif
+
 static DWORD g_currentFVF = 0;
 static float g_vsConst[256 * 4];
 #if COD2_APPLE_SDK

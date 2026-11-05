@@ -789,10 +789,12 @@ char voice_maxframe_ptr[64] __attribute__((aligned(4))) = { 0 };
 char voice_scale_ptr[64] __attribute__((aligned(4))) = { 0 };
 char WaitNextEvent[64] __attribute__((aligned(4))) = { 0 };
 
+#if !defined(COD2_X64)
 int GetHighAndLowIndices(void)
 {
     return 0;
 }
+#endif
 extern void *vtbl_CD3DXConstantTable[];
 #if !COD2_APPLE_SDK
 int D3DXGetShaderConstantTable(const void *function, void **constantTable)
