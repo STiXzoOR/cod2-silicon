@@ -31998,5 +31998,289 @@
   "mac:0x000ee372": {
     "status": "equal",
     "evidence": "Mac 0xee372 hand-read against native source: five groups; issue/reset begin, each of four views in ascending order, then end; invalid=-1 markers skipped. Opt-in native trace calls leave command/glue state unchanged. The delayed-command producers and pending typed backend GOTO/CALL/RETURN consumers were checked separately; native pointer records use full-width fields."
+  },
+  "mac:0x000e2116": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xe2116: CreateBuffer size/usage/pool/format arguments, HRESULT branches, Lock arguments and return; vertex fatal diagnostics and index lock-failure Release match native typed device/buffer access. Pending native buffer providers preserve the slot contracts. Compiled, not renderer-exercised."
+  },
+  "mac:0x000e1ff4": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xe1ff4: CreateBuffer size/usage/pool/format arguments, HRESULT branches, Lock arguments and return; vertex fatal diagnostics and index lock-failure Release match native typed device/buffer access. Pending native buffer providers preserve the slot contracts. Compiled, not renderer-exercised."
+  },
+  "mac:0x000e21a8": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xe21a8: Unlock and alwaysfails retry loop match. Compiled, not renderer-exercised."
+  },
+  "mac:0x000e20c8": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xe20c8: Unlock and alwaysfails retry loop match. Compiled, not renderer-exercised."
+  },
+  "mac:0x000e21ce": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xe21ce: Release and local null assignment and alwaysfails retry loop match. Compiled, not renderer-exercised."
+  },
+  "mac:0x000e20ee": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xe20ee: Release and local null assignment and alwaysfails retry loop match. Compiled, not renderer-exercised."
+  },
+  "mac:0x000f5b5c": {
+    "status": "intentional",
+    "evidence": "Hand compared exact-symbol Mac 0xf5b5c response levels, clear/set-mask tests, unsigned min/max tests and path masks. Script decoded all 36 bit and 8 integer table rows, including strings, and they match. Native MacDisplay_GetVideoMemoryInfo returns video memory in MiB, so the Apple >64 threshold replaces Mac byte threshold >=0x4000001; texture-memory output remains bytes. Compiled, not GPU-exercised."
+  },
+  "mac:0x000c8f98": {
+    "status": "intentional",
+    "evidence": "Decoded all 138 Mac registrations at 0xc8f98 and compared immediate scalar bits/types/flags against the preprocessed native stock registrations; hand checked call order, enum tables and outdoorFeather modified flag. Native adds r_mode/r_displayRefresh at registration through the SDL mode provider (Mac builds them later in R_BeginRegistration), makes fullscreen archived/latched, and retains explicit dx9 default versus Mac auto/dx7; CoD2x keeps its established lodScale domain. These native platform choices are retained, not equality of renderer negotiation. Supplied Windows server binary has no rendererPreference/fullscreen string identities. Compiled, not renderer-exercised."
+  },
+  "mac:0x000ca506": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xca506: tail calls the import Dvar_UnregisterSystem with mask 0x2000, as native does."
+  },
+  "mac:0x000f5b54": {
+    "status": "equal",
+    "evidence": "Exact-symbol Mac 0xf5b54 is a prologue/return with no effects, matching the native empty body; full-binary disassembly was misaligned."
+  },
+  "mac:0x000caa68": {
+    "status": "unchecked",
+    "evidence": "Hand read exact Mac 0xcaa68 and native API59 binding table plus v60 adapter. Native API59 separates void SyncGpu and GpuWaited; Mac API60 tail has IsGpuFenceFinished at 0x150 and integer GpuSyncDelay accessor at 0x154, followed by SetLodOrigin at 0x158. No defined native budget accessor/complete timer-fence contract exists, so neither a return cast nor ABI change was made. Other named callbacks and native pointer-sized slots were inspected; this does not close the table/timing contract."
+  },
+  "mac:0x000cb5f6": {
+    "status": "unchecked",
+    "evidence": "Inspected exact Mac 0xcb5f6-0xcc792 lifecycle, caps and callback sections; display-mode construction/fallback sections are not fully reconciled. Restored native cap consumption/path selection, first-device-only reset resources, resources-before-systems order, initial viewport and typed window bookkeeping from 0xcb8dd-0xcb9cc/0xcc055-0xcc28c. Native SDL creates its GL context inside CreateDevice, so native caps are consumed after that call; device9f05cde fullscreen presentation words are retained exactly. Remaining gaps: complete sorted resolution/refresh construction, display/AA fallback retries, aspect-ratio negotiation, Mac min/mag-anisotropy capability bytes absent from native DxGlobals, and full context/reinitialization lifetime. Compiled and reviewed, not renderer-exercised; no whole-function parity claim."
+  },
+  "mac:0x000ca944": {
+    "status": "fixed",
+    "evidence": "Mac 0xca955 prints Creating Direct3D device; corrected the native diagnostic. Hand compared 20 attempts with WinSleep(100), nonnegative success, and fallback from nonzero adapter to adapter zero. Typed native device output and native presentation words retain pending device9f05cde contract. Compiled and reviewed, not exercised."
+  },
+  "mac:0x000cb24e": {
+    "status": "fixed",
+    "evidence": "Mac 0xcb326-0xcb36c allocates one skinned-cache buffer; native Apple now allocates pool[0], dependent on prior commands pool[0] selection and native Apple DISCARD Lock correction. Non-Apple retains its existing two pools. Restored flushGpuQueryIssued/query reset at 0xcb40e/0xcb415 and exact fatal initialization diagnostics from 0xcb46e-0xcb5f0. Hand compared dynamic sizes/usages, temp-skin reserve, particle creation, flare issue flags and initial-state order. Compiled and reviewed, not GPU/lifetime-exercised."
+  },
+  "mac:0x000ca59a": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xca59a: 8x8x16 grid, three rand calls per particle, SSE multiply/add/multiply/subtract order, four 20-byte vertices and six indices per particle. Script decoded all eight corner-UV floats and six quad indices and they match native tables. Buffer byte sizes and Finish order match. Compiled, not renderer-exercised."
+  },
+  "mac:0x000ca910": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xca910: unsigned width, height, refresh lexicographic order matches native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000caa46": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xcaa46: tail forwarding to R_IssueDrawGroups matches native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000caa0e": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xcaa0e: Material_FinishLoading then R_AddCmdTouchAllImages matches native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000caa20": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xcaa20: R_EndDrawGroupLoop(4,viewIndex), then R_EndDrawGroupSection(4) matches native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000cae42": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xcae42: main-thread sync, conditional EndScene/clear flag, vsnprintf size 0x3ff, final-byte terminator, and Error(level,\"%s\",text). Existing GFX_REAL_D3D9 diagnostic is outside selected Apple provider. Compiled, not error-path-exercised."
+  },
+  "mac:0x000ca590": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xca590: tail forwarding HRESULT to DXGetErrorDescription9A matches native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000ca520": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xca520: three fatal-init banners, newline-wrapped message and Sys_DirectXFatalError matches native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000cb006": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xcb006: lock-error banner, HRESULT description and Sys_DirectXFatalError matches native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000caeca": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xcaeca: float reciprocal gamma; identity ramp; float i/255 promoted to pow with promoted float exponent, pow result narrowed before 65535 multiply and +0.5/floorf; unsigned-short ramp divided by257 for each byte. Compiled, not newly exercised."
+  },
+  "mac:0x000cafce": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xcafce: Images, Material, Fonts, water-count zero, LightDefs, ClearFogs, Debug and registered-byte order matches native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000caa5e": {
+    "status": "equal",
+    "evidence": "Exact Mac 0xcaa5e only tail forwards RB_IsGpuFenceFinished. Native GetRefAPI binds imp_RB_IsGpuFenceFinished directly to the same selected provider; the omitted wrapper adds no behavior. Fence/timer provider fidelity remains separately unchecked; no whole-sync claim."
+  },
+  "mac:0x000cc792": {
+    "status": "fixed",
+    "evidence": "Mac 0xcc792-0xccac8: corrected native window width/height reads and dvar reads to pointer-width-safe typed access; initialize AA state to none when requested samples<=1 as 0xcc89a does. Restored fatal reset/reinitialize diagnostics and progress strings. Retained int[14] presentation words consumed explicitly by pending device9f05cde (Windowed 7, interval 11, refresh 12); unused native HWND word is zero because SDL owns it. Release/reset/reload order and descending AA probes match; compiled and reviewed, not lost-device/GPU-exercised."
+  },
+  "mac:0x000ca77e": {
+    "status": "fixed",
+    "evidence": "Exact Mac 0xca7f0-0xca81b releases only skinned pool[0]; native Apple now follows that ownership, dependent on commands pool 0/DISCARD fixes. Non-Apple keeps both pools. Hand compared swap chains, RT/static caches, dynamic buffers, temp-skin free, particle buffers, flush query and 4x2 flare-query release order. Native dx temp-skin fields replace original separate globals consistently with native producers. Compiled and reviewed, not GPU/lifetime-exercised."
+  },
+  "mac:0x000cb168": {
+    "status": "intentional",
+    "evidence": "Hand compared exact Mac 0xcb168 ramp generation, float/double boundaries and deviceSupportsGamma early return. Native Apple retains its existing presentation-owned gamma path and r_ignoreHwGamma identity-ramp override; this replaces original hardware gamma ownership. Compiled, not newly GPU-exercised."
+  },
+  "mac:0x000cb058": {
+    "status": "fixed",
+    "evidence": "Mac 0xcb0e9 clears each window HWND after releasing reset resources. Native mistakenly cleared already-released swapChain instead; corrected typed hwnd clearing. Hand compared registered/device-lost guards and subsystem, world, cache, device/interface, dvar and command shutdown order. Compiled and reviewed, not renderer-lifecycle-exercised."
+  },
+  "mac:0x000caa50": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xcaa50: typed stats pointer assignment matches native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000ca9e4": {
+    "status": "equal",
+    "evidence": "Hand compared exact-symbol Mac 0xca9e4: multiGpu forces zero, otherwise current gpuSync integer matches native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000edd24": {
+    "status": "fixed",
+    "evidence": "Mac 0xedea5/0xedf64 continue scans only for ordered >=; restored unordered-aware partition comparisons and exact forward-scan restart after swaps. Mac 0xee0da accepts unordered PointToBoxDistSq/cutoff comparison; native now does too. Hand compared visible-light collection, dlight/partition limit, radius-squared distance products, reverse surface traversal and partition compaction. Compiled and reviewed, not renderer-exercised."
+  },
+  "mac:0x000edcf4": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0xedcf4: registers light_dynamic and stores rgp.dlightDef."
+  },
+  "mac:0x000edb98": {
+    "status": "intentional",
+    "evidence": "Hand compared exact Mac 0xedb98 cache traversal,64 limit, load/retry, light_dynamic fallback and count increment. Native retains defined full-limit Error arguments (name,count); Mac 0xedc6d supplies only count to a format expecting name and count. Reproducing that invalid variadic read is not safe native behavior. Compiled, not error-path-exercised."
+  },
+  "mac:0x000edd14": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0xedd14: clears only lightGlob.defCount."
+  },
+  "mac:0x000f342c": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf342c: all six bounds rejects, child/leaf traversal, material flag4, triangle bounds, capacity and append order (including repeated inlined levels) match native typed layouts. Compiled, not mark-runtime-exercised."
+  },
+  "mac:0x000f4228": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf4228: -2 node side traversal, front-before-back recursion, -1 solid skip and typed cell dispatch (including repeated inlined levels) match native typed layouts. Compiled, not mark-runtime-exercised."
+  },
+  "mac:0x000f3eac": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf3eac: mark-count deduplication, cull-group bounds, duplicate surface suppression, capacity checks and AABB traversal match native typed layouts. Compiled, not mark-runtime-exercised."
+  },
+  "mac:0x000f47ca": {
+    "status": "fixed",
+    "evidence": "Mac 0xf50d2/setbe classifies unordered clipping distance as on-plane; native >= sent it behind the plane. Restored unordered-aware on-plane branch. Hand compared expanded bounds, six planes, face/angle rejection, 8-float clipping/interpolation, fragment limits, UV and tangent generation through 0xf5571. Native typed fragment/vertex storage retained. Compiled and reviewed, not mark-runtime-exercised."
+  },
+  "mac:0x000ea1ec": {
+    "status": "fixed",
+    "evidence": "Decoded Mac jump table 0x32b0e0 at 0xea1ec: restored cases 23(16-bit color),32(alpha color),70(D16); removed unsupported 22/71 descriptions. All nine recognized formats and default va diagnostic were compared. Compiled and reviewed, not exercised."
+  },
+  "mac:0x000ea2e2": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xea2e2: dimension shifts/min1/ushort narrowing, category 6, readback-versus-render setup, surface/dimension stores, render-only shared depth creation/AddRef and image memory tracking. Native typed pointers preserve provider slots. Compiled, not GPU-exercised."
+  },
+  "mac:0x000ea47c": {
+    "status": "fixed",
+    "evidence": "Mac 0xea4bc writes GetSwapChain output to windows[0].swapChain; native used &windows[0], overwriting hwnd. Corrected typed output member. Hand compared frame/depth creation, format query, target3->1 and1->7 aliases, two 128x128 shadow-cookie targets/shared depth and five quarter-resolution targets. Format-table correction applies to diagnostic too. Compiled and reviewed, not GPU/lifetime-exercised."
+  },
+  "mac:0x000ea248": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xea248: target0..12 traversal skips aliases 1/7; releases color,depth,image in order; clears all targets and singleSampleDepthStencilSurface. sizeof native target array replaces ILP32 byte count 0x104. Compiled, not GPU/lifetime-exercised."
+  },
+  "mac:0x000e8774": {
+    "status": "equal",
+    "evidence": "Hand compared Mac 0xe8774: ushort resolution/border stores, frame-buffer target and Clear(7,0xffff00ff,1,0) with alwaysfails retries. Compiled, not GPU-exercised."
+  },
+  "mac:0x000e8e96": {
+    "status": "intentional",
+    "evidence": "Hand compared exact Mac 0xe8e96 weighted three-channel accumulation, residual advancement and float rounding order. Native retains source-index guards and skips a zero-weight trailing read, avoiding original past-storage reads while producing the same defined samples. Existing screenshot fixture passed with ASan/UBSan; GPU readback is stubbed."
+  },
+  "mac:0x000e8b2e": {
+    "status": "intentional",
+    "evidence": "Hand compared Mac 0xe8b2e allocate/store, vertical flip, overbright+gamma guard and target reset. Native readback accepts width/height rather than original resolution/border calling convention, converts RGB to BGR, validates six-face index, handles readback failure and frees replaced captures. Retained concrete native readback/owned-buffer contract; no GPU parity claim. Compiled, not capture-exercised."
+  },
+  "mac:0x000e9230": {
+    "status": "intentional",
+    "evidence": "Hand compared Mac 0xe9230: map/default name,128x128 RGB resample,18-byte24bpp TGA header,0xc012 write/free/print. Native swaps RGB readback to file BGR to preserve image channel semantics. Existing synthetic-GL screenshot fixture passed with ASan/UBSan; real GPU/filesystem capture is unexercised."
+  },
+  "mac:0x000e9606": {
+    "status": "fixed",
+    "evidence": "Mac 0xe9ac7 accumulates unordered dot products;0xe9c3c/0xe9c89/0xe9ccd saturate unordered channel values. Restored these branches. Hand compared six-face gamma 2.2f linearization, sample loops/directions, positive-halfspace counts, float reciprocal, promoted0.45454545f exponent, base color and RGB rounding. Retained native incomplete-face cleanup guard. Compiled and reviewed, not capture/GPU-exercised."
+  },
+  "mac:0x000e9322": {
+    "status": "intentional",
+    "evidence": "Hand compared Mac 0xe9322:32bpp TGA header, face copy, direction construction/normalization, Fresnel alpha floorf and write/free order. Script decoded all 63 cubemap axis floats and they match. Native validates owned face and clears it after free, preserving defined capture ownership; native readback supplies BGR. Compiled, not capture/file-exercised."
+  },
+  "mac:0x000e9d96": {
+    "status": "intentional",
+    "evidence": "Hand compared exact Mac 0xe9d96 argument branches and restored savegame argc==3 (0xe9fda), rather than native >=3. Levelshot/savegame 512x512 quality 90, explicit/numbered paths,9998 limit and silent print match. Native retains its established two-frame queue consumed before Present because SDL GL front/back-buffer ownership differs from original immediate capture. Pending backend calls this native capture hook; pixels/presentation are not certified. Compiled and reviewed; existing savegame/levelshot cases passed with ASan/UBSan. New argc==3 branch is not separately exercised. Real GPU capture is unexercised."
+  },
+  "mac:0x000e9006": {
+    "status": "fixed",
+    "evidence": "Mac 0xe904a passes the allocation base to readback, then resamples from base+header at 0xe906b. Restored this defined prefix-shift quirk; exact Mac _Z_MallocInternal 0x37d4c and native allocator both zero the allocation/tail. Hand compared max(request,current) allocation, failure cleanup and horizontal-before-vertical shrink/grow traversal. Native safe pointer guards and RGB readback adapter retained. Compiled and reviewed; existing 14-case screenshot fixture passed with ASan/UBSan after correcting its zero-allocator/prefix-shift oracle. GPU is stubbed, not exercised."
+  },
+  "mac:0x000e8c58": {
+    "status": "intentional",
+    "evidence": "Hand compared exact Mac 0xe8c58 backwards three-channel interpolation, edge replication sentinel, integer weight updates and float rounding. Native retains index-based underflow handling and stops pointer movement after final output; callers reserve expansion space. Defined pointer handling replaces original before-start arithmetic. Existing screenshot fixture passed with ASan/UBSan; GPU readback is stubbed."
+  },
+  "mac:0x000f99fc": {
+    "status": "equal",
+    "evidence": "Exact-symbol Mac 0xf99fc stores float10 and int-1 to weightCap/lastTime, matching native. Full-binary otool was misaligned; exact-symbol restart confirms stores."
+  },
+  "mac:0x000f610a": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf610a: argc 2, cheats/world guards, exact usage/error strings and world sun pointer match native. Script decoded the21-name sun table in order. Compiled, not renderer-exercised."
+  },
+  "mac:0x000f61a8": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf61a8: argc 2,21-name save into 8192-byte buffer, sun/%s.sun path and byte-length write match native. Script decoded the21-name sun table in order. Compiled, not renderer-exercised."
+  },
+  "mac:0x000f6264": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf6264: seven dynamic fields zeroed in each of four records; query pointers/issue flags retained match native. Script decoded the21-name sun table in order. Compiled, not renderer-exercised."
+  },
+  "mac:0x000f5d74": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf5d74: constant 21 return, confirmed with exact-symbol disassembly match native. Script decoded the21-name sun table in order. Compiled, not renderer-exercised."
+  },
+  "mac:0x000f5d7e": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf5d7e: all 21 names/defaults/domains/0x2000 flags, checked register/stack constants by hand match native. Script decoded the21-name sun table in order. Compiled, not renderer-exercised."
+  },
+  "mac:0x000f62ac": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf62ac: material category 6, half sizes, promoted float angles times exact degrees-to-radians double, six millisecond rounding formulas, AngleVectors and valid flag match native. Script decoded the21-name sun table in order. Compiled, not renderer-exercised."
+  },
+  "mac:0x000f59f6": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf59f6: float n0/n1 promoted for double trig, abs incident cosine, [-1,1] refraction clamp, squared sine/tangent ratios and [0,1] result clamp match native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000f568c": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf568c: null->ffffffff and A,R,G,B float*255 truncation/byte stores match native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000f55e6": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf55e6: left-associated float dot+plane constant, strict negative-radius reject2 and otherwise 0 match native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000f5578": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf5578: signed-byte weighted sum starting multiplier119 and increment per byte match native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000f55ae": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf55ae: OR 0x20 before signed-byte weighted sum starting multiplier119 match native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000f56e6": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf56e6: 262144-unit trace, allsolid/startsolid and fraction/material rejects, unsigned surface-type bounds and infoParm append/truncation behavior with native API59 trace/import layout match native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000f59a6": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xf59a6: length<=63, case-insensitive xmodel prefix and slash at byte 6 match native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000d2a9e": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xd2a9e: archive fogSettings160 bytes then fogIndex 4 bytes via typed archiveProc match native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000d2830": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xd2830: zero five 32-byte fog settings then index0 match native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000d286c": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xd286c: B,G,R,255 byte color, start/end, density>=1 technique1/clamp1 else technique2/raw density; drawSky/clear/registered flags match native. Compiled, not renderer-exercised."
+  },
+  "mac:0x000d2936": {
+    "status": "equal",
+    "evidence": "Hand compared exact Mac 0xd2936: registered-slot2 previous-state copy or immediate current-fog fallback, target-slot4 copy and zero/nonzero transition timestamps match native. Compiled, not renderer-exercised."
   }
 }
