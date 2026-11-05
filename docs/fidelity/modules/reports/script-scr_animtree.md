@@ -29,3 +29,8 @@ Original Mac source metadata, executable tree routines and native call sites wer
 The assigned files compiled as actual configured stock and CoD2x arm64 Release client objects in a separate evidence directory, with low priority and at most two jobs. No source or fixture was edited. Previously resolved ledger evidence is preserved exactly in the full `script-remaining.ledger.json`. No full CI or replay ran.
 
 Independent source/binary review at source freeze `28e7d452399e38b2c296b8b4230e3eb8017b8c52` agreed with the two compiler overload closures and sixteen remaining gaps. Eight existing compiler/parser cases passed in each stock and CoD2x configuration: four binary-condition loop cases and four parser cases, using the existing ASan/UBSan runner. These checks do not exercise all reference-count types or the unresolved debugger APIs. No new cases or assertions were added.
+
+
+## Original reverse-lookup identity
+
+Original1.0 IDB body 0x806d034 uniquely relocates to original1.3 0x806d67c: start at the server animation count, compare animation pointers while descending, and return a matching index or zero. This establishes the original reverse helper's complete contract. Fresh exact Mac `Scr_UsingTreeInternal` at 0x9c020 instead searches ushort variable IDs upward at 0x9c0db–0x9c11e, and `Scr_GetAnims` at 0x9bdca only indexes the animation table forward. Neither supplies the descending animation-pointer search. `Scr_GetAnimsIndex` remains unchecked; no source or settled verdict changed, and no compilation, tests, CI or replay ran.
