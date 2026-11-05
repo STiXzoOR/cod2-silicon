@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 3181,
-      "intentional": 1708,
-      "equal": 3835,
-      "fixed": 733
+      "unchecked": 3161,
+      "intentional": 1712,
+      "equal": 3843,
+      "fixed": 741
     },
     "scopes": {
       "unassigned": 777,
@@ -62428,8 +62428,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc3490: hand-compared magic check, silent rejection and Z_FreeInternal dispatch. Native retains magic at user pointer minus four but frees user pointer minus 16 instead of minus four, matching GetMemory's existing 16-byte alignment adaptation for LP64 pointer-bearing objects. Production arm64 Release TU compiled; no runtime exercise."
       },
       {
         "id": "mac:0x000c34ae",
@@ -62459,8 +62459,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc34ae: hand-compared inlined GetMemory allocation/header and full requested-payload memset, including the unguarded null memset on the failure branch. Native calls GetMemory with its documented 16-byte LP64 alignment header and clears the same requested payload; no new null behavior. Production arm64 Release TU compiled; no runtime exercise."
       },
       {
         "id": "mac:0x000c346c",
@@ -62490,8 +62490,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc346c: hand-compared size addition, Z_MallocInternal call, null return and 0x12345678 header. Existing native header is 16 bytes rather than four, retaining malloc alignment for LP64 script, token and punctuation pointer storage; magic remains at user pointer minus four. Production arm64 Release TU compiled; no runtime exercise."
       }
     ],
     "botlib/l_precomp": [
@@ -64468,8 +64468,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xc2d24: hand-compared unsigned script_p >= end_p return against the typed pointer comparison; both pointers refer to the same allocated script buffer. No source change."
       },
       {
         "id": "mac:0x000c2d3a",
@@ -64499,8 +64499,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xc2d3a: hand-compared conditional punctuation-table FreeMemory followed by unconditional script FreeMemory, including order. Typed fields account for native layout. No source change."
       },
       {
         "id": "linux:botlib/l_script.cpp:1134:GetScriptFlags",
@@ -64519,7 +64519,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable caller identity for the getter or separate native body was established."
       },
       {
         "id": "mac:0x000c2d60",
@@ -64549,8 +64549,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc2d60, especially 0xc2e49-0xc2e51: removed native-only end_p recomputation and backtick-to-space sanitizing after compression. Mac keeps end_p at the original file extent and stores only the compressed length. Hand-compared pathname/open/read/close, allocation, initialization and default punctuation setup. Allocation reserves original length plus terminator, so retained end_p stays within storage. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:botlib/l_script.cpp:1260:LoadScriptMemory",
@@ -64569,7 +64569,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline memory-loading caller was established; native has only LoadScriptFile. Do not invent a loader from Linux."
       },
       {
         "id": "linux:botlib/l_script.cpp:1179:NumLinesCrossed",
@@ -64587,8 +64587,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No standalone Mac executable symbol; hand-compared the complete line-minus-lastline operation in PS_ReadToken at 0xc31e9-0xc31ef, stored to token.linescrossed. Native PS_ReadToken contains the same inline subtraction and destination. No separate native wrapper is claimed."
       },
       {
         "id": "mac:0x000c2814",
@@ -64618,8 +64618,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc2814: restored 32-bit wrapping integer accumulators (0xc28c0, 0xc291b, 0xc2989, 0xc29c8), unsigned 32-bit fractional divisor, immediate first digit after dot (0xc295e-0xc2969), second-dot early return with the already initialized intvalue left zero (0xc295a), and signed-64 truncation followed by low-32 extraction (0xc2937-0xc2950). PS_ReadToken clears the full token at 0xc310d. Native deliberately stops at a trailing-dot terminator after processing that byte rather than probing an unbounded direct caller's following storage; production zeroed-token inputs have the same result. Native long double retains host precision. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:botlib/l_script.cpp:950:PS_CheckTokenString",
@@ -64638,7 +64638,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists."
       },
       {
         "id": "linux:botlib/l_script.cpp:967:PS_CheckTokenType",
@@ -64657,7 +64657,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists."
       },
       {
         "id": "mac:0x000c247c",
@@ -64687,8 +64687,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xc247c: hand-compared lazy 256-pointer allocation, full zeroing, signed first-character bucket, stable descending-length insertion, next links and sentinel. Scripted binary-data check also matched all 52 default punctuation strings/IDs/zero links and sentinel at Mac 0x349f60. Native uses pointer-sized table/records for LP64. No source change."
       },
       {
         "id": "linux:botlib/l_script.cpp:932:PS_ExpectAnyToken",
@@ -64707,7 +64707,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists."
       },
       {
         "id": "linux:botlib/l_script.cpp:851:PS_ExpectTokenString",
@@ -64726,7 +64726,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists."
       },
       {
         "id": "linux:botlib/l_script.cpp:874:PS_ExpectTokenType",
@@ -64745,7 +64745,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists."
       },
       {
         "id": "linux:botlib/l_script.cpp:1027:PS_NextWhiteSpaceChar",
@@ -64764,7 +64764,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable caller identity or separate native whitespace-iterator body was established."
       },
       {
         "id": "mac:0x000c2660",
@@ -64794,8 +64794,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc2660: bare hex escape must advance script_p past x even when no digits follow (0xc274b-0xc274e); native previously left it on x. Use defined uint32 arithmetic and signed-32 overflow warning comparison to preserve Mac wrapping. Decoded the 0x32a960 jump table for every supported escape; hand-compared normal/unknown/decimal/hex dispatch, accepted A-Z/a-z hex letters, 255 warning and cursor updates. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:botlib/l_script.cpp:671:PS_ReadLiteral",
@@ -64814,7 +64814,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No executable Mac identity for Linux's single-character literal helper was established. Mac PS_ReadToken at 0xc3418 dispatches single quotes to PS_ReadString, which has different multi-character semantics; that dispatch is matched, but does not prove this helper."
       },
       {
         "id": "linux:botlib/l_script.cpp:465:PS_ReadName",
@@ -64832,8 +64832,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No standalone Mac executable symbol; hand-compared the complete inline name scanner in PS_ReadToken at 0xc337a-0xc33e9 and 0xc3458-0xc3465. Native matches ASCII letter/underscore start, digit continuations, cursor increments, 1024-byte failure, terminator and length subtype. No separate native wrapper is claimed."
       },
       {
         "id": "mac:0x000c29de",
@@ -64863,8 +64863,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc29de: ordinary nonoctal decimal subtype is 0x8 at 0xc2b11, not native 0x800. Mac consumes at most two suffix characters with mutually exclusive L/U branches (0xc2a98-0xc2aba), and ORs into the incoming subtype rather than clearing it. Restored these; hand-compared binary/hex scanning (including uppercase A-only quirk), octal/dot flags, exact length failures and NumberValue dispatch. PS_ReadToken initializes the incoming token. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:botlib/l_script.cpp:751:PS_ReadPrimitive",
@@ -64882,8 +64882,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "No standalone Mac executable symbol; hand-compared inline PS_ReadToken block 0xc322a-0xc328a and 0xc3439. Restored signed-byte >32 delimiter test and acceptance of exactly 1024 bytes when followed by a delimiter; error occurs before a 1025th byte. Mac terminates at byte 1024 (type low byte). Both production layouts place type at 1024, and the full token is zeroed; native uses byte access through the enclosing token object instead of out-of-range string indexing. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:botlib/l_script.cpp:718:PS_ReadPunctuation",
@@ -64901,8 +64901,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No standalone executable Mac symbol (only absolute-zero .eh); hand-compared the inline scanner in PS_ReadToken at 0xc32db-0xc3375. Native matches signed bucket index, linked traversal, original end_p bound, length/strncmp, 1024-byte strncpy, cursor advance, type 5 and punctuation ID subtype. No separate native wrapper is claimed."
       },
       {
         "id": "mac:0x000c2e5c",
@@ -64932,8 +64932,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc2e5c: hand-compared quote/literal type, retained quotes, escape flag 8, concatenation flag 4, line/cursor rollback, length boundary, error strings and subtype length. Shared whitespace helper corrections restore signed high-byte skipping during quote concatenation. Trailing comments/whitespace rollback was checked against 0xc2f9f-0xc2fa8. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x000c30aa",
@@ -64963,8 +64963,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc30aa: restored failure diagnostic from unknown punctuation to can't read token (0xc3422; binary string 0x24df68), signed whitespace/comment cursor behavior, and primitive delimiter/exact-length boundary. Hand-compared tokenavailable cache copy, full clear, metadata, quote/number/name/primitive/punctuation dispatch and successful cache writes. Number scanner fixes are covered by their own row. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:botlib/l_script.cpp:239:PS_ReadWhiteSpace",
@@ -64982,8 +64982,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "No standalone executable Mac symbol (only absolute-zero .eh); hand-compared both inline whitespace/comment scans at PS_ReadToken 0xc311e-0xc31d7 and PS_ReadString 0xc2f38-0xc2fa8. Native helper now uses Mac signed-byte <=32 classification and leaves // EOF cursor at NUL rather than the last comment character. Newline accounting, /* */ termination and EOF returns otherwise matched. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:botlib/l_script.cpp:989:PS_SkipUntilString",
@@ -65002,7 +65002,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists."
       },
       {
         "id": "linux:botlib/l_script.cpp:1005:PS_UnreadLastToken",
@@ -65021,7 +65021,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline unread-last-token caller or separate native wrapper was established."
       },
       {
         "id": "linux:botlib/l_script.cpp:1015:PS_UnreadToken",
@@ -65040,7 +65040,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline script-token copy/unread caller or separate native wrapper was established; precompiler source-token queues are a different object."
       },
       {
         "id": "linux:botlib/l_script.cpp:166:PunctuationFromNum",
@@ -65059,7 +65059,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable punctuation-number lookup caller or separate native implementation was established."
       },
       {
         "id": "linux:botlib/l_script.cpp:1078:ReadSignedFloat",
@@ -65078,7 +65078,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline signed-float reader was established; no separate native implementation exists."
       },
       {
         "id": "linux:botlib/l_script.cpp:1101:ReadSignedInt",
@@ -65097,7 +65097,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline signed-int reader was established; no separate native implementation exists."
       },
       {
         "id": "linux:botlib/l_script.cpp:1144:ResetScript",
@@ -65116,7 +65116,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. LoadScriptFile initializes a fresh object but does not establish the complete reset of an existing token/cursor/whitespace state; no separate native body exists."
       },
       {
         "id": "mac:0x000c259e",
@@ -65146,8 +65146,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xc259e: hand-compared flag bit 1 suppression, 1024-byte vsnprintf bound and Com_Printf filename/line/text argument order. Binary string 0x24d580 matches native error prefix and newline exactly. No source change."
       },
       {
         "id": "linux:botlib/l_script.cpp:1189:ScriptSkipTo",
@@ -65166,7 +65166,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline skip-to-substring caller or separate native implementation was established."
       },
       {
         "id": "mac:0x000c25fe",
@@ -65196,8 +65196,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xc25fe: hand-compared flag bit 2 suppression, 1024-byte vsnprintf bound and Com_Printf filename/line/text argument order. Binary string 0x24d5a0 matches native warning prefix and newline exactly. No source change."
       },
       {
         "id": "linux:botlib/l_script.cpp:1124:SetScriptFlags",
@@ -65216,7 +65216,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline setter caller or separate native implementation was established."
       },
       {
         "id": "linux:botlib/l_script.cpp:218:SetScriptPunctuations",
@@ -65235,7 +65235,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac LoadScriptFile at 0xc2e0b-0xc2e1b establishes only the default-table setup. No executable identity for the full custom/default parameterized setter or separate native body was established."
       },
       {
         "id": "mac:0x000c2ce0",
@@ -65265,8 +65265,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc2ce0: hand-compared independent leading/trailing quote stripping. Native preserves existing memmove for the overlapping one-byte left shift, null return and nonempty tail guard; Mac calls overlapping strcpy (0xc2d1d) and can read before an empty string at 0xc2d02. Preserve defined native storage behavior for these invalid/empty boundaries. Normal nonempty stripping matches. No source change."
       },
       {
         "id": "linux:botlib/l_script.cpp:1061:StripSingleQuotes",
@@ -65285,7 +65285,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No executable single-quote-strip caller or separate native implementation was established; StripDoubleQuotes does not prove it."
       }
     ],
     "cgame/cg_animtree_mp": [
