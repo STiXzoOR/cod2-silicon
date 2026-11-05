@@ -302,21 +302,37 @@ static void RB_TESS_REGPARM3_SSE_ABI RB_AddQuadStampDx7_impl(const vec_t *origin
     int vc, ic;
     float lx, ly, lz, ux, uy, uz, nx, ny, nz;
     float *from;
+#if defined(COD2_X64)
+    MaterialVertexDeclType savedMat;
+#else
     void *savedMat;
+#endif
 
     tess = RB_TessBase();
 
     if (((materialCommands_t *)tess)->vertexCount + 4 > 0x154a ||
         ((materialCommands_t *)tess)->indexCount + 6 > 0x100000) {
+#if defined(COD2_X64)
+        savedMat = ((materialCommands_t *)tess)->declType;
+#else
         savedMat = (*(void **)&((materialCommands_t *)tess)->declType);
+#endif
         RB_EndSurface();
         RB_BeginSurface((const Material *)(*(void **)&((materialCommands_t *)tess)->material),
                         (MaterialTechniqueType)(*(int *)&((materialCommands_t *)tess)->techType),
                         ((materialCommands_t *)tess)->lmapIndex);
+#if defined(COD2_X64)
+        if (((materialCommands_t *)tess)->declType != savedMat) {
+#else
         if ((*(void **)&((materialCommands_t *)tess)->declType) != savedMat) {
+#endif
             if (((materialCommands_t *)tess)->indexCount != 0 || ((materialCommands_t *)tess)->optimizedIndexCount != 0)
                 RB_EndSurface();
+#if defined(COD2_X64)
+            ((materialCommands_t *)tess)->declType = savedMat;
+#else
             (*(void **)&((materialCommands_t *)tess)->declType) = savedMat;
+#endif
         }
     }
 
@@ -423,21 +439,37 @@ static void RB_TESS_REGPARM3_SSE_ABI RB_AddQuadStamp_impl(const vec_t *origin, c
     int vc, ic;
     float lx, ly, lz, ux, uy, uz, nx, ny, nz;
     float *from;
+#if defined(COD2_X64)
+    MaterialVertexDeclType savedMat;
+#else
     void *savedMat;
+#endif
 
     tess = RB_TessBase();
 
     if (((materialCommands_t *)tess)->vertexCount + 4 > 0x154a ||
         ((materialCommands_t *)tess)->indexCount + 6 > 0x100000) {
+#if defined(COD2_X64)
+        savedMat = ((materialCommands_t *)tess)->declType;
+#else
         savedMat = (*(void **)&((materialCommands_t *)tess)->declType);
+#endif
         RB_EndSurface();
         RB_BeginSurface((const Material *)(*(void **)&((materialCommands_t *)tess)->material),
                         (MaterialTechniqueType)(*(int *)&((materialCommands_t *)tess)->techType),
                         ((materialCommands_t *)tess)->lmapIndex);
+#if defined(COD2_X64)
+        if (((materialCommands_t *)tess)->declType != savedMat) {
+#else
         if ((*(void **)&((materialCommands_t *)tess)->declType) != savedMat) {
+#endif
             if (((materialCommands_t *)tess)->indexCount != 0 || ((materialCommands_t *)tess)->optimizedIndexCount != 0)
                 RB_EndSurface();
+#if defined(COD2_X64)
+            ((materialCommands_t *)tess)->declType = savedMat;
+#else
             (*(void **)&((materialCommands_t *)tess)->declType) = savedMat;
+#endif
         }
     }
 
@@ -457,6 +489,31 @@ static void RB_TESS_REGPARM3_SSE_ABI RB_AddQuadStamp_impl(const vec_t *origin, c
     v2 = v0 + 128;
     v3 = v0 + 192;
 
+#if defined(COD2_X64)
+    lx = left[0] + up[0];
+    ly = left[1] + up[1];
+    lz = left[2] + up[2];
+    ux = left[0] - up[0];
+    uy = left[1] - up[1];
+    uz = left[2] - up[2];
+
+    ((GfxVertex *)v0)->xyzw[0] = lx + origin[0];
+    ((GfxVertex *)v0)->xyzw[1] = ly + origin[1];
+    ((GfxVertex *)v0)->xyzw[2] = lz + origin[2];
+
+    ((GfxVertex *)v1)->xyzw[0] = origin[0] - ux;
+    ((GfxVertex *)v1)->xyzw[1] = origin[1] - uy;
+    ((GfxVertex *)v1)->xyzw[2] = origin[2] - uz;
+
+    ((GfxVertex *)v2)->xyzw[0] = origin[0] - lx;
+    ((GfxVertex *)v2)->xyzw[1] = origin[1] - ly;
+    ((GfxVertex *)v2)->xyzw[2] = origin[2] - lz;
+
+    ((GfxVertex *)v3)->xyzw[0] = ux + origin[0];
+    ((GfxVertex *)v3)->xyzw[1] = uy + origin[1];
+    ((GfxVertex *)v3)->xyzw[2] = uz + origin[2];
+
+#else
     lx = left[0];
     ly = left[1];
     lz = left[2];
@@ -479,6 +536,8 @@ static void RB_TESS_REGPARM3_SSE_ABI RB_AddQuadStamp_impl(const vec_t *origin, c
     ((GfxVertex *)v3)->xyzw[0] = origin[0] + lx - ux;
     ((GfxVertex *)v3)->xyzw[1] = origin[1] + ly - uy;
     ((GfxVertex *)v3)->xyzw[2] = origin[2] + lz - uz;
+
+#endif
 
     ((GfxVertex *)v0)->xyzw[3] = 1.0f;
     ((GfxVertex *)v1)->xyzw[3] = 1.0f;
@@ -675,7 +734,11 @@ static void RB_TESS_REGPARM3_SSE_ABI RB_AddLineDx7_impl(const vec_t *start, cons
 {
     char *tess = RB_TessBase();
     char *backEnd = (char *)imp_backEnd;
+#if defined(COD2_X64)
+    MaterialVertexDeclType savedMat;
+#else
     void *savedMat;
+#endif
     int vc, ic;
     unsigned short *indices;
     char *v0, *v1, *v2, *v3;
@@ -704,13 +767,25 @@ static void RB_TESS_REGPARM3_SSE_ABI RB_AddLineDx7_impl(const vec_t *start, cons
     Vec3Cross(tangent, binormal, normal);
 
     if (((materialCommands_t *)tess)->vertexCount + 4 > 0x154a || ((materialCommands_t *)tess)->indexCount + 6 > 0x100000) {
+#if defined(COD2_X64)
+        savedMat = ((materialCommands_t *)tess)->declType;
+#else
         savedMat = (*(void **)&((materialCommands_t *)tess)->declType);
+#endif
         RB_EndSurface();
         RB_BeginSurface( (const Material *)((*(void **)&((materialCommands_t *)tess)->material)), (MaterialTechniqueType)((*(int *)&((materialCommands_t *)tess)->techType)), ((materialCommands_t *)tess)->lmapIndex);
+#if defined(COD2_X64)
+        if (((materialCommands_t *)tess)->declType != savedMat) {
+#else
         if ((*(void **)&((materialCommands_t *)tess)->declType) != savedMat) {
+#endif
             if (((materialCommands_t *)tess)->indexCount != 0 || ((materialCommands_t *)tess)->optimizedIndexCount != 0)
                 RB_EndSurface();
+#if defined(COD2_X64)
+            ((materialCommands_t *)tess)->declType = savedMat;
+#else
             (*(void **)&((materialCommands_t *)tess)->declType) = savedMat;
+#endif
         }
     }
 
@@ -796,13 +871,18 @@ static void RB_TESS_REGPARM3_SSE_ABI RB_AddLine_impl(const vec_t *start, const v
 {
     char *tess = RB_TessBase();
     char *backEnd = (char *)imp_backEnd;
+#if defined(COD2_X64)
+    MaterialVertexDeclType savedMat;
+#else
     void *savedMat;
+#endif
     int vc, ic;
     unsigned short *indices;
     char *v0, *v1, *v2, *v3;
     float v1v[3], v2v[3], tangent[3], halfTangent[3], binormal[3], normal[3];
     float *viewOrigin;
 
+#if !defined(COD2_X64)
     if (((materialCommands_t *)tess)->vertexCount + 4 > 0x154a ||
         ((materialCommands_t *)tess)->indexCount + 6 > 0x100000) {
         savedMat = (*(void **)&((materialCommands_t *)tess)->declType);
@@ -814,6 +894,7 @@ static void RB_TESS_REGPARM3_SSE_ABI RB_AddLine_impl(const vec_t *start, const v
             (*(void **)&((materialCommands_t *)tess)->declType) = savedMat;
         }
     }
+#endif
 
     viewOrigin = (float *)((char *)((r_backEndGlobals_t *)backEnd)->viewParms);
     v1v[0] = start[0] - viewOrigin[0];
@@ -835,6 +916,21 @@ static void RB_TESS_REGPARM3_SSE_ABI RB_AddLine_impl(const vec_t *start, const v
     Vec3Normalize(binormal);
 
     Vec3Cross(tangent, binormal, normal);
+
+#if defined(COD2_X64)
+    if (((materialCommands_t *)tess)->vertexCount + 4 > 0x154a ||
+        ((materialCommands_t *)tess)->indexCount + 6 > 0x100000) {
+        savedMat = ((materialCommands_t *)tess)->declType;
+        RB_EndSurface();
+        RB_BeginSurface( (const Material *)((*(void **)&((materialCommands_t *)tess)->material)), (MaterialTechniqueType)((*(int *)&((materialCommands_t *)tess)->techType)), ((materialCommands_t *)tess)->lmapIndex);
+        if (((materialCommands_t *)tess)->declType != savedMat) {
+            if (((materialCommands_t *)tess)->indexCount != 0 || ((materialCommands_t *)tess)->optimizedIndexCount != 0)
+                RB_EndSurface();
+            ((materialCommands_t *)tess)->declType = savedMat;
+        }
+    }
+#endif
+
 
     vc = ((materialCommands_t *)tess)->vertexCount;
     ic = ((materialCommands_t *)tess)->indexCount;
@@ -1269,6 +1365,114 @@ void RB_TessTriangles(const surfaceType_t *surfType)
     ((materialCommands_t *)tess)->optimizedVertexCount = (int)tri->vertexCount;
 }
 
+#if defined(COD2_X64)
+/* Mac RB_TessEntity type 9, 0xff56f and 0x1000f2. The untouched vertex
+   attributes retain the defined storage already owned by the tess buffer. */
+static void RB_TessCylinderNative(const GfxEntity *re, int isDx7)
+{
+    materialCommands_t *commands = (materialCommands_t *)imp_tess;
+    const GfxLodParms *lod = &((r_backEndGlobals_t *)imp_backEnd)->lodParms;
+    vec3_t midpoint, forward, right, up;
+    for (int k = 0; k < 3; ++k)
+        midpoint[k] = (re->origin[k] + re->endpos[k]) * 0.5f - lod->origin[k];
+    float distance = Vec3Normalize(midpoint);
+    float detail = distance * lod->scale + lod->bias;
+    detail = detail * -0.0009765625f + 1.0f;
+    float roundedSegments = floorf(detail * 32.0f + 0.5f);
+    int segments = roundedSegments >= -2147483648.0f && roundedSegments < 2147483648.0f
+                       ? (int)roundedSegments : (-2147483647 - 1);
+    if (segments <= 7)
+        segments = 8;
+    else if (segments > 32)
+        segments = 32;
+
+    int pairVertices = segments * 2;
+    if (commands->vertexCount + pairVertices + 2 > 0x154a ||
+        commands->indexCount + segments * 6 > 0x100000) {
+        MaterialVertexDeclType savedDecl = commands->declType;
+        RB_EndSurface();
+        RB_BeginSurface(commands->material, commands->techType, commands->lmapIndex);
+        if (commands->declType != savedDecl) {
+            if (commands->indexCount || commands->optimizedIndexCount)
+                RB_EndSurface();
+            commands->declType = savedDecl;
+        }
+    }
+
+    for (int k = 0; k < 3; ++k)
+        forward[k] = re->origin[k] - re->endpos[k];
+    Vec3Normalize(forward);
+    MakeNormalVectors(forward, right, up);
+    unsigned int color = (unsigned int)re->materialRGBA[2] |
+                         ((unsigned int)re->materialRGBA[1] << 8) |
+                         ((unsigned int)re->materialRGBA[0] << 16) |
+                         ((unsigned int)re->materialRGBA[3] << 24);
+    float step = 1.0f / (float)segments;
+    float angle = (float)((double)step * 6.283185307179586);
+    float sinStep = sinf(angle);
+    float cosStep = cosf(angle);
+    float sine = 0.0f, cosine = 1.0f, texS = 0.0f;
+    int base = commands->vertexCount;
+    for (int i = 0; i < pairVertices; i += 2) {
+        for (int end = 0; end < 2; ++end) {
+            const float *origin = end ? re->endpos : re->origin;
+            float radius = re->radius[end ? 0 : 1];
+            vec3_t position;
+            float lateral = sine * radius;
+            float vertical = cosine * radius;
+            for (int k = 0; k < 3; ++k) {
+                position[k] = lateral * right[k] + origin[k];
+                position[k] += vertical * up[k];
+            }
+            if (isDx7) {
+                GfxVertexDx7 *vertex = &commands->verts.dx7.generic[base + i + end];
+                memcpy(vertex->xyz, position, sizeof(position));
+                vertex->texCoord[0] = texS;
+                vertex->texCoord[1] = end ? 0.0f : 1.0f;
+                vertex->color.packed = color;
+            } else {
+                GfxVertex *vertex = &commands->verts.dx9.generic[base + i + end];
+                memcpy(vertex->xyzw, position, sizeof(position));
+                vertex->xyzw[3] = 1.0f;
+                vertex->texCoord[0] = texS;
+                vertex->texCoord[1] = end ? 0.0f : 1.0f;
+                vertex->color.packed = color;
+            }
+        }
+        texS += step;
+        float nextSine = sine * cosStep + sinStep * cosine;
+        cosine = cosine * cosStep - sinStep * sine;
+        sine = nextSine;
+        r_index_t *indices = &commands->indices[commands->indexCount];
+        indices[0] = (r_index_t)(base + i);
+        indices[1] = (r_index_t)(base + i + 1);
+        indices[2] = (r_index_t)(base + i + 3);
+        indices[3] = (r_index_t)(base + i + 3);
+        indices[4] = (r_index_t)(base + i + 2);
+        indices[5] = (r_index_t)(base + i);
+        commands->indexCount += 6;
+    }
+    for (int end = 0; end < 2; ++end) {
+        if (isDx7) {
+            GfxVertexDx7 *first = &commands->verts.dx7.generic[base + end];
+            GfxVertexDx7 *last = &commands->verts.dx7.generic[base + pairVertices + end];
+            memcpy(last->xyz, first->xyz, sizeof(last->xyz));
+            last->texCoord[0] = 1.0f;
+            last->texCoord[1] = end ? 0.0f : 1.0f;
+            last->color.packed = color;
+        } else {
+            GfxVertex *first = &commands->verts.dx9.generic[base + end];
+            GfxVertex *last = &commands->verts.dx9.generic[base + pairVertices + end];
+            memcpy(last->xyzw, first->xyzw, sizeof(last->xyzw));
+            last->texCoord[0] = 1.0f;
+            last->texCoord[1] = end ? 0.0f : 1.0f;
+            last->color.packed = color;
+        }
+    }
+    commands->vertexCount += pairVertices + 2;
+}
+#endif
+
 void RB_TessEntity(const GfxEntity *re)
 {
     char *tess = RB_TessBase();
@@ -1283,6 +1487,11 @@ void RB_TessEntity(const GfxEntity *re)
     isDx7 = (r_rendererInUse->current.integer == 2);
 
     switch (reType) {
+#if defined(COD2_X64)
+    case 9:
+        RB_TessCylinderNative(re, isDx7);
+        return;
+#endif
     case 4:
     {
 #if defined(COD2_X64)
@@ -1367,10 +1576,24 @@ void RB_TessEntity(const GfxEntity *re)
 #endif
                 int k;
 
+#if defined(COD2_X64)
+                vec3_t corner;
+                for (k = 0; k < 3; ++k) {
+                    corner[k] = -worldRadius[0] * viewParms->axis[1][k] + viewParms->origin[k];
+                    corner[k] += worldRadius[1] * viewParms->axis[2][k];
+                }
+                for (k = 0; k < 2; ++k) {
+                    screenOffset[k] = corner[0] * projMatrix[k] + corner[1] * projMatrix[4 + k];
+                    screenOffset[k] += corner[2] * projMatrix[8 + k];
+                    screenOffset[k] += projMatrix[12 + k];
+                }
+#else
                 for (k = 0; k < 2; k++) {
                     float val = (origin[0] - viewOrg[0]) * 0.0f;
                     screenOffset[k] = val;
                 }
+
+#endif
 
                 scale = 1.0f / w;
                 screenOffset[0] *= scale;
@@ -1389,11 +1612,13 @@ void RB_TessEntity(const GfxEntity *re)
         return;
     }
 
+#if !defined(COD2_X64)
     case 5:
     {
 
         return;
     }
+#endif
 
     case 6:
         RB_TessParticleCloud(re);
@@ -1425,7 +1650,11 @@ void RB_TessEntity(const GfxEntity *re)
 
             MakeNormalVectors(((GfxEntity *)ent)->axis[0], right, fwd);
 
+#if defined(COD2_X64)
+            angle = (float)((double)re->rotation * 0.017453292519943295);
+#else
             angle = ((GfxEntity *)ent)->rotation * 0.017453292519943295f;
+#endif
             sinA = sinf(angle);
             cosA = cosf(angle);
 
@@ -1459,8 +1688,13 @@ void RB_TessEntity(const GfxEntity *re)
 
         {
             byte *texInfo = (*(byte **)&((GfxEntity *)ent)->customMaterial);
+#if defined(COD2_X64)
+            int cols = ((Material *)texInfo)->info.textureAtlasColumnCount;
+            int rows = ((Material *)texInfo)->info.textureAtlasRowCount;
+#else
             int cols = ((Material *)texInfo)->info.textureAtlasRowCount;
             int rows = ((Material *)texInfo)->info.textureAtlasColumnCount;
+#endif
             int totalFrames = cols * rows;
 
             if (totalFrames <= 1) {
@@ -1499,8 +1733,13 @@ void RB_TessEntity(const GfxEntity *re)
 
         {
             byte *texInfo = (*(byte **)&((GfxEntity *)ent)->customMaterial);
+#if defined(COD2_X64)
+            int cols = ((Material *)texInfo)->info.textureAtlasColumnCount;
+            int rows = ((Material *)texInfo)->info.textureAtlasRowCount;
+#else
             int cols = ((Material *)texInfo)->info.textureAtlasRowCount;
             int rows = ((Material *)texInfo)->info.textureAtlasColumnCount;
+#endif
             float s0, t0, s1, t1;
 
             if (cols * rows <= 1) {
@@ -1539,7 +1778,11 @@ void RB_TessEntity(const GfxEntity *re)
         return;
     }
 
+#if defined(COD2_X64)
+    case 5:
+#else
     case 9:
+#endif
     {
         float forward[3];
         float midpoint[3];
@@ -1557,10 +1800,17 @@ void RB_TessEntity(const GfxEntity *re)
             segLen = sqrtf(segLen);
         }
 
+#if defined(COD2_X64)
+        color = (int)((unsigned int)re->materialRGBA[3] |
+                      ((unsigned int)re->materialRGBA[0] << 8) |
+                      ((unsigned int)re->materialRGBA[1] << 16) |
+                      ((unsigned int)re->materialRGBA[2] << 24));
+#else
         color = (((GfxEntity *)ent)->materialRGBA[0]) |
                 (((GfxEntity *)ent)->materialRGBA[1] << 8) |
                 (((GfxEntity *)ent)->materialRGBA[2] << 16) |
                 (((GfxEntity *)ent)->materialRGBA[3] << 24);
+#endif
 
         {
             float railWidth;

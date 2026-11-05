@@ -352,6 +352,10 @@ static void RB_DrawPolyInteriors(void)
                     ((GfxVertex *)to)->texCoord[1] = 0.0f;
 
                     ((GfxVertex *)to)->binormal[0] = 0.0f;
+#if defined(COD2_X64)
+                    ((GfxVertex *)to)->binormal[1] = 1.0f;
+                    ((GfxVertex *)to)->binormal[2] = 0.0f;
+#endif
 
                     ((GfxVertex *)to)->tangent[0] = 1.0f;
                     ((GfxVertex *)to)->tangent[1] = 0.0f;

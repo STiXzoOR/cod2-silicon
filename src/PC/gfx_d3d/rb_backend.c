@@ -980,7 +980,11 @@ static void RB_StretchRawCmd(GfxRenderCommandExecState *execState)
     void **devVtable;
     void **texVtable;
     HRESULT hr;
+#if defined(COD2_X64)
+    D3DLOCKED_RECT lockedRect;
+#else
     int lockedRect[2];
+#endif
     int dstRect[4];
     void *surface = NULL;
     byte *dest;
@@ -1000,11 +1004,20 @@ static void RB_StretchRawCmd(GfxRenderCommandExecState *execState)
         do {
             texVtable = *(void ***)rawTexture;
             ((HRESULT(D3DVTCC *)(void *, UINT, void *, void *, DWORD))(texVtable[0x4C / 4]))(
+#if defined(COD2_X64)
+                rawTexture, 0, &lockedRect, NULL, 0x2000);
+#else
                 rawTexture, 0, lockedRect, NULL, 0x2000);
+#endif
         } while (*(volatile int *)&alwaysfails);
 
+#if defined(COD2_X64)
+        dest = (byte *)lockedRect.pBits;
+        pitch = lockedRect.Pitch;
+#else
         dest = (byte *)(size_t)lockedRect[1];
         pitch = lockedRect[0];
+#endif
 
         if (rows > 0) {
             rowBytes = cols * 4;
@@ -1053,6 +1066,18 @@ static void RB_DrawSunCmd(GfxRenderCommandExecState *execState)
     execState->cmd = (const void *)(cmd + byteCount);
 }
 
+#if defined(COD2_X64)
+static byte RB_ClearColorByte(float component)
+{
+    float rounded = floorf(component * 255.0f + 0.5f);
+    int value = rounded >= -2147483648.0f && rounded < 2147483648.0f
+                    ? (int)rounded : (-2147483647 - 1);
+    if ((int)((unsigned int)value - 255u) >= 0)
+        return 255;
+    return value > 0 ? (byte)value : 0;
+}
+#endif
+
 void RB_ClearScreen(int whichToClear, const vec_t *color, float depth, int stencil)
 {
     DxState *dxs = &dxState;
@@ -1077,10 +1102,17 @@ void RB_ClearScreen(int whichToClear, const vec_t *color, float depth, int stenc
     RB_SetViewport( (const GfxViewport *)(viewport));
     backEnd.viewportIsDirty = 1;
 
+#if defined(COD2_X64)
+    r = RB_ClearColorByte(color[0]);
+    g = RB_ClearColorByte(color[1]);
+    b = RB_ClearColorByte(color[2]);
+    a = RB_ClearColorByte(color[3]);
+#else
     r = (byte)(int)floorf(color[0] * 255.0f + 0.5f);
     g = (byte)(int)floorf(color[1] * 255.0f + 0.5f);
     b = (byte)(int)floorf(color[2] * 255.0f + 0.5f);
     a = (byte)(int)floorf(color[3] * 255.0f + 0.5f);
+#endif
 
     d3dColor = ((DWORD)a << 24) | ((DWORD)r << 16) | ((DWORD)g << 8) | (DWORD)b;
 
@@ -2179,7 +2211,11 @@ static void RB_DrawTrianglesCmd(GfxRenderCommandExecState *execState)
 
     if (tess.indexCount != 0 || tess.optimizedIndexCount != 0)
         RB_EndSurface();
+#if defined(COD2_X64)
+    if (backEnd.projection2D)
+#else
     if (!backEnd.projection2D)
+#endif
         RB_Set3D();
 
     if (triMaterial != tess.material || techType != tess.techType) {
@@ -2359,7 +2395,11 @@ static void RB_DrawSpriteCmd(GfxRenderCommandExecState *execState)
 
     cmd = (byte *)execState->cmd;
 
+#if defined(COD2_X64)
+    if (backEnd.projection2D)
+#else
     if (!backEnd.projection2D)
+#endif
         RB_Set3D();
 
     spriteMaterial = (const Material *)((GfxCmdDrawSprite *)cmd)->material;
@@ -2410,7 +2450,11 @@ static inline void RB_SetLineVertex(char *tessBase, int vertIndex, int isDx7,
         char *v = tessBase + vertIndex * 36;
         ((GfxVertexDx7 *)v)->xyz[0] = px;
         ((GfxVertexDx7 *)v)->xyz[1] = py;
+#if defined(COD2_X64)
+        memcpy(&((GfxVertexDx7 *)v)->xyz[2], &zBits, sizeof(zBits));
+#else
         ((GfxVertexDx7 *)v)->xyz[2] = zBits;
+#endif
         ((GfxVertexDx7 *)v)->normal[0] = 0;
         ((GfxVertexDx7 *)v)->normal[1] = 0;
         ((GfxVertexDx7 *)v)->normal[2] = 1.0f;
@@ -2421,7 +2465,11 @@ static inline void RB_SetLineVertex(char *tessBase, int vertIndex, int isDx7,
         char *v = tessBase + vertIndex * 64;
         ((GfxVertexDx7 *)v)->xyz[0] = px;
         ((GfxVertexDx7 *)v)->xyz[1] = py;
+#if defined(COD2_X64)
+        memcpy(&((GfxVertexDx7 *)v)->xyz[2], &zBits, sizeof(zBits));
+#else
         ((GfxVertexDx7 *)v)->xyz[2] = zBits;
+#endif
         ((GfxVertexDx7 *)v)->normal[0] = 1.0f;
         ((GfxVertex *)v)->normal[0] = 0;
         ((GfxVertex *)v)->normal[1] = 0;
@@ -2557,9 +2605,15 @@ void RB_DrawTextInSpace(const char *text, FontHandle font, const vec_t *org, con
 
     RB_SetMatricesForView(backEnd.viewParms);
 
+#if defined(COD2_X64)
+    startX = (-0.5f * xPixelStep[0] + org[0]) + -0.5f * yPixelStep[0];
+    startY = (-0.5f * xPixelStep[1] + org[1]) + -0.5f * yPixelStep[1];
+    startZ = (-0.5f * xPixelStep[2] + org[2]) + -0.5f * yPixelStep[2];
+#else
     startX = org[0] - 0.5f * xPixelStep[0] - 0.5f * yPixelStep[0];
     startY = org[1] - 0.5f * xPixelStep[1] - 0.5f * yPixelStep[1];
     startZ = org[2] - 0.5f * xPixelStep[2] - 0.5f * yPixelStep[2];
+#endif
 
 #if defined(COD2_X64)
     Q_ReadToken = ri.SEH_ReadCharFromString;
@@ -2606,9 +2660,14 @@ void RB_DrawTextInSpace(const char *text, FontHandle font, const vec_t *org, con
         }
 
         vc = RB_CheckTessOverflow4(t);
+#if defined(COD2_X64)
+        RB_WriteQuadIndicesAt(t, vc, (unsigned short)tess.indexCount);
+#endif
         tess.vertexCount = vc + 4;
         tess.indexCount += 6;
+#if !defined(COD2_X64)
         RB_WriteQuadIndices(t, vc);
+#endif
 
         RB_SetVertex3DWorld(t, vc + 0, isDx7,
                             posX, posY, posZ,
@@ -3109,6 +3168,30 @@ extern void RB_ChangeIndices(int value);
 #endif
 extern void RB_ClearAllStreamSources(void);
 extern void Image_RebuildCosinePowerMap(float shift);
+#if defined(COD2_X64)
+static const Material *RB_FillTestMaterial(int macOffset)
+{
+    const r_global_permanent_t *permanent = (const r_global_permanent_t *)imp_rgp;
+    switch (macOffset) {
+    case 0x105c: return permanent->normalFillMaterial;
+    case 0x1060: return permanent->alphaBlendFillMaterial;
+    case 0x1064: return permanent->alphaTestPassFillMaterial;
+    case 0x1068: return permanent->alphaTestFailFillMaterial;
+    case 0x106c: return permanent->additiveFillMaterial;
+    case 0x1070: return permanent->depthOnlyFillMaterial;
+    case 0x1074: return permanent->stencilOneSideKeepFillMaterial;
+    case 0x1078: return permanent->stencilOneSideRejectFillMaterial;
+    case 0x107c: return permanent->stencilTwoSideKeepFillMaterial;
+    case 0x1080: return permanent->stencilTwoSideRejectFillMaterial;
+    case 0x1084: return permanent->phongBumpFillMaterial;
+    case 0x1088: return permanent->phongBumpSpecFillMaterial;
+    default: return NULL;
+    }
+}
+#define RB_FILL_TEST_MATERIAL(base, offset) RB_FillTestMaterial(offset)
+#else
+#define RB_FILL_TEST_MATERIAL(base, offset) *(const Material **)(base + offset)
+#endif
 void RB_ExecuteRenderCommands(const void *data)
 {
     char *dx;
@@ -3297,6 +3380,18 @@ post_render:
         }
     }
 
+#if defined(COD2_X64)
+    if (RB_DVAR(imp_r_skipBackEnd)->current.enabled) {
+        if (backEnd.viewportIsDirty)
+            RB_UpdateViewport();
+        do {
+            dx = (char *)dx_g;
+            void *device = ((DxGlobals *)dx)->device;
+            void **vtable = *(void ***)device;
+            ((HRESULT(D3DVTCC *)(void *, DWORD, void *, DWORD, DWORD, float, DWORD))(vtable[0xac / 4]))(device, 0, NULL, 1, 0x00000000u, 0.0f, 0);
+        } while (*(volatile int *)&alwaysfails);
+    }
+#else
     if (backEnd.viewportIsDirty) {
         RB_UpdateViewport();
     }
@@ -3311,6 +3406,8 @@ post_render:
             void **vtable = *(void ***)device;
             ((HRESULT(D3DVTCC *)(void *, DWORD, void *, DWORD, DWORD, float, DWORD))(vtable[0xac / 4]))(device, 0, NULL, 1, 0x00000000u, 0.0f, 0);
         } while (*(volatile int *)&alwaysfails);
+
+#endif
 
     {
         if (dxState.indexBuffer)
@@ -3345,7 +3442,7 @@ post_render:
                 ri_printf(0, "-----------------------------------------------\n");
 
 #define FILL_TEST_2D(mat_off, fmt)                                                                                         \
-    result = RB_BenchmarkRepeatedCalls_impl(*(const Material **)(rgp + mat_off), testFillCount, screenW, screenH) / 60.0f; \
+    result = RB_BenchmarkRepeatedCalls_impl(RB_FILL_TEST_MATERIAL(rgp, mat_off), testFillCount, screenW, screenH) / 60.0f; \
     ri_printf(0, fmt, (double)result)
                 FILL_TEST_2D(0x105c, "normal fill                 %4.1f overdraw @ 60Hz\n");
                 FILL_TEST_2D(0x1060, "alpha blend fill            %4.1f overdraw @ 60Hz\n");
@@ -3359,7 +3456,7 @@ post_render:
 
                 if (((DxGlobals *)dx)->stencilTwoSided) {
 #define FILL_TEST_2D_S(mat_off, fmt)                                                                                       \
-    result = RB_BenchmarkRepeatedCalls_impl(*(const Material **)(rgp + mat_off), testFillCount, screenW, screenH) / 60.0f; \
+    result = RB_BenchmarkRepeatedCalls_impl(RB_FILL_TEST_MATERIAL(rgp, mat_off), testFillCount, screenW, screenH) / 60.0f; \
     ri_printf(0, fmt, (double)result)
                     FILL_TEST_2D_S(0x107c, "2-sided stencil keep fill   %4.1f overdraw @ 60Hz\n");
                     FILL_TEST_2D_S(0x1080, "2-sided stencil reject fill %4.1f overdraw @ 60Hz\n");
@@ -3367,7 +3464,7 @@ post_render:
                 }
 
 #define FILL_TEST_3D(mat_off, tech, fmt)                                        \
-    result = RB_TestFillPass3D_impl(*(const Material **)(rgp + mat_off), (MaterialTechniqueType)(tech)); \
+    result = RB_TestFillPass3D_impl(RB_FILL_TEST_MATERIAL(rgp, mat_off), (MaterialTechniqueType)(tech)); \
     ri_printf(0, fmt, (double)result)
                 FILL_TEST_3D(0x1084, 0x12, "phong point bump fill       %4.1f overdraw @ 60Hz\n");
                 FILL_TEST_3D(0x1088, 0x12, "phong point bump+spec fill  %4.1f overdraw @ 60Hz\n");
@@ -3465,6 +3562,8 @@ post_render:
 done:
     return;
 }
+
+#undef RB_FILL_TEST_MATERIAL
 
 void RB_DrawFullScreenColoredQuad(const Material *material, float s0, float t0, float s1, float t1, D3DCOLOR color)
 {
@@ -3659,6 +3758,9 @@ static void RB_BACKEND_REGPARM3_SSE_ABI RB_DrawTextWithCursor_impl(const char *t
     xPos = x;
     xAdj = 0.0f;
     count = 0;
+#if defined(COD2_X64)
+    cursor = (unsigned char)cursor;
+#endif
 
     if (traceText) {
 #if defined(COD2_X64)
@@ -4230,7 +4332,11 @@ static void RB_StretchPicRotateCmd(GfxRenderCommandExecState *execState)
     halfH = ((GfxCmdStretchPicRotate *)cmd)->h * 0.5f;
     midX = ((GfxCmdStretchPicRotate *)cmd)->x + halfW;
     midY = ((GfxCmdStretchPicRotate *)cmd)->y + halfH;
+#if defined(COD2_X64)
+    radians = (float)((double)((GfxCmdStretchPicRotate *)cmd)->rotation * (3.14159265358979323846 / 180.0));
+#else
     radians = ((GfxCmdStretchPicRotate *)cmd)->rotation * (float)(3.14159265358979323846 / 180.0);
+#endif
     sinR = sinf(radians);
     cosR = cosf(radians);
 
@@ -4466,12 +4572,21 @@ void RB_DrawLines3D(int count, int width, const GfxPointVertex *verts, int depth
                 ((GfxVertexDx7 *)vp_)->normal[0] = posA_w;
                 ((GfxVertexDx7 *)vp_)->normal[1] = 0;
                 ((GfxVertexDx7 *)vp_)->normal[2] = 0;
+#if defined(COD2_X64)
+                ((GfxVertex *)vp_)->normal[2] = 1.0f;
+                ((GfxVertex *)vp_)->color.packed = colA;
+#else
                 ((GfxVertexDx7 *)vp_)->color.packed = 1.0f;
                 ((GfxVertexDx7 *)vp_)->texCoord[0] = colA;
+#endif
                 ((GfxVertex *)vp_)->texCoord[0] = 0;
                 ((GfxVertex *)vp_)->texCoord[1] = 0;
                 ((GfxVertex *)vp_)->binormal[0] = 0;
+#if defined(COD2_X64)
+                ((GfxVertex *)vp_)->binormal[1] = 1.0f;
+#else
                 ((GfxVertex *)vp_)->binormal[1] = 0.0f;
+#endif
                 ((GfxVertex *)vp_)->binormal[2] = 0;
                 ((GfxVertex *)vp_)->tangent[0] = 1.0f;
                 ((GfxVertex *)vp_)->tangent[1] = 0;
@@ -4506,7 +4621,11 @@ void RB_DrawLines3D(int count, int width, const GfxPointVertex *verts, int depth
                 ((GfxVertex *)vp_)->color.packed = colB;
                 ((GfxVertex *)vp_)->texCoord[0] = 1.0f;
                 ((GfxVertex *)vp_)->texCoord[1] = 1.0f;
+#if defined(COD2_X64)
+                ((GfxVertex *)vp_)->binormal[0] = 0.0f;
+#else
                 ((GfxVertex *)vp_)->binormal[0] = 1.0f;
+#endif
                 ((GfxVertex *)vp_)->binormal[1] = 1.0f;
                 ((GfxVertex *)vp_)->binormal[2] = 0;
                 ((GfxVertex *)vp_)->tangent[0] = 1.0f;
@@ -4524,8 +4643,16 @@ void RB_DrawLines3D(int count, int width, const GfxPointVertex *verts, int depth
                 ((GfxVertex *)vp_)->color.packed = colA;
                 ((GfxVertex *)vp_)->texCoord[0] = 1.0f;
                 ((GfxVertex *)vp_)->texCoord[1] = 0;
+#if defined(COD2_X64)
+                ((GfxVertex *)vp_)->binormal[0] = 0.0f;
+#else
                 ((GfxVertex *)vp_)->binormal[0] = 1.0f;
+#endif
+#if defined(COD2_X64)
+                ((GfxVertex *)vp_)->binormal[1] = 1.0f;
+#else
                 ((GfxVertex *)vp_)->binormal[1] = 0;
+#endif
                 ((GfxVertex *)vp_)->binormal[2] = 0;
                 ((GfxVertex *)vp_)->tangent[0] = 1.0f;
                 ((GfxVertex *)vp_)->tangent[1] = 0;
@@ -4586,7 +4713,11 @@ static inline void RB_SetClipSpaceVertex(char *tessBase, int vertIndex, int isDx
         ((GfxVertexDx7 *)v)->normal[0] = pw;
         ((GfxVertexDx7 *)v)->normal[1] = 0;
         ((GfxVertexDx7 *)v)->normal[2] = 0;
+#if defined(COD2_X64)
+        ((GfxVertex *)v)->normal[2] = 1.0f;
+#else
         ((GfxVertexDx7 *)v)->color.packed = 1.0f;
+#endif
         ((GfxVertex *)v)->color.packed = color;
         ((GfxVertex *)v)->texCoord[0] = 0;
         ((GfxVertex *)v)->texCoord[1] = 0;
@@ -4661,7 +4792,11 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
 {
     char *t = (char *)&tess;
     const byte *cmd = (const byte *)execState->cmd;
+#if defined(COD2_X64)
+    const Material *debugMtl = backEnd.projection2D ? rgp.whiteMaterial : rgp.pointMaterial;
+#else
     const Material *debugMtl = rgp.whiteMaterial;
+#endif
     short pointCount = *(short *)(cmd + 4);
     float size = (float)(short)*(short *)(cmd + 6) * 0.5f;
     const byte *verts = cmd + 8;
@@ -4676,7 +4811,11 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
 
     isDx7 = r_rendererInUse->current.integer == 2;
 
+#if defined(COD2_X64)
+    if (!backEnd.projection2D) {
+#else
     if (backEnd.projection2D) {
+#endif
 
         float identity[16];
         float invWidth, invHeight;
@@ -4779,7 +4918,11 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
                 ((GfxVertex *)v)->texCoord[0] = 0;
                 ((GfxVertex *)v)->texCoord[1] = 0;
                 ((GfxVertex *)v)->binormal[0] = 0;
+#if defined(COD2_X64)
+                ((GfxVertex *)v)->binormal[1] = 1.0f;
+#else
                 ((GfxVertex *)v)->binormal[1] = 0.0f;
+#endif
                 ((GfxVertex *)v)->binormal[2] = 0;
                 ((GfxVertex *)v)->tangent[0] = 1.0f;
                 ((GfxVertex *)v)->tangent[1] = 0;
@@ -4812,7 +4955,11 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
                 ((GfxVertex *)v)->color.packed = color;
                 ((GfxVertex *)v)->texCoord[0] = 1.0f;
                 ((GfxVertex *)v)->texCoord[1] = 1.0f;
+#if defined(COD2_X64)
+                ((GfxVertex *)v)->binormal[0] = 0.0f;
+#else
                 ((GfxVertex *)v)->binormal[0] = 1.0f;
+#endif
                 ((GfxVertex *)v)->binormal[1] = 1.0f;
                 ((GfxVertex *)v)->binormal[2] = 0;
                 ((GfxVertex *)v)->tangent[0] = 1.0f;
@@ -4829,8 +4976,16 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
                 ((GfxVertex *)v)->color.packed = color;
                 ((GfxVertex *)v)->texCoord[0] = 1.0f;
                 ((GfxVertex *)v)->texCoord[1] = 0;
+#if defined(COD2_X64)
+                ((GfxVertex *)v)->binormal[0] = 0.0f;
+#else
                 ((GfxVertex *)v)->binormal[0] = 1.0f;
+#endif
+#if defined(COD2_X64)
+                ((GfxVertex *)v)->binormal[1] = 1.0f;
+#else
                 ((GfxVertex *)v)->binormal[1] = 0;
+#endif
                 ((GfxVertex *)v)->binormal[2] = 0;
                 ((GfxVertex *)v)->tangent[0] = 1.0f;
                 ((GfxVertex *)v)->tangent[1] = 0;
@@ -4868,7 +5023,11 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
                 v = t + (vc + 0) * 36;
                 ((GfxVertexDx7 *)v)->xyz[0] = px - size;
                 ((GfxVertexDx7 *)v)->xyz[1] = py - size;
+#if defined(COD2_X64)
+                memcpy(&((GfxVertexDx7 *)v)->xyz[2], &pz_i, sizeof(pz_i));
+#else
                 ((GfxVertexDx7 *)v)->xyz[2] = pz_i;
+#endif
                 ((GfxVertexDx7 *)v)->normal[0] = 0;
                 ((GfxVertexDx7 *)v)->normal[1] = 0;
                 ((GfxVertexDx7 *)v)->normal[2] = 1.0f;
@@ -4878,7 +5037,11 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
                 v = t + (vc + 1) * 36;
                 ((GfxVertexDx7 *)v)->xyz[0] = px - size;
                 ((GfxVertexDx7 *)v)->xyz[1] = py + size;
+#if defined(COD2_X64)
+                memcpy(&((GfxVertexDx7 *)v)->xyz[2], &pz_i, sizeof(pz_i));
+#else
                 ((GfxVertexDx7 *)v)->xyz[2] = pz_i;
+#endif
                 ((GfxVertexDx7 *)v)->normal[0] = 0;
                 ((GfxVertexDx7 *)v)->normal[1] = 0;
                 ((GfxVertexDx7 *)v)->normal[2] = 1.0f;
@@ -4888,7 +5051,11 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
                 v = t + (vc + 2) * 36;
                 ((GfxVertexDx7 *)v)->xyz[0] = px + size;
                 ((GfxVertexDx7 *)v)->xyz[1] = py + size;
+#if defined(COD2_X64)
+                memcpy(&((GfxVertexDx7 *)v)->xyz[2], &pz_i, sizeof(pz_i));
+#else
                 ((GfxVertexDx7 *)v)->xyz[2] = pz_i;
+#endif
                 ((GfxVertexDx7 *)v)->normal[0] = 0;
                 ((GfxVertexDx7 *)v)->normal[1] = 0;
                 ((GfxVertexDx7 *)v)->normal[2] = 1.0f;
@@ -4898,7 +5065,11 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
                 v = t + (vc + 3) * 36;
                 ((GfxVertexDx7 *)v)->xyz[0] = px + size;
                 ((GfxVertexDx7 *)v)->xyz[1] = py - size;
+#if defined(COD2_X64)
+                memcpy(&((GfxVertexDx7 *)v)->xyz[2], &pz_i, sizeof(pz_i));
+#else
                 ((GfxVertexDx7 *)v)->xyz[2] = pz_i;
+#endif
                 ((GfxVertexDx7 *)v)->normal[0] = 0;
                 ((GfxVertexDx7 *)v)->normal[1] = 0;
                 ((GfxVertexDx7 *)v)->normal[2] = 1.0f;
@@ -4910,7 +5081,11 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
                 v = t + (vc + 0) * 64;
                 ((GfxVertex *)v)->xyzw[0] = px - size;
                 ((GfxVertex *)v)->xyzw[1] = py - size;
+#if defined(COD2_X64)
+                memcpy(&((GfxVertex *)v)->xyzw[2], &pz_i, sizeof(pz_i));
+#else
                 ((GfxVertex *)v)->xyzw[2] = pz_i;
+#endif
                 ((GfxVertex *)v)->xyzw[3] = 1.0f;
                 ((GfxVertex *)v)->normal[0] = 0;
                 ((GfxVertex *)v)->normal[1] = 0;
@@ -4919,7 +5094,11 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
                 ((GfxVertex *)v)->texCoord[0] = 0;
                 ((GfxVertex *)v)->texCoord[1] = 0;
                 ((GfxVertex *)v)->binormal[0] = 0;
+#if defined(COD2_X64)
+                ((GfxVertex *)v)->binormal[1] = 1.0f;
+#else
                 ((GfxVertex *)v)->binormal[1] = 0.0f;
+#endif
                 ((GfxVertex *)v)->binormal[2] = 0;
                 ((GfxVertex *)v)->tangent[0] = 1.0f;
                 ((GfxVertex *)v)->tangent[1] = 0;
@@ -4927,7 +5106,11 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
                 v = t + (vc + 1) * 64;
                 ((GfxVertex *)v)->xyzw[0] = px - size;
                 ((GfxVertex *)v)->xyzw[1] = py + size;
+#if defined(COD2_X64)
+                memcpy(&((GfxVertex *)v)->xyzw[2], &pz_i, sizeof(pz_i));
+#else
                 ((GfxVertex *)v)->xyzw[2] = pz_i;
+#endif
                 ((GfxVertex *)v)->xyzw[3] = 1.0f;
                 ((GfxVertex *)v)->normal[0] = 0;
                 ((GfxVertex *)v)->normal[1] = 0;
@@ -4944,7 +5127,11 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
                 v = t + (vc + 2) * 64;
                 ((GfxVertex *)v)->xyzw[0] = px + size;
                 ((GfxVertex *)v)->xyzw[1] = py + size;
+#if defined(COD2_X64)
+                memcpy(&((GfxVertex *)v)->xyzw[2], &pz_i, sizeof(pz_i));
+#else
                 ((GfxVertex *)v)->xyzw[2] = pz_i;
+#endif
                 ((GfxVertex *)v)->xyzw[3] = 1.0f;
                 ((GfxVertex *)v)->normal[0] = 0;
                 ((GfxVertex *)v)->normal[1] = 0;
@@ -4952,7 +5139,11 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
                 ((GfxVertex *)v)->color.packed = color;
                 ((GfxVertex *)v)->texCoord[0] = 1.0f;
                 ((GfxVertex *)v)->texCoord[1] = 1.0f;
+#if defined(COD2_X64)
+                ((GfxVertex *)v)->binormal[0] = 0.0f;
+#else
                 ((GfxVertex *)v)->binormal[0] = 1.0f;
+#endif
                 ((GfxVertex *)v)->binormal[1] = 1.0f;
                 ((GfxVertex *)v)->binormal[2] = 0;
                 ((GfxVertex *)v)->tangent[0] = 1.0f;
@@ -4961,7 +5152,11 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
                 v = t + (vc + 3) * 64;
                 ((GfxVertex *)v)->xyzw[0] = px + size;
                 ((GfxVertex *)v)->xyzw[1] = py - size;
+#if defined(COD2_X64)
+                memcpy(&((GfxVertex *)v)->xyzw[2], &pz_i, sizeof(pz_i));
+#else
                 ((GfxVertex *)v)->xyzw[2] = pz_i;
+#endif
                 ((GfxVertex *)v)->xyzw[3] = 1.0f;
                 ((GfxVertex *)v)->normal[0] = 0;
                 ((GfxVertex *)v)->normal[1] = 0;
@@ -4969,8 +5164,16 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
                 ((GfxVertex *)v)->color.packed = color;
                 ((GfxVertex *)v)->texCoord[0] = 1.0f;
                 ((GfxVertex *)v)->texCoord[1] = 0;
+#if defined(COD2_X64)
+                ((GfxVertex *)v)->binormal[0] = 0.0f;
+#else
                 ((GfxVertex *)v)->binormal[0] = 1.0f;
+#endif
+#if defined(COD2_X64)
+                ((GfxVertex *)v)->binormal[1] = 1.0f;
+#else
                 ((GfxVertex *)v)->binormal[1] = 0;
+#endif
                 ((GfxVertex *)v)->binormal[2] = 0;
                 ((GfxVertex *)v)->tangent[0] = 1.0f;
                 ((GfxVertex *)v)->tangent[1] = 0;
@@ -4979,7 +5182,9 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
             tess.vertexCount += 4;
         }
 
+#if !defined(COD2_X64)
         RB_EndSurface();
+#endif
     }
 
     {

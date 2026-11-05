@@ -35,6 +35,13 @@ static GfxColor bm_color_from_bits(unsigned int bits)
     return color;
 }
 
+static int RB_SunTruncateToInt(float value)
+{
+    /* Preserve CVTTSS2SI's invalid result without an undefined C conversion. */
+    return value >= -2147483648.0f && value < 2147483648.0f
+               ? (int)value : (-2147483647 - 1);
+}
+
 int RB_CalcSunSpriteSamples(void)
 {
     IDirect3DQuery9 *query = sunFlareArray[0].sunQuery[0];
@@ -185,7 +192,7 @@ static void RB_BeginSunSurface(const Material *material, MaterialTechniqueType t
 
 static float RB_SunEffectFraction(float dot, float minDot, float maxDot)
 {
-    if (dot <= minDot)
+    if (!(dot > minDot))
         return 0.0f;
     return dot < maxDot ? (dot - minDot) / (maxDot - minDot) : 1.0f;
 }
@@ -200,8 +207,10 @@ void RB_DrawSunPostEffects(int viewIndex)
     if (!(*(dvar_t **)imp_r_drawSun)->current.enabled || !rgp.world->sun.hasValidData)
         return;
     const sunflare_t *sun = &rgp.world->sun;
-    if (sun->flareMaterial && sun->flareMinDot < state->lastDot) {
-        float fraction = RB_SunEffectFraction(state->lastDot, sun->flareMinDot, sun->flareMaxDot);
+    if (sun->flareMaterial && !(sun->flareMinDot >= state->lastDot)) {
+        float fraction = !(state->lastDot >= sun->flareMaxDot)
+                             ? (state->lastDot - sun->flareMinDot) / (sun->flareMaxDot - sun->flareMinDot)
+                             : 1.0f;
         float alpha = fraction * sun->flareMaxAlpha;
         float size = fraction * sun->flareMaxSize + sun->flareMinSize;
         state->flareIntensity = FadeToGoal(state->lastVisibility, state->flareIntensity, sun->flareFadeInTime, sun->flareFadeOutTime, frameTime);
@@ -211,7 +220,7 @@ void RB_DrawSunPostEffects(int viewIndex)
             RB_EndSurface();
         RB_BeginSunSurface(sun->flareMaterial, (MaterialTechniqueType)3);
         RB_PushMatrixStack();
-        unsigned int intensity = (unsigned char)(int)floorf(alpha * 255.0f + 0.5f);
+        unsigned int intensity = (unsigned char)RB_SunTruncateToInt(floorf(alpha * 255.0f + 0.5f));
         RB_TessSunBillboard(size / 640.0f, size / 480.0f, bm_color_from_bits(255 | intensity << 8 | intensity << 16 | intensity << 24));
         RB_EndSurface();
         RB_PopMatrixStack();
@@ -229,8 +238,8 @@ void RB_DrawSunPostEffects(int viewIndex)
         state->currentGlare = FadeToGoal(goal, state->currentGlare, sun->glareFadeInTime, sun->glareFadeOutTime, frameTime);
         glare = state->currentGlare * sun->glareMaxLighten * 255.0f;
     }
-    unsigned int dark = (unsigned char)(int)blind;
-    unsigned int light = (unsigned char)(int)glare;
+    unsigned int dark = (unsigned char)RB_SunTruncateToInt(blind);
+    unsigned int light = (unsigned char)RB_SunTruncateToInt(glare);
     RB_DrawFullScreenColoredQuad(rgp.glareBlindMaterial, 0.0f, 0.0f, 1.0f, 1.0f, dark | light << 8 | light << 16 | light << 24);
     RB_EndSurface();
 }
@@ -251,12 +260,12 @@ void RB_DrawSun(int viewIndex)
         const D3DMATRIX *matrix = &backend->viewParms->viewProjectionMatrix;
         float w = DotColumn(direction, matrix, 3);
         float visibility = 0.0f;
-        if (w > 0.0f) {
+        if (!(w <= 0.0f)) {
             const vidConfig_t *video = (vidConfig_t *)imp_vidConfig;
             float x = (DotColumn(direction, matrix, 0) / w + 1.0f) * (float)video->width;
             float y = (DotColumn(direction, matrix, 1) / w + 1.0f) * (float)video->height;
-            int left = (int)floorf((x - 16.0f) * 0.5f + 0.5f);
-            int top = (int)floorf((y - 16.0f) * 0.5f + 0.5f);
+            int left = RB_SunTruncateToInt(floorf((x - 16.0f) * 0.5f + 0.5f));
+            int top = RB_SunTruncateToInt(floorf((y - 16.0f) * 0.5f + 0.5f));
             int right = left + 16, bottom = top + 16;
             if (left < 0)
                 left = 0;

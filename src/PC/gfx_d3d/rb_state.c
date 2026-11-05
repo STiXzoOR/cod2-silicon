@@ -1117,9 +1117,18 @@ void RB_ChangeState_0(int stateBits0)
     }
 
     if (stateBits0 & RB_STATE0_ALPHA_TEST_DISABLE) {
+#if defined(COD2_X64)
+        /* Mac 0xcf176 preserves requested bits as well as cached bits. */
+        stateBits0 |= dxState.activeStateBits[0] & RB_STATE0_ALPHA_TEST_FUNC_MASK;
+#else
         stateBits0 = (stateBits0 & ~RB_STATE0_ALPHA_TEST_FUNC_MASK) | (dxState.activeStateBits[0] & RB_STATE0_ALPHA_TEST_FUNC_MASK);
+#endif
         changedBits &= ~RB_STATE0_ALPHA_TEST_FUNC_MASK;
+#if defined(COD2_X64)
+    } else if (changedBits & RB_STATE0_ALPHA_TEST_FUNC_MASK) {
+#else
     } else {
+#endif
         DWORD alphaFunc;
         byte alphaRef;
 
@@ -1141,8 +1150,15 @@ void RB_ChangeState_0(int stateBits0)
         if (changedBits & RB_STATE0_ALPHA_TEST_FUNC_MASK)
             RB_SetRenderStateDx7(D3DRS_ALPHAFUNC, alphaFunc);
 
+#if defined(COD2_X64)
+        if (dxState.alphaRef != alphaRef) {
+            RB_SetRenderStateDx7(D3DRS_ALPHAREF, alphaRef);
+            dxState.alphaRef = alphaRef;
+        }
+#else
         dxState.alphaRef = alphaRef;
         RB_SetRenderStateDx7(D3DRS_ALPHAREF, alphaRef);
+#endif
     }
 
     if (changedBits & (RB_STATE0_COLOR_WRITE_RGB | RB_STATE0_COLOR_WRITE_ALPHA)) {
@@ -1404,10 +1420,20 @@ void RB_SetWorldMatrixForEntity(const GfxEntity *re)
     RB_FinalizeWorldMatrixChange(activeMatrices, re->scale);
 }
 
+#if defined(COD2_X64)
+/* Mac target 12 reads the adjacent zero at 0x32ab50. Give that value owned
+   storage instead of indexing beyond the twelve-entry native array. */
+const GfxViewportBehavior s_viewportBehaviorForRenderTarget[13] = {
+    (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)0,
+    (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1,
+    (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1,
+    (GfxViewportBehavior)0 };
+#else
 const GfxViewportBehavior s_viewportBehaviorForRenderTarget[12] = {
     (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)0,
     (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1,
     (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1 };
+#endif
 
 const byte s_filterTable[16] = { 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0 };
 
