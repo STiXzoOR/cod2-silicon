@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 319,
+      "unchecked": 318,
       "intentional": 3179,
-      "equal": 4761,
+      "equal": 4762,
       "fixed": 1198
     },
     "scopes": {
@@ -62574,7 +62574,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804f580 maps to original 1.3 0x804f770; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:531:PC_AddBuiltinDefines",
@@ -62593,7 +62593,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804b1dc maps to original 1.3 0x804b3cc; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:1178:PC_AddDefine",
@@ -62612,7 +62612,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804c7da maps to original 1.3 0x804c9ca; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:438:PC_AddDefineToHash",
@@ -62650,7 +62650,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804c822 maps to original 1.3 0x804ca12; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:1289:PC_AddGlobalDefinesToSource",
@@ -62688,7 +62688,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804faec maps to original 1.3 0x804fcdc; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2554:PC_CheckTokenString",
@@ -62726,7 +62726,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804f2ee maps to original 1.3 0x804f4de; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:940:PC_ClearTokenWhiteSpace",
@@ -62833,7 +62833,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804c640 maps to original 1.3 0x804c830; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "mac:0x000c0772",
@@ -63553,7 +63553,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804f230 maps to original 1.3 0x804f420; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2460:PC_ExpectTokenString",
@@ -63572,7 +63572,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804eeac maps to original 1.3 0x804f09c; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2483:PC_ExpectTokenType",
@@ -63591,7 +63591,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804ef50 maps to original 1.3 0x804f140; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:470:PC_FindDefine",
@@ -63610,7 +63610,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804b0c0 maps to original 1.3 0x804b2b0; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:487:PC_FindDefineParm",
@@ -64141,7 +64141,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804c8aa maps to original 1.3 0x804ca9a; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:1211:PC_RemoveGlobalDefine",
@@ -64160,7 +64160,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804c866 maps to original 1.3 0x804ca56; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2629:PC_SetIncludePath",
@@ -64179,7 +64179,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804f416 maps to original 1.3 0x804f606; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2645:PC_SetPunctuations",
@@ -64198,7 +64198,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804f486 maps to original 1.3 0x804f676; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:2593:PC_SkipUntilString",
@@ -64217,7 +64217,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804f380 maps to original 1.3 0x804f570; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "mac:0x000bdb4c",
@@ -64298,7 +64298,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Linux-only ledger identity with no native body/call site found and no standalone Mac text symbol in nm/fidelity_view. No verified Mac caller range establishes this API; Linux source was not used as behavioral authority. Absent API is not asserted equal or reconstructed from an unverified Linux body. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804f3dc maps to original 1.3 0x804f5cc; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_precomp.cpp:254:PC_UnreadSourceToken",
@@ -64519,7 +64519,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable caller identity for the getter or separate native body was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable caller identity for the getter or separate native body was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x80518b6 maps to original 1.3 0x8051ab6; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "mac:0x000c2d60",
@@ -64569,7 +64569,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline memory-loading caller was established; native has only LoadScriptFile. Do not invent a loader from Linux. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline memory-loading caller was established; native has only LoadScriptFile. Do not invent a loader from Linux. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x8051b20 maps to original 1.3 0x8051d20; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_script.cpp:1179:NumLinesCrossed",
@@ -64638,7 +64638,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x80514cc maps to original 1.3 0x80516cc; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_script.cpp:967:PS_CheckTokenType",
@@ -64657,7 +64657,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x805153e maps to original 1.3 0x805173e; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "mac:0x000c247c",
@@ -64707,7 +64707,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x8051488 maps to original 1.3 0x8051688; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_script.cpp:851:PS_ExpectTokenString",
@@ -64726,7 +64726,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x80510ba maps to original 1.3 0x80512ba; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_script.cpp:874:PS_ExpectTokenType",
@@ -64745,7 +64745,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x805115e maps to original 1.3 0x805135e; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_script.cpp:1027:PS_NextWhiteSpaceChar",
@@ -64764,7 +64764,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable caller identity or separate native whitespace-iterator body was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable caller identity or separate native whitespace-iterator body was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x8051662 maps to original 1.3 0x8051862; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "mac:0x000c2660",
@@ -64814,7 +64814,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No executable Mac identity for Linux's single-character literal helper was established. Mac PS_ReadToken at 0xc3418 dispatches single quotes to PS_ReadString, which has different multi-character semantics; that dispatch is matched, but does not prove this helper. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No executable Mac identity for Linux's single-character literal helper was established. Mac PS_ReadToken at 0xc3418 dispatches single quotes to PS_ReadString, which has different multi-character semantics; that dispatch is matched, but does not prove this helper. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x8050b78 maps to original 1.3 0x8050d78; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_script.cpp:465:PS_ReadName",
@@ -65002,7 +65002,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete matching inline caller was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x80515c6 maps to original 1.3 0x80517c6; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_script.cpp:1005:PS_UnreadLastToken",
@@ -65021,7 +65021,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline unread-last-token caller or separate native wrapper was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline unread-last-token caller or separate native wrapper was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x8051622 maps to original 1.3 0x8051822; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_script.cpp:1015:PS_UnreadToken",
@@ -65040,7 +65040,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline script-token copy/unread caller or separate native wrapper was established; precompiler source-token queues are a different object. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline script-token copy/unread caller or separate native wrapper was established; precompiler source-token queues are a different object. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x8051632 maps to original 1.3 0x8051832; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_script.cpp:166:PunctuationFromNum",
@@ -65059,7 +65059,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable punctuation-number lookup caller or separate native implementation was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable punctuation-number lookup caller or separate native implementation was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x804fcaa maps to original 1.3 0x804fe9a; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_script.cpp:1078:ReadSignedFloat",
@@ -65078,7 +65078,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline signed-float reader was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline signed-float reader was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x8051728 maps to original 1.3 0x8051928; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_script.cpp:1101:ReadSignedInt",
@@ -65097,7 +65097,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline signed-int reader was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. No named executable Mac body or complete inline signed-int reader was established; no separate native implementation exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x80517fa maps to original 1.3 0x80519fa; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_script.cpp:1144:ResetScript",
@@ -65116,7 +65116,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. LoadScriptFile initializes a fresh object but does not establish the complete reset of an existing token/cursor/whitespace state; no separate native body exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. LoadScriptFile initializes a fresh object but does not establish the complete reset of an existing token/cursor/whitespace state; no separate native body exists. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x80518c2 maps to original 1.3 0x8051ac2; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "mac:0x000c259e",
@@ -65166,7 +65166,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline skip-to-substring caller or separate native implementation was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline skip-to-substring caller or separate native implementation was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x805195e maps to original 1.3 0x8051b5e; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "mac:0x000c25fe",
@@ -65216,7 +65216,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline setter caller or separate native implementation was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No complete executable inline setter caller or separate native implementation was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x80518a8 maps to original 1.3 0x8051aa8; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       },
       {
         "id": "linux:botlib/l_script.cpp:218:SetScriptPunctuations",
@@ -65234,8 +65234,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac LoadScriptFile at 0xc2e0b-0xc2e1b establishes only the default-table setup. No executable identity for the full custom/default parameterized setter or separate native body was established. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "status": "equal",
+        "evidence": "Complete consumed NULL/default-table operation in the positively identified LoadScriptFile owner: original 1.0 SetScriptPunctuations 0x804fdfa maps to original 1.3 0x804fffa; actual loader 0x8051bd8 passes NULL at 0x8051cc3 and calls the setter at 0x8051cd1. The full default branch calls PS_CreatePunctuationTable(script, default_punctuations), then stores that same punctuation pointer. Exact Mac LoadScriptFile 0xc2e0b\u20130xc2e22 performs both operations in the same initialized-script position; original SLINE 263/264 attributes the inline setup. Complete Mac table provider 0xc247c and native l_script.c typed provider plus loader call/store match this operation. This certifies only the consumed fresh-script NULL/default use, not arbitrary custom tables, a reusable setter, LoadScriptMemory or an exported native API. No source change; independently reviewed in review-provenance-botlib8-punctuation.md. Static source/binary review only; no compilation, tests, CI, replays or runtime verification."
       },
       {
         "id": "mac:0x000c2ce0",
@@ -65285,7 +65285,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No executable single-quote-strip caller or separate native implementation was established; StripDoubleQuotes does not prove it. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity."
+        "evidence": "Read assigned Linux-only row and checked Mac symbol inventory. Mac has only an absolute-zero .eh name. No executable single-quote-strip caller or separate native implementation was established; StripDoubleQuotes does not prove it. Follow-up 2026-11-05: inspected original Mac SO/SLINE/FUN and lexical-scope inventory, complete executable symbol inventory and actual native owner/call-site inventory. No complete additional inline body or explicit replacement boundary was established; related partial operations do not close this identity. Original executable provenance (botlib8): original 1.0 0x80516de maps to original 1.3 0x80518de; complete original body retained. Mapping uses original IDB names or source-order gap anchors, with 78 unique whole-body matches validating the 115-function module order without contradictions. Original addresses establish identity/intent only; complete Mac operation or replacement remains unresolved."
       }
     ],
     "cgame/cg_animtree_mp": [
