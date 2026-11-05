@@ -48,7 +48,7 @@ Mac/Main/mac_splash,4,2,0,2,0
 Mac/Main/mac_syscon,8,0,0,8,0
 Mac/Shaders/lprobe_sm_a_s_lfog,1,0,0,1,0
 Mac/Tools/CAudioRecorder,15,0,0,15,0
-Mac/Tools/CCircularBuffer,8,2,3,2,1
+Mac/Tools/CCircularBuffer,8,2,3,3,0
 Mac/Tools/MacAppleEvents,15,0,0,15,0
 Mac/Tools/MacBuilder,18,0,0,18,0
 Mac/Tools/MacDebug,1,1,0,0,0
