@@ -20988,8 +20988,8 @@
     "evidence": "Mac 0x31628: direct SE_Init delegation compared by hand."
   },
   "linux:stringed/stringed_hooks.cpp:598:SEH_IsChineseChar": {
-    "status": "unchecked",
-    "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_IsChineseChar; no equality inferred from its name or neighboring helpers."
+    "status": "fixed",
+    "evidence": "Original Linux1.3 wrapper0x81392b4-0x81392d7 explicitly extracts unsigned bytes(c>>8) and c, invokes byte-pair predicate0x8138dac, and zero-extends its boolean byte; upper16 input bits are discarded and there are no other effects. Original reader0x8138e64 dispatch links the predicates to language11/10/8; Chinese calls the packed wrapper directly at0x813900c. Mac complete corresponding byte predicate at0x31b54-0x31b70/0x31bc5 has corrected lead0x81..0xfe/trail0x41..0xfe. Existing native SEH_IsThaiDoubleByte implements the same complete two-byte classification. Original wrapper extraction proves the standalone full uint32 input reduces exactly to that pair, not an assumed extension from bounded reader values. Maps the established predicate repair; compiled/reviewed previously, not exercised. No new API export/source change; historical native helper name is not locale authority."
   },
   "linux:stringed/stringed_hooks.cpp:427:SEH_IsChineseLeadTrail": {
     "status": "fixed",
@@ -21000,8 +21000,8 @@
     "evidence": "Mac inline 0x31b83-0x31b8f: language 11 punctuation is 0x8141..0x814d; native used 0xa1a1..0xa1ad. Corrected under COD2_X64; compiled and reviewed, not exercised."
   },
   "linux:stringed/stringed_hooks.cpp:593:SEH_IsJapaneseChar": {
-    "status": "unchecked",
-    "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_IsJapaneseChar; no equality inferred from its name or neighboring helpers."
+    "status": "equal",
+    "evidence": "Original Linux1.3 wrapper0x8139290-0x81392b3 explicitly extracts unsigned bytes(c>>8) and c, invokes byte-pair predicate0x8138cb6, and zero-extends its boolean byte; upper16 input bits are discarded and there are no other effects. Original reader0x8138e64 dispatch links the predicates to language11/10/8; Chinese calls the packed wrapper directly at0x813900c. Mac complete corresponding byte predicate at0x31afb-0x31b18/0x31b99-0x31ba4 has lead0x81..0x9f or0xe0..0xef and trail0x40..0x7e or0x80..0xfc. Existing native SEH_IsChineseDoubleByte implements the same complete two-byte classification. Original wrapper extraction proves the standalone full uint32 input reduces exactly to that pair, not an assumed extension from bounded reader values. Compared complete ranges, boolean outcomes and discarded upper bits. No new API export/source change; historical native helper name is not locale authority."
   },
   "linux:stringed/stringed_hooks.cpp:395:SEH_IsJapaneseLeadTrail": {
     "status": "equal",
@@ -21012,8 +21012,8 @@
     "evidence": "Mac inline 0x31b31-0x31b3d: compared complete language 10 unsigned punctuation test 0x8140..0x8151 and output store in SEH_ReadCharFromString."
   },
   "linux:stringed/stringed_hooks.cpp:588:SEH_IsKoreanChar": {
-    "status": "unchecked",
-    "evidence": "No executable Mac symbol or complete matching native implementation/caller established for this Linux-only API. Reader byte predicates do not establish SEH_IsKoreanChar; no equality inferred from its name or neighboring helpers."
+    "status": "fixed",
+    "evidence": "Original Linux1.3 wrapper0x813926c-0x813928f explicitly extracts unsigned bytes(c>>8) and c, invokes byte-pair predicate0x813922e, and zero-extends its boolean byte; upper16 input bits are discarded and there are no other effects. Original reader0x8138e64 dispatch links the predicates to language11/10/8; Chinese calls the packed wrapper directly at0x813900c. Mac complete corresponding byte predicate at0x31a64-0x31a78/0x31ba9-0x31bc0 has corrected lead0xb0..0xc8/trail0xa1..0xfe. Existing native SEH_IsJapaneseDoubleByte implements the same complete two-byte classification. Original wrapper extraction proves the standalone full uint32 input reduces exactly to that pair, not an assumed extension from bounded reader values. Maps the established predicate repair; compiled/reviewed previously, not exercised. No new API export/source change; historical native helper name is not locale authority."
   },
   "linux:stringed/stringed_hooks.cpp:578:SEH_IsKoreanLeadTrail": {
     "status": "fixed",
