@@ -15,6 +15,7 @@ static const dvar_t *freezeWatch;
 static pthread_t mainThread, watchThread;
 static atomic_uint_fast64_t heartbeat;
 static atomic_int stopping, enabled;
+static atomic_uint userWaitDepth;
 static int watchStarted;
 static struct sigaction previousFreezeSignal;
 
@@ -32,9 +33,12 @@ static void *WatchMain(void *argument)
     while (!atomic_load_explicit(&stopping, memory_order_relaxed)) {
         struct timespec delay = { .tv_sec = 1, .tv_nsec = 0 };
         nanosleep(&delay, NULL);
+        if (atomic_load_explicit(&userWaitDepth, memory_order_acquire))
+            continue;
         uint64_t last = atomic_load_explicit(&heartbeat, memory_order_relaxed);
         uint64_t now = MacSystem_Nanoseconds();
-        if (atomic_load_explicit(&enabled, memory_order_relaxed) && now >= last &&
+        if (!atomic_load_explicit(&userWaitDepth, memory_order_acquire) &&
+            atomic_load_explicit(&enabled, memory_order_relaxed) && now >= last &&
             now - last > 12000000000ULL && last != reportedHeartbeat) {
             reportedHeartbeat = last;
             fprintf(stderr, "CoD2 Silicon: main thread has stalled for more than 12 seconds; writing a native diagnostic.\n");
@@ -75,6 +79,20 @@ void Cod2xNative_Init(void)
 void Cod2xNative_Heartbeat(void)
 {
     atomic_store_explicit(&heartbeat, MacSystem_Nanoseconds(), memory_order_relaxed);
+}
+
+/* A main-thread modal is expected to wait indefinitely for its user. */
+void Cod2xNative_BeginUserWait(void)
+{
+    atomic_fetch_add_explicit(&userWaitDepth, 1, memory_order_acq_rel);
+    Cod2xNative_Heartbeat();
+}
+
+void Cod2xNative_EndUserWait(void)
+{
+    /* Refresh before the last nested wait lets the watcher resume. */
+    Cod2xNative_Heartbeat();
+    atomic_fetch_sub_explicit(&userWaitDepth, 1, memory_order_acq_rel);
 }
 
 void Cod2xNative_Frame(void)
