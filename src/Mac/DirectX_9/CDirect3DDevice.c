@@ -430,6 +430,13 @@ typedef struct {
     DWORD colorVertex;
     float convertedView[16];
     struct DeviceStreamsNative *streamState;
+    GLenum glSrcBlend, glDestBlend, glSrcBlendAlpha, glDestBlendAlpha;
+    GLenum glStencilFunc;
+    DWORD alphaBlendValue, ditherValue;
+    DWORD ambientMaterialSource, diffuseMaterialSource;
+    unsigned char blendStateChanged;
+    GLfloat lightModelAmbient[4];
+    GLfloat slopeScaleDepthBias, scaledDepthBias;
 #endif
 } DeviceImpl;
 #if defined(COD2_X64)
@@ -3073,6 +3080,10 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitiveUP(const CDirect3DDevice *_this,
     return 0;
 }
 
+#if defined(COD2_X64)
+#include "lp64_device_render_state.inc"
+#endif
+
 static void CDirect3DDevice_ApplyDepthBias(void)
 {
     if (g_depthBias != 0.0f || g_slopeScaleDepthBias != 0.0f) {
@@ -3094,6 +3105,9 @@ HRESULT COD2_FORCE_ALIGN_ARG_POINTER CDirect3DDevice_SetRenderState(const CDirec
 #endif
 
     DeviceImpl *dev = (DeviceImpl *)_this;
+#if defined(COD2_X64)
+    return DeviceRenderState_Set(dev, State, Value);
+#else
     switch (State) {
 #if defined(COD2_X64)
     case D3DRS_DITHERENABLE:
@@ -3220,6 +3234,7 @@ HRESULT COD2_FORCE_ALIGN_ARG_POINTER CDirect3DDevice_SetRenderState(const CDirec
         break;
     }
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_GetRenderState(const CDirect3DDevice *_this, D3DRENDERSTATETYPE State, DWORD *pValue)
@@ -3271,7 +3286,11 @@ HRESULT CDirect3DDevice_GetRenderState(const CDirect3DDevice *_this, D3DRENDERST
         *pValue = dev->cullMode;
         break;
     case D3DRS_ALPHABLENDENABLE:
+#if defined(COD2_X64)
+        *pValue = dev->alphaBlendValue;
+#else
         *pValue = dev->alphaBlendEnable;
+#endif
         break;
     case D3DRS_FOGENABLE:
         *pValue = dev->fogEnable;
@@ -5804,6 +5823,7 @@ void CDirect3DDevice_Init(void *device)
     memset(dev->streamStrides, 0, sizeof(dev->streamStrides));
     dev->indexBuffer = NULL; dev->_pad0A8 = 0xffffffffu;
     dev->pixelShader = NULL; dev->bVal1 = dev->bVal3 = dev->bc8Val = 0;
+    DeviceRenderState_Init(dev);
     dev->fillMode = 3; dev->shadeMode = 2;
     dev->fogEnable = dev->stencilEnable = dev->stencilRef = 0;
     dev->stencilFunc = 8; dev->stencilMask = 0xffffffffu;
