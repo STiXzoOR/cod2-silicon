@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**45 entries: 15 equal, 7 fixed, 9 intentional, 14 unchecked.** Mac 1.3 i386 is the authority. The live scanner and parser implementation is included from `yyparse_impl.h`.
+**45 entries: 17 equal, 7 fixed, 9 intentional, 12 unchecked.** Mac 1.3 i386 is the authority. The live scanner and parser implementation is included from `yyparse_impl.h`.
 
 ## Corrections
 
@@ -79,3 +79,13 @@ Original1.0 IDB body 0x808529a also uniquely maps to original1.3 `TransferRefToP
 The retained original scanner packet now anchors all thirteen remaining scanner helpers in the ledger. Original yy_scan_string0x808b79e strictly calls strlen then yy_scan_bytes0x808b7c0; that complete provider allocates length+2, copies input, appends two NULs, invokes yy_scan_buffer0x808b6d1 and marks owned storage. The buffer scanner validates both sentinels, initializes a48-byte descriptor with borrowed storage and filling disabled, then calls yy_switch_to_buffer0x808b11d. The complete switch preserves old hold/cursor/count through its descriptor stack before installing and loading new state. The known Mac token-scanning/init path does not establish this full memory-scan/switch operation. Resolving raw yyfree earlier does not resolve delete-buffer ownership or slot clearing.
 
 Complete original accessors0x808b89d–0x808b8eb identify input/output stream, token length/text loads and argument stores. yyunput0x808ae10 includes pushback relocation/overflow handling; input0x808af78 includes refill/restart/recursive byte-return behavior. These are positive original contracts; prior Mac global-load or token-path intersections remain insufficient complete counterparts. All thirteen remain unchecked. This integrates retained worker original evidence with parent body spot-review; it does not claim a new complete Mac scan or execution. Approved persistent native descriptor and allocator ownership remain unchanged. No source change, compilation, tests, CI, replay or runtime verification.
+
+## Complete current-token reads (lexget25)
+
+`yyget_leng` and `yyget_text` are equal through complete actual current-token reads in lexer actions 90/91. Full original 1.3 getters at 0x808b8b1–0x808b8ba and 0x808b8bb–0x808b8c4 perform only the respective global read and return. The original token producer at 0x808963d/0x8089649 confirms those globals hold the token-start pointer and endpoint-minus-start integer length. This new evidence goes beyond the earlier global-reference inventory: it establishes complete actual value results and concrete consumers.
+
+Mac's actual producer writes yytext at 0x10c4ef and yyleng at 0x10c4f9, saves the hold character, terminates the token and dispatches. Independently decoded table 0x33abac maps actions 90/91 to 0x10ced8/0x10ce89. Complete integer reads at 0x10ce98/0x10cee7 feed full source-position advancement and the separate length+1 provider argument. Complete pointer reads at 0x10cebc/0x10cf0b pass yytext unchanged into `SL_GetStringOfLen` at 0x10cec4/0x10cf13. Native `int slen = yyleng` and direct yytext arguments preserve those complete results. They are not masked or Boolean-only probes, trimmed substrings, or invented pointer adapters.
+
+The mapping requires a live matched token in the existing serialized scanner, valid backing and representable length; a defined consumer also requires representable length+1 and valid provider storage. It does not claim arbitrary stale, null or oversized state is checked. The getters have no mutation or reference effect, and their mapping ends before later arithmetic/provider behavior. No exported ABI, literal inline ancestry, future-token pointer lifetime, reentrancy/concurrency, interning/error-result or whole scanner/DFA/token-code equivalence is claimed. Existing persistent descriptor, native pointer width and ownership adaptations remain unchanged. Unrelated scanner repairs do not turn these two already-correct reads into fixed verdicts.
+
+Parent independently reviewed fresh complete owners, original bodies, producer state, raw jump table and source hashes: `units/review-provenance-lexget25.md`. Private evidence is `recon-provenance-lexget25.noindex`. Two closures, no source change or new defect; no compilation, tests, CI, full build, replay or runtime verification.
