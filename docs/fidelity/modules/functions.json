@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 299,
+      "unchecked": 298,
       "intentional": 3184,
       "equal": 4769,
-      "fixed": 1205
+      "fixed": 1206
     },
     "scopes": {
       "unassigned": 777,
@@ -198043,8 +198043,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no PointInBounds public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native candidate CM_PointContents uses strict interior tests (leaf->mins>=point or point>=leaf->maxs), unlike these inclusive-boundary helper contracts. No complete inclusive two-/three-dimensional native/Mac identity was established. Original-address provenance recovered: Linux 1.0 IDB 0x80a678a maps to retained original Linux 1.3 ELF 0x80a8aee by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
+        "status": "fixed",
+        "evidence": "Complete original1.3 0x80a8aee\u20130x80a8ba4, uniquely mapped from original1.0 0x80a678a, establishes all six inclusive point/min/max comparisons and membership result. New actual Mac SV_PointContents0x1bfb3c\u20130x1bfb46 passes the SAME point pointer as both CM_AreaEntities bounds; wrapper0xaf7c4 retains both pointers in areaParms offsets4/8. CM_AreaEntities_r0xaf6d2\u20130xaf729 compares entity absmin/absmax with all three point coordinates in X-min/X-max,Y-min/Y-max,Z-min/Z-max order. Every UCOMISS/JA rejects only ordered strictly separated values; touching and unordered pairs continue. The true result reaches separate capacity handling then actual entity-list store/count0xaf763/0xaf766; false skips to next entity. Native sv_world_mp.c and cm_world.c preserve the actual adapter, fields, order and complete predicate. Fixed through existing a826bfe0 negated-greater comparison repair (legacy <= rejected unordered), inheriting existing compiled/reviewed provider evidence; no new source defect or compilation. Scope is complete consumed membership for an enumerated content-matching entity with valid float storage, not whole tree traversal, capacity/query result, subsequent collision, malformed-point enumeration, standalone ABI or FP exception/payload behavior. Distinct from previously rejected strict CM_PointContents leaf predicate. Independent review-provenance-pointbounds22.md accepted; private exact original/caller/provider packet recon-provenance-pointbounds22.noindex. No tests, CI, full build, replay or runtime performed; previously settled owners unchanged."
       },
       {
         "id": "linux:universal/com_math.cpp:2737:PointInBounds2D",
