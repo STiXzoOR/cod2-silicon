@@ -37,7 +37,7 @@ int main(void)
     strcpy((char *)table + name, "matrix");
     write_cache(root, "fixture.vc", table, sizeof(table));
     void *shader, *constants, *messages;
-    assert(!MacD3DXCompileShader("fixture.vs", "unused", 6, "vs_2_0", &shader, &messages));
+    assert(!MacD3DXCompileShader("fixture.hlsl", "unused", 6, "vs_2_0", &shader, &messages));
     assert(shader && !messages);
     const char *code = CD3DXBuffer_GetBufferPointer(shader);
     assert(strstr(code, "#COD2CTAB:fixture.vc"));
@@ -53,8 +53,8 @@ int main(void)
     write_cache(root, "fixture.vc", table, sizeof(table));
     assert(D3DXGetShaderConstantTable(code, &constants) < 0 && !constants);
     CD3DXBuffer_Release(shader);
-    assert(MacD3DXCompileShader("missing.vs", "unused", 6, "vs_2_0", &shader, &messages) < 0 && !shader);
-    assert(MacD3DXCompileShader("../fixture.vs", "unused", 6, "vs_2_0", &shader, &messages) < 0 && !shader);
+    assert(!MacD3DXCompileShader("missing.hlsl", "unused", 6, "vs_2_0", &shader, &messages) && !shader);
+    assert(!MacD3DXCompileShader("../fixture.hlsl", "unused", 6, "vs_2_0", &shader, &messages) && !shader);
     char path[1024];
     snprintf(path, sizeof(path), "%s/fixture.vsa", root); unlink(path);
     snprintf(path, sizeof(path), "%s/fixture.vc", root); unlink(path);
