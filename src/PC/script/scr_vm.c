@@ -6584,6 +6584,9 @@ static void VM_CandidatePushEntityObject(VariableValue **top, int classnum, int 
         out->type = VAR_UNDEFINED;
 #if defined(COD2_X64)
         Scr_SetErrorMessageAndJump("unknown object");
+        /* Mac 0x851c5/0x852be also increments the in-bounds slot-0 free head. */
+        out->type = VAR_POINTER;
+        AddRefToObject(out->u.pointerValue);
 #else
         Com_Error(1, "VM_Execute C candidate could not resolve entity object");
 #endif
