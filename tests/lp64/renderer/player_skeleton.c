@@ -298,7 +298,12 @@ static void TestSkinArithmetic(const char *mode)
     renderer.current.integer = dx7 ? 2 : 1;
     R_SkinXSurfaceSkinned(&skinned, bones);
     /* Single-precision results from the original scalar/SIMD operation order. */
+#if defined(COD2_X64)
+    /* Mac 0xd2324 adds translation to Z's product before the final sum. */
+    if (dx7) assert(output[0] == 0x1.448688p+3f);
+#else
     if (dx7) assert(output[0] == 0x1.448686p+3f);
+#endif
     else if (homogeneous) assert(output[3] == 0x1.fffep-1f);
     else assert(output[0] == 0x1.448688p+2f);
 }
