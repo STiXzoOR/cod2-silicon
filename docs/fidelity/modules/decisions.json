@@ -11945,7 +11945,7 @@
   },
   "linux:universal/com_math.cpp:2569:ExpandBoundsByDelta": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no ExpandBoundsByDelta public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+    "evidence": "Native body/caller gap: no ExpandBoundsByDelta public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Further candidate review: exact Mac SV_SightTraceToEntity 0x1bf986-0x1bf9d1 and 0x1bfab2-0x1bfad5 constructs fresh swept bounds from start/end, supplied extents and one-unit padding; native server_mp/sv_world_mp.c preserves that structure. It is not the in-place signed-delta addition to preexisting minima/maxima required by this helper. No complete original helper identity established."
   },
   "mac:0x0002c452": {
     "status": "fixed",
@@ -12173,7 +12173,7 @@
   },
   "linux:universal/com_math.cpp:2259:OrthographicMatrix": {
     "status": "unchecked",
-    "evidence": "Native body/caller gap: no OrthographicMatrix public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified."
+    "evidence": "Native body/caller gap: no OrthographicMatrix public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Further candidate review: native device 2D projections use top-left-origin matrices with negative Y, fixed negative Z and XY translation, not the centered width/height/depth operation. Exact Mac MacOpenGLUtils::ConvertD3DProjectionMatrixToOpenGL 0x254f6-0x2562c mutates an existing full projection, including device-dependent offsets; it does not initialize this matrix. No complete original helper identity established."
   },
   "mac:0x0002d38e": {
     "status": "equal",
