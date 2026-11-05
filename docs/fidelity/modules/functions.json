@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 4151,
-      "intentional": 1603,
-      "equal": 3121,
-      "fixed": 582
+      "unchecked": 3965,
+      "intentional": 1610,
+      "equal": 3283,
+      "fixed": 599
     },
     "scopes": {
       "unassigned": 777,
@@ -1057,8 +1057,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxBoltFrame AddRef is inlined in Mac Acquire at 0xa108b and 0xa10ec: increment refcount before returning/storing frame. Native Acquire performs the same increment."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:181:Alloc",
@@ -1077,7 +1077,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (Alloc(unsigned int), line 181): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:858:ArchiveByte",
@@ -1095,8 +1095,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "ArchiveByte is inlined in Mac Particle::Archive at 0xa8749\u20130xa8774 and 0xa8c96\u20130xa8cb2: mode test and one-byte read/write; native ArchiveByte matches."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:868:ArchiveFloat",
@@ -1114,8 +1114,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "ArchiveFloat is represented by the four-byte scalar bit transfers in Mac Light::Archive at 0xa85cd\u20130xa8610 and its write branches; native Light_Archive/ArchiveInt preserve scalar bits and stream order."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:863:ArchiveInt",
@@ -1133,8 +1133,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "ArchiveInt is inlined in Mac Effect::Archive at 0xa81de\u20130xa8280: mode test and four-byte temporary read/write; native ArchiveInt matches."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:873:ArchiveVec3",
@@ -1152,8 +1152,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "ArchiveVec3 is inlined in Mac Effect::Archive at 0xa81bd\u20130xa81d9 and 0xa837f\u20130xa83d1: one twelve-byte read or three ordered four-byte writes; native ArchiveVec3 matches."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1493:CalcGravityValue",
@@ -1171,8 +1171,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "CalcGravityValue is inlined in Mac Particle::GetTotalVelocity at 0xa3eac\u20130xa3efb: cvttss2si duration, duration*gravity*0.001 and optional world-to-local transform. Native now defines the original INT_MIN conversion for overflow/NaN; compiled and reviewed."
       },
       {
         "id": "mac:0x000a9a0e",
@@ -1193,8 +1193,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN5CloudD1Ev at 0x000a9a0e: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and complete-destructor return without object deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a9a6a",
@@ -1215,8 +1215,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN5CloudD0Ev at 0x000a9a6a: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and final object array deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a8f6a",
@@ -1246,8 +1246,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a8f6a: compared particle base, random direction, two height channels, length blend and one-byte length flag in original read/write order."
       },
       {
         "id": "mac:0x000a98e6",
@@ -1277,8 +1277,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a98e6: compared constructor particle base constructor, Cloud vtable, four trials of three ordered flrand samples, squared-length [0.01,1] acceptance, normalization and (1,0,0) fallback; native C random callbacks do not throw, so the Mac exception-unwind-only cleanup is not a native execution path. Native object/vtable pointers widen with the established layout."
       },
       {
         "id": "mac:0x000a0220",
@@ -1308,8 +1308,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a0220: compared particle channels plus template channels 8/9 into height/height-random instances."
       },
       {
         "id": "mac:0x000a0870",
@@ -1339,8 +1339,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xa08b5\u20130xa08ce selects the extent by radius[0]-radius[1]<0, retaining radius[0] on unordered comparisons; native used the opposite comparison and selected radius[1]. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge."
       },
       {
         "id": "mac:0x000a0218",
@@ -1370,8 +1370,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a0218: compared constant return/no-op body with native implementation."
       },
       {
         "id": "mac:0x000a069e",
@@ -1401,8 +1401,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a069e: compared draw gates, render type and FX_AddFxToScene dispatch; native helper uses the established widened renderer entity contract."
       },
       {
         "id": "mac:0x000a1358",
@@ -1432,8 +1432,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a1358: compared all 22 particle master-curve mappings plus template channels 8/9, using native full-width curve pointers."
       },
       {
         "id": "mac:0x000a0270",
@@ -1463,8 +1463,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a0270: compared returned primitive type byte with native Cloud_TypeID."
       },
       {
         "id": "mac:0x000a6638",
@@ -1494,8 +1494,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xa6def clamps negative normalized time. 0xa66b2\u20130xa66d7 saves previous local origin and 0xa6adf\u20130xa6b01 stores it in render endpos; 0xa68e7 retains sampled height. Native omitted these and incorrectly called the material-subimage callback absent from this Mac body. Native now samples size/height, color, rotation, quaternion and dimensions in original order before origin/endpos. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge."
       },
       {
         "id": "mac:0x000a9712",
@@ -1516,8 +1516,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN8CylinderD0Ev at 0x000a9712: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and final object array deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a9782",
@@ -1538,8 +1538,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN8CylinderD1Ev at 0x000a9782: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and complete-destructor return without object deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a9290",
@@ -1569,8 +1569,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a9290: compared Tail archive tail call."
       },
       {
         "id": "mac:0x000a09f2",
@@ -1600,8 +1600,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xa0a23\u20130xa0a33 passes radius[1] before radius[0]; native reversed the two callback radius arguments. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge."
       },
       {
         "id": "mac:0x000a97de",
@@ -1631,8 +1631,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a97de: compared constructor base particle/effect initialization and class vtable installation. Native object/vtable pointers widen with the established layout."
       },
       {
         "id": "mac:0x000a0668",
@@ -1662,8 +1662,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a0668: compared draw gates, render type and FX_AddFxToScene dispatch; native helper uses the established widened renderer entity contract."
       },
       {
         "id": "mac:0x000a02e4",
@@ -1693,8 +1693,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a02e4: compared returned primitive type byte with native Cylinder_TypeID."
       },
       {
         "id": "mac:0x000a5480",
@@ -1724,8 +1724,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a5480: compared time clamp and attachment invalidation; primary/optional secondary radius flags 0x8000/0x10000, length flag 0x20000, RGB/alpha before endpoint, no particle motion or zero-size early exit; local axis endpoint transformed once."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1033:Effect",
@@ -1743,8 +1743,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Effect constructor is inlined in both Mac Particle constructors 0xa270c/0xa2738 and Light constructors 0xa2830/0xa2848: initialize the bolt slot to null before derived vtable setup. Native constructor entries do the same with a full-width pointer."
       },
       {
         "id": "mac:0x000a1926",
@@ -1765,8 +1765,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN6EffectD1Ev at 0x000a1926: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and complete-destructor return without object deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a1b82",
@@ -1787,8 +1787,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN6EffectD0Ev at 0x000a1b82: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and final object array deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x002ef964",
@@ -1818,8 +1818,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x002ef964: compared constant return/no-op body with native implementation."
       },
       {
         "id": "mac:0x000a81ae",
@@ -1849,8 +1849,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a81ae: compared origin/time/flags/base scalars and vectors, three effect references, render entity/material/model/bolt stream, and read-only cluster/sort rebuild; native offsets/pointer serializers widen storage without changing stream fields."
       },
       {
         "id": "mac:0x0009ff52",
@@ -1880,8 +1880,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x0009ff52: compared constant false cull return, with no callback."
       },
       {
         "id": "mac:0x0009ff4c",
@@ -1911,8 +1911,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x0009ff4c: compared constant return/no-op body with native implementation."
       },
       {
         "id": "mac:0x0009ff5a",
@@ -1942,8 +1942,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x0009ff5a: compared empty draw body."
       },
       {
         "id": "mac:0x0009ff82",
@@ -1973,8 +1973,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x0009ff82: compared constant return/no-op body with native implementation."
       },
       {
         "id": "mac:0x002ef95c",
@@ -2004,8 +2004,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x002ef95c: compared constant return/no-op body with native implementation."
       },
       {
         "id": "mac:0x000a1bf2",
@@ -2035,8 +2035,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xa1c06\u20130xa1c5a compares wrapper values, releases/unlinks/deletes old frames and increments/stores a new nonnull frame. Native preserves that lifetime contract while accepting a null wrapper argument as clear; Mac dereferences the wrapper unconditionally at 0xa1c0c."
       },
       {
         "id": "mac:0x0009ff60",
@@ -2066,8 +2066,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x0009ff60: compared start/end argument stores."
       },
       {
         "id": "mac:0x0009ff7a",
@@ -2097,8 +2097,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x0009ff7a: compared returned primitive type byte with native Effect_TypeID."
       },
       {
         "id": "mac:0x000a06f0",
@@ -2128,8 +2128,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a06f0: compared future-start rejection, integer age/lifetime normalization, upper/lower clamps and true return."
       },
       {
         "id": "mac:0x000a9cd2",
@@ -2150,8 +2150,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN7EmitterD1Ev at 0x000a9cd2: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and complete-destructor return without object deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a9d2e",
@@ -2172,8 +2172,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN7EmitterD0Ev at 0x000a9d2e: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and final object array deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a929a",
@@ -2203,8 +2203,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a929a: compared particle base, three state vectors, emission time/step, angles/angular delta, emitted-effect reference, density/variance and model-null draw-flag clear."
       },
       {
         "id": "mac:0x000a02ee",
@@ -2234,8 +2234,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a02ee: compared constant false cull return, with no callback."
       },
       {
         "id": "mac:0x000a063c",
@@ -2265,8 +2265,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a063c: compared draw gates, render type and FX_AddFxToScene dispatch; native helper uses the established widened renderer entity contract."
       },
       {
         "id": "mac:0x000a9cb4",
@@ -2296,8 +2296,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a9cb4: compared constructor base particle/effect initialization and class vtable installation. Native object/vtable pointers widen with the established layout."
       },
       {
         "id": "mac:0x000a02f6",
@@ -2327,8 +2327,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a02f6: compared returned primitive type byte with native Emitter_TypeID."
       },
       {
         "id": "mac:0x000a4bee",
@@ -2358,8 +2358,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a4bee: compared time and bolt handling, old-origin motion comparison and 0.7 damping, frame*0.01 angular update before AnglesToAxis, size sampling, 0x10 model transforms/bind input and child update ordering."
       },
       {
         "id": "mac:0x000a3f76",
@@ -2389,8 +2389,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a3f76: compared 0x100/frame-time gates, 12ms spacing loop, bolt/axis child calls, rounded linear timing correction, cvttss2si/wrapping duration/clamp, resampling and all persistent state/RNG updates."
       },
       {
         "id": "mac:0x000a0524",
@@ -2420,8 +2420,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xa0534\u20130xa062c zeros a 0x74-byte i386 GfxEntity, copies render fields, maps flags 1/0x4000000 to 8/0x80 and submits model/entity. Native preserves all fields/flags/callback order but uses aligned sizeof(GfxEntity) storage and full-width material/model pointers for its renderer ABI."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:938:FX_ColorToBytes",
@@ -2439,8 +2439,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "FX_ColorToBytes is inlined in Mac Particle::UpdateRGB at 0xa1e54\u20130xa1e82: factor 255, cvttss2si, wrapping upper selection, then a mandatory lower selection using negated original conversion. Native now preserves this distinct RGB sequence after review; Flash retains its early 255 branch. Compiled and reviewed; no new tests were added."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1321:FX_ShouldStopMoving",
@@ -2458,8 +2458,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FX_ShouldStopMoving is inlined in Mac Particle::ApplyImpact at 0xa463c\u20130xa4686: positive Z normal and squared speed below 16, or zero fraction. Native predicates match, including ordered comparisons."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1360:FX_TraceHit",
@@ -2477,8 +2477,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FX_TraceHit is inlined in Mac Particle::UpdateOrigin at 0xa49cb\u20130xa49e8: both solid bytes clear and fraction unequal to one, with unordered fraction treated as a hit. Native predicates match."
       },
       {
         "id": "mac:0x0009ff28",
@@ -2508,8 +2508,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x0009ff28: compared name and identical FxModelAlloc callbacks passed to XModelPrecache."
       },
       {
         "id": "mac:0x002ef972",
@@ -2530,8 +2530,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN5FlashD0Ev at 0x002ef972: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and final object array deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x002ef9e2",
@@ -2552,8 +2552,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN5FlashD1Ev at 0x002ef9e2: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and complete-destructor return without object deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a866a",
@@ -2583,8 +2583,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a866a: compared Light archive tail call."
       },
       {
         "id": "mac:0x002ef96a",
@@ -2614,8 +2614,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x002ef96a: compared constant false cull return, with no callback."
       },
       {
         "id": "mac:0x000a0e1e",
@@ -2645,8 +2645,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xa0e98\u20130xa0eb1 and the three subsequent conversions use cvttss2si plus wrapping subtraction with an early 255 branch; only the negative upper-test path reaches wrapped negation at 0xa100d\u20130xa101b. Native defines invalid conversion as INT_MIN and retains this Flash sequence separately from RGB after review. Compiled and reviewed; existing fixture covers ordinary Flash drawing, not nonfinite conversion."
       },
       {
         "id": "mac:0x000a03be",
@@ -2676,8 +2676,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a03be: compared camera displacement/normalization, distance 600/100 and facing 0.5/1.1 branches, quadratic -360000 falloff and light-channel scaling."
       },
       {
         "id": "mac:0x000a04a8",
@@ -2707,8 +2707,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a04a8: compared returned primitive type byte with native Flash_TypeID."
       },
       {
         "id": "mac:0x000a2038",
@@ -2738,8 +2738,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a2038: compared time normalization/clamps followed only by light RGB update."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:219:Free",
@@ -2758,7 +2758,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (Free(void *), line 219): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:986:FxBoltFrame",
@@ -2776,8 +2776,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxBoltFrame constructor is inlined in Mac Acquire at 0xa10c6\u20130xa10e6: zero count/cache, copy bolt identity, link at list head. Native Acquire uses the same fields in widened zeroed storage."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:414:FxBoltFramePtr",
@@ -2795,8 +2795,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Default FxBoltFramePtr constructor is inlined as the null bolt-slot store in Mac Particle/Light construction at 0xa2712/0xa2836; native constructors store a full-width null."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:419:FxBoltFramePtr",
@@ -2814,8 +2814,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxBoltFramePtr(frame) acquisition is inlined in Mac Acquire at 0xa108b\u20130xa108e and 0xa10ec\u20130xa10ef: AddRef then store the returned frame. Native Acquire returns the matching acquired pointer value."
       },
       {
         "id": "mac:0x000a1982",
@@ -2845,8 +2845,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xa19e2\u20130xa1b80 reads/writes the same handle/bone stream and performs refcount replacement; its negative-handle branch with an existing frame executes addl $1,0 at 0xa1b22. Native intentionally retains defined release-and-null assignment instead of a null write. New/existing-frame and null write-stream paths otherwise compared."
       },
       {
         "id": "mac:0x000a105a",
@@ -2876,8 +2876,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a105a: compared entity/bone search and AddRef, fresh zeroed frame, cache timestamp, list insertion and acquired-reference increment; native uses sizeof(FxBoltFrame) with the matching native new[]/delete[] ABI wrappers instead of fixed i386 0x44 bytes."
       },
       {
         "id": "mac:0x0009feba",
@@ -2907,8 +2907,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x0009feba: compared negative-handle rejection, client skel timestamp cache, bone orientation refresh and both-index invalidation on failure."
       },
       {
         "id": "mac:0x0009fe6c",
@@ -2938,8 +2938,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x0009fe6c: compared reference decrement, list head/interior unlink on zero and array delete."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:318:FxChannelInstance_Blend1d",
@@ -2957,8 +2957,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxChannelInstance_Blend1d is inlined in Mac UpdateAlpha 0xa51e3\u20130xa528e: independently interpolate master/random, (random-master)*blend+master, then master scale. Native EvalCurve1 and its channel blend use that SSE operation order."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:329:FxChannelInstance_Blend3d",
@@ -2976,8 +2976,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxChannelInstance_Blend3d is inlined in Mac Light::UpdateRGB 0xa15b0\u20130xa1790: interpolate each three-component curve, blend vectors then multiply by master scale. Native EvalCurve3 and Light_UpdateRGB follow those operations."
       },
       {
         "id": "mac:0x0009ff88",
@@ -3007,8 +3007,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x0009ff88: compared curve iterator creation then range scale sampling."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:307:FxChannelInstance_GetValue1d",
@@ -3026,8 +3026,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxChannelInstance_GetValue1d is inlined in Mac Light::Update 0xa2c4a\u20130xa2cd6: iterator advance, multiply-before-divide scalar interpolation and master scale. Native EvalCurve1 plus scale matches."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:312:FxChannelInstance_GetValue3d",
@@ -3045,8 +3045,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxChannelInstance_GetValue3d is inlined in Mac Light::UpdateRGB 0xa17b4\u20130xa18b0: advance, interpolate three components and apply master scale. Native EvalCurve3 and color scaling match."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:341:FxChannelInstance_Integrate",
@@ -3064,8 +3064,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxChannelInstance_Integrate is inlined in Mac Particle::IntegrateVelocity at 0xa2283\u20130xa2311: FxCurve_Integrate then channel scale; native IntegrateChannel matches."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:346:FxChannelInstance_IntegrateBlend",
@@ -3083,8 +3083,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxChannelInstance_IntegrateBlend is inlined in Mac Particle::IntegrateVelocity at 0xa20d0\u20130xa2213: master then random integrals, difference*weight+master, master scale. Native IntegrateChannel matches."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:268:FxCurveIterator_Advance",
@@ -3102,8 +3102,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxCurveIterator_Advance is inlined in Mac UpdateAlpha 0xa51ab\u20130xa51e3 with reset/advance blocks 0xa52f7 and 0xa545d: reset on current key time > sample, advance while next time < sample. Native Curve_FindKey matches; key bounds remain the curve-provider contract."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:287:FxCurveIterator_Interpolate1d",
@@ -3121,8 +3121,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxCurveIterator_Interpolate1d is inlined in Mac UpdateAlpha 0xa51e3\u20130xa5219: current scalar key stride eight, (t-t0)*(v1-v0)/(t1-t0)+v0. Native EvalCurve1 matches the multiply-before-divide order."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:298:FxCurveIterator_Interpolate3d",
@@ -3140,8 +3140,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxCurveIterator_Interpolate3d is inlined in Mac Light::UpdateRGB 0xa1600\u20130xa1698: sixteen-byte key stride and a shared normalized fraction before component differences. Native EvalCurve3 matches."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:254:FxCurve_Interpolate3d",
@@ -3159,8 +3159,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxCurve_Interpolate3d is inlined in Mac Light::UpdateRGB around 0xa1610\u20130xa1698: fraction=(t-t0)/(t1-t0), then v0+(v1-v0)*fraction per component. Native EvalCurve3 matches."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:175:FxMemMgr<T>",
@@ -3179,7 +3179,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (FxMemMgr<T>(), line 175): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "mac:0x0009ff1e",
@@ -3209,8 +3209,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x0009ff1e: compared Hunk_AllocInternal tail call."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:457:Get",
@@ -3228,8 +3228,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxBoltFramePtr::Get is inlined as bolt-pointer loads, e.g. Mac GetTotalVelocityAtTime0 0xa4592 and Effect::SetBoltFrame 0xa1c06. Native accesses full-width mBolt.value with the same pointer value."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1094:GetAge",
@@ -3247,8 +3247,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Effect::GetAge is inlined in Mac Emitter::UpdateEmitFx 0xa3fbf\u20130xa3fca as current time minus start time. Native performs the same integer subtraction before float conversion."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1054:GetBoltOrientation",
@@ -3266,8 +3266,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Effect::GetBoltOrientation is inlined in Mac Light::Update 0xa2c27\u20130xa2c3c and 0xa2d16\u20130xa2d64: no frame gives null-success, invalid/failed frame gives false, valid frame uses cached/refreshed orientation. Native update paths preserve that distinction."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1066:GetCullPlaneCount",
@@ -3285,8 +3285,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Effect::GetCullPlaneCount is inlined in Mac Particle::Cull 0xa0762\u20130xa0785: flag 0x02000000 caps camera plane count at five; otherwise full count. Native cull paths match."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:507:GetDuration",
@@ -3304,8 +3304,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Effect::GetDuration is inlined in Mac IntegrateVelocity 0xa2243\u20130xa2253 as end-start before float conversion/lifetime scale. Native integration uses the same duration."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1310:GetNormTime",
@@ -3323,8 +3323,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Particle::GetNormTime is inlined in Mac UpdateOrigin at 0xa4879\u20130xa488d as min(1,age/lifetime), with no lower clamp; native physics and emitter sample paths preserve that comparison behavior."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1550:IntegrateGravity",
@@ -3342,8 +3342,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Particle::IntegrateGravity is inlined in Mac IntegrateTotalVelocity 0xa266e\u20130xa26dc: duration*gravity*0.001, duration*0.001, then vector addition. Native gravity accumulation preserves those operations."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:840:IsReading",
@@ -3361,8 +3361,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxArchive::IsReading is inlined as the byte mode test at arch+4 throughout Mac Effect::Archive, e.g. 0xa81c0. Native archive helpers test the corresponding widened-layout isReading field."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:443:IsValid",
@@ -3380,8 +3380,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxBoltFramePtr::IsValid is represented by inlined pointer tests in Mac GetTotalVelocityAtTime0 0xa4592\u20130xa459a and Light::Update 0xa2c27\u20130xa2c2f. Native checks pointer presence before orientation validity lookup."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:2384:Light",
@@ -3399,8 +3399,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux Light constructor name corresponds to exact Mac C1/C2 bodies 0xa2848/0xa2830: null bolt plus Light vtable. Native Light_Light was compared against both."
       },
       {
         "id": "mac:0x000a2860",
@@ -3421,8 +3421,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN5LightD1Ev at 0x000a2860: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and complete-destructor return without object deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a28bc",
@@ -3443,8 +3443,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN5LightD0Ev at 0x000a28bc: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and final object array deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a856a",
@@ -3474,8 +3474,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a856a: compared effect base, four ordered channel instances and color/size blend floats."
       },
       {
         "id": "mac:0x000a0300",
@@ -3505,8 +3505,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a0300: compared template channel 0/1/4/5 mappings to color/color-random/size/size-random instances."
       },
       {
         "id": "mac:0x000a0a6c",
@@ -3536,8 +3536,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a0a6c: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five."
       },
       {
         "id": "mac:0x000a0374",
@@ -3567,8 +3567,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a0374: compared draw gates, render type and FX_AddFxToScene dispatch; native helper uses the established widened renderer entity contract."
       },
       {
         "id": "mac:0x000a0d28",
@@ -3598,8 +3598,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a0d28: compared template channel 0/1/4/5 master pointer mappings."
       },
       {
         "id": "mac:0x000a2830",
@@ -3620,8 +3620,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a2830: compared constructor base particle/effect initialization and class vtable installation. Native object/vtable pointers widen with the established layout."
       },
       {
         "id": "mac:0x000a2848",
@@ -3642,8 +3642,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a2848: compared constructor base particle/effect initialization and class vtable installation. Native object/vtable pointers widen with the established layout."
       },
       {
         "id": "mac:0x000a03b4",
@@ -3673,8 +3673,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a03b4: compared returned primitive type byte with native Light_TypeID."
       },
       {
         "id": "mac:0x000a2bc8",
@@ -3704,8 +3704,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a2bc8: compared future/time clamps, invalid/cached/fresh bolt branches, size blend flag 0x8000, light RGB and final local/world origin."
       },
       {
         "id": "mac:0x000a15b0",
@@ -3735,8 +3735,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a15b0: compared color flag 0x2000; master/random 3D interpolation, color blend then master scale and light RGB writes."
       },
       {
         "id": "mac:0x000a9afa",
@@ -3757,8 +3757,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN4LineD1Ev at 0x000a9afa: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and complete-destructor return without object deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a9b56",
@@ -3779,8 +3779,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN4LineD0Ev at 0x000a9b56: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and final object array deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a90d8",
@@ -3810,8 +3810,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a90d8: compared particle base and endpoint vector read/write order."
       },
       {
         "id": "mac:0x000a090a",
@@ -3841,8 +3841,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a090a: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five."
       },
       {
         "id": "mac:0x000a027a",
@@ -3872,8 +3872,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a027a: compared constant return/no-op body with native implementation."
       },
       {
         "id": "mac:0x000a068c",
@@ -3903,8 +3903,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a068c: compared draw gates, render type and FX_AddFxToScene dispatch; native helper uses the established widened renderer entity contract."
       },
       {
         "id": "mac:0x000a9adc",
@@ -3934,8 +3934,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a9adc: compared constructor base particle/effect initialization and class vtable installation. Native object/vtable pointers widen with the established layout."
       },
       {
         "id": "mac:0x000a0280",
@@ -3965,8 +3965,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a0280: compared returned primitive type byte with native Line_TypeID."
       },
       {
         "id": "mac:0x000a62d6",
@@ -3996,8 +3996,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xa65d6 clamps negative normalized time. Complete 0xa62d6\u20130xa6638 body transforms fixed origin/endpoint and writes only radius[0], then RGB/alpha; it never advances particle motion or returns early at zero size. Native did all three extra operations and wrote radius[1]. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:241:MoveToFront",
@@ -4016,7 +4016,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (MoveToFront(FxMemBlock *), line 241): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "mac:0x000a981a",
@@ -4037,8 +4037,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN16OrientedParticleD1Ev at 0x000a981a: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and complete-destructor return without object deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a9876",
@@ -4059,8 +4059,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN16OrientedParticleD0Ev at 0x000a9876: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and final object array deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a8eca",
@@ -4090,8 +4090,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a8eca: compared particle base and normal vector read/write order."
       },
       {
         "id": "mac:0x000a07e4",
@@ -4121,8 +4121,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a07e4: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five."
       },
       {
         "id": "mac:0x000a06b0",
@@ -4152,8 +4152,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a06b0: compared draw gates, render type and FX_AddFxToScene dispatch; native helper uses the established widened renderer entity contract."
       },
       {
         "id": "mac:0x000a97fc",
@@ -4183,8 +4183,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a97fc: compared constructor base particle/effect initialization and class vtable installation. Native object/vtable pointers widen with the established layout."
       },
       {
         "id": "mac:0x000a020e",
@@ -4214,8 +4214,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a020e: compared returned primitive type byte with native OrientedParticle_TypeID."
       },
       {
         "id": "mac:0x000a70ba",
@@ -4245,8 +4245,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xa76f8 clamps negative normalized time; 0xa7200\u20130xa7382 updates appearance/animation before position/normal transforms at 0xa73da\u20130xa740a. Native rejected negative time and transformed first. Shared subimage arithmetic also now preserves the conditional modulo, signed loop-count handling, cvttss2si and wrapping frame arithmetic at 0xa7392\u20130xa73c9 and 0xa77e5\u20130xa781f. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1166:Particle",
@@ -4264,8 +4264,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux Particle constructor name corresponds to exact Mac C1/C2 bodies 0xa2738/0xa270c: null bolt, Particle vtable and three zero additive velocity values. Native Particle_Particle matches."
       },
       {
         "id": "mac:0x000a2764",
@@ -4286,8 +4286,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN8ParticleD1Ev at 0x000a2764: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and complete-destructor return without object deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a27c0",
@@ -4308,8 +4308,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN8ParticleD0Ev at 0x000a27c0: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and final object array deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a04ba",
@@ -4339,8 +4339,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a04ba: compared increment-before-write array indexing, renderer origin, squared radius and alpha*(-1/255)+1."
       },
       {
         "id": "mac:0x000a462c",
@@ -4370,8 +4370,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a462c: compared slow upward-facing/zero-fraction stop mask 0xfffff7df|0x1000000, optional world-to-bolt normal, elasticity and reflected additive velocity arithmetic."
       },
       {
         "id": "mac:0x000a8674",
@@ -4401,8 +4401,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a8674: compared four particle vectors, elasticity/one-byte nonuniform flag, all 22 channel instances, nine sequence/blend scalars and two velocity-weight vectors in read/write order; original gravity/wind omissions retained."
       },
       {
         "id": "mac:0x000a36ba",
@@ -4432,8 +4432,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a36ba: compared secondary channel interpolation/blends/master scales, independent random/world bits 0x100000/0x400000 and bolted/unbolted coordinate-space branches."
       },
       {
         "id": "mac:0x000a2f16",
@@ -4463,8 +4463,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a2f16: compared scalar channel interpolation/blends/master scales, primary random/world bits 0x80000/0x200000 and bolted/unbolted coordinate-space branches."
       },
       {
         "id": "mac:0x0009ffba",
@@ -4494,8 +4494,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x0009ffba: compared 22 ordered template/instance mappings: template channels 0\u20137 and 10\u201323."
       },
       {
         "id": "mac:0x000a0758",
@@ -4525,8 +4525,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a0758: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five."
       },
       {
         "id": "mac:0x000a10fe",
@@ -4556,8 +4556,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xa110a\u20130xa121f flag/null gates, Z/Y/X RNG order, normalization threshold and fallback were compared. Native preserves its defined scheduler callback adaptation: builds a full orthogonal axis and null bolt for the native PlayEffect signature in place of the Mac normal-vector overload at 0xa11e6."
       },
       {
         "id": "mac:0x000a06c2",
@@ -4587,8 +4587,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a06c2: compared draw gates, render type and FX_AddFxToScene dispatch; native helper uses the established widened renderer entity contract."
       },
       {
         "id": "mac:0x000a0c14",
@@ -4618,8 +4618,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a0c14: compared 22 ordered master-pointer mappings, excluding template length channels 8/9."
       },
       {
         "id": "mac:0x000a3e5e",
@@ -4649,8 +4649,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xa3eb8\u20130xa3ec5 truncates lifetime*normTime with cvttss2si; native out-of-range/NaN C casts were undefined. Native now returns INT_MIN for these inputs. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge."
       },
       {
         "id": "mac:0x000a4586",
@@ -4680,8 +4680,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a4586: compared null/invalid/cached/fresh attachment branches, zero output on failure and total-velocity call at normalized time zero."
       },
       {
         "id": "mac:0x000a0b1c",
@@ -4711,8 +4711,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xa0be4\u20130xa0be8 returns full visibility when radius-squared versus distance-squared is unordered; native <= did not. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge."
       },
       {
         "id": "mac:0x000a25fc",
@@ -4742,8 +4742,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a25fc: compared duration/lifetime clamp, primary/secondary integrals and duration*gravity*0.001 then duration*0.001 gravity accumulation."
       },
       {
         "id": "mac:0x000a20b4",
@@ -4773,8 +4773,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a20b4: compared master/random integrals blended before master scale, flag 0x80000, world/display-axis flag 0x200000, then lifetime*0.001 scale."
       },
       {
         "id": "mac:0x000a2358",
@@ -4804,8 +4804,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a2358: compared secondary integrals and weights, deliberately retained random flag 0x80000 and distinct world-space flag 0x400000, followed by lifetime scale."
       },
       {
         "id": "mac:0x000a270c",
@@ -4826,8 +4826,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a270c: compared constructor base particle/effect initialization and class vtable installation. Native object/vtable pointers widen with the established layout."
       },
       {
         "id": "mac:0x000a2738",
@@ -4848,8 +4848,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a2738: compared constructor base particle/effect initialization and class vtable installation. Native object/vtable pointers widen with the established layout."
       },
       {
         "id": "mac:0x000a0d64",
@@ -4879,8 +4879,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xa0d75\u20130xa0dd1 copies three axis vectors for valid input. On null input 0xa0dd5 zeros axis0, then 0xa0de9\u20130xa0dee adds 12 to null and enters a low-address read; native intentionally retains defined zero initialization of all three axes."
       },
       {
         "id": "mac:0x000a01de",
@@ -4910,8 +4910,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a01de: compared three secondary weights in argument order."
       },
       {
         "id": "mac:0x000a0af8",
@@ -4941,8 +4941,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a0af8: compared three primary weights in argument order."
       },
       {
         "id": "mac:0x000a0204",
@@ -4972,8 +4972,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a0204: compared returned primitive type byte with native Particle_TypeID."
       },
       {
         "id": "mac:0x000a7970",
@@ -5003,8 +5003,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xa7c6f clamps negative normalized time. 0xa7b61\u20130xa7b66 and 0xa7d60\u20130xa7d69 return true on either zero radius before later appearance work; native continued. Subimage paths at 0xa80dd\u20130xa819c leave negative frames/negative loop counts intact and use wrapping int32/cvttss2si arithmetic, now mirrored by the shared native helper. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge."
       },
       {
         "id": "mac:0x000a5178",
@@ -5034,8 +5034,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xa5293\u20130xa52cc selects upper/lower alpha bounds using ordered subtraction comparisons; native left NaN unbounded before conversion. Native now selects zero for NaN, as those SSE masks do. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge."
       },
       {
         "id": "mac:0x000a47f0",
@@ -5065,8 +5065,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xa47f0\u20130xa4bed stopped/frame gates, velocity step, collision bounds, solid/fraction test, death-on-impact and reflection/origin update were compared. Native retains its defined normal-to-full-axis PlayEffect callback adaptation for impact children (Mac normal overload at 0xa4af0), with unchanged native trace storage/field contract."
       },
       {
         "id": "mac:0x000a1c6a",
@@ -5096,8 +5096,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xa1e62\u20130xa1e82: cvttss2si conversion, wrapping upper-candidate selection at 0xa1e71\u20130xa1e76, then lower selection from the negated original converted value at 0xa1e79\u20130xa1e7f. Review corrected the initial shared Flash early exit: RGB -8421504.0f scales/converts to -2147483520 and now yields 0, while INT_MIN/NaN retains 255. Compiled and reviewed; existing fixture does not exercise this extreme channel."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1861:RandomizeAxis",
@@ -5115,8 +5115,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Cloud::RandomizeAxis is inlined in Mac Cloud constructor 0xa9903\u20130xa99b1: four ordered triples of flrand(-1,1), squared-length [0.01,1], normalization or (1,0,0) fallback. Native constructor matches."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:794:RandomizeEmitDist",
@@ -5134,8 +5134,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Emitter::RandomizeEmitDist is inlined in Mac UpdateEmitFx 0xa4362\u20130xa439b: density + crandom()*variance, store step and square it. Native emits with matching RNG consumption and arithmetic."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:845:ReadInt",
@@ -5153,8 +5153,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxArchive::ReadInt is inlined in Mac Effect::Archive, e.g. 0xa81e8\u20130xa8202: four-byte read temporary followed by returned/stored bits. Native ArchiveInt and bolt archive read paths match."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1330:StopMoving",
@@ -5172,8 +5172,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Particle::StopMoving is inlined in Mac ApplyImpact 0xa47be\u20130xa47ce: flags=(flags&0xfffff7df)|0x1000000; native stop block matches."
       },
       {
         "id": "mac:0x000a9be6",
@@ -5194,8 +5194,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN4TailD1Ev at 0x000a9be6: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and complete-destructor return without object deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a9c42",
@@ -5216,8 +5216,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac symbol __ZN4TailD0Ev at 0x000a9c42: compared Effect-vtable reset, bolt refcount release/list unlink/array deletion, and final object array deletion. Native vtable/field pointers use native width; normalized instruction comparison also checked the repeated class bodies."
       },
       {
         "id": "mac:0x000a9178",
@@ -5247,8 +5247,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a9178: compared particle base, endpoint, two length channels and length blend in original stream order."
       },
       {
         "id": "mac:0x000a1222",
@@ -5278,8 +5278,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xa127f\u20130xa1286 returns for unordered or nonpositive endpoint length; native <= continued for NaN. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge."
       },
       {
         "id": "mac:0x000a028a",
@@ -5309,8 +5309,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a028a: compared particle channels then template channels 8/9 into length/length-random instances."
       },
       {
         "id": "mac:0x000a097e",
@@ -5340,8 +5340,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a097e: compared cull callback shape, renderer origin/endpoints/radii and 0x02000000 plane-count cap at five."
       },
       {
         "id": "mac:0x000a067a",
@@ -5371,8 +5371,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a067a: compared draw gates, render type and FX_AddFxToScene dispatch; native helper uses the established widened renderer entity contract."
       },
       {
         "id": "mac:0x000a1484",
@@ -5402,8 +5402,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a1484: compared all 22 particle master curves plus template channels 8/9 into length instances."
       },
       {
         "id": "mac:0x000a292c",
@@ -5433,8 +5433,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a292c: compared normalized-time length sample/blend with 0x20000, master scale, stored tail length then unbolted CalcNewEndpoint."
       },
       {
         "id": "mac:0x000a9bc8",
@@ -5464,8 +5464,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a9bc8: compared constructor base particle/effect initialization and class vtable installation. Native object/vtable pointers widen with the established layout."
       },
       {
         "id": "mac:0x000a02da",
@@ -5495,8 +5495,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a02da: compared returned primitive type byte with native Tail_TypeID."
       },
       {
         "id": "mac:0x000a5ca6",
@@ -5526,8 +5526,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xa60d8 clamps negative normalized time; 0xa5eb4 samples size before length, 0xa5ffd\u20130xa601f updates RGB/alpha/subimage before endpoint at 0xa6076. Native instead rejected negative time, calculated length/endpoint first, wrote radius[1], skipped animation and set the stop flag at zero size. Compiled and reviewed; existing fixture covers ordinary primitive paths, not every corrected edge."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:2356:UpdateAngles",
@@ -5545,8 +5545,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Emitter::UpdateAngles is inlined in Mac Emitter::Update 0xa4d19\u20130xa4d79: frame milliseconds*0.01 times angular delta, accumulate angles, AnglesToAxis. Native ordering matches."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1895:UpdateLength",
@@ -5564,8 +5564,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Cloud::UpdateLength is inlined in Mac Cloud::Update 0xa67ae\u20130xa68e7: length flag, independent random flag 0x20000, height channels/blend/master scale and stored height at 0x258. Native now retains that height scalar in its corresponding _gap storage before final dimension remapping; compiled and reviewed."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:2076:UpdateLength",
@@ -5583,8 +5583,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Tail::UpdateLength is inlined in Mac Tail::Update 0xa5ebc\u20130xa5ff5: length channel/random flag 0x20000, blend/master scale and stored tail length. Native tail sampling follows the same operations."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1661:UpdateRotation",
@@ -5602,8 +5602,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Particle::UpdateRotation is inlined in Mac Particle::Update at 0xa7d7f\u20130xa80bc: flag 0x40000, rotation channels/blend/master scale, frame milliseconds*0.01 times delta then accumulated render rotation. Native rotation helper matches."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1607:UpdateSize",
@@ -5621,8 +5621,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Particle::UpdateSize is inlined in Mac Particle::Update 0xa7a11\u20130xa7b52 and 0xa7cbc\u20130xa7d50: flag 0x8000, size channels, blend[2], master scale and radius[0]. Native channel sampling matches."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:2428:UpdateSize",
@@ -5640,8 +5640,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Light::UpdateSize is inlined in Mac Light::Update 0xa2c3c\u20130xa2cd6 and 0xa2d6e\u20130xa2ea1: size flag 0x8000, Light size blend, master scale and radius[0]. Native Light sampling matches."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1615:UpdateSize2",
@@ -5659,8 +5659,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Particle::UpdateSize2 is inlined in Mac Particle::Update 0xa7b6c\u20130xa7c12, 0xa7d58 and 0xa7e25\u20130xa7f63: copy size if uniform, otherwise secondary channels/blend[3]/flag 0x10000. Native secondary-size sampling matches."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1672:UpdateSubimage",
@@ -5678,8 +5678,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Particle::UpdateSubimage is inlined in Mac Particle::Update 0xa80c1\u20130xa819c, OrientedParticle 0xa7376\u20130xa7392 and Tail 0xa600d\u20130xa6066/0xa6260. Native now updates tails, retains negative frames until a signed frame>=count condition, preserves nonpositive loop counts, and defines cvttss2si/wrapping arithmetic; the existing native <=1 frame-count guard remains for invalid renderer counts. Compiled and reviewed."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:853:WriteInt",
@@ -5697,8 +5697,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxArchive::WriteInt is inlined in Mac Effect::Archive, e.g. 0xa83e0\u20130xa83fb: four scalar bits through a temporary into WriteData. Native ArchiveInt and bolt write paths match."
       },
       {
         "id": "mac:0x000a04b4",
@@ -5719,8 +5719,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x000a04b4: compared constant return/no-op body with native implementation."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:377:operator delete",
@@ -5739,7 +5739,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 377): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:512:operator delete",
@@ -5758,7 +5758,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 512): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:541:operator delete",
@@ -5777,7 +5777,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 541): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:589:operator delete",
@@ -5796,7 +5796,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 589): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:669:operator delete",
@@ -5815,7 +5815,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 669): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:701:operator delete",
@@ -5834,7 +5834,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 701): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:723:operator delete",
@@ -5853,7 +5853,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 723): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:744:operator delete",
@@ -5872,7 +5872,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 744): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:775:operator delete",
@@ -5891,7 +5891,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 775): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:799:operator delete",
@@ -5910,7 +5910,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (operator delete(void *), line 799): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:372:operator new",
@@ -5929,7 +5929,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved Linux-only allocator identity (operator new(unsigned int), line 372): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:430:operator=",
@@ -5947,8 +5947,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxBoltFramePtr copy assignment is inlined in Mac FxBoltFramePtr::Archive 0xa1a36\u20130xa1a8e: compare same frame, release old, increment/store new then release temporary. Native read archive matches for acquired frames."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:448:operator=",
@@ -5966,8 +5966,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "FxBoltFramePtr raw-frame assignment is represented by Mac Effect::SetBoltFrame 0xa1c06\u20130xa1c5a for valid wrappers. Mac negative archive assignment at 0xa1b22 increments address zero; native deliberately retains defined release-and-null semantics and does not reproduce that null write."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1848:~Cloud",
@@ -5985,8 +5985,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux destructor name maps to the complete Mac Cloud destructor at 0xa9a0e; compared base-vtable reset and acquired bolt reference release/unlink/delete. Native complete destructor preserves object storage and native-width references."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:2129:~Cylinder",
@@ -6004,8 +6004,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux destructor name maps to the complete Mac Cylinder destructor at 0xa9782; compared base-vtable reset and acquired bolt reference release/unlink/delete. Native complete destructor preserves object storage and native-width references."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1037:~Effect",
@@ -6023,8 +6023,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux destructor name maps to the complete Mac Effect destructor at 0xa1926; compared base-vtable reset and acquired bolt reference release/unlink/delete. Native complete destructor preserves object storage and native-width references."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:2186:~Emitter",
@@ -6042,8 +6042,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux destructor name maps to the complete Mac Emitter destructor at 0xa9cd2; compared base-vtable reset and acquired bolt reference release/unlink/delete. Native complete destructor preserves object storage and native-width references."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:424:~FxBoltFramePtr",
@@ -6061,8 +6061,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "FxBoltFramePtr destructor is inlined in Mac FxBoltFramePtr::Archive 0xa1a91\u20130xa1adc: pointer gate, decrement, zero-count list unlink and array delete. Native ReleaseHelper matches with native-width links."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:2388:~Light",
@@ -6080,8 +6080,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux destructor name maps to the complete Mac Light destructor at 0xa2860; compared base-vtable reset and acquired bolt reference release/unlink/delete. Native complete destructor preserves object storage and native-width references."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1966:~Line",
@@ -6099,8 +6099,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux destructor name maps to the complete Mac Line destructor at 0xa9afa; compared base-vtable reset and acquired bolt reference release/unlink/delete. Native complete destructor preserves object storage and native-width references."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1788:~OrientedParticle",
@@ -6118,8 +6118,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux destructor name maps to the complete Mac OrientedParticle destructor at 0xa981a; compared base-vtable reset and acquired bolt reference release/unlink/delete. Native complete destructor preserves object storage and native-width references."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:1171:~Particle",
@@ -6137,8 +6137,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux destructor name maps to the complete Mac Particle destructor at 0xa2764; compared base-vtable reset and acquired bolt reference release/unlink/delete. Native complete destructor preserves object storage and native-width references."
       },
       {
         "id": "linux:EffectsCore/FxPrimitives.cpp:2024:~Tail",
@@ -6156,8 +6156,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux destructor name maps to the complete Mac Tail destructor at 0xa9be6; compared base-vtable reset and acquired bolt reference release/unlink/delete. Native complete destructor preserves object storage and native-width references."
       }
     ],
     "EffectsCore/FxScheduler": [
