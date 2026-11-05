@@ -1,14 +1,14 @@
 # Config Studio catalog
 
-The committed resource describes **reconciliation integration `a90c5b7`**, including
-the startup privacy freeze for local match summaries. This tool uses Python's standard library
+The committed resource describes **reconciliation integration `6ae3bd5`**, including
+the restored renderer mode/refresh registration sites and startup privacy freeze for local match summaries. This tool uses Python's standard library
 and Clang's preprocessor. It reads source; it neither builds nor runs the game,
 and consumes no game data, player profiles, reference binary or private tools.
 
 ```sh
 python3 -m unittest discover -s tools/catalog -v
 python3 tools/catalog/catalog.py generate \
-  --source-root /path/to/source-export --source-revision a90c5b7378228a23767ee0231f1e82a7a733f319 \
+  --source-root /path/to/source-export --source-revision 6ae3bd57910d7a82a452422aef218d2b9cf0066d \
   --output launcher/Resources/ConfigCatalog.json
 python3 tools/catalog/catalog.py check \
   --source-root /path/to/source-export --catalog launcher/Resources/ConfigCatalog.json --mode stock
