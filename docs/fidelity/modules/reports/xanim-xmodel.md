@@ -36,3 +36,9 @@ Configured stock/CoD2x Release objects compiled. After that expectation correcti
 ## Original-address follow-up (inline-effects4)
 
 The original Linux 1.3 replacement-error string anchors XModelReplace at0x80c574e–0x80c583f (exclusive end). Its body checks the replacement, preserves the old name, frees the old model, copies the replacement structure, restores the name and retains referenced LOD surface strings. This improves the identity target but does not identify a complete Mac replacement operation. Mac XModelFree consumers alone do not establish that sequence, and a missing error string or direct caller is not grounds for closure. XModelReplace and the other unresolved helpers remain unchecked. No source changes or runtime verification.
+
+## Original getter and small-helper anchors
+
+Original Linux 1.0 0x80c33d6 maps uniquely to 1.3 0x80c59b2: `XModelGetCollLod` returns the sign-extended short at offset 0x7e. Existing Mac model writes establish the storage but not that complete read/result operation. The input-to-global helper at 0x80c5330, integer-zero body at 0x80c5e4c and byte-consuming body at 0x80c5e56 now also have original anchors. Identical tiny bodies alone are ambiguous; full adjacent original model blocks uniquely bind their locations. Those anchors do not establish a Mac global-write, result or no-op identity, and reconstruction names do not prove deadness. All five remain unchecked, including the previously anchored replacement operation.
+
+Evidence and full-block relocation receipts are retained in `recon-provenance-animation10.noindex`. Targeted PPC source/owner comparison adds no new xmodel pairs. No source changes, compilation, tests, CI, replay or runtime exercise ran.
