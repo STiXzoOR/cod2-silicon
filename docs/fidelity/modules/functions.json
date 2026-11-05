@@ -8,8 +8,8 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 460,
-      "intentional": 3106,
+      "unchecked": 454,
+      "intentional": 3112,
       "equal": 4718,
       "fixed": 1173
     },
@@ -14539,8 +14539,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": "Exact Mac 0xab80c-0xaba9e and native GetToken_impl hand-compared for whitespace/comments, signed characters, quoting, token limits, trimming and quote removal. Both still scan through NUL in readUntilEOL (0xab95f-0xab999) and leave an unterminated quoted cursor beyond NUL (0xaba0f-0xaba1f). Mac FX_ParseEffect 0x5d25f-0x5d2b3 and native FX_ParseEffectFile allocate fileLength+1 and append one NUL without a newline guarantee. Exact Hunk_AllocateTempMemoryInternal 0x38192 has a preceding header and exact-size malloc fallback, no suffix contract. No defined native malformed-EOF replacement exists; out-of-storage result equivalence remains unproved and unexercised."
+        "status": "intentional",
+        "evidence": "Intentional bounded native EOF handling after exact Mac ab80c-aba9e/parser-owner comparison. Ordinary whitespace/comment/quote/1024-byte token/trim behavior retained. Mac readUntilEOL at ab95f-ab999 scans through NUL, and unterminated quote aba0f-aba1f leaves its cursor beyond NUL. FX loader allocates fileLength+1 with one terminator and no suffix contract (Mac5d25f-5d2b3, Hunk38192). Native now stops line reads at that terminator and leaves unterminated quoted cursor on it; the next token scan terminates normally. This defines EOF without reconstructing arbitrary subsequent allocation bytes. Stock/CoDx Release source compiled; malformed EOF compiled and reviewed, not exercised."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:377:Parse",
@@ -149730,8 +149730,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Read complete Mac 0x1fbc42-0x1fc0a0. Native SDK curl backend is intentional. Corrected confirmed omissions: no URL-substring MOTD classification (Mac only reads flag at 0x1fbc39), write 64-byte display URL with authority credentials redacted per 0x1fbffc-0x1fc009 and reset native byte accumulator. Compiled and reviewed, not exercised. Exact libwww HTParse normalization/escaping of unusual credential-bearing, relative or malformed URLs remains unestablished; native bounded parser covers ordinary absolute URLs. Mac no-credentials branch also passes URL as a format string while native copies text. No full semantic-equivalence verdict."
+        "status": "intentional",
+        "evidence": "Intentional concrete SDK curl request/display owner replacing original libwww DL_BeginDownload1fbc42-1fc0a0. Existing ordinary corrections retained: no filename-based MOTD inference, redacted64-byte display name per1fbffc-1fc009, byte accumulator reset. Native passes original URL to CURLOPT_URL; curl owns scheme/normalization/redirect/auth/error processing, while bounded display parser produces literal text and ordinary authority credential masking. It deliberately does not reproduce HTParse normalization of unusual relative/malformed URLs or original URL-as-format undefined reads. No request-level equivalence claim. Fresh owner review additionally found buffered final-close errors could publish DONE; native teardown now downgrades DONE to FAILED before CL_WWWDownload can rename/ack. Stock/CoDx Release compiled; final-close failure and HTTP/FTP transfers are compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001fba80",
@@ -149797,7 +149797,7 @@
         ],
         "linux": [],
         "status": "intentional",
-        "evidence": "Read Mac 0x1fbbaa-0x1fbc24: event pump returns 0 while active, otherwise unregister/reset timeout, kill/delete, clear running and return 1 for nonnegative terminate status or print/return 2 for negative. Native deliberately uses curl_multi_perform/info_read, DL_STATUS and DL_Teardown with curl/HTTP error reporting. The caller uses the replacement status API; cancellation/error timing not exercised."
+        "evidence": "Read Mac 0x1fbbaa-0x1fbc24: event pump returns 0 while active, otherwise unregister/reset timeout, kill/delete, clear running and return 1 for nonnegative terminate status or print/return 2 for negative. Native deliberately uses curl_multi_perform/info_read, DL_STATUS and DL_Teardown with curl/HTTP error reporting. The caller uses the replacement status API; cancellation/error timing not exercised. Follow-up owner review found buffered fclose failure could leave a successful curl transfer DONE. Native DL_Teardown now changes DONE to FAILED if fclose fails, before returning to CL_WWWDownload rename/ack/reconnect handling. Cancellation and existing error states are retained. Both Release source configurations compile; disk-full/final-flush failure is compiled and reviewed, not fault-injected."
       },
       {
         "id": "mac:0x001fbc24",
@@ -186059,8 +186059,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Mac identity 0x1536b2-0x15401c and dispatch table 0x33af60 established and body read. Fixed ordinary text alignments (0x153ab3), double 0.8 dimming (0x153d14), talker text-Y addition order (0x153a18) and serverFilters initialization. Compiled and reviewed. Unresolved: 0x154012 uses playerNames[-1] when a talking client is absent from the rebuilt player list; this reads preceding asset bytes and no equivalent LP64 valid-string contract is established. Existing fallback left unchanged; no runtime claim."
+        "status": "intentional",
+        "evidence": "Intentional native absent-talker string boundary after original full UI_OwnerDraw1536b2-15401c/dispatch comparison and ordinary alignment/dimming/addition fixes. At154012 Mac can use playerNames[-1] into preceding asset storage when a talking client is absent from rebuilt list; no owned valid string established. Native retains icon/material/scaling/position and text call, using empty text only for negative lookup result. Existing valid playerNames index path remains unchanged. Stock/CoDx Release source compiled; missing-talker draw compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0015295c",
@@ -206031,8 +206031,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": "Read full Mac 0x55796: existing-name bytes become floats and invoke corrected SetColorFromSource. Missing-name path 0x557fb passes four promoted integers to va format %g %g %g %g, whose four double reads overrun the supplied 16-byte argument area. Native has the same format/type mismatch on a different variadic ABI; exact output is unresolved, not equality."
+        "status": "intentional",
+        "evidence": "Intentional defined native varargs for original missing-name branch Mac557fb-55822: four zero-extended byte integers were passed to four %g double reads, with no portable original output. Native explicitly promotes those same bytes to doubles and retains format, string registration flags0x4000, lookup and unchanged existing-name SetColorFromSource path55896-558d9. This defines decimal byte text rather than reading absent argument words; no original undefined-output equality claimed. Stock/CoDx Release compiles and existing dvar sanitizer fixtures pass; missing-name color formatting compiled and reviewed, not specifically exercised."
       },
       {
         "id": "mac:0x000539fe",
@@ -206696,8 +206696,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": "Read full Mac 0x54bba: compares type 4 at 0x54bcf, supplies only two local floats at ebp-0x10/-0xc, then vec4 SetVariant reads the following saved-register words as components 3/4. Native has the same two-float source shape but its stack/LP64 layout cannot establish those values. No indeterminate storage was introduced; exact overflow behavior remains unresolved."
+        "status": "intentional",
+        "evidence": "Intentional defined native storage for original type4 branch at Mac54bcf/54c16-54c27. Preserve complete setter dispatch, supplied x/y, string fallback and INTERNAL source. Original vec4 setter reads two supplied local floats then saved-register words; native uses four owned initialized floats with z/w zero, not LP64 stack history. Direct setter and inlined ByName owner use same padding. Stock/CoDx Release compiles and existing domain/promotion/lifetime sanitizer fixture pass; this wrong-type padding path compiled and reviewed, not specifically exercised."
       },
       {
         "id": "mac:0x000550f6",
@@ -206727,8 +206727,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": "Read full Mac ByName 0x550f6 and SetVec2 0x54bba: type-4 branch 0x551d0 passes two locals at ebp-0x20/-0x1c to vec4 SetVariant, reading two additional uninitialized stack words. The native two-float helper and Linux source helper share the dispatch, but the exact extra words/source variants have no portable established contract."
+        "status": "intentional",
+        "evidence": "Intentional defined native storage for original ByName type4 branch at Mac551d0-551f1. Complete lookup/missing-name registration/string dispatch retained; native inline SetVec2 owner supplies x/y and zero z/w instead of reading two extra uninitialized locals. Same explicit four-float storage adaptation as direct Mac54bba; no arbitrary native stack parity claimed. Stock/CoDx Release compiles and existing domain/promotion/lifetime sanitizer fixture pass; exceptional type4 padding compiled and reviewed, not specifically exercised."
       },
       {
         "id": "linux:universal/dvar.cpp:1479:Dvar_SetVec2FromSource",

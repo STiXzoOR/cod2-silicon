@@ -2190,7 +2190,13 @@ void Dvar_SetInt(const dvar_t *dvar, int value)
 void Dvar_SetVec2(const dvar_t *dvar, float x, float y)
 {
     DvarValue newValue;
+#if defined(COD2_X64)
+    /* The retail type-4 path reads four words from two supplied components.
+       Keep its dispatch and supplied values, with defined zero padding. */
+    vec4_t vector = { 0, 0, 0, 0 };
+#else
     vec2_t vector;
+#endif
     char string[64];
 
     if (dvar->type == DVAR_TYPE_VEC4) {
@@ -2301,7 +2307,13 @@ static inline __attribute__((always_inline)) void Dvar_SetFloat_inl(const dvar_t
 static inline __attribute__((always_inline)) void Dvar_SetVec2_inl(const dvar_t *dvar, float x, float y)
 {
     DvarValue newValue;
+#if defined(COD2_X64)
+    /* The retail type-4 path reads four words from two supplied components.
+       Keep its dispatch and supplied values, with defined zero padding. */
+    vec4_t vector = { 0, 0, 0, 0 };
+#else
     vec2_t vector;
+#endif
     char string[64];
 
     if (dvar->type == DVAR_TYPE_VEC4) {
@@ -2478,7 +2490,12 @@ void Dvar_SetColorByName(const char *dvarName, int r, int g, int b, int a)
 
     var = Dvar_FindVar_inl(dvarName);
     if (!var) {
+#if defined(COD2_X64)
+        /* Supply the doubles required by %g rather than reading absent varargs. */
+        Dvar_RegisterString_inl(dvarName, va("%g %g %g %g", (double)red, (double)green, (double)blue, (double)alpha), 0x4000);
+#else
         Dvar_RegisterString_inl(dvarName, va("%g %g %g %g", red, green, blue, alpha), 0x4000);
+#endif
         return;
     }
 

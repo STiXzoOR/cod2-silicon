@@ -124,7 +124,16 @@ static void DL_Teardown(void)
         dl_easy = 0;
     }
     if (dl_fp) {
+#if defined(COD2_X64)
+        /* Buffered writes can fail only when close flushes them. Do not let
+         * the engine rename an incomplete file after a successful transfer. */
+        if (fclose(dl_fp) != 0 && dl_status == DL_STATUS_DONE) {
+            dl_status = DL_STATUS_FAILED;
+            Com_Printf("DL_DownloadLoop: could not finish writing '%s'\n", dl_localName);
+        }
+#else
         fclose(dl_fp);
+#endif
         dl_fp = 0;
     }
     dl_running = 0;

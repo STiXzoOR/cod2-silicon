@@ -3308,7 +3308,12 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
                 float textY = rect[1] + (rect[3] - scaledHeight) * 0.5f + scaledHeight;
 #endif
                 float textX = rect[0] + rect[2] + 2.0f;
+#if defined(COD2_X64)
+                /* A talker absent from the rebuilt list has no owned name. */
+                UI_DrawText(num >= 0 ? sharedUiInfo.playerNames[num] : "", 32, font, textX, textY, *(int *)&rect[4], *(int *)&rect[5], scale, color, textStyle);
+#else
                 UI_DrawText(sharedUiInfo.playerNames[num], 32, font, textX, textY, *(int *)&rect[4], *(int *)&rect[5], scale, color, textStyle);
+#endif
             }
         }
         return;
