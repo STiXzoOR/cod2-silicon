@@ -1749,7 +1749,7 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
             const float *mtx = (const float *)dpvsG.viewProjectionMatrix;
             vec2_t screenVerts[65];
             float minX = 1.0f, minY = 1.0f, maxX = -1.0f, maxY = -1.0f;
-            float lastY = -1.0f;
+
             int nearClip = 0;
             for (i = 0; i < hullPointCount; i++) {
                 float x = portalVerts[i][0], y = portalVerts[i][1], z = portalVerts[i][2];
@@ -1769,12 +1769,12 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
                 if (sx > maxX) maxX = sx;
                 if (sy < minY) minY = sy;
                 if (sy > maxY) maxY = sy;
-                lastY = sy;
+
             }
             if (!nearClip) {
                 float minArea = (r_portalMinClipArea)->current.value;
-                /* Mac uses the last projected y here, rather than the maximum. */
-                float boundArea = (maxX - minX) * (lastY - minY) * 0.25f;
+                /* Mac 0xf21d1 retains maxY through the area calculation. */
+                float boundArea = (maxX - minX) * (maxY - minY) * 0.25f;
                 if (minArea > boundArea) {
                     clipChildren = 0;
                 } else {
