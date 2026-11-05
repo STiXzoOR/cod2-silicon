@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 348,
+      "unchecked": 347,
       "intentional": 3170,
       "equal": 4758,
-      "fixed": 1181
+      "fixed": 1182
     },
     "scopes": {
       "unassigned": 777,
@@ -166916,7 +166916,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read Mac VM_Execute recovery block 0x866fd-0x86717 (ClearVariableValue(tempVariable), then use tempVariable). Native generic error recovery has no equivalent dummy-lvalue restoration. The actual Mac longjmp entry zeroes opcode before dispatch; its comparison with native uncheckpointed C state remains unresolved. No equality inferred from Linux helper name."
+        "evidence": "Exact-symbol Mac VM_Execute has complete inline ClearVariableValue(tempVariable)/tempVariable operations at 0x866fd-0x86717 and 0x86ab5-0x86acc, identified by original scr_vm.cpp lines 298-299. Raw post-error table 0x3299d8 selects 0x866fd for opcodes 0x2d/0x2e; indirect recovery can retain ESI on direct paths to 0x86269, so table presence is not discarded as categorically unreachable. Their ordinary opcode bodies call external Scr_GetVariableField, however, and no enclosing live direct-error path selecting these dummy-field blocks or complete native equivalent was established. Normal longjmp scratch clearing is already fixed under the primary interpreter and does not by itself settle this helper. Remains unchecked; no Linux-only reconstruction used as authority. Source/binary audit only; no builds, tests or CI. Focused reachability follow-up found no supported in-tree interpreter entry with evaluate/script_loading set; entries themselves impose no restriction. Exact Scr_GetVariableField0x8b912 and Scr_Error0x87bd0 confirm ordinary field-helper errors return0 in those modes without RuntimeError/dummy dispatch; a live direct route selecting dummy-field recovery remains unproven. See fast-script-reachability.last.md; no source/build/test/CI change."
       },
       {
         "id": "linux:script/scr_vm.cpp:370:GetDummyObject",
@@ -166934,8 +166934,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Read Mac VM_Execute recovery blocks 0x86695-0x866b7 / 0x86a3d-0x86a5c (clear tempVariable then GetObjectA). Native generic recovery has no matching dummy-object restoration. Reachable error-state semantics remain unresolved because actual Mac longjmp resets opcode and native non-checkpointed C locals are indeterminate."
+        "status": "fixed",
+        "evidence": "Mac exact-symbol VM_Execute opcode0x26 checks self at0x85771-0x8578f, reports its failed field-object check through0x867b3/0x864a5, and reaches0x86269 without ESI reset if evaluate/script_loading permits return. Raw tables0x329b70 and0x3299d8 select0x86695-0x866b7, whose complete ClearVariableValue(tempVariable)/GetObjectA operation is independently identified by original scr_vm.cpp lines291-292. Native scr_vm.c opcode0x26 previously retained invalid objectId and pending error on that supplied state. Its native-only branch now preserves shared error policy first; only on return calls RuntimeError(current position,index,first message,dialog), then clears all3 error fields after return, clears tempVariable and obtains the dummy object, without changing top/position. Normal longjmp handling, opcode0x2b, other opcodes and documented builtin/setter checkpoint are unchanged. Current stock/CoD2x callers do not execute interpreter during these modes; wrappers themselves impose no exclusion, so lack of current production reachability does not erase the corrected input-state behavior. Source/binary review only; explicitly uncompiled and unexercised; no builds/tests/CI run. No tests added. OFF selected bytes and five inactive preprocessing/actual diagnostic-line configurations are identical to dc087a73; git diff --check passes. No whole-interpreter or remaining dummy-field recovery claim. Signed source/report commit ce3835bd; parent and independent source/binary review completed with no actionable findings. No compiled or runtime verification claimed."
       },
       {
         "id": "mac:0x00081844",
