@@ -32504,8 +32504,8 @@
     "evidence": "Mac0x24994: restored priority0xffff and initialize1 vector begin/end/capacity zeroing, plus initialize0 operator-delete ownership for non-null vector begin. Trivial four-byte element-destruction loop has no observable work; native stores pointers at native width. Compiled and reviewed; empty-vector constructor/atexit ownership not runtime exercised."
   },
   "mac:0x00118aa6": {
-    "status": "unchecked",
-    "evidence": "Mac0x118aa6 initializes embedded shader map; inspected lookup tail0x134129\u20130x134353: .vs appends a (card2:n), .ps appends e, successful result contains key::payload, and missing key returns success0 with null shader while clearing other outputs. Actual readonly pending51608e5 cache selects extracted vsa/pse programs, appends a CTAB marker and returns0x88760b59 for missing/invalid cache; absent-cache route still uses generic HLSL heuristics. Complete embedded table/vendor/key/error-contract parity is unproven, not excused by future Metal plans. No shared shader edit or parity claim."
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x118aa6 initializer and 0x134129 lookup/output paths plus sole native material caller: 1042 unique entries; all 417 selected ARB payloads and 417 compact CTAB tables match the original used data (2605 records), Steam extraction and installed cache. Native vendor0 selects vsa; omitted vsn programs belong to the unselected NVIDIA backend. External files, CTAB marker, unused-output removal and documented approximate fallback intentionally replace the embedded map; setup offers the warned approximation and direct launches also log it when cache is absent. Corrected filename-tail/key construction (0x103cb1/0x134169), S_OK/null miss (0x134325), and final string size (0x13423f). Actual Apple object and dedicated Release compiled; existing cache fixture passed ASan/UBSan; no shader-rendering equivalence claimed for fallback."
   },
   "mac:0x000fb7e8": {
     "status": "intentional",
