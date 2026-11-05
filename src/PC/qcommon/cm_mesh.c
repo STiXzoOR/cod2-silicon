@@ -799,7 +799,11 @@ static void CM_MESH_REGPARM3_ABI CM_TraceThroughAabbTree_r(const traceWork_t *tw
 
                         float s_val = hitX * tri[i].svec[0] + hitY * tri[i].svec[1] +
                                       hitZ * tri[i].svec[2] - tri[i].svec[3];
+#if defined(COD2_X64)
+                        if (s_val < -0.001f)
+#else
                         if (!(s_val >= -0.001f))
+#endif
                             continue;
                         if (s_val > 1.001f)
                             continue;
