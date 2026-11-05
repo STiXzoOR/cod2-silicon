@@ -614,7 +614,12 @@ void CDirect3DCubeTexture_UpdateOpenGLSurfaces(const CDirect3DCubeTexture *_this
 
 #if defined(COD2_X64)
     extern void CDirect3DCubeTexture_UpdateOpenGLSurfacesNative(const CDirect3DCubeTexture *, int);
+    CDirect3DCubeTextureClean *tex = (void *)_this;
+    GLint previous;
+    glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP, &previous);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex->texIDStorage);
     CDirect3DCubeTexture_UpdateOpenGLSurfacesNative(_this, 0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, previous);
 #else
 
     (void)_this;

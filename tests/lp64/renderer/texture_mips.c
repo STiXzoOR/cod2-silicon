@@ -10,11 +10,15 @@ extern DWORD CDirect3DTexture_GetLevelCount(const CDirect3DTexture *);
 extern GLuint CDirect3DTexture_GetGLName(const void *);
 extern void ZN16CDirect3DTextureD1Ev(void *);
 
-void *vtbl_CDirect3DTexture_secondary[3];
-void *vtbl_CDirect3DCubeTexture[1];
-bool g_NoTextureID, g_WarmOff;
+Bool g_NoTextureID, g_WarmOff;
+/* Isolate generated ABI import data; exercise real vertex-array initialization. */
+static void *fixtureArrayVtables[16];
+void *imp___ZTV7CBaseVA = fixtureArrayVtables;
+void *imp___ZTV11CColorArray = fixtureArrayVtables;
+void *imp___ZTV20CSecondaryColorArray = fixtureArrayVtables;
+void *imp___ZTV12CNormalArray = fixtureArrayVtables;
+void *imp___ZTV12CVertexArray = fixtureArrayVtables;
 void __ZdlPv(void *pointer) { free(pointer); }
-GLuint CDirect3DCubeTexture_GetGLName(const void *texture) { (void)texture; return 0; }
 int MacDisplay_GetCardType(void) { return 0; }
 int MacDisplay_IsGLExtensionSupported(const char *extension) { (void)extension; return 1; }
 UINT32 MacDisplay_GetPCPixelShaderVersion(void) { return 0; }

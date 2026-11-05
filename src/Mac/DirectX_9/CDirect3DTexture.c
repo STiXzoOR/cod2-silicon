@@ -613,7 +613,12 @@ void CDirect3DTexture_UpdateOpenGLSurfaces(const CDirect3DTexture *_this)
 
 #if defined(COD2_X64)
     extern void CDirect3DTexture_UpdateOpenGLSurfacesNative(const CDirect3DTexture *, int);
+    CDirect3DTextureClean *tex = (void *)_this;
+    GLint previous;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &previous);
+    glBindTexture(GL_TEXTURE_2D, tex->texIDStorage);
     CDirect3DTexture_UpdateOpenGLSurfacesNative(_this, 0);
+    glBindTexture(GL_TEXTURE_2D, previous);
 #else
 
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
