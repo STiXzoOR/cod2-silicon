@@ -51,3 +51,12 @@ All six entries remain unchecked. No production defect was established, and no s
 Stock and CoD2x Release objects for both translation units compiled from their configured client commands. Existing message and transport fixtures and the four existing message/Huffman regression inputs passed in both configurations under low-priority execution with at most two build jobs. These checks exercise the existing codecs, not the absent standalone interfaces. No tests, cases or assertions were added; no full CI or replay ran. Source is byte-identical to base a52e5e27175e86cf0ee0d6dc7c571ab848261ac5, so legacy/OFF diagnostics and line expansions are unchanged.
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-message-remaining.noindex/`.
+
+
+## Original helper provenance
+
+Retained original1.0 IDB bytes now anchor all six remaining operations in original1.3: used-bit count at 0x8067c3e, byte-angle write at 0x806831c, byte-key write/read at 0x80687fa/0x8068838, and Int64 write/read at 0x8068138/0x80684ac. The original byte-key writer compares low bytes and emits a separate byte payload; its reader truth-tests the change bit, reads/XORs/truncates a byte, and otherwise returns the old full value. These complete contracts remain distinct from seven-bit usercmd paths. The byte-angle body has separately verified 256/360 constants; its Linux x87 arithmetic is identity evidence only.
+
+The original Int64 writer checks eight-byte capacity once and commits cursize after both payload words. Its endian callback chain is now traced through original initialization and Long64NoSwap. Fresh exact Mac Swap_Init at 0x292fe and Long64NoSwap at 0x2850a corroborate the initialized little-endian representation. Exact Mac MSG_WriteData at 0x173554 provides a compatible generic pointer/count operation, but no observed scalar-by-value adapter identifies the complete Int64 API. That gap remains open after independent review. The reader has a separate concrete distinction: original overflow returns zero without cursor advance, while Mac MSG_ReadData at 0x173626 fills the output with FF. Neither hypothetical composition closes the row.
+
+All six remain unchecked. This follow-up adds original body/caller evidence only; no source, settled verdict, native hardening or runtime claim changed. No compilation, tests, CI or replay ran.
