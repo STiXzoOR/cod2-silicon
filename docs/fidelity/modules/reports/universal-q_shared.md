@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**Current: 66/89 reconciled: 57 equal, 6 fixed, 3 intentional; 23 unchecked.**
+**Current: 66/89 reconciled: 56 equal, 7 fixed, 3 intentional; 23 unchecked.**
 
 Original pass: 63/90 reconciled: 54 equal, 6 fixed, 3 intentional; 27 unchecked. Mac 1.3 is the authority. Every assigned row and every live shared-source function was inspected. Linux definitions were read only for identity and intent.
 
@@ -86,3 +86,11 @@ still required. I_strnicmpInline remains without an original header-copy
 mapping. All 23 previously unchecked rows remain unchecked, and existing
 resolved evidence is preserved. No source change, compilation, test, CI, replay
 or runtime exercise was performed for this module.
+
+## Defined float byte reversal and retained adapter gaps
+
+Fresh complete provider comparison found a defined-input arithmetic defect in FloatReadSwap. Mac0x28516–0x2854d builds the reversed32-bit word using byte lanes, then loads it as float. Native shifted a signed byte value left24; for values at least0x80 that operation was undefined. Input raw0x00000080 demonstrates the required result,0x80000000 (negative zero), without any invalid storage assumption. The native-only branch now uses unsigned shifts/OR and an unsigned union word. The exact permutation and float reinterpretation stay intact. No runtime failure or changed compiler output is claimed.
+
+The original FloatSwap0x80b7834, FloatNoSwap0x80b7868 and its FloatIdentity provider0x80b933a now have exact executable identities. Their instruction-level representation operations overlap the Mac raw-int-input providers, but that does not establish the missing float-input consumer/adapter or permit C/arm64 callback interchange. Independent review rejected those three closures; both q_shared rows and the separate math header row remain unchecked. FP exceptional representations are not newly certified by source-level union return.
+
+Independent review accepted the concrete FloatReadSwap repair. Manual compilation of changed q_shared.c passed in stock/CoD2x client and dedicated configurations; reviewed source hash3b7767d708c0 matches those receipts. Conditional OFF bytes and five inactive preprocessing line/assert maps are unchanged. No tests, CI, replay, full build or runtime exercise occurred. Private evidence: recon-float-provider7.noindex and manual-float-provider-compile-3b7767d708c0.noindex.

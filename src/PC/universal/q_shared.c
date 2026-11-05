@@ -185,13 +185,22 @@ float FloatReadSwap(int n)
     volatile union {
         float f;
         int i;
+#if defined(COD2_X64)
+        unsigned int bits;
+#endif
     } u;
     byte b1, b2, b3, b4;
     b1 = n & 255;
     b2 = (n >> 8) & 255;
     b3 = (n >> 16) & 255;
     b4 = (n >> 24) & 255;
+#if defined(COD2_X64)
+    /* Mac reverses raw bit lanes, including the sign bit, without signed overflow. */
+    u.bits = ((unsigned int)b1 << 24) | ((unsigned int)b2 << 16)
+           | ((unsigned int)b3 << 8) | (unsigned int)b4;
+#else
     u.i = ((int)b1 << 24) + ((int)b2 << 16) + ((int)b3 << 8) + b4;
+#endif
     return u.f;
 }
 
