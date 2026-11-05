@@ -25488,12 +25488,12 @@
     "evidence": "Mac 0x2ee79c: Read coalesced vector<unsigned long> erase against CFence.c native GLuint vector: memmove tail over [first,last), reduce end by erased element count, return first. GLuint remains32-bit on LP64, as the original fence-ID element was."
   },
   "mac:0x0001a7ba": {
-    "status": "unchecked",
-    "evidence": "Mac 0x1a7ba: Read constructor and selected native CreateDevice->4096-byte static storage->CDirect3DDevice_Init path. Existing CDirect3DDevice_CDirect3DDevice only sets vtable/refcount; Init initializes a different typed DeviceImpl and many defaults differ. Exact default/state/Reset equivalence has not been established. Parent retains the broader device-initialization audit; no constructor change made here."
+    "status": "fixed",
+    "evidence": "Read whole exact C2 constructor0x1a7ba-0x1ab60: ownership fields, streams/index sentinel, blend/render defaults, five identity matrices/dirty bits, zero material/private state, validation flags, Reset call and initial reference. Native constructor now sets typed context/adapter/type and invokes complete native Reset instead of only installing vtable/refcount; deterministic native allocation replaces unspecified original bytes. Existing18-case depth fixture exercised mapped Init defaults, but full constructor is compiled and reviewed only."
   },
   "mac:0x0001ab62": {
-    "status": "unchecked",
-    "evidence": "Mac 0x1ab62: Read constructor and selected native CreateDevice->4096-byte static storage->CDirect3DDevice_Init path. Existing CDirect3DDevice_CDirect3DDevice only sets vtable/refcount; Init initializes a different typed DeviceImpl and many defaults differ. Exact default/state/Reset equivalence has not been established. Parent retains the broader device-initialization audit; no constructor change made here."
+    "status": "fixed",
+    "evidence": "Read whole exact C1 constructor0x1ab62 onward and compared it with C2 and native shared constructor->Reset path. Replaced partial vtable/refcount body with typed allocation/state initialization, full Reset/default resource setup and initial refcount; native private cache/stream metadata and singleton/context ownership replace ILP32 layout. Existing18-case depth fixture exercised Init defaults; full constructor compiled and reviewed, not exercised."
   },
   "mac:0x002ebb82": {
     "status": "intentional",
@@ -28232,8 +28232,8 @@
     "evidence": "Read Mac 0x2ed49c in ordinary text or __textcoal_nt and native CDirect3D_CheckDeviceType: returns zero without changing caller outputs or device state."
   },
   "mac:0x0000dc82": {
-    "status": "unchecked",
-    "evidence": "Original 0xdc82 allocates a 0x1bcc device and runs the full constructor. Native selected creation uses static 4096 storage (sizeof(DeviceImpl) asserted), context-before-Init SDL sequencing and explicit backbuffer/swapchain attachment. Windowed/interval words and bounded defaults repaired, but default depth surface, original per-stage/vector/cache initialization and full Reset responsibilities remain incomplete; do not claim constructor retirement."
+    "status": "fixed",
+    "evidence": "Mac 0xdc82 invokes the complete device constructor. Native creation now reaches typed constructor->Reset, decodes the real fourteen-word presentation protocol, attaches owned backbuffer/swapchain/default texture and rejects a second live static device. SDL creates the current context first; the retained singleton 4096-byte allocation is never freed. Native backbuffer staging texture and separate renderTarget reference support selected FBO copies/owning setters. Compiled and reviewed; full creation not exercised. Accepted native MacDisplay0x46f8 nonmultisample policy is retained: producer negotiation falls back to0, and direct nonzero sample/quality requests are rejected as unavailable."
   },
   "mac:0x0000d764": {
     "status": "fixed",
@@ -28592,8 +28592,8 @@
     "evidence": "Read Mac 0x2ed9ee in ordinary text or __textcoal_nt and native CDirect3DDevice_MultiplyTransform: returns zero without changing caller outputs or device state."
   },
   "mac:0x000157c0": {
-    "status": "unchecked",
-    "evidence": "Original 0x157c0 updates debug texture/shadow-cookie views, swaps context, updates CMemoryBuffer fences and increments COpenGL frame count. SDL swap/screenshot/trace provider is selected, but missing frame/fence/debug responsibilities are not proven replaced."
+    "status": "fixed",
+    "evidence": "Read exact Mac Present 0x157c0-0x1580c: publish show-texture ID, optional single texture and shadow-cookie viewers, swap, deferred CMemoryBuffer update, frame increment. Restored viewers under the actual device context and mapped their SetupView backbuffer through native FBO dispatch; preserved screenshot/trace consumers and swap->update->increment order. Compiled and reviewed; Present/debug viewer rendering not exercised."
   },
   "mac:0x002edaf8": {
     "status": "equal",
@@ -28608,8 +28608,8 @@
     "evidence": "Read Mac 0x000131dc and selected native body: decrement count and invoke deleting-destructor table slot 120 at zero."
   },
   "mac:0x00019c7c": {
-    "status": "unchecked",
-    "evidence": "Original 0x19c7c tears down/recreates context, default surfaces, swapchain, stage caches, streams/shaders/lights/matrices and capability limits. Native SDL SetMode intentionally preserves context and fixes interval/backbuffer dimensions, but required remaining device/cache reset behavior is unresolved. Current producer supplies native 14-word protocol (windowed7, interval11, refresh12), not imported original struct offsets."
+    "status": "fixed",
+    "evidence": "Read full exact Mac Reset 0x19c7c-0x1a7b8 and decoded depth-format jump table 0x327034. Restored owned resource/cache/stream metadata reset, identity transforms, zero material/viewport cache, eight directional lights, exact format21 default1x1 texture word0x000000ff, backbuffer/swapchain and COpenGL Init. Native fourteen-word protocol replaces ILP32 offsets; SDL context is retained for shader objects and depth attachment is transactionally replaced for16/24/32 bits. Default COM depthBuffer staysNULL as Mac constructor/Reset prove; native depthStencilDetached=0 keeps selected implicit context depth active. This is an intentional FBO mask/ownership boundary, not literal Mac pointer-mask parity. Device refcount survives Reset. Compiled and reviewed; full Reset/depth-format replacement not exercised. Accepted native MacDisplay0x46f8 nonmultisample policy is retained: producer negotiation falls back to0, and direct nonzero sample/quality requests are rejected as unavailable."
   },
   "mac:0x00013a4a": {
     "status": "fixed",
@@ -30432,8 +30432,8 @@
     "evidence": "Mac 0x20f38: restored vertex-array enable/pointer guards and generic attribute0 validation; actual native CVertexArrays provider inspected; compiled and reviewed, not exercised."
   },
   "mac:0x00021c10": {
-    "status": "unchecked",
-    "evidence": "Mac 0x21c10: substantial empty-body restoration compiled/reviewed (extensions, GL defaults, owned lights/arrays/texture units/VAO). Original 96 shader-constant dirty caches and remaining private cache provider are not proven; native fixed16 unit storage differs from dynamic Mac vector. Selected Device has no Init/Shutdown caller beyond extern declarations. Full native initialization/lifecycle parity is not established."
+    "status": "fixed",
+    "evidence": "Read entire exact Mac Init 0x21c10-0x2294b: extension flags (0x800 is ATI reversed-components capability), fixed state/light/texture/array defaults, sixteen generic arrays, shader-cache initialization and VAO reset. Native lifecycle now actually calls Init; AUX/front/back clears use selected FBO mapping. Original96 command-number records are replaced by real selected unconditional ARB constant uploads (Mac fragment0x1b778 and vertex0x2edf24); retained-context Init explicitly zeros supported environment registers rather than installing dead cache state. Fixed16 texture storage remains bounded by actual selected limits. Compiled and reviewed; full Init GPU sequence not exercised."
   },
   "mac:0x00021ba6": {
     "status": "fixed",
@@ -31456,12 +31456,12 @@
     "evidence": "Read Mac 0x112640: Read normal C1 constructor separately: zero binding/range words, construct twelve conventional arrays with derived vtables, initialize sixteen generic records validation=1, disabled, size=4, float type, nonnormalized, stride/pointer zero. Native typed constructor matches; exact CBase constructor entry was restarted."
   },
   "mac:0x00022a0e": {
-    "status": "unchecked",
-    "evidence": "Read Mac 0x22a0e: Read original COpenGL C2 and actual pending GL cd687d6 constructor. Typed native singleton intentionally has no public C++ vptr; no proven replacement for original instance-matrix SetIdentity at offset 0x78. Device 9f05cde directly loads matrices and GL has per-unit texture matrices, but neither establishes this constructor contract. No unused shared fields invented."
+    "status": "equal",
+    "evidence": "Read exact COpenGL C2 body0x22a0e-0x22b6d including exception-only base cleanup. Compared native array base/vtable initialization, modelView identity, empty texture-unit vector represented by count, self-linked texture/VAO lists, zero vertex-program selection and all16 generic stream defaults. Private LP64 cache storage replaces the unconsumed C++ object layout."
   },
   "mac:0x00022b6e": {
-    "status": "unchecked",
-    "evidence": "Read Mac 0x22b6e: Read original COpenGL C1 and actual pending GL cd687d6 constructor. Typed native singleton intentionally has no public C++ vptr; no proven replacement for original instance-matrix SetIdentity at offset 0x78. Device 9f05cde directly loads matrices and GL has per-unit texture matrices, but neither establishes this constructor contract. No unused shared fields invented."
+    "status": "equal",
+    "evidence": "Read exact COpenGL C1 body0x22b6e onward and compared with C2 plus native shared constructor. Base array/vtable setup, modelView identity, empty texture-unit storage, both self-linked lists, zero vertex program and16 generic array records match the mapped native initialization contract; only C++ exception unwinding/object representation is replaced by explicit native storage."
   },
   "mac:0x0001fede": {
     "status": "fixed",
@@ -32448,16 +32448,16 @@
     "evidence": "Mac0xd61e: read priority0xffff guard, initialization1 derived-vtable stores and destruction0 reverse-order base-vtable stores. Native matches using widened pointers and two native Itanium header slots; compared each vtable method ordering against coalesced entries."
   },
   "mac:0x00019b92": {
-    "status": "unchecked",
-    "evidence": "Mac0x19b92 deleting device destructor releases five COM objects, shuts down COpenGL before context release, destroys instance-vector storage and deletes this. Actual readonly pending9f05cde D0 only invokes D1 and does not delete this; D1 has partial native ownership cleanup but lacks the complete Mac shutdown/vector contract. Cross-provider lifetime equivalence unresolved; no shared edit or parity claim."
+    "status": "intentional",
+    "evidence": "Mac deleting D0 at0x19b92 releases swapchain/backbuffer/current depth/default textures, shuts down COpenGL, releases context, frees stage vector and deletes its heap allocation. Native D0 delegates to the now-complete D1 teardown but does not free statically owned4096-byte singleton storage; selected Release dispatches D0 and the shim unregisters that address. Separate native renderTarget/depth ownership is balanced and stream metadata reset precedes context destruction. Compiled and reviewed; complete destruction not exercised."
   },
   "mac:0x0001af0a": {
-    "status": "unchecked",
-    "evidence": "Mac0x1af0a base device destructor releases five COM objects, shuts down COpenGL before context release and deletes vector storage. Actual readonly pending9f05cde D2 forwards to D1; its native global texture cache is a partial replacement, while full COpenGL shutdown/instance-vector ownership mapping remains unresolved. No parity claim."
+    "status": "fixed",
+    "evidence": "Read exact Mac base destructor D2 at0x1af0a and its vector cleanup; native shared D1 now releases lifecycle resources/current target references/default textures and global owned texture references while the context is current, resets borrowed stream metadata, runs COpenGL Shutdown/deferred cleanup, releases SDL context and frees stage storage. Native context/ownership adaptations are documented; no stream/shader COM references are invented. Compiled and reviewed; full destruction not exercised."
   },
   "mac:0x0001aff2": {
-    "status": "unchecked",
-    "evidence": "Mac0x1aff2 complete device destructor releases five COM objects, calls COpenGL shutdown before context release and deletes vector storage. Actual readonly pending9f05cde D1 releases swapchain/backbuffer and native texture-cache references then context; full original resource/shutdown contract is not present or proven replaced. Shared device ownership remains unresolved; no parity claim."
+    "status": "fixed",
+    "evidence": "Read exact Mac complete destructor D1 at0x1aff2-0x1b0d5. Restored missing default/current surface and default texture cleanup, COpenGL Shutdown before context release and native stage/global texture/cache cleanup. Selected setters own current targets separately; lifecycle balances those references. Static device storage survives D0 and stream metadata is freed before the context. Compiled and reviewed; full destruction not exercised."
   },
   "mac:0x00019324": {
     "status": "unchecked",
