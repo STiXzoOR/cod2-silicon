@@ -20,6 +20,8 @@ Updated 2026-11-05.
 
 Mac's synthetic `#eval`, sign, and stringizing tokens copy unwritten stack fields. Native retains initialized fields; stringized tokens now use the same initialized synthetic-token path. Mac's failed token-handle read also copies unwritten stack data, so native retains its existing success-only output copy. The line-handle wrapper still copies the token on failure, but initializes it first. Inspected UI numeric parser callers check failure before consuming output.
 
+Independent review found a combined-unit storage boundary: the corrected script reader can produce a 1024-byte primitive, with its NUL in the enclosing token's type field, while the public token has only a 1024-byte string. Both native public wrappers now inspect only the input string's declared extent and copy at most 1023 bytes plus a NUL. This intentionally truncates that exceptional primitive instead of overflowing the public string. Ordinary terminated tokens retain their content. No current production writer enabling primitive mode was found; the explicit bound nevertheless preserves defined storage at this public API.
+
 Mac stringizing can concatenate to 1024 characters and write its terminating NUL into the adjacent `token.type` field. The caller provides a declared stack `token_t`, with a 1024-byte string and no extra string capacity. Native bounds concatenation and termination to that string instead of copying the overwrite. This is an intentional adaptation, not byte equivalence at that boundary.
 
 Mac date/time builtins free the result of `ctime` at 0xbf75d and 0xbf862. Native `ctime` returns libc-owned static storage, not a `GetMemory` allocation. Native omits those invalid frees while retaining formatting and token types.
