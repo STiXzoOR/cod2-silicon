@@ -31,7 +31,9 @@ void *imp___ZTV14CTexCoordArray = vtables;
 void *imp___ZTV7CBaseVA = vtables;
 void *imp___ZTV10COpenGLVAO = vtables;
 
+#define __static_initialization_and_destruction_0 fixture_gl_static_init
 #include "Mac/DirectX_9/COpenGL.c"
+#undef __static_initialization_and_destruction_0
 #include "Mac/DirectX_9/COpenGLVAO.c"
 #include "Mac/DirectX_9/CVAOPacket.c"
 fnptr_t vtbl_CVAOPacket[3];
@@ -67,6 +69,8 @@ int main(void)
     COpenGLBindingList *globalHead = COpenGL_GetVAOBindingList(imp__ZN7COpenGL7sOpenGLE);
     COpenGLVAOBindingNode *node = globalHead->next;
     assert(node->vaoId == vao.mpVAOID && node->next == (void *)globalHead);
+    node->prev->next = node->next;
+    node->next->prev = node->prev;
     free(vao.mpVAOID); free(node);
     puts("renderer texture-unit, VAO and map-node layouts: passed");
 }

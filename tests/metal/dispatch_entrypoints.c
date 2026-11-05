@@ -48,6 +48,9 @@ static unsigned char outputObject;
 static D3DRECT rects[2];
 static unsigned int callbackCalls;
 
+/* Dispatch must return before this Classic display dependency is reached. */
+int MacDisplay_GetNumModes(void) { abort(); }
+
 static bool queryCallback(void)
 {
     ++callbackCalls;
