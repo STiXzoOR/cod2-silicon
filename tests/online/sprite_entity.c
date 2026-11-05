@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static char tessStorage[64];
@@ -26,6 +27,11 @@ static void RB_AddLineDx7_impl(const vec_t *a, const vec_t *b, float w, D3DCOLOR
 { (void)a; (void)b; (void)w; (void)c; (void)s0; (void)t0; (void)s1; (void)t1; }
 static void RB_AddLine_impl(const vec_t *a, const vec_t *b, float w, D3DCOLOR c, float s0, float t0, float s1, float t1)
 { (void)a; (void)b; (void)w; (void)c; (void)s0; (void)t0; (void)s1; (void)t1; }
+#if defined(COD2_X64)
+/* This fixture exercises type 4; restored type 9 remains outside its scope. */
+static void RB_TessCylinderNative(const GfxEntity *re, int isDx7)
+{ (void)re; (void)isDx7; abort(); }
+#endif
 #include "sprite_entity_source.h"
 int main(void)
 {
