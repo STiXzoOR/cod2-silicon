@@ -52,7 +52,7 @@ Mac/Tools/CCircularBuffer,8,2,3,3,0
 Mac/Tools/MacAppleEvents,15,0,0,15,0
 Mac/Tools/MacBuilder,18,0,0,18,0
 Mac/Tools/MacDebug,1,1,0,0,0
-Mac/Tools/MacDisplay,47,2,1,42,2
+Mac/Tools/MacDisplay,47,2,1,44,0
 Mac/Tools/MacExceptions,7,0,1,6,0
 Mac/Tools/MacFastCopy,1,0,1,0,0
 Mac/Tools/MacFeatures,5,0,1,4,0
