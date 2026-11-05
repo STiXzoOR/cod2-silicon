@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**59/77 reconciled: 43 equal, 10 fixed, 6 intentional; 18 unchecked.** Read all 40 Mac function bodies and anchored 18 Linux-only helper identities to their inlined Mac callers. Linux names identify ledger rows; Linux implementation text was not used as authority. All source changes are under `COD2_X64`; the legacy guard comparison passes in all ten inactive configurations.
+**60/77 reconciled: 44 equal, 10 fixed, 6 intentional; 17 unchecked.** Read all 40 Mac function bodies and anchored Linux-only helper identities to their inlined Mac callers. Linux names identify ledger rows; Linux implementation text was not used as authority. All source changes are under `COD2_X64`; the legacy guard comparison passes in all ten inactive configurations.
 
 ## Corrections
 
@@ -57,3 +57,11 @@ Native l_precomp.c:2658-2666 and its PC_UnreadSourceToken/PC_AllocTokenCopy owne
 The other 18 identities remain unchecked after reviewing original SO/SLINE/FUN and lexical scopes, the full symbol inventory and actual native owners. PC_FindDefineInSource traverses hashnext and is the hashed lookup, not proof of the distinct linear PC_FindDefine. Source-token queue copies do not identify PC_UnreadLastToken or PC_UnreadToken wrappers. Fresh source initialization and global-define copying do not establish the include-path setter, custom punctuation setter, memory loader or global-define management APIs. Parameter/local metadata without an executable start is not a body. No absence-only closure was made.
 
 Both assigned production translation units compiled as actual configured arm64 Release client objects for stock and CoD2x, with background priority and at most two jobs. Existing narrowing warnings remain. Triage and constant checks were used only as heuristics; exact-symbol disassembly and binary literals support the inline comparison. No focused botlib runtime fixture exists in this checkout. No new tests, cases or assertions, full CI, replay, push or production changes were made. The inline behavior is compiled and reviewed, not exercised. With source unchanged, all inactive source and actual __LINE__ expansions remain unchanged. Private evidence is in `~/Library/Application Support/CoD2-native-decomp/recon-botlib-remaining.noindex/`.
+
+## Original caller provenance — 2026-11-05
+
+`PC_UnreadToken` is now equal for its complete surviving use in `PC_ReadToken`. The earlier rejection lacked an original caller mapping; that mapping is now established. The retained Linux 1.0 address database identifies the wrapper at 0x0804f3fc and its caller at 0x0804ecb0. The original Linux 1.3 ELF independently confirms the same call graph: the non-string lookahead branch calls the two-argument wrapper at 0x0804eff3, targeting 0x0804f5ec; that complete wrapper forwards both arguments to the source-token prepend provider at 0x0804ac68. Linux supplies identity and call context only.
+
+The authoritative Mac `PC_ReadToken` reads lookahead into its separate `newtoken` local at 0xc0531–0xc0545 and dispatches non-string lookahead into the complete inline operation at 0xc0555–0xc05a8. It allocates 0x440 bytes, checks allocation, copies the whole token, clears the next link, increments numtokens, then prepends to source->tokens and resumes the caller at 0xc0480. Allocation failure calls fatal Com_Error(0) with EXE_ERR_OUT_OF_MEMORY at 0xc0696–0xc06a5. Original STABS records the `newtoken` local and the nested token-copy scope in this same owner. Native `PC_ReadToken`, `PC_UnreadSourceToken` and `PC_AllocTokenCopy` implement this complete operation with sizeof(token_t) and typed links.
+
+This closes the emitted wrapper operation through a concrete original caller; it does not invent a standalone exported Mac API or establish `PC_UnreadLastToken`'s cached-token selection. The other 17 identities stay unchecked. All prior resolved verdicts remain unchanged. No source defect or source edit was needed. No compilation, tests, CI or replay ran, and no new runtime verification is claimed. Private original-address and exact-entry evidence is retained in `CoD2-native-decomp/recon-provenance-helpers4.noindex`.
