@@ -161325,7 +161325,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only two-argument wrapper has no Mac symbol or native definition/call under this name. The three-argument underscore implementation is verified, but no concrete Mac inline caller was identified for this distinct wrapper; do not infer identity from the Linux body."
+        "evidence": "Linux-only two-argument wrapper has no Mac symbol or native definition/call under this name. The three-argument underscore implementation is verified, but no concrete Mac inline caller was identified for this distinct wrapper; do not infer identity from the Linux body. Follow-up: exact Mac Scr_FindAnim 0x9c1e8-0x9c1fe and AnimTreeParseInternal 0x9c380-0x9c393 pass allocation type 4 to the three-argument provider; native does likewise. These concrete consumers do not identify the separate two-argument type-6 wrapper described by the reconstruction."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:501:SL_GetLowercaseStringOfLen",
@@ -161854,7 +161854,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only from/to user-bit transfer loop has no Mac symbol or native definition/call under this name. No concrete Mac inline caller has been established; the Linux reconstruction alone cannot establish Mac identity or omission."
+        "evidence": "Linux-only from/to user-bit transfer loop has no Mac symbol or native definition/call under this name. No concrete Mac inline caller has been established; the Linux reconstruction alone cannot establish Mac identity or omission. Follow-up: exact Mac SL_ShutdownSystem 0x43784-0x43803 clears selected user bits and releases references with restart-on-mutation; SL_TransferRefToUser 0x42b6a-0x42b98 handles one string and may decrement its reference count. Neither complete owner is the unresolved all-strings from/to user-bit transfer operation."
       },
       {
         "id": "mac:0x00043ccc",
@@ -161966,7 +161966,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only pointer/string setter has no Mac symbol or native definition/call under this name. No concrete Mac inline caller has been identified, so its distinct remove-old/intern-new semantics remain unverified."
+        "evidence": "Linux-only pointer/string setter has no Mac symbol or native definition/call under this name. No concrete Mac inline caller has been identified, so its distinct remove-old/intern-new semantics remain unverified. Follow-up: exact Mac Scr_SetString 0x43804-0x4383f takes a numeric string ID, adds its reference before releasing the prior ID, then stores it. That complete provider does not identify the separate char-pointer setter and its release-old/intern-new ordering."
       },
       {
         "id": "mac:0x00043914",
@@ -165556,7 +165556,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Inspected assigned Linux row for Scr_FindAllVariableField, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. A same-named native implementation exists in scr_debugger_eval.c outside this unit, but its primary-reference identity remains unresolved."
+        "evidence": "Inspected assigned Linux row for Scr_FindAllVariableField, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. A same-named native implementation exists in scr_debugger_eval.c outside this unit, but its primary-reference identity remains unresolved. Follow-up: native scr_debugger_ui_watch.c:902-932 uses both count and fill calls; scr_debugger_eval.c:490-511 writes child IDs after a type gate. This is a live feature-gated consumer, not evidence for declaring the API absent or superseded. Mac has only the absolute-zero .eh signature; no original complete enumeration/output contract was established, so no patch is inferred from the Linux reconstruction."
       },
       {
         "id": "linux:script/scr_variable.cpp:3899:Scr_FindArrayIndex",
@@ -165899,7 +165899,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Inspected assigned Linux row for Scr_GetEntClassId, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+        "evidence": "Inspected assigned Linux row for Scr_GetEntClassId, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. Follow-up: exact Mac Scr_GetEntityIdRef 0x8889e-0x888c3 returns a packed entity/class-number pair and never indexes scrClassMap.charId. Native preserves that packed provider. Neither it nor the inverse Scr_GetClassnumForCharId establishes the complete entity-to-class-character operation."
       },
       {
         "id": "linux:script/scr_variable.cpp:2787:Scr_GetEntNum",
@@ -165918,7 +165918,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Inspected assigned Linux row for Scr_GetEntNum, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+        "evidence": "Inspected assigned Linux row for Scr_GetEntNum, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. Follow-up: exact Mac Scr_GetEntityIdRef 0x8889e-0x888c3 combines the 16-bit entity number with class number into scr_entref_t. Ordered STABS assigns its own original lines 4185/4190/4197/4198, not a separately identified getter. This concrete packed-result owner does not establish the standalone integer-result API."
       },
       {
         "id": "mac:0x0008b3e6",

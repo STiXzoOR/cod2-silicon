@@ -45,3 +45,30 @@ Integrated source `dd6a421` passed both dedicated builds and every local macOS C
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. Those unchanged traces do not establish that every corrected edge was exercised. Allocation failures, debugger/error edges and other unreached paths remain compiled and reviewed.
 
 Generic VM recovery, allocation-dependent notify state and missing helper identities remain explicitly unchecked where evidence was insufficient. No undefined native state was introduced to claim parity. Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile; preprocessing checks are not binary-byte parity.
+
+## Remaining identity follow-up, 2026-11-05
+
+All eleven unresolved variable helpers remain unchecked. Exact-symbol review
+rejects a tempting getter substitution: `Scr_GetEntityIdRef` at
+0x8889e–0x888c3 returns the packed entity number and class number. Its ordered
+STABS records identify its own original source lines 4185, 4190, 4197 and 4198.
+The body does not establish either the standalone integer-result `Scr_GetEntNum`
+API or the class-character lookup `Scr_GetEntClassId`; it never reads
+`scrClassMap.charId`. The inverse class-character lookup does not supply the
+latter operation either.
+
+The optional debugger's `Scr_FindAllVariableField` is a live implementation,
+with count and fill calls in `scr_debugger_ui_watch.c:902–932`. Its native body
+at `scr_debugger_eval.c:490–511` enumerates child IDs after a type gate. The Mac
+absolute-zero exception symbol supplies only a signature, not the original
+complete enumeration/output contract. Its presence in native code is neither
+closure evidence nor a reason to implement the Linux reconstruction's different
+operation. The other eight missing variable identities retain their existing
+evidence; no new executable mapping was found.
+
+No source, fixture, or established verdict changed. No compilation, CI, tests,
+or replay ran. This bounded identity investigation establishes no new runtime
+coverage. Private exact-symbol bodies, ordered symbol metadata and the full
+546-row unchanged-or-refined script packet are in
+`CoD2-native-decomp/recon-identity-script3.noindex` and the orchestration
+`units/identity-script3.ledger.json`.
