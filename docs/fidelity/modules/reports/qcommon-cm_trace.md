@@ -48,3 +48,9 @@ cases remain compiled and reviewed, not specifically exercised. Five inactive
 source configurations and exact `unifdef -UCOD2_X64` output match the base;
 this source has no `__LINE__` uses. No new tests, full CI or replays were run.
 The retained point-triangle gap above is not part of this correction.
+
+## Integrated batch 21 acceptance
+
+The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.
+
+The separately identified point-triangle NaN lower-bound gap mentioned above is now corrected by the batch21 `qcommon/cm_mesh` follow-up. Its existing collision fixtures pass; NaN-specific behavior remains compiled and reviewed.

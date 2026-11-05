@@ -53,3 +53,7 @@ xanim trace fixture passes both modes under ASan/UBSan; nonfinite normals were
 not specifically exercised. Five inactive configurations and exact OFF source
 text match, and there are no `__LINE__` uses. No tests, full CI or replays were
 added or run.
+
+## Integrated batch 21 acceptance
+
+The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.

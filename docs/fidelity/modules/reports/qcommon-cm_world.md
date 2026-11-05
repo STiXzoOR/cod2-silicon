@@ -44,3 +44,7 @@ source configurations and byte-for-byte `unifdef -UCOD2_X64` output match the
 base; this source has no `__LINE__` uses. No tests were added. The exceptional
 path is compiled and reviewed only; fresh review, full links, CI and replays
 remain with the integration owner.
+
+## Integrated batch 21 acceptance
+
+The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.

@@ -129,3 +129,7 @@ uses. Final source is frozen for independent reread; full links, CI and replays
 remain with the integration owner. The historical point-triangle NaN-`s` gap
 in `cm_mesh.c` is explicitly outside these repairs and was flagged to the
 parent with its current ledger owners.
+
+## Integrated batch 21 acceptance
+
+The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.

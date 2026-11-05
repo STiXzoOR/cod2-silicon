@@ -120,3 +120,7 @@ The resolved ReleaseContext row `mac:0x000052ea` and ReleaseDisplay row
 specific movement of window ownership. All other existing resolved verdicts and
 evidence are retained. Private evidence is in
 `~/Library/Application Support/CoD2-native-decomp/recon-display-remaining.noindex/`.
+
+## Integrated batch 21 acceptance
+
+The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.

@@ -42,3 +42,7 @@ exclude cgame. No existing fixture executes the whole compass-friendlies
 caller, so these changes are compiled and reviewed only. Five inactive
 configurations and exact OFF source text match; there are no `__LINE__` uses.
 No new tests, full CI or replay was run.
+
+## Integrated batch 21 acceptance
+
+The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.

@@ -65,3 +65,7 @@ Real neighboring consumers were also checked without extending the verdicts. `FX
 No source defect was established and no engine source changed. Release stock and CoD2x objects compiled for `q_shared.c`, `msg_mp.c` and `net_chan_mp.c` (six objects). The existing `f1_msg` source fixture passed both configurations under ASan/UBSan, exercising short/long operations through usercmd serialization. The network swap and setup branches were compiled and reviewed, not exercised by that fixture. Triage and constant scripts supplemented exact-symbol disassembly. No tests, cases or assertions were added; no full CI or replay ran.
 
 The 23 remaining unchecked entries retain explicit interface/identity gaps. This pass neither closes helpers through absence nor certifies the complete containing callers. Private follow-up evidence: `~/Library/Application Support/CoD2-native-decomp/recon-shared-remaining.noindex/`.
+
+## Integrated batch 21 acceptance
+
+The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.
