@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**45 entries: 14 equal, 7 fixed, 9 intentional, 15 unchecked.** Mac 1.3 i386 is the authority. The live scanner and parser implementation is included from `yyparse_impl.h`.
+**45 entries: 15 equal, 7 fixed, 9 intentional, 14 unchecked.** Mac 1.3 i386 is the authority. The live scanner and parser implementation is included from `yyparse_impl.h`.
 
 ## Corrections
 
@@ -28,7 +28,7 @@ The arm64 Release `cod2_macos_ded` target builds at low priority with two jobs. 
 
 The parser group has zero inactive-token mismatches against b275adb09e414d75706f61b1770a6e85b1903d38 across four files and seven `COD2_X64=OFF` configurations.
 
-Fifteen helper identities remain unchecked: `TransferRefToParseUser`, `input`, `yyunput`, `yy_delete_buffer`, `yyfree`, the three memory-scan APIs, `yy_switch_to_buffer`, and the six input/output/text/length accessors. They have specific owner investigations in the private ledger. The string-reference helper is engine code, not a generated scanner API. Similar global loads or direct buffer replacement do not establish callable helper identity.
+Fourteen helper identities remain unchecked: `TransferRefToParseUser`, `input`, `yyunput`, `yy_delete_buffer`, the three memory-scan APIs, `yy_switch_to_buffer`, and the six input/output/text/length accessors. They have specific owner investigations in the private ledger. The string-reference helper is engine code, not a generated scanner API. Similar global loads or direct buffer replacement do not establish callable helper identity.
 
 Private table checks, decoded dispatch evidence, build/fixture receipts and the complete unit ledger remain outside Git.
 
@@ -60,3 +60,12 @@ Hosted ILP32 byte comparison remains unavailable because its unchanged reference
 ## Native descriptor lifetime follow-up
 
 The ownership review above describes the original Mac automatic descriptor and the native snapshot before the follow-up. Native `ScriptParse` now retains a static descriptor across normal and nonlocal returns; its row is intentional rather than equal. This removes the expired pointer and indeterminate alias read while preserving the existing serialized scanner contract. See [scanner descriptor lifetime](scanner-lifetime.md) for exact evidence and limits. The nine runtime API conclusions remain valid under this persistent single-buffer owner.
+
+
+## Original raw-release helper identity
+
+Original Linux1.3 `yyfree` at 0x808b9ca–0x808b9dc forwards its sole pointer unchanged to libc `free` and returns. Original1.0 sub_80871EE has the same complete operation. Positive original scanner deletion calls at 0x808b33a/0x808b345 establish that ownership checks and descriptor-state updates belong to its caller, outside this helper. Linux supplies the original helper identity; its larger descriptor and buffer-stack lifecycle are not imported.
+
+The complete strict release operation maps to the existing ordinary libc provider. Mac indirect symbols bind free at 0x1acc4dd, malloc at 0x1acc514 and realloc at 0x1acc98d; fresh exact-entry scanner bodies call malloc at 0x10be40/0x10be58 and realloc at 0x1100dc. Native retains direct stdlib malloc/realloc for those same allocations, so its matching release provider is ordinary free, without zone guards or header subtraction. `yyfree` is equal under this complete-provider mapping; no standalone scanner symbol or deletion callsite is claimed or added.
+
+This resolves only raw pointer release. `yy_delete_buffer`, memory-scan APIs, switching and accessors remain unchecked, and the approved persistent native `ScriptParse` descriptor remains unchanged. The older ownership review above remains historical evidence, with this one helper now resolved. Independent review accepted this narrow mapping. This follow-up changes documentation only: no source, tests, CI, replay, build or compilation, and no runtime verification.
