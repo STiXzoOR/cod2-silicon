@@ -23974,5 +23974,377 @@
   "mac:0x00008802": {
     "status": "intentional",
     "evidence": "Read Mac 0x8802: cached Gestalt ppcf AltiVec bit4. Native arm64 has no PowerPC AltiVec; live CColorConverter chooses the scalar conversion paths via the false shim, with its three ignored native arguments explicitly supplied. Public project UInt32/Boolean signatures are preserved; these are platform capability/provider adaptations, not i386 equality claims."
+  },
+  "mac:0x0000b1aa": {
+    "status": "intentional",
+    "evidence": "Mac 0xb1aa iterates a Carbon FFItem vector with type-1 all-item/type-2 suffix filtering, returns directory attributes and UTC modification-time words. Native paired FindFirstFileA/FindNextFileA use FFState DIR*, fnmatch(FNM_CASEFOLD), stat metadata and LP64-safe handle storage; no native engine caller remains (Sys_ListFiles uses POSIX enumeration directly). Windows imports FindNextFileA at IAT 0x5930f0, call 0x57cc34. No Carbon iterator or metadata byte-equivalence claim; old backend is replaced."
+  },
+  "mac:0x0000b00c": {
+    "status": "intentional",
+    "evidence": "Mac 0xb00c returns i386 pthread_self directly. Native Apple GetCurrentThreadId uses pthread_mach_thread_np(pthread_self()) to supply a stable DWORD without truncating an LP64 opaque pthread pointer; live win_threads main-thread comparisons use the same provider."
+  },
+  "mac:0x0000afe2": {
+    "status": "equal",
+    "evidence": "Mac 0xafe2 calls MacFiles::access(path,4) and returns -1 when its result is -1, otherwise 1. Compared native provider/call and boolean arithmetic; same contract, including no directory-bit synthesis."
+  },
+  "mac:0x0000b166": {
+    "status": "intentional",
+    "evidence": "Mac 0xb166 gets current display dimensions for metrics 0/1 and returns zero otherwise. Native Apple display/input consumers use SDL and MacDisplay_GetCurrentDimensions/MacPlatform_GetRenderSize directly; no native caller of the fixed 1024x768 compatibility shim remains. Windows imports USER32 GetSystemMetrics at IAT 0x593264. The unused shim is not claimed equivalent to live display dimensions."
+  },
+  "mac:0x0000b06c": {
+    "status": "intentional",
+    "evidence": "Mac 0xb06c returns Comperand on successful OTCompareAndSwap32, Exchange on failure. Native uses compiler atomic compare-exchange and returns the actual observed destination value, preserving the standard Win32 caller contract required by r_model cullState transitions instead of the Carbon failure-result quirk. This is a native atomic adapter decision, not Mac equality; no corresponding Windows inlined compare-exchange body was identified."
+  },
+  "mac:0x0000b3da": {
+    "status": "intentional",
+    "evidence": "Mac 0xb3da loads once, attempts one OTCompareAndSwap32, and can return the requested Value without exchanging on contention. Native compiler atomic exchange always performs the exchange and returns the old 32-bit value; Windows calls imported KERNEL32 InterlockedExchange (IAT 0x5931f8, call 0x462487). Retained that platform atomic contract for native renderer callers."
+  },
+  "mac:0x0000b04a": {
+    "status": "equal",
+    "evidence": "Mac 0xb04a returns OTAtomicAdd32(Value,Addend)-Value, the pre-add 32-bit value. Native cod2_sync_fetch_and_add_i32 returns that same value with an atomic 32-bit update; compared helper implementation and live typed arguments."
+  },
+  "mac:0x0000b09c": {
+    "status": "intentional",
+    "evidence": "Mac 0xb09c caches default/French/German 12-pair key tables (decoded at 0x3410a0/0x341120/0x3411a0); native compatibility switch matches the default table. Native input uses linux_input SDL key events and SDL_TEXTINPUT, bypassing this legacy language shim. Windows 0x468d74 calls imported MapVirtualKeyA with map type 2. Host-layout text is supplied by SDL rather than reintroducing obsolete Carbon language tables."
+  },
+  "mac:0x0000ae90": {
+    "status": "intentional",
+    "evidence": "Mac 0xae90 cleans title/body, uses Carbon alerts, and maps OK/Cancel/Yes/No to 1/2/6/7. Replaced unconditional native acceptance with SDL_ShowMessageBox (documented callable before SDL_Init) on the main-thread linux_common main -> WinMain startup/error path. Windows MessageBoxA IAT 0x5932c8 is called at 0x46448d/0x46459b and its result is compared to 6. Native preserves those IDs and caller flags; dedicated, unavailable-display, or off-main-thread calls log and return Cancel/No (OK for notifications). The Carbon cursor/512-byte text conversion is retired. Compiled and reviewed, no dialog exercised. Profile changes can invoke this after native CoD2x freeze-watch initialization. BeginUserWait/EndUserWait bracket the modal with an atomic nested wait depth and refresh heartbeat before the last wait ends, preventing intentional user waiting from being reported as a freeze. Actual stock/CoD2x client source commands compile; modal/watchdog timing not exercised."
+  },
+  "mac:0x0000b3a8": {
+    "status": "fixed",
+    "evidence": "Mac 0xb3a8 writes 64-bit Microseconds and returns one. Native Apple provider now divides its monotonic nanosecond clock by 1000, matching the restored frequency; compiled and reviewed, not exercised."
+  },
+  "mac:0x0000ae74": {
+    "status": "fixed",
+    "evidence": "Mac 0xae74 writes the 64-bit frequency 1000000 and returns one. Native Apple provider previously reported nanoseconds; restored microseconds together with QueryPerformanceCounter; compiled and reviewed, not exercised."
+  },
+  "mac:0x0000afda": {
+    "status": "equal",
+    "evidence": "Mac 0xafda returns zero without changing attributes; native SetFileAttributesA has the same no-op result."
+  },
+  "mac:0x0000b120": {
+    "status": "equal",
+    "evidence": "Mac 0xb120 returns a non-null requested address unchanged, otherwise calloc(1,size). Native VirtualAlloc matches, including ignored allocation/protection flags; checked com_memory callers use the calloc/free adapter contract."
+  },
+  "mac:0x0000b13a": {
+    "status": "equal",
+    "evidence": "Mac 0xb13a returns one, frees a non-null address only when freeType == 0x8000, and ignores size. Native VirtualFree matches; checked paired VirtualAlloc/com_memory ownership."
+  },
+  "mac:0x0000b016": {
+    "status": "intentional",
+    "evidence": "Mac 0xb016 uses UpTime/AddDurationToAbsolute/MPDelayUntil. Native Apple WinSleep uses timespec seconds/nanoseconds and retries nanosleep on EINTR. This preserves millisecond waits with the SDK POSIX provider instead of retired Carbon absolute-time calls."
+  },
+  "mac:0x0000ae62": {
+    "status": "equal",
+    "evidence": "Mac 0xae62 exact-entry disassembly returns zero without observing the period; native timeBeginPeriod matches."
+  },
+  "mac:0x0000ae6a": {
+    "status": "equal",
+    "evidence": "Mac 0xae6a exact-entry disassembly returns zero without observing the period; native timeEndPeriod matches."
+  },
+  "mac:0x0000b35c": {
+    "status": "fixed",
+    "evidence": "Mac 0xb35c rounds (Microseconds + 500) / 1000 before returning the low 32 bits. Native Apple clock previously truncated milliseconds; restored rounding after microsecond conversion; compiled and reviewed, not exercised. Windows 0x4479b1 calls WINMM timeGetTime directly; clock backend remains the native monotonic adapter."
+  },
+  "mac:0x0000c018": {
+    "status": "intentional",
+    "evidence": "Mac 0xc018 advances animated WinCursor frames from TickCount and QDSetNamedPixMapCursor. Native CursorTimerProc is unused because no Carbon cursor timer is installed; SDL input owns host cursor visibility and the engine UI draws the in-game cursor. No native callsite or animation resource uses this obsolete timer."
+  },
+  "mac:0x0000be94": {
+    "status": "intentional",
+    "evidence": "Mac 0xbe94 selects registered 0x44-byte WinCursor objects, hides/shows the Carbon cursor and starts a 60-Hz timer; native SetWinCursor retains handle bookkeeping only. Live linux_input IN_Frame owns SDL_ShowCursor and relative capture while UI draws its game cursor. No external native callers use the old SetWinCursor registry. Windows uses USER32 cursor APIs (LoadCursorA call 0x4663ee, IAT 0x5932f4); native uses SDL host-cursor ownership instead of Carbon objects."
+  },
+  "mac:0x0000bff2": {
+    "status": "equal",
+    "evidence": "Mac 0xbff2 returns when a cursor is already saved; otherwise stores SetWinCursor(-1). Native SwitchToMacCursor matches the saved-state/return-value sequence; visual cursor provider is separately intentional."
+  },
+  "mac:0x0000bfd2": {
+    "status": "equal",
+    "evidence": "Mac 0xbfd2 saves sSavedWinCursor locally, clears it, then calls SetWinCursor(saved). Native SwitchToWinCursor has the same order; SetWinCursor visual behavior is separately recorded as the SDL backend adaptation."
+  },
+  "mac:0x0000c6a8": {
+    "status": "intentional",
+    "evidence": "Mac 0xc6a8 reads a complete cursor file with fopen/fseek/ftell/malloc/fread, calls ReadCursor, frees and closes on its branches. Native WinCursor_Load returns false with no native caller: SDL owns host cursor and UI renders the game cursor, rather than using retired Carbon ANI/CUR storage. No file-decoding equivalence claim."
+  },
+  "mac:0x0000bae4": {
+    "status": "intentional",
+    "evidence": "Mac 0xbae4 validates a 32x32 ICO/CUR header, decodes 1/4/8-bit pixels/masks into a QuickDraw GWorld and registers a named PixMap cursor. Native WinIcon_Load returns false and has no live caller; SDL/engine UI cursor rendering replaces QuickDraw resource objects. WinIcon remains an opaque placeholder, so no old image-object layout or decoding equivalence is claimed."
+  },
+  "mac:0x0000c160": {
+    "status": "intentional",
+    "evidence": "Mac 0xc160 enters local static destruction at 0xc090 (priority 0xffff) to destroy/free the WinCursor vector; disambiguated the repeated static-init symbol by address. Native has no constructed cursor vector or registered timer: SDL input owns the replacement, so the unused cleanup wrapper is empty."
+  },
+  "mac:0x0000c170": {
+    "status": "intentional",
+    "evidence": "Mac 0xc170 enters local static initialization at 0xc090 (priority 0xffff), zeroing the three cursor-vector pointers. Native static cursor bookkeeping is zero-initialized without registering this old C++ wrapper; the Carbon vector is unused under SDL cursor ownership."
+  },
+  "mac:0x000282f6": {
+    "status": "equal",
+    "evidence": "Mac 0x282f6 returns errno+10000 for unsigned(errno-1)<=0x57, otherwise errno. On Apple, the native EAGAIN/EWOULDBLOCK=35, ECONNRESET=54, EAFNOSUPPORT=47 and EADDRNOTAVAIL=49 cases yield exactly the same values; all other cases retain the Mac range check. Checked active native socket provider and net error-code callers."
+  },
+  "mac:0x000282c4": {
+    "status": "intentional",
+    "evidence": "Mac 0x282c4 zeroes 0x190 bytes of i386 WSADATA and stores the requested version word. Native WSAStartup clears sizeof(WSADATA), including its widened LP64 vendor pointer/padding, then writes the same low version word and returns zero. This is a typed storage adaptation, not a 400-byte native memset claim."
+  },
+  "mac:0x000282b0": {
+    "status": "equal",
+    "evidence": "Mac 0x282b0 tail-calls close(socket). Native closesocket calls the host close with the same descriptor and returns its result; active linux_net provider confirmed in both Apple targets."
+  },
+  "mac:0x000282ba": {
+    "status": "equal",
+    "evidence": "Mac 0x282ba tail-calls ioctl(socket,command,arg). Native ioctlsocket translates 0x8004667e to FIONBIO; on the Apple SDK those values are identical, so the active Mac descriptor/command/argument/result contract matches. Linux command translation is outside this Mac verdict."
+  },
+  "mac:0x0011734c": {
+    "status": "equal",
+    "evidence": "Mac 0x11734c exact-entry body destroys the object pthread mutex. Native ZN6CMutexD1Ev destroys the SDK pthread_mutex_t at the beginning of the typed CMutex; same lifetime action, no ILP32 offset cast."
+  },
+  "mac:0x001174ee": {
+    "status": "intentional",
+    "evidence": "Mac 0x001174ee D2 resets its vtable, clears running, waits 100000 microseconds, and destroys the embedded mutex without freeing the object. Native typed D2 uses CThread_Stop join ownership and destroys lifecycleMutex plus CMutex; D0 frees the native allocation. This deliberately replaces fixed-delay Miles/Carbon lifetime handling, whose consumers are not selected, rather than copying i386 offsets."
+  },
+  "mac:0x00117536": {
+    "status": "intentional",
+    "evidence": "Mac 0x00117536 D1 resets its vtable, clears running, waits 100000 microseconds, and destroys the embedded mutex without freeing the object. Native typed D1 uses CThread_Stop join ownership and destroys lifecycleMutex plus CMutex; D0 frees the native allocation. This deliberately replaces fixed-delay Miles/Carbon lifetime handling, whose consumers are not selected, rather than copying i386 offsets."
+  },
+  "mac:0x0011757e": {
+    "status": "intentional",
+    "evidence": "Mac 0x0011757e D0 resets its vtable, clears running, waits 100000 microseconds, and destroys the embedded mutex then deleting the object. Native typed D0 uses CThread_Stop join ownership and destroys lifecycleMutex plus CMutex; D0 frees the native allocation. This deliberately replaces fixed-delay Miles/Carbon lifetime handling, whose consumers are not selected, rather than copying i386 offsets."
+  },
+  "mac:0x0011747a": {
+    "status": "intentional",
+    "evidence": "Mac 0x11747a writes the i386 vtable, zero thread/argument, constructs the embedded recursive mutex and clears running. Native macos_threads uses a native-width vtable/pthread_t/argument, SDK mutex and separate lifecycleMutex/running/joinable fields; no legacy raw-offset consumer is selected. This typed lifetime adapter is not byte/layout equality. Constructor mutex-error exception coverage is tracked separately with the MacExceptions owner."
+  },
+  "mac:0x001173d8": {
+    "status": "equal",
+    "evidence": "Mac 0x1173d8 calls virtual slot 2 with self and saved argument, clears running and returns NULL. Native CThread_ExecuteProc matches that sequence through the LP64 vtable/argument fields and uses a release atomic clear for the native memory model."
+  },
+  "mac:0x001173cc": {
+    "status": "equal",
+    "evidence": "Mac 0x1173cc returns the running byte; native CThread_IsRunning loads its typed native running flag atomically. Provider writes only 0/1, so the returned Boolean matches for every initialized provider state."
+  },
+  "mac:0x00117360": {
+    "status": "intentional",
+    "evidence": "Mac 0x117360 gates on the running byte, stores argument/running, calls pthread_create and clears running on error. Native macos_threads keeps that contract but serializes lifecycle operations and joins a completed prior thread before reuse. Typed pthread_t and explicit joinable ownership replace the unjoined Carbon/Miles-era object; old engine consumers are excluded in cmake/macos-arm64.cmake."
+  },
+  "mac:0x001173b0": {
+    "status": "intentional",
+    "evidence": "Mac 0x1173b0 clears running and sleeps 100000 microseconds without joining. Native macos_threads clears atomically and joins a joinable worker (unless called by that worker) before destruction/reuse. This is the SDK thread-lifetime adapter, not equivalent shutdown timing; legacy Miles and Carbon voice consumers are excluded and native audio/voice use their own state."
+  },
+  "mac:0x001174b0": {
+    "status": "equal",
+    "evidence": "Mac 0x1174b0 unlocks the saved mutex only when its lock-success byte is set. Native ZN11StMutexLockD1Ev does the same on the LP64 typed owner, then clears the dead guard flag; no valid post-destruction observer exists."
+  },
+  "mac:0x001175ce": {
+    "status": "equal",
+    "evidence": "Mac 0x1175ce stores the mutex owner, calls pthread_mutex_lock, and records result==0. Native StMutexLock constructor matches using native pointer/Boolean fields rather than offsets 0/4."
+  },
+  "mac:0x001174ce": {
+    "status": "equal",
+    "evidence": "Mac 0x1174ce unlocks the thread embedded mutex only when its lock-success byte is set. Native ZN12StThreadLockD1Ev follows the typed CThread::mutex owner and same condition, then clears its dead guard flag; no valid post-destruction observer exists."
+  },
+  "mac:0x001175f4": {
+    "status": "equal",
+    "evidence": "Mac 0x1175f4 stores the thread owner, locks its embedded mutex, and records result==0. Native StThreadLock constructor matches via the typed thread->mutex field rather than i386 offset 0xc."
+  },
+  "mac:0x001f96ae": {
+    "status": "intentional",
+    "evidence": "Mac 0x1f96ae frees and clears all fields only if the buffer pointer is non-null. Native typed destructor calls free(NULL) safely and always clears the object, including failed allocation state. Retained this defined allocation/lifetime adapter; successful allocations have the same free/reset outcome."
+  },
+  "mac:0x001f96ee": {
+    "status": "intentional",
+    "evidence": "Mac 0x1f96ee conditionally frees/resets, mallocs capacity, and records requested capacity even on NULL. Native typed Alloc resets unconditionally and records zero capacity on allocation failure, preventing a nonzero-capacity/null-buffer state in the SDK provider. Successful allocations preserve size and reset behavior. No indeterminate native storage introduced."
+  },
+  "mac:0x001f95ee": {
+    "status": "equal",
+    "evidence": "Mac 0x1f95ee exact-entry default constructor zeroes buffer, capacity, readOffset, lastReadSize and writeOffset. Native CCircularBuffer constructor zeroes its typed pointer/UInt32 fields; same initialized state with widened storage."
+  },
+  "mac:0x001f9740": {
+    "status": "unchecked",
+    "evidence": "Mac 0x1f9740 is the size-taking CCircularBufferC1Em constructor and its zero-then-malloc sequence was read exactly. Selected native macos_ring.c exposes only the zero-argument constructor and separate Alloc; no callable native identity or surviving caller for the size-taking constructor was found. Missing provider mapping is not equality; legacy recorder/playback consumers are excluded."
+  },
+  "mac:0x001f965e": {
+    "status": "fixed",
+    "evidence": "Mac 0x1f965e commits the prior read, resets at >=capacity, clears prior-read length, clamps the request to one contiguous span and records that pending length. Native modulo changed corrupted/overflowed-offset behavior; restored reset arithmetic, retaining the typed zero-capacity guard. Compiled and reviewed, not exercised."
+  },
+  "mac:0x001f9636": {
+    "status": "fixed",
+    "evidence": "Mac 0x1f9636 adds readOffset+lastReadSize in 32 bits, resets to zero when >=capacity, then returns the contiguous span to writeOffset or capacity. Native used modulo; restored reset-at-end arithmetic. Zero-capacity native guard remains a defined adapter. Compiled and reviewed, not exercised."
+  },
+  "mac:0x001f9618": {
+    "status": "equal",
+    "evidence": "Mac 0x1f9618 zeroes readOffset, lastReadSize and writeOffset, preserving buffer/capacity. Native Reset matches those three stores."
+  },
+  "mac:0x001f9784": {
+    "status": "fixed",
+    "evidence": "Mac 0x1f9784 permits the complete free span to readOffset/end, writes at most two spans and resets writeOffset at capacity; native reserved one byte and globally clamped a modular used count. Restored the exact two-branch/two-span updates, including equal-index full/empty ambiguity, in typed native storage; compiled and reviewed, not exercised. Native zero-capacity guard remains defined."
+  },
+  "mac:0x0002590c": {
+    "status": "equal",
+    "evidence": "Mac 0x0002590c tail-calls strcasecmp with its two arguments unchanged; native strcmpi matches that libc call and result."
+  },
+  "mac:0x000258f8": {
+    "status": "equal",
+    "evidence": "Mac 0x000258f8 tail-calls strcasecmp with its two arguments unchanged; native stricmp matches that libc call and result."
+  },
+  "mac:0x00025902": {
+    "status": "equal",
+    "evidence": "Mac 0x25902 tail-calls strncasecmp with the two pointers and length unchanged. Native strnicmp matches; size_t is widened for the native ABI."
+  },
+  "mac:0x00025954": {
+    "status": "equal",
+    "evidence": "Mac 0x25954 stops at NUL, sign-extends each char for __toupper, stores the low result byte, and returns the original pointer. Native strupr has the same loop and signed-char libc conversion on Apple arm64."
+  },
+  "mac:0x001f9d10": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f9d4c": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:256:LoadServerDll": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f98c0": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f98f0": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001fb0c0": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f9898": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f9d88": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f9dc2": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f9ecc": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001fa1c6": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f9e92": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:364:PbSvEvent15_813be28": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:414:PbSvEvent71_813c004": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f9f52": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f9ac4": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f9976": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f9b4a": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f9b26": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:312:ProcessPbEvents": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:217:UnloadAgentDll": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:210:UnloadClientDll": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:243:UnloadServerDll": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f9d00": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f9cec": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x001f9b76": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:152:copyIfNotExists": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:145:getBasePath": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:173:getHomePath": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:233:initialize": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x00025994": {
+    "status": "fixed",
+    "evidence": "Mac 0x25994 negates every negative input (all radices), uses signed quotient/remainder, writes uppercase digits directly, appends a minus, then reverses strlen bytes. Native previously treated nondecimal negatives as unsigned and negated INT_MIN with C overflow. Restored all-radix sign and explicit 32-bit wrapped negation, retaining signed INT_MIN remainders; compiled and reviewed, not exercised. This is the Mac i5stdlib engine helper, not exempt bundled PunkBuster code."
+  },
+  "linux:punkbuster/pbsv.cpp:78:pbChmod_813cbd4": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:84:pbCopyFile_813cf52": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:330:stPbSv": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x002f2632": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "mac:0x002f1f80": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:225:uninitialize": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
+  },
+  "linux:punkbuster/pbsv.cpp:346:~stPbSv": {
+    "status": "intentional",
+    "evidence": "Faithful-decompilation plan: bundled upstream libraries are not re-derived; no semantic-equivalence claim."
   }
 }

@@ -3,6 +3,10 @@
 void Cod2xNative_Init(void);
 void Cod2xNative_Frame(void);
 void Cod2xNative_Heartbeat(void);
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+void Cod2xNative_BeginUserWait(void);
+void Cod2xNative_EndUserWait(void);
+#endif
 void Cod2xNative_Shutdown(void);
 void Cod2xNativeURL_Install(void);
 void Cod2xNativeURL_SetupPaths(void);
