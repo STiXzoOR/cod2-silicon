@@ -540,6 +540,7 @@ static void RB_DrawLinesCmd(GfxRenderCommandExecState *execState);
 static void RB_StencilPlanesCmd(GfxRenderCommandExecState *execState);
 static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState);
 
+/* Mac table 0x36ace0: only slot 0 is the command-list terminator. */
 void (*const RB_RenderCommandTable[34])(GfxRenderCommandExecState *execState) = {
     NULL,
     RB_GotoCmd,
@@ -547,10 +548,26 @@ void (*const RB_RenderCommandTable[34])(GfxRenderCommandExecState *execState) = 
     RB_ReturnCmd,
     RB_SetMaterialColorCmd,
     RB_SetLightPropertiesCmd,
+#if defined(COD2_X64)
+    RB_SetStencilRefValueCmd,
+#else
     NULL,
+#endif
+#if defined(COD2_X64)
+    RB_StencilPlanesCmd,
+#else
     NULL,
+#endif
+#if defined(COD2_X64)
+    RB_SetClipPlanesCmd,
+#else
     NULL,
+#endif
+#if defined(COD2_X64)
+    RB_SetShadowCookieCmd,
+#else
     NULL,
+#endif
     RB_SaveScreenCmd,
     RB_ClearScreenCmd,
     RB_BeginViewCmd,
@@ -569,11 +586,27 @@ void (*const RB_RenderCommandTable[34])(GfxRenderCommandExecState *execState) = 
     RB_ApplyEarlyPostEffectsCmd,
     RB_ApplyLatePostEffectsCmd,
     RB_DrawSunPostEffectsCmd,
+#if defined(COD2_X64)
+    RB_BlurShadowCookieCmd,
+#else
     NULL,
+#endif
     RB_BlendSavedScreenCmd,
+#if defined(COD2_X64)
+    RB_DrawPointsCmd,
+#else
     NULL,
+#endif
+#if defined(COD2_X64)
+    RB_DrawLinesCmd,
+#else
     NULL,
+#endif
+#if defined(COD2_X64)
+    RB_DrawTrianglesCmd,
+#else
     NULL,
+#endif
     RB_TouchAllImagesCmd,
 };
 
@@ -1482,7 +1515,11 @@ static void RB_SetShadowCookieCmd(GfxRenderCommandExecState *execState)
     if (tess.indexCount || tess.optimizedIndexCount)
         RB_EndSurface();
 
+#if defined(COD2_X64)
+    RB_SetShadowLookupMatrix(&((GfxCmdSetShadowCookie *)cmd)->lookupMatrix);
+#else
     RB_SetShadowLookupMatrix(cmd + 4);
+#endif
 
     shadowMapSize = (float)dx.renderTargets[R_RENDERTARGET_SHADOWCOOKIE].width;
     invSize = 1.0f / shadowMapSize;
@@ -2198,11 +2235,20 @@ static void RB_DrawTrianglesCmd(GfxRenderCommandExecState *execState)
     vertexCount = ((GfxCmdDrawTriangles *)cmd)->vertexCount;
 
     {
+#if defined(COD2_X64)
+        int vertexOfs = sizeof(GfxCmdDrawTriangles);
+        int normalOfs = vertexOfs + vertexCount * 16;
+#else
         int normalOfs = 0x10 + vertexCount * 16;
+#endif
         int colorOfs = normalOfs + vertexCount * 12;
         int stOfs = colorOfs + vertexCount * 4;
         int indexOfs = stOfs + vertexCount * 8;
+#if defined(COD2_X64)
+        xyzwData = (float *)(cmd + vertexOfs);
+#else
         xyzwData = (float *)(cmd + 0x10);
+#endif
         normalData = (float *)(cmd + normalOfs);
         colorData = (const int *)(cmd + colorOfs);
         stData = (float *)(cmd + stOfs);
@@ -2264,8 +2310,13 @@ static void RB_DrawTrianglesCmd(GfxRenderCommandExecState *execState)
             ((GfxVertexDx7 *)v)->xyz[0] = px / pw;
             ((GfxVertexDx7 *)v)->xyz[1] = py / pw;
             ((GfxVertexDx7 *)v)->xyz[2] = pz / pw;
+#if defined(COD2_X64)
+            memcpy(&((GfxVertexDx7 *)v)->normal[0], &nx, sizeof(nx));
+            memcpy(&((GfxVertexDx7 *)v)->normal[1], &ny, sizeof(ny));
+#else
             ((GfxVertexDx7 *)v)->normal[0] = nx;
             ((GfxVertexDx7 *)v)->normal[1] = ny;
+#endif
             ((GfxVertexDx7 *)v)->normal[2] = nzf;
             ((GfxVertexDx7 *)v)->color.packed = color;
             ((GfxVertexDx7 *)v)->texCoord[0] = s;
@@ -2277,8 +2328,13 @@ static void RB_DrawTrianglesCmd(GfxRenderCommandExecState *execState)
             ((GfxVertexDx7 *)v)->xyz[1] = py;
             ((GfxVertexDx7 *)v)->xyz[2] = pz;
             ((GfxVertex *)v)->xyzw[3] = pw;
+#if defined(COD2_X64)
+            memcpy(&((GfxVertex *)v)->normal[0], &nx, sizeof(nx));
+            memcpy(&((GfxVertex *)v)->normal[1], &ny, sizeof(ny));
+#else
             ((GfxVertex *)v)->normal[0] = nx;
             ((GfxVertex *)v)->normal[1] = ny;
+#endif
             ((GfxVertex *)v)->normal[2] = nzf;
             ((GfxVertex *)v)->color.packed = color;
             ((GfxVertex *)v)->texCoord[0] = s;
@@ -3324,8 +3380,22 @@ void RB_ExecuteRenderCommands(const void *data)
     if (needToTouchImages)
         RB_TouchAllImages();
 
+#if defined(COD2_X64)
+    if (RB_DVAR(imp_r_skipBackEnd)->current.enabled) {
+        if (backEnd.viewportIsDirty)
+            RB_UpdateViewport();
+        do {
+            dx = (char *)dx_g;
+            void *device = ((DxGlobals *)dx)->device;
+            void **vtable = *(void ***)device;
+            ((HRESULT(D3DVTCC *)(void *, DWORD, void *, DWORD, DWORD, float, DWORD))(vtable[0xac / 4]))(device, 0, NULL, 1, 0x00000000u, 0.0f, 0);
+        } while (*(volatile int *)&alwaysfails);
+        goto post_render;
+    }
+#else
     if (RB_DVAR(imp_r_skipBackEnd)->current.enabled)
         goto post_render;
+#endif
 
     {
         const byte *cmdBuf = backEndData->commands.cmds;
@@ -3380,18 +3450,7 @@ post_render:
         }
     }
 
-#if defined(COD2_X64)
-    if (RB_DVAR(imp_r_skipBackEnd)->current.enabled) {
-        if (backEnd.viewportIsDirty)
-            RB_UpdateViewport();
-        do {
-            dx = (char *)dx_g;
-            void *device = ((DxGlobals *)dx)->device;
-            void **vtable = *(void ***)device;
-            ((HRESULT(D3DVTCC *)(void *, DWORD, void *, DWORD, DWORD, float, DWORD))(vtable[0xac / 4]))(device, 0, NULL, 1, 0x00000000u, 0.0f, 0);
-        } while (*(volatile int *)&alwaysfails);
-    }
-#else
+#if !defined(COD2_X64)
     if (backEnd.viewportIsDirty) {
         RB_UpdateViewport();
     }
@@ -4854,12 +4913,20 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
             ic = tess.indexCount;
 
             indices = tess.indices;
+#if defined(COD2_X64)
+            indices[ic + 0] = (r_index_t)(vc + 3);
+#else
             indices[ic + 0] = (r_index_t)(vc + 1);
+#endif
             indices[ic + 1] = (r_index_t)vc;
             indices[ic + 2] = (r_index_t)(vc + 2);
             indices[ic + 3] = (r_index_t)(vc + 2);
             indices[ic + 4] = (r_index_t)vc;
+#if defined(COD2_X64)
+            indices[ic + 5] = (r_index_t)(vc + 1);
+#else
             indices[ic + 5] = (r_index_t)(vc + 3);
+#endif
             tess.indexCount += 6;
 
             if (isDx7) {
