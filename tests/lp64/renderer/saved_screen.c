@@ -8,6 +8,43 @@
 #include "Mac/DirectX_9/CDirect3DDevice.c"
 
 CXX_BOOL g_InhibitCopy;
+#if defined(COD2_X64)
+CXX_BOOL g_RenderToShadowCookie;
+UINT32 g_NumBlurShadowPasses;
+static GLuint savedTexture;
+static void *surfaceMethods[13];
+static struct { void **vtable; } destinationSurface = { surfaceMethods };
+static COpenGLNative openGL;
+void *imp__ZN7COpenGL7sOpenGLE = &openGL;
+
+int CDirect3DSurface_GetNativeInfo(const void *surface, CDirect3DSurfaceNativeInfo *info)
+{
+    static COpenGLTextureStateNative owner;
+    if (surface != &destinationSurface) return 0;
+    owner.name = &savedTexture;
+    owner.width = owner.height = 32;
+    *info = (CDirect3DSurfaceNativeInfo){ &owner, savedTexture, GL_TEXTURE_2D, 0, 32, 32 };
+    return 1;
+}
+
+unsigned int COpenGL_SetActiveTexUnit(const COpenGL *gl, UINT32 unit)
+{
+    ((COpenGLNative *)gl)->activeTexUnit = unit;
+    glActiveTextureARB(GL_TEXTURE0_ARB + unit);
+    return 0;
+}
+
+int MacDisplay_GetCardType(void) { return 0; }
+UINT32 MacOpenGLUtils_GetPCPixelShaderVersion(void) { return 0; }
+uint16_t MacDisplay_GetCurrentDimensions(int *w, int *h) { *w = *h = 32; return 0; }
+bool CDirect3DSurface_IsDirty(const CDirect3DSurface *s) { return 0; }
+void CDirect3DSurface_SetDirty(void *s, int dirty) { }
+void CDirect3DSurface_UpdateOpenGLSurfaceObject(const CDirect3DSurface *s, int recreate) { }
+void MacGL_DrawBuffer(unsigned int buffer) { glDrawBuffer(buffer); }
+void MacGL_ReadBuffer(unsigned int buffer) { glReadBuffer(buffer); }
+
+static ULONG SurfaceRef(void *surface) { return 1; }
+#else
 static GLuint savedTexture;
 static int destinationSurface;
 
@@ -21,6 +58,7 @@ int CDirect3DSurface_GetGLBlitInfo(const void *surface, unsigned int *texture,
     if (height) *height = 32;
     return 1;
 }
+#endif
 
 static HRESULT SurfaceDesc(const void *surface, D3DSURFACE_DESC *desc)
 {
@@ -38,9 +76,14 @@ int main(void)
     GLint count;
     GLuint target, framebuffer, binding;
     byte pixels[32 * 32 * 4] = { 0 };
+#if !defined(COD2_X64)
     void *surfaceMethods[13] = { 0 };
+#endif
     struct { void **vtable; } backBuffer = { surfaceMethods };
     DeviceImpl device = { 0 };
+#if defined(COD2_X64)
+    surfaceMethods[1] = surfaceMethods[2] = SurfaceRef;
+#endif
     surfaceMethods[12] = SurfaceDesc;
     device.backBuffer = device.renderTarget = (IDirect3DSurface9 *)&backBuffer;
     assert(!CGLChoosePixelFormat(attrs, &format, &count));

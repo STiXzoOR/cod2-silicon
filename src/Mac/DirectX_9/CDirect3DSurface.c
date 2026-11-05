@@ -3,6 +3,10 @@
 #include "imports.h"
 #include <stdlib.h>
 #include <string.h>
+#if defined(COD2_X64)
+#include "lp64_gl_state.h"
+#include "lp64_surface.h"
+#endif
 
 #if defined(COD2_X64)
 /* C++ bool flags: one byte in the Mac binary and in the typed native data. */
@@ -72,6 +76,20 @@ void CDirect3DSurface_SetNativeDimensions(void *surface, UINT32 width, UINT32 he
 static GLuint CDirect3DSurface_GetOwnerGLName(const CDirect3DSurfaceImpl *surface)
 {
     return COpenGLTexture_GetGLNameNative(surface->owner);
+}
+
+int CDirect3DSurface_GetNativeInfo(const void *object, CDirect3DSurfaceNativeInfo *info)
+{
+    const CDirect3DSurfaceImpl *surface = object;
+    if (!surface || surface->vtable != (void **)vtbl_CDirect3DSurface || !surface->owner)
+        return 0;
+    info->owner = surface->owner;
+    info->name = COpenGLTexture_GetGLNameNative(surface->owner);
+    info->target = surface->surfaceType == 1 ? surface->cubemapTarget : 0x0de1;
+    info->level = surface->level;
+    info->width = surface->width;
+    info->height = surface->height;
+    return info->name != 0;
 }
 #endif
 
