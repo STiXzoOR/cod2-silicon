@@ -71,3 +71,7 @@ Configured stock/CoD2x Release objects and existing xanim skeleton/mapping/trace
 ## Original-address follow-up (inline-effects4)
 
 Original Linux 1.3 executable ranges0x80ba706–0x80ba776 (DObjClone) and0x80ba7f2–0x80ba957 (DObjGetCreateParms; upper bounds exclusive) establish stronger identity anchors than the reconstruction alone. Clone copies100 bytes, clears the skeleton, conditionally retains the duplicate-parts string, then binds the supplied tree. GetCreateParms also reconstructs parent bone names and per-model collision flags; a simple model accessor cannot establish its complete operation. Neither anchor supplies Mac behavior authority. No complete Mac clone/extraction operation was identified, so both rows remain unchecked. Direct-call absence is not a completion argument. No source changes or runtime verification.
+
+## Original nonmutating skeleton predicate
+
+The anonymous Linux 1.0 body at 0x80b83dc maps to original 1.3 0x80ba9b4–0x80ba9e2. It returns true only for a matching timestamp and non-null skeleton and makes no external writes. Fresh exact Mac `DObjSkelExists` at 0x73f2e–0x73f52 instead clears the skeleton on mismatch at 0x73f3c; it remains an invalid substitute for `DObjSkelIsValid`. The two earlier clone/create-parameter identities retain their ownership and inverse-operation gaps. All three remain unchecked. Targeted PPC source metadata added no complete owner for these operations. No source changes, compilation, tests, CI, replay or runtime exercise ran; evidence is in `recon-provenance-animation10.noindex`.

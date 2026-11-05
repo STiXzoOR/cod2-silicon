@@ -3897,7 +3897,7 @@
   },
   "linux:bgame/bg_animation_mp.cpp:1745:BG_AnimScriptStateChange": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity: BG_AnimScriptStateChange has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone."
+    "evidence": "Linux-only ledger identity: BG_AnimScriptStateChange has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone. Original executable follow-up, 2026-11-05: Original 1.0 body 0x80d6edc (mislabeled BG_AnimScriptCannedAnimation by the retained database) maps to 1.3 0x80d9600\u20130x80d96ee. Its actual old-state/new-state indexing selects scriptStateChange, rejects dead or missing/empty items, selects a random command and executes it with timer true, continue/force false. The table offsets and full body establish state-change identity independently of that old label. Ordinary event/movement selection does not establish this complete owner. No closure from missing direct calls or static pointer references; no source change."
   },
   "mac:0x00182666": {
     "status": "equal",
@@ -3905,7 +3905,7 @@
   },
   "linux:bgame/bg_animation_mp.cpp:358:BG_AnimationForString": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity: BG_AnimationForString has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone."
+    "evidence": "Linux-only ledger identity: BG_AnimationForString has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone. Original executable follow-up, 2026-11-05: Original Linux 1.0 0x80d4832 maps to 1.3 0x80d6f56\u20130x80d6fea. Complete body hashes the name, scans 96-byte animation records, compares hash and case-insensitive name, returns the matching record pointer, or reports its own Com_Error and returns null if that call returns. Exact Mac BG_AnimationIndexForString 0x184cd6\u20130x184e9a instead returns an index, has load-time lookup/insertion behavior, and uses BG_AnimParseError with a different failure result. Shared hash/search operations do not establish the complete pointer-returning helper. No closure from missing direct calls or static pointer references; no source change."
   },
   "mac:0x00184cd6": {
     "status": "equal",
@@ -3945,7 +3945,7 @@
   },
   "linux:bgame/bg_animation_mp.cpp:1904:BG_GetAnimScriptEvent": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity: BG_GetAnimScriptEvent has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone."
+    "evidence": "Linux-only ledger identity: BG_GetAnimScriptEvent has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone. Original executable follow-up, 2026-11-05: Original 1.0 anonymous body 0x80d71fc maps to 1.3 0x80d9920\u20130x80d99dc. After the death exception, item/condition checks and random command selection it returns the sign-extended first animation index. Exact Mac BG_AnimScriptEvent 0x18729a\u20130x1873d2 instead calls BG_ExecuteCommand at 0x1873b1 and returns the execution result. Its shared selection prefix does not establish the non-playing index getter. No closure from missing direct calls or static pointer references; no source change."
   },
   "linux:bgame/bg_animation_mp.cpp:1822:BG_GetAnimString": {
     "status": "unchecked",
@@ -4017,7 +4017,7 @@
   },
   "linux:bgame/bg_animation_mp.cpp:1622:BG_PlayAnimName": {
     "status": "unchecked",
-    "evidence": "Linux-only ledger identity: BG_PlayAnimName has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone."
+    "evidence": "Linux-only ledger identity: BG_PlayAnimName has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone. Original executable follow-up, 2026-11-05: Original Linux 1.0 0x80d6b7c maps to 1.3 0x80d92a0\u20130x80d92e8. It calls BG_AnimationIndexForString at 0x80d92ac, then forwards that result plus the original player/body/timer/continue/force arguments and duration zero to BG_PlayAnim at 0x80d92e1. This is an actual original two-provider sequence, not a strict alias to either provider. A complete primary Mac/native combined operation is still required; hypothetical composition of separately verified providers is insufficient. No closure from missing direct calls or static pointer references; no source change."
   },
   "linux:bgame/bg_animation_mp.cpp:2487:BG_PlayerAngles": {
     "status": "equal",
@@ -10021,7 +10021,7 @@
   },
   "linux:xanim/dobj.cpp:815:DObjSkelIsValid": {
     "status": "unchecked",
-    "evidence": "No native definition or Mac text symbol/caller identity established for the Linux-only nonmutating timestamp/skeleton predicate. Mac DObjSkelExists at 0x73f2e clears skel on mismatch, so it cannot be equated with this row."
+    "evidence": "No native definition or Mac text symbol/caller identity established for the Linux-only nonmutating timestamp/skeleton predicate. Mac DObjSkelExists at 0x73f2e clears skel on mismatch, so it cannot be equated with this row. Original executable follow-up, 2026-11-05: Original Linux 1.0 anonymous body 0x80b83dc maps to 1.3 0x80ba9b4\u20130x80ba9e2. The complete predicate returns true only when timestamp matches and skeleton is non-null; it never writes either field. Fresh exact Mac DObjSkelExists 0x73f2e\u20130x73f52 writes null to the skeleton on timestamp mismatch at 0x73f3c. That mutating provider remains a rejected substitution. No closure from missing direct calls or static pointer references; no source change."
   },
   "mac:0x00076600": {
     "status": "fixed",
@@ -10241,7 +10241,7 @@
   },
   "linux:xanim/xanim.cpp:337:XAnimDisableLeakCheck": {
     "status": "unchecked",
-    "evidence": "No matching Mac text symbol or uniquely identified complete inlined body was established; Linux definition and native/symbol inventory inspected. No equality inferred from absence."
+    "evidence": "No matching Mac text symbol or uniquely identified complete inlined body was established; Linux definition and native/symbol inventory inspected. No equality inferred from absence. Original executable follow-up, 2026-11-05: Original Linux 1.0 anonymous body 0x80ba7b0 maps to 1.3 0x80bcd88\u20130x80bcd94 and writes byte one to original global 0x85e4f25. This anchors the complete original state write, but no primary Mac owner of that write is established. Metadata or initialization of related state does not suffice. No closure from missing direct calls or static pointer references; no source change."
   },
   "mac:0x0003fa94": {
     "status": "equal",
@@ -10729,7 +10729,7 @@
   },
   "linux:xanim/xmodel.cpp:294:XModelGetCollLod": {
     "status": "unchecked",
-    "evidence": "Read the Linux-only ledger definition and searched native src: no native body or caller, and no Mac symbol/unique complete inline identity established. Linux collLod getter is insufficient authority to claim equality or invent implementation. No code added."
+    "evidence": "Read the Linux-only ledger definition and searched native src: no native body or caller, and no Mac symbol/unique complete inline identity established. Linux collLod getter is insufficient authority to claim equality or invent implementation. No code added. Original executable follow-up, 2026-11-05: Original Linux 1.0 anonymous body 0x80c33d6 maps uniquely to 1.3 0x80c59b2\u20130x80c59be. It returns a sign-extended short from model offset 0x7e. Existing collision-LOD initialization/writes establish storage, not this complete read/result operation. No closure from missing direct calls or static pointer references; no source change."
   },
   "mac:0x00045ab8": {
     "status": "equal",
@@ -10749,7 +10749,7 @@
   },
   "linux:xanim/xmodel.cpp:448:XModelIgnoreChar": {
     "status": "unchecked",
-    "evidence": "Read the Linux-only ledger definition and searched native src: no native body or caller, and no Mac symbol/unique complete inline identity established. Linux unreferenced dead helper is insufficient authority to claim equality or invent implementation. No code added."
+    "evidence": "Read the Linux-only ledger definition and searched native src: no native body or caller, and no Mac symbol/unique complete inline identity established. Linux unreferenced dead helper is insufficient authority to claim equality or invent implementation. No code added. Original executable follow-up, 2026-11-05: Original Linux 1.0 anonymous body 0x80c387a maps to 1.3 0x80c5e56\u20130x80c5e64. It copies the low input byte to its local stack slot and returns without external state changes. The full original neighboring model block uniquely anchors it; neither that reconstruction label nor an unrelated empty Mac provider establishes the missing identity. No closure from missing direct calls or static pointer references; no source change."
   },
   "linux:xanim/xmodel.cpp:196:XModelLoadDefaultModel": {
     "status": "equal",
@@ -10777,11 +10777,11 @@
   },
   "linux:xanim/xmodel.cpp:442:XModelReturnZero": {
     "status": "unchecked",
-    "evidence": "Read the Linux-only ledger definition and searched native src: no native body or caller, and no Mac symbol/unique complete inline identity established. Linux unreferenced dead helper is insufficient authority to claim equality or invent implementation. No code added."
+    "evidence": "Read the Linux-only ledger definition and searched native src: no native body or caller, and no Mac symbol/unique complete inline identity established. Linux unreferenced dead helper is insufficient authority to claim equality or invent implementation. No code added. Original executable follow-up, 2026-11-05: Original Linux 1.0 anonymous body 0x80c3870 maps to 1.3 0x80c5e4c\u20130x80c5e56 and returns integer zero. Its many identical code matches are disambiguated by the full original Com_ValidXModelName/zero/char-body neighborhood, uniquely mapping 0x80c3820 to 0x80c5dfc. Similar zero-returning Mac functions are not an original identity bridge. No closure from missing direct calls or static pointer references; no source change."
   },
   "linux:xanim/xmodel.cpp:42:XModelSetUnusedValue": {
     "status": "unchecked",
-    "evidence": "Read the Linux-only ledger definition and searched native src: no native body or caller, and no Mac symbol/unique complete inline identity established. Linux unreferenced dead helper is insufficient authority to claim equality or invent implementation. No code added."
+    "evidence": "Read the Linux-only ledger definition and searched native src: no native body or caller, and no Mac symbol/unique complete inline identity established. Linux unreferenced dead helper is insufficient authority to claim equality or invent implementation. No code added. Original executable follow-up, 2026-11-05: Original Linux 1.0 anonymous body 0x80c2d54 maps to 1.3 0x80c5330\u20130x80c533e and writes the input integer to original global 0x85e4ff8. The tiny pattern has multiple matches alone; the complete XModelBad-plus-setter original neighborhood uniquely maps 0x80c2d44 to 0x80c5320. This anchors the operation, but not a primary Mac global-write owner. The reconstruction name does not prove deadness. No closure from missing direct calls or static pointer references; no source change."
   },
   "mac:0x0004586a": {
     "status": "equal",
