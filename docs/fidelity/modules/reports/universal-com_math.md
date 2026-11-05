@@ -2,7 +2,7 @@
 
 Updated 2026-11-06.
 
-**Current: 176/229 reconciled: 145 equal, 31 fixed, 0 intentional; 53 unchecked.**
+**Current: 177/229 reconciled: 146 equal, 31 fixed, 0 intentional; 52 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -558,3 +558,13 @@ Current pitch is not assumed normalized. Actual `PM_CheckDuck` stores the 0–36
 The fixed classification inherits the existing `AngleDelta` CVTTSS2SI repair at 0x2cdc4. When the instruction returns with the relevant exception masked, integer-indefinite masks to zero; native's explicit conversion preserves that returned result. No engine-wide exception-mask invariant or trapping equivalence is established. The earlier original tolerance, wrap, tie and final-normalization differences remain facts, but do not override the positively identified Mac operation. The mapping excludes an arbitrary exported rate/time API, normalized-current assumptions, FP flags/traps/NaN payload preservation, invalid storage, timestamp overflow, upstream trace correctness, earlier prone-event effects and whole movement/network equivalence. `LinearTrack` is a separate pending investigation.
 
 Independent botlib and parent reviews accepted the mapping in `units/review-provenance-angletrack30.md`. Private `recon-provenance-angletrack30.noindex` retains the complete original chain, fresh exact Mac producers/update/consumers, raw constants/field records and native hashes. One closure with an inherited correction, no new defect or source change. The prior repair was compiled and reviewed, not runtime verified; this unit ran no compilation, tests, CI, full build or replay.
+
+## Complete signed-delta bounds expansion (expanddelta32)
+
+`ExpandBoundsByDelta` is equal through the complete actual in-place operation in G_MoverTeam. Original1.3 body0x80a86ee throughRET0x80a87b2 adds each ordered-positive delta to its matching maximum, otherwise to its matching minimum, across all three axes while preserving opposite endpoints. The previously rejected fresh swept-box construction remains insufficient by itself.
+
+The new Mac owner supplies real move[3] from trajectory output minus current origin at0x1bae27–0x1bae70. Before expansion it constructs separate complete totalMins/totalMaxs arrays from radius bounds, or copies all six existing absolute bounds at0x1bb608–0x1bb63e. Full update0x1baf77–0x1bafa9 plus minimum tail0x1bb56a–0x1bb57a loops over all three components. UCOMISS/JBE sends nonpositive and unordered delta to the minimum; otherwise it updates maximum. Native preserves that selector, chosen endpoint addition/store and opposite endpoint.
+
+The complete output pair is consumed: both exact local array addresses pass at0x1bafcd–0x1bafd7 into CM_AreaEntities, whose wrapper and recursive consumer preserve the pointers and use all six endpoint comparisons before entity-list insertion. The intervening unlink receives only the entity pointer. This establishes an actual disjoint-storage bounds update, rather than a partial dimension, discarded scalar or hypothetical adapter. The selected operation has no inherited repair or new defect. It does not certify arbitrary aliasing, invalid storage, FP traps/NaN payloads, preceding trajectory/radius work, collision traversal, later pushing or the whole mover.
+
+Independent review: units/review-provenance-expanddelta32.md. Fresh complete original/four Mac bodies, original identity map and source hash are retained in private recon-provenance-expanddelta32.noindex. One equal closure; no source change, compilation, tests, CI, full build, replay or runtime verification. Settled native policies remain unchanged.
