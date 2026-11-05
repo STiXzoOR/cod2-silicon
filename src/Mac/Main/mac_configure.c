@@ -5,7 +5,7 @@
 #include <string.h>
 
 extern float MacFeatures_GetCPUSpeedInGHz(void);
-extern uint32_t MacFeatures_GetMemorySizeInMB(void);
+extern unsigned long MacFeatures_GetMemorySizeInMB(void);
 
 double Sys_CpuGHz(void)
 {
@@ -47,7 +47,7 @@ void Sys_DetectVideoCard(int descLimit, char *description)
     description[descLimit - 1] = '\0';
 }
 
-int Sys_SupportsSSE(void)
+unsigned char Sys_SupportsSSE(void)
 {
     /* The native SIMD implementation does not depend on an x86 Gestalt bit. */
     return 1;
