@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**44/56 reconciled: 42 equal, 1 fixed, 1 intentional; 12 remain unchecked.** Mac 1.3 i386 is the authority. All 14 exported bodies were read from disassembly restarted at their exact symbols. Inline operations were compared in their Mac callers; missing Mac identities were not counted as equal. Linux declarations were used for names only. No reference code was copied.
+**45/56 reconciled: 42 equal, 1 fixed, 2 intentional; 11 unchecked.** Mac 1.3 i386 is the authority. All 14 exported bodies were read from disassembly restarted at their exact symbols. Inline operations were compared in their Mac callers; missing Mac identities were not counted as equal. Linux declarations were used for names only. No reference code was copied.
 
 ## Correction
 
@@ -20,7 +20,7 @@ The Mac null-parent behavior is retained: `AddGroup` initializes the parent to n
 
 ## Unresolved boundaries
 
-`GetToken` remains unchecked for its full input domain. Its whitespace, comment, quote, size-limit and end-of-line trimming branches were compared, but Mac 0xab95f-0xab999 does not stop an end-of-line read at NUL. An unterminated quoted token also advances its cursor beyond NUL at 0xaba0f-0xaba1f, leaving the next scan outside the declared input.
+Historical GetToken gap, resolved by the native-boundary follow-up below: Its whitespace, comment, quote, size-limit and end-of-line trimming branches were compared, but Mac 0xab95f-0xab999 does not stop an end-of-line read at NUL. An unterminated quoted token also advances its cursor beyond NUL at 0xaba0f-0xaba1f, leaving the next scan outside the declared input.
 
 The real loader is inline in Mac `FX_ParseEffect`: 0x5d25f requests `fileLength + 1`, 0x5d273 supplies `fileLength` to `FS_Read`, 0x5d28a appends one NUL, and 0x5d2ab calls the parser. Native `FX_ParseEffectFile` has the same boundary and adds no newline. Mac `Hunk_AllocateTempMemoryInternal` at 0x38192 reserves a header before the requested extent, with no readable suffix guarantee; its fallback requests the exact size from `malloc`. Neither caller nor allocator establishes a safe scan past the final NUL. Existing native bounds remain unchanged; no padding or indeterminate storage was introduced. Parser control-flow verdicts cover inputs whose token reads remain within storage.
 
@@ -43,3 +43,8 @@ Parent inspection covered all six units; independent reviews covered protocol/sn
 Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. Dedicated replay does not exercise client HUD, camera, sound or weapon rendering; unreached corrections remain compiled and reviewed.
 
 Catalog coverage passed without semantic catalog changes. Hosted ILP32 comparison remains unavailable because the unchanged reference fails to compile; no byte parity is claimed.
+
+
+## Defined native boundary follow-up
+
+See [native-invalid-boundaries](native-invalid-boundaries.md) for the exact native contracts, original addresses, source corrections and limits. Earlier open statements for the six named Mac rows describe the prior checkpoint. Current module counts are 42 equal, 1 fixed, 2 intentional, 11 unchecked. All other original identity gaps remain open.

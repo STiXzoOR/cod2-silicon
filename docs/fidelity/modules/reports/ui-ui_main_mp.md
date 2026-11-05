@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**64/65 reconciled: 46 equal, 15 fixed, 3 intentional; 1 unchecked.** Mac 1.3 i386 is the authority. Every assigned symbol was identified and its body read. Triage and constant checks supported the comparison; the active stock native body was preprocessed with the engine compile database. Exact-symbol disassembly was also checked for nine functions, and the active-menu, key-handler, server-column and owner-draw jump tables were decoded from the binary.
+**65/65 reconciled: 46 equal, 15 fixed, 4 intentional; 0 unchecked.** Mac 1.3 i386 is the authority. Every assigned symbol was identified and its body read. Triage and constant checks supported the comparison; the active stock native body was preprocessed with the engine compile database. Exact-symbol disassembly was also checked for nine functions, and the active-menu, key-handler, server-column and owner-draw jump tables were decoded from the binary.
 
 ## Corrections
 
@@ -24,7 +24,7 @@ Updated 2026-11-05.
 
 The two command wrappers retain opt-in native trace prints. `UI_FeederItemText` retains its null status-line guard. Existing trace/gamepad hooks, CoD2x download scale/spacing, and map/profile bounds guards remain. Browser insertion shifts the live array rather than copying Mac's extra inactive slot, which can cross declared storage at the limit. The filter table's second row is an explicit padding-to-defined-storage adaptation. No original binary, disassembly or reference source is committed.
 
-`UI_OwnerDraw` remains **unchecked** despite its ordinary draw corrections. At Mac 0x154012, a talking client absent from the rebuilt player list produces index -1 and reads a string starting 32 bytes before `playerNames`, inside preceding asset storage. Native has the inherited negative-index fallback, but LP64 asset bytes do not establish an equivalent valid-string contract. That fallback is unchanged; this report does not claim it is reconciled or safe.
+Historical UI_OwnerDraw storage gap, resolved by the native-boundary follow-up below: At Mac 0x154012, a talking client absent from the rebuilt player list produces index -1 and reads a string starting 32 bytes before `playerNames`, inside preceding asset storage. Native has the inherited negative-index fallback, but LP64 asset bytes do not establish an equivalent valid-string contract. That fallback is unchanged; this report does not claim it is reconciled or safe.
 
 ## Verification and limits
 
@@ -45,3 +45,8 @@ Parent and fresh independent source/binary reviews covered all six units, includ
 Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. The first stock attempt stopped before engine launch because previous output existed; verified backed-up output was cleared and the complete replay passed. Dedicated replay does not exercise UI interaction, client sound output or microphone capture.
 
 Catalog coverage passed without semantic catalog changes. The predecessor batch 8 hosted macOS run exceeded its one-hour limit during ABI audits despite passing full local CI; that hosted run is incomplete. Hosted ILP32 comparison remains unavailable because the unchanged reference fails compilation; no byte parity is claimed.
+
+
+## Defined native boundary follow-up
+
+See [native-invalid-boundaries](native-invalid-boundaries.md) for the exact native contracts, original addresses, source corrections and limits. Earlier open statements for the six named Mac rows describe the prior checkpoint. Current module counts are 46 equal, 15 fixed, 4 intentional, 0 unchecked. All other original identity gaps remain open.
