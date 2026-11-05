@@ -1,8 +1,8 @@
 # xanim/dobj module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**55/58 reconciled: 54 equal, 1 fixed, 3 unchecked.** Mac 1.3 i386 is the authority. All 40 Mac-backed functions were read, including skeleton composition, hierarchy traversal, duplicate parts, surface masks and both trace paths. The remaining rows were checked against their renamed or inlined Mac counterparts where an identity could be established. Linux supplied names only.
+**55/58 reconciled: 53 equal, 2 fixed, 3 unchecked.** Mac 1.3 i386 is the authority. All 40 Mac-backed functions were read, including skeleton composition, hierarchy traversal, duplicate parts, surface masks and both trace paths. The remaining rows were checked against their renamed or inlined Mac counterparts where an identity could be established. Linux supplied names only.
 
 ## Corrections
 

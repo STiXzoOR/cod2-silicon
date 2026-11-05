@@ -1,8 +1,8 @@
 # qcommon/cm_trace module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**38/38 reconciled: 37 equal, 1 fixed.** Mac 1.3 is the authority; Linux 1.3 was read only. The legacy source is unchanged.
+**38/38 reconciled: 36 equal, 2 fixed.** Mac 1.3 is the authority; Linux 1.3 was read only. The legacy source is unchanged.
 
 The initial comparison covered brush clipping, leaf traversal, the tree walk, sphere tests, transformed traces and the
 whole sight path. The follow-up below corrects four additional unordered tree-walk branches.

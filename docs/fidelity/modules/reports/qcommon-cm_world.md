@@ -1,8 +1,8 @@
 # qcommon/cm_world module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**24/24 reconciled: 24 equal.** Read the Mac 1.3 bodies at 0xaf49c-0xb13ca alongside native source, including the recursive helpers that have Mac symbols but Linux-only ledger rows. Call/string triage and literal checks were used as prompts for that comparison. No code changes were needed.
+**28/28 reconciled: 27 equal, 1 fixed.** The original 24-row pass read the Mac 1.3 bodies at 0xaf49c-0xb13ca alongside native source, including the recursive helpers that have Mac symbols but Linux-only ledger rows. Call/string triage and literal checks were prompts for that comparison. No code changes were needed in that initial pass; the 2026-11-05 follow-up below records the overlap correction.
 
 The comparison covers unlinking and content propagation, area bounds and capacity exits, all point/sight/move traversals, insertion, sector allocation, sorting and initial world linkage. The Linux names `CM_AddEntityToNode` and `CM_AddStaticModelToNode` map to native insertion helpers and Mac inline blocks. `CM_ClearWorld`, `CM_LinkStaticModel` and `CM_LinkAllStaticModels` are inlined into `CM_LinkWorld` at 0xb0cc2.
 
@@ -24,7 +24,7 @@ The hosted ILP32 byte-comparison job cannot compare binaries: its unchanged `410
 
 ## Routed identities
 
-Separately indexed Mac rows moved from universal headers were resolved only where the exact symbol/address and existing complete-body audit established identity with an already reconciled Linux-indexed row. The source matches that audited implementation. Both IDs and original provenance remain; these are duplicate work items, not new implementations. Current module counts: 28 equal, 0 fixed, 0 intentional, 0 unchecked.
+Separately indexed Mac rows moved from universal headers were resolved only where the exact symbol/address and existing complete-body audit established identity with an already reconciled Linux-indexed row. The source matches that audited implementation. Both IDs and original provenance remain; these are duplicate work items, not new implementations. Counts after routing, before the 2026-11-05 follow-up: 28 equal, 0 fixed, 0 intentional, 0 unchecked.
 
 ## Math-helper follow-up — 2026-11-05
 
