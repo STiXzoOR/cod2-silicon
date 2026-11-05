@@ -7176,7 +7176,41 @@ static int VM_CandidateHandleWaitTillFrameEnd(const char **pos, unsigned int *lo
 }
 
 #if defined(COD2_X64)
-static int VM_CandidateHandleWaitTill(const char *volatile *pos, volatile unsigned int *localVarCount,
+static void VM_CandidateEventObjectError(VariableValue *owner, unsigned int errorIndex)
+{
+    int type = owner->type == VAR_POINTER ? GetVarType(owner->u.pointerValue) : owner->type;
+    ((struct scrVarPub_t *)imp_scrVarPub)->error_index = errorIndex;
+    Scr_SetErrorMessageAndJump(va("%s is not an object", ((const char *const *)imp_var_typename)[type]));
+}
+
+static void VM_CandidateRecoverEventError(const char *volatile *pos, VariableValue *volatile *top,
+                                           unsigned int opcode)
+{
+    struct scrVarPub_t *varPub = (struct scrVarPub_t *)imp_scrVarPub;
+
+    /* Mac 0x86269 reports before clearing errors or releasing operands. */
+    RuntimeError(*pos, varPub->error_index, varPub->error_message,
+                 ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message);
+    varPub->error_message = NULL;
+    ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message = NULL;
+    varPub->error_index = 0;
+
+    if (opcode == VMOP_WaitTillMatch)
+        ++*pos;
+    if (opcode == VMOP_NotifyCall) {
+        while ((*top)->type != 8) {
+            RemoveRefToValue((*top)->type, (*top)->u);
+            --*top;
+        }
+    } else {
+        RemoveRefToValue((*top)->type, (*top)->u);
+        --*top;
+    }
+    RemoveRefToValue((*top)->type, (*top)->u);
+    --*top;
+}
+
+static int VM_CandidateHandleWaitTill(unsigned int opcode, const char *volatile *pos, volatile unsigned int *localVarCount,
                                       VariableValue *volatile *top, VariableValue *volatile *startTop,
                                       volatile unsigned int *localId, unsigned int *resultLocalId,
                                       unsigned int *threadCount)
@@ -7203,9 +7237,9 @@ static int VM_CandidateHandleWaitTill(const char **pos, unsigned int *localVarCo
 
     if ((*top)->type != VAR_POINTER || !IsFieldObject((*top)->u.pointerValue)) {
 #if defined(COD2_X64)
-        varPub->error_index = 2;
-        Scr_SetErrorMessageAndJump(va("%s is not an object", ((const char *const *)imp_var_typename)[
-            (*top)->type == VAR_POINTER ? GetVarType((*top)->u.pointerValue) : (*top)->type]));
+        VM_CandidateEventObjectError(*top, 2);
+        VM_CandidateRecoverEventError(pos, top, opcode);
+        return 0;
 #else
         Scr_SetErrorMessageAndJump("first waittill argument is not a field object");
 #endif
@@ -7218,6 +7252,10 @@ static int VM_CandidateHandleWaitTill(const char **pos, unsigned int *localVarCo
         ++*top;
         varPub->error_index = 3;
         Scr_SetErrorMessageAndJump("first parameter of waittill must evaluate to a string");
+        /* Mac 0x86797 repeats object policy on the already validated owner. */
+        VM_CandidateEventObjectError(*top, 2);
+        VM_CandidateRecoverEventError(pos, top, opcode);
+        return 0;
 #else
         Scr_SetErrorMessageAndJump("second waittill argument is not a string");
 #endif
@@ -7282,9 +7320,9 @@ static void VM_CandidateHandleNotifyCall(VariableValue **top)
 
     if ((*top)->type != VAR_POINTER || !IsFieldObject((*top)->u.pointerValue)) {
 #if defined(COD2_X64)
-        ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 2;
-        Scr_SetErrorMessageAndJump(va("%s is not an object", ((const char *const *)imp_var_typename)[
-            (*top)->type == VAR_POINTER ? GetVarType((*top)->u.pointerValue) : (*top)->type]));
+        VM_CandidateEventObjectError(*top, 2);
+        VM_CandidateRecoverEventError(pos, top, VMOP_NotifyCall);
+        return;
 #else
         Scr_SetErrorMessageAndJump("notify object is not a field object");
 #endif
@@ -7297,6 +7335,9 @@ static void VM_CandidateHandleNotifyCall(VariableValue **top)
         ++*top;
         ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 1;
         Scr_SetErrorMessageAndJump("first parameter of notify must evaluate to a string");
+        VM_CandidateEventObjectError(*top, 2);
+        VM_CandidateRecoverEventError(pos, top, VMOP_NotifyCall);
+        return;
 #else
         Scr_SetErrorMessageAndJump("notify name is not a string");
 #endif
@@ -7322,7 +7363,7 @@ static void VM_CandidateHandleNotifyCall(VariableValue **top)
 }
 
 #if defined(COD2_X64)
-static void VM_CandidateHandleEndOnCallback(unsigned int localId, VariableValue *volatile *top)
+static void VM_CandidateHandleEndOnCallback(const char *volatile *pos, unsigned int localId, VariableValue *volatile *top)
 #else
 static void VM_CandidateHandleEndOnCallback(unsigned int localId, VariableValue **top)
 #endif
@@ -7340,9 +7381,9 @@ static void VM_CandidateHandleEndOnCallback(unsigned int localId, VariableValue 
 
     if ((*top)->type != VAR_POINTER || !IsFieldObject((*top)->u.pointerValue)) {
 #if defined(COD2_X64)
-        varPub->error_index = 1;
-        Scr_SetErrorMessageAndJump(va("%s is not an object", ((const char *const *)imp_var_typename)[
-            (*top)->type == VAR_POINTER ? GetVarType((*top)->u.pointerValue) : (*top)->type]));
+        VM_CandidateEventObjectError(*top, 1);
+        VM_CandidateRecoverEventError(pos, top, VMOP_EndOnCallback);
+        return;
 #else
         Scr_SetErrorMessageAndJump("endon object is not a field object");
 #endif
@@ -7352,6 +7393,9 @@ static void VM_CandidateHandleEndOnCallback(unsigned int localId, VariableValue 
     if ((*top - 1)->type != VAR_STRING) {
 #if defined(COD2_X64)
         Scr_SetErrorMessageAndJump("first parameter of endon must evaluate to a string");
+        VM_CandidateEventObjectError(*top, 1);
+        VM_CandidateRecoverEventError(pos, top, VMOP_EndOnCallback);
+        return;
 #else
         Scr_SetErrorMessageAndJump("endon notify name is not a string");
 #endif
@@ -8612,7 +8656,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 
         case VMOP_WaitTillMatch:
         case VMOP_WaitTill:
+#if defined(COD2_X64)
+            if (VM_CandidateHandleWaitTill(opcode, &pos, &localVarCount, &top, &startTop, &localId, &resultLocalId, &thread_count))
+#else
             if (VM_CandidateHandleWaitTill(&pos, &localVarCount, &top, &startTop, &localId, &resultLocalId, &thread_count))
+#endif
                 return resultLocalId;
             break;
 
@@ -8625,7 +8673,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             break;
 
         case VMOP_EndOnCallback:
+#if defined(COD2_X64)
+            VM_CandidateHandleEndOnCallback(&pos, localId, &top);
+#else
             VM_CandidateHandleEndOnCallback(localId, &top);
+#endif
             break;
 
         case VMOP_Switch:
