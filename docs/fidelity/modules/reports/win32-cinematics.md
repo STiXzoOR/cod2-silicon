@@ -12,7 +12,7 @@ Updated 2026-11-05.
 
 `blitVQQuad32fs` now sign-extends the stored 32-bit motion displacement before LP64 pointer addition. Mac adds at 0xb1ab4/0xb1f7f wrap at 32 bits. Native had zero-extended negative previous-buffer displacements into offsets near 4 GiB. All codeword, blit/copy, stride, quadrant and sentinel paths were compared by hand.
 
-The runner received bounded corrections for its active normal four-byte path: the raw-audio clock and signed frame calculation (0xb3f70), SSE integer-conversion behavior for material clock adjustment (0xb2d83/0xb4977), continued frame processing and timeout handling (0xb2e25/0xb300e/0xb3a7d), hold/loop/EOF cleanup (0xb36ba/0xb3fb5/0xb3f39), info clocks/counts (0xb335e..0xb3d68), and codebook low-byte-zero counts (0xb3a44). The jump table at 0x32a560 was decoded directly: 0x1012 is a no-op, 0x1013 clears chunk size, and 0x1030 starts in-memory subchunks. Header validation, subchunk iteration and played-byte update order now follow 0xb3137..0xb375a.
+The runner received corrections for its normal four-byte path: the raw-audio clock and signed frame calculation (0xb3f70), SSE integer-conversion behavior for material clock adjustment (0xb2d83/0xb4977), continued frame processing and timeout handling (0xb2e25/0xb300e/0xb3a7d), hold/loop/EOF cleanup (0xb36ba/0xb3fb5/0xb3f39), info clocks/counts (0xb335e..0xb3d68), and codebook low-byte-zero counts (0xb3a44). The jump table at 0x32a560 was decoded directly: 0x1012 is a no-op, 0x1013 clears chunk size, and 0x1030 starts in-memory subchunks. Header validation, subchunk iteration and played-byte update order now follow 0xb3137..0xb375a.
 
 ## Intentional boundaries
 
@@ -35,3 +35,9 @@ Malformed chunks can also exceed the 65,536-byte input area or decoded-audio sta
 The arm64 Release `cod2_macos_ded` target built with background scheduling and two jobs. Because it excludes cinematics, the actual client compile commands were also used to compile `cinematics.c`, `win_voice.c` and `win_localize.c` separately; all succeeded. The changed production files contain no `__LINE__`. The guard checker reports only the two expected native-on differences, with no inactive-configuration differences. `git diff --check` passes.
 
 No tests were added or changed, and no CI matrix, replay, complete client link or runtime exercise was run by this unit. Corrections are compiled and reviewed only. Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-platform-media.noindex/`.
+
+## Independent review and reachability
+
+Independent source/binary review found no introduced mismatch. It confirmed one changed failure behavior: after failed sound initialization, an audio-bearing ROQ stream follows the reference raw-audio clock of zero and can stop at the watchdog instead of continuing silently using wall time. Both Mac and Windows do this. The earlier native fallback dates to the initial reconstruction, with no documented intentional replacement contract found; the reconciliation retains the reference behavior under the explicit rule to preserve deterministic original quirks.
+
+This does not enable Apple product-path cinematic playback. The public CIN_PlayCinematic and CL_PlayCinematic command wrappers still implement the documented WS11 immediate-finish boundary in client_mp/cl_cin_mp.c. The normal four-byte decoder path above describes what happens when ROQ is called directly; no runtime reachability or complete decoder certification is claimed. The negative-index guards and unresolved malformed-packet limits remain as stated above.
