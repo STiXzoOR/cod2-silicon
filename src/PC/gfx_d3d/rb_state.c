@@ -343,12 +343,17 @@ static void RB_GetSamplerFilterModes(byte samplerState, DWORD *minFilter, DWORD 
     *minFilter = RB_GetFilterTableValue(samplerState & 3);
     *magFilter = *minFilter;
     if (*minFilter == D3DTEXF_ANISOTROPIC) {
+#if defined(COD2_X64)
+        *minFilter = dx->anisotropicMinFilter;
+        *magFilter = dx->anisotropicMagFilter;
+#else
         if (dx->anisotropy > 0) {
             *magFilter = D3DTEXF_LINEAR;
         } else {
             *minFilter = D3DTEXF_LINEAR;
             *magFilter = D3DTEXF_LINEAR;
         }
+#endif
     }
 }
 
@@ -409,7 +414,17 @@ static inline __attribute__((always_inline)) void RB_SetAnisotropy_core(void)
     }
     if (dx->anisotropy <= 1) {
         dx->anisotropy = 0;
+#if defined(COD2_X64)
+        dx->anisotropicMinFilter = D3DTEXF_LINEAR;
+        dx->anisotropicMagFilter = D3DTEXF_LINEAR;
+#endif
     }
+#if defined(COD2_X64)
+    else {
+        dx->anisotropicMagFilter = dx->anisotropicMagSupported ? D3DTEXF_ANISOTROPIC : D3DTEXF_LINEAR;
+        dx->anisotropicMinFilter = dx->anisotropicMinSupported ? D3DTEXF_ANISOTROPIC : D3DTEXF_LINEAR;
+    }
+#endif
 
     anisotropy = dx->anisotropy;
     if (anisotropy < 1) {
@@ -1385,8 +1400,14 @@ void COD2_FORCE_ALIGN_ARG_POINTER RB_SetInitialState(void)
         dxState.activeAlphaStageBits[stageIndex] = 0;
     }
 
+#if defined(COD2_X64)
+    /* These two initial writes do not use Mac's alwaysfails retry loop. */
+    ((SetRenderStateFn)VTABLE(dx.device)[0xe4 / 4])(dx.device, 0x89, 0);
+    ((SetRenderStateFn)VTABLE(dx.device)[0xe4 / 4])(dx.device, 0x93, 1);
+#else
     RB_SetRenderStateDx7(0x89, 0);
     RB_SetRenderStateDx7(0x93, 1);
+#endif
 
     material.Diffuse.r = 1.0f;
     material.Diffuse.g = 1.0f;
