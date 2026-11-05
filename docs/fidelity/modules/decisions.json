@@ -22534,5 +22534,841 @@
   "mac:0x000775e4": {
     "status": "equal",
     "evidence": "Mac 0x775e4 exact-symbol body compared by hand: clears localization and localized_strings only; native agrees."
+  },
+  "mac:0x001111f0": {
+    "status": "intentional",
+    "evidence": "Mac 0x001111f0: Mac branches on listener sentinel -1 and reverses internal Z conversion on query. Native returns stored API-space listener/sample XYZ under audio_mutex. SND_Get3DChannelSaveInfo consumes those coordinates. WS3 avoids serializing the old engine/object position offsets while retaining the public coordinate representation."
+  },
+  "mac:0x00110e18": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110e18: Mac ignores the name and returns engine mixer_count_3D. Native responds to Maximum supported samples for token 2 with 256; SND_InitDriver asks exactly that attribute and limits its engine handle count. The typed pool capacity replaces the configurable AUGraph bus count."
+  },
+  "mac:0x001110ac": {
+    "status": "intentional",
+    "evidence": "Mac 0x001110ac: Mac delegates to the source byte-length field at CSoundObject +0xb0, with zero for NULL. Native returns source_bytes, matching the unit needed by driver 3D saved fractions. SND_Get3DChannelLength retains that byte-returning API; no millisecond reinterpretation is introduced by this replacement."
+  },
+  "mac:0x00111054": {
+    "status": "intentional",
+    "evidence": "Mac 0x00111054: Mac returns the locked byte cursor (or zero for NULL). Native scales its decoded frame cursor to source_bytes and clamps to the active decoded length. Driver raw-clock and 3D save-fraction paths use this byte representation. Codec/frame scheduling is the WS3 software implementation, not an AudioConverter byte-identical claim."
+  },
+  "mac:0x00111080": {
+    "status": "intentional",
+    "evidence": "Mac 0x00111080: Mac resolves its handle and returns the stored playback rate, with zero for NULL. Native reads sample->rate under audio_mutex, returning zero for an invalid/unallocated handle. Driver rate getters, starts and save paths consume that field; the typed pool lookup replaces raw object identity."
+  },
+  "mac:0x00110ffa": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110ffa: Mac returns the resolved object status or 1 for NULL. Native returns typed status under audio_mutex, likewise using 1 for invalid handles; ResetSample/MixLocked/stop/end supply 2/4/8. Driver free-channel, pause, save and cleanup callers are active; old object-pointer lookup is intentionally replaced."
+  },
+  "mac:0x00111028": {
+    "status": "intentional",
+    "evidence": "Mac 0x00111028: Mac reads separate object master volume or zero for NULL. Native reads the typed left gain, which set_3D_sample_volume sets together with right; driver query/save consumers use this scalar. The software mixer gain representation replaces the old master-volume field."
+  },
+  "mac:0x00111254": {
+    "status": "intentional",
+    "evidence": "Mac 0x00111254: Mac parses RIFF/WAVE chunks into nine ILP32 AILSOUNDINFO fields, accepting PCM/IMA. Native parses bounded RIFF chunks into the matching native-width MacAudioSoundInfo, honors padding/fact and additionally supports float/extensible PCM. SND_LoadSoundFile consumes rate/bits/channels/data length/sample count/block size before native conversion. WS3 metadata parsing is implemented and active; unsupported/malformed input handling and compressed sample counts intentionally follow the defined SDK decoder contract rather than the old unbounded parser."
+  },
+  "mac:0x00110e32": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110e32: Mac allocates through NewSampleSound3D -> GetAvailableSampleBus(1). Native allocates a typed sample through its 2D allocator then explicitly sets spatial=1 under audio_mutex. Driver initialization owns the 3D handles; later set_3D_sample_info resets PCM while preserving this type. The native pool replaces sample-bus layout."
+  },
+  "mac:0x00110438": {
+    "status": "fixed",
+    "evidence": "Mac 0x110438 delegates to CSoundEngine_NewSampleSound at 0x115964, passing type 0 through both GetAvailableSampleBus reuse passes; CSampleSound_InitSample writes that type at 0x114b0c-0x114b0f. Native ResetSample preserved stale spatial state after a released 3D handle. AIL_allocate_sample_handle now clears spatial before ResetSample; 3D allocation still sets it and in-place metadata/init resets still preserve it. Driver 2D/raw/stream and macos_voice allocation callers were read. WS3 typed provider remains intentional; compiled and reviewed, not exercised."
+  },
+  "mac:0x00110e12": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110e12: Mac is empty. Native is also a no-op because the synthetic provider shares the digital driver AudioUnit; SND_ShutdownDriver subsequently calls AIL_shutdown to dispose output. This records the explicit WS3 ownership boundary, not equality of backend resource lifecycles."
+  },
+  "mac:0x001109b4": {
+    "status": "intentional",
+    "evidence": "Mac 0x001109b4: Mac resolves the stream then CSoundObject::Release handles the backend-specific resource. Native delegates to AIL_release_sample_handle, freeing decoded PCM and returning the slot to the pool. SND_StopStreamChannel consumes this boundary; QuickTime Movie ownership is replaced by SDK predecode ownership."
+  },
+  "mac:0x00110416": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110416: Mac first pumps QuickTime streams then queries AUGraph CPU load, clamping its report to at least 1. Native reads the default-output AudioUnit CPU load and allows 0; audio progresses in Render/MixLocked rather than CPU-stat polling. SND_GetDriverCPUPercentage remains the diagnostic consumer."
+  },
+  "mac:0x00110ea0": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110ea0: Mac dispatches virtual end for the appropriate handle. Native ends by setting status 2 and cursor 0 while retaining the reusable decoded PCM; the 3D entry delegates. SND_Stop2DChannel/SND_Stop3DChannel and raw-channel cleanup reach this provider implementation."
+  },
+  "mac:0x001105b6": {
+    "status": "intentional",
+    "evidence": "Mac 0x001105b6: Mac dispatches virtual end for the appropriate handle. Native ends by setting status 2 and cursor 0 while retaining the reusable decoded PCM; the 3D entry delegates. SND_Stop2DChannel/SND_Stop3DChannel and raw-channel cleanup reach this provider implementation."
+  },
+  "mac:0x00110dce": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110dce: Mac enumerates one 0x4d504944 token with the cached device name. Native enumerates token 2 named Miles Fast 2D Positional Audio, then ends. SND_InitDriver selects that synthetic provider by its configured name, avoiding a hardware-name/class-layout dependency while retaining one-provider iteration."
+  },
+  "mac:0x00110474": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110474: Mac null-checks then resets the CSoundObject through init_sample and virtual hooks. Native ResetSample frees owned PCM and restores status/rate/gain/loop defaults while preserving the allocated handle spatial type. Active 2D/raw setup uses this native storage; it does not access the old offsets or vtable."
+  },
+  "mac:0x00110d06": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110d06: Mac reports object sound type 1 for .wav sample-backed streams and false for QuickTime type 2. Native newly allocated streams are deliberately nonspatial, so driver stream start/update use MSS_SpatializeStreamImpl and per-channel gains. Typed sample spatial state replaces the retired class distinction; fresh allocation now prevents stale 3D state."
+  },
+  "mac:0x001103f8": {
+    "status": "intentional",
+    "evidence": "Mac 0x001103f8: Mac returns the constant Audio Error 1. Native returns last_error populated by AudioError from initialization, allocation, metadata and decoding failures. SND_InitDriver, stream start and sample loading consume that diagnostic; WS3 intentionally exposes actual SDK failures."
+  },
+  "mac:0x0011081e": {
+    "status": "intentional",
+    "evidence": "Mac 0x0011081e: Mac forwards index/data/length into its four-slot source queue and resumes. Native synchronously decodes/copies to one of two empty owned PCM buffers and begins playback when idle. Driver raw output and macos_voice consume this boundary; voice may pass stack PCM because decoding completes before return. Successful buffer installation advances the payload generation, invalidating an older unlocked metadata decode before it can overwrite or leak the newer PCM."
+  },
+  "mac:0x001107de": {
+    "status": "intentional",
+    "evidence": "Mac 0x001107de: Mac delegates to a constant 2048-byte result. Native computes approximately 50 ms from rate and PCM channels/width, falling back to 2048 for nonpositive rate. SND_RawSamples raises that minimum to 8192 before allocating its queue; native dual PCM buffers replace the old four-buffer bus."
+  },
+  "mac:0x00110e0a": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110e0a: Mac always returns success zero. Native accepts only synthetic token 2 and returns zero for that token; SND_InitDriver obtains it from the native enumerator and checks this return. WS3 provider identity replaces a legacy device/library token."
+  },
+  "mac:0x00110402": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110402: Mac returns the constant driver token 0x4d444449. Native validates frequency/bits/channels, configures a 48 kHz stereo float default-output AudioUnit and returns token 1 only after start succeeds. SND_InitDriver checks NULL; voice output also uses this provider."
+  },
+  "mac:0x00110916": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110916: Mac selects .mp3 QuickTime CStreamSound after access(), or .wav CSampleSound3D, releasing on open failure. Native reads registered filesystem callbacks (or stdio), predecodes via ExtAudioFile with a 256 MiB bound and allocates a nonspatial typed sample. Driver stream start uses its metadata and software pan branch; no extension-specific legacy object is recreated. The MP3 media-time versus mutable playback-rate query/seek discrepancy is not waived by predecode replacement; its two public API rows and two CStreamSound time methods remain unchecked."
+  },
+  "mac:0x001109de": {
+    "status": "intentional",
+    "evidence": "Mac 0x001109de: Mac dispatches stop for nonzero pause and resume for zero. Native delegates to its stop/resume sample setters with that polarity and retains the frame cursor. SND_PauseStreamChannel/SND_UnpauseStreamChannel remain active consumers; Movie-rate/callback scheduling is replaced by MixLocked status gating."
+  },
+  "mac:0x00110da4": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110da4: Mac delegates to a CSoundEngine body that returns zero. Native DecodeInfo plus linear rate/channel conversion writes bounded PCM8/16/32 and returns bytes produced for one source. SND_LoadSoundFile checks the conversion result before exposing metadata; this is the documented WS3 loading replacement, not bundled Miles reconstruction."
+  },
+  "mac:0x0011044a": {
+    "status": "intentional",
+    "evidence": "Mac 0x0011044a: Mac resolves the handle then CSoundObject::Release stops/closes it, frees four conversion buffers and marks it available. Native validates pool membership, frees both owned PCM buffers via ResetSample and marks the typed slot unallocated. Driver raw cleanup and Mac voice destruction use this release boundary."
+  },
+  "mac:0x00110e72": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110e72: Mac dispatches virtual resume after null checking. Native prepares sample PCM when needed and marks a nonempty active buffer playing (4); 3D delegates to this implementation. Driver delayed start/unpause and MixLocked consume the same typed state rather than old AudioUnit bus callbacks."
+  },
+  "mac:0x00110588": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110588: Mac dispatches virtual resume after null checking. Native prepares sample PCM when needed and marks a nonempty active buffer playing (4); 3D delegates to this implementation. Driver delayed start/unpause and MixLocked consume the same typed state rather than old AudioUnit bus callbacks."
+  },
+  "mac:0x001107f0": {
+    "status": "intentional",
+    "evidence": "Mac 0x001107f0: Mac resolves the sample and finds one of four free source slots, returning -1 if unavailable. Native reports one of two empty decoded-PCM buffers, also -1 if full/invalid. SND_DriverPostUpdate and DSound_SampleFrame only submit indices returned here; their native handoff requires no four-slot identity."
+  },
+  "mac:0x001108d0": {
+    "status": "intentional",
+    "evidence": "Mac 0x001108d0: Mac resolves handle then invokes virtual total/current millisecond query. Native prepares PCM as needed and converts decoded frame count/cursor using the current playback rate, returning zeros for invalid state. Driver duration/save paths consume these long outputs. QuickTime timescale and old encoded-byte timing are replaced by WS3."
+  },
+  "mac:0x0011070a": {
+    "status": "intentional",
+    "evidence": "Mac 0x0011070a: Mac resolves its handle and returns the stored playback rate, with zero for NULL. Native reads sample->rate under audio_mutex, returning zero for an invalid/unallocated handle. Driver rate getters, starts and save paths consume that field; the typed pool lookup replaces raw object identity."
+  },
+  "mac:0x00110868": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110868: Mac returns the locked byte cursor (or zero for NULL). Native scales its decoded frame cursor to source_bytes and clamps to the active decoded length. Driver raw-clock and 3D save-fraction paths use this byte representation. Codec/frame scheduling is the WS3 software implementation, not an AudioConverter byte-identical claim."
+  },
+  "mac:0x001106dc": {
+    "status": "intentional",
+    "evidence": "Mac 0x001106dc: Mac returns the resolved object status or 1 for NULL. Native returns typed status under audio_mutex, likewise using 1 for invalid handles; ResetSample/MixLocked/stop/end supply 2/4/8. Driver free-channel, pause, save and cleanup callers are active; old object-pointer lookup is intentionally replaced."
+  },
+  "mac:0x00110778": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110778: Mac returns CSoundObject left/right levels, undoing mono doubling. Native returns the direct gains consumed by MixLocked and writes zeros for an invalid handle. Driver volume queries use these values. WS3 direct gain storage replaces the Mac mono/AUGraph gain representation."
+  },
+  "mac:0x00110736": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110736: Mac returns separate master-volume and pan fields from CSoundObject. Native derives volume=max(left,right) and pan=right/(left+right), using 0.5 for silence, from its direct mixer gains. Driver save-info paths consume this representation; original master/pan storage and acoustic equivalence are outside the WS3 replacement contract."
+  },
+  "mac:0x001110fc": {
+    "status": "intentional",
+    "evidence": "Mac 0x001110fc: Mac stores the engine factor. Native stores a bounded distance_factor read in MixLocked; SND_InitDriver supplies the native scale. The old handedness/distance-property machinery is replaced by typed listener/sample coordinates and WS3 simple attenuation."
+  },
+  "mac:0x0011118c": {
+    "status": "intentional",
+    "evidence": "Mac 0x0011118c: Mac recognizes listener sentinel -1 or forwards to sample storage, internally negating Z for the old mixer. Native recognizes the LP64 -1 sentinel and stores API-space coordinates directly; MixLocked uses listener-relative X for pan. Driver already supplies listener-space right/up/forward (WS90), so old internal handedness conversion is retired."
+  },
+  "mac:0x001110ea": {
+    "status": "intentional",
+    "evidence": "Mac 0x001110ea: Mac stores the factor in CSoundEngine. Native stores a bounded rolloff exponent consumed by MixLocked; SND_InitDriver passes zero because engine falloff curves perform attenuation. The provider keeps this control without preserving the old AudioUnit distance model."
+  },
+  "mac:0x001110d8": {
+    "status": "intentional",
+    "evidence": "Mac 0x001110d8: Mac stores room type in the engine object. Native maps room type to the software feedback delay; both provider entries reach the same room setter. SND_SetRoomtype calls both and sets master reverb levels. This is WS3 simple reverb, without original mixer room-response parity."
+  },
+  "mac:0x0011110e": {
+    "status": "intentional",
+    "evidence": "Mac 0x0011110e: Mac forwards the two floats without reordering, then stores them at +0xd8/+0xdc. Native stores clamped min/max distance in the same call order, consumed by its software attenuation. Driver start supplies interpolated alias distances; engine rolloff is disabled in normal setup, so game curves remain the primary attenuation."
+  },
+  "mac:0x00111154": {
+    "status": "intentional",
+    "evidence": "Mac 0x00111154: Mac forwards the wet/effects value to object +0x78. Native stores clamped wet on the typed sample, read by MixLocked wet accumulation. Driver 3D reverb start/update paths use this setter; WS3 feedback reverb replaces the original mixer backend."
+  },
+  "mac:0x00110ece": {
+    "status": "fixed",
+    "evidence": "Mac AIL_set_3D_sample_info 0x110ece calls init_sample at 0x110ef6 before set_sample_info. init_sample 0x13ef82 sets DONE at 0x13efb0 and clears source/queued-buffer/offset/length state through 0x13f007. Native previously returned on decode failure with old playable PCM; actual SND_StartAlias3DSample ignores the return and may resume it. Native now validates/reset-clears the slot under audio_mutex, preserving spatial and capturing a generation; DecodeInfo converts into temporary owned PCM outside the mutex so unrelated output need not be silenced for conversion. A short installation lock revalidates handle/allocation/generation; stale output is freed instead of replacing a newer payload. Reset/release/reallocation and source-address/buffer replacement invalidate generations; the mutex-protected counter survives shutdown. Failure leaves the reset lifetime DONE/empty. Compiled and reviewed; failure, stale-generation rejection and concurrent output during decode are not directly exercised by the unchanged offline output fixture."
+  },
+  "mac:0x00110fc2": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110fc2: Mac forwards the requested count to object loop storage. Native stores loops and remaining_loops, with 0 infinite and 1 one pass; MixLocked handles wrap/completion. Driver alias starts set these counts before resume. Sample/stream backends share the native implementation rather than AudioConverter/QuickTime loop scheduling."
+  },
+  "mac:0x00110f4e": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110f4e: Mac forwards a byte offset to CSoundObject, which aligns it to format width. Native converts a nonnegative source byte offset into the decoded frame cursor. Driver 3D starts compute this from loaded data_len/fraction or timeshift. WS3 frame decoding replaces the old byte-alignment/converter representation."
+  },
+  "mac:0x00110f86": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110f86: Mac forwards through the sample/stream virtual rate slot. Native stores a positive playback rate (or driver default) in the typed sample; MixLocked advances cursor by rate/48000. Driver pitch/timescale updates and metadata timing queries consume it; no old converter/Movie rate object remains."
+  },
+  "mac:0x00110f16": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110f16: Mac writes the separate CSoundObject master-volume field. Native sets both direct mixer gains to the requested clamped volume; MixLocked subsequently applies positional pan. Driver 3D start/update writes this scalar after metadata setup. WS3 gain staging replaces AUGraph bus gain, without claiming acoustic parity."
+  },
+  "mac:0x00110d32": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110d32: Mac resolves a stream and forwards position to CSoundObject. Native forwards to its typed position setter; ordinary predecoded streams remain nonspatial, so the driver selects software pan and does not call this conditional 3D branch. This is the WS3 stream spatialization boundary, not a missing active positional consumer."
+  },
+  "mac:0x001107cc": {
+    "status": "intentional",
+    "evidence": "Mac 0x001107cc: Mac delegates to an empty CSoundEngine body. Native stores clamped master dry/wet gains under audio_mutex, consumed by MixLocked after its feedback-delay buffer. SND_SetRoomtype is the active engine caller. WS3 simple reverb intentionally provides output rather than reproducing the old no-op."
+  },
+  "mac:0x001107ba": {
+    "status": "intentional",
+    "evidence": "Mac 0x001107ba: Mac stores room type in the engine object. Native maps room type to the software feedback delay; both provider entries reach the same room setter. SND_SetRoomtype calls both and sets master reverb levels. This is WS3 simple reverb, without original mixer room-response parity."
+  },
+  "mac:0x00110d7c": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110d7c: Mac stores the four callbacks through CSoundObject statics. Native stores typed file_open/close/seek/read function pointers used by ReadStreamFile, including repeated partial reads and close on exit. SND_InitDriver supplies the engine filesystem callbacks when mss_q3fs is enabled; legacy generated callback globals are unused by the provider."
+  },
+  "mac:0x001103e6": {
+    "status": "intentional",
+    "evidence": "Mac 0x001103e6: Mac ignores the requested preference and returns mixer_count. Native stores bounded preference values and returns the previous value; SND_InitDriver ignores that return. Actual native sample capacity is 256 and the driver reads Maximum supported samples through the provider attribute instead."
+  },
+  "mac:0x0011040c": {
+    "status": "intentional",
+    "evidence": "Mac 0x0011040c: Mac returns a constant string and performs no library load. The native void no-op is used by SND_InitDriver, which discards the original return; the selected provider links AudioToolbox/CoreAudio and loads no Miles redistributable."
+  },
+  "mac:0x001104d6": {
+    "status": "intentional",
+    "evidence": "Mac 0x001104d6: Mac forwards source pointer/length; CSoundObject clears its four-buffer metadata and byte cursor. Native frees decoded PCM, stores the source pointer and byte count and resets the frame cursor/preparation. SND_StartAlias2DSample owns source lifetime; native decoding occurs before playback or duration query. Source replacement advances the native payload generation so an older unlocked 3D metadata decode cannot later overwrite it."
+  },
+  "mac:0x0011049e": {
+    "status": "intentional",
+    "evidence": "Mac 0x0011049e: Mac forwards block size and triggers a virtual format-change hook when it changes. Native stores block_size and invalidates decoded PCM; SampleInfo/DecodeInfo build the SDK IMA container. SND_StartAlias2DSample supplies the loaded sample block metadata."
+  },
+  "mac:0x001106a4": {
+    "status": "intentional",
+    "evidence": "Mac 0x001106a4: Mac forwards the requested count to object loop storage. Native stores loops and remaining_loops, with 0 infinite and 1 one pass; MixLocked handles wrap/completion. Driver alias starts set these counts before resume. Sample/stream backends share the native implementation rather than AudioConverter/QuickTime loop scheduling."
+  },
+  "mac:0x00110894": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110894: Mac resolves handle then invokes virtual millisecond seek. Native sets a nonnegative frame cursor using the stored playback rate; stream delegates to sample. SND_StartAlias2DSample/SND_StartAliasStreamOnChannel set this before resume. SDK predecode and frame cursors replace old byte/Movie seeking."
+  },
+  "mac:0x001105e4": {
+    "status": "intentional",
+    "evidence": "Mac 0x001105e4: Mac forwards through the sample/stream virtual rate slot. Native stores a positive playback rate (or driver default) in the typed sample; MixLocked advances cursor by rate/48000. Driver pitch/timescale updates and metadata timing queries consume it; no old converter/Movie rate object remains."
+  },
+  "mac:0x00110662": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110662: Mac forwards dry/wet to object fields. Native stores clamped dry/wet, and MixLocked sends wet contributions into its feedback-delay buffer while multiplying direct samples by dry. Driver environment updates reach this path. WS3 simple feedback reverb replaces the old backend, without Miles/EAX acoustic parity."
+  },
+  "mac:0x00110518": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110518: Mac forwards format and flags to CSoundObject. Native stores AIL format bits, ignores flags and invalidates prepared PCM; SampleInfo interprets mono/stereo, width and IMA flags before DecodeInfo. SND_StartAlias2DSample, SND_RawSamples and macos_voice supply the selected format contract."
+  },
+  "mac:0x00110620": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110620: Mac forwards to CSoundObject, whose mono path doubles then clamps stored levels. WS3 native stores direct left/right gains clamped to 0..4; MixLocked multiplies the corresponding output channels. Driver start/update/save paths use the native gains; original AUGraph gain staging/acoustic parity is intentionally not claimed."
+  },
+  "mac:0x00110b9a": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110b9a: Mac forwards the requested count to object loop storage. Native stores loops and remaining_loops, with 0 infinite and 1 one pass; MixLocked handles wrap/completion. Driver alias starts set these counts before resume. Sample/stream backends share the native implementation rather than AudioConverter/QuickTime loop scheduling."
+  },
+  "mac:0x00110c84": {
+    "status": "unchecked",
+    "evidence": "Concrete unresolved contract: Mac AIL_set_stream_ms_position 0x110c84 dispatches to the handle type selected by AIL_open_stream 0x110916: .mp3 uses CStreamSound at 0x13d7a2 and immutable GetMovieTimeScale, while .wav uses CSampleSound/base sample byte conversion with current playback rate. Native delegates every stream seek to AIL_set_sample_ms_position, multiplying by mutable sample.rate. At twice native media rate, a one-second MP3 seek therefore advances two source seconds, unlike Mac. Windows CoD2 stream start at 0x4b723e changes playback rate, 0x4b7325 queries duration, compares timeshift at 0x4b7336, and 0x4b73ae calls the imported millisecond setter. These calls contain no time-base compensation; they delegate to bundled Miles. Its rate/time contract was not established within the excluded-library boundary. WS3-platform/WS3-verification and existing fixtures document SDK predecode/playback but no intentional mutable-rate stream-time choice. No speculative timing source change was made; an authoritative Windows API contract or bounded reference behavior is needed to choose the correct native time base."
+  },
+  "mac:0x00110b32": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110b32 forwards playback rate through the stream virtual slot. Native updates sample.rate and MixLocked advances source frames by rate/48000, replacing QuickTime/sample playback scheduling. Actual stream start/update callers supply pitch/timescale rates. This verdict covers playback-speed control only: MP3 media-time duration/current queries and millisecond seeks remain unchecked at mac:0x00110cc0/mac:0x00110c84 because Mac retains MovieTimeScale independently of Movie rate and the Windows contract was not established."
+  },
+  "mac:0x00110a6c": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110a6c: Mac forwards dry/wet to object fields. Native stores clamped dry/wet, and MixLocked sends wet contributions into its feedback-delay buffer while multiplying direct samples by dry. Driver environment updates reach this path. WS3 simple feedback reverb replaces the old backend, without Miles/EAX acoustic parity."
+  },
+  "mac:0x00110a2a": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110a2a: Mac forwards to CSoundObject, whose mono path doubles then clamps stored levels. WS3 native stores direct left/right gains clamped to 0..4; MixLocked multiplies the corresponding output channels. Driver start/update/save paths use the native gains; original AUGraph gain staging/acoustic parity is intentionally not claimed."
+  },
+  "mac:0x0011039c": {
+    "status": "intentional",
+    "evidence": "Mac 0x0011039c: Mac persists quality preference and destroys sSoundEngine. Native AIL_shutdown stops, uninitializes and disposes the SDK AudioUnit before freeing every typed sample PCM buffer under audio_mutex. SND_ShutdownDriver owns this lifecycle; old class destruction and preference persistence are replaced by WS3. The generation counter is retained across pool clearing, preventing a pre-shutdown metadata decode from installing into a subsequently reused slot."
+  },
+  "mac:0x00110d86": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110d86: Mac delegates to CSoundEngine, whose body returns zero. Native supports one source and computes the ceiling frame-rate conversion size in the requested PCM format with integer bounds. SND_LoadSoundFile uses it to size native hunk storage before conversion; WS3 intentionally implements the conversion contract rather than preserving the obsolete stub behavior."
+  },
+  "mac:0x00110308": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110308: Mac constructs CSoundEngine with the requested bus count and saved high-quality setting. WS3 native AIL_startup clears the error and returns success; AIL_open_digital_driver owns fallible SDK output initialization. SND_InitDriver checks both stages. The old preference/object lifecycle is retired."
+  },
+  "mac:0x00110e44": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110e44: Mac null-checks the appropriate sample handle and dispatches virtual stop. Native forwards 3D to the same typed setter, changes status to 8 and preserves cursor/PCM. Driver pause and free-channel paths use these status semantics; AUGraph callback detachment is replaced by the software mixer status gate."
+  },
+  "mac:0x0011055a": {
+    "status": "intentional",
+    "evidence": "Mac 0x0011055a: Mac null-checks the appropriate sample handle and dispatches virtual stop. Native forwards 3D to the same typed setter, changes status to 8 and preserves cursor/PCM. Driver pause and free-channel paths use these status semantics; AUGraph callback detachment is replaced by the software mixer status gate."
+  },
+  "mac:0x00110c00": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110c00: Mac returns format in the second output and zeros in the other three, also clearing outputs for NULL. Native writes int-sized outputs for datarate/format/source length/PCM allocation. The Apple driver passes &filetype in the second slot and reads format bit 2. Typed output widths match actual callers, rather than widening writes into int storage."
+  },
+  "mac:0x00110cc0": {
+    "status": "unchecked",
+    "evidence": "Concrete unresolved contract: Mac AIL_stream_ms_position 0x110cc0 dispatches .mp3 handles to CStreamSound get_sample_ms_position 0x13d714, deriving total/current from Movie duration/time and immutable MovieTimeScale; .wav sample handles use current playback rate. Native delegates every stream query to AIL_sample_ms_position, dividing decoded frames/cursor by mutable sample.rate. At twice native media rate, a ten-second MP3 reports five seconds rather than Mac media-time ten seconds, affecting alias duration/timeshift rejection and saved fractions. Windows CoD2 stream start at 0x4b723e changes playback rate, 0x4b7325 queries duration, compares timeshift at 0x4b7336, and 0x4b73ae calls the imported millisecond setter. These calls contain no time-base compensation; they delegate to bundled Miles. Its rate/time contract was not established within the excluded-library boundary. WS3-platform/WS3-verification and existing fixtures document SDK predecode/playback but no intentional mutable-rate stream-time choice. No speculative timing source change was made; an authoritative Windows API contract or bounded reference behavior is needed to choose the correct native time base."
+  },
+  "mac:0x00110b6e": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110b6e: Mac resolves its handle and returns the stored playback rate, with zero for NULL. Native reads sample->rate under audio_mutex, returning zero for an invalid/unallocated handle. Driver rate getters, starts and save paths consume that field; the typed pool lookup replaces raw object identity."
+  },
+  "mac:0x00110bd2": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110bd2: Mac returns the resolved object status or 1 for NULL. Native returns typed status under audio_mutex, likewise using 1 for invalid handles; ResetSample/MixLocked/stop/end supply 2/4/8. Driver free-channel, pause, save and cleanup callers are active; old object-pointer lookup is intentionally replaced."
+  },
+  "mac:0x00110af0": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110af0: Mac returns CSoundObject left/right levels, undoing mono doubling. Native returns the direct gains consumed by MixLocked and writes zeros for an invalid handle. Driver volume queries use these values. WS3 direct gain storage replaces the Mac mono/AUGraph gain representation."
+  },
+  "mac:0x00110aae": {
+    "status": "intentional",
+    "evidence": "Mac 0x00110aae: Mac returns separate master-volume and pan fields from CSoundObject. Native derives volume=max(left,right) and pan=right/(left+right), using 0.5 for silence, from its direct mixer gains. Driver save-info paths consume this representation; original master/pan storage and acoustic equivalence are outside the WS3 replacement contract."
+  },
+  "mac:0x00115a98": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115a98: Mac destructor stops its worker, releases sound objects and disposes AUGraph/bus storage. Native AIL_shutdown stops/disposes the one SDK output unit, frees typed PCM under audio_mutex and clears the sample/reverb arrays; no CSoundEngine instance is allocated."
+  },
+  "mac:0x00115c98": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115c98: Mac destructor stops its worker, releases sound objects and disposes AUGraph/bus storage. Native AIL_shutdown stops/disposes the one SDK output unit, frees typed PCM under audio_mutex and clears the sample/reverb arrays; no CSoundEngine instance is allocated."
+  },
+  "mac:0x00115e1c": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115e1c: Mac destructor stops its worker, releases sound objects and disposes AUGraph/bus storage. Native AIL_shutdown stops/disposes the one SDK output unit, frees typed PCM under audio_mutex and clears the sample/reverb arrays; no CSoundEngine instance is allocated."
+  },
+  "mac:0x00115c28": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115c28: Mac inserts an object into its worker-owned vector under StThreadLock. Native allocated flags in samples[256] plus audio_mutex replace that vector; AIL allocation/stream-open install owned PCM and Render scans the typed pool."
+  },
+  "mac:0x00116194": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00116194: Mac constructor builds the output/mixer AUGraph, allocates sample buses, initializes mixer properties and starts CThread. Native AIL_open_digital_driver builds one SDK default-output AudioUnit with Render; static typed samples/audio_mutex own mixing state. SND_InitDriver checks its failure result."
+  },
+  "mac:0x00116a70": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00116a70: Mac constructor builds the output/mixer AUGraph, allocates sample buses, initializes mixer properties and starts CThread. Native AIL_open_digital_driver builds one SDK default-output AudioUnit with Render; static typed samples/audio_mutex own mixing state. SND_InitDriver checks its failure result."
+  },
+  "mac:0x00115980": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115980: Mac worker iterates virtual TheadIdle calls while running and sleeps 100000 us. Native Render/MixLocked advances sample cursors and completion on the AudioUnit callback, with bounded trylock silence; no object idle thread is needed."
+  },
+  "mac:0x00115868": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115868: Mac tries matching-type available buses, then other available buses, calling InitSample with requested type in both passes. Native pool allocation selects an unallocated typed slot; 2D now explicitly clears spatial and 3D allocation sets it. In-place metadata reset preserves the existing type."
+  },
+  "mac:0x001157f6": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001157f6: Mac divides stored mixer maximum by distance factor. Native ResetSample initializes max_distance=100000 then driver 3D start installs alias distances. MixLocked uses typed min/max; old mixer defaults are not a public engine dependency."
+  },
+  "mac:0x001157d2": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001157d2: Mac divides stored mixer reference distance by distance factor. Native ResetSample gives min_distance=1 and distance_factor is separate; driver 3D start installs alias distances. No old mixer default-distance query survives in selected audio callers."
+  },
+  "mac:0x0011581c": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0011581c: Mac copies three listener-face floats for Calculate3DAttributes. Native SND_Set3DPosition computes listener-space coordinates from the engine listener basis (WS90); MixLocked pans using X/distance. The secondary AUGraph azimuth/elevation transform is retired."
+  },
+  "mac:0x00115842": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115842: Mac copies three listener-up floats for Calculate3DAttributes. Native driver already transforms into listener-space right/up/forward; MixLocked consumes that API space. No selected backend requests a second face/up basis."
+  },
+  "mac:0x001157b6": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001157b6: Mac reads its AUGraph mixer AudioUnit field. Native setters update typed sample fields read by MixLocked; AIL_open_digital_driver owns the only output AudioUnit and no active caller requests an old bus mixer unit."
+  },
+  "mac:0x00115794": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115794: Mac simply returns the supplied sample pointer. Native FindSample validates membership and allocated state in samples[256] before access; active AIL functions use that typed lookup instead of the retired raw pointer identity."
+  },
+  "mac:0x0011579c": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0011579c: Mac simply returns the supplied 3D pointer. Native FindSample validates typed pool membership/allocation; spatial state is separate. Active AIL_3D functions never access the old CSoundObject layout."
+  },
+  "mac:0x001157a4": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001157a4: Mac simply returns the stream pointer. Native streams share MacAudioSample storage and FindSample validation; all selected stream AIL functions delegate to the native sample operations."
+  },
+  "mac:0x001157c2": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001157c2: Mac reads the mixer-specific scale-required flag. Native MixLocked applies its stored distance_factor to listener-relative distance; normal driver setup disables provider rolloff and game falloff curves attenuate. The AUGraph feature flag is retired."
+  },
+  "mac:0x00115964": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115964: Mac passes sound type 0 into GetAvailableSampleBus. Native AIL_allocate_sample_handle now clears spatial before ResetSample so released 3D storage cannot affect a new 2D/raw/voice/stream allocation. Pool ownership replaces the old bus lookup."
+  },
+  "mac:0x00115948": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115948: Mac passes sound type 1 into GetAvailableSampleBus. Native AIL_allocate_3D_sample_handle calls the typed allocator then sets spatial=1; set_3D_sample_info preserves it on reinitialization. Driver handle_3D holds these native pointers."
+  },
+  "mac:0x00115754": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115754: Mac allocates a CStreamSound object for QuickTime playback. Native AIL_open_stream predecodes file callbacks/stdio through ExtAudioFile and installs the resulting PCM in a typed nonspatial pool slot. Engine stream callers retain AIL handles rather than class pointers."
+  },
+  "mac:0x00115a20": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115a20: Mac finds/erases an object from its worker vector. Native AIL_release_sample_handle frees PCM and clears allocated under audio_mutex; Render ignores unallocated slots. No selected class-vector caller remains."
+  },
+  "mac:0x001157ac": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001157ac: Mac pumps CStreamSound::UpdateAllStreams for QuickTime tasks/loops. Native Render/MixLocked performs streaming cursor/loop/completion work; SND_GetDriverCPUPercentage no longer drives playback progress."
+  },
+  "mac:0x0011569c": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0011569c: Mac caches strdup(engine+0x58). Native one-provider enumeration returns a stable Miles Fast 2D Positional Audio name matched by SND_InitDriver; synthetic token 2 owns native allocation. Device-name storage and hardware-name selection are intentionally replaced."
+  },
+  "mac:0x001156dc": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001156dc: Mac reads +0x1b0 for old spatial calculations. Native distance_factor is read directly by MixLocked; external driver sets it through AIL_set_3D_distance_factor. No old object-field reader survives the selected provider."
+  },
+  "mac:0x00115726": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115726: Mac returns listener XYZ with Z sign restored. Native AIL_3D_position(-1) returns listener[3] directly in the public API space; typed listener storage replaces engine offsets."
+  },
+  "mac:0x00115620": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115620: Mac calls AUGraphGetCPULoad and reports at least 1. Native AIL_digital_CPU_percent reads kAudioUnitProperty_CPULoad from the default output and allows zero. The active driver diagnostic uses that native provider query."
+  },
+  "mac:0x00115682": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115682: Mac returns 2048. Native AIL_minimum_sample_buffer_size derives approximately 50 ms from rate/PCM format; SND_RawSamples enforces at least 8192. Native two-buffer PCM scheduling replaces the old bus minimum."
+  },
+  "mac:0x00115614": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115614: Mac reads configured bus count at +0x50. Native AIL_set_preference stores preference values, while AIL_3D_provider_attribute exposes actual 256-slot capacity; SND_InitDriver ignores the preference return and sizes its handles through the attribute."
+  },
+  "mac:0x0011565e": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0011565e: Mac reads the same bus count at +0x50. Native AIL_3D_provider_attribute returns AUDIO_SAMPLES=256 for the requested capacity name, which SND_InitDriver clamps to engine limits. Typed pool capacity replaces AUGraph buses."
+  },
+  "mac:0x00115694": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115694: Mac returns zero. Native AIL_process_digital_audio uses DecodeInfo and bounded linear rate/channel conversion for SND_LoadSoundFile. Its caller verifies output before publishing hunk sample data; bundled Miles processing is out of scope."
+  },
+  "mac:0x001156ea": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001156ea: Mac writes +0x1b0. Native AIL_set_3D_distance_factor stores a bounded scalar consumed by MixLocked. The fixed-offset AUGraph object is not recreated."
+  },
+  "mac:0x001156fc": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001156fc: Mac stores listener XYZ with internal negated Z. Native AIL_set_3D_position(-1) writes listener[3] in API coordinates; MixLocked subtracts it from typed positions. The old internal handedness conversion is not needed by this provider."
+  },
+  "mac:0x001156ca": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001156ca: Mac writes +0x1ac. Native AIL_set_3D_rolloff_factor stores bounded rolloff under audio_mutex; MixLocked reads it. SND_InitDriver passes zero so engine sound curves attenuate; original mixer distance-model behavior is retired."
+  },
+  "mac:0x0011566a": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0011566a: Mac stores room at +0x1a8. Native AIL_set_3D_room_type delegates to the shared feedback-delay room setter. SND_SetRoomtype uses both room APIs; room-response parity with AUGraph/Miles is not claimed."
+  },
+  "mac:0x0011567c": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0011567c: Mac body is empty. Native master_dry/master_wet are stored by AIL_set_digital_master_reverb_levels and consumed after the mixer feedback delay. SND_SetRoomtype reaches this documented WS3 reverb replacement."
+  },
+  "mac:0x00115a86": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115a86: Mac stores room at +0x1a8. Native room setter selects a bounded software delay. SND_SetRoomtype supplies it together with dry/wet; there is no native CSoundEngine field or old mixer room object."
+  },
+  "mac:0x0011568c": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0011568c: Mac returns zero. Native AIL_size_processed_digital_audio implements bounded one-source PCM output sizing used by SND_LoadSoundFile; typed AILMIXINFO begins with matching MacAudioSoundInfo. The obsolete no-conversion body is intentionally replaced."
+  },
+  "mac:0x0013de30": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013de30: Mac destructor restores its base vtable and destroys the embedded mutex (deleting variant also frees the object). Native has no class object/embedded mutex: AIL_release_sample_handle and AIL_shutdown free owned PCM under the shared audio_mutex, and the fixed typed pool remains allocated."
+  },
+  "mac:0x0013de48": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013de48: Mac destructor restores its base vtable and destroys the embedded mutex (deleting variant also frees the object). Native has no class object/embedded mutex: AIL_release_sample_handle and AIL_shutdown free owned PCM under the shared audio_mutex, and the fixed typed pool remains allocated."
+  },
+  "mac:0x0013de60": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013de60: Mac destructor restores its base vtable and destroys the embedded mutex (deleting variant also frees the object). Native has no class object/embedded mutex: AIL_release_sample_handle and AIL_shutdown free owned PCM under the shared audio_mutex, and the fixed typed pool remains allocated."
+  },
+  "mac:0x0013eaae": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013eaae: Mac constructor initializes base object state and its mutex/buffer metadata. Native ResetSample initializes a typed pool slot, frees owned PCM and sets done/rate/volume/loop/distance defaults. Fresh allocation separately selects 2D/3D type; no old constructor caller survives."
+  },
+  "mac:0x0013ebee": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013ebee: Mac constructor initializes base object state and its mutex/buffer metadata. Native ResetSample initializes a typed pool slot, frees owned PCM and sets done/rate/volume/loop/distance defaults. Fresh allocation separately selects 2D/3D type; no old constructor caller survives."
+  },
+  "mac:0x0013ea52": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013ea52: Mac base hook is empty. Native distance fields are read directly by MixLocked; normal driver setup disables provider rolloff in favor of engine curves. No virtual distance-property dispatch remains."
+  },
+  "mac:0x0013ea4c": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013ea4c: Mac base hook is empty. Native position setters write typed coordinates, read on each MixLocked chunk; no per-object virtual spatial invalidation is required."
+  },
+  "mac:0x0013ea46": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013ea46: Mac base hook is empty. Native format/block setters invalidate prepared PCM and PrepareSample/DecodeInfo decode it. The native provider removes the virtual format-change layer."
+  },
+  "mac:0x0013ea40": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013ea40: Mac base hook is empty. Native gain setters write typed fields directly and MixLocked reads them; no derived virtual ChangedVolume callback remains."
+  },
+  "mac:0x0013e7a8": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e7a8: Mac translates AIL rate/format into AudioStreamBasicDescription for old converters. Native SampleInfo and DecodeInfo translate AIL bits/metadata into typed PCM, with SDK DecodeFile client format for compressed input. No active old converter-format caller survives."
+  },
+  "mac:0x0013dee8": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013dee8: Mac returns +0x10. Native sample.spatial is explicitly selected on allocation and used by MixLocked/AIL_is_3D_stream; native streams are nonspatial and use driver software pan. The class sound-type field is retired."
+  },
+  "mac:0x0013def4": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013def4: Mac tests sound type==1. Native spatial is a typed discriminator; 3D allocation sets it and metadata reset preserves it. The driver stream path queries AIL_is_3D_stream and otherwise uses software pan."
+  },
+  "mac:0x0013dedc": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013dedc: Mac returns the byte at +0xc. Native AIL_allocate_sample_handle scans !sample.allocated under audio_mutex; release clears it. No selected caller reads the old availability byte."
+  },
+  "mac:0x0013e87e": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e87e: Mac compares stream-description fields for converter reuse. Native prepared flag/source metadata govern its owned decoded PCM; it does not cache an old AudioConverter per object. No selected AIL operation needs this description-comparison helper."
+  },
+  "mac:0x0013de88": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013de88: Mac virtual stop/close precede freeing four conversion buffers and marking the bus available. Native AIL_release_sample_handle frees both decoded PCM buffers and clears allocated under audio_mutex; native stream close delegates there. Pool storage replaces the old class ownership."
+  },
+  "mac:0x0013ea18": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013ea18: Mac checks its four source-buffer pointers. Native MixLocked and AIL_sample_buffer_ready inspect typed frame counts in the two owned PCM buffers; driver/voice handoff uses those provider APIs."
+  },
+  "mac:0x0013df06": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013df06: Mac base hook is empty. Native Render/MixLocked advances playback and buffer handoff; there is no per-object idle-thread dispatch. No active native AIL caller depends on the base hook."
+  },
+  "mac:0x0013e73a": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e73a: Mac base virtual is empty. Native AIL_close_stream releases owned PCM through AIL_release_sample_handle. Stream subclass/Movie teardown is absent from the native object model."
+  },
+  "mac:0x0013e0f0": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e0f0: Mac ends base sample state and resets position. Native AIL_end_sample sets status 2 and frame cursor 0, retaining reusable PCM; driver stop paths reach that setter. Derived converter/Movie end dispatch is replaced by native typed state."
+  },
+  "mac:0x0013ea6c": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013ea6c: Mac forwards through the class-static close callback. Native ReadStreamFile calls typed file_close after the read path, including failures after successful open. No old generated callback slot is dereferenced."
+  },
+  "mac:0x0013ea58": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013ea58: Mac forwards through the stored class-static open callback. Native ReadStreamFile invokes typed file_open with an unsigned-long handle, then checks success. SND_InitDriver supplies the native engine filesystem bridge."
+  },
+  "mac:0x0013ea96": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013ea96: Mac forwards through the class-static read callback. Native ReadStreamFile loops typed file_read until the bounded file is complete and rejects zero/oversized reads. Active stream consumers use the same registered engine bridge."
+  },
+  "mac:0x0013ea7e": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013ea7e: Mac forwards handle/offset/origin through the class-static callback. Native ReadStreamFile calls typed file_seek to get end length then seek to start; the engine bridge maps AIL 0/1/2 origins to FS conventions."
+  },
+  "mac:0x0013e62e": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e62e: Mac reverses stored Z before returning XYZ. Native AIL_3D_position returns the same public coordinate space from typed fields; driver 3D save-info consumes it. The provider has no old negative-Z object representation."
+  },
+  "mac:0x0013e478": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e478: Mac returns source byte length +0xb0. Native AIL_3D_sample_length returns sample.source_bytes, preserving the unit used by driver saved fractions. No fixed-offset class reader survives."
+  },
+  "mac:0x0013ed2e": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013ed2e: Mac converts source-byte length/current position using format/playback rate. Native AIL_sample_ms_position converts decoded frame count/cursor using sample.rate; driver duration/save paths consume the long outputs. Encoded-byte conversion is replaced by WS3 frame timing."
+  },
+  "mac:0x0013e3b0": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e3b0: Mac returns +0x7c. Native AIL rate getters return sample.rate under audio_mutex; driver pitch/start/save paths use it. The typed pool field replaces object offsets."
+  },
+  "mac:0x0013e2fc": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e2fc: Mac returns locked byte position +0xac. Native AIL_sample_position scales decoded frame cursor to source byte length; driver raw timing and 3D save fractions consume that API. Converter byte scheduling is replaced by software PCM cursor scheduling."
+  },
+  "mac:0x0013e446": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e446: Mac reads status +0x60 under mutex. Native AIL getters read typed status; stop/resume/end/MixLocked maintain 8/4/2. Driver free-channel and pause code consume these values through the retained AIL API."
+  },
+  "mac:0x0013e18e": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e18e: Mac returns master volume from +0x64. Native AIL_3D_sample_volume reads the typed left gain, written together with right by the 3D volume setter. Driver volume/save queries retain that scalar API without the old master-gain field."
+  },
+  "mac:0x0013e19a": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e19a: Mac reads left/right and halves mono values. Native AIL getters return the direct typed mixer gains used by driver volume queries. The old hidden mono scaling is part of the retired AUGraph representation."
+  },
+  "mac:0x0013e2a2": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e2a2: Mac returns independent master-volume/pan fields. Native AIL sample/stream query derives volume=max(left,right), pan=right/(left+right) with silence center. Driver save state consumes this native representation; original gain/pan storage is intentionally replaced."
+  },
+  "mac:0x0013e740": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e740: Mac returns sample format in the second output and zero for the other outputs. Native AIL_stream_info writes int-sized typed metadata; Apple driver asks for the second output to infer mono/stereo. Output width and storage follow actual selected callers."
+  },
+  "mac:0x0013ef82": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013ef82: Mac dispatches stop/close, clears four source slots and resets status/format/rate/loop/gain state via nested locks/virtual hooks. Native ResetSample frees both owned PCM buffers and initializes typed defaults while preserving spatial. Fresh allocation separately resets type, as required by Mac allocation."
+  },
+  "mac:0x0013e53e": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e53e: Mac fills one of four borrowed source slots then virtual-resumes. Native AIL_load_sample_buffer copies/decodes synchronously into two owned PCM buffers and starts on an idle slot. macos_voice stack input is safe because the provider finishes decoding before return."
+  },
+  "mac:0x0013e732": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e732: Mac base virtual returns false. Native AIL_open_stream validates/reads/decodes with ExtAudioFile and creates a typed sample; both .wav and .mp3 use that entry rather than this base-class rejection."
+  },
+  "mac:0x0013e0a0": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e0a0: Mac changes base sample status for resumed playback. Native AIL_resume_sample prepares PCM if needed and sets status 4 for nonempty data; driver start/unpause paths retain cursor. Shared Render replaces derived callback installation."
+  },
+  "mac:0x0013e486": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e486: Mac searches up to four source slots. Native AIL_sample_buffer_ready searches two decoded-PCM slots; raw output and voice only submit the index returned by this provider. Native buffer count/ownership intentionally replaces the old queue."
+  },
+  "mac:0x0013e5c4": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e5c4: Mac stores XYZ with internal negative Z and dispatches Changed3DPosition. Native AIL position setter stores typed API-space coordinates, read by MixLocked X/distance pan. Driver supplies listener-space right/up/forward; old internal handedness and virtual update are retired."
+  },
+  "mac:0x0013e680": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e680: Mac stores the two distance floats then dispatches Changed3DDistances. Native AIL setter stores clamped min/max; MixLocked consumes these directly. Engine falloff curves remain active with provider rolloff zero in normal setup."
+  },
+  "mac:0x0013e700": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e700: Mac stores effects/wet +0x78. Native AIL setter writes typed wet; MixLocked accumulates feedback reverb input. Engine 3D reverb paths remain active through the selected provider."
+  },
+  "mac:0x0013e782": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e782: Mac writes four class-static callbacks. Native AIL_set_file_callbacks writes typed file_open/close/seek/read statics consumed by ReadStreamFile; SND_InitDriver installs engine filesystem callbacks. Generated old callback data remains unused by this provider."
+  },
+  "mac:0x0013df0e": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013df0e: Mac stores source pointer/length and clears its four-slot state/cursor under a mutex. Native AIL_set_sample_address frees prior decoded PCM and records typed source/source_bytes, resetting cursor/preparation. Driver 2D start reaches it before decode/resume."
+  },
+  "mac:0x0013e134": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e134: Mac changes block size and dispatches ChangedFormat. Native AIL setter stores block_size and invalidates prepared; DecodeInfo builds an IMA WAV header for the SDK converter. Loaded sample callers still provide that metadata."
+  },
+  "mac:0x0013f108": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013f108: Mac derives format from AILSOUNDINFO bits/channels and copies data/length/rate/block fields through object hooks; its AIL wrapper first calls init_sample at 0x110ef6. Native AIL_set_3D_sample_info resets the validated slot before DecodeInfo, decodes outside audio_mutex and installs owned PCM/frame count/rate/source bytes only if the captured allocation/reset generation still matches. Failed setup leaves its reset lifetime DONE/empty and stale decoded PCM is freed; spatial is retained. The driver ignores the return, requiring old playable data to be cleared first. This internal row records the typed replacement; active reset/ownership correction is recorded at mac:0x00110ece."
+  },
+  "mac:0x0013e410": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e410: Mac stores +0x80 under mutex. Native AIL setters initialize loops/remaining_loops; MixLocked implements zero-infinite and finite repeat completion. Driver alias starts supply those counts; no old stream/virtual loop mechanism remains."
+  },
+  "mac:0x0013ee74": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013ee74: Mac converts milliseconds into the aligned source byte cursor. Native AIL millisecond setters store a nonnegative decoded-frame cursor using playback rate. Driver 2D/stream starts set it before resume; old converter seek granularity is retired."
+  },
+  "mac:0x0013e3bc": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e3bc: Mac updates +0x7c and invokes ChangedFormat. Native AIL rate setters store rate directly, and MixLocked advances by rate/48000 without rebuilding AudioConverters. Driver timescale and pitch paths remain active."
+  },
+  "mac:0x0013e330": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e330: Mac aligns the byte cursor according to format. Native AIL_set_3D_sample_offset converts source byte fraction to decoded frame cursor; driver 3D start computes offsets from loaded metadata. Old format-alignment arithmetic is inside the replaced converter implementation."
+  },
+  "mac:0x0013e2c4": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e2c4: Mac stores dry/wet fields. Native AIL setters store clamped typed dry/wet used by MixLocked direct/wet accumulation. Driver environment effects remain active; WS3 feedback reverb replaces old mixer/DSP behavior."
+  },
+  "mac:0x0013df86": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013df86: Mac changes the format/channel metadata then calls virtual ChangedFormat. Native AIL_set_sample_type stores AIL bits and clears prepared; SampleInfo/DecodeInfo supply SDK PCM. Driver 2D/raw/voice callers reach the native setter, not the virtual hook."
+  },
+  "mac:0x0013e00e": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e00e: Mac stores a separate master-volume field and dispatches ChangedVolume. Native 3D volume sets both direct gains; MixLocked applies scalar gain and positional pan. The engine 3D start/update paths remain active through AIL, with WS3 gain staging."
+  },
+  "mac:0x0013e1da": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e1da: Mac doubles mono levels, clamps to 0..1 and dispatches ChangedVolume. Native AIL setters keep direct gains clamped to 0..4 and MixLocked applies them per channel. This is WS3 software gain staging; original mono/AUGraph acoustic parity is not asserted."
+  },
+  "mac:0x0013e066": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013e066: Mac changes base sample status while preserving position. Native AIL_stop_sample stores status 8 under audio_mutex and MixLocked skips it; driver sample/stream pause uses that provider path. The old base/derived virtual dispatch is retired."
+  },
+  "mac:0x00115032": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115032: Mac destructor waits for render notifications, removes bus callbacks and disposes its AudioConverter before base destruction. Native AIL_release_sample_handle frees owned PCM under shared audio_mutex; AIL_shutdown stops AudioUnit before clearing pool. No per-sample converter/callback object is allocated."
+  },
+  "mac:0x0011518e": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0011518e: Mac destructor waits for render notifications, removes bus callbacks and disposes its AudioConverter before base destruction. Native AIL_release_sample_handle frees owned PCM under shared audio_mutex; AIL_shutdown stops AudioUnit before clearing pool. No per-sample converter/callback object is allocated."
+  },
+  "mac:0x001152ea": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001152ea: Mac destructor waits for render notifications, removes bus callbacks and disposes its AudioConverter before base destruction. Native AIL_release_sample_handle frees owned PCM under shared audio_mutex; AIL_shutdown stops AudioUnit before clearing pool. No per-sample converter/callback object is allocated."
+  },
+  "mac:0x0011428e": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0011428e: Mac validates user data and delegates to DoConvert. Native compressed decoding uses SDK ExtAudioFileRead with its client PCM description, while raw PCM DecodeInfo is direct. No selected API registers the old converter callback."
+  },
+  "mac:0x00113bca": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00113bca: Mac constructs the base and initializes converter/render flags and slice state. Native ResetSample initializes typed pool state; PrepareSample/DecodeInfo own decoded PCM, and one shared Render callback serves the entire pool. The legacy sample object layout is retired."
+  },
+  "mac:0x00114cfa": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00114cfa: Mac adjusts mixer distance properties according to engine scale/feature flags. Native min/max and distance_factor feed MixLocked simple attenuation; normal driver setup disables provider rolloff and game curves attenuate. Original mixer distance-model parity is not claimed."
+  },
+  "mac:0x001140fc": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001140fc: Mac sets the deferred-position flag at +0x110. Native position fields are read by MixLocked per chunk; driver passes listener-space coordinates. No old AudioUnit azimuth/elevation invalidation is needed."
+  },
+  "mac:0x001140ec": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001140ec: Mac sets the deferred-format flag at +0x10f. Native AIL type/block setters clear prepared and PrepareSample rebuilds typed PCM. Playback rate is read directly by MixLocked; there is no deferred AudioConverter format-change flag."
+  },
+  "mac:0x001144c2": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001144c2: Mac turns averaged channel/master gain into clamped dB and sets an AudioUnit bus parameter. Native direct left/right gains multiply PCM in MixLocked; 3D volume sets both before positional pan. WS3 intentionally replaces original gain staging; acoustic parity is not asserted."
+  },
+  "mac:0x0011410c": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0011410c: Mac consumes old source buffers/loop cursor to supply AudioConverter data. Native DecodeInfo/DecodeFile produce owned float PCM and MixLocked performs frame interpolation, loops and two-buffer handoff. Raw/voice callers only use returned native buffer indices."
+  },
+  "mac:0x00115534": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115534: Mac handles deferred callback/notification removal after rendering. Native MixLocked completes typed sample state within its mutex and shared Render remains registered. No old post-render notification consumer survives."
+  },
+  "mac:0x00115454": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00115454: Mac handles deferred callback/notification removal during render lifecycle. Native shared Render and typed sample status/cursor own readiness/completion, and shutdown stops output before freeing PCM. Per-bus pre-render state is retired."
+  },
+  "mac:0x001146dc": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001146dc: Mac locks sample state, updates converter/3D values, fills old AudioBufferLists and zeros remainder. Native shared Render validates stereo float output and MixLocked mixes all playing typed samples, interpolation, loops, completion and feedback reverb. This replaces bus rendering rather than claiming sample-level byte parity."
+  },
+  "mac:0x00114ad0": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00114ad0: Mac resets object/converter, marks unavailable, writes requested sound type at +0x10 and sets mixer properties. Native fresh 2D allocation now clears spatial before ResetSample; 3D allocation then sets it, and in-place metadata reset preserves it. Typed allocation replaces the old bus configuration."
+  },
+  "mac:0x0011493e": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0011493e: Mac validates refcon, calls DoRender and contains exceptions. Native AIL_open_digital_driver registers shared Render with the SDK; it validates buffer shape, emits silence on audio_mutex contention and calls MixLocked. No per-object refcon/vtable callback remains."
+  },
+  "mac:0x00114e90": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00114e90: Mac handles render phase flags and removes per-sample notifications/callbacks on completion. Native MixLocked marks sample done/handles buffer transition directly; shared Render stays installed until AIL_shutdown. No old notification lifecycle is required by selected callers."
+  },
+  "mac:0x00113c94": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00113c94: Mac performs deferred sample/converter idle work. Native decoder work runs synchronously at API setup and Render/MixLocked advances playback; the old worker virtual idle callback is absent from the selected provider."
+  },
+  "mac:0x00114590": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00114590: Mac calculates azimuth/elevation/distance and writes mixer parameters/properties. Native driver computes listener-space coordinates, and MixLocked applies X/distance pan plus its simple attenuation. Original mixer spatial algorithm/Doppler behavior is within the documented WS3 replacement boundary."
+  },
+  "mac:0x001142c8": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001142c8: Mac compares/reconfigures per-object AudioConverter and mixer stream descriptions. Native SampleInfo/DecodeInfo create PCM from AIL metadata and MixLocked resamples to the fixed 48 kHz output. One default-output AudioUnit format replaces per-bus converter state."
+  },
+  "mac:0x00114058": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00114058: Mac releases file/sample stream resources. Native stream close frees owned predecoded PCM through AIL_release_sample_handle; registered file handles are already closed by ReadStreamFile after predecode. No sample file handle survives playback."
+  },
+  "mac:0x00113dea": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00113dea: Mac ends playback and resets old sample/converter state. Native AIL_end_sample sets status 2/cursor 0 while retaining reusable PCM; driver channel stop reaches it. Converter/bus teardown is replaced by typed state."
+  },
+  "mac:0x00113e58": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00113e58: Mac opens file-backed sample data through registered callbacks and configures stream buffers. Native AIL_open_stream reads callbacks/stdio and fully decodes via ExtAudioFile with a 256 MiB limit. Engine stream callers use a typed PCM handle, not this legacy subclass."
+  },
+  "mac:0x0011497e": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0011497e: Mac updates converter/3D state and installs mixer callbacks/render notifications. Native AIL_resume_sample prepares owned PCM if needed and sets status 4; shared Render already owns output. Driver delayed start/unpause therefore needs no per-bus callback installation."
+  },
+  "mac:0x00113d86": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x00113d86: Mac stops the sample and detaches/schedules removal of old mixer callbacks. Native AIL_stop_sample sets status 8 without changing cursor; MixLocked skips it. Driver pause paths use this native status gate."
+  },
+  "mac:0x001e9778": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x001e9778: Calculate3DAttributes computes listener-basis azimuth/elevation and scaled/clamped distance for the old AudioUnit mixer. Native SND_Set3DPosition already produces listener-space right/up/forward coordinates (WS90), and macos_audio.c MixLocked uses X/distance equal-power pan and optional simple attenuation. Driver initialization disables provider rolloff so engine curves attenuate. No selected caller reads the retired helper outputs; original surround/elevation/Doppler/acoustic parity is not claimed."
+  },
+  "mac:0x0013d666": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013d666: Mac destructor restores stream/base vtables and destroys base mutex storage. Native AIL_close_stream releases typed PCM, and AIL_shutdown disposes shared output. No Movie/class object or embedded mutex is allocated."
+  },
+  "mac:0x0013d67c": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013d67c: Mac destructor restores stream/base vtables and destroys base mutex storage. Native AIL_close_stream releases typed PCM, and AIL_shutdown disposes shared output. No Movie/class object or embedded mutex is allocated."
+  },
+  "mac:0x0013d608": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013d608: Mac constructor builds CSoundObject, zeros Movie/track/rate fields and sets sound type 2. Native AIL_open_stream predecodes a file into a nonspatial MacAudioSample; common reset initializes its storage and fresh allocation clears prior spatial state."
+  },
+  "mac:0x0013d7ee": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013d7ee: Mac computes track volume/balance and calls QuickTime track/media controls. Native stream gain setters update direct left/right fields read by MixLocked; driver spatial stream updates supply software pan. Original QuickTime gain/balance staging is intentionally replaced."
+  },
+  "mac:0x0013d8ba": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013d8ba: Mac pumps MoviesTask, checks completion and restarts looping movies from its static vector. Native MixLocked advances predecoded streams and loops/completes by frame cursor in the AudioUnit callback. CPU percentage polling no longer drives playback."
+  },
+  "mac:0x0013d98c": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013d98c: Mac stops/disposes Movie and removes itself from sQTStreams. Native AIL_close_stream frees owned decoded PCM and marks its pool slot available; registered filesystem handles were closed during ReadStreamFile. No QuickTime vector ownership remains."
+  },
+  "mac:0x0013d6d4": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013d6d4: Mac calls base end and StopMovie. Native sample end sets status 2/cursor 0, and stream stop/close releases owned PCM. No QuickTime Movie exists in the selected provider."
+  },
+  "mac:0x0013d714": {
+    "status": "unchecked",
+    "evidence": "Mac 0x13d714 CStreamSound get_sample_ms_position uses GetMovieTimeScale plus GetMovieDuration/GetMovieTime; changing SetMovieRate at 0x13da7a does not change that media scale. .mp3 dispatch at 0x110939-0x11095e reaches this method; .wav dispatch uses sample timing. Native AIL_stream_ms_position divides decoded frames by mutable playback rate for both routes, so pitched MP3 total/current times differ observably in active driver duration/save consumers. Windows CoD2 stream start at 0x4b723e changes playback rate, 0x4b7325 queries duration, compares timeshift at 0x4b7336, and 0x4b73ae calls the imported millisecond setter. These calls contain no time-base compensation; they delegate to bundled Miles. Its rate/time contract was not established within the excluded-library boundary. WS3-platform/WS3-verification and existing fixtures document SDK predecode/playback but no intentional mutable-rate stream-time choice. No speculative timing source change was made; an authoritative Windows API contract or bounded reference behavior is needed to choose the correct native time base."
+  },
+  "mac:0x0013dad8": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013dad8: Mac resolves MacFolders file references, opens/prerolls a QuickTime Movie, reads sound-track metadata and inserts the object into sQTStreams. Native ReadStreamFile uses engine callbacks/stdio, DecodeFile uses SDK ExtAudioFile, and AIL_open_stream owns bounded predecoded PCM in the typed pool."
+  },
+  "mac:0x0013d9fe": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013d9fe: Mac sets base status and Movie playback rate. Native AIL_pause_stream(0) delegates to sample resume, setting status 4 for nonempty PCM while retaining cursor. MixLocked reads the typed playback rate directly."
+  },
+  "mac:0x0013d7a2": {
+    "status": "unchecked",
+    "evidence": "Mac 0x13d7a2 CStreamSound set_sample_ms_position converts milliseconds using immutable MovieTimeScale and SetMovieTimeValue. .mp3 dispatch at 0x110939-0x11095e reaches this method; .wav dispatch uses sample timing. Native AIL_set_stream_ms_position multiplies by mutable playback rate for both routes, so pitch changes the source position of a requested seek in the active alias-start caller. Windows CoD2 stream start at 0x4b723e changes playback rate, 0x4b7325 queries duration, compares timeshift at 0x4b7336, and 0x4b73ae calls the imported millisecond setter. These calls contain no time-base compensation; they delegate to bundled Miles. Its rate/time contract was not established within the excluded-library boundary. WS3-platform/WS3-verification and existing fixtures document SDK predecode/playback but no intentional mutable-rate stream-time choice. No speculative timing source change was made; an authoritative Windows API contract or bounded reference behavior is needed to choose the correct native time base."
+  },
+  "mac:0x0013da7a": {
+    "status": "intentional",
+    "evidence": "WS3 native playback replacement, Mac 0x0013da7a: Mac updates base playback rate and, when playing, sets MovieRate relative to its initial rate; it does not mutate MovieTimeScale. Native AIL_set_stream_playback_rate updates sample.rate consumed by MixLocked for playback speed. Active driver pitch/timescale callers were traced. This playback-control boundary does not waive the separate stream-time mismatch: mac:0x0013d714/mac:0x0013d7a2 remain unchecked until the required Windows media-time contract is established."
+  },
+  "mac:0x0013d6a2": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013d6a2: Mac calls base stop and pauses Movie playback. Native AIL_pause_stream(nonzero) uses AIL_stop_sample, setting status 8 while preserving frame cursor. Driver pause/resume observes that state through AIL_stream_status."
+  },
+  "mac:0x0013de0c": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013de0c: Mac invokes static destruction for sQTStreams. Native AIL_shutdown owns PCM/output disposal; its typed zero-initialized pool requires no C++ vector destructor. Generated old sQTStreams bytes are not the provider state."
+  },
+  "mac:0x0013de1c": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013de1c: Mac invokes static initialization for sQTStreams. Native samples[] and audio_mutex have C static initialization, with AIL open/close controlling allocations. Generated old sQTStreams storage has no selected class consumer."
+  },
+  "mac:0x0013ddac": {
+    "status": "intentional",
+    "evidence": "WS3 native replacement, Mac 0x0013ddac: Mac initializes/destroys the static QuickTime stream vector. Native samples[] is zero-initialized static typed storage, AIL_open_stream uses allocated slots and AIL_shutdown frees all PCM. No static QuickTime container lifecycle remains."
   }
 }
