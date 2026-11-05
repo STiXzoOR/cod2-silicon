@@ -18,7 +18,7 @@ void TestNames(void)
     XModel model={0}; XModelParts parts={0}; XBoneHierarchy hierarchy={0}; unsigned short names[1]={17};
     assert(Com_ValidXModelName("xmodel/test"));
     assert(Com_ValidXModelName("XMODEL/test"));
-    assert(!Com_ValidXModelName("xmodel\\test"));
+    assert(Com_ValidXModelName("xmodel\\test"));
     assert(!Com_ValidXModelName("xmodels/test"));
     model.parts=(void (*)())&parts; parts.hierarchy=&hierarchy; hierarchy.names=names;
     /* The Mac pointer result must retain the complete native address. */

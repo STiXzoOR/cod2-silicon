@@ -23,3 +23,11 @@ Independent source/binary reviews covered all six units. Review caught an incorr
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. These unchanged traces do not exercise every corrected path. Unreached diagnostic, malformed-input and allocation edges remain compiled and reviewed. Missing helper identities and storage-dependent behavior remain explicitly unchecked or documented native adaptations.
 
 Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile. Source preprocessing checks do not establish binary-byte parity.
+
+## Remaining-helper and fixture follow-up — 2026-11-05
+
+The five unchecked helper rows remain unchecked. Mac loader and default-model writes establish collision-LOD storage, but the current native tree contains no read implementing the complete getter contract. The type metadata and existing model cleanup do not establish the replacement copy, preserved name and acquired references. No executable identity was established for the three unused-value/zero/no-op helpers. Their names and apparent deadness are insufficient evidence, and no implementation was copied or inferred from Linux alone.
+
+The existing `TestNames` backslash expectation was obsolete: it rejected `xmodel\test`, while the preserved intentional `Com_ValidXModelName` verdict accepts Windows separators. Independent Windows disassembly reconfirmed slash at 0x490967 and backslash at 0x49096b within 0x490950–0x490977. The existing assertion was changed to expect acceptance, with the same assertion and case count. This is the only code change in this follow-up; production behavior and all prior ledger evidence are unchanged.
+
+Configured stock/CoD2x Release objects compiled. After that expectation correction, the existing complete xanim/model/skeleton fixture passes both modes under ASan/UBSan. Initial failure logs are retained. Existing synchronized notification and game-animation fixtures also pass. No new tests, cases or assertions, full CI or replays were introduced. Private follow-up evidence is in `recon-animation-remaining.noindex`.

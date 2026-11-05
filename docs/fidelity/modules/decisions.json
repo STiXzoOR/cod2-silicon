@@ -10336,8 +10336,8 @@
     "evidence": "Compared Mac 0x394e2: frame-count/framerate then multiplication by 1000 and truncating integer conversion."
   },
   "linux:xanim/xanim.cpp:1119:XAnimGetNextNotifyIndex": {
-    "status": "unchecked",
-    "evidence": "Mac uses a truncated 32-bit null-minus-notify-table address when no next note is found (0x3ee7a\u20130x3ee8e, 0x42048\u20130x42059); native uses explicit -1. Loaded clips append an end sentinel, but equivalence for empty/exhausted tables and address-dependent results was not established. Candidate inline scans at 0x3ef45\u20130x3ef71 and 0x42012\u20130x420f6 read by hand; native shared scan unordered gate corrected, but full storage-dependent equivalence remains unresolved."
+    "status": "intentional",
+    "evidence": "Complete Mac inline scan and index conversion read at 0x3ee68-0x3ee8e / 0x3ef45-0x3ef71 and 0x4203d-0x42059 / 0x420c1-0x420f6. Existing native XAnimGetNextNotifyInfo plus the two caller assignments implement every operation: byte notify count, eight-byte entries, initial best time 2, reject only currentTime > noteTime (unordered current time accepted), strict best-time comparison (unordered note rejected), first equal-time winner, and short index conversion. Native uses -1 when the scan returns null instead of Mac null-minus-table address arithmetic. This is the established explicit native no-match policy, not ILP32 address equivalence. Mac XAnimLoadFile 0xba3cb-0xba415 appends the time-1 end sentinel for ordinary loaded clips; empty/exhausted tables retain the native sentinel. Mac STABS confirms notify count byte, note stride 8, and signed short notifyIndex. Complete operation is present in existing native owners; no helper or engine change required. Existing full animation/model and sync-notify fixtures exercised normal operations in stock/CoD2x; exhausted/nonfinite cases not specifically exercised."
   },
   "linux:xanim/xanim.cpp:1150:XAnimGetNotifyFracLeaf": {
     "status": "equal",
@@ -10464,8 +10464,8 @@
     "evidence": "Mac 0x3c046\u20130x3c1c0 / 0x3c83f\u20130x3c9b9: reverse name matching, first assigned duplicate retained, global bone-index/mask construction and boneCount+16 string interning; native XAnimCalcBuildAnimToModelLocal compared for supported 128-bone representation."
   },
   "linux:xanim/xanim.cpp:3434:XAnimSetNotifyIndex": {
-    "status": "unchecked",
-    "evidence": "Mac uses a truncated 32-bit null-minus-notify-table address when no next note is found (0x3ee7a\u20130x3ee8e, 0x42048\u20130x42059); native uses explicit -1. Loaded clips append an end sentinel, but equivalence for empty/exhausted tables and address-dependent results was not established. Candidate inline scans at 0x3ef45\u20130x3ef71 and 0x42012\u20130x420f6 read by hand; native shared scan unordered gate corrected, but full storage-dependent equivalence remains unresolved."
+    "status": "intentional",
+    "evidence": "Complete inline setter read in exact Mac XAnimGetNotifyFracServer at 0x42012-0x42059 and 0x420c1-0x420f6, with existing native negative-index branch compared: exact time 1 leaves index unchanged; nonleaf selects notifyChild or leaves index unchanged when absent; selected leaf runs the complete next-note scan and writes the short index. Native explicitly writes -1 on no candidate rather than Mac truncated null-minus-table result. The caller retains its separate negative-index end-fraction behavior, and this helper resolution does not recertify the whole caller. Mac STABS establishes XAnimEntry children/parts union, XAnimInfo notifyChild/notifyIndex, and tree info storage. Existing typed native owner contract is complete; no engine change. Existing full animation/model and sync-notify fixtures pass stock/CoD2x; no dedicated empty/exhausted or nonfinite case added."
   },
   "mac:0x000388a6": {
     "status": "equal",
