@@ -13,6 +13,7 @@ const dvar_t *r_portalBevelsOnly = &disabledDvar;
 const dvar_t *r_portalBevels = &bevel;
 const dvar_t *r_portalMinClipArea = &clipArea;
 void *imp_colorMagenta, *imp_colorLtYellow;
+void *imp_colorLtCyan, *imp_colorMdCyan;
 static void *allocation;
 void LargeLocal_LargeLocal(const LargeLocal *local, int size)
 {
@@ -72,7 +73,7 @@ int main(void)
     portal.cell = &to;
     dpvsG.eyeW = 1;
     dpvsG.viewProjectionMatrix = &matrix;
-    dpvsG.inverseViewProjectionMatrix = NULL;
+    dpvsG.inverseViewProjectionMatrix = &matrix;
     dpvsG.eyePlane.coeffs[0] = 1;
     DpvsPlane clip = { .coeffs = {1,0,0,0} };
     /* Empty traversal still initializes the entire exactly sized hull pool. */
