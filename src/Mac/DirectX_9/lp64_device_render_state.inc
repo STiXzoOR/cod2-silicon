@@ -11,6 +11,32 @@ static void DeviceRenderState_Init(DeviceImpl *dev)
     dev->blendStateChanged = 1;
     memset(dev->lightModelAmbient, 0, sizeof(dev->lightModelAmbient));
     dev->slopeScaleDepthBias = dev->scaledDepthBias = 0.0f;
+
+    /* Mac Reset 0x19d85/0x19e50 recreates the context before default caches.
+     * SDL retains it, so restore the fresh-context state not set by COpenGL_Init. */
+    glStencilFunc(dev->glStencilFunc, 0, 0xffffffffu);
+    glStencilOp(0x1e00, 0x1e00, 0x1e00);
+    glStencilMask(0xffffffffu);
+    const GLfloat fogColor[4] = {0, 0, 0, 0};
+    glFogfv(0xb66, fogColor);
+    glFogf(0xb63, 0.0f);
+    glFogf(0xb64, 1.0f);
+    glFogf(0xb62, 1.0f);
+    glColorMaterial(0x408, 0x1602);
+    GLfloat smoothRange[2], aliasedRange[2];
+    glGetFloatv(0xb12, smoothRange);
+    glGetFloatv(0x846d, aliasedRange);
+    glPointParameterfARB(0x8126, 0.0f);
+    glPointParameterfARB(0x8127, smoothRange[1] > aliasedRange[1] ? smoothRange[1] : aliasedRange[1]);
+    const GLfloat attenuation[3] = {1, 0, 0};
+    /* sPointScale is process-wide in the original, independent of this GL default. */
+    glPointParameterfvARB(0x8129, attenuation);
+    glDisable(0x8861);
+    for (UINT i = 0; i < dev->maxTextureUnits; ++i) {
+        COpenGL_SetActiveTexUnit((const COpenGL *)CDirect3DDevice_GL(), i);
+        glTexEnvi(0x8861, 0x8862, 0);
+    }
+    COpenGL_SetActiveTexUnit((const COpenGL *)CDirect3DDevice_GL(), 0);
 }
 
 static GLfloat DeviceRenderState_Float(DWORD value)
