@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**17/37 reconciled: 8 equal, 8 fixed, 1 intentional, 20 unchecked.** Mac 1.3 is the authority; Linux was read only for helper names and intent. Native corrections are under COD2_X64 guards. The selected legacy source tokens are unchanged in all five OFF configurations, and neither assigned source uses __LINE__.
+**18/37 reconciled: 9 equal, 8 fixed, 1 intentional, 19 unchecked.** Mac 1.3 is the authority; Linux was read only for helper names and intent. Native corrections are under COD2_X64 guards. The selected legacy source tokens are unchanged in all five OFF configurations, and neither assigned source uses __LINE__.
 
 ## Corrections
 
@@ -51,3 +51,39 @@ All 20 open identities remain unchecked. The original Mac SO/SLINE/FUN and lexic
 LoadScriptFile's punctuation setup at 0xc2e0b-0xc2e1b specializes the default table; it does not establish the complete custom/default SetScriptPunctuations contract. Initializing a new script does not establish ResetScript's existing-state behavior. The PS_ReadToken token-cache read does not establish PS_UnreadToken or PS_UnreadLastToken writes. Single quotes still dispatch to PS_ReadString, which does not prove the different single-character PS_ReadLiteral identity. No related partial operation or absence-only argument was used to close a row, and all 17 resolved verdicts are preserved exactly.
 
 Both l_script.c and l_precomp.c compiled as actual configured stock and CoD2x arm64 Release client objects with background priority and at most two jobs. Existing narrowing warnings remain. There is no focused botlib runtime fixture in this checkout. No production source changed, so inactive source and actual __LINE__ expansions are unchanged. No new tests/cases/assertions, full CI, replay or push ran. These checks do not exercise the missing APIs. Private evidence is in `~/Library/Application Support/CoD2-native-decomp/recon-botlib-remaining.noindex/`.
+
+
+## Original caller follow-up — botlib8
+
+Original 1.0 IDB names and bounded source-order gaps now anchor every remaining target in these two modules. Complete original 1.3 bodies were matched or bounded by the original module sequence: 115 functions, with 78 unique masked whole-body matches and no unique-anchor contradiction. Tiny anonymous bodies are not identified by shape alone. The retained original direct-call inventory contains eleven calls into the target group; raw address records added only unwind metadata. Those bounded searches establish provenance, not absence-based equality. Mac remains sole behavior authority.
+
+| Helper | Original 1.0 | Original 1.3 | Verdict |
+|---|---|---|---|
+| `GetScriptFlags` | 0x80518b6 | 0x8051ab6 | unchecked |
+| `LoadScriptMemory` | 0x8051b20 | 0x8051d20 | unchecked |
+| `PS_CheckTokenString` | 0x80514cc | 0x80516cc | unchecked |
+| `PS_CheckTokenType` | 0x805153e | 0x805173e | unchecked |
+| `PS_ExpectAnyToken` | 0x8051488 | 0x8051688 | unchecked |
+| `PS_ExpectTokenString` | 0x80510ba | 0x80512ba | unchecked |
+| `PS_ExpectTokenType` | 0x805115e | 0x805135e | unchecked |
+| `PS_NextWhiteSpaceChar` | 0x8051662 | 0x8051862 | unchecked |
+| `PS_ReadLiteral` | 0x8050b78 | 0x8050d78 | unchecked |
+| `PS_SkipUntilString` | 0x80515c6 | 0x80517c6 | unchecked |
+| `PS_UnreadLastToken` | 0x8051622 | 0x8051822 | unchecked |
+| `PS_UnreadToken` | 0x8051632 | 0x8051832 | unchecked |
+| `PunctuationFromNum` | 0x804fcaa | 0x804fe9a | unchecked |
+| `ReadSignedFloat` | 0x8051728 | 0x8051928 | unchecked |
+| `ReadSignedInt` | 0x80517fa | 0x80519fa | unchecked |
+| `ResetScript` | 0x80518c2 | 0x8051ac2 | unchecked |
+| `ScriptSkipTo` | 0x805195e | 0x8051b5e | unchecked |
+| `SetScriptFlags` | 0x80518a8 | 0x8051aa8 | unchecked |
+| `SetScriptPunctuations` | 0x804fdfa | 0x804fffa | equal |
+| `StripSingleQuotes` | 0x80516de | 0x80518de | unchecked |
+
+The new positive original call from LoadScriptFile resolves SetScriptPunctuations only for its complete consumed fresh-script NULL/default operation. Original 1.0 LoadScriptFile 0x80519d8 maps to original 1.3 0x8051bd8; the NULL argument is explicit at 0x8051cc3 and the setter call at 0x8051cd1 targets 0x804fffa. Its default branch performs both the full punctuation-table construction and the table-pointer assignment.
+
+Fresh complete Mac LoadScriptFile 0xc2d60–0xc2e5b contains that exact default operation at 0xc2e0b–0xc2e22, before file read/compression. Original SLINE records mark the call and store as source lines 263/264 inside the loader. Complete PS_CreatePunctuationTable 0xc247c allocates/clears the buckets and maintains stable descending-length links; native l_script.c retains that typed provider and both loader operations. This is equal for the identified consumed use. It does not certify arbitrary custom tables, a reusable setter on an existing script, LoadScriptMemory, PC_SetPunctuations, or a separately exposed native API. Existing loader and storage adaptations are preserved. Independent review: review-provenance-botlib8-punctuation.md.
+
+The other nineteen targets remain unchecked. The original signed-number readers call PS_ExpectAnyToken and PS_ExpectTokenType, but their complete corresponding Mac owner is unresolved. LoadScriptMemory's actual callers are the unresolved precompiler memory/definition helpers; the file loader is not its complete replacement. Original PS_CheckTokenString/Type reset script_p to lastscript_p on mismatch, PS_UnreadLastToken sets the cache flag, PS_UnreadToken copies a token then sets that flag, and ResetScript resets existing cursor/whitespace/line/cache state. The known token reader's cache consumption or a new allocation's zero initialization does not establish these distinct operations. Original PS_ReadLiteral consumes a single character/escape with different recovery and subtype behavior from the selected Mac single-quote string reader. Flags, punctuation-number lookup, whitespace iteration, substring skipping and single-quote stripping still lack a positive complete Mac identity.
+
+No production source change or new defect. No compilation, tests, CI, replays or runtime exercise in this pass. Prior verification entries above describe earlier work only. All previously resolved verdicts remain unchanged. Private exact original/Mac bodies, address maps and actual caller packets are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-botlib8.noindex/`.
