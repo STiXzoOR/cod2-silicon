@@ -673,7 +673,11 @@ Bool Sys_HasInfoChanged(void)
 
     cpuCurrent = (double)sys_cpuGHz->current.value;
 
+#if defined(COD2_X64) && defined(__APPLE__)
+    if (cpuCurrent > sys_info.cpuGHz * (double)1.1f || cpuCurrent < sys_info.cpuGHz * (double)0.9f) {
+#else
     if (cpuCurrent > sys_info.cpuGHz * 1.1 || cpuCurrent < sys_info.cpuGHz * 0.9) {
+#endif
         return Sys_ShouldUpdateForInfoChange();
     }
 
