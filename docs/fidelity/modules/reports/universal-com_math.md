@@ -297,3 +297,24 @@ Full original bytes establish double input and two double stores for `SinCos`; `
 The single-axis quaternion bodies all use the same positive half-degree constant, two literal positive-zero components and the sine/cosine pair in the active component and w. The complete Mac axis-angle provider multiplies every supplied axis component by sine; a hypothetical unit-axis input does not preserve literal zero fields for signed-zero or NaN results. The actual DObj setter chain computes the complete three-angle Euler product, with an identity-only null-pointer branch. These remain distinct operations.
 
 Two concrete double-sine consumers also fail the full `SinSquaredDeg` contract: stance opacity at 0x18bf60 converts the sine to float and takes its absolute value; complete `FresnelTerm` squares a ratio of sines in a larger reflectance calculation. All six entries remain unchecked, with original widths/constants and exact candidate addresses recorded privately in `recon-provenance-math14.noindex`. Math remains 139 equal, 28 fixed and 62 unchecked. No source changes, new defects, compilation, tests, CI, replay or runtime verification.
+
+## In-place affine owner follow-up (provenance-inplace17)
+
+MatrixTransformVector43Equals remains unchecked. Its complete original body at
+0x80a759e–0x80a766e (original 1.0 identity 0x80a523a) computes three affine
+coordinates, saves the first two, then writes z/x/y back into the original point.
+The actual overwrite is part of this helper's operation.
+
+Fresh exact Mac Tail::CalcNewEndpoint 0xa130a and Cylinder::Update 0xa5780
+pass a separate stack point to this+0x9c. Active native code preserves that
+separation; apparent same-endpoint calls exist only in inactive legacy branches.
+FX_CalcOriginAndAxis 0x59d67 passes its local world point at stack-0x48 to the
+caller output through the inverse orientation provider. The native copy-back
+there does not establish an affine-matrix input overwrite. R_SkinXSurfaceSkinned
+0xd1d6c–0xd1e13 computes all three affine coordinates from the vertex array into
+distinct renderer output storage. Temporary results alone do not prove aliasing.
+These concrete operations do not close the remaining row, and they do not
+exclude a different undiscovered owner. No source change or new defect.
+
+Private exact packets are in recon-provenance-inplace17.noindex. No tests, CI,
+compilation, replay or runtime exercise were performed.
