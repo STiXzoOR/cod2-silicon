@@ -1,4 +1,4 @@
-# Batch 22 verification — platform gate unresolved
+# Batch 22 verification — initial platform failures
 
 This batch is locally integrated but is not accepted as passing. Frozen engine/tests `28e7d452399e38b2c296b8b4230e3eb8017b8c52` has 28 new closures, followed only by report/ledger updates. Current counts: 354 unchecked, 4,754 equal, 1,180 fixed, 3,169 intentional; 9,457 total. All remaining unchecked rows are Linux-only identities; this does not establish complete native-client playability.
 
@@ -12,4 +12,4 @@ Unchanged focused runs of software gamma and Metal frame passed individually. Th
 
 Both 2,000-frame dedicated replays match the accepted d873794 baselines and each other exactly in players, state hashes and entities. All six compared logic fields agree with the original Linux recording; maximum origin/velocity drift remains 0.11792/2.0. These traces do not exercise client rendering, hardware audio or every exceptional input. Scanner post-error repeat parsing, full C++ allocation failure behavior and the botlib inline operation remain compiled/reviewed rather than directly exercised by dedicated replay.
 
-The previous batch 21 checkpoint `c4559d73` remains the last accepted/pushed result until an explicit disposition is recorded. This document reports incomplete acceptance; it must not be cited as a passing full CI result. The optional hosted ILP32 comparison independently fails while compiling unchanged reference calling-convention declarations; no i386 byte parity is claimed.
+After this failed gate was reported, the user explicitly directed “push and fix.” Candidate `1f8e4ea2` was pushed with these failures recorded. This document preserves the initial failed result; it must not be cited as a passing full CI result. The subsequent [platform repair](integration-platform-repair.md) records the separate diagnosis and verification. The optional hosted ILP32 comparison independently fails while compiling unchanged reference calling-convention declarations; no i386 byte parity is claimed.

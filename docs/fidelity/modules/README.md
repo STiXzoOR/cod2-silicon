@@ -207,4 +207,4 @@ The combined nineteenth batch closes 24 capability, device, defined-boundary, GP
 
 Batch21 closes 84 additional entries at engine/fixture `a52e5e27`. Both dedicated builds, full local CI02–13, inactive/actual-line checks, independent reviews and exact-baseline replays passed. The existing presentation fixture was repaired after its window-lifetime assumption failed; no tests/cases/assertions were added. [Verification and limits](reports/integration-batch21.md).
 
-Batch22 locally integrates 28 further closures at engine/fixture `28e7d452`. Both builds, source/ABI checks and baseline replays pass, but the sanitizer platform gate failed twice. Acceptance/push is pending; [verification and blockers](reports/integration-batch22-pending.md).
+Batch22 locally integrates 28 further closures at engine/fixture `28e7d452`. Both builds, source/ABI checks and baseline replays pass, but the sanitizer platform gate failed twice. The user authorized pushing candidate `1f8e4ea2` with those failures recorded, followed by repair; [initial verification](reports/integration-batch22-pending.md) and [platform repair](reports/integration-platform-repair.md).

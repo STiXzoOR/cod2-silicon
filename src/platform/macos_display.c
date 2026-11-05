@@ -646,8 +646,8 @@ void SDL_GL_SwapWindowDirect(void)
     GLint readFramebuffer, drawFramebuffer;
     glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING_EXT, &readFramebuffer);
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING_EXT, &drawFramebuffer);
-    glPushAttrib(presentationGammaIdentity ?
-                 GL_COLOR_BUFFER_BIT | GL_SCISSOR_BIT | GL_PIXEL_MODE_BIT : GL_ALL_ATTRIB_BITS);
+    glPushAttrib(GammaUsesShader(&ctx->gamma) ? GL_ALL_ATTRIB_BITS :
+                 GL_COLOR_BUFFER_BIT | GL_SCISSOR_BIT | GL_PIXEL_MODE_BIT);
 #else
     glPushAttrib(GL_COLOR_BUFFER_BIT | GL_SCISSOR_BIT | GL_PIXEL_MODE_BIT);
 #endif
