@@ -72,3 +72,10 @@ This resolves only raw pointer release. `yy_delete_buffer`, memory-scan APIs, sw
 
 
 Original1.0 IDB body 0x808529a also uniquely maps to original1.3 `TransferRefToParseUser` at 0x8085902. It loads the parse-user byte and passes it with the input string ID to `SL_TransferRefToUser`. This positive original identity does not equate Mac parser interning or lowercase conversion with reference transfer. The captured-global transfer operation remains unchecked; it is not a strict pointer-only provider alias like `yyfree`.
+
+
+## Original scanner lifecycle and accessor identities
+
+The retained original scanner packet now anchors all thirteen remaining scanner helpers in the ledger. Original yy_scan_string0x808b79e strictly calls strlen then yy_scan_bytes0x808b7c0; that complete provider allocates length+2, copies input, appends two NULs, invokes yy_scan_buffer0x808b6d1 and marks owned storage. The buffer scanner validates both sentinels, initializes a48-byte descriptor with borrowed storage and filling disabled, then calls yy_switch_to_buffer0x808b11d. The complete switch preserves old hold/cursor/count through its descriptor stack before installing and loading new state. The known Mac token-scanning/init path does not establish this full memory-scan/switch operation. Resolving raw yyfree earlier does not resolve delete-buffer ownership or slot clearing.
+
+Complete original accessors0x808b89d–0x808b8eb identify input/output stream, token length/text loads and argument stores. yyunput0x808ae10 includes pushback relocation/overflow handling; input0x808af78 includes refill/restart/recursive byte-return behavior. These are positive original contracts; prior Mac global-load or token-path intersections remain insufficient complete counterparts. All thirteen remain unchecked. This integrates retained worker original evidence with parent body spot-review; it does not claim a new complete Mac scan or execution. Approved persistent native descriptor and allocator ownership remain unchanged. No source change, compilation, tests, CI, replay or runtime verification.
