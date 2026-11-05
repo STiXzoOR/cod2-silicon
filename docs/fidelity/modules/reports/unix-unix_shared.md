@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**19/26 reconciled: 5 equal, 4 fixed, 10 intentional; 7 unchecked.** The previously reconciled `Sys_SnapVector` Windows-rounding verdict and evidence are preserved exactly.
+**20/26 reconciled: 5 equal, 5 fixed, 10 intentional; 6 unchecked.** The previously reconciled `Sys_SnapVector` Windows-rounding verdict and evidence are preserved exactly.
 
 `Sys_ListFilteredFiles` stopped one result early. Mac 0xc4977 and 0xc4a30 stop only above 0xFFE, allowing entry 4094; native used `>=`. Recursion, path formatting, dot entries, filters, string allocation and directory closure were compared by hand.
 
@@ -22,7 +22,7 @@ The two clock wrappers preserve low-32-bit millisecond arithmetic. Their selecte
 
 Both native executables compile and link. Existing clock/network fixtures pass, including HOME fallback. The listing and permission corrections were compiled and reviewed but not exercised. Inactive source checks pass; the changed files contain no `__LINE__` expansions to drift. No tests were added and no deletion was executed.
 
-Seven Linux-only identities remain unchecked: the three critical-section functions, `Sys_GetCurrentUser`, `Sys_GetProcessorId`, `Sys_NullQuery3` and `fastftol`. Their exact Mac identity or native replacement contract is unresolved.
+Six Linux-only identities remain unchecked: the three critical-section functions, `Sys_GetCurrentUser`, `Sys_GetProcessorId` and `Sys_NullQuery3`. Their exact Mac identity or native replacement contract is unresolved. The consumed scalar conversion for `fastftol` is reconciled below.
 
 Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-unix-runtime.noindex/`.
 
@@ -64,3 +64,10 @@ The original 1.3 indexed critical-section API is concrete: initialization 0x80d6
 Original Sys_Init at 0x80d3ad6 calls Sys_GetCurrentUser 0x80d6760 at 0x80d3b17 and registers the username dvar. This positive original use still does not identify Mac player-name or home-path logic as the same operation. Source-order anchors place GetProcessorId at 0x80d6746 and NullQuery3 at 0x80d6750; constant-return shape supplies no CPU-enum or anonymous-query Mac identity. All seven rows remain unchecked.
 
 This is a report-only provenance audit. No verdict or production source changes, compilation, tests, CI, replays or runtime exercise were performed. Private original body/address/caller packets are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-platform6.noindex/`. Prior verification records above describe earlier work, not this follow-up.
+## Complete scalar conversion in CrashLand
+
+`fastftol` is fixed through the already corrected float32-to-signed32 operation consumed by CrashLand. Complete original Linux bodies at 1.0 0x80d37fe and 1.3 0x80d5e6e load a four-byte float and return a truncating four-byte integer result. The reconstructed `long` spelling describes that original ILP32 result; it does not establish a native LP64 long API. No original external caller is invented.
+
+Primary Mac conversions at 0x70974 and 0x70a50 consume scalar single-precision values and return signed32 integers before separate damage/view-dip selection. Native `PM_CrashLandFloatToInt` accepts exactly [-2^31,2^31), truncates valid values and returns INT_MIN for NaN, infinity or out-of-range values without an invalid C cast. This matches the complete returned conversion result, including signed zero, subnormals and -2^31, when the Mac instruction returns with the relevant exception masked. The fixed classification inherits the earlier CrashLand repair; no additional source defect or change is counted.
+
+This bounded consumed-operation mapping claims no standalone export, 64-bit long ABI, x87/MXCSR flags, control-word side effects, trap mode or floating-point environment equivalence. The approved Windows-style `Sys_SnapVector` rounding is unchanged. Current movement source matches the independently reviewed four-configuration manual compilation receipt; no compilation, tests, CI, replay or runtime exercise ran for this follow-up. Compiled/reviewed does not mean runtime verified or playable. Exact evidence and independent review are retained in `recon-provenance-fastftol12.noindex` and `units/review-provenance-fastftol12.md`.
