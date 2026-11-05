@@ -48,3 +48,7 @@ Catalog coverage passed without semantic catalog changes. Hosted ILP32 compariso
 ## Defined native boundary follow-up
 
 See [native-invalid-boundaries](native-invalid-boundaries.md) for the exact native contracts, original addresses, source corrections and limits. Earlier open statements for the six named Mac rows describe the prior checkpoint. Current module counts are 42 equal, 1 fixed, 2 intentional, 11 unchecked. All other original identity gaps remain open.
+
+## Integrated batch 21 acceptance
+
+The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.

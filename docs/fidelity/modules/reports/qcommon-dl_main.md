@@ -28,3 +28,7 @@ The hosted ILP32 byte-comparison job cannot compare binaries: its unchanged `410
 ## Defined native boundary follow-up
 
 See [native-invalid-boundaries](native-invalid-boundaries.md) for the exact native contracts, original addresses, source corrections and limits. Earlier open statements for the six named Mac rows describe the prior checkpoint. Current module counts are 2 equal, 1 fixed, 8 intentional, 0 unchecked. All other original identity gaps remain open.
+
+## Integrated batch 21 acceptance
+
+The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.

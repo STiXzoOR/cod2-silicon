@@ -73,3 +73,7 @@ The malformed parser, wrong-type dvar, missing-name color, missing-talker draw
 and failed final file flush paths are compiled and reviewed, not directly
 exercised. No real download, rendering, full CI or replay was performed in this
 unit; the parent runs the integrated gate. All other reconciled verdicts remain.
+
+## Integrated batch 21 acceptance
+
+The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.
