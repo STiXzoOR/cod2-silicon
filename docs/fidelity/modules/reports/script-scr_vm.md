@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**Current: 101/112 reconciled: 85 equal, 10 intentional, 6 fixed; 11 unchecked.** The interpreter and its established native ownership adaptations are complete under the later acceptance notes below.
+**Current: 102/112 reconciled: 86 equal, 10 intentional, 6 fixed; 10 unchecked.** The interpreter and its established native ownership adaptations are complete under the later acceptance notes below.
 
 Initial pass: 94/112 reconciled: 85 equal, 8 intentional, 1 fixed; 18 unchecked. The main interpreter has additional local corrections but remains unchecked because its remaining error-state differences are unresolved. All pre-existing rows were unchecked. Legacy `COD2_X64=OFF` source is unchanged.
 
@@ -247,3 +247,23 @@ The fresh complete Mac owner reaches the reset after its not-initialized gate an
 The former evidence rejected initialization/resume writes as standalone helper identity. This closure establishes the narrower complete consumed operation, not a standalone clear API or equivalence of whole `Scr_Init`: already-initialized owners bypass the phase, and nonreturning preceding providers never reach it. Frame/count/tag initialization, arbitrary live-stack cleanup, repeated-init behavior, reference ownership and missing exports are outside the mapped reset. Existing LP64 storage/layout and ownership adaptations are preserved. The interpreter and all other settled verdicts remain unchanged.
 
 Independently accepted in `units/review-provenance-stackclear24.md`; fresh full Mac bodies, original helper/init receipts and source hashes remain in private `recon-provenance-stackclear24.noindex`. One unchecked row becomes equal; no source change or new defect. No compilation, tests, CI, replay or runtime exercise.
+
+## External getter input and result roles — 2026-11-06
+
+`Scr_GetAnimTree` and `Scr_GetFunc` remain unchecked. Complete original 0x8084886–0x8084964 supplies a pointer-valued animation-tree result through the original hidden result argument. It validates external parameter count, integer type6, unsigned server tree index and nonnull tree pointer; bad values are released and cleared before indexed error handling, with the missing-parameter error and lookup[0] fallback if error policy returns. Fresh full Mac gameplay owners `GScr_GetAnimLength` 0x197ad0 and `GScr_AnimHasNotetrack` 0x197b3e instead consume `Scr_GetAnim` type11, extract its high16 tree index, then call the forward tree provider. Their real animation-pointer consumers do not complete the integer-parameter getter's input/error/result role.
+
+Original `Scr_GetFunc` 0x8084dd0–0x8084e65 validates an external parameter of type9 and returns its code-position offset; a returning type error continues to a missing-parameter error and zero. Fresh complete Mac `Scr_GetFunctionHandle` 0xaf28e resolves canonical filename, script/name/object/code-variable state, computes its offset at 0xaf32f and bounds it by programLen. That is a complete named-function lookup, but its input selection, errors and result filtering do not establish the external parameter getter. Existing native stored-offset adaptations and earlier interpreter-gate rejection remain intact.
+
+Private evidence: `recon-provenance-scriptget32.noindex`. These are bounded negative operation comparisons, not missing-symbol conclusions. Source and settled verdicts are unchanged; no compilation, tests, CI, replay or runtime execution ran.
+
+## Complete registered-notify classification — 2026-11-06
+
+`Scr_IsEndonThread` is **equal** for the complete consumed classifier on live, successfully registered notify entries. Original1.0 0x8082e74 maps to original1.3 0x80834bc through RET at 0x8083528 (0x8083529 is padding): require object type16 and identity of its start-local ID, resolve the wait slot, and return whether its type is undefined. Its complete resolver at 0x80833e2–0x80834bb follows nonzero notify name, self, pauseArray[self][id], stored owner, owner notify list, name list and the slot keyed by id.
+
+Actual Mac endon registration allocates the thread at 0x84be8, inserts its undefined keyed slot at 0x84c27, writes the inverse pause-array owner link at 0x84c78, then sets notify name and type16 at 0x84c84. Actual waittill registration creates the same structure, stores type10 stack at 0x84aab, writes the inverse owner link at 0x84af4 and sets name/type16 at 0x84b03. The actual type16 state establishes both original guards: complete `GetStartLocalId` 0x885f0 follows only type18 parent chains. This is not an assumption about arbitrary local IDs.
+
+Mac `VM_Notify` resolves the actual owner/name list at 0x81cf7–0x81d32, selects a live slot at 0x81d51 and obtains its registered thread key at 0x81d63. The actual producer's inverse links establish that the original resolver returns this same slot. `GetVarType` at 0x81d98 and TEST/JNE at 0x81d9d/0x81d9f consume the complete Boolean: undefined selects the endon cancellation path and nonzero selects the wait-stack consumer. Both outcomes have concrete registration producers. Native performs those same list/key reads and complete branch selection; its settled type/key/root providers match.
+
+Scope requires successful registration, live valid variable and interned nonzero-name backing, stable type16 state and consistent owner/name/key links. No arbitrary-ID query, zero-name fallback, allocation-error return, debugger helper equivalence or whole interpreter/notifier verdict is claimed. The optional native debugger helper is not the accepted operation. The selected read/classify phase ends before cancellation, stack copying or the later notifier time-byte ownership adaptation at 0x82407–0x8243b, so that unrelated intentional behavior is not inherited.
+
+Independent review is in `units/review-provenance-scriptget32-endon.md`; full private original/Mac provider bodies, inverse-link analysis and unchanged source hashes are retained under `recon-provenance-scriptget32.noindex`. No source or new defect, compilation, tests, CI, replay or runtime execution. This report does not extend earlier runtime verification.
