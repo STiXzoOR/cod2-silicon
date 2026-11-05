@@ -1,6 +1,9 @@
 #include "common_types.h"
 #include "imports.h"
 #if defined(COD2_X64)
+#include <stdlib.h>
+#endif
+#if defined(COD2_X64)
 #include "lp64_gl_state.h"
 #endif
 
@@ -54,6 +57,12 @@ static UINT32 CColorConverter_FloatToByte(float value)
         scaled = value * 255.0f;
     }
 
+#if defined(COD2_X64)
+    /* Mac's invalid fistpll result has zero in its low 32 bits. */
+    if (scaled != scaled) {
+        return 0;
+    }
+#endif
     return (UINT32)(scaled + 0.5f);
 }
 
@@ -144,6 +153,9 @@ void StdConverterARGB_Convert(const StdConverterARGB *_this, const void *pDst, c
     (void)_this;
 
     memcpy(&value, pSrc, sizeof(value));
+#if defined(COD2_X64)
+    /* Native producers and vertex consumers share the BGRA boundary. */
+#endif
     value = CColorConverter_ByteSwap32(value);
     memcpy((void *)pDst, &value, sizeof(value));
 }
@@ -159,10 +171,19 @@ void StdConverterARGB_Convert4f4ubInverse(const StdConverterARGB *_this, float *
 {
     (void)_this;
 
+#if defined(COD2_X64)
+    const UINT8 components[4] = { Src[0], Src[1], Src[2], Src[3] };
+
+    Dest[0] = CColorConverter_ByteToFloat(components[0]);
+    Dest[1] = CColorConverter_ByteToFloat(components[1]);
+    Dest[2] = CColorConverter_ByteToFloat(components[2]);
+    Dest[3] = CColorConverter_ByteToFloat(components[3]);
+#else
     Dest[0] = CColorConverter_ByteToFloat(Src[0]);
     Dest[1] = CColorConverter_ByteToFloat(Src[1]);
     Dest[2] = CColorConverter_ByteToFloat(Src[2]);
     Dest[3] = CColorConverter_ByteToFloat(Src[3]);
+#endif
 }
 
 void StdConverterABGR_Convert4f4ubInverse(const StdConverterABGR *_this, float *Dest, const UINT8 *Src)
@@ -176,9 +197,17 @@ void StdConverterARGB_Convert3f4ubInverse(const StdConverterARGB *_this, float *
 {
     (void)_this;
 
+#if defined(COD2_X64)
+    const UINT8 components[3] = { Src[0], Src[1], Src[2] };
+
+    Dest[0] = CColorConverter_ByteToFloat(components[0]);
+    Dest[1] = CColorConverter_ByteToFloat(components[1]);
+    Dest[2] = CColorConverter_ByteToFloat(components[2]);
+#else
     Dest[0] = CColorConverter_ByteToFloat(Src[0]);
     Dest[1] = CColorConverter_ByteToFloat(Src[1]);
     Dest[2] = CColorConverter_ByteToFloat(Src[2]);
+#endif
 }
 
 void StdConverterABGR_Convert3f4ubInverse(const StdConverterABGR *_this, float *Dest, const UINT8 *Src)
@@ -225,10 +254,19 @@ void ATI4CompsConverterARGB_Convert4f4ubInverse(const ATI4CompsConverterARGB *_t
 {
     (void)_this;
 
+#if defined(COD2_X64)
+    const UINT8 components[4] = { Src[3], Src[2], Src[1], Src[0] };
+
+    Dest[0] = CColorConverter_ByteToFloat(components[0]);
+    Dest[1] = CColorConverter_ByteToFloat(components[1]);
+    Dest[2] = CColorConverter_ByteToFloat(components[2]);
+    Dest[3] = CColorConverter_ByteToFloat(components[3]);
+#else
     Dest[0] = CColorConverter_ByteToFloat(Src[3]);
     Dest[1] = CColorConverter_ByteToFloat(Src[2]);
     Dest[2] = CColorConverter_ByteToFloat(Src[1]);
     Dest[3] = CColorConverter_ByteToFloat(Src[0]);
+#endif
 }
 
 void ATI4CompsConverterABGR_Convert4f4ubInverse(const ATI4CompsConverterABGR *_this, float *Dest, const UINT8 *Src)
@@ -242,9 +280,17 @@ void ATI4CompsConverterARGB_Convert3f4ubInverse(const ATI4CompsConverterARGB *_t
 {
     (void)_this;
 
+#if defined(COD2_X64)
+    const UINT8 components[3] = { Src[3], Src[2], Src[1] };
+
+    Dest[0] = CColorConverter_ByteToFloat(components[0]);
+    Dest[1] = CColorConverter_ByteToFloat(components[1]);
+    Dest[2] = CColorConverter_ByteToFloat(components[2]);
+#else
     Dest[0] = CColorConverter_ByteToFloat(Src[3]);
     Dest[1] = CColorConverter_ByteToFloat(Src[2]);
     Dest[2] = CColorConverter_ByteToFloat(Src[1]);
+#endif
 }
 
 void ATI4CompsConverterABGR_Convert3f4ubInverse(const ATI4CompsConverterABGR *_this, float *Dest, const UINT8 *Src)
@@ -347,7 +393,7 @@ const CColorConverter *CColorConverter_GetColorConverter(Format SrcFormat)
 
     openGlState = (const unsigned char *)imp___ZN7COpenGL7sOpenGLE;
 #if defined(COD2_X64)
-    if (MacDisplay_GetCardType() == 2 && ((const COpenGLNative *)openGlState)->supportsATIArrayRevComps) {
+    if (MacDisplay_GetCardType() == 1 && ((const COpenGLNative *)openGlState)->supportsATIArrayRevComps) {
 #else
     if (MacDisplay_GetCardType() == 2 && openGlState[0x800] != 0) {
 #endif
@@ -517,6 +563,9 @@ __attribute__((constructor)) static void _ctor_CColorConverter(void)
 #endif
 {
     GLOBAL__I__ZN15CColorConverter17GetColorConverterENS_6FormatE();
+#if defined(COD2_X64)
+    atexit(GLOBAL__D__ZN15CColorConverter17GetColorConverterENS_6FormatE);
+#endif
 }
 
 fnptr_t vtbl_StdConverterARGB[] = { (fnptr_t)StdConverterARGB_Convert, (fnptr_t)StdConverterARGB_Convert4ub4f, (fnptr_t)StdConverterARGB_Convert4f4ubInverse, (fnptr_t)StdConverterARGB_Convert3f4ubInverse, (fnptr_t)StdConverterARGB_ArrayConvert4f4ub, (fnptr_t)StdConverterARGB_GetType, (fnptr_t)ZN16StdConverterARGBD1Ev, (fnptr_t)ZN16StdConverterARGBD0Ev };
