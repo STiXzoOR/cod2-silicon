@@ -8,7 +8,9 @@ typedef struct {
     GLuint name;
     GLenum target;
     UINT32 level, width, height;
+    unsigned char pixelsBottomUp;
 } CDirect3DSurfaceNativeInfo;
 int CDirect3DSurface_GetNativeInfo(const void *surface, CDirect3DSurfaceNativeInfo *info);
+void CDirect3DSurface_MarkGPUWritten(void *surface);
 #endif
 #endif

@@ -296,7 +296,7 @@ static void DeviceTargets_CopyColor(DeviceImpl *dev)
     glPixelStorei(0x0cf2, 0); glPixelStorei(0x0d02, 0);
     glBindTexture(0x0de1, binding);
     glActiveTextureARB(active);
-    CDirect3DSurface_SetDirty(dev->renderTarget, 0);
+    CDirect3DSurface_MarkGPUWritten(dev->renderTarget);
 }
 
 static HRESULT DeviceTargets_SetTarget(DeviceImpl *dev, IDirect3DSurface9 *target)
@@ -381,6 +381,7 @@ static HRESULT DeviceTargets_Stretch(DeviceImpl *dev, void *source, const RECT *
     int fromBack = source == dev->backBuffer;
     int toBack = destination == dev->backBuffer;
     int fromCurrentAux = !fromBack && source == dev->renderTarget;
+    int toCurrentAux = !toBack && destination == dev->renderTarget;
     if (fromCurrentAux) {
         D3DSURFACE_DESC backDesc;
         result = DeviceTargets_GetDesc(dev->backBuffer, &backDesc);
@@ -395,32 +396,57 @@ static HRESULT DeviceTargets_Stretch(DeviceImpl *dev, void *source, const RECT *
         if (!CDirect3DSurface_GetNativeInfo(destination, &dst) || dst.target != 0x0de1 || dst.level ||
             destDesc.Width > backDesc.Width || destDesc.Height > backDesc.Height)
             return (HRESULT)0x8876086c;
+        int fullDestination = destRegion.left == 0 && destRegion.top == 0 &&
+            destRegion.right == destDesc.Width && destRegion.bottom == destDesc.Height;
+        /* A partial copy cannot mix framebuffer rows with untouched top-down
+         * CPU rows. Current targets resolve their whole authoritative buffer. */
+        if (!toCurrentAux && !fullDestination &&
+            (!dst.pixelsBottomUp || CDirect3DSurface_IsDirty(destination)))
+            return (HRESULT)0x8876086c;
     }
     GLint active, binding;
-    if (fromBack && !sourceRect && !destinationRect &&
+    if (fromBack && !toCurrentAux && !sourceRect && !destinationRect &&
         sourceDesc.Width == destDesc.Width && sourceDesc.Height == destDesc.Height) {
+        GLint readBuffer;
+        glGetIntegerv(0x0c02, &readBuffer);
         glGetIntegerv(0x84e0, &active);
         glActiveTextureARB(0x84c0);
         glGetIntegerv(0x8069, &binding);
         glBindTexture(0x0de1, dst.name);
+        DeviceTargets_ReadBuffer(0x0405);
         glPixelStorei(0x0cf2, sourceDesc.Width); glPixelStorei(0x0d02, sourceDesc.Width);
         glCopyTexSubImage2D(0x0de1, 0, 0, 0, 0, 0, destDesc.Width, destDesc.Height);
+        DeviceTargets_ReadBuffer(readBuffer);
         glPixelStorei(0x0cf2, 0); glPixelStorei(0x0d02, 0);
         glBindTexture(0x0de1, binding); glActiveTextureARB(active);
-        CDirect3DSurface_SetDirty(destination, 0);
+        CDirect3DSurface_MarkGPUWritten(destination);
         return 0;
     }
     if (!CDirect3DSurface_GetNativeInfo(source, &src) || src.target != 0x0de1 || src.level)
         return (HRESULT)0x8876086c;
+    int sourceBottomUp = src.pixelsBottomUp;
+    GLint currentDrawBuffer;
+    glGetIntegerv(0x0c01, &currentDrawBuffer);
+    GLenum staging = 0;
+    if (currentDrawBuffer == 0x0409 || currentDrawBuffer == 0x8ce1)
+        staging = 0x040a;
+    else if (currentDrawBuffer == 0x040a || currentDrawBuffer == 0x8ce2)
+        staging = 0x0409;
+    else if (currentDrawBuffer == 0x0405 || currentDrawBuffer == 0x8ce0)
+        staging = 0x040a;
+    else if (!toBack || fromCurrentAux)
+        return (HRESULT)0x8876086c;
+    if ((fromCurrentAux || toCurrentAux) &&
+        currentDrawBuffer != 0x0409 && currentDrawBuffer != 0x8ce1 &&
+        currentDrawBuffer != 0x040a && currentDrawBuffer != 0x8ce2)
+        return (HRESULT)0x8876086c;
+    GLenum destinationBuffer = toBack ? 0x0405 : toCurrentAux ? (GLenum)currentDrawBuffer : staging;
     glPushAttrib(0x000fffff);
     glPushClientAttrib(0xffffffffu);
-    GLint currentReadBuffer;
-    glGetIntegerv(0x0c02, &currentReadBuffer);
     /* Previous auxiliary targets were resolved by RB_SetRenderTarget. Their
      * inactive attachment is native scratch; preserve the current surface's
-     * pixels while drawing a different texture destination. */
-    GLenum staging = fromBack || dev->renderTarget == dev->backBuffer ||
-        currentReadBuffer == 0x0409 || currentReadBuffer == 0x8ce1 ? 0x040a : 0x0409;
+     * pixels while drawing a different texture destination. Source identity
+     * does not override the current AUX attachment's preservation priority. */
     glDisable(0x8620);
     int card = MacDisplay_GetCardType();
     if (card == 2) { glDisable(0x86de); glDisable(0x8522); }
@@ -437,19 +463,22 @@ static HRESULT DeviceTargets_Stretch(DeviceImpl *dev, void *source, const RECT *
     if (!fromBack && !fromCurrentAux && CDirect3DSurface_IsDirty(source)) {
         CDirect3DSurface_UpdateOpenGLSurfaceObject(source, 0);
         CDirect3DSurface_SetDirty(source, 0);
+        sourceBottomUp = 0;
     }
     DeviceTargets_FilterTexture(filter);
     if (fromBack || fromCurrentAux) {
         /* RB_SetRenderTarget selects matching draw/read BACK/AUX0/AUX1. Read
          * a still-current auxiliary source before selecting the blit staging
          * buffer; native CPU backing is not Mac's coherent client storage. */
+        DeviceTargets_ReadBuffer(fromBack ? 0x0405 : currentDrawBuffer);
         glPixelStorei(0x0cf2, sourceDesc.Width); glPixelStorei(0x0d02, sourceDesc.Width);
         glCopyTexSubImage2D(0x0de1, 0, 0, 0, 0, 0, sourceDesc.Width, sourceDesc.Height);
-        CDirect3DSurface_SetDirty(source, 0);
+        CDirect3DSurface_MarkGPUWritten(source);
+        sourceBottomUp = 1;
     }
     if (!fromBack) {
-        DeviceTargets_DrawBuffer(toBack ? 0x0405 : staging);
-        DeviceTargets_ReadBuffer(toBack ? 0x0405 : staging);
+        DeviceTargets_DrawBuffer(destinationBuffer);
+        DeviceTargets_ReadBuffer(destinationBuffer);
     }
     GLfloat matrices[16][16];
     glMatrixMode(0x1702);
@@ -477,12 +506,12 @@ static HRESULT DeviceTargets_Stretch(DeviceImpl *dev, void *source, const RECT *
     glViewport(0, 0, destDesc.Width, destDesc.Height);
     glDisable(0x0c11);
     glOrtho(0.0, (double)destDesc.Width, (double)destDesc.Height, 0.0, -1.0, 1.0);
-    if (fromBack) DeviceTargets_DrawBuffer(staging);
+    if (fromBack) DeviceTargets_DrawBuffer(destinationBuffer);
     float u0 = (float)sourceRegion.left / (float)sourceDesc.Width;
     float u1 = (float)sourceRegion.right / (float)sourceDesc.Width;
     float v0 = (float)sourceRegion.top / (float)sourceDesc.Height;
     float v1 = (float)sourceRegion.bottom / (float)sourceDesc.Height;
-    if (fromBack || fromCurrentAux) { v0 = 1.0f - v0; v1 = 1.0f - v1; }
+    if (sourceBottomUp) { v0 = 1.0f - v0; v1 = 1.0f - v1; }
     glBegin(7);
     glColor4f(1,1,1,1);
     glTexCoord2f(u0,v0); glVertex2f(destRegion.left,destRegion.top);
@@ -501,12 +530,18 @@ static HRESULT DeviceTargets_Stretch(DeviceImpl *dev, void *source, const RECT *
         glBindTexture(0x0de1, dst.name);
         GLint destinationSampler[5];
         DeviceTargets_SaveSampler(destinationSampler);
-        DeviceTargets_ReadBuffer(staging);
+        DeviceTargets_ReadBuffer(destinationBuffer);
         DeviceTargets_FilterTexture(filter);
-        GLint bottom = destDesc.Height - destRegion.bottom;
-        glCopyTexSubImage2D(0x0de1, 0, destRegion.left, bottom, destRegion.left, bottom,
-                            destRegion.right - destRegion.left, destRegion.bottom - destRegion.top);
-        CDirect3DSurface_SetDirty(destination, 0);
+        if (toCurrentAux) {
+            /* The current framebuffer remains authoritative after this call.
+             * Resolve all its pixels so the next target switch agrees too. */
+            glCopyTexSubImage2D(0x0de1, 0, 0, 0, 0, 0, destDesc.Width, destDesc.Height);
+        } else {
+            GLint bottom = destDesc.Height - destRegion.bottom;
+            glCopyTexSubImage2D(0x0de1, 0, destRegion.left, bottom, destRegion.left, bottom,
+                                destRegion.right - destRegion.left, destRegion.bottom - destRegion.top);
+        }
+        CDirect3DSurface_MarkGPUWritten(destination);
         DeviceTargets_RestoreSampler(destinationSampler);
         if (!fromBack) { DeviceTargets_ReadBuffer(0x0405); DeviceTargets_DrawBuffer(0x0405); }
     }
