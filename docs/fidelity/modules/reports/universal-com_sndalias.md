@@ -2,7 +2,7 @@
 
 Updated 2026-11-04.
 
-**23/26 reconciled: 20 equal, 3 fixed; 3 unchecked.** Mac 1.3 i386 is the authority. Linux was used for helper identities, not implementation authority. Changes are under COD2_X64; the legacy preprocessed source is unchanged.
+**23/26 reconciled: 18 equal, 5 fixed; 3 unchecked.** Mac 1.3 i386 is the authority. Linux was used for helper identities, not implementation authority. Changes are under COD2_X64; the legacy preprocessed source is unchanged.
 
 ## Corrections
 
@@ -60,3 +60,13 @@ Original Linux 1.0 IDB addresses were mapped to retained original 1.3 ELF bodies
 The three full original bodies now have concrete addresses. No corresponding complete Mac name accessor or arbitrary seed getter/setter operation has been established. Internal random-seed recurrence does not prove these APIs; all three rows remain unchecked.
 
 No production source changes, defects, compilation, tests, CI or replays in this follow-up. No runtime behavior is certified. Private evidence: `recon-provenance-config7.noindex`; focused ledger preserves all previously resolved rows unchanged.
+
+## Defined seed arithmetic (config13)
+
+One C-level defect was found in the shared random helper consumed by both selector owners. Complete Mac Com_PickSoundAliasFromList0xad450 and Com_PickSoundAlias0xad97e wrap the seed recurrence modulo2^32, store all32bits and extract bits16–30. Native used signed int multiplication/addition. The actual four stock/CoD2x client/dedicated commands omit wrap flags; the separate legacy CMake flags do not apply. Zero-initialized g_sa and repeated ordinary two-entry selections reach signed overflow on the second update:2531011*214013+2531011=541671788154, whose required stored word is0x1e278e7a. No arbitrary seed setter or exceptional input is required.
+
+The COD2_X64 helper now uses unsigned32 multiplication/addition and memcpy for the stored int representation, then extracts the same15bits. The legacy helper text is unchanged. Selection probabilities, seed consumption, sequence handling and ownership are preserved. Existing inspected arm64 objects already use matching32-bit MADD/UBFX; this is a correction to the C contract, not a claim of observed generated-code failure. The two existing selector rows change equal→fixed for this one shared defect. The three unresolved name/seed helpers remain unchecked: internal recurrence does not establish their standalone contracts.
+
+The changed translation unit manually compiled in all four actual production configurations. Inactive unifdef output and five full preprocessing comparisons, including an assertions-enabled variant, are byte-identical without replacing __LINE__; source assertions precede the added guard and retain their positions. Source SHA2564d5c07b53deb09accc2cdea45fcc8cd670b6701eb633b88cc156c2c4bc0c2ef0 and receipts are retained in units/provenance-config13.compile.json and recon-provenance-config13.noindex. No tests, CI, replay or runtime exercise occurred. Compiled/reviewed does not establish sound-path coverage.
+
+Independent final review accepted the exact source hash, complete Mac arithmetic,32-bit native types and all four compile receipts. No additional compilation or runtime check was needed or performed.
