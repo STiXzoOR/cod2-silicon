@@ -50,13 +50,23 @@ const char *R_DescribeFormat(int format)
 {
     switch (format) {
     case D3DFMT_A8R8G8B8:
+#if defined(COD2_X64)
+    case 32:
+#endif
         return "24-bit color with 8-bit alpha";
+#if defined(COD2_X64)
+    case 23:
+        return "16-bit color";
+#else
     case D3DFMT_X8R8G8B8:
         return "24-bit color";
+#endif
     case D3DFMT_A1R5G5B5:
         return "15-bit color with 1-bit alpha";
+#if !defined(COD2_X64)
     case D3DFMT_D32:
         return "32-bit depth without stencil";
+#endif
     case D3DFMT_D15S1:
         return "15-bit depth with 1-bit stencil";
     case D3DFMT_D24S8:
@@ -64,6 +74,9 @@ const char *R_DescribeFormat(int format)
     case D3DFMT_D24X8:
         return "24-bit depth without stencil";
     case D3DFMT_D16:
+#if defined(COD2_X64)
+    case 70:
+#endif
         return "16-bit depth without stencil";
     default:
         return va("unknown format 0x%08x", format);
@@ -245,7 +258,11 @@ void R_InitRenderTargets(void)
     device = ((DxGlobals *)(dxPtr))->device;
     vtable = VTABLE(device);
     hr = ((HRESULT(D3DVTCC *)(void *, UINT, byte *))vtable[0x38 / 4])(
+#if defined(COD2_X64)
+        device, 0, (byte *)&DX_PTR()->windows[0].swapChain);
+#else
         device, 0, (byte *)&DX_PTR()->windows[0]);
+#endif
 
     if (hr < 0) {
         const char *errDesc = R_ErrorDescription(hr);

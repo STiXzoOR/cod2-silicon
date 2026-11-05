@@ -440,7 +440,11 @@ int R_MarkFragments(vec3_t *points, const vec_t *origin, vec3_t *axis, float rad
                     dists[j] = d;
                     if (d > 0.5f) {
                         sides[j] = 0;
+#if defined(COD2_X64)
+                    } else if (!(d < -0.5f)) {
+#else
                     } else if (d >= -0.5f) {
+#endif
                         sides[j] = 2;
                     } else {
                         sides[j] = 1;

@@ -522,7 +522,13 @@ static byte *R_TakeResampledScreenshot(int width, int height, int bytesPerPixel,
     allocSize = maxWidth * maxHeight * bytesPerPixel + headerSize;
     buffer = (byte *)ri.Z_MallocInternal(allocSize);
 
+#if defined(COD2_X64)
+    /* Mac reads at the allocation base, then resamples after the header.
+     * Z_MallocInternal zeroes the allocation, including the trailing bytes. */
+    if (!R_GetFrontBufferData(vidConfig.width, vidConfig.height, bytesPerPixel, buffer)) {
+#else
     if (!R_GetFrontBufferData(vidConfig.width, vidConfig.height, bytesPerPixel, buffer + headerSize)) {
+#endif
         ri.Z_FreeInternal(buffer);
         buffer = NULL;
         return buffer;
@@ -878,7 +884,11 @@ void R_LightingFromCubemapShots(const vec_t *baseColor)
 
                             dot = dir[0] * sourceDir[0] + dir[1] * sourceDir[1] + dir[2] * sourceDir[2];
 
+#if defined(COD2_X64)
+                            if (!(dot <= 0.0f)) {
+#else
                             if (dot > 0.0f) {
+#endif
                                 float *samplePixel = sampleColors + (sampleRow + sx) * 3;
                                 sampleR += dot * samplePixel[0];
                                 sampleG += dot * samplePixel[1];
@@ -907,21 +917,33 @@ void R_LightingFromCubemapShots(const vec_t *baseColor)
                 {
                     float rVal, gVal, bVal;
 
+#if defined(COD2_X64)
+                    if (!(ambientR < 1.0f)) {
+#else
                     if (ambientR >= 1.0f) {
+#endif
                         rVal = 255.0f;
                     } else {
                         rVal = ambientR * 255.0f;
                     }
                     pixel[2] = (byte)(int)floorf(rVal + 0.5f);
 
+#if defined(COD2_X64)
+                    if (!(ambientG < 1.0f)) {
+#else
                     if (ambientG >= 1.0f) {
+#endif
                         gVal = 255.0f;
                     } else {
                         gVal = ambientG * 255.0f;
                     }
                     pixel[1] = (byte)(int)floorf(gVal + 0.5f);
 
+#if defined(COD2_X64)
+                    if (!(ambientB < 1.0f)) {
+#else
                     if (ambientB >= 1.0f) {
+#endif
                         bVal = 255.0f;
                     } else {
                         bVal = ambientB * 255.0f;
@@ -1093,7 +1115,11 @@ void R_ScreenshotCommand(GfxScreenshotType type)
     }
 
     arg = ri.Cmd_Argv(1);
+#if defined(COD2_X64)
+    if (strcmp(arg, "savegame") == 0 && ri.Cmd_Argc() == 3) {
+#else
     if (strcmp(arg, "savegame") == 0 && ri.Cmd_Argc() >= 3) {
+#endif
         arg = ri.Cmd_Argv(2);
         if (arg[0] != '\0') {
 
