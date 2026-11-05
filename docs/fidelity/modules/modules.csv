@@ -436,7 +436,7 @@ universal/dvar,130,96,7,21,6
 universal/dvar_cmds,28,23,1,4,0
 universal/fft,2,2,0,0,0
 universal/memfile,12,8,0,0,4
-universal/q_parse,36,24,3,2,7
+universal/q_parse,36,25,3,2,6
 universal/q_shared,89,58,7,7,17
 universal/surfaceflags,2,2,0,0,0
 unix/unix_dir,1,0,0,0,1
