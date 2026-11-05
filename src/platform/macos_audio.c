@@ -25,6 +25,7 @@
 
 typedef struct {
     int allocated, status, format, rate, channels, block_size;
+    int stream_rate;
     int spatial, loops, remaining_loops, buffered, active_buffer, prepared;
     uint64_t generation;
     const void *source;
@@ -926,6 +927,7 @@ void *AIL_open_stream(void *driver, const char *name, int memory)
         sample->pcm[0] = pcm;
         sample->frames[0] = frames;
         sample->rate = rate;
+        sample->stream_rate = rate;
         sample->channels = channels;
         sample->source_bytes = size;
         sample->format = channels == 2 ? 3 : 1;
@@ -947,8 +949,30 @@ void AIL_set_stream_playback_rate(void *stream, int rate) { AIL_set_sample_playb
 int AIL_stream_playback_rate(void *stream) { return AIL_sample_playback_rate(stream); }
 void AIL_set_stream_loop_count(void *stream, int loops) { AIL_set_sample_loop_count(stream, loops); }
 long AIL_stream_status(void *stream) { return (long)AIL_sample_status(stream); }
-void AIL_set_stream_ms_position(void *stream, int ms) { AIL_set_sample_ms_position(stream, ms); }
-void AIL_stream_ms_position(void *stream, long *total, long *current) { AIL_sample_ms_position(stream, total, current); }
+/* Miles stream time uses file metadata independently of playback pitch.
+   Keep the decoded media rate for streams; ordinary samples retain their rate. */
+void AIL_set_stream_ms_position(void *stream, int ms)
+{
+    pthread_mutex_lock(&audio_mutex);
+    MacAudioSample *sample = FindSample(stream);
+    if (sample) {
+        int rate = sample->stream_rate ? sample->stream_rate : sample->rate;
+        sample->cursor = fmax(0, (double)ms * rate / 1000.0);
+    }
+    pthread_mutex_unlock(&audio_mutex);
+}
+
+void AIL_stream_ms_position(void *stream, long *total, long *current)
+{
+    pthread_mutex_lock(&audio_mutex);
+    MacAudioSample *sample = FindSample(stream);
+    if (sample)
+        PrepareSample(sample);
+    int rate = sample ? (sample->stream_rate ? sample->stream_rate : sample->rate) : 0;
+    if (total) *total = rate ? (long)(sample->frames[sample->active_buffer] * 1000.0 / rate) : 0;
+    if (current) *current = rate ? (long)(sample->cursor * 1000.0 / rate) : 0;
+    pthread_mutex_unlock(&audio_mutex);
+}
 SAMPLE_GETTER(int, AIL_is_3D_stream, 0, sample->spatial)
 
 void AIL_stream_info(void *handle, int *datarate, int *format, int *length, int *memory)
