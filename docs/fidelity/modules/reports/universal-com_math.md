@@ -242,3 +242,7 @@ The same packet records a targeted i386 executable-section trig-call inventory
 for the recovered original SinCos→VectorRotate→VectorRotateAroundOrigin chain.
 It did not establish a complete Mac counterpart and closes no additional row.
 Private evidence: recon-math6.noindex.
+
+## FloatIdentity provider boundary
+
+Original1.3 FloatIdentity copies0x80553f2/0x80b933a load the incoming word as float, and original FloatNoSwap calls the latter. Exact Mac FloatReadNoSwap has matching word instructions, but its input contract is raw integer bits. No positive float-input consumer/representation adapter connects the original helper to that native API. Independent review therefore retains FloatIdentity as unchecked; no cross-ABI alias or arbitrary NaN/exception equality is asserted. The separately found FloatReadSwap signed-shift correction belongs to the q_shared provider and does not close this helper.

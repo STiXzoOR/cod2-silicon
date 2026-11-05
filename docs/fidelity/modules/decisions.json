@@ -11965,7 +11965,7 @@
   },
   "linux:universal/com_math.h:208:FloatIdentity": {
     "status": "unchecked",
-    "evidence": "Searched reference FloatNoSwap (q_shared.cpp:268) and LittleFloat-style q_shared.h:381. Native q_shared.c has no FloatNoSwap/FloatIdentity body, and the Mac symbol inventory has no corresponding full identity routine; this complete bit-preserving float return still lacks a located native/Mac caller identity. New direct owner FloatWriteNoSwap establishes FloatAsInt, but FloatReadNoSwap accepts integer bits and FloatWriteNoSwap returns integer bits. No actual native float-input/float-output identity call was located; merely composing those distinct APIs is not a proof of this row. Original IDB/ELF header-chain provenance is now recorded in recon-provenance-math4.noindex/linux-header-chain-maps.json. Identity is no longer based only on reconstruction references; complete Mac consumed-operation proof remains incomplete (I_clamp/I_sel include CrashLand exceptional conversion and nested selection; FloatIdentity/SinCos need their complete Mac owner identity)."
+    "evidence": "Original1.3 copies0x80553f2/0x80b933a copy the incoming word and load/return float. Exact Mac FloatReadNoSwap0x2854e has matching word instructions but a raw-int-bits input contract; the original float-input consumer/representation adapter remains unproved. No equality inferred from instruction similarity or cross-ABI callback substitution."
   },
   "linux:universal/com_math.h:272:FloatIsNegative": {
     "status": "equal",
@@ -13465,7 +13465,7 @@
   },
   "linux:universal/q_shared.cpp:266:FloatNoSwap": {
     "status": "unchecked",
-    "evidence": "Linux float-to-float identity has no native callable body/callsite identified. Mac FloatReadNoSwap is an int-bits-to-float API, which alone does not establish the float-input interface. Original-address provenance recovered: Linux 1.0 IDB 0x80b5290 maps to retained original Linux 1.3 ELF 0x80b7868 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
+    "evidence": "Original1.3 FloatNoSwap0x80b7868 forwards unchanged input bits to FloatIdentity0x80b933a. Exact Mac FloatReadNoSwap0x2854e loads a raw-int word as float, but no positive float-input consumer/adapter identity establishes this separate API."
   },
   "linux:universal/q_shared.cpp:289:FloatNoSwapAsInt": {
     "status": "equal",
@@ -13476,12 +13476,12 @@
     "evidence": "Hand-compared complete native function/core with Mac 0x0002854e: raw int-bits-to-float load, without numeric conversion."
   },
   "mac:0x00028516": {
-    "status": "equal",
-    "evidence": "Hand-compared complete native function/core with Mac 0x00028516: all four byte lanes and bit reinterpretation, without numeric conversion."
+    "status": "fixed",
+    "evidence": "Mac FloatReadSwap0x28516-0x2854d assembles four reversed raw byte lanes and loads the result as float, without numeric conversion. Native signed b1<<24 was undefined when b1>=0x80 (defined input0x00000080 must form negative-zero bits0x80000000). Native-only unsigned union word plus unsigned shifts/OR removes that overflow while preserving all byte lanes and reinterpretation. Complete function independently reviewed; manual stock/CODX client/dedicated TU compilation passed and inactive source/actual line maps preserved. No runtime behavior or FP-exception coverage asserted."
   },
   "linux:universal/q_shared.cpp:249:FloatSwap": {
     "status": "unchecked",
-    "evidence": "Linux float-to-float byte reversal has no native body/callsite identified. Mac FloatReadSwap and FloatWriteSwap establish permutations but differ in typed input/output contracts; a complete float-to-float caller identity remains missing. Original-address provenance recovered: Linux 1.0 IDB 0x80b525c maps to retained original Linux 1.3 ELF 0x80b7834 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
+    "evidence": "Original1.3 full FloatSwap0x80b7834 reverses the input word and returns float; exact Mac FloatReadSwap0x28516 supplies a raw-int-bits input API. Matching word permutations do not establish the missing float-input consumer/representation adapter; no callback/ABI interchange inferred."
   },
   "linux:universal/q_shared.cpp:271:FloatSwapAsInt": {
     "status": "equal",
