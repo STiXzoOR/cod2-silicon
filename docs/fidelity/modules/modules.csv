@@ -1,5 +1,5 @@
 module,total,equal,fixed,intentional,unchecked
-EffectsCore/FxArchive,26,0,0,0,26
+EffectsCore/FxArchive,26,17,5,3,1
 EffectsCore/FxChannel,6,4,1,0,1
 EffectsCore/FxCurve,5,4,0,0,1
 EffectsCore/FxCurve_load_obj,2,1,0,0,1
@@ -8,7 +8,7 @@ EffectsCore/FxPrimitives,201,162,17,7,15
 EffectsCore/FxScheduler,59,44,6,8,1
 EffectsCore/FxScheduler_load_obj,17,11,4,2,0
 EffectsCore/FxSystem,20,0,0,0,20
-EffectsCore/FxTemplate,77,0,0,0,77
+EffectsCore/FxTemplate,77,45,28,3,1
 EffectsCore/FxUtil,138,82,16,34,6
 EffectsCore/Fxexport,16,0,0,0,16
 EffectsCore/GenericParser2,56,42,1,1,12

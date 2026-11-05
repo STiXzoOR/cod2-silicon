@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 3758,
-      "intentional": 1654,
-      "equal": 3420,
-      "fixed": 625
+      "unchecked": 3657,
+      "intentional": 1660,
+      "equal": 3482,
+      "fixed": 658
     },
     "scopes": {
       "unassigned": 777,
@@ -37,8 +37,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline isReading branches in exact Mac ArchiveEffect 0xaa1c1, ArchiveMaterial 0xaa4aa, ArchiveModel 0xaa764, ArchiveChannelInstance 0xaaa14 and FxBoltInfo/GfxEntity wrappers select read versus write consistently. No standalone native helper required."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:148:BeginWriting",
@@ -57,7 +57,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only name. Mac has an absolute zero-valued exception symbol but no executable BeginWriting body; native has no definition or caller, and no inlined Mac writing initializer was identified. Writer comparison assumes a valid initialized MemoryFile/startPos."
       },
       {
         "id": "mac:0x000aaa08",
@@ -87,8 +87,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Exact Mac 0xaaa08 resets iterator index before reading scale then clears master; native now clears the complete 8-byte pointer rather than only its low word. Native iterator/instance sizes measured 16/24; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "mac:0x000aa1b2",
@@ -118,8 +118,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0xaa1b2: unsigned byte length accepts 1..63, otherwise NULL; reads name, formats fx/%s into 64 bytes, registers; writes byte-truncated length and full strlen bytes. Valid-storage decode/RLE state compared, no malformed-overflow equivalence claimed."
       },
       {
         "id": "mac:0x000aab66",
@@ -140,8 +140,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0xaab66 reads/writes exactly 8 bytes using a temporary copy on write; native FxBoltInfo is still two 32-bit ints (8 bytes)."
       },
       {
         "id": "mac:0x000aacac",
@@ -162,8 +162,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Exact Mac 0xaacac archives 104 bytes. Native 112-byte entity now maps a 4-byte material token plus 100-byte scalar span, avoiding raw native-layout read and 112-byte memcpy into 104-byte temp. Low32 process-local token is intentionally opaque until Effect_Archive replaces it through ArchiveMaterial; no cross-process pointer identity claim; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "mac:0x000aa49e",
@@ -193,8 +193,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0xaa49e: length validity/NULL behavior, bounded NUL, FX_RegisterMaterial and write-side helper-indirection/name serialization match for complete streams. FxArchive is omitted from the dedicated target, so this client path was compiled separately and not exercised."
       },
       {
         "id": "mac:0x000aa758",
@@ -224,8 +224,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0xaa758: length validity/NULL behavior, NUL termination, FX_ModelRegister, XModelGetName and write length/data match."
       },
       {
         "id": "mac:0x000a9dd0",
@@ -255,8 +255,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0xa9dd0 assigns MemoryFile, isReading=1, unusedFlag=0, counters=0 and startPos=bytesUsed. Typed native FxArchive layout measured 32 bytes."
       },
       {
         "id": "mac:0x000a9d9e",
@@ -286,8 +286,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0xa9d9e initializes all named fields to zero; native pointer-bearing object size 32 measured. Padding is not claimed initialized."
       },
       {
         "id": "mac:0x000a9e00",
@@ -317,8 +317,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Exact Mac 0xa9e00 valid positive-count RLE states match: controls encode literal counts 1/2/4 or low6+1 and zero count low6+1. Native nonpositive requests are no-ops and failed nonfatal MemoryFile reads zero-fill the unread output rather than exposing an unwritten stack byte. Normal MemFile_InitForReading is fatal via Com_Error longjmp; no malformed-input equivalence claim. FX_Restore zero terminator stops after zero-filled failure; scheduler can finish its already decoded positive count."
       },
       {
         "id": "mac:0x000a9f0e",
@@ -348,8 +348,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Exact Mac 0xa9f0e-0xaa1ab: replaced byte-copy stub with control creation, literal extension, 1/2/4-literal zero runs, 64-byte boundaries and trailing-three-zero split/rewind. Native nonpositive writes stay no-ops and nonfatal overflow stops compression rather than mutating unavailable storage; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:21:MemFile_ReadByte",
@@ -367,8 +367,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Inline calls in Mac ReadData 0xa9e65/0xa9e8f read one byte through MemFile_ReadData. Native valid reads match; nonfatal overflow has defined zero output through the ReadData adaptation rather than indeterminate local bytes."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:16:MemFile_WriteByte",
@@ -386,8 +386,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac WriteData e.g. 0xaa11f/0xaa141 and 0xa9fdf writes byteCount=1 and byte-address to MemFile_WriteData. Native has equivalent direct calls."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:91:ReadByte",
@@ -405,8 +405,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Inline RLE read-byte paths in Mac ArchiveEffect 0xaa1c7-0xaa1ef match valid streams. Native uses defined zero-fill on nonfatal overflow; no independent ReadByte symbol is needed."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:200:ReadChannelInstance",
@@ -424,8 +424,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac ArchiveChannelInstance 0xaaa1e-0xaaa68 resets index, reads four scale bytes and clears master; full native pointer reset fixed; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:159:ReadEffect",
@@ -443,8 +443,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac ArchiveEffect 0xaa1c7-0xaa1fd / 0xaa26d-0xaa2f8 matches length, fx prefix, bounded NUL and registry call for a complete stream."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:99:ReadFloat",
@@ -462,8 +462,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac ArchiveChannelInstance 0xaaa28-0xaaa65 decodes four bytes, copies float bits unchanged; native scale field is at 16 and accessed by field name. Nonfatal malformed-read behavior is documented under ReadData."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:174:ReadMaterial",
@@ -481,8 +481,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac ArchiveMaterial 0xaa4b0-0xaa4e6 / 0xaa55b-0xaa5b8 matches valid length range, bounded name and registry call for a complete stream."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:187:ReadModel",
@@ -500,8 +500,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac ArchiveModel 0xaa76a-0xaa7a0 / 0xaa80a-0xaa867 matches valid length range, bounded name and registry call for a complete stream."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:107:WriteByte",
@@ -519,8 +519,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac literal write/zero-run state changes in WriteData 0xa9f0e-0xaa1ab now replace the native byte-copy stub; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:299:WriteChannelInstance",
@@ -538,8 +538,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac ArchiveChannelInstance 0xaaaf6-0xaab11 writes exactly the four scale bits, matching the native write branch."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:257:WriteEffect",
@@ -557,8 +557,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac ArchiveEffect 0xaa208-0xaa262 writes empty string for NULL or effect name, byte-truncated length then full strlen bytes; native matches, including length truncation behavior."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:112:WriteFloat",
@@ -576,8 +576,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac ArchiveChannelInstance 0xaaaf6-0xaab11 preserves four float bits through integer temporary and writes size 4."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:272:WriteMaterial",
@@ -595,8 +595,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac ArchiveMaterial 0xaa4ee-0xaa553 resolves name via the imported helper and writes byte length plus full name bytes; NULL uses empty string."
       },
       {
         "id": "linux:EffectsCore/FxArchive.cpp:287:WriteModel",
@@ -614,8 +614,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac ArchiveModel 0xaa7a8-0xaa802 resolves XModelGetName and writes byte length plus full name bytes; NULL uses empty string."
       }
     ],
     "EffectsCore/FxChannel": [
@@ -8514,8 +8514,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inlined in Mac ParseAcceleration 0x5f381-0x5f68e: corrected normalized key denominator to totalMax*(lifeMax*0.001), numerator order (lifeMax*component)*0.001, and random unit-scale curves; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:784:CreateBackCompatibleVelocityCurve",
@@ -8533,8 +8533,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inlined in Mac ParseVelocity 0x5eec9-0x5f157: random curve keys divide by the shared velocity scale while their channel scale remains 1; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "mac:0x0005d952",
@@ -8564,8 +8564,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac entry 0x5d952: invalid model names return NULL; valid names call FX_XModelPrecache(name+7). Dedicated provider intentionally uses XModelPrecache with Hunk allocators."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:2019:FX_PrimTypeIsEmitter",
@@ -8584,7 +8584,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only name; no executable Mac symbol, native definition or callsite identified. Linux body was not accepted as authority."
       },
       {
         "id": "mac:0x0005d8ec",
@@ -8614,8 +8614,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac entry 0x5d8ec: 1024-byte vsnprintf followed by Com_Printf(text), including the second-format behavior."
       },
       {
         "id": "mac:0x0005d92e",
@@ -8645,8 +8645,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x5d92e registers material with imageTrack=3, materialType=6, matching the client implementation. Dedicated builds omit this renderer registration function and the FxArchive translation unit; ParseMaterials validates names without storing GPU handles."
       },
       {
         "id": "mac:0x0005d982",
@@ -8676,8 +8676,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x5d982: equal bounds return min without RNG; unordered/unequal bounds call flrand(min,max)."
       },
       {
         "id": "mac:0x0005d770",
@@ -8707,8 +8707,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x5d770 SSE: min + ((max-min)*percent), in that operation order."
       },
       {
         "id": "mac:0x0005d710",
@@ -8738,8 +8738,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x5d710 stores first and second float arguments into min and max, respectively."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:742:GetBackCompatibleRange",
@@ -8757,8 +8757,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inlined Mac 0x5ee35-0x5eec6 and 0x5e7ec-0x5e813: integer truncation, wrapping INT_MIN absolute sentinel, upper-bound selection, doubling and shared three-axis maximum now use defined native arithmetic; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:22:GetList",
@@ -8776,8 +8776,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline GPValue list load at Mac 0x5dd4e / 0x5e0c0 matches valueList, using the native pointer-bearing field."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:8:GetName",
@@ -8795,8 +8795,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline GPObject name loads throughout Mac ParsePrimitiveInternal (e.g. 0x5f7f8) match name."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:19:GetNext",
@@ -8814,8 +8814,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline next-object loads in Mac 0x5dd60, 0x5f85a and 0x5fb4b match native GPObject.next/GPGroup.nextUnsorted for the corresponding GPValue/GPGroup/GPObject accessor; pointer-width layout was measured."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:31:GetNext",
@@ -8833,8 +8833,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline next-object loads in Mac 0x5dd60, 0x5f85a and 0x5fb4b match native GPObject.next/GPGroup.nextUnsorted for the corresponding GPValue/GPGroup/GPObject accessor; pointer-width layout was measured."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:9:GetNext",
@@ -8852,8 +8852,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline next-object loads in Mac 0x5dd60, 0x5f85a and 0x5fb4b match native GPObject.next/GPGroup.nextUnsorted for the corresponding GPValue/GPGroup/GPObject accessor; pointer-width layout was measured."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:29:GetPairs",
@@ -8871,8 +8871,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac ParsePrimitiveInternal 0x5f784 and ParseChannel 0x5e8dc load GPGroup.pairList; native typed field is at 32 rather than retail 16."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:30:GetSubGroups",
@@ -8890,8 +8890,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x5fa56 loads GPGroup.subGroupList; native typed field is at 56 rather than retail 28."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:458:InitBackCompatibleParameters",
@@ -8909,8 +8909,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x5f787-0x5f7ef: clear 0x600 bytes, set each of 24 channels start[3], end[3], parm ranges to 1, leave flags/containsData zero. Native size is exactly 1536."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:476:MigrateBackCompatibleParameters",
@@ -8928,8 +8928,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x5fa61-0x5faf7: only containsData channels migrate; midpoint min+(max-min)*0.5; dimensions=3 only for channel 0 (channel 1 remains scalar); forceUnitScale only channel 2."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:841:ParseAngle",
@@ -8947,8 +8947,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac 0x60119-0x601be stores first parsed vector into angle minima and second vector into maxima; native had reversed them; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:856:ParseAngleDelta",
@@ -8966,8 +8966,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x60200-0x602a5: parse 3 or 6 floats, duplicate single vector, store first/second triples as angle-delta min/max without sorting."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:964:ParseAttributeFlags",
@@ -8985,8 +8985,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x6080e passes fxAttributeFlags with 24 entries; binary names and both masks at 0x36a800 were script-compared and match the native table."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1174:ParseBackCompatibleEnd",
@@ -9004,8 +9004,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac ParseChannel 0x5ea87-0x5eaea: scalar end ranges sort endpoints and set containsData, without forcing a linear flag; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1140:ParseBackCompatibleEnd3",
@@ -9023,8 +9023,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac ParseChannel 0x5ec88-0x5ed15: RGB end ranges retain endpoint ordering, duplicate a single triple, set containsData, and do not force a linear flag; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1206:ParseBackCompatibleFlags",
@@ -9042,8 +9042,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac ParseChannel 0x5ebcf-0x5ec00: use ParseGroupFlags for flag/flags, OR accepted masks and set containsData; removed invented aliases and mode replacement; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1191:ParseBackCompatibleParm",
@@ -9061,8 +9061,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac ParseChannel 0x5ec17-0x5ec5f: parm/parms preserve endpoint order, duplicate a scalar and set containsData; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1157:ParseBackCompatibleStart",
@@ -9080,8 +9080,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac ParseChannel 0x5e9e1-0x5ea4f: scalar start ranges sort endpoints and set containsData, without forcing a linear flag; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1123:ParseBackCompatibleStart3",
@@ -9099,8 +9099,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac ParseChannel 0x5eaf4-0x5eb8a: RGB start ranges retain endpoint ordering, duplicate a single triple and set containsData, without forcing a linear flag; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1532:ParseChannelScale",
@@ -9118,8 +9118,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac ParseChannel 0x5e979-0x5e9b3: scale preserves parsed ordering, duplicates a single float, does not set containsData, and silently skips conversion count 0. EOF rejection is the defined native ParseFloat adaptation."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:622:ParseCount",
@@ -9137,8 +9137,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x5f81c-0x5f85a: first float to spawn-count min, second to max, duplicate one value; no ordering constraint."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:609:ParseDelay",
@@ -9156,8 +9156,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac 0x5fe3e-0x5fe7e stores first/second parsed delay values to min/max; native reversed the endpoints; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1028:ParseDensity",
@@ -9175,8 +9175,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac 0x603eb-0x60431 stores first/second parsed density values to min/max; native reversed the endpoints; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:635:ParseElasticity",
@@ -9194,8 +9194,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x5feaf-0x5ff43 validates min<=max and each bound in [0,1], then writes elasticity and ORs usePhysics 0x20; NaNs retain the unordered-comparison behavior."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:909:ParseFlag",
@@ -9213,8 +9213,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac ParseFlags 0x5e65e-0x5e6a5 scans case-insensitive entry names and ORs both masks into attribute/spawn flags; unknown tokens return false without undoing earlier flags."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:497:ParseFloat",
@@ -9232,8 +9232,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Inline conversion sites e.g. Mac 0x5f81c-0x5f854 match 1/2-float parsing and single-value duplication. Native rejects sscanf EOF as well as count 0 rather than exposing unwritten float locals; no malformed-input equivalence claim."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1015:ParseGravity",
@@ -9251,8 +9251,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x6038c-0x603d2 stores unsorted first/second gravity endpoints, duplicating a scalar."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:702:ParseHeight",
@@ -9270,8 +9270,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac 0x6068c-0x606d2 stores first/second height endpoints to min/max; native reversed them; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:581:ParseLife",
@@ -9289,8 +9289,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac 0x5fd11-0x5fd51 stores first/second life endpoints to min/max; native reversed them; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1593:ParseMaterialImpact",
@@ -9308,8 +9308,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x609d9-0x609f3 copies shaderImpact to the 32-byte material-impact name using I_strncpyz."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:568:ParseMax",
@@ -9327,8 +9327,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac 0x6004f-0x600c3 aliases sscanf output triples: six floats retain the final triple; stores bbox max and ORs 0x60. Native previously retained the first triple; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:555:ParseMin",
@@ -9346,8 +9346,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac 0x5ff85-0x5fff9 aliases sscanf output triples: six floats retain the final triple; stores bbox min and ORs 0x60. Native previously retained the first triple; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:659:ParseOrigin1",
@@ -9365,8 +9365,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x604ad-0x60552 stores first/second vector triples as origin1 min/max, duplicates 3-value input and rejects 0/1/2/4/5 conversions."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:674:ParseOrigin2",
@@ -9384,8 +9384,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac 0x6056f-0x60614 stores first/second vector triples to origin2 min/max; native reversed them; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:689:ParseRadius",
@@ -9403,8 +9403,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x6062d-0x60673 stores first/second radius endpoints without sorting and duplicates a scalar."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:728:ParseRotation",
@@ -9422,8 +9422,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x6074a-0x60790 stores first/second rotation endpoints without sorting and duplicates a scalar."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1084:ParseSequenceFixedFpsValue",
@@ -9441,8 +9441,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x5f952-0x5f976 stores float-converted atof result before rejecting ordered values below zero, including accepting zero and NaN."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1065:ParseSequenceFixedFrameValue",
@@ -9460,8 +9460,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x60a81-0x60a9a stores atoi result before rejecting nonpositive values."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1092:ParseSequenceLoopMode",
@@ -9479,8 +9479,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x60b4d-0x60b67 uses unsigned >1 validation, then stores the enum."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1103:ParseSequenceLoopTimes",
@@ -9498,8 +9498,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x60b97-0x60bb0 stores atoi result before rejecting negative values, accepting zero."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1073:ParseSequencePlayRateMode",
@@ -9517,8 +9517,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x60ad8-0x60af2 uses unsigned >1 validation, then stores the enum."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1054:ParseSequenceStartFrameMode",
@@ -9536,8 +9536,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x60a2d-0x60a47 uses unsigned >2 validation, then stores the enum."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:970:ParseSpawnFlags",
@@ -9555,8 +9555,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x6086f passes 13 spawn flags; binary names and both masks at 0x36a760 were script-compared and match the native table."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1111:ParseSpawnFrustumCullRadius",
@@ -9574,8 +9574,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac 0x60bc9-0x60bf3 rejects negative parsed radius before storing it; native previously stored the rejected negative value before returning failure; compiled and reviewed. No focused runtime coverage."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:594:ParseSpawnRange",
@@ -9593,8 +9593,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x5fdd4-0x5fe25 rejects ordered min>max before storing spawn-range endpoints; scalar duplication matches."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:1041:ParseVariance",
@@ -9612,8 +9612,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Inline Mac 0x6044a-0x60490 stores first/second parsed variance values to min/max; native reversed the endpoints; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:511:ParseVector",
@@ -9631,8 +9631,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac e.g. 0x604ad-0x60519 accepts 3 or 6 conversions only, duplicates 3-value vector and rejects incomplete second triples; native ParseVec3Range matches."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:715:ParseWindModifier",
@@ -9650,8 +9650,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac 0x606eb-0x60731 stores first/second wind endpoints without sorting and duplicates a scalar."
       },
       {
         "id": "mac:0x0005e16e",
@@ -9681,8 +9681,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Exact Mac 0x5e16e-0x5e4fd: corrected recurrence to previous*(1-step) for 0<step<1, previous*0 for step>=1, and unchanged previous otherwise, including keyScale==0 branch; normalized first key and 20 time samples match; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "mac:0x0005d9b4",
@@ -9712,8 +9712,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x5d9b4-0x5dd2e: all scalar defaults and 24 CreateDefault calls compared; first two channels dimensions 3, remaining 1; channels 0..9 use value 1, 10..23 use 0. Hunk allocator zeroes other fields."
       },
       {
         "id": "mac:0x0005f244",
@@ -9743,8 +9743,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Exact Mac 0x5f244-0x5f777: corrected common maximum selection and scale-normalized acceleration endpoints with SSE multiplication order; typed native channel array avoids retail offsets; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "mac:0x0005e8d0",
@@ -9774,8 +9774,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Exact Mac 0x5e8d0-0x5ed8d: restored curve/scale/start/end/parm(s)/flag(s) keys, scalar-versus-RGB handling, used-bit rules, ignored bad conversions, unknown-key print-and-continue, and success for empty group; removed invented aliases/direct value shortcut; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "mac:0x0005dd36",
@@ -9805,8 +9805,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Exact Mac 0x5dd36: scalar parser always allocates 2 floats per key and creates a dimension-1 curve. Native now exposes the distinct scalar function; partial rows are zero-initialized and empty rows preserve the existing curve as intentional defined-storage adaptations; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "mac:0x0005e0a8",
@@ -9836,8 +9836,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Exact Mac 0x5e0a8: missing native entry now allocates 4 floats per key, parses time+RGB and creates dimension-3 curve; partial rows are zero-initialized and empty lists are no-ops as intentional defined-storage adaptations; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "mac:0x0005de98",
@@ -9867,8 +9867,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x5de98: list/scalar registration and error returns, add to death handles and OR 0x200; empty list succeeds through the list branch."
       },
       {
         "id": "mac:0x0005df44",
@@ -9898,8 +9898,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x5df44: list/scalar registration and errors, add to emitter handles and OR 0x100."
       },
       {
         "id": "mac:0x0005e5c4",
@@ -9929,8 +9929,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Exact Mac 0x5e5c4-0x5e6c7: restored token-length+one progression instead of whitespace skipping; retains partial flag side effects. Native keeps length+1 scratch for sscanf NUL as an intentional storage adaptation; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "mac:0x0005d79c",
@@ -9960,8 +9960,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x5d79c: four-token sscanf, all five masks and return quirk compared; unknown token returns false only at four-token exit, shorter scans return true. Initializer at 0x328cc0 was byte-compared: zeroes except byte 0x60 = 0x30. Oversized token overflow is outside the defined bounded-token comparison."
       },
       {
         "id": "mac:0x0005ddec",
@@ -9991,8 +9991,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x5ddec: list/scalar registration and errors, add impact handles and OR 0x820."
       },
       {
         "id": "mac:0x0005e500",
@@ -10022,8 +10022,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x5e500 client behavior matches renderer-exists early return, list/scalar registration with flags 3/6 and AddHandle. Dedicated native intentionally validates nonempty material list names while omitting renderer handles, as the existing headless-FX boundary specifies."
       },
       {
         "id": "mac:0x0005e6cc",
@@ -10053,8 +10053,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x5e6cc: list/scalar validation, +7 model prefix skip, NULL-precache error, handle append and empty-top-value error all match; dedicated XModel provider uses the existing Hunk-backed replacement."
       },
       {
         "id": "mac:0x0005dff6",
@@ -10084,8 +10084,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x5dff6: list/scalar registration and errors, append play handles without setting an attribute mask."
       },
       {
         "id": "mac:0x00060c10",
@@ -10115,8 +10115,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x60c10: allocate 0x600 compatibility scratch, parse, free and return Bool. Measured BackCompatibleParameters size is 1536 with no pointer fields."
       },
       {
         "id": "mac:0x0005f778",
@@ -10146,8 +10146,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Exact Mac 0x5f778-0x60c0f: corrected reversed ranges, six-value bbox overwrite behavior, pre-group bbox validation, group-only channel dispatch, negative cull-radius rejection; preserved migration channel-1 scalar quirk. Typed native 816-byte primitive and 1536-byte compatibility storage measured; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "mac:0x0005e79e",
@@ -10177,8 +10177,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Exact Mac 0x5e79e: range ordering, integer-absolute common scale, min/max lifetimes and random flag match; defined cvttss2si INT_MIN sentinel replaces undefined C casts/negation and recurrence helper was corrected. EOF rejection is an intentional native unwritten-local adaptation; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "mac:0x0005ed92",
@@ -10208,8 +10208,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Exact Mac 0x5ed92: random endpoint curves now normalize by the common scale rather than 1; bound selection reproduces SSE maxss/compare order and integer sentinel; channel scale for random endpoints remains 1; compiled and reviewed. No focused runtime coverage unless the module report names it."
       },
       {
         "id": "mac:0x0005d724",
@@ -10239,8 +10239,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac 0x5d724: shuts down media, impact, death, emitter and play handle lists in that order, using native fields."
       },
       {
         "id": "linux:EffectsCore/FxTemplate.cpp:349:Swap",
@@ -10258,8 +10258,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Inline Mac scalar min/max swaps e.g. 0x5e7da-0x5e86e and vector swaps 0x5edff-0x5ee35: swap only when first>second; unordered values are not swapped."
       }
     ],
     "EffectsCore/FxUtil": [

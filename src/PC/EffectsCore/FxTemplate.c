@@ -149,6 +149,11 @@ COD2_ASSERT_FIELD(struct FxChannelBackwardCompatible, parm,         0x30);
 COD2_ASSERT_FIELD(struct FxChannelBackwardCompatible, flags,        0x38);
 COD2_ASSERT_FIELD(struct FxChannelBackwardCompatible, containsData, 0x3c);
 COD2_ASSERT_SIZE (struct FxChannelBackwardCompatible, 0x40);
+#if defined(COD2_X64)
+_Static_assert(sizeof(BackCompatibleParameters) == 0x600, "FX compatibility scratch size");
+_Static_assert(sizeof(PrimitiveTemplate) == 0x330, "FX native template size");
+_Static_assert(sizeof(FxChannel) == 16, "FX native channel stride");
+#endif
 
 void FxRange_SetRange(const FxRange *_this, float min, float max);
 void PrimitiveTemplate_Shutdown(const PrimitiveTemplate *_this);
@@ -187,7 +192,11 @@ static int ParseFloatRange(const char *val, float *outMin, float *outMax)
 {
     float a, b;
     int n = sscanf(val, "%f %f", &a, &b);
+#if defined(COD2_X64)
+    if (n <= 0)
+#else
     if (n == 0)
+#endif
         return 0;
     if (n == 1)
         b = a;
@@ -231,6 +240,17 @@ static inline __attribute__((always_inline)) void EnsureMinMax(float *a, float *
     }
 }
 
+#if defined(COD2_X64)
+static inline __attribute__((always_inline)) float AbsCeil(float val)
+{
+    /* cvttss2si returns INT_MIN for unordered/out-of-range input; x86 negation
+     * leaves that sentinel unchanged rather than overflowing a C signed int. */
+    int iv = val >= -2147483648.0f && val < 2147483648.0f ? (int)val : INT32_MIN;
+    if (iv < 0 && iv != INT32_MIN)
+        iv = -iv;
+    return (float)iv;
+}
+#else
 static inline __attribute__((always_inline)) float AbsCeil(float val)
 {
     int iv = (int)val;
@@ -239,6 +259,8 @@ static inline __attribute__((always_inline)) float AbsCeil(float val)
     }
     return (float)iv;
 }
+
+#endif
 
 #if COD2_APPLE_SDK
 #define FX_PARSE_CHANNEL_OFFSET(offset) offsetof(PrimitiveTemplate, mFxChannels[((offset) - 0x100) / 0xc])
@@ -710,6 +732,41 @@ void PrimitiveTemplate_Init(const PrimitiveTemplate *_this)
     t->spawnFrustumCullRadius = 0.0f;
 }
 
+#if defined(COD2_X64)
+static void PrimitiveTemplate_ParseCurve(const PrimitiveTemplate *_this, GPValue *pairs, FxChannelId channel, int dimensions)
+{
+    GPValue *list = GPV_LIST(pairs);
+    int count = 0;
+    for (GPValue *p = list; p; p = GPV_NEXT(p))
+        ++count;
+    if (count == 0)
+        return;
+    int stride = dimensions + 1;
+    float *keys = Hunk_AllocateTempMemoryInternal(count * stride * sizeof(*keys));
+    /* Retail ignores sscanf's result. Define its otherwise unwritten slots. */
+    memset(keys, 0, count * stride * sizeof(*keys));
+    float *key = keys;
+    for (GPValue *p = list; p; p = GPV_NEXT(p), key += stride) {
+        if (dimensions == 3)
+            sscanf(GPV_STRING(p), "%f %f %f %f", key, key + 1, key + 2, key + 3);
+        else
+            sscanf(GPV_STRING(p), "%f %f", key, key + 1);
+    }
+    ((PrimitiveTemplate *)_this)->mFxChannels[channel].curve =
+        FxCurve_AllocAndCreateWithKeys(keys, dimensions, count);
+    Hunk_FreeTempMemory(keys);
+}
+
+void PrimitiveTemplate_ParseChannelCurve(const PrimitiveTemplate *_this, GPValue *pairs, FxChannelId channel)
+{
+    PrimitiveTemplate_ParseCurve(_this, pairs, channel, 1);
+}
+
+void PrimitiveTemplate_ParseChannelRgbCurve(const PrimitiveTemplate *_this, GPValue *pairs, FxChannelId channel)
+{
+    PrimitiveTemplate_ParseCurve(_this, pairs, channel, 3);
+}
+#else
 void PrimitiveTemplate_ParseChannelCurve(const PrimitiveTemplate *_this, GPValue *pairs, FxChannelId channel)
 {
     byte *thisPtr = (byte *)_this;
@@ -777,7 +834,33 @@ void PrimitiveTemplate_ParseChannelCurve(const PrimitiveTemplate *_this, GPValue
 
     Hunk_FreeTempMemory(keys);
 }
+#endif
 
+#if defined(COD2_X64)
+void PrimitiveTemplate_CreateBackCompatibleRotationDeltaCurve(const PrimitiveTemplate *_this, float initialValue, float keyScale, float lifetime, int channelId, float graphScale)
+{
+    float keys[40];
+    float timeStep = (lifetime / 20.0f) * 0.00065f;
+    float endT = timeStep - 1.0f;
+    float negT = 0.0f - timeStep;
+    float factor = 1.0f;
+    if (0.0f > negT)
+        factor = 0.0f > endT ? 1.0f - timeStep : 0.0f;
+    for (int i = 0; i < 20; ++i) {
+        keys[i * 2] = (float)i / 19.0f;
+        if (i == 0)
+            keys[1] = keyScale == 0.0f ? initialValue : initialValue / keyScale;
+        else if (0.0f > negT)
+            keys[i * 2 + 1] = factor * keys[(i - 1) * 2 + 1];
+        else
+            keys[i * 2 + 1] = keys[(i - 1) * 2 + 1];
+    }
+    FxChannel *channel = &((PrimitiveTemplate *)_this)->mFxChannels[channelId];
+    channel->curve = FxCurve_AllocAndCreateWithKeys(keys, 1, 20);
+    channel->scaleRange.mMin = graphScale;
+    channel->scaleRange.mMax = graphScale;
+}
+#else
 void PrimitiveTemplate_CreateBackCompatibleRotationDeltaCurve(const PrimitiveTemplate *_this, float initialValue, float keyScale, float lifetime, int channelId, float graphScale)
 {
     byte *thisPtr = (byte *)_this;
@@ -835,6 +918,7 @@ void PrimitiveTemplate_CreateBackCompatibleRotationDeltaCurve(const PrimitiveTem
     *(unsigned int *)(((char *)thisPtr + offsetof(PrimitiveTemplate, mFxChannels[0].curve)) + chanOff + 8) = *(unsigned int *)&graphScale;
 #endif
 }
+#endif
 
 Bool PrimitiveTemplate_ParseFlags(const PrimitiveTemplate *_this, const char *line, const FxFlagEntry *flagEntries, int flagEntryCount)
 {
@@ -857,11 +941,7 @@ Bool PrimitiveTemplate_ParseFlags(const PrimitiveTemplate *_this, const char *li
 
     parsedLength = 0;
     while (parsedLength < lineLen) {
-#if defined(COD2_X64)
-        parsedLength += (int)strspn(line + parsedLength, " \t\r\n");
-        if (parsedLength == lineLen)
-            break;
-#endif
+
         if (sscanf(line + parsedLength, "%s", flag) != 1) {
             Hunk_FreeTempMemory(flag);
             return 0;
@@ -897,7 +977,11 @@ Bool PrimitiveTemplate_ParseRotationDelta(const PrimitiveTemplate *_this, const 
     float minVal, maxVal;
 
     int n = sscanf(val, "%f %f", &minVal, &maxVal);
+#if defined(COD2_X64)
+    if (n <= 0)
+#else
     if (n == 0)
+#endif
         return 0;
     if (n == 1)
         maxVal = minVal;
@@ -922,6 +1006,43 @@ Bool PrimitiveTemplate_ParseRotationDelta(const PrimitiveTemplate *_this, const 
     return 1;
 }
 
+#if defined(COD2_X64)
+Bool PrimitiveTemplate_ParseVelocity(const PrimitiveTemplate *_this, const char *val)
+{
+    float lo[3], hi[3], bounds[3];
+    if (!ParseVec3Range(val, lo, hi))
+        return 0;
+    for (int i = 0; i < 3; ++i) {
+        EnsureMinMax(lo + i, hi + i);
+        float absolute = AbsCeil(lo[i]);
+        bounds[i] = hi[i] > absolute ? hi[i] : absolute;
+        bounds[i] += bounds[i];
+    }
+    float scale = !(bounds[0] - bounds[1] < 0.0f) ? bounds[0] : bounds[1];
+    scale = !(scale - bounds[2] < 0.0f) ? scale : bounds[2];
+    PrimitiveTemplate *pt = (PrimitiveTemplate *)_this;
+    for (int i = 0; i < 3; ++i) {
+        float value = scale != 0.0f ? lo[i] / scale : 0.0f;
+        float keys[4] = {0.0f, value, 1.0f, value};
+        FxChannel *channel = &pt->mFxChannels[FXCHAN_VELOCITY_X + i];
+        channel->curve = FxCurve_AllocAndCreateWithKeys(keys, 1, 2);
+        channel->scaleRange.mMin = scale;
+        channel->scaleRange.mMax = scale;
+    }
+    if (lo[0] != hi[0] || lo[1] != hi[1] || lo[2] != hi[2]) {
+        pt->mAttributeFlags |= 0x80000;
+        for (int i = 0; i < 3; ++i) {
+            float value = scale != 0.0f ? hi[i] / scale : 0.0f;
+            float keys[4] = {0.0f, value, 1.0f, value};
+            FxChannel *channel = &pt->mFxChannels[FXCHAN_VELOCITY_X_RAND + i];
+            channel->curve = FxCurve_AllocAndCreateWithKeys(keys, 1, 2);
+            channel->scaleRange.mMin = 1.0f;
+            channel->scaleRange.mMax = 1.0f;
+        }
+    }
+    return 1;
+}
+#else
 Bool PrimitiveTemplate_ParseVelocity(const PrimitiveTemplate *_this, const char *val)
 {
     byte *thisPtr = (byte *)_this;
@@ -983,7 +1104,49 @@ Bool PrimitiveTemplate_ParseVelocity(const PrimitiveTemplate *_this, const char 
 
     return 1;
 }
+#endif
 
+#if defined(COD2_X64)
+Bool PrimitiveTemplate_ParseAcceleration(const PrimitiveTemplate *_this, const char *val)
+{
+    float lo[3], hi[3], bounds[3];
+    if (!ParseVec3Range(val, lo, hi))
+        return 0;
+    for (int i = 0; i < 3; ++i) {
+        EnsureMinMax(lo + i, hi + i);
+        float absolute = AbsCeil(lo[i]);
+        bounds[i] = hi[i] > absolute ? hi[i] : absolute;
+        bounds[i] += bounds[i];
+    }
+    PrimitiveTemplate *pt = (PrimitiveTemplate *)_this;
+    float scale = !(bounds[0] - bounds[1] < 0.0f) ? bounds[0] : bounds[1];
+    scale = !(scale - bounds[2] < 0.0f) ? scale : bounds[2];
+    float life = pt->mLife.mMax;
+    scale = scale * (life * 0.001f);
+    for (int i = 0; i < 3; ++i) {
+        float value = (life * lo[i]) * 0.001f;
+        value = scale != 0.0f ? value / scale : 0.0f;
+        float keys[4] = {0.0f, 0.0f, 1.0f, value};
+        FxChannel *channel = &pt->mFxChannels[FXCHAN_VELOCITY2_X + i];
+        channel->curve = FxCurve_AllocAndCreateWithKeys(keys, 1, 2);
+        channel->scaleRange.mMin = scale;
+        channel->scaleRange.mMax = scale;
+    }
+    if (lo[0] != hi[0] || lo[1] != hi[1] || lo[2] != hi[2]) {
+        pt->mAttributeFlags |= 0x100000;
+        for (int i = 0; i < 3; ++i) {
+            float value = (hi[i] * life) * 0.001f;
+            value = scale != 0.0f ? value / scale : 0.0f;
+            float keys[4] = {0.0f, 0.0f, 1.0f, value};
+            FxChannel *channel = &pt->mFxChannels[FXCHAN_VELOCITY2_X_RAND + i];
+            channel->curve = FxCurve_AllocAndCreateWithKeys(keys, 1, 2);
+            channel->scaleRange.mMin = 1.0f;
+            channel->scaleRange.mMax = 1.0f;
+        }
+    }
+    return 1;
+}
+#else
 Bool PrimitiveTemplate_ParseAcceleration(const PrimitiveTemplate *_this, const char *val)
 {
     byte *thisPtr = (byte *)_this;
@@ -1036,6 +1199,7 @@ Bool PrimitiveTemplate_ParseAcceleration(const PrimitiveTemplate *_this, const c
 
     return 1;
 }
+#endif
 
 static int PrimitiveTemplate_ChannelDimensions(FxChannelId channelId)
 {
@@ -1109,6 +1273,65 @@ static void PrimitiveTemplate_ParseChannelFlags(FxChannelBackwardCompatible *cha
     }
 }
 
+#if defined(COD2_X64)
+Bool PrimitiveTemplate_ParseChannel(const PrimitiveTemplate *_this, BackCompatibleParameters *backCompatibleParameters, GPGroup *grp, FxChannelId channelId, const PrimitiveTemplate *_this_4, const char *val, const PrimitiveTemplate *_this_6, const char *val_7, const PrimitiveTemplate *_this_8, const char *val_9, const PrimitiveTemplate *_this_10, const char *val_11)
+{
+    (void)_this_4; (void)val; (void)_this_6; (void)val_7;
+    (void)_this_8; (void)val_9; (void)_this_10; (void)val_11;
+    FxChannelBackwardCompatible *channel = &backCompatibleParameters->fxChannels[channelId];
+    for (GPValue *pair = GPG_PAIRS(grp); pair; pair = GPV_NEXT(pair)) {
+        const char *key = GPV_STRING(pair);
+        const char *value = GPValue_GetTopValue(pair);
+        if (stricmp(key, "curve") == 0) {
+            if ((unsigned int)channelId <= 1)
+                PrimitiveTemplate_ParseChannelRgbCurve(_this, pair, channelId);
+            else
+                PrimitiveTemplate_ParseChannelCurve(_this, pair, channelId);
+        } else if (stricmp(key, "scale") == 0) {
+            float lo, hi;
+            if (ParseFloatRange(value, &lo, &hi)) {
+                ((PrimitiveTemplate *)_this)->mFxChannels[channelId].scaleRange.mMin = lo;
+                ((PrimitiveTemplate *)_this)->mFxChannels[channelId].scaleRange.mMax = hi;
+            }
+        } else if (stricmp(key, "start") == 0 || stricmp(key, "end") == 0) {
+            FxRange *ranges = stricmp(key, "start") == 0 ? channel->start : channel->end;
+            if ((unsigned int)channelId <= 1) {
+                float lo[3], hi[3];
+                if (!ParseVec3Range(value, lo, hi))
+                    continue;
+                for (int i = 0; i < 3; ++i) {
+                    ranges[i].mMin = lo[i];
+                    ranges[i].mMax = hi[i];
+                }
+            } else {
+                float lo, hi;
+                if (!ParseFloatRange(value, &lo, &hi))
+                    continue;
+                EnsureMinMax(&lo, &hi);
+                ranges[0].mMin = lo;
+                ranges[0].mMax = hi;
+            }
+            channel->containsData = 1;
+        } else if (stricmp(key, "parm") == 0 || stricmp(key, "parms") == 0) {
+            float lo, hi;
+            if (ParseFloatRange(value, &lo, &hi)) {
+                channel->parm.mMin = lo;
+                channel->parm.mMax = hi;
+                channel->containsData = 1;
+            }
+        } else if (stricmp(key, "flags") == 0 || stricmp(key, "flag") == 0) {
+            int flags;
+            if (PrimitiveTemplate_ParseGroupFlags(_this, value, &flags)) {
+                channel->flags |= flags;
+                channel->containsData = 1;
+            }
+        } else {
+            FX_Print("Unknown key parsing a channel: %s\n", key);
+        }
+    }
+    return 1;
+}
+#else
 Bool PrimitiveTemplate_ParseChannel(const PrimitiveTemplate *_this, BackCompatibleParameters *backCompatibleParameters, GPGroup *grp, FxChannelId channelId, const PrimitiveTemplate *_this_4, const char *val, const PrimitiveTemplate *_this_6, const char *val_7, const PrimitiveTemplate *_this_8, const char *val_9, const PrimitiveTemplate *_this_10, const char *val_11)
 {
     FxChannelBackwardCompatible *channel;
@@ -1196,7 +1419,185 @@ Bool PrimitiveTemplate_ParseChannel(const PrimitiveTemplate *_this, BackCompatib
 
     return parsed;
 }
+#endif
 
+#if defined(COD2_X64)
+static int PrimitiveTemplate_ChannelForName(const char *name)
+{
+    static const char *const names[FXCHAN_COUNT] = {
+        "rgb", "rgbRand", "alpha", "alphaRand", "size", "sizeRand",
+        "size2", "size2Rand", "length", "lengthRand", "rotationDelta", "rotationDeltaRand",
+        "velocityX", "velocityY", "velocityZ", "velocityXRand", "velocityYRand", "velocityZRand",
+        "velocity2X", "velocity2Y", "velocity2Z", "velocity2XRand", "velocity2YRand", "velocity2ZRand"
+    };
+    for (int i = 0; i < FXCHAN_COUNT; ++i)
+        if (stricmp(name, names[i]) == 0)
+            return i;
+    if (stricmp(name, "rgb2") == 0) return FXCHAN_COLOR_RAND;
+    if (stricmp(name, "width") == 0) return FXCHAN_SIZE;
+    if (stricmp(name, "width2") == 0) return FXCHAN_SIZE2;
+    if (stricmp(name, "height") == 0) return FXCHAN_LENGTH;
+    return -1;
+}
+
+Bool PrimitiveTemplate_ParsePrimitiveInternal(const PrimitiveTemplate *_this, BackCompatibleParameters *backCompatibleParameters, GPGroup *grp)
+{
+    PrimitiveTemplate *pt = (PrimitiveTemplate *)_this;
+    const char *key = NULL;
+    memset(backCompatibleParameters, 0, sizeof(*backCompatibleParameters));
+    for (int i = 0; i < FXCHAN_COUNT; ++i) {
+        FxChannelBackwardCompatible *bc = &backCompatibleParameters->fxChannels[i];
+        for (int d = 0; d < 3; ++d) {
+            bc->start[d].mMin = bc->start[d].mMax = 1.0f;
+            bc->end[d].mMin = bc->end[d].mMax = 1.0f;
+        }
+        bc->parm.mMin = bc->parm.mMax = 1.0f;
+    }
+    for (GPValue *pair = GPG_PAIRS(grp); pair; pair = GPV_NEXT(pair)) {
+        key = GPV_STRING(pair);
+        const char *value = GPValue_GetTopValue(pair);
+        FxRange *range = NULL;
+        if (stricmp(key, "count") == 0) range = &pt->mSpawnCount;
+        else if (stricmp(key, "shaders") == 0 || stricmp(key, "shader") == 0) {
+            if (!PrimitiveTemplate_ParseMaterials(_this, pair)) goto error_key;
+        } else if (stricmp(key, "models") == 0 || stricmp(key, "model") == 0) {
+            if (!PrimitiveTemplate_ParseModels(_this, pair)) goto error_key;
+        } else if (stricmp(key, "impactfx") == 0) {
+            if (!PrimitiveTemplate_ParseImpactFxStrings(_this, pair)) goto error_key;
+        } else if (stricmp(key, "deathfx") == 0) {
+            if (!PrimitiveTemplate_ParseDeathFxStrings(_this, pair)) goto error_key;
+        } else if (stricmp(key, "emitfx") == 0) {
+            if (!PrimitiveTemplate_ParseEmitterFxStrings(_this, pair)) goto error_key;
+        } else if (stricmp(key, "playfx") == 0) {
+            if (!PrimitiveTemplate_ParsePlayFxStrings(_this, pair)) goto error_key;
+        } else if (stricmp(key, "life") == 0) range = &pt->mLife;
+        else if (stricmp(key, "cullrange") == 0) pt->mSpawnRange.mMax = (float)atof(value);
+        else if (stricmp(key, "spawnRange") == 0) {
+            float lo, hi;
+            if (!ParseFloatRange(value, &lo, &hi) || lo > hi) goto error_key;
+            pt->mSpawnRange.mMin = lo;
+            pt->mSpawnRange.mMax = hi;
+        } else if (stricmp(key, "delay") == 0) range = &pt->mSpawnDelay;
+        else if (stricmp(key, "bounce") == 0 || stricmp(key, "intensity") == 0) {
+            float lo, hi;
+            if (!ParseFloatRange(value, &lo, &hi) || lo > hi || lo < 0.0f || lo > 1.0f || hi < 0.0f || hi > 1.0f)
+                goto error_key;
+            pt->mElasticity.mMin = lo;
+            pt->mElasticity.mMax = hi;
+            pt->mAttributeFlags |= 0x20;
+        } else if (stricmp(key, "min") == 0 || stricmp(key, "max") == 0) {
+            float vector[3];
+            /* Mac aliases the two triples: a six-value input keeps the last. */
+            int n = sscanf(value, "%f %f %f   %f %f %f", vector, vector + 1, vector + 2, vector, vector + 1, vector + 2);
+            if (n <= 2 || n == 4 || n == 5) goto error_key;
+            memcpy(stricmp(key, "min") == 0 ? pt->mMin : pt->mMax, vector, sizeof(vector));
+            pt->mAttributeFlags |= 0x60;
+        } else if (stricmp(key, "angle") == 0 || stricmp(key, "angles") == 0 || stricmp(key, "angleDelta") == 0 ||
+                   stricmp(key, "origin") == 0 || stricmp(key, "origin2") == 0) {
+            float lo[3], hi[3];
+            if (!ParseVec3Range(value, lo, hi)) goto error_key;
+            FxRange *ranges[3];
+            if (stricmp(key, "angle") == 0 || stricmp(key, "angles") == 0) {
+                ranges[0] = &pt->mAngle1; ranges[1] = &pt->mAngle2; ranges[2] = &pt->mAngle3;
+            } else if (stricmp(key, "angleDelta") == 0) {
+                ranges[0] = &pt->mAngle1Delta; ranges[1] = &pt->mAngle2Delta; ranges[2] = &pt->mAngle3Delta;
+            } else if (stricmp(key, "origin") == 0) {
+                ranges[0] = &pt->mOrigin1X; ranges[1] = &pt->mOrigin1Y; ranges[2] = &pt->mOrigin1Z;
+            } else {
+                ranges[0] = &pt->mOrigin2X; ranges[1] = &pt->mOrigin2Y; ranges[2] = &pt->mOrigin2Z;
+            }
+            for (int i = 0; i < 3; ++i) {
+                ranges[i]->mMin = lo[i];
+                ranges[i]->mMax = hi[i];
+            }
+        } else if (stricmp(key, "velocity") == 0 || stricmp(key, "vel") == 0) {
+            if (!PrimitiveTemplate_ParseVelocity(_this, value)) goto error_key;
+        } else if (stricmp(key, "acceleration") == 0 || stricmp(key, "accel") == 0) {
+            if (!PrimitiveTemplate_ParseAcceleration(_this, value)) goto error_key;
+        } else if (stricmp(key, "gravity") == 0) range = &pt->mGravity;
+        else if (stricmp(key, "density") == 0) range = &pt->mDensity;
+        else if (stricmp(key, "variance") == 0) range = &pt->mVariance;
+        else if (stricmp(key, "radius") == 0) range = &pt->mRadius;
+        else if (stricmp(key, "height") == 0) range = &pt->mHeight;
+        else if (stricmp(key, "wind") == 0) range = &pt->mWindModifier;
+        else if (stricmp(key, "rotation") == 0) range = &pt->mRotation;
+        else if (I_stricmp(key, "rotationDelta") == 0) {
+            if (!PrimitiveTemplate_ParseRotationDelta(_this, value)) goto error_key;
+        } else if (stricmp(key, "flags") == 0 || stricmp(key, "flag") == 0) {
+            if (!PrimitiveTemplate_ParseFlags(_this, value, fxAttributeFlags, sizeof(fxAttributeFlags) / sizeof(fxAttributeFlags[0]))) goto error_key;
+        } else if (stricmp(key, "spawnFlags") == 0 || stricmp(key, "spawnFlag") == 0) {
+            if (!PrimitiveTemplate_ParseFlags(_this, value, fxSpawnFlags, sizeof(fxSpawnFlags) / sizeof(fxSpawnFlags[0]))) goto error_key;
+        } else if (stricmp(key, "nonUniformScale") == 0) pt->mNonUniformScale = atoi(value) != 0;
+        else if (stricmp(key, "useLength") == 0) pt->useLength = atoi(value) != 0;
+        else if (stricmp(key, "name") == 0) {
+            if (!value) goto error_key;
+            I_strncpyz(pt->mName, value, sizeof(pt->mName));
+        } else if (stricmp(key, "shaderImpact") == 0) I_strncpyz(pt->mMaterialImpact, value, sizeof(pt->mMaterialImpact));
+        else if (stricmp(key, "sequenceStartFrameMode") == 0) {
+            int n = atoi(value);
+            if ((unsigned int)n > 2) goto error_key;
+            pt->mSequenceStartFrameMode = (StartFrameMode)n;
+        } else if (stricmp(key, "sequenceFixedFrameValue") == 0) {
+            pt->mSequenceFixedFrameValue = atoi(value);
+            if (pt->mSequenceFixedFrameValue <= 0) goto error_key;
+        } else if (stricmp(key, "sequencePlayRateMode") == 0) {
+            int n = atoi(value);
+            if ((unsigned int)n > 1) goto error_key;
+            pt->mSequencePlayRateMode = (PlayRateMode)n;
+        } else if (stricmp(key, "sequenceFixedFpsValue") == 0) {
+            pt->mSequenceFixedFpsValue = (float)atof(value);
+            if (pt->mSequenceFixedFpsValue < 0.0f) goto error_key;
+        } else if (stricmp(key, "sequenceLoopMode") == 0) {
+            int n = atoi(value);
+            if ((unsigned int)n > 1) goto error_key;
+            pt->mSequenceLoopMode = (LoopMode)n;
+        } else if (stricmp(key, "sequenceLoopTimes") == 0) {
+            pt->mSequenceLoopTimes = atoi(value);
+            if (pt->mSequenceLoopTimes < 0) goto error_key;
+        } else if (stricmp(key, "spawnFrustumCullRadius") == 0) {
+            float n = (float)atof(value);
+            if (n < 0.0f) goto error_key;
+            pt->spawnFrustumCullRadius = n;
+        } else {
+            FX_Print("Unknown key parsing an effect primitive: %s\n", key);
+            return 0;
+        }
+        if (range && !ParseFloatRange(value, &range->mMin, &range->mMax))
+            goto error_key;
+    }
+    if (pt->mMin[0] > pt->mMax[0] || pt->mMin[1] > pt->mMax[1] || pt->mMin[2] > pt->mMax[2]) {
+        FX_Print("^1FX bounding box mins / maxs invalid for effect '%s'\n", _this);
+        return 0;
+    }
+    if (pt->mMax[0] - pt->mMin[0] > pt->mMax[2] - pt->mMin[2] ||
+        pt->mMax[1] - pt->mMin[1] > pt->mMax[2] - pt->mMin[2]) {
+        FX_Print("^1FX bounding box width or depth is larger than height for effect '%s'\n", _this);
+        return 0;
+    }
+    for (GPGroup *group = grp->subGroupList; group; group = (GPGroup *)group->nextUnsorted) {
+        key = group->name;
+        int channel = PrimitiveTemplate_ChannelForName(key);
+        if (channel < 0) {
+            FX_Print("Unknown group key parsing a particle: %s\n", key);
+            return 0;
+        }
+        if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, group, (FxChannelId)channel,
+                                            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+            goto error_key;
+    }
+    for (int i = 0; i < FXCHAN_COUNT; ++i) {
+        FxChannelBackwardCompatible *bc = &backCompatibleParameters->fxChannels[i];
+        if (bc->containsData) {
+            float lifetime = pt->mLife.mMin + (pt->mLife.mMax - pt->mLife.mMin) * 0.5f;
+            FxChannel_CreateViaMigration(bc, i == FXCHAN_COLOR ? 3 : 1, lifetime, i == FXCHAN_ALPHA, &pt->mFxChannels[i]);
+        }
+    }
+    return 1;
+error_key:
+    FX_Print("^1FX Error while parsing key '%s'\n", key);
+    return 0;
+}
+#else
 Bool PrimitiveTemplate_ParsePrimitiveInternal(const PrimitiveTemplate *_this, BackCompatibleParameters *backCompatibleParameters, GPGroup *grp)
 {
     byte *thisPtr = (byte *)_this;
@@ -1917,3 +2318,4 @@ do_migration:
 
     return 1;
 }
+#endif
