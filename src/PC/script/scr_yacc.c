@@ -152,7 +152,12 @@ YY_BUFFER_STATE yy_create_buffer(FILE *file, int size)
 
 void ScriptParse(sval_t *parseData, int user)
 {
+#if defined(COD2_X64)
+    /* The global scanner retains this descriptor across returns and longjmp. */
+    static struct yy_buffer_state buffer_state;
+#else
     struct yy_buffer_state buffer_state;
+#endif
 
     g_out_pos = 0xFFFFFFFF;
     g_sourcePos = 0;
