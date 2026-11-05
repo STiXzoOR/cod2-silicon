@@ -10,7 +10,7 @@ The four alert overloads at 0xa8be/0xa9f0/0xaa14/0xaa9e were read for string con
 
 ## Unresolved retained sleep ABI
 
-Mac 0xa48c calls UpTime, AddDurationToAbsolute and MPDelayUntil in order. The wrapper source matches that sequence, but project `AbsoluteTime` uses two `UInt32` fields (LP64 unsigned long, 16 bytes) while `macos_compat.c` separately defines two unsigned-int fields (8 bytes). No source/generated-data caller reaches `MacTools_Sleep`, and live scheduling uses MacSystem clocks, but its exported ABI cannot be called equal. Shared type/provider ownership was reported to the parent; no speculative shared-header change was made.
+Mac 0xa48c calls UpTime, AddDurationToAbsolute and MPDelayUntil in order. The wrapper source matches that sequence, but project `AbsoluteTime` uses two `UInt32` fields (LP64 unsigned long, 16 bytes) while `macos_compat.c` separately defines two unsigned-int fields (8 bytes). No source/generated-data caller reaches `MacTools_Sleep`, and live scheduling uses MacSystem clocks, but its exported ABI cannot be called equal. Clang record-layout dumps with the actual native client compilation flags independently confirm the mismatch: imported `AbsoluteTime` has size 16/alignment 8 and `hi` at offset 8; the provider type has size 8/alignment 4 and `hi` at offset 4. Matching field names/order alone does not resolve this ABI. Shared type/provider ownership was reported to the parent; no speculative shared-header change was made.
 
 Only Apple `COD2_X64` code changed. Six inactive preprocessor configurations compare identically with base 3d9df23; neither changed file contains `__LINE__`.
 
