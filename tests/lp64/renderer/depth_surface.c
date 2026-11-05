@@ -33,20 +33,21 @@ static materialCommands_t commands;
 void *imp_tess = &commands;
 void *imp_backEnd;
 GfxWorld s_world;
-void *vtbl_CDirect3DTexture[1], *vtbl_CDirect3DCubeTexture[1], *vtbl_CDirect3DVolumeTexture[1];
+Bool g_NoTextureID, g_WarmOff;
+/* Isolate generated ABI import data; exercise real vertex-array initialization. */
+static void *fixtureArrayVtables[16];
+void *imp___ZTV7CBaseVA = fixtureArrayVtables;
+void *imp___ZTV11CColorArray = fixtureArrayVtables;
+void *imp___ZTV20CSecondaryColorArray = fixtureArrayVtables;
+void *imp___ZTV12CNormalArray = fixtureArrayVtables;
+void *imp___ZTV12CVertexArray = fixtureArrayVtables;
 GLuint CDirect3DVertexShader_GetProgramId(const CDirect3DVertexShader *shader) { assert(shader); return vertexProgram; }
-GLuint CDirect3DTexture_GetGLName(const void *texture) { assert(!"unexpected texture"); return 0; }
-GLuint CDirect3DCubeTexture_GetGLName(const void *texture) { assert(!"unexpected texture"); return 0; }
-GLuint CDirect3DVolumeTexture_GetGLName(const void *texture) { assert(!"unexpected texture"); return 0; }
-void CDirect3DTexture_UpdateOpenGLSurfaces(const CDirect3DTexture *t) { assert(!"unexpected texture update"); }
-void CDirect3DVolumeTexture_UpdateOpenGLSurfaces(const CDirect3DVolumeTexture *t) { assert(!"unexpected volume update"); }
 void MacDisplay_GetVideoMemoryInfo(int *video, int *texture) { *video = *texture = 0; }
 int MacPlatform_GetRenderSize(int *w, int *h) { *w = *h = 32; return 1; }
 int MacDisplay_GetSupportsAnisotropicFiltering(void) { return 0; }
 float MacDisplay_GetMaxSupportedAnisotropy(void) { return 1; }
 D3DMATRIX *RB_GetActiveWorldMatrix(void) { assert(!"unexpected view matrix"); return NULL; }
 D3DXMATRIX *D3DXMatrixMultiply(D3DXMATRIX *a, const D3DXMATRIX *b, const D3DXMATRIX *c) { assert(!"unexpected matrix multiply"); return a; }
-int MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(float *m, float w, float h) { assert(!"unexpected projection"); return 0; }
 
 static void EnablePixel(const void *shader)
 {

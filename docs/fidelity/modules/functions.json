@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 1192,
-      "intentional": 2983,
-      "equal": 4356,
-      "fixed": 926
+      "unchecked": 1063,
+      "intentional": 3004,
+      "equal": 4424,
+      "fixed": 966
     },
     "scopes": {
       "unassigned": 777,
@@ -16562,8 +16562,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000125d0 (__ZN20CDirect3DCubeTextureD0Ev): restored primary/secondary vtable reset and child COM Release traversal instead of directly deleting children despite external references, then child-array/pixel backing cleanup and COpenGLTexture base destruction. D0 frees the native parent allocation; D1/D2 do not. Exact selected COM vtables decoded from Mac data and native malloc/calloc owners traced. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x000127f0",
@@ -16584,8 +16584,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000127f0 (__ZN20CDirect3DCubeTextureD1Ev): restored primary/secondary vtable reset and child COM Release traversal instead of directly deleting children despite external references, then child-array/pixel backing cleanup and COpenGLTexture base destruction. D0 frees the native parent allocation; D1/D2 do not. Exact selected COM vtables decoded from Mac data and native malloc/calloc owners traced. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x000128f4",
@@ -16606,8 +16606,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000128f4 (__ZN20CDirect3DCubeTextureD2Ev): restored primary/secondary vtable reset and child COM Release traversal instead of directly deleting children despite external references, then child-array/pixel backing cleanup and COpenGLTexture base destruction. D0 frees the native parent allocation; D1/D2 do not. Exact selected COM vtables decoded from Mac data and native malloc/calloc owners traced. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x000124e2",
@@ -16628,8 +16628,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000124e2: replaced no-op with marking all six faces/all levels dirty, ignoring supplied face and rectangle as Mac does. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002ed554",
@@ -16650,8 +16650,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x002ed554: loads, increments and stores the uint32 reference counter, returns new count. Native typed counter and constructor initialization/selected COM slot1 match."
       },
       {
         "id": "mac:0x000129f8",
@@ -16672,8 +16672,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x000129f8 (__ZN20CDirect3DCubeTextureC2Ejjm10_D3DFORMAT): Restored all six complete face-major mip chains, full-chain size, zero fill, no invented 16-level cap, shifted face dimensions, correct child secondary owner and one parent reference. Native uses explicit portable pointer-backed storage and zero-initialized scalar fields instead of GCC i386 C++ layouts/uninitialized format bytes; name storage is embedded and registered with the coordinated no-free COpenGL provider. Native texture parents retain defined backing for every allocated child even beyond the natural-chain size stop. Native truncated-chain GL_TEXTURE_MAX_LEVEL and synchronous logical-extent uploads are explicit adaptations. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x00012dd4",
@@ -16694,8 +16694,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x00012dd4 (__ZN20CDirect3DCubeTextureC1Ejjm10_D3DFORMAT): Restored all six complete face-major mip chains, full-chain size, zero fill, no invented 16-level cap, shifted face dimensions, correct child secondary owner and one parent reference. Native uses explicit portable pointer-backed storage and zero-initialized scalar fields instead of GCC i386 C++ layouts/uninitialized format bytes; name storage is embedded and registered with the coordinated no-free COpenGL provider. Native texture parents retain defined backing for every allocated child even beyond the natural-chain size stop. Native truncated-chain GL_TEXTURE_MAX_LEVEL and synchronous logical-extent uploads are explicit adaptations. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002ed5a6",
@@ -16716,8 +16716,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ed5a6 (__ZN20CDirect3DCubeTexture15FreePrivateDataERK5_GUID), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ed5fa",
@@ -16738,8 +16738,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ed5fa (__ZN20CDirect3DCubeTexture20GenerateMipSubLevelsEv): empty void body matches selected native no-op."
       },
       {
         "id": "mac:0x002ed5f2",
@@ -16760,8 +16760,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ed5f2 (__ZN20CDirect3DCubeTexture20GetAutoGenFilterTypeEv), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x000126e0",
@@ -16782,8 +16782,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x000126e0: Restored face-major index face*levelCount+level, exact mip error 0x8876086c and output-before-COM-AddRef. Native retains explicit face<6 validation because Mac reads a six-entry face-offset table unchecked; Image_CubemapFace supplies 0..5 and native allocations do not prove other indices safe. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002ed58e",
@@ -16804,8 +16804,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ed58e (__ZN20CDirect3DCubeTexture9GetDeviceEPP16IDirect3DDevice9), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ed5d6",
@@ -16826,8 +16826,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ed5d6 (__ZN20CDirect3DCubeTexture6GetLODEv), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ed5de",
@@ -16848,8 +16848,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ed5de: returns stored requested/automatic mip count; compared native typed field and newly reconstructed constructor assignment (distinct from Usage==1 child count)."
       },
       {
         "id": "mac:0x000125aa",
@@ -16870,8 +16870,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x000125aa: Native retains a defined invalid-level HRESULT check where Mac indexes the first face unchecked. Valid levels now index the correct face-major child and call its COM GetDesc; actual Image callers supply bounded levels, while no native allocation proves an arbitrary-level read safe. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002ed5b6",
@@ -16892,8 +16892,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ed5b6 (__ZN20CDirect3DCubeTexture11GetPriorityEv), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ed59e",
@@ -16914,8 +16914,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ed59e (__ZN20CDirect3DCubeTexture14GetPrivateDataERK5_GUIDPvPm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ed5c4",
@@ -16936,8 +16936,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ed5c4: returns resource type 5; native enum resolves to the same value."
       },
       {
         "id": "mac:0x00012734",
@@ -16958,8 +16958,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x00012734: Restored face-major child/COM lock dispatch and exact mip error 0x8876086c. Retained native face<6 check instead of the Mac unchecked six-entry face-offset-table read, after tracing Image_UploadData faces 0..5 and owned child allocation. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002ed5be",
@@ -16980,8 +16980,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ed5be (__ZN20CDirect3DCubeTexture7PreLoadEv): empty void body matches selected native no-op."
       },
       {
         "id": "mac:0x000124c8",
@@ -17002,8 +17002,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000124c8: restored output-this then virtual COM AddRef slot1 dispatch instead of hardwired direct AddRef; IID remains ignored, return0. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002ed566",
@@ -17024,8 +17024,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x002ed566: restored decrement/zero branch and concrete virtual deleting-destructor dispatch (texture slot23, volume slot12) with saved return count. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002ed5ea",
@@ -17046,8 +17046,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ed5ea (__ZN20CDirect3DCubeTexture20SetAutoGenFilterTypeE21_D3DTEXTUREFILTERTYPE), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ed5ce",
@@ -17068,8 +17068,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ed5ce (__ZN20CDirect3DCubeTexture6SetLODEm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ed5ae",
@@ -17090,8 +17090,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ed5ae (__ZN20CDirect3DCubeTexture11SetPriorityEm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ed596",
@@ -17112,8 +17112,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ed596 (__ZN20CDirect3DCubeTexture14SetPrivateDataERK5_GUIDPKvmm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x000127a8",
@@ -17134,8 +17134,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x000127a8: Restored face-major child/COM unlock dispatch and exact mip error 0x8876086c. Retained native face<6 check for the unchecked Mac face table; native child unlock deliberately uploads immediately under the active GL provider. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x00012504",
@@ -17156,8 +17156,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00012504: reconstructed the empty body: face-major traversal, COM child acquire/release, dirty-or-recreate upload and dirty clearing; native device binding helper now reaches cube textures. Compiled and reviewed; not exercised."
       }
     ],
     "Mac/DirectX 9/CDirect3DDevice": [
@@ -20794,8 +20794,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001cd78 (__ZN16CDirect3DSurfaceD1Ev): restored owned secondary COpenGLTexture deleting-destructor slot1 call (native previously treated owner as primary IUnknown Release), while borrowed owner survives. D0 frees the actual malloc/calloc-owned native surface. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x0001cd9e",
@@ -20816,8 +20816,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001cd9e (__ZN16CDirect3DSurfaceD0Ev): restored owned secondary COpenGLTexture deleting-destructor slot1 call (native previously treated owner as primary IUnknown Release), while borrowed owner survives. D0 frees the actual malloc/calloc-owned native surface. Compiled and reviewed. Exercised by existing texture_mips CGL fixture: child COM Release-to-zero deleting destructor."
       },
       {
         "id": "mac:0x0001cd64",
@@ -20838,8 +20838,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x0001cd64: loads, increments and stores the uint32 reference counter, returns new count. Native typed counter and constructor initialization/selected COM slot1 match."
       },
       {
         "id": "mac:0x0001d124",
@@ -20860,8 +20860,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001d124 (__ZN16CDirect3DSurfaceC1E11SurfaceTypemjjj10_D3DFORMATPvP14COpenGLTexture): Restored borrowed secondary owner and separately allocated owner when absent/g_NoTextureID permits, format mapping/create gate and AddRef. Native own render/depth buffers come from device malloc; initial/recreated GL images use NULL data instead of introducing indeterminate reads, and borrowed child allocations are proven128-byte blocks. Native uses explicit portable pointer-backed storage and zero-initialized scalar fields instead of GCC i386 C++ layouts/uninitialized format bytes; name storage is embedded and registered with the coordinated no-free COpenGL provider. Native texture parents retain defined backing for every allocated child even beyond the natural-chain size stop. Native truncated-chain GL_TEXTURE_MAX_LEVEL and synchronous logical-extent uploads are explicit adaptations. Compiled and reviewed. Exercised by existing texture_mips CGL fixture: shared native surface constructor for borrowed 2D DXT5 children; standalone allocation remains unexercised."
       },
       {
         "id": "mac:0x0001d632",
@@ -20882,8 +20882,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001d632 (__ZN16CDirect3DSurfaceC2E11SurfaceTypemjjj10_D3DFORMATPvP14COpenGLTexture): Restored borrowed secondary owner and separately allocated owner when absent/g_NoTextureID permits, format mapping/create gate and AddRef. Native own render/depth buffers come from device malloc; initial/recreated GL images use NULL data instead of introducing indeterminate reads, and borrowed child allocations are proven128-byte blocks. Native uses explicit portable pointer-backed storage and zero-initialized scalar fields instead of GCC i386 C++ layouts/uninitialized format bytes; name storage is embedded and registered with the coordinated no-free COpenGL provider. Native texture parents retain defined backing for every allocated child even beyond the natural-chain size stop. Native truncated-chain GL_TEXTURE_MAX_LEVEL and synchronous logical-extent uploads are explicit adaptations. Compiled and reviewed. Exercised by existing texture_mips CGL fixture: shared native surface constructor for borrowed 2D DXT5 children; standalone allocation remains unexercised."
       },
       {
         "id": "mac:0x0001cef4",
@@ -20904,8 +20904,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001cef4: Restored exact compressed DXT1/2/3/5 selection, cube target, depth-format NULL data and valid NULL-backed allocation. Native synchronous upload keeps logical/clamped extents instead of Mac Apple client-storage power-of-two expansion, which can read beyond proven native backing (5x5 RGBA mip aligned128bytes vs8x8 read256bytes). Compiled and reviewed. Exercised by existing texture_mips CGL fixture: DXT5 image creation and full-image uploads at all mip sizes."
       },
       {
         "id": "mac:0x002ee248",
@@ -20926,8 +20926,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee248 (__ZN16CDirect3DSurface15FreePrivateDataERK5_GUID), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee270",
@@ -20948,8 +20948,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee270 (__ZN16CDirect3DSurface12GetContainerERK5_GUIDPPv), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee278",
@@ -20970,8 +20970,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee278 (__ZN16CDirect3DSurface5GetDCEPP5HDC__), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x0001ce12",
@@ -20992,8 +20992,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x0001ce12: only writes format,width,height at descriptor offsets0,24,28; selected native body preserves remaining descriptor fields and returns0."
       },
       {
         "id": "mac:0x002ee230",
@@ -21014,8 +21014,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee230 (__ZN16CDirect3DSurface9GetDeviceEPP16IDirect3DDevice9), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee258",
@@ -21036,8 +21036,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee258 (__ZN16CDirect3DSurface11GetPriorityEv), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee240",
@@ -21058,8 +21058,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee240 (__ZN16CDirect3DSurface14GetPrivateDataERK5_GUIDPvPm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee266",
@@ -21080,8 +21080,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee266: returns resource type 1; native enum resolves to the same value."
       },
       {
         "id": "mac:0x0001d32e",
@@ -21102,8 +21102,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001d32e: restored dirty-byte OR non-null owner with zero GL name, reading portable COpenGLTexture name pointer rather than misidentifying a parent COM object. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x0001ce30",
@@ -21124,8 +21124,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001ce30: Read Mac pitch, compressed zero-width case, rect byte arithmetic, ignored flags and dirty write. Native retains existing 4 MiB scratch fallback for NULL backing, because Mac merely returns NULL and no selected native caller/allocation proves a subsequent NULL write safe. Non-null native pointer-backed locks keep Mac arithmetic. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002ee260",
@@ -21146,8 +21146,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee260 (__ZN16CDirect3DSurface7PreLoadEv): empty void body matches selected native no-op."
       },
       {
         "id": "mac:0x0001cdd0",
@@ -21168,8 +21168,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x0001cdd0: ignores IID, stores this, invokes selected AddRef and returns0. Native concrete COM table slot1 resolves to its same typed AddRef body; output-before-increment behavior matches."
       },
       {
         "id": "mac:0x0001d356",
@@ -21190,8 +21190,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001d356: Reconstructed owned-base destructor/allocation/defaults and format remap/create gate. Native owns a real portable prefix, binds its regenerated name, allocates standalone render/depth images with NULL data rather than reading device malloc bytes, and uses synchronous logical extents; borrowed children never destroy the parent. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x0001cdea",
@@ -21212,8 +21212,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x0001cdea: decrement reference count, invoke selected deleting destructor at zero, return saved count. Native concrete COM slot18 resolves to ZN16CDirect3DSurfaceD0Ev and matches. Exercised by existing texture_mips CGL fixture: child COM Release-to-zero."
       },
       {
         "id": "mac:0x002ee280",
@@ -21234,8 +21234,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee280 (__ZN16CDirect3DSurface9ReleaseDCEP5HDC__), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee250",
@@ -21256,8 +21256,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee250 (__ZN16CDirect3DSurface11SetPriorityEm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee238",
@@ -21278,8 +21278,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee238 (__ZN16CDirect3DSurface14SetPrivateDataERK5_GUIDPKvmm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x0001ceec",
@@ -21300,8 +21300,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001ceec: Mac returns0 without uploading. Retained selected native eager full-image upload, using actual 2D/cube binding query/target, portable secondary owner and binding restore. Clear dirty after synchronous upload, and keep existing standalone owner/name instead of allocating another during ordinary unlock. Compiled and reviewed. Exercised by existing texture_mips CGL fixture: DXT5 eager unlock upload and verified transparent framebuffer pixel."
       },
       {
         "id": "mac:0x0001d4f4",
@@ -21322,8 +21322,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001d4f4: restored recreate dispatch through RecreateSurface, DXT1/2/3/5 selection, compressed width/height>3 threshold and no callee dirty clearing; native previously treated DXT4 as compressed and uploaded all small levels. Compiled and reviewed; not exercised."
       }
     ],
     "Mac/DirectX 9/CDirect3DSwapChain": [
@@ -21656,8 +21656,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001dabe (__ZN16CDirect3DTextureD0Ev): restored primary/secondary vtable reset and child COM Release traversal instead of directly deleting children despite external references, then child-array/pixel backing cleanup and COpenGLTexture base destruction. D0 frees the native parent allocation; D1/D2 do not. Exact selected COM vtables decoded from Mac data and native malloc/calloc owners traced. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x0001e6d4",
@@ -21678,8 +21678,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001e6d4 (__ZN16CDirect3DTextureD2Ev): restored primary/secondary vtable reset and child COM Release traversal instead of directly deleting children despite external references, then child-array/pixel backing cleanup and COpenGLTexture base destruction. D0 frees the native parent allocation; D1/D2 do not. Exact selected COM vtables decoded from Mac data and native malloc/calloc owners traced. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x0001e7d8",
@@ -21700,8 +21700,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001e7d8 (__ZN16CDirect3DTextureD1Ev): restored primary/secondary vtable reset and child COM Release traversal instead of directly deleting children despite external references, then child-array/pixel backing cleanup and COpenGLTexture base destruction. D0 frees the native parent allocation; D1/D2 do not. Exact selected COM vtables decoded from Mac data and native malloc/calloc owners traced. Compiled and reviewed. Exercised by existing texture_mips CGL fixture: direct parent D1 and child COM Release/deleting destruction."
       },
       {
         "id": "mac:0x0001da6e",
@@ -21722,8 +21722,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001da6e: replaced no-op with iteration marking every existing child dirty, ignoring the rectangle as Mac does. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x0001d934",
@@ -21744,8 +21744,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x0001d934: loads, increments and stores the uint32 reference counter, returns new count. Native typed counter and constructor initialization/selected COM slot1 match."
       },
       {
         "id": "mac:0x002ee2d0",
@@ -21766,8 +21766,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee2d0 (__ZN16CDirect3DTexture15FreePrivateDataERK5_GUID), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee324",
@@ -21788,8 +21788,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee324 (__ZN16CDirect3DTexture20GenerateMipSubLevelsEv): empty void body matches selected native no-op."
       },
       {
         "id": "mac:0x002ee31c",
@@ -21810,8 +21810,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee31c (__ZN16CDirect3DTexture20GetAutoGenFilterTypeEv), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee2b8",
@@ -21832,8 +21832,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee2b8 (__ZN16CDirect3DTexture9GetDeviceEPP16IDirect3DDevice9), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee300",
@@ -21854,8 +21854,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee300 (__ZN16CDirect3DTexture6GetLODEv), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee308",
@@ -21876,8 +21876,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee308: returns stored requested/automatic mip count; compared native typed field and newly reconstructed constructor assignment (distinct from Usage==1 child count). Exercised by existing texture_mips CGL fixture: requested and automatic level counts."
       },
       {
         "id": "mac:0x0001d988",
@@ -21898,8 +21898,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001d988: restored COM GetSurfaceLevel/GetDesc/Release lifetime and exact 0x8876086c failure; native previously read the child directly and returned -1. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002ee2e0",
@@ -21920,8 +21920,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee2e0 (__ZN16CDirect3DTexture11GetPriorityEv), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee2c8",
@@ -21942,8 +21942,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee2c8 (__ZN16CDirect3DTexture14GetPrivateDataERK5_GUIDPvPm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x0001dc16",
@@ -21964,8 +21964,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001dc16: restored actual child-vector bounds (including Usage==1), exact 0x8876086c failure, output-before-AddRef ordering, and COM AddRef. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002ee2ee",
@@ -21986,8 +21986,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee2ee: returns resource type 3; native enum resolves to the same value."
       },
       {
         "id": "mac:0x0001dbce",
@@ -22008,8 +22008,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001dbce: restored actual child-vector bounds, 0x8876086c failure and child COM LockRect forwarding; removed redundant native bitmask in favor of the child dirty byte. Compiled and reviewed. Exercised by existing texture_mips CGL fixture: DXT5 mip locks for levels1,2/full."
       },
       {
         "id": "mac:0x002ee2e8",
@@ -22030,8 +22030,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee2e8 (__ZN16CDirect3DTexture7PreLoadEv): empty void body matches selected native no-op."
       },
       {
         "id": "mac:0x0001d946",
@@ -22052,8 +22052,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001d946: restored output-this then virtual COM AddRef slot1 dispatch instead of hardwired direct AddRef; IID remains ignored, return0. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x0001d960",
@@ -22074,8 +22074,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001d960: restored decrement/zero branch and concrete virtual deleting-destructor dispatch (texture slot23, volume slot12) with saved return count. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002ee314",
@@ -22096,8 +22096,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee314 (__ZN16CDirect3DTexture20SetAutoGenFilterTypeE21_D3DTEXTUREFILTERTYPE), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee2f8",
@@ -22118,8 +22118,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee2f8 (__ZN16CDirect3DTexture6SetLODEm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee2d8",
@@ -22140,8 +22140,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee2d8 (__ZN16CDirect3DTexture11SetPriorityEm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002ee2c0",
@@ -22162,8 +22162,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002ee2c0 (__ZN16CDirect3DTexture14SetPrivateDataERK5_GUIDPKvmm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x0001da90",
@@ -22184,8 +22184,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001da90: restored vector bounds, 0x8876086c failure and child COM UnlockRect forwarding; the selected child keeps documented native eager upload. Compiled and reviewed. Exercised by existing texture_mips CGL fixture: DXT5 mip unlock/eager full-image upload with verified transparent pixel."
       },
       {
         "id": "mac:0x0001d9e0",
@@ -22206,8 +22206,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0001d9e0: restored child traversal, dirty-or-recreate selection, recreate boolean forwarding and caller-owned dirty clearing; native previously depended on a redundant lock-only bitmask and had no recreate argument. Compiled and reviewed; not exercised."
       }
     ],
     "Mac/DirectX 9/CDirect3DVertexBuffer": [
@@ -23182,8 +23182,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00117630 (__ZN15CDirect3DVolumeD1Ev): restored base vtable reset; D0 destroys then frees the native calloc-owned volume. Native Release now dispatches deleting destructor slot12 at zero instead of only decrementing. Compiled and reviewed. Exercised by existing volume_upload CGL fixture: volume D1 called by D0."
       },
       {
         "id": "mac:0x0011763e",
@@ -23204,8 +23204,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0011763e (__ZN15CDirect3DVolumeD0Ev): restored base vtable reset; D0 destroys then frees the native calloc-owned volume. Native Release now dispatches deleting destructor slot12 at zero instead of only decrementing. Compiled and reviewed. Exercised by existing volume_upload CGL fixture: volume deleting destructor."
       },
       {
         "id": "mac:0x00117a8e",
@@ -23226,8 +23226,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00117a8e (__ZN22CDirect3DVolumeTextureD0Ev): restored primary/secondary vtable reset and child COM Release traversal instead of directly deleting children despite external references, then child-array/pixel backing cleanup and COpenGLTexture base destruction. D0 frees the native parent allocation; D1/D2 do not. Exact selected COM vtables decoded from Mac data and native malloc/calloc owners traced. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x0011860a",
@@ -23248,8 +23248,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0011860a (__ZN22CDirect3DVolumeTextureD2Ev): restored primary/secondary vtable reset and child COM Release traversal instead of directly deleting children despite external references, then child-array/pixel backing cleanup and COpenGLTexture base destruction. D0 frees the native parent allocation; D1/D2 do not. Exact selected COM vtables decoded from Mac data and native malloc/calloc owners traced. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x0011870e",
@@ -23270,8 +23270,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0011870e (__ZN22CDirect3DVolumeTextureD1Ev): restored primary/secondary vtable reset and child COM Release traversal instead of directly deleting children despite external references, then child-array/pixel backing cleanup and COpenGLTexture base destruction. D0 frees the native parent allocation; D1/D2 do not. Exact selected COM vtables decoded from Mac data and native malloc/calloc owners traced. Compiled and reviewed. Exercised by existing volume_upload CGL fixture: direct texture D1 releasing the final child reference and base owner."
       },
       {
         "id": "mac:0x0011780c",
@@ -23292,8 +23292,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0011780c: replaced no-op with marking every child dirty, ignoring supplied box as Mac does. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x001176c2",
@@ -23314,8 +23314,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x001176c2: loads, increments and stores the uint32 reference counter, returns new count. Native typed counter and constructor initialization/selected COM slot1 match."
       },
       {
         "id": "mac:0x00117e0a",
@@ -23336,8 +23336,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x00117e0a (__ZN22CDirect3DVolumeTextureC2Ejjjjm10_D3DFORMAT): Restored full mip count, contiguous chain backing, clamped shifted child dimensions, per-volume format mapping/create gate, portable owner, child AddRef and parent AddRef. Native retains correct 0x806a binding query: Mac 0x806f query leaves an uninitialized local on conforming GL, with no native output proof to copy. Native uses explicit portable pointer-backed storage and zero-initialized scalar fields instead of GCC i386 C++ layouts/uninitialized format bytes; name storage is embedded and registered with the coordinated no-free COpenGL provider. Native texture parents retain defined backing for every allocated child even beyond the natural-chain size stop. Native truncated-chain GL_TEXTURE_MAX_LEVEL and synchronous logical-extent uploads are explicit adaptations. Compiled and reviewed. Exercised by existing volume_upload CGL fixture: shared native 2x2x2 uncompressed constructor."
       },
       {
         "id": "mac:0x0011820a",
@@ -23358,8 +23358,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0011820a (__ZN22CDirect3DVolumeTextureC1Ejjjjm10_D3DFORMAT): Restored full mip count, contiguous chain backing, clamped shifted child dimensions, per-volume format mapping/create gate, portable owner, child AddRef and parent AddRef. Native retains correct 0x806a binding query: Mac 0x806f query leaves an uninitialized local on conforming GL, with no native output proof to copy. Native uses explicit portable pointer-backed storage and zero-initialized scalar fields instead of GCC i386 C++ layouts/uninitialized format bytes; name storage is embedded and registered with the coordinated no-free COpenGL provider. Native texture parents retain defined backing for every allocated child even beyond the natural-chain size stop. Native truncated-chain GL_TEXTURE_MAX_LEVEL and synchronous logical-extent uploads are explicit adaptations. Compiled and reviewed. Exercised by existing volume_upload CGL fixture: shared native 2x2x2 uncompressed constructor."
       },
       {
         "id": "mac:0x002f17d6",
@@ -23380,8 +23380,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f17d6 (__ZN22CDirect3DVolumeTexture15FreePrivateDataERK5_GUID), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002f182a",
@@ -23402,8 +23402,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f182a (__ZN22CDirect3DVolumeTexture20GenerateMipSubLevelsEv): empty void body matches selected native no-op."
       },
       {
         "id": "mac:0x002f1822",
@@ -23424,8 +23424,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1822 (__ZN22CDirect3DVolumeTexture20GetAutoGenFilterTypeEv), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002f17be",
@@ -23446,8 +23446,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f17be (__ZN22CDirect3DVolumeTexture9GetDeviceEPP16IDirect3DDevice9), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002f1806",
@@ -23468,8 +23468,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1806 (__ZN22CDirect3DVolumeTexture6GetLODEv), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002f180e",
@@ -23490,8 +23490,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f180e: returns stored requested/automatic mip count; compared native typed field and newly reconstructed constructor assignment (distinct from Usage==1 child count)."
       },
       {
         "id": "mac:0x00117716",
@@ -23512,8 +23512,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00117716: restored COM GetVolumeLevel/GetDesc/Release lifetime and exact 0x8876086c failure. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002f17e6",
@@ -23534,8 +23534,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f17e6 (__ZN22CDirect3DVolumeTexture11GetPriorityEv), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002f17ce",
@@ -23556,8 +23556,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f17ce (__ZN22CDirect3DVolumeTexture14GetPrivateDataERK5_GUIDPvPm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002f17f4",
@@ -23578,8 +23578,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f17f4: returns resource type 4; native enum resolves to the same value."
       },
       {
         "id": "mac:0x00117be8",
@@ -23600,8 +23600,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00117be8: restored exact 0x8876086c bounds failure, output-before-AddRef ordering and child COM AddRef. Compiled and reviewed. Exercised by existing volume_upload CGL fixture: actual child COM acquire."
       },
       {
         "id": "mac:0x00117ba0",
@@ -23622,8 +23622,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00117ba0: restored exact 0x8876086c bounds failure and child COM LockBox dispatch with unchanged box/flags. Compiled and reviewed. Exercised by existing volume_upload CGL fixture: texture-level COM lock and Image_UploadData."
       },
       {
         "id": "mac:0x002f17ee",
@@ -23644,8 +23644,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f17ee (__ZN22CDirect3DVolumeTexture7PreLoadEv): empty void body matches selected native no-op."
       },
       {
         "id": "mac:0x001176d4",
@@ -23666,8 +23666,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x001176d4: restored output-this then virtual COM AddRef slot1 dispatch instead of hardwired direct AddRef; IID remains ignored, return0. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x001176ee",
@@ -23688,8 +23688,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x001176ee: restored decrement/zero branch and concrete virtual deleting-destructor dispatch (texture slot23, volume slot12) with saved return count. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002f181a",
@@ -23710,8 +23710,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f181a (__ZN22CDirect3DVolumeTexture20SetAutoGenFilterTypeE21_D3DTEXTUREFILTERTYPE), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002f17fe",
@@ -23732,8 +23732,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f17fe (__ZN22CDirect3DVolumeTexture6SetLODEm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002f17de",
@@ -23754,8 +23754,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f17de (__ZN22CDirect3DVolumeTexture11SetPriorityEm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002f17c6",
@@ -23776,8 +23776,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f17c6 (__ZN22CDirect3DVolumeTexture14SetPrivateDataERK5_GUIDPKvmm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x00117a38",
@@ -23798,8 +23798,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x00117a38: Restored exact 0x8876086c bounds failure and child COM UnlockBox dispatch. Mac only forwards to its no-op volume unlock. Native texture-level wrapper retains existing eager full-level GL upload, binding save/restore and dirty clear after Image_UploadData; direct Volume::UnlockBox remains the Mac no-op. This also populates small compressed levels omitted by deferred Mac subimage updates. Compiled and reviewed. Exercised by existing volume_upload CGL fixture: texture-level native eager upload and binding restore."
       },
       {
         "id": "mac:0x00117d82",
@@ -23820,8 +23820,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00117d82: restored dirty-or-zero-owner-name/recreate traversal, boolean forwarding and caller-owned dirty clearing. Compiled and reviewed. Exercised by existing volume_upload CGL fixture: dirty uncompressed child update and binding restoration; recreate-all branch remains unexercised."
       },
       {
         "id": "mac:0x0011761c",
@@ -23842,8 +23842,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x0011761c: loads, increments and stores the uint32 reference counter, returns new count. Native typed counter and constructor initialization/selected COM slot1 match. Exercised by existing volume_upload CGL fixture: GetVolumeLevel child AddRef."
       },
       {
         "id": "mac:0x0011782e",
@@ -23864,8 +23864,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0011782e: Restored exact compressed DXT1/2/3/5 selection and depth-format NULL data. Native keeps synchronous GL uploads and logical/clamped extents, omitting Apple client-storage flags and power-of-two expansion: tightly packed native mip allocations do not prove expanded reads safe. Active OpenGL SDK provider remains selected. Compiled and reviewed. Exercised by existing volume_upload CGL fixture: uncompressed image creation."
       },
       {
         "id": "mac:0x002f17ae",
@@ -23886,8 +23886,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f17ae (__ZN15CDirect3DVolume15FreePrivateDataERK5_GUID), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002f17b6",
@@ -23908,8 +23908,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f17b6 (__ZN15CDirect3DVolume12GetContainerERK5_GUIDPPv), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x00117696",
@@ -23930,8 +23930,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00117696: restored only the four Mac writes (format,width,height,depth); removed invented Type/Usage/Pool writes so caller-owned remaining descriptor bytes stay unchanged. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002f1796",
@@ -23952,8 +23952,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f1796 (__ZN15CDirect3DVolume9GetDeviceEPP16IDirect3DDevice9), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x002f17a6",
@@ -23974,8 +23974,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f17a6 (__ZN15CDirect3DVolume14GetPrivateDataERK5_GUIDPvPm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x00117a66",
@@ -23996,8 +23996,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00117a66: restored dirty-byte OR non-null owner with zero GL name, using the proven portable secondary prefix. Compiled and reviewed. Exercised by existing volume_upload CGL fixture: dirty/clean results with a live nonzero owner name; zero-name branch remains unexercised."
       },
       {
         "id": "mac:0x0011776e",
@@ -24018,8 +24018,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0011776e: Mac compressed SlicePitch is RowPitch*texelHeight. Native Image_UploadData writes each depth slice using returned SlicePitch into tightly packed GetImageSizeInBytes backing; e.g. 8x8x4 DXT1 allocates 128 bytes but Mac stride 128 would overrun from slice 1. Retained native block-row SlicePitch; restored zero-width row pitch and reviewed pBits, ignored box/flags, uint32 arithmetic and dirty write. Compiled and reviewed. Exercised by existing volume_upload CGL fixture: uncompressed row/slice pitches and backing; compressed safety adaptation remains unexercised."
       },
       {
         "id": "mac:0x00117654",
@@ -24040,8 +24040,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x00117654: ignores IID, stores this, invokes selected AddRef and returns0. Native concrete COM table slot1 resolves to its same typed AddRef body; output-before-increment behavior matches."
       },
       {
         "id": "mac:0x0011766e",
@@ -24062,8 +24062,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0011766e: restored decrement/zero branch and concrete virtual deleting-destructor dispatch (texture slot23, volume slot12) with saved return count. Compiled and reviewed. Exercised by existing volume_upload CGL fixture: balanced child references and deleting destruction at parent D1."
       },
       {
         "id": "mac:0x002f179e",
@@ -24084,8 +24084,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x002f179e (__ZN15CDirect3DVolume14SetPrivateDataERK5_GUIDPKvmm), including __textcoal_nt where selected: returns0 without writes through output parameters or other side effects, matching the selected native body."
       },
       {
         "id": "mac:0x001176ba",
@@ -24106,8 +24106,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact Mac 0x001176ba: returns0 without modifying the volume or uploading. Selected native direct Volume::UnlockBox remains the same no-op; the native texture-level wrapper owns eager upload. Exercised by existing volume_upload CGL fixture: direct no-op unlock leaves child dirty."
       },
       {
         "id": "mac:0x00117c20",
@@ -24128,8 +24128,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00117c20: restored recreate format remap/create gate, DXT1/2/3/5 cases, compressed width/height/depth>3 threshold, and no callee dirty clearing; original native uploaded every compressed size and cleared dirty here. Compiled and reviewed. Exercised by existing volume_upload CGL fixture: uncompressed recreate and subimage branches; compressed branches remain unexercised."
       }
     ],
     "Mac/DirectX 9/CFence": [
@@ -25280,8 +25280,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001dc4c (__ZN16CDirect3DTextureC2Ejjjm10_D3DFORMAT): Restored 32-byte per-mip aligned offsets, full automatic/requested level count without invented 16-level cap, Usage==1 rounded backing with exactly one child, distinct child count, correct secondary owner and parent reference. Native uses explicit portable pointer-backed storage and zero-initialized scalar fields instead of GCC i386 C++ layouts/uninitialized format bytes; name storage is embedded and registered with the coordinated no-free COpenGL provider. Native texture parents retain defined backing for every allocated child even beyond the natural-chain size stop. Native truncated-chain GL_TEXTURE_MAX_LEVEL and synchronous logical-extent uploads are explicit adaptations. Compiled and reviewed. Exercised by existing texture_mips CGL fixture: shared native 2D constructor with requested1/2 and automatic mip counts; Usage==1 remains unexercised."
       },
       {
         "id": "mac:0x0001e190",
@@ -25302,8 +25302,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0001e190 (__ZN16CDirect3DTextureC1Ejjjm10_D3DFORMAT): Restored 32-byte per-mip aligned offsets, full automatic/requested level count without invented 16-level cap, Usage==1 rounded backing with exactly one child, distinct child count, correct secondary owner and parent reference. Native uses explicit portable pointer-backed storage and zero-initialized scalar fields instead of GCC i386 C++ layouts/uninitialized format bytes; name storage is embedded and registered with the coordinated no-free COpenGL provider. Native texture parents retain defined backing for every allocated child even beyond the natural-chain size stop. Native truncated-chain GL_TEXTURE_MAX_LEVEL and synchronous logical-extent uploads are explicit adaptations. Compiled and reviewed. Exercised by existing texture_mips CGL fixture: shared native 2D constructor with requested1/2 and automatic mip counts; Usage==1 remains unexercised."
       },
       {
         "id": "mac:0x002ed600",
@@ -25324,8 +25324,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x002ed600 (__ZN14COpenGLTextureD1Ev): reconstructed base vtable reset and release-binding call; D0 additionally frees only a real standalone native allocation. Native embedded GLuint storage must not be deleted as a separate C++ allocation. Provider contract unregisters even zero names before owner free, invalidates pointer caches, deletes/zeroes names without freeing the passed storage; actual current inert provider retains direct-delete fallback. No deferred/Metal replacement claimed. Compiled and reviewed. Exercised by existing texture_mips/volume_upload CGL fixtures: base D1 using actual registered embedded-name release provider; zero-name shutdown branch remains unexercised."
       },
       {
         "id": "mac:0x002ed632",
@@ -25346,8 +25346,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x002ed632 (__ZN14COpenGLTextureD0Ev): reconstructed base vtable reset and release-binding call; D0 additionally frees only a real standalone native allocation. Native embedded GLuint storage must not be deleted as a separate C++ allocation. Provider contract unregisters even zero names before owner free, invalidates pointer caches, deletes/zeroes names without freeing the passed storage; actual current inert provider retains direct-delete fallback. No deferred/Metal replacement claimed. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x002ed54e",
@@ -25368,8 +25368,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x002ed54e: restored the empty base no-argument virtual; native incorrectly adjusted this to the parent and ran the 2D texture updater even for cube objects. Compiled and reviewed; not exercised."
       }
     ],
     "Mac/DirectX 9/COpenGLVAO": [
@@ -48194,8 +48194,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Mac 0x2f1830 coal thunk subtracts4 then jumps to CDirect3DVolumeTexture D0. No corresponding native thunk body exists. Current native CDirect3DVolumeTextureClean has a secondaryVtable field but constructor memset leaves it NULL and primary Release/direct typed device dispatch is used. Exhaustive secondary-interface/cast caller retirement was not established; NULL storage alone is not proof that this entry is retired."
+        "status": "fixed",
+        "evidence": "Mac coalesced 0x2f1830 subtracts4 from secondary this and jumps to volume-texture D0. Restored native CDirect3DVolumeTexture_SecondaryD0 subtracts one pointer to match adjacent primary/secondary vtable fields and dispatches actual D0; constructor installs secondary slot1. Previously no native thunk and secondary vtable NULL. Exact original entry, native layout, constructor and D1/D0 teardown read together; compiled and reviewed, secondary dispatch not runtime exercised."
       },
       {
         "id": "mac:0x01acc181",
