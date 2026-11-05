@@ -8,7 +8,7 @@
 #include "Mac/DirectX_9/CDirect3DDevice.c"
 
 #if defined(COD2_X64)
-/* SetViewport invalidates the owning GL matrix cache. */
+/* Copy and target paths share the owning GL texture-state cache. */
 static COpenGLNative fixtureGL;
 void *imp__ZN7COpenGL7sOpenGLE = &fixtureGL;
 #endif
