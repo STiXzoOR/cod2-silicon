@@ -18,6 +18,9 @@ HRESULT CD3DXBuffer_QueryInterface(const void *_this, const IID *iid, void **ppv
 {
     (void)iid;
     *ppvObj = (void *)_this;
+#if defined(COD2_X64)
+    ((ULONG (*)(const void *))(*(void ***)_this)[1])(_this);
+#endif
     return 0;
 }
 
@@ -32,8 +35,12 @@ ULONG CD3DXBuffer_Release(const void *_this)
     CD3DXBufferImpl *buf = (CD3DXBufferImpl *)_this;
     ULONG rc = --buf->refCount;
     if (!rc) {
+#if defined(COD2_X64)
+        ((void (*)(const void *))buf->vtable[6])(_this);
+#else
         free(buf->data);
         free(buf);
+#endif
     }
     return rc;
 }
@@ -88,6 +95,9 @@ HRESULT CD3DXConstantTable_QueryInterface(const void *_this, const IID *iid, voi
 {
     (void)iid;
     *ppvObj = (void *)_this;
+#if defined(COD2_X64)
+    ((ULONG (*)(const void *))(*(void ***)_this)[1])(_this);
+#endif
     return 0;
 }
 
@@ -101,8 +111,12 @@ ULONG CD3DXConstantTable_Release(const void *_this)
     CD3DXConstantTableImpl *ct = (CD3DXConstantTableImpl *)_this;
     ULONG rc = --ct->refCount;
     if (!rc) {
+#if defined(COD2_X64)
+        ((void (*)(const void *))ct->vtable[28])(_this);
+#else
         free(ct->data);
         free(ct);
+#endif
     }
     return rc;
 }
@@ -119,7 +133,7 @@ HRESULT CD3DXConstantTable_GetDesc(const void *_this, void *pDesc)
 {
     (void)_this;
 #if defined(COD2_X64)
-    memset(pDesc, 0, sizeof(D3DXCONSTANTTABLE_DESC));
+    (void)pDesc; /* Mac 0x2f1a5e leaves the caller descriptor untouched. */
 #else
     memset(pDesc, 0, 32);
 #endif
@@ -130,7 +144,11 @@ HRESULT CD3DXConstantTable_GetConstantDesc(const void *_this, const void *hConst
     (void)_this;
     (void)hConstant;
     (void)pConstantDesc;
+#if defined(COD2_X64)
+    (void)pCount;
+#else
     *pCount = 0;
+#endif
     return 0;
 }
 UINT CD3DXConstantTable_GetSamplerIndex(const void *_this, const void *hConstant)
@@ -726,3 +744,24 @@ void *g_realIncludeVtbl[2] = { (void *)RealInclude_Open, (void *)RealInclude_Clo
 
 fnptr_t vtbl_CD3DXBuffer[] = { (fnptr_t)CD3DXBuffer_QueryInterface, (fnptr_t)CD3DXBuffer_AddRef, (fnptr_t)CD3DXBuffer_Release, (fnptr_t)CD3DXBuffer_GetBufferPointer, (fnptr_t)CD3DXBuffer_GetBufferSize, (fnptr_t)ZN11CD3DXBufferD1Ev, (fnptr_t)ZN11CD3DXBufferD0Ev };
 fnptr_t vtbl_CD3DXConstantTable[] = { (fnptr_t)CD3DXConstantTable_QueryInterface, (fnptr_t)CD3DXConstantTable_AddRef, (fnptr_t)CD3DXConstantTable_Release, (fnptr_t)CD3DXConstantTable_GetBufferPointer, (fnptr_t)CD3DXConstantTable_GetBufferSize, (fnptr_t)CD3DXConstantTable_GetDesc, (fnptr_t)CD3DXConstantTable_GetConstantDesc, (fnptr_t)CD3DXConstantTable_GetSamplerIndex, (fnptr_t)CD3DXConstantTable_GetConstant, (fnptr_t)CD3DXConstantTable_GetConstantByName, (fnptr_t)CD3DXConstantTable_GetConstantElement, (fnptr_t)CD3DXConstantTable_SetDefaults, (fnptr_t)CD3DXConstantTable_SetValue, (fnptr_t)CD3DXConstantTable_SetBool, (fnptr_t)CD3DXConstantTable_SetBoolArray, (fnptr_t)CD3DXConstantTable_SetInt, (fnptr_t)CD3DXConstantTable_SetIntArray, (fnptr_t)CD3DXConstantTable_SetFloat, (fnptr_t)CD3DXConstantTable_SetFloatArray, (fnptr_t)CD3DXConstantTable_SetVector, (fnptr_t)CD3DXConstantTable_SetVectorArray, (fnptr_t)CD3DXConstantTable_SetMatrix, (fnptr_t)CD3DXConstantTable_SetMatrixArray, (fnptr_t)CD3DXConstantTable_SetMatrixPointerArray, (fnptr_t)CD3DXConstantTable_SetMatrixTranspose, (fnptr_t)CD3DXConstantTable_SetMatrixTransposeArray, (fnptr_t)CD3DXConstantTable_SetMatrixTransposePointerArray, (fnptr_t)ZN18CD3DXConstantTableD1Ev, (fnptr_t)ZN18CD3DXConstantTableD0Ev };
+
+#if defined(COD2_X64)
+/* Mac 0x11897c reads index zero even when count is zero. Its first output
+ * is the minimum, despite the original exported function's word order. */
+void GetHighAndLowIndices(UINT32 *low, UINT32 *high, const unsigned short *indices, UINT32 count)
+{
+    UINT32 minimum = indices[0];
+    UINT32 maximum = minimum;
+    *high = minimum;
+    *low = minimum;
+    for (UINT32 i = 0; i < count; ++i) {
+        UINT32 value = indices[i];
+        if (value < minimum)
+            minimum = value;
+        if (value > maximum)
+            maximum = value;
+    }
+    *low = minimum;
+    *high = maximum;
+}
+#endif

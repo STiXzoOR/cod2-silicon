@@ -22,7 +22,11 @@ HRESULT CDirect3DVertexShader_QueryInterface(const CDirect3DVertexShader *_this,
 ULONG CDirect3DVertexShader_Release(const CDirect3DVertexShader *_this);
 HRESULT CDirect3DVertexShader_GetDevice(const CDirect3DVertexShader *_this, IDirect3DDevice9 **ppDevice);
 unsigned char CDirect3DVertexShader_CDirect3DVertexShader(const CDirect3DVertexShader *_this, const char *pSrcData);
+#if defined(COD2_X64)
+HRESULT CDirect3DVertexShader_GetFunction(const CDirect3DVertexShader *_this, void *pDstData, UINT *pSizeOfData);
+#else
 HRESULT CDirect3DVertexShader_GetFunction(const CDirect3DVertexShader *_this, UINT *pSizeOfData);
+#endif
 
 extern unsigned int COpenGLVertexProgram_COpenGLVertexProgram(const COpenGLVertexProgram *_this, const char *pSrcData);
 #if defined(COD2_X64)
@@ -87,7 +91,11 @@ HRESULT CDirect3DVertexShader_QueryInterface(const CDirect3DVertexShader *_this,
     (void)iid;
 
     *ppvObj = (unsigned char *)_this;
+#if defined(COD2_X64)
+    ((ULONG (*)(const void *))(*(void ***)_this)[1])(_this);
+#else
     CDirect3DVertexShader_AddRef(_this);
+#endif
     return 0;
 }
 
@@ -106,7 +114,11 @@ ULONG CDirect3DVertexShader_Release(const CDirect3DVertexShader *_this)
     shader = (CDirect3DVertexShaderImpl *)_this;
     refCount = --shader->refCount;
     if (!refCount) {
+#if defined(COD2_X64)
+        ((void (*)(const void *))shader->vtablePrimary[6])(_this);
+#else
         ZN21CDirect3DVertexShaderD0Ev(_this);
+#endif
     }
 
     return refCount;
@@ -177,6 +189,21 @@ HRESULT CDirect3DVertexShader_GetDevice(const CDirect3DVertexShader *_this, IDir
     return 0;
 }
 
+#if defined(COD2_X64)
+HRESULT CDirect3DVertexShader_GetFunction(const CDirect3DVertexShader *_this, void *pDstData, UINT *pSizeOfData)
+{
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pDstData, &pSizeOfData };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexShader_GetFunction", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+    (void)_this;
+    (void)pDstData;
+    (void)pSizeOfData;
+    return 0;
+}
+#else
 HRESULT CDirect3DVertexShader_GetFunction(const CDirect3DVertexShader *_this, UINT *pSizeOfData)
 {
 #if MAC_METAL_NATIVE
@@ -190,6 +217,7 @@ HRESULT CDirect3DVertexShader_GetFunction(const CDirect3DVertexShader *_this, UI
     (void)pSizeOfData;
     return 0;
 }
+#endif
 
 #if defined(COD2_X64)
 void ZThn4_N21CDirect3DVertexShaderD0Ev(void *p) {
