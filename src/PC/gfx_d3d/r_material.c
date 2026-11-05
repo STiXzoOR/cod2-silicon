@@ -723,7 +723,11 @@ void Material_Shutdown(void)
 
 MaterialHandle R_RegisterRawImage(const char *name, int baseImageFlags, int imageTrack)
 {
+#if defined(COD2_X64)
+    r_global_permanent_t *rgp = (r_global_permanent_t *)imp_rgp;
+#else
     r_global_permanent_t *rgp;
+#endif
     Material *rawMaterial;
     Material *defaultMaterial;
 
@@ -788,6 +792,13 @@ void Material_ReloadAll(void)
 
                     insertPos = numElems;
                     if (numElems > 0 && (unsigned)elemTable[numElems - 1].Stream > (unsigned)src[0]) {
+#if defined(COD2_X64)
+                        int j = numElems;
+                        do {
+                            elemTable[j] = elemTable[j - 1];
+                            --j;
+                        } while (j > 0 && (unsigned)elemTable[j - 1].Stream > (unsigned)src[0]);
+#else
                         int j = numElems - 1;
                         while (j > 0) {
                             elemTable[j] = elemTable[j - 1];
@@ -795,6 +806,7 @@ void Material_ReloadAll(void)
                                 break;
                             j--;
                         }
+#endif
                         insertPos = j;
                     }
 
@@ -830,7 +842,11 @@ void Material_ReloadAll(void)
         int mi;
         void (*ri_Printf)(int, const char *, ...) = (void (*)(int, const char *, ...))ri.Error;
 
+#if defined(COD2_X64)
+        for (mi = 0; mi < 256; mi++) {
+#else
         for (mi = 0; mi < 255; mi++) {
+#endif
 
             byte *shader = (byte *)MG_SHADER[mi];
             int hr;
@@ -853,7 +869,11 @@ void Material_ReloadAll(void)
             }
 
             if (hr < 0) {
+#if defined(COD2_X64)
+                ri_Printf(0, "Couldn't reload shader '%s' when recovering from a lost device: %s (0x%08x)\n",
+#else
                 ri_Printf(0, "Couldn't reload shader '%s' when recovering from a lost devi",
+#endif
                           *(const char **)shader, R_ErrorDescription(hr), hr);
             }
         }
@@ -899,6 +919,13 @@ void Load_BuildVertexDecl(MaterialVertexDeclaration **mtlVertDecl)
             insertPos = numElems;
             if (numElems > 0 && (unsigned)elemTable[numElems - 1].Stream > (unsigned)src[0]) {
 
+#if defined(COD2_X64)
+                int j = numElems;
+                do {
+                    elemTable[j] = elemTable[j - 1];
+                    --j;
+                } while (j > 0 && (unsigned)elemTable[j - 1].Stream > (unsigned)src[0]);
+#else
                 int j = numElems - 1;
                 while (j > 0) {
                     int prev = j - 1;
@@ -907,6 +934,7 @@ void Load_BuildVertexDecl(MaterialVertexDeclaration **mtlVertDecl)
                         break;
                     j = prev;
                 }
+#endif
                 insertPos = j;
             }
 
@@ -957,7 +985,11 @@ void R_Cmd_ReloadMaterialTextures(void)
     GfxImage *lastReloaded;
 
     if (ri.Cmd_Argc() != 2) {
+#if defined(COD2_X64)
+        ri.Printf(0, "Usage: reloadmaterialtextures <materialname>\n");
+#else
         ri.Printf(0, "Usage: reloadMaterialTextures <materialName>\n");
+#endif
         return;
     }
 
@@ -976,7 +1008,11 @@ void R_Cmd_ReloadMaterialTextures(void)
     material = existing ? rgg->materialHashTable[hash] : NULL;
 
     if (!material) {
+#if defined(COD2_X64)
+        ri.Printf(0, "%s", va("ReloadMaterialTextures: Material '%s' is not currently loaded.\n", name));
+#else
         ri.Printf(0, "%s", va("ReloadMaterialTextures: Material '%s' is not currently loaded\n", name));
+#endif
         return;
     }
 
@@ -1050,7 +1086,13 @@ MaterialHandle Material_Duplicate(MaterialHandle mtlCopy, const char *name)
     while (existing) {
         if (strcmp(*(const char **)existing, name) == 0) {
 
+#if defined(COD2_X64)
+            const char *existingName = ((Material *)existing)->info.name;
+#endif
             memcpy(existing, (void *)mtlCopy, sizeof(Material));
+#if defined(COD2_X64)
+            ((Material *)existing)->info.name = existingName;
+#endif
             rgpg->materialLoaded = 1;
             return (MaterialHandle)existing;
         }
@@ -1182,7 +1224,11 @@ void Material_Init(void)
         rawMaterial->techniqueSet != defaultMaterial->techniqueSet) {
         if (rawMaterial->textureCount != 1) {
 
+#if defined(COD2_X64)
+            ri.Printf(3, "material '$raw' doesn't use just one image");
+#else
             ri.Printf(3, "$raw material is not compatible with $default");
+#endif
             rawMaterial = defaultMaterial;
             ((r_global_permanent_t *)rgp_ptr)->rawMaterial = defaultMaterial;
         }
@@ -1195,7 +1241,11 @@ void Material_Init(void)
         rawMaterial->constants != defaultMaterial->constants ||
         rawMaterial->techniqueSet != defaultMaterial->techniqueSet) {
 
+#if defined(COD2_X64)
+        ((r_global_permanent_t *)rgp_ptr)->rawTexdef.name = rawMaterial->textures->name;
+#else
         *(int *)&((r_global_permanent_t *)rgp_ptr)->rawTexdef = *(int *)rawMaterial->textures;
+#endif
         rawMaterial->textures = &((r_global_permanent_t *)rgp_ptr)->rawTexdef;
     }
 }
