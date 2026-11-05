@@ -430,6 +430,13 @@ typedef struct {
     DWORD colorVertex;
     float convertedView[16];
     struct DeviceStreamsNative *streamState;
+    GLenum glSrcBlend, glDestBlend, glSrcBlendAlpha, glDestBlendAlpha;
+    GLenum glStencilFunc;
+    DWORD alphaBlendValue, ditherValue;
+    DWORD ambientMaterialSource, diffuseMaterialSource;
+    unsigned char blendStateChanged;
+    GLfloat lightModelAmbient[4];
+    GLfloat slopeScaleDepthBias, scaledDepthBias;
 #endif
 } DeviceImpl;
 #if defined(COD2_X64)
@@ -3073,6 +3080,10 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitiveUP(const CDirect3DDevice *_this,
     return 0;
 }
 
+#if defined(COD2_X64)
+#include "lp64_device_render_state.inc"
+#endif
+
 static void CDirect3DDevice_ApplyDepthBias(void)
 {
     if (g_depthBias != 0.0f || g_slopeScaleDepthBias != 0.0f) {
@@ -3094,6 +3105,9 @@ HRESULT COD2_FORCE_ALIGN_ARG_POINTER CDirect3DDevice_SetRenderState(const CDirec
 #endif
 
     DeviceImpl *dev = (DeviceImpl *)_this;
+#if defined(COD2_X64)
+    return DeviceRenderState_Set(dev, State, Value);
+#else
     switch (State) {
 #if defined(COD2_X64)
     case D3DRS_DITHERENABLE:
@@ -3220,6 +3234,7 @@ HRESULT COD2_FORCE_ALIGN_ARG_POINTER CDirect3DDevice_SetRenderState(const CDirec
         break;
     }
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_GetRenderState(const CDirect3DDevice *_this, D3DRENDERSTATETYPE State, DWORD *pValue)
@@ -3271,7 +3286,11 @@ HRESULT CDirect3DDevice_GetRenderState(const CDirect3DDevice *_this, D3DRENDERST
         *pValue = dev->cullMode;
         break;
     case D3DRS_ALPHABLENDENABLE:
+#if defined(COD2_X64)
+        *pValue = dev->alphaBlendValue;
+#else
         *pValue = dev->alphaBlendEnable;
+#endif
         break;
     case D3DRS_FOGENABLE:
         *pValue = dev->fogEnable;
@@ -5839,6 +5858,7 @@ void CDirect3DDevice_Init(void *device)
     glGetIntegerv(0x8872, (GLint *)&dev->maxTextureImageUnits);
     if (dev->maxTextureUnits > 16 || dev->maxTextureImageUnits > 16)
         abort();
+    DeviceRenderState_Init(dev);
     free(dev->texStageData);
     CTexStageNative *stages = calloc(17, sizeof(*stages));
     if (!stages)
