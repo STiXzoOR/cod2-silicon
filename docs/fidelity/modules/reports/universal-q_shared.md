@@ -69,3 +69,20 @@ The 23 remaining unchecked entries retain explicit interface/identity gaps. This
 ## Integrated batch 21 acceptance
 
 The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.
+
+## Retained original-address provenance
+
+The retained 1.0 IDA database and original Linux 1.3 ELF now provide concrete
+addresses for 22 of the 23 remaining identities. Masked whole-body comparison
+maps 73 q_shared bodies with a common +0x25d8 relocation; 13 identical-body
+ambiguities are resolved by the surrounding module sequence. Examples are
+Com_AssembleFilepath 0x80b4d74 to 0x80b734c, BigLong 0x80b4fb8 to 0x80b7590 and
+OrientationConcatenate 0x80b6a34 to 0x80b900c. Original bytes and the resulting
+address map are retained privately in recon-provenance-math4.noindex.
+
+These are identity and intent findings, not Mac behavior authority. No q_shared
+row closes from this mapping alone: complete corresponding Mac operations are
+still required. I_strnicmpInline remains without an original header-copy
+mapping. All 23 previously unchecked rows remain unchecked, and existing
+resolved evidence is preserved. No source change, compilation, test, CI, replay
+or runtime exercise was performed for this module.

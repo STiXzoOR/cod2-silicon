@@ -681,6 +681,13 @@ Bool Effect_Update(const Effect *_this)
     return 1;
 }
 
+#if defined(COD2_X64)
+static inline int FxNative_LimitCullPlaneCount(int count)
+{
+    /* Mac tests the sign after a wrapping 32-bit count - 5 subtraction. */
+    return (((unsigned int)count - 5u) & 0x80000000u) ? count : 5;
+}
+#endif
 extern unsigned char FxHelper_CullSphere(const FxHelper *helper, const float *origin, float radius, int cullType);
 Bool Particle_Cull(const Particle *_this)
 {
@@ -689,8 +696,12 @@ Bool Particle_Cull(const Particle *_this)
     int cullType = (helper->mCamera.numPlanes);
 
     if (*(byte *)(p + FX_FLAG_OFFSET(3, 0xab)) & 2) {
+#if defined(COD2_X64)
+        cullType = FxNative_LimitCullPlaneCount(cullType);
+#else
         if (cullType >= 5)
             cullType = 5;
+#endif
     }
     return (Bool)FxHelper_CullSphere(helper, ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.origin))), (((Effect *)(p))->mRefEnt.radius[0]), cullType);
 }
@@ -701,8 +712,12 @@ Bool OrientedParticle_Cull(const OrientedParticle *_this)
     FxHelper *helper = *(FxHelper **)imp_theFxHelper;
     int cullType = (helper->mCamera.numPlanes);
     if ((*(byte *)&((OrientedParticle *)p)->_base[FX_FLAG_OFFSET(3, 171)]) & 2) {
+#if defined(COD2_X64)
+        cullType = FxNative_LimitCullPlaneCount(cullType);
+#else
         if (cullType >= 5)
             cullType = 5;
+#endif
     }
     return (Bool)FxHelper_CullSphere(helper, ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.origin))), (((Effect *)(p))->mRefEnt.radius[0]), cullType);
 }
@@ -713,8 +728,8 @@ Bool Cloud_Cull(const Cloud *_this)
     const Effect *effect = (const Effect *)_this;
     FxHelper *helper = *(FxHelper **)imp_theFxHelper;
     int planeCount = helper->mCamera.numPlanes;
-    if ((effect->mFlags & 0x02000000) && planeCount > 5)
-        planeCount = 5;
+    if (effect->mFlags & 0x02000000)
+        planeCount = FxNative_LimitCullPlaneCount(planeCount);
     float extent = effect->mRefEnt.radius[0] - effect->mRefEnt.radius[1] < 0.0f
         ? effect->mRefEnt.radius[1] : effect->mRefEnt.radius[0];
     return FxHelper_CullSphere(helper, effect->mRefEnt.origin,
@@ -747,8 +762,12 @@ Bool Line_Cull(const Line *_this)
     int cullType = (helper->mCamera.numPlanes);
     float radius;
     if ((*(byte *)&((Line *)p)->_base[FX_FLAG_OFFSET(3, 171)]) & 2) {
+#if defined(COD2_X64)
+        cullType = FxNative_LimitCullPlaneCount(cullType);
+#else
         if (cullType >= 5)
             cullType = 5;
+#endif
     }
     radius = (((Effect *)(p))->mRefEnt.radius[0]);
     return (Bool)FxHelper_CullCylinder(helper, ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.origin))), ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.endpos))), radius, radius, cullType);
@@ -761,8 +780,12 @@ Bool Tail_Cull(const Tail *_this)
     int cullType = (helper->mCamera.numPlanes);
     float radius;
     if (*(byte *)(p + FX_FLAG_OFFSET(3, 0xab)) & 2) {
+#if defined(COD2_X64)
+        cullType = FxNative_LimitCullPlaneCount(cullType);
+#else
         if (cullType >= 5)
             cullType = 5;
+#endif
     }
     radius = (((Effect *)(p))->mRefEnt.radius[0]);
     return (Bool)FxHelper_CullCylinder(helper, ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.origin))), ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.endpos))), radius, radius, cullType);
@@ -774,8 +797,12 @@ Bool Cylinder_Cull(const Cylinder *_this)
     FxHelper *helper = *(FxHelper **)imp_theFxHelper;
     int cullType = (helper->mCamera.numPlanes);
     if (*(byte *)(p + FX_FLAG_OFFSET(3, 0xab)) & 2) {
+#if defined(COD2_X64)
+        cullType = FxNative_LimitCullPlaneCount(cullType);
+#else
         if (cullType >= 5)
             cullType = 5;
+#endif
     }
     return (Bool)FxHelper_CullCylinder(helper, ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.origin))), ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.endpos))),
 #if defined(COD2_X64)
@@ -791,8 +818,12 @@ Bool Light_Cull(const Light *_this)
     FxHelper *helper = *(FxHelper **)imp_theFxHelper;
     int cullType = (helper->mCamera.numPlanes);
     if (*(byte *)(p + FX_FLAG_OFFSET(3, 0xab)) & 2) {
+#if defined(COD2_X64)
+        cullType = FxNative_LimitCullPlaneCount(cullType);
+#else
         if (cullType >= 5)
             cullType = 5;
+#endif
     }
     return (Bool)FxHelper_CullSphere(helper, ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.origin))), (((Effect *)(p))->mRefEnt.radius[0]), cullType);
 }
