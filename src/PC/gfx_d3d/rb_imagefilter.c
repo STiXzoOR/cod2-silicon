@@ -267,7 +267,12 @@ static int RB_GenerateGaussianFilterChain(float radiusX, float radiusY, int srcW
 
         if (radiusX > radiusY) {
 
+#if defined(COD2_X64)
+            /* Mac 0x105e56 sends equality through the residual sqrt. */
+            if (FILTER_MAX_SINGLE > radiusX) {
+#else
             if (FILTER_MAX_SINGLE >= radiusX) {
+#endif
                 filterRadius = radiusX;
                 radiusX = 0.0f;
             } else {

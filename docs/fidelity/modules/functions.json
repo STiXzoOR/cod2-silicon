@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 1330,
-      "intentional": 2973,
-      "equal": 4264,
-      "fixed": 890
+      "unchecked": 1192,
+      "intentional": 2983,
+      "equal": 4356,
+      "fixed": 926
     },
     "scopes": {
       "unassigned": 777,
@@ -112803,8 +112803,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000fee96: Mac overflow save/restore uses32-bit declType (e.g.0xfe385/0xfe3e1), native void** touched8bytes. Corrected native enum-width access. DX9 quad coordinates now follow0xfe4a5 left+up/left-up arithmetic grouping; line overflow occurs after direction calculation as0xfefea. Compared vertices, attributes,UVs and six-index order; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000fea50",
@@ -112825,8 +112825,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000fea50: Mac overflow save/restore uses32-bit declType (e.g.0xfe385/0xfe3e1), native void** touched8bytes. Corrected native enum-width access. DX9 quad coordinates now follow0xfe4a5 left+up/left-up arithmetic grouping; line overflow occurs after direction calculation as0xfefea. Compared vertices, attributes,UVs and six-index order; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000fe330",
@@ -112847,8 +112847,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000fe330: Mac overflow save/restore uses32-bit declType (e.g.0xfe385/0xfe3e1), native void** touched8bytes. Corrected native enum-width access. DX9 quad coordinates now follow0xfe4a5 left+up/left-up arithmetic grouping; line overflow occurs after direction calculation as0xfefea. Compared vertices, attributes,UVs and six-index order; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000fdfce",
@@ -112869,8 +112869,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000fdfce: Mac overflow save/restore uses32-bit declType (e.g.0xfe385/0xfe3e1), native void** touched8bytes. Corrected native enum-width access. DX9 quad coordinates now follow0xfe4a5 left+up/left-up arithmetic grouping; line overflow occurs after direction calculation as0xfefea. Compared vertices, attributes,UVs and six-index order; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000d68f8",
@@ -112891,8 +112891,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d68f8: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d87ea",
@@ -112913,8 +112913,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xd87ea: Compared default-material exit, FinishGpu/QPC/BeginScene ordering, repeated full-white quad arguments, EndSurface/EndScene/FinishGpu ordering and double rate division. The selected MacWin32 monotonic QPC/frequency provider supplies a coherent clock pair; integration uses the separately reviewed microsecond provider from batch13; fence sequencing is inlined in RB_BeginBenchmarkGpu_impl/RB_EndBenchmarkGpu_impl. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000d98bc",
@@ -112935,8 +112935,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xd98bc: Compared positive blur iteration loop, two target-5 feedback copies per iteration, six UV constants, one-pixel origin/two-pixel size inset, EndSurface boundaries and command advance. Review follow-up: restored native command slot28 from raw Mac table0x36ace0 ->0xd98bc. Checked actual arm64 Clang record layout: header-only blur command. Native allocator in r_rendercmds.c aligns command records to8; no current native producer for this ID was found, so dispatch/layout are compiled and reviewed, not runtime exercised."
       },
       {
         "id": "mac:0x000d46a0",
@@ -112957,8 +112957,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d46a0: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d4b9a",
@@ -112979,8 +112979,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d4b9a: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d95a6",
@@ -113001,8 +113001,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d95a6: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d9610",
@@ -113023,8 +113023,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d9610: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d6b40",
@@ -113045,8 +113045,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xd6b40, e.g. 0xd6bda: Z is copied as 32-bit float storage. Native converted integer bits to float; corrected both vertex layouts with memcpy. Compared width-independent half-pixel normal, overflow restart, six indices, colors, UVs and all attributes; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000dbdd0",
@@ -113067,8 +113067,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xdbdd0, 0xdbf7c-0xdbfc0: Restored first generic vertex normal/color as typed float/packed-color stores and all generic binormals (0,1,0); native used numeric packed-color/float conversions and UV-like binormals. Compared clip transforms, width scaling, perpendicular/offset order, DX7 divides, topology, depth-state override/restore and matrix restoration; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000dca04",
@@ -113089,8 +113089,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xdca04: Compared projection2D choice, signed short count/width, vertex payload, 3D depthTest=1 and byteCount command advance. Review follow-up: restored native command slot31 from raw Mac table0x36ace0 ->0xdca04. Checked actual arm64 Clang record layout: lines count4/width6/16-byte vertices8. Native allocator in r_rendercmds.c aligns command records to8; no current native producer for this ID was found, so dispatch/layout are compiled and reviewed, not runtime exercised."
       },
       {
         "id": "mac:0x000dd10c",
@@ -113111,8 +113111,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xdd123/0xdd677: Restored 2D versus 3D dispatch, white versus point material and retained 2D batching. 0xdd331/0xddefc copy Z bits, rather than converting them; 0xdd399/0xdd7e5 onward set binormals (0,1,0). Compared both paths, projection scaling, overflow, winding, UVs, attributes and 3D matrix restoration; compiled and reviewed, not exercised. Review follow-up: restored native command slot30 from raw Mac table0x36ace0 ->0xdd10c. Checked actual arm64 Clang record layout: points count4/size6/16-byte vertices8. Native allocator in r_rendercmds.c aligns command records to8; no current native producer for this ID was found, so dispatch/layout are compiled and reviewed, not runtime exercised. Projected 3D point indices now follow0xddc21-0xddca7 [3,0,2,2,0,1]; the 2D winding remains [1,0,2,2,0,3]."
       },
       {
         "id": "mac:0x00108aca",
@@ -113133,8 +113133,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00108aca: 0x108c3d-0x108c4b writes full binormal(0,1,0); native omitted components1/2. Restored native stores and compared vertex layouts, fan winding, overflow restart and counters; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000d6a32",
@@ -113155,8 +113155,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xd6a43/0xd6b19 calls Set3D when projection2D is true; native condition was reversed. Compared material batching and entity population/TessEntity/advance. Retained sizeof(GfxEntity) native storage and existing null-material exit for defined native behavior; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000df038",
@@ -113177,8 +113177,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xdf860 uses ordered w<=0 rejection, allowing unordered input to proceed. Matched that branch. Compared query-index parity, Issue/GetData/Sleep loop and unsigned sample conversion, tile accumulation/error retention, no-query 16x16 clipped visibility and sight trace, direction dot, sprite axes/arithmetic and both vertex paths; Float-to-int conversions explicitly emulate CVTTSS2SI invalid results without undefined C casts; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000d4952",
@@ -113199,8 +113199,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d4952: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000deb08",
@@ -113221,8 +113221,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xdeb9d/0xdebab/0xded87/0xdee00: Matched flare and blind/glare unordered comparison behavior. Compared lastTime/frame delta handling, fraction and FadeToGoal arithmetic, flare color/size, matrix-stack draw and final blind/glare byte packing/full-screen draw; Float-to-int conversions explicitly emulate CVTTSS2SI invalid results without undefined C casts; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000d5d32",
@@ -113243,8 +113243,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d5d32: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d5ca2",
@@ -113265,8 +113265,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xd5ca2: Compared advance-before-draw command routing, conditional EndSurface, projection2D Set3D, viewport dirty/cache gates and draw-surface list arguments."
       },
       {
         "id": "mac:0x000da28c",
@@ -113287,8 +113287,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xda28c: Compared typed native font handle and inline text payload, maxChars, four float placement/scale arguments, packed color/style, signed cursor-byte transport and byteCount advance."
       },
       {
         "id": "mac:0x000d71ce",
@@ -113309,8 +113309,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xd7355 retains the old index position while incrementing indexCount; native helper used the incremented count. Write indices before increment and preserve the Mac unsigned-short old-index truncation at0xd7357. Matched initial (-0.5*xStep+origin)+(-0.5*yStep) order. Compared character decode, signed offsets, dimensions, all four vertices/attributes/UVs and advance; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000d79e8",
@@ -113331,8 +113331,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xd79e8: Compared inline text/font, three world vectors, packed color arguments and command byteCount advance."
       },
       {
         "id": "mac:0x000d9b64",
@@ -113353,8 +113353,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xd9b83/0xda001/0xda13b normalizes cursor to an unsigned byte; native retained a negative signed command byte. Corrected native normalization. Compared half-pixel adjustment, color escapes and character counts, newline/carriage handling, double-pass glyph/shadow draws, cursor blink and final cursor placement; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000d6466",
@@ -113375,8 +113375,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xd64d6/0xd677b calls Set3D only when projection2D is true; corrected native reversed condition. Compared command sections, material/technique/overflow restart, rebased indices, both vertex layouts/attributes and count/advance stores; compiled and reviewed, not exercised. Review follow-up: restored native command slot32 from raw Mac table0x36ace0 ->0xd6466. Checked actual arm64 Clang record layout: triangle record24/material8/tech16/counts20,22; planar payload starts24. Native allocator in r_rendercmds.c aligns command records to8; no current native producer for this ID was found, so dispatch/layout are compiled and reviewed, not runtime exercised. Native triangle payload now follows sizeof(GfxCmdDrawTriangles)=24 instead of hardcoded16, and normal.x/y bit storage is copied (Mac0xd65de/0xd66e0) rather than numerically converted."
       },
       {
         "id": "mac:0x000d44e8",
@@ -113397,8 +113397,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xd44e8: Compared Present/error/deviceLost/cache flush, dynamic-index reset, projection2D reset and modified-dvar clearing. Existing native null dynamic-index guard preserves defined lazy allocation. Apple always calls R_SetColorMappings on gamma changes so its existing ignoreHwGamma branch actively restores identity gamma; Mac original skips that call when ignored. Provider body read in r_init.c, no provider edit. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000d8958",
@@ -113420,7 +113420,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Mac 0xd8958: Hand-compared command dispatch, dvars, device loss, scene and fence control. Fixed native skipBackEnd-only black clear before pending flush/debug (0xd8cde/0xd8d28 ->0xd8d39/0xd93f5) and typed fill-test material loads (0xd8dd7 onward), compiled and reviewed, not exercised. Full parity unresolved: mode3 0xd93b3/0xd94a2 decay and rdtsc-budget wait are absent; native mode2 contains duplicated wait and zero start/now/end timing. API59/API60 callback/clock-unit contract must be coordinated before replacing timing, not inferred from pending sibling work. Review follow-up: decoded all34 raw command-table slots and matched native preprocessed table; restored eight NULL mappings only after checking native records/allocator and adapting LP64 triangle payload. No current native emitters for those eight IDs were found. Timing remains unresolved as stated; no producer/header edit or runtime reachability claim."
       },
       {
         "id": "mac:0x000d4cba",
@@ -113441,8 +113441,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xd4cba: No separate native body; both benchmark helpers inline its two phases: retire/test/delete an existing fence, generate/set a new fence, then test/delete it and clear issued state. Compared those loops to the original entry and benchmark callers; no return-value cast or budget callback surrogate added."
       },
       {
         "id": "mac:0x000d43c0",
@@ -113463,8 +113463,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d43c0: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d44d8",
@@ -113486,7 +113486,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Mac 0x000d44d8: Mac0xd44d8 returns integer dx.gpuSyncDelay. Native API59 exports separate void RB_AdaptiveGpuSyncWait and RB_GpuWaited callbacks rather than Mac API60 budget accessor. rdtsc_lo is constant0; shared refexport_t/GetRefAPI/client elapsed-budget contract remains unresolved. No undefined callback cast or uncalled surrogate added."
       },
       {
         "id": "mac:0x000d45ca",
@@ -113507,8 +113507,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x000d45ca: Compared initialization stores and scene viewport tail call. Native memset covers sizeof(backEnd), preserving the expanded LP64 allocation instead of Mac fixed0x36e90 byte extent; worldEntity3 and both resolved target14 stores match."
       },
       {
         "id": "mac:0x000d4472",
@@ -113529,8 +113529,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d4472: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d4632",
@@ -113551,8 +113551,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d4632: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d4610",
@@ -113573,8 +113573,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d4610: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d5630",
@@ -113595,8 +113595,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xd5630: Compared forward/reverse traversal, sort merge rules, lightmap/fog/depth-prepass technique selection, entity/world-space table, material-time double-radian scroll, matrix stack, depth hack and tess dispatch/cleanup. Retained existing native null material/technique-set skips for defined native asset handling; valid-input path matches. External sort/asset producers were not treated as proven by sibling work."
       },
       {
         "id": "mac:0x000d43d0",
@@ -113617,8 +113617,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d43d0: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d6826",
@@ -113639,8 +113639,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d6826: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d5d72",
@@ -113661,8 +113661,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xd5d72: Compared viewport orthographic coefficients, validity stores, world/view/projection record copies, GL projection conversion and DX7 transforms/constants. Existing native typed record copies preserve 260-byte GfxCodeMatrix storage rather than Mac padded 272-byte copies; preserved the normalized world-view-projection copy from worldView seen in Mac."
       },
       {
         "id": "mac:0x000d4d8e",
@@ -113683,8 +113683,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xd4d8e: Compared conditional surface flush, projection2D reset, world identity/change scale1, view matrices and view origin/axis code constants 11 through14 including w components."
       },
       {
         "id": "mac:0x000d46c4",
@@ -113705,8 +113705,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000d46c4: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained. Review follow-up: restored native command slot8 from raw Mac table0x36ace0 ->0xd46c4. Checked actual arm64 Clang record layout: clip planes count4/payload8. Native allocator in r_rendercmds.c aligns command records to8; no current native producer for this ID was found, so dispatch/layout are compiled and reviewed, not runtime exercised."
       },
       {
         "id": "mac:0x000d438c",
@@ -113727,8 +113727,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d438c: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d43e8",
@@ -113749,8 +113749,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xd43e8: Compared 256 entries copied to all three ushort channels and SetGammaRamp device slot0x54 arguments (swapchain0,flags0)."
       },
       {
         "id": "mac:0x000d4ebe",
@@ -113771,8 +113771,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d4ebe: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d4e6a",
@@ -113793,8 +113793,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d4e6a: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d55f0",
@@ -113815,8 +113815,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d55f0: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d5160",
@@ -113837,8 +113837,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000d5160: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained. Review follow-up: restored native command slot9 from raw Mac table0x36ace0 ->0xd5160. Checked actual arm64 Clang record layout: shadow-cookie matrix4/fade68/record72. Native allocator in r_rendercmds.c aligns command records to8; no current native producer for this ID was found, so dispatch/layout are compiled and reviewed, not runtime exercised."
       },
       {
         "id": "mac:0x000d50d4",
@@ -113859,8 +113859,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000d50d4: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained. Review follow-up: restored native command slot6 from raw Mac table0x36ace0 ->0xd50d4. Checked actual arm64 Clang record layout: stencil-ref record8/refValue4. Native allocator in r_rendercmds.c aligns command records to8; no current native producer for this ID was found, so dispatch/layout are compiled and reviewed, not runtime exercised."
       },
       {
         "id": "mac:0x000d5594",
@@ -113881,8 +113881,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d5594: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000dca78",
@@ -113903,8 +113903,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xdcbD5/0xdcbdb: Generic normal.z receives float1 bits, not integer1. Corrected native typed store in RB_SetClipSpaceVertex. Compared d-minus-near arithmetic, DX7 per-component divides, homogeneous generic vertices, white color, attributes, winding, overflow and final flush/advance; compiled and reviewed, not exercised. Review follow-up: restored native command slot7 from raw Mac table0x36ace0 ->0xdca78. Checked actual arm64 Clang record layout: stencil planes nearDist4/count8/payload12. Native allocator in r_rendercmds.c aligns command records to8; no current native producer for this ID was found, so dispatch/layout are compiled and reviewed, not runtime exercised."
       },
       {
         "id": "mac:0x000d877c",
@@ -113925,8 +113925,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xd877c: Compared all eight coordinate/UV floats, packed color, material, stats target8 and command byteCount advance."
       },
       {
         "id": "mac:0x000d47a2",
@@ -113947,8 +113947,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000d47a2: Mac0xd4832-0xd4865 uses D3DLOCKED_RECT Pitch/pBits; native int[2] truncated the LP64 pointer and undersized lock output. Switched native to typed lock storage; preserved existing dynamic-texture usage0x200 adaptation for DISCARD while comparing row pitch/copy/surface/stretch/release order. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00100ada",
@@ -113969,8 +113969,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00100ada: Hand-compared empty bad-surface body/current-entity dispatch, tess overflow/decl restoration, vertex/index copies and topology, cached/source draw arguments, particle view-axis/color constants, stream/index cache checks and renderer-specific strides. Native typed surface pointers and existing cloud draw-argument storage corrections retained."
       },
       {
         "id": "mac:0x00100ee0",
@@ -113991,8 +113991,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00100ee0: Hand-compared empty bad-surface body/current-entity dispatch, tess overflow/decl restoration, vertex/index copies and topology, cached/source draw arguments, particle view-axis/color constants, stream/index cache checks and renderer-specific strides. Native typed surface pointers and existing cloud draw-argument storage corrections retained."
       },
       {
         "id": "mac:0x000d4452",
@@ -114013,8 +114013,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d4452: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d4c92",
@@ -114035,8 +114035,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d4c92: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d4bd8",
@@ -114057,8 +114057,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000d4bd8: Hand-compared command field/callback routing, conditional batch flushes, native pointer-size record traversal, cache/constants writes and device arguments against the named Mac entry; color conversion preserves multiply255/add0.5/floor order. Debug-only tracing is gated; selected native provider bindings retained."
       },
       {
         "id": "mac:0x000d497a",
@@ -114079,8 +114079,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_ClearScreen was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to gfx_d3d/rb_backend; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/rb_backend.c:1056; assigned universal header has no body. Mac symbol __Z14RB_ClearScreenhPKffh at 0x000d497a. Whole caller not audited by universal-math."
+        "status": "fixed",
+        "evidence": "Mac 0xd49ee-0xd4ae8 rounds each color component then clamps before narrowing; native wrapped bytes. Restored native clamp including defined emulation of CVTTSS2SI invalid conversion and wrapping subtract/sign selection. Compared flag mapping, full target viewport/dirty store, ARGB assembly and clear device args; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000db81c",
@@ -114101,8 +114101,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_DrawQuadPicCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to gfx_d3d/rb_backend; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/rb_backend.c:4263; assigned universal header has no body. Mac symbol __Z17RB_DrawQuadPicCmdP25GfxRenderCommandExecState at 0x000db81c. Whole caller not audited by universal-math."
+        "status": "equal",
+        "evidence": "Mac 0xdb81c: Compared Set2D gate, batching/overflow, old index position, six-index order, four command positions, UVs, color, both vertex layouts and advance."
       },
       {
         "id": "mac:0x000d8148",
@@ -114123,8 +114123,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_DrawStretchPic was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to gfx_d3d/rb_backend; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/rb_backend.c:2851; assigned universal header has no body. Mac symbol __Z17RB_DrawStretchPicPK8Materialffffffffm18GfxPrimStatsTarget at 0x000d8148. Whole caller not audited by universal-math."
+        "status": "intentional",
+        "evidence": "Mac 0xd8148: Compared batching/Set2D, overflow/decl restoration, all four position/normal/binormal/tangent/UV/color writes and topology. Existing native null-material and NaN-coordinate guards preserve defined renderer behavior; valid-input arithmetic follows Mac."
       },
       {
         "id": "mac:0x000db13c",
@@ -114145,8 +114145,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_StretchPicRotateCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to gfx_d3d/rb_backend; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/rb_backend.c:4200; assigned universal header has no body. Mac symbol __Z22RB_StretchPicRotateCmdP25GfxRenderCommandExecState at 0x000db13c. Whole caller not audited by universal-math."
+        "status": "fixed",
+        "evidence": "Mac 0xdb24b converts rotation to double, multiplies by pi/180, then narrows for sinf/cosf. Native multiplied float constants; corrected native conversion. Compared half dimensions/center, ordered corner operations, batching/overflow, UVs/color/layouts and topology; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000d7a32",
@@ -114167,8 +114167,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_TestFillPass3D was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to gfx_d3d/rb_backend; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/rb_backend.c:2846; assigned universal header has no body. Mac symbol __Z17RB_TestFillPass3DPK8Material21MaterialTechniqueType at 0x000d7a32. Whole caller not audited by universal-math."
+        "status": "intentional",
+        "evidence": "Mac 0xd7a32: Compared viewer/projection90/90/.9 setup, constants, same-address writes for all four test corners (original quirk retained), index loop and benchmark scene/fence/QPC ordering plus double division by60. The selected MacWin32 monotonic counter/frequency pair is a platform adaptation; integration uses the separately reviewed microsecond provider from batch13. Compiled and reviewed, not exercised."
       }
     ],
     "gfx_d3d/rb_debug": [
@@ -114191,8 +114191,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0010864c: Hand-compared allocation/batch limits, depth-change flushes, camera-axis string steps, polygon edge order, plume sine/duration arithmetic and debug queue/reset order. Exact-entry disassembly checked after malformed full-binary prologues."
       },
       {
         "id": "mac:0x00108da8",
@@ -114213,8 +114213,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00108da8: Hand-compared allocation/batch limits, depth-change flushes, camera-axis string steps, polygon edge order, plume sine/duration arithmetic and debug queue/reset order. Exact-entry disassembly checked after malformed full-binary prologues."
       },
       {
         "id": "mac:0x00108962",
@@ -114235,8 +114235,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00108962: Hand-compared allocation/batch limits, depth-change flushes, camera-axis string steps, polygon edge order, plume sine/duration arithmetic and debug queue/reset order. Exact-entry disassembly checked after malformed full-binary prologues."
       },
       {
         "id": "mac:0x001086ee",
@@ -114257,8 +114257,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001086ee: Hand-compared allocation/batch limits, depth-change flushes, camera-axis string steps, polygon edge order, plume sine/duration arithmetic and debug queue/reset order. Exact-entry disassembly checked after malformed full-binary prologues."
       },
       {
         "id": "mac:0x00108828",
@@ -114279,8 +114279,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00108828: Hand-compared allocation/batch limits, depth-change flushes, camera-axis string steps, polygon edge order, plume sine/duration arithmetic and debug queue/reset order. Exact-entry disassembly checked after malformed full-binary prologues."
       }
     ],
     "gfx_d3d/rb_fog": [
@@ -114303,8 +114303,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000faa68: Compared fog dvar/registration gates, blend-source black selection, BGRA constant writes, reciprocal-range operation order and cached fixed-function fog states with native typed fields; r_zfar replaces the original imported dvar read."
       },
       {
         "id": "mac:0x000fab32",
@@ -114325,8 +114325,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000fab32: Compared fog dvar/registration gates, blend-source black selection, BGRA constant writes, reciprocal-range operation order and cached fixed-function fog states with native typed fields; r_zfar replaces the original imported dvar read."
       },
       {
         "id": "mac:0x000faa8c",
@@ -114347,8 +114347,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000faa8c: Compared fog dvar/registration gates, blend-source black selection, BGRA constant writes, reciprocal-range operation order and cached fixed-function fog states with native typed fields; r_zfar replaces the original imported dvar read."
       }
     ],
     "gfx_d3d/rb_imagefilter": [
@@ -114371,8 +114371,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x0010669e: Hand-compared viewport-height/aspect radius arithmetic, filter-chain arguments, ping-pong targets, tap uploads and even-pass final flip. Existing selected GL exact-extent textures use unit UV extents and-0.5 pixel quads instead of original POT padding/origin0; preserved current render-target coverage adaptation, no Metal substitution."
       },
       {
         "id": "mac:0x00105878",
@@ -114393,8 +114393,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00105878: Hand-compared tap parity/exponential/pair-centroid/normalization/trimming and glow-radius rescaling, orthogonal second radius, last-pass flag and image/count updates; includes existing native aspect-radius corrections."
       },
       {
         "id": "mac:0x00105d0a",
@@ -114415,8 +114415,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00105d0a: 0x105e56 uses JBE for the X maximum, so equality must compute the residual sqrt; native used>=. Corrected native-only strict comparison. Read residual-radius loop, all constants and2D fallback; compiled and reviewed, not exercised. Native exact-extent screen-texture coordinates remain the selected GL adaptation."
       },
       {
         "id": "mac:0x0010654a",
@@ -114437,8 +114437,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0010654a: Hand-compared tap parity/exponential/pair-centroid/normalization/trimming and glow-radius rescaling, orthogonal second radius, last-pass flag and image/count updates; includes existing native aspect-radius corrections."
       }
     ],
     "gfx_d3d/rb_imagetouch": [
@@ -114461,8 +114461,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001113bc: Compared semantic-zero ordering, descending card-memory tie break, semantic tie break, mapType3 filtering, feedbackImage lifetime and8x8 full-white feedback draws; native qsort uses pointer-sized elements."
       },
       {
         "id": "mac:0x00111406",
@@ -114483,8 +114483,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00111406: Compared semantic-zero ordering, descending card-memory tie break, semantic tie break, mapType3 filtering, feedbackImage lifetime and8x8 full-white feedback draws; native qsort uses pointer-sized elements."
       }
     ],
     "gfx_d3d/rb_light": [
@@ -114507,8 +114507,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000eab7e: Restored original eight-direction data table0x32b2c0 (native was zero);0xead4b reserves final sunlight by ending when count>=max, native allowed one extra. Matched threshold words0x32642c and0x326224. Hand-compared both ambient/fallback loops and sunlight fields; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000eb5e4",
@@ -114529,8 +114529,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000eb5e4: 0xeb603/0xeb64f/0xeb68f truncate biased coordinates, native floored;0xec095 uses search predecessor, native used insertion successor. Corrected bounded predecessor and retained defined first-point fallback when Mac would read before storage. Restored blue sample box/yellow visible trace diagnostics and unordered weight return; made packed-key wrapping explicit. Compared8-corner trace/weight/normalized color and nearest fallback paths; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000ec1ae",
@@ -114551,8 +114551,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000ec1ae: 0x250d28 diagnostic begins control byte0x15; restored native prefix. Compared filename length+5 bound63,6-byte records,24MiB capacity, mode2 read/copy cap, divisible-size validation and frees/resets; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000eaaac",
@@ -114573,8 +114573,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000eaaac: 0x250d28 diagnostic begins control byte0x15; restored native prefix. Compared filename length+5 bound63,6-byte records,24MiB capacity, mode2 read/copy cap, divisible-size validation and frees/resets; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000ec126",
@@ -114595,8 +114595,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000ec126: Compared viewCount store, low renderFxFlags byte bit7 lighting-origin choice, entity origin+4 height fallback, grid call and returned sunVisibility store."
       },
       {
         "id": "mac:0x000eb30e",
@@ -114617,8 +114617,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000eb30e: Mac0xeb55b uses yellow for lower-plane missing points; native used red. Corrected native color, compared bounded coordinate loops,6-byte log binary search, cull gate and dot debug string; compiled and reviewed, not exercised."
       }
     ],
     "gfx_d3d/rb_shade": [
@@ -114641,8 +114641,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000f6598: Hand-compared batch initialization, two2MiB index allocations, eight hardware-light enable/upload/disable routing, entity lighting/cache/constants and decoded all24 code-texture cases from0x32b560, including dvar overrides and error branches. Native typed pointers replace i386 offsets."
       },
       {
         "id": "mac:0x000f6b4a",
@@ -114663,8 +114663,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000f6b4a: Hand-compared batch initialization, two2MiB index allocations, eight hardware-light enable/upload/disable routing, entity lighting/cache/constants and decoded all24 code-texture cases from0x32b560, including dvar overrides and error branches. Native typed pointers replace i386 offsets."
       },
       {
         "id": "mac:0x000f7e66",
@@ -114685,8 +114685,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xf7e94/0xf7ea2: Restored techType33 debug-shader gate and declType3 special flag. 0xf8633 fog-source polarity, 0xf8422 per-pass project-to-infinity view w reset, 0xf9025 double radians, and 0xf92ea mapType3 semantic/dvar image overrides now match. Restored complete state-map error format. Compared pass args/shaders, constants/matrices, water preparation, texture loops and draws. Existing null declaration/missing named-constant skips keep defined native handling. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000f9488",
@@ -114707,8 +114707,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xf9488: Compared debug technique-name print gate and null technique outcome, single versus multiple pass wrapper arguments, and DrawSingleTechnique return/control routing."
       },
       {
         "id": "mac:0x000f9542",
@@ -114729,8 +114729,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xf9542: Compared empty batch exit, counters, cached world/static direct draw arguments, dynamic index/vertex pool rollover, stride44/32/64/24 data setup and surface cleanup. Retained native GL prebind plus existing null/invalid material/declaration/VB guards for defined current-renderer storage and asset handling; no Metal exemption used."
       },
       {
         "id": "mac:0x000f7528",
@@ -114751,8 +114751,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000f7528: 0xf7cfe multiplies view by projection for source0xcc; native multiplied worldView by projection.0xf7bf3 adds outdoor down-bias to vector component2; native used1. Corrected both; decoded0x32b6a0 dispatch and compared matrix cache inverse/transpose/normalization including original0xe0 alias to normalizedWorldView. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000f66d6",
@@ -114773,8 +114773,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000f66d6: Hand-compared batch initialization, two2MiB index allocations, eight hardware-light enable/upload/disable routing, entity lighting/cache/constants and decoded all24 code-texture cases from0x32b560, including dvar overrides and error branches. Native typed pointers replace i386 offsets."
       },
       {
         "id": "mac:0x000f6a26",
@@ -114795,8 +114795,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000f6a26: Hand-compared batch initialization, two2MiB index allocations, eight hardware-light enable/upload/disable routing, entity lighting/cache/constants and decoded all24 code-texture cases from0x32b560, including dvar overrides and error branches. Native typed pointers replace i386 offsets."
       },
       {
         "id": "mac:0x000f65fa",
@@ -114817,8 +114817,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000f65fa: 0xf6647 selects DISCARD for offset0 and NOOVERWRITE otherwise independently of gpuSync. Corrected native flag selection; compared overflow/pool reset, byteOffset/2 return, lock/copy/unlock/bind/increment; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000f6b86",
@@ -114839,8 +114839,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000f6b86: Hand-compared batch initialization, two2MiB index allocations, eight hardware-light enable/upload/disable routing, entity lighting/cache/constants and decoded all24 code-texture cases from0x32b560, including dvar overrides and error branches. Native typed pointers replace i386 offsets."
       }
     ],
     "gfx_d3d/rb_sky": [
@@ -114863,8 +114863,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000de0dc: Compared query Issue/GetData loop and fallback256, six-index topology, both vertex layouts, sun direction matrix products, DX7 divide and DX9 homogeneous billboard offsets; CalcSunSpriteSamples checked at exact symbol entry."
       },
       {
         "id": "mac:0x000de232",
@@ -114885,8 +114885,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000de232: Compared query Issue/GetData loop and fallback256, six-index topology, both vertex layouts, sun direction matrix products, DX7 divide and DX9 homogeneous billboard offsets; CalcSunSpriteSamples checked at exact symbol entry."
       },
       {
         "id": "mac:0x000de3d4",
@@ -114907,8 +114907,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000de3d4: Compared query Issue/GetData loop and fallback256, six-index topology, both vertex layouts, sun direction matrix products, DX7 divide and DX9 homogeneous billboard offsets; CalcSunSpriteSamples checked at exact symbol entry."
       },
       {
         "id": "mac:0x000de4ea",
@@ -114929,8 +114929,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000de4ea: Compared query Issue/GetData loop and fallback256, six-index topology, both vertex layouts, sun direction matrix products, DX7 divide and DX9 homogeneous billboard offsets; CalcSunSpriteSamples checked at exact symbol entry."
       }
     ],
     "gfx_d3d/rb_state": [
@@ -114953,8 +114953,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000ce5d2: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cce5c",
@@ -114975,8 +114975,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cce5c: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cce78",
@@ -114997,8 +114997,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cce78: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000ccee2",
@@ -115019,8 +115019,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000ccee2: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000ccac8",
@@ -115041,8 +115041,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000ccac8: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cecc2",
@@ -115063,8 +115063,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000cecc2: 0xced0a/0xced68 only change alpha function/reference when function bits change and the byte reference differs;0xcf176 ORs cached function bits when disabled. Native updated reference unconditionally and cleared requested disabled bits. Corrected native guards/cache ordering and OR semantics; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000cdeea",
@@ -115085,8 +115085,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cdeea: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000ccb1a",
@@ -115107,8 +115107,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000ccb1a: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000ccd04",
@@ -115129,8 +115129,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Partial fix (not a full reconciliation): alpha/color stage enum tables initialized from Mac .data 0x329d5c/0x329d6c; tests/lp64/renderer/texture_stage_enums.c. See docs/macos-port/reports/2026-11-04-outside-reference-fixes.md"
+        "status": "equal",
+        "evidence": "Mac 0x000ccd04: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cd14e",
@@ -115151,8 +115151,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cd14e: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cec24",
@@ -115173,8 +115173,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cec24: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000ccba0",
@@ -115195,8 +115195,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000ccba0: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cd122",
@@ -115217,8 +115217,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cd122: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cdd40",
@@ -115239,8 +115239,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cdd40: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000ce988",
@@ -115261,8 +115261,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000ce988: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cdd1e",
@@ -115283,8 +115283,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cdd1e: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cdbfe",
@@ -115305,8 +115305,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cdbfe: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cdbac",
@@ -115327,8 +115327,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cdbac: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cde94",
@@ -115349,8 +115349,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cde94: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000ccca8",
@@ -115371,8 +115371,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000ccca8: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000ccbc2",
@@ -115394,7 +115394,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Mac 0x000ccbc2: Hand comparison found a shared provider/layout gap: Mac dx+0x2d65/+0x2d66 capability bytes and+0x2d68/+0x2d6c MIN/MAG caches are absent from native DxGlobals. Native hardcodes MAG linear and derives MIN only from anisotropy; needs coordinated header/capability-producer reconstruction. No equality claimed from sibling work."
       },
       {
         "id": "mac:0x000cd55e",
@@ -115415,8 +115415,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cd55e: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cdda4",
@@ -115437,8 +115437,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cdda4: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cf59a",
@@ -115460,7 +115460,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Mac 0x000cf59a: Hand comparison found a shared provider/layout gap: Mac dx+0x2d65/+0x2d66 capability bytes and+0x2d68/+0x2d6c MIN/MAG caches are absent from native DxGlobals. Native hardcodes MAG linear and derives MIN only from anisotropy; needs coordinated header/capability-producer reconstruction. No equality claimed from sibling work."
       },
       {
         "id": "mac:0x000cd746",
@@ -115481,8 +115481,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cd746: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cf310",
@@ -115503,8 +115503,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cf310: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000ce9ce",
@@ -115525,8 +115525,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000ce9ce: 0x32ab20 is the12-word viewport behavior table; target12 deterministically reads adjacent zero at0x32ab50. Native also declared12words and indexed13targets. Extended native storage with that zero, preserving original routing, feedback unbinds, surfaces, GL buffers and depth/viewport updates; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000ce2ce",
@@ -115548,7 +115548,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Mac 0x000ce2ce: Hand comparison found a shared provider/layout gap: Mac dx+0x2d65/+0x2d66 capability bytes and+0x2d68/+0x2d6c MIN/MAG caches are absent from native DxGlobals. Native hardcodes MAG linear and derives MIN only from anisotropy; needs coordinated header/capability-producer reconstruction. No equality claimed from sibling work."
       },
       {
         "id": "mac:0x000cce94",
@@ -115569,8 +115569,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cce94: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cd68e",
@@ -115591,8 +115591,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cd68e: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000f6e1e",
@@ -115613,8 +115613,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000f6e1e: 0xf6e4d selects DISCARD only for offset0 and NOOVERWRITE otherwise; native consulted gpuSync and used flags0.0x32b5c0 jump table skips unknown strides; native copied them. Corrected flags/default branch, compared supported20/24/32/36/64/68-byte conversion layouts; retained defined native null-lockSlot guard. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000cd2e4",
@@ -115635,8 +115635,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cd2e4: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cd4b0",
@@ -115657,8 +115657,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cd4b0: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cde0c",
@@ -115679,8 +115679,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cde0c: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cf8c2",
@@ -115701,8 +115701,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cf8c2: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000fde5c",
@@ -115723,8 +115723,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xfde5c: Compared entity bone/quaternion transform to four native vec3 axis storage, model part/index data, transform stack and cached/direct tess route; typed LP64 data pointers preserve the Mac matrix argument/scale contract."
       },
       {
         "id": "mac:0x000ce618",
@@ -115745,8 +115745,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000ce618: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000ce66c",
@@ -115767,8 +115767,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000ce66c: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       },
       {
         "id": "mac:0x000cf4d6",
@@ -115789,8 +115789,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000cf4d6: Compared native named state fields against Mac cache reads/writes, device slots/arguments, matrix copy/validity invalidation and DX7 transform routing, sampler/image loops and viewport changes. Scripted raw Mac state decode/filter/blend/cull tables also match; native LP64 pointer strides retained."
       }
     ],
     "gfx_d3d/rb_tess": [
@@ -115813,8 +115813,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x000fe78a: Compared origin/flag offset, zero/rotated camera axes (double radians conversion), color-byte permutation, atlas division and renderer dispatch to Mac0xfe78a. Preserved native defined null-material return and zero atlas-count fallback instead of introducing Mac null dereference/division by zero; valid material/atlas path matches."
       },
       {
         "id": "mac:0x00100810",
@@ -115835,8 +115835,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00100810: Hand-compared empty bad-surface body/current-entity dispatch, tess overflow/decl restoration, vertex/index copies and topology, cached/source draw arguments, particle view-axis/color constants, stream/index cache checks and renderer-specific strides. Native typed surface pointers and existing cloud draw-argument storage corrections retained."
       },
       {
         "id": "mac:0x000fdb04",
@@ -115857,8 +115857,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x000fdb04: Hand-compared empty bad-surface body/current-entity dispatch, tess overflow/decl restoration, vertex/index copies and topology, cached/source draw arguments, particle view-axis/color constants, stream/index cache checks and renderer-specific strides. Native typed surface pointers and existing cloud draw-argument storage corrections retained."
       },
       {
         "id": "mac:0x000ff3cc",
@@ -115879,8 +115879,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x000ff3cc: Decoded0x32b8d0: type5 rail0xffae2 and type9 cylinder0xff56f; native type5 empty/type9 rail. Reconstructed cylinder segment/LOD/trig/vertex/index/closure path, restored sprite minimum-radius projection0xff478, atlas divisor for types7/8, double rotated-angle conversion and rail color bytes. Existing defined three-component sprite storage retained. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00100828",
@@ -115901,8 +115901,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00100828: Hand-compared empty bad-surface body/current-entity dispatch, tess overflow/decl restoration, vertex/index copies and topology, cached/source draw arguments, particle view-axis/color constants, stream/index cache checks and renderer-specific strides. Native typed surface pointers and existing cloud draw-argument storage corrections retained."
       },
       {
         "id": "mac:0x00100be4",
@@ -115923,8 +115923,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00100be4: Hand-compared empty bad-surface body/current-entity dispatch, tess overflow/decl restoration, vertex/index copies and topology, cached/source draw arguments, particle view-axis/color constants, stream/index cache checks and renderer-specific strides. Native typed surface pointers and existing cloud draw-argument storage corrections retained."
       },
       {
         "id": "mac:0x000fdb0a",
@@ -115945,8 +115945,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_tess.c (gfx_d3d/rb_tess); whole RB_TessParticleCloud was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to gfx_d3d/rb_tess; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/rb_tess.c:83; assigned universal header has no body. Mac symbol __Z20RB_TessParticleCloudPK9GfxEntity at 0x000fdb0a. Whole caller not audited by universal-math."
+        "status": "equal",
+        "evidence": "Mac 0x000fdb0a: Hand-compared empty bad-surface body/current-entity dispatch, tess overflow/decl restoration, vertex/index copies and topology, cached/source draw arguments, particle view-axis/color constants, stream/index cache checks and renderer-specific strides. Native typed surface pointers and existing cloud draw-argument storage corrections retained."
       }
     ],
     "groupvoice/decode": [
