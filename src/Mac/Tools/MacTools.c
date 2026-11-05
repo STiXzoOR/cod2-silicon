@@ -54,6 +54,20 @@ SInt16 MacTools_FindDiscVolume(CFStringRef inVolumeName, char *outVolumePath)
 
 void MacTools_CenterRect(MacRect *ioRect, const MacRect *inBounds)
 {
+#if defined(COD2_X64) && defined(__APPLE__)
+    /* Mac 0xa409-0xa47d wraps each extent to signed 16 bits first. */
+    short width = (short)(ioRect->right - ioRect->left);
+    short height = (short)(ioRect->bottom - ioRect->top);
+    short boundsWidth = (short)(inBounds->right - inBounds->left);
+    short boundsHeight = (short)(inBounds->bottom - inBounds->top);
+    int left = (unsigned short)inBounds->left + (boundsWidth - width) / 2;
+    int top = (unsigned short)inBounds->top + (boundsHeight - height) / 2;
+
+    ioRect->left = (short)left;
+    ioRect->top = (short)top;
+    ioRect->right = (short)(left + (unsigned short)width);
+    ioRect->bottom = (short)(top + (unsigned short)height);
+#endif
 }
 
 void MacTools_Sleep(UInt32 inMillisecondsToSleep)
