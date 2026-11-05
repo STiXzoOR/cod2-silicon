@@ -13888,7 +13888,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Follow-up: Mac STABS declares GPValue::Duplicate(TextPool **), _ZN7GPValue9DuplicateEPP8TextPool. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Parser construction/AddPair/AddGroup allocate new nodes from input; no original recursive copy operation with this signature was established. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
+        "evidence": "Follow-up: Mac STABS declares GPValue::Duplicate(TextPool **), _ZN7GPValue9DuplicateEPP8TextPool. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Parser construction/AddPair/AddGroup allocate new nodes from input; no original recursive copy operation with this signature was established. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked. Original-provenance follow-up: exact original Linux1.3 entry0x081320a2, linked to original1.0 anonymous/address anchor0x0812fc5a is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:518:Duplicate",
@@ -13907,7 +13907,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Follow-up: Mac STABS declares GPGroup::Duplicate(TextPool **, GPGroup *), _ZN7GPGroup9DuplicateEPP8TextPoolPS_. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Parser construction/AddPair/AddGroup allocate new nodes from input; no original recursive copy operation with this signature was established. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
+        "evidence": "Follow-up: Mac STABS declares GPGroup::Duplicate(TextPool **, GPGroup *), _ZN7GPGroup9DuplicateEPP8TextPoolPS_. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Parser construction/AddPair/AddGroup allocate new nodes from input; no original recursive copy operation with this signature was established. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked. Original-provenance follow-up: exact original Linux1.3 entry0x0813289a, linked to original1.0 anonymous/address anchor0x08130452 is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:740:FindPair",
@@ -13926,7 +13926,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Follow-up: Mac STABS declares GPGroup::FindPair(const char *), _ZN7GPGroup8FindPairEPKc. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FX_ParseEffect 0x5d302/0x5d381, ParseChannel 0x5e8d9/0x5e93c, and ParsePrimitiveInternal 0x5f781/0x5f85a plus 0x5fa53/0x5fb4b traverse and dispatch all nodes; these are not complete name-to-node/default-value lookup operations. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
+        "evidence": "Follow-up: Mac STABS declares GPGroup::FindPair(const char *), _ZN7GPGroup8FindPairEPKc. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FX_ParseEffect 0x5d302/0x5d381, ParseChannel 0x5e8d9/0x5e93c, and ParsePrimitiveInternal 0x5f781/0x5f85a plus 0x5fa53/0x5fb4b traverse and dispatch all nodes; these are not complete name-to-node/default-value lookup operations. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked. Original-provenance follow-up: exact original Linux1.3 entry0x08133052, linked to original1.0 anonymous/address anchor0x08130c0a is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:755:FindPairValue",
@@ -13945,7 +13945,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Follow-up: Mac STABS declares GPGroup::FindPairValue(const char *, const char *), _ZN7GPGroup13FindPairValueEPKcS1_. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FX_ParseEffect 0x5d302/0x5d381, ParseChannel 0x5e8d9/0x5e93c, and ParsePrimitiveInternal 0x5f781/0x5f85a plus 0x5fa53/0x5fb4b traverse and dispatch all nodes; these are not complete name-to-node/default-value lookup operations. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
+        "evidence": "Follow-up: Mac STABS declares GPGroup::FindPairValue(const char *, const char *), _ZN7GPGroup13FindPairValueEPKcS1_. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FX_ParseEffect 0x5d302/0x5d381, ParseChannel 0x5e8d9/0x5e93c, and ParsePrimitiveInternal 0x5f781/0x5f85a plus 0x5fa53/0x5fb4b traverse and dispatch all nodes; these are not complete name-to-node/default-value lookup operations. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked. Original-provenance follow-up: exact original Linux1.3 entry0x081330ae, linked to original1.0 anonymous/address anchor0x08130c66 is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:638:FindSubGroup",
@@ -13964,7 +13964,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Follow-up: Mac STABS declares GPGroup::FindSubGroup(const char *), _ZN7GPGroup12FindSubGroupEPKc. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FX_ParseEffect 0x5d302/0x5d381, ParseChannel 0x5e8d9/0x5e93c, and ParsePrimitiveInternal 0x5f781/0x5f85a plus 0x5fa53/0x5fb4b traverse and dispatch all nodes; these are not complete name-to-node/default-value lookup operations. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
+        "evidence": "Follow-up: Mac STABS declares GPGroup::FindSubGroup(const char *), _ZN7GPGroup12FindSubGroupEPKc. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FX_ParseEffect 0x5d302/0x5d381, ParseChannel 0x5e8d9/0x5e93c, and ParsePrimitiveInternal 0x5f781/0x5f85a plus 0x5fa53/0x5fb4b traverse and dispatch all nodes; these are not complete name-to-node/default-value lookup operations. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked. Original-provenance follow-up: exact original Linux1.3 entry0x08132c54, linked to original1.0 anonymous/address anchor0x0813080c is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:444:GPGroup",
@@ -14490,7 +14490,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Follow-up: Mac STABS declares GPGroup::GetNumPairs(), _ZN7GPGroup11GetNumPairsEv. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. The matching .eh symbol is absolute zero, not an executable address. FX_ParseEffect 0x5d368-0x5d38a increments accepted-primitive count and traversal index while performing parsing; neither establishes a complete GPGroup count method. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
+        "evidence": "Follow-up: Mac STABS declares GPGroup::GetNumPairs(), _ZN7GPGroup11GetNumPairsEv. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. The matching .eh symbol is absolute zero, not an executable address. FX_ParseEffect 0x5d368-0x5d38a increments accepted-primitive count and traversal index while performing parsing; neither establishes a complete GPGroup count method. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked. Original-provenance follow-up: exact original Linux1.3 entry0x08132766 is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation. Original counter increments and dereferences the initial list head before testing the next pointer; guarded zero-for-empty traversals are not this complete operation."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:462:GetNumSubGroups",
@@ -14509,7 +14509,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Follow-up: Mac STABS declares GPGroup::GetNumSubGroups(), _ZN7GPGroup15GetNumSubGroupsEv. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. The matching .eh symbol is absolute zero, not an executable address. FX_ParseEffect 0x5d368-0x5d38a increments accepted-primitive count and traversal index while performing parsing; neither establishes a complete GPGroup count method. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
+        "evidence": "Follow-up: Mac STABS declares GPGroup::GetNumSubGroups(), _ZN7GPGroup15GetNumSubGroupsEv. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. The matching .eh symbol is absolute zero, not an executable address. FX_ParseEffect 0x5d368-0x5d38a increments accepted-primitive count and traversal index while performing parsing; neither establishes a complete GPGroup count method. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked. Original-provenance follow-up: exact original Linux1.3 entry0x08132732 is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation. Original counter increments and dereferences the initial list head before testing the next pointer; guarded zero-for-empty traversals are not this complete operation."
       },
       {
         "id": "mac:0x000ab80c",
@@ -14742,7 +14742,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Follow-up: Mac STABS declares GPValue::Write(TextPool **, int), _ZN7GPValue5WriteEPP8TextPooli. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FxArchive::ArchiveEffect 0xaa208-0xaa26c writes an effect-name length and name through FxArchive::WriteData. This is not parser text serialization; TextPool::AllocText alone does not establish quoting/indentation/list/group output or failure behavior. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
+        "evidence": "Follow-up: Mac STABS declares GPValue::Write(TextPool **, int), _ZN7GPValue5WriteEPP8TextPooli. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FxArchive::ArchiveEffect 0xaa208-0xaa26c writes an effect-name length and name through FxArchive::WriteData. This is not parser text serialization; TextPool::AllocText alone does not establish quoting/indentation/list/group output or failure behavior. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked. Original-provenance follow-up: exact original Linux1.3 entry0x081323aa, linked to original1.0 anonymous/address anchor0x0812ff62 is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:700:Write",
@@ -14761,7 +14761,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Follow-up: Mac STABS declares GPGroup::Write(TextPool **, int), _ZN7GPGroup5WriteEPP8TextPooli. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FxArchive::ArchiveEffect 0xaa208-0xaa26c writes an effect-name length and name through FxArchive::WriteData. This is not parser text serialization; TextPool::AllocText alone does not establish quoting/indentation/list/group output or failure behavior. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
+        "evidence": "Follow-up: Mac STABS declares GPGroup::Write(TextPool **, int), _ZN7GPGroup5WriteEPP8TextPooli. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FxArchive::ArchiveEffect 0xaa208-0xaa26c writes an effect-name length and name through FxArchive::WriteData. This is not parser text serialization; TextPool::AllocText alone does not establish quoting/indentation/list/group output or failure behavior. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked. Original-provenance follow-up: exact original Linux1.3 entry0x08132e82, linked to original1.0 anonymous/address anchor0x08130a3a is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:798:Write",
@@ -14780,7 +14780,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Follow-up: Mac STABS declares GenericParser2::Write(TextPool *), _ZN14GenericParser25WriteEP8TextPool. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FxArchive::ArchiveEffect 0xaa208-0xaa26c writes an effect-name length and name through FxArchive::WriteData. This is not parser text serialization; TextPool::AllocText alone does not establish quoting/indentation/list/group output or failure behavior. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
+        "evidence": "Follow-up: Mac STABS declares GenericParser2::Write(TextPool *), _ZN14GenericParser25WriteEP8TextPool. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FxArchive::ArchiveEffect 0xaa208-0xaa26c writes an effect-name length and name through FxArchive::WriteData. This is not parser text serialization; TextPool::AllocText alone does not establish quoting/indentation/list/group output or failure behavior. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked. Original-provenance follow-up: exact original Linux1.3 entry0x081332e2, linked to original1.0 anonymous/address anchor0x08130e9a is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:284:WriteText",
@@ -14799,7 +14799,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Follow-up: Mac STABS declares GPObject::WriteText(TextPool **, const char *), _ZN8GPObject9WriteTextEPP8TextPoolPKc. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FxArchive::ArchiveEffect 0xaa208-0xaa26c writes an effect-name length and name through FxArchive::WriteData. This is not parser text serialization; TextPool::AllocText alone does not establish quoting/indentation/list/group output or failure behavior. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
+        "evidence": "Follow-up: Mac STABS declares GPObject::WriteText(TextPool **, const char *), _ZN8GPObject9WriteTextEPP8TextPoolPKc. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FxArchive::ArchiveEffect 0xaa208-0xaa26c writes an effect-name length and name through FxArchive::WriteData. This is not parser text serialization; TextPool::AllocText alone does not establish quoting/indentation/list/group output or failure behavior. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked. Original-provenance follow-up: exact original Linux1.3 entry0x08131ee2, linked to original1.0 anonymous/address anchor0x0812fa9a is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:14:operator delete",
@@ -146652,7 +146652,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No unique Mac symbol or established inline counterpart found. Native joins arguments starting at one then copies to the caller buffer; the join operation was compared with Cmd_Args, but that does not establish this Linux-only wrapper identity."
+        "evidence": "No unique Mac symbol or established inline counterpart found. Native joins arguments starting at one then copies to the caller buffer; the join operation was compared with Cmd_Args, but that does not establish this Linux-only wrapper identity. Original-provenance follow-up: exact original Linux1.3 entry0x0806031c, linked to original1.0 anonymous/address anchor0x08060118 is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "mac:0x0004e7bc",
@@ -146733,7 +146733,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux-only name has no native body and no unique Mac symbol or established inline counterpart. Mac Cmd_Init 0x4f508 registers no echo command, but absence of a registration does not identify the Linux echo implementation."
+        "evidence": "Linux-only name has no native body and no unique Mac symbol or established inline counterpart. Mac Cmd_Init 0x4f508 registers no echo command, but absence of a registration does not identify the Linux echo implementation. Original-provenance follow-up: exact original Linux1.3 entry0x08060196, linked to original1.0 anonymous/address anchor0x0805ff92 is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "linux:qcommon/cmd.cpp:42:Cmd_EmptyStub",
@@ -146752,7 +146752,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux marks this an unreferenced empty function with unknown original name. No native body or unique Mac identity was established; no semantic equality claimed."
+        "evidence": "Linux marks this an unreferenced empty function with unknown original name. No native body or unique Mac identity was established; no semantic equality claimed. Original-provenance follow-up: candidate empty original1.3 body0x0805fc5c is between the four-word math copier and Cmd_Wait_f; an empty body and reconstruction placement do not establish its original name or Mac identity. Remains unchecked."
       },
       {
         "id": "linux:qcommon/cmd.cpp:250:Cmd_ExecFromDisk",
@@ -208841,7 +208841,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read full Linux delimiter/parse/atof loop. Native has no named body/callsite and no complete Mac parenthesized matrix loop was identified; standalone scalar parsing is insufficient."
+        "evidence": "Read full Linux delimiter/parse/atof loop. Native has no named body/callsite and no complete Mac parenthesized matrix loop was identified; standalone scalar parsing is insufficient. Original-provenance follow-up: exact original Linux1.3 entry0x080b7166, linked to original1.0 anonymous/address anchor0x080b4b8e is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "linux:universal/q_parse.cpp:991:Com_Parse2DMatrix",
@@ -208860,7 +208860,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read full Linux outer delimiters, row loop and x-stride offsets. Native has no body/callsite and complete Mac nested matrix identity remains missing."
+        "evidence": "Read full Linux outer delimiters, row loop and x-stride offsets. Native has no body/callsite and complete Mac nested matrix identity remains missing. Original-provenance follow-up: exact original Linux1.3 entry0x080b71ec, linked to original1.0 anonymous/address anchor0x080b4c14 is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "linux:universal/q_parse.cpp:1005:Com_Parse3DMatrix",
@@ -208879,7 +208879,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read full Linux outer delimiters, depth loop and x*y-stride offsets. Native has no body/callsite and complete Mac nested matrix identity remains missing."
+        "evidence": "Read full Linux outer delimiters, depth loop and x*y-stride offsets. Native has no body/callsite and complete Mac nested matrix identity remains missing. Original-provenance follow-up: exact original Linux1.3 entry0x080b7266, linked to original1.0 anonymous/address anchor0x080b4c8e is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "linux:universal/q_parse.cpp:359:Com_ParseCSV",
@@ -208979,7 +208979,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read Linux Com_ParseOnLine-to-atof wrapper. Mac Float_Parse/native UI utility adds nonempty-token failure handling; that is not a complete identity for empty-token conversion. No unconditional matching float wrapper/callsite identified."
+        "evidence": "Read Linux Com_ParseOnLine-to-atof wrapper. Mac Float_Parse/native UI utility adds nonempty-token failure handling; that is not a complete identity for empty-token conversion. No unconditional matching float wrapper/callsite identified. Original-provenance follow-up: exact original Linux1.3 entry0x080b70f4, linked to original1.0 anonymous/address anchor0x080b4b1c is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "mac:0x000ae824",
@@ -209079,7 +209079,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read full Linux on-line token loop, spaced concatenation and shared line-buffer result. Native has no body/callsite implementing that complete operation and no full Mac identity identified."
+        "evidence": "Read full Linux on-line token loop, spaced concatenation and shared line-buffer result. Native has no body/callsite implementing that complete operation and no full Mac identity identified. Original-provenance follow-up: exact original Linux1.3 entry0x080b704a, linked to original1.0 anonymous/address anchor0x080b4a72 is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "mac:0x000adffe",
@@ -209315,7 +209315,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Mac has only a zero-address .eh label. Native reads/initializes negativeNumbers but no native setting callsite or complete matching Mac nonzero-normalizing setter was identified."
+        "evidence": "Mac has only a zero-address .eh label. Native reads/initializes negativeNumbers but no native setting callsite or complete matching Mac nonzero-normalizing setter was identified. Original-provenance follow-up: exact original Linux1.3 entry0x080b60fe is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "linux:universal/q_parse.cpp:131:Com_SetScriptErrorPrefix",
@@ -209334,7 +209334,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Mac has only a zero-address .eh label. Native reads/initializes errorPrefix but no native setting callsite or complete matching Mac setter was identified."
+        "evidence": "Mac has only a zero-address .eh label. Native reads/initializes errorPrefix but no native setting callsite or complete matching Mac setter was identified. Original-provenance follow-up: exact original Linux1.3 entry0x080b6162 is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "mac:0x000ade04",
@@ -209415,7 +209415,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read full Linux maximum-nesting/exceeded predicate and token loop. Native has no named body/callsite and no complete Mac maximum-nesting helper identity was identified."
+        "evidence": "Read full Linux maximum-nesting/exceeded predicate and token loop. Native has no named body/callsite and no complete Mac maximum-nesting helper identity was identified. Original-provenance follow-up: exact original Linux1.3 entry0x080b6f24, linked to original1.0 anonymous/address anchor0x080b494c is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
       },
       {
         "id": "mac:0x000ae6ca",
