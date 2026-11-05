@@ -10,6 +10,6 @@ Mac 0xc4890 copies the actual display renderer. Native returned the hardcoded `L
 
 The float-to-double CPU conversion at 0xc4858 and signed memory cap at 0xc4876 match. The cap is exactly `0x8000000`, not an inferred one-gigabyte limit. Native SIMD capability remains true instead of querying Mac's obsolete x86 Gestalt attribute 25 at 0xc48b4. The CPU/memory underlying providers remain `MacFeatures` -> `MacSystem`.
 
-The SDK branch is isolated from the legacy type/import copies. The linked dedicated executable resolves all newly used CF functions from CoreFoundation and all IO functions from IOKit. The legacy branch is unchanged, and neither changed file contains `__LINE__` use.
+The SDK branch is isolated from the legacy type/import copies. Its memory-provider declaration uses the project provider's unsigned-long return and its SSE wrapper uses unsigned char, matching the existing Bool caller rather than introducing cross-unit signature differences. The linked dedicated executable resolves all newly used CF functions from CoreFoundation and all IO functions from IOKit. The legacy branch is unchanged, and neither changed file contains `__LINE__` use.
 
 The arm64 Release `cod2_macos_ded` target compiles and links with `taskpolicy -b nice -n 19` and two jobs. All six inactive-source configurations match the assignment base. No new tests, full CI, replays or pushes were run. Source changes are compiled and reviewed, not exercised. Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-mac-lifecycle.noindex/`.
