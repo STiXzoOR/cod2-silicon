@@ -7789,7 +7789,7 @@
   },
   "linux:script/scr_compiler.cpp:5847:Scr_CompileStatement": {
     "status": "unchecked",
-    "evidence": "No Mac symbol or proven inlined debugger statement-compilation entry was identified, and no native body exists in the assigned source. Did not infer equality from Linux text or create an unproven body."
+    "evidence": "No Mac symbol or proven inlined debugger statement-compilation entry was identified, and no native body exists in the assigned source. Did not infer equality from Linux text or create an unproven body. Original executable follow-up, 2026-11-05: Previously recovered original 1.0 sub_8075710 maps to original 1.3 0x8075d58\u20130x8075d9f. The complete wrapper calls EmitStatement with zero/zero/null context at 0x8075d7c, then emits opcode 128 at 0x8075d98. Ordinary statement emission is not this complete statement-plus-abort owner; no new primary Mac mapping was established. No closure from absent symbols or callers; no production change."
   },
   "linux:script/scr_compiler.cpp:830:Scr_CopyBlock": {
     "status": "equal",
@@ -7929,7 +7929,7 @@
   },
   "linux:script/scr_variable.cpp:4290:CopyEntity": {
     "status": "unchecked",
-    "evidence": "Inspected assigned Linux row for CopyEntity, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+    "evidence": "Inspected assigned Linux row for CopyEntity, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. Original executable follow-up, 2026-11-05: Original Linux 1.0 0x807edfc\u20130x807eece maps to original 1.3 0x807f44e\u20130x807f520. Complete body walks fields, skips name 0x1fffe, writes destination type/payload and adds references. Actual caller is Scr_CopyEntityNum at 0x807f56e. This is shallow copying; exact Mac CopyArray 0x8bf46\u20130x8c274 instead recursively allocates/copies array-valued children (call 0x8c23e), so that provider cannot establish this operation. No closure from absent symbols or callers; no production change."
   },
   "mac:0x00088bcc": {
     "status": "equal",
@@ -8173,7 +8173,7 @@
   },
   "linux:script/scr_variable.cpp:4834:Scr_AddStringSet": {
     "status": "unchecked",
-    "evidence": "Inspected assigned Linux row for Scr_AddStringSet, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+    "evidence": "Inspected assigned Linux row for Scr_AddStringSet, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. Original executable follow-up, 2026-11-05: Original Linux 1.0 sub_807F74E 0x807f74e\u20130x807f7e0 maps to original 1.3 0x807fda0\u20130x807fe32. Complete body obtains the type-6 lowercase name, returns zero after releasing it when the key exists, otherwise creates the variable, releases the temporary name, assigns integer zero and returns one. The positive lowercase-wrapper call at 0x807fdb4 supports that separate strict-forwarder closure, not this insertion/duplicate/reference/result operation. A complete Mac insertion owner is still required. No closure from absent symbols or callers; no production change."
   },
   "mac:0x0008c816": {
     "status": "equal",
@@ -8229,7 +8229,7 @@
   },
   "linux:script/scr_variable.cpp:4352:Scr_CopyEntityNum": {
     "status": "unchecked",
-    "evidence": "Inspected assigned Linux row for Scr_CopyEntityNum, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+    "evidence": "Inspected assigned Linux row for Scr_CopyEntityNum, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. Original executable follow-up, 2026-11-05: Original Linux 1.0 0x807eece\u20130x807ef24 maps to original 1.3 0x807f520\u20130x807f576. Complete body returns for missing source or no children, obtains destination entity ID, then calls CopyEntity. Original G_DuplicateScriptFields 1.0 0x8118504 maps to 1.3 0x811a994\u20130x811a9ba and positively calls it at 0x811a9b3 with source/destination entity numbers and class zero. This original caller chain does not identify a complete Mac copy owner; the game row remains separate. No closure from absent symbols or callers; no production change."
   },
   "mac:0x0008a454": {
     "status": "equal",
@@ -8361,7 +8361,7 @@
   },
   "linux:script/scr_variable.cpp:1763:Scr_FindAllVariableField": {
     "status": "unchecked",
-    "evidence": "Inspected assigned Linux row for Scr_FindAllVariableField, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. A same-named native implementation exists in scr_debugger_eval.c outside this unit, but its primary-reference identity remains unresolved. Follow-up: native scr_debugger_ui_watch.c:902-932 uses both count and fill calls; scr_debugger_eval.c:490-511 writes child IDs after a type gate. This is a live feature-gated consumer, not evidence for declaring the API absent or superseded. Mac has only the absolute-zero .eh signature; no original complete enumeration/output contract was established, so no patch is inferred from the Linux reconstruction."
+    "evidence": "Inspected assigned Linux row for Scr_FindAllVariableField, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. A same-named native implementation exists in scr_debugger_eval.c outside this unit, but its primary-reference identity remains unresolved. Follow-up: native scr_debugger_ui_watch.c:902-932 uses both count and fill calls; scr_debugger_eval.c:490-511 writes child IDs after a type gate. This is a live feature-gated consumer, not evidence for declaring the API absent or superseded. Mac has only the absolute-zero .eh signature; no original complete enumeration/output contract was established, so no patch is inferred from the Linux reconstruction. Original executable follow-up, 2026-11-05: Original Linux 1.0 0x807bd0e\u20130x807bf2c maps to original 1.3 0x807c35e\u20130x807c57c. Complete body enumerates names, including non-overridden canonical entity-class fields, dynamic fields excluding special notify/stack names, and all array names; a null output performs counting only. Native optional debugger still outputs child IDs. This is a concrete original contract distinction, but no primary Mac complete owner has been established, so no Linux-driven source correction is justified. No closure from absent symbols or callers; no production change."
   },
   "linux:script/scr_variable.cpp:3899:Scr_FindArrayIndex": {
     "status": "equal",
@@ -8401,7 +8401,7 @@
   },
   "linux:script/scr_variable.cpp:4792:Scr_GetChecksum": {
     "status": "unchecked",
-    "evidence": "Inspected assigned Linux row for Scr_GetChecksum, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+    "evidence": "Inspected assigned Linux row for Scr_GetChecksum, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. Original executable follow-up, 2026-11-05: Original Linux 1.0 0x807f6c0\u20130x807f6f2 maps to original 1.3 0x807fd12\u20130x807fd44. Complete body stores checksum, program length, and endScriptBuffer minus programBuffer as three consecutive integers. Individual global updates do not establish this ordered snapshot API; no complete primary Mac owner is identified. No closure from absent symbols or callers; no production change."
   },
   "mac:0x00088926": {
     "status": "equal",
@@ -8413,11 +8413,11 @@
   },
   "linux:script/scr_variable.cpp:2776:Scr_GetEntClassId": {
     "status": "unchecked",
-    "evidence": "Inspected assigned Linux row for Scr_GetEntClassId, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. Follow-up: exact Mac Scr_GetEntityIdRef 0x8889e-0x888c3 returns a packed entity/class-number pair and never indexes scrClassMap.charId. Native preserves that packed provider. Neither it nor the inverse Scr_GetClassnumForCharId establishes the complete entity-to-class-character operation."
+    "evidence": "Inspected assigned Linux row for Scr_GetEntClassId, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. Follow-up: exact Mac Scr_GetEntityIdRef 0x8889e-0x888c3 returns a packed entity/class-number pair and never indexes scrClassMap.charId. Native preserves that packed provider. Neither it nor the inverse Scr_GetClassnumForCharId establishes the complete entity-to-class-character operation. Original executable follow-up, 2026-11-05: Previously recovered original 1.3 0x807d4fc\u20130x807d521 uses the name/class index and original 12-byte class-map stride to return a sign-extended class character. Mac Scr_GetEntityIdRef returns a packed number/class tuple without this class-character lookup; it is not the same result contract. No closure from absent symbols or callers; no production change."
   },
   "linux:script/scr_variable.cpp:2787:Scr_GetEntNum": {
     "status": "unchecked",
-    "evidence": "Inspected assigned Linux row for Scr_GetEntNum, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. Follow-up: exact Mac Scr_GetEntityIdRef 0x8889e-0x888c3 combines the 16-bit entity number with class number into scr_entref_t. Ordered STABS assigns its own original lines 4185/4190/4197/4198, not a separately identified getter. This concrete packed-result owner does not establish the standalone integer-result API."
+    "evidence": "Inspected assigned Linux row for Scr_GetEntNum, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. Follow-up: exact Mac Scr_GetEntityIdRef 0x8889e-0x888c3 combines the 16-bit entity number with class number into scr_entref_t. Ordered STABS assigns its own original lines 4185/4190/4197/4198, not a separately identified getter. This concrete packed-result owner does not establish the standalone integer-result API. Original executable follow-up, 2026-11-05: Previously recovered original 1.3 0x807d522\u20130x807d533 returns a zero-extended 16-bit entity number. Mac Scr_GetEntityIdRef returns a packed tuple, so extracting one component hypothetically does not identify the separate integer-result API. No closure from absent symbols or callers; no production change."
   },
   "mac:0x0008b3e6": {
     "status": "equal",
@@ -8477,7 +8477,7 @@
   },
   "linux:script/scr_variable.cpp:2593:Scr_IsThreadAlive": {
     "status": "unchecked",
-    "evidence": "Inspected assigned Linux row for Scr_IsThreadAlive, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+    "evidence": "Inspected assigned Linux row for Scr_IsThreadAlive, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. Original executable follow-up, 2026-11-05: Previously recovered original 1.3 0x807d1c4\u20130x807d1f9 masks type with 31, compares it with 23 and returns an integer boolean. That separate result-producing operation still needs a complete primary Mac owner; lifecycle type checks alone are insufficient. No closure from absent symbols or callers; no production change."
   },
   "mac:0x0008da1c": {
     "status": "equal",
@@ -9156,8 +9156,8 @@
     "evidence": "Linux helper identified inline in Mac SL_RemoveRefToStringOfLen 0x42bda-0x42d5c and SL_RemoveRefToString. Compared hashing before MT_FreeIndex, head promotion, predecessor links, restart marker and free-list insertion. Removed native-only bounded-search recycle fallback absent from 0x42c6a-0x42c83. Compiled and reviewed, not exercised."
   },
   "linux:script/scr_stringlist.cpp:535:SL_GetLowercaseString": {
-    "status": "unchecked",
-    "evidence": "Linux-only two-argument wrapper has no Mac symbol or native definition/call under this name. The three-argument underscore implementation is verified, but no concrete Mac inline caller was identified for this distinct wrapper; do not infer identity from the Linux body. Follow-up: exact Mac Scr_FindAnim 0x9c1e8-0x9c1fe and AnimTreeParseInternal 0x9c380-0x9c393 pass allocation type 4 to the three-argument provider; native does likewise. These concrete consumers do not identify the separate two-argument type-6 wrapper described by the reconstruction."
+    "status": "equal",
+    "evidence": "Original1.0 sub_80793D2 and original1.3 0x8079a22-0x8079a43 explicitly set allocation type6 and forward unchanged string/user arguments to SL_GetLowercaseString_, returning its result without extra state or guards. Positive original AddStringSet call0x807fdb4 identifies this lowercase wrapper; its actual target0x80799ee distinguishes the same-shaped ordinary string wrapper. Complete Mac provider0x434b8-0x43554 accepts arbitrary type at0x434e3-0x434e6, computes strlen+1, checks unsigned8192 bound, lowercases signed input bytes includingNUL, forwards type/user/length to SL_GetStringOfLen and returns0 if the oversize error returns. Native SL_GetLowercaseString_ preserves this complete provider and type forwarding. Equal through the strict original default-type wrapper mapping; no separate Mac emitted wrapper or new native export claimed. Existing type4 anim consumers and fixed string-allocation/ownership providers remain unchanged; AddStringSet remains unresolved. Documentation-only, no runtime exercise."
   },
   "linux:script/scr_stringlist.cpp:501:SL_GetLowercaseStringOfLen": {
     "status": "equal",
@@ -9233,7 +9233,7 @@
   },
   "linux:script/scr_stringlist.cpp:858:SL_TransferSystem": {
     "status": "unchecked",
-    "evidence": "Linux-only from/to user-bit transfer loop has no Mac symbol or native definition/call under this name. No concrete Mac inline caller has been established; the Linux reconstruction alone cannot establish Mac identity or omission. Follow-up: exact Mac SL_ShutdownSystem 0x43784-0x43803 clears selected user bits and releases references with restart-on-mutation; SL_TransferRefToUser 0x42b6a-0x42b98 handles one string and may decrement its reference count. Neither complete owner is the unresolved all-strings from/to user-bit transfer operation."
+    "evidence": "Linux-only from/to user-bit transfer loop has no Mac symbol or native definition/call under this name. No concrete Mac inline caller has been established; the Linux reconstruction alone cannot establish Mac identity or omission. Follow-up: exact Mac SL_ShutdownSystem 0x43784-0x43803 clears selected user bits and releases references with restart-on-mutation; SL_TransferRefToUser 0x42b6a-0x42b98 handles one string and may decrement its reference count. Neither complete owner is the unresolved all-strings from/to user-bit transfer operation. Original executable follow-up, 2026-11-05: Original Linux 1.0 0x80799ca\u20130x8079a58 maps to original 1.3 0x807a01a\u20130x807a0a8. Complete body scans live hash records, clears selected source user bits and ORs destination bits without releasing references or restarting traversal. Exact Mac SL_ShutdownSystem and single-string SL_TransferRefToUser have different reference/traversal contracts; neither establishes this bulk transfer. No closure from absent symbols or callers; no production change."
   },
   "mac:0x00043ccc": {
     "status": "equal",
@@ -9249,7 +9249,7 @@
   },
   "linux:script/scr_stringlist.cpp:747:Scr_SetStringFromCharString": {
     "status": "unchecked",
-    "evidence": "Linux-only pointer/string setter has no Mac symbol or native definition/call under this name. No concrete Mac inline caller has been identified, so its distinct remove-old/intern-new semantics remain unverified. Follow-up: exact Mac Scr_SetString 0x43804-0x4383f takes a numeric string ID, adds its reference before releasing the prior ID, then stores it. That complete provider does not identify the separate char-pointer setter and its release-old/intern-new ordering."
+    "evidence": "Linux-only pointer/string setter has no Mac symbol or native definition/call under this name. No concrete Mac inline caller has been identified, so its distinct remove-old/intern-new semantics remain unverified. Follow-up: exact Mac Scr_SetString 0x43804-0x4383f takes a numeric string ID, adds its reference before releasing the prior ID, then stores it. That complete provider does not identify the separate char-pointer setter and its release-old/intern-new ordering. Original executable follow-up, 2026-11-05: Original 1.0 0x80797ca and original 1.3 0x8079e1a\u20130x8079e57 retain the already established release-old, intern-C-string with user zero, store-16-bit-ID contract. The numeric-ID setter retains the new reference before old release, and reviewed vector-to-string consumers do not establish arbitrary C-string input. The prior specific Mac ownership gap remains unchanged. No closure from absent symbols or callers; no production change."
   },
   "mac:0x00043914": {
     "status": "equal",
