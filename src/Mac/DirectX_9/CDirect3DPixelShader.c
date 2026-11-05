@@ -21,7 +21,11 @@ typedef struct {
     void **vtable;
     ULONG refCount;
     UINT32 textureUsageMask;
+#if defined(COD2_X64)
+    const void *source;
+#else
     UINT32 pad0xc;
+#endif
     UINT32 stageCount;
 } COpenGLNVidiaRegisterCombinersProgramImpl;
 
@@ -38,6 +42,37 @@ extern fnptr_t vtbl_CDirect3DPixelShader_base[];
 extern fnptr_t vtbl_CDirect3DPixelShader_ATI[];
 extern fnptr_t vtbl_CDirect3DPixelShader_NVidia[];
 extern fnptr_t vtbl_CDirect3DPixelShader_ARB[];
+
+#if defined(COD2_X64)
+#if !COD2_APPLE_SDK
+extern GLboolean glIsEnabled(GLenum cap);
+#endif
+extern int CDirect3DDevice_DetachPixelShader(const void *shader);
+
+/* Current native rendering also binds programs outside COpenGL. Query the
+ * current context rather than keeping Mac's 0x81c/0x820 singleton cache. */
+static int PixelShader_ProgramIsBound(GLenum target, GLuint program)
+{
+    GLint bound = 0;
+    glGetProgramivARB(target, 0x8677, &bound);
+    return (GLuint)bound == program;
+}
+
+static void PixelShader_EnableProgram(GLenum target, GLuint program)
+{
+    if (!PixelShader_ProgramIsBound(target, program))
+        glBindProgramARB(target, program);
+    if (!glIsEnabled(target))
+        glEnable(target);
+}
+
+static void PixelShader_DisableProgram(GLenum target)
+{
+    if (glIsEnabled(target))
+        glDisable(target);
+}
+#endif
+
 
 extern void *imp___ZN7COpenGL7sOpenGLE;
 extern int g_fp_enable_count;
@@ -118,7 +153,11 @@ HRESULT CDirect3DPixelShader_QueryInterface(const CDirect3DPixelShader *_this, c
     (void)iid;
 
     *ppvObj = (void *)_this;
+#if defined(COD2_X64)
+    ((ULONG (*)(const void *))(*(void ***)_this)[1])(_this);
+#else
     CDirect3DPixelShader_AddRef(_this);
+#endif
     return 0;
 }
 
@@ -155,6 +194,9 @@ void ZN20CDirect3DPixelShaderD2Ev(const CDirect3DPixelShader *_this)
 
     CDirect3DPixelShaderImpl *shader = (CDirect3DPixelShaderImpl *)_this;
     shader->vtable = vtbl_CDirect3DPixelShader_base;
+#if defined(COD2_X64)
+    CDirect3DDevice_DetachPixelShader(_this);
+#endif
     CDirect3DPixelShader_InvalidateDeviceState();
 }
 
@@ -189,9 +231,13 @@ void COpenGLATITextFragmentShader_Enable(const COpenGLATITextFragmentShader *_th
         return;
 #endif
 
+#if defined(COD2_X64)
+    PixelShader_EnableProgram(0x8200, ((const COpenGLATITextFragmentShaderImpl *)_this)->programId);
+#else
     (void)_this;
 
     return 0;
+#endif
 }
 
 void COpenGLATITextFragmentShader_Disable(const COpenGLATITextFragmentShader *_this)
@@ -202,9 +248,14 @@ void COpenGLATITextFragmentShader_Disable(const COpenGLATITextFragmentShader *_t
         return;
 #endif
 
+#if defined(COD2_X64)
+    (void)_this;
+    PixelShader_DisableProgram(0x8200);
+#else
     (void)_this;
 
     return 0;
+#endif
 }
 
 void COpenGLATITextFragmentShader_SetConstants(const COpenGLATITextFragmentShader *_this, UINT32 Register, const float *pConstantData, UINT32 Vector4fCount, UINT32 CommandNumber)
@@ -215,6 +266,12 @@ void COpenGLATITextFragmentShader_SetConstants(const COpenGLATITextFragmentShade
         return;
 #endif
 
+#if defined(COD2_X64)
+    (void)_this;
+    (void)CommandNumber;
+    for (UINT32 i = 0; i < Vector4fCount; ++i)
+        glProgramEnvParameter4fvARB(0x8200, Register + i, pConstantData + i * 4);
+#else
     (void)_this;
     (void)Register;
     (void)pConstantData;
@@ -222,6 +279,7 @@ void COpenGLATITextFragmentShader_SetConstants(const COpenGLATITextFragmentShade
     (void)CommandNumber;
 
     return 0;
+#endif
 }
 
 void COpenGLATITextFragmentShader_COpenGLATITextFragmentShader(const COpenGLATITextFragmentShader *_this, const void *pSrcData)
@@ -232,6 +290,19 @@ void COpenGLATITextFragmentShader_COpenGLATITextFragmentShader(const COpenGLATIT
         return;
 #endif
 
+#if defined(COD2_X64)
+    COpenGLATITextFragmentShaderImpl *shader = (COpenGLATITextFragmentShaderImpl *)_this;
+    GLint previousProgram;
+    shader->vtable = vtbl_CDirect3DPixelShader_ATI;
+    shader->refCount = 1;
+    shader->textureUsageMask = 0;
+    shader->programId = 0;
+    glGetProgramivARB(0x8200, 0x8677, &previousProgram);
+    glGenProgramsARB(1, &shader->programId);
+    glBindProgramARB(0x8200, shader->programId);
+    glProgramStringARB(0x8200, 0x8875, (GLsizei)strlen((const char *)pSrcData), pSrcData);
+    glBindProgramARB(0x8200, (GLuint)previousProgram);
+#else
     COpenGLATITextFragmentShaderImpl *shader;
 
     (void)pSrcData;
@@ -243,12 +314,18 @@ void COpenGLATITextFragmentShader_COpenGLATITextFragmentShader(const COpenGLATIT
     shader->programId = 0;
 
     return 0;
+#endif
 }
 
 static void COpenGLATITextFragmentShader_DestroyImpl(const COpenGLATITextFragmentShader *_this)
 {
     COpenGLATITextFragmentShaderImpl *shader = (COpenGLATITextFragmentShaderImpl *)_this;
     shader->vtable = vtbl_CDirect3DPixelShader_ATI;
+#if defined(COD2_X64)
+    if (PixelShader_ProgramIsBound(0x8200, shader->programId))
+        PixelShader_DisableProgram(0x8200);
+    glDeleteProgramsARB(1, &shader->programId);
+#endif
 
     ZN20CDirect3DPixelShaderD2Ev((const CDirect3DPixelShader *)_this);
 }
@@ -296,9 +373,18 @@ void COpenGLNVidiaRegisterCombinersProgram_Disable(const COpenGLNVidiaRegisterCo
         return;
 #endif
 
+#if defined(COD2_X64)
+    (void)_this;
+    /* NV has no ARB program binding; these are the two enable capabilities. */
+    if (glIsEnabled(0x86de) || glIsEnabled(0x8522)) {
+        glDisable(0x86de);
+        glDisable(0x8522);
+    }
+#else
     (void)_this;
 
     return 0;
+#endif
 }
 
 void COpenGLNVidiaRegisterCombinersProgram_SetConstants(const COpenGLNVidiaRegisterCombinersProgram *_this, UINT32 Register, const float *pConstantData, UINT32 Vector4fCount, UINT32 CommandNumber)
@@ -309,6 +395,14 @@ void COpenGLNVidiaRegisterCombinersProgram_SetConstants(const COpenGLNVidiaRegis
         return;
 #endif
 
+#if defined(COD2_X64)
+    (void)Register;
+    (void)Vector4fCount;
+    if (((const COpenGLNVidiaRegisterCombinersProgramImpl *)_this)->stageCount <= 2)
+        glCombinerParameterfvNV(0x852a + CommandNumber, pConstantData);
+    else
+        glCombinerStageParameterfvNV(0x8550 + CommandNumber, 0x852a, pConstantData);
+#else
     (void)_this;
     (void)Register;
     (void)pConstantData;
@@ -316,6 +410,7 @@ void COpenGLNVidiaRegisterCombinersProgram_SetConstants(const COpenGLNVidiaRegis
     (void)CommandNumber;
 
     return 0;
+#endif
 }
 
 void COpenGLNVidiaRegisterCombinersProgram_COpenGLNVidiaRegisterCombinersProgram(const COpenGLNVidiaRegisterCombinersProgram *_this, const void *pSrcData)
@@ -332,7 +427,11 @@ void COpenGLNVidiaRegisterCombinersProgram_COpenGLNVidiaRegisterCombinersProgram
     program->vtable = vtbl_CDirect3DPixelShader_NVidia;
     program->refCount = 1;
     program->textureUsageMask = 0;
+#if defined(COD2_X64)
+    program->source = pSrcData;
+#else
     program->pad0xc = (UINT32)(unsigned long)pSrcData;
+#endif
     program->stageCount = 0;
     return 0;
 }
@@ -342,6 +441,10 @@ static void COpenGLNVidiaRegisterCombinersProgram_DestroyImpl(const COpenGLNVidi
     COpenGLNVidiaRegisterCombinersProgramImpl *program;
     program = (COpenGLNVidiaRegisterCombinersProgramImpl *)_this;
     program->vtable = vtbl_CDirect3DPixelShader_NVidia;
+#if defined(COD2_X64)
+    if (CDirect3DDevice_DetachPixelShader(_this))
+        COpenGLNVidiaRegisterCombinersProgram_Disable(_this);
+#endif
 
     ZN20CDirect3DPixelShaderD2Ev((const CDirect3DPixelShader *)_this);
 }
@@ -388,12 +491,16 @@ void COpenGLARBFragmentProgram_Enable(const COpenGLARBFragmentProgram *_this)
         return;
 #endif
 
+#if defined(COD2_X64)
+    PixelShader_EnableProgram(0x8804, ((const COpenGLARBFragmentProgramImpl *)_this)->programId);
+#else
     COpenGLARBFragmentProgramImpl *program = (COpenGLARBFragmentProgramImpl *)_this;
     if (program->programId) {
         glEnable(0x8804);
         glBindProgramARB(0x8804, program->programId);
     }
     return 0;
+#endif
 }
 
 void COpenGLARBFragmentProgram_Disable(const COpenGLARBFragmentProgram *_this)
@@ -404,10 +511,15 @@ void COpenGLARBFragmentProgram_Disable(const COpenGLARBFragmentProgram *_this)
         return;
 #endif
 
+#if defined(COD2_X64)
+    (void)_this;
+    PixelShader_DisableProgram(0x8804);
+#else
     (void)_this;
     glDisable(0x8804);
     glBindProgramARB(0x8804, 0);
     return 0;
+#endif
 }
 
 void COpenGLARBFragmentProgram_SetConstants(const COpenGLARBFragmentProgram *_this, UINT32 Register, const float *pConstantData, UINT32 Vector4fCount, UINT32 CommandNumber)

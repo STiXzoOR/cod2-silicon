@@ -109,7 +109,11 @@ HRESULT CDirect3DVertexDeclaration_QueryInterface(const CDirect3DVertexDeclarati
     (void)iid;
 
     *(void **)ppvObj = (void *)_this;
+#if defined(COD2_X64)
+    ((ULONG (*)(const void *))(*(void ***)_this)[1])(_this);
+#else
     CDirect3DVertexDeclaration_AddRef(_this);
+#endif
     return 0;
 }
 
@@ -128,7 +132,11 @@ ULONG CDirect3DVertexDeclaration_Release(const CDirect3DVertexDeclaration *_this
     declaration = (CDirect3DVertexDeclarationImpl *)_this;
     refCount = --declaration->refCount;
     if (!refCount) {
+#if defined(COD2_X64)
+        ((void (*)(const void *))declaration->vtable[6])(_this);
+#else
         ZN26CDirect3DVertexDeclarationD0Ev(_this);
+#endif
     }
 
     return refCount;
@@ -175,10 +183,16 @@ HRESULT CDirect3DVertexDeclaration_GetDeclaration(const CDirect3DVertexDeclarati
     CDirect3DVertexDeclarationImpl *declaration;
 
     declaration = (CDirect3DVertexDeclarationImpl *)_this;
+#if defined(COD2_X64)
+    /* Mac 0x1f609 copies in this direction, including the end marker. */
+    for (UINT32 i = 0; i < declaration->elementCount; ++i)
+        declaration->elements[i] = ((const D3DVERTEXELEMENT9 *)pElement)[i];
+#else
     if (pElement && declaration->elementCount) {
         memcpy(pElement, declaration->elements,
                declaration->elementCount * sizeof(D3DVERTEXELEMENT9));
     }
+#endif
 
     *pNumElements = declaration->elementCount;
     return 0;
@@ -251,9 +265,18 @@ int CDirect3DVertexDeclaration_GetShaderDeclaration(const CDirect3DVertexDeclara
 
         typeToken = CDirect3DVertexDeclaration_TypeToken(element, &currentOffset);
         regIndex = CDirect3DVertexDeclaration_UsageRegister(element);
+#if defined(COD2_X64)
+        /* The jump at 0x1f7d0 tests register 2; later occurrences select 6.
+         * The fallback is not marked in Mac's used-register array. */
+        if (element->Usage == 2 && isUsed[regIndex])
+            regIndex = 6;
+        else if (regIndex < 16)
+            isUsed[regIndex] = 1;
+#else
         if (regIndex < 16) {
             isUsed[regIndex] = 1;
         }
+#endif
 
         tokenStream[tokenIndex++] = 0x40000000 | typeToken | regIndex;
     }
@@ -281,10 +304,18 @@ int CDirect3DVertexDeclaration_CDirect3DVertexDeclaration(const CDirect3DVertexD
     declaration->refCount = 1;
 
     count = 0;
+#if defined(COD2_X64)
+    while (pVertexElements[count].Stream != 0xff ||
+           pVertexElements[count].Offset != 0 ||
+           pVertexElements[count].Type != 0x11 ||
+           pVertexElements[count].Method != 0 ||
+           pVertexElements[count].Usage != 0 || pVertexElements[count].UsageIndex != 0) {
+#else
     while (pVertexElements[count].Stream != 0xff ||
            pVertexElements[count].Offset != 0 ||
            pVertexElements[count].Type != 0x11 ||
            pVertexElements[count].Method != 0) {
+#endif
         ++count;
     }
     ++count;

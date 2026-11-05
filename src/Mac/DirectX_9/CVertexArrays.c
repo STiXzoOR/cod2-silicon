@@ -192,3 +192,17 @@ void CTexCoordArray_Set(const CTexCoordArray *_this, GLenum Type, GLsizei Stride
     base->size = Size;
     glTexCoordPointer(Size, Type, Stride, Pointer);
 }
+
+#if defined(COD2_X64)
+void CTexCoordArray_SetGuardFull(const CTexCoordArray *_this, int vEnable, GLenum Type,
+                               GLsizei Stride, const void *Pointer, GLint Size)
+{
+    CBaseVAImpl *base = CBaseVA_GetImpl((const CBaseVA *)_this);
+
+    base->enabled = (unsigned char)vEnable;
+    base->type = Type;
+    base->stride = Stride;
+    base->pointer = Pointer;
+    base->size = Size;
+}
+#endif
