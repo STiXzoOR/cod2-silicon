@@ -7616,64 +7616,136 @@ static void VM_CandidateCheckFrameDepth(void)
     }
 }
 #if defined(COD2_X64)
-static Bool VM_CandidateCheckScriptCall(unsigned int opcode, VariableValue *volatile *top)
-{
-    int setDepthErrorIndex = 1;
-    int popFunctionOnOverflow = 0;
+typedef enum VM_CallErrorContinuation_e {
+    VM_CALL_NO_RECOVERY,
+    VM_CALL_UNWIND,
+    VM_CALL_UNWIND_SKIP_TARGET,
+    VM_CALL_THREAD_CLEANUP,
+    VM_CALL_THREAD_CLEANUP_SKIP_TARGET,
+    VM_CALL_POP_TOP
+} VM_CallErrorContinuation;
 
-    /* Mac checks these errors before consuming the immediate call operands. */
+static void VM_CandidateCallDepthError(Bool setErrorIndex)
+{
+    if (setErrorIndex)
+        ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 1;
+    Scr_SetErrorMessageAndJump("script stack overflow (too many embedded function calls)");
+}
+
+static void VM_CandidateFunctionPointerError(unsigned int type)
+{
+    Scr_SetErrorMessageAndJump(va("%s is not a function pointer",
+                                ((const char *const *)imp_var_typename)[type]));
+}
+
+static VM_CallErrorContinuation VM_CandidateCallObjectError(unsigned int opcode,
+                                                            VariableValue *top,
+                                                            unsigned int errorIndex)
+{
+    ((struct scrVarPub_t *)imp_scrVarPub)->error_index = errorIndex;
+    Scr_SetErrorMessageAndJump(va("%s is not an object",
+                                ((const char *const *)imp_var_typename)[top->type]));
     switch (opcode) {
     case VMOP_ScriptFunctionCallPointer:
     case VMOP_ScriptFunctionCall:
-        setDepthErrorIndex = 0;
-        break;
+    case VMOP_ScriptMethodCall:
+        return VM_CALL_UNWIND_SKIP_TARGET;
+    case VMOP_ScriptFunctionCallExpr:
+    case VMOP_ScriptMethodCallExpr:
+        return VM_CALL_UNWIND;
+    case VMOP_ScriptThreadCall:
+    case VMOP_ScriptMethodThreadCall:
+        return VM_CALL_THREAD_CLEANUP_SKIP_TARGET;
+    case VMOP_ScriptThreadCallExpr:
+    case VMOP_ScriptMethodThreadCallExpr:
+        return VM_CALL_THREAD_CLEANUP;
+    default:
+        return VM_CALL_NO_RECOVERY;
+    }
+}
+
+static VM_CallErrorContinuation VM_CandidateCheckScriptCall(unsigned int opcode,
+                                                            VariableValue *volatile *top)
+{
+    /* Follow only the proved error-only chains. Their shared-policy returns
+     * invoke no VM callback before the next neighboring type/depth check. */
+    switch (opcode) {
+    case VMOP_ScriptFunctionCallPointer:
+        if (scrVmPub.function_count <= 30)
+            return VM_CALL_NO_RECOVERY;
+        VM_PushValue(top)->type = 8;
+        VM_CandidateCallDepthError(0);
+        VM_CandidateFunctionPointerError((*top)->type);
+        return VM_CandidateCallObjectError(opcode, *top, 1);
+
+    case VMOP_ScriptFunctionCall:
+        if (scrVmPub.function_count <= 30)
+            return VM_CALL_NO_RECOVERY;
+        VM_CandidateCallDepthError(0);
+        if ((*top)->type == 9)
+            VM_CandidateCallDepthError(1);
+        VM_CandidateFunctionPointerError((*top)->type);
+        if ((*top)->type == VAR_POINTER)
+            VM_CandidateCallDepthError(0);
+        return VM_CandidateCallObjectError(opcode, *top, 1);
+
     case VMOP_ScriptFunctionCallExpr:
     case VMOP_ScriptThreadCallExpr:
-        if ((*top)->type != 9)
-            return 0;
-        break;
+        if ((*top)->type == 9) {
+            if (scrVmPub.function_count <= 30)
+                return VM_CALL_NO_RECOVERY;
+            VM_CandidateCallDepthError(1);
+        } else if ((*top)->type == VAR_POINTER) {
+            /* This failure can enter a successful neighboring method call. */
+            return VM_CALL_NO_RECOVERY;
+        }
+        VM_CandidateFunctionPointerError((*top)->type);
+        return VM_CandidateCallObjectError(opcode, *top,
+                                           opcode == VMOP_ScriptFunctionCallExpr ? 1 : 2);
+
     case VMOP_ScriptMethodCall:
     case VMOP_ScriptMethodThreadCall:
-        if ((*top)->type != VAR_POINTER) {
-            ((struct scrVarPub_t *)imp_scrVarPub)->error_index =
-                opcode == VMOP_ScriptMethodCall ? 1 : 2;
-            Scr_SetErrorMessageAndJump(va("%s is not an object",
-                ((const char *const *)imp_var_typename)[(*top)->type]));
-            /* Only opcode 0x52's complete returned-error recovery is handled. */
-            return opcode == VMOP_ScriptMethodCall;
+        if ((*top)->type == VAR_POINTER) {
+            if (scrVmPub.function_count <= 30)
+                return VM_CALL_NO_RECOVERY;
+            VM_CandidateCallDepthError(opcode != VMOP_ScriptMethodCall);
         }
-        setDepthErrorIndex = opcode != VMOP_ScriptMethodCall;
-        break;
+        return VM_CandidateCallObjectError(opcode, *top,
+                                           opcode == VMOP_ScriptMethodCall ? 1 : 2);
+
     case VMOP_ScriptMethodCallExpr:
     case VMOP_ScriptMethodThreadCallExpr:
-        if ((*top)->type != 9)
-            return 0;
-        if ((*top - 1)->type != VAR_POINTER) {
+        if ((*top)->type != 9) {
+            unsigned int badType = (*top)->type;
+            if (opcode == VMOP_ScriptMethodCallExpr)
+                return VM_CALL_NO_RECOVERY;
+            RemoveRefToValue((*top)->type, (*top)->u);
             --*top;
-            ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 2;
-            Scr_SetErrorMessageAndJump(va("%s is not an object",
-                ((const char *const *)imp_var_typename)[(*top)->type]));
-            return 0;
+            VM_CandidateFunctionPointerError(badType);
+            return VM_CALL_POP_TOP;
         }
-        popFunctionOnOverflow = 1;
-        break;
-    case VMOP_ScriptThreadCall:
-        break;
-    default:
-        return 0;
-    }
-
-    if (scrVmPub.function_count <= 30)
-        return 0;
-
-    if (opcode == VMOP_ScriptFunctionCallPointer)
-        VM_PushValue(top)->type = 8;
-    if (popFunctionOnOverflow)
+        if ((*top - 1)->type == VAR_POINTER && scrVmPub.function_count <= 30)
+            return VM_CALL_NO_RECOVERY;
+        /* Mac pops the valid function word before either receiver/depth error. */
         --*top;
-    if (setDepthErrorIndex)
-        ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 1;
-    Scr_SetErrorMessageAndJump("script stack overflow (too many embedded function calls)");
-    return 0;
+        if ((*top)->type == VAR_POINTER)
+            VM_CandidateCallDepthError(1);
+        return VM_CandidateCallObjectError(opcode, *top, 2);
+
+    case VMOP_ScriptThreadCall:
+        if (scrVmPub.function_count <= 30)
+            return VM_CALL_NO_RECOVERY;
+        VM_CandidateCallDepthError(1);
+        if ((*top)->type == 9)
+            VM_CandidateCallDepthError(1);
+        VM_CandidateFunctionPointerError((*top)->type);
+        if ((*top)->type == VAR_POINTER)
+            VM_CandidateCallDepthError(1);
+        return VM_CandidateCallObjectError(opcode, *top, 2);
+
+    default:
+        return VM_CALL_NO_RECOVERY;
+    }
 }
 #endif
 
@@ -8021,22 +8093,44 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             errorCheckpoint.objectId = objectId;
             errorCheckpoint.thread_count = thread_count;
         }
-        if (opcode >= VMOP_ScriptFunctionCallPointer && opcode <= VMOP_ScriptMethodThreadCallExpr &&
-            VM_CandidateCheckScriptCall(opcode, &top)) {
-            /* Mac 0x86269/0x869ae reports the failed receiver before skipping
-             * its target and unwinding arguments to an undefined result. */
-            RuntimeError(pos, varPub->error_index, varPub->error_message,
-                         ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message);
-            varPub->error_message = NULL;
-            ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message = NULL;
-            varPub->error_index = 0;
-            pos += 4;
-            while (top->type != 8) {
+        if (opcode >= VMOP_ScriptFunctionCallPointer && opcode <= VMOP_ScriptMethodThreadCallExpr) {
+            VM_CallErrorContinuation continuation = VM_CandidateCheckScriptCall(opcode, &top);
+            if (continuation == VM_CALL_POP_TOP) {
+                /* Mac 0x85d44/0x84593 returns directly, without reporting or
+                 * consuming a thread parameter count. */
                 RemoveRefToValue(top->type, top->u);
                 --top;
+                continue;
             }
-            top->type = VAR_UNDEFINED;
-            continue;
+            if (continuation != VM_CALL_NO_RECOVERY) {
+                RuntimeError(pos, varPub->error_index, varPub->error_message,
+                             ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message);
+                varPub->error_message = NULL;
+                ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message = NULL;
+                varPub->error_index = 0;
+                if (continuation == VM_CALL_UNWIND_SKIP_TARGET ||
+                    continuation == VM_CALL_THREAD_CLEANUP_SKIP_TARGET)
+                    pos += 4;
+                if (continuation == VM_CALL_THREAD_CLEANUP ||
+                    continuation == VM_CALL_THREAD_CLEANUP_SKIP_TARGET) {
+                    /* Read the count and current operands only after the
+                     * potentially returning RuntimeError, as at 0x86a1a. */
+                    unsigned int paramCount = (unsigned int)VM_ReadI32(&pos);
+                    while (paramCount) {
+                        RemoveRefToValue(top->type, top->u);
+                        --top;
+                        --paramCount;
+                    }
+                    VM_PushValue(&top)->type = VAR_UNDEFINED;
+                } else {
+                    while (top->type != 8) {
+                        RemoveRefToValue(top->type, top->u);
+                        --top;
+                    }
+                    top->type = VAR_UNDEFINED;
+                }
+                continue;
+            }
         }
 #endif
         switch ((ScrVmOpcode)opcode) {
