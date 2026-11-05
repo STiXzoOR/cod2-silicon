@@ -8,8 +8,8 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 326,
-      "intentional": 3173,
+      "unchecked": 321,
+      "intentional": 3178,
       "equal": 4761,
       "fixed": 1197
     },
@@ -948,8 +948,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "No Mac text symbol or identified inline implementation for the Linux-named block allocator; native has no definition, caller, FxMemBlock layout, or fx_memBlocks arena. Mac FxMem_Init at 0xacbd8 is a no-op and native effects use existing __Znam/__ZdaPv allocation paths. No Linux 32KB arena or 32-bit free-list writes were introduced without a Mac allocator/layout contract. Follow-up: Mac STABS fieldless one-byte manager types and FxMemMgr.h-attributed direct array allocation/free now positively establish the live class allocation boundary, but identify no FxMemBlock layout, block arena, or equivalent body for this particular helper. It remains unchecked rather than inferred from removal of a pool."
+        "status": "intentional",
+        "evidence": "Original1.3 block allocation0x812411a is called at0x812a149 from the FxBoltFrame manager allocation0x812a0da, reached from Acquire0x8124386 via operator new0x8129b74. Complete original keyed bolt-list/refcount owners identify these as consumed FxMemMgr backend operations. Complete Mac FxBoltFrame Acquire0xa105a/Release0x9fe6c instead allocate/zero68 bytes at0xa109c-0xa10c1 and array-delete at0x9fea5 after the same object-list lifetime. Positive original Mac STABS/SLINE identifies fieldless one-byte FxMemMgr<T> with array Alloc/Free; native typed sizeof-based new/delete owners preserve this existing backend. Intentional replacement of original pool addressing, reuse,2MB capacity, failure, counters/highwater and link bookkeeping, not equality or a standalone arbitrary FxMemBlock API. Existing primitive manager/new/delete verdicts and native ownership adaptations preserved. No source change, compilation or runtime exercise."
       },
       {
         "id": "linux:EffectsCore/FxMemMgr.cpp:65:FxMem_FreeBlock",
@@ -967,8 +967,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "No Mac text symbol or identified inline implementation for the Linux-named block free helper; native has no definition/caller or shared FxMemBlock arena contract. The Linux unlink-and-freeCount=-1 behavior cannot be assigned to a Mac body. Follow-up: Mac STABS fieldless one-byte manager types and FxMemMgr.h-attributed direct array allocation/free now positively establish the live class allocation boundary, but identify no FxMemBlock layout, block arena, or equivalent body for this particular helper. It remains unchecked rather than inferred from removal of a pool."
+        "status": "intentional",
+        "evidence": "Original1.3 block release0x8124292 calls UnlinkBlock0x812422a then marks freeCount=-1; manager Free0x812a200 invokes it at0x812a291 after FreeItem/full-block checks. Complete original keyed bolt-list/refcount owners identify these as consumed FxMemMgr backend operations. Complete Mac FxBoltFrame Acquire0xa105a/Release0x9fe6c instead allocate/zero68 bytes at0xa109c-0xa10c1 and array-delete at0x9fea5 after the same object-list lifetime. Positive original Mac STABS/SLINE identifies fieldless one-byte FxMemMgr<T> with array Alloc/Free; native typed sizeof-based new/delete owners preserve this existing backend. Intentional replacement of original pool addressing, reuse,2MB capacity, failure, counters/highwater and link bookkeeping, not equality or a standalone arbitrary FxMemBlock API. Existing primitive manager/new/delete verdicts and native ownership adaptations preserved. No source change, compilation or runtime exercise."
       },
       {
         "id": "linux:EffectsCore/FxMemMgr.cpp:72:FxMem_FreeItem",
@@ -986,8 +986,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "No Mac text symbol or identified inline implementation for the Linux-named item free helper; native has no definition/caller or shared FxMemBlock arena contract. The Linux 0x7fff pointer mask and embedded free-list write were not transplanted into native pointer-sized allocations without Mac identity/layout evidence. Follow-up: Mac STABS fieldless one-byte manager types and FxMemMgr.h-attributed direct array allocation/free now positively establish the live class allocation boundary, but identify no FxMemBlock layout, block arena, or equivalent body for this particular helper. It remains unchecked rather than inferred from removal of a pool."
+        "status": "intentional",
+        "evidence": "Original1.3 item release0x81242b2 masks an item into its32KB block, pushes onto the free list and increments freeCount; FxBoltFrame manager Free0x812a200 calls it at0x812a214, reached from Release0x8124442 via operator delete0x8129b90. Complete original keyed bolt-list/refcount owners identify these as consumed FxMemMgr backend operations. Complete Mac FxBoltFrame Acquire0xa105a/Release0x9fe6c instead allocate/zero68 bytes at0xa109c-0xa10c1 and array-delete at0x9fea5 after the same object-list lifetime. Positive original Mac STABS/SLINE identifies fieldless one-byte FxMemMgr<T> with array Alloc/Free; native typed sizeof-based new/delete owners preserve this existing backend. Intentional replacement of original pool addressing, reuse,2MB capacity, failure, counters/highwater and link bookkeeping, not equality or a standalone arbitrary FxMemBlock API. Existing primitive manager/new/delete verdicts and native ownership adaptations preserved. No source change, compilation or runtime exercise."
       },
       {
         "id": "mac:0x000acbd8",
@@ -1036,8 +1036,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "No Mac text symbol or identified inline implementation for the Linux-named unlink helper; native has no definition/caller or shared FxMemBlock layout. The Linux doubly linked block mutations cannot establish Mac behavior. Follow-up: Mac STABS fieldless one-byte manager types and FxMemMgr.h-attributed direct array allocation/free now positively establish the live class allocation boundary, but identify no FxMemBlock layout, block arena, or equivalent body for this particular helper. It remains unchecked rather than inferred from removal of a pool."
+        "status": "intentional",
+        "evidence": "Original1.3 block unlink0x812422a is called by MoveToFront0x812a1b8 at0x812a1c4 and FreeBlock0x8124292 at0x812429e, within the identified FxBoltFrame manager allocate/free chain. Complete original keyed bolt-list/refcount owners identify these as consumed FxMemMgr backend operations. Complete Mac FxBoltFrame Acquire0xa105a/Release0x9fe6c instead allocate/zero68 bytes at0xa109c-0xa10c1 and array-delete at0x9fea5 after the same object-list lifetime. Positive original Mac STABS/SLINE identifies fieldless one-byte FxMemMgr<T> with array Alloc/Free; native typed sizeof-based new/delete owners preserve this existing backend. Intentional replacement of original pool addressing, reuse,2MB capacity, failure, counters/highwater and link bookkeeping, not equality or a standalone arbitrary FxMemBlock API. Existing primitive manager/new/delete verdicts and native ownership adaptations preserved. No source change, compilation or runtime exercise."
       }
     ],
     "EffectsCore/FxPrimitives": [
@@ -4015,8 +4015,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Unresolved Linux-only allocator identity (MoveToFront(FxMemBlock *), line 241): no exact Mac template/class-operator body or conclusive inlined identity was established. Mac FxBoltFrame::Acquire 0xa109c/0xa10c1 and inspected deleting destructors use general array new/delete; native uses size_t new[]/delete[] wrappers. Those executable contracts were checked separately, but do not establish this Linux-only helper identity. Follow-up: Mac STABS fieldless one-byte manager types and FxMemMgr.h-attributed direct array allocation/free now positively establish the live class allocation boundary, but identify no FxMemBlock layout, block arena, or equivalent body for this particular helper. It remains unchecked rather than inferred from removal of a pool."
+        "status": "intentional",
+        "evidence": "Original1.3 FxMemMgr<FxBoltFrame> MoveToFront0x812a1b8 calls UnlinkBlock and rewires prev/next/manager head; actual manager Alloc/Free calls occur at0x812a115/0x812a238. Original1.0 specialization0x8127d96 and source member definition establish the generic member identity. Complete original keyed bolt-list/refcount owners identify these as consumed FxMemMgr backend operations. Complete Mac FxBoltFrame Acquire0xa105a/Release0x9fe6c instead allocate/zero68 bytes at0xa109c-0xa10c1 and array-delete at0x9fea5 after the same object-list lifetime. Positive original Mac STABS/SLINE identifies fieldless one-byte FxMemMgr<T> with array Alloc/Free; native typed sizeof-based new/delete owners preserve this existing backend. Intentional replacement of original pool addressing, reuse,2MB capacity, failure, counters/highwater and link bookkeeping, not equality or a standalone arbitrary FxMemBlock API. Existing primitive manager/new/delete verdicts and native ownership adaptations preserved. No source change, compilation or runtime exercise."
       },
       {
         "id": "mac:0x000a981a",
