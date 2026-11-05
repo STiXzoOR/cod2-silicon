@@ -86,3 +86,13 @@ still required. I_strnicmpInline remains without an original header-copy
 mapping. All 23 previously unchecked rows remain unchecked, and existing
 resolved evidence is preserved. No source change, compilation, test, CI, replay
 or runtime exercise was performed for this module.
+
+## Additional concrete owner comparisons
+
+The remaining wildcard comparator cannot be supplied by `Com_Filter`. Exact Mac 0x47f84–0x4828a returns boolean success one, accepts when the pattern ends and implements bracket/range grammar. Original `I_stricmpwild` at 0x80b7c3c has a recursive star/question-mark operation and zero/normalized-sign comparison results. Native filesystem filter and platform wildcard consumers do not establish its complete interface.
+
+The complete Mac `MacStrings::GetCString` at 0xa144–0xa1ac consumes a length-prefixed UTF-16 object, initializes output empty, creates/converts/releases a CFString and passes a signed-short capacity. Original `Com_WideToNarrow` at 0x80b80c8 instead copies each odd source byte and writes a final NUL at length minus one. The current character-conversion owner is not that input/termination contract.
+
+Exact Mac `R_FrustumClipPlanes` at 0xeef0e–0xef030 computes four-coefficient matrix products, normalizes the plane and emits culling metadata. It does not establish the four missing orientation-plane helpers' direction-plus-distance operations. A hypothetical matrix adapter with normalization removed would not be a concrete existing owner. The separate scaled-position, filepath, ownership-predicate and endian-wrapper gaps retain their earlier evidence and decisions.
+
+These six refined entries remain unchecked. Orientation concatenation is handled by a separate complete-owner review. No source changes, compilation, tests, CI, replay or runtime exercise ran. Fresh exact candidate bodies and the focused owner review are retained in `CoD2-native-decomp/recon-provenance-shared11.noindex`; prior original bodies/callers remain in `recon-provenance-shared8.noindex` and `recon-provenance-shared9.noindex`.
