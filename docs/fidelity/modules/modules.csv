@@ -198,7 +198,7 @@ gfx_d3d/r_water,1,0,1,0,0
 gfx_d3d/r_water_load_obj,2,1,1,0,0
 gfx_d3d/r_xsurface,8,7,0,1,0
 gfx_d3d/r_xsurface_optimize,3,3,0,0,0
-gfx_d3d/rb_backend,63,31,23,8,1
+gfx_d3d/rb_backend,63,31,23,9,0
 gfx_d3d/rb_debug,5,5,0,0,0
 gfx_d3d/rb_fog,3,3,0,0,0
 gfx_d3d/rb_imagefilter,4,2,1,1,0
