@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 511,
-      "intentional": 3077,
-      "equal": 4721,
-      "fixed": 1148
+      "unchecked": 497,
+      "intentional": 3079,
+      "equal": 4720,
+      "fixed": 1161
     },
     "scopes": {
       "unassigned": 777,
@@ -15922,8 +15922,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0xe3ee compares texture-coordinate stream constraints. No native body; native immediate draw bypasses packet selection, and full multi-stream equivalence has not been established."
+        "status": "fixed",
+        "evidence": "Mac 0xe3ee: restored active-stage traversal, GetUsesTexture gate, generated TCI rejection and declared-coordinate requirement, preserving incoming eligibility. Invalid native coordinate indices remain bounded. Compiled and reviewed; fixed-stage branches not exercised."
       },
       {
         "id": "mac:0x0000e29c",
@@ -15944,8 +15944,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0xe29c collects referenced streams and element/stride state for packet validation. No native body; immediate native draw reads streams/declaration elements directly, but full multi-stream/packet behavior is not established."
+        "status": "fixed",
+        "evidence": "Mac 0xe29c: restored position/color pointer arithmetic and normal necessity from lighting or TCI 0x10000/0x30000, including testing generation before disabled-stage termination. Uses widened native buffer data. Compiled and reviewed; fixed stream branches not exercised."
       },
       {
         "id": "mac:0x0000eb2e",
@@ -15966,8 +15966,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0xeb2e parses declaration tokens into stream requirements. No native body; direct native element arrays cover some draw formats but original declaration/validation contract is not reconstructed."
+        "status": "fixed",
+        "evidence": "Mac 0xeb2e: restored token operation/stream/skip parsing, all eight declaration-table formats, element-offset accumulation, normalized programmable descriptors, fixed selectors and dynamic-buffer eligibility. Native malformed tokens and unsupported fixed registers retain defined bounds handling. Original-format programmable path exercised by the existing depth fixture; remaining branches compiled and reviewed."
       },
       {
         "id": "mac:0x0000dce0",
@@ -16010,8 +16010,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0xea3e updates stream caches conditionally. Native has no matching private body, and immediate draw does not establish all original stream/VAO cache behavior."
+        "status": "fixed",
+        "evidence": "Mac 0xea3e: restored position register0, normal3, diffuse5 and texture8..15 descriptors, with exact per-family fields and other-stream flag behavior. Unsupported fixed registers retain defined native handling rather than recreating original out-of-bounds writes. Compiled and reviewed, not independently exercised."
       },
       {
         "id": "mac:0x0000e222",
@@ -16098,8 +16098,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Exact entry 0x10ff2\u20130x12094 hand compared against native draw, ApplyTextureStageState and actual selected GL/array/shader providers. Typed stages, sampler synchronization and modelview/light validation are restored. Full validator remains absent: original packet/declaration stream fields, SetTextureCoordStream, generated coordinate modes 0x10000/0x20000/0x30000, full combine operation dispatch, fixed-stage termination/disable ordering and pixel-shader texture mask orchestration are not established by the native draw approximation. No raw ILP32 offsets or VARange integer-to-pointer aliases introduced; not retired by Metal."
+        "status": "fixed",
+        "evidence": "Mac 0x10ff2: restored shader-mask/stage orchestration, max fixed/image loop, texgen/texture matrices, null default texture, target/sampler synchronization, remaining-unit handling and decoded RGB/alpha tables at 0x326714/0x3266e0. Native shader Enable retains actual-provider GL-context queries. Existing ARB depth cases exercise shader/default-texture path; other branches compiled and reviewed."
       },
       {
         "id": "mac:0x0000ff3e",
@@ -16120,8 +16120,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0xff3e selects and validates fixed/program streams and matrix state. Native has no body; selected indexed draw implements only part of these responsibilities, so no retirement/equality claim."
+        "status": "fixed",
+        "evidence": "Mac 0xff3e: restored descriptor clearing, fixed/program declaration parsing, cached/generic selection, fixed normal collection and texture-coordinate veto/fallback. Native byte-color conversion deliberately uses generic packets and owned scratch lifetime. Programmable selection exercised by existing depth cases; fixed and nonzero VAR branches compiled and reviewed."
       },
       {
         "id": "mac:0x0000d6b2",
@@ -17687,7 +17687,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": "Original 0x12094 performs original private stream, packet, transformation/rasterization/lighting validation and high/low index handling. Native CPU/ARB draw path passes existing synthetic raster/depth cases but lacks full multi-stream/cache/lighting behavior."
+        "evidence": "Read Mac 0x12094. Existing opt-in original-format ARB draw now reaches restored stream/packet/raster chain, high/low selection and 65535-element batches; APPLE VAO0 protects cached packets across direct fallback. All existing nine ARB and nine fallback depth cases pass. Full CPU/fixed fallback and extended declaration orchestration, point behavior and original SetFence tail remain unresolved; no whole-function equivalence claim."
       },
       {
         "id": "mac:0x002edaf0",
@@ -19138,8 +19138,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x1409a generates declaration tokens and invalidates transformation/rasterization. Native saves FVF for immediate draw only; changing from a retained explicit declaration and original format/token cases is unresolved."
+        "status": "fixed",
+        "evidence": "Mac 0x1409a: restored FVF stream/XYZ/normal/diffuse/texture tokens, texture-dimension encoding, terminal token and both invalidation flags. Native FVF lookup now supersedes retained explicit declaration elements. Compiled and reviewed; FVF transitions not independently exercised."
       },
       {
         "id": "mac:0x00013576",
@@ -19490,8 +19490,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Original 0x2edb08 clears vertex-buffer dirty byte, compares same pointer/offset, and can retain previous stride. Native clean CPU buffer has no original dirty/packet byte and always writes stride/flags; full original caching/dirty behavior unresolved."
+        "status": "fixed",
+        "evidence": "Mac coalesced 0x2edb08: clear native vertex-buffer locked byte before comparison, return only for unlocked same buffer and offset, retain old stride on that return, and force NULL-buffer updates. Original transformation/raster invalidation preserved. Compiled and reviewed, not independently exercised."
       },
       {
         "id": "mac:0x002edb96",
@@ -22274,8 +22274,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Mac 0x0000e4b0 body read: generic packet selection, range/cache flush and stream/array guards. No selected native function exists in baseline or pending device9f05cde; current direct-array/program draw providers do not establish cached packet/VAR control parity. Requires pending VAO/vertex-array and device provider reconciliation; no out-of-scope draw replacement attempted."
+        "status": "fixed",
+        "evidence": "Mac 0xe4b0: restored generic fixed packet selection, buffer0 range, VAR/static-cache flush choice and position/normal/diffuse guards plus GL enables/disables. Native range/data owners are widened; converted colors remain generic with owned scratch. Compiled and reviewed; fixed/generic VAR branches not exercised."
       },
       {
         "id": "mac:0x0000de60",
@@ -22296,8 +22296,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Mac 0x0000de60 body read: generic packet selection, range/cache flush and stream/array guards. No selected native function exists in baseline or pending device9f05cde; current direct-array/program draw providers do not establish cached packet/VAR control parity. Requires pending VAO/vertex-array and device provider reconciliation; no out-of-scope draw replacement attempted."
+        "status": "fixed",
+        "evidence": "Mac 0xde60: restored generic programmable packet/range selection, VAR/static-cache flush branch and all sixteen descriptor guards, pointer updates and unused-array disables. Native converted-color pointers are owned and never cached. Compiled and reviewed; dynamic/converted-color generic branch not established by existing depth pixels."
       },
       {
         "id": "mac:0x0001eca0",
@@ -24574,8 +24574,8 @@
           }
         ],
         "linux": [],
-        "status": "fixed",
-        "evidence": "Mac 0x2007a: replaced empty native bind/copy body, preserving target enable priority and copying sampler/name/lastlevel/anisotropy from the proven native secondary texture prefix; border is not copied, matching Mac; compiled and reviewed, not exercised."
+        "status": "intentional",
+        "evidence": "Mac 0x2007a fixed-unit binding/cache/target sequence retained. Existing depth context exposes 16 image/8 fixed units; original target enables on image-only units produced GL_INVALID_OPERATION. Parent-approved native programmable-only guard occurs after real binding and sampler-cache copy and before fixed target enables/disables. All eighteen existing ASan/UBSan depth cases pass after fixture provider plumbing; no claim about all hardware limits."
       },
       {
         "id": "mac:0x00020e48",
@@ -25102,8 +25102,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Mac 0x20b00: native bind/cache-copy/invalidation body restored and compiled/reviewed. Original fields8/c are VARange start/size, while actual native COpenGLVAO/CVAOPacket provider exposes UINT32 mCode/mReserved0C and currently assigns onlyzero. The proven zero range is handled; a nonzero scalar is not cast to native pointer. Widened range-provider contract remains unproved."
+        "status": "fixed",
+        "evidence": "Mac 0x20b00: binder now consumes shared COpenGLVAONative actual range pointer and size, retaining binding-ID/force checks, fixed/generic cache copies and opposite-family invalidation. Device producers, CVAOPacket allocations/copies/cache and COpenGLVAO constructor use this same widened owner. Existing ARB depth cases exercise packet binding; nonzero VAR binding compiled and reviewed."
       },
       {
         "id": "mac:0x0002000c",
@@ -25393,7 +25393,7 @@
         ],
         "linux": [],
         "status": "equal",
-        "evidence": "Read Mac 0x112310: Compare only packet word 8, matching native fixed-width mCode equality. Nonzero pointer/key production remains unresolved in the device builder rows."
+        "evidence": "Read Mac 0x112310: equality compares only range-start address. Native now compares full widened mpVAStart pointers, preserving this selector without truncation; cache keys and bounds are uintptr_t throughout. Compiled and reviewed with existing programmable packet draw coverage."
       },
       {
         "id": "mac:0x00112328",
@@ -25436,8 +25436,8 @@
           }
         ],
         "linux": [],
-        "status": "equal",
-        "evidence": "Read Mac 0x112304: Return packet word 8: native returns existing UINT32 mCode. This is field-access equality, not proof of nonzero widened VARange production."
+        "status": "intentional",
+        "evidence": "Mac 0x112304 returns its ILP32 range-start address. The existing public UINT32 GetCode facade retains ABI and returns low32 of widened mpVAStart. Both active native Cache/IsCached key producers directly use full uintptr_t, all insertion/bounds/equality preserve it, and no active internal cache calls this narrowing facade. Compiled and reviewed."
       },
       {
         "id": "mac:0x00112382",
@@ -25504,8 +25504,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Read Mac 0xf228: Fixed-function cached VAO builder is absent in actual pending device provider 9f05cde. Read original producer 0xf313-0xf340: buffer data+stream offset+stride*g_Low and byte count become packet words 8/12. Native DeviceImpl, buffer storage, UINT32 packet fields and multimap key have no established widened producer/allocation contract. Current direct client arrays do not prove equivalence."
+        "status": "fixed",
+        "evidence": "Mac 0xf228: restored texture-stream dynamic veto, original selected-buffer range arithmetic, cached/virgin fixed packets, per-family guard versus enable sequencing, TCI position/declared arrays, range flush and cache lifetime. Strong native provider replaces only client padding stub; dedicated/OFF retain it. Compiled and reviewed; fixed cached/virgin branches not exercised."
       },
       {
         "id": "mac:0x0000fbac",
@@ -25526,8 +25526,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Read Mac 0xfbac: Programmable cached VAO builder is absent in actual pending device provider 9f05cde. Read original range producer 0xfbde-0xfbff, cache and sixteen generic-stream branches. Native has no corresponding widened packet range/key/device-declaration contract; selected direct client-array drawing does not establish this function."
+        "status": "fixed",
+        "evidence": "Mac 0xfbac: restored pointer-keyed cached lookup or virgin binding, VAR range/flush, all sixteen programmable descriptors, unused-array behavior and packet caching/destruction. Every native key/copy/allocation preserves widened pointer storage. Existing ARB depth cases exercise virgin/cached programmable path; VAR flush compiled and reviewed."
       },
       {
         "id": "mac:0x0000d6a0",
@@ -28132,8 +28132,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Mac0x19324 handles transform/projected flags, TCI0/0x10000/0x20000/0x30000 and renderer-dependent texcoord arrays/matrices through0x19b91. Actual readonly pending9f05cde SetTextureCoordStream remains zero-return/no-op in selected GL mode. Native texcoord-state/provider reconstruction is outside owned files and not supplied; no parity claim."
+        "status": "fixed",
+        "evidence": "Mac 0x19324: restored TCI0,0x10000,0x20000,0x30000 control, projection-bit/count matrix rewrites, original model-view multiply order, reflection transpose, three eye planes, generic coordinate guards and draw-flag rejection. Widened native metadata owns pointers; no scalar reinterpretation. Compiled and reviewed; texgen modes not independently exercised."
       },
       {
         "id": "mac:0x0000ecd2",

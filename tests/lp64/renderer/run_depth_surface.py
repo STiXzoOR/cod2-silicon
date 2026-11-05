@@ -33,6 +33,12 @@ source_root = entry['file'][:-len('/src/Mac/DirectX_9/CDirect3DDevice.c')]
 command = entry.get('arguments') or shlex.split(entry['command'])
 flags = [flag.replace(source_root, str(ROOT)) for flag in command[:command.index('-o')]
          if flag != '-DNDEBUG']
+abi_object = output / 'macos_cpp_abi.o'
+abi_flags = [flag for flag in flags if not flag.startswith('-std=')]
+with (output / 'abi-compile.log').open('w') as log:
+    subprocess.run([*abi_flags, '-std=c++17', '-fsanitize=address,undefined',
+                    '-c', str(ROOT / 'src/platform/macos_cpp_abi.cpp'), '-o', str(abi_object)],
+                   cwd=ROOT, stdout=log, stderr=log, check=True)
 exe = output / 'depth_surface'
 command = [*flags, '-UNDEBUG', '-DGL_SILENCE_DEPRECATION', '-I' + str(output),
            '-I' + str(source_dir), '-ffunction-sections', '-fdata-sections',
@@ -40,7 +46,9 @@ command = [*flags, '-UNDEBUG', '-DGL_SILENCE_DEPRECATION', '-I' + str(output),
            '-framework', 'OpenGL', str(ROOT / 'tests/lp64/renderer/depth_surface.c'),
            *[str(source_dir / (name + '.c')) for name in
              ['CDirect3DTexture', 'CDirect3DCubeTexture', 'CDirect3DVolumeTexture',
-              'CDirect3DSurface', 'MacOpenGLUtils', 'CVertexArrays', 'D3DXMath', 'MacOpenGLMath']],
+              'CDirect3DSurface', 'MacOpenGLUtils', 'CVertexArrays',
+              'CDirect3DVertexDeclaration', 'CDirect3DVertexBuffer', 'COpenGLVAO', 'CVAOPacket', 'D3DXMath', 'MacOpenGLMath']],
+           str(abi_object), '-lc++',
            os.environ.get('COD2_OPENGL_PROVIDER_SOURCE', str(source_dir / 'COpenGL.c')),
            '-o', str(exe)]
 (output / 'compile-command.txt').write_text(shlex.join(command) + '\n')

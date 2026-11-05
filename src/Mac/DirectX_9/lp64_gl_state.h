@@ -25,6 +25,21 @@ typedef struct {
     const void *mpStream;
 } VertexProgramStreamStateNative;
 
+/* Shared by Device packet producers, CVAOPacket cache owners, COpenGLVAO
+ * constructors and the COpenGL binder. Mac +8 is a range pointer, also used
+ * as the cache key; it is never a 32-bit scalar in native storage. */
+typedef struct {
+    void **vtable;
+    GLuint *mpVAOID;
+    const void *mpVAStart;
+    UINT32 mSize;
+    CBaseVAImpl mColorArray, mSecondaryColorArray, mNormalArray, mVertexArray;
+    CBaseVAImpl mTexCoordArrays[8];
+    VertexProgramStreamStateNative mGenericArrays[16];
+} COpenGLVAONative;
+
+COpenGLVAONative *CVAOPacket_GetCurrentGenericNative(void);
+
 /* Field order verified against the i386 CTexUnit STABS (304 bytes). */
 typedef struct {
     unsigned char mIsProgramableOnly;

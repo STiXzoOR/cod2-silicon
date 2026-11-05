@@ -1,6 +1,11 @@
 #include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
+#if defined(COD2_X64)
+#define CVAOPacketKey uintptr_t
+#else
+#define CVAOPacketKey UINT32
+#endif
 
 #if defined(COD2_X64)
 #include "lp64_gl_state.h"
@@ -17,6 +22,11 @@ typedef struct {
 } CBaseVAImpl;
 #endif
 
+#if defined(COD2_X64)
+typedef COpenGLVAONative CVAOPacketImpl;
+#define mCode mpVAStart
+#define mReserved0C mSize
+#else
 typedef struct {
     void **vtable;
     GLuint *mpVAOID;
@@ -33,6 +43,7 @@ typedef struct {
     VertexProgramStreamState mGenericArrays[16];
 #endif
 } CVAOPacketImpl;
+#endif
 
 typedef struct CVAOPacketRbTreeNodeBase {
     int _M_color;
@@ -49,12 +60,12 @@ typedef struct {
 
 typedef struct {
     CVAOPacketRbTreeNodeBase _M_base;
-    UINT32 first;
+    CVAOPacketKey first;
     CVAOPacketImpl second;
 } CVAOPacketRbTreeNode;
 
 typedef struct {
-    UINT32 first;
+    CVAOPacketKey first;
     CVAOPacketImpl second;
 } CVAOPacketKeyValue;
 
@@ -137,6 +148,13 @@ static const CVAOPacketRbTreeNode *CVAOPacket_GetConstTreeNode(const CVAOPacketR
     return (const CVAOPacketRbTreeNode *)node;
 }
 
+#if defined(COD2_X64)
+COpenGLVAONative *CVAOPacket_GetCurrentGenericNative(void)
+{
+    return CVAOPacket_GetGenericPacket(CVAOPacket_sCurrentPacket);
+}
+#endif
+
 static const CVAOPacketVTable *CVAOPacket_GetVTable(const CVAOPacket *packet)
 {
     return *(const CVAOPacketVTable *const *)packet;
@@ -165,8 +183,8 @@ static void __static_initialization_and_destruction_0(int __initialize_p, int __
 static void GLOBAL__D__ZN10CVAOPacket10sVAOStatusE(void);
 static void GLOBAL__I__ZN10CVAOPacket10sVAOStatusE(void);
 bool CVAOPacket_IsFixedFunction(const CVAOPacket *_this);
-CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key);
-CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key);
+CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(const CVAOPacketRbTree *tree, const CVAOPacketKey *key);
+CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_(const CVAOPacketRbTree *tree, const CVAOPacketKey *key);
 #if defined(COD2_X64)
 CVAOPacketRbTreeIterator ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_(CVAOPacketRbTree *tree, CVAOPacketRbTreeNodeBase *x, CVAOPacketRbTreeNodeBase *parent, const CVAOPacketKeyValue *kv);
 #else
@@ -481,7 +499,7 @@ bool CVAOPacket_IsCached(CVAOPacket *v)
         return macResult;
 #endif
 
-    UINT32 Code;
+    CVAOPacketKey Code;
     CVAOPacketRbTree *allPackets;
     CVAOPacketRbTreeNodeBase *lower;
     CVAOPacketRbTreeNodeBase *upper;
@@ -491,7 +509,11 @@ bool CVAOPacket_IsCached(CVAOPacket *v)
     allPackets = (CVAOPacketRbTree *)CVAOPacket_sAllPackets;
     header = &allPackets->_M_header;
 
+#if defined(COD2_X64)
+    Code = (uintptr_t)((const CVAOPacketImpl *)v)->mpVAStart;
+#else
     Code = COpenGLVAO_GetCode((const COpenGLVAO *)v);
+#endif
 
     upper = ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_(allPackets, &Code);
     lower = ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(allPackets, &Code);
@@ -569,7 +591,7 @@ void CVAOPacket_Cache(CVAOPacket *v)
 #endif
 
 
-    UINT32 Code;
+    CVAOPacketKey Code;
 #if defined(COD2_X64)
     CVAOPacketKeyValue newValue, insertValue;
     unsigned char *NewPacketBuf = (unsigned char *)&newValue;
@@ -580,9 +602,13 @@ void CVAOPacket_Cache(CVAOPacket *v)
 #endif
     CVAOPacketImpl *newPacket;
     CVAOPacketImpl *insertPacket;
-    UINT32 *codePtr;
+    CVAOPacketKey *codePtr;
 
+#if defined(COD2_X64)
+    Code = (uintptr_t)((const CVAOPacketImpl *)v)->mpVAStart;
+#else
     Code = COpenGLVAO_GetCode((const COpenGLVAO *)v);
+#endif
 
 #if defined(COD2_X64)
     newPacket = &newValue.second;
@@ -595,7 +621,7 @@ void CVAOPacket_Cache(CVAOPacket *v)
     CVAOPacket_CVAOPacket((const CVAOPacket *)newPacket);
 #endif
 
-    codePtr = (UINT32 *)NewPacketBuf;
+    codePtr = (CVAOPacketKey *)NewPacketBuf;
     *codePtr = Code;
 
 #if defined(COD2_X64)
@@ -609,7 +635,7 @@ void CVAOPacket_Cache(CVAOPacket *v)
     CVAOPacket_CVAOPacket((const CVAOPacket *)insertPacket);
 #endif
 
-    *(UINT32 *)InsertBuf = Code;
+    *(CVAOPacketKey *)InsertBuf = Code;
 
     {
 
@@ -786,7 +812,7 @@ void ZN22CVAOPacketProgrammableD1Ev(void) {}
 void ZN22CVAOPacketProgrammableD0Ev(void) {}
 #endif
 
-CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key)
+CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(const CVAOPacketRbTree *tree, const CVAOPacketKey *key)
 {
 #if MAC_METAL_NATIVE
     const void *macArguments[] = { &tree, &key };
@@ -812,7 +838,7 @@ CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS
     return y;
 }
 
-CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key)
+CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_(const CVAOPacketRbTree *tree, const CVAOPacketKey *key)
 {
 #if MAC_METAL_NATIVE
     const void *macArguments[] = { &tree, &key };
