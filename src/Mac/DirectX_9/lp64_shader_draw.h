@@ -126,7 +126,12 @@ static HRESULT MacShader_DrawIndexed(DeviceImpl *dev, INT baseVertex, UINT minVe
             continue;
         buffer = (const void *)dev->streams[element->Stream];
         stride = dev->streamStrides[element->Stream];
+#if defined(COD2_X64)
+        pointer = buffer->data + dev->streamOffsets[element->Stream] +
+            (intptr_t)baseVertex * stride + element->Offset;
+#else
         pointer = buffer->data + dev->streamOffsets[element->Stream] + baseVertex * stride + element->Offset;
+#endif
         if (element->Type <= 3) {
             components = element->Type + 1;
             type = GL_FLOAT;
@@ -140,7 +145,11 @@ static HRESULT MacShader_DrawIndexed(DeviceImpl *dev, INT baseVertex, UINT minVe
                 /* NULL means the interleaved array is already RGBA (or nothing is
                  * indexed): keep the original pointer and stride. */
                 const byte *converted = CDirect3DDevice_ConvertColorArray(
+#if defined(COD2_X64)
+                    buffer->data + dev->streamOffsets[element->Stream] + (intptr_t)baseVertex * stride,
+#else
                     buffer->data + dev->streamOffsets[element->Stream] + baseVertex * stride,
+#endif
                     stride, element->Offset, minVertex + vertexCount, order,
                     (const unsigned short *)((const byte *)indices->data + startIndex * 2), primitiveCount * 3);
                 if (converted) {
@@ -263,8 +272,12 @@ static HRESULT MacShader_DrawIndexed(DeviceImpl *dev, INT baseVertex, UINT minVe
         }
     } else {
 #endif
+#if defined(COD2_X64)
+    CDirect3DDevice_SubmitIndexedNative(dev, indices->data + startIndex * 2, primitiveCount * 3);
+#else
     glDrawElements(GL_TRIANGLES, primitiveCount * 3, GL_UNSIGNED_SHORT,
                     indices->data + startIndex * 2);
+#endif
 #if defined(COD2_X64)
     }
 #endif

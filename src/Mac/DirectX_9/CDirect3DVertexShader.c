@@ -36,6 +36,18 @@ extern void ZN20COpenGLVertexProgramD2Ev(void);
 #endif
 
 #if defined(COD2_X64)
+/* DrawIndexedPrimitive reads the original secondary program base (+4) and
+ * trailing byte (+0x198). Expose their native owners without i386 offsets. */
+const COpenGLVertexProgram *CDirect3DVertexShader_GetProgramInfo(const CDirect3DVertexShader *_this)
+{
+    return (const COpenGLVertexProgram *)((const CDirect3DVertexShaderImpl *)_this)->baseState;
+}
+
+Bool CDirect3DVertexShader_GetDrawPointFlag(const CDirect3DVertexShader *_this)
+{
+    return ((const CDirect3DVertexShaderImpl *)_this)->isBound;
+}
+
 GLuint CDirect3DVertexShader_GetProgramId(const CDirect3DVertexShader *_this)
 {
 #if MAC_METAL_NATIVE
