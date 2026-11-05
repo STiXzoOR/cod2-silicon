@@ -24610,5 +24610,145 @@
   "mac:0x0000ccd4": {
     "status": "fixed",
     "evidence": "Mac 0xccd4 caches French table for language 1, German for 2, otherwise ANSI, then returns the indexed byte; native returned zero. Reconstructed cache/query order and restored 12 wrong table bytes. Scripted full comparison verifies 384/384 bytes at Mac 0x341240/0x3412c0/0x341340. Compiled and reviewed, not exercised. This is the dormant mac_input Carbon callback contract: selected linux_input.c queues SDL key symbols directly and MacResources_GetLanguageCode remains a dormant zero-returning provider."
+  },
+  "mac:0x001f8970": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8970: Frame is an empty return; native services every allocated queue through DSound_SampleFrame. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f893e": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f893e: Init sets its private initialized flag and returns1; native opens the selected output driver and propagates actual availability. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f888e": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f888e: NewSample obtains old recorder-pool storage, creates an AIL handle and 0xc800-byte circular buffer, then sets playback rate/type. Native owns65 typed slots,32768-byte queues and independent AIL handles, avoiding dependence on microphone allocation. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f8976": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8976: SampleFrame waits for AIL status2, takes a contiguous ring segment, installs its address and resumes it. Native hands copied4096-byte chunks to ready AIL buffers and records status4 playing state; buffer ownership and scheduling are explicit adapter differences. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f8964": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8964: Shutdown only clears its initialized flag. Native releases all allocated AIL handles and typed queues before clearing its flag. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f883c": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f883c: UpdateSample returns-1 before initialization,0 for zero input, otherwise writes into the ring but returns requested length even when shortened. Native validates allocated handle/even PCM bytes, bounds its own queue, returns accepted bytes and services it immediately. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f85e4": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f85e4: DestroySample returns the initialized predicate without freeing. Native delegates to DestroyVoice because live Sound_DestroySample uses this API for playback handles; release/zeroing owns the native allocation. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f86f2": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f86f2: Frame gates initialization/recording/current sample, obtains converted PCM and fills sample fields before the installed callback. Native capture Frame is inert because initialization deliberately fails; Voice_GetLocalVoiceData gates on recording availability. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f85f6": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f85f6: Init selects original recording pool, constructs a0x78-byte16-bit recorder, initializes it and destroys on failure. Native DSOUNDRecord_Init clears capture flags, emits one unavailable notice and returns0 before any fixed-address recorder access. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f858e": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f858e: NewSample advances the old pool by0x24 bytes, clears9words and stores rate/volume/pan128/channels/mode2. Native returnsNULL because no capture pool exists; native playback allocates independently. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f86a8": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f86a8: Shutdown invokes recorder shutdown/destructor/delete and clears initialization. Native clears only its two capture flags because it allocated no recorder; playback teardown is separate. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f8500": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8500: Start gates initialized/recorder, calls recorder Start and records sample/recording on success, otherwise returns-1 with diagnostic. Native returns-1 unconditionally under the unavailable-capture contract. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f8552": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8552: Stop gates initialized/recorder then stops and clears sample/recording, returning0. Native returns-1 with capture unavailable; live Voice shutdown skips this operation when capture never initialized. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f87be": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f87be: Record-level getter divides device level by saved baseline then scales65535, with absent-recorder ushort0xffff. Native returns0; Voice reads mixer state only after capture initialization succeeds. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f87f2": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f87f2: Record-source getter writes Mac plus NUL and returns1. Native clears supplied first byte and returns0 to report no capture source; live mixer calls are capture-gated. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f8810": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8810: Microphone setter negates its Boolean argument before recorder Mute and returns0. Native no-ops because it owns no capture device; live call sites are availability-gated. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f878a": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f878a: Level setter normalizes unsigned16 level by65535.0f and calls recorder setter. Native no-ops because it owns no capture device; live calls are availability-gated. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f8806": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8806: Source setter returns1 without effects. Native returns0 because no source can be selected; live caller is capture-gated. Selected provider is src/platform/macos_voice.c -> macos_audio.c SDK AudioUnit/mixer; old mac_play_dsound/mac_record_dsound and groupvoice record.c are excluded. This preserves the documented WS3/WS110 playback-without-capture boundary, not old queue/recorder equivalence."
+  },
+  "mac:0x001f94ae": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f94ae: D1 invokes Shutdown, ring destructor and mutex destructor, including unwind cleanup. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x001f9502": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f9502: D2 invokes the same Shutdown/ring/mutex cleanup, including unwind paths. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x001f9556": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f9556: Converter callback validates userdata, locks, borrows a ring segment, zeroes it when muted and returns0; exceptions/null return-50. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x001f89e0": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f89e0: Constructor stores rate/channels/bits, clears device/unit/flags/buffers, constructs mutex at+0x20 and ring at+0x60, and clears overflow+0x74. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x001f8e08": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8e08: DoConvert locks the ring read, returns borrowed buffer and zeroes muted bytes, unlocking on normal/unwind paths. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x001f8d2a": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8d2a: DoRender locks, checks running/overflow, renders input bus1, writes PCM into its ring and sets overflow when not all bytes fit. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x001f8c52": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8c52: GetBuffer fills its converter output, resets converter/ring on overflow, clears overflow and returns a buffer only for successful nonempty conversion. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x001f8b08": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8b08: GetRecordLevel reads device input volm under mutex, divides by saved level and falls back1.0f on absent device/error. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x001f901a": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f901a: Initialize finds HAL output component, enables input/disables output, binds default input, saves volume, installs callback, sets PCM formats, initializes converter and allocates output/input/ring buffers. Caught errors shut down and returnfalse. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x001f8ad2": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8ad2: Mute locks and stores the low byte of the flag at+0x19. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x001f8e84": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8e84: Render callback validates refcon and delegates timestamp/frame count to DoRender; null/exception returns-50. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x001f8bc4": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8bc4: SetRecordLevel locks and writes requested level multiplied by saved baseline to device input volm. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x001f8ebe": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8ebe: Shutdown stops input, waits/uninitializes/disposes converter, restores saved device volume, closes component, frees both buffers and clears overflow under recursive locking. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x001f8a74": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8a74: Start is idempotent; starts AudioUnit and marks running only on success. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x001f8aac": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x1f8aac: Stop calls AudioOutputUnitStop only while running and clears running. CMake excludes CAudioRecorder and mac_record_dsound; selected macos_voice.c DSOUNDRecord_Init deliberately reports unavailable before constructing a recorder, as documented WS3/WS110. No selected native source or generated data refers to this method, so no callback/old object is installed. Native microphone capture remains absent, not reconstructed or claimed equivalent."
+  },
+  "mac:0x00113bb4": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x113bb4: Constructor zeroes40bytes. Surviving native class declaration is only an int placeholder, so its40-byte memset is not approved for reuse. No selected source/generated data calls this legacy helper; its former audio graph is excluded. macos_audio.c constructs actual SDK AudioStreamBasicDescription values directly for output/decoding (WS3), avoiding this placeholder. This is a replaced SDK-format boundary, not equality for the dormant helper."
+  },
+  "mac:0x00113b64": {
+    "status": "intentional",
+    "evidence": "Read exact-symbol Mac 0x113b64: SetCanonical writes lpcm, float32 flags9 or noninterleaved41,channels,one frame/packet and4 or4*channels bytes; native legacy helper is empty. No selected source/generated data calls this legacy helper; its former audio graph is excluded. macos_audio.c constructs actual SDK AudioStreamBasicDescription values directly for output/decoding (WS3), avoiding this placeholder. This is a replaced SDK-format boundary, not equality for the dormant helper."
   }
 }
