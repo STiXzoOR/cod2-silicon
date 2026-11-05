@@ -39,3 +39,68 @@ The six units closed 543 entries. Thirty-two whole callers misattributed to univ
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baselines and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. These dedicated traces do not exercise client input/rendering or every changed diagnostic, parser, sound or numeric edge; unreached corrections remain compiled and reviewed.
 
 Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile. No new tests were written; the existing formatter fixture expectation was corrected against exact Mac diagnostic bytes.
+
+## Remaining-helper follow-up — 2026-11-05
+
+**160/229 reconciled: 136 equal, 24 fixed; 69 unchecked.** This pass closes 37
+of the 106 remaining Linux-only helper rows: 35 equal and two fixed. The original
+123 reconciled statuses/evidence remain unchanged. Linux supplied helper names;
+Mac symbol-start disassembly supplied behavior. Every new closure accounts for
+the complete helper operation, including every component, branch and result.
+It does not certify the unrelated caller around an inline operation.
+
+Two corrections were required in actual native owners. `FastCeil` in the HUD
+timer/clock code used a C float-to-int cast. Mac 0x1b3d4f, 0x1b3f03 and 0x1b3f39
+use `CVTTSS2SI`, whose invalid result is `INT_MIN`. A connected native helper now
+preserves that result after `ceilf` at all three uses. `BoundsOverlap` in
+`CM_AreaEntities_r` used six `<=` tests, rejecting unordered pairs; Mac
+0xaf6d2–0xaf729 rejects only strictly separated pairs with `UCOMISS/JA`. The
+native predicates now preserve that unordered-inclusive behavior and finite
+axis/order behavior. Both corrections are guarded by `COD2_X64`. Their complete
+owner rows receive explicit parent-approved evidence overrides.
+
+The new identity evidence includes:
+
+- `FloatAsInt` is the complete native `FloatWriteNoSwap` operation, Mac
+  0x28590–0x28597, returning the entire float word. This resolves the previous
+  sign-only evidence gap. `FloatIdentity` remains distinct and unchecked.
+- `Q_rint`/`I_fround`, `Q_round` and four-component byte packing use the complete
+  `Flash::Draw` sequence at 0xa0e83–0xa0f71. Later native FX conversion helpers
+  already preserve invalid integer conversion and the wrapping clamp paths.
+- `AxisClear`/`AxisIdentity` match the full nine-word camera identity block at
+  0x1d4826–0x1d4867; the decoded cubemap table selects it for case 4.
+  `Vec3ScaleToUnitMax` is the complete `ColorNormalize` operation at
+  0x2c7a6–0x2c82e, including output ones on zero and its returned maximum.
+- Paired float sine/cosine, reciprocal square root, float sign, integer sign,
+  side predicate, three-operand float clamp and accumulated plane-sign bits
+  were read in their exact owners. Mac's comparison-based signs and unordered
+  side result take precedence over the Linux header expressions.
+- Complete two-/three-/four-component copies, sets, clears, sums, differences,
+  averages, scales, multiply-adds, interpolation, negation and squared length
+  were established in Dvar, collision, animation, camera, item and movement
+  owners. Private ledger evidence names each exact range and native owner.
+
+The 69 unchecked rows retain real identity or input-contract gaps. New leads
+were evaluated without converting an absent symbol or partial operator into a
+closure. In particular, the partition integer minimum uses sign-only selection
+while native brush counts are bounded; the generic integer clamp has a located
+wrapping crash-land block but no established complete exceptional caller/input
+contract. Separate-output normalizers are not in-place normalizers, unsigned
+angle routines do not prove signed angles, matrix APIs do not establish the
+special alias/store contracts, and the FX random sphere sampler does not prove
+uniform-deviate or golden-angle samplers. Existing float-bit, plane snapping,
+projection, quaternion and remaining geometry gaps stay explicit. No unused
+standalone helper was added.
+
+Both changed translation units compile with the configured arm64 Release
+client and dedicated commands in stock and CoD2x modes (eight objects). All ten
+existing HUD module groups pass both modes under ASan/UBSan; the existing
+production `world_links` fixture passes both modes under ASan. No tests were
+added or changed. Five inactive preprocessing configurations match the base;
+`unifdef -UCOD2_X64` output is byte-identical for both sources, and neither uses
+`__LINE__`. These are source-preservation checks, not i386 byte parity.
+
+The exceptional conversion and unordered-overlap corrections are compiled and
+reviewed, not specifically exercised. Full links, CI and replays remain with
+the integration owner. Parent/fresh source review is pending at this worker
+commit. Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-math-remaining.noindex/`.

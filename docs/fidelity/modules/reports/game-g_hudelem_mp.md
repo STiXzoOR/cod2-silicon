@@ -124,3 +124,21 @@ original trace. Existing original differences remain: velocity frame 102,
 quantized state 116, movement flags 652, view angles 776 and movement time 1803.
 Entity counts, movement type, health, weapon and weapon state match throughout.
 Whole-project parity remains open.
+
+## Math-helper follow-up — 2026-11-05
+
+The complete `FastCeil` operation exposed one additional conversion defect in
+`HECmd_SetTimer_Internal` and `HECmd_SetClock_Internal`. Mac 0x1b3d4f,
+0x1b3f03 and 0x1b3f39 return `INT_MIN` from `CVTTSS2SI` for nonfinite or
+out-of-int-range `ceilf` results. Direct native C casts did not preserve that
+contract. A `COD2_X64` helper now handles that result before the existing
+parameter validation at all three sites. The two owner rows remain fixed;
+their original evidence is retained with this correction appended.
+
+This source compiles with the configured stock/CoD2x arm64 Release client and
+dedicated commands. All ten unchanged HUD module groups pass both modes under
+ASan/UBSan. The exceptional inputs are compiled and reviewed, not specifically
+exercised. Five inactive source configurations and byte-for-byte
+`unifdef -UCOD2_X64` output match the base. This file has no `__LINE__` uses.
+No tests were added; full integration validation and fresh review remain with
+the parent.

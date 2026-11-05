@@ -183,10 +183,17 @@ static void __attribute_regparm__(2)
         svEntity_t *check = &((server_t *)imp_sv)->svEntities[((unsigned int)entIndex) - 1];
         gentity_t *gEnt = SV_GEntityForSvEntity(check);
 
+#if defined(COD2_X64)
+        if ((gEnt->r.contents & ap->contentmask) != 0 &&
+            !(gEnt->r.absmin[0] > ap->maxs[0]) && !(ap->mins[0] > gEnt->r.absmax[0]) &&
+            !(gEnt->r.absmin[1] > ap->maxs[1]) && !(ap->mins[1] > gEnt->r.absmax[1]) &&
+            !(gEnt->r.absmin[2] > ap->maxs[2]) && !(ap->mins[2] > gEnt->r.absmax[2])) {
+#else
         if ((gEnt->r.contents & ap->contentmask) != 0 &&
             gEnt->r.absmin[0] <= ap->maxs[0] && ap->mins[0] <= gEnt->r.absmax[0] &&
             gEnt->r.absmin[1] <= ap->maxs[1] && ap->mins[1] <= gEnt->r.absmax[1] &&
             gEnt->r.absmin[2] <= ap->maxs[2] && ap->mins[2] <= gEnt->r.absmax[2]) {
+#endif
             if (ap->count == ap->maxcount) {
                 Com_DPrintf("CM_AreaEntities: MAXCOUNT\n");
                 return;
