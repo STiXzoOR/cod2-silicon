@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**Current: 173/229 reconciled: 143 equal, 30 fixed, 0 intentional; 56 unchecked.**
+**Current: 174/229 reconciled: 144 equal, 30 fixed, 0 intentional; 55 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -501,3 +501,32 @@ compilation, tests, CI, full build, replay or runtime exercise.
 `VectorSubtract4` remains unchecked. Four genuine float SUBSS operations at 0xb0035/0xb0050/0xb006b/0xb0081 improve the evidence beyond the prior three-component and packed-short candidates. Each difference is immediately scaled and added, however, before an interpolated component is stored. There is no established unscaled output vector or independent unscaled vector consumer. The reconstructed helper's four output writes cannot be attributed by assuming an eliminated temporary without original inline identity. The complete addition output does not resolve that separate storage gap.
 
 The reconstructed header supplies names/intent only; this closure uses complete actual Mac/native operation evidence, not a recovered standalone original helper or literal inline ancestry. The domain is the actual produced operand values and distinct local/ancestor storage. It excludes arbitrary pointer overlap, exported ABI, FP flags/trap timing/NaN payload selection, concurrent observation and whole trace/traversal equivalence. Fresh exact wrapper/recursive bodies match the retained evidence; source is unchanged. Independent split review: `units/review-provenance-vec4ops24.md`; private evidence: `recon-provenance-vec4ops24.noindex`. One closure, one refined unchecked row, no new defect or source change. Static review only; no compilation, tests, CI, replay or runtime verification.
+
+## Image-count logarithm (provenance-math24)
+
+`Q_log2` is equal for the complete consumed positive-count calculation in
+`R_ImageList_f`. The full original helper at0x80a3ea6 returns at0x80a3eca;
+its signed shift/count operation identifies floor-log2 for positive input.
+Actual Mac count initialization, asset callback and2048-slot list storage supply
+the valid nonempty count domain1..2048. Empty lists bypass the calculation.
+The callback is unguarded; this scope requires valid enumeration/storage and
+does not claim that the owner prevents overflow.
+
+Mac0xe779c–0xe77a6 counts arithmetic shifts until the actual count reaches1.
+The n==1 branch reaches exact bytes30c0 at0xe7cb8: XOR AL,AL produces full0
+because EAX is proven1. The complete integer result is doubled at0xe77a8 and
+consumed by the actual sort-depth argument/call0xe77b3/0xe77c4. Native uses the
+actual element count with wider pointers and matches every produced positive
+count, including1 and nonpowers of2. Both native branches already have this
+scalar operation; the owner's existing insertion/reporting repairs do not
+change its equal classification.
+
+This is a complete real producer/operation/consumer, distinct from the earlier
+rejected water left-shift counter. It does not certify arbitrary signed-input
+API behavior, original negative-input nontermination, zero-input call/return,
+malformed enumeration/storage, whole sort/list behavior or literal inline
+ancestry. Original Linux supplies identity/intent; Mac supplies behavior.
+Independent review: review-provenance-math24-log2.md. Exact original/Mac bodies,
+raw target bytes and source hashes remain in recon-provenance-math24.noindex.
+One equal closure, no source change or new defect. No compilation, tests, CI,
+full build, replay or runtime verification.
