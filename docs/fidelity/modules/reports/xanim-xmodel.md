@@ -31,3 +31,8 @@ The five unchecked helper rows remain unchecked. Mac loader and default-model wr
 The existing `TestNames` backslash expectation was obsolete: it rejected `xmodel\test`, while the preserved intentional `Com_ValidXModelName` verdict accepts Windows separators. Independent Windows disassembly reconfirmed slash at 0x490967 and backslash at 0x49096b within 0x490950–0x490977. The existing assertion was changed to expect acceptance, with the same assertion and case count. This is the only code change in this follow-up; production behavior and all prior ledger evidence are unchanged.
 
 Configured stock/CoD2x Release objects compiled. After that expectation correction, the existing complete xanim/model/skeleton fixture passes both modes under ASan/UBSan. Initial failure logs are retained. Existing synchronized notification and game-animation fixtures also pass. No new tests, cases or assertions, full CI or replays were introduced. Private follow-up evidence is in `recon-animation-remaining.noindex`.
+
+
+## Original-address follow-up (inline-effects4)
+
+The original Linux 1.3 replacement-error string anchors XModelReplace at0x80c574e–0x80c583f (exclusive end). Its body checks the replacement, preserves the old name, frees the old model, copies the replacement structure, restores the name and retains referenced LOD surface strings. This improves the identity target but does not identify a complete Mac replacement operation. Mac XModelFree consumers alone do not establish that sequence, and a missing error string or direct caller is not grounds for closure. XModelReplace and the other unresolved helpers remain unchecked. No source changes or runtime verification.
