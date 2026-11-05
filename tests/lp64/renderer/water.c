@@ -19,6 +19,30 @@ extern void MatrixIdentity44(float (*)[4]);
 #define RB_SetSampler RB_ProductionSetSampler
 #include "water_helpers.h"
 #undef RB_SetSampler
+
+#if defined(WATER_HAS_NATIVE_BUFFER_OWNERS)
+/* Existing water cases borrow CPU storage with memory.vptr == NULL. Real Lock
+ * and its owner types/helpers are included; owning/GPU paths must stay unused. */
+CBufferFenceIds CFence_sUnusedFenceIDs;
+UINT32 COpenGL_sFrameCount;
+void CMemoryBuffer_CMemoryBuffer(const CMemoryBuffer *p, UINT32 n)
+{ (void)p; (void)n; abort(); }
+void CMemoryBuffer_FreeLater(const CMemoryBuffer *p, UINT32 n)
+{ (void)p; (void)n; abort(); }
+void CMemoryBuffer_Recreate(const CMemoryBuffer *p) { (void)p; abort(); }
+void ZN13CMemoryBufferD1Ev(const CMemoryBuffer *p) { (void)p; abort(); }
+void CFence_CFence(const CFence *p, const void *start, UINT32 size, UINT32 frame)
+{ (void)p; (void)start; (void)size; (void)frame; abort(); }
+void CVAOPacket_ReleaseBuffer(const void *p, UINT32 n)
+{ (void)p; (void)n; abort(); }
+void MacShim_RecordObject(const void *p, int backend)
+{ (void)p; (void)backend; abort(); }
+void MacShim_ForgetObject(const void *p) { (void)p; abort(); }
+void glFinishFenceAPPLE(GLuint fence) { (void)fence; abort(); }
+void glFlushVertexArrayRangeAPPLE(GLsizei length, const void *pointer)
+{ (void)length; (void)pointer; abort(); }
+#endif
+
 extern void FFT_Init(int *, complex_t *);
 
 DxGlobals dx;
