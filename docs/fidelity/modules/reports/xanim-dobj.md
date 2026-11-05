@@ -75,3 +75,26 @@ Original Linux 1.3 executable ranges0x80ba706–0x80ba776 (DObjClone) and0x80ba7
 ## Original nonmutating skeleton predicate
 
 The anonymous Linux 1.0 body at 0x80b83dc maps to original 1.3 0x80ba9b4–0x80ba9e2. It returns true only for a matching timestamp and non-null skeleton and makes no external writes. Fresh exact Mac `DObjSkelExists` at 0x73f2e–0x73f52 instead clears the skeleton on mismatch at 0x73f3c; it remains an invalid substitute for `DObjSkelIsValid`. The two earlier clone/create-parameter identities retain their ownership and inverse-operation gaps. All three remain unchecked. Targeted PPC source metadata added no complete owner for these operations. No source changes, compilation, tests, CI, replay or runtime exercise ran; evidence is in `recon-provenance-animation10.noindex`.
+
+## Unordered sphere projection selector (provenance-distance18)
+
+DObjTraceline's closest-point selection at Mac 0x76b58 compares one with the
+projection parameter and branches only for ordered values below one. Unordered
+values select all three end-minus-center residuals. Native's ordered >= test
+selected the start residual instead. The COD2_X64 predicate now uses
+`!(closestT < 1.0f)`; the previous predicate is retained in the legacy branch.
+
+The actual endpoint delta, squared-length reciprocal and bone-center producer
+were traced through every start/end/interior distance branch and the radius
+consumer. A hand-derived finite entry-domain case, start=(2^65,0,0), end=center=0
+and radiusSquared=1, overflows squared length and produces an unordered parameter:
+Mac obtains end distance zero while the former native branch obtained infinite
+start distance. This is not an upstream reachability or observed gameplay claim.
+
+The existing valid-model guards, scratch-sign handling and earlier unordered
+normal correction are preserved. Independent review confirmed the exact Mac
+comparison, minimal patch, unchanged complete OFF bytes and zero affected
+__LINE__/#line/assert locations. Only dobj.c was manually compiled for the existing
+stock/CoD2x client/dedicated configurations, all successfully. The new path remains
+unexercised; no tests, CI, full build or replay were run. Evidence and receipts:
+recon-provenance-distance18.noindex and provenance-distance18.compile.json.

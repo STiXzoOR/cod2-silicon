@@ -1712,7 +1712,11 @@ void DObjTraceline(DObj *obj, vec_t *start, vec_t *end, unsigned char *priorityM
             startToCenter[2] = start[2] - center[2];
             closestT = -(delta[0] * startToCenter[0] + delta[1] * startToCenter[1] + delta[2] * startToCenter[2]) * invLenSq;
 
+#if defined(COD2_X64)
+            if (!(closestT < 1.0f)) {
+#else
             if (closestT >= 1.0f) {
+#endif
                 startToCenter[0] = end[0] - center[0];
                 startToCenter[1] = end[1] - center[1];
                 startToCenter[2] = end[2] - center[2];
