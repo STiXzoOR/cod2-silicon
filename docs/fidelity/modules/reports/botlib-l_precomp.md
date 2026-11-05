@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**58/77 reconciled: 42 equal, 10 fixed, 6 intentional; 19 unchecked.** Read all 40 Mac function bodies and anchored 18 Linux-only helper identities to their inlined Mac callers. Linux names identify ledger rows; Linux implementation text was not used as authority. All source changes are under `COD2_X64`; the legacy guard comparison passes in all ten inactive configurations.
+**59/77 reconciled: 43 equal, 10 fixed, 6 intentional; 18 unchecked.** Read all 40 Mac function bodies and anchored 18 Linux-only helper identities to their inlined Mac callers. Linux names identify ledger rows; Linux implementation text was not used as authority. All source changes are under `COD2_X64`; the legacy guard comparison passes in all ten inactive configurations.
 
 ## Corrections
 
@@ -34,7 +34,7 @@ Configured an arm64 Release build and built `cod2_macos_ded` with background pri
 
 No new tests, runtime fixtures, full CI, replays, or pushes were run. The corrections are compiled and reviewed but not exercised. Parent integration owns independent review and runtime validation.
 
-The 19 unchecked entries have no native body or caller and no verified standalone Mac symbol: `LoadSourceMemory`, `PC_AddBuiltinDefines`, `PC_AddDefine`, `PC_AddGlobalDefine`, `PC_CheckOpenSourceHandles`, `PC_CheckTokenString`, `PC_CheckTokenType`, `PC_DefineFromString`, `PC_ExpectAnyToken`, `PC_ExpectTokenString`, `PC_ExpectTokenType`, `PC_FindDefine`, `PC_RemoveAllGlobalDefines`, `PC_RemoveGlobalDefine`, `PC_SetIncludePath`, `PC_SetPunctuations`, `PC_SkipUntilString`, `PC_UnreadLastToken`, and `PC_UnreadToken`. Missing identity is not recorded as equality.
+The 18 remaining unchecked entries have no complete verified Mac body or native replacement boundary: `LoadSourceMemory`, `PC_AddBuiltinDefines`, `PC_AddDefine`, `PC_AddGlobalDefine`, `PC_CheckOpenSourceHandles`, `PC_CheckTokenType`, `PC_DefineFromString`, `PC_ExpectAnyToken`, `PC_ExpectTokenString`, `PC_ExpectTokenType`, `PC_FindDefine`, `PC_RemoveAllGlobalDefines`, `PC_RemoveGlobalDefine`, `PC_SetIncludePath`, `PC_SetPunctuations`, `PC_SkipUntilString`, `PC_UnreadLastToken`, and `PC_UnreadToken`. Missing identity is not recorded as equality.
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-botlib-precomp.noindex/`. Exact verdict IDs are in the external `botlib-precomp.ledger.json` unit ledger; global ledgers were not edited.
 
@@ -47,3 +47,13 @@ Parent and fresh independent source/binary review covered all six units, includi
 Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. Dedicated replay does not exercise client rendering, platform dialogs, real audio output or microphone capture.
 
 Catalog coverage passed without semantic catalog changes. The earlier batch 8 hosted macOS run exceeded its one-hour limit during ABI audits despite passing full local CI; that hosted run remains incomplete. Hosted ILP32 comparison is unavailable because the unchanged reference fails compilation; no byte parity is claimed.
+
+## Remaining-identity audit, 2026-11-05
+
+Original Mac STABS resolves the complete live use of PC_CheckTokenString inside PC_Directive_define. Its source/string parameter scope starts at original line 2810; the tok local is line 2812. SLINE 2814 maps the read at 0xc0a6f-0xc0a8e, and SLINE 2817 maps the comparison at 0xc0be3-0xc0c0f. The binary string at 0x24d6f8 is `)`. Failure continues without a token, an exact match proceeds past the empty parameter list, and mismatch allocates and copies the full token, increments numtokens, and pushes it back onto the source queue at 0xc0edb-0xc0f32. The allocation-failure branch is at 0xc0f4c-0xc0f62.
+
+Native l_precomp.c:2658-2666 and its PC_UnreadSourceToken/PC_AllocTokenCopy owners retain all three outcomes and the complete queue operation. This establishes the complete live specialized use; it does not assert that a separately exported generic API exists. No source edit was needed. The existing PC_Directive_define verdict is preserved exactly in the full unit ledger.
+
+The other 18 identities remain unchecked after reviewing original SO/SLINE/FUN and lexical scopes, the full symbol inventory and actual native owners. PC_FindDefineInSource traverses hashnext and is the hashed lookup, not proof of the distinct linear PC_FindDefine. Source-token queue copies do not identify PC_UnreadLastToken or PC_UnreadToken wrappers. Fresh source initialization and global-define copying do not establish the include-path setter, custom punctuation setter, memory loader or global-define management APIs. Parameter/local metadata without an executable start is not a body. No absence-only closure was made.
+
+Both assigned production translation units compiled as actual configured arm64 Release client objects for stock and CoD2x, with background priority and at most two jobs. Existing narrowing warnings remain. Triage and constant checks were used only as heuristics; exact-symbol disassembly and binary literals support the inline comparison. No focused botlib runtime fixture exists in this checkout. No new tests, cases or assertions, full CI, replay, push or production changes were made. The inline behavior is compiled and reviewed, not exercised. With source unchanged, all inactive source and actual __LINE__ expansions remain unchanged. Private evidence is in `~/Library/Application Support/CoD2-native-decomp/recon-botlib-remaining.noindex/`.
