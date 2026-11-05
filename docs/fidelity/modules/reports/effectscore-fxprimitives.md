@@ -176,3 +176,33 @@ were advisory; the Release helper name did not resolve in the constant tool,
 so its exact-symbol disassembly was used. Production source is unchanged,
 including OFF text and actual `__LINE__` expansions. Private evidence is in
 `~/Library/Application Support/CoD2-native-decomp/recon-fx-alloc-remaining.noindex/`.
+
+## Original integer-selector provenance follow-up
+
+The original Linux ELF preserves calls from seven cull wrappers to the common
+plane-count operation at 0x81247a4, which calls the original I_min copy at
+0x81293be. That supplies the helper identity; the Mac operations decide behavior.
+Particle, OrientedParticle, Cloud, Line, Tail, Cylinder and Light culling at
+0xa0758, 0xa07e4, 0xa0870, 0xa090a, 0xa097e, 0xa09f2 and 0xa0a6c each test the
+sign after a wrapping 32-bit camera-count minus five when flag 0x02000000 is set.
+An ordinary signed comparison selected the wrong result for INT_MIN through
+INT_MIN+4. A shared native selector now performs the unsigned subtraction and
+sign-bit selection. Existing position, radius order and Cloud extent behavior
+remain intact.
+
+The backing contract is defined: FxCamera owns six plane records and a signed
+count. Mac CalcFrustumPlanes writes five at 0xab55c, optionally initializes the
+sixth plane and writes six at 0xab5aa, and initializes plane distances before
+returning. Native preserves that layout and producer contract. The corrected
+exceptional count selects the first five backed records; it introduces no
+uninitialized storage. Normal producer counts five/six already agreed, and this
+review does not establish normal gameplay reachability of the extreme counts.
+
+Five previous equal owners become fixed; Cloud and Cylinder were already fixed
+and gain this additional correction. The module is now 157 equal, 22 fixed,
+21 intentional and one unchecked. Manual compilation of the changed translation
+unit passed in stock and CODX client configurations; this FX file is excluded
+from dedicated targets. COD2_X64=OFF source is byte-identical after conditional
+selection. No tests, CI, replay, full build or runtime exercise was performed.
+Private evidence: recon-provenance-math4.noindex; compilation receipts are in
+manual-fx-cull-compile-4bac2b6de38b.noindex.
