@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 382,
-      "intentional": 3144,
-      "equal": 4751,
+      "unchecked": 373,
+      "intentional": 3152,
+      "equal": 4752,
       "fixed": 1180
     },
     "scopes": {
@@ -169913,7 +169913,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Reviewed the actual g_parse_user consumers in Mac yyparse and native yyparse_impl.h: string actions intern with user 0 or g_parse_user, and reductions call SL_ConvertToLowercase with g_parse_user. No SL_TransferRefToUser operation or standalone TransferRefToParseUser identity was established in this owner. Unlike the generated stack/debug APIs, this is an engine string-reference helper; no version-boundary exemption is claimed."
       },
       {
         "id": "linux:script/scr_yacc.c:2768:input",
@@ -169932,7 +169932,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Read the Mac scanner DFA cursor/hold-character path 0x10c40b-0x10c51c and refill/replay 0x10cf4b-0x10cfff / 0x10fc08-0x110220 against native yyparse_yylex. Those operations implement token scanning; no separately callable character-input or pushback operation identity was established. The existing cursor/hold-character fields do not justify equating this helper with the token path."
       },
       {
         "id": "mac:0x0010be2a",
@@ -169982,7 +169982,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Mac yy_create_buffer 0x10be39-0x10be68 allocates a descriptor and owned character storage; yyparse lazy creation 0x10fa8e-0x10faaa / 0x10ffb5-0x10ffd4 and growth 0x1100bb-0x110126 retain genuine heap paths. Normal ScriptParse uses stack/static storage, but that alone cannot establish the heap deletion/free operation. No native production deletion owner or equivalent original body was established; yy_delete_buffer has only an absolute-zero .eh symbol, not executable code. Left unresolved rather than using the stack-teardown boundary for this older helper."
       },
       {
         "id": "linux:script/scr_yacc.c:3171:yy_fatal_error",
@@ -170115,7 +170115,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Established the real input owner: Mac Scr_LoadScript initializes scrCompilePub.in_ptr/parseBuf then calls ScriptParse, which installs a fill-enabled stack descriptor over static ch_buf at 0x110257-0x1102c6; yyparse refills through Scr_ScanFile at 0x10fe09. Native mirrors that path, with an additional debugger caller using the same ScriptParse input contract. This does not establish the separate memory-scan API allocation/sentinel/ownership operation; no original inline identity was proven."
       },
       {
         "id": "linux:script/scr_yacc.c:3139:yy_scan_bytes",
@@ -170134,7 +170134,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Established the real input owner: Mac Scr_LoadScript initializes scrCompilePub.in_ptr/parseBuf then calls ScriptParse, which installs a fill-enabled stack descriptor over static ch_buf at 0x110257-0x1102c6; yyparse refills through Scr_ScanFile at 0x10fe09. Native mirrors that path, with an additional debugger caller using the same ScriptParse input contract. This does not establish the separate memory-scan API allocation/sentinel/ownership operation; no original inline identity was proven."
       },
       {
         "id": "linux:script/scr_yacc.c:3127:yy_scan_string",
@@ -170153,7 +170153,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Established the real input owner: Mac Scr_LoadScript initializes scrCompilePub.in_ptr/parseBuf then calls ScriptParse, which installs a fill-enabled stack descriptor over static ch_buf at 0x110257-0x1102c6; yyparse refills through Scr_ScanFile at 0x10fe09. Native mirrors that path, with an additional debugger caller using the same ScriptParse input contract. This does not establish the separate memory-scan API allocation/sentinel/ownership operation; no original inline identity was proven."
       },
       {
         "id": "linux:script/scr_yacc.c:2852:yy_switch_to_buffer",
@@ -170172,7 +170172,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Read Mac single-buffer installation at ScriptParse 0x1102b6, lazy allocation assignment 0x10faa3/0x10ffcf, and state loads 0x10c3e4-0x10c405 / 0x110062-0x110083. None identifies the complete save-old/install-new/switch-on-EOF operation. An absolute-zero yy_switch_to_buffer .eh symbol is not a body. Native direct replacement alone is insufficient proof; left unchecked."
       },
       {
         "id": "linux:script/scr_yacc.c:2708:yy_try_NUL_trans",
@@ -170266,8 +170266,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "status": "equal",
+        "evidence": "Identified the actual parser discard/cleanup operations in Mac yyparse: lookahead discard 0x10c5e6-0x10c5fe only resets yychar to -2; recovery pop 0x10c14b-0x10c16b only moves semantic/state stack pointers; abort 0x10c35a-0x10c366 and success 0x10fae2-0x10fae4 unwind the stack with no semantic destructor/free/ref-transfer. Native yyparse error recovery and return paths have the same no-destructor behavior. This reconciles the no-op semantic-destruction operation at its real owners, not a standalone Mac helper or all Linux parser behavior."
       },
       {
         "id": "linux:script/scr_yacc.c:3047:yyensure_buffer_stack",
@@ -170285,8 +170285,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "status": "intentional",
+        "evidence": "Mac has one yy_current_buffer at 0xda2288, identified in STABS and all direct text references. ScriptParse 0x110257-0x1102c6 installs its stack descriptor over static ch_buf; yyparse 0x10c3d1-0x10c405 loads that single descriptor. Lazy allocation at 0x10fa8e-0x10faaa and 0x10ffb5-0x10ffd4 also replaces that one pointer; growth at 0x1100bb-0x110126 reallocates only its character storage. Native scr_yacc.c/yyparse_impl.h preserve this model; native engine callers are Scr_LoadScript and Scr_CompileTextInternal, both through ScriptParse. The Linux-named stack-capacity API belongs to a distinct multi-buffer ownership interface: the retained native contract has no descriptor array/capacity/top to ensure. No adapter or inferred equivalent malloc operation is claimed."
       },
       {
         "id": "linux:script/scr_yacc.c:3291:yyerror",
@@ -170324,7 +170324,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Mac yy_create_buffer 0x10be39-0x10be68 allocates a descriptor and owned character storage; yyparse lazy creation 0x10fa8e-0x10faaa / 0x10ffb5-0x10ffd4 and growth 0x1100bb-0x110126 retain genuine heap paths. Normal ScriptParse uses stack/static storage, but that alone cannot establish the heap deletion/free operation. No native production deletion owner or equivalent original body was established; yy_delete_buffer has only an absolute-zero .eh symbol, not executable code. Left unresolved rather than using the stack-teardown boundary for this older helper."
       },
       {
         "id": "linux:script/scr_yacc.c:3236:yyget_debug",
@@ -170342,8 +170342,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "status": "intentional",
+        "evidence": "Mac lexer dispatch 0x10c40b-0x10c51c and source actions 0x10c637-0x10d04e / 0x10eb5a-0x10f012 run DFA/token processing and route diagnostics directly to CompileError or fatal fprintf/exit; STABS scanner state has no yy_flex_debug owner. Native yyparse_yylex retains those operations and diagnostics, including unconditional ECHO via yyout at 0x10d004-0x10d042. The Linux-named scanner-debug flag accessor belongs to an unsupported scanner tracing interface; it is not the engine script debugger or a gate on compiler errors. No synthetic debug state is introduced."
       },
       {
         "id": "linux:script/scr_yacc.c:3188:yyget_in",
@@ -170362,7 +170362,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Mac and native retain the underlying scanner global; inspected input-file loads at 0x10c3b7/0x10ffaa. Whole-text xrefs confine these globals to yyparse, yy_create_buffer and ScriptParse as applicable. These loads/stores establish ownership, not the identity of the Linux-named callable accessor; no original caller or separate body was proven. Left unchecked rather than equating similar global access with that API."
       },
       {
         "id": "linux:script/scr_yacc.c:3202:yyget_leng",
@@ -170381,7 +170381,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Mac and native retain the underlying scanner global; inspected matched-token length store 0x10c4f9 and action reads such as 0x10c646. Whole-text xrefs confine these globals to yyparse, yy_create_buffer and ScriptParse as applicable. These loads/stores establish ownership, not the identity of the Linux-named callable accessor; no original caller or separate body was proven. Left unchecked rather than equating similar global access with that API."
       },
       {
         "id": "linux:script/scr_yacc.c:3181:yyget_lineno",
@@ -170399,8 +170399,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "status": "intentional",
+        "evidence": "Mac scanner source positions are byte offsets: ScriptParse 0x110226-0x11023a resets g_out_pos/g_sourcePos, token action 0x10c637-0x10c64c copies the position and adds yyleng, and error reporting 0x10c31b-0x10c343 passes g_sourcePos to CompileError. STABS records the ten-field 40-byte descriptor and scanner state, with no scanner line counter. Native scr_yacc.c/yyparse_impl.h retain this byte-offset contract; scr_parser.c derives displayed lines from stored source bytes. The Linux-named scanner line-counter accessor is an unsupported interface, not an alias for sourcePos. No mutable line counter/getter/setter is introduced."
       },
       {
         "id": "linux:script/scr_yacc.c:3195:yyget_out",
@@ -170419,7 +170419,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Mac and native retain the underlying scanner global; inspected ECHO output stream read at 0x10d020. Whole-text xrefs confine these globals to yyparse, yy_create_buffer and ScriptParse as applicable. These loads/stores establish ownership, not the identity of the Linux-named callable accessor; no original caller or separate body was proven. Left unchecked rather than equating similar global access with that API."
       },
       {
         "id": "linux:script/scr_yacc.c:3209:yyget_text",
@@ -170438,7 +170438,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Mac and native retain the underlying scanner global; inspected matched-text store 0x10c4ef and action reads such as 0x10ca48. Whole-text xrefs confine these globals to yyparse, yy_create_buffer and ScriptParse as applicable. These loads/stores establish ownership, not the identity of the Linux-named callable accessor; no original caller or separate body was proven. Left unchecked rather than equating similar global access with that API."
       },
       {
         "id": "linux:script/scr_yacc.c:1850:yylex",
@@ -170475,8 +170475,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "status": "intentional",
+        "evidence": "Mac has one yy_current_buffer at 0xda2288, identified in STABS and all direct text references. ScriptParse 0x110257-0x1102c6 installs its stack descriptor over static ch_buf; yyparse 0x10c3d1-0x10c405 loads that single descriptor. Lazy allocation at 0x10fa8e-0x10faaa and 0x10ffb5-0x10ffd4 also replaces that one pointer; growth at 0x1100bb-0x110126 reallocates only its character storage. Native scr_yacc.c/yyparse_impl.h preserve this model; native engine callers are Scr_LoadScript and Scr_CompileTextInternal, both through ScriptParse. The Linux-named whole-buffer-stack teardown interface is unsupported. Mac parser exit 0x10c35a-0x10c366 and ScriptParse return 0x1102cb-0x1102d7 unwind stack storage; EOF retains/reset the active buffer. Heap-backed lazy buffers and realloc remain supported, but no bulk stack ownership/destruction interface is claimed. This does not reconcile yy_delete_buffer or yyfree."
       },
       {
         "id": "mac:0x0010bf2a",
@@ -170525,8 +170525,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "status": "intentional",
+        "evidence": "Mac has one yy_current_buffer at 0xda2288, identified in STABS and all direct text references. ScriptParse 0x110257-0x1102c6 installs its stack descriptor over static ch_buf; yyparse 0x10c3d1-0x10c405 loads that single descriptor. Lazy allocation at 0x10fa8e-0x10faaa and 0x10ffb5-0x10ffd4 also replaces that one pointer; growth at 0x1100bb-0x110126 reallocates only its character storage. Native scr_yacc.c/yyparse_impl.h preserve this model; native engine callers are Scr_LoadScript and Scr_CompileTextInternal, both through ScriptParse. The Linux-named pop/restore interface is unsupported: normal parser return at 0x1102cb-0x1102d7 returns yaccResult without restoring a preceding descriptor. EOF 0x10ffde-0x110089 resets the same buffer, not a stacked predecessor."
       },
       {
         "id": "linux:script/scr_yacc.c:2998:yypush_buffer_state",
@@ -170544,8 +170544,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "status": "intentional",
+        "evidence": "Mac has one yy_current_buffer at 0xda2288, identified in STABS and all direct text references. ScriptParse 0x110257-0x1102c6 installs its stack descriptor over static ch_buf; yyparse 0x10c3d1-0x10c405 loads that single descriptor. Lazy allocation at 0x10fa8e-0x10faaa and 0x10ffb5-0x10ffd4 also replaces that one pointer; growth at 0x1100bb-0x110126 reallocates only its character storage. Native scr_yacc.c/yyparse_impl.h preserve this model; native engine callers are Scr_LoadScript and Scr_CompileTextInternal, both through ScriptParse. The Linux-named nested-buffer push interface is unsupported by this single-buffer contract; ScriptParse replaces the current descriptor without saving a prior descriptor. This is a specific ownership boundary, not equality to that push operation."
       },
       {
         "id": "linux:script/scr_yacc.c:3269:yyrealloc",
@@ -170601,8 +170601,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "status": "intentional",
+        "evidence": "Mac lexer dispatch 0x10c40b-0x10c51c and source actions 0x10c637-0x10d04e / 0x10eb5a-0x10f012 run DFA/token processing and route diagnostics directly to CompileError or fatal fprintf/exit; STABS scanner state has no yy_flex_debug owner. Native yyparse_yylex retains those operations and diagnostics, including unconditional ECHO via yyout at 0x10d004-0x10d042. The Linux-named scanner-debug flag accessor belongs to an unsupported scanner tracing interface; it is not the engine script debugger or a gate on compiler errors. No synthetic debug state is introduced."
       },
       {
         "id": "linux:script/scr_yacc.c:3226:yyset_in",
@@ -170621,7 +170621,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Mac and native retain the underlying scanner global; inspected initial FILE assignment 0x10c616-0x10c61b and buffer reload 0x10c3fb-0x10c3fd. Whole-text xrefs confine these globals to yyparse, yy_create_buffer and ScriptParse as applicable. These loads/stores establish ownership, not the identity of the Linux-named callable accessor; no original caller or separate body was proven. Left unchecked rather than equating similar global access with that API."
       },
       {
         "id": "linux:script/scr_yacc.c:3217:yyset_lineno",
@@ -170639,8 +170639,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "status": "intentional",
+        "evidence": "Mac scanner source positions are byte offsets: ScriptParse 0x110226-0x11023a resets g_out_pos/g_sourcePos, token action 0x10c637-0x10c64c copies the position and adds yyleng, and error reporting 0x10c31b-0x10c343 passes g_sourcePos to CompileError. STABS records the ten-field 40-byte descriptor and scanner state, with no scanner line counter. Native scr_yacc.c/yyparse_impl.h retain this byte-offset contract; scr_parser.c derives displayed lines from stored source bytes. The Linux-named scanner line-counter accessor is an unsupported interface, not an alias for sourcePos. No mutable line counter/getter/setter is introduced."
       },
       {
         "id": "linux:script/scr_yacc.c:3231:yyset_out",
@@ -170659,7 +170659,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Mac and native retain the underlying scanner global; inspected stdout initialization at 0x10fa65-0x10fa6d. Whole-text xrefs confine these globals to yyparse, yy_create_buffer and ScriptParse as applicable. These loads/stores establish ownership, not the identity of the Linux-named callable accessor; no original caller or separate body was proven. Left unchecked rather than equating similar global access with that API."
       },
       {
         "id": "linux:script/scr_yacc.c:1766:yysetlength",
@@ -170697,7 +170697,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "No Mac standalone identity or equivalent inlined caller established. This Linux flex API is absent from the native scanner; the older Mac scanner exposes yy_create_buffer/yyparse/ScriptParse, and its checked input/refill path does not establish this API behavior."
+        "evidence": "Read the Mac scanner DFA cursor/hold-character path 0x10c40b-0x10c51c and refill/replay 0x10cf4b-0x10cfff / 0x10fc08-0x110220 against native yyparse_yylex. Those operations implement token scanning; no separately callable character-input or pushback operation identity was established. The existing cursor/hold-character fields do not justify equating this helper with the token path."
       },
       {
         "id": "linux:script/scr_yacc.c:3340:yywrap",
