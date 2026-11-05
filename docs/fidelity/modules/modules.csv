@@ -343,7 +343,7 @@ qcommon/cm_test,9,9,0,0,0
 qcommon/cm_trace,38,36,2,0,0
 qcommon/cm_tracebox,2,2,0,0,0
 qcommon/cm_world,28,27,1,0,0
-qcommon/cmd,36,25,0,7,4
+qcommon/cmd,36,26,0,7,3
 qcommon/com_bsp_load_obj,6,5,1,0,0
 qcommon/com_playerprofile,7,4,1,2,0
 qcommon/com_profilemapload,1,1,0,0,0

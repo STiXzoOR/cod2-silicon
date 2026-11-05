@@ -2,7 +2,7 @@
 
 Updated 2026-11-04.
 
-**32/36 reconciled: 25 equal, 7 intentional, 4 unchecked.** Mac 1.3 i386 is the authority. No engine code changed in this module.
+**33/36 reconciled: 26 equal, 7 intentional, 3 unchecked.** Mac 1.3 i386 is the authority. No engine code changed in this module.
 
 The review covered buffer append and insertion, immediate and queued execution, quote and line splitting, the 4095-byte line limit, wait handling, tokenization, command lookup and dispatch, registration and removal, completion metadata, argument access and listing. `Cbuf_InsertText` was compared in its Mac `Cbuf_ExecuteText` inline block at 0x4f1a4. The Linux helper names `Cmd_FindCommand` and `Cmd_ExecFromDisk` were compared with the corresponding search loops and disk execution block in the Mac callers, rather than treated as separate exports.
 
@@ -23,3 +23,33 @@ Integrated source through `12d554b` passed both dedicated builds and all local m
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline in players, state hashes and entities, and match each other. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and maximum velocity drift 2.0. Unchanged traces do not establish coverage of each correction. Branches not reached by the recording remain compiled and reviewed.
 
 The hosted ILP32 byte-comparison job cannot compare binaries: its unchanged `410342a` reference fails to compile GCC `__stdcall`/`__cdecl` declarations. The workflow already records that limitation and marks the job non-blocking; preprocessing equality is not binary-byte parity.
+
+## Complete server-tokenizer operation — 2026-11-05
+
+`SV_Cmd_TokenizeStringWithLimit` is now equal through the complete existing
+Mac/native `Cmd_TokenizeString2` operation. The former rejection considered
+only the zero-limit server specialization and did not establish this generic
+provider mapping. Original Linux 1.0 address provenance places the client/server
+sibling wrappers at 0x080603cc/0x080603fc. The original 1.3 ELF independently
+locates them at 0x080605d0/0x08060600: both forward the same two arguments,
+shared argv/storage and count destination to the same tokenizer. The server
+caller at 0x0806064c targets the latter with limit zero. These original anchors
+establish duplicate-wrapper identity, not Linux behavioral authority.
+
+Authoritative Mac `Cmd_TokenizeString2` at 0x4eac6–0x4eaea reads the supplied
+text and arbitrary limit, forwards them with `cmd_argv` and `cmd_tokenized` to
+`Cmd_TokenizeStringInternal`, then commits its result to `cmd_argc`. Native
+`src/PC/qcommon/cmd.c:455–458` implements that complete operation. There is no
+separate server token context: Mac `SV_Cmd_TokenizeString` at
+0x4efee–0x4f012 and its native counterpart use those exact shared owners with
+limit zero. The arbitrary-limit proof comes from the complete generic provider,
+not extrapolation from the zero-limit caller or the non-executable
+`SV_Cmd_TokenizeString2` exception marker. No new public alias is needed.
+
+The previously documented CoD2x tokenizer-core policy remains separately
+intentional; no new policy decision or whole-core equality is claimed. The
+other three missing identities remain unchecked. Parent and independent
+source/binary reviews support this closure; no source changed, compilation,
+tests, CI or replay ran, and no runtime coverage was added. Private original
+identity anchors and exact Mac bodies remain in
+`CoD2-native-decomp/recon-provenance-parent4.noindex`.
