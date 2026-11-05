@@ -95,9 +95,13 @@ void ZN20CDirect3DIndexBufferD1Ev(const CDirect3DIndexBuffer *_this)
     CDirect3DIndexBufferClean *ib = (CDirect3DIndexBufferClean *)_this;
     ib->vtable = vtbl_CDirect3DIndexBuffer;
 #if defined(COD2_X64)
-    if (ib->memory.vptr)
+    if (ib->memory.vptr) {
         ZN13CMemoryBufferD1Ev((const CMemoryBuffer *)&ib->memory);
-    else
+#if MAC_METAL_NATIVE
+        /* The member constructor records its interior address separately. */
+        MacShim_ForgetObject(&ib->memory);
+#endif
+    } else
         free(ib->data);
 #else
     free(ib->data);

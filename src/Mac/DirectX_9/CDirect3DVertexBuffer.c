@@ -249,6 +249,10 @@ void ZN21CDirect3DVertexBufferD1Ev(void *_this)
             node = CBuffer_EraseFence(node);
         }
         ZN13CMemoryBufferD1Ev((const CMemoryBuffer *)&vb->memory);
+#if MAC_METAL_NATIVE
+        /* The member constructor records its interior address separately. */
+        MacShim_ForgetObject(&vb->memory);
+#endif
     } else {
         free(vb->data);
     }

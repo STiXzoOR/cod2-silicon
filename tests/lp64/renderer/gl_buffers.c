@@ -27,7 +27,14 @@ CBufferFenceIds CFence_sUnusedFenceIDs;
 UINT32 COpenGL_sFrameCount;
 void *imp__ZN7COpenGL7sOpenGLE, *imp_g_VAOID;
 void __ZdlPv(void *pointer) { free(pointer); }
-void MacShim_ForgetObject(const void *object) { (void)object; abort(); }
+/* These existing CPU objects have no installed dispatch hooks/registrations.
+ * Permit their explicit member cleanup; unexpected fence cleanup still aborts. */
+static const void *fixtureMemoryOwners[2];
+void MacShim_ForgetObject(const void *object)
+{
+    if (object != fixtureMemoryOwners[0] && object != fixtureMemoryOwners[1])
+        abort();
+}
 void glFinish(void) { /* No context: this fixture checks CPU retirement only. */ }
 void glFinishFenceAPPLE(GLuint fence) { (void)fence; abort(); }
 void ZN10COpenGLVAOD2Ev(const COpenGLVAO *vao) { (void)vao; abort(); }
@@ -46,6 +53,8 @@ int main(void)
     CMemoryBufferImpl buffer;
     void *locked;
 
+    fixtureMemoryOwners[0] = &vb.memory;
+    fixtureMemoryOwners[1] = &ib.memory;
     CDirect3DVertexBuffer_CDirect3DVertexBuffer((void *)&vb, 64, 0, 0);
     CDirect3DVertexBuffer_Lock((void *)&vb, 17, 4, &locked, 0);
     assert(locked == vb.data + 17);
