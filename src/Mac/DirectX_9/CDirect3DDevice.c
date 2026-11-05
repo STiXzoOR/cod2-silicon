@@ -539,6 +539,7 @@ typedef struct DeviceStreamsNative {
     byte *convertedColors[16];
     size_t convertedColorBytes[16];
     unsigned char tokensSet;
+    unsigned char directStateDirty;
 } DeviceStreamsNative;
 
 static DeviceStreamsNative *CDirect3DDevice_StreamsNative(const CDirect3DDevice *);
@@ -2558,7 +2559,11 @@ HRESULT CDirect3DDevice_DrawPrimitive(const CDirect3DDevice *_this,
     return 0;
 }
 
+#if defined(COD2_X64)
+static void CDirect3DDevice_SubmitIndexedNative(DeviceImpl *, const byte *, UINT32);
+#endif
 #include "lp64_shader_draw.h"
+#include "lp64_device_draw.inc"
 
 COD2_FORCE_ALIGN_ARG_POINTER
 HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
@@ -2572,6 +2577,10 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
         return macResult;
 #endif
 
+#if defined(COD2_X64)
+    return CDirect3DDevice_DrawIndexedNative(_this, PrimitiveType, BaseVertexIndex,
+                                           MinVertexIndex, NumVertices, startIndex, primCount);
+#else
     DeviceImpl *dev = (DeviceImpl *)_this;
 #if defined(COD2_X64)
     CDirect3DDevice_ValidateModelViewMatrix(_this);
@@ -3034,6 +3043,7 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
     CDirect3DDevice_DisableExtraTextureUnits();
 
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_DrawPrimitiveUP(const CDirect3DDevice *_this,
