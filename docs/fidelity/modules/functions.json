@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 416,
+      "unchecked": 413,
       "intentional": 3113,
-      "equal": 4748,
+      "equal": 4751,
       "fixed": 1180
     },
     "scopes": {
@@ -209566,8 +209566,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Linux dispatches through _BigShort, but native/Mac Swap_Init retain only five Little* pointers; no native BigShort body, callers, or corresponding Mac Big* dispatch table was identified."
+        "status": "equal",
+        "evidence": "Complete inlined signed-16 network-order operation identified in active native NET_StringToAdr and NET_AdrToString (src/PC/qcommon/net_chan_mp.c). Exact-symbol Mac 0x1584e3-0x1584e7 rotates AX by eight and stores the full word; native narrows atoi to unsigned short before the same shift/or permutation. Mac 0x1583b4-0x1583b9 additionally sign-extends the full swapped word; the stock native formatting path casts portHost to short. This certifies the complete BigShort operator on the little-endian Mac/native targets, not whole callers or a reconstructed Big* dispatch table. CoD2x subsequent unsigned presentation belongs to its existing caller boundary."
       },
       {
         "id": "linux:universal/q_shared.cpp:614:CanKeepStringPointer",
@@ -209586,7 +209586,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read the full Linux stack-range and TLS va-buffer ownership predicate. No native body/callsite implementing both range tests or corresponding Mac text identity was identified; va buffer selection alone does not establish this predicate."
+        "evidence": "Current-consumer follow-up examined Dvar_CanonicalizeValueString and Dvar_RegisterNew: current ownership paths canonicalize constants or allocate explicit copies through CopyStringInternal. They do not establish the complete stack-range plus TLS-va-buffer predicate, including both false ranges and true result. No complete original Mac/native predicate identity or demonstrated replacement of its interface established."
       },
       {
         "id": "mac:0x00028314",
@@ -209636,7 +209636,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read full Linux length-sum check plus three copies. Native has no named body/callsite or matching filepath diagnostic; no complete Mac three-part assembly identity was identified."
+        "evidence": "Current-consumer follow-up examined FS_BuildOSPath_Internal in universal/com_files.c: it inserts two slashes, uses a fixed OS-path bound and has a stream-thread failure return before slash normalization. That complete active owner is not the generic folder/name/extension length-check-and-three-copy operation. No complete original Mac/native Com_AssembleFilepath identity established; no closure from three-copy similarity."
       },
       {
         "id": "linux:universal/q_shared.h:522:Com_BitCheck",
@@ -209877,7 +209877,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Mac retains only a zero-address .eh label. Native has no body/callsite for basename-offset copy and NUL; Com_SkipPath establishes only the basename subhelper, not this full copy operation."
+        "evidence": "Current-consumer follow-up examined FindFirstFileA in Mac/Tools/MacWin32.c: it bounds the directory copy, excludes the final slash and separately stores a wildcard pattern. The required basename-offset copy includes that slash and has a different output contract. Com_SkipPath remains only the basename subhelper; no complete Mac/native Com_StripFilename identity established."
       },
       {
         "id": "linux:universal/q_shared.cpp:670:Com_WideToNarrow",
@@ -210670,7 +210670,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Linux header labels this helper original-name-unknown and uses tolower rather than I_strnicmp ASCII uppercasing. No complete matching native/Mac lowercasing caller was established; ASCII core similarity is insufficient for the full byte/locale contract."
+        "evidence": "Current-consumer follow-up located bounded compares in native Dvar_StringToEnumIndex, SV_UnbanClient and FX_RegisterEffect. They call strnicmp; complete Mac/native i5stdlib strnicmp at 0x25902 tail-calls strncasecmp. The Linux original-name-unknown helper instead normalizes to -1/0/1 after signed-char tolower calls. The actual consumer-owned libc interface is concrete, but its full return/locale/input contract is not established as this reconstructed helper identity; sign/zero consumption alone does not certify the full helper."
       },
       {
         "id": "mac:0x000291da",
@@ -210974,8 +210974,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Read Linux header little-endian identity helper. Native has no same-name callable/inline definition or proven caller identity; the separate LongNoSwap routine proves the target arithmetic but not this header helper placement."
+        "status": "equal",
+        "evidence": "Complete 32-bit little-endian identity identified in active MSG_ReadLong_core/MSG_WriteLong_core and public owners (src/PC/qcommon/msg_mp.c). Exact-symbol Mac MSG_WriteLong 0x1739c8-0x1739cb loads the scalar and stores all 32 bits unchanged; MSG_ReadLong 0x17360c-0x173612 loads the unchanged 32-bit result. Native direct int load/store performs that entire identity. This certifies the inline helper only, not a runtime dispatch wrapper or the complete message callers. Existing stock/CoD2x f1_msg fixture passes ASan/UBSan; corresponding Release objects compiled."
       },
       {
         "id": "linux:universal/q_shared.cpp:169:LittleLong64",
@@ -211031,8 +211031,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": "Read Linux header little-endian identity helper. Native has no same-name callable/inline definition or proven caller identity; the separate ShortNoSwap routine proves the target arithmetic but not this header helper placement."
+        "status": "equal",
+        "evidence": "Complete signed-16 little-endian identity identified in active MSG_ReadShort_core/MSG_WriteShort_core and public owners (src/PC/qcommon/msg_mp.c). Exact-symbol Mac MSG_WriteShort 0x173998-0x17399b loads the scalar and stores SI unchanged; MSG_ReadShort 0x1735de-0x1735e5 loads the unchanged word with sign extension. Native writes (short)c and reads *(short *)(msg->data+readcount), preserving every bit and signed result. This certifies the inline helper only, not a runtime dispatch wrapper or the complete message callers. Existing stock/CoD2x f1_msg fixture passes ASan/UBSan; corresponding Release objects compiled."
       },
       {
         "id": "linux:universal/q_shared.cpp:175:LittleShortRuntime",
@@ -211194,7 +211194,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read Linux four-transform composition. Mac has only a zero-address .eh label and native has no body/callsite; the four scalar transform aliases do not establish a complete concatenate operation."
+        "evidence": "Current-consumer follow-up examined FX_GetBoneOrientation composition at Mac 0x593c4-0x593f4 and native EffectsCore/FxUtil.c: MatrixMultiply forms all three axes, then MatrixTransformVector43 forms translation. The latter Mac/native operator adds translation after the dot (0x2b474-0x2b4fa); q_shared OrientationPosToWorldPos adds the origin before successive products. This candidate does not establish the complete q_shared concatenate operation/order, despite matching real rigid composition intent."
       },
       {
         "id": "mac:0x000290d2",
@@ -211503,7 +211503,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "Read full Linux scale-after-dot then origin additions; native has no body/callsite and complete Mac scaled-position identity remains missing."
+        "evidence": "Current-consumer follow-up examined native R_GetRigidTransform (gfx_d3d/r_model.c) and weighted XSurfaceTransformPos: R_GetRigidTransform scales each axis component before dot products, while the weighted surface operator scales the translated result and accumulates it. Neither is the complete q_shared scale-after-dot then origin-add operation. No complete authoritative Mac/native scaled-position helper identity established."
       },
       {
         "id": "mac:0x000283bc",
