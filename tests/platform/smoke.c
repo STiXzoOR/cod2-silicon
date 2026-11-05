@@ -61,7 +61,8 @@ int main(int argc, char **argv)
     glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT, GL_RENDERBUFFER_WIDTH_EXT, &attachmentW);
     printf("mode=%d render=%dx%d drawable=%dx%d viewport=%dx%d attachment_width=%d\n", mode, renderW, renderH, drawableW, drawableH, viewport[2], viewport[3], attachmentW);
     assert(renderW == 640 && renderH == 480 && viewport[2] == 640 && attachmentW == 640);
-    assert(SDL_GL_GetSwapInterval() == 0);
+    /* The requested D3D default interval (0) selects one vertical retrace. */
+    assert(SDL_GL_GetSwapInterval() == 1);
     glClearColor(0.125f, 0.5f, 0.875f, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     unsigned char pixel[4];
