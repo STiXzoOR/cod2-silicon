@@ -248,12 +248,20 @@ void FxScheduler_CreateEffect(const FxScheduler *_this, const EffectTemplate *fx
 
     AxisCopy( (vec3_t (*))((const vec_t *)axis), (vec3_t (*))((vec_t *)ax));
 
+#if defined(COD2_X64)
+    if (primTemp->mSpawnFlags & 0x100) {
+        float angle = flrand(0.0f, 360.0f);
+        RotatePointAroundVector(ax[1], ax[0], (const vec_t *)axis + 3, angle);
+        Vec3Cross(ax[0], ax[1], ax[2]);
+    }
+#else
     if (primTemp->mSpawnFlags & 1) {
         vec3_t rotated;
         float angle = flrand(0.0f, 360.0f);
         RotatePointAroundVector(rotated, (const vec_t *)ax, (const vec_t *)axis + 3, angle);
         Vec3Cross((const vec_t *)ax, rotated, ax[1]);
     }
+#endif
 
     if (!FX_GetBoltingFrame(primTemp, bolt, &boltFrame)) {
         goto cleanup;
@@ -386,10 +394,17 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
         if (axis) {
             AxisCopy( (vec3_t (*))((const vec_t *)axis), (vec3_t (*))((vec_t *)ax));
         } else {
+#if defined(COD2_X64)
+            /* The simple-effect overload uses forward +Z, right +X, up +Y. */
+            ax[0][0] = 0.0f; ax[0][1] = 0.0f; ax[0][2] = 1.0f;
+            ax[1][0] = 1.0f; ax[1][1] = 0.0f; ax[1][2] = 0.0f;
+            ax[2][0] = 0.0f; ax[2][1] = 1.0f; ax[2][2] = 0.0f;
+#else
             /* identity axis when no orientation supplied (FX_PlaySimpleEffect) */
             ax[0][0] = 1.0f; ax[0][1] = 0.0f; ax[0][2] = 0.0f;
             ax[1][0] = 0.0f; ax[1][1] = 1.0f; ax[1][2] = 0.0f;
             ax[2][0] = 0.0f; ax[2][1] = 0.0f; ax[2][2] = 1.0f;
+#endif
         }
     }
 
@@ -412,6 +427,10 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
         float cullDistSq;
         int flags;
 
+#if defined(COD2_X64)
+        /* Culled and empty primitives still advance the Mac seed sequence. */
+        seedOffset = (int)((unsigned int)i * 0x369d035u);
+#endif
         prim = fx->mPrimitives[i];
         factor = 0.0f;
 
@@ -494,7 +513,11 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
                     continue;
                 memset(sfx, 0, sizeof(ScheduledEffect));
 
+#if defined(COD2_X64)
+                sfx->mStartTime = (int)((unsigned int)helper->mTime + (unsigned int)delay);
+#else
                 sfx->mStartTime = helper->mTime + delay;
+#endif
 
                 sfx->mFx = fx;
 
@@ -502,7 +525,11 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
 
                 sfx->mIndexInBatch = t;
 
+#if defined(COD2_X64)
+                sfx->mSeed = (int)((unsigned int)FxHelper_GetSeed(helper) + (unsigned int)seedOffset);
+#else
                 sfx->mSeed = FxHelper_GetSeed(helper) + seedOffset;
+#endif
 
                 if (bolt) {
                     sfx->mBolt.dobjHandle = bolt->dobjHandle;
@@ -532,7 +559,9 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
             }
         }
 
+#if !defined(COD2_X64)
         seedOffset += 0x369d035;
+#endif
     }
 
     if (numAdded) {

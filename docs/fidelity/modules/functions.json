@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 3965,
-      "intentional": 1610,
-      "equal": 3283,
-      "fixed": 599
+      "unchecked": 3890,
+      "intentional": 1620,
+      "equal": 3338,
+      "fixed": 609
     },
     "scopes": {
       "unassigned": 777,
@@ -6177,8 +6177,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x61042-0x61045 and Acquire 0xa108b-0xa108e inline increment of frame refCount followed by pointer storage match native FX_GetBoltingFrame and FxBoltFrame_Acquire_impl; typed native pointers retained."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:156:Alloc",
@@ -6196,8 +6196,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux pooled allocator helper has no corresponding Mac pool operation: Mac 0x614e2-0x6150b and 0x6262d-0x62652 use global new[] plus zeroing, 0x618c6-0x618cf/0x62679 use delete[], and 0x60fb6 static init is empty. Native uses sizeof(ScheduledEffect), explicit zeroing, and macos_cpp_abi.cpp operator new[]/delete[] wrappers; no 32-bit pool layout is reintroduced."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:494:ArchiveInt",
@@ -6215,8 +6215,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac ScheduledEffect::Archive 0x6223d-0x62288 and 0x6234d-0x6238c: re-read isReading, read four bytes via a temporary then store, or write a four-byte temporary; native FxArchive_ArchiveInt matches."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:499:ArchiveVec3",
@@ -6234,8 +6234,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x6229a-0x62319 and 0x623a0-0x6252b: reading consumes 12 bytes per vector, writing submits three four-byte float bit patterns in x/y/z order; native inline helper matches."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:948:FX_AddPrimitive",
@@ -6253,8 +6253,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared native CreateEffect dispatch with Mac 0x61118 and decoded 13-word jump table at 0x328d40: cases 0 through 12 route respectively to no-op, particle, line, tail, cylinder, emitter, decal, oriented particle, runner, light, shake, flash and cloud, preserving origin/axis/lateTime/index arguments."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:1075:FX_AddRegisteredEffect",
@@ -6272,8 +6272,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac 0x60f43-0x60f59 and 0x60f75-0x60f89 with FX_TryRegisterEffect: exact ==256 capacity test, same diagnostic, array append and count increment."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:1060:FX_FindRegisteredEffect",
@@ -6291,8 +6291,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac 0x60ef6-0x60f29 with native FX_TryRegisterEffect: scan cached count, strcmp stored effect name, return matching typed template."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:1105:FX_FreeTemplates",
@@ -6310,8 +6310,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac Clean 0x618e8-0x61940 with native Clean: shut down every nonpreserved template, clear its registry slot, reset count, and restore a found preserved template in slot zero."
       },
       {
         "id": "mac:0x00060fbc",
@@ -6341,8 +6341,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x60fbc-0x61066 and native FX_GetBoltingFrame: bit 2/no-bolt/negative-handle early success, acquire, compare/release/clear/copy/AddRef, release acquired temporary, then null and orientation checks match. Native FxBoltFramePtr.value preserves widened pointers; existing repeated-acquire fixture passes."
       },
       {
         "id": "mac:0x00060ed2",
@@ -6372,8 +6372,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x60ed2-0x60ee2 and native FX_InitTemplates both only reset effectTemplateArrayCount to zero."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:711:FX_IsInSpawnRange",
@@ -6391,8 +6391,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac PlayEffect 0x613d6-0x6141f, 0x61637-0x6167a and 0x616c7-0x616e8 with native spawn-range block: optional distance, range*adsZoomFactor then square, reject below minimum or above maximum, reuse computed squared distance."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:676:FX_PrintInvalidEffect",
@@ -6410,8 +6410,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x6173e-0x6174a emits the same invalid-effect diagnostic as native PlayEffect after the fx/error.efx fallback fails; binary string checked."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:938:FX_RandomizeRoll",
@@ -6429,8 +6429,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x6108b tests spawn flag 0x100; 0x610c0 rotates supplied axis[1] around axis[0] into local ax[1], and 0x610d3 writes cross(ax[0],ax[1]) to ax[2]. Native had bit 1 and overwrote ax[1] with the cross product. Corrected under COD2_X64, compiled and reviewed; roll path not exercised."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:633:FX_SchedulerUnused",
@@ -6449,7 +6449,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux reconstruction labels an empty dedicated-only helper with an explicitly unknown original name. No Mac symbol or identifiable live caller for this helper was established; the separate Mac empty global initializer is not enough to prove identity."
       },
       {
         "id": "mac:0x00060ee2",
@@ -6479,8 +6479,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x60ee2-0x60fb6 and native FX_TryRegisterEffect: parser construction precedes name-cache scan; successful parse is appended unless count==256; every normal return destroys parser, with same capacity diagnostic. Exception unwind glue is outside the C normal-return path."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:204:Free",
@@ -6498,8 +6498,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux pooled allocator helper has no corresponding Mac pool operation: Mac 0x614e2-0x6150b and 0x6262d-0x62652 use global new[] plus zeroing, 0x618c6-0x618cf/0x62679 use delete[], and 0x60fb6 static init is empty. Native uses sizeof(ScheduledEffect), explicit zeroing, and macos_cpp_abi.cpp operator new[]/delete[] wrappers; no 32-bit pool layout is reintroduced."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:412:FxBoltFramePtr",
@@ -6517,8 +6517,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Default pointer construction is inlined as zero at Mac CreateEffect 0x61072 and native boltFrame.value=NULL. Native typed union layout retains an entire pointer."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:417:FxBoltFramePtr",
@@ -6536,8 +6536,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac FxBoltFrame::Acquire 0xa105a-0xa10fa and full native FxBoltFrame_Acquire_impl: existing-frame return 0xa108b-0xa108e and new-frame return 0xa10ec-0xa10ef both increment refCount then store the returned frame pointer, matching native return construction. No edits to provider source."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:355:FxChannelInstance_Blend1d",
@@ -6555,8 +6555,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac GetDecalAlpha 0x61de5-0x61e99 and GetDecalSize 0x62029-0x620d6 with native: interpolate each curve at t=0, from+(to-from)*randomWeight, then multiply by the base instance scale; same float operation order."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:366:FxChannelInstance_Blend3d",
@@ -6574,8 +6574,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac GetDecalColor 0x61adf-0x61c4e with native: interpolate base and random RGB at t=0, subtract each base component, multiply by the shared random weight, add base, then apply base scale."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:344:FxChannelInstance_GetValue1d",
@@ -6593,8 +6593,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared actual Mac t=0 callsites 0x61d13-0x61d4b and 0x61f72-0x61fa7 with native decal alpha/size helpers: scalar interpolation completes before multiplication by instance scale."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:349:FxChannelInstance_GetValue3d",
@@ -6612,8 +6612,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared actual Mac t=0 callsite 0x619be-0x61a54 with native decal color: interpolate all RGB components, then multiply each by base channel scale."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:305:FxCurveIterator_Advance",
@@ -6631,8 +6631,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac inlined decal callsites 0x61983-0x619be, 0x61c5a-0x61ca7, 0x61cd8-0x61d13 and 0x61eb8-0x61f05 with native FxCurveIterator_FindKey. At these actual t=0 calls, reset when current key time>0 and advance while next key time<0 using dimensionCount+1 stride; no claim about an unobserved standalone generic function."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:324:FxCurveIterator_Interpolate1d",
@@ -6650,8 +6650,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac decal callsites 0x61cd8-0x61d47 and 0x61f37-0x61fa3 with native FindKey plus Interp1 at t=0: current key index selects pairs, then (t-t0)*(v1-v0)/(t1-t0)+v0 in the same order."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:335:FxCurveIterator_Interpolate3d",
@@ -6669,8 +6669,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac decal color 0x61983-0x61a2d and randomized branch with native FindKey plus Interp3 at actual t=0: advance by dimensionCount+1, interpolate four-float RGB keys. Channel contract is dimension three for color; no standalone unused-domain parity claim."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:291:FxCurve_Interpolate3d",
@@ -6688,8 +6688,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read inlined Mac 0x619c9-0x61a2d and 0x61b9e-0x61c00: compute (t-t0)/(t1-t0) once and v0+(v1-v0)*fraction per RGB component. Native FxCurve_Interp3 and randomized color block match operation order for the dimension-three color channel."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:150:FxMemMgr<T>",
@@ -6707,8 +6707,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux pooled allocator helper has no corresponding Mac pool operation: Mac 0x614e2-0x6150b and 0x6262d-0x62652 use global new[] plus zeroing, 0x618c6-0x618cf/0x62679 use delete[], and 0x60fb6 static init is empty. Native uses sizeof(ScheduledEffect), explicit zeroing, and macos_cpp_abi.cpp operator new[]/delete[] wrappers; no 32-bit pool layout is reintroduced."
       },
       {
         "id": "mac:0x00062560",
@@ -6738,8 +6738,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x62560-0x62683 and native FxScheduler_Archive. Nonnegative-count records match: reset list, read count, zero native-sized allocations, archive, validate effect/index/non-null primitive, prepend or delete; writer traverses the global scheduler as Mac does. Retain existing signed i<pendingCount skip for negative counts: Mac equality-terminated counter would keep reading until provider failure/wrap. FxArchive_ReadData has no failure result and nonfatal MemoryFile overflow can leave its local byte unwritten, so full malformed-archive behavior is not reproduced. Native new[] throws on allocation failure. Compiled and reviewed, no archive execution."
       },
       {
         "id": "mac:0x000618b4",
@@ -6769,8 +6769,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x618b4-0x61952 and native Clean: traverse/pop/delete scheduled head, zero count, optionally clean registry while preserving one requested template. Native mScheduledNext and FxUtil SCH_NEXT share the widened field; delayed-list cleanup existing fixture passes."
       },
       {
         "id": "mac:0x00062172",
@@ -6800,8 +6800,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x62172-0x62222 and native CreateDecalEffect: sample rotation, color, alpha, size in order, choose a random material only for nonempty media list, then CG_ImpactMark(material,origin,axis[0],rotation,rgba,size)."
       },
       {
         "id": "mac:0x00061066",
@@ -6831,8 +6831,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x61066-0x61322, including decoded jump table 0x328d40. Fixed random-roll bit 0x100 and rotated-right/cross-up destinations at 0x6108b/0x610c0/0x610d3. Bolting, dispatch argument order, null cleanup and every primitive case match; typed pointer storage and defined EffectPrimitive initialization retained. Compiled and reviewed; actual primitive dispatch/roll not exercised."
       },
       {
         "id": "mac:0x00060e72",
@@ -6862,8 +6862,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x60e72-0x60e88 only initializes scheduled head and count to zero, leaving seed to PlayEffect; native constructor matches with typed widened head."
       },
       {
         "id": "mac:0x00061cac",
@@ -6893,8 +6893,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read all Mac GetDecalAlpha 0x61cac-0x61f0a versus native: channels 2/3, random-weight draw and secondary channel creation order, attribute 0x4000, t=0 iterator reset/advance, multiply-before-divide scalar interpolation, blend then base scale, clamp below zero and above one match."
       },
       {
         "id": "mac:0x00061952",
@@ -6924,8 +6924,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read all Mac GetDecalColor 0x61952-0x61cac versus native: channels 0/1, attribute 0x2000, random weight before secondary channel creation, t=0 iterator search, division before RGB interpolation, blend and base scale order match on color-channel dimension-three data."
       },
       {
         "id": "mac:0x00061f0a",
@@ -6955,8 +6955,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read all Mac GetDecalSize 0x61f0a-0x62138 versus native: channels 4/5, signed low-word test for attribute bit 0x8000, t=0 search, scalar multiply/divide/add order, optional random blend and base scale with no clamp match."
       },
       {
         "id": "mac:0x00060e88",
@@ -6986,8 +6986,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x60e88-0x60ed2 versus native GetEffectLength: positive primitive-count loop sums spawnDelay.max then life.max and keeps the maximum against initial +0; native comparison also retains prior max for unordered/equal values as Mac maxss does."
       },
       {
         "id": "mac:0x0006178e",
@@ -7008,8 +7008,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac forward/up overload 0x6178e-0x61802 and native provider FX_PlayOrientedEffect in Fxexport.c: forward to axis[0], up to axis[2], cross(forward,up) to axis[1], then common scheduler with null bolt. No provider edit."
       },
       {
         "id": "mac:0x00061802",
@@ -7030,8 +7030,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac direction overload 0x61802-0x61862 and native macOS FX_PlayEffect provider: copy direction to axis[0], MakeNormalVectors produces right/up, call typed common scheduler with null bolt. No provider edit; native pointer API retained."
       },
       {
         "id": "mac:0x00061862",
@@ -7052,8 +7052,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac simple overload 0x61868-0x6188a creates rows {0,0,1},{1,0,0},{0,1,0}. Native null-axis wrapper substituted identity. Restored Mac rows in common scheduler fallback used by FX_PlaySimpleEffect; existing scheduled_fx assertion corrected (same case), ASan/UBSan stock and COD2_CODX runs pass. History acccfb736 identifies identity as undocumented null fallback, not an intentional orientation choice."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:455:Get",
@@ -7071,8 +7071,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac FX_GetBoltingFrame 0x6101d/0x6102a loads the stored frame pointer before validity/orientation tests; native boltFrame.value retrieval matches with pointer width preserved."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:476:IsReading",
@@ -7090,8 +7090,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac ScheduledEffect::Archive and FxScheduler::Archive repeatedly test the isReading byte at i386 offset 4; native typed arch->isReading selects the same paths after pointer layout expansion."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:441:IsValid",
@@ -7109,8 +7109,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac FX_GetBoltingFrame 0x6101d-0x61023 checks stored frame against zero; native curFrame null check matches. Copy assignment additionally guards its new frame before AddRef."
       },
       {
         "id": "mac:0x00062138",
@@ -7140,8 +7140,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x62138-0x62172 and native MediaHandles_GetEffect return null for zero 16-bit count, otherwise irand(0,count) selects a typed pointer entry. Same upper-exclusive provider contract and widened entry stride."
       },
       {
         "id": "mac:0x00060e36",
@@ -7171,8 +7171,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact-symbol otool -p __ZNK12MediaHandles9GetHandleEv corrected a full-binary prologue misalignment. Mac 0x60e36-0x60e72 and native return null for empty 16-bit list, else return elements[irand(0,count)].data with native pointer stride."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:194:MoveToFront",
@@ -7190,8 +7190,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux pooled allocator helper has no corresponding Mac pool operation: Mac 0x614e2-0x6150b and 0x6262d-0x62652 use global new[] plus zeroing, 0x618c6-0x618cf/0x62679 use delete[], and 0x60fb6 static init is empty. Native uses sizeof(ScheduledEffect), explicit zeroing, and macos_cpp_abi.cpp operator new[]/delete[] wrappers; no 32-bit pool layout is reintroduced."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:681:PlayEffect",
@@ -7209,8 +7209,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Simple overload corresponds to Mac 0x61862. Fixed common native null-axis fallback from identity to Mac +Z/+X/+Y rows; Fxexport FX_PlaySimpleEffect supplies explicit null axis/bolt. Existing scheduled_fx orientation assertion corrected and passes in stock/COD2_CODX sanitizer runs."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:691:PlayEffect",
@@ -7228,8 +7228,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mapped direction overload to Mac 0x61802-0x61862 and inspected native macOS FX_PlayEffect in Fxexport.c: copied direction plus MakeNormalVectors and null bolt match; provider remains untouched."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:700:PlayEffect",
@@ -7247,8 +7247,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mapped forward/up overload to Mac 0x6178e-0x61802 and inspected native FX_PlayOrientedEffect: same copied forward/up rows, cross product destination/order, and null bolt to common scheduler."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:741:PlayEffect",
@@ -7266,8 +7266,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Common overload is Mac 0x61322-0x6178e. Fixed seed offset: 0x61609-0x61611 advances 0x369d035 for every primitive, while native continues skipped it; native now derives wrapped offset from index. Delay-time/seed additions preserve Mac 32-bit addl bits without signed overflow. Kept widened queue, bolted axes, null wrapper and corrupt-template guard. Compiled and reviewed; skipped-primitive seed and overflow paths not exercised."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:481:ReadInt",
@@ -7285,8 +7285,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac scheduler pending-count read 0x62583-0x625a0 and ScheduledEffect scalar reads: four-byte temporary supplied to FxArchive_ReadData and then assigned, matching native local pendingCount/ArchiveInt."
       },
       {
         "id": "mac:0x00062222",
@@ -7316,8 +7316,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x62222-0x62560 and native ScheduledEffect_Archive including both directions: effect, primitive index, start time, bolt, origin, three axis vectors, seed. Four-byte scalar/vector component writes and 12-byte vector reads match; mIndexInBatch and list link are deliberately absent in Mac and remain zero after native restore allocation."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:489:WriteInt",
@@ -7335,8 +7335,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac scheduler 0x625ac-0x625c4 and scheduled scalar writers: copy scalar to local four-byte temporary and call FxArchive_WriteData; native write-count and ArchiveInt match."
       },
       {
         "id": "mac:0x00060fb6",
@@ -7357,8 +7357,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac global initializer 0x60fb6-0x60fbc is only prologue/return; native GLOBAL__I__ZN17PrimitiveTemplate8gmMemMgrE is empty. No Mac pool initialization is present."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:521:operator delete",
@@ -7376,8 +7376,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux pooled allocator helper has no corresponding Mac pool operation: Mac 0x614e2-0x6150b and 0x6262d-0x62652 use global new[] plus zeroing, 0x618c6-0x618cf/0x62679 use delete[], and 0x60fb6 static init is empty. Native uses sizeof(ScheduledEffect), explicit zeroing, and macos_cpp_abi.cpp operator new[]/delete[] wrappers; no 32-bit pool layout is reintroduced."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:516:operator new",
@@ -7395,8 +7395,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux pooled allocator helper has no corresponding Mac pool operation: Mac 0x614e2-0x6150b and 0x6262d-0x62652 use global new[] plus zeroing, 0x618c6-0x618cf/0x62679 use delete[], and 0x60fb6 static init is empty. Native uses sizeof(ScheduledEffect), explicit zeroing, and macos_cpp_abi.cpp operator new[]/delete[] wrappers; no 32-bit pool layout is reintroduced."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:428:operator=",
@@ -7414,8 +7414,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac FX_GetBoltingFrame 0x60ff1-0x61047 and native: identical-pointer no-op; otherwise release old, clear stored pointer, AddRef/store nonnull acquired frame, then release acquired temporary."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:446:operator=",
@@ -7433,8 +7433,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mapped raw-frame assignment to Mac FxBoltFramePtr::Archive negative-handle path 0xa1ae1-0xa1b29, read against full native FxBoltFramePtr_Archive. With an existing old frame, Mac releases it then 0xa1b22 increments address zero before storing null. Native releases/clears without a null write, preserving defined native null-frame handling; no provider edit. Pointer copy-assignment is separately checked at 0x60ff1."
       },
       {
         "id": "linux:EffectsCore/FxScheduler.cpp:422:~FxBoltFramePtr",
@@ -7452,8 +7452,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac CreateEffect cleanup 0x61101-0x6110b and GetBoltingFrame acquired-temporary cleanup 0x61011-0x61018 with native: release only a nonnull stored frame; native pointer width retained."
       },
       {
         "id": "mac:0x00061322",
@@ -7474,8 +7474,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/EffectsCore/FxScheduler.c (EffectsCore/FxScheduler); whole FxScheduler_PlayEffect was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to EffectsCore/FxScheduler; original Mac source-module provenance retained. Native function definition at src/PC/EffectsCore/FxScheduler.c:322; assigned universal header has no body. Mac symbol __ZN11FxScheduler10PlayEffectEPK14EffectTemplatePKfPA3_S3_PK10FxBoltInfo at 0x00061322. Whole caller not audited by universal-math."
+        "status": "fixed",
+        "evidence": "Read common Mac PlayEffect 0x61322-0x6178e. Fixed skipped-primitive seed progression (0x61609-0x61611); now seedOffset=index*0x369d035 with 32-bit wrap, and delayed start/seed additions use unsigned bitwise add as Mac 0x61518/0x61539. Preserved verified near/far rejection, frustum bit 0x400, rounded count, 0x200 delay distribution, list prepend/count, bolt/origin/axis fields, and AddPlume. Native corrupt-template bounds guard and typed/null-axis API retained. Compiled and reviewed; scheduled queue fixture passes, skipped-primitive RNG and wraparound not exercised."
       }
     ],
     "EffectsCore/FxScheduler_load_obj": [
@@ -7495,8 +7495,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac ParseEffect 0x5d368-0x5d381/0x5d426: reject count>23 with exact diagnostic, otherwise store primitive and increment count. Native >=24 equivalent for signed count; overflowed primitive is not separately freed in either path."
       },
       {
         "id": "linux:EffectsCore/FxScheduler_load_obj.cpp:127:FX_Alloc",
@@ -7514,8 +7514,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x5d2b8/0x5d31b requests Hunk allocations of 0x68/0x2a4 aligned to four. Native uses sizeof(EffectTemplate/PrimitiveTemplate), aligns pointer-containing objects to native alignment, and retains four-byte string allocation. Hunk_AllocAlignInternal zeroes requested storage, so count/list start defined and zero; native layout adaptation preserved and applied to all COD2_X64 targets."
       },
       {
         "id": "mac:0x0005d0d8",
@@ -7545,8 +7545,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x5d0d8-0x5d116 and native FX_CleanTemplate: positive primitive-count loop calls PrimitiveTemplate_Shutdown on each primitive; native cached count agrees because Shutdown only clears owned media lists, not effect count."
       },
       {
         "id": "mac:0x0005d116",
@@ -7576,8 +7576,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x5d116-0x5d152 and native FX_CreateDefaultEffect: register misc/missing_fx into defaultEffect and Com_Error(1) with identical message if null; binary strings checked."
       },
       {
         "id": "linux:EffectsCore/FxScheduler_load_obj.cpp:215:FX_HasMaterials",
@@ -7595,8 +7595,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x5d3ca-0x5d3d9 checks g_rendererExists byte via import then media size. Native client alias fx_developer_check_ptr resolves to imp_g_rendererExists; dedicated build compiles this check out because renderer/media registration is absent. Preserved headless boundary, verified both existing dedicated/client parser fixtures."
       },
       {
         "id": "linux:EffectsCore/FxScheduler_load_obj.cpp:141:FX_LoadEffectFile",
@@ -7614,8 +7614,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x5d250 opens through FS_FOpenFileByMode(FS_READ). Native previously used FS_FOpenFileRead(...,unique=0), bypassing file-access, pure-ignore lookup, unique-handle and stream setup in native provider. X64 now uses ByMode; read/close/NUL/parse(clean=1,writeable=0)/free ordering matches Mac 0x5d255-0x5d2b3. Existing fixture adapter renamed with FS_READ assertion; client/dedicated sanitizer cases pass."
       },
       {
         "id": "mac:0x0005d218",
@@ -7645,8 +7645,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac FX_ParseEffect 0x5d218-0x5d5fa: fixed native file opener to FS_FOpenFileByMode(FS_READ), matching 0x5d250, and request native effect alignment rather than four for widened pointer-containing storage. Hunk allocator zeroing verified; twelve type strings/values, unknown-group index increment, type/parent assignment, material validation, 24-primitive cap and cleanup/error branches match. Native-sized primitive allocation preserved for every COD2_X64 target. Both existing client/dedicated sanitizer fixtures pass."
       },
       {
         "id": "mac:0x0005d5fa",
@@ -7676,8 +7676,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x5d5fa-0x5d67a versus native FX_RegisterEffect: remove at most one leading slash/backslash, case-insensitive fx/ prefix, strip extension into 64-byte buffer, lowercase, register, and default fallback/diagnostic match. All referenced strings checked directly in binary."
       },
       {
         "id": "linux:EffectsCore/FxScheduler_load_obj.cpp:352:FX_StripExtensionLower",
@@ -7695,8 +7695,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac RegisterEffect 0x5d62c-0x5d646 with native: pass fileName+3 to Com_StripExtension then strlwr on same 64-byte local before registration."
       },
       {
         "id": "linux:EffectsCore/FxScheduler_load_obj.cpp:225:FX_ValidatePrimitive",
@@ -7714,8 +7714,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac ParseEffect 0x5d356-0x5d3f3 and native client: only types 1/7/3 require media when renderer exists, identical diagnostic and shutdown/clean/error return order. Dedicated renderer absence is documented separately under FX_HasMaterials."
       },
       {
         "id": "linux:EffectsCore/FxScheduler_load_obj.cpp:86:GetBaseParseGroup",
@@ -7733,8 +7733,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac ParseEffect 0x5d302 reads parser top-level group.subGroupList directly; native accesses parser->group.subGroupList. First-member group layout is retained after native pointer widening."
       },
       {
         "id": "linux:EffectsCore/FxScheduler_load_obj.cpp:57:GetName",
@@ -7752,8 +7752,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac ParseEffect 0x5d392 loads first GPGroup member as name, passes it to type comparisons and error printing; native grpName and error path use the same first typed pointer."
       },
       {
         "id": "linux:EffectsCore/FxScheduler_load_obj.cpp:69:GetNext",
@@ -7771,8 +7771,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac ParseEffect 0x5d381 follows GPGroup base next link at i386 offset 4 and increments parent-group index, including unknown groups. Native follows nextUnsorted typed pointer and increments currentPrimitiveIndex."
       },
       {
         "id": "linux:EffectsCore/FxScheduler_load_obj.cpp:70:GetSubGroups",
@@ -7790,8 +7790,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac ParseEffect 0x5d302 loads top-level subgroup head at i386 offset 0x1c, and native parser->group.subGroupList selects the corresponding widened field."
       },
       {
         "id": "mac:0x0005d67a",
@@ -7821,8 +7821,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac MediaHandles::AddEffect at 0x5d67a: unsigned-short count/capacity, initial capacity 4, 16-bit doubling, allocate/copy existing entries, free old list, append, increment. Preserved native pointer-sized entries and extended that existing Apple-only allocation/copy branch to all COD2_X64 targets; four-byte entries would underallocate non-Apple LP64. Existing client/dedicated pointer-list growth fixtures pass; non-Apple binary not built."
       },
       {
         "id": "mac:0x0005d182",
@@ -7852,8 +7852,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac MediaHandles::AddHandle at 0x5d182: unsigned-short count/capacity, initial capacity 4, 16-bit doubling, allocate/copy existing entries, free old list, append, increment. Preserved native pointer-sized entries and extended that existing Apple-only allocation/copy branch to all COD2_X64 targets; four-byte entries would underallocate non-Apple LP64. Existing client/dedicated pointer-list growth fixtures pass; non-Apple binary not built."
       },
       {
         "id": "mac:0x0005d152",
@@ -7883,8 +7883,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x5d152-0x5d182 and native MediaHandles_Shutdown: only for nonnull elements, free and zero pointer, size and maxSize; zero fields remain untouched for already-null list. Existing pointer-list fixtures pass."
       }
     ],
     "EffectsCore/FxSystem": [

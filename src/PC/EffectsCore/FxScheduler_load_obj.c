@@ -15,6 +15,9 @@ extern void Com_Error(int level, const char *fmt, ...);
 extern void Z_FreeInternal(void *ptr);
 extern void *Z_MallocInternal(int size);
 extern int FS_FOpenFileRead(const char *filename, fileHandle_t *f, qboolean uniqueFILE);
+#if defined(COD2_X64)
+extern int FS_FOpenFileByMode(const char *filename, fileHandle_t *f, fsMode_t mode);
+#endif
 extern int FS_Read(void *buffer, int len, int f);
 extern void FS_FCloseFile(fileHandle_t f);
 extern void *Hunk_AllocateTempMemoryInternal(int size);
@@ -92,13 +95,13 @@ void MediaHandles_AddHandle(const MediaHandles *_this, TMediaElement item)
         } else {
             self->mMediaList.maxSize = 4;
         }
-#if COD2_APPLE_SDK
+#if defined(COD2_X64) || COD2_APPLE_SDK
         newElements = Z_MallocInternal(self->mMediaList.maxSize * sizeof(TMediaElement));
 #else
         newElements = Z_MallocInternal(self->mMediaList.maxSize * 4);
 #endif
         if (self->mMediaList.elements != NULL) {
-#if COD2_APPLE_SDK
+#if defined(COD2_X64) || COD2_APPLE_SDK
             memcpy(newElements, self->mMediaList.elements, self->mMediaList.size * sizeof(TMediaElement));
 #else
             memcpy(newElements, self->mMediaList.elements, self->mMediaList.size * 4);
@@ -121,7 +124,11 @@ static Bool BM_NOINLINE FX_ParseEffectFile(const char *name, GenericParser2 *par
     char *bufParse;
 
     sprintf(fileName, "fx/%s.efx", name);
+#if defined(COD2_X64)
+    fileLength = FS_FOpenFileByMode(fileName, &fileHandle, FS_READ);
+#else
     fileLength = FS_FOpenFileRead(fileName, &fileHandle, 0);
+#endif
     if (fileLength < 0) {
         FX_Print("Effect file load failed: %s: file not found\n", fileName);
         return 0;
@@ -152,7 +159,11 @@ EffectTemplate *FX_ParseEffect(GenericParser2 *parser, const char *name)
         return NULL;
     }
 
+#if defined(COD2_X64)
+    effect = (EffectTemplate *)Hunk_AllocAlignInternal(sizeof(EffectTemplate), _Alignof(EffectTemplate));
+#else
     effect = (EffectTemplate *)Hunk_AllocAlignInternal(sizeof(EffectTemplate), 4);
+#endif
 
     effect->mEffectName = (char *)Hunk_AllocAlignInternal(strlen(name) + 1, 4);
     strcpy((char *)effect->mEffectName, name);
@@ -193,7 +204,7 @@ EffectTemplate *FX_ParseEffect(GenericParser2 *parser, const char *name)
             goto next_group;
         }
 
-#if COD2_APPLE_SDK
+#if defined(COD2_X64) || COD2_APPLE_SDK
         prim = (PrimitiveTemplate *)Hunk_AllocAlignInternal(sizeof(PrimitiveTemplate), sizeof(void *));
 #else
         prim = (PrimitiveTemplate *)Hunk_AllocAlignInternal(0x2a4, 4);
@@ -275,13 +286,13 @@ void MediaHandles_AddEffect(const MediaHandles *_this, EffectTemplate *fx)
         } else {
             self->mMediaList.maxSize = 4;
         }
-#if COD2_APPLE_SDK
+#if defined(COD2_X64) || COD2_APPLE_SDK
         newElements = Z_MallocInternal(self->mMediaList.maxSize * sizeof(TMediaElement));
 #else
         newElements = Z_MallocInternal(self->mMediaList.maxSize * 4);
 #endif
         if (self->mMediaList.elements != NULL) {
-#if COD2_APPLE_SDK
+#if defined(COD2_X64) || COD2_APPLE_SDK
             memcpy(newElements, self->mMediaList.elements, self->mMediaList.size * sizeof(TMediaElement));
 #else
             memcpy(newElements, self->mMediaList.elements, self->mMediaList.size * 4);
