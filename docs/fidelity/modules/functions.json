@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 293,
+      "unchecked": 292,
       "intentional": 3184,
-      "equal": 4773,
+      "equal": 4774,
       "fixed": 1207
     },
     "scopes": {
@@ -160029,8 +160029,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Mac NUL-line-count primitive is established in Scr_PrintSourcePos, but no complete original buffer-index wrapper range was identified. Native scr_debugger_glue.c:178-196 has a live guarded buffer-index wrapper with pointer-typed offset argument and UI callers. Zero-address Mac .eh metadata gives a signature only; complete wrapper equality and its argument/guard adaptations remain unproven. Original executable provenance follow-up: Linux1.0 0x80775a6 maps to Linux1.3 0x8077be6. Selects source buffer then calls full line primitive with local outputs. Positive calls0x8077cc1/0x80785fd belong to typed source helper and GetFileAndLine; those complete Mac owners remain unproven. No absence-based closure; Mac remains primary."
+        "status": "equal",
+        "evidence": "Scriptline24 equal through complete actual indexed-buffer line-number operation. Full original1.3 wrapper0x8077be6\u20130x8077c23 selects sourceBufferLookup[index].sourceBuf with24byte stride/+8, calls full NUL-line provider0x8077b94\u20130x8077be4 using local-only start/column scratch, returns zero-based count. Actual exact Mac Scr_PrintPrevCodePos0x9b9cd\u20130x9b9d6 performs same indexed source-buffer selection, forwards actual sourcePos at0x9b9df\u20130x9b9ee and tailcalls Scr_PrintSourcePos0x9b9fb. Complete provider zero case0x9b5e7\u20130x9b5f1 or loop0x9b705\u20130x9b739 scans offset bytes and stores zero-based count0x9b733; actual consumer loads0x9b653 then separately adds1 at0x9b659 for diagnostic. Native active caller/scan preserve complete indexed operation; optional debugger wrapper is not the mapping. Scope requires resolved non-sentinel0<=sourcePos<=selected len<INT_MAX and valid selected lookup/source storage. Exact file/archive producers use signed len with negative rejection and len+1 allocation; registered buffer allocation filenameLen+len+2 and signed len field establish defined backing limits, not a newly assumed clamp. Actual lexer byte offsets/prefix compensation and -1/-2 stores/patches retained, but no universal resolution/validation guarantee. Under bound signed loop i, NUL count, column and lineNumber+1 are representable. Defined static example a\\0bc\\0 offset3 produces count1/column1 then display2; no runtime execution. Excludes invalid/mismatched lookup, unresolved sentinel, size overflow, standalone ABI, arbitrary unsigned offsets, empty-line trimming and subsequent formatting/savegame/output behavior, whole-owner/VM recertification. Existing pointer/storage/loader policies preserved; no source defect or inherited fix for the count operation. Independently accepted units/review-provenance-scriptline24.md and parent; complete evidence recon-provenance-scriptline24.noindex. No source change/compile/tests/CI/replay/runtime."
       },
       {
         "id": "linux:script/scr_parser.cpp:492:Scr_GetLineNumInternal",
