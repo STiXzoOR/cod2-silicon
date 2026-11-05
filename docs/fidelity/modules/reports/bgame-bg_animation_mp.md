@@ -39,3 +39,8 @@ The six unchecked rows remain unchecked after reviewing the Mac symbol/STABS inv
 `BG_AnimScriptEvent` selects and executes a command; its shared selection prefix does not establish the query-only `BG_GetAnimScriptEvent` return contract. The latter has only a zero-valued exception symbol. Parser state-change tables do not establish state-change execution. `BG_AnimationIndexForString` has its own load/runtime lookup and parse-error contract, so it does not prove the pointer-returning lookup or play-name wrapper. Existing index checking and movement masks do not establish the missing string-range error or mantle-mask predicate. No code was invented from Linux definitions, and no prior verdict changed.
 
 Configured stock/CoD2x Release objects and existing game-animation fixtures pass both modes. No production source, tests, cases or assertions changed in this module. No full CI or replay ran. Private follow-up evidence is in `recon-animation-remaining.noindex`.
+
+
+## Original-address follow-up (inline-effects4)
+
+The original Linux 1.3 range0x80d97ce–0x80d9805 (exclusive end), anchored by its exact range-error string, establishes BG_GetAnimString's original index-check/name-return identity. The original BG_IsMantleAnim body at0x80d9cac–0x80d9cff clears the animation toggle bit, resolves the animation and tests the movetype mask0x7ff00000. These Linux identities do not establish a corresponding complete Mac getter/predicate. A Mac semantic immediate search did not supply a new complete operation; missing constants, strings or direct calls are not closure evidence. All six unresolved rows remain unchecked. No source changes or runtime verification.
