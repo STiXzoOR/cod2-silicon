@@ -31,3 +31,10 @@ Catalog coverage passed without semantic catalog changes. The earlier batch 8 ho
 ## Integrated batch 21 acceptance
 
 The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.
+
+
+## Original executable provenance follow-up (platform6)
+
+Original 1.0 Sys_InitMainThread at 0x80d4444 uniquely matches original 1.3 0x80d6b60; its following empty-return query at 1.0 0x80d4462 / 1.3 0x80d6b7e is bounded by the next named Sys_IsMainThread operation. This locates the reconstructed Sys_NullQuery4 slot but does not recover its original name, purpose or a Mac operation. The row remains unchecked; constant-zero shape and missing callers are not equality.
+
+This is a report-only provenance audit. No verdict or production source changes, compilation, tests, CI, replays or runtime exercise were performed. Private original body/address/caller packets are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-platform6.noindex/`. Prior verification records above describe earlier work, not this follow-up.
