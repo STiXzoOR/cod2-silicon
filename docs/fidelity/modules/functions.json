@@ -10,8 +10,8 @@
     "statuses": {
       "unchecked": 416,
       "intentional": 3113,
-      "equal": 4749,
-      "fixed": 1179
+      "equal": 4748,
+      "fixed": 1180
     },
     "scopes": {
       "unassigned": 777,
@@ -143958,8 +143958,8 @@
             "static": true
           }
         ],
-        "status": "equal",
-        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
+        "status": "fixed",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required. Follow-up 2026-11-05: the complete inlined point-triangle operation at Mac 0x675c7-0x67780, including loop continuation 0x67a98-0x67a9b, was compared within the exact-symbol 0x6754e-0x67ca1 body. Mac 0x676fb-0x67704 accepts unordered s, then rejects ordered s < -0.001; native !(s >= -0.001) rejected NaN. Corrected under COD2_X64 to s < -0.001. Plane distances, biased fraction/zero clamp and fraction gate, unbiased interpolation, s/t dot products and tolerance gates, stores and triangle iteration match. This correction supersedes the preceding point-trace match claim. Compiled and reviewed: all four stock/CoD2x Release client/dedicated objects and both variants of all five existing ASan/UBSan collision suites pass; the existing fixtures do not exercise this NaN-specific branch. OFF bytes and five inactive guard configurations remain identical."
       },
       {
         "id": "mac:0x00067ca2",
@@ -144021,7 +144021,7 @@
         ],
         "pairing": "unique module and name; semantics unchecked",
         "status": "fixed",
-        "evidence": "All 1,876 Mac bytes 0x6754e-0x67ca1 compared against the live native body and its helpers. Fixed the partition check: Mac compares the zero-extended check with the sign-extended counter, so a partition is retested while bit 15 of the counter is set. Native compared both as unsigned. The rest, including the inlined point trace and border trace, matches Mac."
+        "evidence": "All 1,876 Mac bytes 0x6754e-0x67ca1 compared against the live native body and its helpers. Fixed the partition check: Mac compares the zero-extended check with the sign-extended counter, so a partition is retested while bit 15 of the counter is set. Native compared both as unsigned. The rest, including the inlined point trace and border trace, matches Mac. Follow-up 2026-11-05: the complete inlined point-triangle operation at Mac 0x675c7-0x67780, including loop continuation 0x67a98-0x67a9b, was compared within the exact-symbol 0x6754e-0x67ca1 body. Mac 0x676fb-0x67704 accepts unordered s, then rejects ordered s < -0.001; native !(s >= -0.001) rejected NaN. Corrected under COD2_X64 to s < -0.001. Plane distances, biased fraction/zero clamp and fraction gate, unbiased interpolation, s/t dot products and tolerance gates, stores and triangle iteration match. This correction supersedes the preceding point-trace match claim. Compiled and reviewed: all four stock/CoD2x Release client/dedicated objects and both variants of all five existing ASan/UBSan collision suites pass; the existing fixtures do not exercise this NaN-specific branch. OFF bytes and five inactive guard configurations remain identical."
       }
     ],
     "qcommon/cm_polylib": [
