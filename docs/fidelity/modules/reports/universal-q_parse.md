@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**29/36 reconciled: 24 equal, 3 fixed, 2 intentional; 7 unchecked.** Mac 1.3 is the authority. Every assigned row was inspected.
+**30/36 reconciled: 25 equal, 3 fixed, 2 intentional; 6 unchecked.** Mac 1.3 is the authority. Every assigned row was inspected.
 
 ## Corrections
 
@@ -61,3 +61,14 @@ Fresh complete Mac `Com_LoadDvarsFromBuffer` calls `Com_ParseOnLine`0x549df with
 The mapped operation includes the complete on-line provider's cursor, backup/unget, line-counter and token effects. Its fixed status inherits the existing `Com_ParseExt` escaped-character newline correction0xae4fb–0xae500, with no new defect. Existing complete primary parser review remains the authority for settled tokenization paths. Preserve native long-token/closing-quote bounds and terminal-exponent NUL protection; no invalid-storage behavior is reintroduced. The later file-loader skip-rest-of-line correction is outside this operation.
 
 Scope is the complete selected registered-float value operation with valid parser/session/cursor/token storage and stable nonconcurrent type. It does not establish a standalone export, arbitrary missing-dvar behavior, whole loader/setter, all-type conversion, malformed-token storage, libc/locale-wide identity or x87 FP-control/sticky effects. Mac's observed double-to-float conversion governs. Independently accepted in `units/review-provenance-parsefloat25.md`; fresh bodies/data/source hashes remain private in `recon-provenance-parsefloat25.noindex`. One unchecked row becomes fixed; no source changes, new defects, compilation, tests, CI, replay or runtime exercise. Existing parser correction remains compiled and reviewed with its prior unexercised-path limits.
+
+
+## Actual current-session negative-number disable (parserflag40)
+
+Com_SetParseNegativeNumbers is equal through the complete false-byte operation in an actual material-file parse session. Full original0x80b60fe–RET0x80b6132 obtains its constant global parse provider0x80b5eb0, selects the current record and writes the entire normalized Boolean byte+0x408. Mac BeginParseSession selects its newly current record0xadc58–62 and writes literal0 at0xadc8f. Native writes the same false value to its typed current record. Other initialization, current-index increment and preceding overflow handling are outside the selected setter phase; no arbitrary nonzero-input exported setter is certified.
+
+The new evidence establishes a real consumer beyond initialization. Actual Material_LoadPassStateMap0x103690 begins the session, changes warning prefix, disables space-delimited parsing0x1036a8 and calls ParseRuleSet0x1036f6 for the literal alphaTest rule. RuleSet→MatchToken→ParseExt selects the same record; an ordinary unquoted alphaTest token bypasses digit recognition and reads the complete negativeNumbers byte at0xae315. Its zero branch proceeds to the identifier path, and MatchToken consumes the full token at0xae765. This is an actual full-byte state read/branch; alphaTest itself would also tokenize identically with the flag true after the minus check, so no observed token difference is claimed. The normal default space-delimited path would bypass this read and is not the supporting route.
+
+Native material allocation/name copying precedes BeginSession while Mac does it after. The accepted scope is the successful serialized setter operation on the resulting live current record, not whole allocation/initialization timing. Valid session index/backing and returning nonreentrant providers are required. Arbitrary API/nonzero input, overflow continuation, concurrent/reentrant parse state, whole parser/material loader and runtime behavior remain excluded. No existing preceding diagnostic or downstream parser/material repair is inherited by the unchanged byte write. Com_SetScriptErrorPrefix remains unchecked; warning-prefix use is not its error-prefix consumer.
+
+Independent review accepted in units/review-provenance-parserflag40.md. Fresh complete original/provider and seven Mac bodies, exact raw store/read/literal bytes and source hashes are private in recon-provenance-parserflag40.noindex. One equal closure, zero new defects or source changes. No compilation, tests, CI, full build, replay or runtime verification.
