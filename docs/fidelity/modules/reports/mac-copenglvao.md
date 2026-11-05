@@ -21,3 +21,7 @@ Engine 28e3856 and fixture-only follow-up ea23228 passed both dedicated builds, 
 Both 2,000-frame replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six Linux logic fields agree, with maximum origin/velocity drift 0.11792/2.0. Existing accelerated-GL raster/saved-screen checks and all 18 depth cases passed ASan/UBSan. No new tests, cases or assertions were added; no i386 byte-parity claim is made.
 
 This batch closes 334 math, shader, array, material, command and frame/setup entries. Fixes cover arithmetic/aliasing, shader ownership/declarations, array and cache lifetime, constant-table routing, command/buffer order, light partitioning and screenshot handling. Full device registration/state/draw and timing gaps remain explicit for separate follow-ups. Dedicated replays do not exercise client rendering; unreached client/error paths remain compiled and reviewed. These checks do not establish a complete rendered frame.
+
+## Batch 19 follow-up
+
+Native allocation-exception ownership and complete-triangle-before-FIFO output ordering are now repaired in mac-exception-contracts.md. Earlier missing exception-cleanup statements are historical; allocation failures were compiled/reviewed, not injected.

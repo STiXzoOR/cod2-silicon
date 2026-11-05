@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**657 rows audited: 650 intentional, 5 fixed, 2 unchecked.** There are 631 external-import rows and 26 lower-address entries. No external library implementation is described as equal to reconstructed engine code.
+**657 rows audited: 650 intentional, 7 fixed, 0 unchecked.** There are 631 external-import rows and 26 lower-address entries. No external library implementation is described as equal to reconstructed engine code.
 
 ## Import identity and providers
 
@@ -37,9 +37,9 @@ Five coal-section texture/cube/vertex-shader thunks preserve their destructor ta
 
 The key-resource follow-up closes 0x01acc42e `CFBundleCopyLocalizedString`, 0x01acc429 `CFStringGetPascalString`, and 0x01acc424 `StringToNum` as intentional. At native base `6ae3bd57`, the retained VK translator is reached only by unregistered Carbon key callbacks; the selected SDL key/text path queues engine events directly, and the four native generated-data payloads contain no callback/resource reference. This supersedes the earlier pending-VK_Map gap, without approving the zero language helper, placeholder CF providers or keyboard-layout parity. Original import identities and consumers, including the separate key-alert consumer, are documented in [Mac key-resource imports](mac-key-resource-imports.md). This follow-up is report/ledger-only source proof; it ran no build or runtime check.
 
-Two import-unit rows remain unchecked:
+Both remaining optimizer exception-tail rows are now reconciled by the batch19 exception follow-up:
 
-- 0x00113119 and 0x00113166: Optimize's triangle-list and deque exception cleanup. The restored native normal path still allocates with throwing `__Znwm` from C and lacks matching unwind cleanup.
+- 0x00113119 and 0x00113166: Optimize's triangle-list/deque exception cleanup and complete-triangle output ordering now use the typed native unwind bridge. See mac-exception-contracts.md; failure paths were compiled and reviewed, not injected.
 The texture follow-up closes0x002f1830: the native constructor installs the volume secondary vtable and its deleting-destructor slot subtracts one pointer to reach the primary object, then follows D1/free ownership. Exact Mac coalesced thunk adjusts this by four bytes and jumps to D0; the native pointer-sized adjustment is verified against the actual adjacent fields. This boundary is fixed, compiled and reviewed; no secondary-interface runtime coverage is claimed.
 
 ## Verification and limits
@@ -61,3 +61,15 @@ Engine c8ef702 and fixture-only follow-ups 1581779, 2c6cf4f and 7f49612 passed b
 The standard full-file guard command cannot preprocess the dispatch fixture's deliberate native-only error. A final source-only pass using the same checker confirms all five inactive configurations are identical. Engine source was unchanged by the fixture corrections. Both 2,000-frame replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six Linux logic fields agree; maximum origin/velocity drift is 0.11792/2.0. No i386 byte-parity claim is made.
 
 This batch closes 655 device, world/model, backend, texture/surface, GL and buffer entries. Fixes cover layouts, resource/context/fence lifetime, command and matrix order, lighting/culling constants and functional DISCARD flags. Constructor/reset/draw/VAO/sampler/timing gaps remain explicit. Existing local accelerated-GL raster/saved-screen, mip, volume and all 18 depth cases passed ASan/UBSan. Dedicated replays do not exercise client rendering; unreached client/error paths remain compiled and reviewed. These checks do not establish a complete rendered frame.
+
+## Integrated batch 19 verification
+
+Production 6ae3bd5 and the catalog/existing-fixture follow-ups through 4ee16df passed both dedicated builds, full local CI02–13, source guards, actual OFF line expansion checks including the C++ bridge and Objective-C owner, unit parent/independent reviews and independent combined-source review. Integrated production/build/fixture files exactly match the reviewed private composition. Both 2,000-frame dedicated replays exactly match both d873794 baselines in players, state hashes and entities; all six Linux logic fields agree, maximum origin/velocity drift0.11792/2.0.
+
+Existing raster/saved-screen checks and 18 depth cases passed ASan/UBSan. The depth fixture uses the actual typed vertex-shader owner and provider accessors, real borrowed-buffer AddRef/Release methods, existing outer depth defaults and actual fence/index/dispatch providers. Its fallback mode explicitly covers the approximation path, not shader-free native validation. GL cases and result assertions are unchanged. The catalog was generated twice identically: only the restored r_mode/r_displayRefresh registration sites change factual metadata; other changes are source provenance. Initial CI02 failed stale coverage and its complete retry passed after regeneration. The existing Swift loader then passed after updating its revision literal and display consensus expectation; no assertions/cases were added or removed. Fresh source/resource review confirms the preserved copy/restrictions and consumer contract. No tests, cases or assertions were added.
+
+This batch closes 24 capability, defined-boundary, GPU budget, render-state, shader factory, mutex/Optimize exception, VM recovery, startup splash, indexed-draw and retired platform-boundary entries. Two formerly equal splash no-op lifecycle verdicts become intentional Windows-style native ownership. Indexed drawing restores GL context state and separate logical caches around the explicit approximation; extended formats use the original driver and independent color buffers. The inherited multi-color scratch alias found during fresh review is corrected. Licensed/source-shader approximation and bounded storage adaptations remain explicit; no visual-equivalence claim follows from whole-row intentional closure. Original fresh-context state defaults are explicitly restored where native Reset retains its context. Exception cleanup/output ordering, malformed opcodes and unreached registration/state paths remain compiled and reviewed where fixtures did not execute them. Existing builtin/setter VM checkpoints are an explicit native adaptation, not original zero-opcode longjmp equivalence. Actual startup visibility, sampled-texture journal entries, fallback-to-normal transitions, multiple converted colors and their reallocation/reset branches remain compiled/reviewed only. Dedicated replay does not exercise rendering; this is not a complete rendered-frame acceptance.
+
+## Batch 19 follow-up
+
+All 657 original unmatched rows are now reconciled: 650 intentional and 7 fixed. The three retired key/resource imports are established by mac-key-resource-imports.md; both optimizer exception-tail rows are repaired in mac-exception-contracts.md. Older pending statements are historical. This is provider/ownership boundary reconciliation, not external library algorithm parity.

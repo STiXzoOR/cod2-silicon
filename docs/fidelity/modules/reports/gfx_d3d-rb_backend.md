@@ -35,3 +35,7 @@ This batch closes 655 device, world/model, backend, texture/surface, GL and buff
 ## Batch 17 follow-up
 
 RB_ExecuteRenderCommands now follows the original mode-dependent fence ordering and adaptive budget arithmetic through renderer-gpu-sync.md. The shared native cycle clock is no longer the zero stub on Apple LP64. RB_GpuSyncDelay remains separately tracked for the typed API59 ownership verdict; no API60 query ABI or Metal fence submission parity is asserted.
+
+## Batch 19 follow-up
+
+RB_GpuSyncDelay ownership is now reconciled by renderer-gpu-budget.md: API59 folds the original budget snapshot into SyncGpu. GL fences and the synthetic clock are explicit; Metal submission tracking and wall-clock equivalence are not claimed.

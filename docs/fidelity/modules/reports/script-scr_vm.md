@@ -45,3 +45,7 @@ Integrated source `dd6a421` passed both dedicated builds and every local macOS C
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. Those unchanged traces do not establish that every corrected edge was exercised. Allocation failures, debugger/error edges and other unreached paths remain compiled and reviewed.
 
 Generic VM recovery, allocation-dependent notify state and missing helper identities remain explicitly unchecked where evidence was insufficient. No undefined native state was introduced to claim parity. Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile; preprocessing checks are not binary-byte parity.
+
+## Batch 19 follow-up
+
+The remaining generic nonlocal live-frame/scratch and bounded unknown-opcode continuation gaps are addressed in script-scr_vm-recovery.md. The retained builtin/setter checkpoint is an intentional native adaptation and must not be described as original longjmp equality.
