@@ -256,10 +256,12 @@ int CGLSetCurrentContext()
 {
     return 0;
 }
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int CGRectEqualToRect()
 {
     return 0;
 }
+#endif
 int CGRectGetHeight()
 {
     return 0;
