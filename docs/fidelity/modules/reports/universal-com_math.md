@@ -391,3 +391,51 @@ engine ownership evidence. These bounded checks do not prove semantic absence.
 
 Evidence is retained in recon-provenance-packing20.noindex. No source edits,
 compilation, tests, CI, replay or runtime exercise were performed.
+
+## Geometry consumer boundaries (provenance-geometry21)
+
+Five entries remain unchecked after reading their complete original bodies and
+new concrete Mac/native candidates. No source defect or closure is claimed.
+
+VectorRotate at original0x80aa82a is sequential X/Y/Z rotation with a separate
+ordered-zero skip for each component; unordered inputs enter that rotation.
+VectorRotateAroundOrigin at0x80aa974 subtracts the pivot, invokes that operation,
+and adds the pivot to all three outputs. Mac G_TryPushingEntity0x1ba63c provides
+a real complete pivot rotation: movement, relative point, all three basis
+products, then rotated-minus-relative deltas before capsule use. Its actual
+AngleVectors provider0x2d938 uses pitch/yaw/roll, however: component0 changes
+the X/Z plane rather than the original helper's Y/Z plane. No actual convention
+adapter was established. CM_TransformedPointContents0x693ce instead applies an
+inverse model basis after a single all-zero gate and consumes a local point.
+Neither candidate proves the missing original input-role mapping; a hypothetical
+matrix or three single-axis calls would not supply it.
+
+IntersectPlanes at original0x80a97e0 consumes three normal/distance planes,
+checks the determinant and produces three coordinates plus success. Exact
+R_ChopPortalWinding0xee7fe clips existing polygon endpoints against one plane;
+its three-coordinate interpolation0xee94d–0xee9d2 does not supply a three-plane
+solve or determinant failure. MatrixInverse0x2a79e emits nine coefficients
+unconditionally, with no plane-distance inputs or success result. A bounded
+instruction scan of ordinary and coalesced text for0.001 float/double references
+found no new complete candidate. This is discovery evidence, not proof of
+semantic absence, and no plane-to-matrix adapter is assumed.
+
+For PlaneNormalFromPoints and PlaneFromPoints, new mark and occluder candidates
+add concrete producer evidence beyond the earlier side-normal search.
+R_MarkFragments0xf4c8d–0xf4d24 forms two indexed triangle edges and their cross,
+but consumes the unnormalized magnitude in facing tests. Its side-volume path
+uses an edge and an extrusion axis. R_VisitPortalsForCell's perspective occluder
+branch0xf096f–0xf0a13 forms both endpoint-eye differences, crosses them, then
+joins normalization0xf0864 and stores additive negative-dot distance0xf089b
+plus side metadata. It discards the normalization return and always writes the
+fourth coefficient. Original PlaneFromPoints0x80aa04a returns0 for ordered-zero
+normal length before writing its fourth slot; no actual original caller was
+recovered that establishes a compatible narrower consumed contract.
+PlaneNormalFromPoints0x80a54f0 additionally normalizes both differences before
+crossing them, a provider chain these candidates do not establish. The unresolved
+operation contracts, rather than Linux/Mac arithmetic grouping, prevent closure.
+
+Focused packet: provenance-geometry21. Private exact bodies, discovery inventory,
+and source hashes: recon-provenance-geometry21.noindex. No source edits,
+compilation, tests, CI, replay or runtime exercise. Counts remain141equal,
+29fixed and59unchecked; all previously settled evidence is preserved.
