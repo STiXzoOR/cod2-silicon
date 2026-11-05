@@ -33,3 +33,10 @@ Integrated engine source through `868a08f` passed both dedicated builds and all 
 The first stock recording attempt stopped before map load because its isolated home had no selected player profile. The restored engine behavior requires one. Harness commit `b275adb` seeds the default profile; 38 existing harness checks and its independent review passed. Failed recording evidence is preserved. After this prerequisite correction, both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline in players, state hashes and entities, and match each other. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. Unchanged traces do not prove that each correction was reached; unreached branches remain compiled and reviewed.
 
 Hosted ILP32 byte comparison remains unavailable: its unchanged `410342a` reference fails compiling GCC `__stdcall`/`__cdecl` declarations. The workflow already documents that limitation and marks the job nonblocking. Preprocessing equality is not binary-byte parity.
+
+## Original single-entity trace refinement (storage10)
+
+SV_LocationalTraceToEntity remains unchecked. Complete original1.3 body0x809e2aa resolves one supplied entity, clears36-byte trace output, initializes fraction/entity, copies extents and computes inverse delta, sets pass/ignore fields to-1 and contentmask/locational/priority inputs, then calls the entity trace provider. Fresh exact Mac SV_PointTraceToEntity0x1bf0e8 consumes existing clip/entity/result storage; the identified CM linked-entity traversal is a different owner and does not establish this complete initializer. Original1.0 code-reference follow-up adds no caller bridge. No generic trace-provider closure was inferred.
+
+
+Private original bodies and new exact Mac/provider/state-owner evidence are retained in recon-provenance-storage5.noindex and recon-provenance-storage10.noindex. No source changes, compilation, tests, CI, replay or runtime exercise occurred. Missing names/callers are not completion evidence.

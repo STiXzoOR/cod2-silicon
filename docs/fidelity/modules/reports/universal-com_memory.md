@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**59/64 reconciled: 37 equal, 11 fixed, 11 intentional, 5 unchecked.** Mac 1.3 is the authority. Linux was read only for helper names and intent. Behavior changes are native-only. Legacy preprocessed tokens, including all seven actual OOM line-number arguments, are identical in five OFF configurations.
+**61/64 reconciled: 39 equal, 11 fixed, 11 intentional, 3 unchecked.** Mac 1.3 is the authority. Linux was read only for helper names and intent. Behavior changes are native-only. Legacy preprocessed tokens, including all seven actual OOM line-number arguments, are identical in five OFF configurations.
 
 ## Storage and lifetime
 
@@ -67,3 +67,14 @@ The original executable establishes a complete consumed owner for Hunk_Shutdown.
 Exact Mac Sys_Quit at0xc3be0–0xc3c6d supplies the platform replacement: its shutdown calls and queued-event frees are followed by preference synchronization and exit(0). Native mac_main.c preserves that complete terminal owner, including established optional platform adaptations. Remaining hunk backing is released with process teardown. Hunk_Shutdown is therefore intentional for this consumed terminal lifecycle. This does not establish a standalone reusable shutdown API, equal reset timing before exit, or equal observations from finalizers. The verdict relies on the original owner/call sequence and complete Mac/native terminal operation, not missing symbols or callers.
 
 Independent review accepted this narrow boundary. No production source changed; no compilation, tests, CI, replay or runtime exercise occurred. The five remaining memory helpers stay unchecked. Exact original and Mac owners, unique original body maps and native hashes are preserved in recon-provenance-storage5.noindex.
+
+## Original allocation and clear providers (storage10)
+
+Two anonymous original1.3 helpers now have complete provider mappings. The reconstruction names remain unknown labels. Z_VirtualCommit0x80ab702 forwards its size to calloc(1,size) and directly returns. Complete Mac Z_VirtualReserveInternal0x37498 passes NULL,size,0x2000,4 to VirtualAlloc0xb120; that selected path tail-calls calloc(1,size). Native preserves this complete nullable zeroed-allocation chain. The identical original sibling0x80ab6b2 is actually called by the original allocation owner at0x80ab6da; no caller of the anonymous copy is invented. This row is equal for the complete existing provider operation. The earlier two-argument existing-pointer CommitInternal candidate remains rejected.
+
+Z_VirtualDecommit0x80ab71e forwards ptr, literal0 and size to memset, with no C-level return-value API. Complete Mac Com_Memset0x47f62 and native com_shared.c forward all arguments to memset. This strict original default-value adapter establishes equal zero-fill provider behavior, not the no-op virtual decommit API. No allocation, release, metadata write or error call is added. Both mappings preserve existing platform allocator, pointer and size_t contracts: no identical negative-size ILP32/LP64 outcomes, allocation success/capacity, deterministic zero-size pointer, invalid-storage allowance or incidental EAX-return contract is claimed. Independent reviews accepted both; existing primary providers and ownership adaptations are unchanged.
+
+Three memory rows remain unchecked. The state-reference audit distinguishes complete Mac Hunk_SetMark0x37828 (high getter), Hunk_HideTempMemory0x37bf2/Show0x37c08 (low state), Hunk_ClearTempMemoryHigh0x37a60 (temp from permanent), and Hunk_ClearToMark0x37f10 (both high fields plus cleanup). None establishes the low getter or high save/replace/restore helpers' complete contracts. Original1.0 IDB code-reference follow-up adds no actual consumer; that bounded finding is not a closure.
+
+
+Private original bodies and new exact Mac/provider/state-owner evidence are retained in recon-provenance-storage5.noindex and recon-provenance-storage10.noindex. No source changes, compilation, tests, CI, replay or runtime exercise occurred. Missing names/callers are not completion evidence.
