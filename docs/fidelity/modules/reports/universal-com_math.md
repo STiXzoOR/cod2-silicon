@@ -133,3 +133,26 @@ parent with its current ledger owners.
 ## Integrated batch 21 acceptance
 
 The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.
+
+## Remaining identity search — 2026-11-05
+
+The 69 unresolved rows remain unchecked. Two additional concrete candidates
+were examined after reading the earlier helper and fast-math evidence:
+
+- `ExpandBoundsByDelta`: Mac `SV_SightTraceToEntity` at 0x1bf986–0x1bf9d1
+  and 0x1bfab2–0x1bfad5 builds fresh swept bounds from start/end positions,
+  supplied extents and one-unit padding. The native server owner preserves
+  that structure. It does not identify an in-place signed-delta update of
+  existing minima/maxima.
+- `OrthographicMatrix`: the native device's 2D matrices have top-left origin,
+  negative Y, fixed negative Z and XY translation. The exact Mac projection
+  conversion at 0x254f6–0x2562c modifies an existing matrix and includes
+  device-dependent offsets. Neither establishes the complete centered
+  width/height/depth matrix initializer.
+
+These are rejected candidates, not new helper closures or whole-caller
+verification. No source defect was established. No source changed and no
+compilation, tests, CI or replay ran. Private exact-entry evidence is retained
+in `CoD2-native-decomp/recon-identity-math3.noindex`. The 23 outstanding
+`q_shared` identities also retain their prior verdicts; review of the previous
+consumer investigations supplied no new complete-operation lead.
