@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 269,
+      "unchecked": 268,
       "intentional": 3184,
-      "equal": 4793,
+      "equal": 4794,
       "fixed": 1211
     },
     "scopes": {
@@ -196276,8 +196276,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no ClearBounds2D public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up checked actual bounds owners: ClearBounds/AddPointToBounds/ExpandBounds touch all three dimensions, and CM_AreaEntities_r consumes all six 3D comparisons. These are not a complete distinct 2D or epsilon-expanded operation; no partial axis slice closes the helper. Original-address provenance recovered: Linux 1.0 IDB 0x80a65c8 maps to retained original Linux 1.3 ELF 0x80a892c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked. New bounds2d15 projected-portal owner witness: actual screen reset is min(1,1)/max(-1,-1), with a separate near-clip viewport reset; original complete0x80a892c resets\u00b1131072. This is not the complete original reset, so the row remains unchecked."
+        "status": "equal",
+        "evidence": "Complete consumed four-endpoint screen-bounds reset in actual R_VisitPortals, equal; no source change or inherited defect. Original1.0 0x80a65c8 maps to complete1.3 ClearBounds2D0x80a892c throughRET0x80a896d (exclusive0x80a896e), invoking full Vector2Set0x80aaff8 throughRET0x80ab00f twice to write both minima+131072 and both maxima-131072. No old-state input, extra scalar/failure result or third dimension. Those constants establish original identity/intent only. Actual nonempty portal winding produces screen coordinates; on the selected normal-projection route after first-w gate, exact Mac0xf20ba/0xf20c4 writes both minimum locals+1,0xf20ce loads raw-1 from0x326194 into maxX XMM6,0xf20d6 copies it to maxY XMM7 before the first projected-point update. All4 complete new endpoint values exist and no prior bound survives. Native active reset supplies exactly those four values. Native initializes before its first-w gate whereas this selected Mac reset follows that gate; no whole initialization/gate timing equivalence is claimed. Actual sx/sy at0xf2192/96 feed all4 MINSS/MAXSS selectors0xf219e/0xf21ae/0xf21c1/0xf21d1, preserving prior endpoints on tie/unordered, with loop-carried minima/maxima. Full width/height consume both pairs0xf21e3-0xf21ee, and actual optional bevel path0xf1bc0 onward constructs all4 rectangle corners from them before inverse projection and side-normal call0xf1cc7. These consumers positively establish complete2D bounds state, not a3D slice or unrelated constants. Actual near-clip viewport fallback0xf1ec4-0xf1ef0 instead writes min(-1,-1)/max(1,1); that and later midloop fallback are separate operations, not the proposed reset. Mac screen sentinels are behavioral authority; no equality to original\u00b1131072, hypothetical scale adapter, unbounded mathematical-empty-set claim or assumed projected[-1,1] domain. Prior bounds2d15 constant-only rejection is superseded for this full actual reset, not arbitrary exported ABI. Existing AddPointToBounds2D role corroborates consumers but did not alone prove reset. Later maxY area repair and bevel repairs are outside these four writes and not inherited. Valid owned bounded nonempty actual projection storage required; arbitrary aliasing, invalid counts/backing, original sentinel results, FP control/traps/payload identity, entire hull/projection/area/bevel/traversal or runtime/gameplay behavior excluded. ExpandBounds2D and2D overlap helpers remain unchecked; CM cell split endpoint replacement is not independent rectangle union. Parent and script independently accepted, units/review-provenance-bounds37.md. Fresh complete original/helper and Mac owner, raw constants/instruction bytes and source hash remain private in recon-provenance-bounds37.noindex. No compilation/tests/CI/full build/replay/runtime verification."
       },
       {
         "id": "linux:universal/com_math.cpp:2299:ColorBytesFromRGB",
