@@ -1,8 +1,8 @@
 # universal/com_files module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**84/92 reconciled: 68 equal, 6 fixed, 10 intentional; 8 unchecked.** All 62 assigned Mac entries were compared with native source. Linux-only helpers were checked in emitted Mac callers where their identity could be established. Mac 1.3 is the authority; Windows was also checked for path separator policy. Bundled unzip code was read only to establish engine-wrapper contracts.
+**85/92 reconciled: 69 equal, 6 fixed, 10 intentional; 7 unchecked.** All 62 assigned Mac entries were compared with native source. Linux-only helpers were checked in emitted Mac callers where their identity could be established. Mac 1.3 is the authority; Windows was also checked for path separator policy. Bundled unzip code was read only to establish engine-wrapper contracts.
 
 ## Corrections
 
@@ -26,7 +26,7 @@ ZIP metadata selection uses typed stream ownership rather than copying retail's 
 
 ## Unresolved identities
 
-The assigned Linux definitions of `FS_FileCompare`, `FS_IsBaseGameDirOfType`, `FS_ListFilesOfDirType`, `FS_ListFilteredFilesOfDirType`, `FS_OpenFileForWrite`, `FS_Rename`, `FS_SetWritable` and `FS_ShiftedStrStr` have no settled emitted or inline Mac identity and no native body/caller. They remain unchecked. Their absence is not an equality claim.
+The assigned Linux definitions of `FS_FileCompare`, `FS_IsBaseGameDirOfType`, `FS_ListFilesOfDirType`, `FS_ListFilteredFilesOfDirType`, `FS_Rename`, `FS_SetWritable` and `FS_ShiftedStrStr` have no settled emitted or inline Mac identity and no native body/caller. They remain unchecked. Their absence is not an equality claim. The `FS_OpenFileForWrite` row maps to the complete `FS_OpenFileOverwrite` operation through the BSP save caller, as established below.
 
 ## Verification and limits
 
@@ -43,3 +43,15 @@ Independent source/binary reviews covered all six units. Review caught an incorr
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. These unchanged traces do not exercise every corrected path. Unreached diagnostic, malformed-input and allocation edges remain compiled and reviewed. Missing helper identities and storage-dependent behavior remain explicitly unchecked or documented native adaptations.
 
 Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile. Source preprocessing checks do not establish binary-byte parity.
+
+## Write-open identity audit, 2026-11-05
+
+The Linux-only `FS_OpenFileForWrite` row now has a complete Mac/native mapping under the name `FS_OpenFileOverwrite`. The Linux reconstruction supplies the API name and its sole callsite in `CM_SaveLump`; its constant-zero stub is not behavioral authority. This is a caller-based identity, not a claim that the differently named `FS_FOpenFileWrite` is equivalent.
+
+Exact-symbol Mac `CM_SaveLump` occupies `[0x73b06,0x73daf)`. After reading the old BSP, checking version 4 or 61 and copying its header, `[0x73be8,0x73bf5)` passes the current `cm.name` to `FS_OpenFileOverwrite`. The returned integer handle is stored at 0x73bf5 and tested at 0x73bf8. Zero takes `[0x73d87,0x73daf)`, which reports the write-open error and returns. Success retains that same handle for the 0x140-byte header, 39 aligned lump writes and close; the optional reread/checksum follows. Native `qcommon/cm_load.c:164-257` preserves this complete argument, failure, handle-use and return contract, including the prior native error-return corrections. The corresponding Linux call occupies this same position in its complete BSP rewrite operation.
+
+The callee's original STABS names `FS_OpenFileOverwrite` at 0x342a2 and gives its full extent as `[0x342a2,0x34411)`. The complete exact-symbol body was re-read against native `universal/com_files.c:1476-1524`: resolve an existing loose-file OS path and report lookup failure; optionally log it; clear the read-only attribute bit when needed; open with `wb`; return zero on open failure; find a free main handle with the original exhaustion diagnostic; clear its ZIP pointer, store FILE/name/sync fields, and return the handle. This agrees with the existing settled primary Mac row, whose verdict is unchanged. No source edit was needed.
+
+The other seven identities remain unchecked. In particular, `FS_FileCompare` claims file-content comparison, so the path-string comparator is a different contract. Mac `FS_SV_Rename` at `[0x466c0,0x467ba)` uses root-relative paths and one rename followed by copy/remove; it does not establish the gamedir-relative rename/remove/retry API. Mac `FS_ShiftStr` at `[0x467ba,0x46820)` returns shifted static storage without a substring search, and the complete `CL_InitDownloads` caller discards that return. Ordinary `FS_ListFiles` passes the existing search chain directly; it does not construct and free the directory-type-filtered chain. The overwrite helper's read-only-bit operation likewise does not establish the separate writable setter's full contract.
+
+This follow-up used source and binary review only. No source changes, builds, tests, CI, replays or Actions were run; the newly mapped operation is uncompiled and unexercised in this pass. Private exact-symbol evidence is retained under `~/Library/Application Support/CoD2-native-decomp/recon-fast-files-sound.noindex/`.

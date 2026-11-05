@@ -11120,8 +11120,8 @@
     "evidence": "Linux loader name maps to native FS_LoadIwd and Mac inline loader inside FS_AddIwdFilesForGameDirectory 0x3483f-0x34ae3/0x34c1b-0x34ecd. Restored first metadata-error break at 0x34e9e. Hand-compared name sizing, typed allocation, 2048 hash cap, CRC collection, hash chaining and both checksums; excluded unzip implementation is unchanged. Compiled and reviewed; not exercised."
   },
   "linux:universal/com_files.cpp:1576:FS_OpenFileForWrite": {
-    "status": "unchecked",
-    "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_OpenFileForWrite were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal."
+    "status": "equal",
+    "evidence": "Complete alternate-name mapping established through CM_SaveLump, not through FS_FOpenFileWrite. Linux supplies only the FS_OpenFileForWrite name and sole BSP-save callsite; its zero-return stub is not behavioral authority. Exact-symbol Mac CM_SaveLump [0x73b06,0x73daf) passes cm.name to FS_OpenFileOverwrite at [0x73be8,0x73bf5), stores/tests its returned integer handle at 0x73bf5/0x73bf8, reports/returns on zero at [0x73d87,0x73daf), then uses that same successful handle for the complete header/lump writes and close. Native qcommon/cm_load.c:164-257 matches the complete caller contract. Re-read the complete exact-symbol Mac callee FS_OpenFileOverwrite [0x342a2,0x34411) against universal/com_files.c:1476-1524: loose-file path resolution/error, debug output, conditional read-only-bit clearing, wb open/failure, main-handle allocation/exhaustion diagnostic and ZIP/FILE/name/sync fields all match. Existing primary mac:0x000342a2 verdict retained exactly. No source edit; source/binary review only, uncompiled and unexercised in this pass."
   },
   "mac:0x000342a2": {
     "status": "equal",
