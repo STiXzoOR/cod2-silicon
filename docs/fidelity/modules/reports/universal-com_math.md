@@ -221,3 +221,24 @@ I_sel also becomes fixed. These are consumed-operation verdicts; no independent
 arbitrary-argument Mac entry or new public API is claimed. This leaves 65 math
 rows unchecked. Only the changed bg_pmove translation unit was manually compiled
 in its four configured modes; no tests, CI, replay or runtime behavior ran.
+
+## PPC OrthographicMatrix identity lead
+
+The retained fat Mac binary's PPC slice contains an actual OrthographicMatrix
+body at 0x2beb8. Direct original branch encodings establish the complete caller
+chain: R_RenderScene 0xcdbb0 calls R_GenerateShadowCookies 0x10335c at 0xce668;
+that calls R_AddShadowCookie 0x1029c4 at 0x103878, which calls the matrix helper
+at 0x102e14. This is positive original Mac identity evidence, beyond the
+reconstruction-only references available earlier.
+
+The helper and all three PPC callers were retained privately and the exact
+corresponding i386 R_RenderScene body at 0xc5e5c was inspected. A complete
+corresponding i386 matrix operation/native owner was not established. The entry
+remains unchecked; PPC supplies identity and caller intent without overriding
+i386 floating behavior or justifying a disconnected native helper. No source
+changed and no compilation, test, CI, replay or runtime operation ran.
+
+The same packet records a targeted i386 executable-section trig-call inventory
+for the recovered original SinCos→VectorRotate→VectorRotateAroundOrigin chain.
+It did not establish a complete Mac counterpart and closes no additional row.
+Private evidence: recon-math6.noindex.
