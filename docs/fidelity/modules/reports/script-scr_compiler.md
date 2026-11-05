@@ -1,8 +1,8 @@
 # script/scr_compiler module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**196/200 reconciled: 150 equal, 41 fixed, 5 intentional; 4 unchecked.** Mac 1.3 i386 is the authority. Linux names were used to identify inline helpers, never to override Mac. The 32 exported Mac compiler functions were read, including the complete statement, local-variable analysis, loop, switch and script-linking callers. The eight dispatch tables at 0x329dc0, 0x329ecc, 0x329fd0, 0x329fec, 0x32a0e8, 0x32a1d0, 0x32a288 and 0x32a300 were decoded from the binary (414 entries).
+**199/200 reconciled: 152 equal, 41 fixed, 6 intentional; 1 unchecked.** Mac 1.3 i386 is the authority. Linux names were used to identify inline helpers, never to override Mac. The 32 exported Mac compiler functions were read, including the complete statement, local-variable analysis, loop, switch and script-linking callers. The eight dispatch tables at 0x329dc0, 0x329ecc, 0x329fd0, 0x329fec, 0x32a0e8, 0x32a1d0, 0x32a288 and 0x32a300 were decoded from the binary (414 entries).
 
 ## Corrections
 
@@ -18,9 +18,11 @@ Updated 2026-11-04.
 
 Five intentional entries preserve native pointer representations: full-width builtin pointers use table-backed cache indices, and packed code positions use program-buffer offsets. The Mac lookup, developer-state, call and linking branches were compared around those adaptations. No platform-specific Windows behavior was identified or selected.
 
-Four rows remain unchecked. `AddRefToValue(VariableValue *)` and `RemoveRefToValue(VariableValue *)` are offsource overload identities; this compiler imports the separate two-argument functions. Their caller field loads were checked, but a standalone overload identity was not established. `Scr_CompileStatement` has no identified Mac symbol or proven inline entry and no body in this source.
+`Scr_CompileStatement` remains unchecked. Neither original Mac source-line metadata nor the executable compiler entry inventory identifies its debugger statement-compilation entry. The complete operation would compile a statement and emit an abort; ordinary statement dispatch alone does not establish it.
 
-`ScriptCompile` was read completely, including an exact-symbol disassembly restart. Its terminal marker at 0x9a3d6 sets type 6, then passes the payload at stack offset -0x20 to `SetVariableValue`; no defining payload store appears in the function. Native initializes that marker to integer 1. This discrepancy remains unchecked; the code was not changed to imitate uninitialized stack data.
+The two value-reference overload rows are now equal. Exact-entry Mac disassembly and original stabs identify their complete inline operations in `scr_variable.h`, rather than just similarly named calls. At 0x92860–0x92883, header line 246 loads the payload and type of both named `VariableCompileValue` locals and dispatches to the two-argument `AddRefToValue`. The compiler source resumes at 0x92884. Header line 252 identifies the matching release operations at 0x9400b–0x94019 and 0x94825–0x94833. Their enclosing constant-evaluation branches and optional boolean cast were followed to establish which value is released. Native field loads and calls implement the complete operations; no standalone wrappers or source changes are needed.
+
+`ScriptCompile` retains its established intentional marker initialization. Mac 0x9a3d6 sets type 6 without defining the payload at stack offset -0x20; native initializes integer 1. The previously reconciled load-table consumers use marker presence/type, preserving defined native behavior instead of imitating prior stack bytes.
 
 ## Verification
 
@@ -37,3 +39,9 @@ Integrated source `dd6a421` passed both dedicated builds and every local macOS C
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. Those unchanged traces do not establish that every corrected edge was exercised. Allocation failures, debugger/error edges and other unreached paths remain compiled and reviewed.
 
 Generic VM recovery, allocation-dependent notify state and missing helper identities remain explicitly unchecked where evidence was insufficient. No undefined native state was introduced to claim parity. Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile; preprocessing checks are not binary-byte parity.
+
+## Remaining-helper audit, 2026-11-05
+
+The two overload closures use Mac source metadata and complete inline operations; Linux supplied helper names only. All previously resolved ledger entries retain their exact status and evidence. Five unchanged source files compiled into ten separate arm64 Release objects using the configured stock and CoD2x client commands, with only checkout/output paths remapped. Builds used low priority and at most two jobs. No source, fixture, assertion or legacy line mapping changed. No full CI or replay ran in this audit. Private evidence is in `recon-script-remaining.noindex`, and the complete four-module ledger is `script-remaining.ledger.json` in the orchestrator units directory.
+
+Independent source/binary review at source freeze `28e7d452399e38b2c296b8b4230e3eb8017b8c52` agreed with the two compiler overload closures and sixteen remaining gaps. Eight existing compiler/parser cases passed in each stock and CoD2x configuration: four binary-condition loop cases and four parser cases, using the existing ASan/UBSan runner. These checks do not exercise all reference-count types or the unresolved debugger APIs. No new cases or assertions were added.
