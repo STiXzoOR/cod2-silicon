@@ -1,8 +1,8 @@
 # universal/com_memory module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**57/64 reconciled: 36 equal, 11 fixed, 10 intentional, 7 unchecked.** Mac 1.3 is the authority. Linux was read only for helper names and intent. Behavior changes are native-only. Legacy preprocessed tokens, including all seven actual OOM line-number arguments, are identical in five OFF configurations.
+**58/64 reconciled: 37 equal, 11 fixed, 10 intentional, 6 unchecked.** Mac 1.3 is the authority. Linux was read only for helper names and intent. Behavior changes are native-only. Legacy preprocessed tokens, including all seven actual OOM line-number arguments, are identical in five OFF configurations.
 
 ## Storage and lifetime
 
@@ -49,3 +49,12 @@ The seven remaining rows stay unchecked. This pass made no source changes and pr
 Direct references to the Mac hunk permanent/temp fields at 0x477f00/04 and 0x477f08/0c were assigned to their existing allocation, diagnostic, mark and reset owners. `Hunk_SetMark` at 0x37828 returns the high permanent count. The hide/show pair at 0x37bf2/0x37c08 saves and restores the low permanent count. `Hunk_ClearTempMemoryHigh` at 0x37a60 copies the high permanent count to the high temporary count; it does not implement saving and replacing high permanent state. None establishes the full high hide/show API. Reading the low count inside a larger allocator or diagnostic does not identify the separate getter, and resetting marks does not establish a shutdown/free contract for `s_origHunkData`. These direct-reference results are search bounds, not proof that no indirect or inlined identity exists.
 
 Stock Release and CoDxRelease production objects for this module and MacWin32 compiled using their configured arm64 commands. The existing native diagnostics fixture passed, and the unchanged storage fixture passed with ASan in both configurations. These exercise guard allocation/free and large-local rollback, not the seven unidentified APIs. Triage and selected constant checks ran as leads only. No new tests, cases, assertions, full CI or replay ran. Source bytes and therefore OFF `__LINE__` expansions remain unchanged. Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-storage-remaining.noindex/`.
+
+
+## Original raw-free identity follow-up
+
+The retained original Linux 1.0 IDB identifies the anonymous third free wrapper as sub_80a927c at0x80a927c–0x80a928f (exclusive end). Its position between named Z_VirtualFreeInternal and the out-of-memory handler agrees with the reconstructed Z_FreeRaw row. The original 1.3 executable retains that wrapper at0x80ab5e0–0x80ab5f3, immediately after the two named free wrappers. All three complete bodies forward the sole pointer unchanged to the same free import; only relative call displacements differ. The original executable evidence establishes a strict operation alias, without inventing the unknown original name.
+
+Exact Mac Z_FreeInternal at0x3740c–0x37415 tail-jumps to free. The native default Z_FreeInternal likewise calls free(ptr). This closes Z_FreeRaw as equal for the complete shared free operation; it does not assert that a distinct raw wrapper was emitted on Mac. Existing optional guardheap ownership handling remains unchanged. Parent independent review is recorded in the private orchestration packet. No production source change, compilation, tests, CI, replay, or runtime exercise occurred.
+
+Original Linux identities also sharpen the remaining hunk targets: Shutdown0x80aba6e, low-permanent getter0x80abf0e, and high hide/show0x80ac500/0x80ac51e. These require complete Mac operations beyond the already documented low hide/show and high temp-clear owners. The virtual commit/decommit helpers retain different signatures/effects from the Mac exported platform shims. All six remaining rows stay unchecked. Private evidence: recon-provenance-storage5.noindex.
