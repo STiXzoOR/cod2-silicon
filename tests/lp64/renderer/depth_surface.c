@@ -12,6 +12,12 @@
 #include "CDirect3DDevice.c"
 #undef glBindVertexArray
 #if defined(COD2_X64)
+#include "Mac/DirectX_9/CDirect3DVertexShader.c"
+intptr_t g_Low, g_High;
+extern ULONG CDirect3DVertexBuffer_AddRef(const CDirect3DVertexBuffer *);
+extern ULONG CDirect3DVertexBuffer_Release(const CDirect3DVertexBuffer *);
+#endif
+#if defined(COD2_X64)
 /* The production initializer invalidates these original device caches. */
 CXX_BOOL CDirect3DDevice_mNeedsVertexShaderValidation;
 CXX_BOOL CDirect3DDevice_mNeedsTransformationValidation;
@@ -60,7 +66,9 @@ void *imp___ZTV11CColorArray = fixtureArrayVtables;
 void *imp___ZTV20CSecondaryColorArray = fixtureArrayVtables;
 void *imp___ZTV12CNormalArray = fixtureArrayVtables;
 void *imp___ZTV12CVertexArray = fixtureArrayVtables;
+#if !defined(COD2_X64)
 GLuint CDirect3DVertexShader_GetProgramId(const CDirect3DVertexShader *shader) { assert(shader); return vertexProgram; }
+#endif
 void MacDisplay_GetVideoMemoryInfo(int *video, int *texture) { *video = *texture = 0; }
 int MacPlatform_GetRenderSize(int *w, int *h) { *w = *h = 32; return 1; }
 int MacDisplay_GetSupportsAnisotropicFiltering(void) { return 0; }
@@ -177,6 +185,14 @@ int main(int argc, char **argv)
             for (int j = 0; j < 3; ++j) vertices[i].xyz[j] *= 4000;
     unsigned short indices[] = {0, 1, 2};
     CDirect3DVertexBufferClean vb = { .data = (byte *)vertices, .lengthBytes = sizeof(vertices) };
+#if defined(COD2_X64)
+    /* The indexed driver retains stream zero even for borrowed stack data. */
+    void *bufferMethods[16] = { [1] = CDirect3DVertexBuffer_AddRef, [2] = CDirect3DVertexBuffer_Release };
+    vb.vtable = bufferMethods;
+    vb.refCount = 1;
+    CDirect3DVertexShaderImpl shader = {0};
+    /* Both modes supply the shader owner; D3D_PROG selects ARB or approximation. */
+#endif
     CDirect3DIndexBufferClean ib = { .data = (byte *)indices, .lengthBytes = sizeof(indices), .indexSizeBytes = 2 };
     D3DVERTEXELEMENT9 elements[] = {{0, 0, 2, 0, 0, 0}, {0, 12, 4, 0, 10, 0}, {255, 0, 17, 0, 0, 0}};
     CDirect3DVertexDeclarationImpl declaration = { .elementCount = 3, .elements = elements };
@@ -191,6 +207,10 @@ int main(int argc, char **argv)
     DeviceImpl dev = {0};
     CDirect3DDevice_Init(&dev);
 #if defined(COD2_X64)
+    /* Init-only setup supplies COpenGL_Init's initial depth state. */
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glDepthMask(GL_TRUE);
     /* Reset normally owns the 1x1 fallback texture; this Init-only fixture
      * supplies the same widened secondary-base contract for raster validation. */
     fprintf(stderr, "native texture units: fixed=%u image=%u\n", dev.maxTextureUnits, dev.maxTextureImageUnits);
@@ -217,6 +237,9 @@ int main(int argc, char **argv)
     dev.streamStrides[0] = sizeof(vertices[0]);
     dev.indexBuffer = (void *)&ib;
     g_activeVertexDeclaration = (void *)&declaration;
+#if defined(COD2_X64)
+    g_activeVertexShader = (void *)&shader;
+#endif
     if (arb) {
         const char *vp = "!!ARBvp1.0\nMOV result.position, vertex.position;\nMOV result.color, vertex.attrib[5];\nEND";
         const char *fp = "!!ARBfp1.0\nMOV result.color, fragment.color.primary;\nEND";
@@ -227,7 +250,11 @@ int main(int argc, char **argv)
         glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, fragmentProgram);
         glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (GLsizei)strlen(fp), fp);
         assert(glGetError() == GL_NO_ERROR);
+#if defined(COD2_X64)
+        memcpy(shader.baseState, &vertexProgram, sizeof(vertexProgram));
+#else
         g_activeVertexShader = (void *)&vertexProgram;
+#endif
         dev.pixelShader = (void *)&pixel;
     }
     /* Existing stencil operations isolate the surface enable/mask contract. */
