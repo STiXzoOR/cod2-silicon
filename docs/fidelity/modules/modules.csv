@@ -56,7 +56,7 @@ Mac/Tools/MacDisplay,47,0,0,0,47
 Mac/Tools/MacExceptions,7,0,0,0,7
 Mac/Tools/MacFastCopy,1,0,0,0,1
 Mac/Tools/MacFeatures,5,0,0,0,5
-Mac/Tools/MacFiles,5,0,0,0,5
+Mac/Tools/MacFiles,5,1,3,1,0
 Mac/Tools/MacFolders,9,0,0,0,9
 Mac/Tools/MacGameEngine,24,0,0,0,24
 Mac/Tools/MacGlobals,5,0,0,0,5
@@ -440,10 +440,10 @@ universal/q_parse,36,24,2,2,8
 universal/q_shared,89,54,6,3,26
 universal/surfaceflags,2,2,0,0,0
 unix/unix_dir,1,0,0,0,1
-unix/unix_main,52,0,0,0,52
+unix/unix_main,52,6,4,30,12
 unix/unix_net,17,0,0,0,17
-unix/unix_shared,26,0,0,1,25
-unix/unix_threads,5,0,0,0,5
+unix/unix_shared,26,5,4,10,7
+unix/unix_threads,5,2,0,2,1
 win32/cinematics,16,0,0,0,16
 win32/snd_driver,55,0,0,0,55
 win32/win_localize,3,0,0,0,3

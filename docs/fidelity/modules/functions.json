@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 3103,
-      "intentional": 1718,
-      "equal": 3885,
-      "fixed": 751
+      "unchecked": 3036,
+      "intentional": 1760,
+      "equal": 3899,
+      "fixed": 762
     },
     "scopes": {
       "unassigned": 777,
@@ -32838,8 +32838,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Exact Mac0x8940 promotes inForHFS as an unsigned byte, then converts backslashes to colon or slash and terminates. Native int parameter tested all bits; COD2_X64 now casts to unsigned char before the choice, preserving the original Boolean-width contract. Byte traversal/alias-safe copy hand-compared. Compiled and reviewed; unusual high-bit argument not exercised."
       },
       {
         "id": "mac:0x00008998",
@@ -32860,8 +32860,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand-compared Mac0x8998 in-place backslash conversion with the existing native MacFiles_CleanPath(input,output,inForHFS) when input==output. The C reconstruction consolidates the C++ overload into that alias-safe three-argument helper; selected MacFolders calls use that API, and no source/generated native callback targets the old overload. Native Boolean choice now preserves the low byte."
       },
       {
         "id": "mac:0x00008b18",
@@ -32882,8 +32882,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac0x8b18 previously selected a constant-success stub. Native Apple now uses SDK FSPathMakeRef, propagates initial lookup error, rejects non-directory with paramErr(-50), recurses, and conditionally FSDeleteObject on the root. Crucial Mac0x8b68-0x8b7a returns saved initial success even after later failure; copied exactly. SDK FSRef storage80 bytes; same FS APIs retain their symlink resolution policy. CoreServices owns the actual symbols. Compiled and reviewed; no directory deletion executed."
       },
       {
         "id": "mac:0x00008b7c",
@@ -32904,8 +32904,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared exact Mac0x8b7c-0x8bf5: normalize backslashes to slash into a1024-byte stack buffer, including empty input, then access(buffer,inMode). Selected MacFiles.c matches argument order and byte loop; its existing unbounded legacy path contract is not silently changed."
       },
       {
         "id": "mac:0x000089ea",
@@ -32926,8 +32926,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Reconstructed missing native body from exact Mac0x89ea-0x8b15: FSOpenIterator(kFSIterateDelete), one-item FSGetCatalogInfoBulk(kFSCatInfoNodeFlags), directory recursion before child deletion, saved original flags, clear locked bit with ignored FSSetCatalogInfo status, stop on stored errors, clear errFSNoMoreItems(-1417), ignore FSCloseIterator result. Real SDK FSRef/FSCatalogInfo/ItemCount replace i386 storage; exactly the six local FS no-op symbols are excluded in Apple+COD2_X64 builds. Compiled and reviewed; deletion not exercised."
       }
     ],
     "Mac/Tools/MacFolders": [
@@ -211781,7 +211781,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_DirectoryHasEntries identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       }
     ],
     "unix/unix_main": [
@@ -211801,8 +211801,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux terminal history helper Hist_Add is not compiled or referenced by either native graph. Native command input is src/Mac/Main/mac_syscon.c:Sys_ConsoleInput, a bounded 512-byte select/read line reader without shell history; Sys_GetEvent consumes that string. The Carbon console at Mac 0xc46e8 is also replaced by this stdin frontend. No Linux body is used as behavioral authority."
       },
       {
         "id": "linux:unix/unix_main.cpp:213:Hist_Next",
@@ -211820,8 +211820,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux terminal history helper Hist_Next is not compiled or referenced by either native graph. Native command input is src/Mac/Main/mac_syscon.c:Sys_ConsoleInput, a bounded 512-byte select/read line reader without shell history; Sys_GetEvent consumes that string. The Carbon console at Mac 0xc46e8 is also replaced by this stdin frontend. No Linux body is used as behavioral authority."
       },
       {
         "id": "linux:unix/unix_main.cpp:200:Hist_Prev",
@@ -211839,8 +211839,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux terminal history helper Hist_Prev is not compiled or referenced by either native graph. Native command input is src/Mac/Main/mac_syscon.c:Sys_ConsoleInput, a bounded 512-byte select/read line reader without shell history; Sys_GetEvent consumes that string. The Carbon console at Mac 0xc46e8 is also replaced by this stdin frontend. No Linux body is used as behavioral authority."
       },
       {
         "id": "linux:unix/unix_main.cpp:794:Sys_AppActivate",
@@ -211859,7 +211859,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_AppActivate identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "linux:unix/unix_main.cpp:104:Sys_BeginProfiling",
@@ -211878,7 +211878,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_BeginProfiling identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "mac:0x000c4ec4",
@@ -211908,8 +211908,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact-symbol Mac 0xc4ec4 consists only of prologue/epilogue/return; compared with the selected mac_common.c no-op taking fileHandle_t and readAhead. Cinematic callers retain the synchronous FS_Read provider."
       },
       {
         "id": "linux:unix/unix_main.cpp:789:Sys_CheckCD",
@@ -211928,7 +211928,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_CheckCD identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "linux:unix/unix_main.cpp:835:Sys_Chmod",
@@ -211947,7 +211947,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_Chmod identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "linux:unix/unix_main.cpp:816:Sys_ConfigureFPU",
@@ -211965,8 +211965,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "The Linux-only FPU setup entry is absent from native callers and both native build graphs. Native Apple uses arm64 scalar/SIMD floating point with -ffp-contract=off from cmake/macos-arm64.cmake and no x87 control-word setup; WinMain initializes the native runtime directly. This is the architecture boundary, not a claim about an unlocated Mac body."
       },
       {
         "id": "mac:0x000c46e8",
@@ -211996,8 +211996,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc46e8 copies a nonempty Carbon-produced sConsoleText into sReturnedText and clears the former; producer 0xc433e-0xc4340 appends newline+NUL. Selected mac_syscon.c replaces the Carbon control with a bounded 512-byte nonblocking select/read stdin reader, returns completed lines without newline, preserves partial lines and returns NULL on unavailable/closed stdin. Sys_GetEvent consequently copies len+1 rather than Mac's newline-dropping len capacity. Both native graphs select this frontend."
       },
       {
         "id": "linux:unix/unix_main.cpp:323:Sys_ConsoleInputInit",
@@ -212015,8 +212015,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux terminal lifecycle Sys_ConsoleInputInit is replaced by mac_syscon.c:Sys_CreateConsole (clears the two 512-byte buffers), Sys_DestroyConsole (no-op), and select/read Sys_ConsoleInput; WinMain/Sys_Quit call those native lifecycle functions. No termios state is acquired or restored. Both native targets select mac_syscon.c."
       },
       {
         "id": "linux:unix/unix_main.cpp:174:Sys_ConsoleInputShutdown",
@@ -212034,8 +212034,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux terminal lifecycle Sys_ConsoleInputShutdown is replaced by mac_syscon.c:Sys_CreateConsole (clears the two 512-byte buffers), Sys_DestroyConsole (no-op), and select/read Sys_ConsoleInput; WinMain/Sys_Quit call those native lifecycle functions. No termios state is acquired or restored. Both native targets select mac_syscon.c."
       },
       {
         "id": "linux:unix/unix_main.cpp:853:Sys_DoStartProcess",
@@ -212053,8 +212053,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux process-launch backend is replaced by mac_main.c:Sys_StartProcess -> SDK-only macos_launch.c:MacLaunch_Application. The actual engine caller CL_startSingleplayer_f passes cod2sp_s.exe and doexit=1. Mac 0xc36f8's substring mapping, sibling-bundle selection and success-before-queued-quit ordering are reconstructed there; no shell/argv split is used."
       },
       {
         "id": "mac:0x000c4eca",
@@ -212084,8 +212084,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact-symbol Mac 0xc4eca consists only of prologue/epilogue/return; selected mac_common.c is the same no-op for the file handle."
       },
       {
         "id": "mac:0x000c3840",
@@ -212115,8 +212115,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc384a sets com_errorEntered=1 through GOT 0x1accf0d ->0x10cceb4 before formatting; native omitted the store, so Com_Quit_f could run normal teardown after fatal error. Restored under COD2_X64. Formatting, shutdown, console/error messages compared with 0xc3840-0xc38e5. Native terminal diagnostics and immediate Com_Quit_f replace the Carbon console event-wait loop; dedicated skips client teardown and CoD2x shuts down its watcher. Compiled and reviewed; fatal error path not exercised."
       },
       {
         "id": "linux:unix/unix_main.cpp:227:Sys_Exit",
@@ -212134,8 +212134,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "No native Sys_Exit entry/caller exists. The selected lifecycle is main -> WinMain; Sys_Quit drains pending event allocations, synchronizes the file preference adapter and exits(0), while Sys_OutOfMemErrorInternal exits(-1). Dedicated signals route MacServer_CheckQuit -> Com_Quit_f. These explicit native lifecycle providers replace the Linux process-exit layer."
       },
       {
         "id": "linux:unix/unix_main.cpp:305:Sys_FileTime",
@@ -212154,7 +212154,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_FileTime identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "linux:unix/unix_main.cpp:99:Sys_FunctionCheckSum",
@@ -212173,7 +212173,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_FunctionCheckSum identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "linux:unix/unix_main.cpp:94:Sys_FunctionCmp",
@@ -212192,7 +212192,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_FunctionCmp identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "mac:0x000c38f8",
@@ -212222,8 +212222,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Exact-symbol Mac 0xc38f8 returns the empty literal at0x240c74, inherited by native. All three source callers release nonnull results through Z_FreeInternal, which reaches free; static literal ownership is invalid in both original and reconstructed path. Native COD2_X64 now returns an explicitly NUL-terminated one-byte Z_MallocInternal allocation, preserving empty content and the debugger paste call while satisfying the actual release contract. This is a defined-storage adaptation, not OS clipboard support. Compiled and reviewed; paste path not exercised."
       },
       {
         "id": "mac:0x000c3c6e",
@@ -212253,8 +212253,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc3c7a dequeues an already queued event before ProcessAllEvents at0xc3cda. Native pumped IN_Frame first; now COD2_X64 drains the existing queue before its SDL input provider. Remaining queue/console/network/empty-event branches hand-compared through0xc3ef4. Explicit native adaptations: stdin has already stripped newline (len+1 copy), SDK netadr_t is20 bytes rather than Mac12, receive capacity remains0x20000, and dedicated omits SDL input. Compiled and reviewed; existing system_network fixtures exercise native packet events, not the client backlog correction."
       },
       {
         "id": "mac:0x000c3996",
@@ -212284,8 +212284,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc3996 shuts down input then initializes it; selected native client callback preserves that order using linux_input.c's SDL/native input provider. cmake/macos-arm64.cmake excludes input from dedicated, so that build intentionally has neither registration nor input calls; no engine-side restart work is silently exempted."
       },
       {
         "id": "mac:0x000c39b2",
@@ -212315,8 +212315,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand-compared Mac0xc39b2 period init, in_restart/net_restart registration, sys_info fields, SSE strings and final IN_Init. Native MacWin32 period APIs are no-ops, hardware probes report maximum CPU frequency and uncapped physical memory (printed as such), SDL input is client-only, and dedicated registers only net_restart. This is the documented native hardware/input boundary; shared engine command registration/order otherwise matches."
       },
       {
         "id": "mac:0x000c4ebe",
@@ -212346,8 +212346,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact-symbol Mac 0xc4ebe is prologue/epilogue/return only; selected mac_common.c creates no stream thread, matching the binary."
       },
       {
         "id": "linux:unix/unix_main.cpp:587:Sys_LoadDll",
@@ -212365,8 +212365,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux game-module loader helper Sys_LoadDll is not selected or referenced. cmake/macos-arm64.cmake links game_mp sources directly into both native executables; SV_InitGameVM calls G_InitGame and SV_ShutdownGameProgs calls G_ShutdownGame directly. There is no Linux dlopen/dlsym/dlclose game-module boundary in this graph; actual initialization/shutdown remains engine code."
       },
       {
         "id": "linux:unix/unix_main.cpp:990:Sys_LoadRenderer",
@@ -212384,8 +212384,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux renderer-module lifecycle Sys_LoadRenderer has no native definition/caller. The native client links gfx_d3d/DirectX shim sources directly; CL_InitRef invokes GetRefAPI, and CL_ShutdownRef invokes the renderer shutdown callback. The dedicated graph excludes renderer sources entirely. This replaces the dynamic renderer-module boundary, not its engine-facing lifecycle behavior."
       },
       {
         "id": "mac:0x000c3a66",
@@ -212415,8 +212415,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac0xc3a66 calls UpdateSystemActivity(0). The selected linux_common.c no-op is now replaced on Apple by SDK MacRuntime_UserActivity in macos_launch.c:IOPMAssertionDeclareUserActivity(kIOPMUserActiveLocal), reusing/updating one static assertion ID per the local IOPMLib.h contract. CoD2x heartbeat remains before it. CoreServices no longer declares the old API; IOKit is the explicit native display-sleep replacement. Compiled and reviewed only; assertion not executed."
       },
       {
         "id": "linux:unix/unix_main.cpp:89:Sys_LowPhysicalMemory",
@@ -212435,7 +212435,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_LowPhysicalMemory identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "linux:unix/unix_main.cpp:566:Sys_NullQuery1",
@@ -212454,7 +212454,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_NullQuery1 identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "linux:unix/unix_main.cpp:571:Sys_NullQuery2",
@@ -212473,7 +212473,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_NullQuery2 identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "linux:unix/unix_main.cpp:562:Sys_NullStub",
@@ -212492,7 +212492,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_NullStub identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "mac:0x000c37a4",
@@ -212522,8 +212522,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc37a4 creates CFURL from URL bytes with encoding=0, opens via LaunchServices, queues quit only after successful open and nonzero second argument, then releases the URL. Native Apple selected xdg-open shell path and ignored quit; now SDK-only MacLaunch_OpenURL uses CFURLCreateWithBytes/LSOpenCFURLRef and balanced CFRelease, with the wrapper's exact success/quit order. CL_ParseWWWDownload is the live caller. Compiled and reviewed; no URL was opened."
       },
       {
         "id": "mac:0x000c3694",
@@ -212553,8 +212553,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand-compared Mac 0xc3694 formatting, localization keys, MessageBoxA title/body order, flag0x10 and exit(-1). The selected native MacWin32.c:MessageBoxA writes body/caption to stderr instead of a Carbon modal alert; output/localization and process termination remain, making this an explicit terminal-UI replacement. Both native targets select it."
       },
       {
         "id": "linux:unix/unix_main.cpp:924:Sys_ParseArgs",
@@ -212572,8 +212572,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux standalone option parsing is replaced by linux_common.c:main's bounded 4096-byte argv join -> WinMain -> Com_Init. Native CoD2x bundle arguments are prepended by Cod2xNativeApp_Arguments, with overflow failure before startup; otherwise arguments are separated by single spaces with no synthesized quoting. There is no Sys_ParseArgs call or standalone Linux option dispatcher in either native target."
       },
       {
         "id": "mac:0x000c38ee",
@@ -212603,8 +212603,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc38ee tail-calls Conbuf_AppendText and native mac_main.c forwards the same message. The selected mac_syscon.c adapter uses fputs(stdout) plus fflush rather than Carbon TXN console storage; callers keep their text unchanged. This is the precise native terminal output boundary."
       },
       {
         "id": "linux:unix/unix_main.cpp:823:Sys_PrintBinVersion",
@@ -212622,8 +212622,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "No separate Linux binary-version printer is selected. main forwards launch arguments to WinMain/Com_Init; common.c:Com_Init prints the configured native CoD2/CoD2x version and registers the version dvar. cod2_feature_config.h and COD2_RELEASE_VERSION supply build identity; the Linux CLI version/exit layer is intentionally not retained."
       },
       {
         "id": "mac:0x000c3904",
@@ -212653,8 +212653,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xc3904-0xc3993 with selected Sys_QueEventInternal: 256-slot index, overflow when head-tail>255, old-pointer free before tail increment, head increment, zero-time clock fallback and all six event fields in order. Native sysEvent_t carries its real pointer width; queue policy is unchanged."
       },
       {
         "id": "mac:0x000c3be0",
@@ -212684,8 +212684,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand-compared Mac0xc3be0 period/input/key/console/localization/dvar/cmd/con shutdown, Com_ShutdownEvents, pending event-pointer frees, preference synchronize and exit0. Native client retains that ordering plus CoD2x watcher shutdown; dedicated excludes client-only calls. Selected MacPreferences_Synchronize is intentionally a no-op because native PutString already flushes/closes and atomically renames .cod2/preferences (WS21); native terminal console owns no GUI resources."
       },
       {
         "id": "linux:unix/unix_main.cpp:670:Sys_ShutdownStreamThread",
@@ -212703,8 +212703,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "No native stream-thread shutdown body/caller is needed: exact Mac 0xc4ebe/0xc4ec4/0xc4eca bodies confirm init/begin/end are no-ops, and selected mac_common.c reads/seeks synchronously through FS_Read/FS_Seek. Both native targets use that provider; no background stream thread is created."
       },
       {
         "id": "mac:0x000c36f8",
@@ -212734,8 +212734,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc36f8: cod2sp substring precedes cod2mp, maps to the two exact stock sibling app names, opens only that app and queues quit with exec_when=2 only after success and doexit. Native unsupported-Linux stub is replaced on Apple by that control flow plus SDK MacLaunch_Application (recognize only the packaged <outer>.app/Contents/Helpers/CoD2 Game.app layout and use the outer app parent; otherwise use the direct bundle parent; append the fixed app component + LSOpenCFURLRef); unknown names call the matching no-op game_dprintf (Mac 0x3fb4). No command-line splitting or shell. Compiled and reviewed; no app was launched."
       },
       {
         "id": "mac:0x000c4eec",
@@ -212765,8 +212765,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared exact Mac 0xc4eec: forward file handle, signed integer offset and origin to FS_Seek, discarding its return. Native mac_common.c does so; native FS_Seek's long offset receives the sign-extended int."
       },
       {
         "id": "mac:0x000c4ed0",
@@ -212796,8 +212796,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared exact Mac 0xc4ed0: multiply size*count as integer bytes and tail-call FS_Read(buffer, product, fileHandle); selected mac_common.c has the same argument order and returns the byte count."
       },
       {
         "id": "linux:unix/unix_main.cpp:582:Sys_UnableToLoadLibrary",
@@ -212815,8 +212815,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux game-module loader helper Sys_UnableToLoadLibrary is not selected or referenced. cmake/macos-arm64.cmake links game_mp sources directly into both native executables; SV_InitGameVM calls G_InitGame and SV_ShutdownGameProgs calls G_ShutdownGame directly. There is no Linux dlopen/dlsym/dlclose game-module boundary in this graph; actual initialization/shutdown remains engine code."
       },
       {
         "id": "linux:unix/unix_main.cpp:537:Sys_UnloadGame",
@@ -212834,8 +212834,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux game-module loader helper Sys_UnloadGame is not selected or referenced. cmake/macos-arm64.cmake links game_mp sources directly into both native executables; SV_InitGameVM calls G_InitGame and SV_ShutdownGameProgs calls G_ShutdownGame directly. There is no Linux dlopen/dlsym/dlclose game-module boundary in this graph; actual initialization/shutdown remains engine code."
       },
       {
         "id": "linux:unix/unix_main.cpp:996:Sys_UnloadRenderer",
@@ -212853,8 +212853,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux renderer-module lifecycle Sys_UnloadRenderer has no native definition/caller. The native client links gfx_d3d/DirectX shim sources directly; CL_InitRef invokes GetRefAPI, and CL_ShutdownRef invokes the renderer shutdown callback. The dedicated graph excludes renderer sources entirely. This replaces the dynamic renderer-module boundary, not its engine-facing lifecycle behavior."
       },
       {
         "id": "linux:unix/unix_main.cpp:282:Sys_Warn",
@@ -212873,7 +212873,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_Warn identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "linux:unix/unix_main.cpp:317:floating_point_exception_handler",
@@ -212891,8 +212891,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "The Linux-specific FPE handler entry is not selected. WinMain installs crash_handler.c:Sys_InstallCrashHandler, whose native POSIX signal table includes SIGFPE and installs cr_posix_handler using sigaction. That SDK/native diagnostic path replaces the old handler; Linux handler internals were not treated as authority."
       },
       {
         "id": "mac:0x00025b9e",
@@ -212922,8 +212922,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Exact Mac0x25b9e sets the cursor and calls CMacGameEngine::Run(argc,argv), with C++ exception handling, then returns0. Native linux_common.c:main instead joins arguments into a bounded4096-byte command line, applies native data pointer fixups and enters mac_main.c:WinMain; CoD2x bundle arguments and main-thread QoS are native additions. WinMain initializes thread slots/localization/dvars/hardware/console and runs Com_Frame directly, with dedicated signal checks or native client hooks. This explicitly replaces the discarded Carbon engine lifecycle; no claim that its object/exception ABI is preserved."
       },
       {
         "id": "linux:unix/unix_main.cpp:122:tty_Back",
@@ -212941,8 +212941,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux termios/display helper tty_Back has no selected native body or caller. mac_syscon.c:Sys_ConsoleInput uses select/read without terminal-mode changes, Conbuf_AppendText writes/flushed stdout, and Sys_GetEvent consumes the line. This is the concrete stdin/stdout frontend replacing terminal editing/redisplay, not an exemption for the event queue."
       },
       {
         "id": "linux:unix/unix_main.cpp:113:tty_FlushIn",
@@ -212960,8 +212960,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux termios/display helper tty_FlushIn has no selected native body or caller. mac_syscon.c:Sys_ConsoleInput uses select/read without terminal-mode changes, Conbuf_AppendText writes/flushed stdout, and Sys_GetEvent consumes the line. This is the concrete stdin/stdout frontend replacing terminal editing/redisplay, not an exemption for the event queue."
       },
       {
         "id": "linux:unix/unix_main.cpp:136:tty_Hide",
@@ -212979,8 +212979,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux termios/display helper tty_Hide has no selected native body or caller. mac_syscon.c:Sys_ConsoleInput uses select/read without terminal-mode changes, Conbuf_AppendText writes/flushed stdout, and Sys_GetEvent consumes the line. This is the concrete stdin/stdout frontend replacing terminal editing/redisplay, not an exemption for the event queue."
       },
       {
         "id": "linux:unix/unix_main.cpp:156:tty_Show",
@@ -212998,8 +212998,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux termios/display helper tty_Show has no selected native body or caller. mac_syscon.c:Sys_ConsoleInput uses select/read without terminal-mode changes, Conbuf_AppendText writes/flushed stdout, and Sys_GetEvent consumes the line. This is the concrete stdin/stdout frontend replacing terminal editing/redisplay, not an exemption for the event queue."
       }
     ],
     "unix/unix_net": [
@@ -213452,8 +213452,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux path API Sys_Cwd is not selected or called. Native FS_Startup in com_files.c registers fs_basepath from mac_common.c:Sys_DefaultInstallPath, which matches Mac0xc493a's getcwd into a256-byte static buffer with byte255 NUL. Both native targets use that explicit default-path provider instead of the Linux getter layer."
       },
       {
         "id": "linux:unix/unix_shared.cpp:311:Sys_DefaultBasePath",
@@ -213471,8 +213471,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux path API Sys_DefaultBasePath is not selected or called. Native FS_Startup in com_files.c registers fs_basepath from mac_common.c:Sys_DefaultInstallPath, which matches Mac0xc493a's getcwd into a256-byte static buffer with byte255 NUL. Both native targets use that explicit default-path provider instead of the Linux getter layer."
       },
       {
         "id": "mac:0x000c4928",
@@ -213502,8 +213502,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact-symbol Mac0xc4928 returns empty string at0x240c74; selected mac_common.c returns empty string. Native FS_Startup uses it for fs_cdpath."
       },
       {
         "id": "mac:0x000c4932",
@@ -213533,8 +213533,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac0xc4932 returns NULL. Selected mac_common.c calls macos_system.c:MacSystem_HomePath, initialized once from HOME or getpwuid(getuid()), returning ~/Library/Application Support/CoD2 Silicon (or NULL if unavailable/too long). FS_Startup uses this native writable-home default; both native graphs select the SDK provider. Existing system_no_home checks fallback."
       },
       {
         "id": "mac:0x000c493a",
@@ -213564,8 +213564,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac0xc493a getcwd(cwd,255), unconditional cwd[255]=0 and return static cwd; selected mac_common.c matches, including lack of a special getcwd-failure branch."
       },
       {
         "id": "mac:0x000c4e62",
@@ -213595,8 +213595,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac0xc4e87 skips names beginning '.', then0xc4e8d-0xc4e97 accepts only dirent.d_type==8 (DT_REG), rejecting directories and every other type including unknown/symlink. Native counted any visible entry; now COD2_X64 checks DT_REG. Caller FS_AddGameDirectory uses this for localized game-directory eligibility. Compiled and reviewed; not directly exercised."
       },
       {
         "id": "linux:unix/unix_shared.cpp:431:Sys_EnterCriticalSection",
@@ -213615,7 +213615,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_EnterCriticalSection identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "mac:0x000c4e24",
@@ -213645,8 +213645,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac0xc4e24 null guard, sentinel walk freeing each string and final array free; selected mac_common.c matches with native pointer-sized traversal."
       },
       {
         "id": "linux:unix/unix_shared.cpp:385:Sys_GetCurrentUser",
@@ -213665,7 +213665,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_GetCurrentUser identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "linux:unix/unix_shared.cpp:370:Sys_GetProcessorId",
@@ -213684,7 +213684,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_GetProcessorId identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "linux:unix/unix_shared.cpp:415:Sys_InitializeCriticalSections",
@@ -213703,7 +213703,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_InitializeCriticalSections identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "linux:unix/unix_shared.cpp:436:Sys_LeaveCriticalSection",
@@ -213722,7 +213722,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_LeaveCriticalSection identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "mac:0x000c4b8e",
@@ -213752,8 +213752,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac0xc4bec/0xc4c58 tests only mode bit0x4000 for directory selection; native S_ISDIR changed socket classification. Native now copies the raw bit test. Hand-compared filter delegation, '/' sentinel, hidden-name skip, stat failure, suffix comparison,4095 limit, NULL result/count and copied pointer-list terminator. LP64 allocations intentionally use sizeof(char*) instead of4. Compiled and reviewed; not directly exercised."
       },
       {
         "id": "mac:0x000c4962",
@@ -213783,8 +213783,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac0xc4977 and0xc4a30 return/break only when count>0xFFE, allowing index4094; native used>= and dropped the final result. Native also used S_ISDIR where Mac0xc4a1d tests only mode bit0x4000, treating sockets as directories; now both quirks match. Recursion-before-filter, dot entries, path formats, case-insensitive checks, CopyString and close/error branches hand-compared. Compiled and reviewed; not directly exercised."
       },
       {
         "id": "mac:0x000aecec",
@@ -213814,8 +213814,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac0xaecec initializes a timeGetTime base once then subtracts with32-bit wrap. Selected win_shared.c preserves wrapped subtraction but uses pthread_once; MacWin32.c:timeGetTime is uint32(MacSystem_Nanoseconds()/1000000), backed by mach_absolute_time/timebase, replacing Mac0xb35c Microseconds plus nearest-ms rounding. This explicit monotonic native clock also supplies deadline pacing. Existing system_network timing checks passed."
       },
       {
         "id": "mac:0x000aed1c",
@@ -213845,8 +213845,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac0xaed1c tail-calls timeGetTime. Selected win_shared.c likewise returns the low32 bits of the native MacWin32 clock: floor(MacSystem_Nanoseconds()/1000000) from mach_absolute_time, rather than Mac0xb35c's rounded Microseconds clock. The native clock provider and32-bit wrap are intentional; actual native callers include game initialization/pacing."
       },
       {
         "id": "mac:0x000c48d8",
@@ -213876,8 +213876,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac0xc48e2 probes access(path,7), then mkdir(path,0777) on any nonzero result. Native had reduced access to existence-only for Windows. Restored R_OK|W_OK|X_OK for COD2_X64 POSIX, retaining Windows/legacy existence probe; compiled and reviewed, not directly exercised."
       },
       {
         "id": "linux:unix/unix_shared.cpp:376:Sys_NullQuery3",
@@ -213896,7 +213896,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_NullQuery3 identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "mac:0x000c490c",
@@ -213926,8 +213926,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac0xc490c: call MacFiles_RemoveDirectoryA(path), return status==0. Selected mac_common.c has that exact wrapper. The live provider is now reconstructed in MacFiles.c using real SDK FSRef APIs, with its original saved-initial-status return bug preserved (see Mac/Tools/MacFiles report); it is no longer a no-op stub."
       },
       {
         "id": "linux:unix/unix_shared.cpp:301:Sys_SetDefaultCDPath",
@@ -213945,8 +213945,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux setter Sys_SetDefaultCDPath has no native callers or compiled storage. Native FS_Startup registers fs_cdpath directly from mac_common.c:Sys_DefaultCDPath; startup dvar overrides are handled by Com_Init, and CoD2x path setup precedes it. This concrete dvar/default-provider boundary replaces Linux mutable default-path setters, not filesystem behavior generally."
       },
       {
         "id": "linux:unix/unix_shared.cpp:340:Sys_SetDefaultHomePath",
@@ -213964,8 +213964,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux setter Sys_SetDefaultHomePath has no native callers or compiled storage. Native FS_Startup registers fs_homepath directly from mac_common.c:Sys_DefaultHomePath; startup dvar overrides are handled by Com_Init, and CoD2x path setup precedes it. This concrete dvar/default-provider boundary replaces Linux mutable default-path setters, not filesystem behavior generally."
       },
       {
         "id": "linux:unix/unix_shared.cpp:323:Sys_SetDefaultInstallPath",
@@ -213983,8 +213983,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux setter Sys_SetDefaultInstallPath has no native callers or compiled storage. Native FS_Startup registers fs_basepath directly from mac_common.c:Sys_DefaultInstallPath; startup dvar overrides are handled by Com_Init, and CoD2x path setup precedes it. This concrete dvar/default-provider boundary replaces Linux mutable default-path setters, not filesystem behavior generally."
       },
       {
         "id": "mac:0x000c45e2",
@@ -214014,8 +214014,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac0xc45e2 implements Carbon window show/hide/collapse/focus and console-running state, with Sys_Error for invalid visibility levels. Selected mac_syscon.c provides terminal stdout/stdin only, setting gConsoleRunning exactly for visLevel1 and owning no Carbon windows. Sys_Error uses terminal diagnostics then exits through Com_Quit_f; WinMain/Sys_Quit use the corresponding create/destroy adapters. GUI visibility operations are deliberately replaced at this frontend boundary."
       },
       {
         "id": "mac:0x000aed28",
@@ -214065,7 +214065,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only fastftol identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "mac:0x00025916",
@@ -214095,8 +214095,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared exact Mac0x25916 signed-byte promotion, tolower call per non-NUL byte, write-back, pointer increment and original pointer return with selected Mac/Tools/i5stdlib.c. Native engine callers include sound aliases, model material names and gametype script names; this engine-facing helper was not exempted as platform code."
       }
     ],
     "unix/unix_threads": [
@@ -214128,8 +214128,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac0x22255a returns g_threadValues[index] without guards. Selected win_threads.c preserves global array lookup, with pointer-sized native elements; q_shared va(), common error frames and cm_trace are actual engine consumers."
       },
       {
         "id": "mac:0x00222510",
@@ -214159,8 +214159,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac0x222510 stores GetCurrentThreadId then calls Com_InitThreadData(0). Selected win_threads.c preserves that flow and global slot layout. Native MacWin32.c replaces Mac0xb00c pthread_self identity with pthread_mach_thread_np(pthread_self()) in DWORD; WinMain is the initializer and rendering/error callers consume main-thread equality. SDK IDs replace the i386 pthread-handle representation, not TLS semantics."
       },
       {
         "id": "mac:0x0022252e",
@@ -214190,8 +214190,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand-compared Mac0x22252e current-thread equality against saved threadId. Selected win_threads.c has the same comparison; native MacWin32.c supplies pthread_mach_thread_np IDs instead of Mac0xb00c pthread_self handles. Actual callers include CL_UpdateScreen/CL_ConsolePrint/render init. The native provider was compiled in both targets, and existing threads_ring checks distinguish main and worker IDs."
       },
       {
         "id": "linux:unix/unix_threads.cpp:20:Sys_NullQuery4",
@@ -214210,7 +214210,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only Sys_NullQuery4 identity: no matching executable Mac symbol, selected native definition, source caller or native generated-data reference was found. Its precise Mac inline identity/replacement contract remains unproved; absence is not equality."
       },
       {
         "id": "mac:0x00222548",
@@ -214240,8 +214240,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact Mac0x222548 stores data in global g_threadValues[index] without bounds checks or per-thread TLS. Selected win_threads.c preserves that global five-pointer array with native pointer-width indexing. Com_InitThreadData writes slots1/2/3 for va buffers, longjmp state and trace info; no thread-local redesign was inferred."
       }
     ],
     "win32/cinematics": [
