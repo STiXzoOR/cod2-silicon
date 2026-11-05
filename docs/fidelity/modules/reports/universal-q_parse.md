@@ -1,8 +1,8 @@
 # universal/q_parse module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-05.
 
-**28/36 reconciled: 24 equal, 2 fixed, 2 intentional; 8 unchecked.** Mac 1.3 is the authority. Every assigned row was inspected.
+**29/36 reconciled: 24 equal, 3 fixed, 2 intentional; 7 unchecked.** Mac 1.3 is the authority. Every assigned row was inspected.
 
 ## Corrections
 
@@ -51,3 +51,13 @@ The original 1.3 ELF supplies exact identity anchors for the eight open helpers:
 All eight remaining helpers stay unchecked. Original Com_SkipBracedSection0x80b6f24 sets exceeded when opening at depth==max without increasing depth, then still decrements for closing braces and stops at depth0 or exhausted cursor. A conventional balanced skip or immediate limit rejection is not its complete contract. Matrix parsing retains delimiter/error, dimension-loop and stride effects; scalar conversion alone cannot supply them. The prior unconditional-on-line float and arbitrary current-session setter gaps remain unchanged; guarded UI parsing and initialization-only stores were not promoted to equality.
 
 Private original evidence remains in recon-provenance-parser5.noindex and recon-provenance-config7.noindex; new complete provider packets are in recon-provenance-parser12.noindex. No production source changes, compilation, tests, CI, replay or runtime exercise occurred.
+
+## Complete on-line float value path (parsefloat25)
+
+`Com_ParseFloatOnLine` is fixed through the complete operation consumed by the actual registered-float-dvar file path. Original1.0 helper0x80b4b1c maps to the complete original1.3 body0x80b70f4 through RET0x80b7120 (end0x80b7121 exclusive): on-line parse, unconditional `atof`, float32 narrowing and return. Linux establishes identity and intent only. The earlier `Float_Parse` candidate still fails because it rejects empty tokens; this actual path converts them.
+
+Fresh complete Mac `Com_LoadDvarsFromBuffer` calls `Com_ParseOnLine`0x549df with the actual file cursor and immediately forwards its returned token to the setter0x549ea. The setter copies it to a real1024-byte local through `I_strncpyz`0x537cd; valid token lengths0..1023, including empty, preserve all bytes through NUL. No intervening parse mutates the token. Decoded type1 dispatch0x328b60→0x514bb calls `atof`0x514c1, stores the double and narrows via `CVTSD2SS`0x514c9. The complete float result is then passed to actual `Dvar_SetVariant`0x537f8 before later clamp/policy. Native preserves this full parser/copy/conversion/result-consumer chain. Raw Mac table0x34a3c0 and indirect slot0x1acd299 connect the real sun loader to `r_sunsprite_size`, registered as float0xf5dcf and consumed0xf62d9–0xf62e1.
+
+The mapped operation includes the complete on-line provider's cursor, backup/unget, line-counter and token effects. Its fixed status inherits the existing `Com_ParseExt` escaped-character newline correction0xae4fb–0xae500, with no new defect. Existing complete primary parser review remains the authority for settled tokenization paths. Preserve native long-token/closing-quote bounds and terminal-exponent NUL protection; no invalid-storage behavior is reintroduced. The later file-loader skip-rest-of-line correction is outside this operation.
+
+Scope is the complete selected registered-float value operation with valid parser/session/cursor/token storage and stable nonconcurrent type. It does not establish a standalone export, arbitrary missing-dvar behavior, whole loader/setter, all-type conversion, malformed-token storage, libc/locale-wide identity or x87 FP-control/sticky effects. Mac's observed double-to-float conversion governs. Independently accepted in `units/review-provenance-parsefloat25.md`; fresh bodies/data/source hashes remain private in `recon-provenance-parsefloat25.noindex`. One unchecked row becomes fixed; no source changes, new defects, compilation, tests, CI, replay or runtime exercise. Existing parser correction remains compiled and reviewed with its prior unexercised-path limits.
