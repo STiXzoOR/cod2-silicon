@@ -47,7 +47,9 @@ int MacPlatform_GetRenderSize(int *w, int *h) { *w = *h = 32; return 1; }
 int MacDisplay_GetSupportsAnisotropicFiltering(void) { return 0; }
 float MacDisplay_GetMaxSupportedAnisotropy(void) { return 1; }
 D3DMATRIX *RB_GetActiveWorldMatrix(void) { assert(!"unexpected view matrix"); return NULL; }
+#if !defined(COD2_X64)
 D3DXMATRIX *D3DXMatrixMultiply(D3DXMATRIX *a, const D3DXMATRIX *b, const D3DXMATRIX *c) { assert(!"unexpected matrix multiply"); return a; }
+#endif
 
 static void EnablePixel(const void *shader)
 {
@@ -60,11 +62,28 @@ static void Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, DWORD value)
     assert(!CDirect3DDevice_SetRenderState((const void *)dev, state, value));
 }
 
+#if defined(COD2_X64)
+static void *FixtureSurface(void)
+{
+    static void *surface;
+    if (!surface) {
+        surface = calloc(1, 128);
+        CDirect3DSurface_CDirect3DSurface(surface, 0, 0, 0, 32, 32, D3DFMT_A8R8G8B8, NULL, NULL);
+    }
+    return surface;
+}
+#endif
+
 static void Surface(DeviceImpl *dev, int present)
 {
+#if defined(COD2_X64)
+    assert(!CDirect3DDevice_SetDepthStencilSurface((const void *)dev,
+        present ? FixtureSurface() : NULL));
+#else
     static int surface;
     assert(!CDirect3DDevice_SetDepthStencilSurface((const void *)dev,
         present ? (IDirect3DSurface9 *)&surface : NULL));
+#endif
 }
 
 static void State(int depth, int write, int stencil, unsigned mask)
@@ -146,6 +165,9 @@ int main(int argc, char **argv)
     assert(sizeof(DeviceImpl) <= 4096);
     DeviceImpl dev = {0};
     CDirect3DDevice_Init(&dev);
+#if defined(COD2_X64)
+    dev.renderTarget = FixtureSurface();
+#endif
     dev.streams[0] = (void *)&vb;
     dev.streamStrides[0] = sizeof(vertices[0]);
     dev.indexBuffer = (void *)&ib;
