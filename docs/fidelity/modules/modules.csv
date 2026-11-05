@@ -417,7 +417,7 @@ ui/ui_atoms,4,3,0,1,0
 ui/ui_component,1,1,0,0,0
 ui/ui_gameinfo_mp,2,1,1,0,0
 ui/ui_main_mp,65,46,15,3,1
-ui/ui_shared_mp,103,0,0,0,103
+ui/ui_shared_mp,103,77,20,6,0
 ui/ui_shared_obj,112,0,0,0,112
 ui/ui_utils,30,27,2,1,0
 universal/assertive,2,2,0,0,0

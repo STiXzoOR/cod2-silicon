@@ -19906,5 +19906,417 @@
   "mac:0x0014fa08": {
     "status": "equal",
     "evidence": "Hand compared Mac 0x0014fa08: language query/verification, ui_language correction and changed flag compared to the requested language."
+  },
+  "mac:0x00165f42": {
+    "status": "equal",
+    "evidence": "Mac 0x00165f42: Compared 56-command lookup, primary/secondary key buffers (32-byte key names, 128-byte display strings), localized OR and UNBOUND paths."
+  },
+  "mac:0x00165e04": {
+    "status": "equal",
+    "evidence": "Mac 0x00165e04: Compared Controls_GetConfig_core with the Mac scan of 256 keys for each of 56 commands, two-key limit, -1 defaults, and both binding writes; typed sizeof(bind_t) replaces the i386 stride. Scripted comparison also matches all 56 Mac binding-table command strings and four integer fields."
+  },
+  "mac:0x00165ec2": {
+    "status": "fixed",
+    "evidence": "Mac 0x00165ec2: Queues the Mac in_restart command instead of unregistered bindingsave after applying both key slots. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00165f20": {
+    "status": "equal",
+    "evidence": "Mac 0x00165f20: Compared both default-to-current binding copies across the 56-entry table; typed native structure stride replaces 20-byte i386 stride. Scripted comparison also matches all 56 Mac binding-table command strings and four integer fields."
+  },
+  "mac:0x001662d6": {
+    "status": "equal",
+    "evidence": "Mac 0x001662d6: Compared the single g_waitingForKey load and return."
+  },
+  "mac:0x0016e536": {
+    "status": "equal",
+    "evidence": "Mac 0x0016e536: Compared menu drag rectangle copies, position updates, reverse open-stack dispatch, focused popup handling and success returns."
+  },
+  "mac:0x001660a2": {
+    "status": "equal",
+    "evidence": "Mac 0x001660a2: Compared case-insensitive command search and primary-bind -1 test over 56 commands."
+  },
+  "mac:0x001661bc": {
+    "status": "equal",
+    "evidence": "Mac 0x001661bc: Compared GetKeyBindings result handling, localized key fallback, 256-byte output bound and localized OR concatenation."
+  },
+  "mac:0x001660f6": {
+    "status": "equal",
+    "evidence": "Mac 0x001660f6: Compared both empty outputs, 56-command search, 128-byte key strings, one/two-key returns and literal KEY_UNBOUND fallback."
+  },
+  "mac:0x0016d3a8": {
+    "status": "intentional",
+    "evidence": "Retains native g_bindItem reset after cancel/commit and defined missing-command handling. Compared Mac enter/hit-test/character rejection, escape/delete, global duplicate removal and first/second/third-key replacement, including WS42 clear-old-binds repair; Controls_SetConfig now restores the Mac queued input restart."
+  },
+  "mac:0x0016a346": {
+    "status": "intentional",
+    "evidence": "Mac 0x16a6c9 draws literal FIXME for an unlabeled bind; preserves the documented WS44 native binding-name/EXE_KEYWAIT display and defined waiting color. Reviewed Mac maxPaintChars fallback, focus pulse, labeled/unlabeled paths and native output bound."
+  },
+  "mac:0x0016d720": {
+    "status": "equal",
+    "evidence": "Mac 0x0016d720: Compared capture cancellation, mouse capture/slider bounds, both callback setups, decoded type dispatch at 0x33b350 and multi/enum current-value lookup, wrap direction and dvar writes."
+  },
+  "mac:0x0016c8c6": {
+    "status": "equal",
+    "evidence": "Mac 0x0016c8c6: Compared transformed cursor/focus/force gates, horizontal and vertical selection, wheel/home/end/page keys, five scrollbar flags, 300-ms double click and feeder-18 special dispatch; preserves the unusual horizontal nonselectable count clamp."
+  },
+  "mac:0x00166630": {
+    "status": "equal",
+    "evidence": "Mac 0x00166630: Compared float feeder dispatch, horizontal/vertical visible-count truncation, +1 scroll endpoint and zero clamp."
+  },
+  "mac:0x0016c35e": {
+    "status": "equal",
+    "evidence": "Mac 0x0016c35e: Compared scrollbar flag clearing/recalculation, both orientation hit rectangles, original-coordinate row/column arithmetic and distinct >= versus > end-position clamps."
+  },
+  "mac:0x0016bb24": {
+    "status": "fixed",
+    "evidence": "Mac 0x0016bb24: Restored horizontal bottom-bar geometry, five region flags 0x100/0x200/0x400/0x800/0x1000, and Mac page-region bounds. Preserves the final page region using the absolute end coordinate as its extent. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00167664": {
+    "status": "fixed",
+    "evidence": "Mac 0x00167664: Restored selected text-row width when noScrollBars is set (width minus 4, instead of minus 20). Compared both scrollbar orientations, image/text/column draws, selection colors, endPos and drawPadding updates, including the original vertical-image width decrement. Compiled and reviewed; not exercised."
+  },
+  "mac:0x001667aa": {
+    "status": "equal",
+    "evidence": "Mac 0x001667aa: Compared capture identity, orientation bounds, eight-pixel cursor offset and fallback thumb-position calls."
+  },
+  "mac:0x001666a0": {
+    "status": "equal",
+    "evidence": "Mac 0x001666a0: Compared orientation branches, width/height minus 32 then 2 then 16, maxScroll division before startPos multiplication, coordinate additions and integer truncation."
+  },
+  "mac:0x0016ad16": {
+    "status": "equal",
+    "evidence": "Mac 0x0016ad16: Compared focus interpolation, @ translation, labeled and unlabeled value draws, label width preservation, eight-pixel gap and INT_MAX character bound."
+  },
+  "mac:0x0016c63e": {
+    "status": "fixed",
+    "evidence": "Mac 0x0016c63e: Restored textRect hit bounds with baseline-minus-height, its alignment fields, and listbox hover dispatch only outside the text hit rectangle. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00166380": {
+    "status": "equal",
+    "evidence": "Mac 0x00166380: Compared null-item exit, mouseExitText flag clearing, unconditional mouseExit script and 0x300 flag removal."
+  },
+  "mac:0x0016a712": {
+    "status": "fixed",
+    "evidence": "Mac 0x0016a712: Restored text-style-1 pulse on the low half of the adjusted 0x100 time bit. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0016fe0e": {
+    "status": "fixed",
+    "evidence": "Mac 0x0016fe0e: Restored item imageTrack for style-6 material registration. Compared orbit math/order, transition steps and completion, owner/dvar visibility, focused-hidden navigation, decoded 19-type draw table at 0x33b374, multi/enum labels and optional diagnostics. Retains native missing-enum safety checks. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00165d10": {
+    "status": "equal",
+    "evidence": "Mac 0x00165d10: Compared 1024-byte script initialization/copy, semicolon skip, command table iteration/callback arguments and UI_RunMenuScript fallback. Scripted comparison also matches all 28 command names, handler identities and their order in the Mac commandList table."
+  },
+  "mac:0x0016b386": {
+    "status": "fixed",
+    "evidence": "Mac 0x0016b386: Restored correct X/Y screen conversions and rejection when a focused menu occludes the candidate parent at the pointer. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00166bd8": {
+    "status": "equal",
+    "evidence": "Mac 0x00166bd8: Compared cached extents bypass, owner/edit-field widths, alignment-3 width, integer half-width truncation, borders and screen-rect write."
+  },
+  "mac:0x0016afdc": {
+    "status": "equal",
+    "evidence": "Mac 0x0016afdc: Compared dvar/visibility/focus gates, transformed mouse bounds, shared thumb setter, accepted arrow keys, 5 percent range step, clamping and %g dvar write."
+  },
+  "mac:0x0016a0f6": {
+    "status": "equal",
+    "evidence": "Mac 0x0016a0f6: Compared focused color pulse, label placement, 96x16 bar, 10x20 thumb and x-5/y-2 offsets. Native repeats the read-only variant-string lookup; rendered/control state agrees."
+  },
+  "mac:0x001663f6": {
+    "status": "equal",
+    "evidence": "Mac 0x001663f6: Compared text/no-text base, float dvar bounds, normalization, multiplication by 84 and ordered +5,+1,+base additions."
+  },
+  "mac:0x00169418": {
+    "status": "fixed",
+    "evidence": "Mac 0x00169418: Restored text-style-1 pulse on the low half of the adjusted 0x100 time bit. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0016ee5e": {
+    "status": "fixed",
+    "evidence": "Mac 0x0016ee5e: Restored post-character dispatch for extended byte values 0x9a/0x9b/0xbf, matching Mac navigation/accept fallthrough after successful writes. Compared insert/overstrike/delete/backspace, type filters, locale decimal conversion, edit bounds, cursor/paint offsets, focus traversal and accept/cancel paths. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0016994a": {
+    "status": "fixed",
+    "evidence": "Mac 0x0016994a: Restored inline focused-value color rather than a second fading/text-style color pass, and dynamic visibility/focus cursor eligibility. Retains bounded native paint/cursor offsets and optional diagnostics. Compiled and reviewed; existing numeric_fields fixture passes stock and CoD2x after correcting its stale static-focus setup. Localization/cursor/paint-offset paths exercised; pulse color is not asserted."
+  },
+  "mac:0x00166eac": {
+    "status": "fixed",
+    "evidence": "Mac 0x00166eac: Restored height+1/height+4 spacing, strict width-above-target space break and right alignment without adding cached textRect width. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00169784": {
+    "status": "intentional",
+    "evidence": "Retains optional native MTRACE diagnostics/counters; compared Mac text/dvar fallback, localization, empty return, color/extents and wrapped/auto/plain draw dispatch."
+  },
+  "mac:0x001672b6": {
+    "status": "equal",
+    "evidence": "Mac 0x001672b6: Compared carriage-return split/copy, centered and right-aligned per-line widths, height+5 baseline step and final remainder draw."
+  },
+  "mac:0x0016b1b8": {
+    "status": "equal",
+    "evidence": "Mac 0x0016b1b8: Compared dvar/visibility/focus gate, transformed pointer hit box, accepted keys, 25-byte atoi input and boolean inversion write."
+  },
+  "mac:0x00169db0": {
+    "status": "equal",
+    "evidence": "Mac 0x00169db0: Compared float dvar conversion, focused color interpolation, localized YES/NO selection, label/no-label placement and INT_MAX draw bound."
+  },
+  "mac:0x00165150": {
+    "status": "equal",
+    "evidence": "Mac 0x00165150: Compared all four SSE subtract/multiply/add channels and ordered lower/upper clamps; native compile disables FP contraction."
+  },
+  "mac:0x0016654a": {
+    "status": "fixed",
+    "evidence": "Mac 0x0016654a: Restored per-item focus bit 2 or static 0x100000 eligibility before dvar/onKey processing. Retains native diagnostic/pointer guard. Compiled and reviewed; not exercised."
+  },
+  "mac:0x001662e0": {
+    "status": "equal",
+    "evidence": "Mac 0x001662e0: Compared the menuCount field load and return."
+  },
+  "mac:0x00165718": {
+    "status": "equal",
+    "evidence": "Mac 0x00165718: Compared matching-item traversal, null skip, fade-out add 0x14/remove 0x20 and fade-in add 0x24/remove 0x10."
+  },
+  "mac:0x00166504": {
+    "status": "equal",
+    "evidence": "Mac 0x00166504: Compared reverse open-stack search requiring dynamic visibility bit 4 and focus bit 2, then null fallback."
+  },
+  "mac:0x001653da": {
+    "status": "equal",
+    "evidence": "Mac 0x001653da: Compared first-asterisk prefix matching, case-insensitive exact name/group alternatives, one count per item and indexed/null returns."
+  },
+  "mac:0x0016f560": {
+    "status": "fixed",
+    "evidence": "Mac 0x0016f560: Restored left-arrow previous-item navigation and same-click redispatch after leaving an active edit field. Compared bind/edit priority, OOB recursion guard, wheel routing, onKey/action/escape paths and edit entry. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0016dfa0": {
+    "status": "equal",
+    "evidence": "Mac 0x0016dfa0: Compared both reverse-item passes, capture/edit/bind exits, visible/forced/dvar gates, corrected type-0 text bounds, mouse enter/leave flags, first accepted focus and final leaveFocus scripts."
+  },
+  "mac:0x00165294": {
+    "status": "equal",
+    "evidence": "Mac 0x00165294: Compared first-asterisk prefix matching, case-insensitive exact names/groups and one match count per item."
+  },
+  "mac:0x00168ffc": {
+    "status": "equal",
+    "evidence": "Mac 0x00168ffc: Compared matched traversal, 0x2004 flags, offset time, effect-center/client-start rectangles and parent border-adjusted screen coordinates."
+  },
+  "mac:0x0017077c": {
+    "status": "intentional",
+    "evidence": "Retains optional native MTRACE/menu diagnostics; compared visibility/force and owner gates, sound, ordered blur accumulation, forced stack reorder, fullscreen background, fade arguments, item order and debug rectangle."
+  },
+  "mac:0x00170a4a": {
+    "status": "intentional",
+    "evidence": "Retains optional native menu diagnostics; compared blur reset, capture callback, non-open menu pass, reverse fullscreen cutoff, ordered open-stack paints and developer FPS overlay."
+  },
+  "mac:0x00168afc": {
+    "status": "equal",
+    "evidence": "Mac 0x00168afc: Compared explicit/named/focused menu resolution, float feeder comparison, item cursor/selection updates and zero/backward list scroll changes."
+  },
+  "mac:0x0016ebd0": {
+    "status": "equal",
+    "evidence": "Mac 0x0016ebd0: Compared initial -1 handling, increment-before-focus behavior, single wrap, original-item fallback, failure restoration and pointer-move update."
+  },
+  "mac:0x0016ed18": {
+    "status": "fixed",
+    "evidence": "Mac 0x0016ed18: Restored failure/restoration for a negative cursor after the second wrap, avoiding items[-1]. Compiled and reviewed; not exercised."
+  },
+  "mac:0x001689b0": {
+    "status": "equal",
+    "evidence": "Mac 0x001689b0: Compared menu/open-stack counter resets, keyword hashes and inlined Controls_GetConfig scan."
+  },
+  "mac:0x00165682": {
+    "status": "equal",
+    "evidence": "Mac 0x00165682: Compared matched-item visibility add/remove and cinematic-stop/-1 reset when hiding."
+  },
+  "mac:0x00168cf8": {
+    "status": "equal",
+    "evidence": "Mac 0x00168cf8: Compared flags 0x84, effect/client rectangle assignments, float-delta-to-int truncation before absolute-value/division and parent screen-coordinate update."
+  },
+  "mac:0x001664b8": {
+    "status": "equal",
+    "evidence": "Mac 0x001664b8: Compared reverse open-stack traversal requiring visible and fullScreen fields."
+  },
+  "mac:0x001669d8": {
+    "status": "fixed",
+    "evidence": "Mac 0x001669d8: Suppresses onClose and stack processing when the menu is absent from the open stack, while still removing flags 6. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00166b90": {
+    "status": "fixed",
+    "evidence": "Mac 0x00166b90: Closes menus in definition order across dc->Menus/menuCount, matching Mac instead of repeatedly closing the stack top. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00168a8e": {
+    "status": "equal",
+    "evidence": "Mac 0x00168a8e: Compared inlined name lookup and guarded Menus_Close call in Menus_CloseByName_core."
+  },
+  "mac:0x001657b2": {
+    "status": "equal",
+    "evidence": "Mac 0x001657b2: Compared Menus_FindByName_core against the Mac ordered case-insensitive name scan and first-match/null return."
+  },
+  "mac:0x00170c70": {
+    "status": "equal",
+    "evidence": "Mac 0x00170c70: Compared OOB close flag/script, reverse menu search and forward child hit scan, type-0 corrected-text restriction (WS42 repair retained), focus transfer/re-dispatch, visible-menu pause gate and unconditional open-stack cinematic cleanup."
+  },
+  "mac:0x0016e684": {
+    "status": "equal",
+    "evidence": "Mac 0x0016e684: Compared clearing old focus, existing-stack removal and append, 16-menu capacity error, onOpen/sound dispatch, reverse stack cinematic/ownerdraw cleanup and Display_MouseMove."
+  },
+  "mac:0x0016e986": {
+    "status": "equal",
+    "evidence": "Mac 0x0016e986: Compared inlined ordered case-insensitive lookup, guarded Menus_Open call and boolean result."
+  },
+  "mac:0x001692e8": {
+    "status": "equal",
+    "evidence": "Mac 0x001692e8: Compared 1024-byte parse and inlined named-menu close."
+  },
+  "mac:0x0016923a": {
+    "status": "equal",
+    "evidence": "Mac 0x0016923a: Compared parse, item dvar string formatting through va and named-menu close."
+  },
+  "mac:0x00165a12": {
+    "status": "equal",
+    "evidence": "Mac 0x00165a12: Compared three ordered 1024-byte parses, variant-string lookup, predicate call and conditional newline-formatted Cbuf_ExecuteText."
+  },
+  "mac:0x00168ca4": {
+    "status": "equal",
+    "evidence": "Mac 0x00168ca4: Compared 1024-byte parse and newline-formatted Cbuf_ExecuteText mode 2."
+  },
+  "mac:0x00165b1e": {
+    "status": "equal",
+    "evidence": "Mac 0x00165b1e: Compared double atof subtraction followed by float conversion, absolute difference and strict 1e-5 comparison including unordered failure."
+  },
+  "mac:0x00165af0": {
+    "status": "equal",
+    "evidence": "Mac 0x00165af0: Compared both atoi conversions and integer equality result."
+  },
+  "mac:0x00165ace": {
+    "status": "equal",
+    "evidence": "Mac 0x00165ace: Compared I_stricmp result-to-boolean inversion."
+  },
+  "mac:0x001659be": {
+    "status": "equal",
+    "evidence": "Mac 0x001659be: Compared 1024-byte parse and newline-formatted Cbuf_ExecuteText mode 0."
+  },
+  "mac:0x00165bf0": {
+    "status": "equal",
+    "evidence": "Mac 0x00165bf0: Compared Mac tail-call arguments to the shared conditional handler: mode 0, original item/args and float equality predicate; implementation helper preserves parse/execute behavior."
+  },
+  "mac:0x00165bd8": {
+    "status": "equal",
+    "evidence": "Mac 0x00165bd8: Compared Mac tail-call arguments to the shared conditional handler: mode 0, original item/args and int equality predicate; implementation helper preserves parse/execute behavior."
+  },
+  "mac:0x00165bc0": {
+    "status": "equal",
+    "evidence": "Mac 0x00165bc0: Compared Mac tail-call arguments to the shared conditional handler: mode 0, original item/args and string equality predicate; implementation helper preserves parse/execute behavior."
+  },
+  "mac:0x00165ba4": {
+    "status": "equal",
+    "evidence": "Mac 0x00165ba4: Compared Mac tail-call arguments to the shared conditional handler: mode 2, original item/args and float equality predicate; implementation helper preserves parse/execute behavior."
+  },
+  "mac:0x00165b88": {
+    "status": "equal",
+    "evidence": "Mac 0x00165b88: Compared Mac tail-call arguments to the shared conditional handler: mode 2, original item/args and int equality predicate; implementation helper preserves parse/execute behavior."
+  },
+  "mac:0x00165b6c": {
+    "status": "equal",
+    "evidence": "Mac 0x00165b6c: Compared Mac tail-call arguments to the shared conditional handler: mode 2, original item/args and string equality predicate; implementation helper preserves parse/execute behavior."
+  },
+  "mac:0x001658ac": {
+    "status": "equal",
+    "evidence": "Mac 0x001658ac: Compared 1024-byte parse and parent Menu_FadeItemByName call with fadeOut=0."
+  },
+  "mac:0x001658fe": {
+    "status": "equal",
+    "evidence": "Mac 0x001658fe: Compared 1024-byte parse and parent Menu_FadeItemByName call with fadeOut=1."
+  },
+  "mac:0x0016585a": {
+    "status": "equal",
+    "evidence": "Mac 0x0016585a: Compared 1024-byte parse and parent Menu_ShowItemByName call with show=0."
+  },
+  "mac:0x00169380": {
+    "status": "equal",
+    "evidence": "Mac 0x00169380: Compared parse-before-in-game check and conditional named-menu close."
+  },
+  "mac:0x0016eb38": {
+    "status": "equal",
+    "evidence": "Mac 0x0016eb38: Compared parse-before-in-game check and conditional named-menu open."
+  },
+  "mac:0x0016e9f2": {
+    "status": "equal",
+    "evidence": "Mac 0x0016e9f2: Compared 1024-byte parse and inlined name lookup/open against Menus_OpenByName."
+  },
+  "mac:0x0016ea8a": {
+    "status": "equal",
+    "evidence": "Mac 0x0016ea8a: Compared parse, item dvar string formatting through va and named-menu open."
+  },
+  "mac:0x00169168": {
+    "status": "equal",
+    "evidence": "Mac 0x00169168: Compared name/four-float/integer parse sequence, early failures and parent orbit argument order."
+  },
+  "mac:0x00165c08": {
+    "status": "equal",
+    "evidence": "Mac 0x00165c08: Compared 1024-byte parse and local alias-name playback."
+  },
+  "mac:0x00165c44": {
+    "status": "equal",
+    "evidence": "Mac 0x00165c44: Compared legacy response gate, 1024-byte parse, 32 config-string search from 0x4de, -1 fallback and sv_serverId/index/value command formatting."
+  },
+  "mac:0x0016562e": {
+    "status": "fixed",
+    "evidence": "Mac 0x0016562e: Restored the item imageTrack argument instead of hard-coded track 3. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00165536": {
+    "status": "equal",
+    "evidence": "Mac 0x00165536: Compared color-name dispatch, 0x8000/0x10000 dynamic flags and four ordered Float_Parse writes with partial-update failure."
+  },
+  "mac:0x00165950": {
+    "status": "equal",
+    "evidence": "Mac 0x00165950: Compared two ordered 1024-byte parses and name/value setter argument order."
+  },
+  "mac:0x0016b9d6": {
+    "status": "equal",
+    "evidence": "Mac 0x0016b9d6: Compared named sibling search, failure diagnostics, focus call, edit-type mask 0x70210, paint/cursor reset and overstrike state."
+  },
+  "mac:0x0016b8f6": {
+    "status": "intentional",
+    "evidence": "Retains native parent-null exit and I_stricmp in place of Mac strcasecmp. Compared dvarFlags 0x10, missing-test error, enable check, item bounds passed to focus and stop-on-success scan; menu identifiers use engine case folding."
+  },
+  "mac:0x00168840": {
+    "status": "equal",
+    "evidence": "Mac 0x00168840: Compared both name parses, four-float color capture, matching traversal and color writes; only forecolor adds 0x10000 as in Mac."
+  },
+  "mac:0x00165808": {
+    "status": "equal",
+    "evidence": "Mac 0x00165808: Compared 1024-byte parse and parent Menu_ShowItemByName call with show=1."
+  },
+  "mac:0x00168ec0": {
+    "status": "equal",
+    "evidence": "Mac 0x00168ec0: Compared name/two-rectangle/integer/float parse sequence, early failures and by-value parent transition argument order."
+  },
+  "mac:0x0016d33e": {
+    "status": "fixed",
+    "evidence": "Mac 0x0016d33e: Restored one repeat event per callback and realTime reload after the handler, matching the Mac callback rather than a cached-time repeat loop. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0016d15a": {
+    "status": "fixed",
+    "evidence": "Mac 0x0016d15a: Restored stationary horizontal-thumb return, at most one repeat event per callback and realTime reload after the handler; compared orientation float order and list bounds. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00166866": {
+    "status": "equal",
+    "evidence": "Mac 0x00166866: Compared Scroll_Slider_SetThumbPos_impl with Mac text/no-text base, screen transformation, 84-unit thumb span, clamp/normalization, range multiply/add and %g dvar assignment."
+  },
+  "mac:0x001669c6": {
+    "status": "equal",
+    "evidence": "Mac 0x001669c6: Compared typed scroll item retrieval at original offset 24 and dispatch to Scroll_Slider_SetThumbPos_impl."
+  },
+  "mac:0x001651c4": {
+    "status": "equal",
+    "evidence": "Mac 0x001651c4: Compared parse-on-line termination, @ localization, warning/error dvars, error code 6 and bounded fallback copy."
+  },
+  "mac:0x001662ee": {
+    "status": "equal",
+    "evidence": "Mac 0x001662ee: Compared null/empty exits, list order, 128-menu capacity error and count increments with native pointer widths."
+  },
+  "mac:0x00168304": {
+    "status": "fixed",
+    "evidence": "Mac 0x00168304: Restored ordered alpha<=0 / alpha>=clamp tests so unordered fades preserve Mac flags/alpha. Decoded all eight style jump-table targets at 0x33b330; reviewed border/cinematic paths. Compiled and reviewed; not exercised."
   }
 }
