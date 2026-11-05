@@ -4955,7 +4955,11 @@ qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x,
                     CalcScreenX(&tcx, 4);
                     CalcScreenY(&tcy, 4);
                     CalcScreenPlacement(&trx, &try_, &trw, &trh, textBuf[4], textBuf[5]);
+#if defined(COD2_X64)
+                    if (!(tcx >= trx) || !(trx + trw >= tcx) || !(tcy >= try_) || !(try_ + trh >= tcy))
+#else
                     if (tcx < trx || tcx > trx + trw || tcy < try_ || tcy > try_ + trh)
+#endif
                         goto next_item;
                 }
 

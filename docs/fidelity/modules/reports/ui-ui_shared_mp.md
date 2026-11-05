@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**103/103 reconciled: 77 equal, 20 fixed, 6 intentional.** Mac 1.3 i386 is the authority. Every assigned row has a named Mac body; no verdict relies on a missing identity. The comparison includes the native helper behind `Scroll_Slider_SetThumbPos`, which the triage parser reports as missing because its native name ends in `_impl`.
+**103/103 reconciled: 76 equal, 21 fixed, 6 intentional.** Mac 1.3 i386 is the authority. Every assigned row has a named Mac body; no verdict relies on a missing identity. The comparison includes the native helper behind `Scroll_Slider_SetThumbPos`, which the triage parser reports as missing because its native name ends in `_impl`.
 
 ## Corrections
 
@@ -50,3 +50,39 @@ Parent and fresh independent source/binary reviews covered all six units, includ
 Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. The first stock attempt stopped before engine launch because previous output existed; verified backed-up output was cleared and the complete replay passed. Dedicated replay does not exercise UI interaction, client sound output or microphone capture.
 
 Catalog coverage passed without semantic catalog changes. The predecessor batch 8 hosted macOS run exceeded its one-hour limit during ABI audits despite passing full local CI; that hosted run is incomplete. Hosted ILP32 comparison remains unavailable because the unchanged reference fails compilation; no byte parity is claimed.
+
+## Corrected text rectangle unordered rejection (provenance-uihit23)
+
+Menu_HandleMouseMove0x16dfa0 changes from equal to fixed. In the second-pass
+type0/text-nonnull branch, Mac0x16e26f–0x16e2ab uses four UCOMISS/JB comparisons
+to reject outside or unordered corrected-text coordinates. Native rejected only
+ordered `<` or `>` violations and could therefore admit an unordered text bound.
+The COD2_X64 predicate now uses four negated `>=` comparisons in the same
+X-lower/X-upper/Y-lower/Y-upper order, preserving the rounded upper additions
+and equality behavior. The complete old OFF text remains unchanged.
+
+Independent review established a defined-storage witness with a finite enclosing
+item rectangle and cursor, but separate textRect.x quiet NaN, supplied through
+the actual Item_SetTextRect0x19235e field-copy owner. Other text fields are finite,
+alignment5 leaves the text fields in place, and the visible type0/textnonnull
+item passes earlier capture/edit/bind/dvar and outer-rectangle gates. Mac skips
+the item; old native can enter Item_MouseEnter and change flags4 to5. Null scripts
+and static flag0x100000 isolate that effect from later focus processing. The
+actual Item_SetTextExtents textalignx float path0x166cfc/0x166d75 to setter0x166d92
+also preserves independent X provenance with finite textscale and dimensions,
+without a NaN-to-integer conversion. This is a static function-entry storage
+witness; no parsed-asset, gameplay, frequency or runtime occurrence is claimed.
+
+The initial item-window rectangle predicate already matches Mac and is outside
+this repair; the separate PointInBounds2D alias does not inherit the text-specific
+defect. Previously approved UI ownership/layout changes remain intact.
+
+The changed TU was manually compiled with both applicable configured client
+commands, stock and CoD2x, at SHA256
+`d14bc0d8bb85f6c3c6fb5663202a976c9da280e06730734064368b2a28f86a45`.
+Both succeeded. Those databases contain no dedicated UI TU, so none is claimed.
+Full unifdef OFF output is byte-identical and the source contains no __LINE__,
+#line or assert tokens. Review: review-provenance-uihit23.md. Repair evidence:
+recon-provenance-uihit23.noindex; independent witness:
+recon-provenance-menuhover22.noindex. Compiled and reviewed, not exercised.
+No tests, CI, full build, replay or runtime verification.
