@@ -82,6 +82,10 @@ typedef struct {
     GLfloat anisotropy;
     GLint width, height, depth;
 } COpenGLTexturePrefixNative;
+_Static_assert(sizeof(COpenGLTexturePrefixNative) == sizeof(COpenGLTextureStateNative), "native texture prefix width");
+_Static_assert(offsetof(COpenGLTexturePrefixNative, lastLevel) == offsetof(COpenGLTextureStateNative, lastLevel), "native last-level contract");
+_Static_assert(offsetof(COpenGLTexturePrefixNative, anisotropy) == offsetof(COpenGLTextureStateNative, anisotropy), "native anisotropy contract");
+_Static_assert(offsetof(COpenGLTexturePrefixNative, depth) == offsetof(COpenGLTextureStateNative, depth), "native texture field extent");
 
 typedef struct {
     void **vtable;
@@ -975,6 +979,7 @@ unsigned int COpenGL_Shutdown(const COpenGL *_this)
 
 #if defined(COD2_X64)
     COpenGLNative *gl = (COpenGLNative *)_this;
+    memcpy(gl->modelViewMatrix, s_identityNative, sizeof(gl->modelViewMatrix));
     glFinish(); CMemoryBuffer_Reset();
     for (UINT32 i = 0; i < gl->texUnitCount; ++i) COpenGL_SetActiveTexUnit(_this, i);
     /* Regenerated embedded names keep their address after shutdown. */
@@ -1171,6 +1176,7 @@ unsigned int COpenGL_Init(const COpenGL *_this, UINT32 Buffers, UINT32 MaxTextur
 #if defined(COD2_X64)
     COpenGLNative *gl = (COpenGLNative *)_this;
     COpenGL_sFrameCount = 0;
+    memcpy(gl->modelViewMatrix, s_identityNative, sizeof(gl->modelViewMatrix));
     gl->supportsBlendSubtract = MacOpenGLUtils_IsGLExtensionSupported("GL_EXT_blend_subtract");
     gl->supportsBlendMinMax = MacOpenGLUtils_IsGLExtensionSupported("GL_EXT_blend_minmax");
     gl->supportsATIArrayRevComps = MacOpenGLUtils_IsGLExtensionSupported("GL_ATI_array_rev_comps_in_4_bytes");
@@ -1298,6 +1304,7 @@ unsigned int COpenGL_COpenGL(const COpenGL *_this)
     gl->vaoBindings.next = gl->vaoBindings.prev = &gl->vaoBindings;
     gl->textureBindings.next = gl->textureBindings.prev = &gl->textureBindings;
     gl->vertexProgram = 0;
+    memcpy(gl->modelViewMatrix, s_identityNative, sizeof(gl->modelViewMatrix));
     gl->texUnitCount = 0;
     for (unsigned i = 0; i < 16; ++i) {
         VertexProgramStreamStateNative *array = &gl->genericArrays[i];

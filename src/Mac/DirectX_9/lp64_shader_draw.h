@@ -154,7 +154,11 @@ static HRESULT MacShader_DrawIndexed(DeviceImpl *dev, INT baseVertex, UINT minVe
                 fprintf(stderr, "Native texture bind: unit=%u target=%x texture=%p id=%u error=%x\n", i, target, texture, textureId, error);
         }
         if (texture) {
+#if defined(COD2_X64)
+            CDirect3DDevice_ApplySamplerState(dev, i, target);
+#else
             CDirect3DDevice_ApplySamplerState(i, target);
+#endif
             MacShader_CheckGL("sampler state");
         }
     }
