@@ -6430,7 +6430,11 @@ extern void Scr_CastVector(VariableValue *value);
 extern unsigned int Scr_GetEntityIdRef(unsigned int id);
 extern int GetVarType(unsigned int id);
 
+#if defined(COD2_X64)
+static unsigned short VM_ReadU16(const char *volatile *pos)
+#else
 static unsigned short VM_ReadU16(const char **pos)
+#endif
 {
 #if defined(COD2_X64)
     unsigned short v;
@@ -6442,7 +6446,11 @@ static unsigned short VM_ReadU16(const char **pos)
     return v;
 }
 
+#if defined(COD2_X64)
+static int VM_ReadI32(const char *volatile *pos)
+#else
 static int VM_ReadI32(const char **pos)
+#endif
 {
 #if defined(COD2_X64)
     int v;
@@ -6454,7 +6462,11 @@ static int VM_ReadI32(const char **pos)
     return v;
 }
 
+#if defined(COD2_X64)
+static float VM_ReadF32(const char *volatile *pos)
+#else
 static float VM_ReadF32(const char **pos)
+#endif
 {
 #if defined(COD2_X64)
     float v;
@@ -6466,20 +6478,32 @@ static float VM_ReadF32(const char **pos)
     return v;
 }
 
+#if defined(COD2_X64)
+static VariableValue *VM_PushValue(VariableValue *volatile *top)
+#else
 static VariableValue *VM_PushValue(VariableValue **top)
+#endif
 {
     ++*top;
     return *top;
 }
 
+#if defined(COD2_X64)
+static void VM_PushInt(VariableValue *volatile *top, int value)
+#else
 static void VM_PushInt(VariableValue **top, int value)
+#endif
 {
     VariableValue *out = VM_PushValue(top);
     out->u.intValue = value;
     out->type = VAR_INTEGER;
 }
 
+#if defined(COD2_X64)
+static void VM_PushObject(VariableValue *volatile *top, unsigned int objectId)
+#else
 static void VM_PushObject(VariableValue **top, unsigned int objectId)
+#endif
 {
     VariableValue *out = VM_PushValue(top);
     out->u.pointerValue = objectId;
@@ -6495,7 +6519,11 @@ static VariableValue VM_ValueFromPacked(unsigned long long packed)
     return value;
 }
 
+#if defined(COD2_X64)
+static void VM_PushPackedValue(VariableValue *volatile *top, unsigned long long packed)
+#else
 static void VM_PushPackedValue(VariableValue **top, unsigned long long packed)
+#endif
 {
     VariableValue *out = VM_PushValue(top);
     *out = VM_ValueFromPacked(packed);
@@ -6506,14 +6534,22 @@ static unsigned int VM_LocalVarCacheId(unsigned int slot)
     return scrVmPub.localVars[-(int)slot];
 }
 
+#if defined(COD2_X64)
+static void VM_EvalArrayRefAndPop(unsigned int *fieldValueId, VariableValue *volatile *top)
+#else
 static void VM_EvalArrayRefAndPop(unsigned int *fieldValueId, VariableValue **top)
+#endif
 {
     unsigned int arrayId = Scr_EvalArrayRef(*fieldValueId);
     *fieldValueId = Scr_EvalArrayIndex(arrayId, *top);
     --*top;
 }
 
+#if defined(COD2_X64)
+static void VM_EvalBinaryAndPop(VariableValue *volatile *top, void (*eval)(VariableValue *, VariableValue *))
+#else
 static void VM_EvalBinaryAndPop(VariableValue **top, void (*eval)(VariableValue *, VariableValue *))
+#endif
 {
     eval(*top - 1, *top);
     --*top;
@@ -6530,7 +6566,11 @@ static void VM_CandidateFieldObjectCheck(unsigned int objectId)
     }
 }
 
+#if defined(COD2_X64)
+static void VM_CandidatePushEntityObject(VariableValue *volatile *top, int classnum, int entnum)
+#else
 static void VM_CandidatePushEntityObject(VariableValue **top, int classnum, int entnum)
+#endif
 {
     VariableValue *out = VM_PushValue(top);
     out->u.pointerValue = FindEntityId(entnum, classnum);
@@ -6547,7 +6587,11 @@ static void VM_CandidatePushEntityObject(VariableValue **top, int classnum, int 
     }
 }
 
+#if defined(COD2_X64)
+static void VM_CandidateIncDecField(unsigned int fieldValueId, VariableValue *volatile *top, int delta)
+#else
 static void VM_CandidateIncDecField(unsigned int fieldValueId, VariableValue **top, int delta)
+#endif
 {
     VM_PushPackedValue(top, Scr_EvalVariableField(fieldValueId));
 #if defined(COD2_X64)
@@ -6601,7 +6645,11 @@ static void VM_CandidateAbortNullBuiltin(unsigned int builtinIndex, const char *
     _exit(1);
 }
 
+#if defined(COD2_X64)
+static void VM_CandidateCompleteCall(const char *volatile *pos, VariableValue *volatile *top)
+#else
 static void VM_CandidateCompleteCall(const char **pos, VariableValue **top)
+#endif
 {
     unsigned int paramCount;
 
@@ -6627,7 +6675,11 @@ static void VM_CandidateCompleteCall(const char **pos, VariableValue **top)
     }
 }
 
+#if defined(COD2_X64)
+static void VM_CandidateCallBuiltin(const char *volatile *pos, VariableValue *volatile *top, unsigned int paramCount)
+#else
 static void VM_CandidateCallBuiltin(const char **pos, VariableValue **top, unsigned int paramCount)
+#endif
 {
     struct scrCompilePub_t *compilePub = (struct scrCompilePub_t *)imp_scrCompilePub;
     unsigned int builtinIndex = VM_ReadU16(pos);
@@ -6655,7 +6707,11 @@ static void VM_CandidateCallBuiltin(const char **pos, VariableValue **top, unsig
     VM_CandidateCompleteCall(pos, top);
 }
 
+#if defined(COD2_X64)
+static void VM_CandidateCallBuiltinMethod(const char *volatile *pos, VariableValue *volatile *top, unsigned int paramCount)
+#else
 static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top, unsigned int paramCount)
+#endif
 {
     struct scrCompilePub_t *compilePub = (struct scrCompilePub_t *)imp_scrCompilePub;
     unsigned int builtinIndex = VM_ReadU16(pos);
@@ -6712,8 +6768,13 @@ static unsigned int VM_CandidateFinishOutermost(VariableValue *startTop, unsigne
     return localId;
 }
 
+#if defined(COD2_X64)
+static void VM_CandidateRestoreCaller(unsigned int parentLocalId, const char *volatile *pos,
+                                      volatile unsigned int *localId, volatile unsigned int *localVarCount)
+#else
 static void VM_CandidateRestoreCaller(unsigned int parentLocalId, const char **pos,
                                       unsigned int *localId, unsigned int *localVarCount)
+#endif
 {
     function_frame_t *frame = scrVmPub.function_frame;
 
@@ -6724,7 +6785,11 @@ static void VM_CandidateRestoreCaller(unsigned int parentLocalId, const char **p
     *localId = parentLocalId ? parentLocalId : frame->fs.localId;
 }
 
+#if defined(COD2_X64)
+static void VM_CandidatePopToFrameSentinel(VariableValue *volatile *top)
+#else
 static void VM_CandidatePopToFrameSentinel(VariableValue **top)
+#endif
 {
     while ((*top)->type != 7) {
         RemoveRefToValue((*top)->type, (*top)->u);
@@ -6732,15 +6797,22 @@ static void VM_CandidatePopToFrameSentinel(VariableValue **top)
     }
 }
 
+#if defined(COD2_X64)
+static int VM_CandidateThreadSuspendReturn(const char *volatile *pos, volatile unsigned int *localId,
+                                           volatile unsigned int *localVarCount, VariableValue *volatile *top,
+                                           VariableValue *volatile *startTop, unsigned int *resultLocalId,
+                                           unsigned int *threadCount);
+#else
 static int VM_CandidateThreadSuspendReturn(const char **pos, unsigned int *localId,
                                            unsigned int *localVarCount, VariableValue **top,
                                            VariableValue **startTop, unsigned int *resultLocalId,
                                            unsigned int *threadCount);
+#endif
 
 #if defined(COD2_X64)
-static int VM_CandidateThreadReturn(const char **pos, unsigned int *localId,
-                                    unsigned int *localVarCount, VariableValue **top,
-                                    VariableValue **startTop, unsigned int *resultLocalId,
+static int VM_CandidateThreadReturn(const char *volatile *pos, volatile unsigned int *localId,
+                                    volatile unsigned int *localVarCount, VariableValue *volatile *top,
+                                    VariableValue *volatile *startTop, unsigned int *resultLocalId,
                                     unsigned int *threadCount)
 {
     if (*threadCount == 0) {
@@ -6763,10 +6835,17 @@ static int VM_CandidateThreadReturn(const char **pos, unsigned int *localId,
 }
 #endif
 
+#if defined(COD2_X64)
+static int VM_CandidateHandleEnd(const char *volatile *pos, volatile unsigned int *localId,
+                                 volatile unsigned int *localVarCount, VariableValue *volatile *top,
+                                 VariableValue *volatile *startTop, unsigned int *resultLocalId,
+                                 unsigned int *threadCount)
+#else
 static int VM_CandidateHandleEnd(const char **pos, unsigned int *localId,
                                  unsigned int *localVarCount, VariableValue **top,
                                  VariableValue **startTop, unsigned int *resultLocalId,
                                  unsigned int *threadCount)
+#endif
 {
     unsigned int parentLocalId = GetSafeParentLocalId(*localId);
     extern void dbg_end_probe(int);
@@ -6794,10 +6873,17 @@ static int VM_CandidateHandleEnd(const char **pos, unsigned int *localId,
     return 0;
 }
 
+#if defined(COD2_X64)
+static int VM_CandidateHandleReturn(const char *volatile *pos, volatile unsigned int *localId,
+                                    volatile unsigned int *localVarCount, VariableValue *volatile *top,
+                                    VariableValue *volatile *startTop, unsigned int *resultLocalId,
+                                    unsigned int *threadCount)
+#else
 static int VM_CandidateHandleReturn(const char **pos, unsigned int *localId,
                                     unsigned int *localVarCount, VariableValue **top,
                                     VariableValue **startTop, unsigned int *resultLocalId,
                                     unsigned int *threadCount)
+#endif
 {
     unsigned int parentLocalId = GetSafeParentLocalId(*localId);
     VariableValue returnValue = **top;
@@ -6835,11 +6921,20 @@ static unsigned int VM_CandidateSuspendCurrentStack(const char *archivePos,
                                                     unsigned int localVarCount,
                                                     VariableValue *top,
                                                     VariableValue *startTop,
+#if defined(COD2_X64)
+                                                    volatile unsigned int *localId)
+#else
                                                     unsigned int *localId)
+#endif
 {
     int stackSize = (int)(top - startTop);
 #if defined(COD2_X64)
-    return VM_ArchiveStack(stackSize, archivePos, top, localVarCount, localId);
+    unsigned int archiveLocalId = *localId;
+    VariableStackBuffer *stackValue = VM_ArchiveStack(stackSize, archivePos, top, localVarCount, &archiveLocalId);
+    /* VM_ArchiveStack writes the ID only after its final call, so a jump from
+     * inside it leaves the live frame ID unchanged. */
+    *localId = archiveLocalId;
+    return stackValue;
 #else
     return (unsigned int)(uintptr_t)VM_ArchiveStack(stackSize, archivePos, top, localVarCount, localId);
 #endif
@@ -6852,10 +6947,17 @@ static unsigned int VM_CandidateFinishSuspend(VariableValue *startTop, unsigned 
     return localId;
 }
 
+#if defined(COD2_X64)
+static int VM_CandidateThreadSuspendReturn(const char *volatile *pos, volatile unsigned int *localId,
+                                           volatile unsigned int *localVarCount, VariableValue *volatile *top,
+                                           VariableValue *volatile *startTop, unsigned int *resultLocalId,
+                                           unsigned int *threadCount)
+#else
 static int VM_CandidateThreadSuspendReturn(const char **pos, unsigned int *localId,
                                            unsigned int *localVarCount, VariableValue **top,
                                            VariableValue **startTop, unsigned int *resultLocalId,
                                            unsigned int *threadCount)
+#endif
 {
     ((*startTop) + 1)->type = VAR_UNDEFINED;
 #if defined(COD2_X64)
@@ -6883,10 +6985,17 @@ static int VM_CandidateThreadSuspendReturn(const char **pos, unsigned int *local
 }
 
 #if COD2_APPLE_SDK
+#if defined(COD2_X64)
+static int VM_CandidateHandleJumpBack(const char *volatile *pos, volatile unsigned int *localId,
+                                      volatile unsigned int *localVarCount, VariableValue *volatile *top,
+                                      VariableValue *volatile *startTop, unsigned int *resultLocalId,
+                                      unsigned int *threadCount)
+#else
 static int VM_CandidateHandleJumpBack(const char **pos, unsigned int *localId,
                                       unsigned int *localVarCount, VariableValue **top,
                                       VariableValue **startTop, unsigned int *resultLocalId,
                                       unsigned int *threadCount)
+#endif
 {
     scrVmGlob_t *glob = (scrVmGlob_t *)scrVmGlob;
 
@@ -6972,10 +7081,17 @@ static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value)
     return 0;
 }
 
+#if defined(COD2_X64)
+static int VM_CandidateHandleWait(const char *volatile *pos, volatile unsigned int *localVarCount,
+                                  VariableValue *volatile *top, VariableValue *volatile *startTop,
+                                  volatile unsigned int *localId, unsigned int *resultLocalId,
+                                  unsigned int *threadCount)
+#else
 static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
                                   VariableValue **top, VariableValue **startTop,
                                   unsigned int *localId, unsigned int *resultLocalId,
                                   unsigned int *threadCount)
+#endif
 {
     struct scrVarPub_t *varPub = (struct scrVarPub_t *)imp_scrVarPub;
     unsigned int waitTime = VM_CandidateWaitTimeFromValue(*top);
@@ -7019,10 +7135,17 @@ static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
                                            startTop, resultLocalId, threadCount);
 }
 
+#if defined(COD2_X64)
+static int VM_CandidateHandleWaitTillFrameEnd(const char *volatile *pos, volatile unsigned int *localVarCount,
+                                              VariableValue *volatile *top, VariableValue *volatile *startTop,
+                                              volatile unsigned int *localId, unsigned int *resultLocalId,
+                                              unsigned int *threadCount)
+#else
 static int VM_CandidateHandleWaitTillFrameEnd(const char **pos, unsigned int *localVarCount,
                                               VariableValue **top, VariableValue **startTop,
                                               unsigned int *localId, unsigned int *resultLocalId,
                                               unsigned int *threadCount)
+#endif
 {
     struct scrVarPub_t *varPub = (struct scrVarPub_t *)imp_scrVarPub;
     VariableStackBuffer *stackValue;
@@ -7049,10 +7172,17 @@ static int VM_CandidateHandleWaitTillFrameEnd(const char **pos, unsigned int *lo
                                            startTop, resultLocalId, threadCount);
 }
 
+#if defined(COD2_X64)
+static int VM_CandidateHandleWaitTill(const char *volatile *pos, volatile unsigned int *localVarCount,
+                                      VariableValue *volatile *top, VariableValue *volatile *startTop,
+                                      volatile unsigned int *localId, unsigned int *resultLocalId,
+                                      unsigned int *threadCount)
+#else
 static int VM_CandidateHandleWaitTill(const char **pos, unsigned int *localVarCount,
                                       VariableValue **top, VariableValue **startTop,
                                       unsigned int *localId, unsigned int *resultLocalId,
                                       unsigned int *threadCount)
+#endif
 {
     const char *archivePos = *pos;
     struct scrVarPub_t *varPub = (struct scrVarPub_t *)imp_scrVarPub;
@@ -7139,7 +7269,7 @@ static int VM_CandidateHandleWaitTill(const char **pos, unsigned int *localVarCo
 }
 
 #if defined(COD2_X64)
-static void VM_CandidateHandleNotifyCall(const char **pos, VariableValue **top)
+static void VM_CandidateHandleNotifyCall(const char *volatile *pos, VariableValue *volatile *top)
 #else
 static void VM_CandidateHandleNotifyCall(VariableValue **top)
 #endif
@@ -7188,7 +7318,11 @@ static void VM_CandidateHandleNotifyCall(VariableValue **top)
     --*top;
 }
 
+#if defined(COD2_X64)
+static void VM_CandidateHandleEndOnCallback(unsigned int localId, VariableValue *volatile *top)
+#else
 static void VM_CandidateHandleEndOnCallback(unsigned int localId, VariableValue **top)
+#endif
 {
     struct scrVarPub_t *varPub = (struct scrVarPub_t *)imp_scrVarPub;
     unsigned int notifyListOwnerId;
@@ -7240,7 +7374,11 @@ static void VM_CandidateHandleEndOnCallback(unsigned int localId, VariableValue 
     *top -= 2;
 }
 
+#if defined(COD2_X64)
+static void VM_CandidateHandleSwitch(const char *volatile *pos, VariableValue *volatile *top)
+#else
 static void VM_CandidateHandleSwitch(const char **pos, VariableValue **top)
+#endif
 {
     const char *opcodeStart = *pos - 1;
 #if defined(COD2_X64)
@@ -7328,10 +7466,17 @@ static void VM_CandidateSaveCallerFrame(const char *returnPos, unsigned int loca
     frame->fs.localVarCount = localVarCount;
 }
 
+#if defined(COD2_X64)
+static void VM_CandidateEnterScriptFrame(const char *volatile *pos, volatile unsigned int *localId,
+                                         volatile unsigned int *localVarCount, VariableValue *volatile *top,
+                                         VariableValue *volatile *startTop, const char *targetPos,
+                                         unsigned int newLocalId, const char *returnPos)
+#else
 static void VM_CandidateEnterScriptFrame(const char **pos, unsigned int *localId,
                                          unsigned int *localVarCount, VariableValue **top,
                                          VariableValue **startTop, const char *targetPos,
                                          unsigned int newLocalId, const char *returnPos)
+#endif
 {
     VM_CandidateSaveCallerFrame(returnPos, *localVarCount, *top, *startTop);
     *localVarCount = 0;
@@ -7356,7 +7501,7 @@ static void VM_CandidateCheckFrameDepth(void)
     }
 }
 #if defined(COD2_X64)
-static void VM_CandidateCheckScriptCall(unsigned int opcode, VariableValue **top)
+static void VM_CandidateCheckScriptCall(unsigned int opcode, VariableValue *volatile *top)
 {
     int setDepthErrorIndex = 1;
     int popFunctionOnOverflow = 0;
@@ -7415,7 +7560,11 @@ static void VM_CandidateCheckScriptCall(unsigned int opcode, VariableValue **top
 }
 #endif
 
+#if defined(COD2_X64)
+static const char *VM_CandidateReadScriptCallTarget(const char *volatile *pos)
+#else
 static const char *VM_CandidateReadScriptCallTarget(const char **pos)
+#endif
 {
 #    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 #if defined(COD2_X64)
@@ -7431,7 +7580,7 @@ static const char *VM_CandidateReadScriptCallTarget(const char **pos)
 }
 
 #if defined(COD2_X64)
-static const char *VM_CandidatePopCodepos(VariableValue **top, int popBadValue)
+static const char *VM_CandidatePopCodepos(VariableValue *volatile *top, int popBadValue)
 #else
 static const char *VM_CandidatePopCodepos(VariableValue **top)
 #endif
@@ -7457,7 +7606,11 @@ static const char *VM_CandidatePopCodepos(VariableValue **top)
     return target;
 }
 
+#if defined(COD2_X64)
+static unsigned int VM_CandidatePopObjectForCall(VariableValue *volatile *top, unsigned int errorIndex)
+#else
 static unsigned int VM_CandidatePopObjectForCall(VariableValue **top, unsigned int errorIndex)
+#endif
 {
     unsigned int objectId;
 
@@ -7475,10 +7628,17 @@ static unsigned int VM_CandidatePopObjectForCall(VariableValue **top, unsigned i
     return objectId;
 }
 
+#if defined(COD2_X64)
+static void VM_CandidateEnterFunctionCall(const char *volatile *pos, volatile unsigned int *localId,
+                                          volatile unsigned int *localVarCount, VariableValue *volatile *top,
+                                          VariableValue *volatile *startTop, const char *targetPos,
+                                          const char *returnPos)
+#else
 static void VM_CandidateEnterFunctionCall(const char **pos, unsigned int *localId,
                                           unsigned int *localVarCount, VariableValue **top,
                                           VariableValue **startTop, const char *targetPos,
                                           const char *returnPos)
+#endif
 {
     unsigned int selfId;
     unsigned int newLocalId;
@@ -7490,10 +7650,17 @@ static void VM_CandidateEnterFunctionCall(const char **pos, unsigned int *localI
     VM_CandidateEnterScriptFrame(pos, localId, localVarCount, top, startTop, targetPos, newLocalId, returnPos);
 }
 
+#if defined(COD2_X64)
+static void VM_CandidateEnterMethodCall(const char *volatile *pos, volatile unsigned int *localId,
+                                        volatile unsigned int *localVarCount, VariableValue *volatile *top,
+                                        VariableValue *volatile *startTop, const char *targetPos,
+                                        const char *returnPos)
+#else
 static void VM_CandidateEnterMethodCall(const char **pos, unsigned int *localId,
                                         unsigned int *localVarCount, VariableValue **top,
                                         VariableValue **startTop, const char *targetPos,
                                         const char *returnPos)
+#endif
 {
     unsigned int objectId;
     unsigned int newLocalId;
@@ -7520,10 +7687,17 @@ static void VM_CandidatePrepareThreadCallerFrame(const char *returnPos,
     frame->topType = threadStartTop->type;
 }
 
+#if defined(COD2_X64)
+static void VM_CandidateEnterFunctionThreadCall(const char *volatile *pos, volatile unsigned int *localId,
+                                                volatile unsigned int *localVarCount, VariableValue *volatile *top,
+                                                VariableValue *volatile *startTop, const char *targetPos,
+                                                const char *returnPos, unsigned int paramCount)
+#else
 static void VM_CandidateEnterFunctionThreadCall(const char **pos, unsigned int *localId,
                                                 unsigned int *localVarCount, VariableValue **top,
                                                 VariableValue **startTop, const char *targetPos,
                                                 const char *returnPos, unsigned int paramCount)
+#endif
 {
     unsigned int selfId;
     unsigned int newLocalId;
@@ -7540,10 +7714,17 @@ static void VM_CandidateEnterFunctionThreadCall(const char **pos, unsigned int *
     VM_CandidateEnterScriptFrame(pos, localId, localVarCount, top, startTop, targetPos, newLocalId, returnPos);
 }
 
+#if defined(COD2_X64)
+static void VM_CandidateEnterMethodThreadCall(const char *volatile *pos, volatile unsigned int *localId,
+                                              volatile unsigned int *localVarCount, VariableValue *volatile *top,
+                                              VariableValue *volatile *startTop, const char *targetPos,
+                                              const char *returnPos, unsigned int paramCount)
+#else
 static void VM_CandidateEnterMethodThreadCall(const char **pos, unsigned int *localId,
                                               unsigned int *localVarCount, VariableValue **top,
                                               VariableValue **startTop, const char *targetPos,
                                               const char *returnPos, unsigned int paramCount)
+#endif
 {
     unsigned int objectId;
     unsigned int newLocalId;
@@ -7574,11 +7755,21 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
     unsigned int currentCaseValue = 0;
     const char *currentCodePos = NULL;
     unsigned int thread_count = 0;
+#if defined(COD2_X64)
+    /* Mac keeps these live frame fields in its by-value stack argument. Their
+     * latest stores must survive longjmp, including stores made by helpers. */
+    const char *volatile pos = fs.pos;
+    volatile unsigned int localId = fs.localId;
+    volatile unsigned int localVarCount = fs.localVarCount;
+    VariableValue *volatile top = fs.top;
+    VariableValue *volatile startTop = fs.startTop;
+#else
     const char *pos = fs.pos;
     unsigned int localId = fs.localId;
     unsigned int localVarCount = fs.localVarCount;
     VariableValue *top = fs.top;
     VariableValue *startTop = fs.startTop;
+#endif
     unsigned int resultLocalId = 0;
 #if defined(COD2_X64)
     /* Calls and entity setters can longjmp after modifying interpreter locals.
@@ -7612,6 +7803,17 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             fieldValueId = errorCheckpoint.fieldValueId;
             objectId = errorCheckpoint.objectId;
             thread_count = errorCheckpoint.thread_count;
+        } else {
+            /* Mac 0x8622f-0x86262 resets all interpreter scratch after a jump.
+             * Its zeroed opcode bypasses the recovery table at 0x862af. */
+            fieldValueId = 0;
+            objectId = 0;
+            waitTime = 0;
+            caseCount = 0;
+            caseValue = 0;
+            currentCaseValue = 0;
+            currentCodePos = NULL;
+            thread_count = 0;
         }
 #endif
         RuntimeError(pos, varPub->error_index, varPub->error_message,
@@ -8459,6 +8661,24 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             return 0;
 
         default:
+#if defined(COD2_X64)
+            /* Mac 0x839e1/0x84227 continues unknown opcodes as a thread-frame
+             * boundary without consuming a target. Preserve its stores while
+             * another frame fits; malformed frame-table exhaustion stays fatal. */
+            if ((unsigned int)scrVmPub.function_count < 31u) {
+                function_frame_t *frame = scrVmPub.function_frame;
+                frame->fs.top = startTop;
+                frame->topType = startTop->type;
+                startTop->type = 8;
+                ++thread_count;
+                frame->fs.localVarCount = localVarCount;
+                localVarCount = 0;
+                ++scrVmPub.function_count;
+                ++scrVmPub.function_frame;
+                scrVmPub.function_frame->fs.localId = localId;
+                break;
+            }
+#endif
             scrVmPub.top = top;
             Com_Error(1, "VM_Execute C candidate pass66 hit unconverted opcode 0x%02x (%s)",
                       opcode, VM_OpcodeName(opcode));
