@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 2733,
-      "intentional": 1986,
-      "equal": 3961,
-      "fixed": 777
+      "unchecked": 2649,
+      "intentional": 2049,
+      "equal": 3980,
+      "fixed": 779
     },
     "scopes": {
       "unassigned": 777,
@@ -28908,8 +28908,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac coalesced D1 at 0x2f0b9e restores the derived vptr and calls the base destructor. Native linux_common main enters WinMain directly; no CCallOfDutyEngine singleton, vtable, allocation or destructor caller exists in selected source/generated native data. The Carbon object lifecycle is replaced by native startup and Sys_Quit."
       },
       {
         "id": "mac:0x002f0bb4",
@@ -28930,8 +28930,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac coalesced D0 at 0x2f0bb4 calls the base destructor then operator delete. Native main/WinMain/Sys_Quit own startup/shutdown without allocating this Carbon engine object; no native source/generated-data reference instantiates it. Read the exact __textcoal_nt body, not the empty ordinary-text extraction."
       },
       {
         "id": "mac:0x00111e66",
@@ -28952,8 +28952,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x111e66 zeroes object button state, initializes the Carbon engine, waits for the launcher and presents/stores the serial-number preference. Native main -> WinMain -> Com_Init replaces that bootstrap; launcher KeyStore validates/stores the serial preference, setup selects licensed game files, and Com_ReadCDKey reads it during engine file initialization. No native Carbon object/serial-dialog callback is installed; this verdict does not claim GUI equivalence."
       },
       {
         "id": "mac:0x00111e3e",
@@ -28974,8 +28974,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x111e3e tail-calls CMacGameEngine::MacMain. Native entry calls WinMain directly from linux_common main; Com_Frame and SDL IN_Frame replace the Carbon event-loop/timer bridge. No native caller or generated-native-data vtable points to this method."
       },
       {
         "id": "mac:0x00111da6",
@@ -28996,8 +28996,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x111da6 finds creator CD2S, sends quit, waits with 1000-ms sleeps up to an event-time deadline and fronts the game. Native launcher/Model.swift spawns the engine helper and remains its UI owner; direct main -> WinMain does not terminate another application. The retired parent-process AppleEvent handoff has no native caller."
       },
       {
         "id": "mac:0x00111d2c",
@@ -29018,8 +29018,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Exact-symbol Mac 0x111d2c constructs a guarded function-static CCallOfDutyEngine, sets its vptr and registers __tcf_0 with atexit. Native linux_common main calls WinMain without this singleton; selected native data has no corresponding vtable reference. SDL/rawmouse own input state rather than constructing this Carbon object."
       },
       {
         "id": "mac:0x00111e48",
@@ -29040,8 +29040,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x111e48 is the function-static engine atexit destructor, resetting its vptr and calling CMacGameEngine D2. No corresponding native singleton is constructed/registered: native main/WinMain and Sys_Quit own lifecycle. Compared the actual registration in GetMacGameEngine and checked native source/generated-data references."
       }
     ],
     "Mac/Main/mac_configure": [
@@ -29064,8 +29064,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact-symbol Mac 0xc4858 after full-binary disassembly misaligned its prologue: GetCPUSpeedInGHz returns float, which is explicitly widened to double. Native Sys_CpuGHz performs that same conversion; the selected MacFeatures provider obtains host CPU frequency through MacSystem."
       },
       {
         "id": "mac:0x000c4890",
@@ -29086,8 +29086,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc4890 copies the actual display renderer with bounded strncpy; native reported the literal Linux OpenGL. Native Apple now queries the SDK IOAccelerator model before WinMain creates a render context, releases the service/property and falls back to Unknown GPU. Retains explicit NUL termination for sys_info dvar/strcmp consumers rather than reproducing a potentially unterminated copy. Compiled and reviewed; provider call not exercised."
       },
       {
         "id": "mac:0x000c48b4",
@@ -29108,8 +29108,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc48b4 tests Gestalt x86f attribute 25. Native ARM SIMD implements the engine operations independently of that obsolete Intel hardware bit and keeps the existing true capability result; live WinMain sets sys_SSE from it. This is a platform capability adaptation, not a claim of hardware SSE on arm64."
       },
       {
         "id": "mac:0x000c4876",
@@ -29130,8 +29130,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc4876: obtain GetMemorySizeInMB, signed-compare against 0x8000001, cap at 0x8000000. Native preserves the signed cast, threshold and cap. Checked the live WinMain destination and SDK memory provider; constant triage is clean apart from stack offsets."
       }
     ],
     "Mac/Main/mac_input": [
@@ -29154,8 +29154,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x10bb1e: translated VK special cases (tilde, keypad Enter/equals), MapVirtualKeyA fallback and extended-character pair search. Native legacy callback is simplified and its extended table differs, but Apple SDL_PumpInputEvents bypasses it via sdl_to_keynum -> Sys_QueEvent; no native Carbon vtable exists. Preserve that documented WS3/WS38 input replacement, not the legacy callback as equal."
       },
       {
         "id": "mac:0x0010b912",
@@ -29176,8 +29176,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x10b912: same VK/character fallback and keypad distinctions as key-down, emitting key-up state. Native callback is simplified; native Apple SDL KEYUP maps sdl_to_keynum directly into Sys_QueEvent and never dispatches this Carbon method. No selected native object/vtable caller; no equality is claimed for the dormant table translation."
       },
       {
         "id": "mac:0x0010bc7a",
@@ -29198,8 +29198,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x10bc7a updates object+0x20 then compares all five bits with shared sOldButtonState, emitting transitions only. Native dormant callback lacks that filter and has an opaque object layout, but native Apple SDL button events map five buttons directly to engine key transitions. No native source or generated vtable invokes the Carbon object callback (WS38-core boundary)."
       },
       {
         "id": "mac:0x0010b818",
@@ -29220,8 +29220,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x10b818: sign-extend Point.h and Point.v and forward as CL_MouseEvent(dx,dy). Native callback matches that ordering and signed 16-bit conversion. Selected Apple IN_Frame bypasses this wrapper, delivering SDL/rawmouse motion directly to CL_MouseEvent as documented in WS3."
       },
       {
         "id": "mac:0x0010bd52",
@@ -29242,8 +29242,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x10bd52 clears object+0x20 button bit then compares with sOldButtonState for both press/release transitions. Dormant native wrapper has neither transition filter nor a validated native object layout; Apple SDL mouse-button-up/down handlers directly emit five engine keys and do not call it. Preserves the documented native input boundary, not alleged callback equivalence."
       },
       {
         "id": "mac:0x0010b830",
@@ -29264,8 +29264,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x10b830: positive delta emits 0xce press/release, zero or negative emits 0xcd press/release, all time/type/unused fields matched. Native wrapper is identical. Apple SDL wheel processing bypasses it for fractional/multiple scroll steps; that separate WS3 input adapter was verified in its actual preprocessor branch."
       },
       {
         "id": "mac:0x0010ba6e",
@@ -29286,8 +29286,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x10ba6e: zero-extend the UInt16, accept isprint or code 8, queue SE_CHAR with g_wv.sysMsgTime and zero unused fields. Native callback matches those branches and fields. Apple SDL text/backspace branches bypass it and send decoded UTF8 characters directly to Sys_QueEvent."
       },
       {
         "id": "mac:0x0010bad6",
@@ -29308,8 +29308,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x10bad6 registers in_mouse=true flags0x1021, optionally prints inactive, then clears modified. Native retains that sequence and adds in_rawmouse=true flags0x1001 plus MacRawMouse_Init. Verified live Sys_Init/in_restart calls and SDL IN_Frame use both dvars; dedicated excludes mac_input. SDK raw mouse replaces Carbon input ownership (WS3)."
       },
       {
         "id": "mac:0x0010bad0",
@@ -29330,8 +29330,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x10bad0 is empty. Native client IN_Shutdown drains/removes the MacRawMouse handler and queue; Sys_Quit, Sys_Error and in_restart call this shutdown. This is required lifecycle cleanup for the documented SDK raw-input replacement; dedicated excludes it."
       }
     ],
     "Mac/Main/mac_main": [
@@ -29354,8 +29354,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc3534 and decoded names: registers sys_cpuGHz/sys_sysMB/sys_gpu/sys_configSum flags0x1011 with full float/int ranges, narrows CPU double to float and archives CPU/memory/GPU/checksum in order. Native Sys_ArchiveInfo and Sys_RegisterInfoDvars match those values and stores; Com_SetRecommended remains a live caller."
       },
       {
         "id": "mac:0x000c364a",
@@ -29376,8 +29376,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc364a: localize WIN_DIRECTX_INIT_TITLE/BODY, MessageBoxA flags0x10, exit(-1). Native Apple follows that error sequence through its terminal MessageBox adapter; optional retail-DLL recovery branch is unreachable because only COD2_GFX_DLL-gated Windows loading sets g_gfxV60DllActive. Checked renderer import-table callers rather than exempting the function."
       },
       {
         "id": "mac:0x000c3510",
@@ -29398,8 +29398,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Exact-symbol Mac 0xc3510 copies 0x210 bytes from static sys_info. Native copies sizeof(SysInfo), whose double/int/byte/512-byte string and trailing alignment retain that 528-byte layout. Verified live Com_SetRecommended and autoconfigure consumers and the typed WinMain field stores; full-binary entry was misaligned and not used as proof."
       },
       {
         "id": "mac:0x000c4056",
@@ -29420,8 +29420,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc4056: register info dvars; prompt only for nonzero changed checksum with WIN_CONFIGURE_UPDATED_TITLE/BODY, flags0x44, accept result6; reread checksum after prompt and set if zero or changed. Native matches branches, re-read, literals and setter order; native MessageBoxA is the established terminal provider."
       },
       {
         "id": "mac:0x000c418c",
@@ -29442,8 +29442,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xc425c/0xc426a multiplies CPU GHz by doubles read at 0x340ca8/0x340cb0: 1.100000023841858 and 0.8999999761581421 (widened 1.1f/0.9f). Native used double literals 1.1/0.9. Native Apple COD2_X64 now widens float literals before double multiplication; remaining signed +/-32 MB, strcmp and prompt branches match. Compiled and reviewed; threshold path not exercised."
       },
       {
         "id": "mac:0x000c39a8",
@@ -29464,8 +29464,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xc39a8 tail-calls NET_Restart. Native static Sys_Net_Restart_f performs that same zero-argument call, registered by live Sys_Init as net_restart. No other behavior in either body."
       },
       {
         "id": "mac:0x000c38e8",
@@ -29486,8 +29486,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xc38e8 returns without effects. Native Sys_NormalExit is empty; confirmed live Com_Error/quit-related callers remain in common.c. No lifecycle work was incorrectly inferred from its name."
       },
       {
         "id": "mac:0x000c3efa",
@@ -29508,8 +29508,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc3efa: register info dvars, archive current CPU/memory/GPU with checksum0 before localizing WIN_COMPUTER_CHANGE_TITLE/BODY, prompt flags0x44 and accept result6. Native delegates stores to Sys_ArchiveInfo(0); its preceding identical registration is idempotent before any store. Dialog result comes from the existing terminal MessageBox provider."
       },
       {
         "id": "mac:0x000c3a7a",
@@ -29530,8 +29530,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc3a7a initialization/state/dvar collection and Com_Init/Com_Frame loop compared directly. Native main -> WinMain preserves engine initialization while adding native crash handling, dedicated mode/signals, SDL/CoD2x lifecycle and frame-state observation. The Carbon console/5-ms dedicated GUI sleep is replaced by terminal console and engine pacing; omitted PB initialize/process calls belong to documented null adapter. Live sys-info logic was audited separately, not blanket-exempted."
       }
     ],
     "Mac/Main/mac_play_dsound": [
@@ -29954,8 +29954,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc4830: empty return. Native Sys_CreateSplashWindow is empty, matching exactly at this boundary; live non-dedicated WinMain still calls it."
       },
       {
         "id": "mac:0x000c4836",
@@ -29976,8 +29976,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc4836: empty return. Native Sys_DestroySplashWindow is empty; shutdown/error callers remain safe no-op boundaries."
       },
       {
         "id": "mac:0x000c4850",
@@ -29998,8 +29998,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc4850 through ret at 0xc4854: empty return. Native Sys_HideSplashWindow is empty; trailing padding/disassembler bytes were not treated as instructions in the function."
       },
       {
         "id": "mac:0x000c483c",
@@ -30020,8 +30020,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0xc483c and decoded string0x24e260: forward cod.png to CMacGameEngine_DrawSplashScreen. Native Sys_ShowSplashWindow passes exactly that name. This covers only the forwarding wrapper; its live native no-op drawing callee remains unchecked in MacGameEngine."
       }
     ],
     "Mac/Main/mac_syscon": [
@@ -30044,8 +30044,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc4368 handles builder clos by calling CMacGameEngine::Quit and returning true. No native Carbon console window/callback is installed: terminal stdin/stdout owns console commands, SDL_QUIT queues quit through Cbuf_AddText and dedicated uses MacServer quit signals. Retired GUI-close handler is not an engine command implementation gap."
       },
       {
         "id": "mac:0x000c471e",
@@ -30066,8 +30066,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc471e appends to Carbon TXN text view or pre-window Handle and scrolls selection. Native live Sys_Print/Sys_Error callers reach null-safe fputs(stdout)+fflush immediately. Verified selected mac_syscon.c and live call path; terminal diagnostics replace Carbon text buffering, not an equality claim for the old widget."
       },
       {
         "id": "mac:0x000c439c",
@@ -30088,8 +30088,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc439c releases display, locks system, builds Carbon console, configures TXN/editor controls and installs a 30-second activity timer for dedicated mode. Native console uses stdin/stdout with no display release/window/GUI timer; live creation resets bounded command buffers. SDL/native activity and dedicated signal providers replace those old platform owners."
       },
       {
         "id": "mac:0x000c42bc",
@@ -30110,8 +30110,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc42bc accepts CR/LF, retrieves console control2 text, echoes nonempty commands, appends newline/NUL and clears the editor. Native Sys_ConsoleInput select/read path collects a bounded 512-byte line and returns it on newline, while Sys_GetEvent copies the command into the engine queue. No Carbon edit hook is installed; terminal line handling is the replacement."
       },
       {
         "id": "mac:0x000c4546",
@@ -30132,8 +30132,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc4546 lazily allocates the Carbon pre-window text Handle and clears two 512-byte command buffers. Native live WinMain uses terminal streams and clears the same command-buffer roles without a Carbon Handle. Checked selected provider and Sys_ConsoleInput consumer; this is the documented terminal-console boundary."
       },
       {
         "id": "mac:0x000c4588",
@@ -30154,8 +30154,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc4588 releases console window, text Handle and event-loop timer if present, clearing each owner. Native terminal provider owns none of these resources, so Sys_DestroyConsole is empty when Sys_Quit invokes it. No native console widget/timer can leak through this omitted Carbon cleanup."
       },
       {
         "id": "mac:0x000c47f4",
@@ -30176,8 +30176,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc47f4 hides the console edit control and calls MessageBoxA(text, flags0x10). Native live Sys_Error diagnostics use fprintf(stderr, ERROR:...) with the terminal console; no Carbon editor or native modal alert is allocated. Checked the caller and provider rather than treating its platform filename as an exemption."
       },
       {
         "id": "mac:0x000c4388",
@@ -30198,8 +30198,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xc4388 calls UpdateSystemActivity(0) from a Carbon console timer. Native terminal console never creates that timer; loading activity is owned by the separate MacRuntime_UserActivity SDK boundary reviewed in Unix-runtime commit b8facc48110ee340ba1d1311818604de7934fd55. No native source callback registers this retired timer."
       }
     ],
     "Mac/Shaders/lprobe_sm_a_s_lfog": [
@@ -30756,8 +30756,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2640: descriptor type compare, coercion fallback, sized GetDescData, signed OSStatus throws and temporary disposal. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       },
       {
         "id": "mac:0x00002736",
@@ -30778,8 +30778,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2736: TEXT coercion, descriptor data-size clamp at255 and Pascal length-byte write. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       },
       {
         "id": "mac:0x00002552",
@@ -30800,8 +30800,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2552: dispose nonnull event descriptor and restore null descriptor. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       },
       {
         "id": "mac:0x00002ca4",
@@ -30822,8 +30822,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2ca4: initialize null descriptor and zero data handle. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       },
       {
         "id": "mac:0x00002cba",
@@ -30844,8 +30844,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2cba: AESend mode0x11, priority0, timeout-1 and reply descriptor cleanup/error unwind. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       },
       {
         "id": "mac:0x000028c2",
@@ -30866,8 +30866,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x28c2: C2 object-specifier construction with disposal flag0 and signed-status exception cleanup. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       },
       {
         "id": "mac:0x00002964",
@@ -30888,8 +30888,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2964: C1 object-specifier construction with disposal flag0 and signed-status exception cleanup. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       },
       {
         "id": "mac:0x0000257e",
@@ -30910,8 +30910,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x257e: dispose nonnull target descriptor and restore null descriptor. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       },
       {
         "id": "mac:0x000025aa",
@@ -30932,8 +30932,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x25aa: C1 ProcessSerialNumber target of type psn and fixed8-byte payload. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       },
       {
         "id": "mac:0x00002ae6",
@@ -30954,8 +30954,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2ae6: C2 signature target of type sign and fixed4-byte creator payload. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       },
       {
         "id": "mac:0x00002b7a",
@@ -30976,8 +30976,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2b7a: C1 signature target of type sign and fixed4-byte creator payload. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       },
       {
         "id": "mac:0x00002c0e",
@@ -30998,8 +30998,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2c0e: C2 ProcessSerialNumber target of type psn and fixed8-byte payload. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       },
       {
         "id": "mac:0x00002ef4",
@@ -31020,8 +31020,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2ef4: core/cnte event with element class parameter, AESend0x13 reply and long count extraction. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       },
       {
         "id": "mac:0x000030c8",
@@ -31042,8 +31042,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x30c8: core/getd property object specifier, optional requested type and wildcard reply descriptor extraction. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       },
       {
         "id": "mac:0x00002d72",
@@ -31064,8 +31064,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2d72: core/setd property object specifier, direct-object/data parameters, AESend and descriptor cleanup. Native MacAppleEvents has no external source caller or selected generated-native-data reference; old ProcessSerialNumber/Carbon object transport is retired. The reviewed pending Unix-runtime dependency supplies native application/URL opening through a separate CoreFoundation/LaunchServices boundary in b8facc48110ee340ba1d1311818604de7934fd55. Dormant wrappers/missing overloads/property stubs are not claimed equivalent or approved for live use."
       }
     ],
     "Mac/Tools/MacBuilder": [
@@ -33150,8 +33150,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x25aa4: D2 removes the two installed Carbon event handlers. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable."
       },
       {
         "id": "mac:0x00025ad8",
@@ -33172,8 +33172,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x25ad8: D1 removes the two installed Carbon event handlers. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable."
       },
       {
         "id": "mac:0x00025b0c",
@@ -33194,8 +33194,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x25b0c: D0 removes both handlers then deletes the object. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable."
       },
       {
         "id": "mac:0x00025a58",
@@ -33216,8 +33216,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x25a58: constructor initializes vptr, argv/handler/modifier/quit/running state and queries main event queue. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable."
       },
       {
         "id": "mac:0x000260b8",
@@ -33238,8 +33238,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x260b8: default key-down virtual is empty. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Apple linux_input SDL_PumpInputEvents/IN_Frame directly owns key/text/button/wheel/focus/relative/rawmouse delivery (WS3/WS38); no old base virtual callback is installed."
       },
       {
         "id": "mac:0x000260be",
@@ -33260,8 +33260,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x260be: default key-up virtual is empty. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Apple linux_input SDL_PumpInputEvents/IN_Frame directly owns key/text/button/wheel/focus/relative/rawmouse delivery (WS3/WS38); no old base virtual callback is installed."
       },
       {
         "id": "mac:0x000260a0",
@@ -33282,8 +33282,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x260a0: default mouse-down virtual is empty. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Apple linux_input SDL_PumpInputEvents/IN_Frame directly owns key/text/button/wheel/focus/relative/rawmouse delivery (WS3/WS38); no old base virtual callback is installed."
       },
       {
         "id": "mac:0x000260ac",
@@ -33304,8 +33304,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x260ac: default mouse-motion virtual is empty. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Apple linux_input SDL_PumpInputEvents/IN_Frame directly owns key/text/button/wheel/focus/relative/rawmouse delivery (WS3/WS38); no old base virtual callback is installed."
       },
       {
         "id": "mac:0x000260a6",
@@ -33326,8 +33326,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x260a6: default mouse-up virtual is empty. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Apple linux_input SDL_PumpInputEvents/IN_Frame directly owns key/text/button/wheel/focus/relative/rawmouse delivery (WS3/WS38); no old base virtual callback is installed."
       },
       {
         "id": "mac:0x000260b2",
@@ -33348,8 +33348,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x260b2: default mouse-wheel virtual is empty. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Apple linux_input SDL_PumpInputEvents/IN_Frame directly owns key/text/button/wheel/focus/relative/rawmouse delivery (WS3/WS38); no old base virtual callback is installed."
       },
       {
         "id": "mac:0x000260d4",
@@ -33370,8 +33370,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x260d4: DoQuit checks virtual IsQuitAvailable before setting object quit byte. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Native SDL_QUIT queues quit via Cbuf_AddText; dedicated uses MacServer signal checks. Unix-runtime keeps terminal Sys_Error on its direct Com_Quit_f path rather than waiting on the no-op Carbon pump."
       },
       {
         "id": "mac:0x000260c4",
@@ -33392,8 +33392,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x260c4: default text-input virtual is empty. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Apple linux_input SDL_PumpInputEvents/IN_Frame directly owns key/text/button/wheel/focus/relative/rawmouse delivery (WS3/WS38); no old base virtual callback is installed."
       },
       {
         "id": "mac:0x00025cbc",
@@ -33415,7 +33415,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Mac 0x25cbc was read: resolve cod.png in the data folder, create URL/provider/PNG, draw and clear over full display through QuickDraw CGContext, release owned resources. Live native non-dedicated WinMain -> Sys_ShowSplashWindow -> linux_common CMacGameEngine_DrawSplashScreen is a no-op. No launcher/bootstrap code or report establishes an equivalent splash/replacement. Native drawing implementation and intended rendering owner remain unresolved; do not classify absence as equality or intentional."
       },
       {
         "id": "mac:0x0002612c",
@@ -33436,8 +33436,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2612c: AppleEvent quit handler rejects missing/refusing engine and invokes virtual DoQuit. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Native SDL_QUIT queues quit via Cbuf_AddText; dedicated uses MacServer signal checks. Unix-runtime keeps terminal Sys_Error on its direct Com_Quit_f path rather than waiting on the no-op Carbon pump."
       },
       {
         "id": "mac:0x000264d4",
@@ -33458,8 +33458,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x264d4: HandleEvent gates running/system-lock state and dispatches mouse/key/text/menu/window/application events; decoded 11-entry mouse jump table at0x328228, including button1/2, motion5/6 and wheel10 cases. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Apple linux_input SDL_PumpInputEvents/IN_Frame directly owns key/text/button/wheel/focus/relative/rawmouse delivery (WS3/WS38); no old base virtual callback is installed."
       },
       {
         "id": "mac:0x000260f4",
@@ -33480,8 +33480,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x260f4: event callback maps virtual handled result to noErr/eventNotHandledErr and catches exceptions. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Apple linux_input SDL_PumpInputEvents/IN_Frame directly owns key/text/button/wheel/focus/relative/rawmouse delivery (WS3/WS38); no old base virtual callback is installed."
       },
       {
         "id": "mac:0x00025e66",
@@ -33502,8 +33502,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x25e66: Initialize checks product/build tags and OS version, raises stack soft limit up to hard limit, enters QuickTime, validates data volume/folder and primes the codec. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable."
       },
       {
         "id": "mac:0x000260ca",
@@ -33524,8 +33524,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x260ca: IsQuitAvailable returns true. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Native SDL_QUIT queues quit via Cbuf_AddText; dedicated uses MacServer signal checks. Unix-runtime keeps terminal Sys_Error on its direct Com_Quit_f path rather than waiting on the no-op Carbon pump."
       },
       {
         "id": "mac:0x0002604a",
@@ -33546,8 +33546,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x2604a: MacMain installs the zero-delay one-shot timer, runs Carbon event loop and releases display. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable."
       },
       {
         "id": "mac:0x000264ae",
@@ -33568,8 +33568,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x264ae: one-shot callback invokes OneShotTimer, catches exceptions and quits application event loop. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable."
       },
       {
         "id": "mac:0x00025c26",
@@ -33590,8 +33590,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x25c26: ProcessAllEvents drains/release Carbon events and returns singleton quit flag. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Native SDL_QUIT queues quit via Cbuf_AddText; dedicated uses MacServer signal checks. Unix-runtime keeps terminal Sys_Error on its direct Com_Quit_f path rather than waiting on the no-op Carbon pump."
       },
       {
         "id": "mac:0x00025c9e",
@@ -33612,8 +33612,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x25c9e: Quit only sets singleton quit flag when the engine is running. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable. Native SDL_QUIT queues quit via Cbuf_AddText; dedicated uses MacServer signal checks. Unix-runtime keeps terminal Sys_Error on its direct Com_Quit_f path rather than waiting on the no-op Carbon pump."
       },
       {
         "id": "mac:0x00025b48",
@@ -33634,8 +33634,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x25b48: Run stores argc/argv, calls virtual Initialize, initializes MacDisplay, syncs preferences, flushes queue and calls virtual MacMain. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable."
       },
       {
         "id": "mac:0x00026090",
@@ -33656,8 +33656,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x26090: SetIsRunning stores the object running byte. Native main -> WinMain/Com_Init/Com_Frame and Sys_Quit replace the Carbon object lifecycle; native CMacGameEngine methods are not instantiated or referenced by a source/generated-data vtable."
       }
     ],
     "Mac/Tools/MacGlobals": [
@@ -33680,8 +33680,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x95b2 through ret0x95c2: signed counter >0 result. Native MacGlobals_IsSystemLocked returns exactly that predicate; no selected native caller remains after SDL/terminal replacement."
       },
       {
         "id": "mac:0x00009590",
@@ -33702,8 +33702,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x9590: increment static system-lock counter by1. Native MacGlobals_LockSystem performs the same increment; all selected native Carbon lock callers are retired. Scripted call/constant triage and hand inspection agree."
       },
       {
         "id": "mac:0x0000959c",
@@ -33724,8 +33724,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x959c: decrement system-lock counter only when signed-positive. Native MacGlobals_UnlockSystem matches the test and decrement; no caller from selected SDL/terminal providers."
       },
       {
         "id": "mac:0x0000a95e",
@@ -33746,8 +33746,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xa95e: main-thread/windowed guard, lock system, select stop/note alert, Create/RunStandardAlert and unlock including unwind. Native MacTools_MessageAlert is dormant with no external source/generated-native-data caller. Live sys-info/error dialogs use the MacWin32 terminal MessageBoxA/stderr provider; obsolete Carbon alerts are not claimed equivalent."
       },
       {
         "id": "mac:0x0000a7f4",
@@ -33768,8 +33768,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0xa7f4: reject off-main/fullscreen, lock, initialize question-alert params, run alert, return button1 result and unlock including unwind. No native source/generated-data caller uses the dormant MacTools_QuestionAlert wrapper. Live autoconfigure decisions use MessageBoxA via the selected terminal adapter, not the Carbon alert class."
       }
     ],
     "Mac/Tools/MacMSS": [
