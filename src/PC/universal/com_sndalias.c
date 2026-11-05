@@ -87,11 +87,19 @@ static inline __attribute__((always_inline)) unsigned int Com_SoundAliasHash(con
 
 static inline __attribute__((always_inline)) int Com_SoundAliasRandom(void)
 {
+#if defined(COD2_X64)
+    unsigned int seed = (unsigned int)g_sa.randSeed * 214013u + 2531011u;
+
+    memcpy(&g_sa.randSeed, &seed, sizeof(seed));
+
+    return (int)((seed >> 16) & 0x7fffu);
+#else
     int seed = g_sa.randSeed * 214013 + 2531011;
 
     g_sa.randSeed = seed;
 
     return ((unsigned int)seed >> 16) & 0x7fff;   /* unsigned: a logical shift, not arithmetic */
+#endif
 }
 
 static inline __attribute__((always_inline)) Bool Com_SoundAliasShouldPick(float probability, float totalProbability)
