@@ -13888,7 +13888,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "GPValue Duplicate has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+        "evidence": "Follow-up: Mac STABS declares GPValue::Duplicate(TextPool **), _ZN7GPValue9DuplicateEPP8TextPool. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Parser construction/AddPair/AddGroup allocate new nodes from input; no original recursive copy operation with this signature was established. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:518:Duplicate",
@@ -13907,7 +13907,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "GPGroup Duplicate has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+        "evidence": "Follow-up: Mac STABS declares GPGroup::Duplicate(TextPool **, GPGroup *), _ZN7GPGroup9DuplicateEPP8TextPoolPS_. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Parser construction/AddPair/AddGroup allocate new nodes from input; no original recursive copy operation with this signature was established. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:740:FindPair",
@@ -13926,7 +13926,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "FindPair has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+        "evidence": "Follow-up: Mac STABS declares GPGroup::FindPair(const char *), _ZN7GPGroup8FindPairEPKc. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FX_ParseEffect 0x5d302/0x5d381, ParseChannel 0x5e8d9/0x5e93c, and ParsePrimitiveInternal 0x5f781/0x5f85a plus 0x5fa53/0x5fb4b traverse and dispatch all nodes; these are not complete name-to-node/default-value lookup operations. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:755:FindPairValue",
@@ -13945,7 +13945,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "FindPairValue has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+        "evidence": "Follow-up: Mac STABS declares GPGroup::FindPairValue(const char *, const char *), _ZN7GPGroup13FindPairValueEPKcS1_. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FX_ParseEffect 0x5d302/0x5d381, ParseChannel 0x5e8d9/0x5e93c, and ParsePrimitiveInternal 0x5f781/0x5f85a plus 0x5fa53/0x5fb4b traverse and dispatch all nodes; these are not complete name-to-node/default-value lookup operations. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:638:FindSubGroup",
@@ -13964,7 +13964,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "FindSubGroup has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+        "evidence": "Follow-up: Mac STABS declares GPGroup::FindSubGroup(const char *), _ZN7GPGroup12FindSubGroupEPKc. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FX_ParseEffect 0x5d302/0x5d381, ParseChannel 0x5e8d9/0x5e93c, and ParsePrimitiveInternal 0x5f781/0x5f85a plus 0x5fa53/0x5fb4b traverse and dispatch all nodes; these are not complete name-to-node/default-value lookup operations. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:444:GPGroup",
@@ -14490,7 +14490,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "GetNumPairs has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+        "evidence": "Follow-up: Mac STABS declares GPGroup::GetNumPairs(), _ZN7GPGroup11GetNumPairsEv. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. The matching .eh symbol is absolute zero, not an executable address. FX_ParseEffect 0x5d368-0x5d38a increments accepted-primitive count and traversal index while performing parsing; neither establishes a complete GPGroup count method. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:462:GetNumSubGroups",
@@ -14509,7 +14509,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "GetNumSubGroups has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+        "evidence": "Follow-up: Mac STABS declares GPGroup::GetNumSubGroups(), _ZN7GPGroup15GetNumSubGroupsEv. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. The matching .eh symbol is absolute zero, not an executable address. FX_ParseEffect 0x5d368-0x5d38a increments accepted-primitive count and traversal index while performing parsing; neither establishes a complete GPGroup count method. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
       },
       {
         "id": "mac:0x000ab80c",
@@ -14742,7 +14742,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "GPValue Write has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+        "evidence": "Follow-up: Mac STABS declares GPValue::Write(TextPool **, int), _ZN7GPValue5WriteEPP8TextPooli. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FxArchive::ArchiveEffect 0xaa208-0xaa26c writes an effect-name length and name through FxArchive::WriteData. This is not parser text serialization; TextPool::AllocText alone does not establish quoting/indentation/list/group output or failure behavior. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:700:Write",
@@ -14761,7 +14761,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "GPGroup Write has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+        "evidence": "Follow-up: Mac STABS declares GPGroup::Write(TextPool **, int), _ZN7GPGroup5WriteEPP8TextPooli. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FxArchive::ArchiveEffect 0xaa208-0xaa26c writes an effect-name length and name through FxArchive::WriteData. This is not parser text serialization; TextPool::AllocText alone does not establish quoting/indentation/list/group output or failure behavior. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:798:Write",
@@ -14780,7 +14780,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "GenericParser2 Write has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+        "evidence": "Follow-up: Mac STABS declares GenericParser2::Write(TextPool *), _ZN14GenericParser25WriteEP8TextPool. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FxArchive::ArchiveEffect 0xaa208-0xaa26c writes an effect-name length and name through FxArchive::WriteData. This is not parser text serialization; TextPool::AllocText alone does not establish quoting/indentation/list/group output or failure behavior. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:284:WriteText",
@@ -14799,7 +14799,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": "WriteText has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+        "evidence": "Follow-up: Mac STABS declares GPObject::WriteText(TextPool **, const char *), _ZN8GPObject9WriteTextEPP8TextPoolPKc. Full symbols and FUN/source-line records establish no executable body or complete inline identity for this row; nonvirtual parser layouts supply no vtable route. Exact FxArchive::ArchiveEffect 0xaa208-0xaa26c writes an effect-name length and name through FxArchive::WriteData. This is not parser text serialization; TextPool::AllocText alone does not establish quoting/indentation/list/group output or failure behavior. Native source/headers have no implementation, and no documented selected native tooling replacement was established. Declaration-only or absent/dead-code evidence does not justify equal/intentional; remains unchecked."
       },
       {
         "id": "linux:EffectsCore/GenericParser2.cpp:14:operator delete",
