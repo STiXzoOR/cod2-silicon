@@ -45,3 +45,18 @@ All three unresolved rows remain unchecked and prior resolved verdicts are prese
 The 69 named calls to `Com_FindSoundAlias` were grouped under seven actual owners: sound, weapon and item registration, UI asset/menu/focus-sound loading, and script sound existence. The return sites store or consume the alias-list pointer, or test it for existence. They do not establish the full null-safe lookup-and-name-return wrapper attributed to `Com_GetSoundAliasName`. Native `Com_FindSoundAlias` and these callers retain their existing contracts. This bounded direct-call/reference inspection does not prove absence of an unrecognized inline wrapper.
 
 The unchanged sound-alias module compiled with configured stock Release and CoDxRelease arm64 production commands. Triage and selected constant checks ran as leads; the random helper has no standalone Mac body, so exact selector disassembly supplied the seed-reference evidence. Existing audio-output and script-binding fixtures provide alias stubs, not these production helper bodies, and were not counted as runtime coverage. No source changes, new tests, cases, assertions, full CI or replay. Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-storage-remaining.noindex/`.
+
+
+## Original identity follow-up — provenance-config7
+
+Original Linux 1.0 IDB addresses were mapped to retained original 1.3 ELF bodies using source order, independent decompiler anchors and masked whole-body comparisons. Every unique whole-body match agrees with the mapped module order; ambiguous tiny bodies and changed implementations were located from neighboring unique anchors and inspected separately. An ambiguous non-target `FS_Path_f` comparison was not used as an anchor. The private packet retains the mapping alternatives and exact bodies. These addresses establish original identity and intent only; Mac i386 remains behavior authority.
+
+| Helper | Original 1.0 | Original 1.3 | Verdict |
+|---|---|---|---|
+| `Com_GetSoundAliasName` | 0x80aaf4a | 0x80ad2e2 | unchecked |
+| `Com_GetSoundAliasRandomSeed` | 0x80aaf7a | 0x80ad312 | unchecked |
+| `Com_SetSoundAliasRandomSeed` | 0x80aaf84 | 0x80ad31c | unchecked |
+
+The three full original bodies now have concrete addresses. No corresponding complete Mac name accessor or arbitrary seed getter/setter operation has been established. Internal random-seed recurrence does not prove these APIs; all three rows remain unchecked.
+
+No production source changes, defects, compilation, tests, CI or replays in this follow-up. No runtime behavior is certified. Private evidence: `recon-provenance-config7.noindex`; focused ledger preserves all previously resolved rows unchanged.
