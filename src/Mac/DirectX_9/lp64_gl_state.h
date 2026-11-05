@@ -114,6 +114,26 @@ typedef struct {
     GLfloat factor[4], matrix[16];
 } CTexStageNative;
 
+/* r_init.c publishes fourteen 32-bit words, without an HWND pointer. This is
+ * a native renderer protocol, not the imported D3DPRESENT_PARAMETERS layout. */
+typedef struct {
+    uint32_t width, height, backBufferFormat, backBufferCount;
+    uint32_t multiSampleType, multiSampleQuality, swapEffect, windowed;
+    uint32_t depthFormat, flags, displayMode, presentationInterval;
+    uint32_t refreshRate, reserved;
+} NativePresentationParameters14;
+
+static inline int NativePresentation_DepthBits(uint32_t format)
+{
+    /* Mac Reset jump table at 0x327034 (D3DFORMAT 70 through 80). */
+    switch (format) {
+    case 70: case 80: return 16;
+    case 71: return 32;
+    case 75: case 77: return 24;
+    default: return 0;
+    }
+}
+
 void *COpenGL_GetVAOBindingList(const COpenGL *gl);
 #endif
 #endif
