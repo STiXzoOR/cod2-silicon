@@ -2,7 +2,7 @@
 
 Updated 2026-11-06.
 
-**Current: 189/229 reconciled: 157 equal, 32 fixed, 0 intentional; 40 unchecked.**
+**Current: 190/229 reconciled: 157 equal, 33 fixed, 0 intentional; 39 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -693,3 +693,14 @@ The full current AxisToAngles operation includes the existing unordered roll-sel
 For vectoanglessigned, the zero-roll intermediate inside AxisToAngles is insufficient because it is overwritten. The independent bound builtin supplies a complete consumer: raw functions[60] binds vectortoangles to0x198e66, selected by actual Scr_GetFunction. Successful argument0/type4 copies all three words into a local, vectoangles writes a separate pitch/yaw/zero-roll triple, and Scr_AddVector consumes the entire result. Its allocator copies all three words into independent backing before the VM slot receives that vector. Native preserves the actual full operation and existing vector encoding. Positive vertical pitch270 and negative-angle wrapping remain explicit Mac behavior; vertical/negative/quadrant cases are not excluded to force agreement with original signed outputs.
 
 Both verdicts require valid live storage and actual admitted, ordinarily defined owner execution with returning providers. Failed vector type/count checks, unavailable allocation/capacity, arbitrary malformed frame/index state, rejected owner paths, output overlap, standalone ABI, FP traps/flags/NaN-payload parity and whole animation/VM/renderer/runtime claims remain outside scope. No new finite or orthogonal invariant is assumed. Independent review: units/review-provenance-angles46.md; private complete original/Mac bodies, raw constants/binding and unchanged source hashes in recon-provenance-angles46.noindex. Two closures, zero new defects or source changes; no compilation, tests, CI, full build, replay or runtime work.
+
+
+## Complete single-yaw orientation constructor — matrixz47
+
+MatrixRotationZ is fixed through the complete scalar-degree Z-orientation role in the actual turret path. Original1.0 0x80a5a48 maps to the complete152-byte original1.3 constructor0x80a7dac–RET0x80a7e43. Its degree scale and full sine/cosine provider fill all nine matrix words: an XY rotation block, four cross-Z zeros and Z/Z one. No caller was recovered by the bounded original direct-reference check; that negative result supplies no closure evidence.
+
+Actual CG_Player adds tag yaw and animation root yaw at0x1e7399, then calls YawToAxis0x1e73a6 into a nonnull disjoint local. Complete Mac0x2d5ba degree scaling and sinf/cosf produce all nine words; every row exists before return. The same local then feeds MatrixMultiply43 at0x1e73c2. Its nine orientation-result calculations read every component of all three input rows. The owner separately supplies translation outside this constructor; the later full angle conversion confirms the orientation role without a round-trip equality claim.
+
+Original stored XY entries c/−s;s/c differ from Mac c/s;0−s/0+c. Conventional original column interpretation is an inference, not recovered caller evidence or a transpose adapter. The complete original degree/fixed-Z construction and the actual full nine-word orientation producer/consumer establish the scoped role; Mac supplies its concrete representation and arithmetic policy. No original matrix layout, positive-angle handedness convention or direct byte-equivalent API is certified. X/Y constructors are not extrapolated.
+
+The mapped current constructor includes the existing YawToAxis COD2_X64 correction preserving Mac0−s and0+c, hence inherited fixed with zero new defects or primary overrides. Later matrix/roll fixes are not extra constructor defects. Valid disjoint nonnull storage, ordinarily defined successful owner computation and returning providers remain required; arbitrary null/overlap/caller ABI, finite/orthogonal assumptions, exceptional-value geometric equality, FP flags/traps/NaN payload and whole animation/render/runtime claims remain excluded. Independent review: units/review-provenance-matrixz47.md. Exact original/provider/owner bodies and raw/source receipts: recon-provenance-matrixz47.noindex. No source changes, new compilation, tests, CI, replay or runtime verification.
