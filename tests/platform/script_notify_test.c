@@ -18,6 +18,9 @@ int GetVarType(unsigned int id) { (void)id; abort(); }
 static const char *typeNames[24];
 void *imp_var_typename = typeNames;
 char *va(const char *fmt, ...) { (void)fmt; abort(); }
+void RuntimeError(const char *codePos, unsigned int index, const char *msg, const char *dialogMessage)
+{ (void)codePos; (void)index; (void)msg; (void)dialogMessage; abort(); }
+void RemoveRefToValue(int type, VariableUnion u) { (void)type; (void)u; abort(); }
 Bool IsFieldObject(unsigned int id) { assert(id == 77); return 1; }
 void AddRefToObject(unsigned int id) { assert(id == 13); }
 void RemoveRefToObject(unsigned int id) { assert(id == 17); }
@@ -42,14 +45,15 @@ void Scr_SetThreadNotifyName(unsigned int id, unsigned int name)
 
 int main(void)
 {
-    VariableValue values[3] = {0}, *top = &values[2];
+    VariableValue values[3] = {0}, *volatile top = &values[2];
+    const char *volatile pos = NULL;
     scrVarPub.levelId = 41;
     scrVarPub.pauseArrayId = 42;
     values[1].type = VAR_STRING;
     values[1].u.stringValue = 9;
     values[2].type = VAR_POINTER;
     values[2].u.pointerValue = 77;
-    VM_CandidateHandleEndOnCallback(13, &top);
+    VM_CandidateHandleEndOnCallback(&pos, 13, &top);
     assert(top == values && stored == 77 && storedNotifyName == 9);
     puts("script endon owner is stored in the pause array: passed");
 }
