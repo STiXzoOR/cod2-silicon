@@ -454,7 +454,8 @@ static HRESULT CDirect3DDevice_DrawApproximateNative(const CDirect3DDevice *_thi
         }
     }
 
-    CDirect3DDevice_ClearStaleTexUnitsNative(dev->maxTextureUnits);
+    /* This fallback only manages units 0 and 1 itself. */
+    CDirect3DDevice_ClearTexUnitsNative(2, dev->maxTextureUnits);
     glActiveTextureARB(GL_TEXTURE0_ARB);
     glMatrixMode(0x1702);
     if (g_textureStageState[0][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE)
