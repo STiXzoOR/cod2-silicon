@@ -2,7 +2,7 @@
 
 Updated 2026-11-06.
 
-**Current: 191/229 reconciled: 158 equal, 33 fixed, 0 intentional; 38 unchecked.**
+**Current: 192/229 reconciled: 158 equal, 34 fixed, 0 intentional; 37 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -714,3 +714,11 @@ Actual Mac `Pmove` supplies the live pml basis and selects `PM_LadderMove`. Afte
 Mac ordered-zero policy retains the copied coordinates, including signed zeros or tiny values whose square sum rounds to zero, while original Linux clears both to positive zero. That difference is explicit under Mac authority; no finite/nonzero restriction hides it. The actual unordered reciprocal/product path and full return are preserved. Scope is live valid movement backing, the ordinary returning ladder/no-rightmove phase, and distinct automatic output; no arbitrary overlap/ABI, original caller, Linux x87/exception equivalence, earlier projection, later yaw conversion, whole movement-owner, or runtime claim. The separately inspected PM_Accelerate copy/call/discard corroborates the operation but its surrounding gates are not part of this verdict.
 
 Independent review: `units/review-provenance-vec2to48.md`. Six fresh exact Mac containers, full original/providers, raw constants and unchanged source hashes are retained in private `recon-provenance-vec2to48.noindex`. One unchecked row becomes equal; no source changes or new defects. No compilation, tests, CI, replay, full build, or runtime execution.
+
+## Complete consumed mark basis (axis49)
+
+`AxisFromForwardYaw` is fixed through the existing rotation-provider repair. The complete original1.0 identity0x80a28d8 maps to1.3 [0x80a4c3c,0x80a4cc2): it preserves the first axis, builds a perpendicular, conditionally rotates a copied side, and writes the complete cross axis. Actual `CG_ImpactMark`0x17c06b–0x17c0b1 consumes its already stored normal plus the actual FX scalar rotation and fully materializes all nine words. The existing native contiguous axis array preserves that result. Every side component feeds all four corners; the same full basis passes through the verified renderer export0xd0 to `R_MarkFragments`, which consumes all three normal components for extrusion. Actual accepted-fragment UV/tangent consumers corroborate both side roles without assuming every mark hits a surface.
+
+Mac uses [normal,cross,rotated] and always rotates, including signed-zero yaw; original uses [forward,rotated,cross] and skips either zero yaw. These explicit Mac construction and representation choices govern the complete consumed basis role. No original caller, per-slot numeric identity, handedness convention or permutation adapter is invented. Normalization is the separate actual producer, with no finite, nonzero, exact-unit or orthogonality invariant assumed. Full constructor providers preserve the existing `RotatePointAroundVector` vr-cross-dir correction at0x2d77a–0x2d7c4, hence inherited fixed and no new defect. Upstream FX repairs, mark diagnostics and later clipping remain separate.
+
+Scope is valid live disjoint storage and admitted returning provider execution, not an arbitrary exported ABI/overlap contract, original zero-yaw shortcut, FP-environment/trap/NaN-payload equivalence, whole renderer or runtime certification. Twelve fresh Mac containers, original whole bodies and copy provider, raw renderer binding and seven source hashes are retained privately in `recon-provenance-axis49.noindex`; independent peer and parent reviews accepted the complete role. No source changes, new compilation, tests, CI, replay or runtime run; the inherited repair was compiled/reviewed, not exercised.
