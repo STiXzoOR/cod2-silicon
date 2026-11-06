@@ -214,13 +214,19 @@ void *Z_MallocInternal(int size)
 {
     void *buf;
 #if defined(COD2_X64) && defined(COD2_GUARDHEAP)
-    return gp_alloc(size, 1);
-#endif
+    buf = gp_alloc(size, 1);
+    if (buf)
+        return buf;
+#else
     buf = malloc(size);
     if (buf) {
         Com_Memset(buf, 0, size);
         return buf;
     }
+#endif
+#if !defined(COD2_X64)
+#line 212
+#endif
     Sys_OutOfMemErrorInternal(__FILE__, __LINE__);
     return buf;
 }
@@ -229,10 +235,14 @@ void *Z_MallocGarbageInternal(int size)
 {
     void *buf;
 #if defined(COD2_X64) && defined(COD2_GUARDHEAP)
-    return gp_alloc(size, 0);
-#endif
+    buf = gp_alloc(size, 0);
+#else
     buf = malloc(size);
+#endif
     if (!buf) {
+#if !defined(COD2_X64)
+#line 224
+#endif
         Sys_OutOfMemErrorInternal(__FILE__, __LINE__);
     }
     return buf;
@@ -358,7 +368,11 @@ void Com_InitHunkMemory(void)
     int nMegs;
 
     if (FS_LoadStack() != 0) {
+#if defined(COD2_X64)
+        Com_Error(0, "\025Hunk initialization failed. File system load stack not zero");
+#else
         Com_Error(0, "Hunk initialization failed. File system load stack not zero");
+#endif
     }
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
@@ -376,6 +390,9 @@ void Com_InitHunkMemory(void)
 
     s_hunkData = (byte *)VirtualAlloc(0, s_hunkTotal, 0x1000, 4);
     if (!s_hunkData) {
+#if !defined(COD2_X64)
+#line 367
+#endif
         Sys_OutOfMemErrorInternal(__FILE__, __LINE__);
     }
 
@@ -607,8 +624,13 @@ void *Hunk_AllocInternal(int size)
     hunk_high.temp = newHighUsed;
 
     if (s_hunkTotal < newHighUsed + hunk_low.temp) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025Hunk_AllocAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)",
+                  size, TO_MB(s_hunkTotal), TO_MB(hunk_low.temp), TO_MB(newHighUsed));
+#else
         Com_Error(1, "Hunk_AllocAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)",
                   size, TO_MB(s_hunkTotal), TO_MB(hunk_low.temp), TO_MB(newHighUsed));
+#endif
     }
 
     memset(buf, 0, size);
@@ -639,8 +661,13 @@ void *Hunk_AllocNoZeroInternal(int size)
     hunk_high.temp = newHighUsed;
 
     if (s_hunkTotal < newHighUsed + hunk_low.temp) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025Hunk_AllocAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)",
+                  size, TO_MB(s_hunkTotal), TO_MB(hunk_low.temp), TO_MB(newHighUsed));
+#else
         Com_Error(1, "Hunk_AllocAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)",
                   size, TO_MB(s_hunkTotal), TO_MB(hunk_low.temp), TO_MB(newHighUsed));
+#endif
     }
 
     return buf;
@@ -657,8 +684,13 @@ void *Hunk_AllocAlignInternal(int size, int alignment)
     hunk_high.temp = newHighUsed;
 
     if (s_hunkTotal < newHighUsed + hunk_low.temp) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025Hunk_AllocAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)",
+                  size, TO_MB(s_hunkTotal), TO_MB(hunk_low.temp), TO_MB(newHighUsed));
+#else
         Com_Error(1, "Hunk_AllocAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)",
                   size, TO_MB(s_hunkTotal), TO_MB(hunk_low.temp), TO_MB(newHighUsed));
+#endif
     }
 
     memset(buf, 0, size);
@@ -673,8 +705,13 @@ void *Hunk_AllocateTempMemoryHighInternal(int size)
     hunk_high.temp = newTempHigh;
 
     if (newTempHigh + hunk_low.temp > s_hunkTotal) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025Hunk_AllocateTempMemoryHigh: failed on %i bytes (total %i MB, low %i MB, high %i MB)",
+                  size, TO_MB(s_hunkTotal), TO_MB(hunk_low.temp), TO_MB(newTempHigh));
+#else
         Com_Error(1, "Hunk_AllocateTempMemoryHigh: failed on %i bytes (total %i MB, low %i MB, high %i MB)",
                   size, TO_MB(s_hunkTotal), TO_MB(hunk_low.temp), TO_MB(newTempHigh));
+#endif
     }
 
     return s_hunkData + s_hunkTotal - newTempHigh;
@@ -698,8 +735,13 @@ void *Hunk_AllocLowInternal(int size)
     hunk_low.temp = newLow;
 
     if (newLow + hunk_high.temp > s_hunkTotal) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025Hunk_AllocLowAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)",
+                  size, TO_MB(s_hunkTotal), TO_MB(newLow), TO_MB(hunk_high.temp));
+#else
         Com_Error(1, "Hunk_AllocLowAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)",
                   size, TO_MB(s_hunkTotal), TO_MB(newLow), TO_MB(hunk_high.temp));
+#endif
     }
 
     memset(buf, 0, size);
@@ -720,8 +762,13 @@ void *Hunk_AllocLowAlignInternal(int size, int alignment)
     hunk_low.temp = newLow;
 
     if (newLow + hunk_high.temp > s_hunkTotal) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025Hunk_AllocLowAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)",
+                  size, TO_MB(s_hunkTotal), TO_MB(newLow), TO_MB(hunk_high.temp));
+#else
         Com_Error(1, "Hunk_AllocLowAlign failed on %i bytes (total %i MB, low %i MB, high %i MB)",
                   size, TO_MB(s_hunkTotal), TO_MB(newLow), TO_MB(hunk_high.temp));
+#endif
     }
 
     memset(buf, 0, size);
@@ -755,9 +802,15 @@ void *Hunk_AllocateTempMemoryInternal(int size)
     hunk_low.temp = newTemp;
 
     if (newTemp + hunk_high.temp > s_hunkTotal) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025Hunk_AllocateTempMemory: failed on %i bytes (total %i MB, low %i MB, high %i MB), needs %i more hunk bytes",
+                  allocSize, TO_MB(s_hunkTotal), TO_MB(newTemp), TO_MB(hunk_high.temp),
+                  newTemp + hunk_high.temp - s_hunkTotal);
+#else
         Com_Error(1, "Hunk_AllocateTempMemory: failed on %i bytes (total %i MB, low %i MB, high %i MB), needs %i more hunk bytes",
                   allocSize, TO_MB(s_hunkTotal), TO_MB(newTemp), TO_MB(hunk_high.temp),
                   newTemp + hunk_high.temp - s_hunkTotal);
+#endif
     }
 
     buf = base + 16;
@@ -778,8 +831,13 @@ void *Hunk_ReallocateTempMemoryInternal(int size)
     hunk_low.temp = newTemp;
 
     if (newTemp + hunk_high.temp > s_hunkTotal) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025Hunk_ReallocateTempMemory: failed on %i bytes (total %i MB, low %i MB, high %i MB)",
+                  size, TO_MB(s_hunkTotal), TO_MB(newTemp), TO_MB(hunk_high.temp));
+#else
         Com_Error(1, "Hunk_ReallocateTempMemory: failed on %i bytes (total %i MB, low %i MB, high %i MB)",
                   size, TO_MB(s_hunkTotal), TO_MB(newTemp), TO_MB(hunk_high.temp));
+#endif
     }
 
     return buf;

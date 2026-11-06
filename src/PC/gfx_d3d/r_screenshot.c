@@ -9,14 +9,31 @@
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 
 static int lastNumber;
+#if defined(COD2_X64)
+static vec3_t cubemapShotAxis[7][3] = {
+    {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}},
+    {{0, 0, 1}, {1, 0, 0}, {0, 1, 0}},
+    {{0, 0, -1}, {-1, 0, 0}, {0, 1, 0}},
+    {{0, 1, 0}, {-1, 0, 0}, {0, 0, 1}},
+    {{0, -1, 0}, {1, 0, 0}, {0, 0, 1}},
+    {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}},
+    {{-1, 0, 0}, {0, -1, 0}, {0, 0, 1}}
+};
+static byte *cubeShotGlob[6];
+#else
 static vec3_t cubemapShotAxis[7][3];
 static int cubeShotGlob;
+#endif
 static int pendingScreenshotType = -1;
 static char pendingScreenshotFilename[256];
 static int pendingScreenshotSilent;
 static int pendingScreenshotDelayFrames;
 
+#if defined(COD2_X64)
+#define dx ((DxGlobals *)imp_dx)
+#else
 extern DxGlobals *dx;
+#endif
 extern int alwaysfails;
 extern refimport_t ri;
 extern vidConfig_t vidConfig;
@@ -285,13 +302,35 @@ void R_EndCubemapShot(const CubemapShot shotIndex)
     int *pixels;
     int gammaVal;
 
+#if defined(COD2_X64)
+    if (shotIndex < 1 || shotIndex > 6)
+        return;
+    if (cubeShotGlob[shotIndex - 1]) {
+        ri.Z_FreeInternal(cubeShotGlob[shotIndex - 1]);
+        cubeShotGlob[shotIndex - 1] = NULL;
+    }
+#endif
     res = dx->cubemapShotRes;
     bufferSizeInBytes = res * res * 4;
     buffer = (byte *)ri.Z_MallocInternal(bufferSizeInBytes);
 
+#if defined(COD2_X64)
+    if (!R_GetFrontBufferData(res, res, 4, buffer)) {
+        ri.Z_FreeInternal(buffer);
+        RB_SetRenderTarget(0);
+        return;
+    }
+    cubeShotGlob[shotIndex - 1] = buffer;
+    for (int i = 0; i < bufferSizeInBytes; i += 4) {
+        byte red = buffer[i];
+        buffer[i] = buffer[i + 2];
+        buffer[i + 2] = red;
+    }
+#else
     ((byte **)&cubeShotGlob)[shotIndex - 1] = buffer;
 
     R_GetFrontBufferData(dx->cubemapShotRes, dx->cubemapShotPixelBorder, 4, buffer);
+#endif
 
     pixels = (int *)buffer;
     for (rowIndex = 0; rowIndex < dx->cubemapShotRes / 2; rowIndex++) {
@@ -324,21 +363,34 @@ static void R_UpsamplePixelData(int oldSize, int newSize, int stride, int bytesP
     int forwardWeight;
     float colorScale;
     int i;
+#if defined(COD2_X64)
+    int sourceIndex = oldSize - 1;
+#endif
 
     nextSample = stride * bytesPerPixel;
     currSrc = src + (oldSize - 1) * nextSample;
 
     dst = dst + (newSize - 1) * nextSample;
+#if defined(COD2_X64)
+    currSrc[nextSample] = currSrc[0];
+    currSrc[nextSample + 1] = currSrc[1];
+    currSrc[nextSample + 2] = currSrc[2];
+#else
     dst[nextSample] = currSrc[0];
     dst[nextSample + 1] = currSrc[1];
     dst[nextSample + 2] = currSrc[2];
+#endif
 
     forwardWeight = newSize - oldSize;
     backwardWeight = newSize + oldSize;
     colorScale = 0.5f / (float)newSize;
 
     for (i = 0; i < newSize; i++) {
+#if defined(COD2_X64)
+        if (sourceIndex >= 0) {
+#else
         if (currSrc >= src) {
+#endif
 
             int val0, val1, val2;
             val0 = (int)currSrc[0] * backwardWeight + (int)currSrc[nextSample] * forwardWeight;
@@ -357,6 +409,10 @@ static void R_UpsamplePixelData(int oldSize, int newSize, int stride, int bytesP
             dst[2] = (byte)(int)floorf((float)((int)src[2] * totalWeight) * colorScale + 0.5f);
         }
 
+#if defined(COD2_X64)
+        if (i + 1 == newSize)
+            break;
+#endif
         dst -= nextSample;
         backwardWeight += oldSize * 2;
         forwardWeight -= oldSize * 2;
@@ -364,7 +420,12 @@ static void R_UpsamplePixelData(int oldSize, int newSize, int stride, int bytesP
         if (forwardWeight < 0) {
             backwardWeight -= newSize * 2;
             forwardWeight += newSize * 2;
+#if defined(COD2_X64)
+            if (--sourceIndex >= 0)
+                currSrc -= nextSample;
+#else
             currSrc -= nextSample;
+#endif
         }
     }
 }
@@ -376,6 +437,9 @@ static void R_DownsamplePixelData(int oldSize, int newSize, int stride, int byte
     int residual;
     int column;
     int accR, accG, accB;
+#if defined(COD2_X64)
+    int sourceIndex = 0;
+#endif
 
     colorScale = 1.0f / (float)oldSize;
     nextSample = stride * bytesPerPixel;
@@ -385,7 +449,12 @@ static void R_DownsamplePixelData(int oldSize, int newSize, int stride, int byte
         accR = (int)src[0] * residual;
         accG = (int)src[1] * residual;
         accB = (int)src[2] * residual;
+#if defined(COD2_X64)
+        if (++sourceIndex < oldSize)
+            src += nextSample;
+#else
         src += nextSample;
+#endif
 
         residual = residual + newSize - oldSize;
 
@@ -393,15 +462,26 @@ static void R_DownsamplePixelData(int oldSize, int newSize, int stride, int byte
             accR += (int)src[0] * newSize;
             accG += (int)src[1] * newSize;
             accB += (int)src[2] * newSize;
+#if defined(COD2_X64)
+            if (++sourceIndex < oldSize)
+                src += nextSample;
+#else
             src += nextSample;
+#endif
             residual += newSize;
         }
 
         {
             int frac = newSize - residual;
+#if defined(COD2_X64)
+            if (frac) {
+#endif
             accG += (int)src[1] * frac;
             accB += (int)src[2] * frac;
             accR += (int)src[0] * frac;
+#if defined(COD2_X64)
+            }
+#endif
         }
 
         dst[0] = (byte)(int)floorf((float)accR * colorScale + 0.5f);
@@ -423,18 +503,32 @@ static byte *R_TakeResampledScreenshot(int width, int height, int bytesPerPixel,
     int maxWidth, maxHeight;
 
     maxWidth = vidConfig.width;
+#if defined(COD2_X64)
+    if (width > maxWidth) {
+#else
     if (width < maxWidth) {
+#endif
         maxWidth = width;
     }
     maxHeight = vidConfig.height;
+#if defined(COD2_X64)
+    if (height > maxHeight) {
+#else
     if (height < maxHeight) {
+#endif
         maxHeight = height;
     }
 
     allocSize = maxWidth * maxHeight * bytesPerPixel + headerSize;
     buffer = (byte *)ri.Z_MallocInternal(allocSize);
 
+#if defined(COD2_X64)
+    /* Mac reads at the allocation base, then resamples after the header.
+     * Z_MallocInternal zeroes the allocation, including the trailing bytes. */
+    if (!R_GetFrontBufferData(vidConfig.width, vidConfig.height, bytesPerPixel, buffer)) {
+#else
     if (!R_GetFrontBufferData(vidConfig.width, vidConfig.height, bytesPerPixel, buffer + headerSize)) {
+#endif
         ri.Z_FreeInternal(buffer);
         buffer = NULL;
         return buffer;
@@ -466,6 +560,10 @@ static byte *R_TakeResampledScreenshot(int width, int height, int bytesPerPixel,
         if (oldHeight > 0) {
             for (i = 0; i < oldHeight; i++) {
                 R_UpsamplePixelData(oldWidth, width, 1, bytesPerPixel, srcRow, dstRow);
+#if defined(COD2_X64)
+                if (i + 1 == oldHeight)
+                    break;
+#endif
                 srcRow -= srcRowStride;
                 dstRow -= dstRowStride;
             }
@@ -490,6 +588,10 @@ static byte *R_TakeResampledScreenshot(int width, int height, int bytesPerPixel,
             srcRow = dstRow;
             for (i = 0; i < width; i++) {
                 R_UpsamplePixelData(oldHeight, height, width, bytesPerPixel, srcRow, dstRow);
+#if defined(COD2_X64)
+                if (i + 1 == width)
+                    break;
+#endif
                 dstRow -= bytesPerPixel;
                 srcRow -= bytesPerPixel;
             }
@@ -523,6 +625,14 @@ void R_LevelShot(void)
         buffer[14] = 128;
         buffer[16] = 24;
 
+#if defined(COD2_X64)
+        /* Native readback is RGB; preserve the original levelshot's BGR data. */
+        for (int i = 18; i < 0xC012; i += 3) {
+            byte red = buffer[i];
+            buffer[i] = buffer[i + 2];
+            buffer[i + 2] = red;
+        }
+#endif
         ri.FS_WriteFile(checkname, buffer, 0xC012);
         ri.Z_FreeInternal(buffer);
         ri.Printf(0, "Wrote %s\n", checkname);
@@ -540,6 +650,10 @@ void R_SaveCubemapShot(const char *filename, const CubemapShot shotIndex, const 
     vec3_t dir;
     float scale;
 
+#if defined(COD2_X64)
+    if (shotIndex < 1 || shotIndex > 6 || !cubeShotGlob[shotIndex - 1])
+        return;
+#endif
     imgIndex = shotIndex - 1;
 
     res = dx->cubemapShotRes;
@@ -621,6 +735,9 @@ void R_SaveCubemapShot(const char *filename, const CubemapShot shotIndex, const 
     ri.FS_WriteFile(filename, targa, fileSize);
     ri.Z_FreeInternal(targa);
     ri.Z_FreeInternal(((byte **)&cubeShotGlob)[imgIndex]);
+#if defined(COD2_X64)
+    cubeShotGlob[imgIndex] = NULL;
+#endif
 }
 
 void R_LightingFromCubemapShots(const vec_t *baseColor)
@@ -641,6 +758,19 @@ void R_LightingFromCubemapShots(const vec_t *baseColor)
     byte *pixel;
     float heightF;
 
+#if defined(COD2_X64)
+    for (int face = 0; face < 6; ++face)
+        if (!cubeShotGlob[face]) {
+            for (int captured = 0; captured < 6; ++captured) {
+                if (cubeShotGlob[captured]) {
+                    ri.Z_FreeInternal(cubeShotGlob[captured]);
+                    cubeShotGlob[captured] = NULL;
+                }
+            }
+            ri.Printf(0, "Skipping cubemap lighting: incomplete face captures\n");
+            return;
+        }
+#endif
     pixelsPerFace = (int)dx->cubemapShotRes * (int)dx->cubemapShotRes;
     linearColors = (float *)ri.Z_MallocInternal(pixelsPerFace * 9 * 8);
 
@@ -668,9 +798,15 @@ void R_LightingFromCubemapShots(const vec_t *baseColor)
                 for (y = 0; y < height; y++) {
                     for (x = 0; x < height; x++) {
                         byte *srcPixel = cubeShotPtr[faceIdx - 1] + pixelIndex * 4;
+#if defined(COD2_X64)
+                        faceLinear[pixelIndex * 3 + 0] = (float)pow((double)((float)srcPixel[2] * (1.0f / 255.0f)), (double)2.2f);
+                        faceLinear[pixelIndex * 3 + 1] = (float)pow((double)((float)srcPixel[1] * (1.0f / 255.0f)), (double)2.2f);
+                        faceLinear[pixelIndex * 3 + 2] = (float)pow((double)((float)srcPixel[0] * (1.0f / 255.0f)), (double)2.2f);
+#else
                         faceLinear[pixelIndex * 3 + 0] = (float)pow((double)((float)srcPixel[2] * (1.0f / 255.0f)), 2.2);
                         faceLinear[pixelIndex * 3 + 1] = (float)pow((double)((float)srcPixel[1] * (1.0f / 255.0f)), 2.2);
                         faceLinear[pixelIndex * 3 + 2] = (float)pow((double)((float)srcPixel[0] * (1.0f / 255.0f)), 2.2);
+#endif
                         pixelIndex++;
                     }
                 }
@@ -748,7 +884,11 @@ void R_LightingFromCubemapShots(const vec_t *baseColor)
 
                             dot = dir[0] * sourceDir[0] + dir[1] * sourceDir[1] + dir[2] * sourceDir[2];
 
+#if defined(COD2_X64)
+                            if (!(dot <= 0.0f)) {
+#else
                             if (dot > 0.0f) {
+#endif
                                 float *samplePixel = sampleColors + (sampleRow + sx) * 3;
                                 sampleR += dot * samplePixel[0];
                                 sampleG += dot * samplePixel[1];
@@ -760,9 +900,15 @@ void R_LightingFromCubemapShots(const vec_t *baseColor)
                 }
 
                 invSampleCount = 1.0f / (float)sampleCount;
+#if defined(COD2_X64)
+                ambientR = (float)pow((double)(sampleR * invSampleCount), (double)0.45454545f);
+                ambientG = (float)pow((double)(sampleG * invSampleCount), (double)0.45454545f);
+                ambientB = (float)pow((double)(sampleB * invSampleCount), (double)0.45454545f);
+#else
                 ambientR = (float)pow((double)(sampleR * invSampleCount), 0.454545);
                 ambientG = (float)pow((double)(sampleG * invSampleCount), 0.454545);
                 ambientB = (float)pow((double)(sampleB * invSampleCount), 0.454545);
+#endif
 
                 ambientR *= baseColor[0];
                 ambientG *= baseColor[1];
@@ -771,21 +917,33 @@ void R_LightingFromCubemapShots(const vec_t *baseColor)
                 {
                     float rVal, gVal, bVal;
 
+#if defined(COD2_X64)
+                    if (!(ambientR < 1.0f)) {
+#else
                     if (ambientR >= 1.0f) {
+#endif
                         rVal = 255.0f;
                     } else {
                         rVal = ambientR * 255.0f;
                     }
                     pixel[2] = (byte)(int)floorf(rVal + 0.5f);
 
+#if defined(COD2_X64)
+                    if (!(ambientG < 1.0f)) {
+#else
                     if (ambientG >= 1.0f) {
+#endif
                         gVal = 255.0f;
                     } else {
                         gVal = ambientG * 255.0f;
                     }
                     pixel[1] = (byte)(int)floorf(gVal + 0.5f);
 
+#if defined(COD2_X64)
+                    if (!(ambientB < 1.0f)) {
+#else
                     if (ambientB >= 1.0f) {
+#endif
                         bVal = 255.0f;
                     } else {
                         bVal = ambientB * 255.0f;
@@ -867,6 +1025,14 @@ static void R_CaptureScreenshotNow(GfxScreenshotType type, const char *filename,
         buffer[17] = 32;
 
         if (R_GetFrontBufferData(width, height, 3, buffer + 18)) {
+#if defined(COD2_X64)
+            /* Native readback is RGB; TGA stores BGR pixels. */
+            for (int i = 18; i < fileSize; i += 3) {
+                byte red = buffer[i];
+                buffer[i] = buffer[i + 2];
+                buffer[i + 2] = red;
+            }
+#endif
             ri.FS_WriteFile(filename, buffer, fileSize);
         }
         ri.Z_FreeInternal(buffer);
@@ -949,7 +1115,11 @@ void R_ScreenshotCommand(GfxScreenshotType type)
     }
 
     arg = ri.Cmd_Argv(1);
+#if defined(COD2_X64)
+    if (strcmp(arg, "savegame") == 0 && ri.Cmd_Argc() == 3) {
+#else
     if (strcmp(arg, "savegame") == 0 && ri.Cmd_Argc() >= 3) {
+#endif
         arg = ri.Cmd_Argv(2);
         if (arg[0] != '\0') {
 

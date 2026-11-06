@@ -312,8 +312,14 @@ int MacOpenGLUtils_GetSubPixelOffset(float *XOffset, float *YOffset)
 int MacOpenGLUtils_GetOpenGLTextureType(bool *CreateOpenGLResources, GLenum *OpenGLInternalFormat, GLenum *OpenGLFormat, GLenum *OpenGLElementType, D3DFORMAT mFormat)
 {
     GLenum tmpInternal = 0, tmpFormat = 0, tmpElement = 0;
+#if defined(COD2_X64)
+    bool tmpCreate = 1;
+    if (!CreateOpenGLResources)
+        CreateOpenGLResources = &tmpCreate;
+#else
     if (CreateOpenGLResources)
         *CreateOpenGLResources = 1;
+#endif
     if (!OpenGLInternalFormat)
         OpenGLInternalFormat = &tmpInternal;
     if (!OpenGLFormat)
@@ -485,7 +491,11 @@ int MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(float *m, float ViewportWi
 
     m[8] = -(m[8] + x * m[11]);
     m[9] = -(m[9] + y * m[11]);
+#if defined(COD2_X64)
+    m[10] = -2.0f * m[10] + m[11];
+#else
     m[10] = m[11] - 2.0f * m[10];
+#endif
     m[11] = -m[11];
 
     m[12] += x * m[15];
@@ -511,6 +521,10 @@ UINT32 MacOpenGLUtils_GetImageSizeInBytes(UINT32 Width, UINT32 Height, UINT32 De
     d = Depth;
 
     for (Level = 0; Level < LevelCount; Level++) {
+#if defined(COD2_X64)
+        if (!w && !h && !d)
+            break;
+#endif
         D3DFORMAT fmt_val = *f;
         UINT32 ew, eh, ed;
         UINT32 levelSize;

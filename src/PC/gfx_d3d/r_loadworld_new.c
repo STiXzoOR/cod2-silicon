@@ -66,6 +66,10 @@ static int R_ValidateLumpRaw(const byte *header, const byte *fileBase, int fileS
 
     if (lumpFileOfs + lumpSize > fileSize)
         R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
+#if defined(COD2_X64)
+    if (lumpFileOfs <= 3)
+        R_Error(1, "LoadMap: funny lump offset in %s", s_world.name);
+#else
     if (lumpFileOfs <= 3) {
         Com_Printf("DBG funny lump offset: byteOfs=0x%x size=%d fileOfs=%d\n", lumpByteOfs, lumpSize, lumpFileOfs);
 
@@ -79,6 +83,13 @@ static int R_ValidateLumpRaw(const byte *header, const byte *fileBase, int fileS
         R_Error(1, "LoadMap: funny lump offset in %s", s_world.name);
     }
 
+#endif
+
+#if defined(COD2_X64)
+    count = lumpSize / elemSize;
+    if (lumpSize < 0 || count * elemSize != lumpSize)
+        R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
+#else
     if (lumpSize < 0)
         count = (lumpSize + elemSize - 1) / elemSize;
     else
@@ -86,6 +97,8 @@ static int R_ValidateLumpRaw(const byte *header, const byte *fileBase, int fileS
 
     if (count * elemSize != lumpSize)
         R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
+
+#endif
 
     if (countOut)
         *countOut = count;
@@ -239,7 +252,11 @@ GfxWorld *R_LoadWorldInternal(const char *name)
                 for (j = nextLmap; j < origLmapCount; j++) {
                     if (lmapVertCount[j] == 0)
                         continue;
+#if defined(COD2_X64)
+                    int strength = (int)((uint32_t)lmapVertCount[j] + (uint32_t)lmapVertCount[lmapIndex] + (uint32_t)coupling[lmapIndex][j]);
+#else
                     int strength = lmapVertCount[j] + lmapVertCount[lmapIndex] + coupling[lmapIndex][j];
+#endif
                     if (strength < 0)
                         strength = 0x7FFFFFFF;
                     coupling[lmapIndex][j] = strength;
@@ -259,6 +276,12 @@ GfxWorld *R_LoadWorldInternal(const char *name)
 
     wideCount = 1;
     highCount = 1;
+#if defined(COD2_X64)
+    if ((*(dvar_t **)imp_r_optimizeLightmaps)->current.enabled) {
+        wideCount = ((const vidConfig_t *)imp_vidConfig)->maxTextureSize / 1024;
+        highCount = wideCount;
+    }
+#endif
 
     int newLmapCount;
     int usedCount;
@@ -310,6 +333,23 @@ GfxWorld *R_LoadWorldInternal(const char *name)
                 int firstLmap = -1;
                 int bestOther = LIGHTMAP_NONE;
 
+#if defined(COD2_X64)
+                /* Mac 0xe55dc considers every unused pair and emits its
+                   second member first, retaining the first as the merge pivot. */
+                for (i = 0; i < origLmapCount; i++) {
+                    if (used[i])
+                        continue;
+                    for (j = i + 1; j < origLmapCount; j++) {
+                        if (used[j])
+                            continue;
+                        if (bestOther == LIGHTMAP_NONE ||
+                            coupling[i][j] > coupling[bestOther][firstLmap]) {
+                            bestOther = i;
+                            firstLmap = j;
+                        }
+                    }
+                }
+#else
                 for (i = 0; i < origLmapCount; i++) {
                     if (!used[i]) {
                         firstLmap = i;
@@ -326,6 +366,7 @@ GfxWorld *R_LoadWorldInternal(const char *name)
                         bestOther = j;
                     }
                 }
+#endif
 
                 reorder[usedCount] = firstLmap;
                 reorder[usedCount + 1] = bestOther;
@@ -338,7 +379,11 @@ GfxWorld *R_LoadWorldInternal(const char *name)
                     for (int filled = 2; filled < targetSize; filled++) {
 
                         for (k = 0; k < origLmapCount; k++) {
+#if defined(COD2_X64)
+                            coupling[bestOther][k] = (int)((uint32_t)coupling[bestOther][k] + (uint32_t)coupling[firstLmap][k]);
+#else
                             coupling[bestOther][k] += coupling[firstLmap][k];
+#endif
                             coupling[k][bestOther] = coupling[bestOther][k];
                         }
 
@@ -636,9 +681,13 @@ GfxWorld *R_LoadWorldInternal(const char *name)
     R_PrintLoadProgress("occluders");
     {
 
+#if defined(COD2_X64)
+        CALL_LOADER_EAX(R_LoadOccluders, &load);
+#else
         int occLumpSize = *(int *)(header + LUMP_OFS_OCCLUDERS);
         if (occLumpSize > 0)
             CALL_LOADER_EAX(R_LoadOccluders, &load);
+#endif
     }
 
     R_PrintLoadProgress("occluder indices");

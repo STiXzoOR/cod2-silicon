@@ -177,7 +177,11 @@ int G_GetClientScore(int clientNum);
 int G_GetClientArchiveTime(int clientNum);
 void G_SetClientArchiveTime(int clientNum, int time);
 clientState_t *G_GetClientState(int clientNum);
+#if defined(COD2_X64)
+void *Hunk_AllocXAnimServer(int size);
+#else
 int *Hunk_AllocXAnimServer(int size);
+#endif
 void CalculateRanks(void);
 void G_LogPrintf(const char *fmt, ...);
 void ExitLevel(void);

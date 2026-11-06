@@ -22,6 +22,9 @@ extern long int unztell(unzFile file);
 
 int fs_numServerIwds = 0x0;
 int fs_packFiles = 0x0;
+#if defined(COD2_X64)
+const char *fs_defaultConfigName = "default_mp.cfg";
+#endif
 
 extern char fs_gamedir[256];
 extern const dvar_t *fs_debug;
@@ -753,7 +756,11 @@ int FS_Seek(fileHandle_t f, long int offset, int origin)
 
 #if COD2_APPLE_SDK
     byte scratch[4096];
+#if defined(COD2_X64)
+    if (skip <= 0)
+#else
     if (skip < 0)
+#endif
         return -1;
     while (skip > 0) {
         int chunk = skip > (int)sizeof(scratch) ? (int)sizeof(scratch) : skip;
@@ -880,11 +887,15 @@ static __attribute_regparm__(3) void FS_BuildOSPath_Internal(const char *base, c
     while (*src) {
         char c = *src++;
 
+#if defined(COD2_X64)
+        if (c == '\\' || c == '/') {
+#else
         if (c == '\\' || c == '/'
 #    ifndef _WIN32
             || c == ':'
 #    endif
         ) {
+#endif
             if (sawSlash) {
                 continue;
             }
@@ -943,7 +954,11 @@ const char *FS_ShortOSFilePath(const char *filename)
         }
 
         base = search->dir->gamedir;
+#if defined(COD2_X64)
+        FS_BuildOSPath_Internal(search->dir->path, base, filename, netpath, 0);
+#else
         FS_BuildOSPath_Internal(base, NULL, filename, netpath, 0);
+#endif
         handle = FS_FileOpen(netpath, "rb");
         if (handle) {
             FS_FileClose(handle);
@@ -1012,7 +1027,13 @@ void FS_DisplayPath(qboolean bLanguageCull)
                     break;
                 }
             }
+#if defined(COD2_X64)
+            if (fs_numServerIwds) {
+                Com_Printf(onPureList ? "    on the pure list\n" : "    not on the pure list\n");
+            }
+#else
             Com_Printf(onPureList ? "    on the pure list\n" : "    not on the pure list\n");
+#endif
         } else if (s->dir) {
             Com_Printf("%s/%s\n", s->dir->path, s->dir->gamedir);
             if (s->bLocalized) {
@@ -1023,7 +1044,11 @@ void FS_DisplayPath(qboolean bLanguageCull)
 
     Com_Printf("\nFile Handles:\n");
     for (i = 1; i < 74; i++) {
+#if defined(COD2_X64)
+        if (fsh[i].handleFiles.file.o) {
+#else
         if (*(int *)&fsh[i].handleFiles) {
+#endif
             Com_Printf("handle %i: %s\n", i, fsh[i].name);
         }
     }
@@ -1548,7 +1573,11 @@ static void FS_PrintSupportedLanguagesOnce(void)
     }
 
     Com_Printf("Supported languages are:\n");
+#if defined(COD2_X64)
+    for (iSuppLang = 0; iSuppLang < 15; iSuppLang++) {
+#else
     for (iSuppLang = 0; iSuppLang < 14; iSuppLang++) {
+#endif
         Com_Printf("    %s\n", SEH_GetLanguageName(iSuppLang));
     }
     bLanguagesListed = 1;
@@ -1598,9 +1627,16 @@ static pack_t *FS_LoadIwd(const char *iwdfile, const char *basename, const char 
 
     len = 0;
     for (i = 0; i < gi.number_entry; i++) {
+#if defined(COD2_X64)
+        if (unzGetCurrentFileInfo(uf, &file_info, filename_inzip, sizeof(filename_inzip), 0, 0, 0, 0)) {
+            break;
+        }
+        len += strlen(filename_inzip) + 1;
+#else
         if (!unzGetCurrentFileInfo(uf, &file_info, filename_inzip, sizeof(filename_inzip), 0, 0, 0, 0)) {
             len += strlen(filename_inzip) + 1;
         }
+#endif
         unzGoToNextFile(uf);
     }
 
@@ -2398,12 +2434,23 @@ int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode)
         break;
     }
 
+#if defined(COD2_X64)
+    if (f) {
+        fileHandleData_t *entry = &fsh[*f];
+        if (*f) {
+            entry->fileSize = len;
+            entry->streamed = 0;
+        }
+        entry->handleSync = sync;
+    }
+#else
     if (f && *f) {
         fileHandleData_t *entry = &fsh[*f];
         entry->fileSize = len;
         entry->streamed = 0;
         entry->handleSync = sync;
     }
+#endif
 
     return len;
 }
@@ -2546,7 +2593,11 @@ void FS_Restart(int checksumFeed)
     SEH_UpdateLanguageInfo();
     FS_SetRestrictions();
 
+#if defined(COD2_X64)
+    if (FS_ReadFile(fs_defaultConfigName, NULL) <= 0) {
+#else
     if (FS_ReadFile("default_mp.cfg", NULL) <= 0) {
+#endif
         if (lastValidBase[0]) {
             FS_PureServerSetLoadedIwds("", "");
             Dvar_SetString(fs_basepath, lastValidBase);
@@ -2558,7 +2609,11 @@ void FS_Restart(int checksumFeed)
             Com_Error(1, "Invalid game folder\n");
         }
 
+#if defined(COD2_X64)
+        Com_Error(0, "Couldn't load %s.  Make sure Call of Duty is run from the correct folder.", fs_defaultConfigName);
+#else
         Com_Error(0, "Couldn't load %s.  Make sure Call of Duty is run from the correct folder.", "default_mp.cfg");
+#endif
     }
 
     if (I_stricmp(fs_gameDirVar->current.string, lastValidGame) && !Com_SafeMode()) {
@@ -2607,9 +2662,18 @@ void FS_InitFilesystem(void)
     SEH_UpdateLanguageInfo();
     FS_SetRestrictions();
 
+#if defined(COD2_X64)
+    if (FS_ReadFile("default_localize_mp.cfg", NULL) > 0)
+        fs_defaultConfigName = "default_localize_mp.cfg";
+    else if (FS_ReadFile("default_mp.cfg", NULL) > 0)
+        fs_defaultConfigName = "default_mp.cfg";
+    else
+        Com_Error(0, "Couldn't load %s.  Make sure Call of Duty is run from the correct folder.", "default_localize_mp.cfg");
+#else
     if (FS_ReadFile("default_mp.cfg", NULL) <= 0) {
         Com_Error(0, "Couldn't load %s.  Make sure Call of Duty is run from the correct folder.", "default_mp.cfg");
     }
+#endif
 
     I_strncpyz(lastValidBase, fs_basepath->current.string, sizeof(lastValidBase));
     I_strncpyz(lastValidGame, fs_gameDirVar->current.string, sizeof(lastValidGame));

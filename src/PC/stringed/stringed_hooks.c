@@ -296,7 +296,11 @@ void SEH_UpdateLanguageInfo(void)
 
 static int SEH_IsJapaneseDoubleByte(unsigned char lead, unsigned char follow)
 {
+#if defined(COD2_X64)
+    if ((unsigned char)(lead + 0x50) <= 0x18) {
+#else
     if ((unsigned char)(lead + 0x50) <= 0x18 || (unsigned char)(lead + 0x20) <= 0x0F) {
+#endif
         if (follow > 0xA0 && follow != 0xFF) {
             return 1;
         }
@@ -336,10 +340,18 @@ static int SEH_IsChineseDoubleByte(unsigned char lead, unsigned char follow)
 
 static int SEH_IsThaiDoubleByte(unsigned char hi, unsigned char lo)
 {
+#if defined(COD2_X64)
+    if ((unsigned char)(hi + 0x7F) > 0x7D) {
+#else
     if ((unsigned char)(hi + 0x5F) > 0x56) {
+#endif
         return 0;
     }
+#if defined(COD2_X64)
+    if (lo <= 0x40) {
+#else
     if (lo <= 0xA0) {
+#endif
         return 0;
     }
     if ((unsigned char)(lo + 1) == 0) {
@@ -398,7 +410,11 @@ unsigned int SEH_ReadCharFromString(const char **ppsText, qboolean *pbIsTrailing
             if (SEH_IsThaiDoubleByte((unsigned char)(uiLetter >> 8), (unsigned char)uiLetter)) {
                 *ppsText = p + 2;
                 if (pbIsTrailingPunctuation) {
+#if defined(COD2_X64)
+                    *pbIsTrailingPunctuation = ((unsigned int)(uiLetter - 0x8141) <= 0x0C);
+#else
                     *pbIsTrailingPunctuation = ((unsigned int)(uiLetter - 0xA1A1) <= 0x0C);
+#endif
                 }
                 return uiLetter;
             }
@@ -543,6 +559,11 @@ const char *SEH_LocalizeTextMessage(const char *pszInputBuffer, const char *pszM
                     pszTranslated = SE_GetString(szTokenBuf);
                 }
 
+#if defined(COD2_X64)
+                if (!pszTranslated && szTokenBuf[0] != '\0' && szTokenBuf[1] == '\0') {
+                    pszTranslated = szTokenBuf;
+                }
+#endif
                 if (!pszTranslated) {
                     if (!loc_translate || !loc_translate->current.enabled ||
                         szTokenBuf[0] == '\0') {

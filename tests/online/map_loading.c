@@ -56,6 +56,9 @@ void CL_ServerStatusResponse(netadr_t a, msg_t *m) { (void)a; (void)m; }
 void CL_ServersResponsePacket(netadr_t a, msg_t *m) { (void)a; (void)m; }
 const char *SEH_LocalizeTextMessage(const char *a, const char *b, int c) { (void)b; (void)c; return a; }
 void CL_RequestAuthorization(void) {}
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+void CL_Disconnect(void) {}
+#endif
 void CL_SetupForNewServerMap(const char *map, const char *game)
 { assert(!strcmp(map,"mp_carentan") && !strcmp(game,"dm")); ++setups; }
 void UI_DrawConnectScreen(void) { assert(connection.state == CA_CONNECTED); ++screens; }

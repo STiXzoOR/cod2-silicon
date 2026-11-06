@@ -252,7 +252,11 @@ void CL_ParseGamestate(msg_t *msg)
         if (cmd == 2) {
 
             i = MSG_ReadShort(msg);
+#if defined(COD2_X64)
+            if ((unsigned int)i > 0x7ff) {
+#else
             if (i > 0x7ff) {
+#endif
                 Com_Error(1, "\x15"
                              "configstring > MAX_CONFIGSTRINGS");
             }
@@ -274,7 +278,11 @@ void CL_ParseGamestate(msg_t *msg)
         } else if (cmd == 3) {
 
             newnum = MSG_ReadBits(msg, 10);
+#if defined(COD2_X64)
+            if ((unsigned int)newnum > 0x3ff) {
+#else
             if (newnum > 0x3ff) {
+#endif
                 Com_Error(1, "\x15"
                              "Baseline number out of range: %i",
                           newnum);
@@ -287,8 +295,13 @@ void CL_ParseGamestate(msg_t *msg)
                                 newnum);
         } else {
 
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "CL_ParseGamestate: bad command byte (GameState may exceed MAX_GAMESTATE_CHARS, or packet may exceed MAX_MSGLEN)");
+#else
             Com_Error(1, "\x15"
                          "CL_ParseGamestate: bad command byte");
+#endif
         }
     }
 
@@ -394,6 +407,10 @@ void CL_ParseDownload(msg_t *msg)
         CL_AddReliableCommand("stopdl");
         clc->downloadName[0] = 0;
         clc->downloadTempName[0] = 0;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        cls.downloadName[0] = 0;
+        cls.downloadTempName[0] = 0;
+#endif
         ZN10LargeLocalD1Ev(&data_large_local);
         return;
     }
@@ -404,6 +421,10 @@ void CL_ParseDownload(msg_t *msg)
         CL_AddReliableCommand("stopdl");
         clc->downloadName[0] = 0;
         clc->downloadTempName[0] = 0;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        cls.downloadName[0] = 0;
+        cls.downloadTempName[0] = 0;
+#endif
         ZN10LargeLocalD1Ev(&data_large_local);
         return;
     }
@@ -435,6 +456,10 @@ void CL_ParseDownload(msg_t *msg)
         FS_Write(data, size, ((clientConnection_t *)*clc_ptr)->download);
     }
 
+#if defined(COD2_X64)
+    /* Mac 1.3 0x1d5b27 updates UI progress before queuing nextdl. */
+    ((LegacyHacks *)*download_ui_ptr)->cl_downloadCount += size;
+#endif
     clc = (clientConnection_t *)*clc_ptr;
     CL_AddReliableCommand(va("nextdl %d", clc->downloadBlock));
 
@@ -442,7 +467,11 @@ void CL_ParseDownload(msg_t *msg)
 
     clc->downloadCount += size;
 
+#if defined(COD2_X64)
+    /* The connection retains the native UDP download counter. */
+#else
     *(int *)((*download_ui_ptr) + 0x14) = clc->downloadCount;
+#endif
 
     if (size != 0) {
         ZN10LargeLocalD1Ev(&data_large_local);
@@ -460,6 +489,10 @@ void CL_ParseDownload(msg_t *msg)
 
     clc->downloadName[0] = 0;
     clc->downloadTempName[0] = 0;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    cls.downloadName[0] = 0;
+    cls.downloadTempName[0] = 0;
+#endif
 
     *(byte *)((*download_ui_ptr) + 0x1c) = 0;
 
@@ -505,7 +538,11 @@ void CL_ParseWWWDownload(msg_t *msg)
     }
 #    endif
 
+#if defined(COD2_X64)
+    /* External redirects return before the UI update at Mac 0x1d58a1. */
+#else
     *(int *)((*download_ui_ptr) + 0x10) = cls.downloadSize;
+#endif
 
     if (cls.downloadFlags & 0x2) {
         Sys_OpenURL(cls.downloadName, 1);
@@ -516,6 +553,9 @@ void CL_ParseWWWDownload(msg_t *msg)
         return;
     }
 
+#if defined(COD2_X64)
+    ((LegacyHacks *)*download_ui_ptr)->cl_downloadSize = cls.downloadSize;
+#endif
     Com_DPrintf("Server redirected download: %s\n", cls.downloadName);
     cls.wwwDlInProgress = 1;
     CL_AddReliableCommand("wwwdl ack");
@@ -588,6 +628,10 @@ void CL_WWWDownload(void)
 
         cls.downloadTempName[0] = '\0';
         cls.downloadName[0] = '\0';
+#if defined(COD2_X64)
+        ((clientConnection_t *)*clc_ptr)->downloadName[0] = '\0';
+        ((clientConnection_t *)*clc_ptr)->downloadTempName[0] = '\0';
+#endif
         *(char *)((*download_ui_ptr) + 0x1c) = 0;
 
         if (cls.wwwDlDisconnected)
@@ -740,7 +784,11 @@ void CL_ParseSnapshot(msg_t *msg)
     }
 
     if (CL_ShowNetValue() > 1) {
+#if defined(COD2_X64)
+        Com_Printf("%3i:%s\n", msg->readcount - 1, "packet entities");
+#else
         Com_Printf("%3i:%s\n", msg->readcount - 1, "packet clients");
+#endif
     }
 
     cla = (clientActive_t *)cl;
@@ -1018,7 +1066,11 @@ void CL_ParseSnapshot(msg_t *msg)
         for (i = 1; i < 0x21; i++) {
             int idx = (parseEntNum - i) & 0x1f;
             outPacket_t *slot = &cla->outPackets[idx];
+#if defined(COD2_X64)
+            if (slot->p_serverTime <= snapTime) {
+#else
             if (slot->p_serverTime >= snapTime) {
+#endif
                 cla->snap.ping = *(int *)(*(byte **)cls_ptr + 0x118) - slot->p_realtime;
 #if defined(COD2_X64)
                 pingMeasured = 1;
@@ -1105,7 +1157,13 @@ void CL_ParseServerMessage(msg_t *msg)
         }
 
         if (CL_ShowNetValue() > 1) {
+#if defined(COD2_X64)
+            /* MSG_ReadByte returns -1 on truncation. Mac's preceding table
+               word is null; do not depend on native linker placement. */
+            if (cmd < 0 || svc_strings[cmd] == NULL) {
+#else
             if (svc_strings[cmd] == NULL) {
+#endif
                 Com_Printf("%3i:BAD CMD %i\n", msgCompressed.readcount - 1, cmd);
             } else {
                 Com_Printf("%3i:%s\n", msgCompressed.readcount - 1, svc_strings[cmd]);

@@ -314,6 +314,23 @@ void R_LoadWorld(const char *name, int *checksum)
                             ((GfxWorld *)worldData)->sunParse.ambientColor[1]);
 #endif
 
+#if defined(COD2_X64)
+    /* Mac 0xe1e36 refreshes each lighting dvar reset value from its current value. */
+    dvar = R_DvarFromImport(imp_r_lightTweakAmbient);
+    refimport->Dvar_ChangeResetValue(dvar, dvar->current);
+    dvar = R_DvarFromImport(imp_r_lightTweakDiffuseFraction);
+    refimport->Dvar_ChangeResetValue(dvar, dvar->current);
+    dvar = R_DvarFromImport(imp_r_lightTweakSunLight);
+    refimport->Dvar_ChangeResetValue(dvar, dvar->current);
+    dvar = R_DvarFromImport(imp_r_lightTweakAmbientColor);
+    refimport->Dvar_ChangeResetValue(dvar, dvar->current);
+    dvar = R_DvarFromImport(imp_r_lightTweakSunColor);
+    refimport->Dvar_ChangeResetValue(dvar, dvar->current);
+    dvar = R_DvarFromImport(imp_r_lightTweakSunDiffuseColor);
+    refimport->Dvar_ChangeResetValue(dvar, dvar->current);
+    dvar = R_DvarFromImport(imp_r_lightTweakSunDirection);
+    refimport->Dvar_ChangeResetValue(dvar, dvar->current);
+#else
     dvar = R_DvarFromImport(imp_r_lightTweakAmbient);
     refimport->Dvar_SetModified(dvar);
     dvar = R_DvarFromImport(imp_r_lightTweakDiffuseFraction);
@@ -328,6 +345,7 @@ void R_LoadWorld(const char *name, int *checksum)
     refimport->Dvar_SetModified(dvar);
     dvar = R_DvarFromImport(imp_r_lightTweakSunDirection);
     refimport->Dvar_SetModified(dvar);
+#endif
 
     R_UpdateLightsFromDvars();
     R_FlushSun();

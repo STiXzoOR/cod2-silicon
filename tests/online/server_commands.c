@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if defined(COD2_X64)
+#include <strings.h>
+#endif
 
 static clientConnection_t connection;
 static clientActive_t active;
@@ -51,6 +54,18 @@ void Cmd_TokenizeString2(const char *text, int flags)
 void Cmd_TokenizeString(const char *s) { Cmd_TokenizeString2(s, 3); }
 char *Cmd_Argv(int n) { return n < argc ? argv[n] : ""; }
 int Cmd_Argc(void) { return argc; }
+#if defined(COD2_X64)
+int I_stricmp(const char *a, const char *b) { return strcasecmp(a, b); }
+const char *va(const char *fmt, ...)
+{
+    static char buffer[1024];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+    return buffer;
+}
+#endif
 const char *SEH_SafeTranslateString(const char *s) { return s; }
 const char *UI_ReplaceConversionString(const char *s, const char *r) { (void)s; return r; }
 void CL_ConfigstringModified(void)

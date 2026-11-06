@@ -131,7 +131,11 @@ void Com_BeginParseSession(const char *filename)
                 Com_Printf("%i. %s\n", i, g_parse[0].parseInfo[i].parseFile);
             }
         }
+#if defined(COD2_X64)
+        Com_Error(0, "\025Com_BeginParseSession: session overflow trying to parse %s\n", filename);
+#else
         Com_Error(0, "Com_BeginParseSession: session overflow trying to parse %s\n", filename);
+#endif
     }
 
     g_parse[0].parseInfoNum++;
@@ -242,7 +246,11 @@ void Com_UngetToken(void)
         Com_ScriptError("UngetToken called twice");
     }
     pi->ungetToken = 1;
+#if defined(COD2_X64)
+    g_parse[0].tokenPos = g_parse[0].prevTokenPos;
+#else
     g_parse[0].prevTokenPos = g_parse[0].tokenPos;
+#endif
 }
 
 void Com_ParseSetMark(const char **text, com_parse_mark_t *mark)
@@ -273,7 +281,11 @@ void Com_ParseReturnToMark(const char **text, com_parse_mark_t *mark)
 
 const char *Com_GetLastTokenPos(void)
 {
+#if defined(COD2_X64)
+    return g_parse[0].tokenPos;
+#else
     return g_parse[0].prevTokenPos;
+#endif
 }
 
 static char *Com_ParseExt(const char **data_p, int allowLineBreaks)
@@ -370,7 +382,11 @@ static char *Com_ParseExt(const char **data_p, int allowLineBreaks)
 skip_whitespace:
     hasNewLines = 0;
     while (1) {
+#if defined(COD2_X64)
+        c = (signed char)*text;
+#else
         c = (unsigned char)*text;
+#endif
         if (c > ' ')
             break;
         if (!c) {
@@ -436,6 +452,9 @@ skip_whitespace:
 
         text++;
         while (1) {
+#if defined(COD2_X64)
+            int escaped = 0;
+#endif
             c = *text;
             text++;
 
@@ -444,6 +463,9 @@ skip_whitespace:
                 if (next == '"' || next == '\\') {
                     c = next;
                     text++;
+#if defined(COD2_X64)
+                    escaped = 1;
+#endif
                 }
             } else if (c == '"' || !c) {
                 if (pi->keepStringQuotes) {
@@ -455,7 +477,11 @@ skip_whitespace:
                 return pi->token;
             }
 
+#if defined(COD2_X64)
+            if (!escaped && *text == '\n')
+#else
             if (*text == '\n')
+#endif
                 pi->lines++;
 
             if (len <= 1022)
@@ -468,7 +494,12 @@ skip_whitespace:
         while (*text > ' ') {
             if (len <= 1022)
                 pi->token[len] = *text;
+#if defined(COD2_X64)
+            if (len <= 1022)
+                len++;
+#else
             len++;
+#endif
             text++;
         }
         if (len == 1024)
@@ -486,7 +517,12 @@ skip_whitespace:
         while (1) {
             if (len <= 1022)
                 pi->token[len] = *text;
+#if defined(COD2_X64)
+            if (len <= 1022)
+                len++;
+#else
             len++;
+#endif
             text++;
             c = *text;
             if ((c < '0' || c > '9') && c != '.')
@@ -496,23 +532,48 @@ skip_whitespace:
         if (c == 'e' || c == 'E') {
             if (len <= 1022)
                 pi->token[len] = c;
+#if defined(COD2_X64)
+            if (len <= 1022)
+                len++;
+#else
             len++;
+#endif
             text++;
             c = *text;
             if (c == '-' || c == '+') {
                 if (len <= 1022)
                     pi->token[len] = c;
+#if defined(COD2_X64)
+                if (len <= 1022)
+                    len++;
+#else
                 len++;
+#endif
                 text++;
                 c = *text;
             }
+#if defined(COD2_X64)
+            do {
+                if (!c)
+                    break;
+#else
             while (c >= '0' && c <= '9') {
+#endif
                 if (len <= 1022)
                     pi->token[len] = c;
+#if defined(COD2_X64)
+                if (len <= 1022)
+                    len++;
+#else
                 len++;
+#endif
                 text++;
                 c = *text;
+#if defined(COD2_X64)
+            } while (c >= '0' && c <= '9');
+#else
             }
+#endif
         }
         if (len == 1024)
             len = 0;
@@ -527,7 +588,12 @@ skip_whitespace:
         while (1) {
             if (len <= 1022)
                 pi->token[len] = *text;
+#if defined(COD2_X64)
+            if (len <= 1022)
+                len++;
+#else
             len++;
+#endif
             text++;
             c = *text;
             if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||

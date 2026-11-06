@@ -253,16 +253,23 @@ static inline __attribute__((always_inline)) unsigned int Dvar_GenerateHashValue
     return hash & 0xff;
 }
 
+#if !defined(COD2_X64)
 static Bool Dvar_IsFiniteFloat(float value)
 {
     return isfinite(value) != 0;
 }
+#endif
 
 static Bool Dvar_FloatInDomain(float value, float min, float max)
 {
+#if defined(COD2_X64)
+    return !(value < min || value > max);
+#else
     return Dvar_IsFiniteFloat(value) && min <= value && value <= max;
+#endif
 }
 
+#if !defined(COD2_X64)
 static float Dvar_FallbackFloatForDomain(float min, float max)
 {
     if (min <= 0.0f && max >= 0.0f) {
@@ -271,12 +278,17 @@ static float Dvar_FallbackFloatForDomain(float min, float max)
 
     return min;
 }
+#endif
 
 static float Dvar_ClampFloatToDomain(float value, float resetValue, float min, float max)
 {
+#if defined(COD2_X64)
+    (void)resetValue;
+#else
     if (!Dvar_IsFiniteFloat(value)) {
         value = Dvar_IsFiniteFloat(resetValue) ? resetValue : Dvar_FallbackFloatForDomain(min, max);
     }
+#endif
 
     if (value < min) {
         value = min;
@@ -291,12 +303,17 @@ static void Dvar_ClampVectorToDomainWithReset(vec_t *vector, const vec_t *reset,
 {
     int i;
 
+#if defined(COD2_X64)
+    (void)reset;
+#endif
     for (i = 0; i < components; ++i) {
+#if !defined(COD2_X64)
         float resetValue = reset ? reset[i] : Dvar_FallbackFloatForDomain(min, max);
 
         if (!Dvar_IsFiniteFloat(vector[i])) {
             vector[i] = Dvar_IsFiniteFloat(resetValue) ? resetValue : Dvar_FallbackFloatForDomain(min, max);
         }
+#endif
 
         if (vector[i] < min) {
             vector[i] = min;
@@ -480,8 +497,12 @@ static int Dvar_StringToEnumIndex(DvarLimits domain, const char *string)
         index = 0;
         for (i = 0; string[i]; ++i) {
             if (string[i] < '0' || string[i] > '9') {
+#if defined(COD2_X64)
+                return DVAR_INVALID_ENUM_INDEX;
+#else
                 index = DVAR_INVALID_ENUM_INDEX;
                 break;
+#endif
             }
 
             index = index * 10 + (string[i] - '0');
@@ -1166,6 +1187,13 @@ const char *Dvar_GetString(const char *dvarName)
         return "";
     }
 
+#if defined(COD2_X64)
+    if (var->type == DVAR_TYPE_STRING) {
+        return var->current.string;
+    }
+    /* Keep defined conversion for wrong-type calls instead of interpreting
+       scalar bits as an LP64 pointer. Mac 0x51cd6 returns the raw string slot. */
+#endif
     return Dvar_ValueToString_impl(var, var->current);
 }
 
@@ -1182,6 +1210,11 @@ float Dvar_GetFloat(const char *dvarName)
         return var->current.value;
     }
 
+#if defined(COD2_X64)
+    if (var->type == DVAR_TYPE_STRING) {
+        return (float)atof(var->current.string);
+    }
+#endif
     return (float)atof(Dvar_ValueToString_impl(var, var->current));
 }
 
@@ -1198,6 +1231,11 @@ int Dvar_GetInt(const char *dvarName)
         return var->current.integer;
     }
 
+#if defined(COD2_X64)
+    if (var->type == DVAR_TYPE_STRING) {
+        return atoi(var->current.string);
+    }
+#endif
     return atoi(Dvar_ValueToString_impl(var, var->current));
 }
 
@@ -1214,6 +1252,11 @@ Bool Dvar_GetBool(const char *dvarName)
         return var->current.enabled;
     }
 
+#if defined(COD2_X64)
+    if (var->type == DVAR_TYPE_STRING) {
+        return atoi(var->current.string) != 0;
+    }
+#endif
     return atoi(Dvar_ValueToString_impl(var, var->current)) != 0;
 }
 
@@ -1672,9 +1715,24 @@ void Dvar_SetString(const dvar_t *dvar, const char *value)
 void Dvar_SetColorFromSource(const dvar_t *dvar, float r, float g, float b, float a, DvarSetSource source)
 {
     DvarValue newValue;
+#if !defined(COD2_X64)
     DvarLimits domain;
+#endif
     char string[128];
 
+#if defined(COD2_X64)
+    if (dvar->type == DVAR_TYPE_COLOR) {
+        newValue.color[0] = Dvar_FloatToColorComponent(r);
+        newValue.color[1] = Dvar_FloatToColorComponent(g);
+        newValue.color[2] = Dvar_FloatToColorComponent(b);
+        newValue.color[3] = Dvar_FloatToColorComponent(a);
+    } else {
+        Com_sprintf(string, sizeof(string), "%g %g %g %g", r, g, b, a);
+        /* Mac 0x53a66 passes this string slot directly. Preserve the native
+           defined fallback for a non-string, non-color destination. */
+        newValue = Dvar_StringToValueReg(dvar->type, dvar->domain, string);
+    }
+#else
     Com_sprintf(string, sizeof(string), "%g %g %g %g", r, g, b, a);
 
     if (dvar->type == DVAR_TYPE_COLOR) {
@@ -1683,6 +1741,7 @@ void Dvar_SetColorFromSource(const dvar_t *dvar, float r, float g, float b, floa
     } else {
         newValue = Dvar_StringToValueReg(dvar->type, dvar->domain, string);
     }
+#endif
 
     Dvar_SetVariantReg(dvar, newValue, source);
 }
@@ -2060,6 +2119,9 @@ qboolean Com_LoadDvarsFromBuffer(const char **dvarnames, int numDvars, const cha
             wasRead[i] = 1;
             ++numRead;
         }
+#if defined(COD2_X64)
+        Com_SkipRestOfLine(&buffer);
+#endif
     }
 
     Com_EndParseSession();
@@ -2068,7 +2130,11 @@ qboolean Com_LoadDvarsFromBuffer(const char **dvarnames, int numDvars, const cha
         return 1;
     }
 
+#if defined(COD2_X64)
+    Com_Printf("^1ERROR: the following dvars were not specified in file '%s'\n", filename);
+#else
     Com_Printf("^1ERROR: the following dvars were not specified in file '%s'", filename);
+#endif
     for (i = 0; i < numDvars; ++i) {
         if (!wasRead[i]) {
             Com_Printf("^1  %s\n", dvarnames[i]);
@@ -2124,7 +2190,13 @@ void Dvar_SetInt(const dvar_t *dvar, int value)
 void Dvar_SetVec2(const dvar_t *dvar, float x, float y)
 {
     DvarValue newValue;
+#if defined(COD2_X64)
+    /* The retail type-4 path reads four words from two supplied components.
+       Keep its dispatch and supplied values, with defined zero padding. */
+    vec4_t vector = { 0, 0, 0, 0 };
+#else
     vec2_t vector;
+#endif
     char string[64];
 
     if (dvar->type == DVAR_TYPE_VEC4) {
@@ -2235,7 +2307,13 @@ static inline __attribute__((always_inline)) void Dvar_SetFloat_inl(const dvar_t
 static inline __attribute__((always_inline)) void Dvar_SetVec2_inl(const dvar_t *dvar, float x, float y)
 {
     DvarValue newValue;
+#if defined(COD2_X64)
+    /* The retail type-4 path reads four words from two supplied components.
+       Keep its dispatch and supplied values, with defined zero padding. */
+    vec4_t vector = { 0, 0, 0, 0 };
+#else
     vec2_t vector;
+#endif
     char string[64];
 
     if (dvar->type == DVAR_TYPE_VEC4) {
@@ -2412,7 +2490,12 @@ void Dvar_SetColorByName(const char *dvarName, int r, int g, int b, int a)
 
     var = Dvar_FindVar_inl(dvarName);
     if (!var) {
+#if defined(COD2_X64)
+        /* Supply the doubles required by %g rather than reading absent varargs. */
+        Dvar_RegisterString_inl(dvarName, va("%g %g %g %g", (double)red, (double)green, (double)blue, (double)alpha), 0x4000);
+#else
         Dvar_RegisterString_inl(dvarName, va("%g %g %g %g", red, green, blue, alpha), 0x4000);
+#endif
         return;
     }
 

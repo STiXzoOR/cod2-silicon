@@ -152,6 +152,11 @@ COD2_ASSERT_FIELD(itemInfo_t, ammoPickupSound,  0x20);
 COD2_ASSERT_FIELD(centity_t, localClientNum, 0x220);
 COD2_ASSERT_FIELD(centity_t, bMuzzleFlash,   0x1e2);
 
+#if defined(COD2_X64)
+/* Mac 0x33c5e0; the tentative legacy declaration above stays zero-filled. */
+static const int iSlotPreferenceOrder[2] = {1, 2};
+#endif
+
 static void __attribute_regparm__(3) CG_PlayADSAnim(int unusedWeapon, XAnimTree *pAnimTree, int animIndex);
 static inline __attribute__((always_inline)) qboolean CG_CanCycleWeapon(cg_t **cgOut, int *serverTimeOut);
 int CG_WeaponDObjHandle(int weaponNum);
@@ -332,8 +337,13 @@ void CG_Weapons_SetToDefault(int weaponNum, DObjModel_s *dobjModels)
 
     CG_SetWeaponDefToDefaultWeapon(weaponNum);
     weapDef = (WeaponDef *)BG_GetWeaponDef(weaponNum);
+#if defined(COD2_X64)
+    Com_Printf("WARNING: gun and/or hand model file for weapon [%s] could not be found, switching to default weapon.\n",
+               weapDef->szDisplayName);
+#else
     Com_Printf("WARNING: gun and/or hand model file for weapon [%s] could not be found\n",
                weapDef->szDisplayName);
+#endif
 
     if (!weapDef->szGunXModel || !weapDef->szGunXModel[0] ||
         !weapDef->szHandXModel || !weapDef->szHandXModel[0])
@@ -1264,6 +1274,226 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
     }
 }
 
+#if defined(COD2_X64)
+extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
+extern float GetLeanFraction(float fraction);
+extern float AngleNormalize360(float angle);
+
+/* Mac 0x1da2f8: position is built in the previous viewmodel frame, then the
+ * weapon-angle calculation updates that frame and its persistent recoil state. */
+void CG_AddViewWeapon(playerState_t *ps)
+{
+    playerState_t *predicted;
+    playerEntity_t *pe;
+    WeaponDef *weapDef;
+    GfxEntity hand;
+    weaponState_t ws;
+    vec3_t target, offset, forward, right, up, weaponAngles;
+    vec3_t baseAxis[3], weaponAxis[3];
+    const float *move;
+    const float *stance;
+    float swayScale, fraction, minSpeed, moveRate, step, delta;
+    float zoom;
+    int remaining, elapsed, weaponIndex, i;
+    qboolean drawGun;
+
+    if (ps->pm_type == 4 || ps->pm_type == 5 || cg->renderingThirdPerson)
+        return;
+
+    drawGun = !cg->cubemapShot && cg_drawGun->current.enabled && !CG_GetWeapReticleZoom(&zoom);
+    if (cg->testGun || (ps->eFlags & 0x300))
+        return;
+
+    weaponIndex = BG_GetViewmodelWeaponIndex(ps);
+#    ifdef VM_TRACE
+    {
+        static int n;
+        if (n++ < 40 || (n % 120) == 0)
+            fprintf(stderr, "[vm] AddViewWeapon: pm_type=%d 3rd=%d eFlags=0x%x drawGun=%d weaponIdx=%d cubemap=%d\n",
+                    ps->pm_type, cg->renderingThirdPerson, ps->eFlags, drawGun, weaponIndex, cg->cubemapShot);
+        fflush(stderr);
+    }
+#    endif
+    if (weaponIndex <= 0) {
+        CG_ResetViewWeaponOffsets(cg);
+        return;
+    }
+
+    predicted = &cg->predictedPlayerState;
+    weapDef = BG_GetWeaponDef(BG_GetViewmodelWeaponIndex(predicted));
+    swayScale = 1.0f;
+    remaining = cg->shellshock.startTime + cg->shellshock.duration - cg->time;
+    if (remaining > 0) {
+        int fadeTime = cg->shellshock.parms->view.fadeTime;
+        fraction = remaining < fadeTime ? (float)remaining / (float)fadeTime : 1.0f;
+        swayScale = (((fraction * -2.0f + 3.0f) * fraction) * fraction)
+                    * (weapDef->swayShellShockScale - 1.0f) + 1.0f;
+    }
+    BG_CalculateWeaponPosition_Sway(predicted, cg->swayViewAngles, cg->swayOffset,
+                                    cg->swayAngles, swayScale, cg->frametime);
+
+    pe = &cg->playerEntity;
+    if (BG_IsAimDownSightWeapon(BG_GetViewmodelWeaponIndex(predicted))) {
+        if (predicted->fWeaponPosFrac == 1.0f)
+            pe->bPositionToADS = 0;
+        else if (predicted->fWeaponPosFrac == 0.0f)
+            pe->bPositionToADS = 1;
+        pe->fLastWeaponPosFrac = predicted->fWeaponPosFrac;
+    }
+
+    memset(&hand, 0, sizeof(hand));
+    if (predicted->leanf != 0.0f && predicted->fWeaponPosFrac < 1.0f) {
+        vec3_t leanAngles = {0.0f, 0.0f, 0.0f};
+        float lean = GetLeanFraction(predicted->leanf);
+        leanAngles[2] += lean * -2.0f;
+        fraction = ((1.0f - predicted->fWeaponPosFrac) * lean) * 1.6f;
+        AngleVectors(leanAngles, NULL, right, NULL);
+        CG_Madd(hand.origin, right, fraction);
+    }
+
+    weapDef = BG_GetWeaponDef(BG_GetViewmodelWeaponIndex(predicted));
+    if (predicted->eFlags & 8) {
+        minSpeed = weapDef->fProneMoveMinSpeed + CG_DvarValue(imp_cg_gun_move_minspeed);
+        move = weapDef->vProneMove;
+    } else if (predicted->eFlags & 4) {
+        minSpeed = weapDef->fDuckedMoveMinSpeed + CG_DvarValue(imp_cg_gun_move_minspeed);
+        move = weapDef->vDuckedMove;
+    } else {
+        minSpeed = weapDef->fStandMoveMinSpeed + CG_DvarValue(imp_cg_gun_move_minspeed);
+        move = weapDef->vStandMove;
+    }
+    if (cg->xyspeed > minSpeed && predicted->weaponstate != 5) {
+        fraction = (cg->xyspeed - minSpeed) / ((float)predicted->speed - minSpeed);
+        if (!(fraction > 0.0f))
+            fraction = 0.0f;
+        else if (!(fraction < 1.0f))
+            fraction = 1.0f;
+        for (i = 0; i < 3; i++)
+            target[i] = fraction * move[i];
+        target[0] += fraction * CG_DvarValue(imp_cg_gun_move_f);
+        target[1] += fraction * CG_DvarValue(imp_cg_gun_move_r);
+        target[2] += fraction * CG_DvarValue(imp_cg_gun_move_u);
+    } else {
+        target[0] = target[1] = target[2] = 0.0f;
+    }
+    if (predicted->viewHeightTarget == 40 || predicted->viewHeightTarget == 11) {
+        stance = predicted->viewHeightTarget == 40 ? weapDef->vDuckedOfs : weapDef->vProneOfs;
+        for (i = 0; i < 3; i++)
+            target[i] += stance[i];
+        target[0] += CG_DvarValue(imp_cg_gun_ofs_f);
+        target[1] += CG_DvarValue(imp_cg_gun_ofs_r);
+        target[2] += CG_DvarValue(imp_cg_gun_ofs_u);
+    }
+    for (i = 0; i < 3; i++) {
+        float current = pe->vLastMoveOrg[i];
+        if (current == target[i])
+            continue;
+        moveRate = predicted->viewHeightCurrent == 11.0f ? weapDef->fPosProneMoveRate : weapDef->fPosMoveRate;
+        delta = (((float)cg->frametime * 0.001f) * (target[i] - current))
+                * (moveRate + CG_DvarValue(imp_cg_gun_move_rate));
+        if (target[i] > current) {
+            step = ((float)cg->frametime * 0.001f) * 0.1f;
+            current += step > delta ? step : delta;
+            pe->vLastMoveOrg[i] = current > target[i] ? target[i] : current;
+        } else {
+            step = ((float)cg->frametime * 0.001f) * -0.1f;
+            current += step < delta ? step : delta;
+            pe->vLastMoveOrg[i] = current > target[i] ? current : target[i];
+        }
+    }
+    fraction = predicted->fWeaponPosFrac;
+    for (i = 0; i < 3; i++) {
+        if (fraction == 0.0f)
+            offset[i] = pe->vLastMoveOrg[i] + 0.0f;
+        else if (fraction < 0.5f)
+            offset[i] = (fraction * -2.0f + 1.0f) * pe->vLastMoveOrg[i] + 0.0f;
+        else
+            offset[i] = 0.0f;
+        pe->vPositionLastOrg[i] = offset[i];
+        offset[i] += hand.origin[i];
+    }
+    offset[1] -= cg->swayOffset[1];
+    offset[2] += cg->swayOffset[2];
+
+    AngleVectors(cg->viewModelAngles, forward, right, up);
+    for (i = 0; i < 3; i++)
+        hand.origin[i] = cg->viewModelOrigin[i];
+    CG_Madd(hand.origin, forward, offset[0]);
+    CG_Madd(hand.origin, right, -offset[1]);
+    CG_Madd(hand.origin, up, offset[2]);
+
+    elapsed = cg->time - cg->landTime;
+    if (elapsed <= 149)
+        hand.origin[2] += ((0.25f * cg->landChange) * (float)elapsed) / 150.0f;
+    else if (elapsed <= 449)
+        hand.origin[2] += ((0.25f * cg->landChange) * (float)(450 - elapsed)) / 300.0f;
+
+    if (BG_IsAimDownSightWeapon(BG_GetViewmodelWeaponIndex(predicted))) {
+        fraction = predicted->fWeaponPosFrac;
+        if (fraction != 0.0f) {
+            cg->gunXOfs = (hand.origin[0] - cg->refdef.vieworg[0]) * fraction;
+            cg->gunYOfs = (hand.origin[1] - cg->refdef.vieworg[1]) * fraction;
+            cg->gunZOfs = (hand.origin[2] - cg->refdef.vieworg[2]) * fraction;
+        } else {
+            cg->gunXOfs = cg->gunYOfs = cg->gunZOfs = 0.0f;
+        }
+    } else {
+        cg->gunXOfs = cg->gunYOfs = cg->gunZOfs = 0.0f;
+    }
+    CG_Madd(hand.origin, cg->viewModelAxis[0], CG_DvarValue(imp_cg_gun_x));
+    CG_Madd(hand.origin, cg->viewModelAxis[1], CG_DvarValue(imp_cg_gun_y));
+    CG_Madd(hand.origin, cg->viewModelAxis[2], CG_DvarValue(imp_cg_gun_z));
+    AnglesToAxis(cg->viewModelAngles, baseAxis);
+
+    ws.ps = ps;
+    ws.xyspeed = cg->xyspeed;
+    ws.frametime = (float)cg->frametime * 0.001f;
+    for (i = 0; i < 3; i++)
+        ws.vLastMoveAng[i] = pe->vLastMoveAng[i];
+    ws.fLastIdleFactor = pe->fLastIdleFactor;
+    ws.time = cg->time - ps->deltaTime;
+    ws.damageTime = cg->damageTime ? cg->damageTime - ps->deltaTime : 0;
+    ws.v_dmg_pitch = cg->v_dmg_pitch;
+    ws.v_dmg_roll = cg->v_dmg_roll;
+    for (i = 0; i < 3; i++) {
+        ws.vGunOffset[i] = cg->vGunOffset[i];
+        ws.vGunSpeed[i] = cg->vGunSpeed[i];
+        ws.swayAngles[i] = cg->swayAngles[i];
+    }
+    ws.weapIdleTime = &cg->weapIdleTime;
+    BG_CalculateWeaponAngles(&ws, weaponAngles);
+    AnglesToAxis(weaponAngles, weaponAxis);
+    MatrixMultiply(weaponAxis, baseAxis, hand.axis);
+
+    weapDef = BG_GetWeaponDef(weaponIndex);
+    if (BG_IsAimDownSightWeapon(ps->weapon) && ps->fWeaponPosFrac != 0.0f && !weapDef->overlayReticle) {
+        AxisToAngles(hand.axis, weaponAngles);
+        cg->gunPitch = AngleNormalize360(weaponAngles[0]);
+        cg->gunYaw = AngleNormalize360(weaponAngles[1]);
+    } else {
+        cg->gunPitch = cg->refdefViewAngles[0];
+        cg->gunYaw = cg->refdefViewAngles[1];
+    }
+    for (i = 0; i < 3; i++) {
+        pe->vLastMoveAng[i] = ws.vLastMoveAng[i];
+        cg->vGunOffset[i] = ws.vGunOffset[i];
+        cg->vGunSpeed[i] = ws.vGunSpeed[i];
+    }
+    pe->fLastIdleFactor = ws.fLastIdleFactor;
+    hand.renderFxFlags = 0xc;
+    {
+        static int vwTrace;
+        if (vwTrace < 8) {
+            if (COD2_DEBUG_ENV("DBGSPAM"))
+                fprintf(stderr, "[viewmodel] AddViewWeapon: drawGun=%d weaponIdx=%d pm_type=%d eFlags=0x%x thirdPerson=%d org=(%.0f,%.0f,%.0f)\n",
+                        drawGun, weaponIndex, ps->pm_type, ps->eFlags,
+                        cg->renderingThirdPerson, cg->refdef.vieworg[0], cg->refdef.vieworg[1], cg->refdef.vieworg[2]);
+            ++vwTrace;
+        }
+    }
+    CG_AddPlayerWeapon(&hand, ps, &cg->predictedPlayerEntity, drawGun);
+}
+#else
 void CG_AddViewWeapon(playerState_t *ps)
 {
     playerState_t *playerState;
@@ -1373,6 +1603,7 @@ void CG_AddViewWeapon(playerState_t *ps)
     }
     CG_AddPlayerWeapon(&hand, playerState, &cg->predictedPlayerEntity, drawGun);
 }
+#endif
 
 void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_t *reflected, int surfType, int event)
 {
@@ -1825,8 +2056,12 @@ void CG_CycleWeap(qboolean bNext, qboolean bIgnoreEmpty)
         if (CG_SelectFirstWeaponNotInSlot(bNext, bIgnoreEmpty))
             return;
 
+#if defined(COD2_X64)
+        CG_SelectWeaponFromSlots(bNext, bIgnoreEmpty);
+#else
         if (CG_SelectWeaponFromSlots(bNext, bIgnoreEmpty))
             return;
+#endif
     } else {
         if (CG_SelectNextNonSlotWeapon(bNext, bIgnoreEmpty))
             return;
@@ -1834,8 +2069,12 @@ void CG_CycleWeap(qboolean bNext, qboolean bIgnoreEmpty)
         if (CG_SelectWeaponFromSlots(bNext, bIgnoreEmpty))
             return;
 
+#if defined(COD2_X64)
+        CG_SelectFirstWeaponNotInSlot(bNext, bIgnoreEmpty);
+#else
         if (CG_SelectFirstWeaponNotInSlot(bNext, bIgnoreEmpty))
             return;
+#endif
     }
 
     currentWeapon = cg->weaponSelect;
@@ -1995,6 +2234,10 @@ void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
 
     flags = ((playerState_t *)psBytes)->pm_flags;
     adsIn = (flags & 0x40) && !(flags & 0x10);
+#if defined(COD2_X64)
+    if (ps->weaponstate == 5 && ps->weaponTime > weapDef->iPositionReloadTransTime)
+        adsIn = 0;
+#endif
     if (weapDef->bADSPositionInfo)
         CG_PlayADSAnim(weaponIndex, pAnimTree, adsIn ? 0x15 : 0x16);
 
@@ -2016,7 +2259,11 @@ void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
 
         clip = BG_ClipForWeapon(weaponIndex);
         activeAnim = *(int *)(((char *)psBytes + offsetof(playerState_t, ammoclip[0])) + clip * 4) ? 1 : 2;
+#if defined(COD2_X64)
+    } else if ((unsigned int)maskedAnim <= 0x13) {
+#else
     } else if (maskedAnim <= 0x13) {
+#endif
         activeAnim = weapAnimToXAnim[maskedAnim];
     } else {
         activeAnim = 1;
@@ -2024,7 +2271,11 @@ void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
 
     CG_SetWeaponXAnimWeights(pAnimTree, &cg_weaponsArray[weaponIndex], activeAnim);
 
+#if defined(COD2_X64)
+    if ((unsigned int)maskedAnim > 0x13)
+#else
     if (maskedAnim > 0x13)
+#endif
         Com_Printf("CG_WeaponRunXModelAnims: Unknown weapon animation %i\n", maskedAnim);
 
     weapInfo->iPrevAnim = weapAnim;
@@ -2055,8 +2306,13 @@ static inline __attribute__((always_inline)) void CG_PlayViewWeaponNotetrackSoun
     if (notifyCount <= 0)
         return;
 
+#if defined(COD2_X64)
+    snd_alias_list_t *aliasList = 0;
+#endif
     for (i = 0; i < notifyCount; i++) {
+#if !defined(COD2_X64)
         snd_alias_list_t *aliasList = 0;
+#endif
         const char *name = notifyList[i].name;
 
         if (!stricmp(name, "noteTrackSoundA"))

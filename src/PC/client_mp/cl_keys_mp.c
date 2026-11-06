@@ -2,6 +2,9 @@
 #include "imports.h"
 #include <ctype.h>
 #include <string.h>
+#if defined(COD2_X64)
+#include "www_download.h"
+#endif
 
 extern keyname_t keynames[99];
 extern keyname_t keynames_localized[100];
@@ -49,6 +52,9 @@ extern void Cmd_ForEach(void (*callback)(const char *));
 extern void Dvar_ForEach(void (*callback)(const char *));
 extern void SCR_UpdateScreen(void);
 extern Bool CL_AllLocalClientsDisconnected(void);
+#if defined(COD2_X64)
+extern int CL_ClearStaticDownload(void);
+#endif
 
 extern FontHandle UI_GetFontHandle(int fontEnum, float scale);
 extern void CL_DrawTextWithCursor(const char *text, int maxChars, Font_s *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor);
@@ -225,8 +231,13 @@ compute_visible: {
             scroll = edit->scroll;
             goto compute_visible;
         }
+#if defined(COD2_X64)
+        if (0.0f >= lineWidth)
+            goto compute_visible;
+#else
         if (cursorWidth < lineWidth)
             goto compute_drawWidth;
+#endif
     } else if (diff >= lineWidth) {
         edit->scroll++;
         scroll = edit->scroll;
@@ -819,12 +830,19 @@ void Field_KeyDownEvent(field_t *edit, int key)
         if (edit->cursor > 0)
             edit->cursor--;
 
+#if defined(COD2_X64)
+        if (Key_IsDown(K_CTRL)) {
+            while (edit->cursor > 0 && Field_IsWordChar(edit->buffer[edit->cursor - 1]))
+                edit->cursor--;
+        }
+#else
         if (Key_IsDown(K_CTRL)) {
             while (edit->cursor > 0 && Field_IsWordChar(edit->buffer[edit->cursor - 1]))
                 edit->cursor--;
             while (edit->cursor > 0 && !Field_IsWordChar(edit->buffer[edit->cursor - 1]))
                 edit->cursor--;
         }
+#endif
 
         if (edit->cursor < edit->scroll)
             edit->scroll = edit->cursor;
@@ -956,10 +974,15 @@ static void Console_ExecuteLine(void)
 
 static void Console_HistoryUp(void)
 {
+#if defined(COD2_X64)
+    if (nextHistoryLine - historyLine <= 31 && historyLine > 0)
+        historyLine--;
+#else
     if (nextHistoryLine - historyLine > 31 || historyLine <= 0)
         return;
 
     historyLine--;
+#endif
     memcpy(&g_consoleField,
            &historyEditLines[Console_HistoryIndex(historyLine)],
            sizeof(g_consoleField));
@@ -978,6 +1001,108 @@ static void Console_HistoryDown(void)
     Field_AdjustScroll(&g_consoleField);
 }
 
+#if defined(COD2_X64)
+static void Console_CompleteArgument(const char *argument, const char *completed)
+{
+    if (completed[0]) {
+        size_t length = strlen(g_consoleField.buffer);
+        size_t argumentLength = strlen(argument);
+        while (length && isspace((unsigned char)g_consoleField.buffer[length - 1]))
+            --length;
+        /* Valid tokenized input has room for its last argument. */
+        if (length >= argumentLength) {
+            size_t offset = length - argumentLength;
+            I_strncpyz(g_consoleField.buffer + offset, completed,
+                       (int)(sizeof(g_consoleField.buffer) - offset));
+        }
+    }
+}
+
+static void Console_CompleteCommand(void)
+{
+    const char *command = g_consoleField.buffer;
+    field_t original;
+    size_t commandMatchLength;
+    const char *tail;
+    if (*command == '/' || *command == '\\')
+        ++command;
+    if (I_strnicmp(command, "pb_", 3) == 0) {
+        char completed[256];
+        strncpy(completed, command, 255);
+        completed[255] = 0;
+        /* The native PunkBuster null adapter has no completion backend. */
+        Com_sprintf(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\\%s", completed);
+        Console_UpdateFieldCursor();
+        return;
+    }
+    completionString = Con_TokenizeInput();
+    matchCount = 0;
+    shortestMatch[0] = 0;
+    if (!completionString[0])
+        return;
+    Cmd_ForEach(FindMatches);
+    commandMatchLength = strlen(shortestMatch);
+    Dvar_ForEach(FindMatches);
+    if (!matchCount)
+        return;
+    original = g_consoleField;
+    if (matchCount == 1 || (hasExactMatch && Con_AnySpaceAfterCommand())) {
+        int commandMatchUnchanged = commandMatchLength == strlen(shortestMatch);
+        Com_sprintf(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\\%s", shortestMatch);
+        if (Cmd_Argc() == 1) {
+            I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), " ");
+        } else {
+            tail = strstr(original.buffer, completionString);
+            if (tail)
+                I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), tail + strlen(completionString));
+            else
+                keyConcatArgs();
+            if (Cmd_Argc() == 2) {
+                extern dvar_t *Dvar_FindVar(const char *);
+                extern void Con_AutoCompleteFromList(const char **, int, const char *, char *, int);
+                extern const char **Cmd_GetAutoCompleteFileList(const char *, int *, int);
+                extern void FS_FreeFileList(const char **, int);
+                extern void Com_StripExtension(const char *, char *);
+                const char *name = Con_TokenizeInput();
+                const char *argument = Cmd_Argv(1);
+                char completed[256];
+                if (argument[0]) {
+                    if (!commandMatchUnchanged) {
+                        dvar_t *dvar = Dvar_FindVar(name);
+                        if (dvar && dvar->type == 6) {
+                            Con_AutoCompleteFromList(dvar->domain.enumeration.strings,
+                                dvar->domain.enumeration.stringCount, argument, completed, sizeof(completed));
+                            Console_CompleteArgument(argument, completed);
+                        }
+                    } else {
+                        int count;
+                        const char **files = Cmd_GetAutoCompleteFileList(name, &count, 10);
+                        if (count) {
+                            Con_AutoCompleteFromList(files, count, argument, completed, sizeof(completed));
+                            FS_FreeFileList(files, 10);
+                            Com_StripExtension(completed, completed);
+                            Console_CompleteArgument(argument, completed);
+                        }
+                    }
+                }
+            }
+        }
+        Console_UpdateFieldCursor();
+        return;
+    }
+    Com_sprintf(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\\%s", shortestMatch);
+    g_consoleField.cursor = (int)strlen(g_consoleField.buffer);
+    tail = strstr(original.buffer, completionString);
+    if (tail)
+        I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), tail + strlen(completionString));
+    else
+        keyConcatArgs();
+    Field_AdjustScroll(&g_consoleField);
+    Com_Printf("]%s\n", g_consoleField.buffer);
+    Cmd_ForEach(PrintMatches);
+    Dvar_ForEach(PrintMatches);
+}
+#else
 static void Console_CompleteCommand(void)
 {
     completionString = Con_TokenizeInput();
@@ -1008,9 +1133,15 @@ static void Console_CompleteCommand(void)
     Dvar_ForEach(PrintMatches);
 }
 
+#endif
+
 void Console_Key(int key)
 {
+#if defined(COD2_X64)
+    if (key == 0x6c && Key_IsDown(K_CTRL)) {
+#else
     if (tolower(key) == 0x6c && Key_IsDown(K_CTRL)) {
+#endif
         Cbuf_AddText("clear\n");
         return;
     }
@@ -1039,15 +1170,29 @@ void Console_Key(int key)
 
     if (key == K_PGUP || key == K_MWHEELUP) {
         Con_PageUp();
+#if defined(COD2_X64)
+        if (key == K_MWHEELUP && Key_IsDown(K_CTRL)) {
+            Con_PageUp();
+            Con_PageUp();
+        }
+#else
         if (key == K_MWHEELUP && Key_IsDown(K_CTRL))
             Con_PageUp();
+#endif
         return;
     }
 
     if (key == K_PGDN || key == K_MWHEELDOWN) {
         Con_PageDown();
+#if defined(COD2_X64)
+        if (key == K_MWHEELDOWN && Key_IsDown(K_CTRL)) {
+            Con_PageDown();
+            Con_PageDown();
+        }
+#else
         if (key == K_MWHEELDOWN && Key_IsDown(K_CTRL))
             Con_PageDown();
+#endif
         return;
     }
 
@@ -1129,7 +1274,11 @@ static inline __attribute__((always_inline)) void CL_ExecuteKeyBinding(int key, 
         return;
 
     binding = keys[key].binding;
+#if defined(COD2_X64)
+    if (!binding) {
+#else
     if (!binding || !binding[0]) {
+#endif
         if (down && key >= 0xc8) {
             Com_Printf("%s is unbound, use controls menu to set.\n", Key_KeynumToString(key, 0));
         }
@@ -1152,6 +1301,54 @@ static inline __attribute__((always_inline)) void CL_ExecuteKeyBinding(int key, 
     }
 }
 
+#if defined(COD2_X64)
+static inline __attribute__((always_inline)) void CL_HandleEscapeKey(qboolean down)
+{
+    clientActive_t *cl = *(clientActive_t **)imp_cl;
+    clientConnection_t *clc;
+    LegacyHacks *hacks;
+
+    if (!down)
+        return;
+    if (cl->keyCatchers & 0x10) {
+        Message_Key(K_ESCAPE);
+        return;
+    }
+    if (cl->keyCatchers & 8) {
+        UI_KeyEvent(K_ESCAPE, down);
+        return;
+    }
+    clc = *(clientConnection_t **)imp_clc;
+    hacks = *(LegacyHacks **)imp_legacyHacks;
+    switch (clc->state) {
+    case CA_CINEMATIC:
+    case CA_LOGO:
+        CL_StopLogoOrCinematic();
+        return;
+    case CA_CONNECTING:
+    case CA_CHALLENGING:
+    case CA_CONNECTED:
+        CL_Disconnect();
+        if (CL_DvarEnabledFromImport(imp_com_sv_running))
+            (*(LegacyHacks **)imp_legacyHacks)->sv_killserver = 1;
+        return;
+    case CA_ACTIVE:
+        UI_SetActiveMenu(clc->demoplaying || hacks->cl_serverloadwaiting ? 1 : 2);
+        return;
+    default:
+        if (!cls.uiStarted)
+            return;
+#if COD2_IS_PATCH_13
+        if (DL_InProgress()) {
+            cls.wwwDlDisconnected = 0;
+            CL_ClearStaticDownload();
+        }
+#endif
+        UI_SetActiveMenu(1);
+        return;
+    }
+}
+#else
 static inline __attribute__((always_inline)) void CL_HandleEscapeKey(qboolean down)
 {
     clientConnection_t *clc;
@@ -1196,6 +1393,8 @@ static inline __attribute__((always_inline)) void CL_HandleEscapeKey(qboolean do
     }
 }
 
+#endif
+
 static inline __attribute__((always_inline)) void CL_HandleConsoleToggleKey(qboolean down)
 {
     clientActive_t *cl;
@@ -1210,9 +1409,17 @@ static inline __attribute__((always_inline)) void CL_HandleConsoleToggleKey(qboo
         return;
     }
 
+#if defined(COD2_X64)
+    if (keys[K_SHIFT].down) {
+#else
     if (keys['`'].binding) {
+#endif
         if (Con_IsActive()) {
+#if defined(COD2_X64)
+            Con_ToggleConsoleOutput();
+#else
             Con_ToggleConsole_f();
+#endif
         } else {
             Con_ToggleConsole_f();
             Con_ToggleConsoleOutput();
@@ -1222,6 +1429,111 @@ static inline __attribute__((always_inline)) void CL_HandleConsoleToggleKey(qboo
     }
 }
 
+#if defined(COD2_X64)
+void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
+{
+    clientActive_t *cl;
+    clientConnection_t *clc;
+    qkey_t *keyState;
+    int keyCatchers;
+    qboolean repeated;
+    qboolean bypassUi;
+    const char *binding;
+
+    /* SDL and gamepad events use the native 256-entry key array. */
+    if (key < 0 || key >= 256)
+        return;
+    cl = *(clientActive_t **)imp_cl;
+    clc = *(clientConnection_t **)imp_clc;
+    keyState = &keys[key];
+    keyState->down = down;
+    repeated = 0;
+    if (down) {
+        if (++keyState->repeats == 1)
+            ++*anykeydown;
+        else
+            repeated = 1;
+    } else {
+        keyState->repeats = 0;
+        if (*anykeydown > 0)
+            --*anykeydown;
+    }
+#if COD2_FEATURE_GAMEPAD
+    if (down && !repeated && (key < 0xcf || key > 0xde))
+        CL_Gamepad_NoteKbmActive();
+#endif
+
+    if (key != '`' && key != '~' && !(cl->keyCatchers & 1)) {
+        binding = keyState->binding;
+        if (binding && I_stricmp(binding, "devgui") == 0 && down && !repeated) {
+            Cbuf_AddText(binding);
+            return;
+        }
+    }
+    if (repeated) {
+        keyCatchers = cl->keyCatchers;
+        if (!(keyCatchers & 0x11) &&
+            (!(keyCatchers & 8) ||
+             (key != K_UPARROW && key != K_DOWNARROW && key != K_PGDN && key != K_PGUP)))
+            return;
+        if (key == '`' || key == '~' || key == K_ESCAPE)
+            return;
+    }
+    if (key == '`' || key == '~') {
+        CL_HandleConsoleToggleKey(down);
+        return;
+    }
+
+    if (down && (key <= 0x7f || key == 0xc8) &&
+        (clc->demoplaying || clc->state == CA_CINEMATIC || clc->state == CA_LOGO) &&
+        !cl->keyCatchers) {
+        Dvar_SetString(*(const dvar_t **)imp_nextdemo, "");
+        CL_HandleEscapeKey(down);
+        return;
+    }
+    if (key == K_ESCAPE && down) {
+        CL_HandleEscapeKey(down);
+        return;
+    }
+    if (cl->cgameInitialized && CG_KeyInterceptEvent(key, down))
+        return;
+    if (!down) {
+        CL_ExecuteKeyBinding(key, 0, time);
+        if ((cl->keyCatchers & 8) && cls.uiStarted)
+            UI_KeyEvent(key, 0);
+        return;
+    }
+
+    keyCatchers = cl->keyCatchers;
+    if (keyCatchers & 1) {
+        Console_Key(key);
+        return;
+    }
+    bypassUi = 0;
+    if (keyCatchers & 8) {
+        qboolean bypassMouseInput = CL_DvarEnabledFromImport(imp_cl_bypassMouseInput);
+        qboolean uiWantsKey = bypassMouseInput ? UI_checkKeyExec(key) : 1;
+        if (bypassMouseInput && key >= 0xc8 && key <= 0xca) {
+            bypassUi = 1;
+        } else if (!uiWantsKey) {
+            bypassUi = 1;
+        }
+        if (!bypassUi) {
+            UI_KeyEvent(key, down);
+            return;
+        }
+    }
+    if (keyCatchers & 0x10) {
+        Message_Key(key);
+        return;
+    }
+    if (clc->state == CA_DISCONNECTED) {
+        Console_Key(key);
+        return;
+    }
+    CL_ExecuteKeyBinding(key, 1, time);
+}
+#else
 void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
 {
     clientActive_t *cl;
@@ -1321,6 +1633,7 @@ void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
 
     CL_ExecuteKeyBinding(key, 1, time);
 }
+#endif
 
 void Key_ClearStates(void)
 {

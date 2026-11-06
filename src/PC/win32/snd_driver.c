@@ -139,7 +139,12 @@ extern const dvar_t *mss_3d_provider;
 extern const dvar_t *mss_q3fs;
 static struct MssLocal milesGlob;
 
+#if defined(COD2_X64)
+/* Mac's live table is part of milesGlob and is cleared on driver shutdown. */
+#define handle_2D_004a3ad4 milesGlob.handle_2D
+#else
 static HSAMPLE handle_2D_004a3ad4[8];
+#endif
 #if defined(COD2_X64)
 /* 2D channels are numbered from 45 (after the 3D and stream channels);
    1.3 indexes this table at channel - 45 (Mac SND_Stop2DChannel reads
@@ -519,7 +524,11 @@ void SND_Get2DChannelSaveInfo(int index, snd_save_2D_sample_t *info)
 
     handle = SND_2D_HANDLE(index);
     AIL_sample_ms_position(handle, &length, &offset);
+#if defined(COD2_X64)
+    info->fraction = (float)(unsigned int)offset / (float)(unsigned int)length;
+#else
     info->fraction = (float)(unsigned long int)offset / (float)(unsigned long int)length;
+#endif
     sndGlob = &g_snd;
     info->pitch = sndGlob->chaninfo[index].pitch;
     AIL_sample_volume_pan(handle, &info->volume, &info->pan);
@@ -543,7 +552,11 @@ void SND_Get3DChannelSaveInfo(int index, snd_save_3D_sample_t *info)
     handle = milesGlob.handle_3D[index];
     sampleOffset = AIL_3D_sample_offset(handle);
     sampleLength = AIL_3D_sample_length(handle);
+#if defined(COD2_X64)
+    info->fraction = (float)(unsigned int)sampleOffset / (float)(unsigned int)sampleLength;
+#else
     info->fraction = (float)sampleOffset / (float)sampleLength;
+#endif
     sndGlob = &g_snd;
     chaninfo = &sndGlob->chaninfo[index];
     info->pitch = chaninfo->pitch;
@@ -567,7 +580,11 @@ void SND_GetStreamChannelSaveInfo(int index, snd_save_stream_t *info)
 
     handle = milesGlob.handle_stream[index - 0x20];
     AIL_stream_ms_position(handle, &length, &offset);
+#if defined(COD2_X64)
+    info->fraction = (float)(unsigned int)offset / (float)(unsigned int)length;
+#else
     info->fraction = (float)(unsigned long int)offset / (float)(unsigned long int)length;
+#endif
     sndGlob = &g_snd;
     info->rate = (int)floorf((float)AIL_stream_playback_rate(handle) / sndGlob->timescale + 0.5f);
     info->basevolume = sndGlob->chaninfo[index].basevolume;
@@ -1224,7 +1241,11 @@ int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
     AIL_set_sample_adpcm_block_size(handle, (int)((MssSound *)sound)->info.block_size);
 
     sndGlob = SND_GLOB_PTR;
+#if defined(COD2_X64)
+    AIL_set_sample_playback_rate(handle, (int)floorf((float)(unsigned int)((MssSound *)sound)->info.rate * pitch * sndGlob->timescale + 0.5f));
+#else
     AIL_set_sample_playback_rate(handle, (int)floorf((float)(int)((MssSound *)sound)->info.rate * pitch * sndGlob->timescale + 0.5f));
+#endif
 
     aliasFlags = pAlias0->flags;
     volTable = (float *)sndGlob->channelvol;
@@ -1341,18 +1362,33 @@ int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
 
     playbackRate = AIL_3D_sample_playback_rate(handle);
     sndGlob = SND_GLOB_PTR;
+#if defined(COD2_X64)
+    playbackRate = (int)floorf((float)playbackRate * pitch * sndGlob->timescale + 0.5f);
+    AIL_set_3D_sample_playback_rate(handle, playbackRate);
+#else
     AIL_set_3D_sample_playback_rate(handle, (int)floorf((float)playbackRate * pitch * sndGlob->timescale + 0.5f));
+#endif
     SND_Set3DPosition(index, org);
 
     AIL_set_3D_sample_loop_count(handle, ((byte)(pAlias0->flags) & 1) ^ 1);
     AIL_set_3D_sample_effects_level(handle, sndGlob->effect->wetlevel);
 
+#if defined(COD2_X64)
+    {
+        /* Mac 0x57a14-0x57a3b wraps samples * 1000 before converting to
+           float, then divides by the adjusted rate held in edi. */
+        unsigned int sampleMillis = (unsigned int)((MssSound *)sound)->info.samples * 1000u;
+        float totalFloat = (float)sampleMillis * g_snd.timescale / (float)playbackRate + 0.5f;
+        total_msec = (int)floorf(totalFloat);
+    }
+#else
     soundSamples = (int)((MssSound *)sound)->info.samples;
     {
         int val = soundSamples * 5 * 5 * 5 * 8;
         float totalFloat = (float)val * g_snd.timescale / (float)playbackRate + 0.5f;
         total_msec = (int)floorf(totalFloat);
     }
+#endif
 
     if (total_msec <= timeshift) {
         return 0;
@@ -1371,7 +1407,11 @@ int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
     }
 
     {
+#if defined(COD2_X64)
+        unsigned int datasize = (unsigned int)((MssSound *)sound)->info.data_len;
+#else
         int datasize = (int)((MssSound *)sound)->info.data_len;
+#endif
         float bytePos = (float)datasize * fraction + 0.5f;
         AIL_set_3D_sample_offset(handle, (int)floorf(bytePos));
     }

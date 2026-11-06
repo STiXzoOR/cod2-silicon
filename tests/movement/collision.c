@@ -65,6 +65,61 @@ static void jump(void)
     puts("PASS jump: flat ladder reflection and 1802 slowdown timer cases");
 }
 
+#if defined(COD2_X64)
+static unsigned int friction_bits(float value)
+{
+    unsigned int bits;
+    memcpy(&bits, &value, sizeof(bits));
+    return bits;
+}
+
+static void friction_flags(void)
+{
+    static dvar_t slowdown = {.current.enabled = 1};
+    jump_slowdownEnable = &slowdown;
+    /* Literal Mac 1.3 observations: 0x200 bypasses the real jump helper,
+       including its timer > 1800 clear-state side effect. */
+    const struct {
+        int flags, timer;
+        unsigned int velocity, flagsAfter, jumpOrigin;
+    } cases[] = {
+        {0x80200, 1700, 0x433b7df4, 0x80200, 0x42150000},
+        {0x80200, 1801, 0x433b7df4, 0x80200, 0x42150000},
+        {0x200, 1700, 0x433b7df4, 0x200, 0x42150000},
+        {PMF_JUMPING, 1700, 0x4329199a, PMF_JUMPING, 0x42150000},
+        {PMF_JUMPING, 1801, 0x4335a3d7, 0, 0},
+    };
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        playerState_t ps; pmove_t pm; pml_t pml; init(&ps, &pm, &pml, 60);
+        ps.velocity[0] = 190; ps.pm_flags = cases[i].flags;
+        ps.pm_time = cases[i].timer; ps.jumpOriginZ = 37.25f;
+        pml.frametime = 0.008f;
+        PM_Friction(&ps, &pml);
+        assert(friction_bits(ps.velocity[0]) == cases[i].velocity);
+        assert(ps.velocity[1] == 0 && ps.velocity[2] == 0);
+        assert((unsigned int)ps.pm_flags == cases[i].flagsAfter);
+        assert(ps.pm_time == cases[i].timer);
+        assert(friction_bits(ps.jumpOriginZ) == cases[i].jumpOrigin);
+    }
+    puts("PASS friction: combined flags bypass jump scaling and clear-state side effects");
+}
+
+static void friction_type4(void)
+{
+    /* Initialized root states only: type-4 walking caller reachability is unproved. */
+    playerState_t ps; pmove_t pm; pml_t pml; init(&ps, &pm, &pml, 60);
+    ps.pm_type = 4; ps.pm_time = 1700; ps.jumpOriginZ = 37.25f;
+    ps.velocity[0] = 190; ps.velocity[2] = -20;
+    pml.frametime = 0.016f;
+    PM_Friction(&ps, &pml);
+    assert(friction_bits(ps.velocity[0]) == 0x431e147b);
+    assert(ps.velocity[1] == 0);
+    assert(friction_bits(ps.velocity[2]) == 0xc1851eb8);
+    assert(ps.pm_flags == 0 && ps.pm_time == 1700 && ps.jumpOriginZ == 37.25f);
+    puts("PASS friction: initialized type-4 walking combines ground and flight drag");
+}
+#endif
+
 static void landing(void)
 {
     testWorld = 3;
@@ -217,6 +272,10 @@ int main(int argc, char **argv)
     if (all || !strcmp(argv[1], "step")) step_drop();
     if (all || !strcmp(argv[1], "mantle")) mantle();
     if (all || !strcmp(argv[1], "jump")) jump();
+#if defined(COD2_X64)
+    if (all || !strcmp(argv[1], "friction")) friction_flags();
+    if (all || !strcmp(argv[1], "friction_type4")) friction_type4();
+#endif
     if (all || !strcmp(argv[1], "landing")) landing();
     if (all || !strcmp(argv[1], "frames")) frames();
     if (all || !strcmp(argv[1], "backward")) backward_frames();

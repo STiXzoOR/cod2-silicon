@@ -799,7 +799,11 @@ static inline __attribute__((always_inline)) byte *CG_FindSmokeGrenadeEntityStat
         if (gametime < eventTime)
             continue;
 
+#if defined(COD2_X64)
+        if (bestTime == 0 || eventTime < bestTime) {
+#else
         if (!found || eventTime < bestTime) {
+#endif
             bestIndex = i;
             bestTime = eventTime;
             found = 1;
@@ -888,7 +892,7 @@ int CG_PlayEntitySoundAlias(int entitynum, snd_alias_list_t *aliasList)
     const vec_t *origin;
 
 #if defined(COD2_X64)
-    origin = cg_entities[entitynum].lerpOrigin;
+    origin = cg_entities[entitynum].nextState.pos.trBase;
 #else
     origin = (const vec_t *)((const byte *)cg_entities + entitynum * 548 + 0x108);
 #endif
@@ -927,6 +931,20 @@ static void CG_RegisterSounds(void)
 #if defined(COD2_X64)
     cgs->media.noAmmoSound = Com_FindSoundAlias("player_out_of_ammo");
     cgs->media.landDmgSound = Com_FindSoundAlias("land_damage");
+    CG_RegisterNativeSurfaceSounds(cgs->media.grenadeBounceSound, "grenade_bounce");
+    CG_RegisterNativeSurfaceSounds(cgs->media.grenadeExplodeSound, "grenade_explode");
+    CG_RegisterNativeSurfaceSounds(cgs->media.rocketExplodeSound, "rocket_explode");
+    CG_RegisterNativeSurfaceSounds(cgs->media.bulletHitSmallSound, "bullet_small");
+    CG_RegisterNativeSurfaceSounds(cgs->media.shotgunHitSound, "bulletspray_small");
+    CG_RegisterNativeSurfaceSounds(cgs->media.bulletHitLargeSound, "bullet_large");
+    CG_RegisterNativeSurfaceSounds(cgs->media.stepRunSound, "step_run");
+    CG_RegisterNativeSurfaceSounds(cgs->media.stepRunSoundPlayer, "step_run_plr");
+    CG_RegisterNativeSurfaceSounds(cgs->media.stepWalkSound, "step_walk");
+    CG_RegisterNativeSurfaceSounds(cgs->media.stepWalkSoundPlayer, "step_walk_plr");
+    CG_RegisterNativeSurfaceSounds(cgs->media.stepProneSound, "step_prone");
+    CG_RegisterNativeSurfaceSounds(cgs->media.stepProneSoundPlayer, "step_prone_plr");
+    CG_RegisterNativeSurfaceSounds(cgs->media.landSound, "land");
+    CG_RegisterNativeSurfaceSounds(cgs->media.landSoundPlayer, "land_plr");
     cgs->media.runningEquipmentSound = Com_FindSoundAlias("gear_rattle_run");
     cgs->media.runningEquipmentSoundPlayer = Com_FindSoundAlias("gear_rattle_plr_run");
     cgs->media.walkingEquipmentSound = Com_FindSoundAlias("gear_rattle_walk");
@@ -942,20 +960,6 @@ static void CG_RegisterSounds(void)
     cgs->media.playerBreathOutSound = Com_FindSoundAlias("weap_sniper_breathout");
     cgs->media.playerBreathGaspSound = Com_FindSoundAlias("weap_sniper_breathgasp");
     cgs->media.playerSwapOffhand = Com_FindSoundAlias("weap_offhand_select");
-    CG_RegisterNativeSurfaceSounds(cgs->media.grenadeBounceSound, "grenade_bounce");
-    CG_RegisterNativeSurfaceSounds(cgs->media.grenadeExplodeSound, "grenade_explode");
-    CG_RegisterNativeSurfaceSounds(cgs->media.rocketExplodeSound, "rocket_explode");
-    CG_RegisterNativeSurfaceSounds(cgs->media.bulletHitSmallSound, "bullet_small");
-    CG_RegisterNativeSurfaceSounds(cgs->media.shotgunHitSound, "bulletspray_small");
-    CG_RegisterNativeSurfaceSounds(cgs->media.bulletHitLargeSound, "bullet_large");
-    CG_RegisterNativeSurfaceSounds(cgs->media.stepRunSound, "step_run");
-    CG_RegisterNativeSurfaceSounds(cgs->media.stepRunSoundPlayer, "step_run_plr");
-    CG_RegisterNativeSurfaceSounds(cgs->media.stepWalkSound, "step_walk");
-    CG_RegisterNativeSurfaceSounds(cgs->media.stepWalkSoundPlayer, "step_walk_plr");
-    CG_RegisterNativeSurfaceSounds(cgs->media.stepProneSound, "step_prone");
-    CG_RegisterNativeSurfaceSounds(cgs->media.stepProneSoundPlayer, "step_prone_plr");
-    CG_RegisterNativeSurfaceSounds(cgs->media.landSound, "land");
-    CG_RegisterNativeSurfaceSounds(cgs->media.landSoundPlayer, "land_plr");
 #else
     CG_RegisterSoundAlias((byte *)cgs, 0xbc84, "player_out_of_ammo");
     CG_RegisterSoundAlias((byte *)cgs, 0xbc88, "land_damage");
@@ -1130,7 +1134,9 @@ static inline __attribute__((always_inline)) void CG_RegisterDvars(void)
     cg_shock_screenBlendFadeTime = Dvar_RegisterFloat("cg_shock_screenBlendFadeTime", 1.0f, 0.00100000005f, 10.0f, 0x1080);
     cg_shock_viewKickPeriod = Dvar_RegisterFloat("cg_shock_viewKickPeriod", 0.75f, 0.00100000005f, 10.0f, 0x1080);
     cg_shock_viewKickRadius = Dvar_RegisterFloat("cg_shock_viewKickRadius", 0.0500000007f, 0.0f, 1.0f, 0x1080);
+#if !defined(COD2_X64)
     cg_shock_viewKickFadeTime = Dvar_RegisterFloat("cg_shock_viewKickFadeTime", 3.0f, 0.00100000005f, 10.0f, 0x1080);
+#endif
     cg_shock_sound = Dvar_RegisterBool_mac("cg_shock_sound", 1, 0x1080);
     cg_shock_soundFadeInTime = Dvar_RegisterFloat("cg_shock_soundFadeInTime", 0.25f, 0.00100000005f, 10.0f, 0x1080);
     cg_shock_soundFadeOutTime = Dvar_RegisterFloat("cg_shock_soundFadeOutTime", 2.5f, 0.00100000005f, 10.0f, 0x1080);
@@ -1300,9 +1306,13 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
     }
 
     CG_SetupWeaponDef();
+#if !defined(COD2_X64)
     Com_Printf("", *(int *)(scrMemTreeGlob + 525092), *(int *)(scrMemTreeGlob + 525096));
+#endif
     CGScr_LoadAnimTrees();
+#if !defined(COD2_X64)
     Com_Printf("", *(int *)(scrMemTreeGlob + 525092), *(int *)(scrMemTreeGlob + 525096));
+#endif
 
     bgs = (bgs_t *)((char *)cgBase + offsetof(cg_t, bgs.animScriptData.animations[0].name[0]));
     BG_LoadAnim();

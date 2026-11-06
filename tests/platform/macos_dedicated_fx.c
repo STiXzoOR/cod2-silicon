@@ -118,8 +118,9 @@ void Hunk_FreeTempMemory(void *data)
     Z_FreeInternal(data);
 }
 
-int FS_FOpenFileRead(const char *name, fileHandle_t *file, qboolean unique)
+int FS_FOpenFileByMode(const char *name, fileHandle_t *file, fsMode_t mode)
 {
+    assert(mode == FS_READ);
     if (stockRoot) {
         char path[2048];
         assert(!stockFile);
@@ -134,7 +135,6 @@ int FS_FOpenFileRead(const char *name, fileHandle_t *file, qboolean unique)
         return (int)size;
     }
     assert(!strcmp(name, "fx/synthetic.efx"));
-    (void)unique;
     *file = 1;
     ++fileReads;
     return sizeof(fixture) - 1;

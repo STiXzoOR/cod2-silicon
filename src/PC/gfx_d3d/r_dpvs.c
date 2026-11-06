@@ -102,7 +102,11 @@ static inline int R_CullByFrustumPlanes(DpvsPlane *planes, int planeCount, int s
 #endif
             continue;
         planes[i].u.frontal = 0xFF;
+#if defined(COD2_X64)
+        if (!(R_DpvsPlaneBoundsTest(&planes[i], bounds) > 0.0f))
+#else
         if (R_DpvsPlaneBoundsTest(&planes[i], bounds) <= 0.0f)
+#endif
             return 0;
     }
     return 1;
@@ -224,7 +228,12 @@ void R_ClearDpvsScene(void)
 
 void R_SetCullDist(float dist)
 {
+#if defined(COD2_X64)
+    /* Mac cmpnless keeps unordered inputs and clears nonpositive distances. */
+    *(float *)&dpvsConfig = dist <= 0.0f ? 0.0f : dist;
+#else
     *(float *)&dpvsConfig = dist > 0.0f ? dist : 0.0f;
+#endif
 }
 
 static int R_DPVS_REGPARM3_ABI R_FilterEntityIntoCells_r_impl(mnode_t *node, int entIndex, const vec_t *mins, const vec_t *maxs)
@@ -280,7 +289,11 @@ static int R_DPVS_REGPARM3_ABI R_FilterEntityIntoCells_r_impl(mnode_t *node, int
     GfxCell *cell = &cells[cellIndex];
 
     if (dpvsScene.modelRefCount >= 4096) {
+#if defined(COD2_X64)
+        ri.Printf(1, "^1Max xmodel refs (%i) exceeded\n", 4096);
+#else
         R_Error(1, "^1Max xmodel refs (%i) exceeded\n", 4096);
+#endif
         return node->cellIndex;
     }
 
@@ -353,7 +366,11 @@ static vec3_t *R_DPVS_REGPARM3_ABI R_ChopPortalWinding_impl(vec3_t *vertsIn, int
     }
 
     float nx = plane[0], ny = plane[1], nz = plane[2], dist = plane[3];
+#if defined(COD2_X64)
+    float distForVert[129];
+#else
     float distForVert[128];
+#endif
     byte sideForVert[129];
     int frontCount = 0, backCount = 0;
     int i;
@@ -406,7 +423,11 @@ static vec3_t *R_DPVS_REGPARM3_ABI R_ChopPortalWinding_impl(vec3_t *vertsIn, int
         int next = i + 1;
         byte nextSide = sideForVert[next];
 
+#if defined(COD2_X64)
+        if (side != 2 && nextSide != 2 && nextSide != side) {
+#else
         if (nextSide != 2 && nextSide != side) {
+#endif
             float d0 = distForVert[i];
             float frac = d0 / (d0 - distForVert[next]);
             int nextVert = next % count;
@@ -553,10 +574,14 @@ void R_FrustumClipPlanes(const D3DMATRIX *viewProjMtx, vec4_t *sidePlanes, int s
         fp[2] *= invLen;
         fp[3] *= invLen;
 
+#if defined(COD2_X64)
+        R_DpvsPlaneSetSideBytes(&frustumPlanes[planeIndex]);
+#else
         frustumPlanes[planeIndex].side[0] = (fp[0] > 0.0f) ? 0x0C : 0x00;
         frustumPlanes[planeIndex].side[1] = (fp[1] > 0.0f) ? 0x10 : 0x04;
         frustumPlanes[planeIndex].side[2] = (fp[2] > 0.0f) ? 0x14 : 0x08;
         frustumPlanes[planeIndex].u.frontal = 0xFF;
+#endif
     }
 }
 
@@ -579,7 +604,11 @@ static void R_DPVS_REGPARM3_ABI R_AddWorldSurfaceWithCull_impl(int surfIndex, co
         return;
     }
 
+#if defined(COD2_X64)
+    if ((r_portalFineCull)->current.enabled) {
+#else
     if (planeCount > 0 && (r_portalFineCull)->current.enabled) {
+#endif
         const float *bounds = (const float *)tris->bounds;
         if (!R_CullByFrustumPlanes((DpvsPlane *)planes, planeCount, stackLevel, bounds))
             return;
@@ -697,7 +726,11 @@ static void R_DPVS_REGPARM3_ABI R_AddAabbTreeSurfaces_r_impl(GfxAabbTree *tree, 
             if ((unsigned char)p->u.frontal > (unsigned)stackLevel)
 #endif
                 continue;
+#if defined(COD2_X64)
+            if (!(R_DpvsPlaneFarBoundsTest(p, tree) < 0.0f))
+#else
             if (R_DpvsPlaneFarBoundsTest(p, tree) >= 0.0f)
+#endif
                 p->u.frontal = stackLevel;
             else
                 recursionNeeded = 1;
@@ -906,12 +939,24 @@ static void R_DPVS_REGPARM3_ABI R_AddVisibleSurfacesInCell_impl(const GfxCell *c
                 }
             } else {
 
+#if defined(COD2_X64)
+                if (dpvsG.drawSmodels) {
+                    for (i = 0; i < tree->staticModelCount; i++)
+                        R_AddStaticModelWithCull_impl(tree->staticModels[i], planes, planeCount, 0);
+                }
+#endif
                 int startSurf = tree->startSurfIndex;
                 for (i = 0; i < tree->surfaceCount; i++)
                     R_AddWorldSurfaceWithCull_impl(startSurf + i, planes, planeCount, 0);
             }
         } else if (tree) {
 
+#if defined(COD2_X64)
+            if (dpvsG.drawSmodels) {
+                for (i = 0; i < tree->staticModelCount; i++)
+                    R_AddStaticModelWithCull_impl(tree->staticModels[i], planes, planeCount, 0);
+            }
+#endif
             int startSurf = tree->startSurfIndex;
             for (i = 0; i < tree->surfaceCount; i++)
                 R_AddWorldSurfaceWithCull_impl(startSurf + i, planes, planeCount, 0);
@@ -937,7 +982,24 @@ static void R_DPVS_REGPARM3_ABI R_AddVisibleSurfacesInCell_impl(const GfxCell *c
             int entType = ent->reType;
 
             if (entType <= 1) {
+#if defined(COD2_X64)
+                if (!dpvsG.drawXmodels)
+                    goto next_modelref;
+#endif
 
+#if defined(COD2_X64)
+                if (sceneEnt2->cullState <= 1) {
+                    const float *bounds = modelRef->mins;
+                    if (!R_CullByFrustumPlanes((DpvsPlane *)planes, planeCount, 0, bounds) ||
+                        !R_CullByOccluders(0, bounds))
+                        goto next_modelref;
+                    CG_UsedDObjCalcPose(sceneEnt2->cent);
+                    R_UpdateXModelBounds(sceneEnt2, ent);
+                }
+                if (!R_CullByFrustumPlanes((DpvsPlane *)planes, planeCount, 0, sceneEnt2->curMins) ||
+                    !R_CullByOccluders(0, sceneEnt2->curMins))
+                    goto next_modelref;
+#else
                 if (dpvsG.drawXmodels) {
 
                     int lodLevel = *(int *)&ent->lighting.dx7.sunVisibility;
@@ -960,6 +1022,7 @@ static void R_DPVS_REGPARM3_ABI R_AddVisibleSurfacesInCell_impl(const GfxCell *c
                     R_UpdateXModelBounds(sceneEnt2, ent);
                 }
 
+#endif
                 CG_CullIn(sceneEnt2->cent);
                 R_SkinSceneEnt(sceneEnt2, ent);
                 sceneEnt2->cullState = 5;
@@ -967,6 +1030,10 @@ static void R_DPVS_REGPARM3_ABI R_AddVisibleSurfacesInCell_impl(const GfxCell *c
 
             } else if (entType == 3) {
 
+#if defined(COD2_X64)
+                if (!dpvsG.drawBmodels)
+                    goto next_modelref;
+#endif
                 if (dpvsG.drawBmodels) {
                     float *bounds = (float *)(modelRef->mins);
                     if (!R_CullByFrustumPlanes((DpvsPlane *)planes, planeCount, 0, bounds))
@@ -974,10 +1041,12 @@ static void R_DPVS_REGPARM3_ABI R_AddVisibleSurfacesInCell_impl(const GfxCell *c
                     if (!R_CullByOccluders(0, bounds))
                         goto next_modelref;
 
+#if !defined(COD2_X64)
                     if ((r_showPortals)->current.integer & 1) {
                         DebugGlobals *debugGlobals = &frontEndDataOut->debugGlobals;
                         R_AddDebugBox(debugGlobals, (float *)modelRef->mins, (float *)modelRef->maxs, (const float *)imp_colorLtYellow);
                     }
+#endif
                 }
                 R_AddBModelSurfaces(sceneEnt2, entIndex);
             }
@@ -1016,8 +1085,17 @@ static void R_DPVS_REGPARM3_ABI R_AddVisibleSurfacesInCell_impl(const GfxCell *c
                 int surfStart = cg->startSurfIndex;
                 int surfCount = cg->surfaceCount;
                 int j;
+#if defined(COD2_X64)
+                for (j = 0; j < surfCount; j++) {
+                    int surfIndex = surfStart + j;
+                    ((int *)rg.surfaces)[surfIndex] = viewCount;
+                    GfxSurface *surf = &rgp.world->surfaces[surfIndex];
+                    R_AddDrawSurfForSurface(surf, surf->sortGroup + 0x800);
+                }
+#else
                 for (j = 0; j < surfCount; j++)
                     R_AddWorldSurfaceDirect(surfStart + j);
+#endif
             }
         }
     }
@@ -1070,7 +1148,11 @@ static inline void R_ComputeOccluderEdgePlane(const vec3_t *v0, const vec3_t *v1
     outPlane->coeffs[2] = cross_result[2];
     Vec3Normalize(outPlane->coeffs);
     float dot = outPlane->coeffs[0] * (*v0)[0] + outPlane->coeffs[1] * (*v0)[1] + outPlane->coeffs[2] * (*v0)[2];
+#if defined(COD2_X64)
+    outPlane->coeffs[3] = 0.0f - dot;
+#else
     outPlane->coeffs[3] = -dot;
+#endif
     R_DpvsPlaneSetSideBytes(outPlane);
 }
 
@@ -1123,8 +1205,29 @@ static inline void R_FreeHullPointsBuf(vec2_t *buf)
     *freeList = buf;
 }
 
+#if defined(COD2_X64)
+static inline float R_PortalExtremumDot(const vec3_t *verts, int count, const float *plane, int maximum)
+{
+    float first = plane[0] * verts[0][0] + plane[1] * verts[0][1] + plane[2] * verts[0][2] + plane[3];
+    float last = plane[0] * verts[count - 1][0] + plane[1] * verts[count - 1][1] + plane[2] * verts[count - 1][2] + plane[3];
+    int forward = maximum ? first > last : last > first;
+    float value = forward ? first : last;
+    int step = forward ? 1 : -1;
+    for (int i = forward ? 1 : count - 2; i > 0 && i < count - 1; i += step) {
+        float next = plane[0] * verts[i][0] + plane[1] * verts[i][1] + plane[2] * verts[i][2] + plane[3];
+        if (maximum ? value > next : next > value)
+            break;
+        value = next;
+    }
+    return value;
+}
+#endif
+
 static inline float R_PortalMinDot(const vec3_t *verts, int vertCount, const float *planeCoeffs)
 {
+#if defined(COD2_X64)
+    return R_PortalExtremumDot(verts, vertCount, planeCoeffs, 0);
+#else
     float first = planeCoeffs[0] * verts[0][0] + planeCoeffs[1] * verts[0][1] + planeCoeffs[2] * verts[0][2] + planeCoeffs[3];
     float last = planeCoeffs[0] * verts[vertCount - 1][0] + planeCoeffs[1] * verts[vertCount - 1][1] + planeCoeffs[2] * verts[vertCount - 1][2] + planeCoeffs[3];
 
@@ -1168,6 +1271,7 @@ static inline float R_PortalMinDot(const vec3_t *verts, int vertCount, const flo
         }
     }
     return minDot;
+#endif
 }
 
 static void R_DPVS_REGPARM3_ABI R_VisitPortalsForCell_impl(const GfxCell *cell, GfxPortal *parentPortal, const DpvsPlane *parentPlane, const DpvsPlane *planes, int planeCount, DpvsClipChildren clipChildren)
@@ -1206,7 +1310,11 @@ static void R_DPVS_REGPARM3_ABI R_VisitPortalsForCell_impl(const GfxCell *cell, 
             continue;
 
         if (dpvsG.occluderCount == 0x400) {
+#if defined(COD2_X64)
+            R_Error(1, "\x15Too many active occluder brushes");
+#else
             R_Error(1, "More than %i active occluders", 0x400);
+#endif
         }
 
         int occIdx = dpvsG.occluderCount;
@@ -1228,13 +1336,21 @@ static void R_DPVS_REGPARM3_ABI R_VisitPortalsForCell_impl(const GfxCell *cell, 
 
             float *eye = dpvsG.eyePos;
             float dot = srcPlane->coeffs[0] * eye[0] + srcPlane->coeffs[1] * eye[1] + srcPlane->coeffs[2] * eye[2] + srcPlane->coeffs[3] * dpvsG.eyeW;
+#if defined(COD2_X64)
+            if (!(dot > 0.0f))
+#else
             if (dot <= 0.0f)
+#endif
                 continue;
 
             srcPlane->u.frontal = 1;
 
             if (dpvsG.viewPlaneCount == 0x1800) {
+#if defined(COD2_X64)
+                R_Error(1, "\x15Too many active occluder faces");
+#else
                 R_Error(1, "More than %i occluder planes", 0x1800);
+#endif
             }
 
             int destIdx = dpvsG.viewPlaneCount;
@@ -1414,7 +1530,11 @@ static void R_DPVS_REGPARM3_ABI R_VisitPortalsForCell_impl(const GfxCell *cell, 
                         vec2_t hullResult[64];
                         int hullCount = Com_ConvexHull(portal->hullPoints, 64, hullResult);
                         if (hullCount >= 64) {
+                            #if defined(COD2_X64)
+                            R_Error(1, "More than %i points on a clipped portal's convex hull\n", 64);
+#else
                             R_Error(1, "More than %i points on a clipped portal's convex hull", 64);
+#endif
                         }
                         portal->hullPointCount = hullCount;
                         memcpy(portal->hullPoints, hullResult, hullCount * sizeof(vec2_t));
@@ -1437,13 +1557,21 @@ static void R_DPVS_REGPARM3_ABI R_VisitPortalsForCell_impl(const GfxCell *cell, 
                 portal->writable.queuedParent = parentPortal;
 
                 float *nearPlaneCoeffs = dpvsG.eyePlane.coeffs;
+#if defined(COD2_X64)
+                float priority = R_PortalExtremumDot(portal->vertices, portal->vertexCount, nearPlaneCoeffs, 1);
+#else
                 float priority = R_PortalMinDot(portal->vertices, portal->vertexCount, nearPlaneCoeffs);
+#endif
                 R_PortalQueueInsert(portal, priority);
             }
         }
     } else {
 
+#if defined(COD2_X64)
+        const GfxCell *furtherCells[1024];
+#else
         const GfxCell *furtherCells[128];
+#endif
         int cellCount = R_GetFurtherCellList_r_impl(cell, parentPlane, planes, planeCount, scratchBuf, furtherCells, 0);
         for (i = 0; i < cellCount; i++) {
             R_AddVisibleSurfacesInCell_impl(furtherCells[i], planes, planeCount);
@@ -1585,7 +1713,12 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
         if ((r_showPortals)->current.integer) {
             if (!((r_portalBevelsOnly)->current.enabled)) {
                 DebugGlobals *debugGlobals = &frontEndDataOut->debugGlobals;
+#if defined(COD2_X64)
+                static const vec4_t color = { 0.0f, 1.0f, 1.0f, 0.25f };
+                R_AddDebugPolygon(debugGlobals, color, hullPointCount, portalVerts);
+#else
                 R_AddDebugPolygon(debugGlobals, (const float *)&dpvsConfig, hullPointCount, (vec3_t *)portalVerts);
+#endif
             }
         }
 
@@ -1609,6 +1742,94 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
 
         R_GetSidePlaneNormals((vec3_t *)portalVerts, hullPointCount, normals);
 
+#if defined(COD2_X64)
+        childPlaneCount = 0;
+        clipChildren = 1;
+        if (doBevels || (r_portalMinClipArea)->current.value > 0.0f) {
+            const float *mtx = (const float *)dpvsG.viewProjectionMatrix;
+            vec2_t screenVerts[65];
+            float minX = 1.0f, minY = 1.0f, maxX = -1.0f, maxY = -1.0f;
+
+            int nearClip = 0;
+            for (i = 0; i < hullPointCount; i++) {
+                float x = portalVerts[i][0], y = portalVerts[i][1], z = portalVerts[i][2];
+                float w = (x * mtx[3] + y * mtx[7]) + z * mtx[11] + mtx[15];
+                if (w < 0.125f) {
+                    nearClip = 1;
+                    minX = minY = -1.0f;
+                    maxX = maxY = 1.0f;
+                    break;
+                }
+                float invW = 1.0f / w;
+                float sx = (x * mtx[0] + y * mtx[4] + z * mtx[8] + mtx[12]) * invW;
+                float sy = (x * mtx[1] + y * mtx[5] + z * mtx[9] + mtx[13]) * invW;
+                screenVerts[i][0] = sx;
+                screenVerts[i][1] = sy;
+                if (sx < minX) minX = sx;
+                if (sx > maxX) maxX = sx;
+                if (sy < minY) minY = sy;
+                if (sy > maxY) maxY = sy;
+
+            }
+            if (!nearClip) {
+                float minArea = (r_portalMinClipArea)->current.value;
+                /* Mac 0xf21d1 retains maxY through the area calculation. */
+                float boundArea = (maxX - minX) * (maxY - minY) * 0.25f;
+                if (minArea > boundArea) {
+                    clipChildren = 0;
+                } else {
+                    float area = 0.0f;
+                    screenVerts[hullPointCount][0] = screenVerts[0][0];
+                    screenVerts[hullPointCount][1] = screenVerts[0][1];
+                    for (i = 1; i <= hullPointCount; i++) {
+                        int next = i == hullPointCount ? 1 : i + 1;
+                        area += screenVerts[i][0] * (screenVerts[next][1] - screenVerts[i - 1][1]);
+                    }
+                    area *= 0.125f;
+                    clipChildren = !(minArea > area);
+                }
+            }
+            if (doBevels) {
+                const float *inverse = (const float *)dpvsG.inverseViewProjectionMatrix;
+                for (i = 0; i < 4; i++) {
+                    float x = i < 2 ? minX : maxX;
+                    float y = i == 1 || i == 2 ? minY : maxY;
+                    float invW = 1.0f / (x * inverse[3] + y * inverse[7] + inverse[15]);
+                    bevelVerts[i][0] = (x * inverse[0] + y * inverse[4] + inverse[12]) * invW;
+                    bevelVerts[i][1] = (x * inverse[1] + y * inverse[5] + inverse[13]) * invW;
+                    bevelVerts[i][2] = (x * inverse[2] + y * inverse[6] + inverse[14]) * invW;
+                }
+                memcpy(bevelVerts[4], bevelVerts[0], sizeof(vec3_t));
+                R_GetSidePlaneNormals(bevelVerts, 4, bevelNormals);
+                for (i = 0; i < 4; i++) {
+                    int reject = 0;
+                    if (!forceBevels) {
+                        float threshold = (r_portalBevels)->current.value;
+                        for (int j = 0; j < hullPointCount; j++) {
+                            float dot = bevelNormals[i][0] * normals[j][0] + bevelNormals[i][1] * normals[j][1] + bevelNormals[i][2] * normals[j][2];
+                            if (dot > threshold) {
+                                reject = 1;
+                                break;
+                            }
+                        }
+                    }
+                    int show = (r_showPortals)->current.integer;
+                    if (reject) {
+                        if (show & 2)
+                            R_AddDebugLine(&frontEndDataOut->debugGlobals, bevelVerts[i], bevelVerts[i + 1], (const float *)imp_colorMdCyan);
+                        continue;
+                    }
+                    if (show)
+                        R_AddDebugLine(&frontEndDataOut->debugGlobals, bevelVerts[i], bevelVerts[i + 1], (const float *)imp_colorLtCyan);
+                    DpvsPlane *plane = &childPlanes[childPlaneCount++];
+                    memcpy(plane->coeffs, bevelNormals[i], sizeof(vec3_t));
+                    float dot = plane->coeffs[0] * bevelVerts[i][0] + plane->coeffs[1] * bevelVerts[i][1] + plane->coeffs[2] * bevelVerts[i][2];
+                    plane->coeffs[3] = 0.001f - dot;
+                    R_DpvsPlaneSetSideBytes(plane);
+                }
+            }
+        }
+#else
         if (!doBevels) {
             float minClipArea = (r_portalMinClipArea)->current.value;
             if (minClipArea <= 0.0f) {
@@ -1703,6 +1924,7 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
             }
         }
 
+#endif
         if (useNormalPlanes && hullPointCount > 0) {
             for (i = 0; i < hullPointCount; i++) {
                 float lenSq = normals[i][0] * normals[i][0] + normals[i][1] * normals[i][1] + normals[i][2] * normals[i][2];
@@ -1794,7 +2016,11 @@ static inline int R_CullBoundsAgainstFrustumAndOccluders(const float *bounds, co
     for (i = 0; i < frustumPlaneCount; i++) {
         DpvsPlane *plane = (DpvsPlane *)&frustumPlanes[i];
         plane->u.frontal = 0xFF;
+#if defined(COD2_X64)
+        if (!(R_DpvsPlaneBoundsTest(plane, bounds) > 0.0f))
+#else
         if (R_DpvsPlaneBoundsTest(plane, bounds) <= 0.0f)
+#endif
             return 0;
     }
 
@@ -1829,7 +2055,11 @@ static void R_AddWorldSurfacesDpvs_impl(const GfxViewParms *viewParms, int camer
     int frustumPlaneCount;
     int i;
 
+#if defined(COD2_X64)
+    LargeLocal_LargeLocal(&activeOccluderBuffer_large_local, 0x400 * sizeof(GfxOccluder *));
+#else
     LargeLocal_LargeLocal(&activeOccluderBuffer_large_local, 0x1000);
+#endif
     byte *activeOccluderBuf = (byte *)LargeLocal_GetBuf(&activeOccluderBuffer_large_local);
     LargeLocal_LargeLocal(&occluderPlaneBuffer_large_local, 0x1e000);
     byte *occluderPlaneBuf = (byte *)LargeLocal_GetBuf(&occluderPlaneBuffer_large_local);
@@ -1900,6 +2130,27 @@ static void R_AddWorldSurfacesDpvs_impl(const GfxViewParms *viewParms, int camer
         dpvsG.clipPlanes = &dpvsG.eyePlane;
     }
 
+#if defined(COD2_X64)
+    if (projW == 0.0f) {
+        float farPlaneDist = (r_zfar)->current.value;
+        if (farPlaneDist == 0.0f) {
+            if (rg.fogIndex && rg.fogSettings[2].registered && rg.fogSettings[2].techniqueOffset == 1) {
+                farPlaneDist = rg.fogSettings[2].fogEnd;
+            }
+        }
+        float cullDist = *(float *)&dpvsConfig;
+        cullDist = cullDist > farPlaneDist ? cullDist : farPlaneDist;
+
+        if (!(cullDist <= 0.0f)) {
+
+            R_DpvsInitFarPlane(&dpvsG.farPlane, viewDir, cullDist);
+            dpvsG.farPlanePtr = &dpvsG.farPlane;
+        } else {
+            dpvsG.farPlanePtr = 0;
+        }
+
+    }
+#else
     float farPlaneDist = (r_zfar)->current.value;
     if (farPlaneDist == 0.0f) {
         if (rg.fogIndex && rg.fogSettings[2].registered && rg.fogSettings[2].techniqueOffset == 1) {
@@ -1918,6 +2169,7 @@ static void R_AddWorldSurfacesDpvs_impl(const GfxViewParms *viewParms, int camer
         dpvsG.farPlanePtr = 0;
     }
 
+#endif
     DpvsPlane *nearPlane = dpvsG.clipPlanes;
     DpvsPlane *farPlane = dpvsG.farPlanePtr;
 

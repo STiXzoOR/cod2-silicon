@@ -69,6 +69,11 @@ extern void FS_Printf(int handle, const char *fmt, ...);
 extern int Hunk_Used(void);
 extern void *Z_MallocInternal(int size);
 extern void Z_FreeInternal(void *ptr);
+#if defined(COD2_X64)
+extern void LargeLocal_LargeLocal(const LargeLocal *_this, int size);
+extern void *LargeLocal_GetBuf(const LargeLocal *_this);
+extern void ZN10LargeLocalD1Ev(LargeLocal *_this);
+#endif
 extern char *Info_ValueForKey(const char *s, const char *key);
 extern const char *GetBspExtension(void);
 extern int Sys_Milliseconds(void);
@@ -249,7 +254,11 @@ qboolean CL_GetUserCmd(int cmdNumber, usercmd_t *ucmd)
     int currentCmd = cl->cmdNumber;
 
     if (currentCmd < cmdNumber) {
+#if defined(COD2_X64)
+        Com_Error(ERR_DROP, "\x15" "CL_GetUserCmd: %i >= %i", cmdNumber, currentCmd);
+#else
         Com_Error(ERR_DROP, "CL_GetUserCmd: %i >= %i", cmdNumber, currentCmd);
+#endif
         currentCmd = cl->cmdNumber;
     }
 
@@ -282,7 +291,11 @@ qboolean CL_GetSnapshot(int snapshotNumber, snapshot_t *snapshot)
     int i;
 
     if (cl->snap.messageNum < snapshotNumber) {
+#if defined(COD2_X64)
+        Com_Error(ERR_DROP, "\x15" "CL_GetSnapshot: snapshotNumber > cl->snapshot.messageNum");
+#else
         Com_Error(ERR_DROP, "CL_GetSnapshot: snapshotNumber > cl.snap.messageNum");
+#endif
     }
 
     if (cl->snap.messageNum - snapshotNumber > 0x1f) {
@@ -313,7 +326,11 @@ qboolean CL_GetSnapshot(int snapshotNumber, snapshot_t *snapshot)
     count = clSnap->numEntities;
     if (count > 256) {
         if ((com_statmon)->current.enabled) {
+#if defined(COD2_X64)
+            StatMon_Warning(4, 3000, "gfx/2d/warning@snapshotents.jpg");
+#else
             StatMon_Warning(4, 3000, "CL_GetSnapshot: truncated entities");
+#endif
         } else {
             Com_DPrintf("CL_GetSnapshot: truncated %i entities to %i\n", count, 256);
         }
@@ -362,6 +379,72 @@ void CL_AddCgameCommand(const char *cmdName)
 
 void CL_ConfigstringModified(void)
 {
+#if defined(COD2_X64)
+    LargeLocal oldGsStorage;
+    gameState_t *oldGs;
+    int index;
+    const char *s;
+    int i, len;
+    clientActive_t *cl;
+
+    LargeLocal_LargeLocal(&oldGsStorage, sizeof(gameState_t));
+    oldGs = (gameState_t *)LargeLocal_GetBuf(&oldGsStorage);
+
+    index = atoi(Cmd_Argv(1));
+    if ((unsigned int)index > 0x7ff) {
+        Com_Error(ERR_DROP, "\x15" "configstring > MAX_CONFIGSTRINGS");
+    }
+
+    s = Cmd_Argv(2);
+
+    cl = CL_LOCAL;
+
+    {
+        int offset = cl->gameState.stringOffsets[index];
+        const char *old = cl->gameState.stringData + offset;
+        if (strcmp(old, s) == 0) {
+            ZN10LargeLocalD1Ev(&oldGsStorage);
+            return;
+        }
+    }
+
+    memcpy(oldGs, &cl->gameState, sizeof(gameState_t));
+
+    memset(&cl->gameState, 0, sizeof(gameState_t));
+    cl->gameState.dataCount = 1;
+
+    for (i = 0; i < 0x800; i++) {
+        const char *dup;
+
+        if (i == index) {
+            dup = s;
+        } else {
+            int oldOff = oldGs->stringOffsets[i];
+            dup = oldGs->stringData + oldOff;
+        }
+
+        if (*dup == '\0')
+            continue;
+
+        len = strlen(dup) + 1;
+        cl = CL_LOCAL;
+        int writePos = cl->gameState.dataCount;
+        if (writePos + len > MAX_GAMESTATE_CHARS) {
+            Com_Error(ERR_DROP, "\x15" "MAX_GAMESTATE_CHARS exceeded");
+            writePos = cl->gameState.dataCount;
+        }
+
+        cl->gameState.stringOffsets[i] = writePos;
+        memcpy(cl->gameState.stringData + writePos, dup, len);
+        cl->gameState.dataCount = writePos + len;
+    }
+
+    if (index == 1) {
+        CL_SystemInfoChanged();
+    }
+
+    ZN10LargeLocalD1Ev(&oldGsStorage);
+#else
     gameState_t oldGs;
     int index;
     const char *s;
@@ -418,6 +501,7 @@ void CL_ConfigstringModified(void)
     if (index == 1) {
         CL_SystemInfoChanged();
     }
+#endif
 }
 
 qboolean CL_GetServerCommand(int serverCommandNumber)
@@ -431,7 +515,11 @@ qboolean CL_GetServerCommand(int serverCommandNumber)
         if (clui->demoplaying) {
             return 0;
         }
+#if defined(COD2_X64)
+        Com_Printf("===== CL_GetServerCommand =====\n");
+#else
         Com_Printf("CL_GetServerCommand: a]command was lost\n");
+#endif
         Com_Printf("serverCommandNumber: %d\n", serverCommandNumber & 0x7f);
         {
             int j;
@@ -440,12 +528,20 @@ qboolean CL_GetServerCommand(int serverCommandNumber)
                 Com_Printf("cmd %5d: %s\n", j, clui2->serverCommands[j & 0x7f]);
             }
         }
+#if defined(COD2_X64)
+        Com_Error(ERR_DROP, "\x15" "CL_GetServerCommand: \x14" "EXE_ERR_RELIABLE_CYCLED_OUT");
+#else
         Com_Error(ERR_DROP, "CL_GetServerCommand: too many missed");
+#endif
     }
 
     clui = CLUI_STATE;
     if (serverCommandNumber > clui->serverCommandSequence) {
+#if defined(COD2_X64)
+        Com_Error(ERR_DROP, "\x15" "CL_GetServerCommand: \x14" "EXE_ERR_NOT_RECEIVED");
+#else
         Com_Error(ERR_DROP, "CL_GetServerCommand: requested beyond last");
+#endif
     }
 
     s = clui->serverCommands[serverCommandNumber & 0x7f];
@@ -469,9 +565,21 @@ restart:
     case 'd':
 #endif
     case 'w':
+#if defined(COD2_X64)
+        if (argc > 2 && I_stricmp(Cmd_Argv(2), "PB") == 0) {
+            const char *reason = Cmd_Argv(1);
+            const char *base = SEH_SafeTranslateString("EXE_SERVERDISCONNECTREASON");
+            const char *msg = UI_ReplaceConversionString(base, reason);
+            Com_Error(ERR_SERVERDISCONNECT, va("\x15%s", msg));
+        }
+        if (argc - 1 <= 0) {
+            Com_Error(ERR_SERVERDISCONNECT, "EXE_SERVER_DISCONNECTED");
+        }
+#else
         if (argc - 1 <= 0) {
             Com_Error(ERR_SERVERDISCONNECT, "EXE_DISCONNECTED");
         }
+#endif
         {
             const char *reason = SEH_SafeTranslateString(Cmd_Argv(1));
             const char *base = SEH_SafeTranslateString("EXE_SERVERDISCONNECTREASON");
@@ -500,7 +608,11 @@ restart:
         {
             const char *arg2 = Cmd_Argv(2);
             if (strlen(bigConfigString) + strlen(arg2) > 0x1fff) {
+#if defined(COD2_X64)
+                Com_Error(ERR_DROP, "\x15" "bcs exceeded BIG_INFO_STRING");
+#else
                 Com_Error(ERR_DROP, "BCS overflow");
+#endif
             }
             strcat(bigConfigString, arg2);
         }
@@ -514,7 +626,11 @@ restart:
         {
             const char *arg2 = Cmd_Argv(2);
             if (strlen(bigConfigString) + strlen(arg2) + 1 > 0x1fff) {
+#if defined(COD2_X64)
+                Com_Error(ERR_DROP, "\x15" "bcs exceeded BIG_INFO_STRING");
+#else
                 Com_Error(ERR_DROP, "BCS overflow");
+#endif
             }
             strcat(bigConfigString, arg2);
         }
@@ -846,6 +962,21 @@ void CL_LoadSoundAliases(const char *loadspec)
 
 qboolean CL_Popup(const char *menu)
 {
+#if defined(COD2_X64)
+    clientConnection_t *clui = CLUI_STATE;
+    if (clui->state != 8 || clui->demoplaying || UI_IsFullscreen())
+        return 0;
+
+    if (I_stricmp(menu, "UIMENU_WM_QUICKMESSAGE") == 0) {
+        UI_SetActiveMenu(8);
+        return 1;
+    }
+    if (I_strnicmp(menu, "UIMENU_SCRIPT_POPUP", 0x13) != 0)
+        return 1;
+    if (I_stricmp(menu, "UIMENU_SCRIPT_POPUP_NO_MOUSE") == 0)
+        return UI_SetActiveMenu(10);
+    return UI_SetActiveMenu(9);
+#else
     clientConnection_t *clui = CLUI_STATE;
     int fullscreen = UI_IsFullscreen();
     int activeMenu = UI_GetActiveMenu();
@@ -880,10 +1011,21 @@ qboolean CL_Popup(const char *menu)
     }
 
     return UI_SetActiveMenu(9);
+#endif
 }
 
 void CL_ClosePopup(const char *menu)
 {
+#if defined(COD2_X64)
+    if (UI_IsFullscreen())
+        return;
+    if (I_stricmp(menu, "UIMENU_SCRIPT_POPUP_NO_MOUSE") == 0 && UI_GetActiveMenu() == 9) {
+        UI_CloseFocusedMenu();
+        return;
+    }
+    if (I_stricmp(menu, "UIMENU_SCRIPT_POPUP") == 0 && UI_GetActiveMenu() == 9)
+        UI_CloseFocusedMenu();
+#else
     if (UI_IsFullscreen())
         return;
 
@@ -897,6 +1039,7 @@ void CL_ClosePopup(const char *menu)
         if (UI_GetActiveMenu() == 9 || UI_GetActiveMenu() == 10)
             UI_SetActiveMenu(0);
     }
+#endif
 }
 
 void CL_CloseInGameMenu(void)
@@ -990,7 +1133,11 @@ void CL_UpdateLevelHunkUsage(void)
                 if (memusage == atoi(token)) {
                     Z_FreeInternal(buf);
                     Z_FreeInternal(outbuf);
+#if defined(COD2_X64)
+                    return;
+#else
                     goto write_new;
+#endif
                 }
                 continue;
             }
@@ -1001,7 +1148,11 @@ void CL_UpdateLevelHunkUsage(void)
 
         token = Com_Parse(&buftrav);
         if (!token || *token == '\0') {
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "EXE_ERR_HUNGUSAGE_CORRUPT");
+#else
             Com_Error(ERR_DROP, "CL_UpdateLevelHunkUsage: bad hunkusage.dat");
+#endif
             continue;
         }
 
@@ -1029,7 +1180,11 @@ write_new:
 
     len = FS_FOpenFileByMode("hunkusage.dat", &handle, 2);
     if (!handle) {
+#if defined(COD2_X64)
+        Com_Error(ERR_DROP, "EXE_ERR_HUNKUSAGE_CANT_WRITE");
+#else
         Com_Error(ERR_DROP, "CL_UpdateLevelHunkUsage: cannot open for append");
+#endif
     }
 
     {
@@ -1086,7 +1241,13 @@ void CL_InitCGame(void)
         clientConnection_t *clui = CLUI_STATE;
         clui->state = (connstate_t)(6);
         cl->cgameInitCalled = 1;
+#if defined(COD2_X64)
+        /* Mac 0x17b4d2: CG_Init(serverMessageNum, serverCommandSequence, clientNum).
+           The reversed order put a message sequence into cg.clientNum. */
+        CG_Init(clui->serverMessageSequence, clui->lastExecutedServerCommand, clui->clientNum);
+#else
         CG_Init(clui->clientNum, clui->lastExecutedServerCommand, clui->serverMessageSequence);
+#endif
         cl->cgameInitialized = 1;
         clui->state = (connstate_t)(7);
     }
@@ -1151,7 +1312,11 @@ void CL_AdjustTimeDelta(void)
         cl->oldServerTime = cl->snap.serverTime;
         cl->serverTime = cl->snap.serverTime;
         if ((cl_showTimeDelta)->current.enabled) {
+#if defined(COD2_X64)
+            Com_Printf("<RESET> ");
+#else
             Com_Printf("cl_showTimeDelta: reset\n");
+#endif
         }
         goto debug_print;
     }
@@ -1159,7 +1324,11 @@ void CL_AdjustTimeDelta(void)
     if (deltaDiff > 100) {
 
         if ((cl_showTimeDelta)->current.enabled) {
+#if defined(COD2_X64)
+            Com_Printf("<FAST> ");
+#else
             Com_Printf("cl_showTimeDelta: average\n");
+#endif
         }
         cl = CL_LOCAL;
 #if defined(COD2_X64)
@@ -1308,6 +1477,58 @@ void CL_SyncTimes(void)
     CL_FirstSnapshot();
 }
 
+#if defined(COD2_X64)
+static void CL_UpdateTimeDemo(void)
+{
+    clientConnection_t *clui = CLUI_STATE;
+    clientActive_t *cl = CL_LOCAL;
+
+    if (!clui->timeDemoLog) {
+
+        char *mapPath = cl->mapname;
+        char *base = mapPath;
+        char *dotPos = 0;
+        while (*mapPath) {
+            if (*mapPath == '/' || *mapPath == '\\') {
+                base = mapPath + 1;
+                dotPos = 0;
+            } else if (*mapPath == '.') {
+                dotPos = mapPath;
+            }
+            mapPath++;
+        }
+        {
+            const char *name;
+            if (dotPos) {
+                name = va("%s", base);
+                ((char *)name)[dotPos - base] = '\0';
+            } else {
+                name = base;
+            }
+            int mode = Dvar_GetInt("r_mode");
+            clui->timeDemoLog = FS_FOpenFileWrite(va("demos/timedemo_%s_mode_%i.csv", name, mode));
+        }
+    }
+
+    {
+        int msec = Sys_Milliseconds();
+        clui = CLUI_STATE;
+        if (!clui->timeDemoStart) {
+            clui->timeDemoStart = msec;
+        } else if (clui->timeDemoLog) {
+            FS_Printf(clui->timeDemoLog, "%i,%i\n",
+                      clui->timeDemoFrames,
+                      msec - clui->timeDemoPrev);
+        }
+        clui->timeDemoPrev = msec;
+        int frameNum = clui->timeDemoFrames + 1;
+        clui->timeDemoFrames = frameNum;
+        cl = CL_LOCAL;
+        cl->serverTime = clui->timeDemoBaseTime + frameNum * 50;
+    }
+}
+
+#endif
 void CL_SetCGameTime(void)
 {
     clientConnection_t *clui;
@@ -1345,7 +1566,11 @@ void CL_SetCGameTime(void)
 
     cl = CL_LOCAL;
     if (!cl->snap.valid) {
+#if defined(COD2_X64)
+        Com_Error(ERR_DROP, "\x15" "CL_SetCGameTime: !cl->snap.valid");
+#else
         Com_Error(ERR_DROP, "CL_SetCGameTime: no snapshot");
+#endif
     }
 
     if (CL_DvarCurrentInt(imp_sv_paused) &&
@@ -1360,7 +1585,11 @@ void CL_SetCGameTime(void)
         if (serverTime < cl->oldFrameServerTime) {
             clientStatic_t *cls = CLS;
             if (I_stricmp(cls->servername, "localhost") != 0) {
+#if defined(COD2_X64)
+                Com_Error(ERR_DROP, "\x15" "cl->snap.serverTime < cl->oldFrameServerTime");
+#else
                 Com_Error(ERR_DROP, "cl.snap.serverTime < cl.oldFrameServerTime");
+#endif
             }
 
             if (!(cl->snap.snapFlags & 2)) {
@@ -1393,12 +1622,23 @@ void CL_SetCGameTime(void)
             cl->oldServerTime = cl->serverTime;
 
             int serverTime = cl->snap.serverTime;
+#if defined(COD2_X64)
+            if (timeDelta + realtime >= serverTime - 5) {
+#else
             if (timeDelta + realtime < serverTime - 5) {
+#endif
                 cl->extrapolatedSnapshot = 1;
                 if (CL_DvarCurrentBool(imp_cl_showTimeDelta)) {
+#if defined(COD2_X64)
+                    Com_Printf("Extrapolating snapshot!\n");
+#else
                     Com_Printf("%.6f extrapolating\n");
+#endif
                 }
             }
+#if defined(COD2_X64)
+        }
+#else
         } else {
 
             if (!clui->timeDemoLog) {
@@ -1445,6 +1685,7 @@ void CL_SetCGameTime(void)
                 cl->serverTime = clui->timeDemoBaseTime + frameNum * 50;
             }
         }
+#endif
     }
 
     cl = CL_LOCAL;
@@ -1457,11 +1698,17 @@ void CL_SetCGameTime(void)
     if (!clui->demoplaying)
         return;
 
+#if defined(COD2_X64)
+    if (clui->isTimeDemo)
+        CL_UpdateTimeDemo();
+    cl = CL_LOCAL;
+#else
     if (!clui->isTimeDemo) {
         cl = CL_LOCAL;
     } else {
         cl = CL_LOCAL;
     }
+#endif
 
     while (cl->serverTime >= cl->snap.serverTime) {
         CL_ReadDemoMessage();

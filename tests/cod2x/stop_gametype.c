@@ -96,6 +96,7 @@ void Cod2x_Disconnect(void) {}
 #endif
 void SV_Cod2xClearIdentities(void) {}
 void Com_DPrintf(const char *format, ...) { (void)format; }
+void Com_DedicatedModified(void) {}
 void Com_Memset(void *p, int value, int size) { memset(p, value, size); }
 void SV_AddOperatorCommands(void) {}
 void SV_RemoveOperatorCommands(void) {}

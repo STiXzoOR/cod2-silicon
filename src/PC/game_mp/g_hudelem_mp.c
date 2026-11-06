@@ -197,8 +197,15 @@ static void HudElem_SetEnumString_impl(game_hudelem_t *hud_base, const game_hude
 
             mask = f->mask;
             shift = f->shift;
+#if defined(COD2_X64)
+            unsigned int bits = (unsigned int)*value;
+            bits &= ~((unsigned int)mask << shift);
+            bits |= (unsigned int)nameIndex << shift;
+            *value = (int)bits;
+#else
             *value = *value & ~(mask << shift);
             *value = *value | (nameIndex << shift);
+#endif
             return;
         }
     }
@@ -352,7 +359,11 @@ BuiltinMethod HudElem_GetMethod(const char **pName)
 {
     int i;
     for (i = 0; i < (int)ARRAY_COUNT(methods); i++) {
+#if defined(COD2_X64)
+        if (strcmp(*pName, methods[i].actionString) == 0) {
+#else
         if (I_stricmp(*pName, methods[i].actionString) == 0) {
+#endif
             *pName = methods[i].actionString;
             return methods[i].actionFunc;
         }
@@ -632,6 +643,17 @@ static void HECmd_SetShader(scr_entref_t entref)
     hud->elem.height = height;
 }
 
+#if defined(COD2_X64)
+static int HECmd_MillisecondsFromSecondsCeiled(float seconds)
+{
+    float value = ceilf(seconds * 1000.0f);
+
+    /* Mac 0x1b3d4f uses CVTTSS2SI's integer-indefinite result. */
+    if (!(value >= -2147483648.0f && value < 2147483648.0f))
+        return -2147483647 - 1;
+    return (int)value;
+}
+#endif
 static void HECmd_SetTimer_Internal(scr_entref_t entref, he_type_t type, const char *cmdName)
 {
     game_hudelem_t *hud = HECmd_GetHudElem(entref);
@@ -643,7 +665,11 @@ static void HECmd_SetTimer_Internal(scr_entref_t entref, he_type_t type, const c
     if (Scr_GetNumParam() != 1)
         Scr_Error(va((const char *)"USAGE: <hudelem> %s(time_in_seconds);\n", cmdName));
 
+#if defined(COD2_X64)
+    time = HECmd_MillisecondsFromSecondsCeiled(Scr_GetFloat(0));
+#else
     time = (int)ceilf(Scr_GetFloat(0) * 1000.0f);
+#endif
     if (time <= 0 && type != HE_TYPE_TIMER_UP)
         Scr_ParamError(0, va((const char *)"time %g should be > 0", (double)((float)time * 0.001f)));
 
@@ -664,7 +690,16 @@ static game_hudelem_t *HECmd_GetHudElem(scr_entref_t entref)
 
 static void HudElem_ResetDefaults(game_hudelem_t *hud)
 {
+#if defined(COD2_X64)
+    /* Mac leaves movement timing intact when resetting or reusing an element. */
+    int moveStartTime = hud->elem.moveStartTime;
+    int moveTime = hud->elem.moveTime;
+#endif
     memset(&hud->elem, 0, sizeof(hud->elem));
+#if defined(COD2_X64)
+    hud->elem.moveStartTime = moveStartTime;
+    hud->elem.moveTime = moveTime;
+#endif
     hud->elem.type = HE_TYPE_TEXT;
     hud->elem.fontScale = 1.0f;
     hud->elem.color.rgba = -1;
@@ -686,6 +721,9 @@ static void HECmd_ClearTimingFieldsForValue(hudelem_t *elem)
     elem->fromAlignScreen = 0;
     elem->time = 0;
     elem->duration = 0;
+#if defined(COD2_X64)
+    elem->value = 0.0f;
+#endif
     elem->text = 0;
 }
 
@@ -740,11 +778,19 @@ static void HECmd_SetClock_Internal(scr_entref_t entref, he_type_t type, const c
     if (paramCount != 3 && paramCount != 5)
         Scr_Error(va((const char *)"USAGE: <hudelem> %s(time_in_seconds, total_clock_time_in_seconds, shadername[, width, height]);\n", cmdName));
 
+#if defined(COD2_X64)
+    time = HECmd_MillisecondsFromSecondsCeiled(Scr_GetFloat(0));
+#else
     time = (int)ceilf(Scr_GetFloat(0) * 1000.0f);
+#endif
     if (time <= 0 && type != HE_TYPE_CLOCK_UP)
         Scr_ParamError(0, va((const char *)"time %g should be > 0", (double)((float)time * 0.001f)));
 
+#if defined(COD2_X64)
+    duration = HECmd_MillisecondsFromSecondsCeiled(Scr_GetFloat(1));
+#else
     duration = (int)ceilf(Scr_GetFloat(1) * 1000.0f);
+#endif
     if (duration <= 0)
         Scr_ParamError(1, va((const char *)"duration %g should be > 0", (double)((float)duration * 0.001f)));
 

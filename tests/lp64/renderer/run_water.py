@@ -68,12 +68,17 @@ def main():
                                       'R_DownsampleMipMapBilinear')
         utilities += '\n' + function(source('src/Mac/DirectX_9/MacOpenGLUtils.c', options.baseline),
                                       'MacOpenGLUtils_SquareRootLowPrecision')
-        for name in ['CDirect3DVertexBuffer_Lock', 'CDirect3DVertexBuffer_Unlock']:
-            utilities += '\n' + function(source('src/Mac/DirectX_9/CDirect3DVertexBuffer.c', options.baseline), name)
+        # Lock now shares private native cache types/helpers with its owner.
+        # Keep the production owner intact rather than copying those contracts.
+        vertex_owner = source('src/Mac/DirectX_9/CDirect3DVertexBuffer.c', options.baseline)
+        utilities += '\n' + vertex_owner
+        if 'CBufferFenceIds' in vertex_owner:
+            utilities += '\n#define WATER_HAS_NATIVE_BUFFER_OWNERS 1\n'
         for name in ['CColorConverter_ByteSwap32', 'StdConverterARGB_Convert']:
             utilities += '\n' + function(source('src/Mac/DirectX_9/CColorConverter.c', options.baseline), name)
         (out / 'water_helpers.h').write_text(utilities)
-        fixture_flags = flags + ['-UNDEBUG', '-I' + str(out), '-fsanitize=address,undefined',
+        fixture_flags = flags + ['-UNDEBUG', '-I' + str(out),
+                                 '-I' + str(ROOT / 'src/Mac/DirectX_9'), '-fsanitize=address,undefined',
                                  '-fno-omit-frame-pointer', '-ffunction-sections', '-fdata-sections']
         objects = []
         for path in ['tests/lp64/renderer/water.c', 'src/PC/universal/fft.c',

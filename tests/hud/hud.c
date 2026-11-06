@@ -334,8 +334,8 @@ static void spectator_layout(void)
 
 static void follow_policy(void)
 {
-    cg->snap->ps.pm_flags = 0x400000;
-    cg->snap->ps.clientNum = 2;
+    cg->nextSnap->ps.pm_flags = 0x400000;
+    cg->nextSnap->ps.clientNum = 2;
     cg->bgs.clientinfo[2].infoValid = 1;
     snprintf(cg->bgs.clientinfo[2].name, sizeof(cg->bgs.clientinfo[2].name), "Player Two");
     CHECK(CG_DrawFollow() == 1 && text_count == 2);

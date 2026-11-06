@@ -12,10 +12,18 @@ static int allocations, loads, frees;
 static unsigned char freed[72];
 
 void *Hunk_AllocXAnimServer(int size) { (void)size; assert(0); return NULL; }
-void BG_LoadAnim(void) { ++loads; }
+static int scriptLoads;
+static XAnim_s *humanAnims = (XAnim_s *)&storage[0][1];
+snd_alias_list_t *Com_FindSoundAlias(const char *name) { (void)name; return NULL; }
+int G_AnimScriptSound(int client, snd_alias_list_t *aliasList) { (void)client; (void)aliasList; return 0; }
+void Scr_BeginLoadScripts(void) { assert(scriptLoads == 0); }
+void GScr_LoadScripts(int level) { assert(level == 1); ++scriptLoads; }
+void Scr_EndLoadScripts(void) { assert(scriptLoads == 1); }
+void BG_LoadAnim(void) { assert(scriptLoads == 1); level_bgs.generic_human.tree.anims = humanAnims; ++loads; }
 XAnimTree *XAnimCreateTree(XAnim *anims, Alloc_t allocator)
 {
-    assert(anims == (XAnim *)level_bgs.animScriptData.animTree.anims);
+    /* Trees are built after BG_LoadAnim from the generic human anim tree. */
+    assert(anims == (XAnim *)humanAnims);
     assert(allocator == (Alloc_t)Hunk_AllocXAnimServer && allocations < 72);
     return (XAnimTree *)storage[allocations++];
 }
@@ -64,10 +72,14 @@ int main(void)
     assert(frees == 8);
     for (int i = 0; i < 8; ++i) {
         assert(!g_scr_data.playerCorpseInfo[i].tree);
-        assert(!g_scr_data.playerCorpseInfo[i].ci.pXAnimTree);
+        /* Mac shutdown frees the slot-owned tree and leaves ci untouched
+           (see tests/lp64/game/main_shutdown.c). */
+        assert(g_scr_data.playerCorpseInfo[i].ci.pXAnimTree ==
+               (i & 1 ? (XAnimTree_s *)storage[64 + i] : NULL));
     }
     release_corpse_trees();
     assert(frees == 8);
+    assert(scriptLoads == 1);
     puts("PASS cold allocation, restart retention, unused/used corpse shutdown");
     return 0;
 }

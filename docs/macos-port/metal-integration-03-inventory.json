@@ -1,0 +1,1520 @@
+{
+  "schema": "cod2-metal-u1-inventory/v1",
+  "date": "2026-10-15",
+  "base": "3ef770ba088808f87805ba748839db2ca53e9dad",
+  "donor": "bf71e8ecd9985a57c69f27edf442516a8dd02074",
+  "current": "b3e6880056812e0951ba7bc6553b062dd2a6774e",
+  "counts": {
+    "donor_changed": 188,
+    "current_changed": 630,
+    "shared_changed": 38,
+    "shared_identical": 6,
+    "restored_historical_docs": 17
+  },
+  "paths": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "donor_blob": "ae03fec85883ded708795093f816336d4ffa67b1",
+      "current_blob": "e653aead5c2793572328c53098be83dc4a72b17a",
+      "classification": "shared-diverged",
+      "slice": "U2a-build",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "cmake/macos-arm64.cmake",
+      "donor_blob": "4dcc2cf879e23b9be1edb07d555b0c9d02998b06",
+      "current_blob": "423a72e59bbf06b09f004e32ec3554765e93c0f4",
+      "classification": "shared-diverged",
+      "slice": "U2a-build",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "docs/macos-port/metal-contract-audit.md",
+      "donor_blob": "49252f7954901e9b6b506c70c41b08d035e6a835",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/metal-design.md",
+      "donor_blob": "05ccfa003795f9e8327fe5328530d3cd2f01e290",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/metal-goldens.md",
+      "donor_blob": "f17b1ccb73c74c2c386a919fbf23696374f73e3f",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/metal-interfaces.md",
+      "donor_blob": "3d7fc1bf658a37eabdd61dc0d5b3ebcaf77a596e",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/reports/WS23-metal-present.md",
+      "donor_blob": "31ca7819f4967e41a92f0e7552937489b99c0398",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/reports/WS24-metal-design.md",
+      "donor_blob": "7eae46dd8d14608b44f330ab6f78ee72fd1669a5",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/reports/WS29-metal-core.md",
+      "donor_blob": "95d77b04ab8a200f51a364c3dbd46ac953f19665",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/reports/WS30-metal-resources.md",
+      "donor_blob": "a12c9b5fc394405b1d895a678f15c63584350d3d",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/reports/WS31-metal-states.md",
+      "donor_blob": "90131dce42d830bb0639bb6428021b7b75b6349d",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/reports/WS32-fixed-evidence.md",
+      "donor_blob": "f8e6a1613e78ea9a962262d7def3395cc46413d7",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/reports/WS32-raster-evidence.md",
+      "donor_blob": "de6b6561b4e1d79a87c6cfe838bed301c5c98ae0",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/reports/WS32.md",
+      "donor_blob": "8f02c22467909ec86f1577c7f9582a0a05776c98",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/reports/WS33-metal-draws.md",
+      "donor_blob": "12bfe68cb871bd7aef8f8b2914e50c404b8a067e",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/reports/WS34.md",
+      "donor_blob": "6777e3dcbdc1bc0d8f41573ed20802790b14a031",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/reports/WS35-metal-parity.md",
+      "donor_blob": "7d253606f453fa315ee483a294eb046d1e6acdb5",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/reports/WS37-metal-finish.md",
+      "donor_blob": "982819b1b150a7271bbb647998cc2aaecfdd12e3",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "docs/macos-port/reports/WS39-metal-cert.md",
+      "donor_blob": "81ecab13c39034ff7af8f527de2f39673e46385b",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U1-history",
+      "disposition": "restore historical documentation only"
+    },
+    {
+      "path": "scripts/build-sdl.sh",
+      "donor_blob": "6fce3da2ebbcf4bc8a51b1a43c7cff5d1183a759",
+      "current_blob": "8c7aac1bc75a51608fe28dd07f62be7e434052d3",
+      "classification": "shared-diverged",
+      "slice": "U2a-build",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "scripts/patches/sdl3-cocoa-desktop-mode.patch",
+      "donor_blob": "4fa0f6334bb711d9435391a65c94df926df7d685",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2a-build",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CDirect3D.c",
+      "donor_blob": "04d8d57051b36e32186e5801efadbe2880b388f8",
+      "current_blob": "dc7d9540c9fb6f983dd781489f6cbed7c6e0d2d8",
+      "classification": "shared-diverged",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+      "donor_blob": "41e111e58d5bed8ef01907c33ca2991b80e45714",
+      "current_blob": "042e99ee595004356af42edb6428d0489d0ef78a",
+      "classification": "shared-diverged",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
+      "donor_blob": "ff4c6e0d7b8987cebe160de7e5d4609b2471c43c",
+      "current_blob": "eb26ba834225dcc91d12b96b78b4bf8318c535bf",
+      "classification": "shared-diverged",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+      "donor_blob": "b9c48cffeb5b332acb27da396de452f01d450967",
+      "current_blob": "3de1277fc33532d39d1d3014efc8f1fe9aaba56a",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+      "donor_blob": "e205a28fcb497e771301f7c28dc05ef912fc3f25",
+      "current_blob": "e41e67c9e70cbc3ffe601518d43e05d868e91323",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CDirect3DSurface.c",
+      "donor_blob": "5af6f1343b5910eef5e47f990ad878cd524c1376",
+      "current_blob": "7b6b93e64dcfb9797348f24f8fdc2ed04f093718",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+      "donor_blob": "cca7e72f415212009b14f5fde0652445c49f6620",
+      "current_blob": "16f8aa139f039a09981f6ee9a889341fde3f9447",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CDirect3DTexture.c",
+      "donor_blob": "7acd885b3d15c22ed25307af1d6e2177dc85f376",
+      "current_blob": "a962a79101438062dd1162d87fdec096acfc93b4",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+      "donor_blob": "617440b8723eda380745107574a76de60df8167a",
+      "current_blob": "830af5aabb195d1cb0fa98f5016c60a033b2fd35",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CDirect3DVertexDeclaration.c",
+      "donor_blob": "d74055b27353dd7d54dda5dd535243b991b090c7",
+      "current_blob": "9990ff5de702497a2d9a2fc18433fabbce58b018",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+      "donor_blob": "90eab37ec92f315f6f30958aaca199a8d9bd87d8",
+      "current_blob": "d323ccb2f7606acfff7beb123741549b23012bca",
+      "classification": "shared-diverged",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+      "donor_blob": "bc042c75054d98e28b6c002523c9e31518977ac6",
+      "current_blob": "a17b81dd7ef929b1c19ee7eb2890aafe024fc3a9",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CFence.c",
+      "donor_blob": "c2893415e9fc8a30999ed60554a65c9ebfe663d3",
+      "current_blob": "e0b8a8b403e0b489b17f893ef9fc0fc852dbfcaa",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CMemoryBuffer.c",
+      "donor_blob": "c5746c0646dcb8a93d217877beddbfc47953d8b1",
+      "current_blob": "ff6f1ccb0061aa6e593536e39b1d39a872ea3578",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/COpenGL.c",
+      "donor_blob": "634762ce3b9be4836e7def124cdfc750ff9daa41",
+      "current_blob": "d56aadc41a2c555ae10b7e7f86fbb0aa21cce15c",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/COpenGLVAO.c",
+      "donor_blob": "435786774e65cd5fc23996742db2daeb5505d004",
+      "current_blob": "e8918862db827493c6fe81f72aba128af4e727ab",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CVAOPacket.c",
+      "donor_blob": "fce2000fe4a0d93ae326b5b9d27cd29ecd82a823",
+      "current_blob": "f848ac48d69c85be79b72ab7451bc48038913d46",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/CVertexArrays.c",
+      "donor_blob": "a1c2d1495794cc04a258037de92a4d1bafefacff",
+      "current_blob": "e435b226823519b8388350a7512abd10e8bf3c51",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/DirectX_9/d3d9_real.c",
+      "donor_blob": "094c6be5fd19913049aeffa90837564a8e231c8a",
+      "current_blob": "ad0464df04b5da9202f4da0749b6a72925077696",
+      "classification": "donor-only-change",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/arb_raster.h",
+      "donor_blob": "337757d0252ebb19a17978c5d6438ba826f618af",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/arb_to_msl.cpp",
+      "donor_blob": "f6a7d18b0e8696b851d369dd576d29ffc5329349",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/arb_to_msl.h",
+      "donor_blob": "7a72e1668cabb8fe1b45031767d5a6f802eac458",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/draw_contract.cpp",
+      "donor_blob": "877b92ab4f9fc1d7387cc9d66737e10dc3cad059",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/draw_contract.h",
+      "donor_blob": "040b13c27983a843641575cbf245199a5b21f3c9",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_abi.h",
+      "donor_blob": "21e3978609f574b3f2d3dca624c79d2d6d0c7271",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_backend.h",
+      "donor_blob": "4577ddb7a69e2f49399b3ac202ffe69e65e80b3d",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_backend.m",
+      "donor_blob": "97be7609f9e33d93485d148192094f7bfe1d507a",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_core.h",
+      "donor_blob": "f4941003b3223caf9eca7de605e51cecaac02c9e",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_core.m",
+      "donor_blob": "05442bb463d531db9368c3fa91a3fc592b0f7fe9",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_dispatch.m",
+      "donor_blob": "55ea658ec5d3e85b3a74a5ac21247feee8b5d804",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_draws.h",
+      "donor_blob": "17d92cb0e955dff57d976b406e09ddca90ea463b",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_draws.mm",
+      "donor_blob": "5b1dee7260514427c1e2c5e3504fcebd220dfe32",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_encode_pool.h",
+      "donor_blob": "b3bf9dea351e4c01a7209093cb367bd90fee2f3d",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_frame.m",
+      "donor_blob": "fdbc24d51152de5f6a5e330d88b120d3df51c965",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_frame_stats.h",
+      "donor_blob": "59c459345e8680e5b9a56f9f07845fdbdfbda2db",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_gpu.m",
+      "donor_blob": "eba593f36730376d56f2a782f11740160694bec8",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_hresult.inc",
+      "donor_blob": "8d85e227ec9fde4243119d2100effe33a146c827",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_integration.mm",
+      "donor_blob": "dd30d26e10f7dc6e24658645233d15afb7d1131d",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_inventory.h",
+      "donor_blob": "a0796e4da41583a121a548a81c7ef99470d9fbb2",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_materials.m",
+      "donor_blob": "d4295e3cee2d6b62a4d11aec22bcbf6d17089688",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_object_index.h",
+      "donor_blob": "42dec983b0119ca4fcb4229ffd02a16e5ea2a06f",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_resources.h",
+      "donor_blob": "8b7da8e9804b25cb6a43d033f76b5bfc12c82a78",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2c-resources",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_resources.m",
+      "donor_blob": "53196f1937d6da7d4f2bdde3bdf072d272a2276d",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2c-resources",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_state_cache.hpp",
+      "donor_blob": "dfb3e53be55adecc610ebd1fe4e6fa9c2ec98333",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_states.cpp",
+      "donor_blob": "39d3187b08c1b1076e2d3ef2509a56b2cad802f2",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_states.h",
+      "donor_blob": "9ea0b7ccb8d7f14790da345d7a32d26fc4443a49",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_states_gpu.mm",
+      "donor_blob": "162372a25ac70df1e0c7cc8b35cfb61ff2a57462",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_target_shim.m",
+      "donor_blob": "1e34cec179026110e59feda3483e66c6aef5658b",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_target_types.h",
+      "donor_blob": "bc62fd4c349673dd9aff5b8519f451b240961897",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_targets.h",
+      "donor_blob": "737f966321d32e7dd2a8bd1b2e5995845912c0c4",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/metal_targets.m",
+      "donor_blob": "74154406b12c9cad36008711edd9bbf3a470af11",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/resource_formats.h",
+      "donor_blob": "ed40ca50ed55c133e4407f7e2890820bc3322086",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2c-resources",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/resource_formats.m",
+      "donor_blob": "361942bc0f6e15b49457848686a3ec6799f11b16",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2c-resources",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/shader_archive.h",
+      "donor_blob": "8c684808c30afdaf03148c49bc045649d06ff846",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/shader_archive.mm",
+      "donor_blob": "9813eb239d920a9ec731ccf4f46787c43cd491c5",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/shader_fixed.cpp",
+      "donor_blob": "ad16a6484ff0e9e78dcd88fc390ad700a9c0de61",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/shader_fixed.h",
+      "donor_blob": "2fc60027ee9759bc9477b7aaa704252cb71c38b2",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/shader_provider.h",
+      "donor_blob": "d816553896d43db9d0d9a988ef4e244807c52648",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/shader_provider.mm",
+      "donor_blob": "3af563664fbfa5e35fb64c676c80e2b2e9749016",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/shader_setup.h",
+      "donor_blob": "7e207fd7e83fdc1bd361bdc39b3ac1db9c288f68",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/shader_setup.mm",
+      "donor_blob": "aff1b4cf0656e3d61f03a94b7333878a0a92cf9c",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/Mac/Metal/shim_dispatch.h",
+      "donor_blob": "3ca22d5515359719ba81857cc1a87d90971d914f",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/EffectsCore/FxSystem.c",
+      "donor_blob": "55d8483281f99e1f0c07f50168de1ce06e97783e",
+      "current_blob": "55d8483281f99e1f0c07f50168de1ce06e97783e",
+      "classification": "identical",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "src/PC/EffectsCore/Fxexport.c",
+      "donor_blob": "1dbeb32020465c2574cc030649d4d2291320e459",
+      "current_blob": "aa017c432db28afcffa7afe5d063e47c0810ace9",
+      "classification": "shared-diverged",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/cgame_mp/cg_consolecmds_mp.c",
+      "donor_blob": "0cdb04925b7d5817e01a890c73c03e4d1b0e0f80",
+      "current_blob": "9b1fd8e78c2a5b9999e84fe82d529a90a6aba557",
+      "classification": "shared-diverged",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/cgame_mp/cg_event_mp.c",
+      "donor_blob": "ff7f949ede9b4ce5a1208f55b4fd03cea8dde0d7",
+      "current_blob": "feffeedc21eab4b8ade74b39dbe41534f8f09f83",
+      "classification": "shared-diverged",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/cgame_mp/cg_view_mp.c",
+      "donor_blob": "847ef1cc58cb90a7cc8b51928bb60764a325e1d0",
+      "current_blob": "456de6df04fc77210129afdb914644d810f2c329",
+      "classification": "shared-diverged",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/client_mp/cl_cgame_mp.c",
+      "donor_blob": "eb543bceba075f7e3d1e90c19c9dc6aabe1273c1",
+      "current_blob": "bec539459e930d7972620453db7711a74adaba42",
+      "classification": "donor-only-change",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/client_mp/cl_ui_mp.c",
+      "donor_blob": "9bc7b5f1bf694c2d73db36cebbac418256a0e044",
+      "current_blob": "3c89dc112d28b69219a25072ca7e4255dc867c22",
+      "classification": "shared-diverged",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/game_mp/g_active_mp.c",
+      "donor_blob": "c3a92d11ca79b686c4f1edda615111e02308fb39",
+      "current_blob": "e5ac5948d9d2bbb567a6b71fab097c18ff5ed0aa",
+      "classification": "shared-diverged",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "src/PC/game_mp/player_use_mp.c",
+      "donor_blob": "3f1ad995f9cd24e0d0fc860c81792a2250bdbe3a",
+      "current_blob": "3f1ad995f9cd24e0d0fc860c81792a2250bdbe3a",
+      "classification": "identical",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "src/PC/gfx_d3d/r_dvars.c",
+      "donor_blob": "e845e7c5427e97962999a7f6e6ade615e7d5e2f3",
+      "current_blob": "09336c671d00523690f17f05fd5bf66486198795",
+      "classification": "shared-diverged",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/gfx_d3d/r_image.c",
+      "donor_blob": "1dd5de9548af80d29c9042a28c264ebfbe3a1a46",
+      "current_blob": "035607268e74733fd596fcdd948ef804f0022104",
+      "classification": "donor-only-change",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/gfx_d3d/r_init.c",
+      "donor_blob": "70a9c8277e49a5fba62f80624e5a9280655d62f1",
+      "current_blob": "f62c911ff4a914204a5035c2ee23d4b5bad77233",
+      "classification": "shared-diverged",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/gfx_d3d/r_screenshot.c",
+      "donor_blob": "0cbd682107b015ad098d5db7fab9c363f62b5ed0",
+      "current_blob": "2d94c9a1f1d083da42acc0e4ed0b84f72b4e1961",
+      "classification": "shared-diverged",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/gfx_d3d/rb_backend.c",
+      "donor_blob": "a610803405a7c898378fae939607fc0d093906f5",
+      "current_blob": "a6a92985d8b360bdbc68768c85f2938a1b6de932",
+      "classification": "shared-diverged",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/gfx_d3d/rb_shade.c",
+      "donor_blob": "b615ac2fa3305a1cdba461c686586907b45d5d2b",
+      "current_blob": "0722e3f93cb561a6e0a82b26d2b78e151186a95d",
+      "classification": "shared-diverged",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/gfx_d3d/rb_state.c",
+      "donor_blob": "92494445f4620ce5aebe1e3f14ddf5b7095f6418",
+      "current_blob": "63728e52e510b31e6ed8c3830eadae692a94a910",
+      "classification": "shared-diverged",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/gfx_d3d/rb_tess.c",
+      "donor_blob": "908f211d2d800d3a042d31cb9f90af18c91f43d5",
+      "current_blob": "0ff44e93392cf0139400af4f7c5a9587a3b1288d",
+      "classification": "shared-diverged",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/PC/qcommon/cm_load_obj.c",
+      "donor_blob": "9df324cba3966d5674f62366289e097f867680a5",
+      "current_blob": "9df324cba3966d5674f62366289e097f867680a5",
+      "classification": "identical",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "src/PC/qcommon/cm_world.c",
+      "donor_blob": "ceec0881d431e619a23ac601165608ae9120721f",
+      "current_blob": "ceec0881d431e619a23ac601165608ae9120721f",
+      "classification": "identical",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "src/PC/universal/dvar.c",
+      "donor_blob": "45f0cc10e40a4d0afbd2b45d9e788756f65f1620",
+      "current_blob": "f27b155918edda1301d9a74ba1b8d2bf6109b2de",
+      "classification": "shared-diverged",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "src/platform/cod2x_native_setup.h",
+      "donor_blob": "263c513fcd4b09902762e99f4e6528031e737b79",
+      "current_blob": "a32a77e416323c36b42894b89836317ed7554f22",
+      "classification": "donor-only-change",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/platform/macos_display.c",
+      "donor_blob": "65aa3c831ee2a5c5494319ac36917cf05c8033fb",
+      "current_blob": "33982e65113aecb3327b4fe62429cb13afe2e895",
+      "classification": "shared-diverged",
+      "slice": "U2d-display",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/platform/macos_display.h",
+      "donor_blob": "70a88c92c57459ba7df484b750ac8bb1732edb1a",
+      "current_blob": "951804fb6f4cd5839c39ed90d441e74215b8c968",
+      "classification": "donor-only-change",
+      "slice": "U2d-display",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/platform/macos_metal_present.h",
+      "donor_blob": "a7a4086a3059c49cc6fdfbdc914ee50d8d9a3c11",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2d-display",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/platform/macos_metal_present.m",
+      "donor_blob": "111ebd5c2ba8e2077c225650bc55f68f6bd2c586",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2d-display",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "src/stubs/carbon_stubs.c",
+      "donor_blob": "7006d70095dd3a36e03af7210bc5f1361f9a92e4",
+      "current_blob": "fbaae92c7113de6997ac4a56a10c1b1aee9f0551",
+      "classification": "donor-only-change",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/cod2x/test_dvar_pool.c",
+      "donor_blob": "752196d0ca345858c2393c4492f9b34667c5b004",
+      "current_blob": "3beeb91fdbdccbed071c9bb734145c8a42489166",
+      "classification": "donor-only-change",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "tests/fixes13/run.py",
+      "donor_blob": "120e5c83be3a060963c4b9e8fa453b79348998e5",
+      "current_blob": "8eda07a0f71df33f7ef0e23a3d361a24e4f2afbc",
+      "classification": "shared-diverged",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "tests/fixes13/timing.c",
+      "donor_blob": "26e4a0b1c84830f94ea85a97bf0a4e9249df172d",
+      "current_blob": "008638b9c12694a2574c381f04fc68a26153496c",
+      "classification": "shared-diverged",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "tests/lp64/game/run.py",
+      "donor_blob": "e42362c67d05fdd5cddc2d9874688de36996ca5c",
+      "current_blob": "fad1d974637d3e4c8a81c8e1071c4c09cf13125a",
+      "classification": "shared-diverged",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "tests/lp64/game/use_list.c",
+      "donor_blob": "70c7d5f32f92c66209837f167281b4ca2b072fc2",
+      "current_blob": "70c7d5f32f92c66209837f167281b4ca2b072fc2",
+      "classification": "identical",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "tests/lp64/game/world_links.c",
+      "donor_blob": "5fc3415d9e30268b87bbc3436e45aa9d429deeef",
+      "current_blob": "5fc3415d9e30268b87bbc3436e45aa9d429deeef",
+      "classification": "identical",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "tests/metal/core.c",
+      "donor_blob": "9afd6dbdb60dd93f897f8039cd0d6f7b4efe9f5b",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/demo_clock.c",
+      "donor_blob": "8534c3eba7b02c5e14ea4e46e85c7207efb25a09",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/draw_cache.py",
+      "donor_blob": "f50fe650126a5170edeffae2a43c050bf686b09f",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/draw_contract.cpp",
+      "donor_blob": "f39c2232bfee011d2cba2d6abba0ec56d4092cc9",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/draws_gpu.mm",
+      "donor_blob": "87ca18e68c5e8bf1fae5cb2d7fb8b26f05a7203e",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/fixed_contract.cpp",
+      "donor_blob": "739b0f2b20bd5f73e488afd1e75a90d35ad18f38",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/fixed_gpu.mm",
+      "donor_blob": "04615699080e535607df57db9da309b745405a2e",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/fixed_run.sh",
+      "donor_blob": "5aa21a42b3f19ac25c41232b185002f8e7a72dc2",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/frame.m",
+      "donor_blob": "c22d591ee5780e8a8da8e00c447ee5d319021b52",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/fx_clock.c",
+      "donor_blob": "9e56b3c9c7e80c1f6d114259ee7af3d23b8d5c21",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/goldens.py",
+      "donor_blob": "1ac7872a2859290f5f3d5118048a78370a3d8159",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/gpu.m",
+      "donor_blob": "548a11666ed0602dab3a3be10c3d0a5fe0c381ec",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/map_lifetime.c",
+      "donor_blob": "519851b07b82d78f80e751fc4a982496a0fd2944",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/observed_states.py",
+      "donor_blob": "64374728ea6f62b3928d0b1f907c26705d9daa48",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/parser.cpp",
+      "donor_blob": "1f0a019c0a8ae6110f9fc741d3d9579e52fd365f",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/platform_stubs.c",
+      "donor_blob": "503ae328dbaf304afae3324254a7a68e18854543",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/provider.mm",
+      "donor_blob": "c633362905c051de14befb39e20a82d0cebad73f",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/raster.mm",
+      "donor_blob": "7512ec8908f4f1b0007cf5c1711788433a37a919",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/raster.sh",
+      "donor_blob": "f66c233b014f328d346ec6bdfda24cb70780436e",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/resource_bridge.c",
+      "donor_blob": "2fcb91862862b4c65fb422323946c9afca4ab17c",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2c-resources",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/resource_formats.c",
+      "donor_blob": "f80992efaa508b95c14550c523bf4da2c98633a1",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2c-resources",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/resource_gl_buffers.c",
+      "donor_blob": "e2bc0ac49304e42493453b249a430cb3010d9123",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2c-resources",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/resources.m",
+      "donor_blob": "a07078de9908e5a39b5af5b6c27244a5f9388e04",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2c-resources",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/run_core.sh",
+      "donor_blob": "21e0c396f3275df1462b886dc4f5452854173427",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/run_demo_clock.py",
+      "donor_blob": "10c745c2383d5a6ed3a084f93253e73b31fd62e4",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/run_draws.sh",
+      "donor_blob": "90236c8b747327703cc1b0828f18d2930b3ea15c",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/run_draws_gpu.sh",
+      "donor_blob": "fb14c30e775ec08fb3b0c45b9eab18402cac91b9",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/run_fx_clock.py",
+      "donor_blob": "7804ebc66d23ff96bc5b633fa242198778f48ec6",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/run_map_lifetime.py",
+      "donor_blob": "ab67705b3407f2945f9efc2703eedd4425f370fd",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/run_resources.sh",
+      "donor_blob": "14866aaeb2983d3775a2f1b4b209fb325c63ddbd",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2c-resources",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/run_states.sh",
+      "donor_blob": "991013cdd99ccdefad6a9606c4f957b3f3e50bc5",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/run_target_shim.sh",
+      "donor_blob": "c6b1033665298082cd9f9ba92d56874d2b74220c",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/run_targets.sh",
+      "donor_blob": "6ede61f2b874ffe172289e4264332e08583c869f",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/run_tess_overflow.py",
+      "donor_blob": "4c028cd0f9fc3e48f6150cd1954876dcb6f88bd3",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/semantic.mm",
+      "donor_blob": "c352e5cab52804d122858ce4656c2e5add97a537",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/setup.py",
+      "donor_blob": "d1aa0b42b4d5acccaf08697278c6b91f6d21ce7d",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/shaders.sh",
+      "donor_blob": "a4203939358190644639bdc7d0b46615dcc7df6a",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/states.cpp",
+      "donor_blob": "212b72860777ec93feaf9172d5c7924b3f50bb67",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/states_gpu.mm",
+      "donor_blob": "86aa999410cf8c1a8a202e301310bc500e6c8264",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/target_layout.c",
+      "donor_blob": "4f3e0d235d2cdc92a8616289e4ddb4d71cd89cd7",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/target_shim.m",
+      "donor_blob": "2c0b7f5b0421b6e72a737b59892149b395f9939b",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/target_shim_stubs.c",
+      "donor_blob": "cb6cbcf4f80738201ce9d8220489366c1de345e6",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/targets.m",
+      "donor_blob": "17271eedbbf44ae5b6bbf7ed3d90143c063a77cb",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/tess_overflow.c",
+      "donor_blob": "9566776bdb91efd484008b5b115c924fe7735bfa",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U4-draws-targets",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/metal/test_goldens.py",
+      "donor_blob": "0844f9a23d4b58d1b1c178a095a32c45aa96c701",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/online/challenge_resend.c",
+      "donor_blob": "817704cd3f7c372be851296a10227a9b161c0b13",
+      "current_blob": "7252e421475b234912d7abd7635a334421953be8",
+      "classification": "shared-diverged",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "tests/online/run.py",
+      "donor_blob": "35f002b764ab23aa32b6338199111945a110a3e3",
+      "current_blob": "fc0c0d416d540a49332497f7b42ac521d7349208",
+      "classification": "shared-diverged",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "tests/online/timeout.c",
+      "donor_blob": "fdad42098fb8f498e5ac03bad302c3c43a0091c7",
+      "current_blob": "c79e40a725e5975112725c3c368be77635e75e61",
+      "classification": "shared-diverged",
+      "slice": "retain-current",
+      "disposition": "retain current; do not replay"
+    },
+    {
+      "path": "tests/platform/CMakeLists.txt",
+      "donor_blob": "0c8cff264d71c322e483938801c597a72314acdf",
+      "current_blob": "2fb6dc5b68586957f452fa19b69cee1c4a6fc5ff",
+      "classification": "shared-diverged",
+      "slice": "U2a-build",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/platform/fx_call_test.c",
+      "donor_blob": "e2215271951f69ce239e90d9f9695a69f8d9aa08",
+      "current_blob": "4745e72061db75be2ec022a0d52d1ec06312b272",
+      "classification": "shared-diverged",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/platform/metal_present.m",
+      "donor_blob": "6985f48381b8711668d4d8dd991a3de0b79d07d3",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2d-display",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tests/platform/sdl_cocoa_leaks.m",
+      "donor_blob": "0462c11a8a3d1645dd1d9044028024add4cfcc83",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2d-display",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/macos/bench_state.py",
+      "donor_blob": "f7ff14f50a19dd3d17b1806a106831242a50bdb8",
+      "current_blob": "4f27f37e2f1e69631fd4dc67edf8dc73fb7c3c5e",
+      "classification": "shared-diverged",
+      "slice": "U6-observer",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/macos/check-gamemode.sh",
+      "donor_blob": "3d2c859fe96749e956ce4f76e900fa086cedef79",
+      "current_blob": "748d849220d7d1962d948de9ce06c87322d67837",
+      "classification": "donor-only-change",
+      "slice": "U6-observer",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/macos/frame-probe.c",
+      "donor_blob": "43ef561c8a8342aa97cb57dc63e23568258dd2ec",
+      "current_blob": "bef1230ec6ee152916fc5bc386fe5168ae44deba",
+      "classification": "donor-only-change",
+      "slice": "U6-observer",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/macos/live-bench.py",
+      "donor_blob": "99f885a095b9613ee1b53c79543381f4df1d20b8",
+      "current_blob": "b0987c9e762acb324fe6b379327886e3808938fa",
+      "classification": "donor-only-change",
+      "slice": "U6-observer",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/macos/summarize-333.py",
+      "donor_blob": "8ba39d7840ba4a94bc51d34b82c26d11c8b18432",
+      "current_blob": "429d1e00e6f4347878a0d80fdd128374138018e3",
+      "classification": "donor-only-change",
+      "slice": "U6-observer",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/macos/validate-333.sh",
+      "donor_blob": "8b60083b7f344f681b9ece3db341e7a406eccbe3",
+      "current_blob": "4710cd36464899ba176bb21a3d4ffecbcfac4f98",
+      "classification": "donor-only-change",
+      "slice": "U6-observer",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/metal/README.md",
+      "donor_blob": "586f3f31897ff5d121c58d67c4f628b2ff2a12fa",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/metal/add_dispatch.py",
+      "donor_blob": "72e81a45eb6ecb34403f1e1717c8b6c65a6f413e",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/metal/audit_contract.py",
+      "donor_blob": "93cfec56df737d434c0d578de991526958653094",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/metal/check_invalid.py",
+      "donor_blob": "b55efd6b8af390bf38ae8bb22042c1286198c53f",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/metal/check_semantics.py",
+      "donor_blob": "21d5254c8cc1f3ff94c739e0f115cb4cef8c3d10",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/metal/leak_gate.py",
+      "donor_blob": "7b6c9613cd5a6694771beb73b20618f72dd5deda",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U6-observer",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/metal/no_gl_guard.py",
+      "donor_blob": "3c33eac7d9c916dd9420ab97460d48172b44f9f7",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/metal/observe_states.py",
+      "donor_blob": "3ca61dfdfef11b4445149024698b6c99f0ffa8ae",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/metal/prepare.mm",
+      "donor_blob": "c38591fd8734c1ba9e552b630d989cd95a25f968",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/metal/run.sh",
+      "donor_blob": "76deae38a6b7dc3376a49c0645d6f17742a0740c",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/metal/shim_methods.json",
+      "donor_blob": "b8ce519653de7a870d45e53816257982cd7d62b7",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U2b-dispatch-transport",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/metal/smoke.py",
+      "donor_blob": "2e1e7ae8011689fe9bcd1a095251d5472cf50fdf",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U5-receipts",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/metal/translate.cpp",
+      "donor_blob": "20a48f65c1ccf0022aa1f2824a0419502768f05b",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U3-shaders-state",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/tests/test_bench_state.py",
+      "donor_blob": "39ff22e602dfd686124eb378d5f0f13ce1ce4d32",
+      "current_blob": "b1a95d9c14b1803f6736fe2f7642f4b475ec3a6d",
+      "classification": "shared-diverged",
+      "slice": "U6-observer",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    },
+    {
+      "path": "tools/tests/test_metal_leaks.py",
+      "donor_blob": "05bcc341ed315a78fc9f98a7df85625b8d439233",
+      "current_blob": null,
+      "classification": "donor-only-path",
+      "slice": "U6-observer",
+      "disposition": "selective reconciliation; no whole-file replacement"
+    }
+  ]
+}

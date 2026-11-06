@@ -22,14 +22,28 @@ void Image_BuildSpecularityMap(float shift, byte *pic)
             double normalized = (double)((float)power / 30.0f + shift);
             double logInput;
 
+#if defined(COD2_X64)
+            /* Mac's upper-bound jbe also retains unordered values. */
+            if (normalized < 0.0)
+                logInput = -0.0;
+            else if (normalized > 1.0)
+                logInput = -175.0;
+            else
+                logInput = normalized * -175.0;
+#else
             if (normalized < 0.0)
                 logInput = 0.0;
             else if (normalized <= 1.0)
                 logInput = normalized * -175.0;
             else
                 logInput = -175.0;
+#endif
 
+#if defined(COD2_X64)
+            exponent = log((double)0.1f) / log(cos((logInput + 180.0) * (M_PI / 720.0)));
+#else
             exponent = log(0.1) / log(cos((logInput + 180.0) * (M_PI / 720.0)));
+#endif
         }
 
         byte *dst = pic + power;
@@ -37,7 +51,12 @@ void Image_BuildSpecularityMap(float shift, byte *pic)
         for (level = 0; level < 256; level++) {
             double intensity = (double)((float)level * (1.0f / 255.0f));
             double value = pow(intensity, exponent) * 255.0;
+#if defined(COD2_X64)
+            /* Mac's invalid cvttss2si result has a zero low byte. */
+            *dst = value != value ? 0 : (byte)(int)floorf((float)value + 0.5f);
+#else
             *dst = (byte)(int)floorf((float)value + 0.5f);
+#endif
             dst += 32;
         }
     }

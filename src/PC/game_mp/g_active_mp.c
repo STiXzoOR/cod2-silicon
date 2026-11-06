@@ -504,7 +504,11 @@ void G_TouchTriggers(gentity_t *ent)
         if (hit->s.eType == 3 && !BG_PlayerTouchesItem(&client->ps, &hit->s, level.time))
             continue;
 
+#if defined(COD2_X64)
+        if (hit->s.eType != 3 && !SV_EntityContact(mins, maxs, hit))
+#else
         if (!SV_EntityContact(mins, maxs, hit))
+#endif
             continue;
 
         if (Scr_IsSystemActive(1)) {
@@ -541,11 +545,19 @@ void ClientEvents(gentity_t *ent, int oldEventSequence)
             }
 
             if (eventParm > 99) {
+#if defined(COD2_X64)
+                G_Damage(ent, NULL, NULL, NULL, NULL, (int)(client->ps.stats[2] * 1.100000023841858f), 0, 11, 0, 0);
+#else
                 G_Damage(ent, NULL, NULL, NULL, NULL, (int)(client->ps.stats[0] * 1.100000023841858f), 0, 11, 0, 0);
+#endif
             } else {
                 float damageFrac = (float)eventParm * 0.009999999776482582f;
                 if (damageFrac != 0.0f) {
+#if defined(COD2_X64)
+                    G_Damage(ent, NULL, NULL, NULL, NULL, (int)(client->ps.stats[2] * damageFrac), 0, 11, 0, 0);
+#else
                     G_Damage(ent, NULL, NULL, NULL, NULL, (int)(client->ps.stats[0] * damageFrac), 0, 11, 0, 0);
+#endif
                 }
             }
             continue;
@@ -559,33 +571,65 @@ void ClientEvents(gentity_t *ent, int oldEventSequence)
         case 0:
         case 1:
         case 2:
+#if defined(COD2_X64)
+        case 17:
+#else
         case 3:
         case 18:
+#endif
             if (((const dvar_t *)*(void **)imp_g_antilag)->current.enabled) {
                 FireWeaponAntiLag(ent, client->lastServerTime);
             } else {
                 FireWeaponAntiLag(ent, level.time);
             }
             break;
+#if defined(COD2_X64)
+        case 6:
+#else
         case 7:
+#endif
             FireWeaponMelee(ent);
             break;
+#if defined(COD2_X64)
+        case 8:
+#else
         case 9:
+#endif
             G_UseOffHand(ent);
             break;
+#if defined(COD2_X64)
+        case 10:
+#else
         case 11:
+#endif
             Scr_Notify(ent, SCR_CONST()->binocular_enter, 0);
             break;
+#if defined(COD2_X64)
+        case 11:
+#else
         case 12:
+#endif
             Scr_Notify(ent, SCR_CONST()->binocular_exit, 0);
             break;
+#if defined(COD2_X64)
+        case 12:
+#else
         case 13:
+#endif
             Scr_Notify(ent, SCR_CONST()->binocular_fire, 0);
             break;
+#if defined(COD2_X64)
+        case 13:
+#else
         case 14:
+#endif
             Scr_Notify(ent, SCR_CONST()->binocular_release, 0);
             break;
+#if defined(COD2_X64)
+        case 14:
+#else
         case 15:
+#endif
             Scr_Notify(ent, SCR_CONST()->binocular_drop, 0);
             break;
         case 39:
@@ -658,8 +702,14 @@ void P_DamageFeedback(gentity_t *player)
 
         client->v_dmg_roll = (damageFrom[0] * viewaxis[1][0] + damageFrom[1] * viewaxis[1][1] + damageFrom[2] * viewaxis[1][2]) * negativeKick;
         client->v_dmg_pitch = (damageFrom[0] * viewaxis[0][0] + damageFrom[1] * viewaxis[0][1] + damageFrom[2] * viewaxis[0][2]) * kick;
+#if defined(COD2_X64)
+        /* Mac rounds the division before scaling to the network angle. */
+        client->ps.damagePitch = (int)((angles[0] / 360.0f) * 256.0f);
+        client->ps.damageYaw = (int)((angles[1] / 360.0f) * 256.0f);
+#else
         client->ps.damagePitch = (int)(angles[0] * (256.0f / 360.0f));
         client->ps.damageYaw = (int)(angles[1] * (256.0f / 360.0f));
+#endif
     }
 
     ++client->ps.damageEvent;
@@ -680,7 +730,11 @@ qboolean StuckInClient(gentity_t *self)
     if (self->r.contents != 0x2000000 && self->r.contents != 0x4000000)
         return qfalse;
 
+#if defined(COD2_X64)
+    for (i = 0; i < level.maxclients; ++i) {
+#else
     for (i = 0; i < level.num_entities; ++i) {
+#endif
         gentity_t *ent = &g_entities[i];
         gclient_t *client;
         vec2_t vDelta;
@@ -690,7 +744,11 @@ qboolean StuckInClient(gentity_t *self)
         float ejectSpeed;
         const dvar_t *ejectDvar;
 
+#if defined(COD2_X64)
+        if (!ent->r.inuse)
+#else
         if (!ent->takedamage)
+#endif
             continue;
 
         client = ent->client;
@@ -744,12 +802,20 @@ qboolean StuckInClient(gentity_t *self)
         client->ps.velocity[0] = otherSpeed * vDelta[0];
         client->ps.velocity[1] = otherSpeed * vDelta[1];
         client->ps.pm_time = 300;
+#if defined(COD2_X64)
+        client->ps.pm_flags |= 0x200;
+#else
         client->ps.eFlags |= 0x200;
+#endif
 
         selfClient->ps.velocity[0] = -selfSpeed * vDelta[0];
         selfClient->ps.velocity[1] = -selfSpeed * vDelta[1];
         selfClient->ps.pm_time = 300;
+#if defined(COD2_X64)
+        selfClient->ps.pm_flags |= 0x200;
+#else
         selfClient->ps.eFlags |= 0x200;
+#endif
         return qtrue;
     }
 
@@ -1300,7 +1366,11 @@ void ClientEndFrame(gentity_t *ent)
 
     client->ps.pm_flags |= 0x00800000;
     client->ps.pm_flags &= 0xfcffffff;
+#if defined(COD2_X64)
+    client->ps.viewmodelIndex = client->sess.viewmodelIndex;
+#else
     client->ps.damageCount = client->sess.viewmodelIndex;
+#endif
 
     G_SetClientContents(ent);
 
@@ -1314,7 +1384,11 @@ void ClientEndFrame(gentity_t *ent)
     } else if (client->ufo) {
         client->ps.pm_type = 3;
     } else if (client->sess.sessionState == SESS_STATE_DEAD) {
+#if defined(COD2_X64)
+        client->ps.pm_type = ent->tagInfo ? 7 : 6;
+#else
         client->ps.pm_type = (ent->count == 1) ? 6 : 7;
+#endif
         ent->r.svFlags = (ent->r.svFlags | 1) & 0xfd;
 #if defined(COD2_X64)
         ent->takedamage = 0;
@@ -1360,7 +1434,11 @@ void ClientEndFrame(gentity_t *ent)
     }
 
     client->ps.stats[0] = ent->health;
+#if defined(COD2_X64)
+    ent->s.loopSound = 0;
+#else
     ent->s.eventSequence = 0;
+#endif
 
     if (g_smoothClients->current.enabled) {
         G_PlayerStateToEntityStateExtrapolate(&client->ps, &ent->s, client->ps.commandTime, qtrue);
@@ -1395,7 +1473,11 @@ void ClientEndFrame(gentity_t *ent)
     ent->handler = (ent->health <= 0) ? 11 : 9;
 
     ci = G_ClientInfoForEntity(ent);
+#if defined(COD2_X64)
+    ci->lerpMoveDir = ent->s.angles2[1];
+#else
     ci->lerpMoveDir = (float)ent->s.eventParm;
+#endif
     ci->lerpLean = ent->s.leanf;
     ci->playerAngles[0] = client->ps.viewangles[0];
     ci->playerAngles[1] = client->ps.viewangles[1];

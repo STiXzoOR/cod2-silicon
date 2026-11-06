@@ -3,6 +3,12 @@
 #include "bytematch.h"
 #include <string.h>
 
+#if defined(COD2_X64)
+_Static_assert(sizeof(FxArchive) == 32, "FX native archive storage");
+_Static_assert(sizeof(FxChannelInstance) == 24, "FX native channel instance storage");
+_Static_assert(sizeof(FxBoltInfo) == 8, "FX bolt wire storage");
+#endif
+
 extern void MemFile_ReadData(MemoryFile *memFile, int bytes, void *data);
 extern void MemFile_WriteData(MemoryFile *memFile, int bytes, const void *data);
 extern EffectTemplate * FX_RegisterEffect(const char *fileName);
@@ -46,6 +52,51 @@ void FxArchive_BeginReading(const FxArchive *_this, MemoryFile *memFile)
     ((FxArchive *)_this)->zeroCount = 0;
 }
 
+#if defined(COD2_X64)
+/* Fatal MemoryFile readers leave through Com_Error. A nonfatal reader leaves
+ * memoryOverflow set and supplies zeroes for the unread remainder. */
+static inline __attribute__((always_inline)) void FxArchive_ReadData_core(const FxArchive *_this, void *p, int byteCount)
+{
+    FxArchive *a = (FxArchive *)_this;
+    byte *data = p;
+    if (byteCount <= 0)
+        return;
+    a->byteCounter += byteCount;
+    while (byteCount > 0) {
+        unsigned char value = 0;
+        if (a->repeatCount != 0) {
+            --a->repeatCount;
+            MemFile_ReadData(a->memFile, 1, &value);
+            if (a->memFile->memoryOverflow) {
+                memset(data, 0, byteCount);
+                return;
+            }
+            *data++ = value;
+            --byteCount;
+        } else if (a->zeroCount != 0) {
+            --a->zeroCount;
+            *data++ = 0;
+            --byteCount;
+        } else {
+            MemFile_ReadData(a->memFile, 1, &value);
+            if (a->memFile->memoryOverflow) {
+                memset(data, 0, byteCount);
+                return;
+            }
+            switch (value & 0xc0) {
+            case 0x00: a->repeatCount = 1; break;
+            case 0x40: a->repeatCount = 2; break;
+            case 0x80: a->repeatCount = 4; break;
+            default:
+                a->repeatCount = (value & 0x3f) + 1;
+                a->zeroCount = 0;
+                continue;
+            }
+            a->zeroCount = (value & 0x3f) + 1;
+        }
+    }
+}
+#else
 static inline __attribute__((always_inline)) void FxArchive_ReadData_core(const FxArchive *_this, void *p, int byteCount)
 {
     FxArchive *a = (FxArchive *)_this;
@@ -103,12 +154,68 @@ static inline __attribute__((always_inline)) void FxArchive_ReadData_core(const 
         byteCount = newRemaining;
     }
 }
+#endif
 
 void FxArchive_ReadData(const FxArchive *_this, void *p, int byteCount)
 {
     FxArchive_ReadData_core(_this, p, byteCount);
 }
 
+#if defined(COD2_X64)
+/* Mac 0xa9f0e: literal runs have a 0xc0 control; the other controls
+ * encode one, two or four literals followed by up to 64 zeroes. */
+void FxArchive_WriteData(const FxArchive *_this, const void *p, int byteCount)
+{
+    FxArchive *a = (FxArchive *)_this;
+    MemoryFile *mf = a->memFile;
+    const byte *data = p;
+    byte control;
+    a->byteCounter += byteCount;
+    if (byteCount <= 0 || mf->memoryOverflow)
+        return;
+    if (a->startPos == mf->bytesUsed) {
+        control = 0xc0;
+        MemFile_WriteData(mf, 1, &control);
+        MemFile_WriteData(mf, 1, data++);
+        --byteCount;
+    }
+    for (int i = 0; i < byteCount && !mf->memoryOverflow; ++i) {
+        byte *run = mf->buffer + a->startPos;
+        int count = *run & 0x3f;
+        if ((*run & 0xc0) != 0xc0) {
+            if (data[i] == 0 && count != 0x3f) {
+                ++*run;
+                continue;
+            }
+        } else if (count == 0 || count == 1 || count == 3) {
+            if (data[i] == 0) {
+                *run = count == 0 ? 0 : count == 1 ? 0x40 : 0x80;
+                continue;
+            }
+            ++*run;
+            MemFile_WriteData(mf, 1, data + i);
+            continue;
+        } else if (count != 0x3f) {
+            byte *end = mf->buffer + mf->bytesUsed;
+            if (count > 5 && data[i] == 0 && end[-2] == 0 && end[-1] == 0) {
+                *run -= 3;
+                end[-2] = end[-3];
+                end[-3] = 2;
+                a->startPos = mf->bytesUsed - 3;
+                --mf->bytesUsed;
+                continue;
+            }
+            ++*run;
+            MemFile_WriteData(mf, 1, data + i);
+            continue;
+        }
+        a->startPos = mf->bytesUsed;
+        control = 0xc0;
+        MemFile_WriteData(mf, 1, &control);
+        MemFile_WriteData(mf, 1, data + i);
+    }
+}
+#else
 void FxArchive_WriteData(const FxArchive *_this, const void *p, int byteCount)
 {
     MemoryFile *memFile;
@@ -140,6 +247,7 @@ void FxArchive_WriteData(const FxArchive *_this, const void *p, int byteCount)
         }
     }
 }
+#endif
 
 void FxArchive_ArchiveEffect(const FxArchive *_this, const EffectTemplate **fx)
 {
@@ -282,7 +390,11 @@ void FxArchive_ArchiveChannelInstance(const FxArchive *_this, FxChannelInstance 
 
         *(int *)&channelInstance->scale = f;
 
+#if defined(COD2_X64)
+        channelInstance->curveIterator.master = NULL;
+#else
         *(int *)&channelInstance->curveIterator.master = 0;
+#endif
     } else {
 
         f = *(int *)&channelInstance->scale;
@@ -307,6 +419,28 @@ void FxArchive_ArchiveFxBoltInfo(const FxArchive *_this, FxBoltInfo *bolt)
     }
 }
 
+#if defined(COD2_X64)
+void FxArchive_ArchiveFxGfxEntity(const FxArchive *_this, FxGfxEntity *entity)
+{
+    /* The material token is process-local and is replaced by ArchiveMaterial
+     * later in Effect_Archive. Keep its retail 32-bit slot. */
+    BM_ALIGNED(4) byte wire[0x68];
+    uint32_t material;
+    _Static_assert(offsetof(FxGfxEntity, endpos) - offsetof(FxGfxEntity, rotation) + sizeof(vec3_t) == 100,
+                   "FxGfxEntity archive scalar span");
+    if (_this->isReading) {
+        FxArchive_ReadData_core(_this, wire, sizeof(wire));
+        memcpy(&material, wire, sizeof(material));
+        entity->customMaterial = (MaterialHandle)(uintptr_t)material;
+        memcpy(&entity->rotation, wire + 4, 100);
+    } else {
+        material = (uint32_t)(uintptr_t)entity->customMaterial;
+        memcpy(wire, &material, sizeof(material));
+        memcpy(wire + 4, &entity->rotation, 100);
+        FxArchive_WriteData(_this, wire, sizeof(wire));
+    }
+}
+#else
 void FxArchive_ArchiveFxGfxEntity(const FxArchive *_this, FxGfxEntity *entity)
 {
     char isReading;
@@ -323,3 +457,4 @@ void FxArchive_ArchiveFxGfxEntity(const FxArchive *_this, FxGfxEntity *entity)
         FxArchive_WriteData(_this, temp, 0x68);
     }
 }
+#endif

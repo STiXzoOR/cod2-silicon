@@ -51,9 +51,15 @@ static int compare_impact_files(const int *pe0, const int *pe1)
 }
 #endif
 
+#if defined(COD2_X64)
+static int CG_RegisterImpactEffectsForDir(const char *dir, char *(*szEffectFile)[23], char *listbuf)
+#else
 static int CG_RegisterImpactEffectsForDir(const char *dir, char *(*szEffectFile)[23])
+#endif
 {
+#if !defined(COD2_X64)
     char listbuf[65536];
+#endif
 
     int iListCount = FS_GetFileList(dir, "csv", 0, listbuf, 0x10000);
     if (iListCount == 0)
@@ -151,6 +157,9 @@ static int CG_RegisterImpactEffectsForDir(const char *dir, char *(*szEffectFile)
 
         if (pszErrorMsg) {
             Com_Printf("^1ERROR: %s", pszErrorMsg);
+#if defined(COD2_X64)
+            return 0;
+#endif
         }
     }
 
@@ -159,17 +168,29 @@ static int CG_RegisterImpactEffectsForDir(const char *dir, char *(*szEffectFile)
 
 FxImpactTable *CG_RegisterImpactEffects(const char *mapname)
 {
+#if defined(COD2_X64)
+    char *listbuf = (char *)Hunk_AllocateTempMemoryInternal(65536);
+#else
     char listbuf[65536];
+#endif
 
     char *szEffectFile[11 * 23];
     memset(szEffectFile, 0, sizeof(szEffectFile));
 
+#if defined(COD2_X64)
+    CG_RegisterImpactEffectsForDir("fx", (char *(*)[23])szEffectFile, listbuf);
+#else
     CG_RegisterImpactEffectsForDir("fx", (char *(*)[23])szEffectFile);
+#endif
 
     if (mapname != NULL) {
         char mapdir[64];
         Com_sprintf(mapdir, 64, "fx/maps/%s", mapname);
+#if defined(COD2_X64)
+        CG_RegisterImpactEffectsForDir(mapdir, (char *(*)[23])szEffectFile, listbuf);
+#else
         CG_RegisterImpactEffectsForDir(mapdir, (char *(*)[23])szEffectFile);
+#endif
     }
 
 #if COD2_APPLE_SDK
@@ -224,10 +245,19 @@ FxImpactTable *CG_RegisterImpactEffects(const char *mapname)
     }
 
     if (iBadCount != 0) {
+#if defined(COD2_X64)
+        Com_Printf("^1ERROR: %i missing entries in effect CSV files (see console for details)", iBadCount);
+        return NULL;
+#else
         Com_Printf("^1ERROR: %i missing entries in effect CSV files (see console for details)\n", iBadCount);
         fx = NULL;
+#endif
     } else {
+#if defined(COD2_X64)
+        fx->name = "";
+#else
         *(const char **)fx = "illusionoftypes";
+#endif
     }
 
     Hunk_ClearTempMemory();

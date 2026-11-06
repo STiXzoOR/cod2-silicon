@@ -9,6 +9,11 @@ void MacPlatform_ConfigureWindow(int width, int height, int mode, int refresh);
 void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
                                     int quality, int interval, int *hasAux);
 uint16_t MacDisplay_ReleaseContext(void **context);
+#if defined(COD2_X64)
+int MacDisplay_MakeContextCurrent(void *context);
+int MacDisplay_SetDepthStencilFormat(void *context, int depthBits, int stencil);
+void MacDisplay_SetPresentationInterval(void *context, uint32_t interval);
+#endif
 void MacDisplay_ReleaseDisplay(void);
 void SDL_GL_SwapWindowDirect(void);
 int MacPlatform_GetRenderSize(int *width, int *height);
@@ -19,5 +24,8 @@ void MacPlatform_TransformPoint(int x, int y, int logicalWidth, int logicalHeigh
 void MacPlatform_MapWindowPoint(int x, int y, int *renderX, int *renderY);
 void MacGL_DrawBuffer(unsigned int buffer);
 void MacGL_ReadBuffer(unsigned int buffer);
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+void MacPlatform_ConfigurePresentation(int metal, int edr);
+#endif
 
 #endif

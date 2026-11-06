@@ -50,7 +50,12 @@ def function(source, name):
     raise ValueError('unterminated production function: ' + name)
 
 
-values = (ROOT / 'src/PC/script/scr_variable.c').read_text()
+values = subprocess.run(['unifdef', '-DCOD2_X64',
+                         str(ROOT / 'src/PC/script/scr_variable.c')],
+                        capture_output=True, text=True)
+if values.returncode not in (0, 1):
+    raise SystemExit(values.stderr)
+values = values.stdout
 scalar_helpers = '\n'.join(re.findall(r'^#define (?:SCRVL_\w+|VG_STATUS\(id\)).*', values, re.M)) + '\n'
 scalar_helpers += ''.join(function(values, name) for name in
                           ['Scr_CastBool_core', 'Scr_CastBool', 'Scr_CastNumericPair', 'Scr_EvalEquality'])

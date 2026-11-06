@@ -13,11 +13,11 @@ extern void *Hunk_AllocAlignInternal(int size, int alignment);
 extern void *Hunk_AllocLowAlignInternal(int size, int alignment);
 extern void Com_Printf(const char *fmt, ...);
 
-/* The menu string pool must persist for the whole UI lifetime. On x64 it was
- * being allocated from the HIGH hunk, which the menu-load path churns (temp
- * allocations / mark rollbacks), so freshly-added stringDef nodes had their
- * 8-byte str field clobbered and later lookups crashed. Put the pool in the
- * LOW permanent hunk on x64 (x86 keeps its original high-hunk behavior). */
+/* Native keeps the menu string pool on the low hunk; Mac uses the high hunk.
+ * This only changes where the strings live. The original crash was blamed on
+ * high-hunk rollback, but no rollback reaches these strings on Mac (0xaf394
+ * takes its mark after UI init). The likelier cause is the hard-coded 8-byte
+ * node replaced in the same commit, which is unproven. */
 #if defined(COD2_X64)
 #define STRPOOL_ALLOC(sz, al) Hunk_AllocLowAlignInternal((sz), (al))
 #else
@@ -121,7 +121,11 @@ qboolean Item_EnableShowViaDvar(const itemDef_t *item, int flag)
             return 1;
         }
 
+#if defined(COD2_X64)
+        while (val[0] == ';' && val[1] == '\0') {
+#else
         if (val[0] == ';' && val[1] == '\0') {
+#endif
             if (!String_Parse(&p, val, 1024)) {
                 if (item->dvarFlags & flag)
                     return 0;
@@ -145,7 +149,11 @@ qboolean Item_IsEditFieldDef(itemDef_t *item)
 {
     int type = item->dataType;
 
+#if defined(COD2_X64)
+    if ((unsigned int)type > 0x12u)
+#else
     if (type > 0x12)
+#endif
         return 0;
     if ((1 << type) & 0x74e11)
         return 1;

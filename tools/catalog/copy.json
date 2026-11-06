@@ -4091,12 +4091,6 @@
       "summary": "How many seconds the shell shock screen tint builds.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.4 seconds."
     },
-    "cg_shock_viewkickfadetime": {
-      "group": "other",
-      "title": "Shock view kick fade",
-      "summary": "How many seconds the shell shock view kick takes to fade.",
-      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 3 seconds."
-    },
     "cg_shock_viewkickperiod": {
       "group": "other",
       "title": "Shock view kick period",
@@ -5072,6 +5066,14 @@
       "bindable": true,
       "menuLabel": "Show scoreboard"
     },
+    "listip": {
+      "title": "Show the IP filter list",
+      "summary": "Show the hosted server's IP filter list in the console.",
+      "details": "This dispatch-only command runs g_banIPs through the console, which prints the saved filter list.",
+      "effectSources": [
+        "src/PC/game_mp/g_svcmds_mp.c: ConsoleCommand"
+      ]
+    },
     "weapnext": {
       "title": "Next weapon",
       "summary": "Next weapon.",
@@ -5786,14 +5788,6 @@
         "src/PC/server_mp/sv_ccmds_mp.c: SV_GameCompleteStatus_f"
       ]
     },
-    "gc": {
-      "title": "Send a preset player message",
-      "summary": "Send a numbered preset message to a numbered player.",
-      "details": "The native server accepts player numbers 0–63 and message numbers 0–6. It sends the message to the target and echoes it to the sender.",
-      "effectSources": [
-        "src/PC/game_mp/g_cmds_mp.c: Cmd_GameCommand_f"
-      ]
-    },
     "give": {
       "title": "Give health, ammunition or items",
       "summary": "Ask the server to grant the named resource to the player.",
@@ -5936,14 +5930,6 @@
       "details": "Uses sv_mapRotation and sv_mapRotationCurrent. When no usable map entry remains it falls back to restarting the current game.",
       "effectSources": [
         "src/PC/server_mp/sv_ccmds_mp.c: SV_MapRotate_f"
-      ]
-    },
-    "maprotate": {
-      "title": "Run the next-map script",
-      "summary": "Execute the commands stored in nextmap through the hosted game's console.",
-      "details": "This dispatch-only command queues vstr nextmap. Its effect depends on the saved nextmap text; it is distinct from map_rotate's rotation parser.",
-      "effectSources": [
-        "src/PC/game_mp/g_svcmds_mp.c: ConsoleCommand"
       ]
     },
     "match": {
@@ -6377,29 +6363,12 @@
         "src/PC/game_mp/g_cmds_mp.c: Cmd_Take_f"
       ]
     },
-    "tcmd": {
-      "title": "Send a preset message to the aimed player",
-      "summary": "Send a numbered game command to the player under the crosshair.",
-      "details": "Looks up the crosshair target and queues gc with that player number and the supplied command number. The server validates the numbers.",
-      "effectSources": [
-        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_TargetCommand_f"
-      ]
-    },
     "tell": {
       "title": "Send a private player message",
       "summary": "Send chat text to a numbered player.",
-      "details": "The game-server path delivers the message to the target and echoes it to the sender. From the server console it sends a console-prefixed message to that player.",
+      "details": "This server console command sends a console-prefixed message to that player.",
       "effectSources": [
-        "src/PC/game_mp/g_cmds_mp.c: ClientCommand",
         "src/PC/server_mp/sv_ccmds_mp.c: SV_ConTell_f"
-      ]
-    },
-    "tell_target": {
-      "title": "Message the aimed player",
-      "summary": "Send the supplied chat text to the player under the crosshair.",
-      "details": "Does nothing without a crosshair player target. Otherwise it forwards tell with the target's client number.",
-      "effectSources": [
-        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_TellTarget_f"
       ]
     },
     "tempbanclient": {
@@ -6760,6 +6729,15 @@
         "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_InitConsoleCommands",
         "src/PC/client_mp/cl_cgame_mp.c: CL_AddCgameCommand",
         "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "unskippablecinematic": {
+      "title": "Unskippable cinematic command",
+      "summary": "The native Mac handler skips cinematic playback.",
+      "details": "Sets the cinematic skip flag to false. On the native Apple path it clears nextmap and marks the intro as played without playing the requested video. The legacy video-player path starts playback with skipping disabled.",
+      "effectSources": [
+        "src/PC/client_mp/cl_cin_mp.c: CL_PlayUnskippableCinematic_f",
+        "src/PC/client_mp/cl_cin_mp.c: SCR_StopCinematic"
       ]
     }
   },

@@ -214,6 +214,167 @@ void SV_Netchan_AddOOBProfilePacket(int iLength)
 #endif
 }
 
+#if defined(COD2_X64)
+extern int Dvar_GetInt(const char *name);
+
+static void SV_ProfileLineLocal(const char *line, qboolean console, int *y, int step)
+{
+    if (console) {
+        Com_Printf("%s\n", line);
+    } else {
+        *y += step;
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
+        CL_DrawString(32, *y, line, 0, Dvar_GetInt("cl_profileTextHeight"));
+#endif
+    }
+}
+
+static void SV_ProfileTotalWordsLocal(int largest, int smallest, int words[3])
+{
+    /* Mac 0x190d5d/0x190d63 passes two doubles to integer conversions.
+       Preserve the three i386 words consumed by the format on native ABIs. */
+    double largeValue = (double)(float)largest;
+    double smallValue = (double)(float)smallest;
+    unsigned long long largeBits, smallBits;
+    memcpy(&largeBits, &largeValue, sizeof(largeBits));
+    memcpy(&smallBits, &smallValue, sizeof(smallBits));
+    words[0] = (int)(unsigned int)largeBits;
+    words[1] = (int)(unsigned int)(largeBits >> 32);
+    words[2] = (int)(unsigned int)smallBits;
+}
+
+void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
+{
+    char line[1024];
+    int y = 90;
+    int bytes[2] = {0, 0};
+    int packets[2] = {0, 0};
+    int fragments[2] = {0, 0};
+    int largest[2] = {0, 0};
+    int smallest[2] = {9999, 9999};
+    int words[3];
+    int i, side;
+    netProfileInfo_t *prof;
+
+#if COD2_APPLE_SDK && defined(DEDICATED)
+    bPrintToConsole = 1;
+#endif
+    if (!svs.clients)
+        return;
+
+    if (svs.pOOBProf) {
+        NetProf_UpdateStatistics(&svs.pOOBProf->send);
+        NetProf_UpdateStatistics(&svs.pOOBProf->recieve);
+    }
+    for (i = 0; i < sv_maxclients->current.integer; ++i) {
+        client_t *client = &svs.clients[i];
+        if (client->state && client->netchan.pProf) {
+            NetProf_UpdateStatistics(&client->netchan.pProf->send);
+            NetProf_UpdateStatistics(&client->netchan.pProf->recieve);
+        }
+    }
+
+    if (bPrintToConsole)
+        Com_Printf("\n\n");
+    SV_ProfileLineLocal("====================", bPrintToConsole, &y, 0);
+    if (bPrintToConsole) {
+        Com_Printf("Server Network Profile:\n\n");
+        y = 80;
+    } else {
+        SV_ProfileLineLocal("Server Network Profile:", 0, &y, 10);
+        y += 10;
+    }
+    SV_ProfileLineLocal("                    | Sent To                         | Recieved From          | Total Source Traffic   |", bPrintToConsole, &y, 10);
+    SV_ProfileLineLocal("              Source|   bps|  max|  min|frag%|drop%|ak|   bps|  max|  min|frag%|   bps|  max|  min|frag%|", bPrintToConsole, &y, 10);
+
+    prof = svs.pOOBProf;
+    for (i = -1; i < sv_maxclients->current.integer; ++i) {
+        if (i >= 0) {
+            if (!svs.clients[i].state)
+                continue;
+            prof = svs.clients[i].netchan.pProf;
+        }
+        if (!prof)
+            continue;
+        for (side = 0; side < 2; ++side) {
+            netProfileStream_t *stream = side ? &prof->recieve : &prof->send;
+            bytes[side] += stream->iBytesPerSecond;
+            packets[side] += stream->iCountedPackets;
+            fragments[side] += stream->iCountedFragments;
+            if (stream->iLargestPacket > largest[side])
+                largest[side] = stream->iLargestPacket;
+            if (stream->iSmallestPacket < smallest[side])
+                smallest[side] = stream->iSmallestPacket;
+        }
+    }
+    SV_ProfileTotalWordsLocal(largest[0] > largest[1] ? largest[0] : largest[1],
+                              smallest[0] < smallest[1] ? smallest[0] : smallest[1], words);
+    Com_sprintf(line, sizeof(line), "              Totals:%6i|%5i|%5i| %3i%%| %3i%%|%2i|%6i|%5i|%5i| %3i%%|%6i|%5i|%5i| %3i%%|",
+                bytes[0], largest[0], smallest[0], packets[0] ? fragments[0] * 100 / packets[0] : 0,
+                0, 0, bytes[1], largest[1], smallest[1], packets[1] ? fragments[1] * 100 / packets[1] : 0,
+                bytes[0] + bytes[1], words[0], words[1], words[2]);
+    SV_ProfileLineLocal(line, bPrintToConsole, &y, 10);
+
+    prof = svs.pOOBProf;
+    if (prof) {
+        netProfileStream_t *send = &prof->send;
+        netProfileStream_t *recv = &prof->recieve;
+        SV_ProfileTotalWordsLocal(send->iLargestPacket > recv->iLargestPacket ? send->iLargestPacket : recv->iLargestPacket,
+                                  send->iSmallestPacket < recv->iSmallestPacket ? send->iSmallestPacket : recv->iSmallestPacket, words);
+        Com_sprintf(line, sizeof(line), "  OutOfBand Messages: %5i|%5i|%5i| %3i%%| %3i%%|%2i| %5i|%5i|%5i| %3i%%| %5i|%5i|%5i| %3i%%|",
+                    send->iBytesPerSecond, send->iLargestPacket, send->iSmallestPacket, send->iFragmentPercentage,
+                    0, 0, recv->iBytesPerSecond, recv->iLargestPacket, recv->iSmallestPacket, recv->iFragmentPercentage,
+                    send->iBytesPerSecond + recv->iBytesPerSecond, words[0], words[1], words[2]);
+    } else {
+        Com_sprintf(line, sizeof(line), "  OutOfBand Messages:     0|    0|    0|   - |   - |  |     0|    0|    0|   - |     0|    0|    0|   - |");
+    }
+    SV_ProfileLineLocal(line, bPrintToConsole, &y, 10);
+
+    for (i = 0; i < sv_maxclients->current.integer; ++i) {
+        client_t *client = &svs.clients[i];
+        char name[17];
+        int first, previous, pending, acknowledged, losses, j;
+        if (!client->state)
+            continue;
+        strncpy(name, client->name, sizeof(name));
+        name[16] = '\0';
+        prof = client->netchan.pProf;
+        if (!prof) {
+            Com_sprintf(line, sizeof(line), "#%2i-%16s:     0|    0|    0|   0%%|     0|    0|    0|   0%%|     0|    0|    0|   0%%|", i, name);
+        } else {
+            netProfileStream_t *send = &prof->send;
+            netProfileStream_t *recv = &prof->recieve;
+            previous = 0;
+            for (first = 0; first < 32; ++first) {
+                int sent = client->frames[first].messageSent;
+                if (sent <= previous)
+                    break;
+                previous = sent;
+            }
+            losses = 0;
+            acknowledged = 0;
+            pending = 0;
+            for (j = 0; j < 32; ++j) {
+                if (client->frames[(j + first) & 31].messageAcked > 0) {
+                    losses += pending;
+                    ++acknowledged;
+                    pending = 0;
+                } else {
+                    ++pending;
+                }
+            }
+            SV_ProfileTotalWordsLocal(send->iLargestPacket > recv->iLargestPacket ? send->iLargestPacket : recv->iLargestPacket,
+                                      send->iSmallestPacket < recv->iSmallestPacket ? send->iSmallestPacket : recv->iSmallestPacket, words);
+            Com_sprintf(line, sizeof(line), "#%2i-%16s: %5i|%5i|%5i| %3i%%| %3i%%|%2i| %5i|%5i|%5i| %3i%%| %5i|%5i|%5i| %3i%%|",
+                        i, name, send->iBytesPerSecond, send->iLargestPacket, send->iSmallestPacket, send->iFragmentPercentage,
+                        acknowledged ? losses * 100 / (losses + acknowledged) : 100, pending,
+                        recv->iBytesPerSecond, recv->iLargestPacket, recv->iSmallestPacket, recv->iFragmentPercentage,
+                        send->iBytesPerSecond + recv->iBytesPerSecond, words[0], words[1], words[2]);
+        }
+        SV_ProfileLineLocal(line, bPrintToConsole, &y, 10);
+    }
+}
+#else
 void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
 {
     char szLine[1024];
@@ -586,3 +747,4 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
         }
     }
 }
+#endif

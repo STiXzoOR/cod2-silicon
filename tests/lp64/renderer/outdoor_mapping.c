@@ -90,7 +90,8 @@ int main(void)
     downBiasDvar.current.value = 2;
     const float *matrix = RB_GetCodeMatrix_impl(0xEC, 0);
     assert(matrix[0] == 1.0f / 512 && matrix[5] == 1.0f / 1024 && matrix[10] == 1.0f / 256);
-    assert(matrix[12] == -10.0f / 512 && matrix[13] == -18.0f / 1024 && matrix[14] == -32.0f / 256);
+    /* Mac 0xf7bf3 adds down bias to component 2 of the transformed vector. */
+    assert(matrix[12] == -10.0f / 512 && matrix[13] == -20.0f / 1024 && matrix[14] == -30.0f / 256);
     assert(matrix[15] == 1 && matrices->worldOutdoorLookup.valid[0]);
     free(backend);
     rendererDvar.current.integer = 2;

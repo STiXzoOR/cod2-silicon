@@ -619,6 +619,122 @@ static void TraceBoxCull(void)
 }
 #endif
 
+
+#if defined(COD2_X64)
+/* Mac 0x63399: axial planes are min XYZ, then max XYZ. The first
+ * equal entry wins; nonaxial support is a capsule rather than a box. */
+static void SweptBrushContracts(void)
+{
+    Reset();
+    dmaterial_t materials[2] = { { .surfaceFlags = 111 }, { .surfaceFlags = 222 } };
+    cplane_t plane = { .normal = { 0.6f, 0.8f, 0 }, .dist = 0 };
+    cbrushside_t side = { .plane = &plane, .materialNum = 1 };
+    cbrush_t brush = { .mins = { -100, -100, -100 }, .maxs = { 100, 100, 100 },
+        .contents = 1, .numsides = 1, .sides = &side };
+    unsigned short index = 0;
+    cLeafBrushNode_t nodes[70] = { { .leafBrushCount = 1, .contents = 1, .data.leaf.brushes = &index } };
+    cmodel_t models[2] = { 0 };
+    models[1].leaf = (cLeaf_t){ .brushContents = 1, .mins = { -100, -100, -100 },
+        .maxs = { 100, 100, 100 }, .leafBrushNode = 0 };
+    cm.materials = materials;
+    cm.numMaterials = 2;
+    cm.brushes = &brush;
+    cm.numBrushes = 1;
+    cm.leafbrushNodes = nodes;
+    cm.leafbrushNodesCount = 70;
+    cm.cmodels = models;
+    cm.numSubModels = 2;
+    const vec3_t mins = { -2, -2, -5 }, maxs = { 2, 2, 5 }, zero = { 0, 0, 0 };
+    const vec3_t start = { 6, 8, 0 }, end = { 0, 0, 0 };
+    trace_t trace;
+    CM_BoxTrace(&trace, start, end, mins, maxs, 1, 1);
+    Near(trace.fraction, (10 - 2 - 0.125f) / 10);
+    CHECK(trace.surfaceFlags == 222 && trace.contents == 1);
+    // An end outside a plane, but within 1/8, is admitted by the epsilon.
+    const vec3_t closeEnd = { 0.06f, 0.08f, 0 };
+    CM_BoxTrace(&trace, start, closeEnd, zero, zero, 1, 1);
+    CHECK(trace.fraction < 1 && !trace.startsolid);
+    // A start exactly on the plane escaping the brush is rejected at exit zero.
+    const vec3_t origin = { 0, 0, 0 };
+    CM_BoxTrace(&trace, origin, start, zero, zero, 1, 1);
+    CHECK(!trace.startsolid && !trace.allsolid && trace.fraction == 1);
+    CHECK(trace.contents == 0 && trace.material == NULL);
+    // Mac's stationary callers skip descent for an existing all-solid result.
+    trace.startsolid = trace.allsolid = 1;
+    trace.fraction = 0;
+    trace.contents = 0x1234;
+    CM_Trace(&trace, origin, origin, zero, zero, 1, 1);
+    CHECK(trace.contents == 0x1234 && trace.allsolid && trace.fraction == 0);
+    // A valid one-sided brush chain may be deeper than the removed limit.
+    brush.numsides = 0;
+    for (int i = 0; i < 69; ++i) {
+        nodes[i] = (cLeafBrushNode_t){ .axis = 0, .contents = 1,
+            .data.children = { .dist = -200, .childOffset = { 1, 1 } } };
+    }
+    nodes[69] = (cLeafBrushNode_t){ .leafBrushCount = 1, .contents = 1, .data.leaf.brushes = &index };
+    CM_BoxTrace(&trace, origin, origin, zero, zero, 1, 1);
+    CHECK(trace.allsolid && trace.fraction == 0);
+    CM_BoxTrace(&trace, start, end, zero, zero, 1, 1);
+    CHECK(trace.allsolid && trace.fraction == 0);
+
+    // Opposing faces meet at a corner: min-Y precedes max-X at an equal entry.
+    nodes[0] = nodes[69];
+    brush.mins[1] = 0;
+    brush.maxs[0] = 0;
+    brush.axialMaterialNum[0][1] = 1;
+    const vec3_t cornerStart = { 10, -10, 0 };
+    CM_BoxTrace(&trace, cornerStart, origin, zero, zero, 1, 1);
+    CHECK(trace.surfaceFlags == 222);
+    Near(trace.normal[1], -1);
+    Near(trace.normal[0], 0);
+}
+
+static void SweptBrushSplit(void)
+{
+    Reset();
+    const vec3_t zero = { 0,0,0 }, start = { -5,0,0 }, end = { 5,0,0 };
+    dmaterial_t material = { .surfaceFlags = 123 };
+    cbrush_t brushes[2] = {
+        { .mins = { 0,-10,-10 }, .maxs = { 10,10,10 }, .contents = 1 },
+        { .mins = { -10,-10,-10 }, .maxs = { 0,10,10 }, .contents = 2 },
+    };
+    unsigned short indices[2] = { 0,1 };
+    cLeafBrushNode_t nodes[3] = {
+        { .contents = 3, .axis = 0, .data.children = { .dist = 0, .childOffset = { 1,2 } } },
+        { .contents = 1, .leafBrushCount = 1, .data.leaf.brushes = &indices[0] },
+        { .contents = 2, .leafBrushCount = 1, .data.leaf.brushes = &indices[1] },
+    };
+    cmodel_t models[2] = { 0 };
+    models[1].leaf = (cLeaf_t){ .mins = { -20,-20,-20 }, .maxs = { 20,20,20 }, .brushContents = 3, .leafBrushNode = 0 };
+    cm.numSubModels = 2;
+    cm.cmodels = models;
+    cm.numMaterials = 1;
+    cm.materials = &material;
+    cm.brushes = brushes;
+    cm.numBrushes = 2;
+    cm.leafbrushNodes = nodes;
+    cm.leafbrushNodesCount = 3;
+    trace_t trace;
+    // Start inside the near brush and enter the far one. Near first means
+    // the far impact's contents survives the near brush's startsolid write.
+    CM_BoxTrace(&trace, start, end, zero, zero, 1, 3);
+    Near(trace.fraction, 0.4875f);
+    CHECK(trace.startsolid && !trace.allsolid && trace.contents == 1);
+    Near(trace.normal[0], -1);
+    CM_BoxTrace(&trace, end, start, zero, zero, 1, 3);
+    Near(trace.fraction, 0.4875f);
+    CHECK(trace.startsolid && !trace.allsolid && trace.contents == 2);
+    Near(trace.normal[0], 1);
+    // A split range leaves an empty gap. Neither child may be selected.
+    nodes[0].data.children.range = 5;
+    brushes[0].mins[0] = 5;
+    brushes[1].maxs[0] = -5;
+    const vec3_t gapStart = { -1,0,0 }, gapEnd = { 1,0,0 };
+    CM_BoxTrace(&trace, gapStart, gapEnd, zero, zero, 1, 3);
+    Clear(&trace);
+}
+#endif
+
 int main(void)
 {
     TemporaryCapsule();
@@ -630,6 +746,8 @@ int main(void)
     SightTreeAndHints();
     SightMesh();
     TraceBoxCull();
+    SweptBrushContracts();
+    SweptBrushSplit();
 #endif
     FINISH("collision");
 }

@@ -17,8 +17,20 @@ extern DxGlobals dx;
 
 extern struct DxState dxState;
 extern r_backEndGlobals_t backEnd;
+#if defined(COD2_X64)
+/* Mac 1.3 .data (file 0x329d5c/0x329d6c): alpha then color stage states, as
+   {op, arg1, arg2, arg0}. Left zero-initialized, every DX7 stage change set
+   texture stage state 0. */
+static const DxTextureStageEnums texStageEnums = {
+    D3DTSS_ALPHAOP, { D3DTSS_ALPHAARG1, D3DTSS_ALPHAARG2, D3DTSS_ALPHAARG0 }
+};
+static const DxTextureStageEnums texStageEnums_002f24ac = {
+    D3DTSS_COLOROP, { D3DTSS_COLORARG1, D3DTSS_COLORARG2, D3DTSS_COLORARG0 }
+};
+#else
 static const DxTextureStageEnums texStageEnums;
 static const DxTextureStageEnums texStageEnums_002f24ac;
+#endif
 extern const byte defaultSamplerStateTable[];
 extern const DWORD s_blendTable[];
 extern const DWORD s_blendOpTable[];
@@ -331,12 +343,17 @@ static void RB_GetSamplerFilterModes(byte samplerState, DWORD *minFilter, DWORD 
     *minFilter = RB_GetFilterTableValue(samplerState & 3);
     *magFilter = *minFilter;
     if (*minFilter == D3DTEXF_ANISOTROPIC) {
+#if defined(COD2_X64)
+        *minFilter = dx->anisotropicMinFilter;
+        *magFilter = dx->anisotropicMagFilter;
+#else
         if (dx->anisotropy > 0) {
             *magFilter = D3DTEXF_LINEAR;
         } else {
             *minFilter = D3DTEXF_LINEAR;
             *magFilter = D3DTEXF_LINEAR;
         }
+#endif
     }
 }
 
@@ -397,7 +414,17 @@ static inline __attribute__((always_inline)) void RB_SetAnisotropy_core(void)
     }
     if (dx->anisotropy <= 1) {
         dx->anisotropy = 0;
+#if defined(COD2_X64)
+        dx->anisotropicMinFilter = D3DTEXF_LINEAR;
+        dx->anisotropicMagFilter = D3DTEXF_LINEAR;
+#endif
     }
+#if defined(COD2_X64)
+    else {
+        dx->anisotropicMagFilter = dx->anisotropicMagSupported ? D3DTEXF_ANISOTROPIC : D3DTEXF_LINEAR;
+        dx->anisotropicMinFilter = dx->anisotropicMinSupported ? D3DTEXF_ANISOTROPIC : D3DTEXF_LINEAR;
+    }
+#endif
 
     anisotropy = dx->anisotropy;
     if (anisotropy < 1) {
@@ -966,8 +993,13 @@ void RB_UpdateViewportConstants(void)
         viewport = backEnd.sceneViewport;
     }
 
+#if defined(COD2_X64)
+    halfViewportWidth = (invRenderTargetWidth * (float)viewport.width) * 0.5f;
+    halfViewportHeight = (invRenderTargetHeight * (float)viewport.height) * 0.5f;
+#else
     halfViewportWidth = 0.5f * viewport.width * invRenderTargetWidth;
     halfViewportHeight = 0.5f * viewport.height * invRenderTargetHeight;
+#endif
     viewportCenterX = viewport.x * invRenderTargetWidth + halfViewportWidth;
     viewportCenterY = viewport.y * invRenderTargetHeight + halfViewportHeight;
 
@@ -1105,9 +1137,18 @@ void RB_ChangeState_0(int stateBits0)
     }
 
     if (stateBits0 & RB_STATE0_ALPHA_TEST_DISABLE) {
+#if defined(COD2_X64)
+        /* Mac 0xcf176 preserves requested bits as well as cached bits. */
+        stateBits0 |= dxState.activeStateBits[0] & RB_STATE0_ALPHA_TEST_FUNC_MASK;
+#else
         stateBits0 = (stateBits0 & ~RB_STATE0_ALPHA_TEST_FUNC_MASK) | (dxState.activeStateBits[0] & RB_STATE0_ALPHA_TEST_FUNC_MASK);
+#endif
         changedBits &= ~RB_STATE0_ALPHA_TEST_FUNC_MASK;
+#if defined(COD2_X64)
+    } else if (changedBits & RB_STATE0_ALPHA_TEST_FUNC_MASK) {
+#else
     } else {
+#endif
         DWORD alphaFunc;
         byte alphaRef;
 
@@ -1129,8 +1170,15 @@ void RB_ChangeState_0(int stateBits0)
         if (changedBits & RB_STATE0_ALPHA_TEST_FUNC_MASK)
             RB_SetRenderStateDx7(D3DRS_ALPHAFUNC, alphaFunc);
 
+#if defined(COD2_X64)
+        if (dxState.alphaRef != alphaRef) {
+            RB_SetRenderStateDx7(D3DRS_ALPHAREF, alphaRef);
+            dxState.alphaRef = alphaRef;
+        }
+#else
         dxState.alphaRef = alphaRef;
         RB_SetRenderStateDx7(D3DRS_ALPHAREF, alphaRef);
+#endif
     }
 
     if (changedBits & (RB_STATE0_COLOR_WRITE_RGB | RB_STATE0_COLOR_WRITE_ALPHA)) {
@@ -1352,8 +1400,14 @@ void COD2_FORCE_ALIGN_ARG_POINTER RB_SetInitialState(void)
         dxState.activeAlphaStageBits[stageIndex] = 0;
     }
 
+#if defined(COD2_X64)
+    /* These two initial writes do not use Mac's alwaysfails retry loop. */
+    ((SetRenderStateFn)VTABLE(dx.device)[0xe4 / 4])(dx.device, 0x89, 0);
+    ((SetRenderStateFn)VTABLE(dx.device)[0xe4 / 4])(dx.device, 0x93, 1);
+#else
     RB_SetRenderStateDx7(0x89, 0);
     RB_SetRenderStateDx7(0x93, 1);
+#endif
 
     material.Diffuse.r = 1.0f;
     material.Diffuse.g = 1.0f;
@@ -1392,10 +1446,20 @@ void RB_SetWorldMatrixForEntity(const GfxEntity *re)
     RB_FinalizeWorldMatrixChange(activeMatrices, re->scale);
 }
 
+#if defined(COD2_X64)
+/* Mac target 12 reads the adjacent zero at 0x32ab50. Give that value owned
+   storage instead of indexing beyond the twelve-entry native array. */
+const GfxViewportBehavior s_viewportBehaviorForRenderTarget[13] = {
+    (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)0,
+    (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1,
+    (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1,
+    (GfxViewportBehavior)0 };
+#else
 const GfxViewportBehavior s_viewportBehaviorForRenderTarget[12] = {
     (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)0,
     (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1,
     (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1 };
+#endif
 
 const byte s_filterTable[16] = { 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0 };
 

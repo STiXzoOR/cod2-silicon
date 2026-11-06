@@ -189,15 +189,32 @@ void LAN_LoadCachedServers(void)
     if (FS_Read(&size, 4, fileIn) != 4) {
         goto done;
     }
+#if defined(COD2_X64)
+    if (size != sizeof(((clientStatic_t *)base)->globalServers) +
+                sizeof(((clientStatic_t *)base)->favoriteServers)) {
+#else
     if (size != 0x29c500) {
+#endif
         goto done;
     }
 
+#if defined(COD2_X64)
+    if (FS_Read(((clientStatic_t *)base)->globalServers,
+                sizeof(((clientStatic_t *)base)->globalServers), fileIn) !=
+        sizeof(((clientStatic_t *)base)->globalServers)) {
+#else
     if (FS_Read((((clientStatic_t *)(base))->globalServers), 0x298100, fileIn) != 0x298100) {
+#endif
         goto done;
     }
 
+#if defined(COD2_X64)
+    if (FS_Read(((clientStatic_t *)base)->favoriteServers,
+                sizeof(((clientStatic_t *)base)->favoriteServers), fileIn) !=
+        sizeof(((clientStatic_t *)base)->favoriteServers)) {
+#else
     if (FS_Read((((clientStatic_t *)(base))->favoriteServers), 0x4400, fileIn) != 0x4400) {
+#endif
         goto done;
     }
 
@@ -268,12 +285,27 @@ void LAN_SaveServersToCache(void)
 
     FS_Write(&(((clientStatic_t *)(base))->numfavoriteservers), 4, fileOut);
 
+#if defined(COD2_X64)
+    size = sizeof(((clientStatic_t *)base)->globalServers) +
+           sizeof(((clientStatic_t *)base)->favoriteServers);
+#else
     size = 0x298100;
+#endif
     FS_Write(&size, 4, fileOut);
 
+#if defined(COD2_X64)
+    FS_Write(((clientStatic_t *)base)->globalServers,
+             sizeof(((clientStatic_t *)base)->globalServers), fileOut);
+#else
     FS_Write((((clientStatic_t *)(base))->globalServers), 0x298100, fileOut);
+#endif
 
+#if defined(COD2_X64)
+    FS_Write(((clientStatic_t *)base)->favoriteServers,
+             sizeof(((clientStatic_t *)base)->favoriteServers), fileOut);
+#else
     FS_Write((((clientStatic_t *)(base))->favoriteServers), 0x4400, fileOut);
+#endif
 
     FS_FCloseFile(fileOut);
 }

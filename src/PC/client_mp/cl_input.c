@@ -263,7 +263,11 @@ static inline __attribute__((always_inline)) float CL_KeyState(kbutton_t *key)
         if (key->downtime) {
             msec += com_frameTime - key->downtime;
         } else {
+#if defined(COD2_X64)
+            msec = com_frameTime;
+#else
             msec += com_frameTime;
+#endif
         }
 
         key->downtime = com_frameTime;
@@ -298,6 +302,12 @@ static float CL_ClampMouseAxisDelta(float delta, float maxSpeed)
     }
 
     maxDelta = (float)frame_msec * maxSpeed * 0.0010000000474974513f;
+#if defined(COD2_X64)
+    if (delta > maxDelta)
+        delta = maxDelta;
+    if (delta < -maxDelta)
+        delta = -maxDelta;
+#else
     if (delta > maxDelta) {
         return maxDelta;
     }
@@ -305,6 +315,7 @@ static float CL_ClampMouseAxisDelta(float delta, float maxSpeed)
     if (delta < -maxDelta) {
         return -maxDelta;
     }
+#endif
 
     return delta;
 }
@@ -1207,7 +1218,11 @@ void CL_CmdButtons(usercmd_t *cmd)
         cmd->buttons |= 0x40000;
     }
 
+#if defined(COD2_X64)
+    if ((unsigned int)(*clp)->snap.ps.pm_type - 2u <= 2u && CL_ConsumeButtonPress(KB_AT(12))) {
+#else
     if ((int)((*clp)->snap.ps.pm_type - 2) <= 2 && CL_ConsumeButtonPress(KB_AT(12))) {
+#endif
         cmd->buttons |= 0x400;
     }
 
@@ -1408,6 +1423,23 @@ void CL_KeyMove(usercmd_t *cmd)
 
     cl = *(clientActive_t **)imp_cl;
 
+#if defined(COD2_X64)
+    if (KB_AT(25)->active) {
+        cmd->buttons = (cmd->buttons & ~0x200) | 0x2100;
+    } else if (KB_AT(11)->active) {
+        cmd->buttons = (cmd->buttons & ~0x100) | 0x2200;
+    } else {
+        if (cl->stanceHeld && com_frameTime - cl->stanceTime >= cl_stanceHoldTime->current.integer) {
+            legacyHacks->cl_stance = cl->stancePosition == 2 ? 0 : 2;
+            cl->stanceHeld = 0;
+        }
+        cmd->buttons &= ~0x2300;
+        if (legacyHacks->cl_stance == 1)
+            cmd->buttons |= 0x200;
+        else if (legacyHacks->cl_stance == 2)
+            cmd->buttons |= 0x100;
+    }
+#else
     (void)cl;
 
     {
@@ -1417,6 +1449,7 @@ void CL_KeyMove(usercmd_t *cmd)
         else if (clStance == 2)
             cmd->buttons |= 0x100;
     }
+#endif
 
     if (((KB_AT(9)->active != 0) == (cl->usingAds == 0)) || PM_IsBinocularsADS(&cl->snap.ps)) {
         cmd->buttons |= 0x1000;
@@ -1507,18 +1540,31 @@ void CL_SendCmdInternal(void)
         goto not_ready;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    connectElapsed = cls.realtime - clc->lastPacketSentTime;
+    if (cls.downloadTempName[0]) {
+#else
     connectElapsed = cls.realtime - clc->connectTime;
     if (clc->demowaiting) {
+#endif
         if (connectElapsed <= 49) {
             goto not_ready;
         }
     } else if ((unsigned int)(clc->state - CA_PRIMED) > 1) {
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        if (connectElapsed <= 999)
+#else
         if (clc->serverAddress.type != NA_LOOPBACK && connectElapsed <= 999)
+#endif
             goto not_ready;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (clc->netchan.remoteAddress.type == NA_LOOPBACK || Sys_IsLANAddress(clc->netchan.remoteAddress)) {
+#else
     if (clc->serverAddress.type == NA_LOOPBACK || Sys_IsLANAddress(clc->serverAddress)) {
+#endif
         CL_WritePacket();
         return;
     }

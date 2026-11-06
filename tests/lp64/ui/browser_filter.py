@@ -26,7 +26,7 @@ static const char *Info_ValueForKey(const char *s, const char *key) {
     if (!strcmp(key,"addr")) return "127.0.0.1";
     if (!strcmp(key,"sv_maxclients")) return "16";
     if (!strcmp(key,"pure") || !strcmp(key,"hw")) return "1";
-    if (!strcmp(key,"punkbuster")) return pb ? "1" : "0";
+    if (!strcmp(key,"pb")) return pb ? "1" : "0";
     return "0";
 }
 static int I_strnicmp(const char *a, const char *b, int n) { return strncasecmp(a,b,n); }

@@ -437,7 +437,11 @@ void Script_SetBackground(displayContextDef_t *dc, itemDef_t *item, const char *
     char name[0x400];
     if (String_Parse(args, name, 0x400)) {
         byte *it = (byte *)item;
+#if defined(COD2_X64)
+        item->window.background = CL_RegisterMaterialNoMip(name, item->imageTrack);
+#else
         (*(MaterialHandle *)&((itemDef_t *)it)->window.background) = CL_RegisterMaterialNoMip(name, 3);
+#endif
     }
 }
 
@@ -770,7 +774,11 @@ void Controls_SetConfig(qboolean restart)
                 Key_SetBinding(key2, g_bindings[i].command);
         }
     }
+#if defined(COD2_X64)
+    Cbuf_ExecuteText(2, "in_restart\n");
+#else
     Cbuf_ExecuteText(2, "bindingsave\n");
+#endif
 }
 
 void Controls_SetDefaults(void)
@@ -981,6 +989,11 @@ qboolean Menu_CheckOnKey(displayContextDef_t *dc, menuDef_t *menu, int key)
         if (!((*(byte *)&((itemDef_t *)item)->window.dynamicFlags[0]) & 4))
             continue;
 
+#if defined(COD2_X64)
+        if (!(((itemDef_t *)item)->window.dynamicFlags[0] & 2) &&
+            !(((itemDef_t *)item)->window.staticFlags & 0x100000))
+            continue;
+#endif
         if ((*(byte *)&((itemDef_t *)item)->dvarFlags) & 0xc) {
             if (!Item_EnableShowViaDvar((itemDef_t *)item, 4))
                 continue;
@@ -1165,6 +1178,12 @@ void Menus_Close(displayContextDef_t *dc, menuDef_t *menu)
         }
     }
 
+#if defined(COD2_X64)
+    if (i < 0) {
+        Window_RemoveDynamicFlags((itemDef_t *)menu, 6);
+        return;
+    }
+#endif
     int flags = menu->window.dynamicFlags[0];
     if ((flags & 4) && (*(void **)&((menuDef_t *)menu)->onClose)) {
         *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
@@ -1203,12 +1222,17 @@ void Menus_Close(displayContextDef_t *dc, menuDef_t *menu)
 
 void Menus_CloseAll(displayContextDef_t *dc)
 {
+#if defined(COD2_X64)
+    for (int i = 0; i < dc->menuCount; ++i)
+        Menus_Close(dc, dc->Menus[i]);
+#else
     byte *d = (byte *)dc;
 
     while ((((displayContextDef_s*)(d))->openMenuCount) > 0) {
         int top = (((displayContextDef_s*)(d))->openMenuCount) - 1;
         Menus_Close(dc, *(menuDef_t **)((char *)&((displayContextDef_s *)d)->menuStack[top]));
     }
+#endif
 }
 
 void Item_SetTextExtents(itemDef_t *item, int *width, int *height, const char *text)
@@ -1331,7 +1355,11 @@ void Item_Text_AutoWrapped_Paint(itemDef_t *item, const char *textPtr, vec_t *co
 
     y = (((itemDef_s*)(it))->textaligny);
     buff[0] = '\0';
+#if defined(COD2_X64)
+    lineHeight = (float)(height + (height > 15 ? 4 : 1));
+#else
     lineHeight = (float)(height + 5);
+#endif
 
     if (!textPtr)
         return;
@@ -1361,7 +1389,11 @@ void Item_Text_AutoWrapped_Paint(itemDef_t *item, const char *textPtr, vec_t *co
         if (ch == '\n' || ch == '\0')
             shouldBreak = 1;
 
+#if defined(COD2_X64)
+        if (ch == ' ' && textWidth > iTargetLineWidth)
+#else
         if (ch == ' ' && textWidth >= iTargetLineWidth)
+#endif
             shouldBreak = 1;
 
         if (shouldBreak) {
@@ -1379,7 +1411,11 @@ void Item_Text_AutoWrapped_Paint(itemDef_t *item, const char *textPtr, vec_t *co
                 if (alignment == 1) {
                     newTextRect[0] = (((itemDef_s*)(it))->textalignx) - (float)(newLineWidth / 2);
                 } else if (alignment == 2) {
+#if defined(COD2_X64)
+                    newTextRect[0] = item->textalignx - (float)newLineWidth;
+#else
                     newTextRect[0] = (((itemDef_s*)(it))->textalignx) + (((rectDef_t*)(textRect))->w) - (float)newLineWidth;
+#endif
                 } else {
                     newTextRect[0] = (((itemDef_s*)(it))->textalignx);
                 }
@@ -1762,8 +1798,18 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
             }
 
             if (i == ((itemDef_t *)it)->cursorPos[0]) {
+#if defined(COD2_X64)
+                float selectedWidth = item->window.rect[0].w;
+                if (!((listBoxDef_t *)listPtr)->noScrollBars)
+                    selectedWidth -= 16.0f;
+                selectedWidth -= 4.0f;
+#endif
                 UI_FillRect(preX2a, y + 2.0f,
+#if defined(COD2_X64)
+                            selectedWidth,
+#else
                             (((rectDef_t*)(it))->w) - 16.0f - 4.0f,
+#endif
                             (((listBoxDef_s*)(listPtr))->elementHeight),
                             horzAlign, vertAlign,
                             (float *)(((char *)it + offsetof(itemDef_t, window.outlineColor[0]))));
@@ -1907,14 +1953,22 @@ void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAm
 
                             float fadeAlpha = ((windowDef_t *)w)->backColor[3] - fadeAmount;
                             ((windowDef_t *)w)->backColor[3] = fadeAlpha;
+#if defined(COD2_X64)
+                            if (fadeAlpha <= 0.0f) {
+#else
                             if (!(fadeAlpha > 0.0f)) {
+#endif
                                 dynFlags &= 0xffffffeb;
                             }
                         } else {
 
                             float fadeAlpha = ((windowDef_t *)w)->backColor[3] + fadeInAmount;
                             ((windowDef_t *)w)->backColor[3] = fadeAlpha;
+#if defined(COD2_X64)
+                            if (fadeAlpha >= fadeClamp) {
+#else
                             if (!(fadeAlpha < fadeClamp)) {
+#endif
                                 ((windowDef_t *)w)->backColor[3] = fadeClamp;
                                 dynFlags &= ~0x20;
                             }
@@ -2487,7 +2541,11 @@ itemDef_t *Menu_SetPrevCursorItem(displayContextDef_t *dc, menuDef_t *menu)
             cursor = (((menuDef_t*)(m))->cursorItem[0]);
             if (cursor < 0) {
                 if (wrapped)
+#if defined(COD2_X64)
+                    goto fail;
+#else
                     goto try_focus;
+#endif
                 Menu_SetCursorItem(menu, (((menuDef_t*)(m))->itemCount) - 1);
                 wrapped = 1;
                 cursor = (((menuDef_t*)(m))->cursorItem[0]);
@@ -2574,7 +2632,11 @@ void Item_TextColor(displayContextDef_t *dc, itemDef_t *item, vec4_t *newColor)
         int pulseTime = curTime;
         if (pulseTime < 0)
             pulseTime += 255;
+#if defined(COD2_X64)
+        if (pulseTime & 0x100) {
+#else
         if (!(pulseTime & 0x100)) {
+#endif
 
             for (i = 0; i < 4; i++)
                 out[i] = ((itemDef_t *)it)->window.foreColor[i];
@@ -2867,7 +2929,20 @@ void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
     }
 
     Item_SetTextExtents(item, &width, &height, buff);
+#if defined(COD2_X64)
+    if ((item->window.dynamicFlags[0] & 6) == 6) {
+        float lowLight[4];
+        for (int i = 0; i < 4; ++i)
+            lowLight[i] = item->parent->focusColor[i] * 0.8f;
+        float t = sinf((float)(dc->realTime / UI_PULSE_DIVISOR));
+        t = t * 0.5f + 0.5f;
+        LerpColor(item->parent->focusColor, lowLight, newColor, t);
+    } else {
+        memcpy(newColor, item->window.foreColor, sizeof(newColor));
+    }
+#else
     Item_TextColor(dc, item, &newColor);
+#endif
 
     textLen = 0;
     while (textLen < (int)sizeof(buff) - 1 && buff[textLen] != '\0') {
@@ -2920,7 +2995,11 @@ void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
                        (void *)font,
                        newColor[0], newColor[1], newColor[2], newColor[3]);
 
+#if defined(COD2_X64)
+    if (g_editingField && (item->window.dynamicFlags[0] & 6) == 6) {
+#else
     if (g_editingField && (item->window.staticFlags & 6) == 6) {
+#endif
         cursorChar = Key_GetOverstrikeMode() == 1 ? '_' : '|';
         cursorPos = item->cursorPos[0] - paintOffset;
         if (cursorPos < -1) {
@@ -3226,7 +3305,11 @@ void Item_OwnerDraw_Paint(displayContextDef_t *dc, itemDef_t *item)
         int pt = curTime;
         if (pt < 0)
             pt += 255;
+#if defined(COD2_X64)
+        if (!(pt & 0x100)) {
+#else
         if (pt & 0x100) {
+#endif
             float lowLight[4];
             for (i = 0; i < 4; i++)
                 lowLight[i] = ((itemDef_t *)it)->window.foreColor[i] * 0.8f;
@@ -3423,11 +3506,19 @@ qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float 
             float prx = (((rectDef_t*)(parent))->x), pry = (((rectDef_t*)(parent))->y);
             float prw = (((rectDef_t*)(parent))->w), prh = ((menuDef_t *)parent)->window.rect[0].h;
             float pcx = x, pcy = y;
+#if defined(COD2_X64)
+            CalcScreenX(&pcx, 4);
+            CalcScreenY(&pcy, 4);
+#else
             CalcScreenX(&pcy, 4);
             CalcScreenY(&pcx, 4);
+#endif
             CalcScreenPlacement(&prx, &pry, &prw, &prh, (((rectDef_t*)(parent))->horzAlign), (((rectDef_t*)(parent))->vertAlign));
             if (pcx < prx || pcx > prx + prw || pcy < pry || pcy > pry + prh)
                 goto check_dvar;
+#if defined(COD2_X64)
+            return 0;
+#endif
         }
     }
 
@@ -3616,8 +3707,60 @@ void Script_SetFocus(displayContextDef_t *dc, itemDef_t *item, const char **args
     }
 }
 
+#if defined(COD2_X64)
+static qboolean Item_ListBox_HitRect(const itemDef_t *item, float x, float y,
+                                    float rx, float ry, float rw, float rh)
+{
+    CalcScreenX(&x, 4);
+    CalcScreenY(&y, 4);
+    CalcScreenPlacement(&rx, &ry, &rw, &rh,
+                        item->window.rect[0].horzAlign, item->window.rect[0].vertAlign);
+    return x >= rx && x <= rx + rw && y >= ry && y <= ry + rh;
+}
+
+#endif
 int Item_ListBox_OverLB(itemDef_t *item, float x, float y)
 {
+#if defined(COD2_X64)
+    UI_FeederCount(item->special);
+    if (!Item_GetListBoxDef(item))
+        return 0;
+
+    const rectDef_t *r = &item->window.rect[0];
+    if (item->window.staticFlags & 0x200000) {
+        float barY = r->y + r->h - 16.0f;
+        if (Item_ListBox_HitRect(item, x, y, r->x, barY, 16.0f, 16.0f))
+            return 0x100;
+        float endX = r->x + r->w - 16.0f;
+        if (Item_ListBox_HitRect(item, x, y, endX, barY, 16.0f, 16.0f))
+            return 0x200;
+        float thumb = (float)Item_ListBox_ThumbPosition(item);
+        if (Item_ListBox_HitRect(item, x, y, thumb, barY, 16.0f, 16.0f))
+            return 0x400;
+        float startX = r->x + 16.0f;
+        if (Item_ListBox_HitRect(item, x, y, startX, barY, thumb - startX, 16.0f))
+            return 0x800;
+        /* Mac uses the absolute end coordinate as the final region's extent. */
+        if (Item_ListBox_HitRect(item, x, y, thumb + 16.0f, barY, endX, 16.0f))
+            return 0x1000;
+    } else {
+        float barX = r->x + r->w - 16.0f;
+        if (Item_ListBox_HitRect(item, x, y, barX, r->y, 16.0f, 16.0f))
+            return 0x100;
+        float endY = r->y + r->h - 16.0f;
+        if (Item_ListBox_HitRect(item, x, y, barX, endY, 16.0f, 16.0f))
+            return 0x200;
+        float thumb = (float)Item_ListBox_ThumbPosition(item);
+        if (Item_ListBox_HitRect(item, x, y, barX, thumb, 16.0f, 16.0f))
+            return 0x400;
+        float startY = r->y + 16.0f;
+        if (Item_ListBox_HitRect(item, x, y, barX, startY, 16.0f, thumb - startY))
+            return 0x800;
+        if (Item_ListBox_HitRect(item, x, y, barX, thumb + 16.0f, 16.0f, endY))
+            return 0x1000;
+    }
+    return 0;
+#else
     byte *it = (byte *)item;
     int horzAlign = (((rectDef_t*)(it))->horzAlign);
     int vertAlign = (((rectDef_t*)(it))->vertAlign);
@@ -3760,6 +3903,7 @@ int Item_ListBox_OverLB(itemDef_t *item, float x, float y)
     }
 
     return 0;
+#endif
 }
 
 qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down, qboolean force)
@@ -4079,7 +4223,11 @@ static void Scroll_ListBox_ThumbFunc(displayContextDef_t *dc, void *p)
 
         float cursorX = (float)((displayContextDef_t *)d)->cursorx;
         if (cursorX == (((scrollInfo_s*)(scroll))->xStart))
+#if defined(COD2_X64)
+            return;
+#else
             goto check_auto;
+#endif
 
         float startX = (((rectDef_t*)(it))->x) + 16.0f + 1.0f;
         float scrollArea = (((rectDef_t*)(it))->w) - 32.0f - 2.0f;
@@ -4114,8 +4262,15 @@ static void Scroll_ListBox_ThumbFunc(displayContextDef_t *dc, void *p)
 check_auto:;
 
     int curTime = (((displayContextDef_s*)(d))->realTime);
+#if defined(COD2_X64)
+    if (curTime > (((scrollInfo_s*)(scroll))->nextScrollTime)) {
+#else
     while (curTime > (((scrollInfo_s*)(scroll))->nextScrollTime)) {
+#endif
         Item_ListBox_HandleKey(dc, (((scrollInfo_s*)(scroll))->item), (((scrollInfo_s*)(scroll))->scrollKey), 1, 0);
+#if defined(COD2_X64)
+        curTime = dc->realTime;
+#endif
         (((scrollInfo_s*)(scroll))->nextScrollTime) = curTime + (((scrollInfo_s*)(scroll))->adjustValue);
     }
 
@@ -4132,8 +4287,15 @@ static void Scroll_ListBox_AutoFunc(displayContextDef_t *dc, void *p)
     byte *scroll = (byte *)p;
     int curTime = (((displayContextDef_s*)(d))->realTime);
 
+#if defined(COD2_X64)
+    if (curTime > (((scrollInfo_s*)(scroll))->nextScrollTime)) {
+#else
     while (curTime > (((scrollInfo_s*)(scroll))->nextScrollTime)) {
+#endif
         Item_ListBox_HandleKey(dc, (((scrollInfo_s*)(scroll))->item), (((scrollInfo_s*)(scroll))->scrollKey), 1, 0);
+#if defined(COD2_X64)
+        curTime = dc->realTime;
+#endif
         (((scrollInfo_s*)(scroll))->nextScrollTime) = curTime + (((scrollInfo_s*)(scroll))->adjustValue);
     }
 
@@ -4667,12 +4829,22 @@ void Item_MouseEnter(displayContextDef_t *dc, itemDef_t *item, float x, float y)
             return;
     }
     int flags = ((itemDef_t *)it)->window.dynamicFlags[0];
+#if defined(COD2_X64)
+    const rectDef_t *textRect = &item->textRect[0];
+    float rx = textRect->x, ry = textRect->y - textRect->h;
+    float rw = textRect->w, rh = textRect->h;
+#else
     float rx = (((rectDef_t*)(it))->x), ry = (((rectDef_t*)(it))->y);
     float rw = (((rectDef_t*)(it))->w), rh = (((rectDef_t*)(it))->h);
+#endif
     float cx = x, cy = y;
     CalcScreenX(&cx, 4);
     CalcScreenY(&cy, 4);
+#if defined(COD2_X64)
+    CalcScreenPlacement(&rx, &ry, &rw, &rh, textRect->horzAlign, textRect->vertAlign);
+#else
     CalcScreenPlacement(&rx, &ry, &rw, &rh, (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign));
+#endif
     qboolean inside = (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh);
     if (inside) {
         if (!(flags & 0x40)) {
@@ -4693,7 +4865,11 @@ void Item_MouseEnter(displayContextDef_t *dc, itemDef_t *item, float x, float y)
             Window_AddDynamicFlags( (itemDef_t *)((void *)it), 1);
         }
     }
+#if defined(COD2_X64)
+    if (!inside && item->type == 6)
+#else
     if ((((itemDef_s*)(it))->type) == 6)
+#endif
         Item_ListBox_MouseEnter(item, x, y);
 }
 
@@ -4779,7 +4955,11 @@ qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x,
                     CalcScreenX(&tcx, 4);
                     CalcScreenY(&tcy, 4);
                     CalcScreenPlacement(&trx, &try_, &trw, &trh, textBuf[4], textBuf[5]);
+#if defined(COD2_X64)
+                    if (!(tcx >= trx) || !(trx + trw >= tcx) || !(tcy >= try_) || !(try_ + trh >= tcy))
+#else
                     if (tcx < trx || tcx > trx + trw || tcy < try_ || tcy > try_ + trh)
+#endif
                         goto next_item;
                 }
 
@@ -4928,11 +5108,23 @@ qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int 
 
         maxChars = editPtr->maxChars;
         if (maxChars == 0)
+#if defined(COD2_X64)
+            goto post_character;
+#else
             return 1;
+#endif
         if (maxChars > ((itemDef_t *)it)->cursorPos[0])
+#if defined(COD2_X64)
+            goto post_character;
+#else
             return 1;
+#endif
         if (editPtr->maxCharsGotoNext == 0)
+#if defined(COD2_X64)
+            goto post_character;
+#else
             return 1;
+#endif
         {
             itemDef_t *nextItem = Menu_SetNextCursorItem(dc, ((itemDef_t *)it)->parent);
             Item_SetCursorPos(nextItem, 0);
@@ -4940,7 +5132,13 @@ qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int 
                 ((1 << ((itemDef_s *)nextItem)->type) & 0x70210))
                 g_editItem = nextItem;
         }
+#if defined(COD2_X64)
+    post_character:
+        if (key != 0x9b && key != 0x9a && key != 0xbf)
+            return 1;
+#else
         return 1;
+#endif
     }
 
     switch (key) {
@@ -5045,12 +5243,18 @@ void Menu_HandleKey(displayContextDef_t *dc, menuDef_t *menu, int key, qboolean 
                     g_editingField = 0;
                     g_editItem = NULL;
                     Display_MouseMove(dc, NULL, ((displayContextDef_t *)d)->cursorx, (((displayContextDef_s*)(d))->cursory));
+#if defined(COD2_X64)
+                    goto resume_menu;
+#endif
                 }
             }
             goto done;
         }
     }
 
+#if defined(COD2_X64)
+resume_menu:
+#endif
     if (!menu)
         return;
 
@@ -5134,12 +5338,20 @@ void Menu_HandleKey(displayContextDef_t *dc, menuDef_t *menu, int key, qboolean 
         return;
     }
 
+#if defined(COD2_X64)
+    if (key == 9 || key == 0x9b || key == 0x9d) {
+#else
     if (key == 9 || key == 0x9b || key == 0x9d || key == 0x9c) {
+#endif
         Menu_SetNextCursorItem(dc, menu);
         return;
     }
 
+#if defined(COD2_X64)
+    if (key == 0x9a || key == 0x9c) {
+#else
     if (key == 0x9a) {
+#endif
         Menu_SetPrevCursorItem(dc, menu);
         return;
     }
@@ -5438,7 +5650,11 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
 
     if (((itemDef_t *)it)->window.style == 6) {
         const char *dvarStr = Dvar_GetString(item->dvar);
+#if defined(COD2_X64)
+        item->window.background = CL_RegisterMaterialNoMip(dvarStr, item->imageTrack);
+#else
         ((itemDef_t *)it)->window.background = CL_RegisterMaterialNoMip(dvarStr, 3);
+#endif
     }
 
     Window_Paint(dc, (float (*)[4][32])item,

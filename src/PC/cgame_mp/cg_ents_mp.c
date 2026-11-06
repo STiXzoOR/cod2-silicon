@@ -89,7 +89,11 @@ COD2_ASSERT_FIELD(cg_t, rumbleScale, 0x2c5a0);
 
 static clientInfo_t *CG_CorpseInfoForEntityNum(int entNum)
 {
+#if defined(COD2_X64)
+    return &cgs->corpseinfo[entNum - 64];
+#else
     return (clientInfo_t *)((byte *)cgs + CG_CORPSEINFO_BASE_ADJUST + entNum * sizeof(clientInfo_t));
+#endif
 }
 
 struct XAnim_s *CG_GetMG42Anims(centity_t *cent);
@@ -149,7 +153,11 @@ static void CG_mg42_DoControllers(const centity_t *cent, int *partBits)
     struct DObj_s *obj;
     float angles[3];
     const scr_const_t *scr;
+#if defined(COD2_X64)
+    XAnimTree *tree;
+#else
     struct XAnim_s *tree;
+#endif
     int animIndex;
 
     s1 = (const entityState_t *)((const byte *)cent + 0xf0);
@@ -180,7 +188,11 @@ static void CG_mg42_DoControllers(const centity_t *cent, int *partBits)
 
     DObjSetControlTagAngles(obj, partBits, scr->tag_flash, angles);
 
+#if defined(COD2_X64)
+    tree = DObjGetTree(obj);
+#else
     tree = (struct XAnim_s *)DObjGetTree(obj);
+#endif
 
     if (cg->predictedPlayerState.eFlags & 0x300) {
         if (cg->predictedPlayerState.viewlocked_entNum == s1->number) {
@@ -206,7 +218,7 @@ static void CG_mg42_DoControllers(const centity_t *cent, int *partBits)
         float rate = 1.0f;
 
 #if defined(COD2_X64)
-        XAnimSetCompleteGoalWeightKnobAll(tree, 0, animIndex, goalWeight, goalTime, rate, 0, 0);
+        XAnimSetCompleteGoalWeightKnobAll(tree, animIndex, 0, goalWeight, goalTime, rate, 0, 0);
 #else
         XAnimSetCompleteGoalWeightKnobAll(tree, animIndex, goalWeight, goalTime, rate, 0, 0);
 #endif
@@ -448,7 +460,11 @@ void CG_AdjustPositionForMover(const vec_t *in, int moverNum, int fromTime, int 
     }
 
     cent = &(*(centity_t **)imp_cg_entities)[moverNum];
+#if defined(COD2_X64)
+    if (cent->nextState.eType != 6) {
+#else
     if (cent->currentState.eType != 6) {
+#endif
         out[0] = in[0];
         out[1] = in[1];
         out[2] = in[2];
@@ -460,9 +476,15 @@ void CG_AdjustPositionForMover(const vec_t *in, int moverNum, int fromTime, int 
     BG_EvaluateTrajectory(&cent->currentState.pos, toTime, origin);
     BG_EvaluateTrajectory(&cent->currentState.apos, toTime, angles);
 
+#if defined(COD2_X64)
+    out[0] = (origin[0] - oldOrigin[0]) + in[0];
+    out[1] = (origin[1] - oldOrigin[1]) + in[1];
+    out[2] = (origin[2] - oldOrigin[2]) + in[2];
+#else
     out[0] = in[0] + origin[0] - oldOrigin[0];
     out[1] = in[1] + origin[1] - oldOrigin[1];
     out[2] = in[2] + origin[2] - oldOrigin[2];
+#endif
 
     if (outDeltaAngles) {
         outDeltaAngles[0] = angles[0] - oldAngles[0];
@@ -520,7 +542,11 @@ void CG_EntityEffects(centity_t *cent)
     int constantLight;
 
     if (loopSound) {
+#if defined(COD2_X64)
+        if (cent->nextState.solid == 0x00FFFFFF) {
+#else
         if (cent->nextState.constantLight == 0x00FFFFFF) {
+#endif
             vec3_t origin;
             vec_t *midpoint = cgs->inlineModelMidpoints[cent->nextState.index.brushmodel];
 
@@ -537,9 +563,15 @@ void CG_EntityEffects(centity_t *cent)
     if (constantLight) {
         CL_AddLightToScene(cent->lerpOrigin,
                            (float)((unsigned int)constantLight >> 24) * 4.0f,
+#if defined(COD2_X64)
+                           (float)(constantLight & 0xff) / 255.0f,
+                           (float)((constantLight >> 8) & 0xff) / 255.0f,
+                           (float)((constantLight >> 16) & 0xff) / 255.0f);
+#else
                            (float)((constantLight >> 16) & 0xff) / 255.0f,
                            (float)((constantLight >> 8) & 0xff) / 255.0f,
                            (float)(constantLight & 0xff) / 255.0f);
+#endif
     }
 }
 
@@ -750,7 +782,11 @@ void CG_Missile(centity_t *cent)
         FxBoltInfo bolt;
 
         bolt.dobjHandle = s1->number;
+#if defined(COD2_X64)
+        bolt.boneIndex = FX_GetBoneIndex(s1->number, scr_const.tag_origin);
+#else
         bolt.boneIndex = FX_GetBoneIndex(s1->number, scr_const.tag_flash);
+#endif
         if (bolt.boneIndex >= 0)
             FX_PlayEntityEffect(weapInfo->projTrailEffect, cent->lerpOrigin, 0, &bolt);
 
@@ -789,7 +825,11 @@ void CG_ScriptMover(centity_t *cent)
     AnglesToAxis(cent->lerpAngles, ent.axis);
     ent.renderFxFlags = 0x40;
 
+#if defined(COD2_X64)
+    if (s1->solid == 0x00FFFFFF) {
+#else
     if (s1->constantLight == 0x00FFFFFF) {
+#endif
         GfxModel model;
 
         ent.reType = (refEntityType_t)(3);

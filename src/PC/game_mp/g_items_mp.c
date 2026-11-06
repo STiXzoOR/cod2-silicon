@@ -286,12 +286,20 @@ void G_RegisterWeapon(int weapIndex)
 
     if (weapDef->szUseHintString[0] &&
         !G_GetHintStringIndex(&weapDef->iUseHintStringIndex, weapDef->szUseHintString)) {
+#if defined(COD2_X64)
+        Com_Error(1, "\x15" "Too many different hintstring values on weapons. Max allowed is %i different strings", 32);
+#else
         Com_Error(1, "Too many different hintstring values on weapons. Max allowed is %i different strings", 32);
+#endif
     }
 
     if (weapDef->dropHintString[0] &&
         !G_GetHintStringIndex(&weapDef->dropHintStringIndex, weapDef->dropHintString)) {
+#if defined(COD2_X64)
+        Com_Error(1, "\x15" "Too many different hintstring values on weapons. Max allowed is %i different strings", 32);
+#else
         Com_Error(1, "Too many different hintstring values on weapons. Max allowed is %i different strings", 32);
+#endif
     }
 
     modelIndex = G_ModelIndex(weapDef->szWorldModel);
@@ -403,7 +411,11 @@ void G_RunCorpseMove(gentity_t *ent)
 {
     corpseInfo_t *corpseInfo;
     trace_t tr;
+#if defined(COD2_X64)
+    vec3_t rot;
+#else
     vec_t rot[2];
+#endif
     vec3_t deltaChange;
     vec3_t origin;
     vec3_t endpos;
@@ -470,7 +482,11 @@ void G_RunCorpseMove(gentity_t *ent)
     SV_LinkEntity(ent);
     G_RunThink(ent);
 
+#if defined(COD2_X64)
+    if (!ent->r.inuse) {
+#else
     if (!ent->active) {
+#endif
         return;
     }
 
@@ -686,7 +702,11 @@ void G_RunItem(gentity_t *ent)
         SV_LinkEntity(ent);
         G_RunThink(ent);
 
+#if defined(COD2_X64)
+        if (ent->r.inuse && tr.fraction < 0.01f) {
+#else
         if (ent->active && tr.fraction < 0.01f) {
+#endif
             if (tr.normal[2] <= 0.0f || SV_PointContents(ent->r.currentOrigin, -1, 0x80000000)) {
                 G_FreeEntity(ent);
                 return;
@@ -849,7 +869,11 @@ gentity_t *Drop_Weapon(gentity_t *pEnt, int iWeaponIndex, unsigned int tag)
     pWeapItem = (const gitem_t *)imp_bg_itemlist + iWeaponIndex;
     ps = pEnt->client ? &pEnt->client->ps : NULL;
 
+#if defined(COD2_X64)
+    if (ps && !(ps->weapons[iWeaponIndex >> 5] & (1u << (iWeaponIndex & 31)))) {
+#else
     if (ps && !(ps->weapons[iWeaponIndex >> 5] & (1 << (iWeaponIndex & 31)))) {
+#endif
         BG_TakePlayerWeapon(ps, iWeaponIndex);
         return NULL;
     }
@@ -962,13 +986,26 @@ gentity_t *Drop_Weapon(gentity_t *pEnt, int iWeaponIndex, unsigned int tag)
         }
 
         vAngles[2] += 90.0f;
+#if defined(COD2_X64)
+        G_SetAngle(pDrop, pEnt->r.currentAngles);
+#else
         G_SetAngle(pDrop, vAngles);
+#endif
 
         pDrop->s.apos.trType = TR_LINEAR;
         pDrop->s.apos.trTime = level.time;
+#if defined(COD2_X64)
+        float randomZ = crandom();
+        float randomY = crandom();
+        float randomX = crandom();
+        pDrop->s.apos.trDelta[0] = randomX * 50.0f;
+        pDrop->s.apos.trDelta[1] = randomY * 40.0f;
+        pDrop->s.apos.trDelta[2] = randomZ * 60.0f;
+#else
         pDrop->s.apos.trDelta[0] = crandom() * 50.0f;
         pDrop->s.apos.trDelta[1] = crandom() * 40.0f;
         pDrop->s.apos.trDelta[2] = crandom() * 60.0f;
+#endif
     }
 
     return pDrop;
@@ -1003,7 +1040,11 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
         if (ent->s.clientNum == other->s.number || item->giType != IT_WEAPON)
             return;
 
+#if defined(COD2_X64)
+        if (ps->weapons[item->giTag >> 5] & (1u << (item->giTag & 31))) {
+#else
         if (ps->weapons[item->giTag >> 5] & (1 << (item->giTag & 31))) {
+#endif
             SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE,
                                      va("%c \"GAME_PICKUP_CANTCARRYMOREAMMO\x14%s\"", 0x66, BG_GetWeaponDef(item->giTag)->szDisplayName));
             return;
@@ -1049,25 +1090,40 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
         Scr_AddEntity(other);
         Scr_Notify(ent, scr_const.trigger, 1);
         SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE,
+#if defined(COD2_X64)
+                                 va("%c \"%i\"", 0x49, BG_GetWeaponDef(item->giTag)->offhandClass ? 4 : 1));
+#else
                                  va("%c \"%i\"", 0x49, BG_GetWeaponDef(item->giTag)->bSlotStackable ? 4 : 1));
+#endif
         eventParm = 0x90;
         break;
     }
 
     case IT_HEALTH: {
+#if defined(COD2_X64)
+        int quantity = ent->count ? ent->count : item->quantity;
+#else
         int quantity = ent->count ? ent->count : item->giTag;
+#endif
         int maxHealth = ps->stats[2];
         int oldHealth = other->health;
         int normalHealth;
         int oldNormalHealth;
         int targetNormalHealth;
 
+#if defined(COD2_X64)
+        if (item->quantity == 5 || item->quantity == 100)
+#else
         if (item->giTag == 5 || item->giTag == 100)
+#endif
             maxHealth *= 2;
 
         other->health += (int)((float)quantity * (float)ps->stats[2] * 0.01f);
         if (other->health > maxHealth)
             other->health = maxHealth;
+#if defined(COD2_X64)
+        else {
+#endif
 
         normalHealth = (int)((float)(other->health * 100) / (float)ps->stats[2]);
         if (normalHealth <= 0)
@@ -1085,6 +1141,9 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
 
         if (normalHealth != targetNormalHealth)
             other->health = (ps->stats[2] * targetNormalHealth) / 100;
+#if defined(COD2_X64)
+        }
+#endif
 
         ps->stats[0] = other->health;
 
@@ -1128,6 +1187,10 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
                 quantity = high;
             }
 
+#if defined(COD2_X64)
+            if (quantity <= 0)
+                quantity = 0;
+#endif
             ent->count = quantity;
         }
 
@@ -1136,29 +1199,58 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
             quantity = ent->count;
         }
 
+#if defined(COD2_X64)
+        if (ent->item.count2 < 0) {
+#else
         if (ent->chain < 0) {
+#endif
             clipAmmo = 0;
+#if defined(COD2_X64)
+        } else if (ent->item.count2 != 0) {
+#else
         } else if (ent->chain != 0) {
+#endif
+#if defined(COD2_X64)
+            clipAmmo = ent->item.count2;
+#else
             clipAmmo = ent->chain;
+#endif
         } else if (ent->count < 0) {
+#if defined(COD2_X64)
+            ent->item.count2 = 0;
+#else
             ent->chain = 0;
+#endif
             clipAmmo = 0;
         } else {
             clipAmmo = BG_GetAmmoClipSize(BG_ClipForWeapon(weapon));
             if (clipAmmo > ent->count)
                 clipAmmo = ent->count;
+#if defined(COD2_X64)
+            ent->item.count2 = clipAmmo;
+#else
             ent->chain = clipAmmo;
+#endif
             ent->count -= clipAmmo;
             quantity = ent->count;
         }
 
         if (clipAmmo > BG_GetAmmoClipSize(BG_ClipForWeapon(weapon))) {
+#if defined(COD2_X64)
+            clipAmmo = BG_GetAmmoClipSize(BG_ClipForWeapon(weapon));
+            ent->item.count2 = clipAmmo;
+#else
             clipAmmo -= BG_GetAmmoClipSize(BG_ClipForWeapon(weapon));
             quantity += clipAmmo;
             clipAmmo = BG_GetAmmoClipSize(BG_ClipForWeapon(weapon));
+#endif
         }
 
+#if defined(COD2_X64)
+        if (ps->weapons[weapon >> 5] & (1u << (weapon & 31))) {
+#else
         if (ps->weapons[weapon >> 5] & (1 << (weapon & 31))) {
+#endif
             int total = quantity + clipAmmo;
             int added = Add_Ammo(other, weapon, total, 0);
 
@@ -1175,15 +1267,35 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
             if (added != total) {
                 ent->count -= added;
                 if (ent->count <= 0) {
+#if defined(COD2_X64)
+                    ent->item.count2 += ent->count;
+#else
                     ent->chain += ent->count;
+#endif
                     ent->count = -1;
+#if defined(COD2_X64)
+                    if (ent->item.count2 <= 0)
+#else
                     if (ent->chain <= 0)
+#endif
+#if defined(COD2_X64)
+                        ent->item.count2 = -1;
+#else
                         ent->chain = -1;
+#endif
                 }
 
+#if defined(COD2_X64)
+                if (ent->count > 0 || ent->item.count2 > 0) {
+#else
                 if (ent->count > 0 || ent->chain > 0) {
+#endif
                     const dvar_t *weaponAmmoPools = g_weaponAmmoPools;
+#if defined(COD2_X64)
+                    if (weaponAmmoPools->current.enabled)
+#else
                     if (!weaponAmmoPools->current.enabled)
+#endif
                         return;
                 }
             }
@@ -1191,11 +1303,20 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
             Scr_AddUndefined();
             eventParm = 0x91;
         } else {
+#if defined(COD2_X64)
+            Bool needsSlot = BG_DoesWeaponNeedSlot(weapon);
+            if (needsSlot) {
+#else
             if (BG_DoesWeaponNeedSlot(weapon)) {
+#endif
                 int currentWeapon = ps->weapon;
 
                 if (currentWeapon) {
+#if defined(COD2_X64)
+                    if (!(ps->weapons[currentWeapon >> 5] & (1u << (currentWeapon & 31))))
+#else
                     if (!(ps->weapons[currentWeapon >> 5] & (1 << (currentWeapon & 31))))
+#endif
                         return;
 
                     if (!BG_IsPlayerWeaponInSlot(ps, currentWeapon, 1)) {
@@ -1224,7 +1345,11 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
                             }
                         }
 
+#if defined(COD2_X64)
+                        if (dropSlot == 3) {
+#else
                         if (!dropped) {
+#endif
                             SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 0x66));
                             return;
                         }
@@ -1233,8 +1358,13 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
                     if (!dropped)
                         return;
 
+#if defined(COD2_X64)
+                    dropped->spawnflags = ent->spawnflags;
+                    dropped->s.groundEntityNum = ent->s.groundEntityNum;
+#else
                     dropped->tagInfo = ent->tagInfo;
                     dropped->parent = ent->parent;
+#endif
                     G_SetOrigin(dropped, ent->r.currentOrigin);
                     G_SetAngle(dropped, ent->r.currentAngles);
                     SV_LinkEntity(dropped);
@@ -1242,7 +1372,11 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
             }
 
             G_GivePlayerWeapon(ps, weapon);
+#if defined(COD2_X64)
+            if (!bTouched && needsSlot)
+#else
             if (!bTouched)
+#endif
                 G_SelectWeaponIndex(clientNum, weapon);
 
             if (clipAmmo >= 0) {
@@ -1267,7 +1401,11 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
         Scr_AddEntity(other);
         Scr_Notify(ent, scr_const.trigger, 2);
         SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE,
+#if defined(COD2_X64)
+                                 va("%c \"%i\"", 0x49, weapDef->offhandClass ? 4 : 1));
+#else
                                  va("%c \"%i\"", 0x49, weapDef->bSlotStackable ? 4 : 1));
+#endif
         break;
     }
 

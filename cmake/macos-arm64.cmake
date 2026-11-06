@@ -36,6 +36,8 @@ file(GLOB_RECURSE MACOS_MAC_C CONFIGURE_DEPENDS "${COD2_SRC_DIR}/Mac/*.c")
 file(GLOB_RECURSE MACOS_STUBS_C CONFIGURE_DEPENDS "${COD2_SRC_DIR}/stubs/*.c")
 file(GLOB MACOS_ROOT_C CONFIGURE_DEPENDS "${COD2_SRC_DIR}/*.c")
 set(MACOS_C ${MACOS_PC_C} ${MACOS_MAC_C} ${MACOS_STUBS_C} ${MACOS_ROOT_C})
+# Metal providers belong only to the native client, never the dedicated graph.
+list(FILTER MACOS_C EXCLUDE REGEX "/Mac/Metal/")
 # Use the SDK zlib, as in the native Linux build. No 32-bit data generators or ASM.
 list(FILTER MACOS_C EXCLUDE REGEX "/PC/zlib/(inflate|infblock|infcodes|inffast|inftrees|infutil|adler32|zutil)\\.c$")
 list(FILTER MACOS_C EXCLUDE REGEX "/(data|import_pointers|literals)\\.c$")
@@ -47,7 +49,10 @@ list(FILTER MACOS_C EXCLUDE REGEX "/stubs/(agl_stubs|audio_stubs|cpp_compat|cpp_
 list(FILTER MACOS_C EXCLUDE REGEX "/stubs/(iokit_stubs|corefoundation_stubs)\\.c$")
 list(APPEND MACOS_C src/unix/linux_common.c src/unix/linux_net.c src/unix/sysdiff_statehash.c
   src/platform/macos_system.c src/platform/macos_threads.c src/platform/macos_ring.c
-  src/platform/macos_cpp_abi.cpp src/platform/macos_abs_symbols.c)
+  src/platform/macos_cpp_abi.cpp src/platform/macos_abs_symbols.c src/platform/macos_launch.c)
+# These C frames propagate native C++ exceptions to their owning bridge/caller.
+set_property(SOURCE src/platform/macos_threads.c src/Mac/DirectX_9/COpenGLVAO.c
+  APPEND PROPERTY COMPILE_OPTIONS -fexceptions)
 list(FILTER MACOS_C EXCLUDE REGEX "/Mac/Main/(mac_play_dsound|mac_record_dsound)\\.c$")
 list(FILTER MACOS_C EXCLUDE REGEX "/PC/groupvoice/record\\.c$")
 set(MACOS_DED_C ${MACOS_C})
@@ -99,7 +104,7 @@ foreach(target cod2_macos cod2_macos_ded)
     -Wint-conversion -Wincompatible-pointer-types -Wvoid-pointer-to-int-cast
     -Wno-typedef-redefinition -Wno-duplicate-decl-specifier
     -ferror-limit=0)
-  target_link_libraries(${target} PRIVATE ZLIB::ZLIB c++ "-framework IOKit" "-framework CoreFoundation")
+  target_link_libraries(${target} PRIVATE ZLIB::ZLIB c++ "-framework IOKit" "-framework CoreFoundation" "-framework CoreServices")
   target_compile_features(${target} PRIVATE cxx_std_17)
   target_compile_definitions(${target} PRIVATE COD2_RELEASE_VERSION="${COD2_RELEASE_VERSION}")
   # ld64 equivalents of the MinGW --defsym seam aliases in CMakeLists.txt.
@@ -116,6 +121,16 @@ target_sources(cod2_macos PRIVATE src/unix/linux_input.c src/platform/macos_disp
   src/platform/macos_rawmouse.m src/platform/macos_audio.c src/platform/macos_voice.c
   src/platform/macos_jpeg.c)
 set_property(SOURCE src/platform/macos_rawmouse.m APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
+# Native object/resource/presentation providers; Classic remains the default.
+target_sources(cod2_macos PRIVATE src/Mac/Metal/metal_core.m
+  src/Mac/Metal/metal_dispatch.m src/Mac/Metal/metal_gpu.m
+  src/Mac/Metal/metal_backend.m src/Mac/Metal/metal_frame.m
+  src/Mac/Metal/metal_resources.m src/Mac/Metal/resource_formats.m
+  src/platform/macos_metal_present.m)
+set_property(SOURCE src/Mac/Metal/metal_gpu.m src/Mac/Metal/metal_frame.m
+  src/Mac/Metal/metal_resources.m src/platform/macos_metal_present.m APPEND PROPERTY COMPILE_OPTIONS
+  -fobjc-arc -Werror=unguarded-availability -Werror=unguarded-availability-new)
+target_link_libraries(cod2_macos PRIVATE "-framework Metal" "-framework QuartzCore" "-framework IOSurface")
 # The renderer renders into the exact r_mode framebuffer; presentation scales it.
 set_source_files_properties(src/PC/gfx_d3d/rb_state.c src/PC/gfx_d3d/r_screenshot.c PROPERTIES
   COMPILE_DEFINITIONS "glDrawBuffer=MacGL_DrawBuffer;glReadBuffer=MacGL_ReadBuffer")

@@ -186,6 +186,17 @@ static void RoQPrepMcomp(long int xoff, long int yoff)
     }
 }
 
+#if defined(COD2_X64)
+/* Windows 1.3 0x4b2350 queues nextmap directly. The Mac helper at
+ * 0xb14f2 inserts an Aspyr distributor movie before IW_logo. */
+static void RoQ_ExecAnySubsequentMovies(void)
+{
+    Cbuf_ExecuteText(2, va("%s\n", nextmap->current.string));
+    Dvar_SetString(nextmap, "");
+    UI_SetActiveMenu(1);
+}
+#endif
+
 static void RoQShutdown(void)
 {
     int h;
@@ -215,6 +226,9 @@ static void RoQShutdown(void)
             if (*clcState == 0) {
                 nextMapStr = (char *)(nextmap->current.string);
                 if (*nextMapStr != '\0') {
+#if defined(COD2_X64)
+                    RoQ_ExecAnySubsequentMovies();
+#else
                     if (!sAspyrIntroPlayed) {
                         if (strstr(nextMapStr, "IW_logo")) {
                             Cbuf_ExecuteText(2, va("%s\n", "cinematic aspyr_intro"));
@@ -228,6 +242,7 @@ static void RoQShutdown(void)
                         Dvar_SetString(nextmap, "");
                     }
                     UI_SetActiveMenu(1);
+#endif
                 } else {
                     UI_SetActiveMenu(0);
                 }
@@ -297,6 +312,51 @@ void ROQ_UploadCinematicFromHandle(int handle)
     }
 }
 
+#if defined(COD2_X64)
+static void RoQ_CopyRows(const byte *src, byte *dst, int srcStride, int dstStride,
+                         int rows, int words)
+{
+    int row, word;
+    for (row = 0; row < rows; row++) {
+        for (word = 0; word < words; word++) {
+            uint64_t value;
+            /* Keep the original eight-byte read/write order, including
+             * overlapping motion copies, without aligned double lvalues. */
+            memcpy(&value, src + word * 8, 8);
+            memcpy(dst + word * 8, &value, 8);
+        }
+        if (row + 1 < rows) {
+            src += srcStride;
+            dst += dstStride;
+        }
+    }
+}
+
+static void move8_32(byte *src, byte *dst, int spl)
+{
+    RoQ_CopyRows(src, dst, (spl >> 3) * 8, (spl >> 3) * 8, 8, 4);
+}
+
+static void move4_32(byte *src, byte *dst, int spl)
+{
+    RoQ_CopyRows(src, dst, (spl >> 3) * 8, (spl >> 3) * 8, 4, 2);
+}
+
+static void blit8_32(byte *src, byte *dst, int spl)
+{
+    RoQ_CopyRows(src, dst, 32, (spl >> 3) * 8, 8, 4);
+}
+
+static void blit4_32(byte *src, byte *dst, int spl)
+{
+    RoQ_CopyRows(src, dst, 16, (spl >> 3) * 8, 4, 2);
+}
+
+static void blit2_32(byte *src, byte *dst, int spl)
+{
+    RoQ_CopyRows(src, dst, 8, (spl >> 3) * 8, 2, 1);
+}
+#else
 static void move8_32(byte *src, byte *dst, int spl)
 {
     double *dsrc;
@@ -479,6 +539,8 @@ static void blit2_32(byte *src, byte *dst, int spl)
     ddst[dspl] = dsrc[1];
 }
 
+#endif
+
 static void blitVQQuad32fs(byte **status, unsigned char *data)
 {
     unsigned short newd;
@@ -544,7 +606,11 @@ static void blitVQQuad32fs(byte **status, unsigned char *data)
                     break;
 
                 case 0x4000:
+#if defined(COD2_X64)
+                    move4_32(status[index] + (int32_t)cin.mcomp[*data], status[index], spl);
+#else
                     move4_32(status[index] + cin.mcomp[*data], status[index], spl);
+#endif
                     data++;
                     break;
                 }
@@ -553,7 +619,11 @@ static void blitVQQuad32fs(byte **status, unsigned char *data)
             break;
 
         case 0x4000:
+#if defined(COD2_X64)
+            move8_32(status[index] + (int32_t)cin.mcomp[*data], status[index], spl);
+#else
             move8_32(status[index] + cin.mcomp[*data], status[index], spl);
+#endif
             data++;
             index += 5;
             break;
@@ -571,6 +641,9 @@ extern void Com_Error(int level, const char *fmt, ...);
 extern void Com_Memset(void *dest, const int val, int count);
 extern int FS_Read(void *buffer, int len, fileHandle_t f);
 extern void SND_RawSamples(int samples, int rate, int width, int channels, const byte *data);
+#if defined(COD2_X64)
+extern int SND_RawSamplesTime(void);
+#endif
 extern void Con_Close(void);
 
 static int CIN_findHandle(void)
@@ -581,7 +654,11 @@ static int CIN_findHandle(void)
             return i;
         }
     }
+#if defined(COD2_X64)
+    Com_Error(1, "\x15" "CIN_HandleForVideo: none free");
+#else
     Com_Error(1, "CIN_findHandle: none free");
+#endif
     return 0;
 }
 
@@ -607,9 +684,16 @@ int ROQ_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBit
 
     Com_DPrintf("SCR_PlayCinematic( %s )\n", arg);
     Com_Memset(&cin, 0, sizeof(cin));
+#if defined(COD2_X64)
+    /* The selected handle is stored below, as at Mac 0xb20d2. */
+#else
     cin.currentHandle = -1;
+#endif
     handle = CIN_findHandle();
     currentHandle = handle;
+#if defined(COD2_X64)
+    cin.currentHandle = handle;
+#endif
 
     strcpy(cinTable[handle].fileName, name);
     cinTable[handle].ROQSize = 0;
@@ -618,6 +702,10 @@ int ROQ_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBit
     if (cinTable[handle].ROQSize <= 0) {
         Com_DPrintf("play(%s), ROQSize<=0\n", arg);
         cinTable[currentHandle].fileName[0] = '\0';
+#if defined(COD2_X64)
+        if (CLC_CONN->state == 0 && *nextmap->current.string)
+            RoQ_ExecAnySubsequentMovies();
+#endif
         return -1;
     }
 
@@ -653,8 +741,10 @@ int ROQ_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBit
     }
 
     if (handle >= 0) {
+#if !defined(COD2_X64)
         cinTable[handle].VQ0 = blitVQQuad32fs;
         cinTable[handle].VQ1 = blitVQQuad32fs;
+#endif
         cinTable[handle].VQNormal = blitVQQuad32fs;
         cinTable[handle].VQBuffer = blitVQQuad32fs;
         cinTable[handle].samplesPerPixel = 4;
@@ -663,8 +753,13 @@ int ROQ_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBit
             float f = (float)(i * 2 - 255);
             ROQ_UB_tab[i] = (long int)(f * 57.204f + 32.0f);
             ROQ_VR_tab[i] = (long int)(f * 45.364f + 32.0f);
+#if defined(COD2_X64)
+            ROQ_UG_tab[i] = (long int)(f * -0x1.70663cp+3f);
+            ROQ_VG_tab[i] = (long int)(f * -0x1.75a3c2p+4f + 32.0f);
+#else
             ROQ_UG_tab[i] = (long int)(f * -11.5125f);
             ROQ_VG_tab[i] = (long int)(f * -23.3525f + 32.0f);
+#endif
             ROQ_YY_tab[i] = (long int)((i << 6) | (i >> 2));
         }
 
@@ -703,12 +798,18 @@ int ROQ_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBit
         cinTable[currentHandle].roq_id = cin.file[8] | (cin.file[9] << 8);
         cinTable[currentHandle].RoQFrameSize = cin.file[10] | (cin.file[11] << 8) | (cin.file[12] << 16);
         cinTable[currentHandle].roq_flags = cin.file[14] | (cin.file[15] << 8);
+#if !defined(COD2_X64)
         cinTable[currentHandle].roqF0 = (signed char)cin.file[15];
         cinTable[currentHandle].roqF1 = (signed char)cin.file[14];
+#endif
     }
 
     Sys_BeginStreamedFile(cinTable[currentHandle].iFile, 0x10000);
+#if defined(COD2_X64)
+    cinTable[currentHandle].status = FMV_PLAY;
+#else
     cinTable[currentHandle].letterBox = 1;
+#endif
 
     Com_DPrintf("trFMV::play(), playing %s\n", arg);
 
@@ -859,8 +960,10 @@ static void RoQReset(void)
         cinTable[currentHandle].roq_id = cin.file[8] | (cin.file[9] << 8);
         cinTable[currentHandle].RoQFrameSize = cin.file[10] | (cin.file[11] << 8) | (cin.file[12] << 16);
         cinTable[currentHandle].roq_flags = cin.file[14] | (cin.file[15] << 8);
+#if !defined(COD2_X64)
         cinTable[currentHandle].roqF0 = (signed char)cin.file[15];
         cinTable[currentHandle].roqF1 = (signed char)cin.file[14];
+#endif
         cinTable[currentHandle].status = FMV_LOOPED;
     }
 }
@@ -911,6 +1014,644 @@ void ROQ_StopCinematic(void)
 
 extern void Com_Memcpy(void *dest, const void *src, int count);
 
+#if defined(COD2_X64)
+static void RoQ_CodebookPixel(byte *dst, int y, int cb, int cr, int bpp, const byte *gray)
+{
+    long red, green, blue;
+
+    if (bpp == 1) {
+        *dst = gray[y];
+        return;
+    }
+    red = ROQ_YY_tab[y] + ROQ_VR_tab[cr];
+    green = ROQ_YY_tab[y] + ROQ_UG_tab[cb] + ROQ_VG_tab[cr];
+    blue = ROQ_YY_tab[y] + ROQ_UB_tab[cb];
+    if (bpp == 2) {
+        unsigned int pixel;
+        red = red < 0 ? 0 : red >> 9;
+        green = green < 0 ? 0 : green >> 8;
+        blue = blue < 0 ? 0 : blue >> 9;
+        pixel = ((unsigned int)(red > 31 ? 31 : red) << 11) |
+                ((unsigned int)(green > 63 ? 63 : green) << 5) |
+                (unsigned int)(blue > 31 ? 31 : blue);
+        dst[0] = (byte)pixel;
+        dst[1] = (byte)(pixel >> 8);
+    } else {
+        /* Native raw textures consume BGRA; Mac stores A,R,G,B. */
+        dst[0] = ROQ_SAMPLE(blue);
+        dst[1] = ROQ_SAMPLE(green);
+        dst[2] = ROQ_SAMPLE(red);
+        dst[3] = 255;
+    }
+}
+
+static void RoQ_DecodeCodebook(cin_cache *slot, const byte *input, int numY, int numCb)
+{
+    int bpp = (int32_t)slot->samplesPerPixel;
+    int columns = slot->half ? 1 : 2;
+    int rows = !slot->half && slot->smootheddouble ? 4 : 2;
+    int cellBytes;
+    byte *cell = (byte *)vq2;
+    byte *quad = (byte *)vq4;
+    byte *doubleQuad = (byte *)vq8;
+    int i, row, column, component;
+
+    if (bpp != 1 && bpp != 2 && bpp != 4)
+        return;
+    cellBytes = columns * rows * bpp;
+    /* No native creator selects grayscale or owns a gray map. Preserve the
+     * existing defined no-op for that state until a map is supplied. */
+    if (bpp == 1 && !slot->gray)
+        return;
+
+    for (i = 0; i < numY; i++, input += 6) {
+        for (row = 0; row < rows; row++) {
+            for (column = 0; column < columns; column++) {
+                int y;
+                if (rows == 4 && row == 1)
+                    y = (3 * input[column] + input[column + 2]) >> 2;
+                else if (rows == 4 && row == 2)
+                    y = (input[column] + 3 * input[column + 2]) >> 2;
+                else
+                    y = input[(row == rows - 1 ? 2 : 0) + column];
+                RoQ_CodebookPixel(cell, y, input[4], input[5], bpp, slot->gray);
+                cell += bpp;
+            }
+        }
+    }
+
+    /* Each pair contributes one horizontal strip, two cells wide. Mac uses
+     * two rows normally/half-size and four rows for smoothed doubling. */
+    for (i = 0; i < numCb; i++, input += 2) {
+        const byte *left = (const byte *)vq2 + input[0] * cellBytes;
+        const byte *right = (const byte *)vq2 + input[1] * cellBytes;
+        int width = 2 * columns;
+        for (row = 0; row < rows; row++) {
+            for (column = 0; column < width; column++) {
+                const byte *pixel = (column < columns ? left : right) +
+                                    (row * columns + column % columns) * bpp;
+                for (component = 0; component < bpp; component++) {
+                    byte value = pixel[component];
+                    quad[column * bpp + component] = value;
+                    doubleQuad[(2 * column) * bpp + component] = value;
+                    doubleQuad[(2 * column + 1) * bpp + component] = value;
+                    doubleQuad[(2 * width + 2 * column) * bpp + component] = value;
+                    doubleQuad[(2 * width + 2 * column + 1) * bpp + component] = value;
+                }
+            }
+            quad += width * bpp;
+            doubleQuad += 4 * width * bpp;
+        }
+    }
+}
+
+/* These checks bound actual object storage rather than requiring packet
+ * padding to be zero or rejecting the original reads across chunk boundaries. */
+static qboolean RoQ_InputRange(const byte *data, size_t length)
+{
+    uintptr_t begin = (uintptr_t)&cin;
+    uintptr_t address = (uintptr_t)data;
+    return address >= begin && address - begin <= sizeof(cin) &&
+           length <= sizeof(cin) - (address - begin);
+}
+
+static qboolean RoQ_ImageSize(unsigned int width, unsigned int height, long bpp)
+{
+    uint64_t area = (uint64_t)width * height;
+    uint64_t sentinels = (area >> 4) + (area >> 6) + 64;
+    return (bpp == 1 || bpp == 2 || bpp == 4) &&
+           area * bpp <= sizeof(cin.linbuf) / 2 &&
+           sentinels <= sizeof(cin.qStatus[0]) / sizeof(cin.qStatus[0][0]);
+}
+
+static qboolean RoQ_VQRange(const byte *destination, int displacement, int size, int stride)
+{
+    uintptr_t base = (uintptr_t)cin.linbuf;
+    uintptr_t address = (uintptr_t)destination;
+    int64_t offset, length;
+    if (address < base || address - base > sizeof(cin.linbuf))
+        return 0;
+    offset = (int64_t)(address - base) + displacement;
+    length = (int64_t)(size - 1) * stride + size * 4;
+    return offset >= 0 && length <= sizeof(cin.linbuf) &&
+           offset <= (int64_t)sizeof(cin.linbuf) - length;
+}
+
+static qboolean RoQ_VQCode(const byte **data, unsigned short *word, int *remaining, int *code)
+{
+    if (!*remaining) {
+        if (!RoQ_InputRange(*data, 2))
+            return 0;
+        *word = (*data)[0] | ((*data)[1] << 8);
+        *data += 2;
+        *remaining = 7;
+    } else {
+        --*remaining;
+    }
+    *code = *word >> 14;
+    *word <<= 2;
+    return 1;
+}
+
+static qboolean RoQ_ValidateVQ(byte **status, const byte *data, int spl)
+{
+    size_t index = 0, count = sizeof(cin.qStatus[0]) / sizeof(cin.qStatus[0][0]);
+    unsigned short word = 0;
+    int remaining = 0, code, child;
+    int stride = (spl >> 3) * 8;
+
+    if (spl < 0)
+        return 0;
+    do {
+        if (index >= count || !RoQ_VQCode(&data, &word, &remaining, &code))
+            return 0;
+        if (code == 3) {
+            ++index;
+            for (child = 0; child < 4; child++, index++) {
+                int bytes;
+                if (index >= count || !RoQ_VQCode(&data, &word, &remaining, &code))
+                    return 0;
+                bytes = code == 3 ? 4 : code != 0;
+                if (!RoQ_InputRange(data, bytes))
+                    return 0;
+                if (code == 3) {
+                    if (!RoQ_VQRange(status[index], 0, 2, stride) ||
+                        !RoQ_VQRange(status[index], 8, 2, stride) ||
+                        !RoQ_VQRange(status[index], spl * 2, 2, stride) ||
+                        !RoQ_VQRange(status[index], spl * 2 + 8, 2, stride))
+                        return 0;
+                } else if (code != 0) {
+                    if (!RoQ_VQRange(status[index], 0, 4, stride) ||
+                        (code == 1 && !RoQ_VQRange(status[index], (int32_t)cin.mcomp[*data], 4, stride)))
+                        return 0;
+                }
+                data += bytes;
+            }
+        } else {
+            if (code != 0) {
+                if (!RoQ_InputRange(data, 1) || !RoQ_VQRange(status[index], 0, 8, stride) ||
+                    (code == 1 && !RoQ_VQRange(status[index], (int32_t)cin.mcomp[*data], 8, stride)))
+                    return 0;
+                ++data;
+            }
+            index += 5;
+        }
+        if (index >= count)
+            return 0;
+    } while (status[index] != NULL);
+    return 1;
+}
+
+e_status ROQ_RunCinematicFromHandle(int handle)
+{
+    unsigned int thisTime;
+    unsigned int start;
+    int h;
+    unsigned int numFrames;
+    byte *framedata;
+    /* Mac reserves 65536 decoded-audio bytes at 0xb2c88, but mono can
+     * expand every accepted 65536-byte chunk into 262144 bytes (0xb3093).
+     * Give native decoding defined storage rather than copying that overflow. */
+    short samplesBuf[131072];
+    /* The read includes the next header. At size 65536, its eight bytes
+     * overlap sqrTable, as in Mac 0xb3020/0xb30a3. Address the enclosing
+     * object representation so that the overlap stays within one C object. */
+    byte *packet = (byte *)&cin + offsetof(cinematics_t, file);
+
+    if ((unsigned int)handle > 0xf || cinTable[handle].status == FMV_EOF) {
+        return FMV_EOF;
+    }
+
+    if (cin.currentHandle != handle) {
+        currentHandle = handle;
+        cin.currentHandle = handle;
+        cinTable[handle].status = FMV_EOF;
+        RoQReset();
+    }
+
+    if (cinTable[handle].playonwalls < -1) {
+        return cinTable[handle].status;
+    }
+
+    currentHandle = handle;
+
+    if (cinTable[handle].alterGameState) {
+        if (CLC_CONN->state != 1) {
+            return cinTable[handle].status;
+        }
+    }
+
+    if (cinTable[handle].status == FMV_IDLE) {
+        return (e_status)0;
+    }
+
+    thisTime = CL_ScaledMilliseconds();
+    h = currentHandle;
+
+    if (cinTable[h].material) {
+        uint32_t elapsed = thisTime - cinTable[h].lastTime;
+        float fElapsed = (float)elapsed;
+        /* Mac converts with cvttss2si, whose out-of-range result is INT_MIN.
+         * Its integer negation also wraps, so INT_MIN never exceeds 100. */
+        int32_t absElapsed = fElapsed >= 2147483648.0f ? INT32_MIN : (int32_t)fElapsed;
+        if (absElapsed < 0)
+            absElapsed = (int32_t)(0u - (uint32_t)absElapsed);
+        if (absElapsed > 100)
+            cinTable[h].startTime += elapsed;
+    }
+
+    handle = currentHandle;
+    if (cinTable[handle].sound) {
+        int soundTime = SND_RawSamplesTime();
+        h = currentHandle;
+        numFrames = (unsigned int)((int32_t)((uint32_t)soundTime *
+                    (uint32_t)cinTable[h].roqFPS) / 1000 + 1);
+    } else {
+        numFrames = (unsigned int)((unsigned int)(thisTime - cinTable[handle].startTime) * (unsigned int)cinTable[handle].roqFPS) / 1000;
+    }
+    h = currentHandle;
+
+    if ((int32_t)numFrames <= cinTable[h].tfps) {
+        if ((thisTime - cinTable[h].lastFrameTime) * (unsigned int)cinTable[h].roqFPS > 4000) {
+            cinTable[h].status = FMV_EOF;
+        }
+    } else {
+        cinTable[h].tfps = (int32_t)numFrames;
+        cinTable[h].lastFrameTime = thisTime;
+    }
+
+    h = currentHandle;
+    start = cinTable[h].startTime;
+
+frame_loop:
+    h = currentHandle;
+    if (cinTable[h].tfps == cinTable[h].numQuads) {
+        goto frame_done_time;
+    }
+
+    if (cinTable[h].status != FMV_PLAY) {
+        goto frame_done_time;
+    }
+
+    if (handle < 0) {
+        goto after_parse;
+    }
+
+    /* The first packet size comes from the movie header and has not passed
+     * the next-header check at Mac 0xb31a4 yet. Bound the native read too. */
+    if (cinTable[h].RoQFrameSize > 65536) {
+        cinTable[h].status = FMV_EOF;
+        goto frame_done_time;
+    }
+    Sys_StreamedRead(packet, cinTable[h].RoQFrameSize + 8, 1, cinTable[h].iFile);
+    h = currentHandle;
+
+    if (cinTable[h].RoQPlayed >= cinTable[h].ROQSize) {
+        if (cinTable[h].holdAtEnd) {
+            cinTable[h].status = FMV_IDLE;
+            handle = currentHandle;
+            goto after_parse;
+        }
+        if (cinTable[h].looping) {
+            RoQReset();
+            h = currentHandle;
+            handle = h;
+            goto after_parse;
+        } else {
+            cinTable[h].status = FMV_EOF;
+            handle = currentHandle;
+            goto after_parse;
+        }
+    }
+
+    framedata = packet;
+
+parse_roq:
+    h = currentHandle;
+    {
+        unsigned int roqId = cinTable[h].roq_id;
+        size_t required = cinTable[h].RoQFrameSize;
+        if (roqId == 0x1001 && required < 8)
+            required = 8;
+        else if (roqId == 0x1002) {
+            unsigned int flags = (unsigned short)cinTable[h].roq_flags;
+            unsigned int cells = flags >> 8 ? flags >> 8 : 256;
+            unsigned int strips = flags == 0 ? 512 : (flags & 255) * 2;
+            if (required < cells * 6 + strips * 2)
+                required = cells * 6 + strips * 2;
+        } else if (roqId == 0x1021 && (required & 1)) {
+            ++required;
+        }
+        if (cinTable[h].RoQFrameSize > 65536 || !RoQ_InputRange(framedata, required))
+            goto invalid_packet;
+        if (roqId < 0x1001 || roqId > 0x1030) {
+            cinTable[h].status = FMV_EOF;
+            handle = h;
+            goto do_packet_advance;
+        }
+
+        switch (roqId) {
+        case 0x1020:
+        {
+            if (!cinTable[h].silent) {
+                unsigned int frameSize = cinTable[h].RoQFrameSize;
+                unsigned short roqFlags = (unsigned short)cinTable[h].roq_flags;
+
+                if (frameSize > 0) {
+                    unsigned int j;
+                    short accum = roqFlags;
+                    for (j = 0; j < frameSize; j++) {
+                        accum += cin.sqrTable[framedata[j]];
+                        samplesBuf[j * 2 + 1] = accum;
+                        samplesBuf[j * 2] = accum;
+                    }
+                }
+                SND_RawSamples(frameSize, 0x5622, 2, 1, (byte *)samplesBuf);
+                h = currentHandle;
+                cinTable[h].sound = 1;
+            }
+            handle = currentHandle;
+            goto do_packet_advance;
+        }
+
+        case 0x1021:
+        {
+            if (!cinTable[h].silent) {
+                unsigned int frameSize = cinTable[h].RoQFrameSize;
+                unsigned short roqFlags = (unsigned short)cinTable[h].roq_flags;
+                short left = (short)(roqFlags & 0xff00);
+                short right = (short)((roqFlags & 0xff) << 8);
+
+                if (frameSize > 0) {
+                    unsigned int j;
+                    for (j = 0; j < frameSize; j += 2) {
+                        left += cin.sqrTable[framedata[j]];
+                        right += cin.sqrTable[framedata[j + 1]];
+                        samplesBuf[j] = left;
+                        samplesBuf[j + 1] = right;
+                    }
+                }
+                SND_RawSamples(frameSize >> 1, 0x5622, 2, 2, (byte *)samplesBuf);
+                h = currentHandle;
+                cinTable[h].sound = 1;
+            }
+            handle = currentHandle;
+            goto do_packet_advance;
+        }
+
+        case 0x1011:
+        {
+
+            {
+                void (*rendererCb)(void) = ((refexport_t *)(void *)imp_re)->SyncRenderThread;
+                if (rendererCb)
+                    rendererCb();
+            }
+            h = currentHandle;
+
+            if (cinTable[h].samplesPerPixel != 4 ||
+                !RoQ_ImageSize(cinTable[h].xsize, cinTable[h].ysize, 4) ||
+                cinTable[h].samplesPerLine != (long)cinTable[h].xsize * 4 ||
+                cinTable[h].screenDelta != cinTable[h].samplesPerLine * cinTable[h].ysize)
+                goto invalid_packet;
+
+            if (cinTable[h].numQuads & 1) {
+                cinTable[h].normalBuffer0 = cinTable[h].t[1];
+                RoQPrepMcomp(cinTable[h].roqF0, cinTable[h].roqF1);
+                if (cinTable[h].VQ1 != blitVQQuad32fs ||
+                    !RoQ_ValidateVQ(cin.qStatus[1], framedata, (int)cinTable[h].samplesPerLine))
+                    goto invalid_packet;
+                cinTable[h].VQ1(cin.qStatus[1], framedata);
+                h = currentHandle;
+                cinTable[h].buf = (byte *)&cin + cinTable[h].screenDelta;
+            } else {
+                cinTable[h].normalBuffer0 = cinTable[h].t[0];
+                RoQPrepMcomp(cinTable[h].roqF0, cinTable[h].roqF1);
+                if (cinTable[h].VQ0 != blitVQQuad32fs ||
+                    !RoQ_ValidateVQ(cin.qStatus[0], framedata, (int)cinTable[h].samplesPerLine))
+                    goto invalid_packet;
+                cinTable[h].VQ0(cin.qStatus[0], framedata);
+                h = currentHandle;
+                cinTable[h].buf = (byte *)&cin;
+            }
+
+            {
+                int numQ = cinTable[h].numQuads;
+                if (numQ == 0) {
+
+                    if (cinTable[h].numQuads == 0) {
+                        Com_Memcpy((byte *)&cin + cinTable[h].screenDelta,
+                                   (byte *)&cin,
+                                   cinTable[h].samplesPerLine * cinTable[h].ysize);
+                    }
+                }
+            }
+
+            cinTable[h].numQuads++;
+            cinTable[h].dirty = 1;
+            handle = currentHandle;
+            goto do_packet_advance;
+        }
+
+        case 0x1001:
+        {
+            if (cinTable[h].numQuads == -1) {
+
+                if (h >= 0) {
+                    unsigned int width = framedata[0] | (framedata[1] << 8);
+                    unsigned int height = framedata[2] | (framedata[3] << 8);
+                    if (!RoQ_ImageSize(width, height, cinTable[h].samplesPerPixel))
+                        goto invalid_packet;
+                    cinTable[h].xsize = framedata[0] | (framedata[1] << 8);
+                    cinTable[h].ysize = framedata[2] | (framedata[3] << 8);
+                    cinTable[h].maxsize = framedata[4] | (framedata[5] << 8);
+                    cinTable[h].minsize = framedata[6] | (framedata[7] << 8);
+                    cinTable[h].CIN_HEIGHT = cinTable[h].ysize;
+                    cinTable[h].CIN_WIDTH = cinTable[h].xsize;
+                    cinTable[h].samplesPerLine = cinTable[h].CIN_WIDTH * cinTable[h].samplesPerPixel;
+                    cinTable[h].screenDelta = cinTable[h].samplesPerLine * cinTable[h].CIN_HEIGHT;
+                    cinTable[h].half = 0;
+                    cinTable[h].smootheddouble = 0;
+                    cinTable[h].VQ0 = cinTable[h].VQNormal;
+                    cinTable[h].VQ1 = cinTable[h].VQBuffer;
+                    cinTable[h].t[0] = cinTable[h].screenDelta;
+                    cinTable[h].t[1] = -(cinTable[h].screenDelta);
+                }
+
+                if (cin.oldXOff == 0 && cin.oldYOff == 0 &&
+                    cinTable[h].ysize == (unsigned int)cin.oldysize &&
+                    cinTable[h].xsize == (unsigned int)cin.oldxsize) {
+
+                } else {
+                    int numCells, halfCells;
+                    int sx, sy;
+
+                    cin.oldXOff = 0;
+                    cin.oldYOff = 0;
+                    cin.oldysize = cinTable[h].ysize;
+                    cin.oldxsize = cinTable[h].xsize;
+
+                    numCells = (cinTable[h].xsize * cinTable[h].ysize) >> 4;
+                    halfCells = numCells >> 2;
+
+                    cinTable[h].onQuad = 0;
+
+                    for (sy = 0; (unsigned int)sy < cinTable[h].ysize; sy += 16) {
+                        for (sx = 0; (unsigned int)sx < cinTable[h].xsize; sx += 16) {
+                            recurseQuad(sx, sy, 16, 0, 0);
+                            h = currentHandle;
+                        }
+                    }
+
+                    {
+                        int sentStart = numCells + halfCells - 0x40 + 0x40;
+                        int sentEnd = numCells + halfCells + 0x40;
+                        int j;
+                        for (j = sentStart; j < sentEnd; j++) {
+                            cin.qStatus[0][j] = 0;
+                            cin.qStatus[1][j] = 0;
+                        }
+                    }
+                }
+
+                {
+                    unsigned int infoTime = CL_ScaledMilliseconds();
+                    cinTable[h].lastTime = infoTime;
+                    cinTable[h].startTime = infoTime;
+                }
+            }
+            handle = currentHandle;
+            {
+                int hh = handle;
+                if (cinTable[hh].numQuads != 1)
+                    cinTable[hh].numQuads = 0;
+            }
+            goto do_packet_advance;
+        }
+
+        case 0x1002:
+        {
+            unsigned short roqFlags = (unsigned short)cinTable[h].roq_flags;
+            int numY, numCb;
+
+            if ((roqFlags >> 8) == 0) {
+                numY = 256;
+            } else {
+                numY = roqFlags >> 8;
+            }
+            numCb = roqFlags == 0 ? 256 : roqFlags & 0xff;
+            numCb *= 2;
+
+            RoQ_DecodeCodebook(&cinTable[h], framedata, numY, numCb);
+
+            handle = currentHandle;
+            goto do_packet_advance;
+        }
+
+        case 0x1012:
+        {
+            handle = currentHandle;
+            goto do_packet_advance;
+        }
+
+        case 0x1013:
+        {
+            cinTable[h].RoQFrameSize = 0;
+            handle = currentHandle;
+            goto do_packet_advance;
+        }
+
+        case 0x1030:
+        {
+            cinTable[h].inMemory = cinTable[h].roq_flags;
+            cinTable[h].RoQFrameSize = 0;
+            handle = h;
+            goto do_packet_advance;
+        }
+
+        default:
+            cinTable[h].status = FMV_EOF;
+            handle = h;
+            goto do_packet_advance;
+        }
+    }
+
+do_packet_advance:
+    h = currentHandle;
+    if (cinTable[h].RoQPlayed >= cinTable[h].ROQSize) {
+        if (cinTable[h].holdAtEnd)
+            cinTable[h].status = FMV_IDLE;
+        else if (cinTable[h].looping)
+            RoQReset();
+        else
+            cinTable[h].status = FMV_EOF;
+        handle = currentHandle;
+        goto after_parse;
+    }
+    {
+        if (!RoQ_InputRange(framedata, (size_t)cinTable[h].RoQFrameSize + 8))
+            goto invalid_packet;
+        byte *nextHeader = framedata + cinTable[h].RoQFrameSize;
+        cinTable[h].roq_id = nextHeader[0] | (nextHeader[1] << 8);
+        cinTable[h].RoQFrameSize = nextHeader[2] | (nextHeader[3] << 8) | (nextHeader[4] << 16);
+        cinTable[h].roq_flags = nextHeader[6] | (nextHeader[7] << 8);
+        cinTable[h].roqF0 = (signed char)nextHeader[7];
+        cinTable[h].roqF1 = (signed char)nextHeader[6];
+        if (cinTable[h].RoQFrameSize > 65536 || cinTable[h].roq_id == 0x1084) {
+            Com_DPrintf("roq_size>65536||roq_id==0x1084 (roq_size=%i,roq_id=%i)\n",
+                        cinTable[h].RoQFrameSize, cinTable[h].roq_id);
+            h = currentHandle;
+            cinTable[h].status = FMV_EOF;
+            if (cinTable[h].looping)
+                RoQReset();
+        } else if (cinTable[h].inMemory && cinTable[h].status != FMV_EOF) {
+            cinTable[h].inMemory--;
+            framedata = nextHeader + 8;
+            goto parse_roq;
+        } else {
+            cinTable[h].RoQPlayed += cinTable[h].RoQFrameSize + 8;
+        }
+    }
+    handle = currentHandle;
+
+after_parse:
+    h = handle;
+    if (cinTable[h].startTime != start) {
+        /* Mac only uses this new time to recompute tfps, preserving thisTime. */
+        unsigned int resetTime = CL_ScaledMilliseconds();
+        h = currentHandle;
+        numFrames = (uint32_t)((resetTime - cinTable[h].startTime) *
+                    (uint32_t)cinTable[h].roqFPS) / 1000;
+        cinTable[h].tfps = (int32_t)numFrames;
+        start = cinTable[h].startTime;
+    }
+    goto frame_loop;
+
+invalid_packet:
+    /* Malformed native input ends playback instead of accessing unowned
+     * packet, image or quad-table storage. Original overflow is not emulated. */
+    h = currentHandle;
+    cinTable[h].status = FMV_EOF;
+
+frame_done_time:
+    cinTable[h].lastTime = thisTime;
+    if (cinTable[h].status == FMV_LOOPED)
+        cinTable[h].status = FMV_PLAY;
+    if (cinTable[h].status == FMV_EOF) {
+        if (cinTable[h].looping) {
+            RoQReset();
+        } else {
+            /* Mac subsequently indexes cinTable with -1. Return the cleared
+             * slot's idle status without reproducing that out-of-array read. */
+            RoQShutdown();
+            if (currentHandle < 0)
+                return FMV_IDLE;
+        }
+    }
+    return cinTable[currentHandle].status;
+}
+
+#else
 e_status ROQ_RunCinematicFromHandle(int handle)
 {
     unsigned int thisTime;
@@ -1415,6 +2156,16 @@ frame_done:
     return cinTable[h].status;
 }
 
+#endif
+
+#if defined(COD2_X64)
+void ROQ_RunCinematic(void)
+{
+    if ((unsigned int)CL_handle <= 0xf)
+        ROQ_RunCinematicFromHandle(CL_handle);
+}
+
+#else
 void ROQ_RunCinematic(void)
 {
     if ((unsigned int)CL_handle <= 0xf) {
@@ -1436,6 +2187,7 @@ void ROQ_RunCinematic(void)
     }
 }
 
+#endif
 void ROQ_PlayCinematic_f(void)
 {
     int argc;
@@ -1502,6 +2254,11 @@ void ROQ_PlayCinematic_f(void)
             if ((unsigned int)CL_handle <= 0xf) {
                 ROQ_RunCinematicFromHandle(CL_handle);
             }
+#if defined(COD2_X64)
+            /* EOF shutdown clears currentHandle; Mac 0xb5e4c still indexes it. */
+            if ((unsigned int)currentHandle > 0xf)
+                break;
+#endif
             if (cinTable[currentHandle].buf) {
                 break;
             }

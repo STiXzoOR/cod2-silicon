@@ -22,6 +22,10 @@ static dvar_t developerValue;
 const dvar_t *developer = &developerValue;
 static const XModel *expectedModel;
 static int badCalls;
+static GfxSceneEntity *claimedEntity;
+static int claimedState;
+static int simulateCompletion;
+static int atomicCalls;
 static vec3_t zero;
 void *imp_vec3_origin = zero;
 
@@ -29,6 +33,7 @@ int XModelBad(const XModel *model)
 {
     assert(model == expectedModel);
     ++badCalls;
+    if (claimedEntity) assert(claimedEntity->cullState == claimedState);
     return model->bad;
 }
 
@@ -66,9 +71,89 @@ int XModelGetSurfaces(const XModel *model, XSurface ***surfaces, int lod, int **
 
 int InterlockedCompareExchange(volatile int *value, int exchange, int comparand)
 {
+    ++atomicCalls;
     int old = *value;
+    if (simulateCompletion) {
+        *value = simulateCompletion;
+        return old;
+    }
     if (old == comparand) *value = exchange;
     return old;
+}
+
+static dvar_t disabledValue;
+const dvar_t *r_skinCache = &disabledValue;
+const dvar_t *r_xdebug = &disabledValue;
+const dvar_t *r_smc_enable = &disabledValue;
+dvar_t *r_rendererInUse = &disabledValue;
+static const trXSkin_t *testSkins;
+const trXSkin_t *XModelGetSkins(const XModel *model) { return testSkins; }
+int XSurfaceGetNumVerts(const XSurface *surface) { assert(0); return 0; }
+int XSurfaceGetBoneOffset(const XSurface *surface) { return surface->boneOffset; }
+int XModelNumBones(const XModel *model) { assert(0); return 0; }
+const DObjAnimMat *XModelGetBasePose(const XModel *model) { assert(0); return NULL; }
+int InterlockedExchange(volatile int *value, int exchange) { assert(0); return 0; }
+int InterlockedExchangeAdd(volatile int *value, int add) { assert(0); return 0; }
+void R_AddFrontendCmd(int type, void *data) { assert(0); }
+GfxStaticModelSurfaceCached *R_CacheStaticModelSurface(GfxStaticSurface *surface,
+    const XSurface *xsurf, int index, const Material *material) { assert(0); return NULL; }
+static int usedCached;
+void R_UsedCachedStaticModelSurface(GfxStaticModelSurfaceCached *surface) { ++usedCached; }
+
+static void TestSkinClaim(XModel *model, const char *mode)
+{
+    DObj obj = {0};
+    GfxSceneEntity sceneEntity = {0};
+    GfxEntity entity = {0};
+    int isStatic = strstr(mode, "static") != NULL;
+    int contended = strstr(mode, "contended") != NULL;
+    model->bad = 1;
+    obj.numModels = 1;
+    obj.models[0] = model;
+    if (isStatic) sceneEntity.u.model = model;
+    else sceneEntity.u.obj = &obj;
+    sceneEntity.cullState = contended ? 3 : 2;
+    if (contended) simulateCompletion = 4;
+    else { claimedEntity = &sceneEntity; claimedState = 3; }
+    int calls = badCalls;
+    if (isStatic) R_SkinXModel(&sceneEntity, &entity, 0);
+    else R_SkinSceneDObj(&sceneEntity, &entity);
+    assert(sceneEntity.cullState == 4);
+    assert(badCalls == calls + !contended);
+}
+
+static void TestStaticCacheRenderer(XModel *model, int dx7)
+{
+    GfxSceneEntity sceneEntity = {0};
+    GfxEntity entity = {0};
+    Material material = {0};
+    MaterialTechniqueSet techniques = {0};
+    Material *materials[] = { &material };
+    Material **skins[] = { materials };
+    const Material *selected[1] = {0};
+    GfxStaticModelDynamic dynamic = {0};
+    GfxStaticSurface staticSurface = {0};
+    GfxStaticModelSurfaceCached cached = {0};
+    GfxModelRigidSurface output = {0};
+    XSurface surface = {0};
+    qboolean needsSkinning = 0;
+    dvar_t smc = {0}, render = {0};
+    smc.current.enabled = 1;
+    render.current.integer = dx7 ? 2 : 1;
+    r_smc_enable = &smc;
+    r_rendererInUse = &render;
+    material.techniqueSet = &techniques;
+    testSkins = (const trXSkin_t *)skins;
+    staticSurface.cachedLods[0] = &cached;
+    dynamic.staticSurfs = &staticSurface;
+    rg.smodelDyncs = &dynamic;
+    sceneEntity.materials = selected;
+    entity.reType = (refEntityType_t)2;
+    surface.surfRigid.vb = (void *)&surface;
+    R_PreSkinStaticSurface(&sceneEntity, &entity, 0, model, &surface, 0, 0,
+                          &needsSkinning, (byte *)&output);
+    assert(output.surf.surfType == (dx7 ? 4 : 5));
+    assert(needsSkinning == dx7 && usedCached == !dx7);
 }
 
 static void TestNonuniformBoneBounds(XModel *model, XModelParts *parts)
@@ -133,7 +218,7 @@ static void TestNonuniformBoneBounds(XModel *model, XModelParts *parts)
     model->lodInfo[0].surfs = NULL;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     XModel *model = calloc(1, sizeof(*model));
     XModelParts *parts = calloc(1, sizeof(*parts));
@@ -196,7 +281,37 @@ int main(void)
     R_UpdateXModelBounds(&sceneEntity, &entity);
     assert(badCalls == 3 && sceneEntity.cullState == 2);
     assert(R_GetGfxEntityDObj(&sceneEntity, &entity) == &animated);
-    TestNonuniformBoneBounds(model, parts);
+    if (argc > 1 && !strcmp(argv[1], "surfaces")) {
+        XModelSurfs many = {0};
+        model->lodInfo[0].surfs = &many;
+        model->lodInfo[0].numsurfs = 64;
+        sceneEntity.cullState = 0;
+        R_UpdateXModelBounds(&sceneEntity, &entity);
+        assert(sceneEntity.cullState == 2);
+    } else if (argc > 1 && !strcmp(argv[1], "claim")) {
+        claimedEntity = &sceneEntity;
+        claimedState = 1;
+        sceneEntity.cullState = 0;
+        R_UpdateXModelBounds(&sceneEntity, &entity);
+        assert(sceneEntity.cullState == 2);
+    } else if (argc > 1 && !strcmp(argv[1], "completed")) {
+        int calls = badCalls, atomics = atomicCalls;
+        sceneEntity.cullState = 2;
+        R_UpdateXModelBounds(&sceneEntity, &entity);
+        assert(badCalls == calls && atomicCalls == atomics);
+    } else if (argc > 1 && !strcmp(argv[1], "contended")) {
+        int calls = badCalls;
+        sceneEntity.cullState = 1;
+        simulateCompletion = 2;
+        R_UpdateXModelBounds(&sceneEntity, &entity);
+        assert(badCalls == calls && sceneEntity.cullState == 2);
+    } else if (argc > 1 && !strncmp(argv[1], "cache-", 6)) {
+        TestStaticCacheRenderer(model, !strcmp(argv[1], "cache-dx7"));
+    } else if (argc > 1 && !strncmp(argv[1], "skin-", 5)) {
+        TestSkinClaim(model, argv[1]);
+    } else {
+        TestNonuniformBoneBounds(model, parts);
+    }
     free(parts);
     free(model);
     puts("native model bounds: typed initialization, full pointers, wrappers and four nonuniform rotated bone boxes passed");

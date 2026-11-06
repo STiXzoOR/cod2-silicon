@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import shlex
 import subprocess
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
@@ -40,4 +41,12 @@ result = subprocess.run([*flags, '-Wl,-dead_strip', str(ROOT / 'tests/collision/
 if result.returncode:
     print(result.stderr)
     result.check_returncode()
-raise SystemExit(subprocess.run([str(exe)], cwd=ROOT).returncode)
+failures = subprocess.run([str(exe)], cwd=ROOT).returncode != 0
+for script, extra in [('load.py', []), ('kernel.py', ['--test', 'mesh']),
+                      ('kernel.py', ['--test', 'world']), ('kernel.py', ['--test', 'contents'])]:
+    command = [sys.executable, str(ROOT / 'tests/collision' / script), '--build', str(args.build), *extra]
+    if args.baseline:
+        command += ['--baseline', args.baseline]
+    failures += subprocess.run(command, cwd=ROOT).returncode != 0
+print(f'collision suites: {failures} failing / 5')
+raise SystemExit(bool(failures))

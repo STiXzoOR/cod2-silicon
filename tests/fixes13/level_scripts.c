@@ -10,6 +10,8 @@ static void *imp_g_scr_data = &g_scr_data;
 static qboolean itemRegistered[256];
 static int numItems = 4;
 static void *imp_bg_numItems = &numItems;
+static void *bgsSlot = &bgsSlot;
+static void *imp_bgs = &bgsSlot;
 enum { GITEMS_CS_WEAPONS = 7, GITEMS_CS_ITEMS = 8 };
 static int handles[3], calls, frees, writes;
 static char weapons[128], items[128];
@@ -54,6 +56,10 @@ int main(void)
         ++failures;
     }
     assert(frees == 3);
+    /* The startup block also frees every corpse slot and detaches bgs. */
+    for (int i = 0; i < 8; i++)
+        assert(g_scr_data.playerCorpseInfo[i].entnum == -1);
+    assert(bgsSlot == NULL);
     if (!failures) puts("PASS level script order and initial registration publication");
     return failures != 0;
 }

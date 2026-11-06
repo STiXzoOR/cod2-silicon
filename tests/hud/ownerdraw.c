@@ -175,7 +175,7 @@ static void objectives(void)
     if (picture_count != 3) return;
     for (int i = 0; i < 3; ++i) {
         CHECK(pictures[i].material == &default_icon);
-        CHECK(near(pictures[i].x, 65.0f) && near(pictures[i].y, 50.75f));
+        CHECK(near(pictures[i].x, 62.0f) && near(pictures[i].y, 45.75f));
         CHECK(near(pictures[i].w, 16.0f) && near(pictures[i].h, 16.0f));
         CHECK(near(pictures[i].color[3], 1.0f));
     }
@@ -188,28 +188,28 @@ static void objectives(void)
 static void distance(void)
 {
     // Hand-derived cardinal vectors avoid using the production radius/alpha oracle.
-    const float vectors[][4] = { { 0, 0, 68.25f, 1 }, { 100, 0, 68.25f, 1 },
-        { 200, 0, 50.75f, 1 }, { 300, 0, 33.25f, 1 }, { 500, 0, 33.25f, 0.625f },
-        { 700, 0, 33.25f, 0.25f }, { 900, 0, 33.25f, 0.25f } };
+    const float vectors[][4] = { { 0, 0, 63.25f, 1 }, { 100, 0, 63.25f, 1 },
+        { 200, 0, 45.75f, 1 }, { 300, 0, 28.25f, 1 }, { 500, 0, 28.25f, 0.625f },
+        { 700, 0, 28.25f, 0.25f }, { 900, 0, 28.25f, 0.25f } };
     for (int i = 0; i < 7; ++i) {
         reset();
         objective(0, vectors[i][0], 0, 900.0f);
         draw(86);
         CHECK(picture_count == 1);
         if (!picture_count) continue;
-        CHECK(near(pictures[0].x, 65.0f) && near(pictures[0].y, vectors[i][2]));
+        CHECK(near(pictures[0].x, 62.0f) && near(pictures[0].y, vectors[i][2]));
         CHECK(near(pictures[0].color[3], vectors[i][3]));
     }
     reset();
     objective(0, 0, 200, 0);
     draw(86);
-    CHECK(picture_count == 1 && near(pictures[0].x, 38.75f) && near(pictures[0].y, 77.0f));
+    CHECK(picture_count == 1 && near(pictures[0].x, 35.75f) && near(pictures[0].y, 72.0f));
     reset();
     min_range.current.value = max_range.current.value = 300.0f;
     objective_range.current.value = 300.0f;
     objective(0, 300, 0, 0);
     draw(86);
-    CHECK(picture_count == 1 && near(pictures[0].y, 68.25f) && near(pictures[0].color[3], 1.0f));
+    CHECK(picture_count == 1 && near(pictures[0].y, 63.25f) && near(pictures[0].color[3], 1.0f));
 }
 
 static void entity_origin(void)
@@ -219,7 +219,7 @@ static void entity_origin(void)
     entities[17].lerpOrigin[1] = 60.0f;
     entities[17].lerpOrigin[2] = -900.0f;
     draw(86);
-    CHECK(picture_count == 1 && near(pictures[0].x, 65.0f) && near(pictures[0].y, 50.75f));
+    CHECK(picture_count == 1 && near(pictures[0].x, 62.0f) && near(pictures[0].y, 45.75f));
     CHECK(near(pictures[0].color[3], 1.0f));
 }
 
@@ -299,7 +299,7 @@ static void placement(void)
     objective(0, 200, 0, 0);
     draw(86);
     CHECK(picture_count == 1);
-    CHECK(near(pictures[0].x, 159.5f) && near(pictures[0].y, 29.0f));
+    CHECK(near(pictures[0].x, 156.5f) && near(pictures[0].y, 24.0f));
     CHECK(near(pictures[0].w, 32.0f) && near(pictures[0].h, 32.0f));
     CHECK(pictures[0].horz == 2 && pictures[0].vert == 3);
     CHECK(near(pictures[0].color[0], 0.2f) && near(pictures[0].color[1], 0.4f) && near(pictures[0].color[2], 0.8f));
@@ -321,9 +321,9 @@ static void codx_policy(void)
     draw(86);
     CHECK(picture_count == 1);
 #if defined(COD2_CODX) && COD2_CODX
-    CHECK(near(pictures[0].x, 77.0f) && near(pictures[0].y, 46.75f));
+    CHECK(near(pictures[0].x, 74.0f) && near(pictures[0].y, 41.75f));
 #else
-    CHECK(near(pictures[0].x, 65.0f) && near(pictures[0].y, 50.75f));
+    CHECK(near(pictures[0].x, 62.0f) && near(pictures[0].y, 45.75f));
 #endif
 }
 
@@ -336,7 +336,7 @@ static void location(void)
     draw(33);
     CHECK(text_count == 1 && !strcmp(drawn_text, "Translated place"));
     CHECK(last_config == 7 + 0x2e && localization_calls == 1);
-    CHECK(near(text_x, 23.0f) && near(text_y, 125.0f) && near(text_scale, 0.75f));
+    CHECK(near(text_x, 20.0f) && near(text_y, 120.0f) && near(text_scale, 0.75f));
     CHECK(text_horz == 2 && text_vert == 3 && text_style == 6 && text_max == 0x7fffffff && text_font == &font);
     CHECK(near(text_color[3], 0.17f));
 }

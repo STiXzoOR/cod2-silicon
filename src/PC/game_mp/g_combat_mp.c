@@ -146,19 +146,31 @@ void G_ParseHitLocDmgTable(void)
 
     iFileLength = FS_FOpenFileByMode("info/mp_lochit_dmgtable", &hFile, 0);
     if (iFileLength <= 0) {
+#if defined(COD2_X64)
+        Com_Error(1, "\x15" "Could not load hitloc damage table %s\n", "info/mp_lochit_dmgtable");
+#else
         Com_Error(1, "Could not load hitloc damage table %s\n", "info/mp_lochit_dmgtable");
+#endif
     }
 
     FS_Read(buffer, 11, hFile);
     buffer[11] = '\0';
 
     if (memcmp(buffer, "LOCDMGTABLE", 11) != 0) {
+#if defined(COD2_X64)
+        Com_Error(1, "\x15" "\"%s\" does not appear to be a hitloc damage table\n", "info/mp_lochit_dmgtable");
+#else
         Com_Error(1, "\"%s\" does not appear to be a hitloc damage table\n", "info/mp_lochit_dmgtable");
+#endif
     }
 
     iFileLength -= 11;
     if (iFileLength > 0x1fff) {
+#if defined(COD2_X64)
+        Com_Error(1, "\x15" "\"%s\" Is too long of a hitloc damage table to parse\n", "info/mp_lochit_dmgtable");
+#else
         Com_Error(1, "\"%s\" Is too long of a hitloc damage table to parse\n", "info/mp_lochit_dmgtable");
+#endif
     }
 
     FS_Read(buffer, iFileLength, hFile);
@@ -166,7 +178,11 @@ void G_ParseHitLocDmgTable(void)
     FS_FCloseFile(hFile);
 
     if (!Info_Validate(buffer)) {
+#if defined(COD2_X64)
+        Com_Error(1, "\x15" "\"%s\" is not a valid hitloc damage table\n", "info/mp_lochit_dmgtable");
+#else
         Com_Error(1, "\"%s\" is not a valid hitloc damage table\n", "info/mp_lochit_dmgtable");
+#endif
     }
 
 #if defined(COD2_X64)
@@ -174,7 +190,11 @@ void G_ParseHitLocDmgTable(void)
 #else
     if (!ParseConfigStringToStruct(g_fHitLocDamageMult, hitLocDmgFields, 19, buffer, 0, 0, G_HitLocStrcpy)) {
 #endif
+#if defined(COD2_X64)
+        Com_Error(1, "\x15" "Error parsing hitloc damage table %s\n", "info/mp_lochit_dmgtable");
+#else
         Com_Error(1, "Error parsing hitloc damage table %s\n", "info/mp_lochit_dmgtable");
+#endif
     }
 }
 
@@ -424,12 +444,16 @@ void G_Damage(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, const 
     Scr_AddInt(damage);
     Scr_Notify(targ, SCR_CONST()->damage, 2);
 
+#if defined(COD2_X64)
+    /* Mac reloads the entity field across the notification boundary. */
+    health = targ->health;
+#endif
     if (health > 0) {
 
 #if defined(COD2_X64)
         fn_pain pain = ((entityHandler_t *)imp_entityHandlers)[targ->handler].pain;
         if (pain != NULL) {
-            pain(targ, attacker, damage, point, mod, dir, hitLoc);
+            pain(targ, attacker, damage, point, mod, localdir, hitLoc);
         }
 #else
         void (*pain)(gentity_t *, gentity_t *, int, const vec_t *, int, hitLocation_t) =
@@ -682,8 +706,13 @@ void player_die(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int 
         launchspot[1] = self->r.currentOrigin[1];
         launchspot[2] = self->r.currentOrigin[2] + 40.0f;
 
+#if defined(COD2_X64)
+        fire_grenade(self, launchspot, launchvel,
+                     cl->ps.offHandIndex, cl->ps.grenadeTimeLeft);
+#else
         fire_grenade(self, launchspot, launchvel,
                      cl->ps.grenadeTimeLeft, cl->ps.offHandIndex);
+#endif
         cl = self->client;
     }
 

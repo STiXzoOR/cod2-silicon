@@ -87,11 +87,19 @@ static inline __attribute__((always_inline)) unsigned int Com_SoundAliasHash(con
 
 static inline __attribute__((always_inline)) int Com_SoundAliasRandom(void)
 {
+#if defined(COD2_X64)
+    unsigned int seed = (unsigned int)g_sa.randSeed * 214013u + 2531011u;
+
+    memcpy(&g_sa.randSeed, &seed, sizeof(seed));
+
+    return (int)((seed >> 16) & 0x7fffu);
+#else
     int seed = g_sa.randSeed * 214013 + 2531011;
 
     g_sa.randSeed = seed;
 
     return ((unsigned int)seed >> 16) & 0x7fff;   /* unsigned: a logical shift, not arithmetic */
+#endif
 }
 
 static inline __attribute__((always_inline)) Bool Com_SoundAliasShouldPick(float probability, float totalProbability)
@@ -153,7 +161,11 @@ void Com_LoadSoundAliases(const char *loadspec, const char *loadspecCurGame, snd
         vfcurveFiles = FS_ListFiles("soundaliases", "vfcurve", 0, &vfcurveCount, 0xa);
 
         if (vfcurveCount > 15) {
+#if defined(COD2_X64)
+            Com_Error(1, "\025Snd_Alias Curve initialization: '.vfcurve' file count (%d) exceeds maximum (%d)", vfcurveCount, 15);
+#else
             Com_Error(1, "Snd_Alias Curve initialization: '.vfcurve' file count (%d) ", vfcurveCount, 15);
+#endif
         }
 
         {
@@ -186,7 +198,11 @@ void Com_LoadSoundAliases(const char *loadspec, const char *loadspecCurGame, snd
 
                 if (!Com_LoadVolumeFalloffCurve(namePtr, (SndCurve *)curvePtr)) {
 
+#if defined(COD2_X64)
+                    Com_Error(0, "\025Failed to load sndcurve file '%s'", *(fptr - 1));
+#else
                     Com_Error(0, "Failed to load sndcurve file '%s'", *(fptr - 1));
+#endif
                 }
             }
         }
@@ -209,12 +225,16 @@ void Com_LoadSoundAliases(const char *loadspec, const char *loadspecCurGame, snd
 
     strlwr(trimspec);
 
+#if defined(COD2_X64)
+    /* Mac 0xacc7c retains the menu aliases and the shared hash while loading. */
+#else
     if (system == SASYS_UI && g_sa.initialized[SASYS_UI]) {
         memset(g_sa.pHash, 0, sizeof(g_sa.pHash));
         memset(&g_sa.aliasInfo[SASYS_UI], 0, sizeof(g_sa.aliasInfo[SASYS_UI]));
         memset(&g_sa.soundFileInfo[SASYS_UI], 0, sizeof(g_sa.soundFileInfo[SASYS_UI]));
         g_sa.initialized[SASYS_UI] = 0;
     }
+#endif
 
     if (system == 1) {
         const dvar_t *sv_running = com_sv_running;
@@ -231,12 +251,16 @@ void Com_LoadSoundAliases(const char *loadspec, const char *loadspecCurGame, snd
             goto after_load;
         }
 
+#if defined(COD2_X64)
+        /* Mac 0xacdd6 continues loading without discarding the menu hash. */
+#else
         if (g_sa.initialized[SASYS_UI]) {
             memset(g_sa.pHash, 0, sizeof(g_sa.pHash));
             memset(&g_sa.aliasInfo[SASYS_UI], 0, sizeof(g_sa.aliasInfo[SASYS_UI]));
             memset(&g_sa.soundFileInfo[SASYS_UI], 0, sizeof(g_sa.soundFileInfo[SASYS_UI]));
             g_sa.initialized[SASYS_UI] = 0;
         }
+#endif
     }
 
     fileNames = FS_ListFiles("soundaliases", "csv", 0, &fileCount, 0xa);
@@ -305,7 +329,11 @@ after_load:
                 int errCode = (system != 0) ? 1 : 0;
                 {
                     extern const char *va(const char *fmt, ...);
+#if defined(COD2_X64)
+                    Com_Error(errCode, va("\025%i sound file(s) are missing or in a bad format\n", missCount));
+#else
                     Com_Error(errCode, "%s", va("%i sound file(s) are missing or in a bad format\n", missCount));
+#endif
                 }
             }
         }
@@ -360,9 +388,16 @@ void Com_UnloadSoundAliasSounds(snd_alias_system_t system)
     for (index = 0; index < count; index++) {
         snd_alias_t *alias = &head[index];
 
+#if defined(COD2_X64)
+        snd_alias_type_t type = Com_SoundAliasType(alias);
+        if (type != SAT_LOADED && type != SAT_PRIMED) {
+            continue;
+        }
+#else
         if (Com_SoundAliasType(alias) != SAT_LOADED) {
             continue;
         }
+#endif
 
         if (index != 0) {
             const char *soundName = alias->soundFile->soundName;
@@ -371,7 +406,11 @@ void Com_UnloadSoundAliasSounds(snd_alias_system_t system)
             for (j = 0; j < index; j++) {
                 snd_alias_t *prev = &head[j];
 
+#if defined(COD2_X64)
+                if (prev->soundFile->soundName == soundName && Com_SoundAliasType(prev) == type) {
+#else
                 if (prev->soundFile->soundName == soundName && Com_SoundAliasType(prev) == SAT_LOADED) {
+#endif
                     break;
                 }
             }
@@ -537,7 +576,14 @@ static inline __attribute__((always_inline)) snd_alias_t *Com_PickSoundAliasFrom
         }
     }
 
+#if defined(COD2_X64)
+    {
+        unsigned int nextSequence = (unsigned int)maxSequence + 1u;
+        memcpy(&bestAlias->iSequence, &nextSequence, sizeof(nextSequence));
+    }
+#else
     bestAlias->iSequence = maxSequence + 1;
+#endif
     return bestAlias;
 }
 

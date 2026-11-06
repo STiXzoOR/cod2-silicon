@@ -59,11 +59,13 @@ for name, sources in [('startup', ['src/PC/server_mp/sv_init_mp.c']),
                       ('netchan', ['src/PC/server_mp/sv_net_chan_mp.c']),
                       ('weapon_fields', []),
                       ('spawn', ['src/PC/game_mp/g_utils_mp.c']),
+                      ('entity_fields', ['src/PC/game_mp/g_spawn_mp.c', 'src/PC/game_mp/g_scr_main_mp.c', 'src/PC/game_mp/g_utils_mp.c']),
                       ('use_list', []),
                       ('world_links', []),
                       ('fx_channels', ['src/PC/EffectsCore/FxTemplate.c', 'src/PC/EffectsCore/FxCurve_load_obj.c']),
                       ('shellshock_file', ['src/PC/cgame_mp/cg_shellshock.c']),
                       ('grenades', ['src/PC/game_mp/g_missile_mp.c', 'src/PC/bgame/bg_misc.c', 'src/PC/universal/com_math.c']),
+                      ('grenade_death', ['src/PC/game_mp/g_combat_mp.c']),
                       ('wire', ['src/PC/qcommon/msg_mp.c'])]:
     if args.test and name not in args.test:
         continue

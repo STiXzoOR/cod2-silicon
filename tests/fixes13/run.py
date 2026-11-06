@@ -107,7 +107,8 @@ if not args.test or 'switch' in args.test:
     source = function(path, 'EmitSwitchStatement')
     start = source.index('if (numCases > 1)')
     end = source.index('nextCodePos = TempMalloc(0);', start)
-    generated = function(path, 'CompareCaseInfo') + '''
+    packed_load = '#include <string.h>\n' + function(path, 'Scr_LoadPackedInt') if 'Scr_LoadPackedInt(' in source else ''
+    generated = packed_load + function(path, 'CompareCaseInfo') + '''
 static void check_cases(unsigned int (*caseTable)[2], int numCases)
 {
     int i;
@@ -156,6 +157,8 @@ if not args.test or 'timing' in args.test:
     helpers = (function('src/PC/qcommon/cod2x_protocol.c', 'Cod2x_LimitedFPS') +
                function('src/PC/qcommon/cod2x_runtime.c', 'Cod2x_FrameFPS')) if codx_timing else ''
     frame = function('src/PC/qcommon/common.c', 'Com_Frame_Try_Block_Function')
+    if re.search(r'\bCom_DedicatedModified\s*\(', frame):
+        helpers += function('src/PC/qcommon/common.c', 'Com_DedicatedModified')
     # Keep the original fixture for historical callers that predate match summaries.
     matches = not args.baseline or bool(re.search(r'\bMatchSummary_Frame\s*\(', frame))
     run('timing', helpers + frame +
@@ -177,18 +180,18 @@ if not args.test or 'level_state' in args.test:
     generated += 'static void initialize_spawned_level(void) {\n' + source[start:end] + '\n}\n'
     run('level_state', generated)
 if not args.test or 'level_scripts' in args.test:
-    path = 'src/PC/game_mp/g_main_mp.c'
-    source = subprocess.check_output(['git', 'show', f'{args.baseline}:{path}'], text=True, cwd=ROOT) if args.baseline else (ROOT / path).read_text()
-    # The block begins at the final initializing assignment before script startup.
-    start = source.index('    level.initializing = 1;', source.index('    G_LoadStructs();'))
-    end = source.index('    if (restart && !savepersist)', start)
-    tail = source.index('    CalculateRanks();', end)
-    tail_end = source.index('    return;', tail)
+    # Take the G_InitGame the build actually compiles: the native one runs the
+    # gametype, map and startup callbacks while initializing, then publishes
+    # the registered weapons and items (Mac 1.3 order).
+    body = function('src/PC/game_mp/g_main_mp.c', 'G_InitGame')
+    start = body.index('    Scr_LoadGameType();')
+    end = body.index('    SaveRegisteredItems();', start) + len('    SaveRegisteredItems();')
     generated = ''.join(function('src/PC/game_mp/g_scr_main_mp.c', name) for name in
                         ['Scr_LoadLevel', 'Scr_LoadGameType', 'Scr_StartupGameType'])
     generated += ''.join(function('src/PC/game_mp/g_items_mp.c', name) for name in
                          ['SaveRegisteredWeapons', 'SaveRegisteredItems'])
-    generated += 'static void initialize_level_scripts(void) {\n' + source[start:end] + source[tail:tail_end] + '\n}\n'
+    generated += ('static void initialize_level_scripts(void) {\n    int i;\n    level.initializing = 1;\n'
+                  + body[start:end] + '\n}\n')
     run('level_scripts', generated)
 if args.test and 'debug_enabled' in args.test:
     checked = set()
@@ -243,17 +246,20 @@ if not args.test or 'console_hints' in args.test:
 
 if not args.test or 'numeric_fields' in args.test:
     run('numeric_fields', function('src/PC/qcommon/common.c', 'Com_LocalizedFloatToString') +
+        function('src/PC/ui_mp/ui_shared_mp.c', 'LerpColor') +
         function('src/PC/ui_mp/ui_shared_mp.c', 'Item_TextField_Paint'))
 
 if not args.test or 'corpse_trees' in args.test:
     path = 'src/PC/game_mp/g_main_mp.c'
     source = function(path, 'G_InitGame')
-    start = source.index('if (!restart) {\n        BG_LoadAnim();')
+    # Native cold start: compile scripts, load anims, then build the 64 player
+    # and 8 corpse trees; restarts keep all of them.
+    start = source.index('    if (!restart) {\n')
     end = source.index('GScr_LoadConsts();', start)
-    generated = 'static void initialize_trees(int restart) {\n' + source[start:end] + '\n}\n'
+    generated = 'static void initialize_trees(int restart) {\n    int i;\n' + source[start:end] + '\n}\n'
     start = source.index('Scr_StartupGameType();') + len('Scr_StartupGameType();')
-    end = source.index('if (restart && !savepersist)', start)
-    generated += 'static void initialize_corpse_slots(void) {\n' + source[start:end] + '\n}\n'
+    end = source.index('*(void **)imp_bgs =', start)
+    generated += 'static void initialize_corpse_slots(void) {\n    int i;\n' + source[start:end] + '\n}\n'
     source = function(path, 'G_ShutdownGame')
     start = source.index('scr_data_t *scrData =')
     end = source.index('Hunk_ClearToMarkLow(0);', start)

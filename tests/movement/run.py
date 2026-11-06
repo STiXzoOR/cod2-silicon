@@ -44,8 +44,13 @@ end = weapon.index('\nint BG_GetFirstAvailableOffhand(', start)
 (out / 'sway_source.h').write_text(weapon[start:end])
 initpath = 'src/PC/game_mp/g_main_mp.c'
 server = subprocess.check_output(['git', 'show', f'{a.baseline}:{initpath}'], cwd=ROOT, text=True) if a.baseline else (ROOT / initpath).read_text()
-start = server.index('    Scr_EndLoadScripts();') + len('    Scr_EndLoadScripts();')
-end = server.index('    *(void **)imp_bgs = (void *)&level_bgs;', start)
+end = server.index('    *(void **)imp_bgs = (void *)&level_bgs;')
+# Native script loading can occur earlier than the legacy-only load block.
+# Keep the initializer after the last load footer, including its native guard.
+footers = list(re.finditer(
+    r'    Scr_EndLoadScripts\(\);\n    COD2_DEBUG_ONLY\(DBG_PrintFreeVars\(str_dbg_endload\);\)\n(?:#endif\n)?',
+    server[:end]))
+start = footers[-1].end()
 (out / 'server_anim_init_source.h').write_text(server[start:end])
 snappath = 'src/PC/win32/win_shared.c'
 snap = subprocess.check_output(['git', 'show', f'{a.baseline}:{snappath}'], cwd=ROOT, text=True) if a.baseline else (ROOT / snappath).read_text()
@@ -89,7 +94,7 @@ for source in ['src/PC/universal/com_math.c', 'src/PC/universal/q_shared.c',
     objects.append(extra)
 exe = out / 'movement'
 subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip', *map(str, objects), '-o', str(exe)], check=True)
-for name in a.test or ['bob', 'scale', 'snap', 'walk', 'lean', 'timers', 'direction', 'stance', 'view', 'ladder', 'prone', 'dispatch']:
+for name in a.test or ['acceleration-zero', 'spectator-vertical', 'spectator-horizontal', 'bob', 'scale', 'snap', 'walk', 'lean', 'timers', 'direction', 'stance', 'view', 'view-adjust-zero', 'view-adjust-offset', 'trace-routes', 'linked-weapon', 'ladder', 'prone', 'dispatch']:
     if name in ('collision', 'events', 'sway'):
         continue
     for revision in ([0, 3, 4, 6, -1] if a.revision_matrix else [None]):

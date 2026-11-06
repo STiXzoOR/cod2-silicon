@@ -25,7 +25,9 @@
 
 typedef struct {
     int allocated, status, format, rate, channels, block_size;
+    int stream_rate;
     int spatial, loops, remaining_loops, buffered, active_buffer, prepared;
+    uint64_t generation;
     const void *source;
     size_t source_bytes;
     float *pcm[2];
@@ -42,6 +44,8 @@ typedef struct {
 static pthread_mutex_t audio_mutex = PTHREAD_MUTEX_INITIALIZER;
 static AudioUnit output_unit;
 static MacAudioSample samples[AUDIO_SAMPLES];
+/* Guarded by audio_mutex and retained across shutdown to reject stale decodes. */
+static uint64_t sample_generation;
 static int driver_rate = 44100;
 static int preferences[64];
 static float listener[3], rolloff = 1.0f, distance_factor = 1.0f;
@@ -105,6 +109,7 @@ static void ResetSample(MacAudioSample *sample)
     free(sample->pcm[0]);
     free(sample->pcm[1]);
     memset(sample, 0, sizeof(*sample));
+    sample->generation = ++sample_generation;
     sample->allocated = 1;
     sample->spatial = spatial;
     sample->status = AUDIO_DONE;
@@ -551,6 +556,9 @@ void *AIL_allocate_sample_handle(void *driver)
     for (int i = 0; i < AUDIO_SAMPLES; ++i) {
         if (!samples[i].allocated) {
             sample = &samples[i];
+            /* Fresh 2D allocation must not inherit a released 3D slot's type.
+               In-place resets still preserve the type for 3D sample setup. */
+            sample->spatial = 0;
             ResetSample(sample);
             break;
         }
@@ -614,6 +622,7 @@ void AIL_set_sample_address(void *handle, const void *data, int size)
     pthread_mutex_lock(&audio_mutex);
     MacAudioSample *sample = FindSample(handle);
     if (sample) {
+        sample->generation = ++sample_generation;
         free(sample->pcm[0]); free(sample->pcm[1]);
         sample->pcm[0] = sample->pcm[1] = NULL;
         sample->frames[0] = sample->frames[1] = 0;
@@ -703,6 +712,7 @@ void AIL_load_sample_buffer(void *handle, int index, const void *data, int size)
         size_t frames = 0;
         int channels, rate;
         if (size && DecodeInfo(&info, &pcm, &frames, &channels, &rate)) {
+            sample->generation = ++sample_generation;
             free(sample->pcm[index]);
             sample->pcm[index] = pcm;
             sample->frames[index] = frames;
@@ -917,6 +927,7 @@ void *AIL_open_stream(void *driver, const char *name, int memory)
         sample->pcm[0] = pcm;
         sample->frames[0] = frames;
         sample->rate = rate;
+        sample->stream_rate = rate;
         sample->channels = channels;
         sample->source_bytes = size;
         sample->format = channels == 2 ? 3 : 1;
@@ -938,8 +949,30 @@ void AIL_set_stream_playback_rate(void *stream, int rate) { AIL_set_sample_playb
 int AIL_stream_playback_rate(void *stream) { return AIL_sample_playback_rate(stream); }
 void AIL_set_stream_loop_count(void *stream, int loops) { AIL_set_sample_loop_count(stream, loops); }
 long AIL_stream_status(void *stream) { return (long)AIL_sample_status(stream); }
-void AIL_set_stream_ms_position(void *stream, int ms) { AIL_set_sample_ms_position(stream, ms); }
-void AIL_stream_ms_position(void *stream, long *total, long *current) { AIL_sample_ms_position(stream, total, current); }
+/* Miles stream time uses file metadata independently of playback pitch.
+   Keep the decoded media rate for streams; ordinary samples retain their rate. */
+void AIL_set_stream_ms_position(void *stream, int ms)
+{
+    pthread_mutex_lock(&audio_mutex);
+    MacAudioSample *sample = FindSample(stream);
+    if (sample) {
+        int rate = sample->stream_rate ? sample->stream_rate : sample->rate;
+        sample->cursor = fmax(0, (double)ms * rate / 1000.0);
+    }
+    pthread_mutex_unlock(&audio_mutex);
+}
+
+void AIL_stream_ms_position(void *stream, long *total, long *current)
+{
+    pthread_mutex_lock(&audio_mutex);
+    MacAudioSample *sample = FindSample(stream);
+    if (sample)
+        PrepareSample(sample);
+    int rate = sample ? (sample->stream_rate ? sample->stream_rate : sample->rate) : 0;
+    if (total) *total = rate ? (long)(sample->frames[sample->active_buffer] * 1000.0 / rate) : 0;
+    if (current) *current = rate ? (long)(sample->cursor * 1000.0 / rate) : 0;
+    pthread_mutex_unlock(&audio_mutex);
+}
 SAMPLE_GETTER(int, AIL_is_3D_stream, 0, sample->spatial)
 
 void AIL_stream_info(void *handle, int *datarate, int *format, int *length, int *memory)
@@ -1009,26 +1042,38 @@ SAMPLE_SETTER(AIL_set_3D_sample_effects_level, (void *handle, float wet), sample
 
 int AIL_set_3D_sample_info(void *handle, const void *metadata)
 {
+    pthread_mutex_lock(&audio_mutex);
+    MacAudioSample *sample = FindSample(handle);
+    if (!sample) {
+        pthread_mutex_unlock(&audio_mutex);
+        return 0;
+    }
+    /* Alias start may resume even after failure, so discard the old sound first. */
+    ResetSample(sample);
+    uint64_t generation = sample->generation;
+    pthread_mutex_unlock(&audio_mutex);
+
     float *pcm = NULL;
     size_t frames;
     int channels, rate;
     if (!DecodeInfo(metadata, &pcm, &frames, &channels, &rate))
         return 0;
+
     pthread_mutex_lock(&audio_mutex);
-    MacAudioSample *sample = FindSample(handle);
-    if (sample) {
-        ResetSample(sample);
+    sample = FindSample(handle);
+    int result = sample && sample->generation == generation;
+    if (result) {
         sample->pcm[0] = pcm;
         sample->frames[0] = frames;
         sample->channels = channels;
         sample->rate = rate;
         sample->source_bytes = ((const MacAudioSoundInfo *)metadata)->data_len;
         sample->prepared = 1;
-    } else {
-        free(pcm);
     }
     pthread_mutex_unlock(&audio_mutex);
-    return sample != NULL;
+    if (!result)
+        free(pcm);
+    return result;
 }
 
 void AIL_set_3D_position(void *handle, float x, float y, float z)

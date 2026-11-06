@@ -13,6 +13,7 @@ const dvar_t *r_portalBevelsOnly = &disabledDvar;
 const dvar_t *r_portalBevels = &bevel;
 const dvar_t *r_portalMinClipArea = &clipArea;
 void *imp_colorMagenta, *imp_colorLtYellow;
+void *imp_colorLtCyan, *imp_colorMdCyan;
 static void *allocation;
 void LargeLocal_LargeLocal(const LargeLocal *local, int size)
 {
@@ -72,7 +73,7 @@ int main(void)
     portal.cell = &to;
     dpvsG.eyeW = 1;
     dpvsG.viewProjectionMatrix = &matrix;
-    dpvsG.inverseViewProjectionMatrix = NULL;
+    dpvsG.inverseViewProjectionMatrix = &matrix;
     dpvsG.eyePlane.coeffs[0] = 1;
     DpvsPlane clip = { .coeffs = {1,0,0,0} };
     /* Empty traversal still initializes the entire exactly sized hull pool. */
@@ -94,6 +95,18 @@ int main(void)
     dpvsG.farPlanePtr = &farPlane;
     assert(R_GetFurtherCellList_r_impl(&from, &parent, &frustum, 1, scratch, list, 0) == 0);
     dpvsG.farPlanePtr = NULL;
+    GfxSceneModelCellRef modelRef = { .entIndex = 0 };
+    GfxEntity entity = {0};
+    from.modelRefs = &modelRef;
+    scene.def.entities = &entity;
+    dpvsG.drawEntities = 1;
+    dpvsG.drawXmodels = 0;
+    for (int type = 0; type <= 1; ++type) {
+        entity.reType = (refEntityType_t)type;
+        scene.sceneEnts[0].cullState = 0;
+        R_AddVisibleSurfacesInCell_impl(&from, NULL, 0);
+        assert(scene.sceneEnts[0].cullState == 0);
+    }
     puts("native portals: exact hull pool, forward projection, scratch buffers and far clip passed");
     return 0;
 }

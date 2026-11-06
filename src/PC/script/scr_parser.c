@@ -244,7 +244,11 @@ static void Scr_AddSourceBufferInternal(const char *extFilename, const char *cod
     }
 
     filenameLen = strlen(extFilename) + 1;
+#if defined(COD2_X64)
+    buf = (char *)(Z_MallocInternal((int)filenameLen + len + 2));
+#else
     buf = (char *)(Z_MallocInternal((int)filenameLen + len + 1));
+#endif
     strcpy(buf, extFilename);
 
     if (sourceBuf) {
@@ -350,6 +354,25 @@ static void Scr_StripSourceComments(char *sourceBuf)
 
 char *Scr_ReadFile(const char *filename, const char *extFilename, const char *codePos, int archive)
 {
+#if defined(COD2_X64)
+    fileHandle_t file;
+    char *buf;
+    int len;
+
+    (void)filename;
+    len = FS_FOpenFileByMode(extFilename, &file, FS_READ);
+    if (len < 0) {
+        Scr_AddSourceBufferInternal(extFilename, codePos, NULL, -1, 1, archive);
+        return NULL;
+    }
+
+    buf = (char *)Hunk_AllocateTempMemoryHighInternal(len + 1);
+    FS_Read(buf, len, file);
+    buf[len] = '\0';
+    FS_FCloseFile(file);
+    Scr_AddSourceBufferInternal(extFilename, codePos, buf, len, 1, archive);
+    return buf;
+#else
     fileHandle_t file;
     char *fileBuffer;
     int len;
@@ -378,6 +401,7 @@ char *Scr_ReadFile(const char *filename, const char *extFilename, const char *co
     }
 
     return fileBuffer;
+#endif
 }
 
 char *Scr_AddSourceBuffer(const char *filename, const char *extFilename, const char *codePos, unsigned char archive)
@@ -416,6 +440,9 @@ char *Scr_AddSourceBuffer(const char *filename, const char *extFilename, const c
         }
     }
 
+#if defined(COD2_X64)
+    return Scr_ReadFile(filename, extFilename, codePos, archive);
+#else
     {
         fileHandle_t file;
 
@@ -433,6 +460,7 @@ char *Scr_AddSourceBuffer(const char *filename, const char *extFilename, const c
         Scr_AddSourceBufferInternal(extFilename, codePos, buf, len, 1, archive);
         return buf;
     }
+#endif
 }
 
 static void Scr_PrintSourcePos(print_msg_type_t type, const char *filename, const char *sourceBuf, unsigned int sourcePos)
@@ -707,13 +735,20 @@ void RuntimeError(const char *codePos, unsigned int index, const char *msg, cons
             return;
     }
 
+#if defined(COD2_X64)
+    const char *dialogSeparator = dialogMessage ? "\n" : "";
+#endif
     if (!dialogMessage)
         dialogMessage = "";
 
     Com_Error(vmPub->terminal_error ? 5 : 4,
               "\x15script runtime error\n(see console for details)\n%s%s%s",
               msg,
+#if defined(COD2_X64)
+              dialogSeparator,
+#else
               dialogMessage[0] ? "\n" : "",
+#endif
               dialogMessage);
 }
 

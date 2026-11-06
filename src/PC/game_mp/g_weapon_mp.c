@@ -171,8 +171,13 @@ void Weapon_Melee(gentity_s (*ent)[16], weaponParms *wp, float range, float widt
     if (traceEntNum == 0x3fe || !traceEnt->takedamage)
         return;
 
+#if defined(COD2_X64)
+    G_Damage(traceEnt, (gentity_t *)ent, (gentity_t *)ent, wp->forward, endpos,
+             damage + (rand() % 5), 0, 7, (hitLocation_t)tr.partGroup, 0);
+#else
     G_Damage(traceEnt, (gentity_t *)ent, (gentity_t *)ent, wp->forward, endpos,
              damage + (rand() % 5), 7, 0, (hitLocation_t)tr.partGroup, 0);
+#endif
 }
 
 void FireWeaponMelee(gentity_s (*ent)[16])
@@ -333,8 +338,13 @@ Bool Melee_Trace(gentity_t *ent, weaponParms *wp, int damage, float range,
         if (i == 0)
             G_CheckHitTriggerDamage(ent, wp->muzzleTrace, endPos, damage, 7);
 
+#if defined(COD2_X64)
+        if (!(trace->surfaceFlags & 0x10) && trace->fraction != 1.0f)
+            return 1;
+#else
         if ((trace->surfaceFlags & 0x10) || trace->fraction != 1.0f)
             return 1;
+#endif
     }
 
     return 0;
@@ -769,6 +779,9 @@ qboolean G_GivePlayerWeapon(playerState_t *pPS, int iWeaponIndex)
             pPS->offHandIndex = offhandIndex;
             G_SetEquippedOffHand(pPS->clientNum, offhandIndex);
         }
+#if defined(COD2_X64)
+        return 1;
+#endif
     } else if ((unsigned int)(weapDef->weapSlot - WEAPSLOT_PRIMARY) <=
                (WEAPSLOT_PRIMARYB - WEAPSLOT_PRIMARY)) {
         if (!pPS->weaponslots[WEAPSLOT_PRIMARY])

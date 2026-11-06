@@ -119,17 +119,47 @@ extern const dvar_t *g_motd;
 /* offsets must track the real gentity_s layout; the literals were the x86 ABI and are wrong on x64
    (entityShared r + the client/pTurretInfo pointers shift everything after entityState). offsetof
    reproduces the exact x86 numbers and is correct on x64. */
+#if defined(COD2_X64)
+static void Scr_ReadOnlyField(gentity_t *ent, int offset);
+extern void Scr_SetOrigin(gentity_t *ent, int offset);
+extern void Scr_SetAngles(gentity_t *ent, int offset);
+extern void Scr_SetHealth(gentity_t *ent, int offset);
+#endif
 static const ent_field_t fields[11] = {
+#if defined(COD2_X64)
+    { "classname", (int)offsetof(struct gentity_s, classname), F_STRING, (ScriptCallbackEnt)Scr_ReadOnlyField },
+#else
     { "classname", (int)offsetof(struct gentity_s, classname), F_STRING, NULL },
+#endif
+#if defined(COD2_X64)
+    { "origin", (int)offsetof(struct gentity_s, r.currentOrigin), F_VECTOR, (ScriptCallbackEnt)Scr_SetOrigin },
+#else
     { "origin", (int)offsetof(struct gentity_s, r.currentOrigin), F_VECTOR, NULL },
+#endif
+#if defined(COD2_X64)
+    { "model", (int)offsetof(struct gentity_s, model), F_MODEL, (ScriptCallbackEnt)Scr_ReadOnlyField },
+#else
     { "model", (int)offsetof(struct gentity_s, model), F_MODEL, NULL },
+#endif
+#if defined(COD2_X64)
+    { "spawnflags", (int)offsetof(struct gentity_s, spawnflags), F_INT, (ScriptCallbackEnt)Scr_ReadOnlyField },
+#else
     { "spawnflags", (int)offsetof(struct gentity_s, spawnflags), F_INT, NULL },
+#endif
     { "target", (int)offsetof(struct gentity_s, target), F_STRING, NULL },
     { "targetname", (int)offsetof(struct gentity_s, targetname), F_STRING, NULL },
     { "count", (int)offsetof(struct gentity_s, count), F_INT, NULL },
+#if defined(COD2_X64)
+    { "health", (int)offsetof(struct gentity_s, health), F_INT, (ScriptCallbackEnt)Scr_SetHealth },
+#else
     { "health", (int)offsetof(struct gentity_s, health), F_INT, NULL },
+#endif
     { "dmg", (int)offsetof(struct gentity_s, damage), F_INT, NULL },
+#if defined(COD2_X64)
+    { "angles", (int)offsetof(struct gentity_s, r.currentAngles), F_VECTOR, (ScriptCallbackEnt)Scr_SetAngles },
+#else
     { "angles", (int)offsetof(struct gentity_s, r.currentAngles), F_VECTOR, NULL },
+#endif
     { NULL, 0, F_INT, NULL }
 };
 
@@ -215,8 +245,10 @@ static qboolean Scr_SetEntityField(int entnum, int offset)
         return 1;
     }
 
+#if !defined(COD2_X64)
     if (offset < 0 || offset >= 10 || !fields[offset].name)
         return 1;
+#endif
 
     field = &fields[offset];
     if (field->callback) {
@@ -235,16 +267,20 @@ static void Scr_GetEntityField(int entnum, int offset)
     if ((offset & 0xC000) == 0xC000) {
         if (ent && ent->client) {
             Scr_GetClientField(ent->client, offset & 0x3FFF);
+#if !defined(COD2_X64)
         } else {
             Scr_AddUndefined();
+#endif
         }
         return;
     }
 
+#if !defined(COD2_X64)
     if (offset < 0 || offset >= 10 || !fields[offset].name) {
         Scr_AddUndefined();
         return;
     }
+#endif
 
     Scr_GetGenericField((byte *)ent, fields[offset].type, fields[offset].ofs);
 }
@@ -518,7 +554,11 @@ static void __attribute_regparm__(3) G_ParseEntityField(const char *key, const c
             }
             case F_MODEL:
                 if (*value == '*') {
+#if defined(COD2_X64)
+                    ent->s.index.brushmodel = (unsigned short)atoi(value + 1);
+#else
                     ent->model = (byte)(unsigned short)atoi(value + 1);
+#endif
                 } else {
                     G_SetModel(ent, value);
                 }
@@ -553,8 +593,10 @@ void Scr_GetGenericField(byte *b, fieldtype_t type, int ofs)
         scr_string_t stringValue = *(scr_string_t *)(b + ofs);
         if (stringValue) {
             Scr_AddConstString(stringValue);
+#if !defined(COD2_X64)
         } else {
             Scr_AddString("");
+#endif
         }
         break;
     }
@@ -565,8 +607,10 @@ void Scr_GetGenericField(byte *b, fieldtype_t type, int ofs)
         gentity_t *ent = *(gentity_t **)(b + ofs);
         if (ent) {
             Scr_AddEntityNum(ent->s.number, 0);
+#if !defined(COD2_X64)
         } else {
             Scr_AddUndefined();
+#endif
         }
         break;
     }

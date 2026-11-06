@@ -102,6 +102,9 @@ void CompileError(unsigned int pos, const char *fmt, ...)
 }
 void CompileError2(const char *pos, const char *fmt, ...) { (void)pos; fprintf(stderr, "%s\n", fmt); abort(); }
 void *Z_MallocInternal(int size) { return calloc(1, size); }
+#if defined(COD2_X64)
+void *Z_TryMallocInternal(int size) { return calloc(1, size); }
+#endif
 void Z_FreeInternal(void *p) { free(p); }
 void *Hunk_AllocateTempMemoryHighInternal(int size)
 {
@@ -141,6 +144,9 @@ BuiltinFunction Scr_GetFunction(const char **name, int *type)
     return NULL;
 }
 BuiltinMethod Scr_GetMethod(const char **name, int *type) { (void)name; (void)type; return NULL; }
+#if defined(COD2_X64)
+void Scr_ResetAnimRefs(void) {}
+#endif
 void Scr_UsingTree(const char *filename, unsigned int pos) { (void)filename; (void)pos; abort(); }
 void Scr_EmitAnimation(char *pos, unsigned int animName, unsigned int source) { (void)pos; (void)animName; (void)source; abort(); }
 void Scr_PrintPrevCodePos(print_msg_type_t type, const char *pos, unsigned int index) { (void)type; (void)pos; (void)index; }

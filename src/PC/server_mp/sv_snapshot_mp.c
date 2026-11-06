@@ -317,7 +317,11 @@ static __attribute_regparm__(1)
                 byte *newCachedClient;
 
                 if (msg.readcount > msg.cursize)
+#if defined(COD2_X64)
+                    Com_Error(1, "\x15SV_GetCachedSnapshot: end of message");
+#else
                     Com_Error(1, "SV_GetCachedSnapshot: msg overflow");
+#endif
 
                 while (oldClientNum < newClientNum) {
                     oldindex++;
@@ -348,7 +352,11 @@ static __attribute_regparm__(1)
                     svs = (serverStatic_t *)imp_svs;
                     svs->nextCachedSnapshotClients += 1;
                     if (svs->nextCachedSnapshotClients > 0x7ffffffd)
+#if defined(COD2_X64)
+                        Com_Error(0, "\x15svs.nextCachedSnapshotClients wrapped");
+#else
                         Com_Error(0, "SV_GetCachedSnapshot: too many clients");
+#endif
 
                     cachedFrame->num_clients++;
 
@@ -372,7 +380,11 @@ static __attribute_regparm__(1)
                     svs = (serverStatic_t *)imp_svs;
                     svs->nextCachedSnapshotClients += 1;
                     if (svs->nextCachedSnapshotClients > 0x7ffffffd)
+#if defined(COD2_X64)
+                        Com_Error(0, "\x15svs.nextCachedSnapshotClients wrapped");
+#else
                         Com_Error(0, "SV_GetCachedSnapshot: too many clients");
+#endif
 
                     cachedFrame->num_clients++;
                 }
@@ -400,7 +412,11 @@ static __attribute_regparm__(1)
             byte *newCachedClient;
 
             if (msg.readcount > msg.cursize)
+#if defined(COD2_X64)
+                Com_Error(1, "\x15SV_GetCachedSnapshot: end of message");
+#else
                 Com_Error(1, "SV_GetCachedSnapshot: msg overflow");
+#endif
 
             clientIdx = svs->nextCachedSnapshotClients % 0x1000;
             newCachedClient = (byte *)svs->cachedSnapshotClients + clientIdx * CACHEDCLIENT_STRIDE;
@@ -412,7 +428,11 @@ static __attribute_regparm__(1)
 
             svs->nextCachedSnapshotClients += 1;
             if (svs->nextCachedSnapshotClients > 0x7ffffffd)
+#if defined(COD2_X64)
+                Com_Error(0, "\x15svs.nextCachedSnapshotClients wrapped");
+#else
                 Com_Error(0, "SV_GetCachedSnapshot: too many clients");
+#endif
 
             cachedFrame->num_clients++;
         }
@@ -428,7 +448,11 @@ static __attribute_regparm__(1)
             break;
 
         if (msg.readcount > msg.cursize)
+#if defined(COD2_X64)
+            Com_Error(1, "\x15SV_GetCachedSnapshot: end of message");
+#else
             Com_Error(1, "SV_GetCachedSnapshot: msg overflow");
+#endif
 
         svs = (serverStatic_t *)imp_svs;
         entIdx = svs->nextCachedSnapshotEntities % 0x4000;
@@ -439,7 +463,11 @@ static __attribute_regparm__(1)
 
         svs->nextCachedSnapshotEntities += 1;
         if (svs->nextCachedSnapshotEntities > 0x7ffffffd)
+#if defined(COD2_X64)
+            Com_Error(0, "\x15svs.nextCachedSnapshotEntities wrapped");
+#else
             Com_Error(0, "SV_GetCachedSnapshot: too many entities");
+#endif
 
         cachedFrame->num_entities++;
     }
@@ -447,7 +475,11 @@ static __attribute_regparm__(1)
     svs = (serverStatic_t *)imp_svs;
     svs->nextCachedSnapshotFrames += 1;
     if (svs->nextCachedSnapshotFrames > 0x7ffffffd)
+#if defined(COD2_X64)
+        Com_Error(0, "\x15svs.nextCachedSnapshotFrames wrapped");
+#else
         Com_Error(0, "SV_GetCachedSnapshot: too many frames");
+#endif
 
     goto cleanup;
 
@@ -536,7 +568,13 @@ void SV_ArchiveSnapshot(void)
         if (oldindex < 0)
             oldindex = 0;
 
+#if defined(COD2_X64)
+        /* Mac 0x194e2b: the oldest usable delta base is one second (sv_fps
+           archived frames) back; older cached frames are skipped. */
+        newnum = svs.nextArchivedSnapshotFrames - sv_fps->current.integer;
+#else
         newnum = svs.nextArchivedSnapshotFrames - sv_maxRate->current.integer;
+#endif
 
         {
             int idx = archivedFrameNum - 1;
@@ -546,7 +584,11 @@ void SV_ArchiveSnapshot(void)
                 int cfSlot = signedMod512(idx);
                 byte *cf = cachedFrames + cfSlot * 28;
 
+#if defined(COD2_X64)
+                if (*(int *)cf >= newnum) {
+#else
                 if (*(int *)cf <= newnum) {
+#endif
 
                     if (((cachedSnapshot_t *)cf)->usesDelta == 0) {
 
@@ -687,6 +729,10 @@ void SV_ArchiveSnapshot(void)
                                     int contents = ((gentity_t *)gent)->r.broadcastTime;
                                     if (contents == 0) {
 
+#if defined(COD2_X64)
+                                        if (((gentity_t *)gent)->r.svFlags & 1)
+                                            continue;
+#endif
                                         if (!(((gentity_t *)gent)->r.svFlags & 1)) {
 
                                             svEntity_t *svEnt = (svEntity_t *)SV_SvEntityForGentity(gent);
@@ -729,7 +775,9 @@ void SV_ArchiveSnapshot(void)
 
                         goto write_frame;
                     }
+#if !defined(COD2_X64)
                     break;
+#endif
                 }
                 idx--;
             }
@@ -831,6 +879,10 @@ void SV_ArchiveSnapshot(void)
 
                     int entityContents = ((gentity_t *)gent)->r.broadcastTime;
                     if (entityContents == 0) {
+#if defined(COD2_X64)
+                        if (((gentity_t *)gent)->r.svFlags & 1)
+                            continue;
+#endif
                         if (!(((gentity_t *)gent)->r.svFlags & 1)) {
                             svEntity_t *svEnt = (svEntity_t *)SV_SvEntityForGentity(gent);
                             if (!(((gentity_t *)gent)->r.svFlags & 0x18)) {
@@ -922,6 +974,7 @@ write_frame:
 
         bufIndex = archivedFrameCount % 1200;
 
+#if !defined(COD2_X64)
         {
             long long tmp = (long long)archivedFrameCount * 0x1b4e81b5;
             int q = (int)(tmp >> 39);
@@ -929,6 +982,7 @@ write_frame:
                 q--;
             bufIndex = archivedFrameCount - q * 1200;
         }
+#endif
 
         entParts = (byte *)svs.archivedSnapshotFrames;
         byte *partEntry = entParts + bufIndex * 8;
@@ -941,6 +995,15 @@ write_frame:
 
         bufSize = 0x2000000;
         remaining = signedMod33554432(bufOffset);
+
+#if defined(COD2_X64)
+        /* Mac 0x195107: advance the cursor, or every snapshot overwrites the
+           last and anti-lag/killcam history reads the current frame. */
+        svs.nextArchivedSnapshotBuffer = bufOffset + msgDataLen;
+        if (svs.nextArchivedSnapshotBuffer > 0x7ffffffd) {
+            Com_Error(0, "\x15svs.nextArchivedSnapshotBuffer wrapped");
+        }
+#endif
 
         if (remaining + msgDataLen <= bufSize) {
 
@@ -1135,7 +1198,12 @@ qboolean SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, int (*ps)[4]
 
     if (svs.archiveEnabled != 0 && *pArchiveTime > 0) {
         int archivedSnapshotCount = svs.nextArchivedSnapshotFrames;
+#if defined(COD2_X64)
+        /* Mac 0x195a06 converts milliseconds to archived frames with sv_fps. */
+        int rate = sv_fps->current.integer;
+#else
         int rate = sv_maxRate->current.integer;
+#endif
         int minFrame;
 
         archivedFrame = archivedSnapshotCount - (*pArchiveTime * rate / 1000);
@@ -1208,10 +1276,12 @@ qboolean SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, int (*ps)[4]
                 pps->foliageSoundTime += deltaTime;
             if (pps->jumpTime != 0)
                 pps->jumpTime += deltaTime;
+#if !defined(COD2_X64)
             if (pps->legsTimer != 0)
                 pps->legsTimer += deltaTime;
             if (pps->adsDelayTime != 0)
                 pps->adsDelayTime += deltaTime;
+#endif
             if (pps->viewHeightLerpTime != 0)
                 pps->viewHeightLerpTime += deltaTime;
             if (pps->shellshockTime != 0)
@@ -1345,7 +1415,11 @@ Bool SV_GetClientPositionAtTime(int clientNum, int gametime, vec_t *pos)
 #    define SV_SVC_EOF 7
 #    define SV_MAX_SNAPSHOT_ENTITIES 1024
 #    define SV_ENTITY_BASELINE_NUMBER 9999
+#if defined(COD2_X64)
+#    define SV_CLIENT_BASELINE_NUMBER 9999
+#else
 #    define SV_CLIENT_BASELINE_NUMBER 99999
+#endif
 #if defined(COD2_X64)
 #    define SV_ARCHIVED_ENTITY_STRIDE sizeof(archivedEntity_t)
 #    define SV_CACHED_CLIENT_STRIDE sizeof(cachedClient_t)
@@ -1430,6 +1504,68 @@ static int SV_BitVectorTestLocal(const byte *bits, int bit)
     return (bits[bit >> 3] >> (bit & 7)) & 1;
 }
 
+#if defined(COD2_X64)
+static int SV_EntityIsVisibleToClientLocal(byte *entBytes, const vec3_t org, const byte *pvs, float fogOpaqueDistSqrd, int clientNum, int entnum)
+{
+    entityShared_t *shared = (entityShared_t *)(entBytes + sizeof(entityState_t));
+    svEntity_t *svEnt;
+    int i;
+
+    if (!shared->linked) {
+        return 0;
+    }
+    if (entnum == clientNum) {
+        return 0;
+    }
+    if (shared->broadcastTime) {
+        serverStatic_t *svs = (serverStatic_t *)imp_svs;
+        if (shared->broadcastTime < 0 || shared->broadcastTime >= svs->time) {
+            return 1;
+        }
+        shared->broadcastTime = 0;
+    } else {
+        if (shared->svFlags & 1) {
+            return 0;
+        }
+        if ((shared->clientMask[clientNum >> 5] >> (clientNum & 31)) & 1) {
+            return 0;
+        }
+    }
+    if (shared->svFlags & 0x18) {
+        return 1;
+    }
+
+    svEnt = (svEntity_t *)SV_SvEntityForGentity(entBytes);
+    if (svEnt->numClusters == 0) {
+        return 0;
+    }
+    for (i = 0; i < svEnt->numClusters; ++i) {
+        if (SV_BitVectorTestLocal(pvs, svEnt->clusternums[i])) {
+            break;
+        }
+    }
+    if (i == svEnt->numClusters) {
+        int cluster;
+        if (!svEnt->lastCluster) {
+            return 0;
+        }
+        for (cluster = svEnt->clusternums[i - 1]; cluster <= svEnt->lastCluster; ++cluster) {
+            if (SV_BitVectorTestLocal(pvs, cluster)) {
+                break;
+            }
+        }
+        if (cluster == svEnt->lastCluster) {
+            return 0;
+        }
+    }
+
+    if (fogOpaqueDistSqrd != 0.0f && BoxDistSqrdExceeds(shared->absmin, shared->absmax, org, fogOpaqueDistSqrd)) {
+        return 0;
+    }
+    return 1;
+}
+
+#else
 static int SV_EntityIsVisibleToClientLocal(byte *entBytes, const vec3_t org, const byte *pvs, float fogOpaqueDistSqrd, int clientNum)
 {
     entityState_t *es = (entityState_t *)entBytes;
@@ -1489,6 +1625,8 @@ static int SV_EntityIsVisibleToClientLocal(byte *entBytes, const vec3_t org, con
     }
     return 1;
 }
+
+#endif
 
 static int SV_CachedEntityIsVisibleLocal(archivedEntity_t *archEnt, const vec3_t org, const byte *pvs, float fogOpaqueDistSqrd, int clientNum)
 {
@@ -1615,20 +1753,35 @@ static cachedSnapshot_t *SV_FindArchivedSnapshotForClientLocal(int clientNum, in
     int archivedFrame;
     int oldestFrame;
 
+#if defined(COD2_X64)
+    requestedArchiveTime = G_GetClientArchiveTime(clientNum);
+    *archiveTime = requestedArchiveTime;
+    if (!svs->archiveEnabled) {
+        return NULL;
+    }
+#else
     *archiveTime = 0;
     if (!svs->archiveEnabled) {
         return NULL;
     }
 
     requestedArchiveTime = G_GetClientArchiveTime(clientNum);
+#endif
     if (requestedArchiveTime <= 0) {
         return NULL;
     }
 
+#if defined(COD2_X64)
+    /* Archive time is converted with sv_fps, as in SV_GetArchivedClientInfo. */
+    fps = SV_DvarIntLocal((byte *)sv_fps_dvar);
+#else
     fps = SV_DvarIntLocal((byte *)sv_maxRate_dvar);
+#endif
+#if !defined(COD2_X64)
     if (fps <= 0) {
         return NULL;
     }
+#endif
 
     archivedFrame = svs->nextArchivedSnapshotFrames - (requestedArchiveTime * fps) / 1000;
     oldestFrame = svs->nextArchivedSnapshotFrames - 1200;
@@ -1650,6 +1803,9 @@ static cachedSnapshot_t *SV_FindArchivedSnapshotForClientLocal(int clientNum, in
         ++archivedFrame;
     }
 
+#if defined(COD2_X64)
+    *archiveTime = 0;
+#endif
     return NULL;
 }
 
@@ -1703,7 +1859,11 @@ static void SV_BuildVisibleCurrentEntitiesLocal(clientSnapshot_t *frame, const v
         }
         for (entnum = 0; entnum < sv.num_entities; ++entnum) {
             byte *ent = SV_GentityNum(entnum);
+#if defined(COD2_X64)
+            if (SV_EntityIsVisibleToClientLocal(ent, org, pvs, fogOpaqueDistSqrd, clientNum, entnum)) {
+#else
             if (SV_EntityIsVisibleToClientLocal(ent, org, pvs, fogOpaqueDistSqrd, clientNum)) {
+#endif
                 SV_AddSnapshotEntityNumberLocal(&entityNumbers, entnum);
             }
         }
@@ -1727,11 +1887,16 @@ static void SV_BuildClientSnapshotLocal(client_t *client)
 
     frame->num_entities = 0;
     frame->num_clients = 0;
+#if defined(COD2_X64)
+    if (!client->gentity || client->state == 1) {
+        return;
+    }
     frame->first_entity = svs->nextSnapshotEntities;
     frame->first_client = svs->nextSnapshotClients;
-#if defined(COD2_X64)
-    if (!client->gentity || client->state == 1 || sv.state != 2) {
+    if (sv.state != 2) {
 #else
+    frame->first_entity = svs->nextSnapshotEntities;
+    frame->first_client = svs->nextSnapshotClients;
     if (!*(int *)((byte *)client + CLIENT_OLDSERVERTIME) || client->state == 1 || sv.state != 2) {
 #endif
         return;
@@ -1746,7 +1911,11 @@ static void SV_BuildClientSnapshotLocal(client_t *client)
 
     memcpy(&frame->ps, SV_GameClientNum(clientNum), sizeof(playerState_t));
     clientNum = frame->ps.clientNum;
+#if defined(COD2_X64)
+    if ((unsigned int)clientNum >= 1024) {
+#else
     if (clientNum >= 1024) {
+#endif
         Com_Error(1, "\x15SV_BuildClientSnapshot: bad gEnt");
     }
 
@@ -1858,10 +2027,19 @@ static void SV_WriteSnapshotToClientLocal(client_t *client, msg_t *msg)
     int lastframe = 0;
     int snapFlags;
 
+#if defined(COD2_X64)
+    /* Mac 0x1960e8: any positive deltaMessage from an active client. */
+    if (client->deltaMessage > 0 && client->state == 4) {
+#else
     if (client->deltaMessage > client->gamestateMessageNum && client->state == 4) {
+#endif
         lastframe = client->netchan.outgoingSequence - client->deltaMessage;
         if (lastframe > 28) {
+#if defined(COD2_X64)
+            Com_DPrintf("%s: (writing snapshot) Snapshot delta request from out of date packet.\n", client->name);
+#else
             Com_DPrintf("%s: Delta request from out of date packet.\n", client->name);
+#endif
             lastframe = 0;
         } else {
             oldframe = SV_ClientFrameLocal(client, client->deltaMessage);
@@ -1878,7 +2056,13 @@ static void SV_WriteSnapshotToClientLocal(client_t *client, msg_t *msg)
     MSG_WriteByte(msg, lastframe);
 
     snapFlags = svs->snapFlagServerBit;
+#if defined(COD2_X64)
+    /* Mac 0x196144: SNAPFLAG_RATE_DELAYED comes from client+0x20e2c,
+       rateDelayed; pure authentication is unrelated. */
+    if (client->rateDelayed) {
+#else
     if (client->pureAuthentic) {
+#endif
         snapFlags |= 1;
     }
     if (client->state == 4) {
@@ -1917,11 +2101,19 @@ static void SV_WriteOverflowRecoveryCommandsLocal(client_t *client, msg_t *msg)
     int i;
 
     Com_Printf("-- Unacknowledged Server Commands for client %i:%s --\n", SV_ClientIndexLocal(client), client->name);
+#if defined(COD2_X64)
+    for (i = client->reliableAcknowledge + 1; i <= client->reliableSequence; ++i) {
+#else
     for (i = client->reliableAcknowledge + 1; i <= client->reliableSent; ++i) {
+#endif
         int idx = i & CLIENT_CMDENTRY_MASK;
         Com_Printf("cmd %5d: %8d: %s\n", i, client->reliableCommandInfo[idx].time, client->reliableCommandInfo[idx].cmd);
     }
+#if defined(COD2_X64)
+    Com_Printf("----------");
+#else
     Com_Printf("---------------------------------------------\n");
+#endif
 
     reliableAck = client->reliableAcknowledge + 1;
 #if defined(COD2_X64)
@@ -2114,7 +2306,11 @@ void SV_SendClientMessages(void)
             int numSamples = sv.ucompNum + 1;
             sv.ucompNum = numSamples;
             float avgPctSaved = totalPctSaved / (float)numSamples;
+#if defined(COD2_X64)
+            Com_DPrintf("bpspc(%2.0f) bps(%2.0f) pk(%i) ubps(%2.0f) upk(%i) cr(%2.2f) acr(%2.2f)\n",
+#else
             Com_DPrintf("bpspc(%2.0f) bps(%2.0f) pk(%i) ubps(%2.0f) upk(%i) cr(%2.2f)",
+#endif
                         (double)(bpsAvg / (float)numclients), (double)bpsAvg,
                         sv.bpsMaxBytes, (double)ubpsAvg,
                         sv.ubpsMaxBytes, (double)pctSaved, (double)avgPctSaved);

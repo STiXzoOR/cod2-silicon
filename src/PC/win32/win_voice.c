@@ -271,7 +271,11 @@ void Voice_IncomingVoiceData(int talker, unsigned char *data, int packetDataSize
     }
 
     if (winvoice_save_voice->current.enabled) {
+#if defined(COD2_X64)
+        fptr = fopen("voice.wav", "ab");
+#else
         fptr = fopen("voice.wav", "a");
+#endif
         if (fptr != NULL) {
             fwrite(decodedData, decodedLen, 1, fptr);
             fclose(fptr);

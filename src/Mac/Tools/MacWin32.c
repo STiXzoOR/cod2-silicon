@@ -18,6 +18,12 @@
 #include "platform/macos_system.h"
 #include <errno.h>
 #include <time.h>
+#if defined(COD2_X64) && !defined(DEDICATED)
+#include <SDL_messagebox.h>
+#if defined(COD2_CODX) && COD2_CODX
+#include "platform/cod2x_native.h"
+#endif
+#endif
 #endif
 
 #if !defined(_M_X64)  /* x64: use real Win32 (Mac/POSIX emulation collides by name) */
@@ -36,7 +42,11 @@ MMRESULT timeEndPeriod(int period)
 DWORD timeGetTime(void)
 {
 #if COD2_APPLE_SDK
+#if defined(COD2_X64)
+    return (uint32_t)((MacSystem_Nanoseconds() / 1000 + 500) / 1000);
+#else
     return (uint32_t)(MacSystem_Nanoseconds() / 1000000);
+#endif
 #else
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -49,7 +59,11 @@ BOOL QueryPerformanceFrequency(void *lpFrequency)
 {
     long long *freq = (long long *)lpFrequency;
 #if COD2_APPLE_SDK
+#if defined(COD2_X64)
+    *freq = 1000000LL;
+#else
     *freq = 1000000000LL;
+#endif
 #else
     *freq = 1000000LL;
 #endif
@@ -60,7 +74,11 @@ BOOL QueryPerformanceFrequency(void *lpFrequency)
 BOOL QueryPerformanceCounter(void *lpPerformanceCount)
 {
 #if COD2_APPLE_SDK
+#if defined(COD2_X64)
+    *(long long *)lpPerformanceCount = (long long)(MacSystem_Nanoseconds() / 1000);
+#else
     *(long long *)lpPerformanceCount = (long long)MacSystem_Nanoseconds();
+#endif
 #else
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -74,6 +92,51 @@ BOOL QueryPerformanceCounter(void *lpPerformanceCount)
 #if !defined(_M_X64)  /* x64: use real Win32 (Mac/POSIX emulation collides by name) */
 int MessageBoxA(void *hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
 {
+#if defined(COD2_X64) && COD2_APPLE_SDK
+    (void)hWnd;
+    int messageType = uType & 0xf;
+    int fallback = messageType == 1 ? 2 : (messageType == 4 ? 7 : 1);
+#if !defined(DEDICATED)
+    SDL_MessageBoxButtonData buttons[2];
+    int count = (messageType == 1 || messageType == 4) ? 2 : 1;
+    buttons[0].flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
+    buttons[0].buttonid = messageType == 4 ? 6 : 1;
+    buttons[0].text = messageType == 4 ? "Yes" : "OK";
+    if (count == 2) {
+        buttons[1].flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
+        buttons[1].buttonid = fallback;
+        buttons[1].text = messageType == 4 ? "No" : "Cancel";
+        if ((uType & 0x300) == 0x100) {
+            buttons[0].flags = 0;
+            buttons[1].flags |= SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
+        }
+    } else {
+        buttons[0].flags |= SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
+    }
+    Uint32 flags = (uType & 0xf0) == 0x10 ? SDL_MESSAGEBOX_ERROR :
+        ((uType & 0xf0) == 0x30 ? SDL_MESSAGEBOX_WARNING : SDL_MESSAGEBOX_INFORMATION);
+    SDL_MessageBoxData message = {
+        flags, NULL, lpCaption ? lpCaption : "", lpText ? lpText : "", count, buttons, NULL
+    };
+    int result = fallback;
+    /* Startup and profile-change prompts can both wait for user input. */
+    if (pthread_main_np()) {
+#if defined(COD2_CODX) && COD2_CODX
+        Cod2xNative_BeginUserWait();
+#endif
+        int shown = SDL_ShowMessageBox(&message, &result);
+#if defined(COD2_CODX) && COD2_CODX
+        Cod2xNative_EndUserWait();
+#endif
+        if (shown == 0)
+            return result == -1 ? fallback : result;
+    }
+#endif
+    fprintf(stderr, "MessageBox: %s\n", lpText ? lpText : "(null)");
+    if (lpCaption && lpCaption[0])
+        fprintf(stderr, "  Caption: %s\n", lpCaption);
+    return fallback;
+#else
     (void)hWnd;
     int messageType = uType & 0xf;
 
@@ -92,6 +155,7 @@ int MessageBoxA(void *hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
         return 6;
     }
     return 1;
+#endif
 }
 #endif
 

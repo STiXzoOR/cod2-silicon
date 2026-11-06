@@ -408,6 +408,7 @@ static float PM_CmdScale(const playerState_t *ps, const usercmd_t *cmd)
 #endif
 }
 #if defined(COD2_X64)
+extern void Com_DPrintf(const char *fmt, ...);
 extern bgs_t *bgs;
 extern WeaponDef *BG_GetWeaponDef(int weaponIndex);
 extern int BG_AnimScriptAnimation(playerState_t *ps, aistateEnum_t state, scriptAnimMoveTypes_t move, qboolean isContinue);
@@ -790,6 +791,9 @@ prone_check:
             }
         }
 
+#if defined(COD2_X64)
+        float lastProneDelta;
+#endif
         {
             float proneDelta2 = AngleDelta(ps->proneDirection, ps->viewangles[1]);
             if (proneDelta2 != 0.0f) {
@@ -839,10 +843,18 @@ prone_check:
                     proneBlocked = 1;
                 }
             }
+#if defined(COD2_X64)
+            lastProneDelta = proneDelta2;
+#endif
         }
 
         {
+#if defined(COD2_X64)
+            /* Mac 0x6c77d keeps the last delta, even after proneDirection moved. */
+            float proneDelta3 = lastProneDelta;
+#else
             float proneDelta3 = AngleDelta(ps->proneDirection, ps->viewangles[1]);
+#endif
             float yawcap = bg_prone_yawcap->current.value;
             float x;
             if (proneDelta3 > yawcap)
@@ -972,10 +984,22 @@ static void PM_ACCELERATE_ABI PM_Accelerate(playerState_t *ps, pml_t *pml, const
     if (addspeed <= 0.0f)
         return;
 
+#if defined(COD2_X64)
+    /* Original MAXSS selects wishspeed on equal operands, including signed zero. */
+    float speed = stopspeed->current.value > wishspeed ? stopspeed->current.value : wishspeed;
+    accelspeed = fminf(addspeed, speed * (accel * pml->frametime));
+#else
     accelspeed = fminf(addspeed, fmaxf(stopspeed->current.value, wishspeed) * (accel * pml->frametime));
+#endif
 
+#if defined(COD2_X64)
+    /* Original JAE/JP gates admit unordered inertia comparisons. */
+    if (ps->pm_type != 2 && !(inertiaMax->current.value >= accelspeed)
+        && !((ps->oldVelocity[0] * ps->oldVelocity[0] + ps->oldVelocity[1] * ps->oldVelocity[1]) < 0.0001)) {
+#else
     if (ps->pm_type != 2 && inertiaMax->current.value < accelspeed
         && (ps->oldVelocity[0] * ps->oldVelocity[0] + ps->oldVelocity[1] * ps->oldVelocity[1]) >= 0.0001) {
+#endif
         vec2_t newVel, oldVel;
         float dot;
         newVel[0] = ps->velocity[0] + accelspeed * wishdir[0];
@@ -985,7 +1009,11 @@ static void PM_ACCELERATE_ABI PM_Accelerate(playerState_t *ps, pml_t *pml, const
         Vec2Normalize(oldVel);
         Vec2Normalize(newVel);
         dot = oldVel[0] * newVel[0] + oldVel[1] * newVel[1];
+#if defined(COD2_X64)
+        if (!(dot >= inertiaAngle->current.value)) {
+#else
         if (dot < inertiaAngle->current.value) {
+#endif
             if (inertiaDebug->current.enabled) {
                 Com_Printf("angle is %f (oldVel is (%f,%f), vel is (%f, %f))\n",
                            (double)dot, (double)oldVel[0], (double)oldVel[1],
@@ -1027,15 +1055,27 @@ static void PM_REGPARM2_ABI PM_Friction(playerState_t *ps, pml_t *pml)
     drop = 0.0f;
 
     if (pml->walking && !(pml->groundTrace.surfaceFlags & 2) &&
-        !(ps->pm_flags & 0x400) && ps->pm_type != 4) {
+        !(ps->pm_flags & 0x400)
+#if !defined(COD2_X64)
+        && ps->pm_type != 4) {
+#else
+        ) {
+#endif
         control = speed;
         if (PM_DvarFloat(stopspeed, 100.0f) > control)
             control = PM_DvarFloat(stopspeed, 100.0f);
 
+#if defined(COD2_X64)
+        if (ps->pm_flags & 0x200)
+            control *= 0.3f;
+        else if (ps->pm_flags & PMF_JUMPING)
+            control *= Jump_ReduceFriction(ps);
+#else
         if (ps->pm_flags & PMF_JUMPING)
             control *= Jump_ReduceFriction(ps);
         if (ps->pm_flags & 0x200)
             control *= 0.3f;
+#endif
 
         drop += control * PM_DvarFloat(friction, 5.5f) * pml->frametime;
     }
@@ -1151,7 +1191,11 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
         if (ps->pm_flags & 0x1) {
 
             pm->maxs[2] = 50.0f;
+#if defined(COD2_X64)
+            PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#else
             PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#endif
                            ps->origin, ps->clientNum, pm->tracemask & ~0x02000000);
             if (!trace.allsolid) {
                 /* CoD2x animation.cpp:1389-1393 uses controller stance transitions. */
@@ -1177,7 +1221,11 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
     if (ps->pm_flags & 0x1) {
 
         pm->maxs[2] = ps->maxs[2];
+#if defined(COD2_X64)
+        PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#else
         PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#endif
                        ps->origin, ps->clientNum, pm->tracemask & ~0x02000000);
         if (!trace.allsolid) {
             /* CoD2x animation.cpp:1389-1393 uses controller stance transitions. */
@@ -1188,7 +1236,11 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
             ps->pm_flags &= ~0x3;
         } else {
             pm->maxs[2] = 50.0f;
+#if defined(COD2_X64)
+            PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#else
             PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#endif
                            ps->origin, ps->clientNum, pm->tracemask & ~0x02000000);
             if (!trace.allsolid)
                 ps->pm_flags = (ps->pm_flags & ~0x1) | 0x2;
@@ -1201,7 +1253,11 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
     if (ps->pm_flags & 0x2) {
 
         pm->maxs[2] = ps->maxs[2];
+#if defined(COD2_X64)
+        PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#else
         PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#endif
                        ps->origin, ps->clientNum, pm->tracemask & ~0x02000000);
         if (!trace.allsolid) {
             /* CoD2x animation.cpp:1389-1393 uses controller stance transitions. */
@@ -1262,7 +1318,11 @@ compute_target:
         return;
 
     if (pm->cmd.forwardmove != 0 || pm->cmd.rightmove != 0) {
+#if defined(COD2_X64)
+        ps->pm_flags &= ~0x800;
+#else
         ps->pm_flags &= ~0x8;
+#endif
         PM_ExitAimDownSight(ps);
     }
 
@@ -1270,14 +1330,22 @@ compute_target:
     vEnd[1] = ps->origin[1];
     vEnd[2] = ps->origin[2] + 10.0f;
 
+#if defined(COD2_X64)
+    PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs, vEnd,
+#else
     PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs, vEnd,
+#endif
                    ps->clientNum, pm->tracemask & ~0x02000000);
     frac = trace.fraction;
     vEnd[0] = ps->origin[0] + (vEnd[0] - ps->origin[0]) * frac;
     vEnd[1] = ps->origin[1] + (vEnd[1] - ps->origin[1]) * frac;
     vEnd[2] = ps->origin[2] + (vEnd[2] - ps->origin[2]) * frac;
 
+#if defined(COD2_X64)
+    PM_trace(pm, &trace, vEnd, pm->mins, pm->maxs, ps->origin,
+#else
     PM_playerTrace(pm, &trace, vEnd, pm->mins, pm->maxs, ps->origin,
+#endif
                    ps->clientNum, pm->tracemask & ~0x02000000);
     frac = trace.fraction;
     ps->origin[0] = vEnd[0] + (ps->origin[0] - vEnd[0]) * frac;
@@ -1290,7 +1358,11 @@ compute_target:
     vPoint[1] = ps->origin[1];
     vPoint[2] = ps->origin[2] - 0.25f;
 
+#if defined(COD2_X64)
+    PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs, vPoint,
+#else
     PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs, vPoint,
+#endif
                    ps->clientNum, pm->tracemask & ~0x02000000);
 
     normal[0] = trace.normal[0];
@@ -1768,7 +1840,11 @@ static void PM_REGPARM2_ABI PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml)
     float fOffset;
     const viewLerpWaypoint_t *table;
 
+#if defined(COD2_X64)
+    if (target == 0 || current == 0.0f) {
+#else
     if (target == 0) {
+#endif
         if (ps->pm_type == 4)
             ps->viewHeightCurrent = 0.0f;
         else
@@ -1830,6 +1906,9 @@ static void PM_REGPARM2_ABI PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml)
 
             if (fabsf(ps->viewHeightLerpPosAdj - fOffset) > 0.05f) {
                 vec3_t vFlatForward;
+#if defined(COD2_X64)
+                float savedX = ps->velocity[0];
+#endif
                 float savedY = ps->velocity[1];
                 float savedZ = ps->velocity[2];
                 float diff = fOffset - ps->viewHeightLerpPosAdj;
@@ -1850,6 +1929,9 @@ static void PM_REGPARM2_ABI PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml)
 
                 PM_StepSlideMove(pm, pml, 1);
 
+#if defined(COD2_X64)
+                ps->velocity[0] = savedX;
+#endif
                 ps->velocity[1] = savedY;
                 ps->velocity[2] = savedZ;
                 ps->viewHeightLerpPosAdj = fOffset;
@@ -2082,6 +2164,8 @@ static void PM_REGPARM2_ABI PM_Footsteps(pmove_t *pm, pml_t *pml)
             ps->bobCycle = 0;
         scriptAnimMoveTypes_t turn = ANIM_MT_UNUSED;
         if (ci && player_turnAnims->current.enabled) {
+            if (ci->turnAnimType && ci->turnAnimEndTime)
+                Com_DPrintf("turn anim end time is %i, time is %i\n", ci->turnAnimEndTime, bgs->time);
             if (ci->legs.yawing) {
                 turn = ci->legs.yawAngle > ci->torso.yawAngle ? ANIM_MT_TURNRIGHT : ANIM_MT_TURNLEFT;
                 ci->legs.yawAngle = ci->torso.yawAngle;
@@ -2195,6 +2279,14 @@ static void PM_REGPARM2_ABI PM_Footsteps(pmove_t *pm, pml_t *pml)
 #endif
 }
 
+#if defined(COD2_X64)
+static int PM_CrashLandFloatToInt(float value)
+{
+    /* CVTTSS2SI returns integer-indefinite for unordered/out-of-range input. */
+    return value >= -2147483648.0f && value < 2147483648.0f
+        ? (int)value : (-2147483647 - 1);
+}
+#endif
 static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
 {
     playerState_t *ps = pm->ps;
@@ -2220,6 +2312,12 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
                    ps->clientNum, pm->tracemask);
 
     pml->groundTrace = trace;
+
+#if defined(COD2_X64)
+    /* Mac keeps the first trace end at -0x30 for the start-solid retry at 0x702fb. */
+    vec3_t firstEnd;
+    PM_VectorCopy(point, firstEnd);
+#endif
 
     if (trace.allsolid) {
 
@@ -2267,7 +2365,11 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
 
         start[2] = ps->origin[2] - 0.001f;
 
+#if defined(COD2_X64)
+        PM_playerTrace(pm, &trace, start, pm->mins, pm->maxs, firstEnd,
+#else
         PM_playerTrace(pm, &trace, start, pm->mins, pm->maxs, point,
+#endif
                        ps->clientNum, pm->tracemask);
 
         if (trace.startsolid) {
@@ -2287,7 +2389,11 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
             point[1] = ps->origin[1];
             point[2] = ps->origin[2] - 1.0f;
 
+#if defined(COD2_X64)
+            PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs, point,
+#else
             PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs, point,
+#endif
                            ps->clientNum, pm->tracemask);
 
             pml->almostGroundPlane = (trace.fraction != 1.0f);
@@ -2296,7 +2402,11 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
             point[1] = ps->origin[1];
             point[2] = ps->origin[2] - 64.0f;
 
+#if defined(COD2_X64)
+            PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs, point,
+#else
             PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs, point,
+#endif
                            ps->clientNum, pm->tracemask);
 
             if (trace.fraction == 1.0f) {
@@ -2351,7 +2461,7 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
         float acc = -grav;
         float halfg = acc * 0.5f;
         float disc = vz * vz + (pml->previous_origin[2] - ps->origin[2]) * (halfg * -4.0f);
-        if (disc >= 0.0f) {
+        if (!(disc < 0.0f)) {
             float t = (float)((-(double)vz - sqrt((double)disc)) / (double)(halfg + halfg));
             float landVel = -(t * acc + vz);
             float fallHeight = landVel * landVel / (grav + grav);
@@ -2361,13 +2471,18 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
             int surf = PM_GroundSurfaceType(pml);
             if (minH >= maxH)
                 Com_Printf("bg_fallDamageMaxHeight must be greater than bg_fallDamageMinHeight\n");
-            else if (fallHeight > minH && !(pml->groundTrace.surfaceFlags & 1) && ps->pm_type <= 5) {
-                damage = fallHeight >= maxH ? 100 : (int)((fallHeight - minH) / (maxH - minH) * 100.0f);
-                if (damage > 100) damage = 100;
-                if (damage < 0) damage = 0;
+            else if (!(minH >= fallHeight) && !(pml->groundTrace.surfaceFlags & 1) && ps->pm_type <= 5) {
+                if (fallHeight >= maxH) {
+                    damage = 100;
+                } else {
+                    int value = PM_CrashLandFloatToInt((fallHeight - minH) / (maxH - minH) * 100.0f);
+                    int upper = (((unsigned int)value - 100u) & 0x80000000u) ? value : 100;
+                    /* The lower sign test uses the original converted value. */
+                    damage = ((0u - (unsigned int)value) & 0x80000000u) ? upper : 0;
+                }
             }
-            if (fallHeight > 12.0f) {
-                viewDip = (int)((fallHeight - 12.0f) / 26.0f * 4.0f + 4.0f);
+            if (!(fallHeight <= 12.0f)) {
+                viewDip = PM_CrashLandFloatToInt((fallHeight - 12.0f) / 26.0f * 4.0f + 4.0f);
                 if (viewDip > 24) viewDip = 24;
                 BG_AnimScriptEvent(ps, ANIM_ET_LAND, 0, 1);
             }
@@ -2607,14 +2722,15 @@ static void PM_FlyMove(pmove_t *pm, pml_t *pml)
     for (int i = 0; i < 3; ++i)
         wishdir[i] = scale ? scale * pml->forward[i] * (float)pm->cmd.forwardmove + scale * pml->right[i] * (float)pm->cmd.rightmove : 0.0f;
     if (ps->speed) {
-        float vertical = (float)ps->speed;
+        /* Preserve the original scalar rounding in PM_MoveScale(0, 0, 127). */
+        float vertical = (float)ps->speed * 127.0f / 16129.0f;
         if ((ps->pm_flags & 0x100) || ps->leanf != 0.0f)
             vertical *= 0.4f;
         vertical *= player_spectateSpeedScale->current.value;
         if (pm->cmd.buttons & 0x40)
-            wishdir[2] -= vertical;
+            wishdir[2] += vertical * -127.0f;
         if (pm->cmd.buttons & 0x80)
-            wishdir[2] += vertical;
+            wishdir[2] += vertical * 127.0f;
     }
     float wishspeed = Vec3Normalize(wishdir);
     PM_Accelerate(ps, pml, wishdir, wishspeed, 8.0f);
@@ -2643,7 +2759,7 @@ static void PM_FoliageSounds(pmove_t *pm)
         maxs[2] = pm->maxs[2] * 0.9f;
         PM_playerTrace(pm, &trace, ps->origin, mins, maxs, ps->origin, ps->clientNum, 2);
         if (trace.startsolid) {
-            PM_AddEvent(ps, 0x8e);
+            PM_AddEvent(ps, 0x8b);
             ps->foliageSoundTime = pm->cmd.serverTime;
         }
     }
@@ -2740,7 +2856,7 @@ static void PmoveSingle(pmove_t *pm)
         PM_CheckDuck(pm, &pml);
         PM_DropTimers(ps, pml.msec);
         PM_Footsteps(pm, &pml);
-        if (ps->eFlags & 0x300)
+        if (ps->pm_type != 1 && ps->pm_type != 7 && (ps->eFlags & 0x300))
             PM_ResetWeaponState(ps);
         else
             PM_Weapon(pm, &pml);

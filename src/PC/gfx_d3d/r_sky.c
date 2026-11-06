@@ -120,18 +120,30 @@ void R_Cmd_LoadSun(void)
 
     argc = r->Cmd_Argc();
     if (argc != 2) {
+#if defined(COD2_X64)
+        r->Printf(0, "USAGE: r_loadsun <sunname>\n  sunname must not have an extension\n");
+#else
         r->Printf(0, "usage: loadsun <name>\n");
+#endif
         return;
     }
 
     if ((sv_cheats)->current.enabled == 0) {
+#if defined(COD2_X64)
+        r->Printf(0, "You must have cheats enabled to use r_loadsun\n");
+#else
         r->Printf(0, "must be in a level to loadsun\n");
+#endif
         return;
     }
 
     world = rgp.world;
     if (world == NULL) {
+#if defined(COD2_X64)
+        r->Printf(0, "You can't r_loadsun while a map isn't loaded\n");
+#else
         r->Printf(0, "must have a world loaded to loadsun\n");
+#endif
         return;
     }
 
@@ -149,7 +161,11 @@ void R_Cmd_SaveSun(void)
 
     argc = r->Cmd_Argc();
     if (argc != 2) {
+#if defined(COD2_X64)
+        r->Printf(0, "USAGE: r_savesun <sunname>\n  sunname must not have an extension\n");
+#else
         r->Printf(0, "usage: savesun <name>\n");
+#endif
         return;
     }
 

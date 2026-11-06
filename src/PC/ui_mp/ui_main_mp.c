@@ -147,7 +147,12 @@ static char g_gametype[64];
 static Bool g_ingameMenusLoaded;
 extern const char *MonthAbbrev[12];
 extern const char *netSources[3];
+#if defined(COD2_X64)
+/* Mac 0x36cf80; index 1 is accepted by the draw helpers and reads zero padding. */
+static const serverFilter_t serverFilters[2] = { { "EXE_ALL", "" }, { 0, 0 } };
+#else
 static const serverFilter_t serverFilters[1];
+#endif
 static char menuBuf2[32768];
 static int ui_serverFilterType;
 
@@ -217,6 +222,10 @@ extern int LAN_GetServerStatus(char *serverAddress, char *serverStatus, int maxL
 extern int LAN_AddServer(int source, const char *name, const char *addr);
 extern void LAN_GetServerInfo(int source, int index, char *info, int infoSize);
 extern int LAN_GetServerCount(int source);
+#if defined(COD2_X64)
+extern int LAN_GetServerPunkBuster(int source, int index);
+extern void CLUI_SetPbClStatus(int status);
+#endif
 extern void LAN_ResetPings(int source);
 extern int LAN_WaitServerResponse(int source);
 extern int LAN_CompareServers(int source, int sortKey, int sortDir, int s1, int s2);
@@ -430,7 +439,11 @@ FontHandle UI_GetFontHandle(int fontEnum, float scale)
     if (fontEnum == 4) {
         if (ui_smallFont->current.value >= realHeight)
             return sharedUiInfo.assets.smallFont;
+#if defined(COD2_X64)
+        if (realHeight >= ui_bigFont->current.value)
+#else
         if (ui_bigFont->current.value >= realHeight)
+#endif
             return sharedUiInfo.assets.boldFont;
         return sharedUiInfo.assets.textFont;
     }
@@ -772,6 +785,7 @@ qboolean UI_CheckExecKey(int key)
     if (!menu)
         return 0;
 
+#if !defined(COD2_X64)
     if ((key >= 0xc8 && key <= 0xce) ||
         key == 0x0d || key == 0xbf ||
         key == 0x09 ||
@@ -779,6 +793,7 @@ qboolean UI_CheckExecKey(int key)
         key == 0xa3 || key == 0xa4) {
         return 1;
     }
+#endif
 
     khNode = menu->onKey;
     while (khNode) {
@@ -813,10 +828,18 @@ const char *UI_SafeTranslateString(const char *reference)
 {
     const char *ref = reference;
 
+#if defined(COD2_X64)
+    const char *translated = 0;
+    if (ref[0] == 0x15)
+        ref++;
+    else
+        translated = SEH_StringEd_GetString(ref);
+#else
     if (ref[0] == 0x15)
         ref++;
 
     const char *translated = SEH_StringEd_GetString(ref);
+#endif
     if (translated)
         return translated;
 
@@ -872,6 +895,11 @@ static void UI_AddServerToFavoritesList(const char *name, const char *address)
     } else {
         message = UI_SafeTranslateString("EXE_FAVORITEADDED");
         dvarMessage = "@EXE_FAVORITEADDED";
+#if defined(COD2_X64)
+        Com_Printf(va("%s\n", message), address);
+        Dvar_SetStringByName("ui_favorite_message", dvarMessage);
+        return;
+#endif
     }
 
     Com_Printf("%s\n", message);
@@ -936,7 +964,9 @@ static void UI_AddServerStatusDvarRows(serverStatusInfo_t *info)
                 info->lines[index][3] = atoi(info->lines[index][3]) ? "@EXE_YES" : "@EXE_NO";
 
             index++;
+#if !defined(COD2_X64)
             break;
+#endif
         }
     }
 }
@@ -981,11 +1011,21 @@ static int __attribute_regparm__(2) UI_GetServerStatusInfo(const char *serverAdd
 
             key = p;
             slash = strchr(key, '\\');
+#if defined(COD2_X64)
+            if (!slash) {
+                p = 0;
+                break;
+            }
+#else
             if (!slash)
                 break;
+#endif
 
             *slash++ = '\0';
             value = slash;
+#if defined(COD2_X64)
+            p = value;
+#endif
 
             row = info->numLines;
             info->lines[row][0] = key;
@@ -1372,12 +1412,15 @@ void UI_Init(void)
     ui_browserShowNoPassword = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowNoPassword", 1, 0x1001));
     ui_browserShowPure = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowPure", 1, 0x1001));
     ui_browserShowDedicated = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowDedicated", 0, 0x1001));
-#    if COD2_IS_PATCH_13
+#    if COD2_IS_PATCH_13 && !defined(COD2_X64)
     ui_browserShowPunkBuster = (const dvar_t *)(Dvar_RegisterInt("ui_browserShowPunkBuster", -1, (int)0x80000000, 0x7fffffff, 0x1001));
 #    endif
     ui_browserMod = (const dvar_t *)(Dvar_RegisterInt("ui_browserMod", -1, -1, 0x7fffffff, 0x1001));
     ui_browserFriendlyfire = (const dvar_t *)(Dvar_RegisterInt("ui_browserFriendlyfire", -1, (int)0x80000000, 0x7fffffff, 0x1001));
     ui_browserKillcam = (const dvar_t *)(Dvar_RegisterInt("ui_browserKillcam", -1, (int)0x80000000, 0x7fffffff, 0x1001));
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    ui_browserShowPunkBuster = (const dvar_t *)(Dvar_RegisterInt("ui_browserShowPunkBuster", -1, (int)0x80000000, 0x7fffffff, 0x1001));
+#endif
     ui_serverStatusTimeOut = (const dvar_t *)(Dvar_RegisterInt("ui_serverStatusTimeOut", 7000, 0, 0x7fffffff, 0x1001));
     ui_playerProfileCount = (const dvar_t *)(Dvar_RegisterInt("ui_playerProfileCount", 0, (int)0x80000000, 0x7fffffff, 0x1040));
     ui_playerProfileSelected = (const dvar_t *)(Dvar_RegisterString_mac("ui_playerProfileSelected", "", 0x1040));
@@ -1425,7 +1468,9 @@ void UI_Init(void)
         Cmd_AddCommand("ui_sweep", UI_Sweep_f);
     }
 #endif
+#if !defined(COD2_X64)
     UI_LoadIngameMenus();
+#endif
 
     if (g_mapname[0] != '\0') {
         UI_MapLoadInfo(va("maps/mp/%s.csv", g_mapname));
@@ -1443,8 +1488,13 @@ void UI_Init(void)
 
     LAN_LoadCachedServers();
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (sharedUiInfo.serverStatus.sortKey != 10) {
+        sharedUiInfo.serverStatus.sortKey = 10;
+#else
     if (sharedUiInfo.serverStatus.sortKey != 9) {
         sharedUiInfo.serverStatus.sortKey = 9;
+#endif
         qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
     }
 
@@ -1668,7 +1718,9 @@ qboolean UI_SetActiveMenu(int menu)
         }
 
         Key_SetCatcher(8);
+#if !defined(COD2_X64)
         (*(clientActive_t **)imp_cl)->displayHUDWithKeycatchUI = 1;
+#endif
         Menus_CloseAll(&uiInfo->uiDC);
 
         strcpy(((LegacyHacks *)legacyBase)->ui_scriptMenu, ((LegacyHacks *)legacyBase)->ui_newScriptMenu);
@@ -2119,19 +2171,30 @@ static void UI_RemoveDuplicateFromFavorites(int serverIndex)
 static void UI_BinaryInsertServer(int serverIndex)
 {
 #if defined(COD2_X64)
-    int lo = 0, hi = sharedUiInfo.serverStatus.numDisplayServers;
-    while (lo < hi) {
-        int mid = lo + (hi - lo) / 2;
+    /* Mac 0x15257d-0x152711 keeps the tested midpoint as the next base. */
+    int remaining = sharedUiInfo.serverStatus.numDisplayServers;
+    int offset = 0;
+    int position = 0;
+    while (remaining > 0) {
+        int half = remaining / 2;
+        int middle = offset + half;
         int cmp = LAN_CompareServers(ui_netSource->current.integer,
                                     sharedUiInfo.serverStatus.sortKey,
                                     sharedUiInfo.serverStatus.sortDir,
-                                    serverIndex, sharedUiInfo.serverStatus.displayServers[mid]);
+                                    serverIndex, sharedUiInfo.serverStatus.displayServers[middle]);
+        if (cmp == 0) {
+            UI_InsertServerAtPosition(serverIndex, middle);
+            return;
+        }
+        remaining -= half;
         if (cmp > 0)
-            lo = mid + 1;
-        else
-            hi = mid;
+            offset = middle;
+        if (half == 0) {
+            position = offset + (cmp > 0);
+            break;
+        }
     }
-    UI_InsertServerAtPosition(serverIndex, lo);
+    UI_InsertServerAtPosition(serverIndex, position);
 #else
     int numDisplay = sharedUiInfo.serverStatus.numDisplayServers;
     int *displayServers = sharedUiInfo.serverStatus.displayServers;
@@ -2201,7 +2264,11 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
 
         if (motdLen == 0) {
             const char *translated = UI_SafeTranslateString("EXE_COD_MULTIPLAYER");
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+            strcpy(sharedUiInfo.serverStatus.motd, va("%s - %s", translated, "1.3"));
+#else
             strcpy(sharedUiInfo.serverStatus.motd, va("%s - %s", translated, "1.0"));
+#endif
             motdLen = strlen(sharedUiInfo.serverStatus.motd);
         }
 
@@ -2293,15 +2360,16 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
                 goto reject;
         }
 
-#if defined(COD2_X64)
-        if (ui_browserShowPunkBuster->current.integer >= 0 &&
-            atoi(Info_ValueForKey(info_buf, "punkbuster")) != ui_browserShowPunkBuster->current.integer)
-            goto reject;
-#endif
         if ((ui_browserKillcam)->current.integer >= 0) {
             if (atoi(Info_ValueForKey(info_buf, "kc")) != (ui_browserKillcam)->current.integer)
                 goto reject;
         }
+
+#if defined(COD2_X64)
+        if (ui_browserShowPunkBuster->current.integer >= 0 &&
+            atoi(Info_ValueForKey(info_buf, "pb")) != ui_browserShowPunkBuster->current.integer)
+            goto reject;
+#endif
 
         {
             int joinGTIdx = (ui_joinGameType)->current.integer;
@@ -2526,7 +2594,11 @@ qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key
         }
         return 0;
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    case 0xf5:
+#else
     case 0xf4:
+#endif
         if (!UI_IsActionKey(key))
             return 0;
         {
@@ -2866,7 +2938,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         if (gtName[0] == '\0')
             gtName = "EXE_ALL";
         text = UI_SafeTranslateString(gtName);
+#if defined(COD2_X64)
+        UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], *(int *)&rect[4], *(int *)&rect[5], scale, color, textStyle);
+#else
         UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
+#endif
         return;
     }
 
@@ -2881,7 +2957,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         text = SEH_LocalizeTextMessage(
             va("EXE_NETSOURCE\x14%s", netSources[(ui_netSource)->current.integer]),
             "net source", 0);
+#if defined(COD2_X64)
+        UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], *(int *)&rect[4], *(int *)&rect[5], scale, color, textStyle);
+#else
         UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
+#endif
         return;
     }
 
@@ -2904,7 +2984,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         text = SEH_LocalizeTextMessage(
             va("EXE_SERVERFILTER\x14%s", serverFilters[filterType].description),
             "server filter", 0);
+#if defined(COD2_X64)
+        UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], *(int *)&rect[4], *(int *)&rect[5], scale, color, textStyle);
+#else
         UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
+#endif
         return;
     }
 
@@ -2927,7 +3011,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
             if (gtName[0] == '\0')
                 gtName = "EXE_ALL";
             text = UI_SafeTranslateString(gtName);
+#if defined(COD2_X64)
+            UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], *(int *)&rect[4], *(int *)&rect[5], scale, color, textStyle);
+#else
             UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
+#endif
         }
         return;
     }
@@ -2966,10 +3054,17 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
             int waitResponse;
             const char *countText;
 
+#if defined(COD2_X64)
+            lowLight[0] = (float)((double)color[0] * 0.8);
+            lowLight[1] = (float)((double)color[1] * 0.8);
+            lowLight[2] = (float)((double)color[2] * 0.8);
+            lowLight[3] = (float)((double)color[3] * 0.8);
+#else
             lowLight[0] = color[0] * 0.8f;
             lowLight[1] = color[1] * 0.8f;
             lowLight[2] = color[2] * 0.8f;
             lowLight[3] = color[3] * 0.8f;
+#endif
 
             {
                 int realTime = uiInfo->uiDC.realTime;
@@ -3016,7 +3111,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
                 }
             }
 
+#if defined(COD2_X64)
+            UI_DrawText(countText, 0x7fffffff, font, rect[0], rect[1], *(int *)&rect[4], *(int *)&rect[5], scale, newColor, textStyle);
+#else
             UI_DrawText(countText, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, newColor, textStyle);
+#endif
         } else {
 
             char tempString[64];
@@ -3038,7 +3137,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
             text = UI_ReplaceConversions(text, (ConversionArguments *)convArgs);
 #endif
 
+#if defined(COD2_X64)
+            UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], *(int *)&rect[4], *(int *)&rect[5], scale, color, textStyle);
+#else
             UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
+#endif
         }
         return;
     }
@@ -3071,7 +3174,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
             if (gtName[0] == '\0')
                 gtName = "EXE_ALL";
             text = UI_SafeTranslateString(gtName);
+#if defined(COD2_X64)
+            UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], *(int *)&rect[4], *(int *)&rect[5], scale, color, textStyle);
+#else
             UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
+#endif
         }
         return;
     }
@@ -3195,9 +3302,18 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
 
             {
                 float scaledHeight = (float)((int)((float)textHeight * actualScale));
+#if defined(COD2_X64)
+                float textY = (scaledHeight + rect[1]) + (rect[3] - scaledHeight) * 0.5f;
+#else
                 float textY = rect[1] + (rect[3] - scaledHeight) * 0.5f + scaledHeight;
+#endif
                 float textX = rect[0] + rect[2] + 2.0f;
+#if defined(COD2_X64)
+                /* A talker absent from the rebuilt list has no owned name. */
+                UI_DrawText(num >= 0 ? sharedUiInfo.playerNames[num] : "", 32, font, textX, textY, *(int *)&rect[4], *(int *)&rect[5], scale, color, textStyle);
+#else
                 UI_DrawText(sharedUiInfo.playerNames[num], 32, font, textX, textY, *(int *)&rect[4], *(int *)&rect[5], scale, color, textStyle);
+#endif
             }
         }
         return;
@@ -3282,6 +3398,9 @@ static void BM_NOINLINE UI_BuildFindPlayerList(void)
 #endif
 
         if (!*pendingFlag) {
+#if defined(COD2_X64)
+        reuse_slot:
+#endif
             UI_GetServerStatusInfo((const char *)serverAddr, 0);
             *pendingFlag = 0;
 
@@ -3321,7 +3440,11 @@ static void BM_NOINLINE UI_BuildFindPlayerList(void)
         if (!statusResult) {
 
             if (!*pendingFlag)
+#if defined(COD2_X64)
+                goto reuse_slot;
+#else
                 continue;
+#endif
 
             {
                 int timeoutVal = uiInfo->uiDC.realTime - (ui_serverStatusTimeOut)->current.integer;
@@ -3329,7 +3452,11 @@ static void BM_NOINLINE UI_BuildFindPlayerList(void)
                     continue;
             }
             numTimeOuts++;
+#if defined(COD2_X64)
+            goto reuse_slot;
+#else
             continue;
+#endif
         }
 
         numFound++;
@@ -3376,6 +3503,9 @@ static void BM_NOINLINE UI_BuildFindPlayerList(void)
 #endif
         *pendingFlag = 0;
 
+#if defined(COD2_X64)
+        goto reuse_slot;
+#else
         if (!*pendingFlag)
             continue;
 
@@ -3385,6 +3515,7 @@ static void BM_NOINLINE UI_BuildFindPlayerList(void)
                 continue;
         }
         numTimeOuts++;
+#endif
 
     }
 
@@ -3405,7 +3536,11 @@ static void BM_NOINLINE UI_BuildFindPlayerList(void)
 #endif
     } else {
         const char *plural = (numResults == 2) ? "" : "s";
+#if defined(COD2_X64)
+        Com_sprintf(uiInfo->foundPlayerServerNames[numResults], 0x40, "%d server%s found with player %s", numResults - 1, plural, uiInfo->findPlayerName);
+#else
         Com_sprintf(uiInfo->foundPlayerServerNames[numResults - 1], 0x40, "%d server%s found with player %s", numResults - 1, plural, uiInfo->findPlayerName);
+#endif
     }
     uiInfo->nextFindPlayerRefresh = 0;
 }
@@ -3551,7 +3686,11 @@ void UI_Refresh(void)
 
         UI_UpdateServerCount();
 
+#if defined(COD2_X64)
+        if (LAN_UpdateDirtyPings(ui_netSource->current.integer)) {
+#else
         if (LAN_UpdateDirtyPings(netSource)) {
+#endif
             sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
         } else {
             if (needRebuild)
@@ -3568,7 +3707,11 @@ void UI_Refresh(void)
                 Com_Printf("%d servers listed in browser with %d players.\n",
                            listedServers, listedPlayers);
 
+#if defined(COD2_X64)
+                filteredServers = LAN_GetServerCount(ui_netSource->current.integer) - sharedUiInfo.serverStatus.numDisplayServers;
+#else
                 filteredServers = LAN_GetServerCount(netSource) - listedServers;
+#endif
                 if (filteredServers > 0) {
                     Com_Printf("%d servers not listed (filtered out by game browser settings)\n",
                                filteredServers);
@@ -3603,7 +3746,11 @@ void UI_RunMenuScript(const char **args)
     char buff[1024];
     char buff2[2048];
     char out[32];
+#if defined(COD2_X64)
+    char addr[4096];
+#else
     char addr[2048];
+#endif
     char name2[1024];
     char testValue[1024];
     char dvarName[1024];
@@ -3615,6 +3762,16 @@ void UI_RunMenuScript(const char **args)
 
     if (I_stricmp(name, "StartServer") == 0) {
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        if (ui_dedicated->current.integer == 0) {
+            Bool serverPb = Dvar_GetBool("sv_punkbuster");
+            Bool clientPb = Dvar_GetBool("cl_punkbuster");
+            if (serverPb && !clientPb) {
+                Menus_OpenByName(&uiInfo->uiDC, "startpb_popmenu");
+                return;
+            }
+        }
+#endif
         Dvar_SetBoolByName("cg_thirdPerson", 0);
         Dvar_SetFromStringByNameFromSource("dedicated",
                                            va("%i", (ui_dedicated)->current.integer), 1);
@@ -3869,7 +4026,11 @@ void UI_RunMenuScript(const char **args)
         uiInfo->playerProfileCount = 0;
         uiInfo->playerProfileStatus.sortDir = 1;
 
+#if defined(COD2_X64)
+        fileList = FS_ListFiles("players", "/", 1, &sortColumn, 3);
+#else
         fileList = FS_ListFiles("players", "/", 1, &sortColumn, 0);
+#endif
 
         if (sortColumn > 0) {
             for (i = 0; i < sortColumn; i++) {
@@ -3879,7 +4040,11 @@ void UI_RunMenuScript(const char **args)
             }
         }
 
+#if defined(COD2_X64)
+        FS_FreeFileList((const char **)fileList, 3);
+#else
         FS_FreeFileList((const char **)fileList, 0);
+#endif
 
         {
             int numProfiles = uiInfo->playerProfileCount;
@@ -4001,6 +4166,13 @@ void UI_RunMenuScript(const char **args)
                 for (i = 0; i < np; i++)
                     uiInfo->playerProfileStatus.displayProfile[i] = i;
                 qsort(uiInfo->playerProfileStatus.displayProfile, np, 4, UI_PlayerProfilesQsortCompare);
+#if defined(COD2_X64)
+                for (i = uiInfo->uiDC.openMenuCount - 1; i >= 0; i--) {
+                    menuDef_t *menu = uiInfo->uiDC.menuStack[i];
+                    if (menu->window.dynamicFlags[0] & 4)
+                        Menu_SetFeederSelection(&uiInfo->uiDC, menu, 24, 0, 0);
+                }
+#endif
             }
         }
 
@@ -4043,6 +4215,10 @@ void UI_RunMenuScript(const char **args)
             Menus_OpenByName(&uiInfo->uiDC, "profile_delete_fail_popmenu");
             return;
         }
+#if defined(COD2_X64)
+        selName = ui_playerProfileSelected->current.string;
+        numProfiles = uiInfo->playerProfileCount;
+#endif
 
         {
             int found = -1;
@@ -4249,6 +4425,14 @@ void UI_RunMenuScript(const char **args)
             if (selectedServer < 0 || selectedServer >= sharedUiInfo.serverStatus.numDisplayServers)
                 return;
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+            if (LAN_GetServerPunkBuster(ui_netSource->current.integer,
+                                       sharedUiInfo.serverStatus.displayServers[selectedServer]) == 1 &&
+                !Dvar_GetBool("cl_punkbuster")) {
+                Menus_OpenByName(&uiInfo->uiDC, "joinpb_popmenu");
+                return;
+            }
+#endif
             LAN_GetServerAddressString((ui_netSource)->current.integer,
                                        sharedUiInfo.serverStatus.displayServers[selectedServer],
                                        buff, 0x400);
@@ -4422,6 +4606,15 @@ void UI_RunMenuScript(const char **args)
         return;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (I_stricmp(name, "setPbClStatus") == 0) {
+        int status;
+        if (Int_Parse(args, &status))
+            CLUI_SetPbClStatus(status);
+        return;
+    }
+#endif
+
     if (I_stricmp(name, "startSingleplayer") == 0) {
         Cbuf_ExecuteText(2, "startSingleplayer\n");
         return;
@@ -4565,6 +4758,15 @@ static void UI_DrawCenteredText(const char *text, FontHandle font, float scale, 
     UI_DrawText(text, 0x7fffffff, font, x, y, 0, 0, scale, color, style);
 }
 
+#if defined(COD2_X64)
+static void UI_DrawCenteredTextAt(const char *text, FontHandle font, float scale, float centerPoint, float y, const vec_t *color, int style)
+{
+    float actualScale = CL_NormalizedTextScale(font, scale);
+    int scaledWidth = (int)((float)CL_TextWidth(text, 0, font) * actualScale);
+    UI_DrawText(text, 0x7fffffff, font, centerPoint - (float)(scaledWidth / 2), y, 0, 0, scale, color, style);
+}
+#endif
+
 static void UI_ReadableSize_wrap(char *buf, int bufsize, int value)
 {
     UI_ReadableSize(buf, bufsize, value);
@@ -4579,6 +4781,9 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
     int downloadSize = legacyBase->cl_downloadSize;
     int downloadCount = legacyBase->cl_downloadCount;
     int downloadTime = legacyBase->cl_downloadTime;
+#if defined(COD2_X64)
+    int transferStarted = downloadCount > 0xfff && downloadTime != 0;
+#endif
     vec_t color[4];
     float y1, y2, y3;
     int xferRate = 0;
@@ -4695,14 +4900,26 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
                     int hours = timeleft / 3600;
                     int remainder = timeleft - hours * 3600;
                     int minutes = remainder / 60;
+#if defined(COD2_X64)
+                    const char *minutesText = UI_SafeTranslateString("EXE_MINUTES");
+                    const char *hoursText = UI_SafeTranslateString("EXE_HOURS");
+                    Com_sprintf(dlTimeBuf, 64, "%d %s %d %s", hours, hoursText, minutes, minutesText);
+#else
                     Com_sprintf(dlTimeBuf, 64, "%d %s %d %s", hours, UI_SafeTranslateString("EXE_HOURS"),
                                 minutes, UI_SafeTranslateString("EXE_MINUTES"));
+#endif
                 } else if (timeleft > 60) {
 
                     int minutes = timeleft / 60;
                     int secs = timeleft - minutes * 60;
+#if defined(COD2_X64)
+                    const char *secondsText = UI_SafeTranslateString("EXE_SECONDS");
+                    const char *minutesText = UI_SafeTranslateString("EXE_MINUTES");
+                    Com_sprintf(dlTimeBuf, 64, "%d %s %d %s", minutes, minutesText, secs, secondsText);
+#else
                     Com_sprintf(dlTimeBuf, 64, "%d %s %d %s", minutes, UI_SafeTranslateString("EXE_MINUTES"),
                                 secs, UI_SafeTranslateString("EXE_SECONDS"));
+#endif
                 } else {
 
                     Com_sprintf(dlTimeBuf, 64, "%d %s", timeleft, UI_SafeTranslateString("EXE_SECONDS"));
@@ -4714,16 +4931,28 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
                     const char *copiedStr = UI_SafeTranslateString("EXE_COPIED");
                     const char *ofStr = UI_SafeTranslateString("EXE_OF");
                     text = va("(%s %s %s %s)", dlSizeBuf, ofStr, totalSizeBuf, copiedStr);
+#if defined(COD2_X64)
+                    UI_DrawCenteredTextAt(text, font, scale, centerPoint, yStart + 320.0f, ltGrey, 6);
+#else
                     UI_DrawCenteredText(text, font, scale, yStart + 320.0f, ltGrey, 6);
+#endif
                 }
             }
         } else {
 
         estimating:
             text = UI_SafeTranslateString("EXE_ESTIMATING");
+#if defined(COD2_X64)
+            UI_DrawCenteredTextAt(text, font, scale, centerPoint, yEta, ltGrey, 6);
+#else
             UI_DrawCenteredText(text, font, scale, yEta, ltGrey, 6);
+#endif
 
+#if defined(COD2_X64)
+            if (!transferStarted || downloadSize != 0) {
+#else
             if (downloadSize != 0) {
+#endif
 
                 const char *copiedStr = UI_SafeTranslateString("EXE_COPIED");
                 const char *ofStr = UI_SafeTranslateString("EXE_OF");
@@ -4733,7 +4962,11 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
                 const char *copiedStr = UI_SafeTranslateString("EXE_COPIED");
                 text = va("(%s %s)", dlSizeBuf, copiedStr);
             }
+#if defined(COD2_X64)
+            UI_DrawCenteredTextAt(text, font, scale, centerPoint, yStart + (transferStarted ? 320.0f : 340.0f), ltGrey, 6);
+#else
             UI_DrawCenteredText(text, font, scale, yStart + 320.0f, ltGrey, 6);
+#endif
 
             if (xferRate == 0)
                 return;
@@ -4775,6 +5008,16 @@ void UI_DrawConnectScreen(void)
 
     GetClientState(&cstate);
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    {
+        extern clientStatic_t cls;
+        if (cls.wwwDlDisconnected && ((LegacyHacks *)legacyBase)->cl_downloadName[0]) {
+            UI_DisplayDownloadInfo(((LegacyHacks *)legacyBase)->cl_downloadName, 320.0f, 89.0f, font, connectScale);
+            return;
+        }
+    }
+#endif
+
     if (g_mapname[0] != '\0') {
 
         int numGameTypes = sharedUiInfo.numGameTypes;
@@ -4807,7 +5050,14 @@ void UI_DrawConnectScreen(void)
 #else
                 if (I_stricmp(g_mapname, sharedUiInfo.mapList[mi].mapName) == 0)   /* was &sharedUiInfo+mi*0xa4+0x1358 (x86) */
 #endif
+#if defined(COD2_X64)
+                {
+                    mapDisplayName = sharedUiInfo.mapList[mi].mapName;
                     break;
+                }
+#else
+                    break;
+#endif
             }
         }
 
@@ -4829,6 +5079,30 @@ void UI_DrawConnectScreen(void)
     goto check_connection_state;
 
 draw_tips:
+#if defined(COD2_X64)
+    {
+        const char *message = UI_SafeTranslateString(cstate.messageString);
+        int length = (int)strlen(message);
+        int column = 0;
+        int wrap = 0;
+        int lineY = 299;
+        char line[64];
+        for (int i = 0; i < length; i++) {
+            line[column] = message[i];
+            if (column > 40 && i > 0)
+                wrap = 1;
+            if (column > 57 || i == length - 1 || (wrap && message[i] == ' ')) {
+                line[column + 1] = '\0';
+                UI_DrawCenteredText(line, font, connectScale, (float)lineY, (const vec_t *)imp_colorYellow, 6);
+                lineY += 22;
+                wrap = 0;
+                column = 0;
+            } else {
+                column++;
+            }
+        }
+    }
+#endif
 
 check_connection_state: {
     int cs = cstate.connState;
