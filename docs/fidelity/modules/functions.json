@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 250,
+      "unchecked": 249,
       "intentional": 3184,
-      "equal": 4803,
+      "equal": 4804,
       "fixed": 1220
     },
     "scopes": {
@@ -55074,8 +55074,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Linux-only ledger identity: BG_AnimationForString has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone. Original executable follow-up, 2026-11-05: Original Linux 1.0 0x80d4832 maps to 1.3 0x80d6f56\u20130x80d6fea. Complete body hashes the name, scans 96-byte animation records, compares hash and case-insensitive name, returns the matching record pointer, or reports its own Com_Error and returns null if that call returns. Exact Mac BG_AnimationIndexForString 0x184cd6\u20130x184e9a instead returns an index, has load-time lookup/insertion behavior, and uses BG_AnimParseError with a different failure result. Shared hash/search operations do not establish the complete pointer-returning helper. No closure from missing direct calls or static pointer references; no source change."
+        "status": "equal",
+        "evidence": "Complete actual found-name-to-borrowed-animation-record operation in the loaded second parse pass. Fresh original1.0 [0x80d4832,0x80d48c5) maps to full original1.3 [0x80d6f56,0x80d6fe9), RET0x80d6fe8 (following NOP excluded): lowercase hash, ordered nameHash/case-insensitive-name scan and first matching complete record pointer. Actual Mac BG_LoadAnim0x1868fd\u20130x186906 passes the populated global table with NULL load-name/count arguments; BG_AnimParseAnimScript stores that table globally0x185a00 and passes the same retained table to BG_ParseCommands0x18610f\u20130x186129. Actual Com_ParseOnLine token0x185543 reaches runtime BG_AnimationIndexForString0x185562, whose full found-name lookup returns an index. Caller AX store/sign-extension then index*96+same scriptData0x185572\u20130x18557c forms the complete record address, consumed by duration+0x48 at0x18557f and real downstream writable-field paths. Native uses typed animations[index] and explicit animation_t pointer, preserving existing LP64 alignment/backing without hardcoded native stride. Scope: successful stable loaded second pass, live1..512-record table, found nonempty ASCII name<=63 bytes and valid preceding parser/item storage; indices0..511 preserve the16-bit narrowing. Full miss paths remain distinct and outside this consumed found-role: original direct Com_Error then NULL versus Mac BG_AnimParseError then -1 and invalid index if fatal handling returns. No standalone missing-name/NULL API, load-time insertion, arbitrary global replacement/reentrancy, malformed/overlong input or returned-error continuation equivalence. Equal unchanged hash/search/address phase; surrounding parser/loader/consumer repairs and ownership decisions retained. Parent and independent review accepted (units/review-provenance-animlookup48.md); fresh5Mac containers, original147bytes, rawtables and source receipts in recon-provenance-animlookup48.noindex. No source change/new defect, compilation, tests, CI, replay or runtime verification."
       },
       {
         "id": "mac:0x00184cd6",
