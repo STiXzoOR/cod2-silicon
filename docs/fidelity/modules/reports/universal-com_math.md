@@ -2,7 +2,7 @@
 
 Updated 2026-11-06.
 
-**Current: 186/229 reconciled: 155 equal, 31 fixed, 0 intentional; 43 unchecked.**
+**Current: 187/229 reconciled: 156 equal, 31 fixed, 0 intentional; 42 unchecked.**
 
 Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
 
@@ -669,3 +669,14 @@ Complete Mac `CG_DrawRotatedQuadPic`0x1a249a converts the float degree input to 
 Mac's always-evaluated float pair, arithmetic order and quadrant/negative behavior remain authoritative; no Linux literal-table, floating-environment or output-overlap equivalence is claimed. The scope is ordinary admitted grenade/geometry inputs, valid disjoint storage, returning providers and selected successful command consumption, not a standalone ABI or whole renderer/GPU result. Existing pair owner is equal; no unrelated upstream or command repair is inherited. Separate double-output SinCos, SinSquaredDeg and SphericalToCartesian stay unchecked.
 
 Private `recon-provenance-sincos43.noindex` retains complete original/helper bodies, full exact Mac containers, raw constants/binding/dispatch data and unchanged source hashes. Independent review accepted both complete results, actual producer and four-pair consumption. One equal closure, no source change or new defect;155equal31fixed43unchecked. No compilation, tests, CI, builds, replay or runtime verification.
+
+
+## Complete consumed point projection — projectline45
+
+ProjectPointOntoLine is equal through the full selected point-valued projection in CG_WhizbySound. The earlier distance18 checkpoint lacked a separate complete projection consumer; linedistance35 and this focused review establish that boundary before later sound-position changes. Original1.0 0x80a3206 maps to complete1.3 0x80a556a–RET0x80a5616. Its full subtract/dot/copy/Mad providers establish all-three output coordinates, ordered-zero copying of start, otherwise dot/lengthSquared projection; no fourth output or status is omitted. Original formula, zero policy and arbitrary alias order do not override Mac behavior.
+
+Actual successful CG_CalcMuzzlePoint produces the start local and CG_BulletHitClientEvent passes its unchanged impact position as end. The point is all three current vieworg coordinates, with actual camera position producers. Mac Whizby normalizes the complete endpoint delta, computes both full dot products and applies its real64-unit admission gates. The admitted phase writes the complete projected point into one local at0x1d9aad/0x1d9abe/0x1d9acc. All three values coexist, then all three feed the actual view residuals, squared sum and radius calculation. The later16-unit shift starts0x1d9b1c, after this complete result has already been consumed; it is not substituted for the projection. Native preserves the same full inputs, operation grouping, three stores and consumer.
+
+The actual admitted domain is not assumed finite or nondegenerate. Ordered comparisons reject ordinary short/zero cases before any projection output, but unordered projection can enter, including after overflow from finite inputs when FP operations return. Mac/native retain their complete normalize/multiply/add outcomes even where the original zero-length branch would copy start. No original zero fallback, result for rejected calls, hypothetical gate bypass or algebraic equivalence is claimed. This is the complete actual selected projection role with Mac authority.
+
+Scope requires valid disjoint live storage and stable view state. It excludes arbitrary exported ABI/overlap, deferred ownership, FP traps/environment/NaN payload parity, whole camera/event/tag behavior, later sound effects and runtime/gameplay certification. Existing Whizby and NormalizeTo equal verdicts need no inherited fix. One equal closure, zero defects, no source changes or compilation. Independent review: units/review-provenance-projectline45.md. Private full original/Mac bodies, raw words and current source hashes: recon-provenance-projectline45.noindex. No tests, CI, full builds, replay or runtime work.
