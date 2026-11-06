@@ -992,8 +992,14 @@ static void PM_ACCELERATE_ABI PM_Accelerate(playerState_t *ps, pml_t *pml, const
     accelspeed = fminf(addspeed, fmaxf(stopspeed->current.value, wishspeed) * (accel * pml->frametime));
 #endif
 
+#if defined(COD2_X64)
+    /* Original JAE/JP gates admit unordered inertia comparisons. */
+    if (ps->pm_type != 2 && !(inertiaMax->current.value >= accelspeed)
+        && !((ps->oldVelocity[0] * ps->oldVelocity[0] + ps->oldVelocity[1] * ps->oldVelocity[1]) < 0.0001)) {
+#else
     if (ps->pm_type != 2 && inertiaMax->current.value < accelspeed
         && (ps->oldVelocity[0] * ps->oldVelocity[0] + ps->oldVelocity[1] * ps->oldVelocity[1]) >= 0.0001) {
+#endif
         vec2_t newVel, oldVel;
         float dot;
         newVel[0] = ps->velocity[0] + accelspeed * wishdir[0];
@@ -1003,7 +1009,11 @@ static void PM_ACCELERATE_ABI PM_Accelerate(playerState_t *ps, pml_t *pml, const
         Vec2Normalize(oldVel);
         Vec2Normalize(newVel);
         dot = oldVel[0] * newVel[0] + oldVel[1] * newVel[1];
+#if defined(COD2_X64)
+        if (!(dot >= inertiaAngle->current.value)) {
+#else
         if (dot < inertiaAngle->current.value) {
+#endif
             if (inertiaDebug->current.enabled) {
                 Com_Printf("angle is %f (oldVel is (%f,%f), vel is (%f, %f))\n",
                            (double)dot, (double)oldVel[0], (double)oldVel[1],

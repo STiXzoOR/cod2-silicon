@@ -3472,8 +3472,8 @@
     "evidence": "All 74 Mac bytes 0x6b746-0x6b78f compared against the live native body and its helpers. No correction required."
   },
   "mac:0x0006b970": {
-    "status": "equal",
-    "evidence": "All 754 Mac bytes 0x6b970-0x6bc61 compared against the live native body and its helpers. No correction required."
+    "status": "fixed",
+    "evidence": "Complete Mac executable body [0x6b970,0x6bc61), 753 bytes excluding NOP0x6bc61, was reviewed against native. Accel49 correction: complete Mac inertia gates at0x6ba22/25,0x6ba47/4f/55 and0x6bbbf/c8 admit unordered inertiaMax/accelspeed, oldVelocity square-sum threshold, and normalized-dot comparisons. COD2_X64 now uses negated ordered >=/< predicates to preserve those paths, leaving exact legacy comparisons in#else and preserving existing MAXSS repair. Actual separate old/new pairs, both normalizers and full velocity consumer were read. Defined typed quiet-NaN oldVelocity with finite current velocity/wishdir/wishspeed100/accel9/frametime0.1/stopspeed100/inertiaMax50/inertiaAngle0 reaches Mac clamp50 versus old native about90; this is a static input-domain witness, not runtime gameplay proof. Raw snapshot velocity representation, predicted-state persistence and pre-snap oldVelocity smoothing supply actual storage roles; no global finite invariant or gameplay trigger is asserted. Existing MINSS sites unchanged: no distinct source-only-NaN result demonstrated under actual caller constraints. Current ledger was equal despite pre-existing MAXSS source repair; this exact-before row becomes fixed for one additional three-selector defect group, no unchecked closure. Four actual stock/CoD2x client/dedicated changed-TU compilations passed; OFF bytes and five actual inactive preprocessing outputs identical. Compiled and independently reviewed, not exercised; no tests/CI/replay/full build. Evidence recon-provenance-accel49.noindex, compile units/provenance-accel49.compile.json, review units/review-provenance-accel49.md."
   },
   "mac:0x0006b6ac": {
     "status": "equal",
