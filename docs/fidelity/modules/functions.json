@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 254,
+      "unchecked": 252,
       "intentional": 3184,
-      "equal": 4801,
-      "fixed": 1218
+      "equal": 4802,
+      "fixed": 1219
     },
     "scopes": {
       "unassigned": 777,
@@ -195893,8 +195893,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no AxisToSignedAngles public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up native AxisToAngles begins with unsigned vectoangles; vectoangles/vectopitch wrap negative angles into 0..360. The complete signed three-angle output, vertical case and roll construction are not established by those unsigned routines. Original-address provenance recovered: Linux 1.0 IDB 0x80a7338 maps to retained original Linux 1.3 ELF 0x80a969c by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
+        "status": "fixed",
+        "evidence": "Complete consumed basis\u2192three-angle operation inheriting settled AxisToAngles fix. Original1.0 0x80a7338\u2192complete1.3 0x80a969c\u2013RET0x80a97df and full signed direction/Copy/FastSinCos/signedpitch/sqrt providers establish all3angles, no additional output/status. Actual successful CG_Player turret branch constructs real turret/root-animation transforms, MatrixMultiply43 writes disjoint finalbasis0x1e73c2, and AxisToAngles0x1e73d7 writes complete cent+0x1f8 triple. Returning trace paths alter origin only and join0x1e6f49\u2192AnglesToAxis0x1e6f56 with SAMEanglepointer; its complete AngleVectors consumer reads all3 including roll into actual GfxEntity basis. Native fullphase matches. Mac wrapped pitch/yaw and complete roll policy are authoritative, not original signed-value/modulo360/roundtrip equality. Full AxisToAngles includes existing unordered lateral selector at0x2de9b/0x2de9f: COD2_X64 !(temp2<0) selects negatedroll. Inherits fixed, no new defect/primaryoverride; previous repair compiled/reviewed not exercised. Valid live/disjoint storage and actual admitted ordinarily defined owner/frame/index state/returning providers. No malformedstate/early-return output, invented finite/orthogonal invariant, arbitrary ABI/overlap, FP traps/flags/NaNpayload, wholeanimation/renderer/runtime claim. Other upstream/native storage adaptations preserved, unrelated defects not recounted. Independent review-provenance-angles46.md accepted; private recon-provenance-angles46.noindex. Report only, no new source/tests/compilation/CI/replay/runtime."
       },
       {
         "id": "linux:universal/com_math.cpp:3008:AxisTransformComponents",
@@ -200514,8 +200514,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Searched helper-use inventory: vectoanglessigned is referenced at universal/com_math.cpp:3104. No complete Mac caller block and native counterpart for this helper were established in this unit; a same-named native public definition is absent. These specific caller expressions still require comparison. Follow-up native AxisToAngles begins with unsigned vectoangles; vectoangles/vectopitch wrap negative angles into 0..360. The complete signed three-angle output, vertical case and roll construction are not established by those unsigned routines. Original-address provenance recovered: Linux 1.0 IDB 0x80a2dbe maps to retained original Linux 1.3 ELF 0x80a5122 by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
+        "status": "equal",
+        "evidence": "Complete consumed direction\u2192pitch/yaw/zero-roll operation. Original1.0 0x80a2dbe\u2192complete1.3 0x80a5122\u2013RET0x80a5225 includes vertical/general cases and all3stores; original signed policy is identity/intent only. Actual rawfunctions[60]0x34c0d0 binds vectortoangles\u2192Scr_VectorToAngles0x198e66,type0 through full Scr_GetFunction selector. Successful argument0/type4 Scr_GetVector copies all3backingwords to local; complete Mac vectoangles0x2c9d2 writes disjoint pitch/yaw/zero-roll result at actual0x198e8b; Scr_AddVector0x198e93 consumes entire triple. Complete Scr_AllocVector copies all3words0x889f0/f6/fc into independent backing, installed inVMslot0x88313. Native samefullphase and established LP64vector representation preserved. This is a separate fullresult consumer, not overwrittenzero-roll insideAxisToAngles. Mac upwardpitch270 and negativeangle+360 policy explicitly differs from originalsignedvalues; no negative/vertical/quadrant exclusion or modulo360 numericalidentity. Primary arithmetic/owner equal, no inherited unrelated repair/newdefect. Valid suppliedvector/count/type, live storage, successfulcapacity/allocation and returningproviders; inputlocal survives parametercleanup. No returnederror/malformedVMcontinuation, standaloneABI/outputoverlap, FP trap/flags/NaNpayload or wholeVM/runtime claim. Independent review-provenance-angles46.md accepted; private recon-provenance-angles46.noindex. No sourcechanges/tests/compilation/CI/replay/runtime."
       },
       {
         "id": "mac:0x0002c922",
