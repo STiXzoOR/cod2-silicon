@@ -432,7 +432,7 @@ universal/com_shared,7,5,2,0,0
 universal/com_sndalias,26,20,5,0,1
 universal/com_sndalias_load_obj,34,25,7,2,0
 universal/com_vector,0,0,0,0,0
-universal/dvar,130,96,7,21,6
+universal/dvar,130,99,7,21,3
 universal/dvar_cmds,28,23,1,4,0
 universal/fft,2,2,0,0,0
 universal/memfile,12,8,0,0,4
