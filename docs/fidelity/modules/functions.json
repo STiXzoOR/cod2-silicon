@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 252,
+      "unchecked": 251,
       "intentional": 3184,
-      "equal": 4802,
+      "equal": 4803,
       "fixed": 1219
     },
     "scopes": {
@@ -208840,8 +208840,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Read full Linux delimiter/parse/atof loop. Native has no named body/callsite and no complete Mac parenthesized matrix loop was identified; standalone scalar parsing is insufficient. Original-provenance follow-up: exact original Linux1.3 entry0x080b7166, linked to original1.0 anonymous/address anchor0x080b4b8e is retained in recon-provenance-parser5.noindex. Linux is identity/intent evidence only; complete authoritative Mac operation remains unestablished. No absent-call closure or new native implementation."
+        "status": "equal",
+        "evidence": "Complete consumed 1D material literal parse, equal in selected actual positive1..4 numeric domain. Full original1.0 0x80b4b8e\u21921.3 0x80b7166\u2013RET0x80b71eb is void cursor/count/float-array parser with parentheses, pretested signed count, n parse/atof/stores and shared parser/cursor effects. Actual .tech load/session/spaceDelimited0 supplies same cursor to CTAB-backed shader argument owner; float1..4 tokens supply exact1..4 and four-word local. Native validated Apple shader cache supports nonzero CTAB; generic no-CTAB path excluded. Complete Mac Material_ParseVector0x101b5c performs opening match, all n float stores/comma matches and closing match; actual token/backup/line/position/cursor effects included. Vector Boolean ignored by both owners, no invented required result. All parsed elements consumed in full4word Material_RegisterLiteral0x102ca8 (caller initializes unused suffix), pointer stored0x102cb3, same advanced cursor consumed by semicolon match0x1026ef. Mac comma/warning/do-first policy differs original whitespace/error/pretest explicitly. Valid successful count1..4, matching bounded CTAB/rowCount1, stable live storage/session, bounded unquoted recognized numeric tokens, finite atof result within float range, representable line accounting and successful ordinary consumers. No n<=0, malformed/quoted/oversized/error-continuation, rollback, arbitrary ABI/alias, same-text Linux grammar/cursor equivalence, nested2D/3D/wholeloader/runtime claim. Existing escaped-quote and owner fixes outside selected unchanged numeric phase; primary vector/scalar/match/literal operations equal. Independent review-provenance-parse1d47.md accepted. Private recon-provenance-parse1d47.noindex. No source/newdefect/compilation/tests/CI/replay/runtime."
       },
       {
         "id": "linux:universal/q_parse.cpp:991:Com_Parse2DMatrix",
