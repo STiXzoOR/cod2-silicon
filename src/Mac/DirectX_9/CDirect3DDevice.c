@@ -701,17 +701,18 @@ static void CDirect3DDevice_LoadIdentity(void)
         CDirect3DDevice_LoadIdentityMatrix(gl->modelViewMatrix);
     glLoadIdentity();
 }
-/* The fallback draw only manages texture units 0 and 1, but higher units can stay
- * enabled, and fixed-function drawing then multiplies by their textures. This
- * calls GL directly on every draw because neither the wrappers below nor the
- * cached enable flags reliably match GL here. */
-static void CDirect3DDevice_ClearStaleTexUnitsNative(UINT32 unitCount)
+/* Fixed-function drawing multiplies by every enabled texture unit, so units past
+ * the active stages must be off. This calls GL directly because neither the
+ * wrappers below nor the cached enable flags reliably match GL here. */
+static void CDirect3DDevice_ClearTexUnitsNative(UINT32 first, UINT32 unitCount)
 {
     static const GLenum targets[3] = { 0x0DE1, 0x806F, 0x8513 };
     COpenGLNative *gl = CDirect3DDevice_GL();
     GLint active = 0x84C0;
+    if (first >= unitCount)
+        return;
     glGetIntegerv(0x84E0, &active);
-    for (UINT32 unit = 2; unit < unitCount && unit < 16; ++unit) {
+    for (UINT32 unit = first; unit < unitCount && unit < 16; ++unit) {
         glActiveTextureARB(0x84C0 + unit);
         for (UINT32 target = 0; target < 3; ++target) {
             glDisable(targets[target]);
@@ -6834,6 +6835,7 @@ void CDirect3DDevice_ValidateRasterization(const CDirect3DDevice *_this, UINT32 
         }
     }
     if (dev->pixelShader) return;
+    CDirect3DDevice_ClearTexUnitsNative(i, dev->maxTextureUnits);
     for (; i < dev->maxTextureUnits; ++i) {
         if (CVAOPacket_sVAOStatus != USING_CACHED_VAO) {
             if (CVAOPacket_sVAOStatus == USING_GENERIC_VAO && state->genericPacket)
