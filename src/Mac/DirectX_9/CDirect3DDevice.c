@@ -701,6 +701,26 @@ static void CDirect3DDevice_LoadIdentity(void)
         CDirect3DDevice_LoadIdentityMatrix(gl->modelViewMatrix);
     glLoadIdentity();
 }
+/* The fallback draw only manages texture units 0 and 1, but higher units can stay
+ * enabled, and fixed-function drawing then multiplies by their textures. This
+ * calls GL directly on every draw because neither the wrappers below nor the
+ * cached enable flags reliably match GL here. */
+static void CDirect3DDevice_ClearStaleTexUnitsNative(UINT32 unitCount)
+{
+    static const GLenum targets[3] = { 0x0DE1, 0x806F, 0x8513 };
+    COpenGLNative *gl = CDirect3DDevice_GL();
+    GLint active = 0x84C0;
+    glGetIntegerv(0x84E0, &active);
+    for (UINT32 unit = 2; unit < unitCount && unit < 16; ++unit) {
+        glActiveTextureARB(0x84C0 + unit);
+        for (UINT32 target = 0; target < 3; ++target) {
+            glDisable(targets[target]);
+            gl->texUnits[unit].mTargetEnabled[target] = 0;
+        }
+    }
+    glActiveTextureARB((GLenum)active);
+}
+
 #define glEnable CDirect3DDevice_Enable
 #define glDisable CDirect3DDevice_Disable
 #define glActiveTextureARB CDirect3DDevice_ActiveTexture
@@ -1373,7 +1393,16 @@ static void CDirect3DDevice_ApplyTextureStageState(UINT stage)
     DWORD alphaArg1 = g_textureStageState[stage][D3DTSS_ALPHAARG1];
     DWORD alphaArg2 = g_textureStageState[stage][D3DTSS_ALPHAARG2];
 
-#if !defined(COD2_X64)
+#if defined(COD2_X64)
+    /* Only the shader fallback draw reaches this, and D3D ignores stage state
+     * while a pixel shader is active. The Mac device defaults (SELECTARG1 of
+     * diffuse) would drop texture alpha, so draw plain texture * vertex. */
+    if (stage == 0) {
+        colorOp = alphaOp = D3DTOP_MODULATE;
+        colorArg1 = alphaArg1 = 2;
+        colorArg2 = alphaArg2 = 1;
+    }
+#else
     if (!colorOp)
         colorOp = D3DTOP_MODULATE;
     if (!alphaOp)

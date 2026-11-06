@@ -880,6 +880,7 @@ static void R_InitNativeDeviceCaps(void)
     int requested;
     int renderer;
     int allowed;
+    int best;
 
     /* SDL creates the current GL context in CreateDevice. Query the native
      * provider here, before material/system initialization consumes its caps. */
@@ -901,16 +902,20 @@ static void R_InitNativeDeviceCaps(void)
               (caps.VertexShaderVersion >> 8) & 255, caps.VertexShaderVersion & 255);
     allowed = R_CheckDxCaps(&caps);
     requested = r_rendererPreference->current.integer;
-    renderer = requested && ((allowed >> requested) & 1) ? requested : 2;
+    /* Follow Windows 0x100117cb, which keeps the best allowed path. Mac 0xcc599
+     * hardcodes Direct3D 7 here, a visible downgrade on capable hardware. */
+    best = (allowed & 2) ? 1 : 2;
+    renderer = requested && ((allowed >> requested) & 1) ? requested : best;
     if (!requested) {
-        ri.Printf(0, "Using %s code path because it is the best available path on this hardware.\n", "Direct3D 7");
+        ri.Printf(0, "Using %s code path because it is the best available path on this hardware.\n",
+                  renderer == 1 ? "Direct3D 9" : "Direct3D 7");
     } else if (renderer == requested) {
         ri.Printf(0, "Using %s code path because r_rendererPreference is set to %s.\n",
                   renderer == 1 ? "Direct3D 9" : "Direct3D 7",
                   ri.Dvar_EnumToString((dvar_t *)r_rendererPreference));
     } else {
         ri.Printf(0, "Using %s code path because the requested %s code path is unavailable.\n",
-                  "Direct3D 7", requested == 1 ? "Direct3D 9" : "Direct3D 7");
+                  renderer == 1 ? "Direct3D 9" : "Direct3D 7", requested == 1 ? "Direct3D 9" : "Direct3D 7");
     }
     ri.Dvar_SetInt(r_rendererInUse, renderer);
 
