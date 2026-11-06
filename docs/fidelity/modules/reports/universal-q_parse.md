@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**30/36 reconciled: 25 equal, 3 fixed, 2 intentional; 6 unchecked.** Mac 1.3 is the authority. Every assigned row was inspected.
+**31/36 reconciled: 26 equal, 3 fixed, 2 intentional; 5 unchecked.** Mac 1.3 is the authority. Every assigned row was inspected.
 
 ## Corrections
 
@@ -20,7 +20,7 @@ Retained bounded diagnostic formatting where Mac uses `vsprintf`. Existing defin
 
 ## Evidence gaps
 
-Eight rows remain unchecked: `Com_Parse1DMatrix`, `Com_Parse2DMatrix`, `Com_Parse3DMatrix`, `Com_ParseFloatOnLine`, `Com_ParseRestOfLine`, `Com_SetParseNegativeNumbers`, `Com_SetScriptErrorPrefix`, and `Com_SkipBracedSection`.
+The initial pass left eight rows unchecked (later resolutions are documented below): `Com_Parse1DMatrix`, `Com_Parse2DMatrix`, `Com_Parse3DMatrix`, `Com_ParseFloatOnLine`, `Com_ParseRestOfLine`, `Com_SetParseNegativeNumbers`, `Com_SetScriptErrorPrefix`, and `Com_SkipBracedSection`.
 
 Their Linux definitions were read, and native consumers/implementations and Mac identities were sought. No complete corresponding identity was established. The native UI float parser adds empty-token failure handling, so it is insufficient evidence for the unconditional float-on-line wrapper. The two setters have no identified native setting callsite; their Mac `.eh` labels are zero-address entries. Scalar parsing and delimiter helpers alone do not establish nested matrix or maximum-nesting behavior.
 
@@ -72,3 +72,18 @@ The new evidence establishes a real consumer beyond initialization. Actual Mater
 Native material allocation/name copying precedes BeginSession while Mac does it after. The accepted scope is the successful serialized setter operation on the resulting live current record, not whole allocation/initialization timing. Valid session index/backing and returning nonreentrant providers are required. Arbitrary API/nonzero input, overflow continuation, concurrent/reentrant parse state, whole parser/material loader and runtime behavior remain excluded. No existing preceding diagnostic or downstream parser/material repair is inherited by the unchanged byte write. Com_SetScriptErrorPrefix remains unchecked; warning-prefix use is not its error-prefix consumer.
 
 Independent review accepted in units/review-provenance-parserflag40.md. Fresh complete original/provider and seven Mac bodies, exact raw store/read/literal bytes and source hashes are private in recon-provenance-parserflag40.noindex. One equal closure, zero new defects or source changes. No compilation, tests, CI, full build, replay or runtime verification.
+
+
+## Complete material literal array parse (parse1d47)
+
+Com_Parse1DMatrix is equal through the actual successful positive1..4-element material vector literal operation. The full original1.3 0x80b7166–RET0x80b71eb (original1.0 anchor0x80b4b8e) takes cursor/count/float-output, matches parentheses with error-mode0, pretests its signed count and performs all n parse/atof/store steps. It returns void; shared parser state and cursor updates are part of its operation. Its whitespace-token grammar, nonpositive-count behavior and returned-error continuation are not substituted for Mac policy.
+
+Actual Material_FinishLoadingInstance reads the .tech backing at0x10478f, begins its session0x1047a5, disables space-delimited parsing0x1047bd and supplies that same cursor to shader argument parsing0x1053f0/0x10544f. A matched float CTAB record selects float1..float4 with actual counts1..4 and a backed four-float local. The native Apple shader-cache provider supports this nonzero validated metadata path; the generic no-CTAB fallback is not claimed to select it. Valid count1..255 metadata, matching float record, rowCount1 and successful preceding allocations/loading are required. No whole material/cache provider certification is added.
+
+Complete Mac Material_ParseVector0x101b5c matches '(', parses/stores every actual element with comma matches between, and consumes ')'. Native retains this full do-first loop and warning-mode failure policy. Actual ParseFloat0xae7ba selects the same current parser record, consumes through ParseExt with linebreaks allowed, calls atof and narrows to float. The selected phase includes token clearing/termination, backup cursor/line, line counting, previous/current token positions and the final advanced caller cursor. At successful completion all n output floats coexist in the real array.
+
+The vector Boolean is ignored by both Mac and native callers; no Boolean consumer is invented for the void original role. Actual Material_RegisterLiteral0x102ca8 consumes all four local words, including the independently initialized suffix for n<4, by complete comparison or full storage in its existing literal pool; the returned pointer goes into the shader argument0x102cb3. The same updated cursor then reaches the actual semicolon match0x1026ef. Thus both complete array output and parse-position/state effects have real consumers. Existing pool-count behavior and native storage policies are preserved.
+
+Scope is successful ordinary unquoted numeric syntax recognized by the actual session, positive1..4 counts, valid stable nonconcurrent parser/cursor/output/file backing, bounded tokens/delimiters and representable line accounting. Each atof result must be finite and within representable float range before narrowing; short token length alone does not make 1e100 safe. No arbitrary n<=0, malformed/quoted/oversized token, returned diagnostic continuation, rollback, arbitrary exported ABI/overlap, same-text Linux cursor/grammar equivalence, nested2D/3D parse, whole loader/renderer or runtime claim. The existing escaped-quote parser fix and CTAB/row/LP64 owner fixes lie outside this unchanged selected numeric/punctuation parse result.
+
+Independent review accepted in units/review-provenance-parse1d47.md; exact originals, eleven Mac containers, raw delimiters/floatN words, source hashes and peer receipts remain private in recon-provenance-parse1d47.noindex. One equal closure, zero new defects or source changes. No compilation, tests, CI, full build, replay or runtime execution. Five helpers remain unchecked: Com_Parse2DMatrix, Com_Parse3DMatrix, Com_ParseRestOfLine, Com_SetScriptErrorPrefix and Com_SkipBracedSection.
