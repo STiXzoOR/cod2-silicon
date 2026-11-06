@@ -6750,13 +6750,15 @@ static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top,
 #if defined(COD2_X64)
     unsigned int receiverType = (*top)->type;
     VM_BuiltinMethodResult result = { VM_BUILTIN_METHOD_COMPLETE, receiverType };
-    Bool preserveCount = fixedZeroCount && receiverType < 24u;
+    Bool preserveCount = fixedZeroCount && receiverType < 24u &&
+        (((struct scrVarPub_t *)imp_scrVarPub)->evaluate || compilePub->script_loading);
     Bool consumedReference = receiverType == VAR_STRING || receiverType == VAR_LOCALIZED_STRING;
     if (receiverType == VAR_VECTOR)
         consumedReference = !*((const byte *)SCR_VEC_PTR((*top)->u) - 1);
 
-    /* Opcode 0x45 has no original count store. Validate receivers
-     * before retaining the native successful-call count-zero adaptation. */
+    /* Opcode 0x45 has no original count store. Only the returned-error modes
+     * keep a stale count: a jumping error reaches the native checkpoint, which
+     * pops outparamcount values, so a stale count there corrupts the stack. */
     if (!preserveCount)
         scrVmPub.outparamcount = paramCount;
 #else
