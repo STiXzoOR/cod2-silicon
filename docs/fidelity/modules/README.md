@@ -56,7 +56,7 @@ reliable whole-project completion date.
 
 ## Current workload and estimate
 
-All of `game/` is reconciled. The ledger currently has 246 unchecked entries: 246 assigned engine entries and 0 unassigned entries. There are 4,805 equal, 1,222 fixed and 3,184 intentional entries. Intentional entries include the 1,360 bundled-library exclusions and documented platform or native choices. Module reports describe the evidence and runtime limits.
+All of `game/` is reconciled. The ledger currently has 0 unchecked entries: 0 assigned engine entries and 0 unassigned entries. There are 4,806 equal, 1,222 fixed and 3,429 intentional entries. Intentional entries include the 1,360 bundled-library exclusions and documented platform or native choices. Module reports describe the evidence and runtime limits.
 
 The original planning assumption of 20–40 entries per active hour still gives
 approximately **200–400 active hours**, before final cross-module runtime
@@ -210,3 +210,7 @@ Batch21 closes 84 additional entries at engine/fixture `a52e5e27`. Both dedicate
 Batch22 locally integrates 28 further closures at engine/fixture `28e7d452`. Both builds, source/ABI checks and baseline replays pass, but the sanitizer platform gate failed twice. The user authorized pushing candidate `1f8e4ea2` with those failures recorded, followed by repair; [initial verification](reports/integration-batch22-pending.md) and [platform repair](reports/integration-platform-repair.md).
 
 Platform repair `f8538c19` passes both dedicated builds, local stages02–10 and the stock ABI audit, including all46sanitized/48plain platform cases. The user stopped all CI for cost reasons during the CoD2x audit; full verification remains incomplete. GitHub Actions is disabled repository-wide. See [repair evidence, interruption and limits](reports/integration-platform-repair.md). Do not restart CI without a new user instruction.
+
+The final closure on 2026-11-06 closed the last 246 rows. None of them has a Mac address, so every function that exists in the Mac binary already had a verdict. 245 are `intentional`: names from the Linux and Windows reconstructions with no code in the Mac binary. Their evidence says nothing was compared, so `intentional` here does not mean the behaviour was proven equal. Of the 246, 186 were classified by script (no Mac text symbol, no port code, and unreferenced or reached only from other absent helpers), and an independent sample of 15 held. The other 60 were checked against the binary and no missing behaviour was found; `Dvar_SetVec2FromSource` is `equal` to its inlined Mac code.
+
+Zero unchecked means every row has a verdict. It does not mean the port is verified at runtime. The replay covers the dedicated server only, and many fixes are compiled and reviewed but never executed. A spot-check of 30 closed rows found 3 wrong, none noticeable in normal play, so more NaN-only differences probably remain.
