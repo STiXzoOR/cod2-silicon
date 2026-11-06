@@ -1,8 +1,8 @@
 # bgame/bg_pmove module reconciliation
 
-Updated 2026-11-04.
+Updated 2026-11-06.
 
-**55/55 reconciled: 49 equal, 6 fixed.** Mac 1.3 is the authority; Linux 1.3 was read only. The legacy source is unchanged.
+**55/55 reconciled: 48 equal, 7 fixed.** Mac 1.3 is the authority; Linux 1.3 was read only. The legacy source is unchanged.
 
 Mac inlines `PmoveSingle` and every move type into `Pmove` at 0x70c7e. The dispatch table at 0x329210 was decoded, and each
 block was compared with its native function.
@@ -60,3 +60,13 @@ COD2_X64=OFF source is byte-identical; there are no source __LINE__ expansions.
 No tests, CI, replay, full build or runtime exercise was performed. Private
 packet: recon-crashland5.noindex; compile logs/objects:
 manual-crashland-compile-dfd2eacbaf09.noindex.
+
+## Unordered inertia selectors (accel49)
+
+`PM_Accelerate` at 0x6b970 now preserves three Mac unordered branches. The inertiaMax/accelspeed comparison at 0x6ba22–25 skips only ordered greater-or-equal; the oldVelocity square-sum threshold at 0x6ba47–55 admits unordered as well as greater-or-equal; and the normalized old/new direction dot comparison at 0x6bbbf–c8 skips the clamp only for ordered greater-or-equal. Native used ordered comparisons that excluded these unordered paths. The COD2_X64 branches now use the corresponding negated ordered predicates, preserving float operation order, the double threshold, both local vector copies/normalizers, debug prints, and the final three-coordinate velocity update.
+
+The complete primary body and actual inputs/results were read. A static valid typed-input witness uses quiet-NaN oldVelocity with finite current velocity, direction, wishspeed100, accel9, frametime0.1, stopspeed100, inertiaMax50 and inertiaAngle0: Mac reaches the dot clamp and applies50, while the old native gate applied about90. This is a source/binary input-domain proof with ordinarily returning relevant FP operations, not an engine execution or a demonstrated gameplay trigger. Raw snapshot velocity fields copy full float representations; prediction preserves oldVelocity across its snapshot copy, and Pmove smooths oldVelocity before snapping velocity. Those actual storage roles establish no finite-only invariant. No engine-wide FP exception behavior, whole prediction/movement audit, or runtime reachability is claimed.
+
+The existing MAXSS source correction and approved snap policy are preserved. Both MINSS sites were inspected but left unchanged: a distinct source-only-NaN numerical result was not established under the actual fixed-acceleration/clamped-frametime caller constraints. The ledger still marked this primary equal despite the earlier MAXSS source correction; the exact previous evidence is preserved in the override receipt, and this entry now becomes fixed for one additional three-selector defect group. No unchecked entry closes.
+
+All four actual stock/CoD2x client/dedicated compilations of the changed translation unit passed, at low priority. Exact legacy text and all five actual inactive preprocessing outputs, including assertion-enabled processing, are unchanged. Source hash `f0b3fbd4ff9aff4871c61d8f8e0cb6e2df87fe82bf5238d8a2d41bdbd25f5d68`; receipts in `units/provenance-accel49.compile.json`, independent review in `units/review-provenance-accel49.md`, private evidence in `recon-provenance-accel49.noindex`. Compiled and reviewed, not runtime exercised; no tests, CI, replay, full build, or new tests.

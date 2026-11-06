@@ -83,7 +83,7 @@ bgame/bg_animation_mp,48,39,5,0,4
 bgame/bg_jump,14,14,0,0,0
 bgame/bg_mantle,19,19,0,0,0
 bgame/bg_misc,13,13,0,0,0
-bgame/bg_pmove,55,49,6,0,0
+bgame/bg_pmove,55,48,7,0,0
 bgame/bg_slidemove,4,2,2,0,0
 bgame/bg_weapons,136,118,10,8,0
 bgame/bg_weapons_load_obj,15,13,1,1,0
