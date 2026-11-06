@@ -772,7 +772,9 @@ void CDirect3DDevice_ValidateLighting(const CDirect3DDevice *_this)
         return;
     COpenGL_SetColorMaterialEnable((const COpenGL *)gl,
                                    dev->colorVertex && dev->hasDiffuseColor);
-    D3DXMATRIX inverse, transform;
+    /* D3DXMATRIX is only a small placeholder type here, so a by-value object
+     * is far smaller than the 16 floats these calls write. */
+    float inverse[16], transform[16];
     int haveTransform = 0;
     for (UINT i = 0; i < 8; ++i) {
         const LightInfoType *light = &dev->nativeLights[i];
@@ -789,11 +791,12 @@ void CDirect3DDevice_ValidateLighting(const CDirect3DDevice *_this)
         if (!haveTransform) {
             /* Mac ignores this return. The native math provider supplies its
              * defined input-copy fallback if the generic inverse fails. */
-            D3DXMatrixInverse(&inverse, NULL, (const D3DXMATRIX *)gl->modelViewMatrix);
-            D3DXMatrixMultiply(&transform, (const D3DXMATRIX *)dev->convertedView, &inverse);
+            D3DXMatrixInverse((D3DXMATRIX *)inverse, NULL, (const D3DXMATRIX *)gl->modelViewMatrix);
+            D3DXMatrixMultiply((D3DXMATRIX *)transform, (const D3DXMATRIX *)dev->convertedView,
+                               (const D3DXMATRIX *)inverse);
             haveTransform = 1;
         }
-        D3DXVec4Transform(&transformed, &direction, &transform);
+        D3DXVec4Transform(&transformed, &direction, (const D3DXMATRIX *)transform);
         glLightfv(0x4000 + i, 0x1203, (const GLfloat *)&transformed);
     }
 }
