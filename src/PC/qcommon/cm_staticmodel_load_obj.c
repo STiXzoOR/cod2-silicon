@@ -136,17 +136,33 @@ void CM_LoadStaticModels(void)
         cStaticModel_t *staticModel = &cm.staticModelList[modelIdx];
 
         if (modelName[7] == '\0') {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15" "Invalid static model name\n");
+#else
             Com_Error(1, "CM_LoadStaticModels: empty model name");
+#endif
         }
 
         if (scale[0] == 0.0f) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15" "Static model [%s] has x scale of 0.0\n", modelName + 7);
+#else
             Com_Error(1, "Static model [%s] has x scale of 0.0\n", modelName + 7);
+#endif
         }
         if (scale[1] == 0.0f) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15" "Static model [%s] has y scale of 0.0\n", modelName + 7);
+#else
             Com_Error(1, "Static model [%s] has y scale of 0.0\n", modelName + 7);
+#endif
         }
         if (scale[2] == 0.0f) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15" "Static model [%s] has z scale of 0.0\n", modelName + 7);
+#else
             Com_Error(1, "Static model [%s] has z scale of 0.0\n", modelName + 7);
+#endif
         }
 
         void *model = CM_XModelPrecache(modelName + 7);

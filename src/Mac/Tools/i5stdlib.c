@@ -42,6 +42,30 @@ char *strupr(char *str)
 
 char *itoa(int val, char *str, int radix)
 {
+#if defined(COD2_X64)
+    int value = val;
+    int negative = value < 0;
+    int length = 0;
+    if (negative)
+        value = (int)(0u - (unsigned int)value);
+    do {
+        int digit = value % radix;
+        str[length++] = (char)(digit > 9 ? digit + 'A' - 10 : digit + '0');
+        value /= radix;
+    } while (value != 0);
+    if (negative)
+        str[length++] = '-';
+    str[length] = '\0';
+
+    /* The Mac reverses the written C string, including its signed remainders. */
+    length = (int)strlen(str);
+    for (int first = 0, last = length - 1; first < last; ++first, --last) {
+        char digit = str[first];
+        str[first] = str[last];
+        str[last] = digit;
+    }
+    return str;
+#else
     char buf[34];
     int i = 0;
     int isNegative = 0;
@@ -76,4 +100,5 @@ char *itoa(int val, char *str, int radix)
     }
 
     return str;
+#endif
 }

@@ -231,6 +231,13 @@
     "reason": "Allocates file/string bytes plus one nul terminator; count is characters, not pointer slots."
   },
   {
+    "file": "src/Mac/Metal/metal_dispatch.m",
+    "text": "if (object && constructor && !strncmp(method, constructor + 1, (size_t)(constructor - method)))",
+    "count": 1,
+    "classification": "safe",
+    "reason": "constructor is the non-null strchr result for the underscore in a NUL-terminated method name. Advancing one char selects the suffix; pointer subtraction measures the prefix in that same string. This parses a method identifier, not an engine object layout."
+  },
+  {
     "file": "src/Mac/Tools/MacWin32.c",
     "text": "strncpy(lpFindFileData->cFileName, slash ? slash + 1 : lpFileName, 259);",
     "count": 1,
@@ -7446,5 +7453,229 @@
     "count": 1,
     "classification": "safe",
     "reason": "Scalar float arithmetic on the typed dvar_t.current.value member; no pointer arithmetic or byte offset. Directional bob speed scale in PM_Footsteps (Mac 1.3 0x6ed5c), covered by the native movement/reference fixtures."
+  },
+  {
+    "file": "src/Mac/Metal/metal_backend.m",
+    "text": "void *object = calloc(1, 4096);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Native Metal COM shell capacity, not an original-object size or x86 field offset. Backend state is in sidecars; the shared CPU buffer, declaration and surface prefixes fit this allocation. Dispatch prevents routing the shell through the Classic device implementation."
+  },
+  {
+    "file": "src/Mac/Metal/metal_backend.m",
+    "text": "const char *op = strchr(method, '_'); op = op ? op + 1 : method;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Advances one character past a found underscore in a NUL-terminated method identifier; not engine object storage."
+  },
+  {
+    "file": "src/Mac/Metal/metal_resources.m",
+    "text": "if (!P(1)) status = INVALID; else memcpy(P(1), desc, (r->kind == MAC_SHIM_INDEX_BUFFER ? 5 : 6) * sizeof(uint32_t));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "D3D index/vertex buffer descriptors contain respectively five/six fixed 32-bit fields and no pointers. The local uint32_t descriptor supplies that exact API record; native descriptor sizes are asserted by the resource bridge fixture."
+  },
+  {
+    "file": "src/Mac/Metal/metal_resources.m",
+    "text": "memset(nullBuffer.contents, 0, 256); Track(nullBuffer);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Zeroes the 256-byte Metal buffer allocated immediately above with newBufferWithLength:256; byte capacity is independent of engine pointer width."
+  },
+  {
+    "file": "src/Mac/Metal/resource_formats.m",
+    "text": "size_t columns = ((size_t)width + block - 1) / block;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Ceiling division of a uint32 width by 1 or 4 texels per format block. Arithmetic is promoted to native size_t before addition; no object-layout addressing."
+  },
+  {
+    "file": "src/Mac/Metal/resource_formats.m",
+    "text": "size_t rows = ((size_t)height + block - 1) / block;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Ceiling division of a uint32 height by 1 or 4 texels per format block. Arithmetic is promoted to native size_t before addition; no object-layout addressing."
+  },
+  {
+    "file": "src/Mac/Metal/resource_formats.m",
+    "text": "uint16_t a = Read16(color), b = Read16(color + 2);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Two consecutive 16-bit little-endian RGB565 endpoints in the fixed BC compressed block format, not native object fields."
+  },
+  {
+    "file": "src/Mac/Metal/resource_formats.m",
+    "text": "memcpy(pixels[i], colors[(color[4 + i / 4] >> (2 * (i % 4))) & 3], 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Expands a fixed BC block 2-bit color selector into one four-byte RGBA texel. The 16-texel loop and four-color table bound these byte-array indices."
+  },
+  {
+    "file": "src/Mac/Metal/resource_formats.m",
+    "text": "memcpy(rgba + (((size_t)z * height + y + py) * width + x + px) * 4, pixels[py * 4 + px], 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Computes a four-byte RGBA texel destination in caller-provided image storage; the per-block loops restrict texels to the image dimensions. This is pixel stride, not a native pointer or engine-record stride."
+  },
+  {
+    "file": "src/Mac/Metal/resource_formats.m",
+    "text": "case 20: memcpy(out, p, 3); break;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "D3DFMT_R8G8B8 carries exactly three color bytes; the RGBA destination alpha was initialized separately. Neither source nor destination is an engine object."
+  },
+  {
+    "file": "src/Mac/Metal/resource_formats.m",
+    "text": "memcpy(out, palette[*p], 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Copies one four-byte RGBA palette entry indexed by an unsigned input byte; the palette is declared as 256 entries of four bytes."
+  },
+  {
+    "file": "src/Mac/Metal/metal_backend.m",
+    "text": "else if (U(1) <= 256 && U(3) <= 256 - U(1)) memcpy(P(2), bank->env + U(1), U(3) * sizeof(bank->env[0]));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Transfer size uses sizeof the actual typed array element; numbered U/P macro arguments identify dispatch argument slots, not byte offsets. The register range is bounded to the 256-entry bank before copying."
+  },
+  {
+    "file": "src/Mac/Metal/metal_backend.m",
+    "text": "else if (*op == 'S') memcpy(shadow.transform[U(1)], P(2), sizeof(shadow.transform[0]));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Transfer size uses sizeof the actual typed array element; numbered U/P macro arguments identify dispatch argument slots, not byte offsets. The transform copy uses one complete typed matrix row."
+  },
+  {
+    "file": "src/Mac/Metal/metal_backend.m",
+    "text": "else memcpy(P(2), shadow.transform[U(1)], sizeof(shadow.transform[0]));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Transfer size uses sizeof the actual typed array element; numbered U/P macro arguments identify dispatch argument slots, not byte offsets. The transform copy uses one complete typed matrix row."
+  },
+  {
+    "file": "src/Mac/Metal/metal_resources.m",
+    "text": "else if (*op == 'S') { memcpy(palettes[U(1)], P(2), sizeof(palettes[0])); if (U(1) == currentPalette) DirtyPalettes(); }",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Transfer size uses sizeof the actual typed array element; numbered U/P macro arguments identify dispatch argument slots, not byte offsets. The palette copy uses one complete typed palette entry array."
+  },
+  {
+    "file": "src/Mac/Metal/metal_resources.m",
+    "text": "else memcpy(P(2), palettes[U(1)], sizeof(palettes[0]));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Transfer size uses sizeof the actual typed array element; numbered U/P macro arguments identify dispatch argument slots, not byte offsets. The palette copy uses one complete typed palette entry array."
+  },
+  {
+    "file": "src/PC/script/scr_compiler.c",
+    "text": "if (value == (unsigned int)Scr_LoadPackedInt((byte *)caseTable + (i + 1) * 8)) {",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac EmitSwitch uses packed eight-byte rows: a 32-bit key followed by a 32-bit code-position handle. Byte offsets preserve that format; memcpy loads avoid alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_compiler.c",
+    "text": "unsigned int value = (unsigned int)Scr_LoadPackedInt((byte *)caseTable + i * 8);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac EmitSwitch uses packed eight-byte rows: a 32-bit key followed by a 32-bit code-position handle. Byte offsets preserve that format; memcpy loads avoid alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_variable.c",
+    "text": "memcpy(&value, entry + 1, sizeof(value));",
+    "count": 2,
+    "classification": "safe",
+    "reason": "Mac Scr_DumpScriptThreads reads the packed stack record as one type byte plus a 32-bit value. The native arena retains that five-byte format; memcpy avoids alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(record + 1));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac script stack archives retain five-byte records (one type byte and a 32-bit value/code-position handle). Native byte offsets and memcpy preserve those widths without requiring alignment."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "VM_StoreI32(dst + 1, value->u.intValue);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac script stack archives retain five-byte records (one type byte and a 32-bit value/code-position handle). Native byte offsets and memcpy preserve those widths without requiring alignment."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "VM_StoreI32(record + 1, SCR_CODEPOS_ENC(scrVmPub.function_frame->fs.pos));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac script stack archives retain five-byte records (one type byte and a 32-bit value/code-position handle). Native byte offsets and memcpy preserve those widths without requiring alignment."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "VM_StoreI32(record + 1, value->u.intValue);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac script stack archives retain five-byte records (one type byte and a 32-bit value/code-position handle). Native byte offsets and memcpy preserve those widths without requiring alignment."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "const char *caseCodePos = SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(next + 4));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac bytecode uses packed 16-bit jumps/counts, 32-bit branch offsets and eight-byte switch rows. These are byte-stream offsets over the unchanged 32-bit handle format; memcpy removes alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "const char *currentCodePos = SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(*pos + 4));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac bytecode uses packed 16-bit jumps/counts, 32-bit branch offsets and eight-byte switch rows. These are byte-stream offsets over the unchanged 32-bit handle format; memcpy removes alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "const char *tablePos = opcodeStart + 5 + VM_LoadI32(*pos);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac bytecode uses packed 16-bit jumps/counts, 32-bit branch offsets and eight-byte switch rows. These are byte-stream offsets over the unchanged 32-bit handle format; memcpy removes alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "return next + 2 + 8 * VM_LoadU16(next);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac bytecode uses packed 16-bit jumps/counts, 32-bit branch offsets and eight-byte switch rows. These are byte-stream offsets over the unchanged 32-bit handle format; memcpy removes alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "return next + 2 - VM_LoadU16(next);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac bytecode uses packed 16-bit jumps/counts, 32-bit branch offsets and eight-byte switch rows. These are byte-stream offsets over the unchanged 32-bit handle format; memcpy removes alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "savedValue.u.intValue = VM_LoadI32(buf + 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac script stack archives retain five-byte records (one type byte and a 32-bit value/code-position handle). Native byte offsets and memcpy preserve those widths without requiring alignment."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "top->u.intValue = VM_LoadI32(record + 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac script stack archives retain five-byte records (one type byte and a 32-bit value/code-position handle). Native byte offsets and memcpy preserve those widths without requiring alignment."
+  },
+  {
+    "file": "src/PC/bgame/bg_weapons.c",
+    "text": "target = gaspFrac * (player_breath_gasp_scale->current.value - 1.0f) + 1.0f;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Scalar float arithmetic on dvar_t.current.value; no byte offset or pointer arithmetic. Mac PM_Weapon hold-breath scaling at 0x7cd17-0x7cd57 preserves these separate rounding points."
+  },
+  {
+    "file": "src/PC/xanim/dobj.c",
+    "text": "duplicate = (const unsigned char *)(duplicateBits + 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "The duplicate-parts string begins with four 32-bit bone-mask words followed by byte bone-index pairs. Typed int-pointer addition skips its 16-byte pointer-free mask on both ABIs; DObjCalcSkel Mac 1.3 0x7561a and the synthetic duplicate-mask fixture confirm the format."
   }
 ]

@@ -15,6 +15,14 @@ static dvar_t paused, timeout, connectTimeout, ingame;
 const dvar_t *cl_paused = &paused, *sv_paused = &paused;
 const dvar_t *cl_timeout = &timeout, *cl_connectTimeout = &connectTimeout, *cl_ingame = &ingame;
 static int drops;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+const clientConnection_t *clc = clientConnections;
+int lastUpdateKeyAuthTime;
+static dvar_t lanAuthorize;
+const dvar_t *net_lanauthorize = &lanAuthorize;
+int Sys_IsLANAddress(netadr_t address) { (void)address; return 1; }
+void CL_RequestAuthorization(void) { lastUpdateKeyAuthTime = cls.realtime; }
+#endif
 #if defined(COD2_CODX) && COD2_CODX
 void Cod2x_Frame(int connected, int demo) { (void)connected; (void)demo; }
 void Cod2x_DemoClientFrame(void) {}

@@ -8,6 +8,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import Mock, call, patch
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -89,11 +90,11 @@ class VerificationTests(unittest.TestCase):
         (data / 'main/demos/test.dm_1').write_text('synthetic fixture')
         return path, data
 
-    def record(self, body, frames=2):
+    def record(self, body, frames=2, timeout=3):
         binary, data = self.fake(body)
         return subprocess.run([sys.executable, str(ROOT / 'tools/parity/record.py'),
             '--binary', str(binary), '--data', str(data), '--output', str(self.path / 'run'),
-            '--frames', str(frames), '--timeout', '.3'], capture_output=True, text=True)
+            '--frames', str(frames), '--timeout', str(timeout)], capture_output=True, text=True)
 
     def test_record_success(self):
         result = self.record('''import os
@@ -110,7 +111,7 @@ Path(os.environ['SYSDIFF_DUMP']).write_text('e0 eq=22222222\\n')
         self.assertNotEqual(result.returncode, 0)
 
     def test_record_timeout(self):
-        result = self.record('import time\ntime.sleep(10)\n')
+        result = self.record('import time\ntime.sleep(10)\n', timeout=.3)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('exceeded', result.stderr)
 
@@ -129,7 +130,8 @@ sys.exit(7)
 from pathlib import Path
 args = sys.argv
 home = Path(args[args.index('fs_homepath') + 1].strip('"'))
-assert args[args.index('cl_freezeDemo') + 1] == '1'
+assert args[args.index('cl_freezeDemo') + 1] == '0'
+assert args[args.index('+timedemo') + 1] == 'test'
 (home / 'main/demos').mkdir(parents=True)
 (home / 'main/demos/timedemo_test_mode_0.csv').write_text('1,2\\n2,4\\n3,10\\n')
 (home / 'main/qconsole_mp.log').write_text('4 frames, 0.1 seconds: 40.0 fps\\n')
@@ -178,6 +180,99 @@ time.sleep(30)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('No completion', result.stderr)
         self.assertFalse((self.path / 'bench/results.json').exists())
+
+    @unittest.skipUnless(
+        all(hasattr(os, name) for name in ("waitid", "P_PID", "WEXITED", "WNOWAIT")),
+        "unreaped-child observation requires waitid/WNOWAIT")
+    def test_stop_reaps_zombie_group_leader(self):
+        process = subprocess.Popen([sys.executable, '-c', 'pass'], start_new_session=True)
+        try:
+            # Observe exit without reaping: Darwin rejects signals to zombie-only groups.
+            os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOWAIT)
+            bench.stop(process)
+            self.assertEqual(process.returncode, 0)
+        finally:
+            process.wait()
+
+    def test_stop_reaps_exit_between_poll_and_group_probe(self):
+        process = Mock(pid=123)
+        process.poll.side_effect = [None, 0]
+        with patch.object(bench.os, 'killpg', side_effect=[
+                None, PermissionError('zombie group'), ProcessLookupError()]) as killpg:
+            bench.stop(process)
+        self.assertEqual(killpg.call_args_list,
+                         [call(123, signal.SIGTERM), call(123, 0), call(123, 0)])
+        process.wait.assert_called_once_with()
+
+    def test_stop_waits_for_exiting_leader_before_retrying_group_probe(self):
+        process = Mock(pid=123)
+        process.poll.side_effect = [None, None]
+        process.wait.return_value = -signal.SIGTERM
+        with patch.object(bench.os, 'killpg', side_effect=[
+                None, PermissionError('exiting group'), ProcessLookupError()]) as killpg:
+            with patch.object(bench.time, 'monotonic', return_value=0):
+                with patch.object(bench.time, 'sleep'):
+                    bench.stop(process, grace=.2)
+        self.assertEqual(killpg.call_args_list,
+                         [call(123, signal.SIGTERM), call(123, 0), call(123, 0)])
+        process.wait.assert_called_once_with()
+
+    def test_stop_waits_for_group_exit_after_reaping_leader(self):
+        process = Mock(pid=123)
+        process.poll.return_value = 0
+        with patch.object(bench.os, 'killpg', side_effect=[
+                None, PermissionError('exiting descendant'),
+                PermissionError('exiting descendant'), ProcessLookupError()]) as killpg:
+            with patch.object(bench.time, 'monotonic', return_value=0):
+                with patch.object(bench.time, 'sleep'):
+                    bench.stop(process, grace=.2)
+        self.assertEqual(killpg.call_args_list,
+                         [call(123, signal.SIGTERM), call(123, 0), call(123, 0), call(123, 0)])
+        process.wait.assert_called_once_with()
+
+    def test_stop_retries_transient_permission_failure_at_escalation(self):
+        process = Mock(pid=123)
+        process.poll.return_value = 0
+        with patch.object(bench.os, 'killpg', side_effect=[
+                None, None, PermissionError('exiting group'), ProcessLookupError()]) as killpg:
+            with patch.object(bench.time, 'monotonic', side_effect=[0, 0, .3, .3]):
+                with patch.object(bench.time, 'sleep') as sleep:
+                    bench.stop(process, grace=.2)
+        self.assertEqual(killpg.call_args_list, [call(123, signal.SIGTERM), call(123, 0),
+                         call(123, signal.SIGKILL), call(123, signal.SIGKILL)])
+        sleep.assert_called_once_with(.05)
+        process.wait.assert_called_once_with()
+
+    def test_stop_preserves_persistent_permission_failure_at_escalation(self):
+        process = Mock(pid=123)
+        process.poll.return_value = 0
+        error = PermissionError('denied')
+        with patch.object(bench.os, 'killpg', side_effect=[None, None, error, error]) as killpg:
+            with patch.object(bench.time, 'monotonic', side_effect=[0, 0, .3, .3, .3]):
+                with patch.object(bench.time, 'sleep') as sleep:
+                    with self.assertRaises(PermissionError) as caught:
+                        bench.stop(process, grace=.2)
+        self.assertIs(caught.exception, error)
+        self.assertEqual(killpg.call_args_list, [call(123, signal.SIGTERM), call(123, 0),
+                         call(123, signal.SIGKILL), call(123, signal.SIGKILL)])
+        sleep.assert_called_once_with(.05)
+        process.wait.assert_not_called()
+
+    def test_stop_preserves_persistent_permission_failure(self):
+        for returncode in (None, 0):
+            with self.subTest(wrapper_returncode=returncode):
+                process = Mock(pid=123)
+                process.poll.return_value = returncode
+                error = PermissionError('denied')
+                with patch.object(bench.os, 'killpg', side_effect=error) as killpg:
+                    with patch.object(bench.time, 'monotonic', side_effect=[0, 0, .2]):
+                        with patch.object(bench.time, 'sleep') as sleep:
+                            with self.assertRaises(PermissionError) as caught:
+                                bench.stop(process, grace=.2)
+                self.assertIs(caught.exception, error)
+                self.assertEqual(killpg.call_count, 2)
+                sleep.assert_called_once_with(.05)
+                process.wait.assert_not_called()
 
     def test_stop_kills_descendant_after_wrapper_exits(self):
         body = '''import os, signal, time

@@ -279,7 +279,12 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
     case 0:
         arrayIndex = FindNameIndex(pValue, szWeapTypeNames, 4);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown weapon type \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown weapon type \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->weapType = (weapType_t)(arrayIndex);
         return 1;
@@ -287,7 +292,12 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
     case 1:
         arrayIndex = FindNameIndex(pValue, szWeapClassNames, 10);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown weapon class \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown weapon class \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->weapClass = (weapClass_t)(arrayIndex);
         return 1;
@@ -295,7 +305,12 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
     case 2:
         arrayIndex = FindNameIndex(pValue, szWeapOverlayReticleNames, 5);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown weapon overlay reticle \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown weapon overlay reticle \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->overlayReticle = (weapOverlayReticle_t)(arrayIndex);
         return 1;
@@ -303,7 +318,12 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
     case 3:
         arrayIndex = FindNameIndex(pValue, szWeapSlotNames, 3);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown weapon slot \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown weapon slot \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->weapSlot = (weapSlot_t)(arrayIndex);
         return 1;
@@ -311,7 +331,12 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
     case 4:
         arrayIndex = FindNameIndex(pValue, szWeapStanceNames, 3);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown weapon stance \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown weapon stance \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->stance = (weapStance_t)(arrayIndex);
         return 1;
@@ -319,7 +344,12 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
     case 5:
         arrayIndex = FindNameIndex(pValue, szProjectileExplosionNames, 3);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown projectile explosion \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown projectile explosion \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->projExplosion = (weapProjExposion_t)(arrayIndex);
         return 1;
@@ -327,7 +357,12 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
     case 6:
         arrayIndex = FindNameIndex(pValue, offhandClassNames, 3);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown offhand class \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown offhand class \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->offhandClass = (OffhandClass)(arrayIndex);
         return 1;
@@ -336,13 +371,23 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
         arraySize = g_playerAnimTypeNamesCount;
         arrayIndex = FindNameIndex(pValue, g_playerAnimTypeNames, arraySize);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown playerAnimType \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown playerAnimType \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->playerAnimType = arrayIndex;
         return 1;
 
     default:
+#if defined(COD2_X64)
+        Com_Error(1, "\x15"
+                     "Bad field type %i in %s\n", iFieldType, wd->szInternalName);
+#else
         Com_Error(1, "Bad field type %i in %s\n", iFieldType, wd->szInternalName);
+#endif
         return 0;
     }
 }
@@ -405,6 +450,28 @@ WeaponDef *BG_LoadWeaponDefInternal(const char *folder, const char *name)
         return weapDef;
     }
 
+#if defined(COD2_X64)
+    if (weapDef->iAdsTransInTime > 0) {
+        weapDef->fOOPosAnimLength[0] = 1.0f / (float)weapDef->iAdsTransInTime;
+    } else {
+        weapDef->fOOPosAnimLength[0] = BM_I2F(0x3b5a740e); /* was 0x1.b4e81cp-9f (C99 hex float) */
+    }
+
+    if (weapDef->iAdsTransOutTime > 0) {
+        weapDef->fOOPosAnimLength[1] = 1.0f / (float)weapDef->iAdsTransOutTime;
+    } else {
+        weapDef->fOOPosAnimLength[1] = BM_I2F(0x3b03126f); /* was 0x1.0624dep-9f (C99 hex float) */
+    }
+
+    if (weapDef->fMaxDamageRange <= 0.0f) {
+        weapDef->fMaxDamageRange = BM_I2F(0x497423f0); /* was 0x1.e847ep+19f (C99 hex float) */
+    }
+
+    if (weapDef->fMinDamageRange <= 0.0f) {
+        weapDef->fMinDamageRange = BM_I2F(0x497423f2); /* was 0x1.e847e4p+19f (C99 hex float) */
+    }
+
+#else
     if (weapDef->iFireTime > 0) {
         weapDef->fOOPosAnimLength[0] = 1.0f / (float)weapDef->iFireTime;
     } else {
@@ -425,6 +492,7 @@ WeaponDef *BG_LoadWeaponDefInternal(const char *folder, const char *name)
         weapDef->destabilizationTimeReductionRatio = BM_I2F(0x497423f2); /* was 0x1.e847e4p+19f (C99 hex float) */
     }
 
+#endif
     if (weapDef->enemyCrosshairRange > 15000.0f) {
         Com_Error(1, "Enemy crosshair ranges should be less than %f ", 15000.0);
     }

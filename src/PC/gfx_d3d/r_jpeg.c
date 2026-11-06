@@ -34,7 +34,12 @@ void R_LoadJpg(const char *filepath, byte **file, byte **pic, int *width, int *h
         return;
     }
     int bytes = *width * *height * 4;
+#if defined(COD2_X64)
+    /* Image_LoadRaw releases this buffer with Hunk_FreeTempMemory. */
+    *pic = ri.Hunk_AllocateTempMemoryInternal(bytes);
+#else
     *pic = ri.Z_MallocInternal(bytes);
+#endif
     memcpy(*pic, pixels, bytes);
     free(pixels);
     *file = data;

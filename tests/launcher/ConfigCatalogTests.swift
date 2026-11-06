@@ -21,7 +21,7 @@ import Darwin
         let url = URL(fileURLWithPath: CommandLine.arguments[1])
         let bytes = try Data(contentsOf: url)
         let catalog = try ConfigCatalog(data: bytes)
-        require(catalog.sourceRevision == "bb908124", "catalog must describe the requested integration")
+        require(catalog.sourceRevision == "6ae3bd57910d7a82a452422aef218d2b9cf0066d", "catalog must describe the requested integration")
         let speed = catalog.setting(named: "SENSITIVITY")!
         require(speed.name == "sensitivity" && speed.group == .aim, "case-insensitive setting lookup")
         require(catalog.settings(in: .aim).contains(speed), "group lookup")
@@ -35,7 +35,7 @@ import Darwin
         require(catalog.setting(named: "scr_sd_roundlimit")?.availability == .scriptOrMod, "script settings are separate")
         require(catalog.setting(named: "m_enable")?.availability == .referenceOnly, "upstream-only settings are separate")
         require(catalog.setting(named: "m_enable")?.isEditable(in: .cod2x) == false, "no native control for upstream-only setting")
-        require(catalog.setting(named: "r_mode")?.variant(for: .stock)?.enumValues?.status == .dynamic, "display choices are dynamic")
+        require(catalog.setting(named: "r_mode")?.variant(for: .stock)?.enumValues?.status == .ambiguous, "distinct display registration expressions remain ambiguous")
         require(catalog.setting(named: "fs_homepath")?.variant(for: .stock)?.defaultValue.status == .dynamic, "home path is dynamic")
         let frameCap = catalog.setting(named: "com_maxfps")!
         require(frameCap.variant(for: .stock)?.defaultValue.value == .number(85), "stock frame-cap registration")

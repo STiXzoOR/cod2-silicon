@@ -30,7 +30,9 @@ extern int MT_IsNodeCovered(int);
    ("X already defined"). It must NOT gate the direct ref-add functions (SL_AddRefToString /
    Scr_SetString / SL_TransferRefToUser) -- those run for live nodes (e.g. a function name like
    'main' at registration) and skipping them frees a live string -> "could not find main". */
-#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(COD2_X64)
+#define SL_NODE_DEAD(n) (0)
+#elif defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
 #define SL_NODE_DEAD(n) (MT_IsNodeCovered((int)(n)))
 #else
 #define SL_NODE_DEAD(n) (0)   /* x86 string table is unaffected; keep original behavior */
@@ -262,11 +264,13 @@ void SL_RemoveRefToStringOfLen(unsigned int stringValue, unsigned int len)
         {
             int _rml_iters = 0;
             while (1) {
+#if !defined(COD2_X64)
                 if (++_rml_iters > 16384) {
                     edi = hash_ptr;
                     ecx_slot = chain_next_idx;
                     goto add_to_freelist;
                 }
+#endif
                 unsigned int old_prev = prev_idx;
                 prev_idx = chain_next_idx;
                 chain_next_idx = (unsigned int)(hash_ptr[0] & 0x3fff);
@@ -350,7 +354,11 @@ unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
 
     {
         byte *refEntry = base + stringValue * 8;
+#if defined(COD2_X64)
+        if ((unsigned char)refEntry[0] == (unsigned char)byteLen) {
+#else
         if ((unsigned char)refEntry[0] == (unsigned char)byteLen && stringValue != 0xFFFF) {
+#endif
 
             if (memcmp(str, refEntry + 4, len) == 0) {
 
@@ -376,13 +384,19 @@ unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
                 unsigned int sv2;
                 byte *e2;
 
+#if !defined(COD2_X64)
                 if (++_find_iters > 16384)
                     return 0;
+#endif
 
                 sv2 = (unsigned int)newEntry_ptr[1];
                 e2 = base + sv2 * 8;
 
+#if defined(COD2_X64)
+                if ((unsigned char)e2[0] == (unsigned char)byteLen) {
+#else
                 if ((unsigned char)e2[0] == (unsigned char)byteLen && sv2 != 0xFFFF) {
+#endif
                     if (memcmp(str, e2 + 4, len) == 0) {
                         {
                             unsigned short pf = SG_W0(prev_idx) & 0xc000;
@@ -474,7 +488,11 @@ loop_top: {
                 unsigned int sv_head = sw1_val;
                 byte *refEntry = base + sv_head * 8;
 
+#if defined(COD2_X64)
+                if ((unsigned char)refEntry[0] == (unsigned char)byteLen) {
+#else
                 if ((unsigned char)refEntry[0] == (unsigned char)byteLen && sv_head != 0xFFFF) {
+#endif
 
                     if (memcmp(str, refEntry + 4, len) == 0) {
                         /* return the matched id (identity preserved) but never ref-add a
@@ -509,15 +527,21 @@ loop_top: {
                         unsigned int node_sv;
                         byte *node_entry;
 
+#if !defined(COD2_X64)
                         if (++_chain_iters > 16384) {
 
                             goto alloc_mid_chain_occupied;
                         }
+#endif
 
                         node_sv = (unsigned int)cur_ptr[1];
                         node_entry = base + node_sv * 8;
 
+#if defined(COD2_X64)
+                        if ((unsigned char)node_entry[0] == (unsigned char)byteLen) {
+#else
                         if ((unsigned char)node_entry[0] == (unsigned char)byteLen && node_sv != 0xFFFF) {
+#endif
                             byte *cmp_ptr = node_entry + 4;
                             if (memcmp(str, cmp_ptr, len) == 0) {
 
@@ -611,6 +635,7 @@ loop_top: {
             {
                 unsigned int newIndex2 = (unsigned int)SG_W0(0);
 
+#if !defined(COD2_X64)
                 if (newIndex2 == 0) {
                     Scr_DumpScriptThreads();
                     Scr_DumpScriptVariables();
@@ -618,6 +643,7 @@ loop_top: {
                                  "exceeded maximum number of script strings\n");
                     newIndex2 = (unsigned int)SG_W0(0);
                 }
+#endif
 
                 esi_sv = (unsigned int)MT_AllocIndex((int)(len + 4), type);
 
@@ -642,8 +668,10 @@ loop_top: {
                 int _mid_iters = 0;
                 while ((SG_W0(cur_search) & 0x3fff) != hash) {
                     cur_search = (unsigned int)(SG_W0(cur_search) & 0x3fff);
+#if !defined(COD2_X64)
                     if (++_mid_iters > 16384)
                         break;
+#endif
                 }
             }
 
@@ -832,11 +860,17 @@ unsigned int SL_ConvertToLowercase(unsigned int stringValue, unsigned int user, 
         str_ptr = (const char *)0;
 
     if (esi_len > 0) {
+#if defined(COD2_X64)
+        for (i = 0; i < esi_len; i++) {
+            newStr[i] = (char)tolower((signed char)str_ptr[i]);
+        }
+#else
         if (str_ptr != (const char *)0) {
             for (i = 0; i < esi_len; i++) {
                 newStr[i] = (char)tolower(str_ptr[i]);
             }
         }
+#endif
 
     }
 
@@ -957,7 +991,12 @@ void SL_Init(void)
                             SG_W0(0) = (unsigned short)hash3;
                         } else {
 
+#if defined(COD2_X64)
+                            /* The head inherits the successor's link before it is recycled. */
+                            unsigned short new_w03 = (unsigned short)((ecx3_hash[0] & 0x3fff) | 0x8000);
+#else
                             unsigned short new_w03 = (unsigned short)((esi3_chain & 0x3fff) | 0x8000);
+#endif
                             SG_W0(hash3) = new_w03;
                             edi3[1] = ecx3_hash[1];
                             SG_RESTART = (void *)edi3;
@@ -992,7 +1031,9 @@ void SL_Init(void)
                             int sl_guard = 0x4000;   /* chain <= table size; bound it to avoid an infinite spin on a corrupt/cyclic chain (map-load restart-rehash hang) */
                             esi3_prev = esi3_chain;
                             while (ecx3w[1] != (unsigned short)sv2) {
+#if !defined(COD2_X64)
                                 if (--sl_guard < 0) break;
+#endif
                                 esi3_prev = ebx3w;
                                 ebx3w = (unsigned int)(ecx3w[0] & 0x3fff);
                                 ecx3w = (unsigned short *)((char *)&scrStringGlob + ebx3w * 4);
@@ -1128,7 +1169,14 @@ unsigned int SL_GetStringForVector(const float *v)
     char tempString[0x80];
     unsigned int len;
 
+#if defined(COD2_X64)
+    /* Literal vectors may begin at any bytecode offset, as on Mac i386. */
+    float value[3];
+    memcpy(value, (const byte *)v, sizeof(value));
+    sprintf(tempString, "(%g, %g, %g)", (double)value[0], (double)value[1], (double)value[2]);
+#else
     sprintf(tempString, "(%g, %g, %g)", (double)v[0], (double)v[1], (double)v[2]);
+#endif
     len = (unsigned int)strlen(tempString) + 1;
     return SL_GetStringOfLen(tempString, 0, len, 0xe);
 }
@@ -1142,7 +1190,11 @@ unsigned int Scr_CreateCanonicalFilename(const char *filename)
     int c;
 
 skip_slashes:
+#if defined(COD2_X64)
+    c = (int)(signed char)*src++;
+#else
     c = (int)(unsigned char)*src++;
+#endif
     if (c == '\\' || c == '/')
         goto skip_slashes;
 
@@ -1166,7 +1218,11 @@ tolower_store:
     if (remaining == 0) {
         Com_Error(1, "\x15"
                      "Filename '%s' exceeds maximum length of %d",
+#if defined(COD2_X64)
+                  src, 0);
+#else
                   filename, 0);
+#endif
 
     }
 
@@ -1174,7 +1230,11 @@ tolower_store:
         goto skip_slashes;
 
 inner_loop:
+#if defined(COD2_X64)
+    c = (int)(signed char)*src++;
+#else
     c = (int)(unsigned char)*src++;
+#endif
     if (c == '\\') {
         c = '/';
         goto tolower_store;

@@ -182,7 +182,9 @@ static void Image_GetSrcStrideAndDy(D3DFORMAT format, int srcWidth, int *outStri
         return;
     case D3DFMT_R5G6B5:
     case D3DFMT_A8L8:
+#if !defined(COD2_X64)
     case D3DFMT_X8B8G8R8:
+#endif
         *outStride = srcWidth * 2;
         *outDy = 1;
         return;
@@ -352,7 +354,9 @@ void Image_UploadData(GfxImage *image, D3DFORMAT format, int face, int mipLevel,
         break;
     case D3DFMT_R5G6B5:
     case D3DFMT_A8L8:
+#if !defined(COD2_X64)
     case D3DFMT_X8B8G8R8:
+#endif
         srcStride = srcWidth * 2;
         dy = 1;
         break;

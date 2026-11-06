@@ -97,7 +97,9 @@ unsigned char Flash_TypeID(const Flash *_this);
 static void GLOBAL__I__ZN11FxBoltFrame12g_mFrameListE(void);
 void Particle_AddVisibility(const Particle *_this);
 #if defined(COD2_X64)
-static void FxNative_UpdateParticleAppearance(Particle *particle);
+static void FxNative_UpdateParticleAppearance(Particle *particle, Bool stopOnZero);
+static void FxNative_UpdateParticleRotation(Particle *particle);
+static void FxNative_UpdateParticleSubimage(Particle *particle);
 #endif
 void Emitter_Draw(const Emitter *_this);
 void Cylinder_Draw(const Cylinder *_this);
@@ -213,6 +215,9 @@ extern void *__Znam(int size);
 extern void OrientationDirFromWorldDir(const orientation_t *or_, const vec_t *dir, vec_t *out);
 #if defined(COD2_X64)
 extern void OrientationDirToWorldDir(const orientation_t *or_, const vec_t *dir, vec_t *out);
+static float FxNative_SampleChannel(FxChannelInstance *channel,
+                                  FxChannelInstance *random, float blend,
+                                  float normTime, Bool useRandom);
 #endif
 extern void OrientationPosToWorldPos(const orientation_t *or_, const vec_t *pos, vec_t *out);
 extern void AxisTransformVector(vec3_t *axes, const vec_t x, const vec_t y, const vec_t z, vec_t *out);
@@ -676,6 +681,13 @@ Bool Effect_Update(const Effect *_this)
     return 1;
 }
 
+#if defined(COD2_X64)
+static inline int FxNative_LimitCullPlaneCount(int count)
+{
+    /* Mac tests the sign after a wrapping 32-bit count - 5 subtraction. */
+    return (((unsigned int)count - 5u) & 0x80000000u) ? count : 5;
+}
+#endif
 extern unsigned char FxHelper_CullSphere(const FxHelper *helper, const float *origin, float radius, int cullType);
 Bool Particle_Cull(const Particle *_this)
 {
@@ -684,8 +696,12 @@ Bool Particle_Cull(const Particle *_this)
     int cullType = (helper->mCamera.numPlanes);
 
     if (*(byte *)(p + FX_FLAG_OFFSET(3, 0xab)) & 2) {
+#if defined(COD2_X64)
+        cullType = FxNative_LimitCullPlaneCount(cullType);
+#else
         if (cullType >= 5)
             cullType = 5;
+#endif
     }
     return (Bool)FxHelper_CullSphere(helper, ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.origin))), (((Effect *)(p))->mRefEnt.radius[0]), cullType);
 }
@@ -696,8 +712,12 @@ Bool OrientedParticle_Cull(const OrientedParticle *_this)
     FxHelper *helper = *(FxHelper **)imp_theFxHelper;
     int cullType = (helper->mCamera.numPlanes);
     if ((*(byte *)&((OrientedParticle *)p)->_base[FX_FLAG_OFFSET(3, 171)]) & 2) {
+#if defined(COD2_X64)
+        cullType = FxNative_LimitCullPlaneCount(cullType);
+#else
         if (cullType >= 5)
             cullType = 5;
+#endif
     }
     return (Bool)FxHelper_CullSphere(helper, ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.origin))), (((Effect *)(p))->mRefEnt.radius[0]), cullType);
 }
@@ -708,10 +728,10 @@ Bool Cloud_Cull(const Cloud *_this)
     const Effect *effect = (const Effect *)_this;
     FxHelper *helper = *(FxHelper **)imp_theFxHelper;
     int planeCount = helper->mCamera.numPlanes;
-    if ((effect->mFlags & 0x02000000) && planeCount > 5)
-        planeCount = 5;
-    float extent = effect->mRefEnt.radius[0] > effect->mRefEnt.radius[1]
-        ? effect->mRefEnt.radius[0] : effect->mRefEnt.radius[1];
+    if (effect->mFlags & 0x02000000)
+        planeCount = FxNative_LimitCullPlaneCount(planeCount);
+    float extent = effect->mRefEnt.radius[0] - effect->mRefEnt.radius[1] < 0.0f
+        ? effect->mRefEnt.radius[1] : effect->mRefEnt.radius[0];
     return FxHelper_CullSphere(helper, effect->mRefEnt.origin,
                               effect->mRefEnt.scale + extent, planeCount);
 #else
@@ -742,8 +762,12 @@ Bool Line_Cull(const Line *_this)
     int cullType = (helper->mCamera.numPlanes);
     float radius;
     if ((*(byte *)&((Line *)p)->_base[FX_FLAG_OFFSET(3, 171)]) & 2) {
+#if defined(COD2_X64)
+        cullType = FxNative_LimitCullPlaneCount(cullType);
+#else
         if (cullType >= 5)
             cullType = 5;
+#endif
     }
     radius = (((Effect *)(p))->mRefEnt.radius[0]);
     return (Bool)FxHelper_CullCylinder(helper, ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.origin))), ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.endpos))), radius, radius, cullType);
@@ -756,8 +780,12 @@ Bool Tail_Cull(const Tail *_this)
     int cullType = (helper->mCamera.numPlanes);
     float radius;
     if (*(byte *)(p + FX_FLAG_OFFSET(3, 0xab)) & 2) {
+#if defined(COD2_X64)
+        cullType = FxNative_LimitCullPlaneCount(cullType);
+#else
         if (cullType >= 5)
             cullType = 5;
+#endif
     }
     radius = (((Effect *)(p))->mRefEnt.radius[0]);
     return (Bool)FxHelper_CullCylinder(helper, ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.origin))), ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.endpos))), radius, radius, cullType);
@@ -769,11 +797,19 @@ Bool Cylinder_Cull(const Cylinder *_this)
     FxHelper *helper = *(FxHelper **)imp_theFxHelper;
     int cullType = (helper->mCamera.numPlanes);
     if (*(byte *)(p + FX_FLAG_OFFSET(3, 0xab)) & 2) {
+#if defined(COD2_X64)
+        cullType = FxNative_LimitCullPlaneCount(cullType);
+#else
         if (cullType >= 5)
             cullType = 5;
+#endif
     }
     return (Bool)FxHelper_CullCylinder(helper, ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.origin))), ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.endpos))),
+#if defined(COD2_X64)
+                                       (((Effect *)(p))->mRefEnt.radius[1]), (((Effect *)(p))->mRefEnt.radius[0]), cullType);
+#else
                                        (((Effect *)(p))->mRefEnt.radius[0]), (((Effect *)(p))->mRefEnt.radius[1]), cullType);
+#endif
 }
 
 Bool Light_Cull(const Light *_this)
@@ -782,8 +818,12 @@ Bool Light_Cull(const Light *_this)
     FxHelper *helper = *(FxHelper **)imp_theFxHelper;
     int cullType = (helper->mCamera.numPlanes);
     if (*(byte *)(p + FX_FLAG_OFFSET(3, 0xab)) & 2) {
+#if defined(COD2_X64)
+        cullType = FxNative_LimitCullPlaneCount(cullType);
+#else
         if (cullType >= 5)
             cullType = 5;
+#endif
     }
     return (Bool)FxHelper_CullSphere(helper, ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.origin))), (((Effect *)(p))->mRefEnt.radius[0]), cullType);
 }
@@ -821,7 +861,11 @@ float Particle_GetVisibility(const Particle *_this, const vec_t *start, const ve
 
     radiusSq = (((Effect *)(p))->mRefEnt.radius[0]);
     radiusSq *= radiusSq;
+#if defined(COD2_X64)
+    if (!(radiusSq > distSq))
+#else
     if (radiusSq <= distSq)
+#endif
         return 1.0f;
 
     return (float)(((byte *)((byte *)(p) + offsetof(Effect, mRefEnt.materialRGBA)))[3]) * (-0.003921568859368563f) + 1.0f;
@@ -914,24 +958,50 @@ void Particle_SetAxis(const Particle *_this, vec3_t *ax)
 }
 
 extern float floorf(float x);
+#if defined(COD2_X64)
+/* i386 conversion uses INT_MIN for invalid input; the following clamp wraps. */
+static int FxNative_FloatToInt(float value)
+{
+    return value >= -2147483648.0f && value < 2147483648.0f
+        ? (int)value : (int)0x80000000u;
+}
+
+static int FxNative_FlashColorByte(int value)
+{
+    if ((int)((unsigned int)value - 255u) >= 0)
+        return 255;
+    return (int)(0u - (unsigned int)value) < 0 ? value : 0;
+}
+#endif
 static inline __attribute__((always_inline)) int FloatToByte(float f)
 {
+#if defined(COD2_X64)
+    int value = FxNative_FloatToInt(f * 255.0f);
+    int upper = (int)((unsigned int)value - 255u) < 0 ? value : 255;
+    /* RGB applies its lower clamp even after the wrapped upper selection. */
+    return (int)(0u - (unsigned int)value) < 0 ? upper : 0;
+#else
     int v = (int)(f * 255.0f);
     if (v >= 255)
         return 255;
     if (v > 0)
         return v;
     return 0;
+#endif
 }
 
 static inline __attribute__((always_inline)) int FlashColorByte(float f)
 {
+#if defined(COD2_X64)
+    return FxNative_FlashColorByte(FxNative_FloatToInt(floorf(f * 255.0f + 0.5f)));
+#else
     int v = (int)floorf(f * 255.0f + 0.5f);
     if (v >= 255)
         return 255;
     if (v > 0)
         return v;
     return 0;
+#endif
 }
 void Flash_Draw(const Flash *_this)
 {
@@ -1087,7 +1157,11 @@ void Tail_CalcNewEndpoint(const Tail *_this, const orientation_t *or_)
 
     float lenSq = dx * dx + dy * dy + dz * dz;
     float len = __builtin_sqrtf(lenSq);
+#if defined(COD2_X64)
+    if (!(len > 0.0f))
+#else
     if (len <= 0.0f)
+#endif
         return;
 
     float invLen = 1.0f / len;
@@ -1473,7 +1547,11 @@ void Particle_IntegrateVelocity2(const Particle *_this, float normDuration, vec_
         vz = IntegrateChannel(self, FX_OFFSET(Particle, velocity2ZChannelInstance, 0x21c), 0, 0, FX_OFFSET(Particle, velocity2ZChannelInstance, 0x21c) + FX_SCALE_OFFSET, normDuration, 0);
     }
 
+#if defined(COD2_X64)
+    if (!(((Particle *)self)->base.mFlags & 0x400000)) {
+#else
     if (!(*(byte *)(self + FX_FLAG_OFFSET(2, 0xaa)) & 0x20)) {
+#endif
         AxisTransformVector((vec3_t *)((char *)self + offsetof(Particle, displayAxis[0][0])), vx, vy, vz, outVector);
     } else {
         outVector[0] = vx;
@@ -1688,6 +1766,19 @@ void Particle_CalcVelocityValue(const Particle *_this, float normTime, vec_t *ou
         vz = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocityZChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Particle, velocityZChannelInstance.curveIterator.master)) + FX_SCALE_OFFSET);
     }
 
+#if defined(COD2_X64)
+    vec3_t value = {vx, vy, vz};
+    if (((Particle *)self)->base.mFlags & 0x200000) {
+        if (or_)
+            OrientationDirFromWorldDir(or_, value, outVector);
+        else
+            memcpy(outVector, value, sizeof(value));
+    } else if (or_) {
+        memcpy(outVector, value, sizeof(value));
+    } else {
+        AxisTransformVector(((Particle *)self)->displayAxis, vx, vy, vz, outVector);
+    }
+#else
     if (!(*(byte *)(self + FX_FLAG_OFFSET(2, 0xaa)) & 0x20)) {
         AxisTransformVector((vec3_t *)((char *)self + offsetof(Particle, displayAxis[0][0])), vx, vy, vz, outVector);
     } else {
@@ -1695,6 +1786,7 @@ void Particle_CalcVelocityValue(const Particle *_this, float normTime, vec_t *ou
         outVector[1] = vy;
         outVector[2] = vz;
     }
+#endif
 }
 
 void Particle_CalcVelocity2Value(const Particle *_this, float normTime, vec_t *outVector, const orientation_t *or_)
@@ -1703,7 +1795,11 @@ void Particle_CalcVelocity2Value(const Particle *_this, float normTime, vec_t *o
     byte *self = (byte *)_this;
     float vx, vy, vz;
 
+#if defined(COD2_X64)
+    if (((Particle *)self)->base.mFlags & 0x100000) {
+#else
     if (*(byte *)(self + FX_FLAG_OFFSET(2, 0xaa)) & 8) {
+#endif
         float bfx = (((Particle *)(self))->velocity2WeightX);
         float v0x = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2XChannelInstance.curveIterator.master))), normTime);
         float v1x = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2XRandChannelInstance.curveIterator.master))), normTime);
@@ -1724,6 +1820,19 @@ void Particle_CalcVelocity2Value(const Particle *_this, float normTime, vec_t *o
         vz = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2ZChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Particle, velocity2ZChannelInstance.curveIterator.master)) + FX_SCALE_OFFSET);
     }
 
+#if defined(COD2_X64)
+    vec3_t value = {vx, vy, vz};
+    if (((Particle *)self)->base.mFlags & 0x400000) {
+        if (or_)
+            OrientationDirFromWorldDir(or_, value, outVector);
+        else
+            memcpy(outVector, value, sizeof(value));
+    } else if (or_) {
+        memcpy(outVector, value, sizeof(value));
+    } else {
+        AxisTransformVector(((Particle *)self)->displayAxis, vx, vy, vz, outVector);
+    }
+#else
     if (!(*(byte *)(self + FX_FLAG_OFFSET(2, 0xaa)) & 0x20)) {
         AxisTransformVector((vec3_t *)((char *)self + offsetof(Particle, displayAxis[0][0])), vx, vy, vz, outVector);
     } else {
@@ -1731,6 +1840,7 @@ void Particle_CalcVelocity2Value(const Particle *_this, float normTime, vec_t *o
         outVector[1] = vy;
         outVector[2] = vz;
     }
+#endif
 }
 
 void Particle_GetTotalVelocity(const Particle *_this, float normTime, vec_t *outVector, const orientation_t *or_)
@@ -1742,7 +1852,11 @@ void Particle_GetTotalVelocity(const Particle *_this, float normTime, vec_t *out
     Particle_CalcVelocity2Value(_this, normTime, velocity2Value, or_);
 
     int lifetime = (((Effect *)(self))->mTimeEnd) - (((Effect *)(self))->mTimeStart);
+#if defined(COD2_X64)
+    int duration = FxNative_FloatToInt((float)lifetime * normTime);
+#else
     int duration = (int)((float)lifetime * normTime);
+#endif
     float gravZ = (float)duration * ((Particle *)self)->gravity * 0.001f;
     vec3_t worldGrav;
     worldGrav[0] = 0.0f;
@@ -1768,6 +1882,103 @@ void Particle_GetTotalVelocity(const Particle *_this, float normTime, vec_t *out
 
 void Emitter_UpdateEmitFx(const Emitter *_this, vec_t *bindVelocity, const orientation_t *or_)
 {
+#if defined(COD2_X64)
+    extern void MakeNormalVectors(const vec_t *, vec_t *, vec_t *);
+    extern float crandom(void);
+    Emitter *emitter = (Emitter *)_this;
+    Effect *effect = &emitter->base.base;
+    FxHelper *helper = *(FxHelper **)imp_theFxHelper;
+    if (!(effect->mFlags & 0x100) || helper->mFrameTime == 0)
+        return;
+
+    float stepSq = emitter->emitStep * emitter->emitStep;
+    float age = (float)(helper->mTime - effect->mTimeStart) * 0.001f;
+    float lifetime = (float)(effect->mTimeEnd - effect->mTimeStart) * 0.001f;
+    float elapsed = 0.0f;
+    int sampleTime = emitter->emitLastTime;
+    int duration = 0;
+    while (sampleTime < helper->mTime) {
+        duration = (int)((unsigned int)duration + 12u);
+        float seconds = (float)duration * 0.001f;
+        vec3_t previous, position, velocity;
+        for (int i = 0; i < 3; ++i)
+            previous[i] = emitter->emitPos[i] + emitter->velocityDelta[i];
+        float sampleAge = elapsed + age;
+        float normTime = sampleAge / lifetime;
+        if (normTime > 1.0f)
+            normTime = 1.0f;
+        Particle_GetTotalVelocity(&emitter->base, normTime, velocity, or_);
+        for (int i = 0; i < 3; ++i) {
+            position[i] = emitter->emitPos[i] + velocity[i] * seconds;
+            if (or_)
+                position[i] += bindVelocity[i] * seconds;
+        }
+        if (Vec3DistanceSq(position, previous) < stepSq) {
+            sampleTime = (int)((unsigned int)sampleTime + 12u);
+            continue;
+        }
+
+        if (or_) {
+            vec3_t worldPosition;
+            OrientationPosToWorldPos(or_, position, worldPosition);
+            FxScheduler_PlayEffect(*(FxScheduler **)imp_theFxScheduler,
+                emitter->emitFx, worldPosition, NULL, &effect->mBolt.value->mBolt);
+        } else {
+            vec3_t axis[3];
+            float length = __builtin_sqrtf(velocity[0] * velocity[0] +
+                velocity[1] * velocity[1] + velocity[2] * velocity[2]);
+            if (length > 0.0f) {
+                float inverse = 1.0f / length;
+                for (int i = 0; i < 3; ++i)
+                    axis[0][i] = velocity[i] * inverse;
+                MakeNormalVectors(axis[0], axis[1], axis[2]);
+            } else {
+                memcpy(axis, effect->mRefEnt.axis, sizeof(axis));
+            }
+            FxScheduler_PlayEffect(*(FxScheduler **)imp_theFxScheduler,
+                emitter->emitFx, position, (MediaHandles *(*)[4])axis, NULL);
+        }
+
+        float speedSq = velocity[0] * velocity[0] + velocity[1] * velocity[1] + velocity[2] * velocity[2];
+        float secondsSq = seconds * seconds;
+        float denominator = (speedSq + speedSq) * seconds;
+        if (denominator != 0.0f) {
+            float correction = (speedSq * secondsSq - stepSq) / denominator;
+            float rounded = floorf(correction * 1000.0f + 0.5f);
+            /* Mac cvttss2si returns INT_MIN on overflow/NaN; its integer math wraps. */
+            int correctionTime = rounded >= -2147483648.0f && rounded < 2147483648.0f
+                ? (int)rounded : (int)0x80000000u;
+            duration = (int)((unsigned int)duration - (unsigned int)correctionTime);
+            int minimum = (int)((unsigned int)sampleTime - (unsigned int)emitter->emitLastTime);
+            if (duration < minimum)
+                duration = minimum;
+            seconds = (float)duration * 0.001f;
+            normTime = (sampleAge + seconds) / lifetime;
+            if (normTime > 1.0f)
+                normTime = 1.0f;
+            Particle_GetTotalVelocity(&emitter->base, normTime, velocity, or_);
+            for (int i = 0; i < 3; ++i)
+                position[i] = emitter->emitPos[i] + velocity[i] * seconds;
+        }
+        normTime = (sampleAge + seconds) / lifetime;
+        if (normTime > 1.0f)
+            normTime = 1.0f;
+        Particle_GetTotalVelocity(&emitter->base, normTime, emitter->initialVel, or_);
+        memcpy(emitter->emitPos, position, sizeof(position));
+        if (or_) {
+            for (int i = 0; i < 3; ++i)
+                emitter->velocityDelta[i] += (float)duration * 0.001f * bindVelocity[i];
+        }
+        emitter->emitLastTime = (int)((unsigned int)emitter->emitLastTime + (unsigned int)duration);
+        sampleTime = emitter->emitLastTime;
+        elapsed += seconds;
+        float variance;
+        memcpy(&variance, emitter->_tail, sizeof(variance));
+        emitter->emitStep = emitter->spawnVariance + crandom() * variance;
+        stepSq = emitter->emitStep * emitter->emitStep;
+        duration = 0;
+    }
+#else
     byte *self = (byte *)_this;
 
     if (!((*(byte *)&((Emitter *)self)->_base[FX_FLAG_OFFSET(1, 169)]) & 1))
@@ -1872,6 +2083,7 @@ void Emitter_UpdateEmitFx(const Emitter *_this, vec_t *bindVelocity, const orien
         t = startTime + dif;
         (((Emitter *)(self))->emitLastTime) = t;
     }
+#endif
 }
 
 extern void *imp_cl;
@@ -1917,6 +2129,13 @@ void Particle_ApplyImpact(const Particle *_this, const orientation_t *or_, float
 {
     byte *self = (byte *)_this;
 
+#if defined(COD2_X64)
+    float speedSq = velocity[0] * velocity[0] + velocity[1] * velocity[1] + velocity[2] * velocity[2];
+    if ((traceNormal[2] > 0.0f && speedSq < 16.0f) || traceFraction == 0.0f) {
+        ((Effect *)self)->mFlags = (((Effect *)self)->mFlags & ~0x820) | 0x1000000;
+        return;
+    }
+#else
     if (traceNormal[2] > 0.0f) {
         float vLenSq = velocity[0] * velocity[0] + velocity[1] * velocity[1] + velocity[2] * velocity[2];
         if (vLenSq >= 16.0f)
@@ -1933,6 +2152,7 @@ void Particle_ApplyImpact(const Particle *_this, const orientation_t *or_, float
     }
 
 do_reflect:;
+#endif
 
     vec3_t normal;
     if (or_) {
@@ -2068,6 +2288,72 @@ Bool Particle_UpdateOrigin(const Particle *_this, const orientation_t *or_)
 
 Bool Emitter_Update(const Emitter *_this)
 {
+#if defined(COD2_X64)
+    extern void AnglesToAxis(const vec_t *, vec3_t *);
+    Emitter *emitter = (Emitter *)_this;
+    Particle *particle = &emitter->base;
+    Effect *effect = &particle->base;
+    FxHelper *helper = *(FxHelper **)imp_theFxHelper;
+    if (!Effect_Update(effect))
+        return 0;
+    const orientation_t *orient = NULL;
+    if (effect->mBolt.value) {
+        orient = FxBoltFrame_GetOrientation(effect->mBolt.value);
+        if (!orient)
+            return 0;
+    }
+
+    vec3_t previousOrigin;
+    memcpy(previousOrigin, effect->origin, sizeof(previousOrigin));
+    if (!Particle_UpdateOrigin(particle, orient))
+        return 0;
+    vec3_t angles = {emitter->spawnSize,
+        *(float *)&emitter->_gap2[0], *(float *)&emitter->_gap2[4]};
+    vec3_t angleDelta = {emitter->spawnDensity,
+        *(float *)&emitter->_gap3[0], emitter->spawnStep};
+    if (previousOrigin[0] == effect->origin[0] &&
+        previousOrigin[1] == effect->origin[1] &&
+        previousOrigin[2] == effect->origin[2]) {
+        for (int i = 0; i < 3; ++i)
+            angleDelta[i] *= 0.7f;
+        emitter->spawnDensity = angleDelta[0];
+        *(float *)&emitter->_gap3[0] = angleDelta[1];
+        emitter->spawnStep = angleDelta[2];
+    }
+    float angleTime = (float)helper->mFrameTime * 0.01f;
+    for (int i = 0; i < 3; ++i)
+        angles[i] += angleDelta[i] * angleTime;
+    emitter->spawnSize = angles[0];
+    *(float *)&emitter->_gap2[0] = angles[1];
+    *(float *)&emitter->_gap2[4] = angles[2];
+    AnglesToAxis(angles, effect->mRefEnt.axis);
+
+    effect->mRefEnt.radius[0] = FxNative_SampleChannel(
+        &particle->sizeChannelInstance, &particle->sizeRandChannelInstance,
+        particle->blendWeight[2], effect->normTime, (effect->mFlags & 0x8000) != 0);
+
+    vec3_t bindVelocity = {0, 0, 0};
+    if (effect->mFlags & 0x10) {
+        if (orient) {
+            OrientationPosToWorldPos(orient, effect->origin, effect->mRefEnt.origin);
+            for (int i = 0; i < 3; ++i) {
+                vec3_t localAxis;
+                memcpy(localAxis, effect->mRefEnt.axis[i], sizeof(localAxis));
+                OrientationDirToWorldDir(orient, localAxis, effect->mRefEnt.axis[i]);
+            }
+            if (emitter->emitLastTime < helper->mTime) {
+                float elapsed = (float)(helper->mTime - emitter->emitLastTime) * 0.001f;
+                for (int i = 0; i < 3; ++i)
+                    bindVelocity[i] = (orient->origin[i] - emitter->velocityDelta[i]) * elapsed;
+            }
+        } else {
+            memcpy(effect->mRefEnt.origin, effect->origin, sizeof(vec3_t));
+        }
+        effect->mRefEnt.scale = effect->mRefEnt.radius[0];
+    }
+    Emitter_UpdateEmitFx(_this, bindVelocity, orient);
+    return 1;
+#else
     byte *self = (byte *)_this;
     int startTime = (((Effect *)(self))->mTimeStart);
     int curTime = FXH_TIME(*(FxHelper **)imp_theFxHelper);
@@ -2138,23 +2424,6 @@ Bool Emitter_Update(const Emitter *_this)
         radius = EvalCurve1( (byte *)(((char *)self + FX_OFFSET(Particle, sizeChannelInstance, offsetof(Emitter, _base[372])))), normTime) * *(float *)(((char *)self + FX_OFFSET(Particle, sizeChannelInstance, offsetof(Emitter, _base[372]))) + FX_SCALE_OFFSET);
     }
     (((Effect *)(self))->mRefEnt.radius[0]) = radius;
-#if defined(COD2_X64)
-    if (((Effect *)self)->mFlags & 0x10) {
-        extern void AnglesToAxis(const vec_t *, vec3_t *);
-        Emitter *emitter = (Emitter *)self;
-        float angles[3] = {emitter->spawnSize,
-            *(float *)&emitter->_gap2[0], *(float *)&emitter->_gap2[4]};
-        float angularVelocity[3] = {emitter->spawnDensity,
-            *(float *)&emitter->_gap3[0], emitter->spawnStep};
-        for (int i = 0; i < 3; ++i)
-            angles[i] += angularVelocity[i] * theFxHelper->mFrameTime * 0.01f;
-        emitter->spawnSize = angles[0];
-        *(float *)&emitter->_gap2[0] = angles[1];
-        *(float *)&emitter->_gap2[4] = angles[2];
-        AnglesToAxis(angles, ((Effect *)self)->mRefEnt.axis);
-        ((Effect *)self)->mRefEnt.scale = radius;
-    }
-#endif
 
     if (radius == 0.0f) {
         ((Effect *)self)->mFlags |= 0x01000000;
@@ -2165,6 +2434,7 @@ Bool Emitter_Update(const Emitter *_this)
     Particle_UpdateAlpha((const Particle *)_this);
 
     return 1;
+#endif
 }
 
 void Particle_UpdateAlpha(const Particle *_this)
@@ -2184,10 +2454,15 @@ void Particle_UpdateAlpha(const Particle *_this)
     }
     alpha *= *(float *)(((char *)self + offsetof(Particle, alphaChannelInstance.curveIterator.master)) + FX_SCALE_OFFSET);
 
+#if defined(COD2_X64)
+    float clamped = alpha - 1.0f < 0.0f ? alpha : 1.0f;
+    alpha = 0.0f - alpha < 0.0f ? clamped : 0.0f;
+#else
     if (alpha > 1.0f)
         alpha = 1.0f;
     if (alpha < 0.0f)
         alpha = 0.0f;
+#endif
 
     if ((*(signed char *)&((Effect *)self)->mFlags) < 0) {
 
@@ -2221,7 +2496,11 @@ Bool Cylinder_Update(const Cylinder *_this)
     if (normTime > 1.0f)
         ((Effect *)self)->normTime = 1.0f;
     if (0.0f > ((Effect *)self)->normTime)
+#if defined(COD2_X64)
+        ((Effect *)self)->normTime = 0.0f;
+#else
         return 0;
+#endif
     normTime = ((Effect *)self)->normTime;
 
     byte *boltFrame = (*(byte **)&((Effect *)(self))->mBolt.value);
@@ -2242,6 +2521,43 @@ Bool Cylinder_Update(const Cylinder *_this)
         }
     }
 
+#if defined(COD2_X64)
+    if (boltFrame && !orient)
+        return 0;
+
+    Tail *cylinder = (Tail *)_this;
+    Particle *particle = &cylinder->base;
+    Effect *effect = &particle->base;
+    int flags = effect->mFlags;
+    effect->mRefEnt.radius[0] = FxNative_SampleChannel(
+        &particle->sizeChannelInstance, &particle->sizeRandChannelInstance,
+        particle->blendWeight[2], normTime, (flags & 0x8000) != 0);
+    effect->mRefEnt.radius[1] = particle->nonUniformScale
+        ? FxNative_SampleChannel(&particle->size2ChannelInstance,
+              &particle->size2RandChannelInstance, particle->blendWeight[3],
+              normTime, (flags & 0x10000) != 0)
+        : effect->mRefEnt.radius[0];
+    cylinder->tailLength = FxNative_SampleChannel(
+        &cylinder->lengthChannelInstance, &cylinder->lengthRandChannelInstance,
+        cylinder->lengthBlendFactor, normTime, (flags & 0x20000) != 0);
+    Particle_UpdateRGB(particle);
+    Particle_UpdateAlpha(particle);
+
+    /* Cylinders extend along their render axis, independently of tail history. */
+    if (orient) {
+        vec3_t endpoint;
+        OrientationPosToWorldPos(orient, effect->origin, effect->mRefEnt.origin);
+        for (int i = 0; i < 3; ++i)
+            endpoint[i] = effect->origin[i] + cylinder->tailLength * effect->mRefEnt.axis[0][i];
+        OrientationPosToWorldPos(orient, endpoint, effect->mRefEnt.endpos);
+    } else {
+        for (int i = 0; i < 3; ++i)
+            effect->mRefEnt.origin[i] = effect->origin[i];
+        for (int i = 0; i < 3; ++i)
+            effect->mRefEnt.endpos[i] = effect->origin[i] + cylinder->tailLength * effect->mRefEnt.axis[0][i];
+    }
+    return 1;
+#else
     if (!Particle_UpdateOrigin((const Particle *)_this, (const orientation_t *)orient))
         return 0;
 
@@ -2297,10 +2613,42 @@ Bool Cylinder_Update(const Cylinder *_this)
     Particle_UpdateRGB((const Particle *)_this);
     Particle_UpdateAlpha((const Particle *)_this);
     return 1;
+#endif
 }
 
 Bool Tail_Update(const Tail *_this)
 {
+#if defined(COD2_X64)
+    Tail *tail = (Tail *)_this;
+    Particle *particle = &tail->base;
+    Effect *effect = &particle->base;
+    if (!Effect_Update(effect))
+        return 0;
+    const orientation_t *orient = NULL;
+    if (effect->mBolt.value) {
+        orient = FxBoltFrame_GetOrientation(effect->mBolt.value);
+        if (!orient)
+            return 0;
+    }
+    memcpy(tail->endpoint, effect->origin, sizeof(vec3_t));
+    if (!Particle_UpdateOrigin(particle, orient))
+        return 0;
+    if (orient)
+        OrientationPosToWorldPos(orient, effect->origin, effect->mRefEnt.origin);
+    else
+        memcpy(effect->mRefEnt.origin, effect->origin, sizeof(vec3_t));
+    effect->mRefEnt.radius[0] = FxNative_SampleChannel(
+        &particle->sizeChannelInstance, &particle->sizeRandChannelInstance,
+        particle->blendWeight[2], effect->normTime, (effect->mFlags & 0x8000) != 0);
+    tail->tailLength = FxNative_SampleChannel(
+        &tail->lengthChannelInstance, &tail->lengthRandChannelInstance,
+        tail->lengthBlendFactor, effect->normTime, (effect->mFlags & 0x20000) != 0);
+    Particle_UpdateRGB(particle);
+    Particle_UpdateAlpha(particle);
+    FxNative_UpdateParticleSubimage(particle);
+    Tail_CalcNewEndpoint(tail, orient);
+    return 1;
+#else
     byte *self = (byte *)_this;
     int startTime = (((Effect *)(self))->mTimeStart);
     int curTime = FXH_TIME(*(FxHelper **)imp_theFxHelper);
@@ -2334,6 +2682,11 @@ Bool Tail_Update(const Tail *_this)
         }
     }
 
+#if defined(COD2_X64)
+    if (boltFrame && !orient)
+        return 0;
+    memcpy(((Tail *)self)->endpoint, ((Effect *)self)->origin, sizeof(vec3_t));
+#endif
     if (!Particle_UpdateOrigin((const Particle *)_this, (const orientation_t *)orient))
         return 0;
 
@@ -2358,8 +2711,10 @@ Bool Tail_Update(const Tail *_this)
 
     Tail_CalcNewEndpoint(_this, (const orientation_t *)orient);
 
+#if !defined(COD2_X64)
     if (orient)
         OrientationPosToWorldPos(orient, (vec_t *)&((Tail *)self)->base.base.mRefEnt.endpos[0], (vec_t *)&((Tail *)self)->base.base.mRefEnt.endpos[0]);
+#endif
 
     float radius;
     if ((*(short *)&((Effect *)self)->mFlags) < 0) {
@@ -2379,11 +2734,37 @@ Bool Tail_Update(const Tail *_this)
     Particle_UpdateRGB((const Particle *)_this);
     Particle_UpdateAlpha((const Particle *)_this);
     return 1;
+#endif
 }
 
 extern void OrientationPosToWorldPos(const orientation_t *or_, const vec_t *pos, vec_t *out);
 Bool Line_Update(const Line *_this)
 {
+#if defined(COD2_X64)
+    Particle *particle = (Particle *)_this;
+    Effect *effect = &particle->base;
+    if (!Effect_Update(effect))
+        return 0;
+    const orientation_t *orient = NULL;
+    if (effect->mBolt.value) {
+        orient = FxBoltFrame_GetOrientation(effect->mBolt.value);
+        if (!orient)
+            return 0;
+    }
+    if (orient) {
+        OrientationPosToWorldPos(orient, effect->origin, effect->mRefEnt.origin);
+        OrientationPosToWorldPos(orient, _this->endpoint, effect->mRefEnt.endpos);
+    } else {
+        memcpy(effect->mRefEnt.origin, effect->origin, sizeof(vec3_t));
+        memcpy(effect->mRefEnt.endpos, _this->endpoint, sizeof(vec3_t));
+    }
+    effect->mRefEnt.radius[0] = FxNative_SampleChannel(
+        &particle->sizeChannelInstance, &particle->sizeRandChannelInstance,
+        particle->blendWeight[2], effect->normTime, (effect->mFlags & 0x8000) != 0);
+    Particle_UpdateRGB(particle);
+    Particle_UpdateAlpha(particle);
+    return 1;
+#else
     byte *self = (byte *)_this;
     int startTime = (((Effect *)(self))->mTimeStart);
     int curTime = FXH_TIME(*(FxHelper **)imp_theFxHelper);
@@ -2417,6 +2798,10 @@ Bool Line_Update(const Line *_this)
         }
     }
 
+#if defined(COD2_X64)
+    if (boltFrame && !orient)
+        return 0;
+#endif
     if (!Particle_UpdateOrigin((const Particle *)_this, (const orientation_t *)orient))
         return 0;
 
@@ -2455,10 +2840,62 @@ Bool Line_Update(const Line *_this)
     Particle_UpdateAlpha((const Particle *)_this);
 
     return 1;
+#endif
 }
 
 Bool Cloud_Update(const Cloud *_this)
 {
+#if defined(COD2_X64)
+    extern void AngleAxisToQuat(float, const vec_t *, vec_t *);
+    extern void QuatToAxis(const vec_t *, vec3_t *);
+    Cloud *cloud = (Cloud *)_this;
+    Particle *particle = &cloud->base;
+    Effect *effect = &particle->base;
+    if (!Effect_Update(effect))
+        return 0;
+    const orientation_t *orient = NULL;
+    if (effect->mBolt.value) {
+        orient = FxBoltFrame_GetOrientation(effect->mBolt.value);
+        if (!orient)
+            return 0;
+    }
+    vec3_t previousOrigin;
+    memcpy(previousOrigin, effect->origin, sizeof(previousOrigin));
+    if (!Particle_UpdateOrigin(particle, orient))
+        return 0;
+    float time = effect->normTime;
+    effect->mRefEnt.radius[0] = FxNative_SampleChannel(
+        &particle->sizeChannelInstance, &particle->sizeRandChannelInstance,
+        particle->blendWeight[2], time, (effect->mFlags & 0x8000) != 0);
+    effect->mRefEnt.radius[1] = particle->nonUniformScale
+        ? FxNative_SampleChannel(&particle->size2ChannelInstance,
+              &particle->size2RandChannelInstance, particle->blendWeight[3],
+              time, (effect->mFlags & 0x10000) != 0)
+        : effect->mRefEnt.radius[0];
+    if (cloud->useLengthFlag) {
+        float height = FxNative_SampleChannel(&cloud->heightChannel,
+            &cloud->heightRandChannel, cloud->randomLengthBlend, time,
+            (effect->mFlags & 0x20000) != 0);
+        /* This slot is the stored height at Mac object offset 0x258. */
+        memcpy(cloud->_gap, &height, sizeof(height));
+    }
+    Particle_UpdateRGB(particle);
+    Particle_UpdateAlpha(particle);
+    FxNative_UpdateParticleRotation(particle);
+    vec4_t quaternion;
+    AngleAxisToQuat(effect->mRefEnt.rotation, cloud->randomDirection, quaternion);
+    QuatToAxis(quaternion, effect->mRefEnt.axis);
+    effect->mRefEnt.scale = effect->mRefEnt.radius[0];
+    effect->mRefEnt.radius[0] = effect->mRefEnt.radius[1];
+    if (cloud->useLengthFlag)
+        memcpy(&effect->mRefEnt.radius[1], cloud->_gap, sizeof(float));
+    if (orient)
+        OrientationPosToWorldPos(orient, effect->origin, effect->mRefEnt.origin);
+    else
+        memcpy(effect->mRefEnt.origin, effect->origin, sizeof(vec3_t));
+    memcpy(effect->mRefEnt.endpos, previousOrigin, sizeof(previousOrigin));
+    return 1;
+#else
 
     byte *self = (byte *)_this;
     int startTime = (((Effect *)(self))->mTimeStart);
@@ -2493,6 +2930,10 @@ Bool Cloud_Update(const Cloud *_this)
         }
     }
 
+#if defined(COD2_X64)
+    if (boltFrame && !orient)
+        return 0;
+#endif
     if (!Particle_UpdateOrigin((const Particle *)_this, (const orientation_t *)orient))
         return 0;
 
@@ -2572,6 +3013,7 @@ Bool Cloud_Update(const Cloud *_this)
     Particle_UpdateAlpha((const Particle *)_this);
 #endif
     return 1;
+#endif
 }
 
 #if defined(COD2_X64)
@@ -2589,7 +3031,7 @@ static float FxNative_SampleChannel(FxChannelInstance *channel,
     return value * channel->scale;
 }
 
-static void FxNative_UpdateParticleAppearance(Particle *particle)
+static void FxNative_UpdateParticleAppearance(Particle *particle, Bool stopOnZero)
 {
     Effect *effect = &particle->base;
     int flags = effect->mFlags;
@@ -2597,35 +3039,56 @@ static void FxNative_UpdateParticleAppearance(Particle *particle)
     effect->mRefEnt.radius[0] = FxNative_SampleChannel(
         &particle->sizeChannelInstance, &particle->sizeRandChannelInstance,
         particle->blendWeight[2], time, (flags & 0x8000) != 0);
+    if (stopOnZero && effect->mRefEnt.radius[0] == 0.0f)
+        return;
     effect->mRefEnt.radius[1] = particle->nonUniformScale
         ? FxNative_SampleChannel(&particle->size2ChannelInstance,
               &particle->size2RandChannelInstance, particle->blendWeight[3],
               time, (flags & 0x10000) != 0)
         : effect->mRefEnt.radius[0];
+    if (stopOnZero && effect->mRefEnt.radius[1] == 0.0f)
+        return;
     Particle_UpdateRGB(particle);
     Particle_UpdateAlpha(particle);
+    FxNative_UpdateParticleRotation(particle);
+    FxNative_UpdateParticleSubimage(particle);
+}
+
+static void FxNative_UpdateParticleRotation(Particle *particle)
+{
+    Effect *effect = &particle->base;
     float rotationDelta = FxNative_SampleChannel(
         &particle->rotationDeltaChannelInstance,
         &particle->rotationDeltaRandChannelInstance, particle->blendWeight[4],
-        time, (flags & 0x40000) != 0);
+        effect->normTime, (effect->mFlags & 0x40000) != 0);
     effect->mRefEnt.rotation += theFxHelper->mFrameTime * 0.01f * rotationDelta;
+}
 
+static void FxNative_UpdateParticleSubimage(Particle *particle)
+{
+    Effect *effect = &particle->base;
     int frameCount = FxHelper_GetMaterialSubimageCount(theFxHelper,
                                                      effect->mRefEnt.customMaterial);
     if (frameCount <= 1) {
         effect->mRefEnt.materialSubimageIndex = 0;
         return;
     }
-    int frame = particle->startFrame +
-        (int)((theFxHelper->mTime - effect->mTimeStart) * particle->frameRate);
-    if (particle->sequenceLoopMode == 0) {
+    int age = (int)((unsigned int)theFxHelper->mTime - (unsigned int)effect->mTimeStart);
+    int frame = (int)((unsigned int)particle->startFrame +
+        (unsigned int)FxNative_FloatToInt((float)age * particle->frameRate));
+    if (particle->sequenceLoopMode == 0 && frame >= frameCount) {
         frame %= frameCount;
     } else if (particle->sequenceLoopMode == 1 && frame >= frameCount) {
-        if (particle->sequenceLoopTimes > 0 &&
-            frame < frameCount * (particle->sequenceLoopTimes + 1)) {
-            frame %= frameCount;
+        if (particle->sequenceLoopTimes > 0) {
+            int limit = (int)((unsigned int)frameCount *
+                ((unsigned int)particle->sequenceLoopTimes + 1u));
+            if (frame < limit) {
+                frame %= frameCount;
+            } else {
+                particle->sequenceLoopTimes = 0;
+                frame = frameCount - 1;
+            }
         } else {
-            particle->sequenceLoopTimes = 0;
             frame = frameCount - 1;
         }
     }
@@ -2648,7 +3111,11 @@ Bool OrientedParticle_Update(const OrientedParticle *_this)
     if (normTime > 1.0f)
         ((Effect *)self)->normTime = 1.0f;
     if (0.0f > ((Effect *)self)->normTime)
+#if defined(COD2_X64)
+        ((Effect *)self)->normTime = 0.0f;
+#else
         return 0;
+#endif
     normTime = ((Effect *)self)->normTime;
 
     byte *boltFrame = (*(byte **)&((Effect *)(self))->mBolt.value);
@@ -2669,10 +3136,15 @@ Bool OrientedParticle_Update(const OrientedParticle *_this)
         }
     }
 
+#if defined(COD2_X64)
+    if (boltFrame && !orient)
+        return 0;
+#endif
     if (!Particle_UpdateOrigin((const Particle *)_this, (const orientation_t *)orient))
         return 0;
 
 #if defined(COD2_X64)
+    FxNative_UpdateParticleAppearance((Particle *)_this, 0);
     OrientedParticle *particle = (OrientedParticle *)self;
     Effect *effect = &particle->base.base;
     if (orient) {
@@ -2697,9 +3169,7 @@ Bool OrientedParticle_Update(const OrientedParticle *_this)
     }
 #endif
 
-#if defined(COD2_X64)
-    FxNative_UpdateParticleAppearance((Particle *)_this);
-#else
+#if !defined(COD2_X64)
     float radius;
     if ((*(short *)&((Effect *)self)->mFlags) < 0) {
         float bf = (((Particle *)(self))->blendWeight[2]);
@@ -2757,7 +3227,11 @@ Bool Particle_Update(const Particle *_this, const Particle *_this_1, const Cloud
     if (normTime > 1.0f)
         ((Effect *)self)->normTime = 1.0f;
     if (0.0f > ((Effect *)self)->normTime)
+#if defined(COD2_X64)
+        ((Effect *)self)->normTime = 0.0f;
+#else
         return 0;
+#endif
     normTime = ((Effect *)self)->normTime;
 
     byte *boltFrame = (*(byte **)&((Effect *)(self))->mBolt.value);
@@ -2781,6 +3255,10 @@ Bool Particle_Update(const Particle *_this, const Particle *_this_1, const Cloud
         }
     }
 
+#if defined(COD2_X64)
+    if (boltFrame && !orient)
+        return 0;
+#endif
     if (!Particle_UpdateOrigin(_this, (const orientation_t *)orient))
         return 0;
 
@@ -2797,7 +3275,7 @@ Bool Particle_Update(const Particle *_this, const Particle *_this_1, const Cloud
     }
 
 #if defined(COD2_X64)
-    FxNative_UpdateParticleAppearance((Particle *)_this);
+    FxNative_UpdateParticleAppearance((Particle *)_this, 1);
 #else
     float radius;
     if ((*(short *)&((Effect *)self)->mFlags) < 0) {

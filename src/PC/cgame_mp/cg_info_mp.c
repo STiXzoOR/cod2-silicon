@@ -159,7 +159,15 @@ void CG_DrawInformation(qboolean serverLoading)
     }
 
     translated = UI_SafeTranslateString("CGAME_WAITINGFORSERVERLOAD");
+#if defined(COD2_X64)
+    textWidth = UI_TextWidth(translated, 0, (struct Font_s *)font, 0.5f);
+#else
     textWidth = UI_TextWidth(translated, 0x7fffffff, (struct Font_s *)font, 0.5f);
+#endif
     x = (640.0f - (float)textWidth) * 0.5f;
+#if defined(COD2_X64)
+    UI_DrawText(va("%s%s", translated, dots), 0x7fffffff, font, x, 439.0f, 0, 0, 0.5f, (const vec_t *)imp_colorWhite, 3);
+#else
     UI_DrawText(va("%s%s", translated, dots), 0x7fffffff, font, x, 452.0f, 0, 0, 0.5f, (const vec_t *)imp_colorWhite, 3);
+#endif
 }

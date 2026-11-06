@@ -35,6 +35,16 @@ extern unsigned int SEH_ReadCharFromString(const char **ppsText, qboolean *pbIsT
 
 extern int lastLeadTeam;
 
+#if defined(COD2_X64)
+static const listColumnInfo_t columnInfo[6] = {
+    { LCT_TALKING_ICON, 0.05f, "", 0 },
+    { LCT_STATUS_ICON, 0.05f, "", 0 },
+    { LCT_NAME, 0.47f, "", 0 },
+    { LCT_SCORE, 0.13f, "CGAME_SB_SCORE", 2 },
+    { LCT_DEATHS, 0.13f, "CGAME_SB_DEATHS", 2 },
+    { LCT_PING, 0.17f, "CGAME_SB_PING", 2 },
+};
+#else
 static const listColumnInfo_t columnInfo[6] = {
     { LCT_NAME, 0.46f, "", 0 },
     { LCT_STATUS_ICON, 0.05f, "", 0 },
@@ -43,6 +53,7 @@ static const listColumnInfo_t columnInfo[6] = {
     { LCT_DEATHS, 0.15f, "CGAME_SB_DEATHS", 2 },
     { LCT_PING, 0.14f, "CGAME_SB_PING", 2 },
 };
+#endif
 
 qboolean CG_ScoreboardDisplayed(void);
 void CG_ScrollScoreboardUp(void);
@@ -54,6 +65,14 @@ static float CG_DrawClientScore(vec_t *color, float y, score_t *score, float lis
 static float CG_DrawScoreboard_ListBanner(vec_t *color, float y, float listWidth, float h, int team, int *drawLine);
 float CG_DrawScoreboard_ScoresList(float alpha);
 qboolean CG_DrawScoreboard(void);
+
+#if defined(COD2_X64)
+static int CG_ScoreboardSigned32(uint32_t bits)
+{
+    /* Keep the signed result defined even when the wrapped sign bit is set. */
+    return bits <= INT32_MAX ? (int)bits : -1 - (int)(UINT32_MAX - bits);
+}
+#endif
 
 qboolean CG_ScoreboardDisplayed(void)
 {
@@ -77,11 +96,13 @@ void CG_ScrollScoreboardDown(void)
 {
     if (cg->scoresOffBottom != 0) {
 #if defined(COD2_X64)
-        cg->scoresTop += (*(const dvar_t **)imp_cg_scoreboardScrollStep)->current.integer;
+        cg->scoresTop = CG_ScoreboardSigned32((uint32_t)cg->scoresTop +
+            (uint32_t)(*(const dvar_t **)imp_cg_scoreboardScrollStep)->current.integer);
+        int maxScroll = CG_ScoreboardSigned32((uint32_t)cg->numScores - 1u);
 #else
         cg->scoresTop += *(int *)(*(int *)imp_cg_scoreboardScrollStep + 8);
-#endif
         int maxScroll = cg->numScores - 1;
+#endif
         if (cg->scoresTop > maxScroll)
             cg->scoresTop = maxScroll;
     }
@@ -227,7 +248,11 @@ static void CG_Scoreboard_DrawColumnString(const char *text, void *font, float x
         return;
 
     scale = 0.22f;
+#if defined(COD2_X64)
+    while ((float)UI_TextWidth(text, 0x7fffffff, (struct Font_s *)font, scale) > columnWidth)
+#else
     while ((float)UI_TextWidth(text, 0x7fffffff, (struct Font_s *)font, scale) > columnWidth && scale > 0.02f)
+#endif
         scale -= 0.02f;
 
     style = (scale >= 0.16f) ? 3 : 0;
@@ -397,7 +422,11 @@ static float CG_DrawScoreboard_ListBanner(vec_t *color, float y, float listWidth
 
         if (column->type == LCT_SCORE)
             text = va((const char *)"%i", cg->teamScores[team]);
+#if defined(COD2_X64)
+        else if (column->type == LCT_PING)
+#else
         else if (column->type == LCT_DEATHS)
+#endif
             text = va((const char *)"%i", cg->teamPings[team]);
 
         if (text) {
@@ -579,7 +608,11 @@ static float CG_Scoreboard_DrawHeader(vec_t *color, float y, float listWidth)
             float textX = x;
             if (column->iAlignment == 2)
                 textX += columnWidth - (float)UI_TextWidth(translation, 0, (struct Font_s *)font, 0.3f);
+#if defined(COD2_X64)
+            UI_DrawText(translation, 0x7fffffff, font, textX, y + 14.0f * 0.84f, 0, 0, 0.3f, color, 3);
+#else
             UI_DrawText(translation, 0x7fffffff, font, textX, y + 11.76f, 0, 0, 0.3f, color, 3);
+#endif
         }
 
         x += columnWidth;
@@ -623,8 +656,10 @@ static void CG_Scoreboard_DrawScrollBar(float y, int drawLine, int totalLines, f
     int visibleLines;
 
     barHeight = 432.0f - y - 1.0f;
+#if !defined(COD2_X64)
     if (barHeight <= 0.0f)
         return;
+#endif
 
     CG_Scoreboard_SetColor(color, 1.0f, 1.0f, 1.0f, alpha * 0.5f);
     material = CL_RegisterMaterialNoMip((const char *)"black", 7);
@@ -632,10 +667,18 @@ static void CG_Scoreboard_DrawScrollBar(float y, int drawLine, int totalLines, f
 
     thumbY = y + 1.0f;
     thumbHeight = barHeight - 2.0f;
+#if defined(COD2_X64)
+    if (cg->scoresTop != 0 && totalLines != 0)
+#else
     if (cg->scoresTop > 0 && totalLines > 0)
+#endif
         thumbY += ((float)cg->scoresTop / (float)totalLines) * thumbHeight;
 
+#if defined(COD2_X64)
+    visibleLines = CG_ScoreboardSigned32((uint32_t)drawLine - (uint32_t)cg->scoresTop);
+#else
     visibleLines = drawLine - cg->scoresTop;
+#endif
     if (visibleLines > 1 && totalLines > 1)
         thumbHeight *= (float)visibleLines / (float)totalLines;
 
@@ -700,8 +743,16 @@ float CG_DrawScoreboard_ScoresList(float alpha)
     }
 
     if (cg->numScores > 0) {
+#if defined(COD2_X64)
+        int i;
+        for (i = 0; i < cg->numScores; ++i) {
+            contentHeight += 12.0f;
+            ++totalLines;
+        }
+#else
         contentHeight += 12.0f * (float)cg->numScores;
         totalLines += cg->numScores;
+#endif
     }
 
     drawScrollBar = contentHeight > (432.0f - y);
@@ -798,7 +849,11 @@ qboolean CG_DrawScoreboard(void)
             if (fadePtr == 0) {
 
                 cg->killerName[0] = 0;
+#if defined(COD2_X64)
+                return 0;
+#else
                 goto scoreboard_done;
+#endif
             }
 
             fade = fadePtr[0];
@@ -912,9 +967,16 @@ qboolean CG_DrawScoreboard(void)
                 mapLen = len;
             }
 
+#if defined(COD2_X64)
+            /* Windows 0x4d9149 removes seven bytes on this fallback path.
+             * Preserve its label while keeping short native names in bounds. */
+            if (mapLen >= 7 && I_strnicmp(mapBuffer + mapLen - 3, (const char *)"bsp", 3) == 0)
+                mapBuffer[mapLen - 7] = '\0';
+#else
             if (mapLen >= 4 && I_strnicmp(mapBuffer + mapLen - 4, (const char *)"bsp", 3) == 0) {
                 mapBuffer[mapLen - 4] = '\0';
             }
+#endif
         }
 
         map = mapBuffer;

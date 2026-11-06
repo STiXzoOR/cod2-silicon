@@ -23,13 +23,21 @@ extern void Z_FreeInternal(void *ptr);
 extern int I_stricmp(const char *s1, const char *s2);
 extern int FS_Read(void *buffer, int len, fileHandle_t f);
 extern int FS_Seek(fileHandle_t f, long int offset, int origin);
+#if defined(__APPLE__) && defined(COD2_X64)
+extern int MacFiles_RemoveDirectoryA(const char *inPath);
+#else
 extern OSStatus MacFiles_RemoveDirectoryA(const char *inPath);
+#endif
 
 void Sys_Mkdir(const char *path)
 {
     /* mode 7 (R|W|X_OK) is invalid for Windows _access (X_OK unsupported) -> CRT
        invalid-parameter -> __fastfail/abrupt process exit. We only need an existence check. */
+#if defined(COD2_X64) && !defined(_WIN32)
+    if (access(path, R_OK | W_OK | X_OK) != 0) {
+#else
     if (access(path, 0) != 0) {
+#endif
         mkdir(path, 0777);
     }
 }
@@ -69,7 +77,11 @@ void Sys_ListFilteredFiles(const char *basedir, const char *subdirs, const char 
     DIR *fdir;
     struct dirent *d;
 
+#if defined(COD2_X64)
+    if (*numfiles > 0xFFE)
+#else
     if (*numfiles >= 0xFFE)
+#endif
         return;
 
     if (subdirs[0]) {
@@ -88,7 +100,11 @@ void Sys_ListFilteredFiles(const char *basedir, const char *subdirs, const char 
         if (stat(filename, &st) == -1)
             continue;
 
+#if defined(COD2_X64)
+        if (st.st_mode & S_IFDIR) {
+#else
         if (S_ISDIR(st.st_mode)) {
+#endif
             if (I_stricmp(d->d_name, ".") == 0 || I_stricmp(d->d_name, "..") == 0)
                 goto check_file;
 
@@ -101,7 +117,11 @@ void Sys_ListFilteredFiles(const char *basedir, const char *subdirs, const char 
         }
 
     check_file:
+#if defined(COD2_X64)
+        if (*numfiles > 0xFFE)
+#else
         if (*numfiles >= 0xFFE)
+#endif
             break;
 
         Com_sprintf(filename, 256, "%s/%s", subdirs, d->d_name);
@@ -188,10 +208,18 @@ char **Sys_ListFiles(const char *directory, const char *extension, const char *f
             continue;
 
         if (dironly) {
+#if defined(COD2_X64)
+            if (!(st.st_mode & S_IFDIR))
+#else
             if (!S_ISDIR(st.st_mode))
+#endif
                 continue;
         } else {
+#if defined(COD2_X64)
+            if (st.st_mode & S_IFDIR)
+#else
             if (S_ISDIR(st.st_mode))
+#endif
                 continue;
         }
 
@@ -255,6 +283,10 @@ qboolean Sys_DirectoryHasContents(const char *directory)
     while ((d = readdir(dir)) != NULL) {
         if (d->d_name[0] == '.')
             continue;
+#if defined(COD2_X64)
+        if (d->d_type != DT_REG)
+            continue;
+#endif
         closedir(dir);
         return 1;
     }

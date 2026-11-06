@@ -2,6 +2,9 @@
 #include "imports.h"
 
 extern float sqrtf(float x);
+#if defined(COD2_X64)
+extern float fabsf(float x);
+#endif
 
 typedef struct dctri_ondisk_s {
     float v[12];
@@ -102,13 +105,25 @@ void CMod_LoadPlanes(const byte *base, const lump_t *l)
     in = base + l->fileofs;
 
     if (l->filelen & 0xf) {
+#if defined(COD2_X64)
+        Com_Error(ERR_DROP, "\x15" "MOD_LoadBmodel: funny lump size");
+#else
         Com_Error(ERR_DROP, "CMod_LoadPlanes: funny lump size");
+#endif
     }
 
+#if defined(COD2_X64)
+    count = (unsigned)l->filelen >> 4;
+#else
     count = l->filelen >> 4;
+#endif
 
     if (count <= 0) {
+#if defined(COD2_X64)
+        Com_Error(ERR_DROP, "\x15" "Map with no planes");
+#else
         Com_Error(ERR_DROP, "CMod_LoadPlanes: map has no planes");
+#endif
     }
 
     out = (cplane_t *)CM_Hunk_Alloc(count * sizeof(cplane_t), "CMod_LoadPlanes", 0x17);
@@ -162,6 +177,9 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
     const vec_t *curMaxs;
 
     node = (cLeafBrushNode_t *)TempMalloc(sizeof(cLeafBrushNode_t));
+#if defined(COD2_X64)
+    memset(node, 0, sizeof(*node));
+#endif
     node->axis = 0;
     node->contents = 0;
     node->data.children.range = 0;
@@ -203,7 +221,11 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
                         splitMin = bmin;
                 } else {
                     float bmax = ((float *)&brush_j->maxs)[axisLoop];
+#if defined(COD2_X64)
+                    if (bmax <= pivot) {
+#else
                     if (bmax >= pivot) {
+#endif
                         countBelow++;
                         if (bmax > splitMax)
                             splitMax = bmax;
@@ -247,7 +269,11 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
                         splitMin = bmin;
                 } else {
                     float bmax = ((float *)&brush_j->maxs)[axisLoop];
+#if defined(COD2_X64)
+                    if (bmax <= pivot) {
+#else
                     if (bmax >= pivot) {
+#endif
                         countBelow++;
                         if (bmax > splitMax)
                             splitMax = bmax;
@@ -279,13 +305,19 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
         curMaxs++;
     }
 
+#if !defined(COD2_X64)
     bestAxis = -1;
+#endif
 
     if (bestAxis < 0) {
 
         node->leafBrushCount = (short)numLeafBrushes;
         if ((int)(short)numLeafBrushes != numLeafBrushes) {
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_PartionLeafBrushes_r: leafBrushCount exceeded");
+#else
             Com_Error(ERR_DROP, "CMod_PartionLeafBrushes_r: numLeafBrushes overflows a short");
+#endif
         }
 
         if (numLeafBrushes > 0) {
@@ -317,7 +349,11 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
             float bmin = ((float *)&b->mins)[bestAxis];
             float bmax = ((float *)&b->maxs)[bestAxis];
 
+#if defined(COD2_X64)
+            if (!(bmin >= bestDist) && !(bestDist >= bmax)) {
+#else
             if (bmin < bestDist && bestDist < bmax) {
+#endif
                 leafBrushes[numChild] = brushIdx;
                 numChild++;
             }
@@ -351,11 +387,19 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
                         cbrush_t *b = brushesBase + brushIdx;
                         float bmin = ((float *)&b->mins)[bestAxis];
 
+#if defined(COD2_X64)
+                        if (bmin < bestDist) {
+#else
                         if (bmin >= bestDist) {
+#endif
                             continue;
                         }
                         {
+#if defined(COD2_X64)
+                            float diff = bmin - bestDist;
+#else
                             float diff = bestDist - bmin;
+#endif
                             float ddiff = diff - tolerance;
                             if (!(ddiff < 0.0f)) {
 
@@ -368,7 +412,9 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
                     }
                 } else {
 
+#if !defined(COD2_X64)
                     tolerance = 3.4028234663852886e+38f;
+#endif
                     for (m = 0; m < numLeafBrushes; m++) {
                         unsigned short brushIdx = leafBrushesCopy[m];
                         cbrush_t *b = brushesBase + brushIdx;
@@ -376,13 +422,25 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
                         float bmax_val;
 
                         bmax_val = ((float *)&b->maxs)[bestAxis];
+#if defined(COD2_X64)
+                        if (bmax_val > bestDist) {
+#else
                         if (bmax_val <= bestDist) {
+#endif
                             continue;
                         }
                         {
+#if defined(COD2_X64)
+                            float diff = bestDist - bmax_val;
+#else
                             float diff = bval - bestDist;
+#endif
                             float test = diff - tolerance;
+#if defined(COD2_X64)
+                            if (!(test < 0.0f)) {
+#else
                             if (test >= 0.0f) {
+#endif
 
                             } else {
                                 tolerance = diff;
@@ -414,7 +472,11 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
                 encoded = childOffset;
                 node->data.children.childOffset[sideIdx] = (unsigned short)encoded;
                 if ((int)(unsigned short)encoded != encoded) {
+#if defined(COD2_X64)
+                    Com_Error(ERR_DROP, "\x15" "CMod_PartionLeafBrushes_r: child exceeded");
+#else
                     Com_Error(ERR_DROP, "CMod_PartionLeafBrushes_r: childOffset overflows a short");
+#endif
                 }
 
                 node->contents |= childNode->contents;
@@ -544,12 +606,28 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
         matLumpLen = header->lumps[0].filelen;
         in = bspBase + matLumpOfs;
 
+#if defined(COD2_X64)
+        if ((unsigned)matLumpLen % 72 != 0) {
+#else
         if (matLumpLen % 72 != 0) {
+#endif
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadMaterials: funny lump size");
+#else
             Com_Error(ERR_DROP, "CMod_LoadMaterials: funny lump size");
+#endif
         }
+#if defined(COD2_X64)
+        count = (unsigned)matLumpLen / 72;
+#else
         count = matLumpLen / 72;
+#endif
         if (count <= 0) {
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "Map with no materials");
+#else
             Com_Error(ERR_DROP, "CMod_LoadMaterials: map has no materials");
+#endif
         }
 
         cmLocal->materials = (dmaterial_t *)CM_Hunk_Alloc(count * 72 + 72, "CMod_LoadMaterials", 0x17);
@@ -575,18 +653,43 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
 
         inBrush = bspBase + header->lumps[6].fileofs;
         if (header->lumps[6].filelen & 3) {
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadBrushes: funny lump size");
+#else
             Com_Error(ERR_DROP, "CMod_LoadBrushes: funny lump size");
+#endif
         }
+#if defined(COD2_X64)
+        brushCount = (unsigned)header->lumps[6].filelen >> 2;
+#else
         brushCount = header->lumps[6].filelen >> 2;
+#endif
 
         inSides = bspBase + header->lumps[5].fileofs;
         sideLumpLen = header->lumps[5].filelen;
         if (sideLumpLen & 7) {
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadBrushes: funny lump size");
+#else
             Com_Error(ERR_DROP, "CMod_LoadBrushes: funny lump size");
+#endif
         }
+#if defined(COD2_X64)
+        sideCount = (unsigned)sideLumpLen >> 3;
+#else
         sideCount = sideLumpLen >> 3;
+#endif
+#if defined(COD2_X64)
+        sideCount -= brushCount * 6;
+        if (sideCount < 0) {
+#else
         if (sideCount - brushCount * 6 < 0) {
+#endif
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadBrushes: bad side count");
+#else
             Com_Error(ERR_DROP, "CMod_LoadBrushSides: too few sides");
+#endif
         }
 
         if (sideCount == 0) {
@@ -601,7 +704,11 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
         cmLocal->brushes = outBrush;
         cmLocal->numBrushes = (unsigned short)brushCount;
         if ((int)(unsigned short)brushCount != brushCount) {
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadBrushes: cm.numBrushes exceeded");
+#else
             Com_Error(ERR_DROP, "CMod_LoadBrushes: numBrushes overflows a short");
+#endif
         }
 
         for (i = 0; i < brushCount; i++) {
@@ -612,7 +719,11 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
             numSides = (int)*(const short *)inBrush - 6;
             outBrush->numsides = numSides;
             if (numSides < 0) {
+#if defined(COD2_X64)
+                Com_Error(ERR_DROP, "\x15" "CMod_LoadBrushes: brush has less than 6 sides");
+#else
                 Com_Error(ERR_DROP, "CMod_LoadBrushes: bad numsides");
+#endif
             }
 
             if (outBrush->numsides == 0) {
@@ -636,12 +747,20 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
 
                     materialNum = *(const int *)(inSides + 4);
                     if (materialNum < 0 || materialNum >= cmLocal->numMaterials) {
+#if defined(COD2_X64)
+                        Com_Error(ERR_DROP, "\x15" "CMod_LoadBrushes: bad materialNum: %i", materialNum);
+#else
                         Com_Error(ERR_DROP, "CMod_LoadBrushes: bad materialNum: %i", materialNum);
+#endif
                     }
 
                     outBrush->axialMaterialNum[sideIdx][axialIdx] = (short)materialNum;
                     if ((int)(short)materialNum != materialNum) {
+#if defined(COD2_X64)
+                        Com_Error(ERR_DROP, "\x15" "CMod_LoadBrushes: axialMaterialNum exceeded");
+#else
                         Com_Error(ERR_DROP, "CMod_LoadBrushSides: materialNum overflows a short");
+#endif
                     }
 
                     inSides += 8;
@@ -653,13 +772,19 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
                 for (j = 0; j < *outSideNumSides; j++) {
                     int planeNum = *(const int *)inSides;
 
+#if !defined(COD2_X64)
                     if ((unsigned)planeNum >= (unsigned)cml.numPlanes) {
                         Com_Error(ERR_DROP, "CMod_LoadBrushes: bad planeNum: %i", planeNum);
                     }
+#endif
                     outSides->plane = cml.planes + planeNum;
                     outSides->materialNum = *(const int *)(inSides + 4);
                     if (outSides->materialNum < 0 || outSides->materialNum >= cmLocal->numMaterials) {
+#if defined(COD2_X64)
+                        Com_Error(ERR_DROP, "\x15" "CMod_LoadBrushes: bad materialNum: %i", outSides->materialNum);
+#else
                         Com_Error(ERR_DROP, "CMod_LoadBrushes: bad materialNum: %i", outSides->materialNum);
+#endif
                     }
                     inSides += 8;
                     outSides++;
@@ -668,7 +793,11 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
 
             materialNum = (int)((const short *)inBrush)[1];
             if (materialNum < 0 || materialNum >= cmLocal->numMaterials) {
+#if defined(COD2_X64)
+                Com_Error(ERR_DROP, "\x15" "CMod_LoadBrushes: bad materialNum: %i", materialNum);
+#else
                 Com_Error(ERR_DROP, "CMod_LoadBrushes: bad materialNum: %i", materialNum);
+#endif
             }
             outBrush->contents = cmLocal->materials[materialNum].contentFlags & 0xDFFFFFFB;
 
@@ -683,9 +812,17 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
 
         in = bspBase + header->lumps[27].fileofs;
         if (header->lumps[27].filelen & 3) {
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadLeafBrushes: funny lump size");
+#else
             Com_Error(ERR_DROP, "CMod_LoadLeafBrushes: funny lump size");
+#endif
         }
+#if defined(COD2_X64)
+        count = (unsigned)header->lumps[27].filelen >> 2;
+#else
         count = header->lumps[27].filelen >> 2;
+#endif
 
         out = (unsigned short *)CM_Hunk_Alloc(count * 2 + 2, "CMod_LoadLeafBrushes", 0x18);
         cmLocal->leafbrushes = out;
@@ -695,7 +832,11 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
             int val = *(const int *)in;
             *out = (unsigned short)val;
             if ((int)(unsigned short)val != val) {
+#if defined(COD2_X64)
+                Com_Error(ERR_DROP, "\x15" "CMod_LoadLeafBrushes: brushIndex exceeded");
+#else
                 Com_Error(ERR_DROP, "CMod_LoadLeafBrushes: leaf brush overflows a short");
+#endif
             }
             in += 4;
             out++;
@@ -708,9 +849,17 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
 
         in = bspBase + header->lumps[34].fileofs;
         if (header->lumps[34].filelen & 0x1f) {
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadCollisionAabbTrees: funny lump size");
+#else
             Com_Error(ERR_DROP, "CMod_LoadCollisionAabbTrees: funny lump size");
+#endif
         }
+#if defined(COD2_X64)
+        count = (unsigned)header->lumps[34].filelen >> 5;
+#else
         count = header->lumps[34].filelen >> 5;
+#endif
 
         out = (CollisionAabbTree *)CM_Hunk_Alloc(count * 32, "CMod_LoadCollisionAabbTrees", 0x1a);
         cmLocal->aabbTrees = out;
@@ -741,12 +890,28 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
         in = bspBase + leafLump->fileofs;
         leafLumpLen = leafLump->filelen;
 
+#if defined(COD2_X64)
+        if ((unsigned)leafLumpLen % 36 != 0) {
+#else
         if (leafLumpLen % 36 != 0) {
+#endif
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadLeafs: funny lump size");
+#else
             Com_Error(ERR_DROP, "CMod_LoadLeafs: funny lump size");
+#endif
         }
+#if defined(COD2_X64)
+        count = (unsigned)leafLumpLen / 36;
+#else
         count = leafLumpLen / 36;
+#endif
         if (count <= 0) {
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "Map with no leafs");
+#else
             Com_Error(ERR_DROP, "CMod_LoadLeafs: map has no leafs");
+#endif
         }
 
         out = (cLeaf_t *)CM_Hunk_Alloc(count * sizeof(cLeaf_t), "CMod_LoadLeafs", 0x17);
@@ -758,14 +923,22 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
                 int cluster = ((const dleaf_ondisk_t *)in)->cluster;
                 out->cluster = (short)cluster;
                 if ((int)(short)cluster != cluster) {
+#if defined(COD2_X64)
+                    Com_Error(ERR_DROP, "\x15" "CMod_LoadLeafs: cluster exceeded");
+#else
                     Com_Error(ERR_DROP, "CMod_LoadLeafs: cluster overflows a short");
+#endif
                 }
 
                 {
                     int fcaa = ((const dleaf_ondisk_t *)in)->firstCollAabbIndex;
                     out->firstCollAabbIndex = (unsigned short)fcaa;
                     if ((int)(unsigned short)fcaa != fcaa) {
+#if defined(COD2_X64)
+                        Com_Error(ERR_DROP, "\x15" "CMod_LoadLeafs: firstCollAabbIndex exceeded");
+#else
                         Com_Error(ERR_DROP, "CMod_LoadLeafs: firstCollAabbIndex overflows an unsigned short");
+#endif
                     }
                 }
 
@@ -773,7 +946,11 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
                     int cac = ((const dleaf_ondisk_t *)in)->collAabbCount;
                     out->collAabbCount = (unsigned short)cac;
                     if ((int)(unsigned short)cac != cac) {
+#if defined(COD2_X64)
+                        Com_Error(ERR_DROP, "\x15" "CMod_LoadLeafs: collAabbCount exceeded");
+#else
                         Com_Error(ERR_DROP, "CMod_LoadLeafs: collAabbCount overflows an unsigned short");
+#endif
                     }
                 }
 
@@ -784,13 +961,21 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
                 int fcaa = ((const dleaf_ondisk_t *)in)->firstCollAabbIndex;
                 out->firstCollAabbIndex = (unsigned short)fcaa;
                 if ((int)(unsigned short)fcaa != fcaa) {
+#if defined(COD2_X64)
+                    Com_Error(ERR_DROP, "\x15" "CMod_LoadLeafs: firstCollAabbIndex exceeded");
+#else
                     Com_Error(ERR_DROP, "CMod_LoadLeafs: firstCollAabbIndex overflows an unsigned short");
+#endif
                 }
 
                 int cac = ((const dleaf_ondisk_t *)in)->collAabbCount;
                 out->collAabbCount = (unsigned short)cac;
                 if ((int)(unsigned short)cac != cac) {
+#if defined(COD2_X64)
+                    Com_Error(ERR_DROP, "\x15" "CMod_LoadLeafs: collAabbCount exceeded");
+#else
                     Com_Error(ERR_DROP, "CMod_LoadLeafs: collAabbCount overflows an unsigned short");
+#endif
                 }
             }
 
@@ -807,20 +992,43 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
         in = bspBase + header->lumps[35].fileofs;
         subLumpLen = header->lumps[35].filelen;
 
+#if defined(COD2_X64)
+        if ((unsigned)subLumpLen % 48 != 0) {
+#else
         if (subLumpLen % 48 != 0) {
+#endif
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadSubmodels: funny lump size");
+#else
             Com_Error(ERR_DROP, "CMod_LoadSubmodels: funny lump size");
+#endif
         }
+#if defined(COD2_X64)
+        count = (unsigned)subLumpLen / 48;
+#else
         count = subLumpLen / 48;
+#endif
         if (count <= 0) {
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "Map with no models");
+#else
             Com_Error(ERR_DROP, "CMod_LoadSubmodels: map has no submodels");
+#endif
         }
+#if !defined(COD2_X64)
         if (count > 1023) {
             Com_Error(ERR_DROP, "CMod_LoadSubmodels: too many submodels");
         }
+#endif
 
         out = (cmodel_t *)CM_Hunk_Alloc(count * 72, "CMod_LoadSubmodels", 0x18);
         cmLocal->cmodels = out;
         cmLocal->numSubModels = count;
+#if defined(COD2_X64)
+        if (count > 1023) {
+            Com_Error(ERR_DROP, "\x15" "MAX_SUBMODELS exceeded");
+        }
+#endif
 
         for (i = 0; i < count; i++) {
             float extent[3];
@@ -832,9 +1040,15 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
                 out[i].mins[j] = minVal;
                 out[i].maxs[j] = maxVal;
 
+#if defined(COD2_X64)
+                absMin = fabsf(minVal);
+                absMax = fabsf(maxVal);
+                extent[j] = (absMin - absMax) < 0.0f ? absMax : absMin;
+#else
                 absMin = minVal < 0.0f ? -minVal : minVal;
                 absMax = maxVal < 0.0f ? -maxVal : maxVal;
                 extent[j] = (absMin - absMax) < 0.0f ? absMin : absMax;
+#endif
             }
 
             out[i].radius = sqrtf(extent[0] * extent[0] + extent[1] * extent[1] + extent[2] * extent[2]);
@@ -843,13 +1057,21 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
                 int numBrushes = ((const dsubmodel_ondisk_t *)in)->numBrushes;
                 out[i].leaf.collAabbCount = (unsigned short)numBrushes;
                 if ((int)(unsigned short)numBrushes != numBrushes) {
+#if defined(COD2_X64)
+                    Com_Error(ERR_DROP, "\x15" "CMod_LoadSubmodels: collAabbCount exceeded");
+#else
                     Com_Error(ERR_DROP, "CMod_LoadSubmodels: collAabbCount overflows a short");
+#endif
                 }
 
                 int firstBrush = ((const dsubmodel_ondisk_t *)in)->firstBrush;
                 out[i].leaf.firstCollAabbIndex = (unsigned short)firstBrush;
                 if ((int)(unsigned short)firstBrush != firstBrush) {
+#if defined(COD2_X64)
+                    Com_Error(ERR_DROP, "\x15" "CMod_LoadSubmodels: firstCollAabbIndex exceeded");
+#else
                     Com_Error(ERR_DROP, "CMod_LoadSubmodels: firstCollAabbIndex overflows a short");
+#endif
                 }
             }
 
@@ -859,7 +1081,9 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
 
     CM_Hunk_CheckTempMemoryClear();
     TempMemoryReset();
+#if !defined(COD2_X64)
     TempMalloc(0);
+#endif
 
     {
         cLeafBrushNode_t *tempBase = (cLeafBrushNode_t *)((byte *)TempMalloc(0) - sizeof(cLeafBrushNode_t));
@@ -942,8 +1166,10 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
             numBrushes = *(const int *)(submodelIn + i * 0x30 + 0x2C);
             firstBrush = *(const int *)(submodelIn + i * 0x30 + 0x28);
 
+#if !defined(COD2_X64)
             if (numBrushes <= 0)
                 continue;
+#endif
 
             indexes = (unsigned short *)CM_Hunk_Alloc(numBrushes * 2, "CMod_LoadSubmodelBrushNodes", 0x18);
 
@@ -953,7 +1179,11 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
                     int brushIdx = firstBrush + j;
                     indexes[j] = (unsigned short)brushIdx;
                     if ((int)(unsigned short)brushIdx != brushIdx) {
+#if defined(COD2_X64)
+                        Com_Error(ERR_DROP, "\x15" "CMod_LoadSubmodelBrushNodes: leafBrushes exceeded");
+#else
                         Com_Error(ERR_DROP, "CMod_LoadSubmodelBrushNodes: brush index overflows a short");
+#endif
                     }
                     brushContents |= cmLocal->brushes[brushIdx].contents;
                 }
@@ -1091,12 +1321,28 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
         in = bspBase + header->lumps[25].fileofs;
         nodeLumpLen = header->lumps[25].filelen;
 
+#if defined(COD2_X64)
+        if ((unsigned)nodeLumpLen % 36 != 0) {
+#else
         if (nodeLumpLen % 36 != 0) {
+#endif
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "MOD_LoadBmodel: funny lump size");
+#else
             Com_Error(ERR_DROP, "CMod_LoadNodes: funny lump size");
+#endif
         }
+#if defined(COD2_X64)
+        count = (unsigned)nodeLumpLen / 36;
+#else
         count = nodeLumpLen / 36;
+#endif
         if (count <= 0) {
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "Map has no nodes");
+#else
             Com_Error(ERR_DROP, "CMod_LoadNodes: map has no nodes");
+#endif
         }
 
         out = (cNode_t *)CM_Hunk_Alloc(count * sizeof(cNode_t), "CMod_LoadNodes", 0x17);
@@ -1106,16 +1352,22 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
         for (i = 0; i < count; i++) {
             int planeNum = ((const dnode_ondisk_t *)in)->planeNum;
 
+#if !defined(COD2_X64)
             if ((unsigned)planeNum >= (unsigned)cml.numPlanes) {
                 Com_Error(ERR_DROP, "CMod_LoadNodes: bad planeNum: %i", planeNum);
             }
+#endif
             out->plane = cml.planes + planeNum;
 
             for (j = 0; j < 2; j++) {
                 int child = ((const dnode_ondisk_t *)in)->children[j];
                 out->children[j] = (short)child;
                 if ((int)(short)child != child) {
+#if defined(COD2_X64)
+                    Com_Error(ERR_DROP, "\x15" "CMod_LoadNodes: children exceeded");
+#else
                     Com_Error(ERR_DROP, "CMod_LoadNodes: child overflows a short");
+#endif
                 }
             }
 
@@ -1130,9 +1382,17 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
 
         in = bspBase + header->lumps[28].fileofs;
         if (header->lumps[28].filelen & 3) {
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadLeafSurfaces: funny lump size");
+#else
             Com_Error(ERR_DROP, "CMod_LoadLeafSurfaces: funny lump size");
+#endif
         }
+#if defined(COD2_X64)
+        count = (unsigned)header->lumps[28].filelen >> 2;
+#else
         count = header->lumps[28].filelen >> 2;
+#endif
 
         out = (int *)CM_Hunk_Alloc(count * 4, "CMod_LoadLeafSurfaces", 0x1a);
         cmLocal->leafsurfaces = out;
@@ -1151,9 +1411,17 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
 
         in = bspBase + header->lumps[29].fileofs;
         if (header->lumps[29].filelen & 0xf) {
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadCollisionVerts: funny lump size");
+#else
             Com_Error(ERR_DROP, "CMod_LoadCollisionVerts: funny lump size");
+#endif
         }
+#if defined(COD2_X64)
+        count = (unsigned)header->lumps[29].filelen >> 4;
+#else
         count = header->lumps[29].filelen >> 4;
+#endif
 
         out = (CollisionVertex *)CM_Hunk_Alloc(count * 12, "CMod_LoadCollisionVerts", 0x1a);
         cmLocal->verts = out;
@@ -1176,10 +1444,22 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
         in = bspBase + header->lumps[30].fileofs;
         edgeLumpLen = header->lumps[30].filelen;
 
+#if defined(COD2_X64)
+        if ((unsigned)edgeLumpLen % 56 != 0) {
+#else
         if (edgeLumpLen % 56 != 0) {
+#endif
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadCollisionEdges: funny lump size");
+#else
             Com_Error(ERR_DROP, "CMod_LoadCollisionEdges: funny lump size");
+#endif
         }
+#if defined(COD2_X64)
+        count = (unsigned)edgeLumpLen / 56;
+#else
         count = edgeLumpLen / 56;
+#endif
 
         out = (CollisionEdge *)CM_Hunk_Alloc(count * 48, "CMod_LoadCollisionEdges", 0x1a);
         cmLocal->edges = out;
@@ -1220,10 +1500,22 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
         in = bspBase + header->lumps[31].fileofs;
         triLumpLen = header->lumps[31].filelen;
 
+#if defined(COD2_X64)
+        if ((unsigned)triLumpLen % 72 != 0) {
+#else
         if (triLumpLen % 72 != 0) {
+#endif
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadCollisionTriangles: funny lump size");
+#else
             Com_Error(ERR_DROP, "CMod_LoadCollisionTriangles: funny lump size");
+#endif
         }
+#if defined(COD2_X64)
+        count = (unsigned)triLumpLen / 72;
+#else
         count = triLumpLen / 72;
+#endif
 
         out = (CollisionTriangle *)CM_Hunk_Alloc(count * 72, "CMod_LoadCollisionTriangles", 0x1a);
         cmLocal->tris = out;
@@ -1262,10 +1554,22 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
         in = bspBase + header->lumps[32].fileofs;
         borderLumpLen = header->lumps[32].filelen;
 
+#if defined(COD2_X64)
+        if ((unsigned)borderLumpLen % 28 != 0) {
+#else
         if (borderLumpLen % 28 != 0) {
+#endif
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadCollisionBorders: funny lump size");
+#else
             Com_Error(ERR_DROP, "CMod_LoadCollisionBorders: funny lump size");
+#endif
         }
+#if defined(COD2_X64)
+        count = (unsigned)borderLumpLen / 28;
+#else
         count = borderLumpLen / 28;
+#endif
 
         out = (CollisionBorder *)CM_Hunk_Alloc(count * 28, "CMod_LoadCollisionBorders", 0x1a);
         cmLocal->borders = out;
@@ -1292,12 +1596,28 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
         in = bspBase + header->lumps[33].fileofs;
         partLumpLen = header->lumps[33].filelen;
 
+#if defined(COD2_X64)
+        if ((unsigned)partLumpLen % 12 != 0) {
+#else
         if (partLumpLen % 12 != 0) {
+#endif
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\x15" "CMod_LoadCollisionPartitions: funny lump size");
+#else
             Com_Error(ERR_DROP, "CMod_LoadCollisionPartitions: funny lump size");
+#endif
         }
+#if defined(COD2_X64)
+        count = (unsigned)partLumpLen / 12;
+#else
         count = partLumpLen / 12;
+#endif
 
+#if defined(COD2_X64)
+        out = (CollisionPartition *)CM_Hunk_Alloc(count * sizeof(*out), "CMod_LoadCollisionPartitions", 0x1a);
+#else
         out = (CollisionPartition *)CM_Hunk_Alloc(count * 12, "CMod_LoadCollisionPartitions", 0x1a);
+#endif
         cmLocal->partitions = out;
         cmLocal->partitionCount = count;
 
@@ -1341,7 +1661,11 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
         }
     } else {
         if (header->lumps[36].filelen != 0) {
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "In single player, do not compile the bsp with visibility");
+#else
             Com_Error(ERR_DROP, "CMod_LoadVisibility: vis data present but usePvs is false");
+#endif
         }
     }
 

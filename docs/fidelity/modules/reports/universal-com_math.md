@@ -1,0 +1,736 @@
+# universal/com_math module reconciliation
+
+Updated 2026-11-06.
+
+**Current: 193/229 reconciled: 159 equal, 34 fixed, 0 intentional; 36 unchecked.**
+
+Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. The initial 245-row assignment had 123 reconciled entries: 82 native math definitions and 41 complete inline or alias identities compared by hand with Mac 1.3 symbol-start disassembly. Its original 22 fixed ledger rows cover 17 native functions and five aliases of the same corrections. Triage and constant checks supplemented that reading. All 486 `bytedirs` floats and all 64 bytes of `identityMatrix44` match the Mac data. The eight-case `BoxOnPlaneSide` jump table at 0x328460 was decoded.
+
+## Corrections
+
+`RotatePointAroundVector` at 0x2d65c used the opposite perpendicular basis. Mac 0x2d77a-0x2d7c4 forms `vr` cross `dir`; native formed `dir` cross `vr`, reversing the rotation direction.
+
+`MatrixInverse44` at 0x2a9da now subtracts a complete three-term sum from another three-term sum for every cofactor. The former sequential subtraction changed float rounding. `MatrixMultiply43` at 0x2a02c now writes rotation columns in Mac order before translation, preserving the original behavior when storage overlaps. `MatrixForViewer` at 0x2b87e computes the first translation from the already-negated axis, including its signed-zero behavior.
+
+`GetRotatedBounds` at 0x2c674 now selects endpoints by the axis sign bit, including negative zero. Independent review caught an unsupported GCC sign-bit builtin on MSVC; the final implementation copies the float representation into `uint32_t` and masks bit 31. The corrected arm64 dedicated target rebuilt successfully; no MSVC build was run. `YawToAxis` at 0x2d5ba retains subtraction from positive zero and addition to positive zero for its second axis.
+
+The unordered comparison paths now match Mac in `DiffTrack` (0x2c220), `BoxDistSqrdExceeds` (0x2c540), `ExpandBoundsToWidth` (0x2c452), `WindingContainsCoplanarPoint` (0x2d0ee), and `AxisToAngles` (0x2dcc2). In particular the width selection uses a rounded subtraction, and the box-distance minimum retains the same unordered/tie operand.
+
+The packed angle conversion in `AngleMod` (0x2b99c), `AngleNormalize360` (0x2ba88), `AngleNormalize180` (0x2cd68), `AngleDelta` (0x2cdac), and `DiffTrackAngle` (0x2ce40) now handles Mac `CVTTSS2SI` invalid inputs explicitly. Its integer-indefinite result masks to zero; a direct C float-to-int conversion does not preserve that contract on arm64. `irand` at 0x2c0aa now expresses the range subtraction and result addition as 32-bit wrapping operations, matching the Mac integer instructions without signed C overflow.
+
+## Verification and limits
+
+All changes are under `COD2_X64`. Selecting the legacy branches produces exactly the starting source text, byte for byte. The arm64 Release `cod2_macos_ded` target builds with `taskpolicy -b nice -n 19` and two jobs. Existing sway, FX primitive and water fixtures were inspected; no tests were added or changed. The corrections are compiled and reviewed, not exercised. Full CI and replays remain with the integration owner.
+
+The 122 unchecked entries comprise 106 Linux-only helper rows without an established complete Mac inline identity, and 16 unrelated caller functions attributed to this header. The inline pass established complete copy, comparison, dot, length, scale, clamp, transform and sign-predicate operations in exact caller ranges. The Dvar_ValuesEqual dispatch table at 0x328b18 was decoded to identify the two-, three- and four-component comparisons and byte comparison. Similar arithmetic alone was not treated as proof of a whole caller. Remaining helper evidence names searched reference callers, or records an absent native body/use contract. For example, AxisClear and AxisIdentity have only unreferenced reference definitions; FloatAsInt has a known sign-only use but no complete raw-integer-return identity. Q_rint and I_fround have a located floor/conversion block, but exceptional C conversion behavior in the unrelated native caller remains unverified. The private `universal-math.routing.json` maps all misattributed callers to their actual source and module for later ownership correction. No existing reconciled verdict or platform decision was changed.
+
+Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-universal-math.noindex/`.
+
+## Ownership correction
+
+16 unchecked whole-caller rows were moved to their actual engine modules after integration. Original Mac attribution, IDs and unchecked verdicts are preserved. The preceding audit totals describe the original assignment. After that ownership correction, before the 2026-11-05 follow-up, this module held 229 rows: 101 equal, 22 fixed, 0 intentional, 106 unchecked. The destination owners must audit each complete caller; matching a shared inline helper does not certify it.
+
+## Integrated batch verification
+
+Integrated source `7e8d818` with ownership/evidence commit `2ee4eb9` passed both dedicated builds and all local macOS CI steps 02–13, including both Release clients, function/callback ABI audits and existing source fixtures. All nine changed source files differ only under `linux-x86_64-port-on`; none uses diagnostic line-number macros. Source preprocessing does not establish i386 binary-byte parity.
+
+Parent reviews covered all six units; independent source/binary reviews covered the changed math, dvar, text, sound and input code. Memory-file source was unchanged. Review caught an unsupported MSVC sign-bit builtin; a portable bit-copy correction was rebuilt and re-reviewed before integration. MSVC itself was not built. Native typed key storage was verified before deciding no storage mutation was required. No unresolved introduced-code finding remains.
+
+The six units closed 543 entries. Thirty-two whole callers misattributed to universal headers were routed to their actual owners with IDs and original provenance preserved. Five separately indexed Mac rows were resolved only as exact identities of already-audited complete functions. This closes 548 work items, not 548 new implementations. The unresolved identities and platform/storage boundaries remain explicit.
+
+Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baselines and each other in players, state hashes and entities. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and velocity drift 2.0. These dedicated traces do not exercise client input/rendering or every changed diagnostic, parser, sound or numeric edge; unreached corrections remain compiled and reviewed.
+
+Hosted ILP32 byte comparison remains unavailable because its unchanged reference fails to compile. No new tests were written; the existing formatter fixture expectation was corrected against exact Mac diagnostic bytes.
+
+## Remaining-helper follow-up — 2026-11-05
+
+**Current: 165/229 reconciled: 138 equal, 27 fixed, 0 intentional; 64 unchecked.**
+
+Original pass:160/229 reconciled:136 equal,24 fixed;69 unchecked. This pass closes 37
+of the 106 remaining Linux-only helper rows: 35 equal and two fixed. The original
+123 reconciled statuses/evidence remain unchanged. Linux supplied helper names;
+Mac symbol-start disassembly supplied behavior. Every new closure accounts for
+the complete helper operation, including every component, branch and result.
+It does not certify the unrelated caller around an inline operation.
+
+Two corrections were required in actual native owners. `FastCeil` in the HUD
+timer/clock code used a C float-to-int cast. Mac 0x1b3d4f, 0x1b3f03 and 0x1b3f39
+use `CVTTSS2SI`, whose invalid result is `INT_MIN`. A connected native helper now
+preserves that result after `ceilf` at all three uses. `BoundsOverlap` in
+`CM_AreaEntities_r` used six `<=` tests, rejecting unordered pairs; Mac
+0xaf6d2–0xaf729 rejects only strictly separated pairs with `UCOMISS/JA`. The
+native predicates now preserve that unordered-inclusive behavior and finite
+axis/order behavior. Both corrections are guarded by `COD2_X64`. Their complete
+owner rows receive explicit parent-approved evidence overrides.
+
+The new identity evidence includes:
+
+- `FloatAsInt` is the complete native `FloatWriteNoSwap` operation, Mac
+  0x28590–0x28597, returning the entire float word. This resolves the previous
+  sign-only evidence gap. `FloatIdentity` remains distinct and unchecked.
+- `Q_rint`/`I_fround`, `Q_round` and four-component byte packing use the complete
+  `Flash::Draw` sequence at 0xa0e83–0xa0f71. Later native FX conversion helpers
+  already preserve invalid integer conversion and the wrapping clamp paths.
+- `AxisClear`/`AxisIdentity` match the full nine-word camera identity block at
+  0x1d4826–0x1d4867; the decoded cubemap table selects it for case 4.
+  `Vec3ScaleToUnitMax` is the complete `ColorNormalize` operation at
+  0x2c7a6–0x2c82e, including output ones on zero and its returned maximum.
+- Paired float sine/cosine, reciprocal square root, float sign, integer sign,
+  side predicate, three-operand float clamp and accumulated plane-sign bits
+  were read in their exact owners. Mac's comparison-based signs and unordered
+  side result take precedence over the Linux header expressions.
+- Complete two-/three-/four-component copies, sets, clears, sums, differences,
+  averages, scales, multiply-adds, interpolation, negation and squared length
+  were established in Dvar, collision, animation, camera, item and movement
+  owners. Private ledger evidence names each exact range and native owner.
+
+The 69 unchecked rows retain real identity or input-contract gaps. New leads
+were evaluated without converting an absent symbol or partial operator into a
+closure. In particular, the partition integer minimum uses sign-only selection
+while native brush counts are bounded; the generic integer clamp has a located
+wrapping crash-land block but no established complete exceptional caller/input
+contract. Separate-output normalizers are not in-place normalizers, unsigned
+angle routines do not prove signed angles, matrix APIs do not establish the
+special alias/store contracts, and the FX random sphere sampler does not prove
+uniform-deviate or golden-angle samplers. Existing float-bit, plane snapping,
+projection, quaternion and remaining geometry gaps stay explicit. No unused
+standalone helper was added.
+
+Both changed translation units compile with the configured arm64 Release
+client and dedicated commands in stock and CoD2x modes (eight objects). All ten
+existing HUD module groups pass both modes under ASan/UBSan; the existing
+production `world_links` fixture passes both modes under ASan. No tests were
+added or changed. Five inactive preprocessing configurations match the base;
+`unifdef -UCOD2_X64` output is byte-identical for both sources, and neither uses
+`__LINE__`. These are source-preservation checks, not i386 byte parity.
+
+The exceptional conversion and unordered-overlap corrections are compiled and
+reviewed, not specifically exercised. Full links, CI and replays remain with
+the integration owner. Parent/fresh source review is pending at this worker
+commit. Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-math-remaining.noindex/`.
+
+## Fresh caller-review corrections — 2026-11-05
+
+Independent review confirmed the 37 helper identities and the original HUD
+ceiling/area-overlap corrections. It also found four complete-caller defects
+around the helper scopes: unordered child/prune/parallel gates in
+`CM_TraceThroughTree`, the cylinder vertical gate in `SV_EntityContact`,
+start-solid horizontal normalization in `DObjTraceline`, and compass range/alpha
+selection in `CG_DrawCompassFriendlies`. Their guarded repairs and exact Mac
+ranges are recorded in the respective owner reports. Three owner rows change
+from equal to fixed; the compass row remains fixed. Original evidence is
+retained and appended through explicit parent-approved overrides. The math
+module's 136 equal, 24 fixed and 69 unchecked totals are unchanged.
+
+Four additional translation units compile with the actual stock/CoD2x Release
+commands: 14 client/dedicated objects where applicable. All five existing
+collision suites, the existing server-contact fixture and the existing xanim
+trace case pass both modes under ASan/UBSan. No existing fixture executes the
+full compass-friendlies caller, and no new test was added. Exceptional numeric
+paths remain compiled and reviewed only. All six changed source files preserve
+five inactive configurations and byte-identical OFF text, with no `__LINE__`
+uses. Final source is frozen for independent reread; full links, CI and replays
+remain with the integration owner. The historical point-triangle NaN-`s` gap
+in `cm_mesh.c` is explicitly outside these repairs and was flagged to the
+parent with its current ledger owners.
+
+## Integrated batch 21 acceptance
+
+The final integrated snapshot passed both dedicated builds, full local CI02–13, legacy checks, independent reviews and unchanged-baseline replays. See [batch 21 verification](integration-batch21.md) for the preserved initial fixture failure, repair, exact scope and unexercised limits.
+
+## Remaining identity search — 2026-11-05
+
+The 69 unresolved rows remain unchecked. Two additional concrete candidates
+were examined after reading the earlier helper and fast-math evidence:
+
+- `ExpandBoundsByDelta`: Mac `SV_SightTraceToEntity` at 0x1bf986–0x1bf9d1
+  and 0x1bfab2–0x1bfad5 builds fresh swept bounds from start/end positions,
+  supplied extents and one-unit padding. The native server owner preserves
+  that structure. It does not identify an in-place signed-delta update of
+  existing minima/maxima.
+- `OrthographicMatrix`: the native device's 2D matrices have top-left origin,
+  negative Y, fixed negative Z and XY translation. The exact Mac projection
+  conversion at 0x254f6–0x2562c modifies an existing matrix and includes
+  device-dependent offsets. Neither establishes the complete centered
+  width/height/depth matrix initializer.
+
+These are rejected candidates, not new helper closures or whole-caller
+verification. No source defect was established. No source changed and no
+compilation, tests, CI or replay ran. Private exact-entry evidence is retained
+in `CoD2-native-decomp/recon-identity-math3.noindex`. The 23 outstanding
+`q_shared` identities also retain their prior verdicts; review of the previous
+consumer investigations supplied no new complete-operation lead.
+
+## Retained original-address provenance and integer selectors
+
+Original Linux addresses have now been recovered instead of relying on names in
+the reconstruction. The retained 1.0 IDA database supplies function boundaries
+and bytes. Masked whole-body comparisons against the original 1.3 ELF identify
+all 155 math bodies with a common relocation of +0x2364; 14 identical-body
+ambiguities are disambiguated by the surrounding module sequence. This maps
+61 of the 69 remaining math identities to concrete original addresses. For
+example, OrthographicMatrix maps 0x80a5b9c to 0x80a7f00, QuatInverse 0x80a5494 to
+0x80a77f8, Vec3PackUnitVec 0x80a23c8 to 0x80a472c and TransformBoundsExpand
+0x80a6f20 to 0x80a9284. These mappings supply identity and intent only, and do
+not close those rows without corresponding complete Mac operations.
+
+I_min is now fixed and I_max equal based on original caller chains and complete
+consumed Mac operations. Original I_min copies at 0x805525e and 0x81293be serve
+partition scoring, FX cull-plane selection and four-channel byte packing.
+Original I_max copies at 0x80f292e and 0x812991c serve the weapon kick timer and
+that byte packing. The original Flash caller at 0x812915e reaches byte packing
+at 0x81291c0; the original FX cull wrappers reach their shared selector through
+seven explicit calls. This replaces the earlier speculative name association.
+
+Mac partition selection at 0x7800f/0x780df chooses by subtraction sign. Both
+counters start at -1 and increment at most N times for positive signed N, so
+their difference cannot overflow and native comparison agrees. Mac weapon
+selection at 0x7cd9a–0x7cdaf first requires a positive kick timer, subtracts
+pml.msec and selects zero by sign. Pmove bounds that duration to 1–200, making
+the subtraction defined; the native timer operation agrees. Flash Draw's four
+upper/lower selections already preserve wrapped subtraction and negation,
+including the integer-indefinite conversion sentinel. The seven FX cull owners
+needed the wrapped count-minus-five correction described in the FxPrimitives
+report. The helper verdicts cover these original consumed operations, not a
+newly invented arbitrary-argument Mac function.
+
+I_clamp and I_sel remain unchecked: original header-copy identities were
+recovered, but their additional CrashLand exceptional conversion and nested
+selection contract is still incomplete. FloatIdentity and SinCos now have
+original addresses but need their complete Mac owner identity. Narrow semantic
+Mac scans for unit-vector packing constants and quaternion conjugation did not
+establish a new complete owner and do not count as absence evidence.
+
+Private address maps, original caller packets and exact Mac entries are retained
+in recon-provenance-math4.noindex. Only the FX translation unit changed and was
+manually compiled in its two configured client variants. No runtime behavior,
+tests, CI, full build or replay was exercised. There are 67 unchecked math rows.
+
+## Complete I_clamp and I_sel caller operations
+
+The remaining original I_clamp copies are now tied to complete operations by
+actual original executable calls: PM_CrashLand 0x80e30c4 calls 0x80e95f8 at
+0x80e3263, while Particle UpdateRGB 0x81264a2 calls FX_ColorToBytes 0x812430c at
+0x8126529, which calls 0x8129422 at 0x8124367. Mac RGB's three-channel conversion
+loop at 0xa1e62–0xa1e89 already agrees with native FloatToByte, including the
+wrapped upper selection followed by the lower test on the original integer.
+The CrashLand correction and its conversion/branch limits are described in the
+bg_pmove report. I_clamp becomes fixed.
+
+Original I_sel copies at 0x80553d2, 0x80e9a50, 0x80f2b14 and 0x81298fc are now
+linked by their actual calls to the complete I_min/I_max/I_clamp operation set:
+partition scoring, weapon timer, FX culling, Flash packing, RGB packing and
+CrashLand. With the FX culling and CrashLand wrapping selections corrected,
+I_sel also becomes fixed. These are consumed-operation verdicts; no independent
+arbitrary-argument Mac entry or new public API is claimed. This leaves 65 math
+rows unchecked. Only the changed bg_pmove translation unit was manually compiled
+in its four configured modes; no tests, CI, replay or runtime behavior ran.
+
+## PPC OrthographicMatrix identity lead
+
+The retained fat Mac binary's PPC slice contains an actual OrthographicMatrix
+body at 0x2beb8. Direct original branch encodings establish the complete caller
+chain: R_RenderScene 0xcdbb0 calls R_GenerateShadowCookies 0x10335c at 0xce668;
+that calls R_AddShadowCookie 0x1029c4 at 0x103878, which calls the matrix helper
+at 0x102e14. This is positive original Mac identity evidence, beyond the
+reconstruction-only references available earlier.
+
+The helper and all three PPC callers were retained privately and the exact
+corresponding i386 R_RenderScene body at 0xc5e5c was inspected. A complete
+corresponding i386 matrix operation/native owner was not established. The entry
+remains unchecked; PPC supplies identity and caller intent without overriding
+i386 floating behavior or justifying a disconnected native helper. No source
+changed and no compilation, test, CI, replay or runtime operation ran.
+
+The same packet records a targeted i386 executable-section trig-call inventory
+for the recovered original SinCos→VectorRotate→VectorRotateAroundOrigin chain.
+It did not establish a complete Mac counterpart and closes no additional row.
+Private evidence: recon-math6.noindex.
+
+## FloatIdentity provider boundary
+
+Original1.3 FloatIdentity copies0x80553f2/0x80b933a load the incoming word as float, and original FloatNoSwap calls the latter. Exact Mac FloatReadNoSwap has matching word instructions, but its input contract is raw integer bits. No positive float-input consumer/representation adapter connects the original helper to that native API. Independent review therefore retains FloatIdentity as unchecked; no cross-ABI alias or arbitrary NaN/exception equality is asserted. The separately found FloatReadSwap signed-shift correction belongs to the q_shared provider and does not close this helper.
+
+
+## FloatIdentity in the collision-plane loader — shared8
+
+Complete consumed FloatIdentity operation identified in original CMod_LoadPlanes 0x8053d82: actual source-field ADDRESS reaches raw-word dereference helper 0x8055284 at 0x8053e54, then FloatFromBits 0x8055374 at 0x8053e5c, then FloatIdentity 0x80553f2 at 0x8055380; returned float is stored to the matching normal field. Distance repeats the same full chain at 0x8053e9d/0x8053ea5. Fresh complete Mac CMod_LoadPlanes 0x77dc2 has the corresponding raw normal load/local/MOVSS/store at 0x77e3e–0x77e4b and distance MOVL transfer at 0x77e63–0x77e6c. Native cm_load_obj.c copies those same three normal fields and distance. This actual storage adapter resolves the prior hypothetical float-input/int-input bridge: no numeric conversion, callback cast or disconnected API is invented. Equal applies to the identified Mac/native consumed field transfer, not standalone FloatIdentity ABI, original Linux FLDS/FSTPS signaling-NaN/exception behavior, malformed-BSP storage, later comparison side effects or whole loader equivalence. FloatNoSwap/FloatSwap remain separately unchecked. Independent review: review-provenance-shared8-floatidentity.md. No source changes, compilation, tests, CI, replay or runtime verification.
+
+The prior standalone provider rejection remains valid for FloatNoSwap and FloatSwap. This closure uses the newly recovered complete original loader adapter and its actual corresponding Mac/native storage transfer. Existing plane-loader source, layout, count checks, diagnostics and classification logic are unchanged. Private evidence: `recon-provenance-shared8.noindex`.
+
+
+## Complete transformed-bound union — math10
+
+Complete transform-and-union operation identified in active Mac/native R_UpdateXModelBounds, not merely a transform or expansion fragment. Original wrapper identity 1.0 0x80a6f20 / 1.3 0x80a9284 forwards input bounds/origin/axis to complete TransformBounds 0x80a902c using a private six-float temporary, then merges all six endpoints through ExpandBounds 0x80a8eac. Exact Mac per-bone block 0xd0a91–0xd0ce4 performs the full operation: nine sign-bit/component-index endpoint selections, origin plus three ordered products for each min/max, then all six conditional accumulator updates. X merge 0xd0b21–0xd0b52, Y 0xd0be4–0xd0c15, Z 0xd0cb3–0xd0ce4 retain existing endpoints on equality/unordered input. Native r_model.c AXIS_CONTRIB plus the complete three-axis update uses the actual XBoneInfo bounds, quaternion-derived axis, bone translation and separate local bounds[6], with the same operation. This establishes the complete consumed disjoint-buffer operation; no standalone arbitrary-alias API, Linux float authority, whole renderer recertification or closure from zero-address ExpandRotatedBounds.eh is claimed. The final entity GetRotatedBounds call is separate. The existing component-offset repair predates reconciliation (83053c55, Oct3, ancestor of renderer audit555ba3e3), and the current primary Mac owner is already equal; no new defect/owner override. Independent review accepted the complete operation and classification. No source changes, compilation, tests, CI, replay or runtime verification; existing adaptations preserved.
+
+The original 1.3 scan of the remaining 61 emitted math bodies found six direct calls, all inside unresolved math-helper chains, and no new non-EH absolute references. This bounded result closes nothing. The new finding instead follows the active rendering bounds provider into a complete per-bone transform and merge. Original Vec3NormalizeByMax was also read through its zero provider: it writes three zeroes and divides by the maximum, while Mac/native ColorNormalize writes white at zero and uses reciprocal scaling. That different full contract remains unchecked. Color-byte candidates likewise have different byte order/rounding interfaces. Sixty-three math rows remain unresolved. Private evidence: `recon-provenance-math10.noindex`.
+
+
+## Complete camera in-place multiplication — math11
+
+Complete consumed in-place left multiplication identified in CG_PerturbCamera, inheriting its existing contiguous-basis repair. Original full MatrixMultiplyInPlace identity 1.0 0x80a379a / 1.3 0x80a5afe retains six output floats temporarily, writes the final row and copies the first two rows back, establishing inout=left*old-inout. Exact Mac camera 0x1d6ca6–0x1d6cbd snapshots all nine view-axis floats through AxisCopy 0x2c320 into a separate local; the SAME saved view-axis pointer in EBX is then the MatrixMultiply output at 0x1d6ccd, with the snapshot as right input and the complete contiguous perturb basis as left input. Full Mac MatrixMultiply 0x29baa–0x29d6d and native provider preserve all nine ordered dot products. Native CG_PerturbCamera implements that actual snapshot/overwrite sequence, not merely a hypothetical use of a three-buffer provider. Existing correction 3ef61de8 made the native left basis one contiguous 3x3 object, matching Mac stack rows -0x3c/-0x30/-0x24 instead of reading unrelated locals after a three-float vector. The primary owner is already fixed; this alias inherits that correction, with no new defect, source change or owner override. Scope is the complete consumed operation with separate left basis and saved right input; no arbitrary overlapping-left/right API, exact original temporary-store timing, whole-camera recertification or Linux x87/FP-environment equivalence is claimed. Existing correction is compiled and reviewed, not exercised by this operation audit. Independent review: review-provenance-math11-inplace.md. No new compilation, tests, CI, replays or runtime exercise.
+
+The earlier rejection of bare MatrixMultiply/MatrixMultiply43 providers remains valid. The new witness supplies the missing actual input snapshot and same-object output, with all nine values and the repaired left-basis storage established. MatrixMultiply34 and MatrixTransformVector43Equals retain their separate layout/input/output gaps. Sixty-two math rows remain unchecked. Private evidence: `recon-provenance-math11.noindex`.
+
+## Distinct live sampler owners (provenance-math12)
+
+Four remaining sampler rows received narrower blockers, with no closure or source change. The original `SphericalToCartesian` body at 0x80aa9c8 passes the same angle to both complete sine/cosine providers: its three outputs use radius times cosine squared, sine times cosine, and sine. The second angle is not missing from the reconstruction. The previously examined FX sphere owner uses independent angles and separate width/height factors, so it still does not identify that complete operation. Linux supplies original identity and intent here, not native floating-point authority.
+
+Two other live sampling owners were read from fresh exact Mac bodies. `Bullet_Endpos` at 0x1c8cb2 uses a linear random radius for its two transverse offsets, whereas the original uniform-circle helper derives a square-root radius. The complete `Cloud` constructor at 0xa98e6 draws three signed components, accepts squared length in [0.01,1] within four attempts, and normalizes or falls back to (1,0,0). It does not perform either original two-deviate sphere/hemisphere construction. Corresponding native owners preserve these Mac operations. Similar distribution intent does not establish complete helper identity.
+
+All four rows remain unchecked; module counts remain 139 equal, 28 fixed and 62 unchecked. These are bounded candidate eliminations, not proof that no other owner exists. Private exact-body evidence is retained in `recon-provenance-math12.noindex`. No tests, CI, compilation, replay or runtime verification was performed.
+
+## Further complete-operation candidates (provenance-math13)
+
+Seven rows remain unchecked after distinct candidate checks. The original `AxisFromForwardYaw` builder was compared with the complete mark-basis sequence at Mac 0x17c06b–0x17c0ac. Marks always rotates, stores cross before rotated side, and passes that packed order to `CL_MarkFragments`; the original wrapper skips signed-zero yaw and uses the opposite two-axis order. The current native mark layout is preserved. Without an original use bridge, this is a different complete builder rather than a justified wrapper identity.
+
+The full original constant-step trackers were compared with Mac `PM_UpdatePronePitch` at 0x6cafe. Prone pitch uses quantized `AngleDelta`, exact-zero gating, a signed frame-time step and accurate final wrapping. The original pair has an explicit 0.001 tolerance, absolute-step clamp and target-relative wrapping chain. Current native code preserves the Mac tracker; this candidate does not establish either missing helper.
+
+A semantic sign-operation scan found a concrete three-negation candidate in Mac `CDirect3DDevice::ValidateLighting` at 0xe784. Reading the complete body shows literal zero in the fourth component at 0xe87f, rather than the fourth-word preservation required by original `QuatInverse`. The native direction construction agrees. Additional integer-XOR and packed-mask scans are retained as bounded leads, not absence proof. A packed-vector constant route instead found scoreboard text positioning at 0x1c72ad/0x1c74e5; no complete three-field pack/unpack operation was established. Finally, complete original IDB bodies named `VectorSubtract417` and `VectorSubtract412` each process only three components. Their suffixes do not establish the four-component header helper's identity.
+
+Module counts remain 139 equal, 28 fixed and 62 unchecked. No source changes, new defects, tests, CI, compilation, replays or runtime verification. Exact bodies, bounded scan scripts/results and original-byte evidence are retained in `recon-provenance-math13.noindex`.
+
+## Final scalar trigonometry candidate pass (provenance-math14)
+
+Full original bytes establish double input and two double stores for `SinCos`; `SinCosDegrees` instead adds 360 once for negative input, uses literal outputs at exact 0/90/180/270, and narrows its fallback angle to a float pair. A bounded primary Mac direct-import inventory found no owner using both double sine and cosine. Complete `AngleVectors`/`AnglesToAxis` use float pairs and vector products without that quadrant table. No hypothetical two-call adapter or absence-based closure was adopted.
+
+The single-axis quaternion bodies all use the same positive half-degree constant, two literal positive-zero components and the sine/cosine pair in the active component and w. The complete Mac axis-angle provider multiplies every supplied axis component by sine; a hypothetical unit-axis input does not preserve literal zero fields for signed-zero or NaN results. The actual DObj setter chain computes the complete three-angle Euler product, with an identity-only null-pointer branch. These remain distinct operations.
+
+Two concrete double-sine consumers also fail the full `SinSquaredDeg` contract: stance opacity at 0x18bf60 converts the sine to float and takes its absolute value; complete `FresnelTerm` squares a ratio of sines in a larger reflectance calculation. All six entries remain unchecked, with original widths/constants and exact candidate addresses recorded privately in `recon-provenance-math14.noindex`. Math remains 139 equal, 28 fixed and 62 unchecked. No source changes, new defects, compilation, tests, CI, replay or runtime verification.
+
+## In-place affine owner follow-up (provenance-inplace17)
+
+MatrixTransformVector43Equals remains unchecked. Its complete original body at
+0x80a759e–0x80a766e (original 1.0 identity 0x80a523a) computes three affine
+coordinates, saves the first two, then writes z/x/y back into the original point.
+The actual overwrite is part of this helper's operation.
+
+Fresh exact Mac Tail::CalcNewEndpoint 0xa130a and Cylinder::Update 0xa5780
+pass a separate stack point to this+0x9c. Active native code preserves that
+separation; apparent same-endpoint calls exist only in inactive legacy branches.
+FX_CalcOriginAndAxis 0x59d67 passes its local world point at stack-0x48 to the
+caller output through the inverse orientation provider. The native copy-back
+there does not establish an affine-matrix input overwrite. R_SkinXSurfaceSkinned
+0xd1d6c–0xd1e13 computes all three affine coordinates from the vertex array into
+distinct renderer output storage. Temporary results alone do not prove aliasing.
+These concrete operations do not close the remaining row, and they do not
+exclude a different undiscovered owner. No source change or new defect.
+
+Private exact packets are in recon-provenance-inplace17.noindex. No tests, CI,
+compilation, replay or runtime exercise were performed.
+
+## Actual projected two-coordinate bounds (bounds2d15)
+
+`AddPointToBounds2D` is equal for the complete disjoint point-accumulation operation in Mac `R_VisitPortals`. Original 1.0 0x80a66f4 and 1.3 0x80a8a58 establish all four strict min/max updates for one two-coordinate point. Primary Mac 0xf219b–0xf21d5 performs exactly those four updates for actual projected portal points; old bounds are the second MINSS/MAXSS operands, preserving old values on ties (including signed zero) and unordered candidates. Native `r_dpvs.c` retains the same four strict comparisons. No third coordinate, reset or extra result is attributed to this operation. The actual loop carries the four bounds and the bevel path consumes both minima/maxima in four inverse-projected rectangle corners.
+
+This is a complete observed disjoint consumer, not a hypothetical 3D prefix or exported arbitrary-aliasing API. Quiet unordered projected candidates retain the prior bounds; initial finite bounds cannot become NaN through these updates. Signaling/exception timing, concurrent observation and literal original inline ancestry are not certified. The separate area-consumer correction in portalarea15 changes the later use of maxY, not these four already-correct updates, and does not change this equal verdict.
+
+The other three helpers remain unchecked. `ClearBounds2D` original 0x80a892c resets both coordinates to +/-131072, whereas the actual screen owner initializes +/-1 and uses a distinct near-clip viewport reset. `ExpandBounds2D` original 0x80a8f96 accepts independent input minimum/maximum vectors; using the same point for both ends is not that full operation. `BoundsOverlap2D` original 0x80a8ce2 returns the result of four strict rectangle-separation comparisons, accepting touching/unordered boundaries. The inspected portal owner instead clips polygons through side planes and computes projected area. Integer scissor APIs supply no demonstrated replacement for that float rectangle contract. These are bounded candidate limits, not absence-based conclusions.
+
+Independent review: units/review-provenance-bounds2d15.md. One equal closure, three refined unchecked rows, zero new defects in these helpers and no source changes in this packet. Original complete bodies, fresh Mac owner and native state/consumer paths were reviewed. No compilation, tests, CI, replay or runtime verification for this packet; separate portalarea15 compilation does not add exercise coverage. Private evidence: recon-provenance-bounds2d15.noindex.
+
+## Complete segment-distance operation (provenance-distance18)
+
+DistSqToSegment is fixed through the actual DObjTraceline sphere broad phase.
+The complete original helper at 0x80a414e and all called providers establish
+point projection, endpoint clamping and three-component squared distance. Mac
+0x76600 produces the real endpoint delta and reciprocal squared length, transforms
+the actual bone collision center, and selects all three end/start/interior
+residuals before the squared sum feeds radius rejection at 0x76ba4.
+
+This complete endpoint-defined operation identifies the original segment intent;
+it is not a hypothetical normalized-direction adapter. Its newly found unordered
+selector is corrected in the DObj owner. Ordered zero-length segments return
+before the operation, so no standalone zero-length helper result is certified.
+Arbitrary nonunit directions, negative lengths, exported ABI, Linux x87 equality,
+NaN payloads/FP flags and whole-owner equivalence are also outside this verdict.
+
+PointToLineDistSq remains unchecked: the complete triangle-edge residual at
+0x66925–0x669c9 uses a serialized/rescaled direction; the loader's copied edge
+fields at 0x79503–0x795b5 do not establish an actual endpoint-to-axis bridge.
+ProjectPointOntoLine remains unchecked: original 0x80a556a copies start on ordered
+zero length, whereas CG_WhizbySound gates by 64-unit endpoint margins before its
+projection and later shifts the sound position by 16 units. FX visibility also
+has its own minimum-length and centered-segment gates. No partial dot or invented
+input adapter closes either row.
+
+Independent mapping and source reviews are review-provenance-distance18-segment.md
+and review-provenance-distance18-selector.md. Private exact evidence is in
+recon-provenance-distance18.noindex. Only changed dobj.c was manually compiled in
+four existing modes; no tests, CI, full build, replay or runtime exercise.
+
+## Complete fixed-alpha color word (provenance-packing20)
+
+ColorBytesFromRGB is equal through the actual team-color chain. Original
+0x80a810c establishes RGB conversion, fixed fourth byte255 and packed-word
+intent. Mac CL_UpdateColor 0x17b88a obtains bounded byte-derived team RGB and
+sets each alpha to1. Its real export slot0x10c resolves to RB_UpdateColor
+0xd4c92, which calls the complete four-slot converter0xd4bd8. All channels
+retain their byte offsets; multiply255/add0.5/floor/CVTT is the authoritative
+Mac rounding sequence. The persistent words are read and copied whole by
+RB_LookupColor at0xd4684/0xd4692. Native preserves that complete chain.
+
+This is a positive fixed-alpha adapter and full-word consumer, distinct from
+the earlier ARGB and isolated scalar candidates. It certifies the actual bounded
+consumed operation, not arbitrary float inputs, an exported return-register ABI,
+Linux x87 rounding, overlap, or subsequent use of alpha. No exceptional-source
+defect or runtime occurrence is claimed. At that stage ColorBytesFromRGBA remained unchecked:
+the observed caller fixes alpha1, so it does not establish a variable fourth
+input role even though the complete provider reads all four slots. Independent
+review accepted RGB only in review-provenance-packing20-color.md.
+
+The signed10-bit vector helpers remain unchecked. Complete original bodies
+confirm511 scaling, mask0x3ff, shifts10/20 and signed22-bit shifts on unpack.
+A new bounded instruction scan did not locate a complete engine format owner.
+Exact XSurfaceTransfer 0xf9b2c and its Dx7 companion instead copy all three
+normal floatwords into renderer storage; this concrete format does not establish
+a packed-word adapter. ClampShort also remains unchecked: exact32767 candidates
+ValidationProc and GetMenuBuffer use text-selection markers or file-size
+rejection, not signed saturation. External library candidates are not reused as
+engine ownership evidence. These bounded checks do not prove semantic absence.
+
+Evidence is retained in recon-provenance-packing20.noindex. No source edits,
+compilation, tests, CI, replay or runtime exercise were performed.
+
+## Geometry consumer boundaries (provenance-geometry21)
+
+Five entries remain unchecked after reading their complete original bodies and
+new concrete Mac/native candidates. No source defect or closure is claimed.
+
+VectorRotate at original0x80aa82a is sequential X/Y/Z rotation with a separate
+ordered-zero skip for each component; unordered inputs enter that rotation.
+VectorRotateAroundOrigin at0x80aa974 subtracts the pivot, invokes that operation,
+and adds the pivot to all three outputs. Mac G_TryPushingEntity0x1ba63c provides
+a real complete pivot rotation: movement, relative point, all three basis
+products, then rotated-minus-relative deltas before capsule use. Its actual
+AngleVectors provider0x2d938 uses pitch/yaw/roll, however: component0 changes
+the X/Z plane rather than the original helper's Y/Z plane. No actual convention
+adapter was established. CM_TransformedPointContents0x693ce instead applies an
+inverse model basis after a single all-zero gate and consumes a local point.
+Neither candidate proves the missing original input-role mapping; a hypothetical
+matrix or three single-axis calls would not supply it.
+
+IntersectPlanes at original0x80a97e0 consumes three normal/distance planes,
+checks the determinant and produces three coordinates plus success. Exact
+R_ChopPortalWinding0xee7fe clips existing polygon endpoints against one plane;
+its three-coordinate interpolation0xee94d–0xee9d2 does not supply a three-plane
+solve or determinant failure. MatrixInverse0x2a79e emits nine coefficients
+unconditionally, with no plane-distance inputs or success result. A bounded
+instruction scan of ordinary and coalesced text for0.001 float/double references
+found no new complete candidate. This is discovery evidence, not proof of
+semantic absence, and no plane-to-matrix adapter is assumed.
+
+For PlaneNormalFromPoints and PlaneFromPoints, new mark and occluder candidates
+add concrete producer evidence beyond the earlier side-normal search.
+R_MarkFragments0xf4c8d–0xf4d24 forms two indexed triangle edges and their cross,
+but consumes the unnormalized magnitude in facing tests. Its side-volume path
+uses an edge and an extrusion axis. R_VisitPortalsForCell's perspective occluder
+branch0xf096f–0xf0a13 forms both endpoint-eye differences, crosses them, then
+joins normalization0xf0864 and stores additive negative-dot distance0xf089b
+plus side metadata. It discards the normalization return and always writes the
+fourth coefficient. Original PlaneFromPoints0x80aa04a returns0 for ordered-zero
+normal length before writing its fourth slot; no actual original caller was
+recovered that establishes a compatible narrower consumed contract.
+PlaneNormalFromPoints0x80a54f0 additionally normalizes both differences before
+crossing them, a provider chain these candidates do not establish. The unresolved
+operation contracts, rather than Linux/Mac arithmetic grouping, prevent closure.
+
+Focused packet: provenance-geometry21. Private exact bodies, discovery inventory,
+and source hashes: recon-provenance-geometry21.noindex. No source edits,
+compilation, tests, CI, replay or runtime exercise. Counts remain141equal,
+29fixed and59unchecked; all previously settled evidence is preserved.
+
+## Actual point-query bounds adapter (provenance-pointbounds22)
+
+PointInBounds is fixed through the existing unordered-comparison repair in
+CM_AreaEntities_r. Original0x80a8aee establishes the complete six-comparison
+inclusive point/min/max predicate and membership result. Mac SV_PointContents
+0x1bfb3c–0x1bfb46 passes the same point pointer as both bounds to CM_AreaEntities;
+the wrapper preserves both pointers. The actual entity predicate0xaf6d2–0xaf729
+therefore checks all three point coordinates against entity minima/maxima, in
+X-min/X-max,Y-min/Y-max,Z-min/Z-max order. Each UCOMISS/JA rejects only ordered
+greater-than; touching and unordered comparisons continue. Success reaches the
+separate capacity gate and actual entity-list store/count0xaf763/0xaf766.
+
+Native preserves that full adapter and predicate. Existing repair a826bfe0
+replaced legacy <= tests with negated greater-than predicates; this closure
+inherits that fix without a new source change or defect. It is a complete
+consumed point-membership operation, unlike the earlier rejected strict-interior
+CM_PointContents leaf candidate. It does not certify whole tree traversal,
+capacity/query results, subsequent collision, malformed-point enumeration,
+standalone helper ABI or floating exception/payload behavior. In particular,
+unordered point values can affect earlier traversal; no runtime occurrence is
+claimed. PointInBounds2D remains outside this packet.
+
+Independent review: review-provenance-pointbounds22.md. Exact original and Mac
+caller/wrapper/provider bodies and source hashes are retained in
+recon-provenance-pointbounds22.noindex. Existing provider verification remains
+historical; no compilation, tests, CI, full build, replay or runtime was run.
+
+## Actual UI point/rectangle membership (provenance-ui2d23)
+
+PointInBounds2D is equal through the complete initial item-window membership
+operation. Original0x80a8ba6 identifies both point coordinates, both lower/upper
+bounds and the membership result. Actual Mac Display_MouseMove supplies cursor
+coordinates to Menu_HandleMouseMove. The owner reads item.window.rect x/y/w/h,
+transforms cursor and all rectangle fields through the actual screen-placement
+providers, and forms upper endpoints with ADDSS at0x16e107/0x16e128. All four
+comparisons0x16e0fe–0x16e130 have actual lower/upper X/Y input roles and reject
+through mouse-leave/next-item handling; success permits subsequent enter/focus
+gates. Native Rect_ContainsPoint preserves those additions, order and comparisons.
+
+Mac UCOMISS/JB rejects unordered pairs and accepts equality. That is the
+authoritative consumed operation; original Linux unordered behavior is not an
+ABI or exceptional-behavior promise. No finite/positive extent condition is
+silently assumed. This is an actual origin/extent-to-bounds producer, not a
+hypothetical adapter or a slice of a three-dimensional predicate. The scope
+excludes whole menu behavior, corrected text bounds, invalid storage, floating
+exception/payload behavior, data reachability and runtime verification. The
+separate text-rectangle selector defect does not affect this initial item-rectangle
+classification.
+
+Independent review: review-provenance-ui2d23.md. Full original/actual Mac owners,
+placement jump tables and source hashes are retained in
+recon-provenance-pointbounds22.noindex. This alias required no source change,
+compilation, tests, CI, full build, replay or runtime exercise.
+
+## Vec4ops24: complete trace sum and retained subtraction gap
+
+`VectorAdd4` is equal for the complete consumed four-component sum stored into the actual trace split vector. Exact Mac `CM_PointTraceStaticModels` at 0xb00e2 constructs distinct start XYZ/fraction-zero and end XYZ/current-fraction float4 inputs. The recursive owner at 0xafeac copies all four components to local `p`; on a split, ADDSS at 0xb003d/0xb0058/0xb0073/0xb0089 adds the corresponding actual scaled-difference value to each component and writes all four `mid` floats. The actual recursive call at 0xb00b3 consumes `mid`, and 0xb00c4–0xb00d9 copies all four words into `p` for the other child. XYZ supplies spatial split coordinates and the fourth component supplies the fraction prune. Native four-component locals and expressions preserve the complete addition/storage operation. No hypothetical second-operand array is needed: those operands are the actual generated scalar values from this common interpolation.
+
+`VectorSubtract4` remains unchecked. Four genuine float SUBSS operations at 0xb0035/0xb0050/0xb006b/0xb0081 improve the evidence beyond the prior three-component and packed-short candidates. Each difference is immediately scaled and added, however, before an interpolated component is stored. There is no established unscaled output vector or independent unscaled vector consumer. The reconstructed helper's four output writes cannot be attributed by assuming an eliminated temporary without original inline identity. The complete addition output does not resolve that separate storage gap.
+
+The reconstructed header supplies names/intent only; this closure uses complete actual Mac/native operation evidence, not a recovered standalone original helper or literal inline ancestry. The domain is the actual produced operand values and distinct local/ancestor storage. It excludes arbitrary pointer overlap, exported ABI, FP flags/trap timing/NaN payload selection, concurrent observation and whole trace/traversal equivalence. Fresh exact wrapper/recursive bodies match the retained evidence; source is unchanged. Independent split review: `units/review-provenance-vec4ops24.md`; private evidence: `recon-provenance-vec4ops24.noindex`. One closure, one refined unchecked row, no new defect or source change. Static review only; no compilation, tests, CI, replay or runtime verification.
+
+## Image-count logarithm (provenance-math24)
+
+`Q_log2` is equal for the complete consumed positive-count calculation in
+`R_ImageList_f`. The full original helper at0x80a3ea6 returns at0x80a3eca;
+its signed shift/count operation identifies floor-log2 for positive input.
+Actual Mac count initialization, asset callback and2048-slot list storage supply
+the valid nonempty count domain1..2048. Empty lists bypass the calculation.
+The callback is unguarded; this scope requires valid enumeration/storage and
+does not claim that the owner prevents overflow.
+
+Mac0xe779c–0xe77a6 counts arithmetic shifts until the actual count reaches1.
+The n==1 branch reaches exact bytes30c0 at0xe7cb8: XOR AL,AL produces full0
+because EAX is proven1. The complete integer result is doubled at0xe77a8 and
+consumed by the actual sort-depth argument/call0xe77b3/0xe77c4. Native uses the
+actual element count with wider pointers and matches every produced positive
+count, including1 and nonpowers of2. Both native branches already have this
+scalar operation; the owner's existing insertion/reporting repairs do not
+change its equal classification.
+
+This is a complete real producer/operation/consumer, distinct from the earlier
+rejected water left-shift counter. It does not certify arbitrary signed-input
+API behavior, original negative-input nontermination, zero-input call/return,
+malformed enumeration/storage, whole sort/list behavior or literal inline
+ancestry. Original Linux supplies identity/intent; Mac supplies behavior.
+Independent review: review-provenance-math24-log2.md. Exact original/Mac bodies,
+raw target bytes and source hashes remain in recon-provenance-math24.noindex.
+One equal closure, no source change or new defect. No compilation, tests, CI,
+full build, replay or runtime verification.
+
+## Complete scalar maximum phase (maxcomponent26)
+
+Vec3MaxComponent is equal through ColorNormalize's complete float3 maximum phase. Mac loads all three components and MAXSS0x2c7bf/0x2c7cb leaves the selected scalar in XMM2 before any output write. Source-prior operand priorities retain the earlier component on equality/unordered; native initializes from component0 and uses two strict-greater updates in exactly that order. Actual zero testing0x2c7d3 and reciprocal division0x2c800 consume the completed scalar. Original Linux >=/unordered behavior supplies intent, not authority over the Mac operation.
+
+Actual R_InterpretSunLightParseParamsIntoLights0xe25de passes its ambientColor float3 at0xe26b6. R_ParseSunLight's real _color branch supplies all three fields to its three-float conversion. Thus this is a coherent vector maximum and real scalar result, not unrelated comparisons or a hypothetical adapter. The boundary ends before zero-return canonicalization, reciprocal arithmetic and normalization output writes. It does not claim whole ColorNormalize return bits, standalone ABI, literal inline ancestry, malformed storage, FP exception/payload behavior, concurrent state or whole lighting correctness. Existing Vec3ScaleToUnitMax classification remains; Vec3NormalizeByMax still requires its separate complete normalization contract.
+
+Independent full original/Mac/native/caller/provider review and raw key/format evidence: units/review-provenance-maxcomponent26.md, private recon-provenance-maxcomponent26.noindex. One equal closure, no new defect or source change. No compilation, tests, CI, replay or runtime verification.
+
+## MatrixMultiply34 direct-write and renderer follow-up (matrix34-29)
+
+The original body corrects a prior evidence error while `MatrixMultiply34` remains unchecked. Original 1.3 0x80a5d1c through RET 0x80a5ff0 (exclusive 0x80a5ff1; following NOP is padding) computes and immediately writes all twelve outputs in row order. It reloads input words after earlier stores and adds the left translation to each fourth-column dot product. There is no matrix temporary or snapshot, so the earlier ledger claim of alias-preserving temporary storage was incorrect. The existing 1.0 anchor and complete-byte mapping remain valid. This recovers original identity and intent, not a Mac behavior verdict.
+
+A new actual 4x4 renderer route was inspected separately from the earlier 4x3-layout rejection. Entity world matrices use `MatrixSet44` via Mac 0xcf90a, with translation in row 3 and the last column fixed to (0,0,0,1); the first twelve words of ordinary world/view products therefore omit the complete translation role. A closer light-grid path requests actual world inverse-transpose at 0xf7b1b and multiplies it at 0xf7b35 by the raw fixed light-grid matrix at 0x32b520, whose bottom row is (0,0,0,1). It writes a separate cache record, but its left input comes from general cofactor inversion/transposition. Reciprocal determinant at 0x2b29f and scaling all sixteen values do not establish a canonical bottom row, reject singular/nonfinite input, or guarantee bit-exact determinant-times-reciprocal one. Native supplies the same provider without an additional invariant.
+
+The first twelve multiply results only use the right input's bottom row, but that arithmetic observation does not establish the requested complete affine input role for the larger inverse-transpose provider. Extra zero/one terms remain actual Mac operations; no silent finite-only cancellation or original Linux rounding authority is used. Shader routing also selects a first-row/count span supplied by material metadata; this pass did not establish a concrete all-twelve-value affine output consumer. The full producer, input and output-role gap remains explicit rather than inventing an embedding, permutation or input policy. No source change, new defect, closure, compilation, tests, CI, full build, replay or runtime verification. Private `recon-provenance-matrix34-29.noindex` retains the full original body, twelve-write map, five exact Mac owners, raw matrix/jump table and source hashes.
+
+## Complete angular tracking state operation (angletrack30)
+
+`LinearTrackAngle` is fixed through the existing `AngleDelta` conversion repair for its complete consumed constant-rate angular tracking role in `PM_UpdatePronePitch`. Original 1.3 wrapper 0x80a3c66 through RET 0x80a3ce9 (exclusive 0x80a3cea) calls complete `LinearTrack` at 0x80a3cd5, then the original angle normalizer; this concrete callee distinguishes it from the nearby masked-body `DiffTrackAngle` alias. The original establishes the full target/current/rate/time-to-angle intent, not Mac behavior.
+
+The actual Mac `Pmove` producer clamps local milliseconds to 1–200 (with an outer 66 ms step cap), computes float seconds at 0x70f05–0x70f15, and passes that same pml to the update at 0x71d3a. The two actual targets come from `PitchForYawOnNormal` using prone direction or view yaw and the ground normal, or are zero without a ground plane. Current and resulting values are full persistent prone-direction and torso pitch floats. Each complete Mac phase includes quantized `AngleDelta`, exact-zero bypass, both signed-step/residual branches at rate 70, current addition, and accurate normalization when updated. Out-of-line residual tails 0x6cd3b/0x6cd0c are included. Native matches these complete operations.
+
+Current pitch is not assumed normalized. Actual `PM_CheckDuck` stores the 0–360 pitch producer result directly at 0x6e650 and either copies it or uses view pitch ±45 for torso state. A zero-delta update retains that actual representation, including values above 180. Subsequent tracking reads both results, `PM_UpdateViewAngles` consumes torso pitch at 0x6c7fe/0x6c807, and the raw player-state field records drive complete-word snapshot change comparisons at 0x17888a–0x1788a3. Thus the selected operation has actual complete inputs, persistent outputs and consumers, rather than a fabricated target or isolated signed-step fragment.
+
+The fixed classification inherits the existing `AngleDelta` CVTTSS2SI repair at 0x2cdc4. When the instruction returns with the relevant exception masked, integer-indefinite masks to zero; native's explicit conversion preserves that returned result. No engine-wide exception-mask invariant or trapping equivalence is established. The earlier original tolerance, wrap, tie and final-normalization differences remain facts, but do not override the positively identified Mac operation. The mapping excludes an arbitrary exported rate/time API, normalized-current assumptions, FP flags/traps/NaN payload preservation, invalid storage, timestamp overflow, upstream trace correctness, earlier prone-event effects and whole movement/network equivalence. `LinearTrack` is a separate pending investigation.
+
+Independent botlib and parent reviews accepted the mapping in `units/review-provenance-angletrack30.md`. Private `recon-provenance-angletrack30.noindex` retains the complete original chain, fresh exact Mac producers/update/consumers, raw constants/field records and native hashes. One closure with an inherited correction, no new defect or source change. The prior repair was compiled and reviewed, not runtime verified; this unit ran no compilation, tests, CI, full build or replay.
+
+## Complete signed-delta bounds expansion (expanddelta32)
+
+`ExpandBoundsByDelta` is equal through the complete actual in-place operation in G_MoverTeam. Original1.3 body0x80a86ee throughRET0x80a87b2 adds each ordered-positive delta to its matching maximum, otherwise to its matching minimum, across all three axes while preserving opposite endpoints. The previously rejected fresh swept-box construction remains insufficient by itself.
+
+The new Mac owner supplies real move[3] from trajectory output minus current origin at0x1bae27–0x1bae70. Before expansion it constructs separate complete totalMins/totalMaxs arrays from radius bounds, or copies all six existing absolute bounds at0x1bb608–0x1bb63e. Full update0x1baf77–0x1bafa9 plus minimum tail0x1bb56a–0x1bb57a loops over all three components. UCOMISS/JBE sends nonpositive and unordered delta to the minimum; otherwise it updates maximum. Native preserves that selector, chosen endpoint addition/store and opposite endpoint.
+
+The complete output pair is consumed: both exact local array addresses pass at0x1bafcd–0x1bafd7 into CM_AreaEntities, whose wrapper and recursive consumer preserve the pointers and use all six endpoint comparisons before entity-list insertion. The intervening unlink receives only the entity pointer. This establishes an actual disjoint-storage bounds update, rather than a partial dimension, discarded scalar or hypothetical adapter. The selected operation has no inherited repair or new defect. It does not certify arbitrary aliasing, invalid storage, FP traps/NaN payloads, preceding trajectory/radius work, collision traversal, later pushing or the whole mover.
+
+Independent review: units/review-provenance-expanddelta32.md. Fresh complete original/four Mac bodies, original identity map and source hash are retained in private recon-provenance-expanddelta32.noindex. One equal closure; no source change, compilation, tests, CI, full build, replay or runtime verification. Settled native policies remain unchanged.
+
+
+## Complete scalar view-height tracking operation (lineartrack31)
+
+LinearTrack is equal through the complete actual constant-rate approach in PM_ViewHeightAdjust's target-eight, nonzero-current phase. Full original 1.3 LinearTrack 0x80a3bca–RET 0x80a3c65 and its I_fabs provider establish the target/current/rate/time-to-scalar role. Linux tolerance, clamp ordering and x87 behavior supply intent only. PM_CheckDuck's actual pm_type>5 path sets target 8 and passes the same player/pml to the owner; Pmove produces its positive frame time. The real rate is 180, with a negative-step branch using -180. This is independent of angular tracking, with neither a synthetic target nor a proportional error factor.
+
+The complete Mac positive and negative branches add the signed step, store current, and clamp on their respective ordered comparisons; native preserves all result branches, including equal-current retention and unordered non-clamping. Initial zero-current/direct-target behavior and standard 11/40/60 waypoint interpolation remain separate gates. Actual ClientSpawn initializes current 60, and player_die derives type 6/7 from prior 0/1 without changing height in that selected transition. Whole death processing invokes scripts, so no universal callback preservation of 60 or guaranteed lifecycle is inferred; the accepted entry remains the actual nonzero-current state selected by the owner.
+
+The entire persistent viewHeightCurrent result feeds the real full-word snapshot comparison through field index 21 and the actual G_GetPlayerViewOrigin z addition before bob work. No scalar output is discarded. Existing PM_ViewHeightAdjust primary equal remains; unrelated zero-current and angular conversion repairs are outside this operation. This closes one equal row, without source change or new defect. Original arbitrary ABI/rates/times, FP control/traps/payloads, timestamp overflow, corrupted/concurrent state, whole movement/camera/network behavior and gameplay reachability remain outside scope. Independent review: units/review-provenance-lineartrack31.md; full original, exact Mac producers/operation/consumers, raw constants/field records, source hashes and state-domain receipts are retained privately in recon-provenance-lineartrack31.noindex. No compilation, tests, CI, full build, replay or runtime verification.
+
+
+## Complete epsilon-overlap trace predicate (boundsepsilon33)
+
+`BoundsOverlapEpsilon` is equal through the complete actual six-comparison gate in temporary-model `CM_Trace`. Original 1.3 0x80a8d62 through RET 0x80a8e27 establishes two full min/max float3 pairs, epsilon and the Boolean overlap role. Mac supplies those complete inputs: `SV_ClipMoveToEntity` passes actual entity bounds and contents to `CM_TempBoxModel`, whose TLS3 model and handle 1023 flow through `CM_TransformedBoxTrace` into the moving trace. The trace constructs its full swept bounds and reads the same thread model before the handle/content gates.
+
+Raw 0x326188 supplies tolerance 1. The selected Mac predicate at 0x64e3f–0x64ed6 compares all trace minima against model maxima plus 1, then all model minima minus 1 against trace maxima. Every ordered separation reaches the immediate return at 0x648c9; equality and unordered comparisons continue. Passing all six reaches real capsule processing at 0x64edc. Both Boolean outcomes are consumed directly as control flow; passing is permission for narrow-phase work, not a claim of collision.
+
+Native `CM_TraceTempCapsule` preserves both complete bounds pairs, the real tolerance, all six predicates and both outcomes. It retains Mac subtraction on the minimum side rather than importing the original Linux max-plus-epsilon algebra. Native interleaves axis pairs while Mac groups directions; the result agrees for stable nonvolatile valid storage without FP flags/trap observations. The selected predicate is unchanged since 88a0b288, so separate existing trace repairs do not make this row fixed.
+
+This mapping excludes arbitrary exported epsilon APIs, stale or cross-thread TLS, recursive model replacement, malformed/concurrent storage, FP traps/flags/NaN payloads, upstream bounds/transform correctness and whole collision behavior. `BoundsOverlapEpsilon2D` remains separate and unchecked. Independent review: units/review-provenance-boundsepsilon33.md; complete original, five fresh Mac bodies, raw tolerance and matching native hashes are retained in private recon-provenance-boundsepsilon33.noindex. One equal closure; no new defect, source change, compilation, tests, CI, full build, replay or runtime verification.
+
+
+## Complete perspective three-point normal (plane34)
+
+PlaneNormalFromPoints is equal through the complete actual perspective portal-side normal operation. Full original 1.3 body 0x80a54f0–RET 0x80a5569 and its providers establish three input positions and one complete normal output. The original separately normalizes both edges before their cross and final normalization; those internal steps and Linux floating-point outcomes are not Mac authority. This supersedes the geometry21 rejection only after establishing the full actual input and result roles, without assuming finite algebraic or bit equality.
+
+R_AddWorldSurfacesDpvs's actual perspective arm copies all three view-origin coordinates into eyePos and sets eyeW to one. R_VisitPortals reconstructs the real winding positions and passes that array, its count and a disjoint normal array to R_GetSidePlaneNormals. Each selected edge uses the actual eye, next point and current point; the full first-difference copy handles the final edge. Complete Mac cross and normalization produce all three output coordinates. Ordered-zero length leaves the cross words unchanged; nonzero or unordered length scales all three. Native preserves this complete operation and its degenerate selectors. The input scope is valid bounded nonempty perspective winding storage; the concrete ordinary child-plane consumer uses counts one through ten.
+
+That consumer reads all normal coordinates for the length test, copies all three unchanged to child-plane coefficients when admitted, then uses them for the separate fourth coefficient and traversal. No normal output is missing. Existing normal/cross/provider equal verdicts remain; unrelated caller bevel and area repairs are outside this phase. PlaneFromPoints stays unchecked because this normal operation supplies neither its success result nor its conditional fourth-slot contract. No arbitrary original ABI, aliasing, invalid backing, FP environment/traps/payload equivalence, whole hull/traversal correctness or runtime reachability is claimed.
+
+One equal closure, no new defect or source change. Independent review: units/review-provenance-plane34.md. Fresh complete original/provider and five Mac bodies, raw constants and source hashes remain private in recon-provenance-plane34.noindex; earlier evidence is preserved. No compilation, tests, CI, full build, replay or runtime verification.
+
+
+## Complete point-to-line squared-distance phase (linedistance35)
+
+PointToLineDistSq is equal through the complete selected squared-distance operation in CG_WhizbySound. Fresh full original 1.3 helper 0x80a5618–RET 0x80a56bb and its providers establish point/start/end inputs and one squared-distance result. It has no zero-length fallback; the separate ProjectPointOntoLine contract remains unchecked. Original unnormalized projection, residual sign and x87 outcomes do not override the actual Mac operation.
+
+The actual caller supplies a successful muzzle-position local and unchanged impact position as endpoints. Whizby reads all three actual view-position fields; raw GOT and displacement bytes confirm the state identity despite an incidental otool symbol label on the third offset. Full endpoint normalization and both 64-unit margin gates are preserved. Rejected finite degenerate/short paths are outside this selected result; unordered values are not silently excluded. Once selected, Mac materializes all three projection coordinates, all three residuals and their complete left-associated squared sum. XMM0 holds the full scalar at 0x1d9b0b, and the actual next SQRTSS consumes it. Native preserves that complete operation.
+
+The later radius gate, directional position shift and sound emission are downstream consumers, not a substituted squared-distance result. This resolves the prior whizby assessment only through the complete scalar and actual producer/consumer boundary. It supplies no hypothetical serialized-axis endpoint adapter or arbitrary exported projection API. Existing WhizbySound and Vec3NormalizeTo equal verdicts remain; no repair is inherited. Valid live disjoint storage and stable view state are required; FP environment/traps/payload identity, original exceptional outcomes, upstream event/camera/tag correctness and whole sound/gameplay behavior remain outside scope.
+
+One equal closure, no new defect or source change. Independent review: units/review-provenance-linedistance35.md. Fresh original and Mac bodies, raw constants/GOT/field displacements and source hashes remain private in recon-provenance-linedistance35.noindex. No compilation, tests, CI, full build, replay or runtime verification.
+
+
+## Complete maximum normalization and scalar result (maxnormalize36)
+
+`Vec3NormalizeByMax` is equal through the complete actual `ColorNormalize` operation and its ambient-light consumer. Original 1.3 0x80a8202 through RET 0x80a82ae, including its full zero-clear provider, establishes three normalized output components and a returned maximum. Original zeroes at zero, direct division and selected-zero representation remain documented differences. They do not override Mac behavior once the complete input and both result roles are established.
+
+Mac `ColorNormalize` at 0x2c7a6–0x2c82e selects the maximum with source-prior MAXSS operations. Ordered zero writes three ones and returns canonical positive zero; nonzero or unordered computes one reciprocal, writes all three products and returns the maximum. Native preserves every branch and result. The actual identical input/output vector is valid: maximum reads precede writes, and each later component remains untouched until its own read. No partial-overlap or Linux arithmetic equivalence is assumed.
+
+The concrete world loader passes the same sunParse object to `R_ParseSunLight` at 0xe5189 and the interpreter at 0xe519d. The actual `_color` branch initializes and parses the three ambient fields; the `ambient` key supplies the scale selecting the call. The interpreter passes the exact ambient vector at 0xe26b6, consumes the complete scalar return in its zero/unordered gate, and reads all three normalized components at 0xe26d4/0xe26db/0xe26e3 for the actual ambient RGB result. On ordered zero the persistent vector still receives white while the scalar selects zero ambient lighting. No output has been replaced by a maximum-only fragment.
+
+This supersedes the earlier rejection based on zero policy and direct division, while preserving those original facts and the existing `Vec3ScaleToUnitMax` mapping. The selected provider is unchanged and equal; surrounding parser, light-layout and world-loader repairs are outside its boundary. Arbitrary ABI, malformed/partially overlapping/concurrent storage, FP flags/traps/signaling payload identity, whole parsing/lighting correctness and runtime behavior remain outside scope. One equal closure, no new defect or source change. Independent review: units/review-provenance-maxnormalize36.md; complete original/helper, four fresh Mac owners, raw keys/format/constants and source hashes are retained in private recon-provenance-maxnormalize36.noindex. No compilation, tests, CI, full build, replay or runtime verification.
+
+
+## Complete screen-bounds reset (bounds37)
+
+ClearBounds2D is equal through the complete actual four-endpoint reset in R_VisitPortals. Full original1.3 0x80a892c–RET0x80a896d and its two-store provider establish a two-dimensional bounds reset with both minima and both maxima written, without an old-state input or extra result. Its ±131072 constants establish original intent, not the actual Mac screen-domain sentinels. This supersedes the prior constant-only rejection after establishing the whole actual operation.
+
+On the selected normal-projection route, Mac writes minX=minY=1 at0xf20ba/0xf20c4 and maxX=maxY=-1 at0xf20ce/0xf20d6 before any point update. Native supplies those same four complete values. Native initializes before its first-w gate while this selected Mac reset follows the gate; no whole initialization/gate timing equivalence is claimed. All four values feed the real projected-point loop, then width/height and the optional four-corner bevel construction. No output is omitted or discarded. The opposite near-clip viewport assignment and later fallback are distinct operations. No projected[-1,1] premise, mathematical unbounded empty-set claim, original constant equality or invented scaling adapter is required.
+
+The reset is already correct. Later area and bevel repairs are consumers outside its boundary and are not inherited. ExpandBounds2D stays unchecked: the point accumulator does not supply independent source minima/maxima, and newly read CM cell-bound descent only replaces a selected split endpoint. The 2D overlap helpers remain untouched. Scope requires valid owned bounded nonempty actual projection storage; arbitrary public ABI/aliasing, invalid backing/counts, FP environment/traps/payload identity, whole projection/traversal and runtime behavior are excluded.
+
+One equal closure, no new defect or source change. Parent and independent script review accepted units/review-provenance-bounds37.md. Fresh complete original/provider and Mac owner, raw constants/instructions and source hash remain private in recon-provenance-bounds37.noindex. No compilation, tests, CI, full build, replay or runtime verification.
+
+## Quat41: complete quaternion metric follow-up
+
+The two metric helpers remain unchecked. Original `QuatAxisLengthSq` at0x80a79c6–RET0x80a7a69 (Linux1.0 identity0x80a5662) returns zero for an ordered-zero whole quaternion norm; otherwise it separately scales x²,y²,z² by the reciprocal whole norm and returns their full sum. Original `QuatDiffAxisLengthSq` at0x80a7a9a–RET0x80a7ad7 (1.0 identity0x80a5736) conjugates its second full quaternion, multiplies the first by that disjoint local, and returns the complete metric. Full original conjugate/product bodies were read; conjugation flips three sign bits and copies w, with no assumed unit domain.
+
+Fresh complete Mac `QuatToAxis`0x2b5f0 consumes scaled squares only as pairwise matrix-diagonal sums and cross terms. `DObjCalcSkel`0x7561a stores2/full-four norm at0x759ab–0x759af for actual downstream matrix/translation consumers. `XAnimCalc`0x3bf76 uses its inverse-square-root estimate to scale or accumulate all four quaternion components. These are concrete complete operations with different result roles; none establishes the normalized vector-part scalar. `XAnimCalcRelDeltaParts`0x39a7a has actual two-time producers and two-component relative rotation results, followed by a selected two-component norm used to rotate translation. Its zero/unordered handling and all output stores do not supply the full two-quaternion metric. The corresponding native provider/output flows were read. No unconsumed matrix-trace algebra, four-component embedding, or unit-quaternion restriction was substituted for missing complete scalar input/result evidence.
+
+Private `recon-provenance-quat41.noindex` retains four complete original bodies, four fresh complete Mac owners, raw constants and unchanged source hashes. This is a bounded candidate conclusion, not an absence claim or Linux arithmetic equivalence requirement. Two unchecked evidence refinements only;152equal31fixed46unchecked unchanged. No source changes, new defects, compilation, tests, CI, builds, replay or runtime verification.
+
+## Pitch42: actual initialized pelvis pitch quaternion
+
+`QuatFromPitch` is equal for the complete consumed stock pelvis pitch→four-word quaternion phase. Original1.0 0x80a57e8 maps to full1.3 0x80a7b4c–RET0x80a7b97: scalar pitch degrees, double half-degree scaling, and all four output words. The new bridge is actual controller input production, not the previously rejected hypothetical Euler or basis-vector adapter. Fresh Mac `SV_SpawnServer` runs three100ms warmups at0x14322c/0x143230 before its existing-client `ClientConnect` call0x1432a6. `G_RunFrame` installs the actual positive interval before the later complete clientInfo reset0x193b01. Thus the selected successful returning post-warmup reconnect starts with produced yaw/roll zero and a positive clock; normal positive frame samples preserve those zero goals through0x18334a. This does not assert arbitrary first-frame/reset, reentrant callback, foreign clock/controller mutation, or CoD2x lifecycle invariants.
+
+`BG_Player_DoControllers` controller5 supplies the actual smoothed waist pitch with zero yaw/roll; raw controller table index5 is pelvis, and the exact stored tuple ci+0x438 is forwarded at0x182f47. On the admitted call, unchanged equal owner `DObjSetLocalTagInternal`0x74cbe evaluates all actual double half-degree conversions, float sine/cosine pairs and Euler products, materializing all four quaternion words at0x74de8/0x74dfe/0x74e0f/0x74e20. Actual `G_DObjCalcPose` handler9/11→`G_PlayerController`→same-object `SV_DObjCalcSkel` consumes the complete result in skeletal products/norm. The selected native arithmetic/storage matches Mac. Mac's full evaluation order and zero arithmetic remain authoritative; no simplification to Linux literal zeros, arbitrary exceptional ABI equivalence, or whole setter replacement is claimed. Admission gates and later translation/weight effects are separate, so their unrelated prior repairs are not inherited.
+
+Private `recon-provenance-pitch42.noindex` retains complete originals, fresh Mac containers, positive reset/time/producer/consumer evidence, raw tables/constants and unchanged source hashes. Independent orchestrator review accepted the amended post-warmup state history. One equal closure, no source change or new defect;153equal31fixed45unchecked. QuatFromRoll/Yaw/Inverse remain unresolved. No tests, compilation, CI, build, replay or runtime verification.
+## Complete variable-alpha packed color (rgba41)
+
+ColorBytesFromRGBA is now equal through an actual variable-alpha HUD producer and complete packed-word consumer. The earlier fixed-alpha RGB route did not establish this role. Full original1.3 [0x80a817c,0x80a8202) confirms four scaled/truncated channels and a complete returned color word; its R,G,B,A byte order, x87 precision/control effects and FISTP16 conversion do not override Mac.
+
+The actual non-fading type6 HUD branch CG_GetHudElemInfo0x1e0a95–0x1e0af7 reads four bytes at elem+0x20..23, multiplies each by raw1/255 and stores all four float components. Alpha is dynamic, not forced1. CG_Draw2dHudElems selects the nonzero-alpha image route and passes that actual four-float buffer at0x1e152a. The renderer export bridge is established by raw pointer0x1acd0ed→R_AddCmdDrawStretchPic0xc8208, GetRefAPI's slot0x94 store and CL_InitRef's full export copy. Successful command15 allocation forwards the actual color and command color field to the complete converter.
+
+Mac R_ConvertColorToBytes0xf568c–0xf56e4 performs separate float32 multiply255, truncating CVTTSS2SI and low-byte stores for all four inputs. It writes alpha/red/green/blue into byte offsets0/1/2/3 at0xf56ae/bc/cc/d8. Native preserves that existing Mac ARGB format. This is not a claim of raw Linux RGBA-word equality or a new swizzle. Raw dispatcher entry15 selects RB_StretchPicCmd0xd877c, which reads the entire command word0xd8790 and passes it0xd87d5 to RB_DrawStretchPic. All four normal vertex stores0xd8289/0xd8338/0xd83fa/0xd84b7 and corresponding Dx7 stores consume the unchanged full32-bit color. Native typed command and vertex GfxColor.packed preserve every channel across the existing wider command layout.
+
+Scope is the complete bounded conversion/packed-word role with live disjoint storage, non-fading byte-derived color, nonzero variable alpha, label0, valid material and successful selected command dispatch. The preceding HUD path must have representable coordinate conversions and selected time differences; finite geometry alone is insufficient, and fadeElapsed is evaluated even when fadeTime<=0. Color values from actual bytes are finite and small enough that the native direct float-to-int casts are defined and match CVTT truncation. No arbitrary exceptional float, overlap, null-input API, exported return ABI, original FP-environment, full renderer failure/geometry or GPU-image claim follows. Existing native format, pointer/layout, ownership and renderer adaptations remain intact. The selected packing provider/word flow is unchanged; no unrelated producer/consumer repair is inherited.
+
+Independent review accepted this one equal row in units/review-provenance-rgba41.md. Fresh full original/Mac bodies, raw constants/export/dispatch words, producer gates and source hashes are retained in recon-provenance-rgba41.noindex. No source change, new defect, compilation, tests, CI, replay or runtime verification. Other math and packing rows are unchanged.
+
+## SinCos43: complete degree pair in the grenade-pointer quad
+
+`SinCosDegrees` is equal for the complete actual one-degree-input→two-float-result phase in `CG_DrawRotatedQuadPic`. Full original1.3 0x80aacd6–RET0x80aadc9 (1.0 identity0x80a8972) establishes both output roles, including its negative360 addition, literal-quadrant branches and fallback. The actual Mac grenade warning producer constructs delta, evaluates vectoyaw minus view yaw, normalizes it at0x1d26fe, sign-flips the degree result at0x1d2826 and passes that value to the rotated-quad owner0x1d285b. Negative and exact-quadrant inputs are not excluded. This supplies a real independent scalar-degree role beyond the earlier generic AngleVectors candidate.
+
+Complete Mac `CG_DrawRotatedQuadPic`0x1a249a converts the float degree input to double, multiplies decoded pi/180, narrows once, then passes the same rounded argument to sinf0x1a24bc and cosf0x1a24ce. Both full float results store at0x1a24c1/0x1a24d3 before quad arithmetic. The unchanged native phase matches. Both results feed every x/y rotation, and all eight transformed coordinates are submitted. Actual renderer slot0xa0 selects `R_AddCmdDrawQuadPic`0xc86ae; its successful id18 command copies all four pairs, and raw dispatcher0x36ad28 selects `RB_DrawQuadPicCmd`0xdb81c, which consumes every pair into actual tess vertices. Approved typed command layout/callback adaptations remain intact.
+
+Mac's always-evaluated float pair, arithmetic order and quadrant/negative behavior remain authoritative; no Linux literal-table, floating-environment or output-overlap equivalence is claimed. The scope is ordinary admitted grenade/geometry inputs, valid disjoint storage, returning providers and selected successful command consumption, not a standalone ABI or whole renderer/GPU result. Existing pair owner is equal; no unrelated upstream or command repair is inherited. Separate double-output SinCos, SinSquaredDeg and SphericalToCartesian stay unchecked.
+
+Private `recon-provenance-sincos43.noindex` retains complete original/helper bodies, full exact Mac containers, raw constants/binding/dispatch data and unchanged source hashes. Independent review accepted both complete results, actual producer and four-pair consumption. One equal closure, no source change or new defect;155equal31fixed43unchecked. No compilation, tests, CI, builds, replay or runtime verification.
+
+
+## Complete consumed point projection — projectline45
+
+ProjectPointOntoLine is equal through the full selected point-valued projection in CG_WhizbySound. The earlier distance18 checkpoint lacked a separate complete projection consumer; linedistance35 and this focused review establish that boundary before later sound-position changes. Original1.0 0x80a3206 maps to complete1.3 0x80a556a–RET0x80a5616. Its full subtract/dot/copy/Mad providers establish all-three output coordinates, ordered-zero copying of start, otherwise dot/lengthSquared projection; no fourth output or status is omitted. Original formula, zero policy and arbitrary alias order do not override Mac behavior.
+
+Actual successful CG_CalcMuzzlePoint produces the start local and CG_BulletHitClientEvent passes its unchanged impact position as end. The point is all three current vieworg coordinates, with actual camera position producers. Mac Whizby normalizes the complete endpoint delta, computes both full dot products and applies its real64-unit admission gates. The admitted phase writes the complete projected point into one local at0x1d9aad/0x1d9abe/0x1d9acc. All three values coexist, then all three feed the actual view residuals, squared sum and radius calculation. The later16-unit shift starts0x1d9b1c, after this complete result has already been consumed; it is not substituted for the projection. Native preserves the same full inputs, operation grouping, three stores and consumer.
+
+The actual admitted domain is not assumed finite or nondegenerate. Ordered comparisons reject ordinary short/zero cases before any projection output, but unordered projection can enter, including after overflow from finite inputs when FP operations return. Mac/native retain their complete normalize/multiply/add outcomes even where the original zero-length branch would copy start. No original zero fallback, result for rejected calls, hypothetical gate bypass or algebraic equivalence is claimed. This is the complete actual selected projection role with Mac authority.
+
+Scope requires valid disjoint live storage and stable view state. It excludes arbitrary exported ABI/overlap, deferred ownership, FP traps/environment/NaN payload parity, whole camera/event/tag behavior, later sound effects and runtime/gameplay certification. Existing Whizby and NormalizeTo equal verdicts need no inherited fix. One equal closure, zero defects, no source changes or compilation. Independent review: units/review-provenance-projectline45.md. Private full original/Mac bodies, raw words and current source hashes: recon-provenance-projectline45.noindex. No tests, CI, full builds, replay or runtime work.
+
+
+## Complete orientation-angle results — angles46
+
+AxisToSignedAngles is fixed through the complete actual turret-basis conversion; vectoanglessigned is equal through the separate registered vector builtin. Their original signed-degree policy differs from Mac's wrapped pitch/yaw policy. Full original bodies at0x80a969c–RET0x80a97df and0x80a5122–RET0x80a5225, plus all called math providers, establish the respective full three-angle roles. No modulo360 floating equivalence, original signed-value guarantee or name-only alias is inferred.
+
+In the selected successful CG_Player turret path, actual turret angles/tag and animation root delta produce two transforms, then MatrixMultiply43 produces the complete disjoint final transform at0x1e73c2. Its basis is passed to AxisToAngles at0x1e73d7, with all three outputs in cent->lerpAngles. Returning trace paths change origin only and join0x1e6f49; AnglesToAxis0x1e6f56 receives that same full triple. Its complete AngleVectors consumer reads pitch, yaw and roll and constructs the actual GfxEntity basis. This supplies the complete output role before renderer submission, without asserting an exact input/output basis round-trip.
+
+The full current AxisToAngles operation includes the existing unordered roll-selector correction at Mac0x2de9b/0x2de9f: COD2_X64 `!(temp2 < 0)` chooses negated roll on unordered lateral input. The new alias inherits that fixed result; no new defect or primary override is added. Existing upstream blend, typed render storage and other provider repairs remain preserved without importing unrelated defects into this conversion.
+
+For vectoanglessigned, the zero-roll intermediate inside AxisToAngles is insufficient because it is overwritten. The independent bound builtin supplies a complete consumer: raw functions[60] binds vectortoangles to0x198e66, selected by actual Scr_GetFunction. Successful argument0/type4 copies all three words into a local, vectoangles writes a separate pitch/yaw/zero-roll triple, and Scr_AddVector consumes the entire result. Its allocator copies all three words into independent backing before the VM slot receives that vector. Native preserves the actual full operation and existing vector encoding. Positive vertical pitch270 and negative-angle wrapping remain explicit Mac behavior; vertical/negative/quadrant cases are not excluded to force agreement with original signed outputs.
+
+Both verdicts require valid live storage and actual admitted, ordinarily defined owner execution with returning providers. Failed vector type/count checks, unavailable allocation/capacity, arbitrary malformed frame/index state, rejected owner paths, output overlap, standalone ABI, FP traps/flags/NaN-payload parity and whole animation/VM/renderer/runtime claims remain outside scope. No new finite or orthogonal invariant is assumed. Independent review: units/review-provenance-angles46.md; private complete original/Mac bodies, raw constants/binding and unchanged source hashes in recon-provenance-angles46.noindex. Two closures, zero new defects or source changes; no compilation, tests, CI, full build, replay or runtime work.
+
+
+## Complete single-yaw orientation constructor — matrixz47
+
+MatrixRotationZ is fixed through the complete scalar-degree Z-orientation role in the actual turret path. Original1.0 0x80a5a48 maps to the complete152-byte original1.3 constructor0x80a7dac–RET0x80a7e43. Its degree scale and full sine/cosine provider fill all nine matrix words: an XY rotation block, four cross-Z zeros and Z/Z one. No caller was recovered by the bounded original direct-reference check; that negative result supplies no closure evidence.
+
+Actual CG_Player adds tag yaw and animation root yaw at0x1e7399, then calls YawToAxis0x1e73a6 into a nonnull disjoint local. Complete Mac0x2d5ba degree scaling and sinf/cosf produce all nine words; every row exists before return. The same local then feeds MatrixMultiply43 at0x1e73c2. Its nine orientation-result calculations read every component of all three input rows. The owner separately supplies translation outside this constructor; the later full angle conversion confirms the orientation role without a round-trip equality claim.
+
+Original stored XY entries c/−s;s/c differ from Mac c/s;0−s/0+c. Conventional original column interpretation is an inference, not recovered caller evidence or a transpose adapter. The complete original degree/fixed-Z construction and the actual full nine-word orientation producer/consumer establish the scoped role; Mac supplies its concrete representation and arithmetic policy. No original matrix layout, positive-angle handedness convention or direct byte-equivalent API is certified. X/Y constructors are not extrapolated.
+
+The mapped current constructor includes the existing YawToAxis COD2_X64 correction preserving Mac0−s and0+c, hence inherited fixed with zero new defects or primary overrides. Later matrix/roll fixes are not extra constructor defects. Valid disjoint nonnull storage, ordinarily defined successful owner computation and returning providers remain required; arbitrary null/overlap/caller ABI, finite/orthogonal assumptions, exceptional-value geometric equality, FP flags/traps/NaN payload and whole animation/render/runtime claims remain excluded. Independent review: units/review-provenance-matrixz47.md. Exact original/provider/owner bodies and raw/source receipts: recon-provenance-matrixz47.noindex. No source changes, new compilation, tests, CI, replay or runtime verification.
+
+## Separate-output two-coordinate normalization (vec2to48)
+
+`Vec2NormalizeTo` is equal for the complete actual ladder normalization phase. The original 1.0 identity at 0x80a2342 maps uniquely to the full original 1.3 body 0x80a46a6–RET 0x80a472a: read two input coordinates, produce both normalized output coordinates (positive-zero clear on ordered zero), and return the full float length. Its sqrt and two-coordinate clear providers were also read.
+
+Actual Mac `Pmove` supplies the live pml basis and selects `PM_LadderMove`. After its real basis projection, the no-rightmove phase copies both pml->right coordinates into a distinct contiguous local at 0x6d5e7–0x6d5ef and calls `Vec2Normalize` at 0x6d5f8. The full provider 0x2c8c8–0x2c91f computes the two-square float length, normalizes both coordinates for nonzero/unordered length, and always materializes the full scalar return in ST0. The caller explicitly discards that return at 0x6d5fd, then reads both output coordinates for its actual velocity dot and lateral movement consumer. Native has the same separate local copy, complete returning provider, ignored return, and two-coordinate consumer. This supplies the previously missing actual input/output adapter and full return boundary; it does not invent a numerical length consumer or a public two-argument wrapper.
+
+Mac ordered-zero policy retains the copied coordinates, including signed zeros or tiny values whose square sum rounds to zero, while original Linux clears both to positive zero. That difference is explicit under Mac authority; no finite/nonzero restriction hides it. The actual unordered reciprocal/product path and full return are preserved. Scope is live valid movement backing, the ordinary returning ladder/no-rightmove phase, and distinct automatic output; no arbitrary overlap/ABI, original caller, Linux x87/exception equivalence, earlier projection, later yaw conversion, whole movement-owner, or runtime claim. The separately inspected PM_Accelerate copy/call/discard corroborates the operation but its surrounding gates are not part of this verdict.
+
+Independent review: `units/review-provenance-vec2to48.md`. Six fresh exact Mac containers, full original/providers, raw constants and unchanged source hashes are retained in private `recon-provenance-vec2to48.noindex`. One unchecked row becomes equal; no source changes or new defects. No compilation, tests, CI, replay, full build, or runtime execution.
+
+## Complete consumed mark basis (axis49)
+
+`AxisFromForwardYaw` is fixed through the existing rotation-provider repair. The complete original1.0 identity0x80a28d8 maps to1.3 [0x80a4c3c,0x80a4cc2): it preserves the first axis, builds a perpendicular, conditionally rotates a copied side, and writes the complete cross axis. Actual `CG_ImpactMark`0x17c06b–0x17c0b1 consumes its already stored normal plus the actual FX scalar rotation and fully materializes all nine words. The existing native contiguous axis array preserves that result. Every side component feeds all four corners; the same full basis passes through the verified renderer export0xd0 to `R_MarkFragments`, which consumes all three normal components for extrusion. Actual accepted-fragment UV/tangent consumers corroborate both side roles without assuming every mark hits a surface.
+
+Mac uses [normal,cross,rotated] and always rotates, including signed-zero yaw; original uses [forward,rotated,cross] and skips either zero yaw. These explicit Mac construction and representation choices govern the complete consumed basis role. No original caller, per-slot numeric identity, handedness convention or permutation adapter is invented. Normalization is the separate actual producer, with no finite, nonzero, exact-unit or orthogonality invariant assumed. Full constructor providers preserve the existing `RotatePointAroundVector` vr-cross-dir correction at0x2d77a–0x2d7c4, hence inherited fixed and no new defect. Upstream FX repairs, mark diagnostics and later clipping remain separate.
+
+Scope is valid live disjoint storage and admitted returning provider execution, not an arbitrary exported ABI/overlap contract, original zero-yaw shortcut, FP-environment/trap/NaN-payload equivalence, whole renderer or runtime certification. Twelve fresh Mac containers, original whole bodies and copy provider, raw renderer binding and seven source hashes are retained privately in `recon-provenance-axis49.noindex`; independent peer and parent reviews accepted the complete role. No source changes, new compilation, tests, CI, replay or runtime run; the inherited repair was compiled/reviewed, not exercised.
+
+## Initial tag-origin yaw quaternion (yaw50)
+
+`QuatFromYaw` is equal for a complete actual single-yaw quaternion operation. The full original1.3 constructor at0x80a7b98–0x80a7be3 establishes the scalar degree input, half-angle scaling and all four quaternion outputs. The selected Mac operation uses the real initialized tag_origin controller tuple, not a hypothetical basis vector passed to an arbitrary Euler converter.
+
+The post-warmup reconnect ci reset and actual registered player `spawn` method establish a concrete initial state. ClientSpawn clears lean, preserves only flags0x100002 and calls ClientEndFrame before the first ClientThink. Selected ordinary unmounted/unlinked, world-or-noentity look and zero-use-candidate paths avoid a mandatory earlier pose sample. With the real registered nondefault controls g_smoothClients=false and g_debugLocDamage=true, ClientEndFrame transfers the produced state into the same ci, updates animation, then admits the first debug pose. This is bounded to normally returning stable callbacks, a valid loaded model/tree and the initial reset-to-first-admission history; it is not a whole-lifecycle or all-writer invariant. Configurations compiling out that debug path are not claimed.
+
+The yaw role is not restricted to an identity quaternion. Actual BG_RegisterDvars registers bg_swingSpeed in0..1 (default0.2); a valid nondefault0.125 with actual finite spawn yaw90 and the100ms warmup clock gives legs yaw56.25, relative yaw−33.75 and the tag-origin smoother's same nonzero result. This follows the exact scalar operations by hand, without execution or changing settings. The default can instead snap that initial swing to the view yaw. Produced pitch and roll remain zero.
+
+The actual ci+0x444 tuple reaches DObjSetLocalTag with tag_origin at0x183018. Its admitted DObjSetLocalTagInternal phase evaluates the complete Mac half-degree/trig/Euler products and writes all four components at0x74de8/0x74dfe/0x74e0f/0x74e20; the real handler-bound controller then feeds the same object to DObjCalcSkel, which consumes all four words. The existing arithmetic phase is equal. The signed bone-mask admission repair and upstream animation repairs remain separate. Mac full-product/zero semantics govern; this does not claim original literal-zero stores, floating-point exceptions, unrestricted exported ABI or arbitrary later lean/prone gameplay. Live disjoint backing and ordinary defined surrounding conversions are required.
+
+Evidence and both challenges are retained in private recon-provenance-yaw50.noindex, including the original76 bytes, fresh complete Mac containers, real method/control bindings, source hashes and initial-sample-history note. Independent review-provenance-yaw50.md and parent review accepted the complete scoped role. No source change, new defect, compilation, tests, CI, replay or runtime verification.

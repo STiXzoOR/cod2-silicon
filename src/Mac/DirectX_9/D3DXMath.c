@@ -105,11 +105,29 @@ D3DXMATRIX *D3DXMatrixMultiply(D3DXMATRIX *pOut, const D3DXMATRIX *pM1, const D3
         int column;
 
         for (column = 0; column < 4; ++column) {
+#if defined(COD2_X64)
+            const float *a = D3DXMatrix_ConstData(pM1) + row * 4;
+            const float *b = D3DXMatrix_ConstData(pM2) + column;
+            float p0, p1, p2, p3;
+            if (column == 3) {
+                p0 = b[0] * a[0];
+                p1 = b[4] * a[1];
+                p2 = b[8] * a[2];
+                p3 = b[12] * a[3];
+            } else {
+                p0 = a[0] * b[0];
+                p1 = a[1] * b[4];
+                p2 = a[2] * b[8];
+                p3 = a[3] * b[12];
+            }
+            temp[row * 4 + column] = p3 + (p2 + (p0 + p1));
+#else
             temp[row * 4 + column] =
                 D3DXMatrix_ConstData(pM1)[row * 4 + 0] * D3DXMatrix_ConstData(pM2)[0 * 4 + column] +
                 D3DXMatrix_ConstData(pM1)[row * 4 + 1] * D3DXMatrix_ConstData(pM2)[1 * 4 + column] +
                 D3DXMatrix_ConstData(pM1)[row * 4 + 2] * D3DXMatrix_ConstData(pM2)[2 * 4 + column] +
                 D3DXMatrix_ConstData(pM1)[row * 4 + 3] * D3DXMatrix_ConstData(pM2)[3 * 4 + column];
+#endif
         }
     }
 
@@ -129,10 +147,22 @@ int D3DXVec4Transform(float (*pOut)[10][16], const D3DXVECTOR4 *pV, const D3DXMA
     out = (float *)pOut;
     matrix = D3DXMatrix_ConstData(pM);
 
+#if defined(COD2_X64)
+    float result[4];
+    int component;
+    for (component = 0; component < 4; ++component) {
+        result[component] =
+            pV->x * matrix[component] + pV->y * matrix[4 + component] +
+            pV->z * matrix[8 + component] + pV->w * matrix[12 + component];
+    }
+    for (component = 0; component < 4; ++component)
+        out[component] = result[component];
+#else
     out[0] = pV->x * matrix[0] + pV->y * matrix[4] + pV->z * matrix[8] + pV->w * matrix[12];
     out[1] = pV->x * matrix[1] + pV->y * matrix[5] + pV->z * matrix[9] + pV->w * matrix[13];
     out[2] = pV->x * matrix[2] + pV->y * matrix[6] + pV->z * matrix[10] + pV->w * matrix[14];
     out[3] = pV->x * matrix[3] + pV->y * matrix[7] + pV->z * matrix[11] + pV->w * matrix[15];
+#endif
 
 #if defined(COD2_X64)
     return pOut;
@@ -149,6 +179,57 @@ const char *DXGetErrorDescription9A(HRESULT hr)
 
 D3DXMATRIX *D3DXMatrixInverse(D3DXMATRIX *pOut, FLOAT *pDeterminant, const D3DXMATRIX *pM)
 {
+#if defined(COD2_X64)
+    const float *matrix = D3DXMatrix_ConstData(pM);
+    float *out = D3DXMatrix_Data(pOut);
+    UINT32 lastColumn[4];
+    for (int row = 0; row < 4; ++row) {
+        memcpy(&lastColumn[row], &matrix[row * 4 + 3], sizeof(UINT32));
+    }
+
+    /* The Mac affine test compares bits, so negative zero takes the full path. */
+    if ((lastColumn[0] | lastColumn[1] | lastColumn[2]) == 0 && lastColumn[3] == 0x3f800000u) {
+        float tx = matrix[12], ty = matrix[13], tz = matrix[14];
+        float a = matrix[0], b = matrix[4], c = matrix[8];
+        float d = matrix[1], e = matrix[2];
+        out[0] = a;
+        out[1] = b;
+        out[2] = c;
+        out[12] = -((a * tx + d * ty) + e * tz);
+
+        /* Keep each row's reads before its stores, including Mac's aliasing. */
+        a = matrix[5]; b = matrix[9]; c = matrix[4];
+        d = matrix[6]; e = matrix[1];
+        out[4] = e;
+        out[5] = a;
+        out[6] = b;
+        out[13] = -((c * tx + a * ty) + d * tz);
+
+        a = matrix[6]; b = matrix[10]; c = matrix[8];
+        d = matrix[9]; e = matrix[2];
+        out[8] = e;
+        out[9] = a;
+        out[10] = b;
+        out[14] = -((tx * c + ty * d) + tz * b);
+        out[3] = 0.0f;
+        out[7] = 0.0f;
+        out[11] = 0.0f;
+        out[15] = 1.0f;
+    } else {
+        float input[16];
+        float inverseStorage[16];
+        D3DXMatrix_Copy(input, matrix);
+        /* Mac ignores a failed inverse and copies indeterminate stack bytes.
+         * Retain the existing defined native input-copy fallback instead. */
+        D3DXMatrix_Copy(inverseStorage, input);
+        COpenGLMatrix_Inverse((const COpenGLMatrix *)input, (COpenGLMatrix *)inverseStorage);
+        D3DXMatrix_Copy(out, inverseStorage);
+    }
+    if (pDeterminant) {
+        *pDeterminant = 0.0f;
+    }
+    return pOut;
+#else
     float inverseStorage[16];
     float determinant;
 
@@ -169,4 +250,5 @@ D3DXMATRIX *D3DXMatrixInverse(D3DXMATRIX *pOut, FLOAT *pDeterminant, const D3DXM
 
     D3DXMatrix_Copy(D3DXMatrix_Data(pOut), inverseStorage);
     return pOut;
+#endif
 }

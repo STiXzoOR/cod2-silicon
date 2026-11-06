@@ -1,0 +1,51 @@
+# stringed/stringed_ingame reconciliation
+
+Updated 2026-11-05.
+
+**32 entries: 3 equal, 13 fixed, 12 intentional, 4 unchecked.** Exact Mac 1.3 i386 methods, helper inlines and allocation routines were compared by hand. Linux supplied names only. The reconstruction uses the existing native Apple COW/tree provider; other builds retain their previous implementation and OFF source.
+
+The simplified linked-list parser is replaced on native Apple with a typed 80-byte package and 48-byte GCC-layout tree nodes. The original package allocates 40 bytes through Z_MallocInternal at 0x498e8; its tree allocates 24-byte nodes through operator new at coalesced 0x2ef2a8 and frees them through operator delete at 0x2ef866. Those exact allocator stubs were resolved. Native keeps the same package/node allocator distinction, widened pointers and size_t COW headers. It does not substitute libc++ containers. Shared provider files were inspected read-only.
+
+Previously absent InsideQuotes and ConvertCRLiterals_Read bodies at 0x4876a/0x48678 now have native COW return values. ReadLine at 0x4832a carries quote parity across searches after a quoted //; native reset it. SetupNewFileParse at 0x484c4 changes only the package name; native also reset reference, English cache and end marker. AddEntry, SetString, Clear and shutdown now own and release the corresponding COW fields and tree nodes, with no fixed reference/value truncation. Existing references keep their values, and English cache lifetime follows Mac.
+
+ParseLine at 0x48f90 accepts every non-English LANG_ when the force-English byte is zero (0x49560); the native current-language filter was invented. Keyword order, version/error strings, null input, metadata, references, end marker, quotes, escaped newlines and format checks were compared. LoadLanguage at 0x49804 again builds the complete file list before loading. The independently identified SE_GetFoundFile at 0x485e0 now implements its 63-byte copy, semicolon removal and original clear-entire-list behavior when the copied prefix contains no semicolon.
+
+Intentional native limits remain explicit: &&0 is rejected instead of reading/writing before Mac's nine-byte tracking array at 0x4936e; quote trimming stays defined when an opening quote is followed only by whitespace; filenames use dynamic strings instead of overflowing original 64-byte buffers; a missing SetString entry is created instead of writing through end(); and repeated initialization reuses its package instead of leaking it. Existing null-package startup guards remain. The Linux custom allocator spelling is not a separate Mac executable identity: Mac uses std::allocator for nodes and zone allocation for its package. The corresponding six rows record those replacements.
+
+ExtractLanguageFromPath, Filename_PathOnly and both Linux se_alloc constructors have no complete matching native/Mac identities established. These four rows remain unchecked.
+
+The Release arm64 dedicated target links. The actual native client translation unit compiles with this worktree's production flags. Existing ASan/UBSan COW/tree fixtures pass, including the actual file-list builder; they do not link or exercise this parser, package tree, loading, lookup or shutdown. Those paths are compiled and reviewed only. Allocation-failure exception cleanup and live unwinding remain unverified; normal C ownership paths were reviewed. No new tests/cases, full game runs or replays were performed. The OFF guard checks pass, and there are no __LINE__ sites. Initial/final builds, tool limitations and private disassembly stay under recon-stringed.noindex.
+
+## Integrated batch verification
+
+Integrated production source 02a2156 plus existing-fixture correction ac63727 passed both dedicated builds and every local CI step 02–13, including stock/CoD2x Release clients, platform sanitizers, function/callback ABI audits and existing source fixtures. All five guard-visible production changes and the existing numeric-field fixture differ only under native port-on; the Apple-only StringEd source has no inactive differences. Actual assertion line expansions in both UI source files match the previous source in all five inactive configurations. Step 13 first failed because the existing UI text-color extraction counted both conditional opening braces and omitted the function; the fixture now preprocesses it using engine flags, as two other existing suites already do. All unchanged online fixtures passed in stock and CoD2x, followed by the complete source-stage retry. Original failure evidence is retained. No new tests were added. These checks do not establish i386 byte parity.
+
+Parent and fresh independent source/binary reviews covered all six units, including the corrected early-download text path. Fourteen entries remain unchecked: thirteen StringEd identities and one UI missing-player string boundary. Localization parser/tree exception cleanup and unreached client UI/audio paths remain compiled and reviewed; the existing fixtures do not establish complete retail asset behavior. Group voice preserves the documented playback-only native capture boundary.
+
+Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. The first stock attempt stopped before engine launch because previous output existed; verified backed-up output was cleared and the complete replay passed. Dedicated replay does not exercise UI interaction, client sound output or microphone capture.
+
+Catalog coverage passed without semantic catalog changes. The predecessor batch 8 hosted macOS run exceeded its one-hour limit during ABI audits despite passing full local CI; that hosted run is incomplete. Hosted ILP32 comparison remains unavailable because the unchanged reference fails compilation; no byte parity is claimed.
+
+## Original new-language wrapper identity
+
+Original Linux 1.0 wrapper 0x8138320 and original 1.3 wrapper 0x813a752–0x813a766 load the global package and call Clear with no further operation. The 1.3 language loader at 0x813a81e calls the wrapper at 0x813a83d between string construction and the localizedstrings file-list operation. Mac SE_LoadLanguage directly performs that same global-package Clear at 0x4981f–0x49827. This positive caller mapping establishes SE_NewLanguage through the complete existing Mac Clear at 0x4978a–0x49800.
+
+The native Clear erases the tree, resets its root/extrema/count and end marker, clears the reference and English cache, and retains the package name. The alias inherits that existing repair and is fixed; no new export or source change is required. Existing startup guards, native ownership adaptations and exception-cleanup limitations remain. Fresh independent original/native review supports the mapping; no compilation, tests, CI, replay or runtime verification ran in this follow-up.
+
+
+## Original parent-path and language extraction chain
+
+Original1.0 ExtractLanguageFromPath0x813727a uniquely maps to original1.3 0x81396ac, calling actual Filename_PathOnly0x813953c at0x81396bf then Filename_WithoutPath0x813965c at0x81396ce and returning its buffer. PathOnly has a changed original1.0 body0x8137110 (not a unique masked match); the actual mapped caller identifies the1.3 provider, whose full body copies into its64-byte static buffer, finds the last slash/backslash, clears that delimiter and returns the buffer. Fresh exact Mac SetupNewFileParse0x484c4 instead composes extension removal and basename extraction before uppercase/package assignment; native keeps that distinct package operation. It is not the complete parent-directory or language-component return operation. No complete corresponding Mac/native owner established; both rows remain unchecked. Original absence searches are not used as closure evidence. Private exact bodies and maps: recon-stringed9.noindex. No source change, compilation, tests, CI, replay or runtime verification.
+
+The two allocator constructor rows remain separately unresolved; no empty-body or allocator-name substitution is inferred. Existing package storage adaptations remain preserved.
+
+
+## Original allocator-constructor roles — sealloc46
+
+Both constructor rows remain unchecked, with new executable provenance. The default role at original1.0 0x8138a06 maps to original1.3 [0x813ae38,0x813ae3d); the source-allocator role at0x8138a90 maps to [0x813aec2,0x813aec7). Each is five bytes through RET, excluding the following NOP. Unique complete package/map/tree/base/provider anchors establish the chain; the identical tiny bodies alone do not.
+
+The actual map constructor0x813ae0c calls the default entry at0x813ae18 with its local allocator, then forwards that same local as allocator argument3 to the tree constructor. The tree/base chain reaches allocator-base0x813ae9e, which calls the second entry at0x813aeb1 with destination and source allocator. Its later header-pointer zero is a separate base effect. Reconstructed T/U spelling supplies intent; arbitrary instantiations are not inferred from erased bodies or node size. The one-node accessor has several whole-body matches and is selected by its actual caller, not claimed as a unique anchor. Its malloc(24*count) provider supplies surrounding storage provenance, not constructor equivalence.
+
+Fresh full Mac SE_Init0x498e2 allocates its package, installs three empty COW fields and initializes an embedded std-tree header/count before Clear. Native preserves the approved widened package and providers. Package zeroing, allocator representation padding, map-header initialization, unrelated character allocators and node allocation do not independently establish these two allocator-constructor operations. Empty original object effects do not justify closure, nor is missing emitted work treated as dead code or copy elision. The existing allocation/ownership policies stay settled; no new constructor, cookie or exception policy is introduced.
+
+Private complete original bodies, unique/ambiguous maps, exact call targets, fresh Mac initializer and manifest: recon-provenance-sealloc46.noindex. No status closures, source changes, new defects, compilation, tests, CI, replays or runtime verification.

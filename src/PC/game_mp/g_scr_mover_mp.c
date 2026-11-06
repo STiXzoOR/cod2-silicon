@@ -147,11 +147,17 @@ void ScriptEntCmdGetCommandTimes(float *pfTotalTime, float *pfAccelTime, float *
     int iNumParms;
 
     *pfTotalTime = Scr_GetFloat(1);
+#if defined(COD2_X64)
+    if (*pfTotalTime <= 0.0f) {
+        Scr_ParamError(1, "total time must be positive");
+    }
+#else
     if (!(*pfTotalTime > 0.0f)) {
         if (*pfTotalTime == 0.0f) {
             Scr_ParamError(1, "total time must be positive");
         }
     }
+#endif
 
     iNumParms = Scr_GetNumParam();
     if (iNumParms > 2) {
@@ -509,12 +515,20 @@ static qboolean ScriptMover_Updatemove(trajectory_t *pTr, float *vCurrPos, float
         }
     }
 
+#if defined(COD2_X64)
+    if (pTr->trType == TR_GRAVITY) {
+        BG_EvaluateTrajectory(pTr, level.time, pTr->trBase);
+    } else {
+        VectorCopy(vPos3, pTr->trBase);
+    }
+#else
     if (pTr->trType == TR_GRAVITY) {
 
         BG_EvaluateTrajectory(pTr, level.time, pTr->trBase);
     }
 
     VectorCopy(vPos3, pTr->trBase);
+#endif
     pTr->trTime = level.time;
     pTr->trType = TR_STATIONARY;
     return 1;
@@ -578,7 +592,9 @@ static void ScriptMover_SetupMove(trajectory_t *pTr, const vec3_t vPos, vec3_t v
 
     if (pTr->trType != TR_STATIONARY) {
         BG_EvaluateTrajectory(pTr, level.time, vCurrPos);
+#if !defined(COD2_X64)
         VectorSubtract(vPos, vCurrPos, vMove);
+#endif
     }
 
     if (fAccelTime == 0.0f && fDecelTime == 0.0f) {
@@ -633,10 +649,15 @@ static void ScriptMover_SetupMove(trajectory_t *pTr, const vec3_t vPos, vec3_t v
             pTr->trTime = level.time;
             pTr->trDuration = (int)(fAccelTime * 1000.0f);
             VectorCopy(vCurrPos, pTr->trBase);
+#if defined(COD2_X64)
+            VectorCopy(vMaxSpeed, pTr->trDelta);
+            pTr->trType = TR_ACCELERATE;
+#else
             VectorScale(vMaxSpeed, fAccelTime, vMove);
             scale = 1000.0f / (float)pTr->trDuration;
             VectorScale(vMove, scale, pTr->trDelta);
             pTr->trType = TR_ACCELERATE;
+#endif
 
             BG_EvaluateTrajectory(pTr, level.time + pTr->trDuration, vPos1);
         }

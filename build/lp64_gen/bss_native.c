@@ -22,7 +22,7 @@ dg_function sControlKeyFilterUPP = 0;
 #else
 unsigned char sControlKeyFilterUPP[120];
 #endif
-/* DATAGEN_FALLBACK: unresolved type ((7, 0), 265) */
+/* DATAGEN_FALLBACK: unsupported value type cpp_class */
 unsigned char sRectList[12];
 BSSINT sSwapCount;
 #if defined(COD2_X64)
@@ -119,7 +119,7 @@ struct Point sGlobalMouse = {0};
 #else
 unsigned char sGlobalMouse[128];
 #endif
-/* DATAGEN_FALLBACK: unresolved type ((22, 0), 278) */
+/* DATAGEN_FALLBACK: unsupported value type cpp_class */
 unsigned char sCursorList[12];
 BSSINT sCurrentCursor;
 BSSINT sSavedWinCursor;
@@ -136,7 +136,7 @@ unsigned char sCachedVKMap[128];
 BSSINT sATI4CompsConverterABGR;
 BSSINT sATI4CompsConverterARGB;
 BSSINT sStdConverterABGR;
-/* DATAGEN_FALLBACK: unresolved type ((25, 0), 67) */
+/* DATAGEN_FALLBACK: unsupported value type cpp_class */
 unsigned char sStdConverterARGB[116];
 #if defined(COD2_X64)
 void * sDirect3DInterface = 0;
@@ -908,14 +908,14 @@ unsigned char comBspGlob[128];
 #endif
 /* DATAGEN_FALLBACK: no matching debug variable */
 unsigned char __ZGVZ16GetMacGameEnginevE13theGameEngine[32];
-/* DATAGEN_FALLBACK: unresolved type ((208, 0), 4) */
+/* DATAGEN_FALLBACK: unsupported value type cpp_class */
 unsigned char theGameEngine[96];
 #if defined(COD2_X64)
 char * sDeviceName = 0;
 #else
 unsigned char sDeviceName[128];
 #endif
-/* DATAGEN_FALLBACK: unresolved type ((218, 0), 1156) */
+/* DATAGEN_FALLBACK: unsupported value type cpp_class */
 unsigned char sShaderPrograms[24];
 #if defined(COD2_X64)
 _Bool sInit = 0;
@@ -1526,11 +1526,11 @@ _Bool g_NoTextureID = 0;
 #else
 unsigned char g_NoTextureID[127];
 #endif
-/* DATAGEN_FALLBACK: unresolved type ((37, 0), 30) */
+/* DATAGEN_FALLBACK: unsupported value type cpp_class */
 unsigned char __ZN6CFence15sUnusedFenceIDsE[128];
-/* DATAGEN_FALLBACK: unresolved tag list<CMemoryBuffer */
+/* DATAGEN_FALLBACK: unsupported value type cpp_class */
 unsigned char __ZN13CMemoryBuffer20sDelayedFreeRequestsE[128];
-/* DATAGEN_FALLBACK: unresolved type ((39, 0), 191) */
+/* DATAGEN_FALLBACK: unsupported value type cpp_class */
 unsigned char __ZN7COpenGL7sOpenGLE[4096];
 #if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 TraceThreadInfo g_traceThreadInfo[1];   /* x86 blob 28; x64 sizeof 48 (pointer fields grow) */
@@ -2027,11 +2027,11 @@ stype_t yylval;
 int yychar;
 const dvar_t *ui_playerProfileAlreadyChosen;
 const dvar_t *com_playerProfile;
-/* DATAGEN_FALLBACK: unresolved type ((211, 0), 95) */
+/* DATAGEN_FALLBACK: unsupported value type cpp_class */
 unsigned char __ZN10CVAOPacket14sGenericPacketE[688];
-/* DATAGEN_FALLBACK: unresolved type ((211, 0), 100) */
+/* DATAGEN_FALLBACK: unsupported value type cpp_class */
 unsigned char __ZN10CVAOPacket11sAllPacketsE[80];
-/* DATAGEN_FALLBACK: unresolved tag vector<CStreamSound*,std */
+/* DATAGEN_FALLBACK: unsupported value type cpp_class */
 unsigned char __ZN12CStreamSound10sQTStreamsE[128];
 #if defined(COD2_X64)
 /* PlayerKeyState: keys[256] of qkey_t (16B on x64 vs 12B x86) -> 292 + 256*16 = 4388.

@@ -183,8 +183,13 @@ static int RB_GenerateGaussianFilter2D(float radius, int srcWidth, int srcHeight
     filterPass->material = RGP_SYM_FILTER_MAT(7);
     filterPass->tapHalfCount = 8;
 
+#if defined(COD2_X64) && COD2_APPLE_SDK
+    filterPass->srcWidth = 1.0f;
+    filterPass->srcHeight = 1.0f;
+#else
     filterPass->srcWidth = (float)srcWidth / nextPowerOfTwoF((unsigned int)srcWidth);
     filterPass->srcHeight = (float)srcHeight / nextPowerOfTwoF((unsigned int)srcHeight);
+#endif
 
     filterPass->dstWidth = dstWidth;
     filterPass->dstHeight = dstHeight;
@@ -213,7 +218,12 @@ static int RB_GenerateGaussianFilterChain(float radiusX, float radiusY, int srcW
         passCount = 0;
     } else {
 
+#if defined(COD2_X64)
+        /* The Mac SSE select keeps X when Y-X is unordered. */
+        minRadius = radiusY - radiusX < 0.0f ? radiusY : radiusX;
+#else
         minRadius = radiusX < radiusY ? radiusX : radiusY;
+#endif
 
         if (minRadius > GLOW_MAX_RADIUS) {
             minRadius = GLOW_MAX_RADIUS;
@@ -235,7 +245,12 @@ static int RB_GenerateGaussianFilterChain(float radiusX, float radiusY, int srcW
         float filterRadius;
         int dstRes;
 
+#if defined(COD2_X64)
+        /* UCOMISS/JB also stops an unordered residual radius. */
+        if (!(radiusX >= FILTER_MIN_RADIUS) && !(radiusY >= FILTER_MIN_RADIUS)) {
+#else
         if (radiusX < FILTER_MIN_RADIUS && radiusY < FILTER_MIN_RADIUS) {
+#endif
             break;
         }
 
@@ -252,7 +267,12 @@ static int RB_GenerateGaussianFilterChain(float radiusX, float radiusY, int srcW
 
         if (radiusX > radiusY) {
 
+#if defined(COD2_X64)
+            /* Mac 0x105e56 sends equality through the residual sqrt. */
+            if (FILTER_MAX_SINGLE > radiusX) {
+#else
             if (FILTER_MAX_SINGLE >= radiusX) {
+#endif
                 filterRadius = radiusX;
                 radiusX = 0.0f;
             } else {
@@ -291,8 +311,13 @@ static int RB_GenerateGaussianFilterChain(float radiusX, float radiusY, int srcW
             curPass->tapOffsetsAndWeights[i][3] = tapWeights[i];
         }
 
+#if defined(COD2_X64) && COD2_APPLE_SDK
+        curPass->srcWidth = 1.0f;
+        curPass->srcHeight = 1.0f;
+#else
         curPass->srcWidth = (float)curDstWidth / nextPowerOfTwoF((unsigned int)curDstWidth);
         curPass->srcHeight = (float)curDstHeight / nextPowerOfTwoF((unsigned int)curDstHeight);
+#endif
         curPass->dstWidth = curDstWidth;
         curPass->dstHeight = curDstHeight;
 
@@ -350,12 +375,22 @@ static void RB_ApplyFilterPasses(GfxImageFilter *filter, int swapLastPass)
 
         if (swapLastPass && passIndex == passCount - 1) {
 
+#if defined(COD2_X64) && COD2_APPLE_SDK
+            /* Cancel the native half-pixel projection shift so every target
+             * row is covered before the result is sampled by the next pass. */
+            RB_DrawStretchPic(pass->material, -0.5f, -0.5f, dstW, dstH,
+#else
             RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
+#endif
                               0.0f, pass->srcHeight, pass->srcWidth, 0.0f,
                               0xFFFFFFFF, (GfxPrimStatsTarget)0xa);
         } else {
 
+#if defined(COD2_X64) && COD2_APPLE_SDK
+            RB_DrawStretchPic(pass->material, -0.5f, -0.5f, dstW, dstH,
+#else
             RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
+#endif
                               0.0f, 0.0f, pass->srcWidth, pass->srcHeight,
                               0xFFFFFFFF, (GfxPrimStatsTarget)0xa);
         }
@@ -372,19 +407,33 @@ static GfxRenderTargetId RB_ApplyGlowFilter(GfxRenderTargetId srcRenderTarget, G
     int startPass;
     int dstWidth, dstHeight;
     float scaledRadius;
+#if defined(COD2_X64)
+    float scaledRadiusY;
+#endif
 
     if (glowRadius == 0.0f) {
+#if defined(COD2_X64)
+        return srcRenderTarget;
+#else
         return dstRenderTarget;
+#endif
     }
 
     {
         const r_backEndGlobals_t *backend = (const r_backEndGlobals_t *)backEnd;
         const GfxViewParms *viewParms = backend->viewParms;
+#if defined(COD2_X64)
+        unsigned int viewportHeight = viewParms->viewport.Height;
+#else
         int viewportHeight = (int)viewParms->viewport.Height;
+#endif
         float heightScaled = (float)viewportHeight * glowRadius / 480.0f;
 
         const vidConfig_t *vcfg = (const vidConfig_t *)vidConfig;
         scaledRadius = heightScaled * vcfg->aspectRatioPixel;
+#if defined(COD2_X64)
+        scaledRadiusY = heightScaled;
+#endif
     }
 
     filter.pingPongTargets[0] = R_RENDERTARGET_PINGPONG_0;
@@ -402,8 +451,13 @@ static GfxRenderTargetId RB_ApplyGlowFilter(GfxRenderTargetId srcRenderTarget, G
         int sceneWidth = DX_RT_WIDTH(R_RENDERTARGET_RESOLVED_SCENE);
         int sceneHeight = DX_RT_HEIGHT(R_RENDERTARGET_RESOLVED_SCENE);
 
+#if defined(COD2_X64) && COD2_APPLE_SDK
+        filter.passes[0].srcWidth = 1.0f;
+        filter.passes[0].srcHeight = 1.0f;
+#else
         filter.passes[0].srcWidth = (float)sceneWidth / nextPowerOfTwoF((unsigned int)sceneWidth);
         filter.passes[0].srcHeight = (float)sceneHeight / nextPowerOfTwoF((unsigned int)sceneHeight);
+#endif
         filter.passes[0].dstWidth = dstWidth;
         filter.passes[0].dstHeight = dstHeight;
         filter.passes[0].tapHalfCount = 0;
@@ -413,7 +467,11 @@ static GfxRenderTargetId RB_ApplyGlowFilter(GfxRenderTargetId srcRenderTarget, G
 
     startPass = filter.passCount;
     chainPassCount = RB_GenerateGaussianFilterChain(
+#if defined(COD2_X64)
+        scaledRadius, scaledRadiusY,
+#else
         scaledRadius, scaledRadius,
+#endif
         dstWidth, dstHeight,
         dstWidth, dstHeight,
         16 - startPass,
@@ -422,7 +480,11 @@ static GfxRenderTargetId RB_ApplyGlowFilter(GfxRenderTargetId srcRenderTarget, G
     passCount = filter.passCount;
 
     if (passCount == 0) {
+#if defined(COD2_X64)
+        return srcRenderTarget;
+#else
         return dstRenderTarget;
+#endif
     }
 
     g_TotalFilterPasses += passCount;
@@ -510,16 +572,26 @@ void RB_GaussianFilterImage(float radius, GfxRenderTargetId renderTargetId)
     r_backEndGlobals_t *be;
     int width, height;
     float scaledRadius;
+#if defined(COD2_X64)
+    float scaledRadiusY;
+#endif
     int oddPassCount;
 
     be = (r_backEndGlobals_t *)backEnd;
     {
         const GfxViewParms *viewParms = be->viewParms;
+#if defined(COD2_X64)
+        unsigned int viewportHeight = viewParms->viewport.Height;
+#else
         int viewportHeight = (int)viewParms->viewport.Height;
+#endif
         float heightScaled = (float)viewportHeight * radius / 480.0f;
 
         const vidConfig_t *vcfg = (const vidConfig_t *)vidConfig;
         scaledRadius = heightScaled * vcfg->aspectRatioPixel;
+#if defined(COD2_X64)
+        scaledRadiusY = heightScaled;
+#endif
     }
 
     filter.pingPongTargets[0] = R_RENDERTARGET_PINGPONG_0;
@@ -536,7 +608,11 @@ void RB_GaussianFilterImage(float radius, GfxRenderTargetId renderTargetId)
         int vidHeight = vcfg2->height;
 
         passCount = RB_GenerateGaussianFilterChain(
+#if defined(COD2_X64)
+            scaledRadius, scaledRadiusY,
+#else
             scaledRadius, scaledRadius,
+#endif
             vidWidth, vidHeight,
             width, height,
             16,
@@ -585,12 +661,20 @@ void RB_GaussianFilterImage(float radius, GfxRenderTargetId renderTargetId)
 
         if (!oddPassCount && passIndex == passCount - 1) {
 
+#if defined(COD2_X64) && COD2_APPLE_SDK
+            RB_DrawStretchPic(pass->material, -0.5f, -0.5f, dstW, dstH,
+#else
             RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
+#endif
                               0.0f, pass->srcHeight, pass->srcWidth, 0.0f,
                               0xFFFFFFFF, (GfxPrimStatsTarget)0xa);
         } else {
 
+#if defined(COD2_X64) && COD2_APPLE_SDK
+            RB_DrawStretchPic(pass->material, -0.5f, -0.5f, dstW, dstH,
+#else
             RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
+#endif
                               0.0f, 0.0f, pass->srcWidth, pass->srcHeight,
                               0xFFFFFFFF, (GfxPrimStatsTarget)0xa);
         }

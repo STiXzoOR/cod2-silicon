@@ -212,6 +212,11 @@ int FS_SV_FOpenFileRead(const char *filename, fileHandle_t *fp)
             if (file != NULL) {
                 goto done;
             }
+#if defined(COD2_X64)
+            /* Retail's failed base-path retry selects the reserved slot. */
+            f = 0;
+            entry = &((fileHandleData_t *)imp_fsh)[f];
+#endif
         }
     }
 
@@ -369,7 +374,7 @@ void FS_NewDir_f(void)
         void *searchpaths = *(void **)imp_fs_searchpaths;
 
 #if defined(COD2_X64)
-        dirnames = (char **)FS_ListFilteredFiles(searchpaths, "", "", filter, FS_LIST_ALL, &ndirs, 10);
+        dirnames = (char **)FS_ListFilteredFiles(searchpaths, "", "", filter, FS_LIST_PURE_ONLY, &ndirs, 10);
 #else
         dirnames = FS_ListFilteredFiles(searchpaths, "", "", filter, &ndirs, 10);
 #endif
@@ -466,10 +471,18 @@ void FS_SetRestrictions(void)
         Dvar_SetBool(restrict_dvar, 1);
     }
 
+#if defined(COD2_X64)
+    Com_Printf("\nRunning in restricted demo mode.\n\n");
+#else
     Com_Printf("Restricting pure client, full media required.\n");
+#endif
 
     FS_Shutdown(0);
+#if defined(COD2_X64)
+    FS_Startup("demomain");
+#else
     FS_Startup("main");
+#endif
 
     path = *(void **)imp_fs_searchpaths;
     while (path != NULL) {
@@ -701,7 +714,11 @@ void FS_PureServerSetLoadedIwds(const char *iwdSums, const char *iwdNames)
     }
 
     if (c != d) {
+#if defined(COD2_X64)
+        Com_Error(1, "iwd sum/name mismatch");
+#else
         Com_Error(1, "FS_PureServerSetLoadedIwds: count mismatch");
+#endif
     }
 
     {
@@ -771,7 +788,11 @@ do_reload:
             return;
         }
 
+#if defined(COD2_X64)
+        Com_DPrintf("Connected to a pure server.\n");
+#else
         Com_DPrintf("Setting pure server iwds\n");
+#endif
 
         Com_Memcpy(imp_fs_serverIwds, serverIwds, c * 4);
 
@@ -813,7 +834,11 @@ void FS_PureServerSetReferencedIwds(const char *iwdSums, const char *iwdNames)
     if (iwdNames == NULL || iwdNames[0] == '\0') {
 
         if (c != 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "iwd sum/name mismatch");
+#else
             Com_Error(1, "FS_PureServerSetReferencedIwds: count mismatch");
+#endif
         }
 
         *(int *)imp_fs_numServerReferencedIwds = c;
@@ -827,7 +852,11 @@ void FS_PureServerSetReferencedIwds(const char *iwdSums, const char *iwdNames)
     }
 
     if (c != d) {
+#if defined(COD2_X64)
+        Com_Error(1, "iwd sum/name mismatch");
+#else
         Com_Error(1, "FS_PureServerSetReferencedIwds: count mismatch");
+#endif
     }
 
     if (d > 0) {
@@ -1041,7 +1070,11 @@ int FS_GetModList(char *listbuf, int bufsize)
             }
         }
 
+#if defined(COD2_X64)
+        nameLen = (int)strlen(name) + 1;
+#else
         nameLen = (int)strlen(name);
+#endif
 
         strcpy(descPath, name);
         I_strncat(descPath, 0x100, "/description.txt");
@@ -1059,13 +1092,21 @@ int FS_GetModList(char *listbuf, int bufsize)
             FS_FCloseFile(descHandle);
         } else if (I_stricmp(name, "main") == 0) {
 
+#if defined(COD2_X64)
+            strcpy(descPath, "Call of Duty 2 Multiplayer");
+#else
             strcpy(descPath, "Call of 2 Multiplayer");
+#endif
         } else {
 
             strcpy(descPath, name);
         }
 
+#if defined(COD2_X64)
+        descLen = (int)strlen(descPath) + 1;
+#else
         descLen = (int)strlen(descPath);
+#endif
 
         if (nTotal + nameLen + descLen + 2 >= bufsize) {
             break;
@@ -1123,6 +1164,17 @@ qboolean FS_CompareIwds(char *needediwds, int len, qboolean dlstring)
             goto next_iwd;
         }
 
+#if defined(COD2_X64)
+        {
+            const char *p;
+            for (p = iwdName; *p; ++p) {
+                if (!I_strnicmp(p, "_svr_", 5)) {
+                    goto next_iwd;
+                }
+            }
+        }
+#endif
+
         {
             void *search = *(void **)imp_fs_searchpaths;
             int found = 0;
@@ -1166,12 +1218,20 @@ qboolean FS_CompareIwds(char *needediwds, int len, qboolean dlstring)
                     if (f != NULL) {
                         FS_FileClose(f);
 
+#if defined(COD2_X64)
+                        I_strncat(needediwds, len, " (local file exists with wrong checksum)");
+#else
                         I_strncat(needediwds, len, "@");
+#endif
                     }
                 }
             }
 
+#if defined(COD2_X64)
+            I_strncat(needediwds, len, "\n");
+#else
             I_strncat(needediwds, len, " ");
+#endif
         } else {
 
             I_strncat(needediwds, len, "@");

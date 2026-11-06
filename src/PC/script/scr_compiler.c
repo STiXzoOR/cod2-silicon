@@ -103,6 +103,13 @@ static void Scr_StorePackedInt(void *destination, int value)
     memcpy(destination, &value, sizeof(value));
 }
 
+static int Scr_LoadPackedInt(const void *source)
+{
+    int value;
+    memcpy(&value, source, sizeof(value));
+    return value;
+}
+
 static void Scr_StorePackedFloat(void *destination, float value)
 {
     memcpy(destination, &value, sizeof(value));
@@ -214,7 +221,11 @@ static unsigned int __attribute_regparm__(3)
 #    else
                 CompileError2( (int)(codePtr), "normal script cannot reference a function in a /# ... #/ comment");
 #    endif
+#if defined(COD2_X64)
+                return 0;
+#else
                 continue;
+#endif
             }
         } else {
             if (!pos->type) {
@@ -227,10 +238,21 @@ static unsigned int __attribute_regparm__(3)
 #    else
                 CompileError2( (int)(codePtr), "unknown function");
 #    endif
+#if defined(COD2_X64)
+                return 0;
+#else
                 continue;
+#endif
             }
 
+#if defined(COD2_X64)
+        }
+#endif
+#if defined(COD2_X64)
+            if (!allowFarCall && Scr_LoadPackedInt(codePtr) == 1) {
+#else
             if (!allowFarCall && *(int *)codePtr == 1) {
+#endif
 #    ifdef LT_TRACE
                 fprintf(stderr, "[UNKFN-LINKTHREAD-174 farcall] threadId=%u progoff=%d\n",
                         threadId, (int)(codePtr - SCRVP->programBuffer));
@@ -240,11 +262,21 @@ static unsigned int __attribute_regparm__(3)
 #    else
                 CompileError2( (int)(codePtr), "unknown function");
 #    endif
+#if defined(COD2_X64)
+                return 0;
+#else
                 continue;
+#endif
             }
+#if !defined(COD2_X64)
         }
+#endif
 
+#if defined(COD2_X64)
+        Scr_StorePackedInt(codePtr, pos->u.intValue);
+#else
         *(int *)codePtr = pos->u.intValue;
+#endif
     }
 
     return 0;
@@ -286,12 +318,14 @@ int CompareCaseInfo(const unsigned int *elem1, const unsigned int *elem2)
 #endif
 {
 #if defined(COD2_X64)
-    const unsigned int *elem1 = a;
-    const unsigned int *elem2 = b;
-#endif
+    unsigned int value1 = (unsigned int)Scr_LoadPackedInt(a);
+    unsigned int value2 = (unsigned int)Scr_LoadPackedInt(b);
+    return value1 > value2 ? -1 : value1 < value2;
+#else
     if (*elem1 > *elem2)
         return -1;
     return *elem1 < *elem2;
+#endif
 }
 
 void Scr_CompileShutdown(void)
@@ -374,7 +408,11 @@ static Bool __attribute_regparm__(2)
 
     case 9:
         constValue->value.type = 6;
+#if defined(COD2_X64)
+        constValue->value.u.intValue = (int)(0u - (unsigned int)node[1].intValue);
+#else
         constValue->value.u.intValue = -node[1].intValue;
+#endif
         constValue->sourcePos = node[2];
         return 1;
 
@@ -460,9 +498,17 @@ static Bool __attribute_regparm__(2)
 
         for (i = 0; i < 3; ++i) {
             if (constValue2[i].value.type == 5) {
+#if defined(COD2_X64)
+                vec[2 - i] = constValue2[i].value.u.floatValue;
+#else
                 vec[i] = constValue2[i].value.u.floatValue;
+#endif
             } else if (constValue2[i].value.type == 6) {
+#if defined(COD2_X64)
+                vec[2 - i] = (float)constValue2[i].value.u.intValue;
+#else
                 vec[i] = (float)constValue2[i].value.u.intValue;
+#endif
             } else {
                 CompileError(constValue2[i].sourcePos.sourcePosValue,
                              "type %s is not a float",
@@ -787,7 +833,11 @@ Scr_CalcLocalVarsNormalizeChildBlock(scr_block_t *child, const scr_block_t *pare
 {
     int i;
 
+#if defined(COD2_X64)
+    if (!child || !parent || parent->abortLevel) {
+#else
     if (!child || !parent) {
+#endif
         return;
     }
 
@@ -869,7 +919,12 @@ Scr_CalcLocalVarsMergeBranchChildBlocks(scr_block_t *block, scr_block_t **childB
         }
 
         if (child == childCount) {
+#if defined(COD2_X64)
+            block->localVars[block->localVarsCount].name = name;
+            ++block->localVarsCount;
+#else
             Scr_CalcLocalVarsAddName(block, name);
+#endif
         }
     }
 }
@@ -976,6 +1031,18 @@ Scr_CalcLocalVarsSwitchStatement(sval_t stmtlist, scr_block_t *block)
 
         if (currentBlock) {
             Scr_CalcLocalVarsStatement((uintptr_t)stmt, currentBlock);
+#if defined(COD2_X64)
+            if (currentBlock->abortLevel) {
+                if (currentBlock->abortLevel == 2) {
+                    currentBlock->abortLevel = 0;
+                    Scr_CalcLocalVarsAddChildBlock(caseBlocks, &caseBlockCount, currentBlock);
+                    switchAbortLevel = 0;
+                } else if (currentBlock->abortLevel < switchAbortLevel) {
+                    switchAbortLevel = currentBlock->abortLevel;
+                }
+                currentBlock = NULL;
+            }
+#endif
         }
     }
 
@@ -1259,7 +1326,7 @@ static unsigned int __attribute_regparm__(1)
         EmitOpcode(0x0a, 1, 0);
         AddOpcodePos(sourcePos, 1);
 #if defined(COD2_X64)
-        Scr_StorePackedShort(TempMallocAlign(2), (short)stringValue);
+        Scr_StorePackedShort(SCRCG->codePos = (byte *)TempMallocAlign(2), (short)stringValue);
 #else
         *(short *)TempMallocAlign(2) = (short)stringValue;
 #endif
@@ -1282,7 +1349,7 @@ static unsigned int __attribute_regparm__(1)
         EmitOpcode(0x0b, 1, 0);
         AddOpcodePos(sourcePos, 1);
 #if defined(COD2_X64)
-        Scr_StorePackedShort(TempMallocAlign(2), (short)stringValue);
+        Scr_StorePackedShort(SCRCG->codePos = (byte *)TempMallocAlign(2), (short)stringValue);
 #else
         *(short *)TempMallocAlign(2) = (short)stringValue;
 #endif
@@ -1306,7 +1373,7 @@ static unsigned int __attribute_regparm__(1)
         AddOpcodePos(sourcePos, 1);
         for (i = 0; i != 3; ++i) {
 #if defined(COD2_X64)
-            Scr_StorePackedFloat(TempMallocAlignStrict(4), vectorValue[i]);
+            Scr_StorePackedFloat(SCRCG->codePos = (byte *)TempMallocAlignStrict(4), vectorValue[i]);
 #else
             *(float *)TempMallocAlignStrict(4) = vectorValue[i];
 #endif
@@ -1319,7 +1386,7 @@ static unsigned int __attribute_regparm__(1)
         EmitOpcode(9, 1, 0);
         AddOpcodePos(sourcePos, 1);
 #if defined(COD2_X64)
-        Scr_StorePackedFloat(TempMallocAlignStrict(4), constValue->value.u.floatValue);
+        Scr_StorePackedFloat(SCRCG->codePos = (byte *)TempMallocAlignStrict(4), constValue->value.u.floatValue);
 #else
         *(float *)TempMallocAlignStrict(4) = constValue->value.u.floatValue;
 #endif
@@ -1548,12 +1615,17 @@ static unsigned int __attribute_regparm__(2)
         if (value <= 0xff) {
             EmitOpcode(4, 1, 0);
             AddOpcodePos(sourcePos, 1);
+#if defined(COD2_X64)
+            SCRCG->codePos = (byte *)TempMalloc(1);
+            *SCRCG->codePos = (char)value;
+#else
             *TempMalloc(1) = (char)value;
+#endif
         } else if (value <= 0xffff) {
             EmitOpcode(6, 1, 0);
             AddOpcodePos(sourcePos, 1);
 #if defined(COD2_X64)
-            Scr_StorePackedShort(TempMallocAlign(2), (short)value);
+            Scr_StorePackedShort(SCRCG->codePos = (byte *)TempMallocAlign(2), (short)value);
 #else
             *(short *)TempMallocAlign(2) = (short)value;
 #endif
@@ -1561,7 +1633,7 @@ static unsigned int __attribute_regparm__(2)
             EmitOpcode(8, 1, 0);
             AddOpcodePos(sourcePos, 1);
 #if defined(COD2_X64)
-            Scr_StorePackedInt(TempMallocAlign(4), value);
+            Scr_StorePackedInt(SCRCG->codePos = (byte *)TempMallocAlign(4), value);
 #else
             *(int *)TempMallocAlign(4) = value;
 #endif
@@ -1572,12 +1644,17 @@ static unsigned int __attribute_regparm__(2)
     if (value > -256) {
         EmitOpcode(5, 1, 0);
         AddOpcodePos(sourcePos, 1);
+#if defined(COD2_X64)
+        SCRCG->codePos = (byte *)TempMalloc(1);
+        *SCRCG->codePos = (char)-value;
+#else
         *TempMalloc(1) = (char)-value;
+#endif
     } else if (value > -65536) {
         EmitOpcode(7, 1, 0);
         AddOpcodePos(sourcePos, 1);
 #if defined(COD2_X64)
-        Scr_StorePackedShort(TempMallocAlign(2), (short)-value);
+        Scr_StorePackedShort(SCRCG->codePos = (byte *)TempMallocAlign(2), (short)-value);
 #else
         *(short *)TempMallocAlign(2) = (short)-value;
 #endif
@@ -1585,7 +1662,7 @@ static unsigned int __attribute_regparm__(2)
         EmitOpcode(8, 1, 0);
         AddOpcodePos(sourcePos, 1);
 #if defined(COD2_X64)
-        Scr_StorePackedInt(TempMallocAlign(4), value);
+        Scr_StorePackedInt(SCRCG->codePos = (byte *)TempMallocAlign(4), value);
 #else
         *(int *)TempMallocAlign(4) = value;
 #endif
@@ -1848,7 +1925,11 @@ static unsigned int __attribute_regparm__(2)
     EmitOpcode(0x62, 0, 0);
     AddOpcodePos(sourcePos, 1);
     SCRCG->codePos = (byte *)TempMallocAlign(4);
+#if defined(COD2_X64)
+    Scr_StorePackedInt(SCRCG->codePos, 0);
+#else
     *(int *)SCRCG->codePos = 0;
+#endif
 
     statement = (ContinueStatementInfo *)Hunk_AllocateTempMemoryHighInternal(sizeof(*statement));
     statement->codePos = (const char *)SCRCG->codePos;
@@ -1883,7 +1964,11 @@ static unsigned int __attribute_regparm__(2)
     EmitOpcode(0x62, 0, 0);
     AddOpcodePos(sourcePos, 1);
     SCRCG->codePos = (byte *)TempMallocAlign(4);
+#if defined(COD2_X64)
+    Scr_StorePackedInt(SCRCG->codePos, 0);
+#else
     *(int *)SCRCG->codePos = 0;
+#endif
 
     statement = (BreakStatementInfo *)Hunk_AllocateTempMemoryHighInternal(sizeof(*statement));
     statement->codePos = (const char *)SCRCG->codePos;
@@ -2031,7 +2116,11 @@ static unsigned int __attribute_regparm__(2)
                 if (value.type == SCRCOMP_VAR_CODEPOS ||
                     SCRCP->developer_statement != SCRCOMP_SCR_DEV_NO) {
                     SCRCG->codePos = (byte *)TempMallocAlign(4);
+#if defined(COD2_X64)
+                    Scr_StorePackedInt(SCRCG->codePos, value.u.intValue);
+#else
                     *(int *)SCRCG->codePos = value.u.intValue;
+#endif
                     return 0;
                 }
 
@@ -2044,7 +2133,11 @@ static unsigned int __attribute_regparm__(2)
     }
 
     SCRCG->codePos = (byte *)TempMallocAlign(4);
+#if defined(COD2_X64)
+    Scr_StorePackedInt(SCRCG->codePos, scope);
+#else
     *(int *)SCRCG->codePos = scope;
+#endif
 
     countId = GetVariable(threadId, 0);
     Scr_EvalVariableValue(countId, &count);
@@ -2163,16 +2256,28 @@ static int __attribute_regparm__(2)
         return 0;
     }
 
+#if defined(COD2_X64)
+    if (scrCompilePub.developer_statement) {
+#else
     if (scrCompilePub.programLen) {
+#endif
         *type = 0;
         return 0;
     }
 
     if (SCRVP->developer_script) {
+#if defined(COD2_X64)
+        scrCompilePub.developer_statement = 1;
+#else
         scrCompilePub.programLen = 1;
+#endif
     } else {
         *savedPos = TempMalloc(0);
+#if defined(COD2_X64)
+        scrCompilePub.developer_statement = 2;
+#else
         scrCompilePub.programLen = 2;
+#endif
     }
 
     return 1;
@@ -2185,7 +2290,11 @@ static void __attribute_regparm__(2)
         return;
     }
 
+#if defined(COD2_X64)
+    scrCompilePub.developer_statement = 0;
+#else
     scrCompilePub.programLen = 0;
+#endif
     if (!SCRVP->developer_script) {
         TempMemorySetPos(savedPos);
     }
@@ -3090,7 +3199,11 @@ static Bool __attribute_regparm__(3)
         EmitOpcode(0x13, 1, 0);
         AddOpcodePos(node[2].sourcePosValue, 1);
         SCRCG->codePos = (byte *)TempMallocAlign(4);
+#if defined(COD2_X64)
+        Scr_StorePackedInt(SCRCG->codePos, -1);
+#else
         *(int *)SCRCG->codePos = -1;
+#endif
         Scr_EmitAnimation((char *)SCRCG->codePos, node[1].stringValue, node[2].sourcePosValue);
         if (!SCRCG->bConstRefCount) {
             SL_RemoveRefToString(node[1].stringValue);
@@ -3098,11 +3211,19 @@ static Bool __attribute_regparm__(3)
         return 0;
 
     case 74:
+#if defined(COD2_X64)
+        if (!SCRAP->animTreeIndex) {
+            CompileError(node[1].sourcePosValue, "#using_animtree was not specified");
+            return 0;
+        }
+        EmitGetInteger(SCRAP->animTreeIndex, node[1].sourcePosValue);
+#else
         if (!SCRAP->animtrees) {
             CompileError(node[1].sourcePosValue, "#using_animtree was not specified");
             return 0;
         }
         EmitGetInteger(SCRAP->animtrees, node[1].sourcePosValue);
+#endif
         return 0;
 
     default:
@@ -3141,7 +3262,12 @@ static Bool __attribute_regparm__(3)
         EmitOpcode(0x61, -1, 0);
         AddOpcodePos(opcode.sourcePosValue, 0);
         pos = TempMallocAlign(2);
+#if defined(COD2_X64)
+        SCRCG->codePos = (byte *)pos;
+        Scr_StorePackedShort(pos, (short)0);
+#else
         *(short *)pos = 0;
+#endif
         nextPos = TempMalloc(0);
 
         if (EmitOrEvalExpression(rhs, &constValue1, block)) {
@@ -3150,7 +3276,11 @@ static Bool __attribute_regparm__(3)
 
         EmitOpcode(0x5b, 0, 0);
         AddOpcodePos(sourcePos.sourcePosValue, 0);
+#if defined(COD2_X64)
+        Scr_StorePackedShort(pos, (short)(short)(TempMalloc(0) - nextPos));
+#else
         *(short *)pos = (short)(TempMalloc(0) - nextPos);
+#endif
         return 0;
 
     case 48:
@@ -3166,7 +3296,12 @@ static Bool __attribute_regparm__(3)
         EmitOpcode(0x60, -1, 0);
         AddOpcodePos(opcode.sourcePosValue, 0);
         pos = TempMallocAlign(2);
+#if defined(COD2_X64)
+        SCRCG->codePos = (byte *)pos;
+        Scr_StorePackedShort(pos, (short)0);
+#else
         *(short *)pos = 0;
+#endif
         nextPos = TempMalloc(0);
 
         if (EmitOrEvalExpression(rhs, &constValue1, block)) {
@@ -3175,7 +3310,11 @@ static Bool __attribute_regparm__(3)
 
         EmitOpcode(0x5b, 0, 0);
         AddOpcodePos(sourcePos.sourcePosValue, 0);
+#if defined(COD2_X64)
+        Scr_StorePackedShort(pos, (short)(short)(TempMalloc(0) - nextPos));
+#else
         *(short *)pos = (short)(TempMalloc(0) - nextPos);
+#endif
         return 0;
 
     case 49:
@@ -3304,7 +3443,11 @@ static unsigned int __attribute_regparm__(3)
             EmitFunction(func, funcSourcePos);
             out = TempMallocAlign(4);
             SCRCG->codePos = (byte *)out;
+#if defined(COD2_X64)
+            Scr_StorePackedInt(out, param_count);
+#else
             *(int *)out = param_count;
+#endif
             AddOpcodePos(callSourcePos, 0);
             return 0;
         }
@@ -3328,7 +3471,11 @@ static unsigned int __attribute_regparm__(3)
             AddOpcodePos(exprSourcePos, 1);
             out = TempMallocAlign(4);
             SCRCG->codePos = (byte *)out;
+#if defined(COD2_X64)
+            Scr_StorePackedInt(out, param_count);
+#else
             *(int *)out = param_count;
+#endif
             AddOpcodePos(callSourcePos, 0);
             return 0;
         }
@@ -3488,7 +3635,11 @@ static unsigned int __attribute_regparm__(2)
             if (SCRCG->bConstRefCount) {
                 SL_AddRefToString(fieldName);
             }
+#if defined(COD2_X64)
+            Scr_StorePackedShort(out, (short)(unsigned short)SL_TransferToCanonicalString(fieldName));
+#else
             *out = (unsigned short)SL_TransferToCanonicalString(fieldName);
+#endif
         }
         return 0;
     }
@@ -3521,7 +3672,11 @@ static unsigned int __attribute_regparm__(2)
             }
 
             EmitOpcode(0x82, 1, 0);
+#if defined(COD2_X64)
+            Scr_StorePackedShort(SCRCG->codePos = (byte *)TempMallocAlign(2), (short)(unsigned short)entnum);
+#else
             *(unsigned short *)TempMallocAlign(2) = (unsigned short)entnum;
+#endif
             return 0;
         }
 
@@ -3538,8 +3693,16 @@ static unsigned int __attribute_regparm__(2)
         }
 
         EmitOpcode(0x81, 1, 0);
+#if defined(COD2_X64)
+        Scr_StorePackedInt(SCRCG->codePos = (byte *)TempMallocAlign(4), classnum);
+#else
         *(int *)TempMallocAlign(4) = classnum;
+#endif
+#if defined(COD2_X64)
+        Scr_StorePackedInt(SCRCG->codePos = (byte *)TempMallocAlign(4), entnum);
+#else
         *(int *)TempMallocAlign(4) = entnum;
+#endif
         return 0;
     }
 
@@ -3919,7 +4082,11 @@ static unsigned int __attribute_regparm__(2)
         if (SCRCG->bConstRefCount)
             SL_AddRefToString(fieldName);
 
+#if defined(COD2_X64)
+        Scr_StorePackedShort(out, (short)(unsigned short)SL_TransferToCanonicalString(fieldName));
+#else
         *(unsigned short *)out = (unsigned short)SL_TransferToCanonicalString(fieldName);
+#endif
         return 0;
     }
 
@@ -3999,7 +4166,11 @@ static unsigned int __attribute_regparm__(3)
                     } else {
                         if (SCRCG->bConstRefCount)
                             SL_AddRefToString(fieldName);
+#if defined(COD2_X64)
+                        Scr_StorePackedShort(out, (short)(unsigned short)SL_TransferToCanonicalString(fieldName));
+#else
                         *out = (unsigned short)SL_TransferToCanonicalString(fieldName);
+#endif
                     }
                     return 0;
                 }
@@ -4166,7 +4337,12 @@ static unsigned int __attribute_regparm__(3)
                 sval_t *vnode = (sval_t *)(uintptr_t)listNode[0];
                 int idx = Scr_FindLocalVarIndex(vnode[0].stringValue, vnode[1], 1, block);
                 EmitOpcode(0x33, 0, 0);
+#if defined(COD2_X64)
+                SCRCG->codePos = (byte *)TempMalloc(1);
+                *SCRCG->codePos = (char)idx;
+#else
                 *(char *)TempMalloc(1) = (char)idx;
+#endif
                 AddOpcodePos(vnode[1].sourcePosValue, 0);
             }
         }
@@ -4174,6 +4350,44 @@ static unsigned int __attribute_regparm__(3)
         return 0;
     }
 
+#if defined(COD2_X64)
+    case 0x38: {
+        intptr_t *firstNode = ScriptStatementListFirstExecNode(node[2]);
+        intptr_t *listNode = firstNode ? (intptr_t *)(uintptr_t)firstNode[1] : NULL;
+        int exprCount = 0;
+
+        for (; listNode; listNode = (intptr_t *)(uintptr_t)listNode[1]) {
+            sval_t *exprNode = (sval_t *)(uintptr_t)listNode[0];
+            if (exprNode && EmitOrEvalExpression(exprNode[0], &constValue, block))
+                EmitValue(&constValue);
+            ++exprCount;
+        }
+
+        if (firstNode) {
+            sval_t *firstExprNode = (sval_t *)(uintptr_t)firstNode[0];
+            if (firstExprNode && EmitOrEvalExpression(firstExprNode[0], &constValue, block))
+                EmitValue(&constValue);
+            if (EmitOrEvalPrimitiveExpression(node[1], &constValue, block))
+                EmitValue(&constValue);
+            EmitOpcode(0x77, -2 - exprCount, 0);
+            AddOpcodePos(node[4].sourcePosValue, 0);
+            AddOpcodePos(node[4].sourcePosValue, 0);
+            AddOpcodePos(node[3].sourcePosValue, 0);
+            if (firstExprNode)
+                AddOpcodePos(firstExprNode[1].sourcePosValue, 0);
+        }
+        for (listNode = firstNode ? (intptr_t *)(uintptr_t)firstNode[1] : NULL;
+             listNode; listNode = (intptr_t *)(uintptr_t)listNode[1]) {
+            sval_t *exprNode = (sval_t *)(uintptr_t)listNode[0];
+            AddOpcodePos(exprNode[1].sourcePosValue, 0);
+        }
+        SCRCG->codePos = (byte *)TempMalloc(1);
+        *SCRCG->codePos = (byte)exprCount;
+        EmitOpcode(0x34, 0, 0);
+        return 0;
+    }
+
+#else
     case 0x38: {
         intptr_t *firstNode = ScriptStatementListFirstExecNode(node[2]);
         intptr_t *listNode = firstNode ? (intptr_t *)(uintptr_t)firstNode[1] : NULL;
@@ -4205,6 +4419,7 @@ static unsigned int __attribute_regparm__(3)
         return 0;
     }
 
+#endif
     case 0x39:
         EmitOpcode(0x4d, 0, 0);
         AddOpcodePos(node[1].sourcePosValue, 1);
@@ -4216,14 +4431,25 @@ static unsigned int __attribute_regparm__(3)
         int exprCount = 0;
         int signedCount = 0;
         intptr_t *firstNode;
+#if defined(COD2_X64)
+        intptr_t *list = (intptr_t *)(uintptr_t)node[2].node;
+        intptr_t *eventNode = NULL;
+#endif
 
         EmitOpcode(0x7b, 1, 0);
         AddOpcodePos(node[3].sourcePosValue, 1);
 
+#if defined(COD2_X64)
+        for (listNode = list ? (intptr_t *)(uintptr_t)list[0] : NULL; listNode; listNode = (intptr_t *)(uintptr_t)listNode[1]) {
+#else
         for (listNode = ScriptStatementListFirstExecNode(node[2]); listNode; listNode = (intptr_t *)(uintptr_t)listNode[1]) {
+#endif
             sval_t *exprNode = (sval_t *)(uintptr_t)listNode[0];
             if (exprNode && EmitOrEvalExpression(exprNode[0], &constValue, block))
                 EmitValue(&constValue);
+#if defined(COD2_X64)
+            eventNode = listNode;
+#endif
             ++exprCount;
         }
         if (exprCount)
@@ -4233,7 +4459,11 @@ static unsigned int __attribute_regparm__(3)
             EmitValue(&constValue);
         EmitOpcode(0x79, signedCount - 2, 0);
         AddOpcodePos(node[4].sourcePosValue, 0);
+#if defined(COD2_X64)
+        firstNode = eventNode;
+#else
         firstNode = ScriptStatementListFirstExecNode(node[2]);
+#endif
         if (firstNode) {
             sval_t *firstExprNode = (sval_t *)(uintptr_t)firstNode[0];
             if (firstExprNode)
@@ -4276,7 +4506,12 @@ static unsigned int __attribute_regparm__(3)
             if (!SCRCG->bConstRefCount)
                 SL_RemoveRefToString(stringValue);
             EmitOpcode(0x85, 0, 0);
+#if defined(COD2_X64)
+            SCRCG->codePos = (byte *)TempMalloc(1);
+            *SCRCG->codePos = 0;
+#else
             *(char *)TempMalloc(1) = 0;
+#endif
         } else if (!SCRCG->bConstRefCount) {
             SL_RemoveRefToString(stringValue);
         }
@@ -4289,7 +4524,12 @@ static unsigned int __attribute_regparm__(3)
             if (!SCRCG->bConstRefCount)
                 SL_RemoveRefToString(stringValue);
             EmitOpcode(0x86, 0, 0);
+#if defined(COD2_X64)
+            SCRCG->codePos = (byte *)TempMalloc(1);
+            *SCRCG->codePos = 0;
+#else
             *(char *)TempMalloc(1) = 0;
+#endif
         } else if (!SCRCG->bConstRefCount) {
             SL_RemoveRefToString(stringValue);
         }
@@ -4319,7 +4559,11 @@ static unsigned int __attribute_regparm__(3)
 
     jumpOffset = (unsigned short *)TempMallocAlign(2);
     SCRCG->codePos = (byte *)jumpOffset;
+#if defined(COD2_X64)
+    Scr_StorePackedShort(jumpOffset, (short)0);
+#else
     *jumpOffset = 0;
+#endif
     nextPos = TempMalloc(0);
 
     ifBlock = ifStatBlock->block;
@@ -4336,7 +4580,11 @@ static unsigned int __attribute_regparm__(3)
     }
     SCRVP->checksum = savedChecksum + 1;
 
+#if defined(COD2_X64)
+    Scr_StorePackedShort(jumpOffset, (short)(unsigned short)(TempMalloc(0) - nextPos));
+#else
     *jumpOffset = (unsigned short)(TempMalloc(0) - nextPos);
+#endif
     return 0;
 }
 
@@ -4588,7 +4836,11 @@ static unsigned int __attribute_regparm__(3)
 
     pos1 = (unsigned short *)TempMallocAlign(2);
     SCRCG->codePos = (byte *)pos1;
+#if defined(COD2_X64)
+    Scr_StorePackedShort(pos1, (short)0);
+#else
     *pos1 = 0;
+#endif
     nextPos1 = TempMalloc(0);
 
     ifBlock = ifStatBlock->block;
@@ -4611,7 +4863,11 @@ static unsigned int __attribute_regparm__(3)
         EmitOpcode(0, 0, 0);
         pos2 = (int *)TempMallocAlign(4);
         SCRCG->codePos = (byte *)pos2;
+#if defined(COD2_X64)
+        Scr_StorePackedInt(pos2, 0);
+#else
         *pos2 = 0;
+#endif
         AddOpcodePos(endSourcePos, 1);
         pos2 = 0;
         nextPos2 = 0;
@@ -4620,12 +4876,20 @@ static unsigned int __attribute_regparm__(3)
         AddOpcodePos(elseSourcePos.sourcePosValue, 1);
         pos2 = (int *)TempMallocAlign(4);
         SCRCG->codePos = (byte *)pos2;
+#if defined(COD2_X64)
+        Scr_StorePackedInt(pos2, 0);
+#else
         *pos2 = 0;
+#endif
         nextPos2 = TempMalloc(0);
     }
     SCRVP->checksum = savedChecksum + 1;
 
+#if defined(COD2_X64)
+    Scr_StorePackedShort(pos1, (short)(unsigned short)(TempMalloc(0) - nextPos1));
+#else
     *pos1 = (unsigned short)(TempMalloc(0) - nextPos1);
+#endif
 
     elseBlock = elseStatBlock->block;
     if (!elseBlock) {
@@ -4650,7 +4914,11 @@ static unsigned int __attribute_regparm__(3)
     }
 
     if (!lastStatement) {
+#if defined(COD2_X64)
+        Scr_StorePackedInt(pos2, (int)(TempMalloc(0) - nextPos2));
+#else
         *pos2 = (int)(TempMalloc(0) - nextPos2);
+#endif
     }
 
     Scr_MergeBranchChildBlocks(block, childBlocks, childCount);
@@ -4751,7 +5019,11 @@ static unsigned int __attribute_regparm__(3)
         AddOpcodePos(sourcePos.sourcePosValue, 0);
         pos2 = (unsigned short *)TempMallocAlign(2);
         SCRCG->codePos = (byte *)pos2;
+#if defined(COD2_X64)
+        Scr_StorePackedShort(pos2, (short)0);
+#else
         *pos2 = 0;
+#endif
         nextPos2 = TempMalloc(0);
         breakChildBlocks = NULL;
     }
@@ -4778,7 +5050,11 @@ static unsigned int __attribute_regparm__(3)
     for (continueStatement = SCRCG->currentContinueStatement;
          continueStatement;
          continueStatement = continueStatement->next) {
+#if defined(COD2_X64)
+        Scr_StorePackedInt((void *)continueStatement->codePos, (int)(nextCodePos - continueStatement->nextCodePos));
+#else
         *(int *)continueStatement->codePos = (int)(nextCodePos - continueStatement->nextCodePos);
+#endif
     }
 
     EmitOpcode(0x63, 0, 0);
@@ -4789,17 +5065,29 @@ static unsigned int __attribute_regparm__(3)
     }
 
     SCRCG->codePos = (byte *)TempMallocAlign(2);
+#if defined(COD2_X64)
+    Scr_StorePackedShort(SCRCG->codePos, (short)(unsigned short)(TempMalloc(0) - pos1));
+#else
     *(unsigned short *)SCRCG->codePos = (unsigned short)(TempMalloc(0) - pos1);
+#endif
 
     if (pos2) {
+#if defined(COD2_X64)
+        Scr_StorePackedShort(pos2, (short)(unsigned short)(TempMalloc(0) - nextPos2));
+#else
         *pos2 = (unsigned short)(TempMalloc(0) - nextPos2);
+#endif
     }
 
     nextCodePos = TempMalloc(0);
     for (breakStatement = SCRCG->currentBreakStatement;
          breakStatement;
          breakStatement = breakStatement->next) {
+#if defined(COD2_X64)
+        Scr_StorePackedInt((void *)breakStatement->codePos, (int)(nextCodePos - breakStatement->nextCodePos));
+#else
         *(int *)breakStatement->codePos = (int)(nextCodePos - breakStatement->nextCodePos);
+#endif
     }
 
     SCRCG->bCanBreak = bOldCanBreak;
@@ -4919,7 +5207,11 @@ static unsigned int __attribute_regparm__(3)
         AddOpcodePos(sourcePos.sourcePosValue, 0);
         pos2 = (unsigned short *)TempMallocAlign(2);
         SCRCG->codePos = (byte *)pos2;
+#if defined(COD2_X64)
+        Scr_StorePackedShort(pos2, (short)0);
+#else
         *pos2 = 0;
+#endif
         nextPos2 = TempMalloc(0);
         breakChildBlocks = NULL;
     }
@@ -4950,7 +5242,11 @@ static unsigned int __attribute_regparm__(3)
     for (continueStatement = SCRCG->currentContinueStatement;
          continueStatement;
          continueStatement = continueStatement->next) {
+#if defined(COD2_X64)
+        Scr_StorePackedInt((void *)continueStatement->codePos, (int)(nextCodePos - continueStatement->nextCodePos));
+#else
         *(int *)continueStatement->codePos = (int)(nextCodePos - continueStatement->nextCodePos);
+#endif
     }
 
     if (continueChildCount) {
@@ -4967,17 +5263,29 @@ static unsigned int __attribute_regparm__(3)
     }
 
     SCRCG->codePos = (byte *)TempMallocAlign(2);
+#if defined(COD2_X64)
+    Scr_StorePackedShort(SCRCG->codePos, (short)(unsigned short)(TempMalloc(0) - pos1));
+#else
     *(unsigned short *)SCRCG->codePos = (unsigned short)(TempMalloc(0) - pos1);
+#endif
 
     if (pos2) {
+#if defined(COD2_X64)
+        Scr_StorePackedShort(pos2, (short)(unsigned short)(TempMalloc(0) - nextPos2));
+#else
         *pos2 = (unsigned short)(TempMalloc(0) - nextPos2);
+#endif
     }
 
     nextCodePos = TempMalloc(0);
     for (breakStatement = SCRCG->currentBreakStatement;
          breakStatement;
          breakStatement = breakStatement->next) {
+#if defined(COD2_X64)
+        Scr_StorePackedInt((void *)breakStatement->codePos, (int)(nextCodePos - breakStatement->nextCodePos));
+#else
         *(int *)breakStatement->codePos = (int)(nextCodePos - breakStatement->nextCodePos);
+#endif
     }
 
     SCRCG->bCanBreak = bOldCanBreak;
@@ -5044,7 +5352,11 @@ static unsigned int __attribute_regparm__(3)
     EmitOpcode(0x7c, -1, 0);
     pos1 = (int *)TempMallocAlign(4);
     SCRCG->codePos = (byte *)pos1;
+#if defined(COD2_X64)
+    Scr_StorePackedInt(pos1, 0);
+#else
     *pos1 = 0;
+#endif
     nextPos1 = TempMalloc(0);
 
     SCRCG->bCanIgnoreCase = SCRCP->developer_statement != 0;
@@ -5201,26 +5513,46 @@ emit_switch_table:
 
     pos2 = (unsigned short *)TempMallocAlign(2);
     SCRCG->codePos = (byte *)pos2;
+#if defined(COD2_X64)
+    Scr_StorePackedShort(pos2, (short)0);
+#else
     *pos2 = 0;
+#endif
+#if defined(COD2_X64)
+    Scr_StorePackedInt(pos1, (int)((char *)pos2 - nextPos1));
+#else
     *pos1 = (int)((char *)pos2 - nextPos1);
+#endif
 
     caseTable = (unsigned int (*)[2])TempMallocAlignStrict(0);
     numCases = 0;
     for (caseStatement = SCRCG->currentCaseStatement;
          caseStatement;
          caseStatement = caseStatement->next) {
+#if defined(COD2_X64)
+        Scr_StorePackedInt(SCRCG->codePos = (byte *)TempMallocAlign(4), (int)caseStatement->name);
+#else
         *(unsigned int *)TempMallocAlign(4) = caseStatement->name;
+#endif
 #if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
         /* store a program-buffer offset: the runtime (VM_CandidateHandleSwitch) decodes the
            case codepos with SCR_CODEPOS_PTR. A truncated raw pointer would jump to garbage. */
+#if defined(COD2_X64)
+        Scr_StorePackedInt(SCRCG->codePos = (byte *)TempMallocAlign(4), (int)SCR_CODEPOS_ENC(caseStatement->codePos));
+#else
         *(unsigned int *)TempMallocAlign(4) = SCR_CODEPOS_ENC(caseStatement->codePos);
+#endif
 #else
         *(unsigned int *)TempMallocAlign(4) = (unsigned int)(uintptr_t)caseStatement->codePos;
 #endif
         ++numCases;
     }
 
+#if defined(COD2_X64)
+    Scr_StorePackedShort(pos2, (short)(unsigned short)numCases);
+#else
     *pos2 = (unsigned short)numCases;
+#endif
 #if defined(COD2_X64)
     qsort(caseTable, numCases, 8, CompareCaseInfo);
 #else
@@ -5229,10 +5561,11 @@ emit_switch_table:
 
     if (numCases > 1) {
         for (i = 0; i < numCases - 1; ++i) {
-            unsigned int value = caseTable[i][0];
 #if defined(COD2_X64)
-            if (value == caseTable[i + 1][0]) {
+            unsigned int value = (unsigned int)Scr_LoadPackedInt((byte *)caseTable + i * 8);
+            if (value == (unsigned int)Scr_LoadPackedInt((byte *)caseTable + (i + 1) * 8)) {
 #else
+            unsigned int value = caseTable[i][0];
             if (value == caseTable[i + 1][0] && value != 0) {
 #endif
                 for (caseStatement = SCRCG->currentCaseStatement;
@@ -5251,7 +5584,11 @@ emit_switch_table:
     for (breakStatement = SCRCG->currentBreakStatement;
          breakStatement;
          breakStatement = breakStatement->next) {
+#if defined(COD2_X64)
+        Scr_StorePackedInt((void *)breakStatement->codePos, (int)(nextCodePos - breakStatement->nextCodePos));
+#else
         *(int *)breakStatement->codePos = (int)(nextCodePos - breakStatement->nextCodePos);
+#endif
     }
 
     SCRCG->bCanIgnoreCase = bOldCanIgnoreCase;
@@ -5312,7 +5649,12 @@ static unsigned int __attribute_regparm__(3)
         localIndex = Scr_FindLocalVarIndex(paramName, sourcePosVal, 1, block);
         EmitOpcode(localIndex < 1 ? 0x31 : 0x32, 0, 0);
         if (localIndex) {
+#if defined(COD2_X64)
+            SCRCG->codePos = (byte *)TempMalloc(1);
+            *SCRCG->codePos = (char)localIndex;
+#else
             *TempMalloc(1) = (char)localIndex;
+#endif
         }
         AddOpcodePos(paramSourcePos, 0);
 
@@ -5933,6 +6275,15 @@ static void Scr_MergeBranchChildBlocks(scr_block_t *block, scr_block_t **childBl
         return;
     }
 
+#if defined(COD2_X64)
+    localVarsCreateCount = childBlocks[0]->localVarsPublicCount;
+    for (child = 1; child < childCount; ++child) {
+        if (localVarsCreateCount > childBlocks[child]->localVarsPublicCount) {
+            localVarsCreateCount = childBlocks[child]->localVarsPublicCount;
+        }
+    }
+
+#else
     localVarsCreateCount = childBlocks[0]->localVarsCreateCount;
     for (child = 1; child < childCount; ++child) {
         if (localVarsCreateCount > childBlocks[child]->localVarsCreateCount) {
@@ -5940,6 +6291,7 @@ static void Scr_MergeBranchChildBlocks(scr_block_t *block, scr_block_t **childBl
         }
     }
 
+#endif
     block->localVarsCreateCount = localVarsCreateCount;
 
     for (i = 0; i < localVarsCreateCount; ++i) {

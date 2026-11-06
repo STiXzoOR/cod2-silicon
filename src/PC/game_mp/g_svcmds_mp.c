@@ -21,7 +21,11 @@ extern level_locals_t level;
 extern gentity_t g_entities[];
 extern byte level_ptr[];
 extern const dvar_t *g_banIPs;
+#if defined(COD2_X64)
+extern const dvar_t *g_dedicated;
+#else
 extern const dvar_t *g_cheats;
+#endif
 
 static ipFilter_t ipFilters[1024];
 static int numIPFilters;
@@ -157,7 +161,11 @@ void Svcmd_RemoveIP_f(void)
     int i;
 
     if (SV_Cmd_Argc() < 2) {
+#if defined(COD2_X64)
+        Com_Printf("Usage:  sv removeip <ip-mask>\n");
+#else
         Com_Printf("Usage: removeip <ip address>\n");
+#endif
         return;
     }
 
@@ -198,6 +206,31 @@ void Svcmd_EntityList_f(void)
 
         eType = ent->s.eType;
 
+#if defined(COD2_X64)
+        switch (eType) {
+        case 0:
+            Com_Printf("ET_GENERAL          ");
+            break;
+        case 1:
+            Com_Printf("ET_PLAYER           ");
+            break;
+        case 3:
+            Com_Printf("ET_ITEM             ");
+            break;
+        case 4:
+            Com_Printf("ET_MISSILE          ");
+            break;
+        case 5:
+            Com_Printf("ET_INVISIBLE        ");
+            break;
+        case 6:
+            Com_Printf("ET_SCRIPTMOVER      ");
+            break;
+        default:
+            Com_Printf("%3i                 ", eType);
+            break;
+        }
+#else
         switch (eType) {
         case 0:
             Com_Printf("ET_GENERAL             ");
@@ -224,6 +257,7 @@ void Svcmd_EntityList_f(void)
             Com_Printf("%3i                  ", eType);
             break;
         }
+#endif
 
         classname = ent->classname;
         if (classname != 0)
@@ -279,7 +313,11 @@ qboolean ConsoleCommand(void)
 
     if (I_stricmp(cmd, "addip") == 0) {
         if (SV_Cmd_Argc() <= 1) {
+#if defined(COD2_X64)
+            Com_Printf("Usage:  addip <ip-mask>\n");
+#else
             Com_Printf("Usage: addip <ip address>\n");
+#endif
             return 1;
         }
         SV_Cmd_ArgvBuffer(1, str, 0x400);
@@ -292,6 +330,21 @@ qboolean ConsoleCommand(void)
         return 1;
     }
 
+#if defined(COD2_X64)
+    if (I_stricmp(cmd, "listip") == 0) {
+        Cbuf_ExecuteText(1, "g_banIPs\n");
+        return 1;
+    }
+
+    if (!g_dedicated->current.integer)
+        return 0;
+
+    if (I_stricmp(cmd, "say") == 0) {
+        SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE,
+                                 va("%c \"GAME_SERVER\x15: %s\"", 'e', ConcatArgs(1)));
+        return 1;
+    }
+#else
     if (I_stricmp(cmd, "maprotate") == 0) {
         Cbuf_ExecuteText(1, "vstr nextmap\n");
         return 1;
@@ -304,6 +357,7 @@ qboolean ConsoleCommand(void)
         SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 'e', ConcatArgs(1)));
         return 1;
     }
+#endif
 
     return 0;
 }

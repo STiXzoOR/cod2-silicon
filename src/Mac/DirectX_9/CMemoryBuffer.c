@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
@@ -9,6 +10,10 @@ extern fnptr_t vtbl_CMemoryBuffer[];
 int CMemoryBuffer_sDelayedFreeRequests = 0;
 UINT32 CMemoryBuffer_sMemoryDesignatedForDelayedFree = 0;
 
+#if defined(COD2_X64)
+#include "lp64_buffers.h"
+typedef CMemoryBufferNative CMemoryBufferImpl;
+#else
 typedef struct {
 #if defined(COD2_X64)
     fnptr_t *vptr;
@@ -20,6 +25,7 @@ typedef struct {
     UINT32 length;
     int freedLater;
 } CMemoryBufferImpl;
+#endif
 
 typedef struct CMemoryBufferFreeRequestNode {
     struct CMemoryBufferFreeRequestNode *next;
@@ -69,6 +75,12 @@ void ZNSt10_List_baseIN13CMemoryBuffer11FreeRequestESaIS1_EE8_M_clearEv(CMemoryB
 
 void CMemoryBuffer_CMemoryBuffer(const CMemoryBuffer *_this, UINT32 Length)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Length };
+    if (MacShim_Dispatch("CMemoryBuffer_CMemoryBuffer", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CMemoryBufferImpl *buffer;
     byte *allocation;
 
@@ -93,6 +105,12 @@ void CMemoryBuffer_CMemoryBuffer(const CMemoryBuffer *_this, UINT32 Length)
 
 void CMemoryBuffer_Recreate(const CMemoryBuffer *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CMemoryBuffer_Recreate", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CMemoryBufferImpl *buffer;
 
     buffer = (CMemoryBufferImpl *)_this;
@@ -103,6 +121,12 @@ void CMemoryBuffer_Recreate(const CMemoryBuffer *_this)
 
 void ZN13CMemoryBufferD1Ev(const CMemoryBuffer *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN13CMemoryBufferD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CMemoryBufferImpl *buffer;
 
     buffer = (CMemoryBufferImpl *)_this;
@@ -122,12 +146,24 @@ void ZN13CMemoryBufferD1Ev(const CMemoryBuffer *_this)
 
 void ZN13CMemoryBufferD0Ev(const CMemoryBuffer *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN13CMemoryBufferD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN13CMemoryBufferD1Ev(_this);
     free((void *)_this);
 }
 
 void CMemoryBuffer_Resize(const CMemoryBuffer *_this, UINT32 Length)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Length };
+    if (MacShim_Dispatch("CMemoryBuffer_Resize", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CMemoryBufferImpl *buffer;
 
     buffer = (CMemoryBufferImpl *)_this;
@@ -145,6 +181,12 @@ void CMemoryBuffer_Resize(const CMemoryBuffer *_this, UINT32 Length)
 
 void CMemoryBuffer_FreeLater(const CMemoryBuffer *_this, UINT32 Frames)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Frames };
+    if (MacShim_Dispatch("CMemoryBuffer_FreeLater", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CMemoryBufferImpl *buffer;
     CMemoryBufferFreeRequestNode *head;
     CMemoryBufferFreeRequestNode *node;
@@ -177,6 +219,12 @@ void CMemoryBuffer_FreeLater(const CMemoryBuffer *_this, UINT32 Frames)
 
 void CMemoryBuffer_Update(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    if (MacShim_Dispatch("CMemoryBuffer_Update", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
     CMemoryBufferFreeRequestNode *head;
     CMemoryBufferFreeRequestNode *node;
     CMemoryBufferFreeRequestNode *next;
@@ -206,6 +254,12 @@ void CMemoryBuffer_Update(void)
 
 void CMemoryBuffer_Reset(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    if (MacShim_Dispatch("CMemoryBuffer_Reset", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
     CMemoryBufferFreeRequestNode *head;
     CMemoryBufferFreeRequestNode *node;
     CMemoryBufferFreeRequestNode *next;
@@ -213,6 +267,9 @@ void CMemoryBuffer_Reset(void)
     CMemoryBuffer_EnsureDelayedFreeListInitialized();
     head = CMemoryBuffer_GetDelayedFreeHead();
 
+#if defined(COD2_X64)
+    glFinish();
+#endif
     for (node = head->next; node != head; node = next) {
         next = node->next;
         CMemoryBuffer_sMemoryDesignatedForDelayedFree -= node->length;
@@ -261,6 +318,12 @@ void GLOBAL__I__ZN13CMemoryBuffer20sDelayedFreeRequestsE(void)
 
 void ZNSt10_List_baseIN13CMemoryBuffer11FreeRequestESaIS1_EE8_M_clearEv(CMemoryBufferFreeRequestNode *head)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &head };
+    if (MacShim_Dispatch("ZNSt10_List_baseIN13CMemoryBuffer11FreeRequestESaIS1_EE8_M_clearEv", head, macArguments, NULL, 0))
+        return;
+#endif
+
     CMemoryBufferFreeRequestNode *node;
     CMemoryBufferFreeRequestNode *next;
 

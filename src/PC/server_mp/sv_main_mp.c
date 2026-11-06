@@ -71,6 +71,9 @@ extern const char *Dvar_InfoString_Big(int bit);
 extern void SV_SetConfigstring(const int index, const char *val);
 extern void SV_DropClient(client_t *drop, const char *reason);
 extern void Com_DPrintf(const char *fmt, ...);
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+extern void SV_UpdateLastTimeMasterServerCommunicated(netadr_t from);
+#endif
 
 /* Empty debug labels are referenced only by the original x86 assembly. */
 #if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER) && !(defined(__APPLE__) && defined(COD2_X64))
@@ -155,6 +158,90 @@ COD2_ASSERT_FIELD(struct LegacyHacks, sv_killreason, 0xde);
 
 void SV_AddServerCommand(client_t *client, svscmd_type type, const char *cmd)
 {
+#if defined(COD2_X64)
+    int sequence;
+    int replace = -1;
+    int from;
+
+    if (client->bIsTestClient)
+        return;
+
+    sequence = client->reliableSequence;
+    if (sequence - client->reliableAcknowledge > 63 || client->state != 4) {
+        int to = client->reliableSent + 1;
+        for (from = to; from <= client->reliableSequence; ++from) {
+            svscmd_info_t *entry = &client->reliableCommandInfo[from & 127];
+            if (!entry->type)
+                continue;
+            if ((to & 127) != (from & 127))
+                memcpy(&client->reliableCommandInfo[to & 127], entry, sizeof(*entry));
+            ++to;
+        }
+        client->reliableSequence = sequence = to - 1;
+        if (!type)
+            return;
+    }
+
+    for (from = client->reliableSent + 1; from <= sequence; ++from) {
+        const svscmd_info_t *entry = &client->reliableCommandInfo[from & 127];
+        const char *a;
+        const char *b;
+        if (!entry->type || entry->cmd[0] != cmd[0] ||
+            cmd[0] == 'x' || cmd[0] == 'y' || cmd[0] == 'z')
+            continue;
+        if (strcmp(cmd + 1, entry->cmd + 1) == 0) {
+            replace = from;
+            break;
+        }
+        switch (cmd[0]) {
+        case 'C': case 'D': case 'a': case 'b': case 'o':
+        case 'p': case 'q': case 'r': case 't':
+            replace = from;
+            break;
+        case 'd': case 'v':
+            a = cmd + 2;
+            b = entry->cmd + 2;
+            while (*a && *b && *a != ' ' && *b != ' ' && *a == *b) {
+                ++a;
+                ++b;
+            }
+            if ((!*a || *a == ' ') && (!*b || *b == ' '))
+                replace = from;
+            break;
+        default:
+            break;
+        }
+        if (replace >= 0)
+            break;
+    }
+
+    if (replace >= 0) {
+        for (from = replace + 1; from <= client->reliableSequence; ++from)
+            memcpy(&client->reliableCommandInfo[(from - 1) & 127],
+                   &client->reliableCommandInfo[from & 127], sizeof(svscmd_info_t));
+        sequence = client->reliableSequence;
+    } else {
+        client->reliableSequence = ++sequence;
+    }
+
+    if (sequence - client->reliableAcknowledge == 129) {
+        Com_Printf("===== pending server commands =====\n");
+        for (from = client->reliableAcknowledge + 1; from <= client->reliableSequence; ++from)
+            Com_Printf("cmd %5d: %8d: %s\n", from,
+                       client->reliableCommandInfo[from & 127].time,
+                       client->reliableCommandInfo[from & 127].cmd);
+        Com_Printf("cmd %5d: %8d: %s\n", from, svs.time, cmd);
+        NET_OutOfBandPrint(NS_SERVER, client->netchan.remoteAddress, "disconnect");
+        SV_DelayDropClient(client, "EXE_SERVERCOMMANDOVERFLOW");
+        cmd = va("%c \"EXE_SERVERCOMMANDOVERFLOW\"", 'w');
+        type = SV_CMD_RELIABLE;
+        sequence = client->reliableSequence;
+    }
+
+    MSG_WriteReliableCommandToBuffer(cmd, client->reliableCommandInfo[sequence & 127].cmd, 1024);
+    client->reliableCommandInfo[sequence & 127].time = svs.time;
+    client->reliableCommandInfo[sequence & 127].type = type;
+#else
     int i;
     int reliableSequence;
 
@@ -373,6 +460,7 @@ void SV_AddServerCommand(client_t *client, svscmd_type type, const char *cmd)
         client->reliableCommandInfo[slot].time = svs.time;
         client->reliableCommandInfo[slot].type = type;
     }
+#endif
 }
 
 void SV_VoicePacket(netadr_t from, msg_t *msg)
@@ -453,6 +541,9 @@ void SVC_Status(netadr_t from)
 
     for (i = 0; i < sv_maxclients->current.integer; ++i) {
         client_t *cl = &svs.clients[i];
+#if defined(COD2_X64)
+        int score = 0;
+#endif
         int newStatusLength;
 
         if (cl->state <= 1)
@@ -460,12 +551,22 @@ void SVC_Status(netadr_t from)
 
         SV_GameClientNum(i);
 
+#if defined(COD2_X64)
+        if (gameInitialized)
+            score = G_GetClientScore((int)(cl - svs.clients));
+        Com_sprintf(player, sizeof(player), "%i %i \"%s\"\n", score, cl->ping, cl->name);
+#else
         if (gameInitialized)
             G_GetClientScore((int)(cl - svs.clients));
 
         Com_sprintf(player, sizeof(player), "%i %i \"%s\"\n", 0, cl->ping, cl->name);
+#endif
         newStatusLength = statusLength + (int)strlen(player);
+#if defined(COD2_X64)
+        if ((unsigned int)newStatusLength > 0x1ffff)
+#else
         if ((unsigned int)newStatusLength > 0x3fff)
+#endif
             break;
 
         strcpy(status + statusLength, player);
@@ -486,7 +587,11 @@ void SVC_Status(netadr_t from)
     {
         const char *fs_game = Dvar_GetString("fs_game");
 
+#if defined(COD2_X64)
+        if (sv_pure->current.enabled && (!fs_game || !fs_game[0])) {
+#else
         if (sv_pure->current.enabled && fs_game && fs_game[0]) {
+#endif
             const char *referencedIwds = Dvar_GetString("sv_referencedIwdNames");
 
             mod = 0;
@@ -552,7 +657,11 @@ void SVC_GameCompleteStatus(netadr_t from)
         score = G_GetClientScore(i);
         Com_sprintf(player, sizeof(player), "%i %i \"%s\"\n", score, cl->ping, cl->name);
         newStatusLength = statusLength + (int)strlen(player);
+#if defined(COD2_X64)
+        if ((unsigned int)newStatusLength > 0x1ffff)
+#else
         if ((unsigned int)newStatusLength > 0x3fff)
+#endif
             break;
 
         strcpy(status + statusLength, player);
@@ -732,6 +841,9 @@ void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
         if (!SV_Cod2xUdpAllow(from, COD2X_UDP_QUERY))
             return;
 #endif
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        SV_UpdateLastTimeMasterServerCommunicated(from);
+#endif
         SVC_Status(from);
         return;
     }
@@ -741,6 +853,9 @@ void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
         if (!SV_Cod2xUdpAllow(from, COD2X_UDP_QUERY))
             return;
 #endif
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        SV_UpdateLastTimeMasterServerCommunicated(from);
+#endif
         SVC_Info(from);
         return;
     }
@@ -749,6 +864,9 @@ void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
         if (!SV_Cod2xUdpAllow(from, COD2X_UDP_QUERY))
             return;
+#endif
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        SV_UpdateLastTimeMasterServerCommunicated(from);
 #endif
         SV_GetChallenge(from);
         return;
@@ -760,6 +878,9 @@ void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
     }
 
     if (I_stricmp(c, "ipAuthorize") == 0) {
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        SV_UpdateLastTimeMasterServerCommunicated(from);
+#endif
         SV_AuthorizeIpPacket(from);
         return;
     }
@@ -823,11 +944,23 @@ void SV_PacketEvent(netadr_t from, msg_t *msg)
     cl->messageAcknowledge = MSG_ReadLong(msg);
     SV_PktEvtDbg("", netchanResult, cl->state, cl->serverId, cl->messageAcknowledge);
 
+#if defined(COD2_X64)
+    if (cl->messageAcknowledge < 0) {
+        Com_Printf("Invalid reliableAcknowledge message from %s - reliableAcknowledge is %i\n",
+                   cl->name, cl->reliableAcknowledge);
+        return;
+    }
+#else
     if (cl->messageAcknowledge < 0)
         return;
+#endif
 
     cl->reliableAcknowledge = MSG_ReadLong(msg);
     if (cl->reliableSequence - cl->reliableAcknowledge > 127) {
+#if defined(COD2_X64)
+        Com_Printf("Out of range reliableAcknowledge message from %s - cl->reliableSequence is %i, reliableAcknowledge is %i\n",
+                   cl->name, cl->reliableSequence, cl->reliableAcknowledge);
+#endif
         cl->reliableAcknowledge = cl->reliableSequence;
         return;
     }
@@ -859,6 +992,13 @@ void SV_RunFrame(void)
 
 void SV_BotUserMove(client_t *cl)
 {
+#if defined(COD2_X64)
+    {
+        extern int Sys_DiffBotMove(void);
+        if (Sys_DiffBotMove())
+            return;
+    }
+#endif
     usercmd_t nullcmd;
     int clientNum;
 
@@ -913,7 +1053,11 @@ void SV_SendServerCommand(client_t *cl, svscmd_type type, const char *fmt, ...)
     message = (char *)LargeLocal_GetBuf(&message_large_local);
 
     va_start(argptr, fmt);
+#if defined(COD2_X64)
+    vsnprintf(message, MAX_MSGLEN, fmt, argptr);
+#else
     vsnprintf(message, 0x4000, fmt, argptr);
+#endif
     va_end(argptr);
 
     if (cl) {
@@ -962,7 +1106,11 @@ void SV_Frame(int msec)
 
     legacyHacks = *(struct LegacyHacks **)imp_legacyHacks;
     if (legacyHacks->sv_killserver) {
+#if defined(COD2_X64)
+        Com_Shutdown(legacyHacks->sv_killreason[0] ? legacyHacks->sv_killreason : "EXE_SERVERKILLED");
+#else
         Com_Shutdown(legacyHacks->sv_killreason);
+#endif
         legacyHacks->sv_killserver = 0;
         return;
     }
@@ -1086,7 +1234,16 @@ void SV_Frame(int msec)
         int frameIndex;
         byte *frame;
 
+#if defined(COD2_X64)
+        if (cl->state != 4) {
+            cl->ping = 999;
+            continue;
+        }
+        if (!cl->gentity) {
+            Com_DPrintf("Giving %s a 999 ping - not a gentity\n", cl->name);
+#else
         if (cl->state != 4 || !cl->gentity) {
+#endif
             cl->ping = 999;
             continue;
         }
@@ -1106,8 +1263,19 @@ void SV_Frame(int msec)
 
         if (pingCount) {
             int ping = pingTotal / pingCount;
+#if defined(COD2_X64)
+            cl->ping = ping;
+            if (ping > 999) {
+                Com_DPrintf("Giving %s a 999 ping - >999 calculated ping:\n", cl->name);
+                cl->ping = 999;
+            }
+#else
             cl->ping = ping < 1000 ? ping : 999;
+#endif
         } else {
+#if defined(COD2_X64)
+            Com_DPrintf("Giving %s a 999 ping - !count:\n", cl->name);
+#endif
             cl->ping = 999;
         }
     }
@@ -1120,6 +1288,12 @@ void SV_Frame(int msec)
         CL_FlushDebugData(1);
 #endif
         SV_ResetSkeletonCache();
+#if defined(COD2_X64)
+        {
+            extern void Sys_DiffInputFrame(void);
+            Sys_DiffInputFrame();
+        }
+#endif
         G_RunFrame(svs.time);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
         SV_Cod2xUdpStats();

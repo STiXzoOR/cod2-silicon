@@ -144,10 +144,10 @@ void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping)
         server->killcam = (char)atoi(Info_ValueForKey(info, "kc"));
         server->hardware = (byte)atoi(Info_ValueForKey(info, "hw"));
         server->mod = (byte)atoi(Info_ValueForKey(info, "mod"));
-        server->voice = (byte)atoi(Info_ValueForKey(info, "voice"));
 #if defined(COD2_X64) && COD2_IS_PATCH_13
-        server->punkbuster = (byte)atoi(Info_ValueForKey(info, "sv_punkbuster"));
+        server->punkbuster = (byte)atoi(Info_ValueForKey(info, "pb"));
 #endif
+        server->voice = (byte)atoi(Info_ValueForKey(info, "voice"));
     }
 
     server->ping = (short)ping;
@@ -218,7 +218,11 @@ void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
     int i;
     ping_t *pinglist;
     ping_t *entry;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    char info[1025];
+#else
     char info[1024];
+#endif
     int len;
     clientStatic_t *cls;
 
@@ -275,7 +279,11 @@ void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
 
     cls = (clientStatic_t *)imp_cls;
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (cls->pingUpdateSource)
+#else
     if (cls->waitglobalserverresponse)
+#endif
         return;
 
     for (i = 0; i < 128; i++) {
@@ -303,13 +311,21 @@ void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
             server->requestCount = 0;
             server->netType = (byte)from.type;
             server->clients = 0;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+            server->maxClients = 0;
+            server->consoleDisabled = 0;
+#endif
 
             I_strncpyz(info, MSG_ReadString(msg), 0x400);
             if (!info[0])
                 return;
 
             len = strlen(info);
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+            if (info[len - 1] != '\n') {
+#else
             if (info[len - 2] != '\n') {
+#endif
                 info[len] = '\n';
                 info[len + 1] = '\0';
             }
@@ -462,7 +478,11 @@ void CL_Rcon_f(void)
     }
 
     {
+#if defined(COD2_X64)
+        int msgLen = strlen(message) + 1;
+#else
         int msgLen = strlen(message);
+#endif
         CL_Netchan_SendOOBPacket(msgLen, message, sendAdr);
     }
 }
@@ -498,10 +518,21 @@ found_status:
         while (*line) {
             for (infoField = 0; infoField < 2; infoField++) {
                 int j = 0;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+                if (!*line)
+                    break;
+#endif
                 if (*line == '\\')
                     line++;
                 while (*line && *line != '\\' && j < 0x3ff) {
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+                    info[j++] = *line;
+                    if (j == 0x3ff)
+                        break;
+                    line++;
+#else
                     info[j++] = *line++;
+#endif
                 }
                 info[j] = '\0';
 
@@ -717,12 +748,19 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
 #if defined(COD2_X64)
     while (buffptr < buffend && *buffptr != '\\')
         buffptr++;
-    while (buffend - buffptr >= 7 && numservers < 256) {
-        if (*buffptr != '\\' || memcmp(buffptr + 1, "EOT", 3) == 0)
-            break;
+    while (buffend - buffptr >= 8 && numservers < 256) {
         memcpy(servers[numservers], buffptr + 1, 6);
-        numservers++;
         buffptr += 7;
+        if (*buffptr != '\\')
+            break;
+        Com_DPrintf((const char *)"server: %d ip: %d.%d.%d.%d:%d\n", numservers,
+                    servers[numservers][0], servers[numservers][1],
+                    servers[numservers][2], servers[numservers][3],
+                    (int)((unsigned short)servers[numservers][4] |
+                          (unsigned short)servers[numservers][5] << 8));
+        numservers++;
+        if (buffend - buffptr >= 4 && memcmp(buffptr + 1, "EOT", 3) == 0)
+            break;
     }
 #else
     while ((unsigned int)(buffptr + 1) < (unsigned int)buffend) {

@@ -1,5 +1,11 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
+#if defined(COD2_X64)
+#define CVAOPacketKey uintptr_t
+#else
+#define CVAOPacketKey UINT32
+#endif
 
 #if defined(COD2_X64)
 #include "lp64_gl_state.h"
@@ -16,6 +22,11 @@ typedef struct {
 } CBaseVAImpl;
 #endif
 
+#if defined(COD2_X64)
+typedef COpenGLVAONative CVAOPacketImpl;
+#define mCode mpVAStart
+#define mReserved0C mSize
+#else
 typedef struct {
     void **vtable;
     GLuint *mpVAOID;
@@ -32,6 +43,7 @@ typedef struct {
     VertexProgramStreamState mGenericArrays[16];
 #endif
 } CVAOPacketImpl;
+#endif
 
 typedef struct CVAOPacketRbTreeNodeBase {
     int _M_color;
@@ -48,12 +60,12 @@ typedef struct {
 
 typedef struct {
     CVAOPacketRbTreeNodeBase _M_base;
-    UINT32 first;
+    CVAOPacketKey first;
     CVAOPacketImpl second;
 } CVAOPacketRbTreeNode;
 
 typedef struct {
-    UINT32 first;
+    CVAOPacketKey first;
     CVAOPacketImpl second;
 } CVAOPacketKeyValue;
 
@@ -84,7 +96,17 @@ extern UINT32 CVAOPacket_sCurrentPacket;
 #if defined(COD2_X64)
 /* The current-packet selector wraps at one. Stub globals have ILP32 storage. */
 static CVAOPacketImpl s_nativeGenericPacket[1];
-static CVAOPacketRbTree s_nativeAllPackets;
+/* Mac's load-time initializer installs the empty-tree sentinel. Native
+ * buffer destruction can release cached ranges before any GL initialization. */
+static CVAOPacketRbTree s_nativeAllPackets = {
+    ._M_header = {
+        ._M_color = 0,
+        ._M_parent = NULL,
+        ._M_left = &s_nativeAllPackets._M_header,
+        ._M_right = &s_nativeAllPackets._M_header
+    },
+    ._M_node_count = 0
+};
 #define CVAOPacket_sGenericPacket ((unsigned char *)s_nativeGenericPacket)
 #define CVAOPacket_sAllPackets ((unsigned char *)&s_nativeAllPackets)
 #else
@@ -126,6 +148,13 @@ static const CVAOPacketRbTreeNode *CVAOPacket_GetConstTreeNode(const CVAOPacketR
     return (const CVAOPacketRbTreeNode *)node;
 }
 
+#if defined(COD2_X64)
+COpenGLVAONative *CVAOPacket_GetCurrentGenericNative(void)
+{
+    return CVAOPacket_GetGenericPacket(CVAOPacket_sCurrentPacket);
+}
+#endif
+
 static const CVAOPacketVTable *CVAOPacket_GetVTable(const CVAOPacket *packet)
 {
     return *(const CVAOPacketVTable *const *)packet;
@@ -154,9 +183,13 @@ static void __static_initialization_and_destruction_0(int __initialize_p, int __
 static void GLOBAL__D__ZN10CVAOPacket10sVAOStatusE(void);
 static void GLOBAL__I__ZN10CVAOPacket10sVAOStatusE(void);
 bool CVAOPacket_IsFixedFunction(const CVAOPacket *_this);
-CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key);
-CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key);
+CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(const CVAOPacketRbTree *tree, const CVAOPacketKey *key);
+CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_(const CVAOPacketRbTree *tree, const CVAOPacketKey *key);
+#if defined(COD2_X64)
+CVAOPacketRbTreeIterator ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_(CVAOPacketRbTree *tree, CVAOPacketRbTreeNodeBase *x, CVAOPacketRbTreeNodeBase *parent, const CVAOPacketKeyValue *kv);
+#else
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_(void);
+#endif
 #if defined(COD2_X64)
 CVAOPacketRbTreeIterator ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_(CVAOPacketRbTree *tree, const CVAOPacketKeyValue *kv);
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(CVAOPacketRbTree *tree, CVAOPacketRbTreeNode *node);
@@ -167,6 +200,12 @@ void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE
 
 void CVAOPacket_CVAOPacket(const CVAOPacket *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CVAOPacket_CVAOPacket", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CVAOPacketImpl *packet;
 
     packet = (CVAOPacketImpl *)_this;
@@ -176,6 +215,12 @@ void CVAOPacket_CVAOPacket(const CVAOPacket *_this)
 
 void ZN10CVAOPacketD2Ev(const CVAOPacket *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN10CVAOPacketD2Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CVAOPacketImpl *packet;
 
     packet = (CVAOPacketImpl *)_this;
@@ -185,17 +230,35 @@ void ZN10CVAOPacketD2Ev(const CVAOPacket *_this)
 
 void ZN10CVAOPacketD1Ev(const CVAOPacket *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN10CVAOPacketD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN10CVAOPacketD2Ev(_this);
 }
 
 void ZN10CVAOPacketD0Ev(const CVAOPacket *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN10CVAOPacketD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN10CVAOPacketD2Ev(_this);
     __ZdlPv((void *)_this);
 }
 
 void CVAOPacket_SetVAO(const CVAOPacket *_this, int bIsCached)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &bIsCached };
+    if (MacShim_Dispatch("CVAOPacket_SetVAO", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     bool isFixedFunction;
 
     CVAOPacket_sVAOStatus = bIsCached ? USING_CACHED_VAO : USING_VIRGIN_VAO;
@@ -208,6 +271,12 @@ void CVAOPacket_SetVAO(const CVAOPacket *_this, int bIsCached)
 
 void CVAOPacket_SetGenericVAO(int IsFixedFunction, int ForceValidation)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &IsFixedFunction, &ForceValidation };
+    if (MacShim_Dispatch("CVAOPacket_SetGenericVAO", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
     CVAOPacket_sVAOStatus = USING_GENERIC_VAO;
     COpenGL_SetVAO((const COpenGL *)COpenGL_sOpenGLE,
                    (const COpenGLVAO *)CVAOPacket_GetGenericPacket(CVAOPacket_sCurrentPacket),
@@ -218,18 +287,37 @@ void CVAOPacket_SetGenericVAO(int IsFixedFunction, int ForceValidation)
 
 void CVAOPacket_InitializeGenericVAO(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    if (MacShim_Dispatch("CVAOPacket_InitializeGenericVAO", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
+#if !defined(COD2_X64)
     CVAOPacketRbTree *allPackets;
+#endif
     CVAOPacketImpl *genericPacket;
     int i;
 
+#if !defined(COD2_X64)
     allPackets = (CVAOPacketRbTree *)CVAOPacket_sAllPackets;
+#endif
     genericPacket = CVAOPacket_GetGenericPacket(0);
 
+#if defined(COD2_X64)
+    /* Native startup does not run the old C++ initializer. This constructor
+     * only installs object metadata; the GL binding is created below. */
+    if (genericPacket->vtable == NULL)
+        CVAOPacket_CVAOPacket((const CVAOPacket *)genericPacket);
+#endif
+
+#if !defined(COD2_X64)
     allPackets->_M_node_count = 0;
     allPackets->_M_header._M_color = 0;
     allPackets->_M_header._M_parent = NULL;
     allPackets->_M_header._M_left = &allPackets->_M_header;
     allPackets->_M_header._M_right = &allPackets->_M_header;
+#endif
 
     genericPacket->mpVAOID = NULL;
     genericPacket->mCode = 0;
@@ -285,10 +373,39 @@ static void CopyGenericArray(VertexProgramStreamState *dst, const VertexProgramS
     dst->mVType = src->mVType;
     dst->mNormalized = src->mNormalized;
     dst->mStride = src->mStride;
+#if defined(COD2_X64)
+    dst->mpStream = src->mpStream;
+#endif
 }
+
+#if defined(COD2_X64)
+/* Mac copy constructor 0x2f10ce copies values but installs each base vtable. */
+static void CVAOPacket_CopyConstruct(CVAOPacketImpl *dst, const CVAOPacketImpl *src)
+{
+    int i;
+    CVAOPacket_CVAOPacket((const CVAOPacket *)dst);
+    dst->mpVAOID = src->mpVAOID;
+    dst->mCode = src->mCode;
+    dst->mReserved0C = src->mReserved0C;
+    CopyBaseVA(&dst->mColorArray, &src->mColorArray);
+    CopyBaseVA(&dst->mSecondaryColorArray, &src->mSecondaryColorArray);
+    CopyBaseVA(&dst->mNormalArray, &src->mNormalArray);
+    CopyBaseVA(&dst->mVertexArray, &src->mVertexArray);
+    for (i = 0; i < 8; ++i)
+        CopyBaseVA(&dst->mTexCoordArrays[i], &src->mTexCoordArrays[i]);
+    for (i = 0; i < 16; ++i)
+        CopyGenericArray(&dst->mGenericArrays[i], &src->mGenericArrays[i]);
+}
+#endif
 
 void CVAOPacket_ReleaseBuffer(const void *p, UINT32 Length)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &p, &Length };
+    if (MacShim_Dispatch("CVAOPacket_ReleaseBuffer", p, macArguments, NULL, 0))
+        return;
+#endif
+
     CVAOPacketRbTree *allPackets;
     CVAOPacketRbTreeNodeBase *header;
     CVAOPacketRbTreeNodeBase *iter;
@@ -375,7 +492,14 @@ void CVAOPacket_ReleaseBuffer(const void *p, UINT32 Length)
 
 bool CVAOPacket_IsCached(CVAOPacket *v)
 {
-    UINT32 Code;
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &v };
+    bool macResult = { 0 };
+    if (MacShim_Dispatch("CVAOPacket_IsCached", v, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
+    CVAOPacketKey Code;
     CVAOPacketRbTree *allPackets;
     CVAOPacketRbTreeNodeBase *lower;
     CVAOPacketRbTreeNodeBase *upper;
@@ -385,7 +509,11 @@ bool CVAOPacket_IsCached(CVAOPacket *v)
     allPackets = (CVAOPacketRbTree *)CVAOPacket_sAllPackets;
     header = &allPackets->_M_header;
 
+#if defined(COD2_X64)
+    Code = (uintptr_t)((const CVAOPacketImpl *)v)->mpVAStart;
+#else
     Code = COpenGLVAO_GetCode((const COpenGLVAO *)v);
+#endif
 
     upper = ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_(allPackets, &Code);
     lower = ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(allPackets, &Code);
@@ -456,8 +584,14 @@ bool CVAOPacket_IsCached(CVAOPacket *v)
 
 void CVAOPacket_Cache(CVAOPacket *v)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &v };
+    if (MacShim_Dispatch("CVAOPacket_Cache", v, macArguments, NULL, 0))
+        return;
+#endif
 
-    UINT32 Code;
+
+    CVAOPacketKey Code;
 #if defined(COD2_X64)
     CVAOPacketKeyValue newValue, insertValue;
     unsigned char *NewPacketBuf = (unsigned char *)&newValue;
@@ -468,18 +602,26 @@ void CVAOPacket_Cache(CVAOPacket *v)
 #endif
     CVAOPacketImpl *newPacket;
     CVAOPacketImpl *insertPacket;
-    UINT32 *codePtr;
+    CVAOPacketKey *codePtr;
 
+#if defined(COD2_X64)
+    Code = (uintptr_t)((const CVAOPacketImpl *)v)->mpVAStart;
+#else
     Code = COpenGLVAO_GetCode((const COpenGLVAO *)v);
+#endif
 
 #if defined(COD2_X64)
     newPacket = &newValue.second;
 #else
     newPacket = (CVAOPacketImpl *)(NewPacketBuf + 4);
 #endif
+#if defined(COD2_X64)
+    CVAOPacket_CopyConstruct(newPacket, (const CVAOPacketImpl *)v);
+#else
     CVAOPacket_CVAOPacket((const CVAOPacket *)newPacket);
+#endif
 
-    codePtr = (UINT32 *)NewPacketBuf;
+    codePtr = (CVAOPacketKey *)NewPacketBuf;
     *codePtr = Code;
 
 #if defined(COD2_X64)
@@ -487,9 +629,13 @@ void CVAOPacket_Cache(CVAOPacket *v)
 #else
     insertPacket = (CVAOPacketImpl *)(InsertBuf + 4);
 #endif
+#if defined(COD2_X64)
+    CVAOPacket_CopyConstruct(insertPacket, newPacket);
+#else
     CVAOPacket_CVAOPacket((const CVAOPacket *)insertPacket);
+#endif
 
-    *(UINT32 *)InsertBuf = Code;
+    *(CVAOPacketKey *)InsertBuf = Code;
 
     {
 
@@ -511,6 +657,12 @@ void CVAOPacket_Cache(CVAOPacket *v)
 
 void CVAOPacket_Shutdown(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    if (MacShim_Dispatch("CVAOPacket_Shutdown", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
     CVAOPacketRbTree *allPackets;
     CVAOPacketRbTreeNodeBase *root;
     CVAOPacketRbTreeNodeBase *header;
@@ -576,8 +728,16 @@ static void __static_initialization_and_destruction_0(int __initialize_p, int __
     }
 
     if (__initialize_p == 0) {
+#if defined(COD2_X64)
+        CVAOPacketImpl *packet = CVAOPacket_GetGenericPacket(0);
+        ((void (*)(void *))packet->vtable[0])(packet);
+        allPackets = (CVAOPacketRbTree *)CVAOPacket_sAllPackets;
+        ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(
+            allPackets, (CVAOPacketRbTreeNode *)allPackets->_M_header._M_parent);
+#else
         ZN10CVAOPacketD2Ev((const CVAOPacket *)CVAOPacket_sGenericPacket);
         CVAOPacket_Shutdown();
+#endif
     }
 }
 
@@ -593,6 +753,13 @@ void GLOBAL__I__ZN10CVAOPacket10sVAOStatusE(void)
 
 bool CVAOPacket_IsFixedFunction(const CVAOPacket *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    bool macResult = { 0 };
+    if (MacShim_Dispatch("CVAOPacket_IsFixedFunction", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 1;
 }
@@ -609,13 +776,51 @@ bool CVAOPacketProgrammable_IsFixedFunction(const CVAOPacket *_this)
     return 0;
 }
 
+#if defined(COD2_X64)
+extern void *imp___ZTV23CVAOPacketFixedFunction;
+extern void *imp___ZTV22CVAOPacketProgrammable;
+
+void ZN23CVAOPacketFixedFunctionD1Ev(const CVAOPacket *_this)
+{
+    ((CVAOPacketImpl *)_this)->vtable =
+        (void **)((char *)imp___ZTV23CVAOPacketFixedFunction + 2 * sizeof(void *));
+    ZN10CVAOPacketD2Ev(_this);
+}
+
+void ZN23CVAOPacketFixedFunctionD0Ev(const CVAOPacket *_this)
+{
+    ZN23CVAOPacketFixedFunctionD1Ev(_this);
+    __ZdlPv((void *)_this);
+}
+
+void ZN22CVAOPacketProgrammableD1Ev(const CVAOPacket *_this)
+{
+    ((CVAOPacketImpl *)_this)->vtable =
+        (void **)((char *)imp___ZTV22CVAOPacketProgrammable + 2 * sizeof(void *));
+    ZN10CVAOPacketD2Ev(_this);
+}
+
+void ZN22CVAOPacketProgrammableD0Ev(const CVAOPacket *_this)
+{
+    ZN22CVAOPacketProgrammableD1Ev(_this);
+    __ZdlPv((void *)_this);
+}
+#else
 void ZN23CVAOPacketFixedFunctionD1Ev(void) {}
 void ZN23CVAOPacketFixedFunctionD0Ev(void) {}
 void ZN22CVAOPacketProgrammableD1Ev(void) {}
 void ZN22CVAOPacketProgrammableD0Ev(void) {}
+#endif
 
-CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key)
+CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(const CVAOPacketRbTree *tree, const CVAOPacketKey *key)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &tree, &key };
+    CVAOPacketRbTreeNodeBase * macResult = { 0 };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_", tree, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CVAOPacketRbTreeNodeBase *x;
     CVAOPacketRbTreeNodeBase *y;
 
@@ -633,8 +838,15 @@ CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS
     return y;
 }
 
-CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key)
+CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_(const CVAOPacketRbTree *tree, const CVAOPacketKey *key)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &tree, &key };
+    CVAOPacketRbTreeNodeBase * macResult = { 0 };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_", tree, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CVAOPacketRbTreeNodeBase *x;
     CVAOPacketRbTreeNodeBase *y;
 
@@ -652,33 +864,97 @@ CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS
     return y;
 }
 
+#if defined(COD2_X64)
+CVAOPacketRbTreeIterator ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_(CVAOPacketRbTree *tree, CVAOPacketRbTreeNodeBase *x, CVAOPacketRbTreeNodeBase *parent, const CVAOPacketKeyValue *kv)
+{
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &tree, &x, &parent, &kv };
+    CVAOPacketRbTreeIterator macResult = { 0 };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_", tree, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+    CVAOPacketRbTreeNode *node = __Znwm(sizeof(*node));
+    node->first = kv->first;
+    CVAOPacket_CopyConstruct(&node->second, &kv->second);
+    int insertLeft = x != NULL || parent == &tree->_M_header ||
+        kv->first < CVAOPacket_GetConstTreeNode(parent)->first;
+    __ZSt29_Rb_tree_insert_and_rebalancebPSt18_Rb_tree_node_baseS0_RS_(
+        insertLeft, node, parent, &tree->_M_header);
+    ++tree->_M_node_count;
+    return (CVAOPacketRbTreeIterator){ &node->_M_base };
+}
+#else
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
 
     return;
 }
 
+#endif
+
 #if defined(COD2_X64)
 CVAOPacketRbTreeIterator ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_(CVAOPacketRbTree *tree, const CVAOPacketKeyValue *kv)
 {
-    (void)tree;
-    (void)kv;
-    return (CVAOPacketRbTreeIterator){ NULL };
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &tree, &kv };
+    CVAOPacketRbTreeIterator macResult = { 0 };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_", tree, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
+    CVAOPacketRbTreeNodeBase *parent = &tree->_M_header;
+    CVAOPacketRbTreeNodeBase *node = tree->_M_header._M_parent;
+    while (node) {
+        parent = node;
+        node = kv->first < CVAOPacket_GetConstTreeNode(node)->first
+            ? node->_M_left : node->_M_right;
+    }
+    return ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_(tree, NULL, parent, kv);
 }
 
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(CVAOPacketRbTree *tree, CVAOPacketRbTreeNode *node)
 {
-    (void)tree;
-    (void)node;
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &tree, &node };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E", tree, macArguments, NULL, 0))
+        return;
+#endif
+
+    while (node) {
+        ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(tree, (CVAOPacketRbTreeNode *)node->_M_base._M_right);
+        CVAOPacketRbTreeNode *left = (CVAOPacketRbTreeNode *)node->_M_base._M_left;
+        node->second.vtable = vtbl_CVAOPacket;
+        ZN10COpenGLVAOD2Ev((const COpenGLVAO *)&node->second);
+        __ZdlPv(node);
+        node = left;
+    }
 }
 #else
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
 
     return;
 }
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
 
     return;
 }

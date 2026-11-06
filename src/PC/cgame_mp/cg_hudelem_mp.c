@@ -50,7 +50,11 @@ static int cg_time(void)
 
 static char *cg_snap(void)
 {
+#if defined(COD2_X64)
+    return (char *)cg->nextSnap;
+#else
     return (char *)cg->snap;
+#endif
 }
 
 static float clamp01(float val)
@@ -173,10 +177,19 @@ static const char *CG_FormatTimerString(const hudelem_t *elem, int isTenths)
     int hours, minutes, seconds, tenths;
 
     switch (elem->type) {
+#if defined(COD2_X64)
+    case HE_TYPE_TIMER_DOWN:
+        msec = elem->time - serverTime + 999;
+        break;
+    case HE_TYPE_TENTHS_TIMER_DOWN:
+        msec = elem->time - serverTime + 99;
+        break;
+#else
     case HE_TYPE_TIMER_DOWN:
     case HE_TYPE_TENTHS_TIMER_DOWN:
         msec = elem->time - serverTime + 999;
         break;
+#endif
     case HE_TYPE_CLOCK_DOWN:
         msec = elem->time - serverTime + 99;
         break;
@@ -242,7 +255,11 @@ static float CG_GetWidth(const hudelem_t *elem, float fontHeight)
         int elapsed = serverTime - elem->scaleStartTime;
         if (scaleTime > elapsed) {
             float toWidth = CG_GetDimValue(elem->fromWidth, fontHeight);
+#if defined(COD2_X64)
+            float lerp = (1.0f / (float)scaleTime) * (float)elapsed;
+#else
             float lerp = (float)elapsed / (float)scaleTime;
+#endif
             lerp = clamp01(lerp);
             width = (width - toWidth) * lerp + toWidth;
         }
@@ -259,7 +276,11 @@ static float CG_GetHeight(const hudelem_t *elem, float fontHeight)
         int elapsed = serverTime - elem->scaleStartTime;
         if (scaleTime > elapsed) {
             float toHeight = CG_GetDimValue(elem->fromHeight, fontHeight);
+#if defined(COD2_X64)
+            float lerp = (1.0f / (float)scaleTime) * (float)elapsed;
+#else
             float lerp = (float)elapsed / (float)scaleTime;
+#endif
             lerp = clamp01(lerp);
             height = (height - toHeight) * lerp + toHeight;
         }
@@ -297,7 +318,11 @@ static void CG_DrawHudElemString(const char *text, const hudelem_t *elem, cg_hud
         else if (yAlign == 2)
             toY = toY - negHeight;
 
+#if defined(COD2_X64)
+        yPos = (fromY - toY) * moveLerp + fromY;
+#else
         yPos = (toY - fromY) * moveLerp + fromY;
+#endif
     }
 
     float scaleX, scaleY;
@@ -308,15 +333,286 @@ static void CG_DrawHudElemString(const char *text, const hudelem_t *elem, cg_hud
     float dummyX = 0.0f;
     float dummyY = 0.0f;
     int alignScreen = elem->alignScreen;
+#if defined(COD2_X64)
+    CalcScreenPlacement(&dummyX, &dummyY, &scaleX, &scaleY, (alignScreen >> 3) & 7, alignScreen & 7);
+#else
     CalcScreenPlacement(&dummyX, &dummyY, &scaleX, &scaleY, alignScreen & 7, (alignScreen >> 3) & 7);
+#endif
 
+#if defined(COD2_X64)
+    dummyX = 0.0f;
+    dummyY = 0.0f;
+#endif
     float dx = 0.0f;
     float dy = cghe->fontHeight;
+#if defined(COD2_X64)
+    CalcScreenPlacement(&dummyX, &dummyY, &dx, &dy, (alignScreen >> 3) & 7, alignScreen & 7);
+#else
     CalcScreenPlacement(&dummyX, &dummyY, &dx, &dy, alignScreen & 7, (alignScreen >> 3) & 7);
+#endif
 
     CL_DrawTextPhysical(text, 0x7fffffff, cghe->font, cghe->x, yPos + dy, scaleX, scaleY, cghe->color, 3);
 }
 
+#if defined(COD2_X64)
+static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *hudElemString)
+{
+    const char *strResult;
+    int fontIndex;
+
+    cghe->font = 0;
+    cghe->fontHeight = 0.0f;
+
+    switch (elem->font) {
+    case 0:
+        cghe->fontScale = 0.25f * elem->fontScale;
+        fontIndex = 0;
+        break;
+    case 1:
+        cghe->fontScale = 0.5f * elem->fontScale;
+        fontIndex = 4;
+        break;
+    case 2:
+        cghe->fontScale = 0.3333333432674408f * elem->fontScale;
+        fontIndex = 5;
+        break;
+    default:
+        cghe->fontScale = 0.25f * elem->fontScale;
+        fontIndex = 0;
+        break;
+    }
+    cghe->font = UI_GetFontHandle(fontIndex, cghe->fontScale);
+    if (!cghe->font && fontIndex != 0) {
+        cghe->font = UI_GetFontHandle(0, cghe->fontScale);
+    }
+    if (cghe->font) {
+        cghe->fontHeight = (float)UI_TextHeight(cghe->font, cghe->fontScale);
+    }
+
+    cghe->hudElemLabel[0] = 0;
+
+    if (elem->label) {
+        CG_SafeTranslateHudElemString(elem->label, cghe->hudElemLabel);
+    }
+
+    cghe->hudElemText[0] = 0;
+    strResult = NULL;
+
+    switch (elem->type) {
+    case HE_TYPE_TEXT:
+
+        if (elem->text) {
+            CG_SafeTranslateHudElemString(elem->text, cghe->hudElemText);
+        }
+        break;
+    case HE_TYPE_VALUE: {
+
+        double val = (double)elem->value;
+        strResult = va("%g", val);
+        break;
+    }
+    case HE_TYPE_PLAYERNAME: {
+
+        int idx = (int)(floorf(elem->value + 0.5f));
+        if (idx > 63)
+            break;
+
+        if (idx < 0)
+            break;
+        I_strncpyz(cghe->hudElemText, cg->bgs.clientinfo[idx].name, 256);
+        break;
+    }
+    case HE_TYPE_MAPNAME:
+        strResult = CL_GetConfigString(0x14);
+        break;
+    case HE_TYPE_GAMETYPE:
+        strResult = CL_GetConfigString(0x13);
+        break;
+    case HE_TYPE_MATERIAL:
+        break;
+    case HE_TYPE_TIMER_DOWN:
+    case HE_TYPE_TIMER_UP:
+        strResult = CG_FormatTimerString(elem, 0);
+        break;
+    case HE_TYPE_TENTHS_TIMER_DOWN:
+    case HE_TYPE_TENTHS_TIMER_UP:
+        strResult = CG_FormatTimerString(elem, 1);
+        break;
+    default:
+        break;
+    }
+
+    if (strResult) {
+        I_strncpyz(cghe->hudElemText, strResult, 256);
+    }
+
+    cghe->labelWidth = 0.0f;
+    if (cghe->hudElemLabel[0] && cghe->hudElemText[0]) {
+
+        int outIdx = 0;
+        int labelIdx = 0;
+
+        while (outIdx < 255) {
+            char ch = cghe->hudElemLabel[labelIdx];
+            if (ch == 0)
+                break;
+            if (ch == '&') {
+                if (cghe->hudElemLabel[labelIdx + 1] == '&' && cghe->hudElemLabel[labelIdx + 2] == '1') {
+                    labelIdx += 3;
+                    break;
+                }
+            }
+            hudElemString[outIdx++] = ch;
+            labelIdx++;
+        }
+
+        if (outIdx <= 254) {
+            int textIdx = 0;
+            while (outIdx < 255 && cghe->hudElemText[textIdx]) {
+                hudElemString[outIdx++] = cghe->hudElemText[textIdx++];
+            }
+        }
+
+        if (outIdx <= 254) {
+            while (outIdx < 255 && cghe->hudElemLabel[labelIdx]) {
+                hudElemString[outIdx++] = cghe->hudElemLabel[labelIdx++];
+            }
+        }
+
+        if (outIdx > 255)
+            outIdx = 255;
+        hudElemString[outIdx] = 0;
+
+        memcpy(cghe->hudElemText, hudElemString, 256);
+
+        cghe->textWidth = (float)UI_TextWidth(cghe->hudElemText, 0, cghe->font, cghe->fontScale);
+        cghe->hudElemLabel[0] = 0;
+        cghe->labelWidth = 0.0f;
+    } else if (cghe->hudElemLabel[0] && !cghe->hudElemText[0]) {
+
+        cghe->labelWidth = (float)UI_TextWidth(cghe->hudElemLabel, 0, cghe->font, cghe->fontScale);
+    }
+
+    if (cghe->hudElemText[0]) {
+        cghe->textWidth = (float)UI_TextWidth(cghe->hudElemText, 0, cghe->font, cghe->fontScale);
+    } else {
+        cghe->textWidth = 0.0f;
+    }
+
+    {
+        unsigned type = (unsigned)elem->type;
+        int typeMask = type <= 13 ? 1 << type : 0;
+        if (typeMask & 0x7be)
+            cghe->width = cghe->labelWidth + cghe->textWidth;
+        else if (typeMask & 0x1840)
+            cghe->width = CG_GetWidth(elem, cghe->fontHeight) + cghe->labelWidth;
+        else if (typeMask & 0x2000)
+            cghe->width = (float)elem->width;
+        else
+            cghe->width = 0.0f;
+
+        if (typeMask & 0x7be) {
+            cghe->height = cghe->fontHeight;
+        } else if (typeMask & 0x2040) {
+            float height = (float)elem->height;
+            cghe->height = height > cghe->fontHeight ? height : cghe->fontHeight;
+        } else if (typeMask & 0x1800) {
+            float height = CG_GetHeight(elem, cghe->fontHeight);
+            cghe->height = height > cghe->fontHeight ? height : cghe->fontHeight;
+        } else {
+            cghe->height = 0.0f;
+        }
+    }
+
+    cghe->z = elem->z;
+
+    {
+        float moveLerp = CG_GetMoveLerpFactor(elem);
+
+        if (moveLerp == 1.0f) {
+
+            float x = elem->x;
+            float y = elem->y;
+            float width = cghe->width;
+            float height = cghe->height;
+
+            x = CG_AlignX(elem->alignOrg, x, width);
+            y = CG_AlignY(elem->alignOrg, y, height);
+
+            cghe->x = x;
+            cghe->y = y;
+
+            float dummyWidth = 0.0f;
+            float dummyHeight = 0.0f;
+            int alignScreen = elem->alignScreen;
+            CalcScreenPlacement(&cghe->x, &cghe->y, &dummyWidth, &dummyHeight, (alignScreen >> 3) & 7, alignScreen & 7);
+        } else {
+
+            float width = cghe->width;
+            float height = cghe->height;
+
+            float fromX = elem->fromX;
+            float fromY = elem->fromY;
+            fromX = CG_AlignX(elem->fromAlignOrg, fromX, width);
+            fromY = CG_AlignY(elem->fromAlignOrg, fromY, height);
+
+            float dummyWidth = 0.0f;
+            float dummyHeight = 0.0f;
+            int fromAlignScreen = elem->fromAlignScreen;
+            CalcScreenPlacement(&fromX, &fromY, &dummyWidth, &dummyHeight, (fromAlignScreen >> 3) & 7, fromAlignScreen & 7);
+
+            float toX = elem->x;
+            float toY = elem->y;
+            toX = CG_AlignX(elem->alignOrg, toX, width);
+            toY = CG_AlignY(elem->alignOrg, toY, height);
+
+            dummyWidth = 0.0f;
+            dummyHeight = 0.0f;
+            int alignScreen = elem->alignScreen;
+            CalcScreenPlacement(&toX, &toY, &dummyWidth, &dummyHeight, (alignScreen >> 3) & 7, alignScreen & 7);
+
+            cghe->x = fromX + (toX - fromX) * moveLerp;
+            cghe->y = fromY + (toY - fromY) * moveLerp;
+        }
+
+        if (moveLerp == 1.0f) {
+            cghe->x = (float)(int)floorf(cghe->x + 0.5f);
+            cghe->y = (float)(int)floorf(cghe->y + 0.5f);
+        }
+    }
+
+    {
+        int serverTime = cg_time();
+        int fadeElapsed = serverTime - elem->fadeStartTime;
+        int fadeTime = elem->fadeTime;
+
+        if (fadeTime > 0 && fadeTime > fadeElapsed) {
+
+            float lerp;
+            if (fadeElapsed <= 0) {
+                lerp = 0.0f;
+            } else {
+                lerp = (float)fadeElapsed / (float)fadeTime;
+            }
+
+            byte *fromColor = (byte *)&elem->fromColor;
+            byte *toColor = (byte *)&elem->color;
+
+            cghe->color[0] = ((float)(int)fromColor[0] + (float)((int)toColor[0] - (int)fromColor[0]) * lerp) * (1.0f / 255.0f);
+            cghe->color[1] = ((float)(int)fromColor[1] + (float)((int)toColor[1] - (int)fromColor[1]) * lerp) * (1.0f / 255.0f);
+            cghe->color[2] = ((float)(int)fromColor[2] + (float)((int)toColor[2] - (int)fromColor[2]) * lerp) * (1.0f / 255.0f);
+            cghe->color[3] = ((float)(int)fromColor[3] + (float)((int)toColor[3] - (int)fromColor[3]) * lerp) * (1.0f / 255.0f);
+        } else {
+
+            byte *color = (byte *)&elem->color;
+            cghe->color[0] = (float)(int)color[0] * (1.0f / 255.0f);
+            cghe->color[1] = (float)(int)color[1] * (1.0f / 255.0f);
+            cghe->color[2] = (float)(int)color[2] * (1.0f / 255.0f);
+            cghe->color[3] = (float)(int)color[3] * (1.0f / 255.0f);
+        }
+    }
+}
+#else
 static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *hudElemString)
 {
     const char *strResult;
@@ -578,7 +874,11 @@ static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *h
             float dummyWidth = 0.0f;
             float dummyHeight = 0.0f;
             int alignScreen = elem->alignScreen;
+#if defined(COD2_X64)
+            CalcScreenPlacement(&cghe->x, &cghe->y, &dummyWidth, &dummyHeight, (alignScreen >> 3) & 7, alignScreen & 7);
+#else
             CalcScreenPlacement(&cghe->x, &cghe->y, &dummyWidth, &dummyHeight, alignScreen & 7, (alignScreen >> 3) & 7);
+#endif
         } else {
 
             float width = cghe->width;
@@ -592,7 +892,11 @@ static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *h
             float dummyWidth = 0.0f;
             float dummyHeight = 0.0f;
             int fromAlignScreen = elem->fromAlignScreen;
+#if defined(COD2_X64)
+            CalcScreenPlacement(&fromX, &fromY, &dummyWidth, &dummyHeight, (fromAlignScreen >> 3) & 7, fromAlignScreen & 7);
+#else
             CalcScreenPlacement(&fromX, &fromY, &dummyWidth, &dummyHeight, fromAlignScreen & 7, (fromAlignScreen >> 3) & 7);
+#endif
 
             float toX = elem->x;
             float toY = elem->y;
@@ -602,7 +906,11 @@ static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *h
             dummyWidth = 0.0f;
             dummyHeight = 0.0f;
             int alignScreen = elem->alignScreen;
+#if defined(COD2_X64)
+            CalcScreenPlacement(&toX, &toY, &dummyWidth, &dummyHeight, (alignScreen >> 3) & 7, alignScreen & 7);
+#else
             CalcScreenPlacement(&toX, &toY, &dummyWidth, &dummyHeight, alignScreen & 7, (alignScreen >> 3) & 7);
+#endif
 
             cghe->x = fromX + (toX - fromX) * moveLerp;
             cghe->y = fromY + (toY - fromY) * moveLerp;
@@ -643,6 +951,8 @@ static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *h
         }
     }
 }
+#endif
+
 
 void CG_Draw2dHudElems(qboolean foreground)
 {
@@ -656,8 +966,13 @@ void CG_Draw2dHudElems(qboolean foreground)
 
     byte *ps = (byte *)cg_snap() + 0x0C;
     elemCount = 0;
+#if defined(COD2_X64)
+    current = (hudelem_t *)(ps + 0x1728);
+    archival = (hudelem_t *)(ps + 0x7a8);
+#else
     current = (hudelem_t *)(ps + 0x7a8);
     archival = current + 31;
+#endif
 
     for (i = 0; i < 31; i++) {
         if (current[i].type != HE_TYPE_FREE) {
@@ -699,7 +1014,11 @@ void CG_Draw2dHudElems(qboolean foreground)
             cghe.x += cghe.labelWidth;
         }
 
+#if defined(COD2_X64)
+        if ((unsigned int)elem->type <= 12) {
+#else
         if (elem->type <= 12) {
+#endif
             int typeMask = 1 << elem->type;
 
             if (typeMask & 0x7be) {
@@ -736,13 +1055,21 @@ void CG_Draw2dHudElems(qboolean foreground)
                         toY += negHeight * -0.5f;
                     else if (yAlign == 2)
                         toY -= negHeight;
+#if defined(COD2_X64)
+                    yPos = (fromY - toY) * moveLerp + fromY;
+#else
                     yPos = (toY - fromY) * moveLerp + fromY;
+#endif
                 }
 
                 float dummyX = 0.0f;
                 float dummyY = 0.0f;
                 int alignScreen = elem->alignScreen;
+#if defined(COD2_X64)
+                CalcScreenPlacement(&dummyX, &dummyY, &width, &height, (alignScreen >> 3) & 7, alignScreen & 7);
+#else
                 CalcScreenPlacement(&dummyX, &dummyY, &width, &height, alignScreen & 7, (alignScreen >> 3) & 7);
+#endif
 
                 CL_DrawStretchPicPhysical(cghe.x, yPos, width, height, 0.0f, 0.0f, 1.0f, 1.0f, cghe.color, (Material *)material);
             } else if (typeMask & 0x1800) {
@@ -752,7 +1079,11 @@ void CG_Draw2dHudElems(qboolean foreground)
                     continue;
 
                 void *faceMaterial = CL_RegisterMaterialNoMip(materialName, 7);
+#if defined(COD2_X64)
+                I_strncat(materialName, 64, "needle");
+#else
                 I_strncat(materialName, 64, "_hand");
+#endif
                 void *handMaterial = CL_RegisterMaterialNoMip(materialName, 7);
 
                 float timeVal = 0.0f;
@@ -766,8 +1097,13 @@ void CG_Draw2dHudElems(qboolean foreground)
                     if (msec >= 0)
                         timeVal = (float)msec;
                     break;
+#if defined(COD2_X64)
+                case HE_TYPE_CLOCK_DOWN:
+                    msec = elem->time - serverTime;
+#else
                 case HE_TYPE_CLOCK_DOWN:
                     msec = elem->time - serverTime + 99;
+#endif
                     if (msec >= 0)
                         timeVal = (float)msec;
                     break;
@@ -815,13 +1151,21 @@ void CG_Draw2dHudElems(qboolean foreground)
                         toY += negHeight * -0.5f;
                     else if (yAlign == 2)
                         toY -= negHeight;
+#if defined(COD2_X64)
+                    yPos2 = (fromY - toY) * moveLerp2 + fromY;
+#else
                     yPos2 = (toY - fromY) * moveLerp2 + fromY;
+#endif
                 }
 
                 float dummyY2 = 0.0f;
                 float dummyW = 0.0f;
                 int alignScreen2 = elem->alignScreen;
+#if defined(COD2_X64)
+                CalcScreenPlacement(&dummyY2, &dummyW, &width, &height, (alignScreen2 >> 3) & 7, alignScreen2 & 7);
+#else
                 CalcScreenPlacement(&dummyY2, &dummyW, &width, &height, alignScreen2 & 7, (alignScreen2 >> 3) & 7);
+#endif
 
                 CL_DrawStretchPicPhysical(cghe.x, yPos2, width, height, 0.0f, 0.0f, 1.0f, 1.0f, cghe.color, (Material *)faceMaterial);
 
@@ -848,8 +1192,13 @@ void CG_Draw3dHudElems(void)
 
     byte *ps = (byte *)cg_snap() + 0x0C;
     elemCount = 0;
+#if defined(COD2_X64)
+    current = (hudelem_t *)(ps + 0x1728);
+    archival = (hudelem_t *)(ps + 0x7a8);
+#else
     current = (hudelem_t *)(ps + 0x7a8);
     archival = current + 31;
+#endif
 
     for (i = 0; i < 31; i++) {
         if (current[i].type != HE_TYPE_FREE) {

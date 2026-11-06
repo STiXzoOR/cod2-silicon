@@ -41,6 +41,11 @@ int Com_sprintf(char *dest, int size, const char *fmt, ...)
     return result;
 }
 void Com_Printf(const char *fmt, ...) {}
+int Dvar_GetInt(const char *name)
+{
+    assert(!strcmp(name, "cl_profileTextHeight"));
+    return 8;
+}
 void CL_DrawString(int x, int y, const char *str, int color, int size) {}
 Bool Netchan_Transmit(netchan_t *chan, int length, const byte *data) { return 1; }
 
@@ -66,7 +71,9 @@ int main(void)
     SV_Netchan_PrintProfileStats(1);
     assert(statisticsCalls == 6);
     assert(namedClients == 2);
-    assert(strstr(totals, "   97|    7|"));
+    /* Retail's aggregate columns consume the i386 words of two doubles:
+       97.0 is 0x4058400000000000, and 7.0 has a zero low word. */
+    assert(strstr(totals, "    71|    0|1079525376|   0%|"));
 
     /* Retail XOR keys use 32-bit challenge/sequence scalars; native pointers do not enter the bytes. */
     byte packet[] = {0, 0, 0, 0, 0, 1, 2, 3, 4, 5};

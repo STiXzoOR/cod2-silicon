@@ -527,7 +527,11 @@ static inline __attribute__((always_inline)) void Item_InitDvarEditField(itemDef
 {
     editFieldDef_t *editDef;
 
+#if defined(COD2_X64)
+    if (!item->typeData.data || !Item_IsEditFieldDef(item)) {
+#else
     if (!item->dvar || !item->typeData.data || !Item_IsEditFieldDef(item)) {
+#endif
         return;
     }
 
@@ -750,6 +754,10 @@ void Menu_PostParse(menuDef_t *menu)
     memcpy(items, (void *)UI_MenuItemStorage(), size);   /* was g_load + 64 */
     if (((menuDef_t *)menu)->fullScreen) {
         rectDef_t rect;
+#if defined(COD2_X64)
+        rect.horzAlign = menu->window.rect[0].horzAlign;
+        rect.vertAlign = menu->window.rect[0].vertAlign;
+#endif
         rect.x = 0.0f;
         rect.y = 0.0f;
         rect.w = 640.0f;
@@ -907,7 +915,11 @@ static Bool __attribute_regparm__(2) Menu_New(int handle, int imageTrack)
         memset(&token, 0, sizeof(token));
 
         if (!PC_ReadTokenHandle(handle, &token)) {
+#if defined(COD2_X64)
+            PC_SourceError(handle, "end of file inside menu\n");
+#else
             PC_SourceError(handle, "end of file inside menu");
+#endif
             return 0;
         }
 
@@ -937,7 +949,11 @@ static Bool __attribute_regparm__(2) Menu_New(int handle, int imageTrack)
     Menu_PostParse(menu);
 
     if (menuList->menuCount > 0x7f)
+#if defined(COD2_X64)
+        Com_Error(ERR_DROP, "\025Menu_New: \024EXE_ERR_OUT_OF_MEMORY");
+#else
         Com_Error(ERR_DROP, "too many menus");
+#endif
 
     menuList->menus[menuList->menuCount] = menu;
     menuList->menuCount += 1;
@@ -956,7 +972,11 @@ qboolean Item_Parse(int handle, const char (*item)[4])
         memset(&token, 0, sizeof(token));
 
         if (!PC_ReadTokenHandle(handle, &token)) {
+#if defined(COD2_X64)
+            PC_SourceError(handle, "end of file inside menu item\n");
+#else
             PC_SourceError(handle, "end of file inside menu item");
+#endif
             return 0;
         }
 
@@ -1160,6 +1180,9 @@ qboolean ItemParse_dvar(const char (*item)[4], int handle)
     pc_token_t token;
 
     itemDef = (itemDef_t *)item;
+#if defined(COD2_X64)
+    Item_ValidateTypeData(itemDef, handle);
+#endif
     if (!PC_ReadTokenHandle(handle, &token)) {
         return 0;
     }
@@ -1553,8 +1576,12 @@ qboolean ItemParse_type(const char (*item)[4], int handle)
     if (!UI_ParseIntToken(handle, &itemDef->type))
         return 0;
 
+#if defined(COD2_X64)
+    Item_ValidateTypeData(itemDef, handle);
+#else
     Item_ValidateTypeData(itemDef, handle);
     Item_InitDvarEditField(itemDef);
+#endif
     return 1;
 }
 
@@ -1597,12 +1624,28 @@ qboolean ItemParse_columns(const char (*item)[4], int handle)
     listPtr->numColumns = num;
 
     for (i = 0; i < num; i++) {
+#if defined(COD2_X64)
+        int pos;
+        int width;
+        int maxChars;
+
+        if (!UI_ParseIntToken(handle, &pos))
+            return 0;
+        if (!UI_ParseIntToken(handle, &width))
+            return 0;
+        if (!UI_ParseIntToken(handle, &maxChars))
+            return 0;
+        listPtr->columnInfo[i].pos = pos;
+        listPtr->columnInfo[i].width = width;
+        listPtr->columnInfo[i].maxChars = maxChars;
+#else
         if (!UI_ParseIntToken(handle, &listPtr->columnInfo[i].pos))
             return 0;
         if (!UI_ParseIntToken(handle, &listPtr->columnInfo[i].width))
             return 0;
         if (!UI_ParseIntToken(handle, &listPtr->columnInfo[i].maxChars))
             return 0;
+#endif
     }
 
     return 1;
@@ -1615,6 +1658,18 @@ qboolean ItemParse_border(const char (*item)[4], int handle)
 
 qboolean ItemParse_visible(const char (*item)[4], int handle)
 {
+#if defined(COD2_X64)
+    int visible;
+
+    if (!UI_ParseIntToken(handle, &visible))
+        return 0;
+
+    /* Windows 0x544b10 keeps the shadows controls visible. */
+    if (visible)
+        Window_SetDynamicFlags((Window *)item, ((itemDef_t *)item)->window.dynamicFlags[0] | 4);
+
+    return 1;
+#else
     itemDef_t *itemDef = (itemDef_t *)item;
     int visible;
 
@@ -1631,6 +1686,7 @@ qboolean ItemParse_visible(const char (*item)[4], int handle)
 
     Window_SetDynamicFlags((Window *)item, ((itemDef_t *)item)->window.dynamicFlags[0] | 4);
     return 1;
+#endif
 }
 
 qboolean ItemParse_ownerdraw(const char (*item)[4], int handle)
@@ -1947,13 +2003,22 @@ MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
         Com_Printf("^3WARNING: menu file not found: %s\n", menuFile);
         len = FS_FOpenFileByMode("ui/default.menu", &f, FS_READ);
         if (!f)
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\025default.menu file not found. This is a default menu that you should have.\n");
+#else
             Com_Error(ERR_DROP, "default menu file not found");
+#endif
     }
 
     if (len > 0x7fff) {
         FS_FCloseFile(f);
+#if defined(COD2_X64)
+        Com_Error(ERR_DROP, "\025^1menu file too large: %s is %i, max allowed is %i",
+                  menuFile, len, 0x8000);
+#else
         Com_Error(ERR_DROP, "^1menu file too large: %s is %i, max allowed is %i",
                   menuFile, len, 0x8000);
+#endif
     }
 
     FS_Read(menuBuf, len, f);
@@ -2000,7 +2065,11 @@ MenuList *UI_LoadMenu(const char *menuFile, int imageTrack)
     if (!UI_ParseMenuInternal(menuFile, imageTrack)) {
         Com_Printf("^3WARNING: menu file not found: %s\n", menuFile);
         if (!UI_ParseMenuInternal("ui/default.menu", imageTrack))
+#if defined(COD2_X64)
+            Com_Error(ERR_DROP, "\025default.menu file not found. This is a default menu that you should have.\n");
+#else
             Com_Error(ERR_DROP, "default menu file not found");
+#endif
     }
 
     return UI_MenuList();

@@ -1,0 +1,4527 @@
+[
+  {
+    "method": "CDirect3D_QueryInterface",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iid",
+      "ppvObj"
+    ]
+  },
+  {
+    "method": "CDirect3D_AddRef",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3D_Release",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3D_RegisterSoftwareDevice",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pInitializeFunction"
+    ]
+  },
+  {
+    "method": "CDirect3D_GetAdapterCount",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "UINT",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3D_GetAdapterIdentifier",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Adapter",
+      "Flags",
+      "pIdentifier"
+    ]
+  },
+  {
+    "method": "CDirect3D_GetAdapterModeCount",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "UINT",
+    "arguments": [
+      "_this",
+      "Adapter",
+      "Format"
+    ]
+  },
+  {
+    "method": "CDirect3D_EnumAdapterModes",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Adapter",
+      "Format",
+      "Mode",
+      "pMode"
+    ]
+  },
+  {
+    "method": "CDirect3D_GetAdapterDisplayMode",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Adapter",
+      "pMode"
+    ]
+  },
+  {
+    "method": "CDirect3D_CheckDeviceType",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "HRESULT",
+    "arguments": [
+      "t",
+      "a",
+      "dt",
+      "ab",
+      "bb",
+      "w"
+    ]
+  },
+  {
+    "method": "CDirect3D_CheckDeviceFormat",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "HRESULT",
+    "arguments": [
+      "t",
+      "a",
+      "dt",
+      "af",
+      "u",
+      "rt",
+      "cf"
+    ]
+  },
+  {
+    "method": "CDirect3D_CheckDeviceMultiSampleType",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "HRESULT",
+    "arguments": [
+      "t",
+      "a",
+      "dt",
+      "sf",
+      "w",
+      "ms",
+      "q"
+    ]
+  },
+  {
+    "method": "CDirect3D_CheckDepthStencilMatch",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "HRESULT",
+    "arguments": [
+      "t",
+      "a",
+      "dt",
+      "af",
+      "rt",
+      "ds"
+    ]
+  },
+  {
+    "method": "CDirect3D_CheckDeviceFormatConversion",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "HRESULT",
+    "arguments": [
+      "t",
+      "a",
+      "dt",
+      "sf",
+      "tf"
+    ]
+  },
+  {
+    "method": "CDirect3D_GetDeviceCaps",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Adapter",
+      "DeviceType",
+      "pCaps"
+    ]
+  },
+  {
+    "method": "CDirect3D_GetAdapterMonitor",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "void *",
+    "arguments": [
+      "_this",
+      "Adapter"
+    ]
+  },
+  {
+    "method": "CDirect3D_CreateDevice",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Adapter",
+      "DeviceType",
+      "hFocusWindow",
+      "BehaviorFlags",
+      "pPresentationParameters",
+      "ppReturnedDeviceInterface"
+    ]
+  },
+  {
+    "method": "ZN9CDirect3DD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN9CDirect3DD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "Direct3DCreate9",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "void *",
+    "arguments": [
+      "sdkVersion"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_AddRef",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_QueryInterface",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iid",
+      "ppvObj"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_Release",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateTexture",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Width",
+      "Height",
+      "Levels",
+      "Usage",
+      "Format",
+      "Pool",
+      "ppTexture",
+      "pSharedHandle"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateVolumeTexture",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Width",
+      "Height",
+      "Depth",
+      "Levels",
+      "Usage",
+      "Format",
+      "Pool",
+      "ppVolumeTexture",
+      "pSharedHandle"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateCubeTexture",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "EdgeLength",
+      "Levels",
+      "Usage",
+      "Format",
+      "Pool",
+      "ppCubeTexture",
+      "pSharedHandle"
+    ]
+  },
+  {
+    "method": "CreateVolumeTexture",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "Width",
+      "Height",
+      "Depth",
+      "Levels",
+      "Usage",
+      "Format",
+      "Pool",
+      "ppVolumeTexture",
+      "pSharedHandle"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateVertexBuffer",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Length",
+      "Usage",
+      "FVF",
+      "Pool",
+      "ppVertexBuffer",
+      "pSharedHandle"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateIndexBuffer",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Length",
+      "Usage",
+      "Format",
+      "Pool",
+      "ppIndexBuffer",
+      "pSharedHandle"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateVertexDeclaration",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pVertexElements",
+      "ppDecl"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateVertexShader",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pFunction",
+      "ppShader"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreatePixelShader",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pFunction",
+      "ppShader"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreatePixelShaderOpenGL",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ShaderType",
+      "pSrcData",
+      "ppShader"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateDepthStencilSurface",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Width",
+      "Height",
+      "Format",
+      "MultiSample",
+      "MultisampleQuality",
+      "Discard",
+      "ppSurface",
+      "pSharedHandle"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateRenderTarget",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Width",
+      "Height",
+      "Format",
+      "MultiSample",
+      "MultisampleQuality",
+      "Lockable",
+      "ppSurface",
+      "pSharedHandle"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateQuery",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Type",
+      "ppQuery"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateOffscreenPlainSurface",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Width",
+      "Height",
+      "Format",
+      "Pool",
+      "ppSurface",
+      "pSharedHandle"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_TestCooperativeLevel",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetAvailableTextureMem",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "UINT",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_EvictManagedResources",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetDirect3D",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppD3D8"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetDeviceCaps",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pCaps"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetDisplayMode",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iSwapChain",
+      "pMode"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetCreationParameters",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pParameters"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetBackBuffer",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iSwapChain",
+      "BackBuffer",
+      "Type",
+      "ppBackBuffer"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_BeginScene",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_EndScene",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_Clear",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Count",
+      "pRects",
+      "Flags",
+      "Color",
+      "Z",
+      "Stencil"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_Present",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pSourceRect",
+      "pDestRect",
+      "hDestWindowOverride",
+      "pDirtyRegion"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_DrawPrimitive",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "PrimitiveType",
+      "StartVertex",
+      "PrimitiveCount"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_DrawIndexedPrimitive",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "PrimitiveType",
+      "BaseVertexIndex",
+      "MinVertexIndex",
+      "NumVertices",
+      "startIndex",
+      "primCount"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_DrawPrimitiveUP",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "PrimitiveType",
+      "PrimitiveCount",
+      "pVertexStreamZeroData",
+      "VertexStreamZeroStride"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_DrawIndexedPrimitiveUP",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "PrimitiveType",
+      "MinVertexIndex",
+      "NumVertexIndices",
+      "PrimitiveCount",
+      "pIndexData",
+      "IndexDataFormat",
+      "pVertexStreamZeroData",
+      "VertexStreamZeroStride"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetRenderState",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT COD2_FORCE_ALIGN_ARG_POINTER",
+    "arguments": [
+      "_this",
+      "State",
+      "Value"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetRenderState",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "State",
+      "pValue"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetTexture",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Stage",
+      "pTexture"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetTexture",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Stage",
+      "ppTexture"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetTextureStageState",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Stage",
+      "Type",
+      "Value"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetTextureStageState",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Stage",
+      "Type",
+      "pValue"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetSamplerState",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Sampler",
+      "Type",
+      "Value"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetSamplerState",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Sampler",
+      "Type",
+      "pValue"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetTransform",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "State",
+      "pMatrix"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetTransform",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "State",
+      "pMatrix"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetViewport",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pViewport"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetViewport",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pViewport"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetMaterial",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pMaterial"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetMaterial",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pMaterial"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetLight",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Index",
+      "pLight"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetLight",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Index"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_LightEnable",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Index",
+      "Enable"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetLightEnable",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Index",
+      "pEnable"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetClipPlane",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Index",
+      "pPlane"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetClipPlane",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Index",
+      "pPlane"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetStreamSource",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StreamNumber",
+      "pStreamData",
+      "OffsetInBytes",
+      "Stride"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetStreamSource",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StreamNumber",
+      "ppStreamData",
+      "pOffsetInBytes",
+      "pStride"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetIndices",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pIndexData"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetIndices",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppIndexData"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetVertexDeclaration",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pDecl"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetVertexDeclaration",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppDecl"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetFVF",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "FVF"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetFVF",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pFVF"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetVertexShader",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pShader"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetVertexShader",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppShader"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetPixelShader",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pShader"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetPixelShader",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppShader"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetVertexShaderConstantF",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StartRegister",
+      "pConstantData",
+      "Vector4fCount"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetVertexShaderConstantF",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StartRegister",
+      "pConstantData",
+      "Vector4fCount"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetPixelShaderConstantF",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StartRegister",
+      "pConstantData",
+      "Vector4fCount"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetPixelShaderConstantF",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StartRegister",
+      "pConstantData",
+      "Vector4fCount"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetVertexShaderConstantI",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StartRegister",
+      "pConstantData",
+      "Vector4iCount"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetVertexShaderConstantI",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StartRegister",
+      "pConstantData",
+      "Vector4iCount"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetVertexShaderConstantB",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StartRegister",
+      "pConstantData",
+      "BoolCount"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetVertexShaderConstantB",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StartRegister",
+      "pConstantData",
+      "BoolCount"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetPixelShaderConstantI",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StartRegister",
+      "pConstantData",
+      "Vector4iCount"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetPixelShaderConstantI",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StartRegister",
+      "pConstantData",
+      "Vector4iCount"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetPixelShaderConstantB",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StartRegister",
+      "pConstantData",
+      "BoolCount"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetPixelShaderConstantB",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StartRegister",
+      "pConstantData",
+      "BoolCount"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetRenderTarget",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "RenderTargetIndex",
+      "pRenderTarget"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetRenderTarget",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "RenderTargetIndex",
+      "ppRenderTarget"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetDepthStencilSurface",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pNewZStencil"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetDepthStencilSurface",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppZStencilSurface"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetStreamSourceFreq",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StreamNumber",
+      "Setting"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetStreamSourceFreq",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "StreamNumber",
+      "pSetting"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_ValidateDevice",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pNumPasses"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_Reset",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pPresentationParameters"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetGammaRamp",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this",
+      "iSwapChain",
+      "Flags",
+      "pRamp"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetGammaRamp",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this",
+      "iSwapChain",
+      "pRamp"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_StretchRect",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pSourceSurface",
+      "pSourceRect",
+      "pDestSurface",
+      "pDestRect",
+      "Filter"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_UpdateTexture",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pSourceTexture",
+      "pDestinationTexture"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_MultiplyTransform",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetCursorProperties",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "XHotSpot",
+      "YHotSpot",
+      "pCursorBitmap"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetCursorPosition",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this",
+      "XScreenSpace",
+      "YScreenSpace",
+      "Flags"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_ShowCursor",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "BOOL",
+    "arguments": [
+      "_this",
+      "bShow"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateAdditionalSwapChain",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pPresentationParameters",
+      "pSwapChain"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetSwapChain",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iSwapChain",
+      "pSwapChain"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetNumberOfSwapChains",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "UINT",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetRasterStatus",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iSwapChain",
+      "pRasterStatus"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetDialogBoxMode",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "bEnableDialogs"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_UpdateSurface",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pSourceSurface",
+      "pSourceRect",
+      "pDestinationSurface",
+      "pDestPoint"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetRenderTargetData",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pRenderTarget",
+      "pDestSurface"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetFrontBufferData",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iSwapChain",
+      "pDestSurface"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_ColorFill",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pSurface",
+      "pRect",
+      "color"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateStateBlock",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Type",
+      "ppSB"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_BeginStateBlock",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_EndStateBlock",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppSB"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetClipStatus",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pClipStatus"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetClipStatus",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pClipStatus"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetPaletteEntries",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "PaletteNumber",
+      "pEntries"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetPaletteEntries",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "PaletteNumber",
+      "pEntries"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetCurrentTexturePalette",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "PaletteNumber"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetCurrentTexturePalette",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "PaletteNumber"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetScissorRect",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pRect"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetScissorRect",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pRect"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetSoftwareVertexProcessing",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "bSoftware"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetSoftwareVertexProcessing",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "BOOL",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetNPatchMode",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "nSegments"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetNPatchMode",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "float",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_ProcessVertices",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "SrcStartIndex",
+      "DestIndex",
+      "VertexCount",
+      "pDestBuffer",
+      "pVertexDecl",
+      "Flags"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_DrawRectPatch",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Handle",
+      "pNumSegs",
+      "pRectPatchInfo"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_DrawTriPatch",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Handle",
+      "pNumSegs",
+      "pTriPatchInfo"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_DeletePatch",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Handle"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_StartPixelOneToOneState",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_EndPixelOneToOneState",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetAlphaFuncAndRef",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this",
+      "AlphaFuncValue",
+      "AlphaRefValue"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetStencilOpFunc",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "GLenum",
+    "arguments": [
+      "_this",
+      "Value"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CopyColorToRenderTargetTexture",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CTexStage_GetUsesTexture",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "bool",
+    "arguments": [
+      "_this",
+      "UsesTexFactor"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetTextureCoordStream",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this",
+      "TexUnit",
+      "TransformFlags",
+      "OriginalTexTransform",
+      "VSize",
+      "Tci",
+      "StartVertex",
+      "EndVertex",
+      "pSrcCoords",
+      "SrcStride",
+      "pSrc2Coords",
+      "Src2Stride"
+    ]
+  },
+  {
+    "method": "COpenGL_SetTexCombinerRGB1",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this",
+      "Unit",
+      "ColorOp",
+      "Source0",
+      "Operand0",
+      "Scale"
+    ]
+  },
+  {
+    "method": "COpenGL_SetTexCombinerRGB2",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this",
+      "Unit",
+      "ColorOp",
+      "Source0",
+      "Operand0",
+      "Source1",
+      "Operand1",
+      "Scale"
+    ]
+  },
+  {
+    "method": "COpenGL_SetTexCombinerRGB3",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this",
+      "Unit",
+      "ColorOp",
+      "Source0",
+      "Operand0",
+      "Source1",
+      "Operand1",
+      "Source2",
+      "Operand2",
+      "Scale"
+    ]
+  },
+  {
+    "method": "COpenGL_SetTexCombinerAlpha1",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this",
+      "Unit",
+      "AlphaOp",
+      "Source0",
+      "Operand0",
+      "Scale"
+    ]
+  },
+  {
+    "method": "COpenGL_SetTexCombinerAlpha2",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this",
+      "Unit",
+      "AlphaOp",
+      "Source0",
+      "Operand0",
+      "Source1",
+      "Operand1",
+      "Scale"
+    ]
+  },
+  {
+    "method": "COpenGL_SetTexCombinerAlpha3",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this",
+      "Unit",
+      "AlphaOp",
+      "Source0",
+      "Operand0",
+      "Source1",
+      "Operand1",
+      "Source2",
+      "Operand2",
+      "Scale"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CTexStage_Init",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this",
+      "Stage",
+      "IsProgrammableStage"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CDirect3DDevice",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "long unsigned int",
+    "arguments": [
+      "_this",
+      "Adapter",
+      "DeviceType",
+      "Context",
+      "pPresentationParameters"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_Init",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "device"
+    ]
+  },
+  {
+    "method": "ZN15CDirect3DDeviceD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN15CDirect3DDeviceD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN15CDirect3DDeviceD2Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DSwapChain_AddRef",
+    "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DSwapChain_QueryInterface",
+    "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iid",
+      "ppvObj"
+    ]
+  },
+  {
+    "method": "CDirect3DSwapChain_Release",
+    "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN18CDirect3DSwapChainD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN18CDirect3DSwapChainD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DSwapChain_GetBackBuffer",
+    "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "BackBuffer",
+      "Type",
+      "ppBackBuffer"
+    ]
+  },
+  {
+    "method": "CDirect3DSwapChain_SetBackBuffer",
+    "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+    "result": "int",
+    "arguments": [
+      "_this",
+      "pBackBuffer"
+    ]
+  },
+  {
+    "method": "CDirect3DSwapChain_CDirect3DSwapChain",
+    "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+    "result": "int",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DSwapChain_Present",
+    "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pSourceRect",
+      "pDestRect",
+      "hDestWindowOverride",
+      "pDirtyRegion",
+      "dwFlags"
+    ]
+  },
+  {
+    "method": "CDirect3DSwapChain_GetFrontBufferData",
+    "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pDestSurface"
+    ]
+  },
+  {
+    "method": "CDirect3DSwapChain_GetRasterStatus",
+    "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pRasterStatus"
+    ]
+  },
+  {
+    "method": "CDirect3DSwapChain_GetDisplayMode",
+    "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pMode"
+    ]
+  },
+  {
+    "method": "CDirect3DSwapChain_GetDevice",
+    "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppDevice"
+    ]
+  },
+  {
+    "method": "CDirect3DSwapChain_GetPresentParameters",
+    "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pPresentationParameters"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_SetNativeDimensions",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "void",
+    "arguments": [
+      "surface",
+      "width",
+      "height"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_SetOwner",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "void",
+    "arguments": [
+      "surf",
+      "owner"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_GetGLBlitInfo",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "int",
+    "arguments": [
+      "surf",
+      "texId",
+      "width",
+      "height"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_AddRef",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN16CDirect3DSurfaceD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN16CDirect3DSurfaceD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_QueryInterface",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iid",
+      "ppvObj"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_Release",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_GetDesc",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pDesc"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_LockRect",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pLockedRect",
+      "pRect",
+      "Flags"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_UnlockRect",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_CreateOpenGLSurfaceObject",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_UpdateOpenGLSurfaceObject",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "bRecreateSurface"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_IsDirty",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "bool",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_RecreateSurface",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_CDirect3DSurface",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "s",
+      "CubemapID",
+      "Level",
+      "Width",
+      "Height",
+      "Format",
+      "pSurfaceMemory",
+      "pOpenGLTextureInfo"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_IgnorePixelStorei",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "void",
+    "arguments": [
+      "pname",
+      "param"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_IgnoreTexParameteri",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "void",
+    "arguments": [
+      "target",
+      "pname",
+      "param"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_GetDevice",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppDevice"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_SetPrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid",
+      "pData",
+      "SizeOfData",
+      "Flags"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_GetPrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid",
+      "pData",
+      "pSizeOfData"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_FreePrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_SetPriority",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this",
+      "PriorityNew"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_GetPriority",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_PreLoad",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_GetType",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "D3DRESOURCETYPE",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_GetContainer",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "riid",
+      "ppContainer"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_GetDC",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "phdc"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_ReleaseDC",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "hdc"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_GetGLName",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "GLuint",
+    "arguments": [
+      "texture"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_AddRef",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_QueryInterface",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iid",
+      "ppvObj"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_Release",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_GetLevelDesc",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Level",
+      "pDesc"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_GetSurfaceLevel",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Level",
+      "ppSurfaceLevel"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_LockRect",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Level",
+      "pLockedRect",
+      "pRect",
+      "Flags"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_UnlockRect",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Level"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_AddDirtyRect",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pDirtyRect"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_SetLOD",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this",
+      "LODNew"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_GetLOD",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_GetLevelCount",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_GetType",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "D3DRESOURCETYPE",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_SetAutoGenFilterType",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "FilterType"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_GetAutoGenFilterType",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "D3DTEXTUREFILTERTYPE",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_GenerateMipSubLevels",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN16CDirect3DTextureD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN16CDirect3DTextureD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN16CDirect3DTextureD2Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_CDirect3DTexture",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "Width",
+      "Height",
+      "Levels",
+      "Usage",
+      "Format"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_UpdateOpenGLSurfaces",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_GetDevice",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppDevice"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_SetPrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid",
+      "pData",
+      "SizeOfData",
+      "Flags"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_GetPrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid",
+      "pData",
+      "pSizeOfData"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_FreePrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_SetPriority",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this",
+      "PriorityNew"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_GetPriority",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DTexture_PreLoad",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_GetGLName",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "GLuint",
+    "arguments": [
+      "texture"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_AddRef",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_QueryInterface",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iid",
+      "ppvObj"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_Release",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_GetLevelDesc",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Level",
+      "pDesc"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_GetCubeMapSurface",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "FaceType",
+      "Level",
+      "ppCubeMapSurface"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_LockRect",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "FaceType",
+      "Level",
+      "pLockedRect",
+      "pRect",
+      "Flags"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_UnlockRect",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "FaceType",
+      "Level"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_AddDirtyRect",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "FaceType",
+      "pDirtyRect"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_SetLOD",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this",
+      "LODNew"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_GetLOD",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_GetLevelCount",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_GetType",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "D3DRESOURCETYPE",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_SetAutoGenFilterType",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "f"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_GetAutoGenFilterType",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "D3DTEXTUREFILTERTYPE",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_GenerateMipSubLevels",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGLTexture_UpdateOpenGLSurfaces",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN20CDirect3DCubeTextureD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN20CDirect3DCubeTextureD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN20CDirect3DCubeTextureD2Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_CDirect3DCubeTexture",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "EdgeLength",
+      "Levels",
+      "Usage",
+      "Format"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_UpdateOpenGLSurfaces",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_GetDevice",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppDevice"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_SetPrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid",
+      "pData",
+      "SizeOfData",
+      "Flags"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_GetPrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid",
+      "pData",
+      "pSizeOfData"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_FreePrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_SetPriority",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this",
+      "PriorityNew"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_GetPriority",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_PreLoad",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZThn4_N16CDirect3DTextureD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "p"
+    ]
+  },
+  {
+    "method": "ZThn4_N16CDirect3DTextureD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "p"
+    ]
+  },
+  {
+    "method": "ZThn4_N20CDirect3DCubeTextureD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "p"
+    ]
+  },
+  {
+    "method": "ZThn4_N20CDirect3DCubeTextureD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "p"
+    ]
+  },
+  {
+    "method": "ZThn4_N16CDirect3DTextureD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "p"
+    ]
+  },
+  {
+    "method": "ZThn4_N16CDirect3DTextureD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "p"
+    ]
+  },
+  {
+    "method": "ZThn4_N20CDirect3DCubeTextureD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "p"
+    ]
+  },
+  {
+    "method": "ZThn4_N20CDirect3DCubeTextureD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "p"
+    ]
+  },
+  {
+    "method": "CDirect3DVolume_AddRef",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVolume_Release",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVolume_QueryInterface",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iid",
+      "ppv"
+    ]
+  },
+  {
+    "method": "ZN15CDirect3DVolumeD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN15CDirect3DVolumeD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVolume_GetDesc",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pDesc"
+    ]
+  },
+  {
+    "method": "CDirect3DVolume_LockBox",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pLockedVolume",
+      "pBox",
+      "Flags"
+    ]
+  },
+  {
+    "method": "CDirect3DVolume_UnlockBox",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVolume_IsDirty",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "bool",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVolume_CreateOpenGLSurfaceObject",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVolume_UpdateOpenGLSurfaceObject",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "bRecreate"
+    ]
+  },
+  {
+    "method": "CDirect3DVolume_GetDevice",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "t",
+      "p"
+    ]
+  },
+  {
+    "method": "CDirect3DVolume_SetPrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "t",
+      "g",
+      "d",
+      "s",
+      "f"
+    ]
+  },
+  {
+    "method": "CDirect3DVolume_GetPrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "t",
+      "g",
+      "d",
+      "s"
+    ]
+  },
+  {
+    "method": "CDirect3DVolume_FreePrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "t",
+      "g"
+    ]
+  },
+  {
+    "method": "CDirect3DVolume_GetContainer",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "t",
+      "r",
+      "p"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_GetGLName",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "GLuint",
+    "arguments": [
+      "texture"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_AddRef",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_QueryInterface",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iid",
+      "ppvObj"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_Release",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_GetLevelDesc",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Level",
+      "pDesc"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_GetVolumeLevel",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Level",
+      "ppVolumeLevel"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_LockBox",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Level",
+      "pLockedVolume",
+      "pBox",
+      "Flags"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_UnlockBox",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "Level"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_AddDirtyBox",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pBox"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_SetLOD",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this",
+      "LODNew"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_GetLOD",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_GetLevelCount",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_GetType",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "D3DRESOURCETYPE",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_SetAutoGenFilterType",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "f"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_GetAutoGenFilterType",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "D3DTEXTUREFILTERTYPE",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_GenerateMipSubLevels",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN22CDirect3DVolumeTextureD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN22CDirect3DVolumeTextureD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN22CDirect3DVolumeTextureD2Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_CDirect3DVolumeTexture",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "Width",
+      "Height",
+      "Depth",
+      "Levels",
+      "Usage",
+      "Format"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_UpdateOpenGLSurfaces",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_GetDevice",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "t",
+      "p"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_SetPrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "t",
+      "g",
+      "d",
+      "s",
+      "f"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_GetPrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "t",
+      "g",
+      "d",
+      "s"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_FreePrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "HRESULT",
+    "arguments": [
+      "t",
+      "g"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_SetPriority",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "t",
+      "p"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_GetPriority",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "DWORD",
+    "arguments": [
+      "t"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_PreLoad",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "void",
+    "arguments": [
+      "t"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_AddRef",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_QueryInterface",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iid",
+      "ppvObj"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_Release",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_Lock",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "OffsetToLock",
+      "SizeToLock",
+      "ppbData",
+      "Flags"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_Unlock",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_GetDesc",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pDesc"
+    ]
+  },
+  {
+    "method": "ZN21CDirect3DVertexBufferD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN21CDirect3DVertexBufferD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN21CDirect3DVertexBufferD2Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_CDirect3DVertexBuffer",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "Length",
+      "Usage",
+      "Pool"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_GetDevice",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppDevice"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_SetPrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid",
+      "pData",
+      "SizeOfData",
+      "Flags"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_GetPrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid",
+      "pData",
+      "pSizeOfData"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_FreePrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_SetPriority",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this",
+      "PriorityNew"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_GetPriority",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_PreLoad",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_GetType",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "D3DRESOURCETYPE",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_WaitFence",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "pStart",
+      "SizeInBytes"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexBuffer_SetFence",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "pStart",
+      "SizeInBytes",
+      "_this_3"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_AddRef",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_QueryInterface",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iid",
+      "ppvObj"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_Release",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN20CDirect3DIndexBufferD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN20CDirect3DIndexBufferD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_Lock",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "OffsetToLock",
+      "SizeToLock",
+      "ppbData",
+      "Flags"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_Unlock",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_GetDesc",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pDesc"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_CDirect3DIndexBuffer",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "Length",
+      "Format",
+      "Usage",
+      "Pool"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_GetDevice",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppDevice"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_SetPrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid",
+      "pData",
+      "SizeOfData",
+      "Flags"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_GetPrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid",
+      "pData",
+      "pSizeOfData"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_FreePrivateData",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "refguid"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_SetPriority",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this",
+      "PriorityNew"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_GetPriority",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "DWORD",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_PreLoad",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DIndexBuffer_GetType",
+    "file": "src/Mac/DirectX_9/CDirect3DIndexBuffer.c",
+    "result": "D3DRESOURCETYPE",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexDeclaration_AddRef",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexDeclaration.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexDeclaration_QueryInterface",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexDeclaration.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iid",
+      "ppvObj"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexDeclaration_Release",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexDeclaration.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN26CDirect3DVertexDeclarationD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexDeclaration.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN26CDirect3DVertexDeclarationD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexDeclaration.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexDeclaration_GetDeclaration",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexDeclaration.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pElement",
+      "pNumElements"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexDeclaration_GetShaderDeclaration",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexDeclaration.c",
+    "result": "int",
+    "arguments": [
+      "_this",
+      "pTokenStream"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexDeclaration_CDirect3DVertexDeclaration",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexDeclaration.c",
+    "result": "int",
+    "arguments": [
+      "_this",
+      "pVertexElements"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexDeclaration_GetDevice",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexDeclaration.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppDevice"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexShader_GetProgramId",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "GLuint",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexShader_GetProgramId",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "GLuint",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexShader_AddRef",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexShader_QueryInterface",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iid",
+      "ppvObj"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexShader_Release",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN21CDirect3DVertexShaderD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN21CDirect3DVertexShaderD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexShader_CDirect3DVertexShader",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "unsigned char",
+    "arguments": [
+      "_this",
+      "pSrcData"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexShader_GetDevice",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppDevice"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexShader_GetFunction",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pSizeOfData"
+    ]
+  },
+  {
+    "method": "ZThn4_N21CDirect3DVertexShaderD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "void",
+    "arguments": [
+      "p"
+    ]
+  },
+  {
+    "method": "ZThn4_N21CDirect3DVertexShaderD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "void",
+    "arguments": [
+      "p"
+    ]
+  },
+  {
+    "method": "ZThn4_N21CDirect3DVertexShaderD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "void",
+    "arguments": [
+      "p"
+    ]
+  },
+  {
+    "method": "ZThn4_N21CDirect3DVertexShaderD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "void",
+    "arguments": [
+      "p"
+    ]
+  },
+  {
+    "method": "CDirect3DPixelShader_AddRef",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DPixelShader_QueryInterface",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "iid",
+      "ppvObj"
+    ]
+  },
+  {
+    "method": "CDirect3DPixelShader_Release",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "ULONG",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN20CDirect3DPixelShaderD2Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN20CDirect3DPixelShaderD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN20CDirect3DPixelShaderD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGLATITextFragmentShader_Enable",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGLATITextFragmentShader_Disable",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGLATITextFragmentShader_SetConstants",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "Register",
+      "pConstantData",
+      "Vector4fCount",
+      "CommandNumber"
+    ]
+  },
+  {
+    "method": "COpenGLATITextFragmentShader_COpenGLATITextFragmentShader",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "pSrcData"
+    ]
+  },
+  {
+    "method": "ZN28COpenGLATITextFragmentShaderD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN28COpenGLATITextFragmentShaderD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGLNVidiaRegisterCombinersProgram_Enable",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGLNVidiaRegisterCombinersProgram_Disable",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGLNVidiaRegisterCombinersProgram_SetConstants",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "Register",
+      "pConstantData",
+      "Vector4fCount",
+      "CommandNumber"
+    ]
+  },
+  {
+    "method": "COpenGLNVidiaRegisterCombinersProgram_COpenGLNVidiaRegisterCombinersProgram",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "pSrcData"
+    ]
+  },
+  {
+    "method": "ZN37COpenGLNVidiaRegisterCombinersProgramD2Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN37COpenGLNVidiaRegisterCombinersProgramD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN37COpenGLNVidiaRegisterCombinersProgramD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGLARBFragmentProgram_Enable",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGLARBFragmentProgram_Disable",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGLARBFragmentProgram_SetConstants",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "Register",
+      "pConstantData",
+      "Vector4fCount",
+      "CommandNumber"
+    ]
+  },
+  {
+    "method": "COpenGLARBFragmentProgram_COpenGLARBFragmentProgram",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "Name",
+      "Code"
+    ]
+  },
+  {
+    "method": "ZN25COpenGLARBFragmentProgramD2Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN25COpenGLARBFragmentProgramD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN25COpenGLARBFragmentProgramD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DPixelShader_GetDevice",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "ppDevice"
+    ]
+  },
+  {
+    "method": "CDirect3DPixelShader_GetFunction",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pDstData",
+      "pSizeOfData"
+    ]
+  },
+  {
+    "method": "CFence_CFence",
+    "file": "src/Mac/DirectX_9/CFence.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "Start",
+      "SizeInBytes",
+      "FrameCount"
+    ]
+  },
+  {
+    "method": "CFence_Shutdown",
+    "file": "src/Mac/DirectX_9/CFence.c",
+    "result": "void",
+    "arguments": []
+  },
+  {
+    "method": "CMemoryBuffer_CMemoryBuffer",
+    "file": "src/Mac/DirectX_9/CMemoryBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "Length"
+    ]
+  },
+  {
+    "method": "CMemoryBuffer_Recreate",
+    "file": "src/Mac/DirectX_9/CMemoryBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN13CMemoryBufferD1Ev",
+    "file": "src/Mac/DirectX_9/CMemoryBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN13CMemoryBufferD0Ev",
+    "file": "src/Mac/DirectX_9/CMemoryBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CMemoryBuffer_Resize",
+    "file": "src/Mac/DirectX_9/CMemoryBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "Length"
+    ]
+  },
+  {
+    "method": "CMemoryBuffer_FreeLater",
+    "file": "src/Mac/DirectX_9/CMemoryBuffer.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "Frames"
+    ]
+  },
+  {
+    "method": "CMemoryBuffer_Update",
+    "file": "src/Mac/DirectX_9/CMemoryBuffer.c",
+    "result": "void",
+    "arguments": []
+  },
+  {
+    "method": "CMemoryBuffer_Reset",
+    "file": "src/Mac/DirectX_9/CMemoryBuffer.c",
+    "result": "void",
+    "arguments": []
+  },
+  {
+    "method": "ZNSt10_List_baseIN13CMemoryBuffer11FreeRequestESaIS1_EE8_M_clearEv",
+    "file": "src/Mac/DirectX_9/CMemoryBuffer.c",
+    "result": "void",
+    "arguments": [
+      "head"
+    ]
+  },
+  {
+    "method": "CVAOPacket_CVAOPacket",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN10CVAOPacketD2Ev",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN10CVAOPacketD1Ev",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN10CVAOPacketD0Ev",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CVAOPacket_SetVAO",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "bIsCached"
+    ]
+  },
+  {
+    "method": "CVAOPacket_SetGenericVAO",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": [
+      "IsFixedFunction",
+      "ForceValidation"
+    ]
+  },
+  {
+    "method": "CVAOPacket_InitializeGenericVAO",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": []
+  },
+  {
+    "method": "CVAOPacket_ReleaseBuffer",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": [
+      "p",
+      "Length"
+    ]
+  },
+  {
+    "method": "CVAOPacket_IsCached",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "bool",
+    "arguments": [
+      "v"
+    ]
+  },
+  {
+    "method": "CVAOPacket_Cache",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": [
+      "v"
+    ]
+  },
+  {
+    "method": "CVAOPacket_Shutdown",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": []
+  },
+  {
+    "method": "CVAOPacket_IsFixedFunction",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "bool",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "CVAOPacketRbTreeNodeBase *",
+    "arguments": [
+      "tree",
+      "key"
+    ]
+  },
+  {
+    "method": "ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "CVAOPacketRbTreeNodeBase *",
+    "arguments": [
+      "tree",
+      "key"
+    ]
+  },
+  {
+    "method": "ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": []
+  },
+  {
+    "method": "ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "CVAOPacketRbTreeIterator",
+    "arguments": [
+      "tree",
+      "kv"
+    ]
+  },
+  {
+    "method": "ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": [
+      "tree",
+      "node"
+    ]
+  },
+  {
+    "method": "ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": []
+  },
+  {
+    "method": "ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": []
+  },
+  {
+    "method": "COpenGLVAO_GetCode",
+    "file": "src/Mac/DirectX_9/COpenGLVAO.c",
+    "result": "UINT32",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZNK10COpenGLVAOeqERKS_",
+    "file": "src/Mac/DirectX_9/COpenGLVAO.c",
+    "result": "bool",
+    "arguments": [
+      "_this",
+      "v"
+    ]
+  },
+  {
+    "method": "COpenGLVAO_CreateNewBinding",
+    "file": "src/Mac/DirectX_9/COpenGLVAO.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGLVAO_COpenGLVAO",
+    "file": "src/Mac/DirectX_9/COpenGLVAO.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN10COpenGLVAOD2Ev",
+    "file": "src/Mac/DirectX_9/COpenGLVAO.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN10COpenGLVAOD1Ev",
+    "file": "src/Mac/DirectX_9/COpenGLVAO.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN10COpenGLVAOD0Ev",
+    "file": "src/Mac/DirectX_9/COpenGLVAO.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGL_TexUnitBase",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned char *",
+    "arguments": [
+      "_this",
+      "Unit"
+    ]
+  },
+  {
+    "method": "COpenGL_GetVAOBindingList",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "void *",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGL_TexUnitBase",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned char *",
+    "arguments": [
+      "_this",
+      "Unit"
+    ]
+  },
+  {
+    "method": "COpenGL_SetColorMaterialEnable",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Value"
+    ]
+  },
+  {
+    "method": "COpenGL_SetActiveTexUnit",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Unit"
+    ]
+  },
+  {
+    "method": "COpenGL_SetDither",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Value"
+    ]
+  },
+  {
+    "method": "COpenGL_SetBlendEXT",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "ForceValidation",
+      "SrcFactorRGB",
+      "DstFactorRGB",
+      "SrcFactorAlpha",
+      "DstFactorAlpha"
+    ]
+  },
+  {
+    "method": "COpenGL_SetBlend",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "ForceValidation",
+      "SrcFactorRGB",
+      "DstFactorRGB"
+    ]
+  },
+  {
+    "method": "COpenGL_SetVertexProgram",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "pOGLVertexProgramInfo"
+    ]
+  },
+  {
+    "method": "COpenGL_SetVARInfo",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "pVAStart",
+      "Size"
+    ]
+  },
+  {
+    "method": "COpenGL_DisableVertexProgramStream",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "AttribArray"
+    ]
+  },
+  {
+    "method": "COpenGL_CTexUnit_SetTex",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Target",
+      "pOpenGLTexInfo"
+    ]
+  },
+  {
+    "method": "COpenGL_SetTex",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Unit",
+      "Target",
+      "pOpenGLTexInfo"
+    ]
+  },
+  {
+    "method": "COpenGL_SetVertexProgramStreamInfo",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "AttribArray",
+      "VSize",
+      "VType",
+      "Normalized",
+      "Stride",
+      "pStream"
+    ]
+  },
+  {
+    "method": "COpenGL_CTexUnit_Reset",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "SupportsAnisotropicFiltering",
+      "SupportsLODBias",
+      "IsProgramableOnly"
+    ]
+  },
+  {
+    "method": "COpenGL_SetVAO",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "VAO",
+      "IsFixedFunction",
+      "ForceValidation"
+    ]
+  },
+  {
+    "method": "COpenGL_EnableColorArray",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Size",
+      "Type",
+      "Stride",
+      "Pointer"
+    ]
+  },
+  {
+    "method": "COpenGL_DisableColorArray",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGL_EnableNormalArray",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Type",
+      "Stride",
+      "Pointer"
+    ]
+  },
+  {
+    "method": "COpenGL_DisableNormalArray",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGL_EnableVertexArray",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Size",
+      "Type",
+      "Stride",
+      "Pointer"
+    ]
+  },
+  {
+    "method": "COpenGL_SetLight",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Light",
+      "Src"
+    ]
+  },
+  {
+    "method": "COpenGL_EnableTexCoordArray",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Unit",
+      "Size",
+      "Type",
+      "Stride",
+      "Pointer"
+    ]
+  },
+  {
+    "method": "COpenGL_DisableTexCoordArray",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Unit"
+    ]
+  },
+  {
+    "method": "COpenGL_SetTexMatrix",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Unit",
+      "m"
+    ]
+  },
+  {
+    "method": "COpenGL_SetTexMatrixIdentity",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Unit"
+    ]
+  },
+  {
+    "method": "COpenGL_Shutdown",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGL_SetTexGenEnable",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Unit",
+      "Enable",
+      "EnableReflection",
+      "EnableNormalMap"
+    ]
+  },
+  {
+    "method": "COpenGL_DisableTexUnit",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Unit"
+    ]
+  },
+  {
+    "method": "COpenGL_ReleaseVAOBinding",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "TexID"
+    ]
+  },
+  {
+    "method": "COpenGL_ReleaseTextureBinding",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "TexID"
+    ]
+  },
+  {
+    "method": "COpenGL_Init",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Buffers",
+      "MaxTextureUnits",
+      "MaxTextureImageUnits"
+    ]
+  },
+  {
+    "method": "COpenGL_COpenGL",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN7COpenGLD1Ev",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN7COpenGLD0Ev",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN7COpenGLD2Ev",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGLVertexProgram_COpenGLVertexProgram",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "pSrcData"
+    ]
+  },
+  {
+    "method": "ZN20COpenGLVertexProgramD1Ev",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN20COpenGLVertexProgramD0Ev",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN20COpenGLVertexProgramD2Ev",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  }
+]

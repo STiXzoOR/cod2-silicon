@@ -15,17 +15,33 @@ void *imp_g_skinBuffers = &skinBuffers;
 static dvar_t renderer;
 dvar_t *r_rendererInUse = &renderer;
 static unsigned char stringData[256];
+#if defined(COD2_X64)
+static unsigned char emptyData[17];
+#endif
 static unsigned char duplicateData[32];
 
 unsigned int SL_GetStringOfLen(const char *value, unsigned int user, unsigned int len, int type)
 {
     (void)user;
+#if defined(COD2_X64)
+    assert((type == 11 || type == 12) && len <= sizeof(stringData));
+    if (type == 12) {
+        assert(len == sizeof(emptyData));
+        memcpy(emptyData, value, len);
+        return 2;
+    }
+#else
     assert(type == 11 && len <= sizeof(stringData));
+#endif
     memcpy(stringData, value, len);
     return 1;
 }
 const char *SL_ConvertToString(unsigned int value)
 {
+#if defined(COD2_X64)
+    if (value == 2)
+        return (const char *)emptyData;
+#endif
     if (value == 200)
         return (const char *)duplicateData;
     assert(value == 1);
@@ -166,8 +182,14 @@ static void TestMultiRootMasks(void)
     DObjCalcAnim(&object,roots);
     RootTransform(&s->mat[0],10,20,30,1); RootTransform(&s->mat[1],100,200,300,0);
     s->mat[3].trans[0]=789;
+#if defined(COD2_X64)
+    DObjCalcAnim(&object,early);
+#endif
     DObjCalcSkel(&object,early);
     CheckVec(s->mat[2].trans,6,23,42); assert(s->skelPartBits[0]==5); assert(s->mat[3].trans[0]==789);
+#if defined(COD2_X64)
+    DObjCalcAnim(&object,full);
+#endif
     DObjCalcSkel(&object,full);
     CheckVec(s->mat[0].trans,10,20,30); CheckVec(s->mat[1].trans,100,200,300);
     CheckVec(s->mat[2].trans,6,23,42); CheckVec(s->mat[3].trans,4,26,41);
@@ -187,8 +209,14 @@ static void TestAttachmentDuplicates(void)
         models[i].parts=(void (*)())&parts[i]; object.models[i]=&models[i]; object.modelParents[i]=255;}
     object.modelParents[1]=1;
     memset(duplicateData,0,sizeof(duplicateData)); duplicateData[16]=5; duplicateData[17]=1;
+#if defined(COD2_X64)
+    duplicateData[0]=0x30;
+#endif
     duplicateData[18]=6; duplicateData[19]=2; object.duplicateParts=200;
     DObjCalcAnim(&object,roots); RootTransform(&s->mat[0],10,20,30,1);
+#if defined(COD2_X64)
+    DObjCalcAnim(&object,full);
+#endif
     DObjCalcSkel(&object,full);
     CheckVec(s->mat[1].trans,6,23,42); CheckVec(s->mat[2].trans,6,23,42); CheckVec(s->mat[3].trans,6,25,42);
     CheckVec(s->mat[4].trans,10,20,30); CheckVec(s->mat[5].trans,6,23,42);
@@ -208,11 +236,91 @@ static void TestLocalTagNullBind(void)
     DObjCalcSkel(&object,bits); CheckVec(s->mat[1].trans,4,24,45);
     memset(s,0,sizeof(*s)+sizeof(DObjAnimMat)); parts.trans=NULL;
     RootTransform(&s->mat[0],10,20,30,1); s->animPartBits[0]=1;
+#if defined(COD2_X64)
+    DObjCalcAnim(&object,bits);
+#endif
     DObjCalcSkel(&object,bits); CheckVec(s->mat[1].trans,10,20,30); free(s);
 }
 
-int main(void)
+static void TestRigidRotationRounding(void)
 {
+    XSurface surface = {0};
+    GfxModelRigidSurface rigid = {0};
+    GfxEntity entity = {0};
+    SkinRigidXModelCmd command = {0};
+    rigid.surf.surfType = (surfaceType_t)4;
+    rigid.surf.xsurf = &surface;
+    entity.scale = 1;
+    entity.axis[0][0] = entity.axis[1][1] = entity.axis[2][2] = 1;
+    command.surfs = (surfaceType_t *)&rigid;
+    command.surfCount = 1;
+    command.e = &entity;
+    command.mat.quat[0] = .3f;
+    command.mat.quat[1] = .4f;
+    command.mat.quat[2] = .5f;
+    command.mat.quat[3] = sqrtf(.5f);
+    command.mat.transWeight = 2;
+    R_SkinRigidXModelCmd(&command);
+    /* Mac adds the two squared quaternion terms before subtracting from one. */
+    assert(rigid.boneAxis[0][0] == 0x1.70a3dp-3f);
+    assert(rigid.boneAxis[1][1] == 0x1.47ae14p-2f);
+    assert(rigid.boneAxis[2][2] == 0x1p-1f);
+}
+
+static void TestSkinArithmetic(const char *mode)
+{
+    struct { XVertexInfo vertex; XBlendInfo blend; } input = {0};
+    DObjSkelMat bones[2] = {0};
+    XSurface surface = {0};
+    GfxModelSkinnedSurface skinned = {0};
+    float output[16] = {0};
+    int dx7 = !strcmp(mode, "dx7");
+    int homogeneous = !strcmp(mode, "homogeneous");
+    bones[1].axis[0][0] = bones[1].axis[2][0] = 0x1.6a09e6p-1f;
+    bones[1].axis[0][2] = -0x1.6a09e6p-1f;
+    bones[1].axis[1][1] = 1;
+    bones[1].axis[2][2] = 0x1.6a09e6p-1f;
+    bones[1].origin[0] = 10.0f;
+    bones[0].origin[3] = bones[1].origin[3] = 1;
+    input.vertex.numWeights = dx7 ? 0 : 1;
+    input.vertex.boneWeight = 128;
+    input.vertex.boneOffset = dx7 ? 64 : 0;
+    input.vertex.offset[0] = input.vertex.offset[2] = .1f;
+    input.blend.offset[0] = input.blend.offset[2] = .1f;
+    input.blend.boneOffset = 64;
+    input.blend.boneWeight = homogeneous ? 32767 : 32768;
+    surface.boneOffset = -1;
+    surface.vertCount = 1;
+    surface.verts = (XVertexBuffer *)&input;
+    skinned.surf.xsurf = &surface;
+    skinned.skinnedCachedOffset = -1;
+    skinned.skinnedVert.variant = output;
+    renderer.current.integer = dx7 ? 2 : 1;
+    R_SkinXSurfaceSkinned(&skinned, bones);
+    /* Single-precision results from the original scalar/SIMD operation order. */
+#if defined(COD2_X64)
+    /* Mac 0xd2324 adds translation to Z's product before the final sum. */
+    if (dx7) assert(output[0] == 0x1.448688p+3f);
+#else
+    if (dx7) assert(output[0] == 0x1.448686p+3f);
+#endif
+    else if (homogeneous) assert(output[3] == 0x1.fffep-1f);
+    else assert(output[0] == 0x1.448688p+2f);
+}
+
+int main(int argc, char **argv)
+{
+#if defined(COD2_X64)
+    DObjInit();
+#endif
+    if (argc > 1 && !strcmp(argv[1], "rigid")) {
+        TestRigidRotationRounding();
+        return 0;
+    }
+    if (argc > 1 && strcmp(argv[1], "existing")) {
+        TestSkinArithmetic(argv[1]);
+        return 0;
+    }
     TestChildTranslation(1, 0);
     TestChildTranslation(1, 1);
     TestChildTranslation(0, 0);

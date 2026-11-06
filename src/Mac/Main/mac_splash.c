@@ -8,7 +8,12 @@ void Sys_CreateSplashWindow(void)
 
 void Sys_DestroySplashWindow(void)
 {
+#if defined(COD2_X64) && defined(__APPLE__) && !defined(DEDICATED)
+    extern void MacWindow_DestroySplash(void);
+    MacWindow_DestroySplash();
+#else
 
+#endif
 }
 
 extern void CMacGameEngine_DrawSplashScreen(const char *inFileName);
@@ -21,7 +26,12 @@ void Sys_ShowSplashWindow(void)
 
 void Sys_HideSplashWindow(void)
 {
+#if defined(COD2_X64) && defined(__APPLE__) && !defined(DEDICATED)
+    extern void MacWindow_HideSplash(void);
+    MacWindow_HideSplash();
+#else
 
+#endif
 }
 
 const unsigned char __ZZN14CMacGameEngine20InstallEventHandlersEvE5C_135[128] = {

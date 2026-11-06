@@ -170,7 +170,11 @@ extern void SV_GameSendServerCommand(int clientnum, svscmd_type type, const char
 extern void Scr_Notify(gentity_t *ent, unsigned short stringValue, unsigned int paramcount);
 extern struct XModel *SV_XModelGet(const char *name);
 extern int XModelNumBones(const struct XModel *model);
+#if defined(COD2_X64)
+extern unsigned short *XModelBoneNames(XModel *model);
+#else
 extern int XModelBoneNames(XModel *model);
+#endif
 extern void G_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const char *pszText);
 extern void CL_AddDebugLine(const vec_t *start, const vec_t *end, const vec_t *color, int depthTest, int duration, int fromServer);
 extern int G_ModelIndex(const char *name);
@@ -1570,14 +1574,22 @@ void GScr_sin(void)
 {
     float val = Scr_GetFloat(0);
 
+#if defined(COD2_X64)
+    Scr_AddFloat((float)sin((double)val * 0.017453292519943295));
+#else
     Scr_AddFloat((float)sin(val * 0.017453292519943295f));
+#endif
 }
 
 void GScr_cos(void)
 {
     float val = Scr_GetFloat(0);
 
+#if defined(COD2_X64)
+    Scr_AddFloat((float)cos((double)val * 0.017453292519943295));
+#else
     Scr_AddFloat((float)cos(val * 0.017453292519943295f));
+#endif
 }
 
 void GScr_tan(void)
@@ -1597,7 +1609,11 @@ void GScr_asin(void)
 
     if (x < -1.0f || x > 1.0f)
         Scr_Error(va("%g out of range", (double)x));
+#if defined(COD2_X64)
+    Scr_AddFloat((float)((double)asinf(x) * 57.29577951308232));
+#else
     Scr_AddFloat(asinf(x) * 57.29577951308232f);
+#endif
 }
 
 void GScr_acos(void)
@@ -1606,14 +1622,22 @@ void GScr_acos(void)
     if (x < -1.0f || x > 1.0f) {
         Scr_Error(va("%g out of range", (double)x));
     }
+#if defined(COD2_X64)
+    Scr_AddFloat((float)((double)acosf(x) * 57.29577951308232));
+#else
     Scr_AddFloat(acosf(x) * 57.29577951308232f);
+#endif
     return;
 }
 
 void GScr_atan(void)
 {
     float val = Scr_GetFloat(0);
+#if defined(COD2_X64)
+    Scr_AddFloat((float)((double)atanf(val) * 57.29577951308232));
+#else
     Scr_AddFloat(atanf(val) * 57.29577951308232f);
+#endif
 }
 
 void GScr_CastInt(void)
@@ -1879,7 +1903,11 @@ void Scr_PrecacheShader(void)
         Scr_Error("precacheShader must be called before any wait statements in the gametype or level script\n");
     shaderName = Scr_GetString(0);
     if (!shaderName[0])
+#if defined(COD2_X64)
+        Scr_ParamError(0, "Shader name string is empty");
+#else
         Scr_ParamError(0, "shader name can't be empty");
+#endif
     G_ShaderIndex(shaderName);
 }
 
@@ -1909,7 +1937,11 @@ void GScr_RadiusDamage(void)
     min_damage = Scr_GetFloat(3);
 
     level.bPlayerIgnoreRadiusDamage = level.bPlayerIgnoreRadiusDamageLatched;
+#if defined(COD2_X64)
+    G_RadiusDamage(origin, NULL, &g_entities[1022], max_damage, min_damage, range, NULL, 0xe);
+#else
     G_RadiusDamage(origin, &g_entities[1022], NULL, max_damage, min_damage, range, NULL, 0xe);
+#endif
     level.bPlayerIgnoreRadiusDamage = 0;
     return;
 }
@@ -2286,8 +2318,7 @@ void GScr_GetPartName(void)
         Scr_ParamError(1, va("index out of range (0 - %d)", numBones - 1));
 
 #if defined(COD2_X64)
-    /* XModelBoneNames still returns int in xanim; read the typed hierarchy until that ABI is migrated. */
-    name = ((XModelParts *)model->parts)->hierarchy->names[index];
+    name = XModelBoneNames(model)[index];
 #else
     name = ((unsigned short *)XModelBoneNames( (XModel *)(model)))[index];
 #endif
@@ -2791,6 +2822,7 @@ void GScr_ReleaseClaimedTrigger(scr_entref_t entref)
     triggerEnt->trigger.singleUserEntIndex = 0x3ff;
 }
 
+#if !defined(COD2_X64)
 /* No-op for Xbox-360-only script builtins that stock PC scripts still reference inside dead
    level.xenon branches (e.g. endparty() at maps/mp/gametypes/_menus.gsc:92). The PC
    engine registers these as no-ops so the scripts compile; without it the GSC compiler aborts
@@ -2799,24 +2831,31 @@ static unsigned int Scr_XenonStub(void)
 {
     return 0;
 }
+#endif
 
 BuiltinFunction Scr_GetFunction(const char **pName, int *type)
 {
     int i;
     for (i = 0; i < FUNCTIONS_COUNT; i++) {
+#if defined(COD2_X64)
+        if (strcmp(*pName, functions[i].actionString) == 0) {
+#else
         if (I_stricmp(*pName, functions[i].actionString) == 0) {
+#endif
             *pName = functions[i].actionString;
             *type = functions[i].type;
             return functions[i].actionFunc;
         }
     }
 
+#if !defined(COD2_X64)
     if (I_stricmp(*pName, "endparty") == 0) {
         static const char endparty_name[] = "endparty";
         *pName = endparty_name;
         *type = 0;
         return (BuiltinFunction)Scr_XenonStub;
     }
+#endif
 
     return (BuiltinFunction)0;
 }
@@ -4227,8 +4266,17 @@ void ScrCmd_PlayLoopSound(scr_entref_t entref)
 {
     gentity_t *ent = GScr_EntityFromEntRef(entref);
 
+#if defined(COD2_X64)
+    {
+        const int alias = G_SoundAliasIndex(Scr_GetString(0));
+
+        ent->r.broadcastTime = -1;
+        ent->s.loopSound = alias;
+    }
+#else
     ent->r.broadcastTime = -1;
     ent->s.loopSound = G_SoundAliasIndex(Scr_GetString(0));
+#endif
     return;
 }
 
@@ -4614,7 +4662,11 @@ void GScr_PlaceSpawnPoint(scr_entref_t entref)
     vStart[2] = vStart[2] + (vEnd[2] - vStart[2]) * trace.fraction;
 
     G_TraceCapsule(&trace, vStart, playerMins, playerMaxs, vStart, pEnt->s.number, 0x2810011);
+#if defined(COD2_X64)
+    if (trace.allsolid) {
+#else
     if (trace.startsolid) {
+#endif
         Com_Printf("WARNING: Spawn point entity %i is in solid at (%i, %i, %i)\n",
                    pEnt->s.number,
                    (int)pEnt->r.currentOrigin[0],
@@ -4748,6 +4800,22 @@ void Scr_PlayFX(void)
                      GScr_EffectName(fxId, fxName, sizeof(fxName))));
 
     Vec3Cross(axis[2], axis[0], axis[1]);
+#if defined(COD2_X64)
+    crossLen = sqrtf(axis[1][0] * axis[1][0] + axis[1][1] * axis[1][1] + axis[1][2] * axis[1][2]);
+    if (crossLen < 0.001f) {
+        Scr_Error(va("%s (effect = %s)\n",
+                     "playFx called an up direction 0 or 180 degrees from forward",
+                     GScr_EffectName(fxId, fxName, sizeof(fxName))));
+    } else if (crossLen < 0.999f) {
+        /* A nearly unit cross product stays as computed, as on Mac. */
+        const float scale = 1.0f / crossLen;
+
+        axis[1][0] *= scale;
+        axis[1][1] *= scale;
+        axis[1][2] *= scale;
+        Vec3Cross(axis[0], axis[1], axis[2]);
+    }
+#else
     crossLen = Vec3Normalize(axis[1]);
     if (crossLen < 0.001f)
         Scr_Error(va("%s (effect = %s)\n",
@@ -4756,6 +4824,7 @@ void Scr_PlayFX(void)
 
     if (crossLen < 0.999f)
         Vec3Cross(axis[0], axis[1], axis[2]);
+#endif
 
     AxisToAngles(axis, ent->s.apos.trBase);
     return;
@@ -4851,6 +4920,13 @@ void GScr_LoadScripts(int inst)
         }
     }
 
+#if defined(COD2_X64)
+    /* Finish compilation before publishing the script class field maps. */
+    {
+        extern void Scr_PostCompileScripts(void);
+        Scr_PostCompileScripts();
+    }
+#endif
     for (i = 0; i <= 3; i++)
         Scr_SetClassMap(i);
     GScr_AddFieldsForEntity();
@@ -4998,6 +5074,9 @@ BuiltinFunctionDef functions[145] = {
     { "matchend", (BuiltinFunction)GScr_MatchEnd, 0 },
     { "setplayerteamrank", (BuiltinFunction)GScr_SetPlayerTeamRank, 0 },
     { "sendranks", (BuiltinFunction)GScr_SendXboxLiveRanks, 0 },
+#if defined(COD2_X64)
+    { "endparty", (BuiltinFunction)GScr_EndXboxLiveLobby, 0 },
+#endif
     { "setvotestring", (BuiltinFunction)GScr_SetVoteString, 0 },
     { "setvotetime", (BuiltinFunction)GScr_SetVoteTime, 0 },
     { "setvoteyescount", (BuiltinFunction)GScr_SetVoteYesCount, 0 },
@@ -5015,7 +5094,9 @@ BuiltinFunctionDef functions[145] = {
     { "stopallrumbles", (BuiltinFunction)Scr_StopAllRumbles, 0 },
     { "soundexists", (BuiltinFunction)ScrCmd_SoundExists, 0 },
     { "issplitscreen", (BuiltinFunction)Scr_IsSplitscreen, 0 },
+#if !defined(COD2_X64)
     { "issplitscreen", (BuiltinFunction)GScr_EndXboxLiveLobby, 0 },
+#endif
 };
 
 /* methods: script entity-method dispatch table (was the ILP32 blob symbol

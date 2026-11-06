@@ -25,6 +25,7 @@ suites = [
     ('ui_server_insert', 'src/PC/ui_mp/ui_main_mp.c', ['UI_InsertServerAtPosition', 'UI_BinaryInsertServer']),
     ('ui_text_color', 'src/PC/ui_mp/ui_shared_mp.c', ['Item_TextColor']),
     ('setviewpos', 'src/PC/game_mp/g_cmds_mp.c', ['Cmd_SetViewpos_f']),
+    ('callvote', 'src/PC/game_mp/g_cmds_mp.c', ['Cmd_CallVote_f']),
     ('infostring', 'src/PC/universal/q_shared.c', ['Info_RemoveKey', 'Info_RemoveKey_Big']),
     ('pure_iwds', 'src/PC/qcommon/files.c', ['FS_PureServerSetLoadedIwds']),
     ('timeout', 'src/PC/client_mp/cl_main_mp.c', ['CL_Frame']),
@@ -35,6 +36,7 @@ suites = [
     ('server_commands', 'src/PC/client_mp/cl_cgame_mp.c', ['CL_GetServerCommand']),
     ('master_response', 'src/PC/client_mp/cl_main_pc_mp.c', ['CL_ServersResponsePacket']),
     ('time_delta', 'src/PC/client_mp/cl_cgame_mp.c', ['CL_AdjustTimeDelta']),
+    ('cgame_init', 'src/PC/client_mp/cl_cgame_mp.c', ['CL_InitCGame']),
     ('download_names', 'src/PC/qcommon/files.c', ['FS_CompareIwds']),
     ('www_download_begin', 'src/PC/client_mp/cl_main_mp.c', ['CL_BeginDownload']),
     ('www_download', 'src/PC/client_mp/cl_parse_mp.c', ['CL_ParseWWWDownload', 'CL_WWWDownload']),
@@ -58,12 +60,6 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
                     '-o', str(trace_obj)], check=True, cwd=root)
     for name, path, names in suites:
         source = (root / path).read_text()
-        if name == 'netchan_decode':
-            # Its legacy/native diagnostic branches have alternative opening
-            # braces. Resolve them with the real compile flags before extracting.
-            source = subprocess.check_output(
-                [*[flag for flag in flags if flag != '-c'], '-E', '-P', str(root / path)],
-                cwd=root, text=True)
         if name == 'mantle':
             source = source[:source.index('extern const dvar_t *Dvar_RegisterBool')]
         functions = [] if names else [source]
@@ -81,6 +77,12 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
                 protocol = (root / 'src/PC/qcommon/cod2x_protocol.c').read_text()
                 functions.append(protocol[protocol.index('size_t Cod2x_EncodeConnect('):
                                           protocol.index('int Cod2x_HwidValid(')])
+        if name in ('netchan_decode', 'scheduled_fx', 'ui_text_color'):
+            # These functions have alternative opening braces in native/legacy
+            # branches. Resolve them with the engine flags before extraction.
+            source = subprocess.check_output(
+                [*[flag for flag in flags if flag != '-c'], '-E', '-P', str(root / path)],
+                cwd=root, text=True)
         for function in names:
             match = re.search(r'^(?:static )?(?:const char \*|void |dvar_t \*|qboolean |Bool |int )' + function + r'\([^;]*?\)\n\{',
                               source, re.M)

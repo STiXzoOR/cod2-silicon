@@ -48,7 +48,7 @@ extern void CL_Netchan_PrintProfileStats(int bDumpRecvStats);
 extern qboolean Sys_GetPacket(netadr_t *net_from, msg_t *net_message);
 extern qboolean Sys_StringToAdr(const char *s, netadr_t *a);
 #if defined(COD2_X64)
-extern void Sys_SendPacket(int, const void *, netadr_t);
+extern Bool Sys_SendPacket(int, const void *, netadr_t);
 #else
 extern Bool Sys_SendPacket(int length, const void *data, netadr_t to);
 #endif
@@ -119,11 +119,19 @@ void NetProf_PrepProfiling(netProfileInfo_t **pProf)
 
         {
 
+#if defined(COD2_X64)
+            int sv_running = com_sv_running->current.enabled;
+#else
             int sv_running = (com_sv_running)->current.integer;
+#endif
             if (sv_running != 0) {
 
                 int lh_field = (*(LegacyHacks **)imp_legacyHacks)->cl_running;
+#if defined(COD2_X64)
+                if (lh_field != 0 && net_profile_val == 2) {
+#else
                 if (lh_field != 0 && net_iProfilingOn == 2) {
+#endif
 
                     net_iProfilingOn = 1;
                 } else {
@@ -132,7 +140,11 @@ void NetProf_PrepProfiling(netProfileInfo_t **pProf)
             } else {
                 net_iProfilingOn = 1;
             }
+#if defined(COD2_X64)
+            Com_Printf("Net Profiling turned on: %s\n", netsrcString[net_iProfilingOn - 1]);
+#else
             Com_Printf("Net Profiling turned on: %s\n", g_qport);
+#endif
             if (*pProf != NULL)
                 return;
             goto alloc_prof;
@@ -391,8 +403,8 @@ qboolean NET_StringToAdr(const char *s, netadr_t *a)
     char *port;
 
 #if defined(COD2_X64)
-    /* Exact matches; the fixed 10-byte compares read past "loopback". */
-    if (strcmp(s, "loopback") == 0 || strcmp(s, "localhost") == 0) {
+    /* Mac 0x15843f compares only "localhost", including its terminator. */
+    if (strcmp(s, "localhost") == 0) {
 #else
     if (memcmp(s, "loopback", 0xa) == 0 || memcmp(s, "localhost", 0xa) == 0) {
 #endif
@@ -422,7 +434,11 @@ qboolean NET_StringToAdr(const char *s, netadr_t *a)
     }
 
     if (port != NULL) {
+#if defined(COD2_X64)
+        unsigned short portNum = (unsigned short)atoi(port);
+#else
         int portNum = atoi(port);
+#endif
 
         a->port = (unsigned short)((portNum >> 8) | (portNum << 8));
         return 1;
@@ -436,13 +452,35 @@ qboolean NET_StringToAdr(const char *s, netadr_t *a)
 Bool NET_SendPacket(netsrc_t sock, int length, const void *data, netadr_t to)
 {
     if (showpackets->current.enabled) {
+#if defined(COD2_X64)
+        if (*(int *)data == -1) {
+#else
         if (*(int *)data != -1) {
+#endif
             Com_Printf("[client %i] send packet %4i\n", 0, length);
         }
     }
 
     if (to.type == 2) {
 
+#if defined(COD2_X64)
+        int idx = (int)sock;
+        int port = 0;
+        if (idx <= 0) {
+            port = idx;
+            idx = 1;
+        } else if (idx == 1) {
+            idx = to.port;
+        }
+        loopback_t *loop = &loopbacks[idx];
+        int sendSlot = loop->send & 0xf;
+        loop->send++;
+        loopmsg_t *msg = &loop->msgs[sendSlot];
+        memcpy(msg, data, length);
+        msg->datalen = length;
+        msg->port = port;
+        return 1;
+#else
         int idx;
         loopmsg_t *msg;
         loopback_t *loop;
@@ -474,14 +512,14 @@ Bool NET_SendPacket(netsrc_t sock, int length, const void *data, netadr_t to)
 
             return 0;
         }
+#endif
     } else if (to.type == 1 || to.type == 0) {
 
         return 0;
     } else {
 
 #if defined(COD2_X64)
-        Sys_SendPacket(length, data, to);
-        return 1;
+        return Sys_SendPacket(length, data, to);
 #else
         return Sys_SendPacket(length, data, to);
 #endif
@@ -490,7 +528,18 @@ Bool NET_SendPacket(netsrc_t sock, int length, const void *data, netadr_t to)
 
 void NET_OutOfBandVoiceData(netsrc_t sock, netadr_t adr, byte *format, int len)
 {
+#if defined(COD2_X64)
+    char string_large_local[8];
+    LargeLocal_LargeLocal(string_large_local, MAX_MSGLEN + 4);
+    byte *string = (byte *)LargeLocal_GetBuf((const LargeLocal *)string_large_local);
+    if (len > MAX_MSGLEN) {
+        Com_DPrintf("OOB Voice Packet is %i bytes - too large to send\n", len);
+        ZN10LargeLocalD1Ev(string_large_local);
+        return;
+    }
+#else
     byte string[0x8000 + 4];
+#endif
 
     string[0] = 0xff;
     string[1] = 0xff;
@@ -508,8 +557,37 @@ void NET_OutOfBandVoiceData(netsrc_t sock, netadr_t adr, byte *format, int len)
         CL_Netchan_AddOOBProfilePacket(len);
 #endif
     }
+#if defined(COD2_X64)
+    ZN10LargeLocalD1Ev(string_large_local);
+#endif
 }
 
+#if defined(COD2_X64)
+void NET_OutOfBandPbPacket(netsrc_t sock, netadr_t adr, byte *format, int len)
+{
+    char string_large_local[8];
+    LargeLocal_LargeLocal(string_large_local, MAX_MSGLEN + 4);
+    byte *string = (byte *)LargeLocal_GetBuf((const LargeLocal *)string_large_local);
+    if (len > MAX_MSGLEN) {
+        Com_DPrintf("OOB Packet is %i bytes - too large to send\n", len);
+        ZN10LargeLocalD1Ev(string_large_local);
+        return;
+    }
+    memset(string, 0xff, 4);
+    memcpy(string + 4, format, len);
+    len += 4;
+    NET_SendPacket(sock, len, string, adr);
+    if (sock == 1) {
+        SV_Netchan_AddOOBProfilePacket(len);
+    } else {
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
+        CL_Netchan_AddOOBProfilePacket(len);
+#endif
+    }
+    ZN10LargeLocalD1Ev(string_large_local);
+}
+
+#endif
 Bool NET_OutOfBandData(netsrc_t sock, netadr_t adr, byte *format, int len)
 {
 
@@ -567,7 +645,11 @@ Bool NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *data)
     }
 
     iLength = strlen(data);
+#if defined(COD2_X64)
+    if ((unsigned int)iLength + 1 > MAX_MSGLEN - 4) {
+#else
     if (iLength + 1 > 0x3ffc) {
+#endif
         Com_DPrintf("OOB Packet is %i bytes - too large to send\n", iLength);
         ZN10LargeLocalD1Ev(string_large_local);
         return 0;
@@ -603,8 +685,13 @@ qboolean NET_CompareAdr(netadr_t a, netadr_t b)
         return 1;
     }
     if (a.type != 4) {
+#if defined(COD2_X64)
+        Com_Printf("NET_CompareAdrSigned: bad address type\n");
+        return 1;
+#else
         Com_Printf("NET_CompareAdr: bad address type\n");
         return 0;
+#endif
     }
 
     if (a.port != b.port) {
@@ -633,7 +720,11 @@ qboolean NET_CompareBaseAdr(netadr_t a, netadr_t b)
         return diff == 0 ? 1 : 0;
     }
     if (a.type != 4) {
+#if defined(COD2_X64)
+        Com_Printf("NET_CompareBaseAdrSigned: bad address type\n");
+#else
         Com_Printf("NET_CompareBaseAdr: bad address type\n");
+#endif
         diff = 0;
         return diff == 0 ? 1 : 0;
     }
@@ -707,11 +798,17 @@ Bool Netchan_TransmitNextFragment(netchan_t *chan)
             fragmentLength = 0x514;
         }
 
+#if defined(COD2_X64)
+        /* Protocol 118 sends fragmentStart as a long from both sides (Mac
+           0x158e21); a short from the client misparses on a retail server. */
+        MSG_WriteLong(&send, fragStart);
+#else
         if (chan->sock == 1) {
             MSG_WriteLong(&send, fragStart);
         } else {
             MSG_WriteShort(&send, fragStart);
         }
+#endif
         MSG_WriteShort(&send, fragmentLength);
         MSG_WriteData(&send, chan->unsentBuffer + fragStart, fragmentLength);
     }
@@ -762,8 +859,16 @@ Bool Netchan_Transmit(netchan_t *chan, int length, const byte *data)
     int res;
     int iSize;
 
+#if defined(COD2_X64)
+    if (length > MAX_MSGLEN) {
+#else
     if (length > 0x4000) {
+#endif
+#if defined(COD2_X64)
+        Com_Error(1, "\x15" "Netchan_Transmit: length = %i", length);
+#else
         Com_Error(1, "Netchan_Transmit: length = %i", length);
+#endif
     }
 
     chan->unsentFragmentStart = 0;
@@ -849,11 +954,16 @@ qboolean Netchan_Process(netchan_t *chan, msg_t *msg)
 
     if (fragmented) {
 
+#if defined(COD2_X64)
+        /* Mac 0x15963a: fragmentStart is always a long in protocol 118. */
+        fragmentStart = MSG_ReadLong(msg);
+#else
         if (chan->sock == 0) {
             fragmentStart = MSG_ReadLong(msg);
         } else {
             fragmentStart = MSG_ReadShort(msg);
         }
+#endif
         fragmentLength = MSG_ReadShort(msg);
     } else {
         fragmentStart = 0;
@@ -941,7 +1051,11 @@ qboolean Netchan_Process(netchan_t *chan, msg_t *msg)
 
     if (fragmentLength < 0 ||
         msg->readcount + fragmentLength > msg->cursize ||
+#if defined(COD2_X64)
+        (unsigned int)fragmentStart + (unsigned int)fragmentLength > MAX_MSGLEN) {
+#else
         fragmentStart + fragmentLength > MAX_MSGLEN) {
+#endif
         if (showdrop->current.enabled || showpackets->current.enabled) {
             Com_Printf("%s:illegal fragment length\n",
                        NET_AdrToString(chan->remoteAddress));

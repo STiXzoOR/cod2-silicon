@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
@@ -20,7 +21,11 @@ typedef struct {
     void **vtable;
     ULONG refCount;
     UINT32 textureUsageMask;
+#if defined(COD2_X64)
+    const void *source;
+#else
     UINT32 pad0xc;
+#endif
     UINT32 stageCount;
 } COpenGLNVidiaRegisterCombinersProgramImpl;
 
@@ -37,6 +42,37 @@ extern fnptr_t vtbl_CDirect3DPixelShader_base[];
 extern fnptr_t vtbl_CDirect3DPixelShader_ATI[];
 extern fnptr_t vtbl_CDirect3DPixelShader_NVidia[];
 extern fnptr_t vtbl_CDirect3DPixelShader_ARB[];
+
+#if defined(COD2_X64)
+#if !COD2_APPLE_SDK
+extern GLboolean glIsEnabled(GLenum cap);
+#endif
+extern int CDirect3DDevice_DetachPixelShader(const void *shader);
+
+/* Current native rendering also binds programs outside COpenGL. Query the
+ * current context rather than keeping Mac's 0x81c/0x820 singleton cache. */
+static int PixelShader_ProgramIsBound(GLenum target, GLuint program)
+{
+    GLint bound = 0;
+    glGetProgramivARB(target, 0x8677, &bound);
+    return (GLuint)bound == program;
+}
+
+static void PixelShader_EnableProgram(GLenum target, GLuint program)
+{
+    if (!PixelShader_ProgramIsBound(target, program))
+        glBindProgramARB(target, program);
+    if (!glIsEnabled(target))
+        glEnable(target);
+}
+
+static void PixelShader_DisableProgram(GLenum target)
+{
+    if (glIsEnabled(target))
+        glDisable(target);
+}
+#endif
+
 
 extern void *imp___ZN7COpenGL7sOpenGLE;
 extern int g_fp_enable_count;
@@ -91,6 +127,13 @@ void ZN25COpenGLARBFragmentProgramD2Ev(const COpenGLARBFragmentProgram *_this);
 
 ULONG CDirect3DPixelShader_AddRef(const CDirect3DPixelShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DPixelShader_AddRef", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DPixelShaderImpl *shader;
 
     shader = (CDirect3DPixelShaderImpl *)_this;
@@ -100,15 +143,33 @@ ULONG CDirect3DPixelShader_AddRef(const CDirect3DPixelShader *_this)
 
 HRESULT CDirect3DPixelShader_QueryInterface(const CDirect3DPixelShader *_this, const IID *iid, void **ppvObj)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &iid, &ppvObj };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DPixelShader_QueryInterface", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)iid;
 
     *ppvObj = (void *)_this;
+#if defined(COD2_X64)
+    ((ULONG (*)(const void *))(*(void ***)_this)[1])(_this);
+#else
     CDirect3DPixelShader_AddRef(_this);
+#endif
     return 0;
 }
 
 ULONG CDirect3DPixelShader_Release(const CDirect3DPixelShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DPixelShader_Release", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DPixelShaderImpl *shader;
     ULONG refCount;
 
@@ -125,38 +186,92 @@ ULONG CDirect3DPixelShader_Release(const CDirect3DPixelShader *_this)
 
 void ZN20CDirect3DPixelShaderD2Ev(const CDirect3DPixelShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN20CDirect3DPixelShaderD2Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DPixelShaderImpl *shader = (CDirect3DPixelShaderImpl *)_this;
     shader->vtable = vtbl_CDirect3DPixelShader_base;
+#if defined(COD2_X64)
+    CDirect3DDevice_DetachPixelShader(_this);
+#endif
     CDirect3DPixelShader_InvalidateDeviceState();
 }
 
 void ZN20CDirect3DPixelShaderD1Ev(const CDirect3DPixelShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN20CDirect3DPixelShaderD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN20CDirect3DPixelShaderD2Ev(_this);
 }
 
 void ZN20CDirect3DPixelShaderD0Ev(const CDirect3DPixelShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN20CDirect3DPixelShaderD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN20CDirect3DPixelShaderD2Ev(_this);
     free((void *)_this);
 }
 
 void COpenGLATITextFragmentShader_Enable(const COpenGLATITextFragmentShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("COpenGLATITextFragmentShader_Enable", _this, macArguments, NULL, 0))
+        return;
+#endif
+
+#if defined(COD2_X64)
+    PixelShader_EnableProgram(0x8200, ((const COpenGLATITextFragmentShaderImpl *)_this)->programId);
+#else
     (void)_this;
 
     return 0;
+#endif
 }
 
 void COpenGLATITextFragmentShader_Disable(const COpenGLATITextFragmentShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("COpenGLATITextFragmentShader_Disable", _this, macArguments, NULL, 0))
+        return;
+#endif
+
+#if defined(COD2_X64)
+    (void)_this;
+    PixelShader_DisableProgram(0x8200);
+#else
     (void)_this;
 
     return 0;
+#endif
 }
 
 void COpenGLATITextFragmentShader_SetConstants(const COpenGLATITextFragmentShader *_this, UINT32 Register, const float *pConstantData, UINT32 Vector4fCount, UINT32 CommandNumber)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Register, &pConstantData, &Vector4fCount, &CommandNumber };
+    if (MacShim_Dispatch("COpenGLATITextFragmentShader_SetConstants", _this, macArguments, NULL, 0))
+        return;
+#endif
+
+#if defined(COD2_X64)
+    (void)_this;
+    (void)CommandNumber;
+    for (UINT32 i = 0; i < Vector4fCount; ++i)
+        glProgramEnvParameter4fvARB(0x8200, Register + i, pConstantData + i * 4);
+#else
     (void)_this;
     (void)Register;
     (void)pConstantData;
@@ -164,10 +279,30 @@ void COpenGLATITextFragmentShader_SetConstants(const COpenGLATITextFragmentShade
     (void)CommandNumber;
 
     return 0;
+#endif
 }
 
 void COpenGLATITextFragmentShader_COpenGLATITextFragmentShader(const COpenGLATITextFragmentShader *_this, const void *pSrcData)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pSrcData };
+    if (MacShim_Dispatch("COpenGLATITextFragmentShader_COpenGLATITextFragmentShader", _this, macArguments, NULL, 0))
+        return;
+#endif
+
+#if defined(COD2_X64)
+    COpenGLATITextFragmentShaderImpl *shader = (COpenGLATITextFragmentShaderImpl *)_this;
+    GLint previousProgram;
+    shader->vtable = vtbl_CDirect3DPixelShader_ATI;
+    shader->refCount = 1;
+    shader->textureUsageMask = 0;
+    shader->programId = 0;
+    glGetProgramivARB(0x8200, 0x8677, &previousProgram);
+    glGenProgramsARB(1, &shader->programId);
+    glBindProgramARB(0x8200, shader->programId);
+    glProgramStringARB(0x8200, 0x8875, (GLsizei)strlen((const char *)pSrcData), pSrcData);
+    glBindProgramARB(0x8200, (GLuint)previousProgram);
+#else
     COpenGLATITextFragmentShaderImpl *shader;
 
     (void)pSrcData;
@@ -179,42 +314,95 @@ void COpenGLATITextFragmentShader_COpenGLATITextFragmentShader(const COpenGLATIT
     shader->programId = 0;
 
     return 0;
+#endif
 }
 
 static void COpenGLATITextFragmentShader_DestroyImpl(const COpenGLATITextFragmentShader *_this)
 {
     COpenGLATITextFragmentShaderImpl *shader = (COpenGLATITextFragmentShaderImpl *)_this;
     shader->vtable = vtbl_CDirect3DPixelShader_ATI;
+#if defined(COD2_X64)
+    if (PixelShader_ProgramIsBound(0x8200, shader->programId))
+        PixelShader_DisableProgram(0x8200);
+    glDeleteProgramsARB(1, &shader->programId);
+#endif
 
     ZN20CDirect3DPixelShaderD2Ev((const CDirect3DPixelShader *)_this);
 }
 
 void ZN28COpenGLATITextFragmentShaderD1Ev(const COpenGLATITextFragmentShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN28COpenGLATITextFragmentShaderD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLATITextFragmentShader_DestroyImpl(_this);
 }
 
 void ZN28COpenGLATITextFragmentShaderD0Ev(const COpenGLATITextFragmentShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN28COpenGLATITextFragmentShaderD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLATITextFragmentShader_DestroyImpl(_this);
     free((void *)_this);
 }
 
 void COpenGLNVidiaRegisterCombinersProgram_Enable(const COpenGLNVidiaRegisterCombinersProgram *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("COpenGLNVidiaRegisterCombinersProgram_Enable", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
     return 0;
 }
 
 void COpenGLNVidiaRegisterCombinersProgram_Disable(const COpenGLNVidiaRegisterCombinersProgram *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("COpenGLNVidiaRegisterCombinersProgram_Disable", _this, macArguments, NULL, 0))
+        return;
+#endif
+
+#if defined(COD2_X64)
+    (void)_this;
+    /* NV has no ARB program binding; these are the two enable capabilities. */
+    if (glIsEnabled(0x86de) || glIsEnabled(0x8522)) {
+        glDisable(0x86de);
+        glDisable(0x8522);
+    }
+#else
     (void)_this;
 
     return 0;
+#endif
 }
 
 void COpenGLNVidiaRegisterCombinersProgram_SetConstants(const COpenGLNVidiaRegisterCombinersProgram *_this, UINT32 Register, const float *pConstantData, UINT32 Vector4fCount, UINT32 CommandNumber)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Register, &pConstantData, &Vector4fCount, &CommandNumber };
+    if (MacShim_Dispatch("COpenGLNVidiaRegisterCombinersProgram_SetConstants", _this, macArguments, NULL, 0))
+        return;
+#endif
+
+#if defined(COD2_X64)
+    (void)Register;
+    (void)Vector4fCount;
+    if (((const COpenGLNVidiaRegisterCombinersProgramImpl *)_this)->stageCount <= 2)
+        glCombinerParameterfvNV(0x852a + CommandNumber, pConstantData);
+    else
+        glCombinerStageParameterfvNV(0x8550 + CommandNumber, 0x852a, pConstantData);
+#else
     (void)_this;
     (void)Register;
     (void)pConstantData;
@@ -222,17 +410,28 @@ void COpenGLNVidiaRegisterCombinersProgram_SetConstants(const COpenGLNVidiaRegis
     (void)CommandNumber;
 
     return 0;
+#endif
 }
 
 void COpenGLNVidiaRegisterCombinersProgram_COpenGLNVidiaRegisterCombinersProgram(const COpenGLNVidiaRegisterCombinersProgram *_this, const void *pSrcData)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pSrcData };
+    if (MacShim_Dispatch("COpenGLNVidiaRegisterCombinersProgram_COpenGLNVidiaRegisterCombinersProgram", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLNVidiaRegisterCombinersProgramImpl *program;
 
     program = (COpenGLNVidiaRegisterCombinersProgramImpl *)_this;
     program->vtable = vtbl_CDirect3DPixelShader_NVidia;
     program->refCount = 1;
     program->textureUsageMask = 0;
+#if defined(COD2_X64)
+    program->source = pSrcData;
+#else
     program->pad0xc = (UINT32)(unsigned long)pSrcData;
+#endif
     program->stageCount = 0;
     return 0;
 }
@@ -242,46 +441,95 @@ static void COpenGLNVidiaRegisterCombinersProgram_DestroyImpl(const COpenGLNVidi
     COpenGLNVidiaRegisterCombinersProgramImpl *program;
     program = (COpenGLNVidiaRegisterCombinersProgramImpl *)_this;
     program->vtable = vtbl_CDirect3DPixelShader_NVidia;
+#if defined(COD2_X64)
+    if (CDirect3DDevice_DetachPixelShader(_this))
+        COpenGLNVidiaRegisterCombinersProgram_Disable(_this);
+#endif
 
     ZN20CDirect3DPixelShaderD2Ev((const CDirect3DPixelShader *)_this);
 }
 
 void ZN37COpenGLNVidiaRegisterCombinersProgramD2Ev(const COpenGLNVidiaRegisterCombinersProgram *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN37COpenGLNVidiaRegisterCombinersProgramD2Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLNVidiaRegisterCombinersProgram_DestroyImpl(_this);
 }
 
 void ZN37COpenGLNVidiaRegisterCombinersProgramD1Ev(const COpenGLNVidiaRegisterCombinersProgram *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN37COpenGLNVidiaRegisterCombinersProgramD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLNVidiaRegisterCombinersProgram_DestroyImpl(_this);
 }
 
 void ZN37COpenGLNVidiaRegisterCombinersProgramD0Ev(const COpenGLNVidiaRegisterCombinersProgram *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN37COpenGLNVidiaRegisterCombinersProgramD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLNVidiaRegisterCombinersProgram_DestroyImpl(_this);
     free((void *)_this);
 }
 
 void COpenGLARBFragmentProgram_Enable(const COpenGLARBFragmentProgram *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("COpenGLARBFragmentProgram_Enable", _this, macArguments, NULL, 0))
+        return;
+#endif
+
+#if defined(COD2_X64)
+    PixelShader_EnableProgram(0x8804, ((const COpenGLARBFragmentProgramImpl *)_this)->programId);
+#else
     COpenGLARBFragmentProgramImpl *program = (COpenGLARBFragmentProgramImpl *)_this;
     if (program->programId) {
         glEnable(0x8804);
         glBindProgramARB(0x8804, program->programId);
     }
     return 0;
+#endif
 }
 
 void COpenGLARBFragmentProgram_Disable(const COpenGLARBFragmentProgram *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("COpenGLARBFragmentProgram_Disable", _this, macArguments, NULL, 0))
+        return;
+#endif
+
+#if defined(COD2_X64)
+    (void)_this;
+    PixelShader_DisableProgram(0x8804);
+#else
     (void)_this;
     glDisable(0x8804);
     glBindProgramARB(0x8804, 0);
     return 0;
+#endif
 }
 
 void COpenGLARBFragmentProgram_SetConstants(const COpenGLARBFragmentProgram *_this, UINT32 Register, const float *pConstantData, UINT32 Vector4fCount, UINT32 CommandNumber)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Register, &pConstantData, &Vector4fCount, &CommandNumber };
+    if (MacShim_Dispatch("COpenGLARBFragmentProgram_SetConstants", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     UINT32 i;
     const float *pf = pConstantData;
     (void)_this;
@@ -295,9 +543,18 @@ void COpenGLARBFragmentProgram_SetConstants(const COpenGLARBFragmentProgram *_th
 
 void COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(const COpenGLARBFragmentProgram *_this, const string *Name, const string *Code)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Name, &Code };
+    if (MacShim_Dispatch("COpenGLARBFragmentProgram_COpenGLARBFragmentProgram", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLARBFragmentProgramImpl *program;
     const char *codeStr;
     int codeLen;
+#if defined(COD2_X64)
+    GLint previousProgram;
+#endif
 
     program = (COpenGLARBFragmentProgramImpl *)_this;
     program->vtable = vtbl_CDirect3DPixelShader_ARB;
@@ -308,10 +565,20 @@ void COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(const COpenGLARBFragmen
     program->programId = 0;
 
     codeStr = *(const char **)Code;
+#if defined(COD2_X64)
+    /* Mac 0x1c4ea-0x1c542 uploads even an empty Code string. The factory's
+     * name:: input must let GL determine the compilation failure. */
+    if (!codeStr)
+#else
     if (!codeStr || !codeStr[0])
+#endif
         return 0;
 
     codeLen = strlen(codeStr);
+#if defined(COD2_X64)
+    /* Mac 0x1be4b preserves the prior binding while uploading the new program. */
+    glGetProgramivARB(0x8804, 0x8677, &previousProgram);
+#endif
 
     {
         const char *p = codeStr;
@@ -320,10 +587,25 @@ void COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(const COpenGLARBFragmen
             while (*p == ' ')
                 p++;
             if (*p >= '0' && *p <= '9') {
+#if defined(COD2_X64)
+                unsigned int idx = 0;
+                while (*p >= '0' && *p <= '9') {
+                    if (idx < 16)
+                        idx = idx * 10 + (unsigned int)(*p - '0');
+                    ++p;
+                }
+                if (idx < 16)
+                    program->textureUsageMask |= (1u << idx);
+#else
                 int idx = *p - '0';
                 if (idx < 16)
                     program->textureUsageMask |= (1u << idx);
+#endif
             }
+#if defined(COD2_X64)
+            if (!*p)
+                break;
+#endif
             p++;
         }
     }
@@ -342,10 +624,25 @@ void COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(const COpenGLARBFragmen
         }
     }
 
+#if defined(COD2_X64)
+    glBindProgramARB(0x8804, (GLuint)previousProgram);
+#else
     glBindProgramARB(0x8804, 0);
+#endif
 
     return 0;
 }
+
+#if defined(COD2_X64)
+IDirect3DPixelShader9 *CDirect3DPixelShader_CreateARBNative(const char *name, const char *code)
+{
+    COpenGLARBFragmentProgramImpl *program = calloc(1, sizeof(*program));
+    if (program)
+        COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(
+            (const COpenGLARBFragmentProgram *)program, (const string *)&name, (const string *)&code);
+    return (IDirect3DPixelShader9 *)program;
+}
+#endif
 
 static void COpenGLARBFragmentProgram_DestroyImpl(const COpenGLARBFragmentProgram *_this)
 {
@@ -353,6 +650,12 @@ static void COpenGLARBFragmentProgram_DestroyImpl(const COpenGLARBFragmentProgra
     program = (COpenGLARBFragmentProgramImpl *)_this;
     program->vtable = vtbl_CDirect3DPixelShader_ARB;
     if (program->programId) {
+#if defined(COD2_X64)
+        GLint currentProgram;
+        glGetProgramivARB(0x8804, 0x8677, &currentProgram);
+        if ((GLuint)currentProgram == program->programId)
+            glDisable(0x8804);
+#endif
         glDeleteProgramsARB(1, &program->programId);
         program->programId = 0;
     }
@@ -361,22 +664,47 @@ static void COpenGLARBFragmentProgram_DestroyImpl(const COpenGLARBFragmentProgra
 
 void ZN25COpenGLARBFragmentProgramD2Ev(const COpenGLARBFragmentProgram *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN25COpenGLARBFragmentProgramD2Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLARBFragmentProgram_DestroyImpl(_this);
 }
 
 void ZN25COpenGLARBFragmentProgramD1Ev(const COpenGLARBFragmentProgram *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN25COpenGLARBFragmentProgramD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLARBFragmentProgram_DestroyImpl(_this);
 }
 
 void ZN25COpenGLARBFragmentProgramD0Ev(const COpenGLARBFragmentProgram *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN25COpenGLARBFragmentProgramD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLARBFragmentProgram_DestroyImpl(_this);
     free((void *)_this);
 }
 
 HRESULT CDirect3DPixelShader_GetDevice(const CDirect3DPixelShader *_this, IDirect3DDevice9 **ppDevice)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &ppDevice };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DPixelShader_GetDevice", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     *ppDevice = NULL;
     return 0;
@@ -384,6 +712,13 @@ HRESULT CDirect3DPixelShader_GetDevice(const CDirect3DPixelShader *_this, IDirec
 
 HRESULT CDirect3DPixelShader_GetFunction(const CDirect3DPixelShader *_this, void *pDstData, UINT *pSizeOfData)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pDstData, &pSizeOfData };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DPixelShader_GetFunction", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)pDstData;
     *pSizeOfData = 0;

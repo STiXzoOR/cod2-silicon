@@ -49,7 +49,11 @@ void CM_LoadMap(const char *name, int *checksum)
     void *alloc;
 
     if (name == NULL || *name == '\0') {
+#if defined(COD2_X64)
+        Com_Error(1, "\x15" "CM_LoadMap: NULL name");
+#else
         Com_Error(1, "CM_LoadMap: NULL name");
+#endif
     }
 
     if (cm_base->name != NULL) {
@@ -173,7 +177,11 @@ void CM_SaveLump(int lumpnum, byte *newLump, int size, int *checksum)
 
     length = FS_FOpenFileRead(*(char **)&cm, &h, 0);
     if (h == 0) {
+#if defined(COD2_X64)
+        Com_Error(1, "EXE_ERR_COULDNT_LOAD\x15%s", *(char **)&cm);
+#else
         Com_Error(1, "EXE_ERR_COULDNT_LOAD%s", *(char **)&cm);
+#endif
     }
 
     buf = (byte *)Z_MallocInternal(length + 1);
@@ -190,6 +198,9 @@ void CM_SaveLump(int lumpnum, byte *newLump, int size, int *checksum)
 
     if (hdr->version != 4 && hdr->version != 0x3d) {
         Com_Error(1, "bad bsp version %d", hdr->version);
+#if defined(COD2_X64)
+        return;
+#endif
     }
 
     memcpy(oldHeader, header, sizeof(dheader_t));
@@ -197,6 +208,9 @@ void CM_SaveLump(int lumpnum, byte *newLump, int size, int *checksum)
     h = FS_OpenFileOverwrite(*(char **)&cm);
     if (h == 0) {
         Com_Error(1, "Failed to open file %s for writing", *(char **)&cm);
+#if defined(COD2_X64)
+        return;
+#endif
     }
 
     offset = 0x140;

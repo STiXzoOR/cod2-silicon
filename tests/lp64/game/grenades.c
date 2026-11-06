@@ -27,12 +27,19 @@ static vec3_t zero;
 byte *vec3_origin_ptr = (byte *)zero;
 static WeaponDef weapon;
 static gclient_t client;
-static int eventCounts[256], wallHits, floorHits, links;
+static int eventCounts[256], eventParms[256], wallHits, floorHits, links;
+static int allowDirectDamage, directDamageCalls, accuracyCalls;
 static int useWall, traceStartSolid;
+static trace_t scriptedTraces[2];
+static int scriptedTraceCount, scriptedTraceIndex;
+static int triggerCalls, triggerDamage;
+static vec3_t linkedBase, linkedOrigin2;
 static float wallX = 20.0f;
 static vec3_t explosionOrigin;
 static int splashCalls;
 static float splashInner, splashOuter, splashRadius;
+static gentity_t *splashIgnore, *accuracyAttacker, *damageAttacker, *hitTriggerAttacker;
+static int accuracyResult, expectedSkip, scriptedTargetContents[2];
 
 WeaponDef *BG_GetWeaponDef(int index) { assert(index == 1); return &weapon; }
 gentity_t *G_Spawn(void)
@@ -47,7 +54,14 @@ gentity_t *G_Spawn(void)
 void Scr_SetString(scr_string_t *to, unsigned int value) { *to = value; }
 void Com_Printf(const char *fmt, ...) {}
 void Com_Error(int code, const char *fmt, ...) { abort(); }
-void SV_LinkEntity(gentity_t *ent) { ++links; }
+void SV_LinkEntity(gentity_t *ent)
+{
+    if (!links) {
+        memcpy(linkedBase, ent->s.pos.trBase, sizeof(linkedBase));
+        memcpy(linkedOrigin2, ent->s.origin2, sizeof(linkedOrigin2));
+    }
+    ++links;
+}
 int SV_PointContents(const vec_t *p, int pass, int mask) { return 0; }
 void G_FreeEntity(gentity_t *ent) { ent->r.inuse = 0; }
 gentity_t *G_TempEntity(const vec_t *p, int event) { abort(); }
@@ -55,6 +69,7 @@ void G_AddEvent(gentity_t *ent, int event, int parm)
 {
     assert(event >= 0 && event < 256);
     ++eventCounts[event];
+    eventParms[event] = parm;
     if (event == 188 || event == 191)
         memcpy(explosionOrigin, ent->r.currentOrigin, sizeof(explosionOrigin));
 }
@@ -69,7 +84,13 @@ int G_RunThink(gentity_t *ent)
 void G_LocationalTrace(trace_t *tr, const vec_t *start, const vec_t *end,
                       int skip, int mask, byte *priority)
 {
-    assert(skip == 0 && (mask & 1));
+    assert(skip == expectedSkip && (mask & 1));
+    if (scriptedTraceCount) {
+        assert(scriptedTraceIndex < scriptedTraceCount);
+        scriptedTargetContents[scriptedTraceIndex] = g_entities[1].r.contents;
+        *tr = scriptedTraces[scriptedTraceIndex++];
+        return;
+    }
     memset(tr, 0, sizeof(*tr));
     tr->fraction = 1;
     tr->entityNum = 1023;
@@ -112,7 +133,8 @@ void G_TraceCapsule(trace_t *tr, const vec_t *start, const vec_t *mins,
 qboolean G_RadiusDamage(const vec_t *p, gentity_t *inflictor, gentity_t *attacker,
                         float inner, float outer, float radius, gentity_t *ignore, int mod)
 {
-    assert(attacker == &g_entities[0] && ignore == inflictor);
+    assert(attacker == &g_entities[0]);
+    splashIgnore = ignore;
     ++splashCalls;
     splashInner = inner;
     splashOuter = outer;
@@ -122,11 +144,31 @@ qboolean G_RadiusDamage(const vec_t *p, gentity_t *inflictor, gentity_t *attacke
 void Server_SwitchToValidFxScheduler(void) { abort(); }
 EffectTemplate *FX_RegisterEffect(const char *name) { abort(); }
 float FX_GetEffectLength(EffectTemplate *fx) { abort(); }
-int LogAccuracyHit(gentity_t *target, gentity_t *attacker) { return 0; }
+int LogAccuracyHit(gentity_t *target, gentity_t *attacker)
+{
+    ++accuracyCalls;
+    accuracyAttacker = attacker;
+    return accuracyResult;
+}
 void G_Damage(gentity_t *target, gentity_t *inflictor, gentity_t *attacker,
-              vec_t *dir, vec_t *p, int damage, int flags, int mod, int hit, int loc) { abort(); }
-void G_CheckHitTriggerDamage(gentity_t *attacker, vec_t *start, vec_t *end, int damage, int mod) {}
-void G_GrenadeTouchTriggerDamage(gentity_t *ent, vec_t *old, vec_t *p, int radius, int mod) {}
+              vec_t *dir, vec_t *p, int damage, int flags, int mod, int hit, int loc)
+{
+    assert(allowDirectDamage);
+    assert(target == &g_entities[1]);
+    assert(damage == 25 && dir[0] == 100);
+    damageAttacker = attacker;
+    ++directDamageCalls;
+}
+void G_CheckHitTriggerDamage(gentity_t *attacker, vec_t *start, vec_t *end, int damage, int mod)
+{
+    hitTriggerAttacker = attacker;
+}
+void G_GrenadeTouchTriggerDamage(gentity_t *ent, vec_t *old, vec_t *p, int damage, int mod)
+{
+    assert(mod == 3);
+    ++triggerCalls;
+    triggerDamage = damage;
+}
 void SnapVectorTowards(vec_t *v, vec_t *to) {}
 
 static gentity_t *throw_grenade(int smoke, int cooked)
@@ -137,7 +179,10 @@ static gentity_t *throw_grenade(int smoke, int cooked)
         weapon.perpendicularBounce[i] = .45f;
     }
     weapon.projExplosion = smoke ? 2 : 0;
+    weapon.offhandClass = smoke ? OFFHAND_CLASS_SMOKE_GRENADE : OFFHAND_CLASS_FRAG_GRENADE;
     memset(eventCounts, 0, sizeof(eventCounts));
+    memset(eventParms, 0, sizeof(eventParms));
+    allowDirectDamage = directDamageCalls = accuracyCalls = 0;
     floorHits = wallHits = links = 0;
     splashCalls = 0;
     level.time = 1000;
@@ -195,6 +240,7 @@ int main(void)
     weapon.iExplosionRadius = 100;
     G_ExplodeMissile(ent);
     assert(splashCalls == 1 && splashInner == 250 && splashOuter == 15 && splashRadius == 100);
+    assert(splashIgnore == ent);
     ent = throw_grenade(0, 0);
     weapon.iExplosionRadius = 100;
     G_ExplodeMissile(ent);
@@ -206,8 +252,9 @@ int main(void)
     weapon.iExplosionRadius = 100;
     for (int i = 0; i < 10 && ent->s.eType == 4; ++i)
         frame(ent);
-    assert(ent->s.eType == 0 && eventCounts[190] == 1 && eventCounts[187] == 0);
+    assert(ent->s.eType == 0 && eventCounts[189] == 1 && !eventCounts[190] && eventCounts[187] == 0);
     assert(splashCalls == 1 && splashInner == 250 && splashOuter == 15 && splashRadius == 100);
+    assert(splashIgnore == &g_entities[1022]);
     ent = throw_grenade(0, 0);
     traceStartSolid = 1;
     frame(ent);
@@ -215,4 +262,5 @@ int main(void)
     assert(ent->r.currentOrigin[2] >= 12 && ent->r.currentOrigin[2] <= 14);
     assert(ent->s.pos.trDelta[2] > 0); /* effective reverse normal, no pass-through */
     puts("grenades: production spawn, gravity, bounce/rest, frag/smoke/cooked fuse and grenade/projectile splash pass");
+    return 0;
 }

@@ -134,6 +134,9 @@ extern void SCR_StopCinematic(void);
 extern void Con_Init(void);
 extern void Con_Close(void);
 extern void CL_PlayCinematic_f(void);
+#if defined(COD2_X64)
+extern void CL_PlayUnskippableCinematic_f(void);
+#endif
 extern void CL_Connect_f(void);
 extern void CL_GlobalServers_f(void);
 extern void CL_Rcon_f(void);
@@ -524,7 +527,11 @@ char *CL_AllocSkelMemory(int localClientNum, unsigned int size)
 void CL_ResetSkeletonCache(int localClientNum)
 {
     clientActive_t *client = &clients[localClientNum];
+#if defined(COD2_X64)
+    unsigned int count = (unsigned int)client->skelTimeStamp + 1u;
+#else
     unsigned int count = client->skelTimeStamp + 1;
+#endif
     if (!count)
         count = 1;
     client->skelTimeStamp = count;
@@ -593,6 +600,23 @@ void CL_Setenv_f(void)
 
 extern void Cbuf_AddText(const char *text);
 extern const char *va(const char *fmt, ...);
+#if defined(COD2_X64)
+void CL_NextDemo(void)
+{
+    char command[1024];
+
+    I_strncpyz(command, nextdemo->current.string, sizeof(command));
+    Com_DPrintf("CL_NextDemo: %s\n", command);
+    if (!command[0])
+        return;
+
+    Dvar_SetString(nextdemo, "");
+    Cbuf_AddText(command);
+    Cbuf_AddText("\n");
+    Cbuf_Execute();
+}
+#endif
+
 void CL_Reconnect_f(void)
 {
     char *server = cls.servername;
@@ -661,7 +685,11 @@ void CL_VoicePacket(msg_t *msg)
         return;
 
     for (packet = 0; packet < numPackets; packet++) {
+#if defined(COD2_X64)
+        talker = (byte)MSG_ReadByte(msg);
+#else
         talker = MSG_ReadByte(msg);
+#endif
         dataLen = MSG_ReadByte(msg);
 
         if (dataLen < 1 || dataLen > 256) {
@@ -822,7 +850,26 @@ void CL_InitRenderer(void)
 
     cls.whiteMaterial = re.RegisterMaterial("white", 3, 3);
     cls.consoleMaterial = re.RegisterMaterial("console", 3, 3);
+#if defined(COD2_X64)
+    {
+        extern int SEH_GetCurrentLanguage(void);
+        const char *fontName;
+
+        switch (SEH_GetCurrentLanguage()) {
+        case 6: fontName = "fonts/russian/consoleFont"; break;
+        case 7: fontName = "fonts/polish/consoleFont"; break;
+        case 8: fontName = "fonts/korean/consoleFont"; break;
+        case 9: fontName = "fonts/taiwanese/consoleFont"; break;
+        case 10: fontName = "fonts/japanese/consoleFont"; break;
+        case 11: fontName = "fonts/chinese/consoleFont"; break;
+        case 12: fontName = "fonts/thai/consoleFont"; break;
+        default: fontName = "fonts/consoleFont"; break;
+        }
+        cls.consoleFont = re.RegisterFont(fontName, 3);
+    }
+#else
     cls.consoleFont = re.RegisterFont("fonts/consoleFont", 3);
+#endif
 
     fieldWidth = cls.vidConfig.width - 0x20;
     *(int *)imp_g_console_field_width = fieldWidth;
@@ -1290,6 +1337,9 @@ void CL_InitOnceForAllClients(void)
     Cmd_SetAutoComplete("demo", "demos", "dm_1");
     Cmd_SetAutoComplete("timedemo", "demos", "dm_1");
     Cmd_AddCommand("cinematic", CL_PlayCinematic_f);
+#if defined(COD2_X64)
+    Cmd_AddCommand("unskippablecinematic", CL_PlayUnskippableCinematic_f);
+#endif
     Cmd_SetAutoComplete("cinematic", "video", "roq");
     Cmd_AddCommand("logo", CL_PlayLogo_f);
     Cmd_AddCommand("connect", CL_Connect_f);
@@ -1704,7 +1754,11 @@ void CL_DrawLogo(void)
     color[3] = 1.0f;
 
     w = (float)cls.vidConfig.width;
+#if defined(COD2_X64)
+    h0 = ((float)cls.vidConfig.height + (float)cls.vidConfig.height) / 3.0f;
+#else
     h0 = (float)(cls.vidConfig.height * 2) / 3.0f;
+#endif
     h1 = (float)cls.vidConfig.height - h0;
 
     re.DrawStretchPic(0.0f, 0.0f, w, h0, 0.0f, 0.0f, 1.0f, 1.0f, color, cls.logo.material[0]);
@@ -2215,7 +2269,11 @@ void CL_RunOncePerClientFrame(int msec)
 {
 
     if (UI_IsFullscreen()) {
+#if defined(COD2_X64)
+        CL_SyncGpu();
+#else
         re.SyncGpu();
+#endif
     }
 
     int avidemoVal = cl_avidemo->current.integer;
@@ -2238,9 +2296,17 @@ void CL_RunOncePerClientFrame(int msec)
     cls.realtime += msec;
 
     int curFrameTime = com_frameTime;
+#if defined(COD2_X64)
+    int delta = (int32_t)((uint32_t)curFrameTime - (uint32_t)old_com_frameTime);
+#else
     int delta = curFrameTime - old_com_frameTime;
+#endif
     frame_msec = (delta != 0) ? delta : 1;
+#if defined(COD2_X64)
+    if ((uint32_t)frame_msec > 200u)
+#else
     if (frame_msec > 200)
+#endif
         frame_msec = 200;
     old_com_frameTime = curFrameTime;
 }
@@ -2385,7 +2451,13 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
     if (I_stricmp(cmd, (const char *)"disconnect") == 0) {
         if (conn->state && NET_CompareAdr(from, conn->netchan.remoteAddress) &&
             cls.realtime - conn->lastPacketTime > 2999) {
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+            if (!cls.wwwDlDisconnected)
+                Com_Error(1, (const char *)"EXE_SERVER_DISCONNECTED");
+            CL_Disconnect();
+#else
             Com_Error(1, (const char *)"EXE_SERVER_DISCONNECTED");
+#endif
         }
 
         result = 1;
@@ -2407,7 +2479,11 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
         const char *text = MSG_ReadBigString(msg);
 
         I_strncpyz(conn->serverMessage, text, sizeof(conn->serverMessage));
+#if defined(COD2_X64)
+        Com_sprintf(printBuf, MAX_MSGLEN, (const char *)"%s", text);
+#else
         Com_sprintf(printBuf, 0x4000, (const char *)"%s", text);
+#endif
         Com_PrintMessage(0, printBuf);
         result = 1;
         goto finish;
@@ -2618,7 +2694,11 @@ void CL_Frame(int msec)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     Cod2x_DemoClientFrame();
 #endif
+#if defined(COD2_X64)
+    Voice_GetLocalVoiceData(&clients[0].voicePackets[clients[0].voicePacketCount]);
+#else
     Voice_GetLocalVoiceData((ClientVoicePacket_t *)&clients[0]);
+#endif
     Voice_Playback();
     CL_UpdateColor();
 
@@ -2716,6 +2796,11 @@ Luserinfo:
 Ltail:
     CL_SetCGameTime();
     CL_SendCmd();
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (clc->state == CA_ACTIVE && cls.realtime - lastUpdateKeyAuthTime > 300000 &&
+        (net_lanauthorize->current.enabled || !Sys_IsLANAddress(clc->serverAddress)))
+        CL_RequestAuthorization();
+#endif
 }
 
 void CL_Vid_Restart_f(void)
@@ -2849,6 +2934,9 @@ void CL_Disconnect(void)
 
     conn->downloadName[0] = '\0';
     conn->downloadTempName[0] = '\0';
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (!cls.wwwDlDisconnected)
+#endif
     legacy->cl_downloadName[0] = 0;
 
     if (conn->demofile) {
@@ -2878,6 +2966,10 @@ void CL_Disconnect(void)
 
     memset(conn, 0, sizeof(*conn));
     conn->state = CA_DISCONNECTED;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (!cls.wwwDlDisconnected)
+        CL_ClearStaticDownload();
+#endif
     SND_DisconnectListener();
 
     if (oldState > CA_LOGO)
@@ -2994,12 +3086,21 @@ void CL_MapLoading(const char *mapname)
         conn->lastPacketSentTime = -9999;
     } else {
         Dvar_SetString(nextmap, (const char *)"");
+#if defined(COD2_X64)
+        I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
+        CL_Disconnect();
+#else
         CL_Disconnect();
         I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
+#endif
         UI_CloseAll();
 
         conn->state = CA_CHALLENGING;
+#if defined(COD2_X64)
+        ((clientConnection_t *)conn)->connectTime = -2000;
+#else
         ((clientConnection_t *)conn)->connectTime = -3000;
+#endif
         conn->qport = *(int *)imp_g_qport;
         NET_StringToAdr(cls.servername, &conn->serverAddress);
         CL_CheckForResend();
@@ -3013,7 +3114,9 @@ void CL_MapLoading(const char *mapname)
 void CL_DemoCompleted(void)
 {
     clientConnection_t *conn = (clientConnection_t *)clc;
+#if !defined(COD2_X64)
     connstate_t oldState;
+#endif
 
     if (conn->isTimeDemo) {
         int elapsed = Sys_Milliseconds() - conn->timeDemoStart;
@@ -3029,6 +3132,10 @@ void CL_DemoCompleted(void)
         conn->timeDemoLog = 0;
     }
 
+#if defined(COD2_X64)
+    CL_Disconnect();
+    CL_NextDemo();
+#else
     SCR_StopCinematic();
     oldState = conn->state;
     CL_Disconnect();
@@ -3040,6 +3147,7 @@ void CL_DemoCompleted(void)
         return;
 
     Com_Error(3, (const char *)"EXE_DISCONNECTED_FROM_SERVER");
+#endif
 }
 
 void CL_ReadDemoMessage(void)
@@ -3158,8 +3266,10 @@ void CL_ForwardCommandToServer(const char *string)
     if (!cmd || cmd[0] == '-')
         return;
 
+#if !defined(COD2_X64)
     if (CG_IsConsoleCommandName(cmd))
         return;
+#endif
 
     if (conn->demoplaying || conn->state <= 4 || cmd[0] == '+') {
         Com_Printf((const char *)"Unknown command \"%s\"\n", cmd);
@@ -3224,10 +3334,21 @@ void CL_DownloadsComplete(void)
     char cmd[1024];
     int i;
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (cls.downloadRestart) {
+        cls.downloadRestart = 0;
+#else
     if (clientConnections[0].downloadRestart) {
         clientConnections[0].downloadRestart = 0;
+#endif
         FS_Restart(clc->checksumFeed);
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        if (!cls.wwwDlDisconnected)
+            CL_AddReliableCommand_core((const char *)"donedl");
+        CL_ClearStaticDownload();
+#else
         CL_AddReliableCommand_core((const char *)"donedl");
+#endif
         return;
     }
 
@@ -3273,7 +3394,9 @@ void CL_DownloadsComplete(void)
 
     Dvar_SetInt(cl_paused, 1);
     CL_InitCGame();
+#if !defined(COD2_X64)
     Dvar_SetInt(cl_paused, 0);
+#endif
 
     {
         const char *checksums = FS_ReferencedIwdPureChecksums();
@@ -3299,7 +3422,7 @@ void CL_BeginDownload(const char *localName, const char *remoteName)
     conn = (clientConnection_t *)clc;
     I_strncpyz(conn->downloadName, localName, sizeof(conn->downloadName));
     Com_sprintf(conn->downloadTempName, sizeof(conn->downloadTempName), (const char *)"%s.tmp", localName);
-#if defined(COD2_X64) && COD2_FEATURE_WWW_DOWNLOAD
+#if defined(COD2_X64) && (COD2_IS_PATCH_13 || COD2_FEATURE_WWW_DOWNLOAD)
     /* Mac 1.3 keeps these names in cls (CL_BeginDownload 0x14d668), where an
        HTTP redirect (CL_ParseWWWDownload) reads them. */
     I_strncpyz(cls.downloadName, localName, sizeof(cls.downloadName));
@@ -3330,12 +3453,20 @@ void CL_NextDownload(void)
     char *localName;
     char *next;
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (!cls.downloadList[0]) {
+#else
     if (!clientConnections[0].downloadList[0]) {
+#endif
         CL_DownloadsComplete();
         return;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    remoteName = cls.downloadList;
+#else
     remoteName = clientConnections[0].downloadList;
+#endif
     if (*remoteName == '@')
         ++remoteName;
 
@@ -3354,8 +3485,13 @@ void CL_NextDownload(void)
 
     CL_BeginDownload(localName, remoteName);
     conn = (clientConnection_t *)clc;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    cls.downloadRestart = 1;
+    memmove(cls.downloadList, next, strlen(next) + 1);
+#else
     conn->downloadRestart = 1;
     memmove(conn->downloadList, next, strlen(next) + 1);
+#endif
 }
 
 void CL_InitDownloads(void)
@@ -3366,11 +3502,17 @@ void CL_InitDownloads(void)
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     if (((clientConnection_t *)clc)->demoplaying) {
+#if COD2_IS_PATCH_13
+        CL_ClearStaticDownload();
+#endif
         CL_DownloadsComplete();
         return;
     }
 #endif
     FS_ShiftStr((const char *)"ni]Zm^l", 7);
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    CL_ClearStaticDownload();
+#endif
 
     svRunning = com_sv_running;
     if (svRunning->current.enabled || !cl_allowDownload->current.enabled) {
@@ -3381,13 +3523,22 @@ void CL_InitDownloads(void)
     }
 
     conn = (clientConnection_t *)clc;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (!FS_CompareIwds(cls.downloadList, sizeof(cls.downloadList), 1)) {
+#else
     if (!FS_CompareIwds(conn->downloadList, sizeof(conn->downloadList), 1)) {
+#endif
         CL_DownloadsComplete();
         return;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    Com_Printf((const char *)"Need iwds: %s\n", cls.downloadList);
+    if (!cls.downloadList[0]) {
+#else
     Com_Printf((const char *)"Need iwds: %s\n", conn->downloadList);
     if (!conn->downloadList[0]) {
+#endif
         CL_DownloadsComplete();
         return;
     }

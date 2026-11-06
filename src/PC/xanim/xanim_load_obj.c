@@ -221,14 +221,24 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
         } else {
 
             int numFrames;
+#if defined(COD2_X64)
+            if ((unsigned short int)sQ2 >= numloopframes) {
+#else
             if (sQ2 >= (short int)numloopframes) {
+#endif
 
                 deltaPart->quat = (XAnimDeltaPartQuat *)Alloc(DQ_IDX);
                 numFrames = (int)(unsigned short int)sQ2;
             } else if (bSmallIndices) {
 
                 numFrames = (int)(unsigned short int)sQ2;
+#if defined(COD2_X64)
+                /* Mac reserves sizeof(channel) + 2 * (count - 1), including
+                 * its tail space even when the stored indices are bytes. */
+                deltaPart->quat = (XAnimDeltaPartQuat *)Alloc((int)sizeof(XAnimDeltaPartQuat) + 2 * numFrames - 2);
+#else
                 deltaPart->quat = (XAnimDeltaPartQuat *)Alloc(DQ_IDX + 2 * numFrames);
+#endif
                 memcpy(((char *)deltaPart->quat) + DQ_IDX, pos, numFrames);
                 pos += numFrames;
             } else {
@@ -236,7 +246,11 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
                 numFrames = (int)(unsigned short int)sQ2;
                 {
                     int idxBytes = numFrames * 2;
+#if defined(COD2_X64)
+                    deltaPart->quat = (XAnimDeltaPartQuat *)Alloc((int)sizeof(XAnimDeltaPartQuat) + idxBytes - 2);
+#else
                     deltaPart->quat = (XAnimDeltaPartQuat *)Alloc(DQ_IDX + idxBytes);
+#endif
                     memcpy(((char *)deltaPart->quat) + DQ_IDX, pos, idxBytes);
                     pos += idxBytes;
                 }
@@ -300,14 +314,22 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
         } else {
 
             int numFrames;
+#if defined(COD2_X64)
+            if ((unsigned short int)sQ2 >= numloopframes) {
+#else
             if (sQ2 >= (short int)numloopframes) {
+#endif
 
                 deltaPart->trans = (XAnimDeltaPartTrans *)Alloc(DT_IDX);
                 numFrames = (int)(unsigned short int)sQ2;
             } else if (bSmallIndices) {
 
                 numFrames = (int)(unsigned short int)sQ2;
+#if defined(COD2_X64)
+                deltaPart->trans = (XAnimDeltaPartTrans *)Alloc((int)sizeof(XAnimDeltaPartTrans) + 2 * numFrames - 2);
+#else
                 deltaPart->trans = (XAnimDeltaPartTrans *)Alloc(DT_IDX + 2 * numFrames);
+#endif
                 memcpy(((char *)deltaPart->trans) + DT_IDX, pos, numFrames);
                 pos += numFrames;
             } else {
@@ -315,7 +337,11 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
                 numFrames = (int)(unsigned short int)sQ2;
                 {
                     int idxBytes = numFrames * 2;
+#if defined(COD2_X64)
+                    deltaPart->trans = (XAnimDeltaPartTrans *)Alloc((int)sizeof(XAnimDeltaPartTrans) + idxBytes - 2);
+#else
                     deltaPart->trans = (XAnimDeltaPartTrans *)Alloc(DT_IDX + idxBytes);
+#endif
                     memcpy(((char *)deltaPart->trans) + DT_IDX, pos, idxBytes);
                     pos += idxBytes;
                 }
@@ -457,13 +483,21 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
                     numQFrames = (int)numQuatIndices;
                 } else if (bSmallIndices) {
 
+#if defined(COD2_X64)
+                    part->quat = (XAnimPartQuat *)Alloc((int)sizeof(XAnimPartQuat) + 2 * numQFrames - 2);
+#else
                     part->quat = (XAnimPartQuat *)Alloc(PQ_IDX + 2 * numQFrames);
+#endif
                     memcpy(((char *)part->quat) + PQ_IDX, pos, numQFrames);
                     pos += numQFrames;
                 } else {
 
                     int idxBytes = numQFrames * 2;
+#if defined(COD2_X64)
+                    part->quat = (XAnimPartQuat *)Alloc((int)sizeof(XAnimPartQuat) + idxBytes - 2);
+#else
                     part->quat = (XAnimPartQuat *)Alloc(PQ_IDX + idxBytes);
+#endif
                     memcpy(((char *)part->quat) + PQ_IDX, pos, idxBytes);
                     pos += idxBytes;
                 }
@@ -579,13 +613,21 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
                         part->trans = (XAnimPartTrans *)Alloc(PT_IDX);
                     } else if (bSmallIndices) {
 
+#if defined(COD2_X64)
+                        part->trans = (XAnimPartTrans *)Alloc((int)sizeof(XAnimPartTrans) + 2 * numTFrames - 2);
+#else
                         part->trans = (XAnimPartTrans *)Alloc(PT_IDX + 2 * numTFrames);
+#endif
                         memcpy(((char *)part->trans) + PT_IDX, pos, numTFrames);
                         pos += numTFrames;
                     } else {
 
                         int idxBytes = numTFrames * 2;
+#if defined(COD2_X64)
+                        part->trans = (XAnimPartTrans *)Alloc((int)sizeof(XAnimPartTrans) + idxBytes - 2);
+#else
                         part->trans = (XAnimPartTrans *)Alloc(PT_IDX + idxBytes);
+#endif
                         memcpy(((char *)part->trans) + PT_IDX, pos, idxBytes);
                         pos += idxBytes;
                     }

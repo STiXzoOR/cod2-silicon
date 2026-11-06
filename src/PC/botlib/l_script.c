@@ -53,7 +53,11 @@ static int PS_SkipWhitespaceAndComments(script_t *script)
         int c;
 
         p = script->script_p;
+#if defined(COD2_X64)
+        c = (signed char)*p;
+#else
         c = (unsigned char)*p;
+#endif
 
         if (c <= ' ') {
             if (!c) {
@@ -83,6 +87,9 @@ static int PS_SkipWhitespaceAndComments(script_t *script)
                 ++p;
             }
             if (!*p) {
+#if defined(COD2_X64)
+                script->script_p = p;
+#endif
                 return 0;
             }
             continue;
@@ -200,7 +207,11 @@ int PS_ReadEscapeCharacter(script_t *script, char *ch)
 {
     char *p = script->script_p;
     int c;
+#if defined(COD2_X64)
+    uint32_t value;
+#else
     int value;
+#endif
 
     script->script_p = p + 1;
     c = (unsigned char)p[1];
@@ -220,6 +231,9 @@ int PS_ReadEscapeCharacter(script_t *script, char *ch)
     case 'x':
         value = 0;
         p += 2;
+#if defined(COD2_X64)
+        script->script_p = p;
+#endif
         while (1) {
             int digit;
 
@@ -236,7 +250,11 @@ int PS_ReadEscapeCharacter(script_t *script, char *ch)
             value = (value << 4) + digit;
             script->script_p = ++p;
         }
+#if defined(COD2_X64)
+        if ((int32_t)value > 255) {
+#else
         if (value > 255) {
+#endif
             ScriptWarning(script, "too large value in escape character");
             value = -1;
         }
@@ -258,7 +276,11 @@ int PS_ReadEscapeCharacter(script_t *script, char *ch)
         if (p > script->script_p) {
             script->script_p = p;
         }
+#if defined(COD2_X64)
+        if ((int32_t)value > 255) {
+#else
         if (value > 255) {
+#endif
             ScriptWarning(script, "too large value in escape character");
             value = -1;
         }
@@ -269,6 +291,73 @@ int PS_ReadEscapeCharacter(script_t *script, char *ch)
 
 void NumberValue(char *string, int subtype, long unsigned int *intvalue, long double *floatvalue)
 {
+#if defined(COD2_X64)
+    uint32_t value = 0;
+
+    *intvalue = 0;
+    *floatvalue = 0.0L;
+
+    if (subtype & 0x800) {
+        uint32_t divisor = 0;
+
+        while (*string) {
+            if (*string == '.') {
+                if (divisor)
+                    return;
+                ++string;
+                divisor = 100;
+                *floatvalue += (long double)((signed char)*string - '0') / 10.0L;
+                /* Mac then reads the next byte. PS_ReadToken clears the whole
+                 * token, but direct callers need not provide a second NUL. */
+                if (!*string)
+                    break;
+            } else if (divisor) {
+                long double denominator = (long double)divisor;
+                divisor *= 10;
+                *floatvalue += (long double)((signed char)*string - '0') / denominator;
+            } else {
+                *floatvalue = *floatvalue * 10.0L + ((signed char)*string - '0');
+            }
+            ++string;
+        }
+        /* Mac truncates through signed 64-bit x87 storage, then keeps its low
+         * 32 bits. Invalid/out-of-range conversion produces the x87 indefinite. */
+        if (*floatvalue >= -9223372036854775808.0L &&
+            *floatvalue < 9223372036854775808.0L)
+            *intvalue = (uint32_t)(int64_t)*floatvalue;
+        return;
+    }
+
+    if (subtype & 0x008) {
+        while (*string)
+            value = value * 10 + ((signed char)*string++ - '0');
+    } else if (subtype & 0x100) {
+        string += 2;
+        while (*string) {
+            value <<= 4;
+            if (*string >= 'a' && *string <= 'f')
+                value += *string - 'a' + 10;
+            else if (*string >= 'A' && *string <= 'F')
+                value += *string - 'A' + 10;
+            else
+                value += (signed char)*string - '0';
+            ++string;
+        }
+    } else if (subtype & 0x200) {
+        ++string;
+        while (*string)
+            value = value * 8 + ((signed char)*string++ - '0');
+    } else if (subtype & 0x400) {
+        string += 2;
+        while (*string)
+            value = value * 2 + ((signed char)*string++ - '0');
+    } else {
+        return;
+    }
+
+    *intvalue = value;
+    *floatvalue = (long double)value;
+#else
     *intvalue = 0;
     *floatvalue = 0.0L;
 
@@ -333,6 +422,7 @@ void NumberValue(char *string, int subtype, long unsigned int *intvalue, long do
     }
 
     *floatvalue = (long double)*intvalue;
+#endif
 }
 
 int PS_ReadNumber(script_t *script, token_t *token)
@@ -344,7 +434,9 @@ int PS_ReadNumber(script_t *script, token_t *token)
     int octal;
 
     token->type = 3;
+#if !defined(COD2_X64)
     token->subtype = 0;
+#endif
     p = script->script_p;
 
     if (p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) {
@@ -407,7 +499,11 @@ int PS_ReadNumber(script_t *script, token_t *token)
         if (octal) {
             token->subtype |= 0x200;
         } else {
+#if defined(COD2_X64)
+            token->subtype |= 0x008;
+#else
             token->subtype |= 0x800;
+#endif
         }
         if (dot) {
             token->subtype |= 0x800;
@@ -424,7 +520,11 @@ int PS_ReadNumber(script_t *script, token_t *token)
             token->subtype = subtype;
         }
 
+#if defined(COD2_X64)
+        else
+#else
         c = (unsigned char)*script->script_p;
+#endif
         if ((c == 'u' || c == 'U') && !(subtype & 0x4800)) {
             ++script->script_p;
             subtype = token->subtype | 0x4000;
@@ -510,8 +610,10 @@ script_t * LoadScriptFile(const char *filename)
     FS_FCloseFile(fp);
 
     script->length = Com_Compress(script->buffer);
+#if !defined(COD2_X64)
     script->end_p = script->buffer + script->length;
     Script_SanitizeBuffer(script);
+#endif
     return (script_t *)script;
 }
 
@@ -635,6 +737,19 @@ int PS_ReadToken(script_t *script, token_t *token)
 
     if (script->flags & 0x10) {
         len = 0;
+#if defined(COD2_X64)
+        while ((c = (signed char)*script->script_p) > ' ' && c != ';') {
+            if (len == 1024) {
+                ScriptError(script, "primitive token longer than MAX_TOKEN = %d", 1024);
+                return 0;
+            }
+            token->string[len++] = (char)c;
+            ++script->script_p;
+        }
+        /* Mac permits 1024 bytes and terminates in the low byte of type.
+         * PS_ReadToken already cleared the entire token; access its storage. */
+        ((char *)token)[len] = '\0';
+#else
         while ((c = (unsigned char)*script->script_p) > ' ' && c != ';') {
             token->string[len++] = (char)c;
             ++script->script_p;
@@ -644,6 +759,7 @@ int PS_ReadToken(script_t *script, token_t *token)
             }
         }
         token->string[len] = '\0';
+#endif
         memcpy(&script->token, token, sizeof(*token));
         return 1;
     }
@@ -681,7 +797,11 @@ int PS_ReadToken(script_t *script, token_t *token)
         punc = *(punctuation_t **)&punc->next;
     }
 
+#if defined(COD2_X64)
+    ScriptError(script, "can't read token");
+#else
     ScriptError(script, "unknown punctuation");
+#endif
     return 0;
 }
 

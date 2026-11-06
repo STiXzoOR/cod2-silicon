@@ -147,10 +147,12 @@ int CFStringCompare()
 {
     return 0;
 }
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int CFStringCreateWithCharacters()
 {
     return 0;
 }
+#endif
 int CFStringCreateWithFormat()
 {
     return 0;
@@ -254,10 +256,12 @@ int CGLSetCurrentContext()
 {
     return 0;
 }
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int CGRectEqualToRect()
 {
     return 0;
 }
+#endif
 int CGRectGetHeight()
 {
     return 0;
@@ -311,22 +315,28 @@ int DisposeNibReference()
 {
     return 0;
 }
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int FSCloseIterator()
 {
     return 0;
 }
+#endif
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int FSDeleteObject()
 {
     return 0;
 }
+#endif
 int FSGetCatalogInfo()
 {
     return 0;
 }
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int FSGetCatalogInfoBulk()
 {
     return 0;
 }
+#endif
 int FSGetVolumeInfo()
 {
     return 0;
@@ -335,14 +345,18 @@ int FSMakeFSSpec()
 {
     return 0;
 }
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int FSOpenIterator()
 {
     return 0;
 }
+#endif
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int FSPathMakeRef()
 {
     return 0;
 }
+#endif
 int FSpMakeFSRef()
 {
     return 0;
@@ -354,10 +368,12 @@ int FSRefMakePath(void *ref, unsigned char *path, unsigned int maxPathSize)
         path[0] = '\0';
     return 0;
 }
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int FSSetCatalogInfo()
 {
     return 0;
 }
+#endif
 int GetControlBounds()
 {
     return 0;
@@ -775,10 +791,12 @@ char voice_maxframe_ptr[64] __attribute__((aligned(4))) = { 0 };
 char voice_scale_ptr[64] __attribute__((aligned(4))) = { 0 };
 char WaitNextEvent[64] __attribute__((aligned(4))) = { 0 };
 
+#if !defined(COD2_X64)
 int GetHighAndLowIndices(void)
 {
     return 0;
 }
+#endif
 extern void *vtbl_CD3DXConstantTable[];
 #if !COD2_APPLE_SDK
 int D3DXGetShaderConstantTable(const void *function, void **constantTable)
@@ -833,10 +851,12 @@ int g_dip_vs_bound = 0;
 int g_dip_vs_skip = 0;
 int g_draw_count = 0;
 
+#if !defined(COD2_X64)
 void *CDirect3D_GetDirect3DInterface(void)
 {
     return (void *)0;
 }
+#endif
 
 #define VAO_X16 \
     vsink++;    \
@@ -855,11 +875,25 @@ void *CDirect3D_GetDirect3DInterface(void)
     vsink++;    \
     vsink++;    \
     vsink++;
+#if !defined(COD2_X64) || defined(DEDICATED)
+#if defined(COD2_X64)
+void CDirect3DDevice_CreateAndSetFixedFunctionVAO(const CDirect3DDevice *device,
+    Bool *canUseVAO, UINT32 base, UINT32 count, const void *indices,
+    UINT32 elements, Bool normals)
+#else
 void CDirect3DDevice_CreateAndSetFixedFunctionVAO(void)
+#endif
 {
+#if defined(COD2_X64)
+    /* Dedicated targets retain this unused link provider, with the same ABI
+     * as the real client renderer implementation. */
+    (void)device; (void)canUseVAO; (void)base; (void)count;
+    (void)indices; (void)elements; (void)normals;
+#endif
     static volatile int vsink;
     VAO_X16 VAO_X16 VAO_X16 VAO_X16 VAO_X16 VAO_X16 VAO_X16 VAO_X16
 }
+#endif
 #undef VAO_X16
 
 #if defined(COD2_X64)

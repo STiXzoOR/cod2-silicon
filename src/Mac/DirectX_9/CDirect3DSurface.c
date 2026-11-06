@@ -1,7 +1,12 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
 #include <string.h>
+#if defined(COD2_X64)
+#include "lp64_gl_state.h"
+#include "lp64_surface.h"
+#endif
 
 #if defined(COD2_X64)
 /* C++ bool flags: one byte in the Mac binary and in the typed native data. */
@@ -20,6 +25,11 @@ UINT32 MacOpenGLUtils_GetFormatSizeInBits(const D3DFORMAT *f);
 int MacOpenGLUtils_GetOpenGLTextureType(bool *CreateOpenGLResources, GLenum *OpenGLInternalFormat, GLenum *OpenGLFormat, GLenum *OpenGLElementType, D3DFORMAT mFormat);
 UINT32 MacOpenGLUtils_GetLevelSizeInBytes(UINT32 Width, UINT32 Height, UINT32 Depth, const D3DFORMAT *f);
 
+#if defined(COD2_X64)
+void *COpenGLTexture_CreateNative(UINT32 width, UINT32 height, UINT32 depth);
+GLuint COpenGLTexture_GetGLNameNative(const void *info);
+void ZN14COpenGLTextureD0Ev(void *info);
+#endif
 typedef struct {
     void *QueryInterface;
     ULONG (*AddRef)(void *object);
@@ -40,7 +50,14 @@ typedef struct {
     unsigned char pad0[3];
     void *owner;
     unsigned char releaseOwnerOnDestroy;
+#if defined(COD2_X64)
+    /* Reuses native padding; CPU uploads and framebuffer copies have opposite
+     * row origins. This is live storage metadata, not an i386 class overlay. */
+    unsigned char pixelsBottomUp;
+    unsigned char pad1[2];
+#else
     unsigned char pad1[3];
+#endif
     GLenum openGLInternalFormat;
     GLenum openGLFormat;
     GLenum openGLElementType;
@@ -49,6 +66,12 @@ typedef struct {
 #if COD2_APPLE_SDK
 void CDirect3DSurface_SetNativeDimensions(void *surface, UINT32 width, UINT32 height)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &surface, &width, &height };
+    if (MacShim_Dispatch("CDirect3DSurface_SetNativeDimensions", surface, macArguments, NULL, 0))
+        return;
+#endif
+
     if (surface) {
         ((CDirect3DSurfaceImpl *)surface)->width = width;
         ((CDirect3DSurfaceImpl *)surface)->height = height;
@@ -57,15 +80,31 @@ void CDirect3DSurface_SetNativeDimensions(void *surface, UINT32 width, UINT32 he
 #endif
 
 #if defined(COD2_X64)
-extern void *vtbl_CDirect3DCubeTexture[];
-extern GLuint CDirect3DTexture_GetGLName(const void *texture);
-extern GLuint CDirect3DCubeTexture_GetGLName(const void *texture);
-
 static GLuint CDirect3DSurface_GetOwnerGLName(const CDirect3DSurfaceImpl *surface)
 {
-    if (*(void ***)surface->owner == vtbl_CDirect3DCubeTexture)
-        return CDirect3DCubeTexture_GetGLName(surface->owner);
-    return CDirect3DTexture_GetGLName(surface->owner);
+    return COpenGLTexture_GetGLNameNative(surface->owner);
+}
+
+int CDirect3DSurface_GetNativeInfo(const void *object, CDirect3DSurfaceNativeInfo *info)
+{
+    const CDirect3DSurfaceImpl *surface = object;
+    if (!surface || surface->vtable != (void **)vtbl_CDirect3DSurface || !surface->owner)
+        return 0;
+    info->owner = surface->owner;
+    info->name = COpenGLTexture_GetGLNameNative(surface->owner);
+    info->target = surface->surfaceType == 1 ? surface->cubemapTarget : 0x0de1;
+    info->level = surface->level;
+    info->width = surface->width;
+    info->height = surface->height;
+    info->pixelsBottomUp = surface->pixelsBottomUp;
+    return info->name != 0;
+}
+
+void CDirect3DSurface_MarkGPUWritten(void *object)
+{
+    CDirect3DSurfaceImpl *surface = object;
+    surface->isDirty = 0;
+    surface->pixelsBottomUp = 1;
 }
 #endif
 
@@ -74,7 +113,18 @@ static GLuint CDirect3DSurface_GetOwnerGLName(const CDirect3DSurfaceImpl *surfac
  * the pixel pointer. (x64 port Stage 4.) */
 void CDirect3DSurface_SetOwner(void *surf, void *owner)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &surf, &owner };
+    if (MacShim_Dispatch("CDirect3DSurface_SetOwner", surf, macArguments, NULL, 0))
+        return;
+#endif
+
+#if defined(COD2_X64)
+    ((CDirect3DSurfaceImpl *)surf)->owner = owner ? (void **)owner + 1 : NULL;
+#else
+
     ((CDirect3DSurfaceImpl *)surf)->owner = owner;
+#endif
 }
 
 /* Blit source info for CDirect3DDevice_StretchRect: the GL texture backing this surface
@@ -82,6 +132,13 @@ void CDirect3DSurface_SetOwner(void *surf, void *owner)
    (3 ptrs + 16 int fields + 2 ptrs), expressed portably rather than hardcoded to x86. */
 int CDirect3DSurface_GetGLBlitInfo(const void *surf, unsigned int *texId, unsigned int *width, unsigned int *height)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &surf, &texId, &width, &height };
+    int macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_GetGLBlitInfo", surf, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     const CDirect3DSurfaceImpl *s = (const CDirect3DSurfaceImpl *)surf;
     unsigned int id;
 
@@ -104,6 +161,10 @@ int CDirect3DSurface_GetGLBlitInfo(const void *surf, unsigned int *texId, unsign
 }
 
 ULONG CDirect3DSurface_AddRef(const CDirect3DSurface *_this);
+#if defined(COD2_X64)
+void CDirect3DSurface_RecreateSurface(const CDirect3DSurface *_this);
+void CDirect3DSurface_CreateOpenGLSurfaceObject(const CDirect3DSurface *_this);
+#endif
 void CDirect3DSurface_UpdateOpenGLSurfaceObject(const CDirect3DSurface *_this, int bRecreateSurface);
 void ZN16CDirect3DSurfaceD0Ev(const CDirect3DSurface *_this);
 void ZN16CDirect3DSurfaceD1Ev(const CDirect3DSurface *_this);
@@ -115,31 +176,68 @@ static IUnknownLikeVTable *CDirect3DSurface_GetIUnknownVTable(void *object)
 
 static void CDirect3DSurface_Destroy(CDirect3DSurfaceImpl *surface)
 {
+
+#if defined(COD2_X64)
+    surface->vtable = (void **)vtbl_CDirect3DSurface;
+    if (surface->releaseOwnerOnDestroy && surface->owner)
+        ((void (*)(void *))(*(void ***)surface->owner)[1])(surface->owner);
+#else
     surface->vtable = vtbl_CDirect3DSurface;
     if (surface->releaseOwnerOnDestroy && surface->owner) {
         CDirect3DSurface_GetIUnknownVTable(surface->owner)->Release(surface->owner);
     }
+#endif
 }
 
 ULONG CDirect3DSurface_AddRef(const CDirect3DSurface *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_AddRef", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DSurfaceImpl *surface = (CDirect3DSurfaceImpl *)_this;
     return ++surface->refCount;
 }
 
 void ZN16CDirect3DSurfaceD1Ev(const CDirect3DSurface *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN16CDirect3DSurfaceD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DSurface_Destroy((CDirect3DSurfaceImpl *)_this);
 }
 
 void ZN16CDirect3DSurfaceD0Ev(const CDirect3DSurface *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN16CDirect3DSurfaceD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DSurface_Destroy((CDirect3DSurfaceImpl *)_this);
+#if defined(COD2_X64)
+    free((void *)_this);
+#else
     __ZdlPv((void *)_this);
+#endif
 }
 
 HRESULT CDirect3DSurface_QueryInterface(const CDirect3DSurface *_this, const IID *iid, void **ppvObj)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &iid, &ppvObj };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_QueryInterface", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)iid;
     *ppvObj = (void *)_this;
     CDirect3DSurface_AddRef(_this);
@@ -148,6 +246,13 @@ HRESULT CDirect3DSurface_QueryInterface(const CDirect3DSurface *_this, const IID
 
 ULONG CDirect3DSurface_Release(const CDirect3DSurface *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_Release", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DSurfaceImpl *surface = (CDirect3DSurfaceImpl *)_this;
     ULONG rc = --surface->refCount;
     if (!rc) {
@@ -158,6 +263,13 @@ ULONG CDirect3DSurface_Release(const CDirect3DSurface *_this)
 
 HRESULT CDirect3DSurface_GetDesc(const CDirect3DSurface *_this, D3DSURFACE_DESC *pDesc)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pDesc };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_GetDesc", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     const CDirect3DSurfaceImpl *surface = (const CDirect3DSurfaceImpl *)_this;
     pDesc->Format = surface->format;
     pDesc->Width = surface->width;
@@ -167,6 +279,13 @@ HRESULT CDirect3DSurface_GetDesc(const CDirect3DSurface *_this, D3DSURFACE_DESC 
 
 HRESULT CDirect3DSurface_LockRect(const CDirect3DSurface *_this, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pLockedRect, &pRect, &Flags };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_LockRect", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DSurfaceImpl *surface = (CDirect3DSurfaceImpl *)_this;
     UINT32 formatBits;
 
@@ -206,6 +325,33 @@ HRESULT CDirect3DSurface_LockRect(const CDirect3DSurface *_this, D3DLOCKED_RECT 
 
 HRESULT CDirect3DSurface_UnlockRect(const CDirect3DSurface *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_UnlockRect", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
+#if defined(COD2_X64)
+    CDirect3DSurfaceImpl *surface = (void *)_this;
+    if (surface->isDirty && surface->surfaceMemory && surface->owner) {
+        GLuint name = COpenGLTexture_GetGLNameNative(surface->owner);
+        if (name) {
+            GLenum target = surface->surfaceType == 1 ? 0x8513 : 0x0de1;
+            GLenum query = surface->surfaceType == 1 ? 0x8514 : 0x8069;
+            GLint previous;
+            glGetIntegerv(query, &previous);
+            glBindTexture(target, name);
+            /* Keep native eager uploads, including small compressed mip levels,
+             * without replacing the standalone surface's existing GL owner. */
+            CDirect3DSurface_CreateOpenGLSurfaceObject(_this);
+            surface->isDirty = 0;
+            glBindTexture(target, previous);
+        }
+    }
+    return 0;
+#else
+
     CDirect3DSurfaceImpl *surface = (CDirect3DSurfaceImpl *)_this;
 
     if (surface->isDirty && surface->surfaceMemory && surface->owner) {
@@ -224,10 +370,38 @@ HRESULT CDirect3DSurface_UnlockRect(const CDirect3DSurface *_this)
     }
 
     return 0;
+#endif
 }
 
 void CDirect3DSurface_CreateOpenGLSurfaceObject(const CDirect3DSurface *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DSurface_CreateOpenGLSurfaceObject", _this, macArguments, NULL, 0))
+        return;
+#endif
+
+#if defined(COD2_X64)
+    CDirect3DSurfaceImpl *surface = (void *)_this;
+    GLenum target = surface->surfaceType == 1 ? surface->cubemapTarget : 0x0de1;
+    UINT32 width = surface->width ? surface->width : 1;
+    UINT32 height = surface->height ? surface->height : 1;
+    if (surface->format == D3DFMT_DXT1 || surface->format == D3DFMT_DXT2 ||
+        surface->format == D3DFMT_DXT3 || surface->format == D3DFMT_DXT5) {
+        UINT32 size = MacOpenGLUtils_GetLevelSizeInBytes(surface->width, surface->height, 1, &surface->format);
+        glCompressedTexImage2DARB(target, surface->level, surface->openGLInternalFormat,
+                                  surface->width, surface->height, 0, size, surface->surfaceMemory);
+        surface->pixelsBottomUp = 0;
+    } else {
+        /* Synchronous native uploads use proven logical extents. Mac's client
+         * storage path rounds these up and requires a different backing contract. */
+        glTexImage2D(target, surface->level, surface->openGLInternalFormat, width, height, 0,
+                     surface->openGLFormat, surface->openGLElementType,
+                     surface->openGLInternalFormat == 0x1902 ? NULL : surface->surfaceMemory);
+        surface->pixelsBottomUp = 0;
+    }
+#else
+
     CDirect3DSurfaceImpl *surface = (CDirect3DSurfaceImpl *)_this;
     GLenum target;
     UINT32 w, h;
@@ -252,10 +426,39 @@ void CDirect3DSurface_CreateOpenGLSurfaceObject(const CDirect3DSurface *_this)
                      surface->openGLInternalFormat, w, h, 0,
                      surface->openGLFormat, surface->openGLElementType, surface->surfaceMemory);
     }
+#endif
 }
 
 void CDirect3DSurface_UpdateOpenGLSurfaceObject(const CDirect3DSurface *_this, int bRecreateSurface)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &bRecreateSurface };
+    if (MacShim_Dispatch("CDirect3DSurface_UpdateOpenGLSurfaceObject", _this, macArguments, NULL, 0))
+        return;
+#endif
+
+#if defined(COD2_X64)
+    CDirect3DSurfaceImpl *surface = (void *)_this;
+    if (bRecreateSurface) {
+        CDirect3DSurface_RecreateSurface(_this);
+        return;
+    }
+    GLenum target = surface->surfaceType == 1 ? surface->cubemapTarget : 0x0de1;
+    if (surface->format == D3DFMT_DXT1 || surface->format == D3DFMT_DXT2 ||
+        surface->format == D3DFMT_DXT3 || surface->format == D3DFMT_DXT5) {
+        UINT32 size = MacOpenGLUtils_GetLevelSizeInBytes(surface->width, surface->height, 1, &surface->format);
+        if (surface->width > 3 && surface->height > 3) {
+            glCompressedTexSubImage2D(target, surface->level, 0, 0, surface->width, surface->height,
+                                      surface->openGLInternalFormat, size, surface->surfaceMemory);
+            surface->pixelsBottomUp = 0;
+        }
+    } else {
+        glTexSubImage2D(target, surface->level, 0, 0, surface->width, surface->height,
+                        surface->openGLFormat, surface->openGLElementType, surface->surfaceMemory);
+        surface->pixelsBottomUp = 0;
+    }
+#else
+
     CDirect3DSurfaceImpl *surface = (CDirect3DSurfaceImpl *)_this;
     GLenum target;
     UINT32 w, h;
@@ -283,21 +486,102 @@ void CDirect3DSurface_UpdateOpenGLSurfaceObject(const CDirect3DSurface *_this, i
     }
 
     surface->isDirty = 0;
+#endif
 }
 
 bool CDirect3DSurface_IsDirty(const CDirect3DSurface *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    bool macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_IsDirty", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
+#if defined(COD2_X64)
+    CDirect3DSurfaceImpl *surface = (void *)_this;
+    return surface->isDirty || (surface->owner && !COpenGLTexture_GetGLNameNative(surface->owner));
+#else
+
     CDirect3DSurfaceImpl *surface = (CDirect3DSurfaceImpl *)_this;
     return surface->isDirty;
+#endif
 }
 
 void CDirect3DSurface_RecreateSurface(const CDirect3DSurface *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DSurface_RecreateSurface", _this, macArguments, NULL, 0))
+        return;
+#endif
+
+#if defined(COD2_X64)
+    CDirect3DSurfaceImpl *surface = (void *)_this;
+    if (surface->releaseOwnerOnDestroy) {
+        if (surface->owner)
+            ((void (*)(void *))(*(void ***)surface->owner)[1])(surface->owner);
+        surface->owner = COpenGLTexture_CreateNative(surface->width, surface->height, 1);
+        glBindTexture(surface->surfaceType == 0 ? 0x0de1 : 0x8513,
+                      COpenGLTexture_GetGLNameNative(surface->owner));
+    }
+    bool createGL = 1;
+    MacOpenGLUtils_GetOpenGLTextureType(&createGL, &surface->openGLInternalFormat,
+                                       &surface->openGLFormat, &surface->openGLElementType, surface->format);
+    if (createGL) {
+        byte *memory = surface->surfaceMemory;
+        if (surface->releaseOwnerOnDestroy)
+            surface->surfaceMemory = NULL;
+        CDirect3DSurface_CreateOpenGLSurfaceObject(_this);
+        surface->surfaceMemory = memory;
+    }
+#else
+
     CDirect3DSurface_CreateOpenGLSurfaceObject(_this);
+#endif
 }
 
 void CDirect3DSurface_CDirect3DSurface(const CDirect3DSurface *_this, SurfaceType s, GLenum CubemapID, UINT32 Level, UINT32 Width, UINT32 Height, D3DFORMAT Format, const void *pSurfaceMemory, COpenGLTexture *pOpenGLTextureInfo)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &s, &CubemapID, &Level, &Width, &Height, &Format, &pSurfaceMemory, &pOpenGLTextureInfo };
+    if (MacShim_Dispatch("CDirect3DSurface_CDirect3DSurface", _this, macArguments, NULL, 0))
+        return;
+#endif
+
+#if defined(COD2_X64)
+    CDirect3DSurfaceImpl *surface = (void *)_this;
+    memset(surface, 0, sizeof(*surface));
+    surface->vtable = (void **)vtbl_CDirect3DSurface;
+    surface->surfaceType = s;
+    surface->cubemapTarget = CubemapID;
+    surface->level = Level;
+    surface->width = Width;
+    surface->height = Height;
+    surface->format = Format;
+    surface->surfaceMemory = (byte *)pSurfaceMemory;
+    surface->releaseOwnerOnDestroy = pOpenGLTextureInfo == NULL;
+    bool createGL = !g_NoTextureID;
+    if (surface->releaseOwnerOnDestroy && !g_NoTextureID) {
+        surface->owner = COpenGLTexture_CreateNative(Width, Height, 1);
+        glBindTexture(s == 0 ? 0x0de1 : 0x8513, COpenGLTexture_GetGLNameNative(surface->owner));
+    } else {
+        surface->owner = pOpenGLTextureInfo;
+    }
+    MacOpenGLUtils_GetOpenGLTextureType(&createGL, &surface->openGLInternalFormat,
+                                       &surface->openGLFormat, &surface->openGLElementType, Format);
+    if (createGL && !g_NoTextureID) {
+        byte *memory = surface->surfaceMemory;
+        /* Native device-owned render/depth backing is malloc storage. Allocate
+         * its initial GL image without reading bytes the caller has not written. */
+        if (surface->releaseOwnerOnDestroy)
+            surface->surfaceMemory = NULL;
+        CDirect3DSurface_CreateOpenGLSurfaceObject(_this);
+        surface->surfaceMemory = memory;
+    }
+    ++surface->refCount;
+#else
+
     CDirect3DSurfaceImpl *surface = (CDirect3DSurfaceImpl *)_this;
     bool createGL = 0;
 
@@ -328,15 +612,28 @@ void CDirect3DSurface_CDirect3DSurface(const CDirect3DSurface *_this, SurfaceTyp
     (void)createGL;
     (void)g_NoTextureID;
     (void)pSurfaceMemory;
+#endif
 }
 
 void CDirect3DSurface_IgnorePixelStorei(GLenum pname, GLint param)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &pname, &param };
+    if (MacShim_Dispatch("CDirect3DSurface_IgnorePixelStorei", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)pname;
     (void)param;
 }
 void CDirect3DSurface_IgnoreTexParameteri(GLenum target, GLenum pname, GLint param)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &target, &pname, &param };
+    if (MacShim_Dispatch("CDirect3DSurface_IgnoreTexParameteri", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)target;
     (void)pname;
     (void)param;
@@ -344,12 +641,26 @@ void CDirect3DSurface_IgnoreTexParameteri(GLenum target, GLenum pname, GLint par
 
 HRESULT CDirect3DSurface_GetDevice(const CDirect3DSurface *_this, IDirect3DDevice9 **ppDevice)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &ppDevice };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_GetDevice", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)ppDevice;
     return 0;
 }
 HRESULT CDirect3DSurface_SetPrivateData(const CDirect3DSurface *_this, const GUID *refguid, const void *pData, DWORD SizeOfData, DWORD Flags)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &refguid, &pData, &SizeOfData, &Flags };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_SetPrivateData", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)refguid;
     (void)pData;
@@ -359,6 +670,13 @@ HRESULT CDirect3DSurface_SetPrivateData(const CDirect3DSurface *_this, const GUI
 }
 HRESULT CDirect3DSurface_GetPrivateData(const CDirect3DSurface *_this, const GUID *refguid, void *pData, DWORD *pSizeOfData)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &refguid, &pData, &pSizeOfData };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_GetPrivateData", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)refguid;
     (void)pData;
@@ -367,32 +685,73 @@ HRESULT CDirect3DSurface_GetPrivateData(const CDirect3DSurface *_this, const GUI
 }
 HRESULT CDirect3DSurface_FreePrivateData(const CDirect3DSurface *_this, const GUID *refguid)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &refguid };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_FreePrivateData", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)refguid;
     return 0;
 }
 DWORD CDirect3DSurface_SetPriority(const CDirect3DSurface *_this, DWORD PriorityNew)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &PriorityNew };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_SetPriority", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)PriorityNew;
     return 0;
 }
 DWORD CDirect3DSurface_GetPriority(const CDirect3DSurface *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_GetPriority", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
 void CDirect3DSurface_PreLoad(const CDirect3DSurface *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DSurface_PreLoad", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 D3DRESOURCETYPE CDirect3DSurface_GetType(const CDirect3DSurface *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    D3DRESOURCETYPE macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_GetType", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return D3DRTYPE_SURFACE;
 }
 HRESULT CDirect3DSurface_GetContainer(const CDirect3DSurface *_this, const IID *riid, void **ppContainer)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &riid, &ppContainer };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_GetContainer", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)riid;
     (void)ppContainer;
@@ -400,15 +759,37 @@ HRESULT CDirect3DSurface_GetContainer(const CDirect3DSurface *_this, const IID *
 }
 HRESULT CDirect3DSurface_GetDC(const CDirect3DSurface *_this, HDC *phdc)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &phdc };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_GetDC", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)phdc;
     return 0;
 }
 HRESULT CDirect3DSurface_ReleaseDC(const CDirect3DSurface *_this, HDC hdc)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &hdc };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_ReleaseDC", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)hdc;
     return 0;
 }
 
 fnptr_t vtbl_CDirect3DSurface[] = { (fnptr_t)CDirect3DSurface_QueryInterface, (fnptr_t)CDirect3DSurface_AddRef, (fnptr_t)CDirect3DSurface_Release, (fnptr_t)CDirect3DSurface_GetDevice, (fnptr_t)CDirect3DSurface_SetPrivateData, (fnptr_t)CDirect3DSurface_GetPrivateData, (fnptr_t)CDirect3DSurface_FreePrivateData, (fnptr_t)CDirect3DSurface_SetPriority, (fnptr_t)CDirect3DSurface_GetPriority, (fnptr_t)CDirect3DSurface_PreLoad, (fnptr_t)CDirect3DSurface_GetType, (fnptr_t)CDirect3DSurface_GetContainer, (fnptr_t)CDirect3DSurface_GetDesc, (fnptr_t)CDirect3DSurface_LockRect, (fnptr_t)CDirect3DSurface_UnlockRect, (fnptr_t)CDirect3DSurface_GetDC, (fnptr_t)CDirect3DSurface_ReleaseDC, (fnptr_t)ZN16CDirect3DSurfaceD1Ev, (fnptr_t)ZN16CDirect3DSurfaceD0Ev };
+
+#if defined(COD2_X64)
+    void CDirect3DSurface_SetDirty(void *surface, int dirty)
+{
+    ((CDirect3DSurfaceImpl *)surface)->isDirty = dirty != 0;
+}
+_Static_assert(sizeof(CDirect3DSurfaceImpl) <= 128, "native child surface allocation");
+#endif

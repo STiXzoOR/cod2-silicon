@@ -125,6 +125,31 @@ static void Receive(int listener, const byte *packet, int length, int count)
     while (RenderVoice()) {}
 }
 
+static void CheckSessionRouting(VoicePacket_t *packet)
+{
+    /* Mac 1.3 permits equal states, or a dead/live crossing with deadChat. */
+    static const unsigned listenerMasks[2][4] = {
+        {0x1, 0x2, 0x4, 0x8},
+        {0x3, 0xf, 0x6, 0xa},
+    };
+    for (int deadChat = 0; deadChat < 2; deadChat++) {
+        for (int talkerState = 0; talkerState < 4; talkerState++) {
+            for (int listenerState = 0; listenerState < 4; listenerState++) {
+                ResetRouting();
+                globalVoice.current.enabled = 1;
+                deadVoice.current.enabled = deadChat;
+                gameClients[0].sess.sessionState = (sessionState_t)talkerState;
+                gameClients[1].sess.sessionState = (sessionState_t)listenerState;
+                G_BroadcastVoice(&g_entities[0], packet);
+                unsigned expected = (listenerMasks[deadChat][talkerState] >> listenerState) & 1;
+                assert(serverClients[1].voicePacketCount == expected);
+                assert(gameClients[0].lastVoiceTime == level.time);
+            }
+        }
+    }
+    puts("PASS all playing/dead/spectator/intermission pairs with dead chat off/on");
+}
+
 int main(int argc, char **argv)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -171,14 +196,40 @@ int main(int argc, char **argv)
     puts("PASS one/seven-frame cadence at 199/200 ms; original local echo and 299/300 ms talk timeout");
 
     ResetRouting();
+    gameClients[0].sess.sessionState = SESS_STATE_SPECTATOR;
     gameClients[1].sess.sessionState = SESS_STATE_SPECTATOR;
     VoicePacket_t voicePacket = {0};
     voicePacket.dataSize = length;
     memcpy(voicePacket.data, packet, length);
     G_BroadcastVoice(&g_entities[0], &voicePacket);
-    assert(serverClients[1].voicePacketCount == 1 && "spectators must receive other teams' voice with voice_global off");
+    assert(!serverClients[1].voicePacketCount && "spectators still require matching teams with voice_global off");
+
+    ResetRouting();
+    gameClients[0].sess.sessionState = SESS_STATE_INTERMISSION;
+    gameClients[1].sess.sessionState = SESS_STATE_INTERMISSION;
+    G_BroadcastVoice(&g_entities[0], &voicePacket);
+    assert(serverClients[1].voicePacketCount == 1 && "intermission listeners bypass the team filter");
     Receive(1, packet, length, 1);
-    puts("PASS original spectator team bypass -> production decode/playback");
+    puts("PASS spectator team filter and intermission team bypass -> production decode/playback");
+
+    ResetRouting();
+    gameClients[0].sess.sessionState = SESS_STATE_DEAD;
+    gameClients[1].sess.sessionState = SESS_STATE_INTERMISSION;
+    deadVoice.current.enabled = 1;
+    G_BroadcastVoice(&g_entities[0], &voicePacket);
+    assert(serverClients[1].voicePacketCount == 1);
+    Receive(1, packet, length, 1);
+    gameClients[0].sess.sessionState = SESS_STATE_PLAYING;
+    G_BroadcastVoice(&g_entities[0], &voicePacket);
+    assert(!serverClients[1].voicePacketCount && "unequal non-dead states cannot talk even with dead chat enabled");
+
+    ResetRouting();
+    gameClients[0].sess.cs.team = TEAM_FREE;
+    G_BroadcastVoice(&g_entities[0], &voicePacket);
+    assert(serverClients[1].voicePacketCount == 1 && serverClients[2].voicePacketCount == 1);
+    puts("PASS dead/intermission crossing, unequal non-dead rejection and free-team talker");
+
+    CheckSessionRouting(&voicePacket);
 
     ResetRouting();
     globalVoice.current.enabled = 1;

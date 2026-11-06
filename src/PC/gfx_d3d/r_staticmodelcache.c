@@ -90,12 +90,18 @@ void R_InitStaticModelCache(void)
     do {
         device = ((DxGlobals *)imp_dx)->device;
         vtable = *(void ***)device;
+#if defined(COD2_X64) && defined(__APPLE__)
+        /* The Mac shim uses this private bit to allocate its dirty-block cache. */
+        ((HRESULT(D3DVTCC *)(void *, int, int, int, int, void **, void *))vtable[0x68 / 4])(
+            device, size, 0x400208, 0, 0, vbOut, NULL);
+#else
         /* usage = D3DUSAGE_DYNAMIC|D3DUSAGE_WRITEONLY (0x208). NOT 0x400208: the
          * 0x400000 bit is not a valid D3DUSAGE, and real D3D9 fails the whole
          * CreateVertexBuffer on it (Wine ignores it) -> smodelCacheVb stays NULL
          * -> NULL-deref on the first static-model skin. */
         ((HRESULT(D3DVTCC *)(void *, int, int, int, int, void **, void *))vtable[0x68 / 4])(
             device, size, 0x208, 0, 0, vbOut, NULL);
+#endif
     } while (*retryFlag != 0);
 
     memset(&s_cache, 0, sizeof(s_cache));
@@ -978,7 +984,11 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
                     int li;
 
                     for (li = 0; li < lightCount; li++) {
+#if defined(COD2_X64)
+                        float *lightData = (float *)&lights[li].Ambient;
+#else
                         float *lightData = (float *)&lights[li];
+#endif
                         float dot;
 
                         r += lightData[0];
@@ -1003,6 +1013,36 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
                         float oneOver255 = 0.003921568859368563f;
                         int ch;
 
+#if defined(COD2_X64)
+                        /* Mac 0xe04d1 emits ARGB for the color converter. */
+                        ch = (intptr_t)floorf((float)srcColor[3] * oneOver255 * 255.0f + 0.5f);
+                        if (ch > 255)
+                            ch = 255;
+                        if (ch < 0)
+                            ch = 0;
+                        dstColor[0] = (byte)ch;
+
+                        ch = (intptr_t)floorf((float)srcColor[2] * r * oneOver255 * 255.0f + 0.5f);
+                        if (ch > 255)
+                            ch = 255;
+                        if (ch < 0)
+                            ch = 0;
+                        dstColor[1] = (byte)ch;
+
+                        ch = (intptr_t)floorf(g * (float)srcColor[1] * oneOver255 * 255.0f + 0.5f);
+                        if (ch > 255)
+                            ch = 255;
+                        if (ch < 0)
+                            ch = 0;
+                        dstColor[2] = (byte)ch;
+
+                        ch = (intptr_t)floorf(b * (float)srcColor[0] * oneOver255 * 255.0f + 0.5f);
+                        if (ch > 255)
+                            ch = 255;
+                        if (ch < 0)
+                            ch = 0;
+                        dstColor[3] = (byte)ch;
+#else
                         ch = (intptr_t)floorf(r * (float)srcColor[2] * oneOver255 * 255.0f + 0.5f);
                         if (ch > 255)
                             ch = 255;
@@ -1030,6 +1070,7 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
                         if (ch < 0)
                             ch = 0;
                         dstColor[3] = (byte)ch;
+#endif
                     }
                 }
             }

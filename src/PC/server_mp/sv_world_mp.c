@@ -91,7 +91,11 @@ int SV_SightTrace(int *hitNum, const vec_t *start, const vec_t *mins, const vec_
         return *hitNum;
 
     {
+#if defined(COD2_X64)
+        float extentSum = maxs[0] - mins[0] + maxs[1] - mins[1] + maxs[2] - mins[2];
+#else
         float extentSum = (maxs[0] - mins[0]) + (maxs[1] - mins[1]) + (maxs[2] - mins[2]);
+#endif
         if (extentSum == 0.0f) {
 
             sightpointtrace_t clip;
@@ -104,6 +108,9 @@ int SV_SightTrace(int *hitNum, const vec_t *start, const vec_t *mins, const vec_
             clip.passEntityNum[0] = passEntityNum0;
             clip.passEntityNum[1] = passEntityNum1;
             clip.contentmask = contentmask;
+#if defined(COD2_X64)
+            clip.locational = 0;
+#endif
             *hitNum = CM_PointSightTraceToEntities(&clip);
         } else {
 
@@ -164,7 +171,11 @@ void SV_Trace(trace_t *results, const vec_t *start, const vec_t *mins, const vec
     }
 
     {
+#if defined(COD2_X64)
+        float extentSum = maxs[0] - mins[0] + maxs[1] - mins[1] + maxs[2] - mins[2];
+#else
         float extentSum = (maxs[0] - mins[0]) + (maxs[1] - mins[1]) + (maxs[2] - mins[2]);
+#endif
 
         if (extentSum == 0.0f) {
 
@@ -266,7 +277,11 @@ qboolean SV_TracePassed(const vec_t *start, const vec_t *mins, const vec_t *maxs
         return 0;
     }
 
+#if defined(COD2_X64)
+    if (maxs[0] - mins[0] + maxs[1] - mins[1] + maxs[2] - mins[2] == 0.0f) {
+#else
     if ((maxs[0] - mins[0]) + (maxs[1] - mins[1]) + (maxs[2] - mins[2]) == 0.0f) {
+#endif
         sightpointtrace_t clip;
 
         clip.start[0] = start[0];
@@ -553,7 +568,11 @@ void SV_PointTraceToEntity(const pointtrace_t *clip, svEntity_t *check, trace_t 
             vec3_t origin;
             vec3_t absmin;
             vec3_t absmax;
+#if defined(COD2_X64)
+            float entAxis[4][3];
+#else
             float entAxis[3][3];
+#endif
             vec3_t localStart;
             vec3_t localEnd;
             DObjTrace objTrace;
@@ -593,6 +612,13 @@ void SV_PointTraceToEntity(const pointtrace_t *clip, svEntity_t *check, trace_t 
 
             G_DObjCalcPose(touch);
             AnglesToAxis(touch->r.currentAngles, entAxis);
+#if defined(COD2_X64)
+            /* The 4x3 transform reads the translation from row 3; Linux 1.3
+               sv_world_mp.cpp stores currentOrigin there before it. */
+            entAxis[3][0] = origin[0];
+            entAxis[3][1] = origin[1];
+            entAxis[3][2] = origin[2];
+#endif
             MatrixTransposeTransformVector43(clip->extents.start, (const float *)entAxis, localStart);
             MatrixTransposeTransformVector43(clip->extents.end, (const float *)entAxis, localEnd);
 
@@ -724,7 +750,11 @@ int SV_PointSightTraceToEntity(const sightpointtrace_t *clip, svEntity_t *check)
             vec3_t absmin;
             vec3_t absmax;
             TraceExtents extents;
+#if defined(COD2_X64)
+            float entAxis[4][3];
+#else
             float entAxis[3][3];
+#endif
             vec3_t localStart;
             vec3_t localEnd;
             DObjTrace objTrace;
@@ -753,6 +783,13 @@ int SV_PointSightTraceToEntity(const sightpointtrace_t *clip, svEntity_t *check)
 
             G_DObjCalcPose(touch);
             AnglesToAxis(touch->r.currentAngles, entAxis);
+#if defined(COD2_X64)
+            /* The 4x3 transform reads the translation from row 3; Linux 1.3
+               sv_world_mp.cpp stores currentOrigin there before it. */
+            entAxis[3][0] = origin[0];
+            entAxis[3][1] = origin[1];
+            entAxis[3][2] = origin[2];
+#endif
             MatrixTransposeTransformVector43(extents.start, (const float *)entAxis, localStart);
             MatrixTransposeTransformVector43(extents.end, (const float *)entAxis, localEnd);
 

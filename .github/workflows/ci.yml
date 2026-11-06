@@ -106,7 +106,8 @@ jobs:
           status=0
           run_fixture() { "$@" || status=1; }
           run_fixture sh tests/lp64/renderer/run.sh
-          # run_shader_raster.sh, run_texture_mips.sh and run_volume_upload.sh need
+          # run_shader_raster.sh, run_texture_mips.sh, run_volume_upload.sh and
+          # run_depth_surface.py need
           # an accelerated CGL pixel format, which hosted runners lack; local gate only.
           run_fixture python3 tests/perf/run.py
           run_fixture python3 tests/platform/run_hud_matrices.py
@@ -178,7 +179,119 @@ jobs:
       - name: Source-based game, script, network and reconstruction fixtures
         if: ${{ !cancelled() && steps.stock.outcome == 'success' && steps.codx.outcome == 'success' }}
         run: |
+          python3 tests/lp64/game/client_end_frame.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/client-end-frame-stock"
+          python3 tests/lp64/game/client_end_frame.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/client-end-frame-codx"
+          python3 tests/lp64/game/client_events.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/client-events-stock"
+          python3 tests/lp64/game/client_events.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/client-events-codx"
+          python3 tests/movement/run.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/spectator-stock" --test spectator-vertical --test spectator-horizontal
+          python3 tests/movement/run.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/spectator-codx" --test spectator-vertical --test spectator-horizontal
+          python3 tests/xanim/run_sync_notify.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/sync-notify-stock"
+          python3 tests/xanim/run_sync_notify.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/sync-notify-codx"
+          python3 tests/camera/run_snapshot.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/snapshot-stock"
+          python3 tests/camera/run_snapshot.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/snapshot-codx"
+          python3 tests/input/run_stance.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/stance-stock"
+          python3 tests/input/run_stance.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/stance-codx"
+          python3 tests/input/run_scheduling.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/scheduling-stock"
+          python3 tests/input/run_scheduling.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/scheduling-codx"
+          python3 tests/online/run_client_time.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/client-time-stock"
+          python3 tests/online/run_client_time.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/client-time-codx"
+          python3 tests/online/run_browser_packets.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/browser-stock"
+          python3 tests/online/run_browser_packets.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/browser-codx"
+          python3 tests/camera/run_entity_animation.py --compile-commands build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/entity-animation-stock"
+          python3 tests/camera/run_entity_animation.py --compile-commands build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/entity-animation-codx"
+          python3 tests/camera/run_active_frame.py --compile-commands build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/active-frame-stock"
+          python3 tests/camera/run_active_frame.py --compile-commands build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/active-frame-codx"
+          python3 tests/camera/run_prediction.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/prediction-stock"
+          python3 tests/camera/run_prediction.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/prediction-codx"
+          python3 tests/camera/run_events.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/events-stock"
+          python3 tests/camera/run_events.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/events-codx"
+          python3 tests/camera/run_items.py --compile-commands build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/items-stock"
+          python3 tests/camera/run_items.py --compile-commands build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/items-codx"
+          python3 tests/camera/run_server_commands.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/server-commands-stock"
+          python3 tests/camera/run_server_commands.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/server-commands-codx"
+          python3 tests/lp64/renderer/run_screenshot.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/screenshot-stock"
+          python3 tests/lp64/renderer/run_screenshot.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/screenshot-codx"
+          python3 tests/lp64/renderer/run_cubemap.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/cubemap-stock"
+          python3 tests/lp64/renderer/run_cubemap.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/cubemap-codx"
+          python3 tests/lp64/renderer/run_font_icons.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/run_font_icons-stock"
+          python3 tests/lp64/renderer/run_font_icons.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/run_font_icons-codx"
+          python3 tests/lp64/renderer/run_model.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/run_model-stock"
+          python3 tests/lp64/renderer/run_model.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/run_model-codx"
+          python3 tests/lp64/renderer/run_player_skeleton.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/run_player_skeleton-stock"
+          python3 tests/lp64/renderer/run_player_skeleton.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/run_player_skeleton-codx"
+          python3 tests/lp64/renderer/run_sun.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-sun.noindex/ci-stock"
+          python3 tests/lp64/renderer/run_sun.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-sun.noindex/ci-codx"
+          python3 tests/lp64/renderer/run_imagefilter.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-filters.noindex/ci-stock"
+          python3 tests/lp64/renderer/run_imagefilter.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-filters.noindex/ci-codx"
+          python3 tests/lp64/renderer/run_post_effects.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/post-effects-stock"
+          python3 tests/lp64/renderer/run_post_effects.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/post-effects-codx"
+          python3 tests/lp64/renderer/run_lights.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-lights.noindex/ci-stock"
+          python3 tests/lp64/renderer/run_lights.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-lights.noindex/ci-codx"
+          python3 tests/lp64/renderer/run_light_loader.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/light-loader-stock"
+          python3 tests/lp64/renderer/run_light_loader.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/light-loader-codx"
+          python3 tests/lp64/renderer/run_utils.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-utils.noindex/ci-stock"
+          python3 tests/lp64/renderer/run_utils.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-utils.noindex/ci-codx"
           python3 tests/lp64/game/run.py --build build-macos
+          python3 tests/lp64/network/f1_transport.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/transport-stock"
+          python3 tests/lp64/network/f1_transport.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/transport-codx"
+          python3 tests/lp64/server/point_trace.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/point-trace-stock"
+          python3 tests/lp64/server/point_trace.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/point-trace-codx"
           python3 tests/lp64/script/run.py
           python3 tests/online/run.py build-macos/compile_commands.json
           python3 tests/lp64/ui/run.py --build build-macos

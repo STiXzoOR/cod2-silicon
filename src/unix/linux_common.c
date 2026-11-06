@@ -115,19 +115,41 @@ void CMacGameEngine_Quit(void)
 
 void CMacGameEngine_DrawSplashScreen(const char *inFileName)
 {
+#if defined(COD2_X64) && defined(__APPLE__) && !defined(DEDICATED)
+    extern const char *Dvar_GetString(const char *name);
+    extern char *Sys_DefaultInstallPath(void);
+    extern void MacWindow_DrawSplash(const char *directory);
+    const char *directory = Dvar_GetString("fs_basepath");
     (void)inFileName;
+    /* Windows loads the user's cod.bmp, rather than the Mac-only cod.png. */
+    MacWindow_DrawSplash(directory[0] ? directory : Sys_DefaultInstallPath());
+#else
+    (void)inFileName;
+#endif
 }
 
 int UpdateSystemActivity(int activity)
 {
+#if defined(__APPLE__) && defined(COD2_X64)
+    extern int MacRuntime_UserActivity(void);
+    (void)activity;
+    return MacRuntime_UserActivity();
+#else
     (void)activity;
     return 0;
+#endif
 }
 
 #if COD2_IS_PATCH_13
 
 void Sys_OpenURL(const char *url, int activate)
 {
+#if defined(__APPLE__) && defined(COD2_X64)
+    extern int MacLaunch_OpenURL(const char *text);
+    extern void Cbuf_ExecuteText(int exec_when, const char *text);
+    if (MacLaunch_OpenURL(url) && activate)
+        Cbuf_ExecuteText(2, "quit\n");
+#else
     char cmd[1100];
     (void)activate;
     if (!url || !url[0])
@@ -138,6 +160,7 @@ void Sys_OpenURL(const char *url, int activate)
     snprintf(cmd, sizeof(cmd), "xdg-open '%s' >/dev/null 2>&1 &", url);
     if (system(cmd) != 0)
         Com_Printf("Sys_OpenURL: failed to open %s\n", url);
+#endif
 }
 #endif
 

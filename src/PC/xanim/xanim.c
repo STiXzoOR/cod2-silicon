@@ -434,6 +434,25 @@ static void __attribute_regparm__(3)
     const int frameIndex = animTime->frameIndex;
     int index = (int)(animTime->time * (float)tableSize);
 
+#if defined(COD2_X64)
+    int low = 0;
+    int high = tableSize - 1;
+
+    /* Endpoint callers sample their final frame directly. Keep native's
+     * clamped extrapolation for times outside that caller contract. */
+    if (index < 0) index = 0;
+    if (index >= tableSize) index = tableSize - 1;
+    while (1) {
+        if (index > 0 && frameIndex < (int)frames[index]) {
+            high = index - 1;
+        } else if (index < tableSize - 1 && frameIndex >= (int)frames[index + 1]) {
+            low = index + 1;
+        } else {
+            break;
+        }
+        index = (low + high) / 2;
+    }
+#else
     /* x64: bound the search so a bad time/tableSize can't index the array OOB */
     if (index < 0) index = 0;
     if (index >= tableSize) index = tableSize - 1;
@@ -444,6 +463,7 @@ static void __attribute_regparm__(3)
     while (index < tableSize - 1 && frameIndex >= (int)frames[index + 1]) {
         ++index;
     }
+#endif
 
     *keyFrameLerpFrac = (animTime->frameFrac - (float)frames[index]) / (float)((int)frames[index + 1] - (int)frames[index]);
     *keyFrameIndex = index;
@@ -455,6 +475,23 @@ static void __attribute_regparm__(3)
     const int frameIndex = animTime->frameIndex;
     int index = (int)(animTime->time * (float)tableSize);
 
+#if defined(COD2_X64)
+    int low = 0;
+    int high = tableSize - 1;
+
+    if (index < 0) index = 0;
+    if (index >= tableSize) index = tableSize - 1;
+    while (1) {
+        if (index > 0 && frameIndex < (int)indices[index]) {
+            high = index - 1;
+        } else if (index < tableSize - 1 && frameIndex >= (int)indices[index + 1]) {
+            low = index + 1;
+        } else {
+            break;
+        }
+        index = (low + high) / 2;
+    }
+#else
     /* x64: bound the search so a bad time/tableSize can't index the array OOB */
     if (index < 0) index = 0;
     if (index >= tableSize) index = tableSize - 1;
@@ -465,6 +502,7 @@ static void __attribute_regparm__(3)
     while (index < tableSize - 1 && frameIndex >= (int)indices[index + 1]) {
         ++index;
     }
+#endif
 
     *keyFrameLerpFrac = (animTime->frameFrac - (float)indices[index]) / (float)((int)indices[index + 1] - (int)indices[index]);
     *keyFrameIndex = index;
@@ -598,9 +636,17 @@ static unsigned int __attribute_regparm__(2) XAnimGetDescendantWithGreatestWeigh
     for (i = 0; i < numAnims; ++i) {
         unsigned int childIndex = anim->u.s.children + i;
         unsigned int infoIndex = tree_s->infoArray[childIndex];
+#if defined(COD2_X64)
+        float testWeight = g_xAnimInfo[infoIndex].s.goalWeight;
+#else
         float testWeight = g_xAnimInfo[infoIndex].s.weight;
+#endif
 
+#if defined(COD2_X64)
+        if (!(bestWeight >= testWeight)) {
+#else
         if (bestWeight < testWeight) {
+#endif
             unsigned int test = XAnimGetDescendantWithGreatestWeight(tree, childIndex);
             if (test) {
                 bestWeight = testWeight;
@@ -781,8 +827,13 @@ void XAnimGetAbsDelta(const XAnim *anims, unsigned int animIndex, vec_t *rot, ve
     XAnim_CalcDeltaForTime(anim->u.parts, rotDelta, posDelta, time);
 
     const float rotScale = 3.0518509447574615e-05f;
+#if defined(COD2_X64)
+    const float rot0 = rotDelta[0] * rotScale + 0.0f;
+    const float rot1 = rotDelta[1] * rotScale + 0.0f;
+#else
     const float rot0 = rotDelta[0] * rotScale;
     const float rot1 = rotDelta[1] * rotScale;
+#endif
 
     if (rot0 == 0.0f && rot1 == 0.0f) {
         rot[0] = 0.0f;
@@ -792,9 +843,15 @@ void XAnimGetAbsDelta(const XAnim *anims, unsigned int animIndex, vec_t *rot, ve
         rot[1] = rot1;
     }
 
+#if defined(COD2_X64)
+    trans[0] = posDelta[0] + 0.0f;
+    trans[1] = posDelta[1] + 0.0f;
+    trans[2] = posDelta[2] + 0.0f;
+#else
     trans[0] = posDelta[0];
     trans[1] = posDelta[1];
     trans[2] = posDelta[2];
+#endif
 }
 
 void XAnimGetRelDelta(const XAnim *anims, unsigned int animIndex, vec_t *rot, vec_t *trans, float time1, float time2)
@@ -877,7 +934,11 @@ __attribute_regparm__(3) __attribute_sseregparm__
     dy = vec2[1] - vec1[1];
     dz = vec2[2] - vec1[2];
 
+#if defined(COD2_X64)
+    quat = quatIndex ? q2 : q1;
+#else
     quat = (float *)q1 + quatIndex * 2;
+#endif
     qx = quat[0];
     qy = quat[1];
     norm = qx * qx + qy * qy;
@@ -1235,6 +1296,12 @@ static inline __attribute__((always_inline)) void XAnimRestart(XAnimTree *tree, 
         while (scanIndex) {
             anim = &anims->entries[scanIndex];
             if (anim->numAnims && (anim->u.s.flags & 4)) {
+#if defined(COD2_X64)
+                const XAnimState *state = &g_xAnimInfo[tree_s->infoArray[scanIndex]].s;
+                if (state->time == 0.0f && state->timeCount == 0) {
+                    return;
+                }
+#endif
                 XAnimResetTimeIfNeeded(&g_xAnimInfo[tree_s->infoArray[scanIndex]]);
 
                 for (i = 0; i < anim->numAnims; ++i) {
@@ -1402,10 +1469,22 @@ static int __attribute_regparm__(3) __attribute_sseregparm__
     }
 
     if (goalWeight != 0.0f) {
+#if defined(COD2_X64)
+        if (!(goalWeight >= state->weight)) {
+#else
         if (goalWeight < state->weight) {
+#endif
+#if defined(COD2_X64)
+            state->goalTime = (goalTime * (state->weight - goalWeight)) / state->weight;
+#else
             state->goalTime = goalTime * ((state->weight - goalWeight) / state->weight);
+#endif
         } else {
+#if defined(COD2_X64)
+            state->goalTime = (goalTime * (goalWeight - state->weight)) / goalWeight;
+#else
             state->goalTime = goalTime * ((goalWeight - state->weight) / goalWeight);
+#endif
         }
     } else if (state->goalWeight != 0.0f || state->goalTime > goalTime) {
         state->goalTime = goalTime;
@@ -1432,7 +1511,11 @@ static int __attribute_regparm__(3) __attribute_sseregparm__
                 unsigned int childInfoIndex = tree_s->infoArray[childIndex];
                 float childGoalWeight = g_xAnimInfo[childInfoIndex].s.goalWeight;
 
+#if defined(COD2_X64)
+                if (!(bestWeight >= childGoalWeight)) {
+#else
                 if (bestWeight < childGoalWeight) {
+#endif
                     unsigned int descendant = XAnimGetDescendantWithGreatestWeight(tree, childIndex);
                     if (descendant) {
                         bestWeight = childGoalWeight;
@@ -1474,7 +1557,11 @@ void XAnimSetCompleteGoalWeight(XAnimTree *tree, unsigned int animIndex, float g
         parentAnimIndex = tree_s->anims->entries[parentAnimIndex].parent;
         infoIndex = tree_s->infoArray[parentAnimIndex];
 
+#if defined(COD2_X64)
+        if (!infoIndex || g_xAnimInfo[infoIndex].s.goalWeight == 0.0f) {
+#else
         if (!infoIndex || g_xAnimInfo[infoIndex].s.weight == 0.0f) {
+#endif
             XAnimSetGoalWeightInternal(tree, parentAnimIndex, 0, 1.0f, goalTime, 1.0f, 0, 0);
         }
     }
@@ -1712,6 +1799,11 @@ static unsigned short XAnimCalcBuildAnimToModelLocal(const DObj *obj, const XAni
 
             name = boneNames[localBoneIndex];
             for (animPartIndex = storedBoneCount - 1; animPartIndex >= 0; --animPartIndex) {
+#if defined(COD2_X64)
+                if (parts->names[animPartIndex] == name && animToModel.boneIndex[animPartIndex] != 0x7f) {
+                    break;
+                }
+#endif
                 if (parts->names[animPartIndex] == name && animToModel.boneIndex[animPartIndex] == 0x7f) {
                     animToModel.boneIndex[animPartIndex] = (unsigned char)globalBoneIndex;
                     XAnimCalcBitSetLocal(animToModel.partBits, globalBoneIndex);
@@ -1767,15 +1859,25 @@ static void XAnimCalcAccumulateFullQuatLocal(DObjAnimMat *mat, const XAnimPartQu
         mat->quat[1] += (float)quat->u.frame0[1] * scale;
         mat->quat[2] += (float)quat->u.frame0[2] * scale;
         mat->quat[3] += (float)quat->u.frame0[3] * scale;
+#if defined(COD2_X64)
+    } else if (animTime->time == 1.0f || !animTime->frameCount) {
+        const short *frame = quat->u.frames.u.frames[quat->size];
+        mat->quat[0] += (float)frame[0] * scale;
+        mat->quat[1] += (float)frame[1] * scale;
+        mat->quat[2] += (float)frame[2] * scale;
+        mat->quat[3] += (float)frame[3] * scale;
+#endif
     } else {
         int frameIndex;
         float lerpFrac;
         const XQuat *frames = (const XQuat *)quat->u.frames.u.frames;
 
+#if !defined(COD2_X64)
         if ((unsigned)quat->size > 4096u ||
             (uintptr_t)frames + 0x100000000ULL < 0x200000000ULL ||
             (uintptr_t)frames >= 0x800000000000ULL)
             return; /* x64 TODO: corrupt anim frame data (see XAnimCalcAccumulateTransLocal) */
+#endif
 
         XAnimCalcGetFrameIndexLocal(animTime, &quat->u.frames.indices, quat->size, &frameIndex, &lerpFrac);
         if (frameIndex < 0 || frameIndex >= (int)quat->size) { frameIndex = 0; lerpFrac = 0.0f; } /* x64: guard OOB frame index */
@@ -1797,15 +1899,23 @@ static void XAnimCalcAccumulateSimpleQuatLocal(DObjAnimMat *mat, const XAnimPart
     if (!quat->size) {
         mat->quat[2] += (float)quat->u.frame02[0] * scale;
         mat->quat[3] += (float)quat->u.frame02[1] * scale;
+#if defined(COD2_X64)
+    } else if (animTime->time == 1.0f || !animTime->frameCount) {
+        const short *frame = quat->u.frames.u.frames2[quat->size];
+        mat->quat[2] += (float)frame[0] * scale;
+        mat->quat[3] += (float)frame[1] * scale;
+#endif
     } else {
         int frameIndex;
         float lerpFrac;
         const XQuat2 *frames = (const XQuat2 *)quat->u.frames.u.frames2;
 
+#if !defined(COD2_X64)
         if ((unsigned)quat->size > 4096u ||
             (uintptr_t)frames + 0x100000000ULL < 0x200000000ULL ||
             (uintptr_t)frames >= 0x800000000000ULL)
             return; /* x64 TODO: corrupt anim frame data (see XAnimCalcAccumulateTransLocal) */
+#endif
 
         XAnimCalcGetFrameIndexLocal(animTime, &quat->u.frames.indices, quat->size, &frameIndex, &lerpFrac);
         if (frameIndex < 0 || frameIndex >= (int)quat->size) { frameIndex = 0; lerpFrac = 0.0f; } /* x64: guard OOB frame index */
@@ -1822,11 +1932,19 @@ static void XAnimCalcAccumulateTransLocal(DObjAnimMat *mat, const XAnimPartTrans
             mat->trans[0] += trans->u.frame0[0] * weightScale;
             mat->trans[1] += trans->u.frame0[1] * weightScale;
             mat->trans[2] += trans->u.frame0[2] * weightScale;
+#if defined(COD2_X64)
+        } else if (animTime->time == 1.0f || !animTime->frameCount) {
+            const float *frame = trans->u.frames.frames[trans->size];
+            mat->trans[0] += frame[0] * weightScale;
+            mat->trans[1] += frame[1] * weightScale;
+            mat->trans[2] += frame[2] * weightScale;
+#endif
         } else {
             int frameIndex;
             float lerpFrac;
             const vec3_t *frames = (const vec3_t *)trans->u.frames.frames;
 
+#if !defined(COD2_X64)
             /* x64 TODO(root not found): some XAnimPartTrans present corrupt data here --
                a garbage size (>4096; no real anim has that many keyframes) and/or a bad
                frames pointer (truncated OR mid-range non-canonical). The .xanim loader is
@@ -1838,6 +1956,7 @@ static void XAnimCalcAccumulateTransLocal(DObjAnimMat *mat, const XAnimPartTrans
                 mat->transWeight += weightScale;
                 return;
             }
+#endif
 
             XAnimCalcGetFrameIndexLocal(animTime, &trans->u.frames.indices, trans->size, &frameIndex, &lerpFrac);
             if (frameIndex < 0 || frameIndex >= (int)trans->size) { frameIndex = 0; lerpFrac = 0.0f; } /* x64: guard OOB frame index */
@@ -1902,6 +2021,11 @@ static void XAnimCalcAccumulateLeafLocal(const DObj *obj, const XAnimTree_s *tre
         mat = &rotTransArray[modelBoneIndex];
         part = &parts->parts[animPartIndex];
 
+#if defined(COD2_X64)
+        if (!part->quat) {
+            mat->quat[3] += weightScale;
+        } else
+#endif
         if (parts->simpleQuatBits && ((parts->simpleQuatBits[animPartIndex >> 3] >> (animPartIndex & 7)) & 1)) {
             XAnimCalcAccumulateSimpleQuatLocal(mat, part->quat, &animTime, quatScale);
         } else {
@@ -2425,19 +2549,37 @@ static void __attribute_regparm__(3) __attribute_sseregparm__
 
         notifyInfo = &parts->notify[info->notifyIndex];
         notifyIndex = info->notifyIndex;
+#if defined(COD2_X64)
+        if (!(oldTime > notifyInfo->time)) {
+#else
         if (oldTime <= notifyInfo->time) {
+#endif
             while (notifyIndex < parts->notifyCount) {
                 Scr_AddConstString(notifyInfo->name);
                 Scr_NotifyNum(tree_s->entnum - 1, 0, info->notifyName, 1);
                 ++notifyIndex;
                 ++notifyInfo;
             }
+#if defined(COD2_X64)
+            notifyIndex = 0;
+            notifyInfo = parts->notify;
+            while (notifyIndex < parts->notifyCount && time > notifyInfo->time) {
+                Scr_AddConstString(notifyInfo->name);
+                Scr_NotifyNum(tree_s->entnum - 1, 0, info->notifyName, 1);
+                ++notifyIndex;
+                ++notifyInfo;
+            }
+#endif
         }
         return;
     }
 
     if (time == 1.0f) {
+#if defined(COD2_X64)
+        if (!(oldTime > notifyInfo->time)) {
+#else
         if (oldTime <= notifyInfo->time) {
+#endif
             while (notifyIndex < parts->notifyCount) {
                 Scr_AddConstString(notifyInfo->name);
                 Scr_NotifyNum(tree_s->entnum - 1, 0, info->notifyName, 1);
@@ -2452,12 +2594,24 @@ static void __attribute_regparm__(3) __attribute_sseregparm__
         return;
     }
 
+#if defined(COD2_X64)
+    /* Mac 0x3edeb dispatches the accepted first note even for unordered time. */
+    if (notifyIndex < parts->notifyCount) {
+        do {
+            Scr_AddConstString(notifyInfo->name);
+            Scr_NotifyNum(tree_s->entnum - 1, 0, info->notifyName, 1);
+            ++notifyIndex;
+            ++notifyInfo;
+        } while (notifyIndex < parts->notifyCount && time > notifyInfo->time);
+    }
+#else
     while (notifyIndex < parts->notifyCount && time > notifyInfo->time) {
         Scr_AddConstString(notifyInfo->name);
         Scr_NotifyNum(tree_s->entnum - 1, 0, info->notifyName, 1);
         ++notifyIndex;
         ++notifyInfo;
     }
+#endif
 }
 
 static float XAnimSiblingGoalBlendTime(const XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime)
@@ -2482,7 +2636,11 @@ static float XAnimSiblingGoalBlendTime(const XAnimTree_s *tree, unsigned int ani
     for (i = 0; i < numAnims; ++i) {
         unsigned int childIndex = firstChild + i;
         unsigned int infoIndex = tree->infoArray[childIndex];
+#if defined(COD2_X64)
+        float weight = infoIndex ? g_xAnimInfo[infoIndex].s.weight : 0.0f;
+#else
         float weight = infoIndex ? g_xAnimInfo[infoIndex].s.goalWeight : 0.0f;
+#endif
 
         if (childIndex == animIndex) {
             weight = goalWeight - weight;
@@ -2511,7 +2669,11 @@ static void XAnimClearGoalWeightForBlend(XAnimInfo *info, float blendTime)
 
     state->goalWeight = 0.0f;
     if (blendTime == 0.0f) {
+#if defined(COD2_X64)
+        state->weight = 0.0f;
+#else
         state->rate = 0.0f;
+#endif
     }
 
     XAnimClearInfoNotify(info);
@@ -2581,12 +2743,19 @@ int XAnimSetCompleteGoalWeightKnobAll(XAnimTree *tree, unsigned int animIndex, u
         if (parentIndex == rootIndex) {
             return error;
         }
+#if defined(COD2_X64)
+        if (parentIndex) {
+            blendTime = XAnimSiblingGoalBlendTime(tree_s, parentIndex, 1.0f, goalTime);
+            XAnimClearSiblingGoalWeights(tree, parentIndex, blendTime);
+        }
+#else
         if (!parentIndex) {
             return 1;
         }
 
         blendTime = XAnimSiblingGoalBlendTime(tree_s, currentIndex, 1.0f, goalTime);
         XAnimClearSiblingGoalWeights(tree, currentIndex, blendTime);
+#endif
         XAnimSetGoalWeightInternal(tree, parentIndex, 0, 1.0f, goalTime, 1.0f, 0, 0);
 
         if (bRestart) {
@@ -2691,8 +2860,13 @@ static void __attribute_regparm__(3)
             Com_Printf((const char *)"%s%s: (weight) %.2f -> %.2f, (time) %.2f -> %.2f, (realtimedelta) %.2f, '%s'\n",
                        color,
                        debugName,
+#if defined(COD2_X64)
+                       state->weight,
+                       state->goalWeight,
+#else
                        state->goalWeight,
                        state->weight,
+#endif
                        state->oldTime,
                        state->time,
                        realTimeDelta,
@@ -2701,8 +2875,13 @@ static void __attribute_regparm__(3)
             Com_Printf((const char *)"%s%s: (weight) %.2f -> %.2f, (time) %.2f -> %.2f, (realtimedelta) %.2f\n",
                        color,
                        debugName,
+#if defined(COD2_X64)
+                       state->weight,
+                       state->goalWeight,
+#else
                        state->goalWeight,
                        state->weight,
+#endif
                        state->oldTime,
                        state->time,
                        realTimeDelta);
@@ -2715,8 +2894,13 @@ static void __attribute_regparm__(3)
             Com_Printf((const char *)"%s%s: (weight) %.2f -> %.2f, (time) %.2f -> %.2f, '%s'\n",
                        color,
                        debugName,
+#if defined(COD2_X64)
+                       state->weight,
+                       state->goalWeight,
+#else
                        state->goalWeight,
                        state->weight,
+#endif
                        state->oldTime,
                        state->time,
                        SL_ConvertToString(info->notifyName));
@@ -2724,24 +2908,39 @@ static void __attribute_regparm__(3)
             Com_Printf((const char *)"%s%s: (weight) %.2f -> %.2f, '%s'\n",
                        color,
                        debugName,
+#if defined(COD2_X64)
+                       state->weight,
+                       state->goalWeight,
+#else
                        state->goalWeight,
                        state->weight,
+#endif
                        SL_ConvertToString(info->notifyName));
         }
     } else if (XAnimDisplayShowsTime(tree, animIndex)) {
         Com_Printf((const char *)"%s%s: (weight) %.2f -> %.2f, (time) %.2f -> %.2f\n",
                    color,
                    debugName,
+#if defined(COD2_X64)
+                   state->weight,
+                   state->goalWeight,
+#else
                    state->goalWeight,
                    state->weight,
+#endif
                    state->oldTime,
                    state->time);
     } else {
         Com_Printf((const char *)"%s%s: (weight) %.2f -> %.2f\n",
                    color,
                    debugName,
+#if defined(COD2_X64)
+                   state->weight,
+                   state->goalWeight);
+#else
                    state->goalWeight,
                    state->weight);
+#endif
     }
 
     for (int i = 0; i < numAnims; ++i) {
@@ -2889,7 +3088,12 @@ static void XAnimInsertClientNotify(unsigned int notetrackName, unsigned int not
 {
     int insertIndex = g_notifyListSize - 1;
 
+#if defined(COD2_X64)
+    /* Mac's jb also moves an entry when either fraction is unordered. */
+    while (insertIndex >= 0 && !(timeFrac >= g_notifyList[insertIndex].timeFrac)) {
+#else
     while (insertIndex >= 0 && timeFrac < g_notifyList[insertIndex].timeFrac) {
+#endif
         g_notifyList[insertIndex + 1] = g_notifyList[insertIndex];
         --insertIndex;
     }
@@ -2915,13 +3119,21 @@ static float XAnimClientNotifyFrac(const XAnimState *state, float notetrackTime,
             return (notetrackTime - oldTime + 1.0f) / dtime;
         }
         if (notetrackTime >= oldTime) {
+#if defined(COD2_X64)
+            return (notetrackTime - oldTime + 0.0f) / dtime;
+#else
             return (notetrackTime - oldTime) / dtime;
+#endif
         }
         return 1.0f;
     }
 
     if ((time > notetrackTime || time == 1.0f) && notetrackTime >= oldTime) {
+#if defined(COD2_X64)
+        return (notetrackTime - oldTime + 0.0f) / dtime;
+#else
         return (notetrackTime - oldTime) / dtime;
+#endif
     }
 
     return 1.0f;
@@ -2960,6 +3172,43 @@ static void __attribute_regparm__(2) __attribute_sseregparm__
         return;
     }
 
+#if defined(COD2_X64)
+    {
+        const XAnimNotifyInfo *next = XAnimGetNextNotifyInfo(parts, state->oldTime);
+        int first;
+
+        if (!next) {
+            return;
+        }
+        first = (int)(next - notify);
+        if (state->oldTime > state->time) {
+            if (state->time > next->time) {
+                for (i = first; i < notifyCount && state->time > notify[i].time; ++i) {
+                    XAnimInsertClientNotify(notify[i].name, notifyType, XAnimClientNotifyFrac(state, notify[i].time, dtime));
+                }
+            } else if (!(state->oldTime > next->time)) {
+                for (i = first; i < notifyCount; ++i) {
+                    XAnimInsertClientNotify(notify[i].name, notifyType, XAnimClientNotifyFrac(state, notify[i].time, dtime));
+                }
+                /* Mac 1.3 advances the wrapped prefix by two records (0x4115d). */
+                for (i = 0; i < notifyCount && state->time > notify[i].time; i += 2) {
+                    XAnimInsertClientNotify(notify[i].name, notifyType, XAnimClientNotifyFrac(state, notify[i].time, dtime));
+                }
+            }
+        } else if (!(state->oldTime > next->time)) {
+            if (state->time != 1.0f && next->time >= state->time) {
+                return;
+            }
+            /* Mac 0x40aae accepts the first note before testing later times. */
+            i = first;
+            do {
+                XAnimInsertClientNotify(notify[i].name, notifyType, XAnimClientNotifyFrac(state, notify[i].time, dtime));
+                ++i;
+            } while (i < notifyCount && (state->time == 1.0f || state->time > notify[i].time));
+        }
+        return;
+    }
+#endif
     if (state->oldTime > state->time) {
         for (i = 0; i < notifyCount; ++i) {
             if (notify[i].time >= state->oldTime) {
@@ -3079,13 +3328,21 @@ static __attribute_regparm__(3) __attribute_sseregparm__
     if (!numAnims) {
         XAnimParts *parts = anim->u.parts;
 
+#if defined(COD2_X64)
+        totalDtime = state->rate * parts->frequency * dtime;
+#else
         totalDtime = dtime * state->rate * parts->frequency;
+#endif
         if (totalDtime == 0.0f) {
             return;
         }
 
         newTime = state->oldTime + totalDtime;
+#if defined(COD2_X64)
+        timeCount = state->timeCount;
+#else
         timeCount = state->oldTimeCount;
+#endif
         if (newTime >= 1.0f) {
             if (parts->bLoop) {
                 do {
@@ -3097,7 +3354,12 @@ static __attribute_regparm__(3) __attribute_sseregparm__
             }
         }
 
+#if defined(COD2_X64)
+        timeCount = (short)timeCount;
+        if (state->time - newTime > (float)(timeCount - state->timeCount)) {
+#else
         if (state->time - newTime > (float)(timeCount - state->oldTimeCount)) {
+#endif
             return;
         }
 
@@ -3181,7 +3443,12 @@ static __attribute_regparm__(3) __attribute_sseregparm__
         }
     }
 
+#if defined(COD2_X64)
+    timeCount = (short)timeCount;
+    oldTimeCount = state->timeCount;
+#else
     oldTimeCount = state->oldTimeCount;
+#endif
     if (state->time - newTime > (float)(timeCount - oldTimeCount)) {
         return;
     }
@@ -3233,7 +3500,11 @@ static __attribute_regparm__(3) __attribute_sseregparm__
         }
 
         if (childNotify) {
+#if defined(COD2_X64)
+            XAnimProcessServerNotify(tree, childInfo, childAnim, state->time);
+#else
             XAnimProcessServerNotify(tree, childInfo, childAnim, childState->time);
+#endif
         }
 
         childState->time = state->time;
@@ -3311,7 +3582,11 @@ static inline __attribute__((always_inline)) const XAnimNotifyInfo *XAnimGetNext
         const XAnimNotifyInfo *notifyInfo = &parts->notify[notifyInfoIndex];
         float notifyTime = notifyInfo->time;
 
+#if defined(COD2_X64)
+        if (!(time > notifyTime) && bestTime > notifyTime) {
+#else
         if (time <= notifyTime && bestTime > notifyTime) {
+#endif
             bestNotifyInfo = notifyInfo;
             bestTime = notifyTime;
         }
@@ -3396,7 +3671,11 @@ static float __attribute_regparm__(3) __attribute_sseregparm__
 
         childAnim = &tree_s->anims->entries[childIndex];
         testFrac = XAnimGetServerNotifyFracSyncTotal(tree, childInfo, childAnim, syncState, nextSyncState, dtime);
+#if defined(COD2_X64)
+        if (testFrac < minFrac) {
+#else
         if (!(minFrac <= testFrac)) {
+#endif
             minFrac = testFrac;
         }
     }
@@ -3436,13 +3715,21 @@ static float XAnimUpdateServerNotifyFrac(const XAnimTree *tree, XAnimInfo *info,
         }
 
         childInfo = &g_xAnimInfo[infoIndex];
+#if defined(COD2_X64)
+        if (childInfo->s.weight == 0.0f || childInfo->s.goalWeight == 0.0f) {
+#else
         if (childInfo->s.weight == 0.0f && childInfo->s.goalWeight == 0.0f) {
+#endif
             continue;
         }
 
         childAnim = &tree_s->anims->entries[childIndex];
         childFrac = XAnimGetServerNotifyFracSyncTotal(tree, childInfo, childAnim, state, &nextState, totalDtime);
+#if defined(COD2_X64)
+        if (childFrac < frac) {
+#else
         if (!(frac <= childFrac)) {
+#endif
             frac = childFrac;
         }
     }
@@ -3496,7 +3783,11 @@ static float XAnimFindServerNoteTrackInternal(const XAnimTree *tree, unsigned in
             nextTime = 1.0f;
         }
 
+#if defined(COD2_X64)
+        if (state->time - nextTime > (float)((int)(short)nextTimeCount - (int)state->timeCount)) {
+#else
         if (state->time - nextTime > (float)((int)nextTimeCount - (int)state->timeCount)) {
+#endif
             return 1.0f;
         }
 
@@ -3527,7 +3818,11 @@ static float XAnimFindServerNoteTrackInternal(const XAnimTree *tree, unsigned in
             }
         }
 
+#if defined(COD2_X64)
+        if (state->time - nextTime > (float)((int)(short)nextTimeCount - (int)state->timeCount)) {
+#else
         if (state->time - nextTime > (float)((int)nextTimeCount - (int)state->timeCount)) {
+#endif
             return 1.0f;
         }
 
@@ -3546,7 +3841,11 @@ static float XAnimFindServerNoteTrackInternal(const XAnimTree *tree, unsigned in
         for (i = 0; i < numAnims; ++i) {
             unsigned int childIndex = anim->u.s.children + i;
             float childFrac = XAnimFindServerNoteTrackInternal(tree, childIndex, totalDtime);
+#if defined(COD2_X64)
+            if (childFrac < frac) {
+#else
             if (!(childFrac >= frac)) {
+#endif
                 frac = childFrac;
             }
         }

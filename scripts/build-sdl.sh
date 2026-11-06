@@ -2,6 +2,7 @@
 # Build only pinned, checksum-verified SDL sources; no package manager needed.
 set -euo pipefail
 cache=${1:?usage: build-sdl.sh build-directory}
+patch_file=$(cd "$(dirname "$0")" && pwd -P)/patches/sdl3-cocoa-desktop-mode.patch
 mkdir -p "$cache"
 cache=$(cd "$cache" && pwd -P)
 prefix="$cache/install"
@@ -18,7 +19,7 @@ fetch() {
 }
 fetch SDL3-3.4.10.tar.gz 12b34280415ec8418c864408b93d008a20a6530687ee613d60bfbd20411f2785
 fetch sdl2-compat-2.32.72.tar.gz a14d2f78dad8e83ef1039b6534ace4d14f11f5b11d023af989affd70ac1bb35e
-stamp='SDL3-3.4.10 sdl2-compat-2.32.72 arm64 macOS26 Release v1'
+stamp="SDL3-3.4.10 sdl2-compat-2.32.72 arm64 macOS26 Release v2 $(/usr/bin/shasum -a 256 "$patch_file" | /usr/bin/awk '{print $1}')"
 if [[ -f "$prefix/.complete" && $(cat "$prefix/.complete") == "$stamp" ]]; then
     exit 0
 fi
@@ -27,6 +28,11 @@ for source in SDL3-3.4.10 sdl2-compat-2.32.72; do
         /usr/bin/tar -xzf "$cache/$source.tar.gz" -C "$cache"
     fi
 done
+if /usr/bin/patch --force --dry-run --silent -R -p1 -d "$cache/SDL3-3.4.10" < "$patch_file"; then
+    : # Already patched; rebuilding is safe after an interrupted install.
+else
+    /usr/bin/patch --batch --forward -p1 -d "$cache/SDL3-3.4.10" < "$patch_file"
+fi
 # Full speed by default; COD2_BUILD_BACKGROUND=1 keeps builds on efficiency cores.
 run() {
     if [[ ${COD2_BUILD_BACKGROUND:-0} == 1 ]]; then

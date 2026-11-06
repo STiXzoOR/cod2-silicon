@@ -32,12 +32,25 @@ extern void Com_Error(errorParm_t code, const char *fmt, ...);
 
 static inline __attribute__((always_inline)) unsigned char ColorFloatToByte(float f)
 {
+#if defined(COD2_X64)
+    /* Mac 0x17c1aa: CVTTSS2SI gives INT_MIN for NaN and out-of-range input,
+     * and the wrapping subtraction at 0x17c1b4 then selects 255. */
+    float rounded = floorf(f * 255.0f + 0.5f);
+    int val = rounded >= -2147483648.0f && rounded < 2147483648.0f
+        ? (int)rounded : (-2147483647 - 1);
+    if (!(((unsigned int)val - 255u) & 0x80000000u))
+        return 255;
+    if (!((0u - (unsigned int)val) & 0x80000000u))
+        return 0;
+    return (unsigned char)val;
+#else
     int val = (int)floorf(f * 255.0f + 0.5f);
     if (val - 255 >= 0)
         return 255;
     if (val <= 0)
         return 0;
     return (unsigned char)val;
+#endif
 }
 
 void CG_InitMarkPolys(void);
@@ -203,7 +216,11 @@ void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t
             }
 
             if (oldest->prevMark == NULL) {
+#if defined(COD2_X64)
+                Com_Error(ERR_DROP, "\x15" "CG_FreeLocalEntity: not active");
+#else
                 Com_Error(ERR_DROP, "CG_FreeLocalEntity: not active");
+#endif
 
             }
 

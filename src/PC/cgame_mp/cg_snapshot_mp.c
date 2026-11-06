@@ -216,7 +216,11 @@ static void CG_ResetEntity(char *cent)
 
         pXAnimTree = ((clientInfo_t *)corpseInfo)->pXAnimTree;
 
+#if defined(COD2_X64)
+        if (((centity_t *)cent)->nextState.eFlags & 0x80000) {
+#else
         if (((centity_t *)cent)->nextState.eFlags & 8) {
+#endif
             int attachIndex;
 
             memcpy(corpseInfo, ci, CI_STRIDE);
@@ -702,7 +706,11 @@ void CG_SetNextSnap(snapshot_t *snap_param)
 
         if (!isDemo) {
             char *nextSnap = (char *)cg->nextSnap;
+#if defined(COD2_X64)
+            if (!(((snapshot_t *)nextSnap)->ps.pm_flags & 0x400000)) {
+#else
             if (!(((snapshot_t *)nextSnap)->ps.pm_flags & 0x40)) {
+#endif
 
                 const dvar_t *dv1 = cg_dvar1 ? (const dvar_t *)*cg_dvar1 : NULL;
                 if (!dv1 || dv1->current.enabled == 0) {
@@ -812,6 +820,14 @@ static inline __attribute__((always_inline)) char *CG_ReadNextSnapshot(void)
     return NULL;
 }
 
+#if defined(COD2_X64)
+static int CG_SnapshotTimeBefore(int time, int referenceTime)
+{
+    /* Mac branches on the sign of the wrapped subtraction (js/jns). */
+    return (((unsigned int)time - (unsigned int)referenceTime) & 0x80000000u) != 0;
+}
+#endif
+
 void CG_ProcessSnapshots(void)
 {
     int n;
@@ -858,15 +874,32 @@ void CG_ProcessSnapshots(void)
             CG_SetFrameInterpolation();
         }
 
+#if defined(COD2_X64)
+    process_next_snapshot:
+        curSnap = (char *)cg->snap;
+        nextSnap = (char *)cg->nextSnap;
+        if (!cg->cubemapShot && nextSnap != NULL && nextSnap != curSnap) {
+        process_snapshot_time:
+#else
         if (nextSnap != NULL && nextSnap != curSnap) {
+#endif
             curSnap = (char *)cg->snap;
             nextSnap = (char *)cg->nextSnap;
             cgTime = cg->time;
 
+#if defined(COD2_X64)
+            if (CG_SnapshotTimeBefore(cgTime, ((snapshot_t *)curSnap)->serverTime) ||
+                !CG_SnapshotTimeBefore(cgTime, ((snapshot_t *)nextSnap)->serverTime)) {
+#else
             if (cgTime < ((snapshot_t *)curSnap)->serverTime ||
                 cgTime >= ((snapshot_t *)nextSnap)->serverTime) {
+#endif
                 CG_TransitionSnapshot_Inline();
+#if defined(COD2_X64)
+                goto process_next_snapshot;
+#else
                 continue;
+#endif
             }
 
             return;
@@ -875,29 +908,52 @@ void CG_ProcessSnapshots(void)
         snap = CG_ReadNextSnapshot();
         if (!snap) {
             snapTime = ((snapshot_t *)curSnap)->serverTime;
+#if defined(COD2_X64)
+            if (CG_SnapshotTimeBefore(cg->time, snapTime)) {
+#else
             if (cg->time < snapTime) {
+#endif
                 cg->time = snapTime;
                 cg->bgs.time = snapTime;
             }
             return;
         }
 
+#if defined(COD2_X64)
+        nextSnap = (char *)cg->nextSnap;
+#else
         if (((snapshot_t *)snap)->snapFlags & 2) {
             continue;
         }
+#endif
 
+#if defined(COD2_X64)
+        if ((((snapshot_t *)snap)->snapFlags ^ ((snapshot_t *)nextSnap)->snapFlags) & 4) {
+#else
         if ((((snapshot_t *)snap)->snapFlags ^ ((snapshot_t *)curSnap)->snapFlags) & 4) {
+#endif
             CG_SetInitialSnapshot((snapshot_t *)snap);
             CG_SetNextSnap((snapshot_t *)snap);
             CG_TransitionSnapshot_Inline();
+#if defined(COD2_X64)
+            goto process_next_snapshot;
+#else
             continue;
+#endif
         }
 
+#if defined(COD2_X64)
+        if (CG_SnapshotTimeBefore(((snapshot_t *)snap)->serverTime, ((snapshot_t *)nextSnap)->serverTime)) {
+#else
         if (((snapshot_t *)snap)->serverTime < ((snapshot_t *)curSnap)->serverTime) {
+#endif
             Com_Error(1, (const char *)"\x15"
                                        "CG_ProcessSnapshots: Server time went backwards");
         }
 
         CG_SetNextSnap((snapshot_t *)snap);
+#if defined(COD2_X64)
+        goto process_snapshot_time;
+#endif
     }
 }

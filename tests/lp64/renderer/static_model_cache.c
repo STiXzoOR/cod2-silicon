@@ -26,7 +26,10 @@ unsigned char sStdConverterARGB[16], sStdConverterABGR[16];
 unsigned char sATI4CompsConverterARGB[16], sATI4CompsConverterABGR[16];
 static unsigned char openGLState[0x804];
 void *imp___ZN7COpenGL7sOpenGLE = openGLState;
-void *imp___ZTV15CColorConverter;
+/* Two Itanium header slots precede the eight base virtual entries. The
+ * fixture only resets the vptr at exit; it never dispatches this stand-in. */
+static void *baseConverterVtable[10];
+void *imp___ZTV15CColorConverter = baseConverterVtable;
 int MacDisplay_GetCardType(void) { return 0; }
 Boolean MacFeatures_IsAltiVecAvailable(UInt8 *a, UInt8 *b, UInt8 *c) { return 0; }
 void __ZdlPv(void *p) { free(p); }

@@ -22,7 +22,7 @@ from c_headers import Headers
 from elf32 import ELF
 from layout import shape
 from macho32 import MachO32
-from recover import SCALAR_RELOCATIONS, recover_object
+from recover import SCALAR_RELOCATIONS, recover_item_count, recover_object
 from stabs import Database, Unsupported
 from check_alignment import check_alignment
 from arm64_test import check_recovered_values
@@ -325,8 +325,9 @@ def generate(args):
         record.update(name=obj.name, group=group_by_id[id(obj)], aliases=obj.aliases,
                       section=obj.section, bytes=len(obj.data), relocations=len(obj.relocs), ctype=ctype)
         records.append(record)
-        if obj.name in SCALAR_RELOCATIONS:
-            recovered, recovered_type, provenance = recover_object(obj, db, byname, value_reference)
+        if obj.name == 'bg_numItems' or obj.name in SCALAR_RELOCATIONS:
+            recover = recover_item_count if obj.name == 'bg_numItems' else recover_object
+            recovered, recovered_type, provenance = recover(obj, db, byname, value_reference)
             emitter.initializer(recovered, recovered_type)
             emitter.ctype(recovered_type)
             lp64[id(obj)] = (recovered, recovered_type)
@@ -379,13 +380,14 @@ typedef void (*dg_function)(void);
     emitter.translate_addresses = True
     emitter.trusted_objects = {id(o) for o in objects if record_by_id[id(o)]['status'] == 'typed'}
     emitter.trusted_objects.update(id(obj) for obj, _ in lp64.values())
+    sections = {'.rodata': 'DG_RODATA', '.data': 'DG_DATA', '.bss': 'DG_BSS',
+                '.data.rel.ro': 'DG_RELRO'}
     for group, objs in groups.items():
         full = []
         for index, obj in enumerate(objs):
             ty, record = selected[id(obj)], record_by_id[id(obj)]
             ctype = emitter.ctype(ty)
-            section = {'.rodata': 'DG_RODATA', '.data': 'DG_DATA', '.bss': 'DG_BSS',
-                       '.data.rel.ro': 'DG_RELRO'}[obj.section]
+            section = sections[obj.section]
             attr = '__attribute__((used, aligned(DG_ALIGN), section(%s)))' % section
             description = ('DATAGEN_FALLBACK: ' + record['reason']) if record['status'] == 'fallback' else record.get('source', 'debug type')
             text = '\n/* %s: %s */\n' % (obj.name, description)
@@ -397,9 +399,10 @@ typedef void (*dg_function)(void);
             text += '#endif\n'
             if id(obj) in lp64:
                 recovered, recovered_type = lp64[id(obj)]
+                recovered_attr = '__attribute__((used, aligned(DG_ALIGN), section(%s)))' % sections[recovered.section]
                 replacement = '%s%s dg_object_%d __asm__(DG_ASM("%s")) %s = %s;\n' % (
                     '' if obj.global_symbol else 'static ', emitter.ctype(recovered_type), index,
-                    obj.name, attr, emitter.initializer(recovered, recovered_type))
+                    obj.name, recovered_attr, emitter.initializer(recovered, recovered_type))
                 text = '#if __SIZEOF_POINTER__ == 4\n' + text + '#else\n'
                 text += '/* LP64: scalar values verified against the named Steam object. */\n'
                 text += replacement + '#endif\n'

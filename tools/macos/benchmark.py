@@ -53,22 +53,40 @@ def summarize(log, csv_path):
 
 def stop(process, grace=5):
     # A wrapper can exit before its engine child. Track the whole process group.
+    deadline = time.monotonic() + grace
+
+    def signal_group(signum):
+        first_attempt = True
+        while True:
+            try:
+                os.killpg(process.pid, signum)
+                return
+            except PermissionError:
+                # Darwin may reject a group until exiting members finish teardown.
+                process.poll()  # reap our child; descendants may outlive its exit
+                remaining = deadline - time.monotonic()
+                # Keep one immediate post-reap retry even when escalation starts late.
+                if remaining <= 0 and not first_attempt:
+                    raise
+                first_attempt = False
+                if remaining > 0:
+                    time.sleep(min(.05, remaining))
+
     try:
-        os.killpg(process.pid, signal.SIGTERM)
+        signal_group(signal.SIGTERM)
     except ProcessLookupError:
         process.wait()
         return
-    deadline = time.monotonic() + grace
     while time.monotonic() < deadline:
         process.poll()  # reap the group leader if it has exited
         try:
-            os.killpg(process.pid, 0)
+            signal_group(0)
         except ProcessLookupError:
             process.wait()
             return
         time.sleep(.05)
     try:
-        os.killpg(process.pid, signal.SIGKILL)
+        signal_group(signal.SIGKILL)
     except ProcessLookupError:
         pass
     process.wait()
@@ -150,8 +168,7 @@ def main():
     command = [str(Path(__file__).with_name('run.sh')), str(data),
                '+set', 'com_maxfps', str(args.maxfps), '+set', 'r_swapInterval', '0',
                '+set', 'logfile', '0',
-               # Current reconstruction gates CSV/50ms stepping on this cvar.
-               '+set', 'cl_freezeDemo', '1']
+               '+set', 'cl_freezeDemo', '0']
     if args.resolution:
         command += ['+set', 'r_mode', args.resolution]
     if args.window_mode:

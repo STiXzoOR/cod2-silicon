@@ -1,0 +1,17 @@
+# Mac/DirectX 9/CFence reconciliation
+
+Updated 2026-11-05. All 5 assigned entries were read against Mac 1.3: 3 equal, 2 fixed.
+
+The constructor at 0x1f9c0 previously stored a zero ID. It now generates 256 fences one at a time when the unused pool is empty, takes the last ID, sets it and removes it from the unused pool. Existing IDs are reused in the same LIFO order. Shutdown at 0x1fa90 now deletes each unused GL fence and empties the vector while retaining its backing allocation, matching the original erase behavior. Static initialization and destruction wrappers were checked at their actual addresses 0x1faee, 0x1fb4e and 0x1fb5e; the repeated mangled static-helper name requires address selection rather than otool -p's first match.
+
+The native record is GLuint ID, native start pointer, UINT32 byte size and UINT32 frame count, 24 bytes on arm64. The buffer worker independently checked this shape for its recovered fence queues. The public unused-ID vector remains three GLuint pointers. The native allocation uses defined malloc/realloc storage rather than the original STL allocator implementation; no external serialized layout is involved.
+
+Arm64 Release dedicated target and the actual CFence renderer object compiled at low priority. All five OFF preprocessing configurations, including actual __LINE__, match the baseline. No fence waits or GPU synchronization were exercised; no new tests, full CI or replays were run. The recovered buffer-fence caller and GL Init/Shutdown lifecycle still require parent integration validation. Private evidence: ~/Library/Application Support/CoD2-native-decomp/recon-mac-gl.noindex/.
+
+## Integrated batch 15 verification
+
+Engine c8ef702 and fixture-only follow-ups 1581779, 2c6cf4f and 7f49612 passed both dedicated builds, complete local CI steps 02–13, source guards, actual legacy line-map comparisons, parent/per-unit independent reviews and an additional combined-source review. Steps 07, 08 and 13 passed complete reruns after correcting six existing fixtures. Initial failures exposed stale GL/portal plumbing, an outdoor matrix expectation, a missing display provider, the DX7 skinning result and a missing sprite extraction dependency. Exact Mac 0xd2324–0xd232b confirms paired skinning addition; the fixture now expects that result. The sprite fixture retains its type-4 case and aborts if its out-of-scope cylinder helper is reached. No cases or assertions were added.
+
+The standard full-file guard command cannot preprocess the dispatch fixture's deliberate native-only error. A final source-only pass using the same checker confirms all five inactive configurations are identical. Engine source was unchanged by the fixture corrections. Both 2,000-frame replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six Linux logic fields agree; maximum origin/velocity drift is 0.11792/2.0. No i386 byte-parity claim is made.
+
+This batch closes 655 device, world/model, backend, texture/surface, GL and buffer entries. Fixes cover layouts, resource/context/fence lifetime, command and matrix order, lighting/culling constants and functional DISCARD flags. Constructor/reset/draw/VAO/sampler/timing gaps remain explicit. Existing local accelerated-GL raster/saved-screen, mip, volume and all 18 depth cases passed ASan/UBSan. Dedicated replays do not exercise client rendering; unreached client/error paths remain compiled and reviewed. These checks do not establish a complete rendered frame.

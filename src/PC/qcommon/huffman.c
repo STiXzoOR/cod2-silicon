@@ -287,7 +287,12 @@ void Huff_addRef(huff_t *huff, int ch, msg_t *mbuf, int offset)
             SET_HEAD(tnode, NODE_NEXT(huff->lhead)->head);
         } else {
             SET_HEAD(tnode, get_ppnode(huff));
+#if defined(COD2_X64)
+            /* Mac 1.3 0x191a6e retains the internal node in this head slot. */
+            *NODE_HEAD(tnode) = tnode2;
+#else
             *NODE_HEAD(tnode) = tnode;
+#endif
         }
     } else {
         SET_HEAD(tnode, get_ppnode(huff));

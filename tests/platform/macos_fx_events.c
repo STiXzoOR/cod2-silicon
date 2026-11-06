@@ -24,6 +24,7 @@ static FxImpactTable impactTable = {.name = "fixture", .table = (FxImpactEntry *
 static EffectTemplate *seenEffects[4];
 static snd_alias_list_t *seenSounds[4];
 static int effectsSeen, soundsSeen, times[2], timesSeen, boltSeen, noMarksExpected;
+static int orientedSeen;
 static const vec3_t expectedOrigin = {17,29,41};
 static const char configString[] = "12tag_flash";
 
@@ -35,6 +36,12 @@ void FX_PlayEffect(EffectTemplate *effect, const vec_t *origin, const vec_t *for
     float length = forward[0]*forward[0] + forward[1]*forward[1] + forward[2]*forward[2];
     assert(fabsf(length - 1) < .00001f);
     seenEffects[effectsSeen++] = effect;
+}
+void FX_PlayOrientedEffect(EffectTemplate *effect, const vec_t *origin, const vec_t *forward, const vec_t *up)
+{
+    assert(up[0] == 0 && up[1] == 0 && up[2] == 1);
+    ++orientedSeen;
+    FX_PlayEffect(effect, origin, forward);
 }
 void FX_PlayEntityEffect(EffectTemplate *effect, const vec_t *origin, vec3_t *axis, const FxBoltInfo *bolt)
 {
@@ -150,6 +157,7 @@ int main(void)
         CG_EntityEvent(&cent, 0xc2);
         assert(effectsSeen == 1 && seenEffects[0] == &configuredEffects[index]);
     }
+    assert(orientedSeen == 3);
     cent.nextState.eventParm = 3;
     CG_EntityEvent(&cent, 0xc3);
     assert(boltSeen == 1);

@@ -216,6 +216,96 @@ void CL_Netchan_SendOOBPacket(int iLength, const void *pData, netadr_t to)
     NetProf_AddPacket(&((clientConnection_t *)clc_base)->pOOBProf->send, iLength, 0);
 }
 
+#if defined(COD2_X64)
+extern int Dvar_GetInt(const char *dvarName);
+
+static void CL_Netchan_ProfileLine(const char *line, qboolean console, int *y, int step)
+{
+    if (console) {
+        Com_Printf("%s\n", line);
+    } else {
+        *y += step;
+        CL_DrawString(0x20, *y, line, 0, Dvar_GetInt("cl_profileTextHeight"));
+    }
+}
+
+void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
+{
+    char line[1024];
+    int y = 0x5a;
+    int sent = 0;
+    int received = 0;
+    clientConnection_t *connection = *(clientConnection_t **)clc_ptr;
+    netProfileInfo_t *profile = connection->netchan.pProf;
+    netProfileInfo_t *oob = connection->pOOBProf;
+
+    if (profile) {
+        NetProf_UpdateStatistics(&profile->send);
+        NetProf_UpdateStatistics(&profile->recieve);
+    }
+    if (oob) {
+        NetProf_UpdateStatistics(&oob->send);
+        NetProf_UpdateStatistics(&oob->recieve);
+    }
+
+    if (bPrintToConsole)
+        Com_Printf("\n\n");
+    Com_sprintf(line, sizeof(line), "====================");
+    CL_Netchan_ProfileLine(line, bPrintToConsole, &y, 0);
+    Com_sprintf(line, sizeof(line), "Client Network Profile:");
+    if (bPrintToConsole) {
+        Com_Printf("%s\n\n", line);
+    } else {
+        CL_Netchan_ProfileLine(line, 0, &y, 0xa);
+        y += 0xa;
+    }
+    Com_sprintf(line, sizeof(line), "      Source    bps   max   min frag%%");
+    CL_Netchan_ProfileLine(line, bPrintToConsole, &y, 0xa);
+
+    connection = *(clientConnection_t **)clc_ptr;
+    oob = connection->pOOBProf;
+    if (oob) {
+        sent = oob->send.iBytesPerSecond;
+        received = oob->recieve.iBytesPerSecond;
+        Com_sprintf(line, sizeof(line), "    OOB Sent: %5i %5i %5i    -",
+                    sent, oob->send.iLargestPacket, oob->send.iSmallestPacket);
+    } else {
+        Com_sprintf(line, sizeof(line), "    OOB Sent:     0     0     0    -");
+    }
+    CL_Netchan_ProfileLine(line, bPrintToConsole, &y, 0xa);
+    if (oob) {
+        Com_sprintf(line, sizeof(line), "OOB Recieved: %5i %5i %5i    -",
+                    received, oob->recieve.iLargestPacket, oob->recieve.iSmallestPacket);
+    } else {
+        Com_sprintf(line, sizeof(line), "OOB Recieved:     0     0     0    -");
+    }
+    CL_Netchan_ProfileLine(line, bPrintToConsole, &y, 0xa);
+
+    connection = *(clientConnection_t **)clc_ptr;
+    profile = connection->netchan.pProf;
+    if (profile) {
+        sent += profile->send.iBytesPerSecond;
+        received += profile->recieve.iBytesPerSecond;
+        Com_sprintf(line, sizeof(line), "        Sent: %5i %5i %5i  %3i%%",
+                    profile->send.iBytesPerSecond, profile->send.iLargestPacket,
+                    profile->send.iSmallestPacket, profile->send.iFragmentPercentage);
+    } else {
+        Com_sprintf(line, sizeof(line), "        Sent:     0     0     0    0%");
+    }
+    CL_Netchan_ProfileLine(line, bPrintToConsole, &y, 0xa);
+    if (profile) {
+        Com_sprintf(line, sizeof(line), "    Recieved: %5i %5i %5i  %3i%%",
+                    profile->recieve.iBytesPerSecond, profile->recieve.iLargestPacket,
+                    profile->recieve.iSmallestPacket, profile->recieve.iFragmentPercentage);
+    } else {
+        Com_sprintf(line, sizeof(line), "    Recieved:     0     0     0    0%");
+    }
+    /* Mac 0x1903f0/0x19041d draws this row once, then the total. */
+    CL_Netchan_ProfileLine(line, bPrintToConsole, &y, 0xa);
+    Com_sprintf(line, sizeof(line), "       Total: %5i", sent + received);
+    CL_Netchan_ProfileLine(line, bPrintToConsole, &y, 0xa);
+}
+#else
 void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
 {
     char szLine[1024];
@@ -379,3 +469,4 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
         CL_DrawString(0x20, iYPos + 0xa, szLine, 0, 0xa);
     }
 }
+#endif

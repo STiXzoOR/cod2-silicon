@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if defined(COD2_X64)
+#include <strings.h>
+#endif
 
 static int count = 2, checksums[2] = {123, 456};
 static char *names[2] = {"main/zpam_maps_v7", "mod/map"};
@@ -16,6 +19,10 @@ static dvar_t home = { .current.string = "/private" };
 const dvar_t *fs_homepath = &home;
 static int collision;
 qboolean FS_iwIwd(char *name, char *base) { (void)name; (void)base; return 0; }
+#if defined(COD2_X64)
+int I_strnicmp(const char *a, const char *b, size_t n)
+{ return strncasecmp(a, b, n); }
+#endif
 void I_strncat(char *dest, int size, const char *src)
 { assert(strlen(dest) + strlen(src) < (unsigned int)size); strcat(dest, src); }
 char *va(const char *format, ...)

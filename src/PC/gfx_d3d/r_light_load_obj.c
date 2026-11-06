@@ -17,10 +17,12 @@ GfxLightDef *R_LoadLightDef(const char *name)
 
     loadName = name;
     int fileLen = FS_ReadFile(va("lights/%s", loadName), &file);
+#if !defined(COD2_X64)
     if (fileLen < 0 && stricmp(name, "default") == 0) {
         loadName = "light_dynamic";
         fileLen = FS_ReadFile(va("lights/%s", loadName), &file);
     }
+#endif
     if (fileLen < 0) {
         def = NULL;
         return def;

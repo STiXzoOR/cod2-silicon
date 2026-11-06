@@ -142,7 +142,11 @@ void ClientDisconnect(int clientNum)
 
     if (Scr_IsSystemActive(1)) {
         Scr_AddString("disconnect");
+#if defined(COD2_X64)
+        Scr_AddString("-1");
+#else
         Scr_AddString("^1teleport");
+#endif
         Scr_Notify(ent, scr->menuresponse, 2);
     }
 
@@ -252,6 +256,13 @@ int G_GetNonPVSFriendlyInfo(gentity_t *pSelf, vec_t *vPosition, int iLastUpdateE
                 scaleY = ratioX;
             }
 
+#if defined(COD2_X64)
+            if (scaleX < scaleY) {
+                dy = (int)((float)dy * scaleX);
+            } else if (scaleY < scaleX) {
+                dx = (int)((float)dx * scaleY);
+            }
+#else
             if (ratioX > scaleX) {
                 if (scaleX > scaleY) {
 
@@ -264,6 +275,7 @@ int G_GetNonPVSFriendlyInfo(gentity_t *pSelf, vec_t *vPosition, int iLastUpdateE
 
                 dx = (int)((float)dx * scaleY);
             }
+#endif
 
             if (dx > 0x400)
                 dx = 0x402;
@@ -294,7 +306,11 @@ int G_GetNonPVSFriendlyInfo(gentity_t *pSelf, vec_t *vPosition, int iLastUpdateE
             result &= 0xffffff;
             {
                 int yawByte = (int)(pEnt->r.currentAngles[1] * 0.7111111283302307f);
+#if defined(COD2_X64)
+                result |= (unsigned int)yawByte << 24;
+#else
                 result |= (yawByte << 24);
+#endif
             }
 
             return result;
@@ -331,8 +347,8 @@ void G_BroadcastVoice(gentity_t *talker, VoicePacket_t *voicePacket)
 
         {
 #if defined(COD2_X64)
-            /* Mac 1.3 lets spectators hear players on either team. */
-            if (otherClient->sess.sessionState == SESS_STATE_SPECTATOR)
+            /* Mac 1.3 bypasses team filtering for intermission recipients. */
+            if (otherClient->sess.sessionState == SESS_STATE_INTERMISSION)
                 goto check_team;
 #endif
             if (voice_global->current.enabled)
@@ -359,6 +375,10 @@ void G_BroadcastVoice(gentity_t *talker, VoicePacket_t *voicePacket)
             if (otherSessState - 1 == 0 || talkerSessState - 1 == 0) {
                 if (!voice_deadChat->current.enabled)
                     continue;
+#if defined(COD2_X64)
+            } else {
+                continue;
+#endif
             }
         }
 
@@ -602,7 +622,11 @@ void G_GetPlayerViewOrigin(const gentity_t *ent, vec_t *origin)
         gentity_s *turretEnt = G_EntityForNum(turretEntNum);
 
         if (!G_DObjGetWorldTagPos((gentity_t *)turretEnt, scr_data->tag_player, origin)) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15G_GetPlayerViewOrigin: Couldn't find [tag_player] on turret\n");
+#else
             Com_Error(1, "G_GetPlayerViewOrigin: couldn't find tag");
+#endif
         }
         return;
     }
@@ -637,7 +661,11 @@ void G_GetPlayerViewOrigin(const gentity_t *ent, vec_t *origin)
     origin[1] += horzBob * vRight[1];
     origin[2] += horzBob * vRight[2];
 
+#if defined(COD2_X64)
+    AddLeanToPosition(origin, client->ps.viewangles[1], client->ps.leanf, 16.0f, 20.0f);
+#else
     AddLeanToPosition(origin, client->ps.viewangles[1], client->ps.leanf, 20.0f, 16.0f);
+#endif
 
     {
         float minZ = client->ps.origin[2] + 8.0f;
@@ -734,8 +762,13 @@ void ClientUserinfoChanged(int clientNum)
     client->sess.localClient = SV_IsLocalClient(clientNum);
 
     {
+#if defined(COD2_X64)
+        int predictItems = atoi(Info_ValueForKey(userinfo, "cg_predictItems"));
+        client->sess.predictItemPickup = (predictItems != 0) ? 1 : 0;
+#else
         int handicap = atoi(Info_ValueForKey(userinfo, "handicap"));
         client->sess.predictItemPickup = (handicap != 0) ? 1 : 0;
+#endif
     }
 
     if (client->sess.connected == 2) {
@@ -859,7 +892,11 @@ void ClientUserinfoChanged(int clientNum)
             clientInfo_t *ci = &level_bgs.clientinfo[clientNum];
 
             ci->clientNum = clientNum;
+#if defined(COD2_X64)
+            I_strncpyz(ci->name, client->sess.cs.name, sizeof(ci->name));
+#else
             I_strncpyz(ci->name, longName, sizeof(ci->name));
+#endif
             ci->team = client->sess.cs.team;
         }
     }
@@ -911,7 +948,11 @@ char *ClientConnect(int clientNum, int scriptPersId)
         const char *serverPassword = g_password ? g_password->current.string : "";
 
         if (*serverPassword != 0) {
+#if defined(COD2_X64)
+            if (I_stricmp(serverPassword, "none")) {
+#else
             if (I_stricmp(serverPassword, "")) {
+#endif
                 if (strcmp(serverPassword, password)) {
                     G_FreeEntity((gentity_t *)ent);
                     return "GAME_INVALIDPASSWORD";
