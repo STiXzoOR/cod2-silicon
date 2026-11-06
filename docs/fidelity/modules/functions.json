@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 251,
+      "unchecked": 250,
       "intentional": 3184,
       "equal": 4803,
-      "fixed": 1219
+      "fixed": 1220
     },
     "scopes": {
       "unassigned": 777,
@@ -197581,8 +197581,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": "Native body/caller gap: no MatrixRotationZ public implementation was found in native src, and the reference-source use inventory found only its own definition/header declarations. Mac math/hull/FFT symbol bodies were searched; no independent complete used helper contract was identified. Follow-up inspected native YawToAxis and RotatePointAroundVector zrot construction. Their Z rotation off-diagonal signs/transposed layout differ from this helper contract; X/Y full outputs were not located. Matching sine/cosine subexpressions do not close these matrices. Original-address provenance recovered: Linux 1.0 IDB 0x80a5a48 maps to retained original Linux 1.3 ELF 0x80a7dac by masked whole-body comparison plus module sequence. This supplies identity/intent only; no complete corresponding Mac operation has yet been established, so this remains unchecked."
+        "status": "fixed",
+        "evidence": "Complete consumed scalar-degree Z-orientation constructor, fixed through existing YawToAxis repair. Original1.0 0x80a5a48\u2192complete152-byte1.3 0x80a7dac\u2013RET0x80a7e43 and full FastSinCos establish all9 output words, XY sine/cosine block, cross-Z zeros and Z/Z one; no additional output/status. Actual CG_Player tag/root-animation yaw addition0x1e7399 supplies YawToAxis0x1e73a6, whose full Mac0x2d5ba constructor materializes all9 words into nonnull disjoint local. Same local is actual first MatrixMultiply43 input0x1e73c2; all3 components of every row feed full9 orientation outputs0x2a04d\u20130x2a218. Translation is separately supplied outside mappedconstructor. Native complete operation matches Mac including settled COD2_X64 0-s/0+c second-row repair, therefore inheritedfixed; previous repair compiled/reviewed not exercised, no newdefect/primaryoverride. Original c/-s;s/c storage differs from Mac c/s;0-s/0+c; originalcolumn convention is inference, not recoveredcaller or emittedtranspose. Acceptance rests on fulloriginal scalar-degree/fixedZ orientation role plus completeactual9result/consumer, with Macrepresentation authority. No original-layout/handedness/callerAPI/bittranspose or roundtrip claim; bounded direct-reference negative supplies no closure evidence. Valid live nonnull/disjoint storage, ordinarilydefined selectedowner computation and returningproviders. No X/Y extrapolation, invented finite/orthogonal invariant, arbitrarynull/overlap, FP flags/traps/NaNpayload, wholeanimation/renderer/runtime certification. Other settledprovider adaptations preserved. Private recon-provenance-matrixz47.noindex; independent review-provenance-matrixz47.md accepted. No sourcechanges/newcompilation/tests/CI/replay/runtime."
       },
       {
         "id": "mac:0x00029f6e",
