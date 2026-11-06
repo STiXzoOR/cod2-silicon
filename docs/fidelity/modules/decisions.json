@@ -2321,7 +2321,7 @@
   },
   "mac:0x001cd1d4": {
     "status": "fixed",
-    "evidence": "All 1,032 Mac bytes 0x1cd1d4-0x1cd5db compared against the live native body and its helpers. Fixed the first visibility test for NaN to match Mac 0x1cd39e-0x1cd3a7. Compiled and reviewed; no test covers this path."
+    "evidence": "All 1,032 Mac bytes 0x1cd1d4-0x1cd5db compared against the live native body and its helpers. Fixed the first visibility test for NaN to match Mac 0x1cd39e-0x1cd3a7. Compiled and reviewed; no test covers this path. Corrected 2026-11-06: the enemy-range test now matches Mac 0x1cd46a JBE, which also returns on an unordered comparison. Compiled and reviewed; no normal-play effect."
   },
   "linux:game/player_use_mp.cpp:508:Player_UpdateLookAtEntityTrace": {
     "status": "equal",
@@ -8973,7 +8973,7 @@
   },
   "linux:script/scr_vm.cpp:392:VM_ExecuteInternal": {
     "status": "fixed",
-    "evidence": "Fixed using the established complete135-opcode primary Mac audit at0x8393a-0x86aff and decoded main/pre/post tables, longjmp recovery audit, and independently reviewed scoped returned-error followups. Integrated corrections cover volatile live-state/reset and bounded unknown opcodes;26 dummy object;29 push/skip before error;35 field cache;84 extra byte; persistent wait scratch/numeric frame-end4c;64/65 inc/dec fallthrough;77-7a event report/cleanup;81 defined slot-zero reference/free-list increment; all identified4f-57 error-only and51/53/55 successful-neighbor call continuations. Neighbor fixes preserve pre-error release/pop, allocation-before-immediate/frame stores, original-opcode overflow cleanup and signed modular32-bit count displacement for equivalent backed slots. Switch7c now preserves prior/raw/encoded key state and resets every longjmp. Builtin45-4b invalid receivers0..23 follow original wait/error/count ordering using pre-release metadata. User-approved intentional deviations: switch invalid integers never release as string IDs, including defined original alias effects; nonentity builtin receiver omits second object removal, and consumed references become explicit undefined/zero only before returned frame-end archive; static vectors retain exact behavior. Existing documented builtin/setter checkpoint, monotonic timeout, code-position encoding and native frame/storage-boundary adaptations remain. Source ff7a0232 SHA256 b4d5a96ed8cc23b1068c4a60398fa81577a2599c0a3b56bff3301445a05138b6 manually compiled as one translation unit in all four configured stock/CoD2x client/dedicated modes; parent and independent source/binary reviews pass, five inactive source and actual diagnostic-line maps identical vs e6a70269. Compiled and reviewed, latest paths unexercised: no link, runtime tests, replay or CI; older fixtures/replays cover earlier revisions only. Restoring this owner after resolving all concrete gaps from the scoped followups inherits the prior whole-opcode audit, not a fresh whole-VM execution claim. Separate13 optional/missing Linux helper identities remain unchecked. GetDummyFieldValue is separately intentional dead recovery after positive CFG/ABI proof; VM_Notify retains its separate intentional initialized-time adaptation. See script-scr_vm.md, script-scr_vm-recovery.md and private frozen review/compile receipts. This Linux VM_ExecuteInternal(function_stack_t) identity aliases the internal interpreter, not the external overload."
+    "evidence": "Fixed using the established complete135-opcode primary Mac audit at0x8393a-0x86aff and decoded main/pre/post tables, longjmp recovery audit, and independently reviewed scoped returned-error followups. Integrated corrections cover volatile live-state/reset and bounded unknown opcodes;26 dummy object;29 push/skip before error;35 field cache;84 extra byte; persistent wait scratch/numeric frame-end4c;64/65 inc/dec fallthrough;77-7a event report/cleanup;81 defined slot-zero reference/free-list increment; all identified4f-57 error-only and51/53/55 successful-neighbor call continuations. Neighbor fixes preserve pre-error release/pop, allocation-before-immediate/frame stores, original-opcode overflow cleanup and signed modular32-bit count displacement for equivalent backed slots. Switch7c now preserves prior/raw/encoded key state and resets every longjmp. Builtin45-4b invalid receivers0..23 follow original wait/error/count ordering using pre-release metadata. User-approved intentional deviations: switch invalid integers never release as string IDs, including defined original alias effects; nonentity builtin receiver omits second object removal, and consumed references become explicit undefined/zero only before returned frame-end archive; static vectors retain exact behavior. Existing documented builtin/setter checkpoint, monotonic timeout, code-position encoding and native frame/storage-boundary adaptations remain. Source ff7a0232 SHA256 b4d5a96ed8cc23b1068c4a60398fa81577a2599c0a3b56bff3301445a05138b6 manually compiled as one translation unit in all four configured stock/CoD2x client/dedicated modes; parent and independent source/binary reviews pass, five inactive source and actual diagnostic-line maps identical vs e6a70269. Compiled and reviewed, latest paths unexercised: no link, runtime tests, replay or CI; older fixtures/replays cover earlier revisions only. Restoring this owner after resolving all concrete gaps from the scoped followups inherits the prior whole-opcode audit, not a fresh whole-VM execution claim. Separate13 optional/missing Linux helper identities remain unchecked. GetDummyFieldValue is separately intentional dead recovery after positive CFG/ABI proof; VM_Notify retains its separate intentional initialized-time adaptation. See script-scr_vm.md, script-scr_vm-recovery.md and private frozen review/compile receipts. This Linux VM_ExecuteInternal(function_stack_t) identity aliases the internal interpreter, not the external overload. Corrected 2026-11-06: opcode 0x45 now keeps a stale count only in returned-error modes. Introduced by b9871677, it let a setter error followed by a zero-argument method on a bad receiver pop one stack value too many and crash (SIGBUS, reproduced with developer 0). Fix reproduced clean; replay unchanged."
   },
   "mac:0x00081cce": {
     "status": "intentional",
@@ -16497,7 +16497,7 @@
   },
   "mac:0x0017c022": {
     "status": "fixed",
-    "evidence": "Mac 0x17c022 complete body compared: mark gates, axes/corners, fragment caps, four color conversions/byte order, oldest-frame eviction, links and fragment copy. Restored 0x15 diagnostic prefix at 0x17c44b. Existing native 1024-vertex storage, contiguous axis array and typed LP64 mark pool preserve allocator/renderer contracts; compiled and reviewed."
+    "evidence": "Mac 0x17c022 complete body compared: mark gates, axes/corners, fragment caps, four color conversions/byte order, oldest-frame eviction, links and fragment copy. Restored 0x15 diagnostic prefix at 0x17c44b. Existing native 1024-vertex storage, contiguous axis array and typed LP64 mark pool preserve allocator/renderer contracts; compiled and reviewed. Corrected 2026-11-06: for NaN and out-of-range input Mac 0x17c1aa-0x17c1c4 stores 255 (CVTTSS2SI gives INT_MIN, the wrapping subtraction selects 255) where native stored 0. Compiled and reviewed; no normal-play effect."
   },
   "mac:0x0017beec": {
     "status": "equal",
@@ -16633,7 +16633,7 @@
   },
   "mac:0x001d33ca": {
     "status": "equal",
-    "evidence": "Read whole Mac 0x1d33ca-0x1d351e: spectator90, ADS in/out transition, mounted55 override, scale, and subtraction-based minimum selection match native arithmetic and fields."
+    "evidence": "Read whole Mac 0x1d33ca-0x1d351e: pm_type 5 gives 90, ADS in/out transition, mounted55 override, scale, and subtraction-based minimum selection match native arithmetic and fields."
   },
   "mac:0x001d49ba": {
     "status": "equal",
@@ -16861,7 +16861,7 @@
   },
   "mac:0x001d823c": {
     "status": "intentional",
-    "evidence": "Mac 0x1d823c compared by hand through the inlined local-entity, turret-flash and sound-origin helpers: recoil, muzzle flag, local-turret effect selection, normal/last-shot/player sound fallback, trajectory/tag origins, compass duration and bolt-action brass suppression match. Retains gated CoD2x radar-fire notification introduced by a046b8a."
+    "evidence": "Mac 0x1d823c compared by hand through the inlined local-entity, turret-flash and sound-origin helpers: recoil, muzzle flag, local-turret effect selection, normal/last-shot/player sound fallback, trajectory/tag origins, compass duration and bolt-action brass suppression match. Retains the CoD2x radar-fire notification introduced by a046b8a. Release clients build with COD2_CODX=1 and the recorder only tests that the dvar exists; drawing needs cg_drawRadar, which defaults to 0."
   },
   "mac:0x001d7ddc": {
     "status": "equal",
@@ -19601,7 +19601,7 @@
   },
   "mac:0x001924fa": {
     "status": "intentional",
-    "evidence": "Mac 0x1924fa compared by hand: null/empty, signed-character lowercase weighted hash (index+119)&2047, exact string lookup, allocations, and predecessor-link insertion quirk match. Retain documented native low-permanent-hunk pool and pointer-sized node/alignment so UI strings survive high-hunk mark rollback; Mac allocates high-hunk 8-byte/4-aligned nodes. Allocator and mark-reset contracts inspected."
+    "evidence": "Mac 0x1924fa compared by hand: null/empty, signed-character lowercase weighted hash (index+119)&2047, exact string lookup, allocations, and predecessor-link insertion quirk match. Native keeps a low-hunk pool and pointer-sized node/alignment; Mac allocates high-hunk 8-byte/4-aligned nodes. This only changes where the strings live. The previously stated reason was wrong: no rollback reaches these strings, because Mac's only Hunk_ClearToMark caller takes its mark at 0xaf394 after UI init at 0x143060."
   },
   "mac:0x001921c0": {
     "status": "equal",
@@ -24797,7 +24797,7 @@
   },
   "mac:0x000e80ca": {
     "status": "intentional",
-    "evidence": "Mac 0xe80ca ushort dimensions, mapType/depth, one mip, usage 1, default pool, error path and flag-3 accounting hand-compared. Preserve native missing-device return and typed texture clear for current GL resource initialization; no Metal provider is selected."
+    "evidence": "Mac 0xe80ca ushort dimensions, mapType/depth, one mip, usage 1, default pool, error path and flag-3 accounting hand-compared. Preserve native missing-device return and typed texture clear. Every current caller is under R_InitRenderTargets, which already dereferences the device, so that return does not run from those paths; no Metal provider is selected."
   },
   "mac:0x000e81c2": {
     "status": "intentional",

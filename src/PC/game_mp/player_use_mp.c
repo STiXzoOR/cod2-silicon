@@ -675,8 +675,14 @@ void Player_UpdateLookAtEntity(gentity_t *ent)
     distSq = dx * dx + dy * dy + dz * dz;
     rangeSq = weapDef->enemyCrosshairRange;
     rangeSq *= rangeSq;
+#if defined(COD2_X64)
+    /* Mac 0x1cd46a JBE also returns on an unordered comparison. */
+    if (!(rangeSq > distSq))
+        return;
+#else
     if (rangeSq <= distSq)
         return;
+#endif
 
     if ((((gclient_t *)(ent->client))->pLookatEnt) == NULL) {
         (((gclient_t *)(ent->client))->pLookatEnt) = hitEnt;
