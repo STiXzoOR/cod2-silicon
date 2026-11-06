@@ -439,7 +439,7 @@ universal/memfile,12,8,0,0,4
 universal/q_parse,36,25,3,2,6
 universal/q_shared,89,58,7,7,17
 universal/surfaceflags,2,2,0,0,0
-unix/unix_dir,1,0,0,0,1
+unix/unix_dir,1,0,1,0,0
 unix/unix_main,52,6,4,30,12
 unix/unix_net,17,3,2,11,1
 unix/unix_shared,26,5,5,10,6

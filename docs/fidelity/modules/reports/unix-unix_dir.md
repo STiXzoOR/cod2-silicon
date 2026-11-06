@@ -2,7 +2,7 @@
 
 Updated 2026-11-05.
 
-**0/1 reconciled; 1 unchecked.** `Sys_DirectoryHasEntries` has only a Linux ledger identity. No executable Mac symbol, selected native definition or caller was found.
+**1/1 reconciled: 1 fixed.** The directory43 follow-up below establishes the complete actual directory-query role and inherits the prior Mac DT_REG repair. Earlier identity/search checkpoints remain historical.
 
 The active native filesystem uses `mac_common.c:Sys_DirectoryHasContents`, whose Mac identity is 0xc4e62. That function accepts only visible regular dirents and has been corrected and recorded in `unix-unix_shared.md`. Similar names do not prove these are the same function or contract. The Linux-only row remains unchecked pending an exact Mac inline identity or a demonstrated provider mapping.
 
@@ -34,3 +34,18 @@ The final integrated snapshot passed both dedicated builds, full local CI02–13
 The original 1.0 named Sys_DirectoryHasContents at 0x80d416a, consumed by FS_AddGameDirectoryInternal at 0x80a04b4, is the allocating, path-normalizing universal/unix_shared wrapper. It is not the separate thin Sys_DirectoryHasEntries reconstruction in unix_dir.c. Treating that named original as the unresolved thin helper would conflate two ledger identities. No positive original executable anchor for the thin helper was recovered; its any-entry contract also remains distinct from the Mac provider's filtering. The one row remains unchecked.
 
 This is a report-only provenance audit. No verdict or production source changes, compilation, tests, CI, replays or runtime exercise were performed. Private original body/address/caller packets are retained in `~/Library/Application Support/CoD2-native-decomp/recon-provenance-platform6.noindex/`. Prior verification records above describe earlier work, not this follow-up.
+
+
+## Complete directory predicate and admission consumer — directory43
+
+`Sys_DirectoryHasEntries` is fixed through the complete actual directory-input, enumeration lifecycle and Boolean-result operation. A fresh original1.3 import-call trace recovered the distinct thin body at0x80d36ac–RET0x80d373f: direct incoming path, failed open returns0, successful open enumerates until a non-dot/dotdot entry or end, closes exactly once, and returns saved fullint0/1. All148 executable bytes and raw dot strings were independently checked. Its reconstructed name supplies intent; the complete original executable operation is new evidence beyond the earlier name search. No separately named original1.0 thin symbol or missing-caller inference is claimed.
+
+The allocating/path-normalizing original HasContents wrapper remains distinct. Its own inline loop at original1.3 0x80d6886–RET0x80d6974 does not call the thin body. The original FS_AddGameDirectory caller corroborates the directory-eligibility purpose, but wrapper copy/allocation/normalization/free effects are not silently assigned to the thin helper.
+
+Fresh full Mac Sys_DirectoryHasContents0xc4e62 receives the actual OS-directory pointer and returns0 without closing on failed open. After a successful open it skips dot-prefixed entries and every non-DT_REG type, saves1 for the first visible regular entry or0 for null readdir, closes exactly once and returns the saved Boolean, ignoring close errors. Native mac_common.c274 preserves the complete operation with native DIR/dirent fields. Original Linux accepts any name except dot/dotdot, so its hidden/nonregular results differ explicitly; the mapping follows Mac behavior authority rather than claiming Linux filter equality.
+
+Actual FS_Startup's nonempty basepath localized loop feeds FS_AddGameDirectory. Its selected new-directory phase builds game/language and a normalized OS path, removes the generated trailing slash, calls the predicate at0x35140, and consumes the entire Boolean at0x35145/47. False exits before allocation; true admits the directory searchpath and its IWD processing. The ordinary defined producer has valid backed strings, a fitting game/language and path length+2<=255 with nonempty normalized output. This is an actual complete result consumer, not a hypothetical path adapter or unused flag. Oversized paths, returned fatal-handler continuations and downstream searchpath allocation behavior are outside the predicate classification.
+
+The whole predicate includes the DT_REG check already repaired in f689a60c and recorded as fixed for primary mac:0x000c4e62. This row inherits that repair; it adds no defect, source change or platform policy. No standalone thin export, wrapper allocation equivalence, arbitrary errno parity, directory snapshot/race guarantee, stat fallback or whole filesystem lifecycle is asserted.
+
+Independent review: units/review-provenance-directory43.md. Private exact bodies, original bytes/import/dot-string receipts, actual producer/consumer evidence and source hashes: recon-provenance-directory43.noindex. No compilation, tests, CI, replays, directory probe or runtime verification in this follow-up.
