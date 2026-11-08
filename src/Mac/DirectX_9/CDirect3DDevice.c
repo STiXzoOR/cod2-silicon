@@ -1652,7 +1652,17 @@ void CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState(const CDirect3DDevice *
     if (gl->supportsAnisotropy) {
         if (unit->mTexAnisotropicFilter[index] != stage->anisotropy) {
             COpenGL_SetActiveTexUnit((const COpenGL *)gl, stageIndex);
+#if defined(COD2_X64)
+            /* Mac SetSamplerState stores the MAXANISOTROPY DWORD's bits
+             * (Steam MP binary 0x14b52), so the default r_anisotropy of 8
+             * arrives as the float 1.1e-44. GL must reject values below 1
+             * with INVALID_VALUE and leave the texture unchanged. Skip that
+             * call: the texture ends up the same, without the GL error. */
+            if (stage->anisotropy >= 1.0f)
+                glTexParameterf(target, 0x84fe, stage->anisotropy);
+#else
             glTexParameterf(target, 0x84fe, stage->anisotropy);
+#endif
             unit->mTexAnisotropicFilter[index] = stage->anisotropy;
         }
         info->anisotropy = stage->anisotropy;
