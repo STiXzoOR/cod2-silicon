@@ -7217,6 +7217,27 @@
     "reason": "Reads serialized i386 Mach-O32 header/section/nlist byte fields using Read32 after bounds checks. Source binary format is explicitly32-bit; this is not a native Mach-O64/object layout."
   },
   {
+    "file": "src/platform/cod2x_native_shaders.m",
+    "text": "uint32_t count = ReadBig32(bytes + 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Reads big-endian fat_header/fat_arch fields (magic, count; cputype, offset, size at 0/8/12 in 20-byte records) of a serialized Mach-O universal file after bounds checks. On-disk format, not a native object layout."
+  },
+  {
+    "file": "src/platform/cod2x_native_shaders.m",
+    "text": "const unsigned char *arch = bytes + 8 + i * 20;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Reads big-endian fat_header/fat_arch fields (magic, count; cputype, offset, size at 0/8/12 in 20-byte records) of a serialized Mach-O universal file after bounds checks. On-disk format, not a native object layout."
+  },
+  {
+    "file": "src/platform/cod2x_native_shaders.m",
+    "text": "uint32_t offset = ReadBig32(arch + 8), size = ReadBig32(arch + 12);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Reads big-endian fat_header/fat_arch fields (magic, count; cputype, offset, size at 0/8/12 in 20-byte records) of a serialized Mach-O universal file after bounds checks. On-disk format, not a native object layout."
+  },
+  {
     "file": "src/platform/macos_audio.c",
     "text": "*out = (unsigned char)lrintf((value + 1) * 127.5f);",
     "count": 1,
