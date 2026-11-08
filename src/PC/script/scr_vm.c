@@ -7712,13 +7712,10 @@ static void VM_CandidateFunctionPointerError(unsigned int type)
                                 ((const char *const *)imp_var_typename)[type]));
 }
 
-static VM_CallErrorContinuation VM_CandidateCallObjectError(unsigned int opcode,
-                                                            VariableValue *top,
-                                                            unsigned int errorIndex)
+/* Mac 0x3299d8 (opcode - 0x1f) and Linux 0x81456b8 select the same unwind:
+ * 0x869ae/0x80824ce, 0x869b2/0x80824d9, 0x86a16/0x8082506, 0x86a1a/0x8082511. */
+static VM_CallErrorContinuation VM_CandidateScriptCallRecovery(unsigned int opcode)
 {
-    ((struct scrVarPub_t *)imp_scrVarPub)->error_index = errorIndex;
-    Scr_SetErrorMessageAndJump(va("%s is not an object",
-                                ((const char *const *)imp_var_typename)[top->type]));
     switch (opcode) {
     case VMOP_ScriptFunctionCallPointer:
     case VMOP_ScriptFunctionCall:
@@ -7735,6 +7732,42 @@ static VM_CallErrorContinuation VM_CandidateCallObjectError(unsigned int opcode,
         return VM_CALL_THREAD_CLEANUP;
     default:
         return VM_CALL_NO_RECOVERY;
+    }
+}
+
+static VM_CallErrorContinuation VM_CandidateCallObjectError(unsigned int opcode,
+                                                            VariableValue *top,
+                                                            unsigned int errorIndex)
+{
+    ((struct scrVarPub_t *)imp_scrVarPub)->error_index = errorIndex;
+    Scr_SetErrorMessageAndJump(va("%s is not an object",
+                                ((const char *const *)imp_var_typename)[top->type]));
+    return VM_CandidateScriptCallRecovery(opcode);
+}
+
+static void VM_CandidateRecoverScriptCall(VM_CallErrorContinuation continuation,
+                                          const char *volatile *pos, VariableValue *volatile *top)
+{
+    if (continuation == VM_CALL_UNWIND_SKIP_TARGET ||
+        continuation == VM_CALL_THREAD_CLEANUP_SKIP_TARGET)
+        *pos += 4;
+    if (continuation == VM_CALL_THREAD_CLEANUP ||
+        continuation == VM_CALL_THREAD_CLEANUP_SKIP_TARGET) {
+        /* Read the count and current operands only after the
+         * potentially returning RuntimeError, as at 0x86a1a. */
+        unsigned int paramCount = (unsigned int)VM_ReadI32(pos);
+        while (paramCount) {
+            RemoveRefToValue((*top)->type, (*top)->u);
+            --*top;
+            --paramCount;
+        }
+        VM_PushValue(top)->type = VAR_UNDEFINED;
+    } else {
+        while ((*top)->type != 8) {
+            RemoveRefToValue((*top)->type, (*top)->u);
+            --*top;
+        }
+        (*top)->type = VAR_UNDEFINED;
     }
 }
 
@@ -8115,6 +8148,15 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         Bool active;
         Bool returnsValue;
     } errorCheckpoint = {0};
+    /* Mac's landing zeroes the opcode (0x86244), so its call unwind at
+     * 0x3299d8 never runs and execution resumes inside the call operands.
+     * Linux 0x8082350 runs that unwind and keeps the thread count. */
+    volatile struct {
+        unsigned int opcode;
+        unsigned int fieldValueId;
+        unsigned int objectId;
+        unsigned int thread_count;
+    } callError = {0};
 #endif
 
     (void)waitTime;
@@ -8141,6 +8183,10 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             fieldValueId = errorCheckpoint.fieldValueId;
             objectId = errorCheckpoint.objectId;
             thread_count = errorCheckpoint.thread_count;
+        } else if (callError.opcode) {
+            fieldValueId = callError.fieldValueId;
+            objectId = callError.objectId;
+            thread_count = callError.thread_count;
         } else {
             /* Mac 0x8622f-0x86262 resets all interpreter scratch after a jump.
              * Its zeroed opcode bypasses the recovery table at 0x862af. */
@@ -8184,6 +8230,12 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
                 top = errorCheckpoint.frame.top;
             }
             errorCheckpoint.active = 0;
+        }
+        if (callError.opcode) {
+            VM_CallErrorContinuation continuation = VM_CandidateScriptCallRecovery(callError.opcode);
+
+            callError.opcode = 0;
+            VM_CandidateRecoverScriptCall(continuation, &pos, &top);
         }
 #endif
     }
@@ -8239,7 +8291,15 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             errorCheckpoint.thread_count = thread_count;
         }
         if (opcode >= VMOP_ScriptFunctionCallPointer && opcode <= VMOP_ScriptMethodThreadCallExpr) {
-            VM_CallErrorContinuation continuation = VM_CandidateCheckScriptCall(opcode, &top);
+            VM_CallErrorContinuation continuation;
+
+            /* A call check that jumps unwinds this call on landing. */
+            callError.opcode = opcode;
+            callError.fieldValueId = fieldValueId;
+            callError.objectId = objectId;
+            callError.thread_count = thread_count;
+            continuation = VM_CandidateCheckScriptCall(opcode, &top);
+            callError.opcode = 0;
             if (continuation == VM_CALL_ENTER_NEIGHBOR) {
                 VM_CandidateEnterCallNeighbor(opcode, &pos, &localId, &localVarCount,
                                                &top, &startTop, &thread_count);
@@ -8258,27 +8318,7 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
                 varPub->error_message = NULL;
                 ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message = NULL;
                 varPub->error_index = 0;
-                if (continuation == VM_CALL_UNWIND_SKIP_TARGET ||
-                    continuation == VM_CALL_THREAD_CLEANUP_SKIP_TARGET)
-                    pos += 4;
-                if (continuation == VM_CALL_THREAD_CLEANUP ||
-                    continuation == VM_CALL_THREAD_CLEANUP_SKIP_TARGET) {
-                    /* Read the count and current operands only after the
-                     * potentially returning RuntimeError, as at 0x86a1a. */
-                    unsigned int paramCount = (unsigned int)VM_ReadI32(&pos);
-                    while (paramCount) {
-                        RemoveRefToValue(top->type, top->u);
-                        --top;
-                        --paramCount;
-                    }
-                    VM_PushValue(&top)->type = VAR_UNDEFINED;
-                } else {
-                    while (top->type != 8) {
-                        RemoveRefToValue(top->type, top->u);
-                        --top;
-                    }
-                    top->type = VAR_UNDEFINED;
-                }
+                VM_CandidateRecoverScriptCall(continuation, &pos, &top);
                 continue;
             }
         }
