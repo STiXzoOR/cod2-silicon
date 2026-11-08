@@ -1952,7 +1952,12 @@ void SND_Save(MemoryFile *memFile)
                 continue;
 
             if (SND_IsStreamChannelFree(i)) {
+#if defined(COD2_X64)
+                if (i == 32)
+                    MemFile_WriteCString(memFile, "");
+#else
                 MemFile_WriteCString(memFile, "");
+#endif
                 continue;
             }
 
