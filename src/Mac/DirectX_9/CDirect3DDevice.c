@@ -1650,22 +1650,33 @@ void CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState(const CDirect3DDevice *
     info->lastLevel = lastLevel;
 #undef DEVICE_TEXTURE_INT
     if (gl->supportsAnisotropy) {
+#if defined(COD2_X64)
+        /* D3D applies MAXANISOTROPY only where the min or mag filter is
+         * D3DTEXF_ANISOTROPIC, which Windows 1.3 selects for its anisotropic
+         * samplers (gfx_d3d_mp_x86_s.dll 0x1003df13). GL applies its maximum
+         * to every texture, so the others get 1. */
+        GLfloat anisotropy = 1.0f;
+        if (stage->minFilter == 3 || stage->magFilter == 3) {
+            anisotropy = stage->anisotropy;
+            if (anisotropy > gl->maxAnisotropy)
+                anisotropy = gl->maxAnisotropy;
+            if (!(anisotropy >= 1.0f))
+                anisotropy = 1.0f;
+        }
+        if (unit->mTexAnisotropicFilter[index] != anisotropy) {
+            COpenGL_SetActiveTexUnit((const COpenGL *)gl, stageIndex);
+            glTexParameterf(target, 0x84fe, anisotropy);
+            unit->mTexAnisotropicFilter[index] = anisotropy;
+        }
+        info->anisotropy = anisotropy;
+#else
         if (unit->mTexAnisotropicFilter[index] != stage->anisotropy) {
             COpenGL_SetActiveTexUnit((const COpenGL *)gl, stageIndex);
-#if defined(COD2_X64)
-            /* Mac SetSamplerState stores the MAXANISOTROPY DWORD's bits
-             * (Steam MP binary 0x14b52), so the default r_anisotropy of 8
-             * arrives as the float 1.1e-44. GL must reject values below 1
-             * with INVALID_VALUE and leave the texture unchanged. Skip that
-             * call: the texture ends up the same, without the GL error. */
-            if (stage->anisotropy >= 1.0f)
-                glTexParameterf(target, 0x84fe, stage->anisotropy);
-#else
             glTexParameterf(target, 0x84fe, stage->anisotropy);
-#endif
             unit->mTexAnisotropicFilter[index] = stage->anisotropy;
         }
         info->anisotropy = stage->anisotropy;
+#endif
     }
 }
 #endif
@@ -3577,7 +3588,14 @@ HRESULT CDirect3DDevice_SetSamplerState(const CDirect3DDevice *_this, DWORD Samp
         stage->lodBias = 0.25f * value;
     } else {
         if (MacDisplay_GetSupportsAnisotropicFiltering())
+#if defined(COD2_X64)
+            /* MAXANISOTROPY is a DWORD count: Windows 1.3 passes r_anisotropy
+             * (gfx_d3d_mp_x86_s.dll 0x1003dd85). Mac stores its bits as a
+             * float (Steam MP binary 0x14b52), so filtering never applied. */
+            stage->anisotropy = (float)Value;
+#else
             memcpy(&stage->anisotropy, &Value, sizeof(stage->anisotropy));
+#endif
         else
             stage->anisotropy = 1.0f;
     }
