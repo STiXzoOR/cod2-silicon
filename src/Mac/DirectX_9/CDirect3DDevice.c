@@ -1625,7 +1625,15 @@ void CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState(const CDirect3DDevice *
     }
     void **methods = *(void ***)texture;
     int levels = ((UINT (*)(const void *))methods[13])(texture);
+#if defined(COD2_X64)
+    /* Mac 0x103ff takes the smaller of the stored level count and the count
+     * the image size allows. With the larger, an image stored without mips got
+     * a mip range past its only level: an incomplete texture that drew black
+     * or white. */
+    int lastLevel = (levels >= base ? base : levels) - 1;
+#else
     int lastLevel = (levels >= base ? levels : base) - 1;
+#endif
     if (lastLevel < 0) lastLevel = 0;
     GLenum mag = stage->magFilter == 3 || stage->magFilter > 1 ? 0x2601 : 0x2600;
     DEVICE_TEXTURE_INT(mTexMagFilter, 0x2800, mag); info->magFilter = mag;
