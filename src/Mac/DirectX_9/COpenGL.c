@@ -1222,7 +1222,16 @@ unsigned int COpenGL_Init(const COpenGL *_this, UINT32 Buffers, UINT32 MaxTextur
         glVertexArrayRangeAPPLE(0, NULL); glEnableClientState(0x851d);
         glVertexArrayParameteriAPPLE(0x851f, 0x85bf);
     }
+#if defined(COD2_X64)
+    glPixelStorei(0xcf5, 1); glPixelStorei(0xd05, 1);
+    /* Mac COpenGL::Init sets GL_UNPACK_CLIENT_STORAGE_APPLE unconditionally
+     * (Steam MP binary 0x1f924). Other GLs reject the name with INVALID_ENUM,
+     * and 0 is its default where it exists. */
+    if (MacOpenGLUtils_IsGLExtensionSupported("GL_APPLE_client_storage"))
+        glPixelStorei(0x85b2, 0);
+#else
     glPixelStorei(0xcf5, 1); glPixelStorei(0xd05, 1); glPixelStorei(0x85b2, 0);
+#endif
     glDisable(0xbc0); glAlphaFunc(0x207, 0.0f); glBlendFunc(1, 0);
     gl->blendSrcRGB = gl->blendSrcAlpha = 1; gl->blendDstRGB = gl->blendDstAlpha = 0;
     GLint clips; glGetIntegerv(0xd32, &clips);
