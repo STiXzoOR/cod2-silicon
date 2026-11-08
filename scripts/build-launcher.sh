@@ -3,8 +3,8 @@ set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd -P)
 out=${1:?usage: build-launcher.sh OUTPUT [--test]}
 mkdir -p "$out"
-sdk=$(/usr/bin/xcrun --show-sdk-path)
-sdk_version=$(/usr/bin/xcrun --show-sdk-version)
+sdk=$(/usr/bin/xcrun --sdk macosx --show-sdk-path)
+sdk_version=$(/usr/bin/xcrun --sdk macosx --show-sdk-version)
 if [[ ${sdk_version%%.*} -lt 26 ]]; then
     printf 'The launcher requires the macOS 26 SDK or later (Xcode 26+); the selected SDK is %s.\n' "$sdk_version" >&2
     exit 1
