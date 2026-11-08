@@ -7,6 +7,10 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Changed
 
+- Release packaging can sign with a real identity (`COD2_SIGN_IDENTITY`), which
+  adds the hardened runtime and a secure timestamp, and can notarize and staple
+  the app (`COD2_NOTARY_PROFILE`, a `notarytool` keychain profile). Without
+  them, packages stay ad hoc signed as before.
 - Require macOS 26 or later on Apple silicon for new builds, with Xcode 26+
   and the macOS 26+ SDK for source builds. Align the launcher, engine, bundled
   SDL libraries, icons, bundle metadata and verification with that minimum.
