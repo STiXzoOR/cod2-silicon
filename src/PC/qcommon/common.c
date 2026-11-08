@@ -103,7 +103,11 @@ extern void longjmp(jmp_buf env, int val);
 extern dvar_t *com_dedicated;
 extern int dvar_modifiedFlags;
 extern Bool updateScreenCalled;
+#if defined(COD2_X64)
+extern int com_fileAccessed;
+#else
 extern int *com_fileAccessed;
+#endif
 extern void Dvar_ClearModified(const dvar_t *dvar);
 extern void SetAnimCheck(int enabled);
 extern void NET_Sleep(int msec);
@@ -2264,16 +2268,27 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
 #endif
 
     if (com_statmon->current.enabled) {
+#if defined(COD2_X64)
+        if (com_fileAccessed) {
+            StatMon_Warning(1, 3000, "gfx/2d/warning@file.jpg");
+            com_fileAccessed = 0;
+        }
+#else
         if (*com_fileAccessed) {
             StatMon_Warning(1, 3000, "File Accessed");
             *com_fileAccessed = 0;
         }
+#endif
         {
             int prevTime = timeClientFrame;
             int now = Sys_Milliseconds();
             timeClientFrame = now;
             if (com_statmon->current.enabled && (now - prevTime) > 33 && prevTime != 0) {
+#if defined(COD2_X64)
+                StatMon_Warning(0, 3000, "gfx/2d/warning@fps.jpg");
+#else
                 StatMon_Warning(0, 3000, "33 msec frame hit");
+#endif
             }
         }
     }
