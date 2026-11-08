@@ -11,6 +11,10 @@ All notable changes to CoD2 Silicon are documented here, following
   adds the hardened runtime and a secure timestamp, and can notarize and staple
   the app (`COD2_NOTARY_PROFILE`, a `notarytool` keychain profile). Without
   them, packages stay ad hoc signed as before.
+- Anisotropic filtering works, as on Windows 1.3: samplers that ask for it get
+  `r_anisotropy` (default 8). Mac 1.3 passed the setting's raw bits as a float,
+  so it never took effect. Default settings look the same; with
+  `r_textureMode anisotropic`, distant ground textures are sharper.
 - Require macOS 26 or later on Apple silicon for new builds, with Xcode 26+
   and the macOS 26+ SDK for source builds. Align the launcher, engine, bundled
   SDL libraries, icons, bundle metadata and verification with that minimum.
@@ -39,9 +43,8 @@ All notable changes to CoD2 Silicon are documented here, following
   so maps would not load. Release builds already searched it.
 - Indexed draws give OpenGL the vertex range their indices actually use. The
   range was off by the base vertex, as in Mac 1.3, which Apple's GL tolerated
-  but Mesa read past the vertex buffer on. Two calls Mesa rejects as invalid
-  (a below-minimum anisotropy value and Apple client storage on other GLs) are
-  skipped. The picture on macOS is unchanged.
+  but Mesa read past the vertex buffer on. Apple client storage is set only on
+  GLs that have it. The picture on macOS is unchanged.
 
 ## [0.2.1] - 2026-10-13
 
