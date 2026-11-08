@@ -2514,10 +2514,17 @@ void FS_Startup(const char *gameName)
         FS_AddGameDirectoryAllLanguages(path, gameName);
     }
 
+#if defined(COD2_X64)
+    path = fs_basepath->current.string;
+    if (*path && I_stricmp(fs_homepath->current.string, path)) {
+        FS_AddGameDirectoryAllLanguages(fs_homepath->current.string, gameName);
+    }
+#else
 #if (COD2_APPLE_SDK && defined(DEDICATED)) || (defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
     path = fs_homepath->current.string;
     if (*path && I_stricmp(path, fs_basepath->current.string))
         FS_AddGameDirectoryAllLanguages(path, gameName);
+#endif
 #endif
 
     dir = fs_basegame->current.string;
