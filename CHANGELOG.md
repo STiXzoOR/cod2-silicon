@@ -29,6 +29,10 @@ All notable changes to CoD2 Silicon are documented here, following
   server. This happened with the stock test-client script once a map rotation
   left the server full. The call is skipped and the script carries on, as on
   the Linux 1.3 server.
+- Builds without CoD2x now search `fs_homepath/main` when it is not the game
+  folder, as Mac and Windows 1.3 do. Before, the game wrote profiles to
+  `fs_homepath/main/players` but did not find them there on the next launch,
+  so maps would not load. Release builds already searched it.
 
 ## [0.2.1] - 2026-10-13
 
