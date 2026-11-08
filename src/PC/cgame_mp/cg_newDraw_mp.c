@@ -1804,14 +1804,17 @@ static void CG_DrawPlayerHealthBar(const rectDef_t *rect, MaterialHandle materia
         cg->lastHealthLerpDelay = 1;
     } else if (cg->lastHealth <= health) {
         cg->lastHealth = health;
+        cg->lastHealthLerpDelay = 1;
     } else if (cg->lastHealthLerpDelay) {
         cg->lastHealthLerpDelay -= cg->frametime;
         if (cg->lastHealthLerpDelay < 0)
             cg->lastHealthLerpDelay = 0;
     } else {
         cg->lastHealth -= (float)cg->frametime * 0.0012f;
-        if (cg->lastHealth <= health)
+        if (cg->lastHealth <= health) {
             cg->lastHealth = health;
+            cg->lastHealthLerpDelay = 1;
+        }
     }
     if (cg->lastHealth > health) {
         color[0] = 1.0f;
