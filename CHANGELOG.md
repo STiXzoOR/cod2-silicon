@@ -33,6 +33,11 @@ All notable changes to CoD2 Silicon are documented here, following
   folder, as Mac and Windows 1.3 do. Before, the game wrote profiles to
   `fs_homepath/main/players` but did not find them there on the next launch,
   so maps would not load. Release builds already searched it.
+- Indexed draws give OpenGL the vertex range their indices actually use. The
+  range was off by the base vertex, as in Mac 1.3, which Apple's GL tolerated
+  but Mesa read past the vertex buffer on. Two calls Mesa rejects as invalid
+  (a below-minimum anisotropy value and Apple client storage on other GLs) are
+  skipped. The picture on macOS is unchanged.
 
 ## [0.2.1] - 2026-10-13
 
