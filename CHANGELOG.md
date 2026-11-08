@@ -13,6 +13,17 @@ All notable changes to CoD2 Silicon are documented here, following
 - Build and audit the complete release package on macOS 26 for pull requests,
   including launcher core and isolated first-run checks before release tagging.
 
+### Fixed
+
+- Script HUD text for the map name and game type showed each other's value.
+- After damage, the health bar's red section now waits its full delay before
+  shrinking, as in Mac 1.3.
+- `com_statmon 1` no longer crashes the client on the first frame after a file
+  read, and it shows the file-access and slow-frame warning icons instead of
+  trying to load their text as images.
+- A sound restart no longer drops streamed sounds that come after a free
+  stream channel.
+
 ## [0.2.1] - 2026-10-13
 
 [Verification scope and remaining release gates](docs/macos-port/release-0.2.1-verification.md).
