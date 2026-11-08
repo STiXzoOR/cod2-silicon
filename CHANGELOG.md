@@ -25,6 +25,10 @@ All notable changes to CoD2 Silicon are documented here, following
   stream channel.
 - Release and launcher builds take the macOS SDK from the selected Xcode, so
   packaging works on Xcode 27 when the Command Line Tools SDK is also present.
+- A script call on something that is not an object no longer crashes the
+  server. This happened with the stock test-client script once a map rotation
+  left the server full. The call is skipped and the script carries on, as on
+  the Linux 1.3 server.
 
 ## [0.2.1] - 2026-10-13
 
