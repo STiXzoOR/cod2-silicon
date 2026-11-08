@@ -1,6 +1,6 @@
 # Config Studio catalog
 
-The committed resource describes **reconciliation integration `6ae3bd5`**, including
+The committed resource describes **integration `698823b`**, including the CoD2x packet and snapshot defaults,
 the restored renderer mode/refresh registration sites and startup privacy freeze for local match summaries. This tool uses Python's standard library
 and Clang's preprocessor. It reads source; it neither builds nor runs the game,
 and consumes no game data, player profiles, reference binary or private tools.
@@ -8,7 +8,7 @@ and consumes no game data, player profiles, reference binary or private tools.
 ```sh
 python3 -m unittest discover -s tools/catalog -v
 python3 tools/catalog/catalog.py generate \
-  --source-root /path/to/source-export --source-revision 6ae3bd57910d7a82a452422aef218d2b9cf0066d \
+  --source-root /path/to/source-export --source-revision 698823b37d2652a5460be8146ab06ce864741a99 \
   --output launcher/Resources/ConfigCatalog.json
 python3 tools/catalog/catalog.py check \
   --source-root /path/to/source-export --catalog launcher/Resources/ConfigCatalog.json --mode stock

@@ -23,6 +23,12 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Fixed
 
+- CoD2x builds start with the stock packet and snapshot rates
+  (`cl_maxpackets 30`, `snaps 20`), as CoD2x does. They started at 125 and 40,
+  and some 1.3 servers then showed "Connection Interrupted" and a ping of 999.
+  You can still raise both to CoD2x's maximums of 125 and 40, and competitive
+  CoD2x servers still set them. Your saved config keeps its value: if you
+  played an earlier build, enter `/cl_maxpackets 30` once in the console.
 - Script HUD text for the map name and game type showed each other's value.
 - After damage, the health bar's red section now waits its full delay before
   shrinking, as in Mac 1.3.
