@@ -23,6 +23,8 @@ All notable changes to CoD2 Silicon are documented here, following
   trying to load their text as images.
 - A sound restart no longer drops streamed sounds that come after a free
   stream channel.
+- Release and launcher builds take the macOS SDK from the selected Xcode, so
+  packaging works on Xcode 27 when the Command Line Tools SDK is also present.
 
 ## [0.2.1] - 2026-10-13
 
