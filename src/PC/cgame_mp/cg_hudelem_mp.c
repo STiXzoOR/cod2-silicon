@@ -423,10 +423,10 @@ static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *h
         break;
     }
     case HE_TYPE_MAPNAME:
-        strResult = CL_GetConfigString(0x14);
+        strResult = CL_GetConfigString(0x13);
         break;
     case HE_TYPE_GAMETYPE:
-        strResult = CL_GetConfigString(0x13);
+        strResult = CL_GetConfigString(0x14);
         break;
     case HE_TYPE_MATERIAL:
         break;
