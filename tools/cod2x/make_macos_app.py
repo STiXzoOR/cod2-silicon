@@ -9,6 +9,17 @@ import re
 import tempfile
 import os
 
+# "-" signs ad hoc. A real identity, such as "Developer ID Application: Name (TEAMID)",
+# also gets the hardened runtime and a secure timestamp, which notarization requires.
+SIGN_IDENTITY = os.environ.get("COD2_SIGN_IDENTITY", "-")
+
+
+def codesign(path):
+    command = ["codesign", "--force", "--sign", SIGN_IDENTITY]
+    if SIGN_IDENTITY != "-":
+        command += ["--options", "runtime", "--timestamp"]
+    subprocess.run(command + [str(path)], check=True)
+
 
 def build_icon(root, output):
     """Compile CoD2 Silicon.icon, or draw the static fallback without Xcode's actool."""
@@ -136,7 +147,7 @@ def main():
             if not re.search(r"minos 26\.0(?:\.0)?\s", build):
                 parser.error(f"{macho.name} must be built for macOS 26.0")
         for dylib in machos[1:]:
-            subprocess.run(["codesign", "--force", "--sign", "-", str(dylib)], check=True)
+            codesign(dylib)
     icon_files, icon_keys = build_icon(root, pathlib.Path(staging.name) / "icon")
     for icon_file in icon_files:
         shutil.copy2(icon_file, resources / icon_file.name)
@@ -197,7 +208,7 @@ def main():
             shutil.copy2(icon_file, game_resources / icon_file.name)
         with (game_contents / "Info.plist").open("wb") as file:
             plistlib.dump(game_info, file)
-        subprocess.run(["codesign", "--force", "--sign", "-", str(game_contents.parent)], check=True)
+        codesign(game_contents.parent)
         info["LSSupportsGameMode"] = False
         info["CoD2AutomaticShaderSetup"] = False
         info["CoD2DefaultResolution"] = args.resolution
@@ -214,7 +225,7 @@ def main():
             shutil.copy2(root / name, resources / name)
     with (contents / "Info.plist").open("wb") as file:
         plistlib.dump(info, file)
-    subprocess.run(["codesign", "--force", "--sign", "-", str(app)], check=True)
+    codesign(app)
     subprocess.run(["codesign", "--verify", "--deep", "--strict", str(app)], check=True)
     if destination.exists():
         previous = pathlib.Path(staging.name) / "previous.app"
