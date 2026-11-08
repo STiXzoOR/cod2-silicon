@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceRevision": "6ae3bd57910d7a82a452422aef218d2b9cf0066d",
+  "sourceRevision": "698823b37d2652a5460be8146ab06ce864741a99",
   "groups": [
     {
       "id": "frame",
@@ -1431,7 +1431,7 @@
             },
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225795,
+              "line": 225799,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -1467,7 +1467,7 @@
             },
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225760,
+              "line": 225764,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -1498,8 +1498,8 @@
       "details": "The game's menu calls this Show Blood. It is only visual, and guides report no real effect on performance. Newer zPAM versions also use it to show where a hit landed.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1171",
-        "src/PC/client_mp/cl_main_mp.c:225760",
-        "src/PC/client_mp/cl_main_mp.c:225795"
+        "src/PC/client_mp/cl_main_mp.c:225764",
+        "src/PC/client_mp/cl_main_mp.c:225799"
       ],
       "guided": false,
       "control": {
@@ -14841,7 +14841,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 226456,
+              "line": 226460,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4123,
@@ -14868,7 +14868,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 226421,
+              "line": 226425,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4123,
@@ -14901,8 +14901,8 @@
       "summary": "Whether you hide your identity when joining servers.",
       "details": "The game protects this setting from writes, so it can't be changed from here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:226421",
-        "src/PC/client_mp/cl_main_mp.c:226456"
+        "src/PC/client_mp/cl_main_mp.c:226425",
+        "src/PC/client_mp/cl_main_mp.c:226460"
       ],
       "guided": false,
       "control": {
@@ -15901,7 +15901,7 @@
               "flags": 4097,
               "default": {
                 "status": "literal",
-                "value": 125
+                "value": 30
               },
               "minimum": {
                 "status": "literal",
@@ -16454,7 +16454,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2627,
+              "line": 2642,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -16506,7 +16506,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2627,
+              "line": 2642,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -16545,7 +16545,7 @@
       "details": "The game keeps this up to date itself and treats it as read-only. Some players bind a key to toggle it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1114",
-        "src/PC/qcommon/common.c:2627"
+        "src/PC/qcommon/common.c:2642"
       ],
       "guided": false,
       "control": {
@@ -17794,7 +17794,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2633,
+              "line": 2648,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -17817,7 +17817,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2633,
+              "line": 2648,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -17846,7 +17846,7 @@
       "summary": "A developer switch for checking animations.",
       "details": "A developer aid; its effect is not documented here.",
       "sources": [
-        "src/PC/qcommon/common.c:2633"
+        "src/PC/qcommon/common.c:2648"
       ],
       "guided": false,
       "control": {
@@ -17861,7 +17861,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 334,
+              "line": 338,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4160,
@@ -17885,7 +17885,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 334,
+              "line": 338,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4160,
@@ -17915,7 +17915,7 @@
       "summary": "The text of the last error the game showed.",
       "details": "The game fills this in itself and treats it as read-only. It is not a personal preference.",
       "sources": [
-        "src/PC/qcommon/common.c:334"
+        "src/PC/qcommon/common.c:338"
       ],
       "guided": false,
       "control": {
@@ -17931,7 +17931,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 335,
+              "line": 339,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4160,
@@ -17955,7 +17955,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 335,
+              "line": 339,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4160,
@@ -17985,7 +17985,7 @@
       "summary": "The title of the last error the game showed.",
       "details": "The game fills this in itself and treats it as read-only. It is not a personal preference.",
       "sources": [
-        "src/PC/qcommon/common.c:335"
+        "src/PC/qcommon/common.c:339"
       ],
       "guided": false,
       "control": {
@@ -18221,7 +18221,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2632,
+              "line": 2647,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -18245,7 +18245,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2632,
+              "line": 2647,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -18275,7 +18275,7 @@
       "summary": "Skips the opening publisher movies when set.",
       "details": "Set to 1 to skip them. A guide suggests setting it on the launch line.",
       "sources": [
-        "src/PC/qcommon/common.c:2632"
+        "src/PC/qcommon/common.c:2647"
       ],
       "guided": false,
       "control": {
@@ -18290,7 +18290,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2617,
+              "line": 2632,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -18322,7 +18322,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2614,
+              "line": 2629,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -18361,8 +18361,8 @@
       "summary": "The most frames per second the game will draw.",
       "details": "The game turns the cap into whole milliseconds per frame (1000 divided by the cap, rounded down), so only some caps really differ, and 251 to 333 all run at the same rate. Because movement is calculated once per frame, the cap also changes jump height and fall damage, and 333 is commonly reported to jump highest. Servers using CoD2x competitive rules keep it between 125 and 250 and reset anything outside to 250; several league rule texts forbid 333.",
       "sources": [
-        "src/PC/qcommon/common.c:2614",
-        "src/PC/qcommon/common.c:2617"
+        "src/PC/qcommon/common.c:2629",
+        "src/PC/qcommon/common.c:2632"
       ],
       "guided": true,
       "control": {
@@ -18506,7 +18506,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2656,
+              "line": 2671,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -18530,7 +18530,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2656,
+              "line": 2671,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -18560,7 +18560,7 @@
       "summary": "Marks that the game's automatic system check has run.",
       "details": "Present in saved configs. Leave it alone.",
       "sources": [
-        "src/PC/qcommon/common.c:2656"
+        "src/PC/qcommon/common.c:2671"
       ],
       "guided": false,
       "control": {
@@ -18587,7 +18587,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2622,
+              "line": 2637,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -18623,7 +18623,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2622,
+              "line": 2637,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -18654,7 +18654,7 @@
       "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:543",
-        "src/PC/qcommon/common.c:2622"
+        "src/PC/qcommon/common.c:2637"
       ],
       "guided": false,
       "control": {
@@ -18669,7 +18669,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2615,
+              "line": 2630,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -18699,7 +18699,7 @@
       "summary": "Lets CoD2x write changes to your config file as you play.",
       "details": "CoD2x only, on by default. With it off, changes made in game are not saved, although the change to this setting itself is. Config Studio stays read-only while the game runs either way.",
       "sources": [
-        "src/PC/qcommon/common.c:2615"
+        "src/PC/qcommon/common.c:2630"
       ],
       "guided": false,
       "control": {
@@ -19751,7 +19751,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2022,
+              "line": 2026,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4128,
@@ -19771,7 +19771,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2024,
+              "line": 2028,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -19791,7 +19791,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2606,
+              "line": 2621,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4128,
@@ -19811,7 +19811,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2609,
+              "line": 2624,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -19884,7 +19884,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2022,
+              "line": 2026,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4128,
@@ -19904,7 +19904,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2024,
+              "line": 2028,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -19924,7 +19924,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2606,
+              "line": 2621,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4128,
@@ -19944,7 +19944,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2609,
+              "line": 2624,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -19985,10 +19985,10 @@
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1120",
         "src/PC/game_mp/g_main_mp.c:1126",
-        "src/PC/qcommon/common.c:2022",
-        "src/PC/qcommon/common.c:2024",
-        "src/PC/qcommon/common.c:2606",
-        "src/PC/qcommon/common.c:2609"
+        "src/PC/qcommon/common.c:2026",
+        "src/PC/qcommon/common.c:2028",
+        "src/PC/qcommon/common.c:2621",
+        "src/PC/qcommon/common.c:2624"
       ],
       "guided": false,
       "control": {
@@ -20043,7 +20043,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2619,
+              "line": 2634,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -20115,7 +20115,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2619,
+              "line": 2634,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -20155,7 +20155,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1117",
         "src/PC/gfx_d3d/r_dvars.c:539",
-        "src/PC/qcommon/common.c:2619"
+        "src/PC/qcommon/common.c:2634"
       ],
       "guided": false,
       "control": {
@@ -20170,7 +20170,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2620,
+              "line": 2635,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -20193,7 +20193,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2620,
+              "line": 2635,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -20222,7 +20222,7 @@
       "summary": "Prints debug output from game scripts.",
       "details": "A developer aid; its effect is not documented here.",
       "sources": [
-        "src/PC/qcommon/common.c:2620"
+        "src/PC/qcommon/common.c:2635"
       ],
       "guided": false,
       "control": {
@@ -20237,7 +20237,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2624,
+              "line": 2639,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4224,
@@ -20269,7 +20269,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2624,
+              "line": 2639,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4224,
@@ -20307,7 +20307,7 @@
       "summary": "Forces every frame to last a fixed number of milliseconds.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. 0 is off. zPAM sets it to 0 for every player.",
       "sources": [
-        "src/PC/qcommon/common.c:2624"
+        "src/PC/qcommon/common.c:2639"
       ],
       "guided": false,
       "control": {
@@ -20974,7 +20974,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 227319,
+              "line": 227323,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4256,
@@ -21011,7 +21011,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 227284,
+              "line": 227288,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4256,
@@ -21054,8 +21054,8 @@
       "summary": "A switch the game registers to ignore localized files.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It is latched.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:227284",
-        "src/PC/client_mp/cl_main_mp.c:227319",
+        "src/PC/client_mp/cl_main_mp.c:227288",
+        "src/PC/client_mp/cl_main_mp.c:227323",
         "src/PC/universal/com_files.c:436",
         "src/PC/universal/com_files.c:506"
       ],
@@ -21210,7 +21210,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225786,
+              "line": 225790,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21234,7 +21234,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225751,
+              "line": 225755,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21264,8 +21264,8 @@
       "summary": "A developer switch for counting effects.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225751",
-        "src/PC/client_mp/cl_main_mp.c:225786"
+        "src/PC/client_mp/cl_main_mp.c:225755",
+        "src/PC/client_mp/cl_main_mp.c:225790"
       ],
       "guided": false,
       "control": {
@@ -21280,7 +21280,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225777,
+              "line": 225781,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -21303,7 +21303,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225742,
+              "line": 225746,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -21332,8 +21332,8 @@
       "summary": "Skips drawing effects that are out of view.",
       "details": "A culling switch for the effects system. It is on by default and, unlike its neighbours, is not cheat-protected.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225742",
-        "src/PC/client_mp/cl_main_mp.c:225777"
+        "src/PC/client_mp/cl_main_mp.c:225746",
+        "src/PC/client_mp/cl_main_mp.c:225781"
       ],
       "guided": false,
       "control": {
@@ -21348,7 +21348,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225784,
+              "line": 225788,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21372,7 +21372,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225749,
+              "line": 225753,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21402,8 +21402,8 @@
       "summary": "A developer switch that shows effects debugging.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225749",
-        "src/PC/client_mp/cl_main_mp.c:225784"
+        "src/PC/client_mp/cl_main_mp.c:225753",
+        "src/PC/client_mp/cl_main_mp.c:225788"
       ],
       "guided": false,
       "control": {
@@ -21418,7 +21418,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225785,
+              "line": 225789,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -21450,7 +21450,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225750,
+              "line": 225754,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -21488,8 +21488,8 @@
       "summary": "A developer value for debugging bolted-on effects.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225750",
-        "src/PC/client_mp/cl_main_mp.c:225785"
+        "src/PC/client_mp/cl_main_mp.c:225754",
+        "src/PC/client_mp/cl_main_mp.c:225789"
       ],
       "guided": false,
       "control": {
@@ -21504,7 +21504,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225775,
+              "line": 225779,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21528,7 +21528,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225740,
+              "line": 225744,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21558,8 +21558,8 @@
       "summary": "Whether the effects system draws its effects.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list required it on.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225740",
-        "src/PC/client_mp/cl_main_mp.c:225775"
+        "src/PC/client_mp/cl_main_mp.c:225744",
+        "src/PC/client_mp/cl_main_mp.c:225779"
       ],
       "guided": false,
       "control": {
@@ -21574,7 +21574,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225774,
+              "line": 225778,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21598,7 +21598,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225739,
+              "line": 225743,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21628,8 +21628,8 @@
       "summary": "The master switch for special effects.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. TweakGuide says turning it off can improve performance. ESL's old PunkBuster list and WWCL's old rules required it on.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225739",
-        "src/PC/client_mp/cl_main_mp.c:225774"
+        "src/PC/client_mp/cl_main_mp.c:225743",
+        "src/PC/client_mp/cl_main_mp.c:225778"
       ],
       "guided": false,
       "control": {
@@ -21644,7 +21644,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225783,
+              "line": 225787,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21668,7 +21668,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225748,
+              "line": 225752,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21698,8 +21698,8 @@
       "summary": "A developer switch that freezes effects in place.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225748",
-        "src/PC/client_mp/cl_main_mp.c:225783"
+        "src/PC/client_mp/cl_main_mp.c:225752",
+        "src/PC/client_mp/cl_main_mp.c:225787"
       ],
       "guided": false,
       "control": {
@@ -21714,7 +21714,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225788,
+              "line": 225792,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21738,7 +21738,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225753,
+              "line": 225757,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21768,8 +21768,8 @@
       "summary": "A developer switch for profiling effects.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225753",
-        "src/PC/client_mp/cl_main_mp.c:225788"
+        "src/PC/client_mp/cl_main_mp.c:225757",
+        "src/PC/client_mp/cl_main_mp.c:225792"
       ],
       "guided": false,
       "control": {
@@ -21784,7 +21784,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225778,
+              "line": 225782,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -21820,7 +21820,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225743,
+              "line": 225747,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -21862,8 +21862,8 @@
       "summary": "Draws overlapping smoke and other effects in depth order.",
       "details": "On by default. A PunkBuster kick message read 'Must be equal to 1', ESL's old list required 1, and ePAM, zPAM and CoD2x competitive rules force it on. Only WWCL's 2007 LAN rules asked for 0.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225743",
-        "src/PC/client_mp/cl_main_mp.c:225778",
+        "src/PC/client_mp/cl_main_mp.c:225747",
+        "src/PC/client_mp/cl_main_mp.c:225782",
         "src/PC/gfx_d3d/r_dvars.c:533"
       ],
       "guided": false,
@@ -21886,7 +21886,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225787,
+              "line": 225791,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -21918,7 +21918,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225752,
+              "line": 225756,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -21956,8 +21956,8 @@
       "summary": "A developer distance value for effect visibility checks.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225752",
-        "src/PC/client_mp/cl_main_mp.c:225787"
+        "src/PC/client_mp/cl_main_mp.c:225756",
+        "src/PC/client_mp/cl_main_mp.c:225791"
       ],
       "guided": false,
       "control": {
@@ -25808,7 +25808,7 @@
             },
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225794,
+              "line": 225798,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -25844,7 +25844,7 @@
             },
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225759,
+              "line": 225763,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -25875,8 +25875,8 @@
       "details": "The game's menu calls this Draw HUD. Turning it off hides the HUD menus the game draws on top of the picture. Game state still decides which elements appear while it is on.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:216",
-        "src/PC/client_mp/cl_main_mp.c:225759",
-        "src/PC/client_mp/cl_main_mp.c:225794"
+        "src/PC/client_mp/cl_main_mp.c:225763",
+        "src/PC/client_mp/cl_main_mp.c:225798"
       ],
       "guided": false,
       "control": {
@@ -28678,7 +28678,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 227314,
+              "line": 227318,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4129,
@@ -28751,7 +28751,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 227279,
+              "line": 227283,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4129,
@@ -28830,8 +28830,8 @@
       "summary": "Which language the game's text uses.",
       "details": "A number from 0 to 14. It is latched, so a change applies after the game restarts.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:227279",
-        "src/PC/client_mp/cl_main_mp.c:227314",
+        "src/PC/client_mp/cl_main_mp.c:227283",
+        "src/PC/client_mp/cl_main_mp.c:227318",
         "src/PC/stringed/stringed_hooks.c:188",
         "src/PC/stringed/stringed_hooks.c:251"
       ],
@@ -28848,7 +28848,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 227318,
+              "line": 227322,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4128,
@@ -28884,7 +28884,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 227283,
+              "line": 227287,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4128,
@@ -28926,8 +28926,8 @@
       "summary": "Translates the game's text strings.",
       "details": "On by default and latched.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:227283",
-        "src/PC/client_mp/cl_main_mp.c:227318",
+        "src/PC/client_mp/cl_main_mp.c:227287",
+        "src/PC/client_mp/cl_main_mp.c:227322",
         "src/PC/stringed/stringed_hooks.c:193"
       ],
       "guided": false,
@@ -29077,7 +29077,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2621,
+              "line": 2636,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -29108,7 +29108,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2621,
+              "line": 2636,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -29145,7 +29145,7 @@
       "summary": "Writes the console output to a log file.",
       "details": "From 0 to 2, and 0 is off. It is not saved.",
       "sources": [
-        "src/PC/qcommon/common.c:2621"
+        "src/PC/qcommon/common.c:2636"
       ],
       "guided": false,
       "control": {
@@ -31693,7 +31693,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225790,
+              "line": 225794,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4096,
@@ -31716,7 +31716,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225755,
+              "line": 225759,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4096,
@@ -31745,8 +31745,8 @@
       "summary": "The demo that plays next.",
       "details": "The registered default is empty.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225755",
-        "src/PC/client_mp/cl_main_mp.c:225790"
+        "src/PC/client_mp/cl_main_mp.c:225759",
+        "src/PC/client_mp/cl_main_mp.c:225794"
       ],
       "guided": false,
       "control": {
@@ -31896,7 +31896,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225772,
+              "line": 225776,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4098,
@@ -31920,7 +31920,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225737,
+              "line": 225741,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4098,
@@ -31950,8 +31950,8 @@
       "summary": "The password the game sends when you join a server that needs one.",
       "details": "The game's own password box takes up to 12 characters. Treat it as private. The catalog holds only the empty default, never anyone's saved password.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225737",
-        "src/PC/client_mp/cl_main_mp.c:225772"
+        "src/PC/client_mp/cl_main_mp.c:225741",
+        "src/PC/client_mp/cl_main_mp.c:225776"
       ],
       "guided": false,
       "control": {
@@ -35528,7 +35528,7 @@
             },
             {
               "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
-              "line": 6041,
+              "line": 6102,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -35576,7 +35576,7 @@
             },
             {
               "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
-              "line": 6041,
+              "line": 6102,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -35619,7 +35619,7 @@
       "details": "This setting comes from the macOS version of the game. The launcher's display settings cover it for most players.",
       "sources": [
         "src/Mac/DirectX_9/CDirect3D.c:560",
-        "src/Mac/DirectX_9/CDirect3DDevice.c:6041",
+        "src/Mac/DirectX_9/CDirect3DDevice.c:6102",
         "src/Mac/Metal/metal_backend.m:544"
       ],
       "guided": false,
@@ -36216,7 +36216,7 @@
             },
             {
               "path": "src/PC/gfx_d3d/r_init.c",
-              "line": 1022,
+              "line": 1027,
               "mechanism": "Dvar_RegisterEnum",
               "type": "enum",
               "flags": 8225,
@@ -36265,7 +36265,7 @@
             },
             {
               "path": "src/PC/gfx_d3d/r_init.c",
-              "line": 1022,
+              "line": 1027,
               "mechanism": "Dvar_RegisterEnum",
               "type": "enum",
               "flags": 8225,
@@ -36303,7 +36303,7 @@
       "details": "The game builds this list from your display at start-up, so the catalog cannot list the rates. It is a latched setting, and the rate you get depends on your display.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:563",
-        "src/PC/gfx_d3d/r_init.c:1022"
+        "src/PC/gfx_d3d/r_init.c:1027"
       ],
       "guided": false,
       "control": {
@@ -39992,7 +39992,7 @@
             },
             {
               "path": "src/PC/gfx_d3d/r_init.c",
-              "line": 1009,
+              "line": 1014,
               "mechanism": "Dvar_RegisterEnum",
               "type": "enum",
               "flags": 8225,
@@ -40040,7 +40040,7 @@
             },
             {
               "path": "src/PC/gfx_d3d/r_init.c",
-              "line": 1009,
+              "line": 1014,
               "mechanism": "Dvar_RegisterEnum",
               "type": "enum",
               "flags": 8225,
@@ -40078,7 +40078,7 @@
       "details": "The game's menu calls this Video Mode. On macOS the list is built from your display's available modes when the game starts, so the catalog cannot list the sizes. It is latched and applies after the renderer restarts.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:558",
-        "src/PC/gfx_d3d/r_init.c:1009"
+        "src/PC/gfx_d3d/r_init.c:1014"
       ],
       "guided": false,
       "control": {
@@ -42026,7 +42026,7 @@
           "sites": [
             {
               "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
-              "line": 2553,
+              "line": 2607,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 1,
@@ -42057,7 +42057,7 @@
           "sites": [
             {
               "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
-              "line": 2553,
+              "line": 2607,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 1,
@@ -42094,7 +42094,7 @@
       "summary": "Chooses whether the game skips showing a frame while the last one is still being drawn.",
       "details": "0 shows every frame. 1 waits for the graphics card to finish the previous frame and, if it has not, skips showing this one so the screen never shows an older picture. It comes from the macOS version of the game and is saved with your config.",
       "sources": [
-        "src/Mac/DirectX_9/CDirect3DDevice.c:2553"
+        "src/Mac/DirectX_9/CDirect3DDevice.c:2607"
       ],
       "guided": false,
       "control": {
@@ -49245,7 +49245,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2699,
+              "line": 2714,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4164,
@@ -49270,7 +49270,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2697,
+              "line": 2712,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4164,
@@ -49302,8 +49302,8 @@
       "summary": "The version number this build reports to servers.",
       "details": "The game fills this in itself and treats it as read-only. The CoD2x build reports 1.4.6.8 where stock reports 1.3.",
       "sources": [
-        "src/PC/qcommon/common.c:2697",
-        "src/PC/qcommon/common.c:2699"
+        "src/PC/qcommon/common.c:2712",
+        "src/PC/qcommon/common.c:2714"
       ],
       "guided": false,
       "control": {
@@ -49453,7 +49453,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225770,
+              "line": 225774,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4099,
@@ -49486,13 +49486,13 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225732,
+              "line": 225733,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4099,
               "default": {
                 "status": "literal",
-                "value": 40
+                "value": 20
               },
               "minimum": {
                 "status": "literal",
@@ -49526,8 +49526,8 @@
       "summary": "How many game updates per second you ask the server to send you.",
       "details": "Your request is a ceiling: the server's own update rate also limits how often you get one. Stock servers cap it at 30 and CoD2x servers at 40. Servers using CoD2x competitive rules enforce 40, and zPAM 3 servers on stock CoD2 expect 30.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225732",
-        "src/PC/client_mp/cl_main_mp.c:225770"
+        "src/PC/client_mp/cl_main_mp.c:225733",
+        "src/PC/client_mp/cl_main_mp.c:225774"
       ],
       "guided": true,
       "control": {
@@ -52509,7 +52509,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2626,
+              "line": 2641,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -52541,7 +52541,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2626,
+              "line": 2641,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -52579,7 +52579,7 @@
       "summary": "Whether the server is paused.",
       "details": "The game keeps this up to date itself and treats it as read-only.",
       "sources": [
-        "src/PC/qcommon/common.c:2626"
+        "src/PC/qcommon/common.c:2641"
       ],
       "guided": false,
       "control": {
@@ -53326,7 +53326,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2628,
+              "line": 2643,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4160,
@@ -53350,7 +53350,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2628,
+              "line": 2643,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4160,
@@ -53380,7 +53380,7 @@
       "summary": "Whether a server is running on this computer.",
       "details": "The game keeps this up to date itself and treats it as read-only.",
       "sources": [
-        "src/PC/qcommon/common.c:2628"
+        "src/PC/qcommon/common.c:2643"
       ],
       "guided": false,
       "control": {
@@ -54587,7 +54587,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2623,
+              "line": 2638,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4232,
@@ -54620,7 +54620,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2623,
+              "line": 2638,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4232,
@@ -54659,7 +54659,7 @@
       "summary": "How fast game time runs.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 1, and servers share it. It is used for demos and slow motion.",
       "sources": [
-        "src/PC/qcommon/common.c:2623"
+        "src/PC/qcommon/common.c:2638"
       ],
       "guided": false,
       "control": {
@@ -56850,7 +56850,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2693,
+              "line": 2708,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4160,
@@ -56874,7 +56874,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2693,
+              "line": 2708,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4160,
@@ -56904,7 +56904,7 @@
       "summary": "The game's build description.",
       "details": "The game treats this as read-only and sets it itself. The registered default is empty and the game fills it in at start-up. The CoD2x build changes the build name and date.",
       "sources": [
-        "src/PC/qcommon/common.c:2693"
+        "src/PC/qcommon/common.c:2708"
       ],
       "guided": false,
       "control": {
@@ -57089,7 +57089,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2625,
+              "line": 2640,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4224,
@@ -57121,7 +57121,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2625,
+              "line": 2640,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4224,
@@ -57159,7 +57159,7 @@
       "summary": "Shows the developer console log over the picture.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 2.",
       "sources": [
-        "src/PC/qcommon/common.c:2625"
+        "src/PC/qcommon/common.c:2640"
       ],
       "guided": false,
       "control": {
@@ -60704,7 +60704,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225809,
+              "line": 225813,
               "mechanism": "Cmd_AddCommand",
               "name": "cinematic"
             }
@@ -60714,7 +60714,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225774,
+              "line": 225778,
               "mechanism": "Cmd_AddCommand",
               "name": "cinematic"
             }
@@ -60730,8 +60730,8 @@
       "summary": "The native Mac handler skips cinematic playback.",
       "details": "On the native Apple path it clears nextmap and marks the intro as played. The legacy path calls the video player; this native handler does not play the requested video.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225774",
-        "src/PC/client_mp/cl_main_mp.c:225809"
+        "src/PC/client_mp/cl_main_mp.c:225778",
+        "src/PC/client_mp/cl_main_mp.c:225813"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -60789,7 +60789,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225799,
+              "line": 225803,
               "mechanism": "Cmd_AddCommand",
               "name": "clientinfo"
             }
@@ -60799,7 +60799,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225764,
+              "line": 225768,
               "mechanism": "Cmd_AddCommand",
               "name": "clientinfo"
             }
@@ -60815,8 +60815,8 @@
       "summary": "Print the connection state, server name and user-info settings.",
       "details": "This is a console diagnostic of the current client. It does not change the connection.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225764",
-        "src/PC/client_mp/cl_main_mp.c:225799"
+        "src/PC/client_mp/cl_main_mp.c:225768",
+        "src/PC/client_mp/cl_main_mp.c:225803"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -60875,7 +60875,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225836,
+              "line": 225840,
               "mechanism": "Cmd_AddCommand",
               "name": "closemenu"
             }
@@ -60885,7 +60885,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225801,
+              "line": 225805,
               "mechanism": "Cmd_AddCommand",
               "name": "closemenu"
             }
@@ -60901,8 +60901,8 @@
       "summary": "Close the UI menu with the supplied name.",
       "details": "Passes the command's remaining text to the menu system. It changes UI state, not a saved loadout.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225801",
-        "src/PC/client_mp/cl_main_mp.c:225836"
+        "src/PC/client_mp/cl_main_mp.c:225805",
+        "src/PC/client_mp/cl_main_mp.c:225840"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -60918,7 +60918,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225797,
+              "line": 225801,
               "mechanism": "Cmd_AddCommand",
               "name": "cmd"
             }
@@ -60928,7 +60928,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225762,
+              "line": 225766,
               "mechanism": "Cmd_AddCommand",
               "name": "cmd"
             }
@@ -60944,8 +60944,8 @@
       "summary": "Forward the remaining command text to the connected server.",
       "details": "Requires an active connection and does not run during demo playback. The server decides what the forwarded command does.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225762",
-        "src/PC/client_mp/cl_main_mp.c:225797"
+        "src/PC/client_mp/cl_main_mp.c:225766",
+        "src/PC/client_mp/cl_main_mp.c:225801"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -61045,7 +61045,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225798,
+              "line": 225802,
               "mechanism": "Cmd_AddCommand",
               "name": "configstrings"
             }
@@ -61055,7 +61055,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225763,
+              "line": 225767,
               "mechanism": "Cmd_AddCommand",
               "name": "configstrings"
             }
@@ -61071,8 +61071,8 @@
       "summary": "Print the indexed configuration strings received from the server.",
       "details": "Requires an active connection. These are server game-state strings, separate from local saved settings.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225763",
-        "src/PC/client_mp/cl_main_mp.c:225798"
+        "src/PC/client_mp/cl_main_mp.c:225767",
+        "src/PC/client_mp/cl_main_mp.c:225802"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -61088,7 +61088,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225815,
+              "line": 225819,
               "mechanism": "Cmd_AddCommand",
               "name": "connect"
             }
@@ -61098,7 +61098,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225780,
+              "line": 225784,
               "mechanism": "Cmd_AddCommand",
               "name": "connect"
             }
@@ -61114,8 +61114,8 @@
       "summary": "Start a connection to the supplied server address.",
       "details": "Accepts one address, disconnects the previous client session and resolves the new endpoint. Connection, authentication and server acceptance happen afterward.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225780",
-        "src/PC/client_mp/cl_main_mp.c:225815"
+        "src/PC/client_mp/cl_main_mp.c:225784",
+        "src/PC/client_mp/cl_main_mp.c:225819"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -61131,7 +61131,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2679,
+              "line": 2694,
               "mechanism": "Cmd_AddCommand",
               "name": "crash"
             }
@@ -61141,7 +61141,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2679,
+              "line": 2694,
               "mechanism": "Cmd_AddCommand",
               "name": "crash"
             }
@@ -61157,7 +61157,7 @@
       "summary": "Trigger a crash by writing through a null pointer.",
       "details": "This is an internal crash-test command. Running it terminates normal gameplay; it is not a recovery command.",
       "sources": [
-        "src/PC/qcommon/common.c:2679"
+        "src/PC/qcommon/common.c:2694"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -61173,7 +61173,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225832,
+              "line": 225836,
               "mechanism": "Cmd_AddCommand",
               "name": "cubemapShot"
             }
@@ -61183,7 +61183,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225797,
+              "line": 225801,
               "mechanism": "Cmd_AddCommand",
               "name": "cubemapShot"
             }
@@ -61199,8 +61199,8 @@
       "summary": "Capture six views for a development cubemap.",
       "details": "Requires a loaded map, a power-of-two size from 4 to 1024 and an output base name. Optional lighting or Fresnel arguments are development inputs, not ordinary screenshot options.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225797",
-        "src/PC/client_mp/cl_main_mp.c:225832"
+        "src/PC/client_mp/cl_main_mp.c:225801",
+        "src/PC/client_mp/cl_main_mp.c:225836"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -61303,7 +61303,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225805,
+              "line": 225809,
               "mechanism": "Cmd_AddCommand",
               "name": "demo"
             }
@@ -61313,7 +61313,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225770,
+              "line": 225774,
               "mechanism": "Cmd_AddCommand",
               "name": "demo"
             }
@@ -61329,8 +61329,8 @@
       "summary": "Load a recorded multiplayer demo for playback.",
       "details": "Reads demos/<name>.dm_1, disconnecting the current client session. Playback is refused while a local listen server is running.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225770",
-        "src/PC/client_mp/cl_main_mp.c:225805"
+        "src/PC/client_mp/cl_main_mp.c:225774",
+        "src/PC/client_mp/cl_main_mp.c:225809"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -61432,7 +61432,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225802,
+              "line": 225806,
               "mechanism": "Cmd_AddCommand",
               "name": "disconnect"
             }
@@ -61442,7 +61442,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225767,
+              "line": 225771,
               "mechanism": "Cmd_AddCommand",
               "name": "disconnect"
             }
@@ -61458,8 +61458,8 @@
       "summary": "Disconnect the current client session.",
       "details": "Stops cinematic playback and leaves the connection. The native CoD2x path also clears fs_game and restarts the file system after leaving a connected server.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225767",
-        "src/PC/client_mp/cl_main_mp.c:225802"
+        "src/PC/client_mp/cl_main_mp.c:225771",
+        "src/PC/client_mp/cl_main_mp.c:225806"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -61812,7 +61812,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2678,
+              "line": 2693,
               "mechanism": "Cmd_AddCommand",
               "name": "error"
             }
@@ -61822,7 +61822,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2678,
+              "line": 2693,
               "mechanism": "Cmd_AddCommand",
               "name": "error"
             }
@@ -61838,7 +61838,7 @@
       "summary": "Raise a fatal test error, or a drop error when an argument is supplied.",
       "details": "This is an internal error-handler test. It interrupts the session and is not a command for diagnosing an existing error.",
       "sources": [
-        "src/PC/qcommon/common.c:2678"
+        "src/PC/qcommon/common.c:2693"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -62133,7 +62133,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2680,
+              "line": 2695,
               "mechanism": "Cmd_AddCommand",
               "name": "freeze"
             }
@@ -62143,7 +62143,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2680,
+              "line": 2695,
               "mechanism": "Cmd_AddCommand",
               "name": "freeze"
             }
@@ -62159,7 +62159,7 @@
       "summary": "Hold the game loop for the supplied number of seconds.",
       "details": "This development command queues incoming events while waiting. It is a deliberate timing interruption, not the game's pause control.",
       "sources": [
-        "src/PC/qcommon/common.c:2680"
+        "src/PC/qcommon/common.c:2695"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -62175,7 +62175,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225826,
+              "line": 225830,
               "mechanism": "Cmd_AddCommand",
               "name": "fs_openedList"
             }
@@ -62185,7 +62185,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225791,
+              "line": 225795,
               "mechanism": "Cmd_AddCommand",
               "name": "fs_openedList"
             }
@@ -62201,8 +62201,8 @@
       "summary": "Print the names of IWD archives loaded by the game.",
       "details": "An IWD is a game asset archive. This file-system diagnostic does not open a new archive or alter a loadout.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225791",
-        "src/PC/client_mp/cl_main_mp.c:225826"
+        "src/PC/client_mp/cl_main_mp.c:225795",
+        "src/PC/client_mp/cl_main_mp.c:225830"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -62218,7 +62218,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225827,
+              "line": 225831,
               "mechanism": "Cmd_AddCommand",
               "name": "fs_referencedList"
             }
@@ -62228,7 +62228,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225792,
+              "line": 225796,
               "mechanism": "Cmd_AddCommand",
               "name": "fs_referencedList"
             }
@@ -62244,8 +62244,8 @@
       "summary": "Print the IWD archive names recorded as referenced by the game.",
       "details": "This reports file-system reference tracking. It does not change which archives a server accepts.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225792",
-        "src/PC/client_mp/cl_main_mp.c:225827"
+        "src/PC/client_mp/cl_main_mp.c:225796",
+        "src/PC/client_mp/cl_main_mp.c:225831"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -62529,7 +62529,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225818,
+              "line": 225822,
               "mechanism": "Cmd_AddCommand",
               "name": "globalservers"
             }
@@ -62539,7 +62539,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225783,
+              "line": 225787,
               "mechanism": "Cmd_AddCommand",
               "name": "globalservers"
             }
@@ -62555,8 +62555,8 @@
       "summary": "Request Internet server addresses from the master server.",
       "details": "The native CoD2x path queries both protocols 118 and 120 from the configured masters. The stock path uses the supplied protocol and optional query keywords.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225783",
-        "src/PC/client_mp/cl_main_mp.c:225818"
+        "src/PC/client_mp/cl_main_mp.c:225787",
+        "src/PC/client_mp/cl_main_mp.c:225822"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63178,7 +63178,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225834,
+              "line": 225838,
               "mechanism": "Cmd_AddCommand",
               "name": "localizeSoundAliasFiles"
             }
@@ -63188,7 +63188,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225799,
+              "line": 225803,
               "mechanism": "Cmd_AddCommand",
               "name": "localizeSoundAliasFiles"
             }
@@ -63204,8 +63204,8 @@
       "summary": "Collect sound-alias subtitle text into developer translation files.",
       "details": "Requires subtitle.st in the developer source-data folder. Processes soundaliases/*.csv and copies the result back to the translation file; this is an asset-authoring file write.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225799",
-        "src/PC/client_mp/cl_main_mp.c:225834"
+        "src/PC/client_mp/cl_main_mp.c:225803",
+        "src/PC/client_mp/cl_main_mp.c:225838"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63221,7 +63221,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225817,
+              "line": 225821,
               "mechanism": "Cmd_AddCommand",
               "name": "localservers"
             }
@@ -63231,7 +63231,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225782,
+              "line": 225786,
               "mechanism": "Cmd_AddCommand",
               "name": "localservers"
             }
@@ -63247,8 +63247,8 @@
       "summary": "Broadcast discovery requests on the local network.",
       "details": "Clears the client's LAN list and queries the standard game ports. Replies populate that list; this does not connect to a server.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225782",
-        "src/PC/client_mp/cl_main_mp.c:225817"
+        "src/PC/client_mp/cl_main_mp.c:225786",
+        "src/PC/client_mp/cl_main_mp.c:225821"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63264,7 +63264,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225814,
+              "line": 225818,
               "mechanism": "Cmd_AddCommand",
               "name": "logo"
             }
@@ -63274,7 +63274,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225779,
+              "line": 225783,
               "mechanism": "Cmd_AddCommand",
               "name": "logo"
             }
@@ -63290,8 +63290,8 @@
       "summary": "Display the named logo with fade-in, display and fade-out durations.",
       "details": "Accepts an image name and three durations in seconds. It changes the disconnected client's logo display state and stops existing sounds.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225779",
-        "src/PC/client_mp/cl_main_mp.c:225814"
+        "src/PC/client_mp/cl_main_mp.c:225783",
+        "src/PC/client_mp/cl_main_mp.c:225818"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63929,7 +63929,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225835,
+              "line": 225839,
               "mechanism": "Cmd_AddCommand",
               "name": "openmenu"
             }
@@ -63939,7 +63939,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225800,
+              "line": 225804,
               "mechanism": "Cmd_AddCommand",
               "name": "openmenu"
             }
@@ -63955,8 +63955,8 @@
       "summary": "Open the UI menu with the supplied name.",
       "details": "Passes the command's remaining text to the menu system. The named menu must be loaded in the current UI.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225800",
-        "src/PC/client_mp/cl_main_mp.c:225835"
+        "src/PC/client_mp/cl_main_mp.c:225804",
+        "src/PC/client_mp/cl_main_mp.c:225839"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63972,7 +63972,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225833,
+              "line": 225837,
               "mechanism": "Cmd_AddCommand",
               "name": "openScriptMenu"
             }
@@ -63982,7 +63982,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225798,
+              "line": 225802,
               "mechanism": "Cmd_AddCommand",
               "name": "openScriptMenu"
             }
@@ -63998,8 +63998,8 @@
       "summary": "Send a response for a named parent menu to the server's game script.",
       "details": "Requires an active UI and permission to send script-menu responses. It looks up the parent menu and forwards an mr response; it does not directly open a local menu.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225798",
-        "src/PC/client_mp/cl_main_mp.c:225833"
+        "src/PC/client_mp/cl_main_mp.c:225802",
+        "src/PC/client_mp/cl_main_mp.c:225837"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64059,7 +64059,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225821,
+              "line": 225825,
               "mechanism": "Cmd_AddCommand",
               "name": "ping"
             }
@@ -64069,7 +64069,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225786,
+              "line": 225790,
               "mechanism": "Cmd_AddCommand",
               "name": "ping"
             }
@@ -64085,8 +64085,8 @@
       "summary": "Send a getinfo request to a supplied server address and track its reply.",
       "details": "Stores the query in the client's ping list. This measures a server-query round trip, not in-game packet loss or frame timing.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225786",
-        "src/PC/client_mp/cl_main_mp.c:225821"
+        "src/PC/client_mp/cl_main_mp.c:225790",
+        "src/PC/client_mp/cl_main_mp.c:225825"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64158,7 +64158,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2683,
+              "line": 2698,
               "mechanism": "Cmd_AddCommand",
               "name": "quit"
             }
@@ -64168,7 +64168,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2683,
+              "line": 2698,
               "mechanism": "Cmd_AddCommand",
               "name": "quit"
             }
@@ -64184,7 +64184,7 @@
       "summary": "Shut down the client, server and file systems, then exit the game process.",
       "details": "The native CoD2x path can defer quit while its demo-recording shutdown is completed. This ends gameplay rather than closing the console.",
       "sources": [
-        "src/PC/qcommon/common.c:2683"
+        "src/PC/qcommon/common.c:2698"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64456,7 +64456,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225820,
+              "line": 225824,
               "mechanism": "Cmd_AddCommand",
               "name": "rcon"
             }
@@ -64466,7 +64466,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225785,
+              "line": 225789,
               "mechanism": "Cmd_AddCommand",
               "name": "rcon"
             }
@@ -64482,8 +64482,8 @@
       "summary": "Send an operator command to a server after remote-console login.",
       "details": "Supports login, logout and host selection. The server checks the supplied password; remote commands can change or shut down that server.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225785",
-        "src/PC/client_mp/cl_main_mp.c:225820"
+        "src/PC/client_mp/cl_main_mp.c:225789",
+        "src/PC/client_mp/cl_main_mp.c:225824"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64499,7 +64499,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225816,
+              "line": 225820,
               "mechanism": "Cmd_AddCommand",
               "name": "reconnect"
             }
@@ -64509,7 +64509,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225781,
+              "line": 225785,
               "mechanism": "Cmd_AddCommand",
               "name": "reconnect"
             }
@@ -64525,8 +64525,8 @@
       "summary": "Queue a connection to the client's last server name.",
       "details": "Requires a previously known server name. This reconnects the client rather than refreshing a server list.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225781",
-        "src/PC/client_mp/cl_main_mp.c:225816"
+        "src/PC/client_mp/cl_main_mp.c:225785",
+        "src/PC/client_mp/cl_main_mp.c:225820"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64542,7 +64542,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225803,
+              "line": 225807,
               "mechanism": "Cmd_AddCommand",
               "name": "record"
             }
@@ -64552,7 +64552,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225768,
+              "line": 225772,
               "mechanism": "Cmd_AddCommand",
               "name": "record"
             }
@@ -64568,8 +64568,8 @@
       "summary": "Write the current session's demo stream to a file under demos/.",
       "details": "Requires an active game and no recording already in progress. Accepts an optional name; without one it selects an unused demo number.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225768",
-        "src/PC/client_mp/cl_main_mp.c:225803"
+        "src/PC/client_mp/cl_main_mp.c:225772",
+        "src/PC/client_mp/cl_main_mp.c:225807"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65073,7 +65073,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225822,
+              "line": 225826,
               "mechanism": "Cmd_AddCommand",
               "name": "serverstatus"
             }
@@ -65083,7 +65083,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225787,
+              "line": 225791,
               "mechanism": "Cmd_AddCommand",
               "name": "serverstatus"
             }
@@ -65099,8 +65099,8 @@
       "summary": "Request and print a server's status information.",
       "details": "Accepts an address or uses the current connected server. The reply is a server status query, not a measurement of match performance.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225787",
-        "src/PC/client_mp/cl_main_mp.c:225822"
+        "src/PC/client_mp/cl_main_mp.c:225791",
+        "src/PC/client_mp/cl_main_mp.c:225826"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65194,7 +65194,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225824,
+              "line": 225828,
               "mechanism": "Cmd_AddCommand",
               "name": "setenv"
             }
@@ -65204,7 +65204,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225789,
+              "line": 225793,
               "mechanism": "Cmd_AddCommand",
               "name": "setenv"
             }
@@ -65220,8 +65220,8 @@
       "summary": "Print a named environment variable, or assign it a supplied value.",
       "details": "Works on the game process's environment. It is separate from dvar settings and can affect code that reads that variable later.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225789",
-        "src/PC/client_mp/cl_main_mp.c:225824"
+        "src/PC/client_mp/cl_main_mp.c:225793",
+        "src/PC/client_mp/cl_main_mp.c:225828"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65279,7 +65279,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225831,
+              "line": 225835,
               "mechanism": "Cmd_AddCommand",
               "name": "setRecommended"
             }
@@ -65289,7 +65289,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225796,
+              "line": 225800,
               "mechanism": "Cmd_AddCommand",
               "name": "setRecommended"
             }
@@ -65305,8 +65305,8 @@
       "summary": "Run the engine's automatic configuration routine.",
       "details": "Reads configure_mp.csv and chooses settings from the detected hardware information. It can queue a renderer restart; this is not a measured performance recommendation.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225796",
-        "src/PC/client_mp/cl_main_mp.c:225831"
+        "src/PC/client_mp/cl_main_mp.c:225800",
+        "src/PC/client_mp/cl_main_mp.c:225835"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65462,7 +65462,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225825,
+              "line": 225829,
               "mechanism": "Cmd_AddCommand",
               "name": "showip"
             }
@@ -65472,7 +65472,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225790,
+              "line": 225794,
               "mechanism": "Cmd_AddCommand",
               "name": "showip"
             }
@@ -65488,8 +65488,8 @@
       "summary": "Print the local network addresses known to the game.",
       "details": "Calls the platform's address-list routine. It does not reveal a remote server's address or change networking settings.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225790",
-        "src/PC/client_mp/cl_main_mp.c:225825"
+        "src/PC/client_mp/cl_main_mp.c:225794",
+        "src/PC/client_mp/cl_main_mp.c:225829"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65631,7 +65631,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_sndalias.c",
-              "line": 300,
+              "line": 308,
               "mechanism": "Cmd_AddCommand",
               "name": "snd_list"
             }
@@ -65641,7 +65641,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_sndalias.c",
-              "line": 300,
+              "line": 308,
               "mechanism": "Cmd_AddCommand",
               "name": "snd_list"
             }
@@ -65657,7 +65657,7 @@
       "summary": "Print streamed and loaded menu and game sound lists.",
       "details": "This is a sound-system diagnostic. It lists loaded sound aliases, not available recording devices or player voice messages.",
       "sources": [
-        "src/PC/universal/com_sndalias.c:300"
+        "src/PC/universal/com_sndalias.c:308"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65715,7 +65715,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225801,
+              "line": 225805,
               "mechanism": "Cmd_AddCommand",
               "name": "snd_restart"
             }
@@ -65725,7 +65725,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225766,
+              "line": 225770,
               "mechanism": "Cmd_AddCommand",
               "name": "snd_restart"
             }
@@ -65741,8 +65741,8 @@
       "summary": "Save sound state, restart audio and restore the saved state.",
       "details": "The handler also restarts the renderer and refuses to run on a listen server. This is a system restart, not a volume adjustment.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225766",
-        "src/PC/client_mp/cl_main_mp.c:225801"
+        "src/PC/client_mp/cl_main_mp.c:225770",
+        "src/PC/client_mp/cl_main_mp.c:225805"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65800,7 +65800,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225830,
+              "line": 225834,
               "mechanism": "Cmd_AddCommand",
               "name": "startSingleplayer"
             }
@@ -65810,7 +65810,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225795,
+              "line": 225799,
               "mechanism": "Cmd_AddCommand",
               "name": "startSingleplayer"
             }
@@ -65826,8 +65826,8 @@
       "summary": "The registered single-player command has no native launch implementation.",
       "details": "Requests cod2sp_s.exe, but the platform hook only reports that process launching is unsupported. It does not start a single-player session.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225795",
-        "src/PC/client_mp/cl_main_mp.c:225830"
+        "src/PC/client_mp/cl_main_mp.c:225799",
+        "src/PC/client_mp/cl_main_mp.c:225834"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65931,7 +65931,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225804,
+              "line": 225808,
               "mechanism": "Cmd_AddCommand",
               "name": "stoprecord"
             }
@@ -65941,7 +65941,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225769,
+              "line": 225773,
               "mechanism": "Cmd_AddCommand",
               "name": "stoprecord"
             }
@@ -65957,8 +65957,8 @@
       "summary": "Close the active multiplayer demo recording.",
       "details": "Does nothing when no demo is being recorded. Native CoD2x automatic recording can refuse this command while its automatic demo name is enabled.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225769",
-        "src/PC/client_mp/cl_main_mp.c:225804"
+        "src/PC/client_mp/cl_main_mp.c:225773",
+        "src/PC/client_mp/cl_main_mp.c:225808"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -66303,7 +66303,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225806,
+              "line": 225810,
               "mechanism": "Cmd_AddCommand",
               "name": "timedemo"
             }
@@ -66313,7 +66313,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225771,
+              "line": 225775,
               "mechanism": "Cmd_AddCommand",
               "name": "timedemo"
             }
@@ -66329,8 +66329,8 @@
       "summary": "Play a recorded demo with the client's timedemo mode enabled.",
       "details": "Uses the same demo loader as demo but marks playback for timing. The loader refuses playback while a listen server is running.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225771",
-        "src/PC/client_mp/cl_main_mp.c:225806"
+        "src/PC/client_mp/cl_main_mp.c:225775",
+        "src/PC/client_mp/cl_main_mp.c:225810"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -66505,7 +66505,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225823,
+              "line": 225827,
               "mechanism": "Cmd_AddCommand",
               "name": "toggleMenu"
             }
@@ -66515,7 +66515,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225788,
+              "line": 225792,
               "mechanism": "Cmd_AddCommand",
               "name": "toggleMenu"
             }
@@ -66531,8 +66531,8 @@
       "summary": "Select the game's menu state for the current connection.",
       "details": "Chooses a menu state according to demo playback and server loading. Despite its name, the handler does not simply flip a menu-open boolean.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225788",
-        "src/PC/client_mp/cl_main_mp.c:225823"
+        "src/PC/client_mp/cl_main_mp.c:225792",
+        "src/PC/client_mp/cl_main_mp.c:225827"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -66938,7 +66938,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225811,
+              "line": 225815,
               "mechanism": "Cmd_AddCommand",
               "name": "unskippablecinematic"
             }
@@ -66948,7 +66948,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225776,
+              "line": 225780,
               "mechanism": "Cmd_AddCommand",
               "name": "unskippablecinematic"
             }
@@ -66964,8 +66964,8 @@
       "summary": "The native Mac handler skips cinematic playback.",
       "details": "Sets the cinematic skip flag to false. On the native Apple path it clears nextmap and marks the intro as played without playing the requested video. The legacy video-player path starts playback with skipping disabled.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225776",
-        "src/PC/client_mp/cl_main_mp.c:225811"
+        "src/PC/client_mp/cl_main_mp.c:225780",
+        "src/PC/client_mp/cl_main_mp.c:225815"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -66982,7 +66982,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225828,
+              "line": 225832,
               "mechanism": "Cmd_AddCommand",
               "name": "updatehunkusage"
             }
@@ -66992,7 +66992,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225793,
+              "line": 225797,
               "mechanism": "Cmd_AddCommand",
               "name": "updatehunkusage"
             }
@@ -67008,8 +67008,8 @@
       "summary": "Update hunkusage.dat with the current map and hunk-memory use.",
       "details": "This internal loading diagnostic reads and rewrites a game file. Its allocator figure is not total system memory or a frame-time measurement.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225793",
-        "src/PC/client_mp/cl_main_mp.c:225828"
+        "src/PC/client_mp/cl_main_mp.c:225797",
+        "src/PC/client_mp/cl_main_mp.c:225832"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -67025,7 +67025,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225829,
+              "line": 225833,
               "mechanism": "Cmd_AddCommand",
               "name": "updatescreen"
             }
@@ -67035,7 +67035,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225794,
+              "line": 225798,
               "mechanism": "Cmd_AddCommand",
               "name": "updatescreen"
             }
@@ -67051,8 +67051,8 @@
       "summary": "Run the client's screen-update routine once.",
       "details": "Draws the current loading, game or menu state. It is an internal redraw command rather than a display-setting reset.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225794",
-        "src/PC/client_mp/cl_main_mp.c:225829"
+        "src/PC/client_mp/cl_main_mp.c:225798",
+        "src/PC/client_mp/cl_main_mp.c:225833"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -67068,7 +67068,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225800,
+              "line": 225804,
               "mechanism": "Cmd_AddCommand",
               "name": "vid_restart"
             }
@@ -67078,7 +67078,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 225765,
+              "line": 225769,
               "mechanism": "Cmd_AddCommand",
               "name": "vid_restart"
             }
@@ -67094,8 +67094,8 @@
       "summary": "Reinitialise the renderer and related client systems.",
       "details": "Refuses to run on a listen server. When possible it saves and restores client state around the restart; restart-required settings can then take effect.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:225765",
-        "src/PC/client_mp/cl_main_mp.c:225800"
+        "src/PC/client_mp/cl_main_mp.c:225769",
+        "src/PC/client_mp/cl_main_mp.c:225804"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -67532,7 +67532,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2684,
+              "line": 2699,
               "mechanism": "Cmd_AddCommand",
               "name": "writeconfig"
             }
@@ -67542,7 +67542,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2684,
+              "line": 2699,
               "mechanism": "Cmd_AddCommand",
               "name": "writeconfig"
             }
@@ -67558,7 +67558,7 @@
       "summary": "Write current bindings and saved settings to a named config file.",
       "details": "Accepts a file name and adds .cfg when needed. This is the engine's config writer, separate from Config Studio's loadout transactions and History.",
       "sources": [
-        "src/PC/qcommon/common.c:2684"
+        "src/PC/qcommon/common.c:2699"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -67575,7 +67575,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2685,
+              "line": 2700,
               "mechanism": "Cmd_AddCommand",
               "name": "writedefaults"
             }
@@ -67585,7 +67585,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2685,
+              "line": 2700,
               "mechanism": "Cmd_AddCommand",
               "name": "writedefaults"
             }
@@ -67601,7 +67601,7 @@
       "summary": "Write the engine's registered default settings to a named config file.",
       "details": "Accepts a file name and adds .cfg when needed. The values come from registered defaults rather than the player's current choices.",
       "sources": [
-        "src/PC/qcommon/common.c:2685"
+        "src/PC/qcommon/common.c:2700"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -67649,70 +67649,70 @@
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2255,
+        "line": 2261,
         "mechanism": "Dvar_RegisterVariantReg",
         "function": "Dvar_RegisterString_inl",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2379,
+        "line": 2391,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetBoolByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2394,
+        "line": 2406,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetIntByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2407,
+        "line": 2419,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetFloatByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2420,
+        "line": 2432,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetVec2ByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2433,
+        "line": 2445,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetVec3ByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2446,
+        "line": 2458,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetVec4ByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2459,
+        "line": 2471,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetStringByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2481,
+        "line": 2495,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetColorByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2498,
+        "line": 2515,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetFromStringByNameFromSource",
         "nameExpression": "dvarName"
@@ -67756,70 +67756,70 @@
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2255,
+        "line": 2261,
         "mechanism": "Dvar_RegisterVariantReg",
         "function": "Dvar_RegisterString_inl",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2379,
+        "line": 2391,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetBoolByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2394,
+        "line": 2406,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetIntByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2407,
+        "line": 2419,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetFloatByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2420,
+        "line": 2432,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetVec2ByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2433,
+        "line": 2445,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetVec3ByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2446,
+        "line": 2458,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetVec4ByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2459,
+        "line": 2471,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetStringByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2481,
+        "line": 2495,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetColorByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2498,
+        "line": 2515,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetFromStringByNameFromSource",
         "nameExpression": "dvarName"
