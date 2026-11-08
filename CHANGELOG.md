@@ -23,6 +23,11 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Fixed
 
+- Setup now takes the original shaders from the Universal (PowerPC and Intel)
+  Mac 1.3 game as well as from an Intel-only copy. Before, setup reported a
+  Universal copy as not found and the game fell back to approximate shaders,
+  which lose clouds and most lighting detail. The setup text now says so
+  plainly.
 - CoD2x builds start with the stock packet and snapshot rates
   (`cl_maxpackets 30`, `snaps 20`), as CoD2x does. They started at 125 and 40,
   and some 1.3 servers then showed "Connection Interrupted" and a ping of 999.

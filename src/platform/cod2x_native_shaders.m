@@ -12,6 +12,29 @@ static uint32_t Read32(const unsigned char *bytes)
     return bytes[0] | (uint32_t)bytes[1] << 8 | (uint32_t)bytes[2] << 16 | (uint32_t)bytes[3] << 24;
 }
 
+static uint32_t ReadBig32(const unsigned char *bytes)
+{
+    return (uint32_t)bytes[0] << 24 | (uint32_t)bytes[1] << 16 | (uint32_t)bytes[2] << 8 | bytes[3];
+}
+
+/* Mac 1.3 shipped as a Universal Binary for PowerPC and Intel. Use its i386
+ * slice; a file that is not universal is passed through unchanged. */
+static NSData *ShaderIntelSlice(NSData *data)
+{
+    const unsigned char *bytes = data.bytes;
+    NSUInteger length = data.length;
+    if (length < 8 || ReadBig32(bytes) != 0xcafebabe) return data;
+    uint32_t count = ReadBig32(bytes + 4);
+    if (!count || count > 16 || 8 + (uint64_t)count * 20 > length) return nil;
+    for (uint32_t i = 0; i < count; ++i) {
+        const unsigned char *arch = bytes + 8 + i * 20;
+        uint32_t offset = ReadBig32(arch + 8), size = ReadBig32(arch + 12);
+        if (ReadBig32(arch) == 7 && (uint64_t)offset + size <= length)
+            return [data subdataWithRange:NSMakeRange(offset, size)];
+    }
+    return nil;
+}
+
 static void Write16(NSMutableData *data, NSUInteger offset, unsigned value)
 {
     unsigned char *bytes = data.mutableBytes;
@@ -205,7 +228,8 @@ BOOL Cod2xShadersSetup(NSArray<NSString *> *binaries, NSString *cache)
     for (NSString *binary in binaries) {
         if (verified) break;
         NSData *input = [NSData dataWithContentsOfFile:binary options:NSDataReadingMappedIfSafe error:nil];
-        NSDictionary *assets = input ? ShaderExtract(input) : nil;
+        NSData *slice = input ? ShaderIntelSlice(input) : nil;
+        NSDictionary *assets = slice ? ShaderExtract(slice) : nil;
         if (!assets) continue;
         NSString *staging = [parent stringByAppendingPathComponent:[@".shaders-" stringByAppendingString:NSUUID.UUID.UUIDString]];
         if (![files createDirectoryAtPath:staging withIntermediateDirectories:NO attributes:nil error:nil]) continue;

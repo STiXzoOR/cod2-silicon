@@ -293,7 +293,7 @@ struct MediaEntry: Identifiable {
             progress.cancel()
             withAnimation(.launcherSpring) { shaderCount = verified ? 834 : 0 }
             shaderBusy = false; approximate = !verified
-            shaderMessage = verified ? "All shaders verified" : "Original Mac shaders weren't found. Approximate shaders change some lighting and skies."
+            shaderMessage = verified ? "All shaders verified" : "Original Mac shaders weren't found. Approximate shaders lose clouds and most lighting detail."
         }
     }
     /// Payloads written so far into the extractor's private staging folder in the app home.
