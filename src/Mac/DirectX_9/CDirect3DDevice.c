@@ -1633,10 +1633,22 @@ void CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState(const CDirect3DDevice *
     GLenum minEnum = 0;
     if (!stage->mipFilter || !lastLevel)
         minEnum = min > 1 ? 0x2601 : 0x2600;
+#if defined(COD2_X64)
+    /* D3D names the texel filter first and the mip filter second; GL's
+     * LINEAR_MIPMAP_NEAREST is a linear texel filter with point mips. Mac 1.3
+     * swapped the two mixed modes, so the default bilinear sampling (min
+     * LINEAR, mip POINT) point-sampled minified textures. Windows 1.3 filters
+     * them linearly. */
+    else if (stage->mipFilter == 1)
+        minEnum = min > 1 ? 0x2701 : 0x2700;
+    else if (stage->mipFilter == 2)
+        minEnum = min > 1 ? 0x2703 : 0x2702;
+#else
     else if (stage->mipFilter == 1)
         minEnum = min > 1 ? 0x2702 : 0x2700;
     else if (stage->mipFilter == 2)
         minEnum = min > 1 ? 0x2703 : 0x2701;
+#endif
     if (minEnum) {
         DEVICE_TEXTURE_INT(mTexMinFilter, 0x2801, minEnum);
         info->minFilter = minEnum;
