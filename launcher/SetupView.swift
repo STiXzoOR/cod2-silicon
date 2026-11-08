@@ -172,12 +172,12 @@ struct SetupView: View {
                     .accessibilityElement().accessibilityLabel("Shader extraction").accessibilityValue("\(model.shaderCount) of 834")
                 if model.approximate && !model.shaderBusy {
                     HStack(spacing: 10) {
-                        Text("Approximate shaders change some lighting and skies.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
+                        Text("Approximate shaders lose clouds and most lighting detail.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
                         Spacer()
                         Button("Choose Mac Copy…", action: model.pickShaders).glassAction().actionControlSize()
                     }
                 } else {
-                    Text("No Mac copy? You can still play with approximate lighting and add it later in Settings.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
+                    Text("No Mac copy? You can still play, without clouds and most lighting detail, and add it later in Settings.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
                 }
             }
         }
