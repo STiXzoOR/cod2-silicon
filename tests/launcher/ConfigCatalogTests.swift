@@ -21,7 +21,7 @@ import Darwin
         let url = URL(fileURLWithPath: CommandLine.arguments[1])
         let bytes = try Data(contentsOf: url)
         let catalog = try ConfigCatalog(data: bytes)
-        require(catalog.sourceRevision == "6ae3bd57910d7a82a452422aef218d2b9cf0066d", "catalog must describe the requested integration")
+        require(catalog.sourceRevision == "698823b37d2652a5460be8146ab06ce864741a99", "catalog must describe the requested integration")
         let speed = catalog.setting(named: "SENSITIVITY")!
         require(speed.name == "sensitivity" && speed.group == .aim, "case-insensitive setting lookup")
         require(catalog.settings(in: .aim).contains(speed), "group lookup")
@@ -40,7 +40,8 @@ import Darwin
         let frameCap = catalog.setting(named: "com_maxfps")!
         require(frameCap.variant(for: .stock)?.defaultValue.value == .number(85), "stock frame-cap registration")
         require(frameCap.variant(for: .cod2x)?.defaultValue.value == .number(250), "port CoD2x frame-cap registration")
-        require(catalog.setting(named: "snaps")?.variant(for: .cod2x)?.defaultValue.value == .number(40), "port startup preference stays distinct from policy")
+        require(catalog.setting(named: "snaps")?.variant(for: .cod2x)?.defaultValue.value == .number(20), "CoD2x keeps the stock snaps default; only competitive policy forces 40")
+        require(catalog.setting(named: "cl_maxpackets")?.variant(for: .cod2x)?.defaultValue.value == .number(30), "CoD2x keeps the stock packet default; only competitive policy forces 125")
         require(catalog.setting(named: "g_competitive")?.variant(for: .cod2x)?.flagsDynamic == true, "run-time flag choice")
         require(catalog.setting(named: "g_competitive")?.isEditable(in: .cod2x) == false, "server policy is protected")
         let privacy = catalog.setting(named: "cl_matchSummaries")!
