@@ -28,6 +28,11 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Fixed
 
+- Icons stored without smaller copies (mipmaps) draw again. They showed as
+  black squares, or white with approximate shaders: the melee, artillery and
+  crush kill-feed icons, the scoreboard's dead icon, and many mod icons. The
+  game asked OpenGL for mipmap levels these images don't have; Mac 1.3 asks
+  only for the ones they do.
 - Setup now takes the original shaders from the Universal (PowerPC and Intel)
   Mac 1.3 game as well as from an Intel-only copy. Before, setup reported a
   Universal copy as not found and the game fell back to approximate shaders,
