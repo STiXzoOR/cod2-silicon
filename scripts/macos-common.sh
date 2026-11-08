@@ -66,7 +66,7 @@ build_app() {
     "$python" "$root/tools/catalog/catalog.py" check --source-root "$root" --catalog "$root/launcher/Resources/ConfigCatalog.json" --mode cod2x
     "$root/scripts/build-sdl.sh" "$build/deps"
     local prefix="$build/deps/install" sdk
-    sdk=$(/usr/bin/xcrun --show-sdk-path)
+    sdk=$(/usr/bin/xcrun --sdk macosx --show-sdk-path)
     run_build cmake -S "$root" -B "$build/client" \
         -DCOD2_X64=ON -DCOD2_FEATURE_CFLAGS=-DCOD2_CODX=1 -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_OSX_DEPLOYMENT_TARGET=26.0 "-DCMAKE_OSX_SYSROOT=$sdk" \
