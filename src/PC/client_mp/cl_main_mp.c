@@ -1238,7 +1238,7 @@ void CL_InitOnceForAllClients(void)
 
 #if defined(COD2_CODX) && COD2_CODX
 #if defined(COD2_X64) && COD2_X64
-    cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 125, 10, 125, 0x1001);
+    cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 30, 10, 125, 0x1001);
 #else
     cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 125, 15, 125, 0x1001);
 #endif
@@ -1294,7 +1294,11 @@ void CL_InitOnceForAllClients(void)
     name = Dvar_RegisterString_mac("name", "Unknown Soldier", 0x1003);
     Dvar_RegisterInt("rate", 5000, 1000, 25000, 0x1003);
 #if defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64) && COD2_X64
+    Dvar_RegisterInt("snaps", 20, 1, 40, 0x1003);
+#else
     Dvar_RegisterInt("snaps", 40, 1, 40, 0x1003);
+#endif
     Cod2x_Init();
 #else
     Dvar_RegisterInt("snaps", 20, 1, 30, 0x1003);
