@@ -14,11 +14,24 @@ extern intptr_t g_Low, g_High;
 static void CDirect3DDevice_SubmitIndexedNative(DeviceImpl *dev, const byte *indices, UINT32 count)
 {
     DeviceStreamsNative *state = dev->streamState;
-    /* Mac 0x1233c-0x12397: raw indices and base-adjusted range hints are
-     * deliberately separate; a 65535-element chunk is exactly 21845 triangles. */
+#if defined(COD2_X64)
+    /* Mac DrawIndexedPrimitive hints base + MinVertexIndex through
+     * base + MinVertexIndex + NumVertices - 1 (Steam MP binary 0x10e16), but
+     * GetStreamPtrs has already moved every array pointer base vertices in
+     * (0xd02f), and GL applies the hint to those pointers. Mesa reads every
+     * hinted vertex of a client array, so it read base vertices past the
+     * data. Hint the range the raw indices use, as glDrawRangeElements
+     * requires. _pad0A8 holds this draw's base. */
+    UINT32 start = state->low - dev->_pad0A8, end = state->high - dev->_pad0A8;
+#endif
+    /* Mac 0x1233c-0x12397: a 65535-element chunk is exactly 21845 triangles. */
     while (count) {
         UINT32 batch = count > 65534 ? 65535 : count;
+#if defined(COD2_X64)
+        glDrawRangeElements(0x4, start, end, batch, 0x1403, indices);
+#else
         glDrawRangeElements(0x4, state->low, state->high, batch, 0x1403, indices);
+#endif
         indices += batch * 2;
         count -= batch;
     }
