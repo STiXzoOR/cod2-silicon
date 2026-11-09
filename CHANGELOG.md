@@ -7,6 +7,10 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Changed
 
+- Anti-aliasing works. Edges are smoothed at the `r_aaSamples` setting, 2x
+  by default as on Windows; before, the setting did nothing and wires and
+  rooflines were jagged. `r_aaSamples 1` turns it off and looks exactly as
+  before. It cost no measurable frame rate in testing.
 - Release packaging can sign with a real identity (`COD2_SIGN_IDENTITY`), which
   adds the hardened runtime and a secure timestamp, and can notarize and staple
   the app (`COD2_NOTARY_PROFILE`, a `notarytool` keychain profile). Without
