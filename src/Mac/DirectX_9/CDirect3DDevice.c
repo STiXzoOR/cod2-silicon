@@ -1625,7 +1625,17 @@ void CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState(const CDirect3DDevice *
     }
     void **methods = *(void ***)texture;
     int levels = ((UINT (*)(const void *))methods[13])(texture);
+#if defined(COD2_X64)
+    /* Windows 1.3 (D3D9) samples every stored level. The larger of the level
+     * count and the count the image size allows sent an image stored without
+     * mips past its only level: an incomplete texture that drew black or
+     * white. Mac 0x103ff takes the smaller, which also drops the 2x2 and 1x1
+     * levels of full chains. */
+    int lastLevel = levels - 1;
+    (void)base;
+#else
     int lastLevel = (levels >= base ? levels : base) - 1;
+#endif
     if (lastLevel < 0) lastLevel = 0;
     GLenum mag = stage->magFilter == 3 || stage->magFilter > 1 ? 0x2601 : 0x2600;
     DEVICE_TEXTURE_INT(mTexMagFilter, 0x2800, mag); info->magFilter = mag;
@@ -1633,10 +1643,22 @@ void CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState(const CDirect3DDevice *
     GLenum minEnum = 0;
     if (!stage->mipFilter || !lastLevel)
         minEnum = min > 1 ? 0x2601 : 0x2600;
+#if defined(COD2_X64)
+    /* D3D names the texel filter first and the mip filter second; GL's
+     * LINEAR_MIPMAP_NEAREST is a linear texel filter with point mips. Mac 1.3
+     * swapped the two mixed modes, so the default bilinear sampling (min
+     * LINEAR, mip POINT) point-sampled minified textures. Windows 1.3 filters
+     * them linearly. */
+    else if (stage->mipFilter == 1)
+        minEnum = min > 1 ? 0x2701 : 0x2700;
+    else if (stage->mipFilter == 2)
+        minEnum = min > 1 ? 0x2703 : 0x2702;
+#else
     else if (stage->mipFilter == 1)
         minEnum = min > 1 ? 0x2702 : 0x2700;
     else if (stage->mipFilter == 2)
         minEnum = min > 1 ? 0x2703 : 0x2701;
+#endif
     if (minEnum) {
         DEVICE_TEXTURE_INT(mTexMinFilter, 0x2801, minEnum);
         info->minFilter = minEnum;
