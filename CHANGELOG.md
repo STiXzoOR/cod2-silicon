@@ -15,6 +15,11 @@ All notable changes to CoD2 Silicon are documented here, following
   `r_anisotropy` (default 8). Mac 1.3 passed the setting's raw bits as a float,
   so it never took effect. Default settings look the same; with
   `r_textureMode anisotropic`, distant ground textures are sharper.
+- Distant and angled textures are filtered as on Windows 1.3. Mac 1.3 mixed up
+  two OpenGL filter modes, so the default bilinear setting picked the nearest
+  texel on minified textures. Walls and grass in the distance looked grainy,
+  shimmered as you moved, and grass looked slightly blue-green. Replayed demos
+  now match the Windows game much more closely.
 - Require macOS 26 or later on Apple silicon for new builds, with Xcode 26+
   and the macOS 26+ SDK for source builds. Align the launcher, engine, bundled
   SDL libraries, icons, bundle metadata and verification with that minimum.
@@ -23,6 +28,11 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Fixed
 
+- Icons stored without smaller copies (mipmaps) draw again. They showed as
+  black squares, or white with approximate shaders: the melee, artillery and
+  crush kill-feed icons, the scoreboard's dead icon, and many mod icons. The
+  game asked OpenGL for mipmap levels these images don't have. It now uses
+  the levels each image has, as on Windows.
 - Setup now takes the original shaders from the Universal (PowerPC and Intel)
   Mac 1.3 game as well as from an Intel-only copy. Before, setup reported a
   Universal copy as not found and the game fell back to approximate shaders,
