@@ -7,6 +7,10 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Changed
 
+- The CoD2x machine ID (`cl_hwid2`) is now computed the way CoD2x computes it:
+  the same list of hardware details, hashed the same way. Only the hash is
+  sent. This changes the ID once for existing Mac players, so a CoD2x server
+  sees them as a new machine one time.
 - Anti-aliasing works. Edges are smoothed at the `r_aaSamples` setting, 2x
   by default as on Windows; before, the setting did nothing and wires and
   rooflines were jagged. `r_aaSamples 1` turns it off and looks exactly as
