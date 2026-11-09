@@ -6098,9 +6098,7 @@ static HRESULT CDirect3DDevice_ResetNative(DeviceImpl *dev, const void *presenta
     if (!presentation) return (HRESULT)(int32_t)0x8876086cu;
     NativePresentationParameters14 parameters;
     memcpy(&parameters, presentation, sizeof(parameters));
-    /* The selected display advertises no multisample buffers. Reject callers
-     * that bypass capability negotiation instead of silently dropping FSAA. */
-    if (parameters.multiSampleType || parameters.multiSampleQuality)
+    if (!NativePresentation_SamplesValid(&parameters))
         return (HRESULT)(int32_t)0x8876086au;
     int depthBits = NativePresentation_DepthBits(parameters.depthFormat);
     if (!depthBits) return (HRESULT)(int32_t)0x88760869u;
@@ -6126,7 +6124,8 @@ static HRESULT CDirect3DDevice_ResetNative(DeviceImpl *dev, const void *presenta
         parameters.windowed ? MAC_WINDOWED : (borderless->current.enabled ? MAC_BORDERLESS : MAC_FULLSCREEN), parameters.refreshRate);
     if (MacDisplay_SetMode(parameters.width, parameters.height,
             parameters.backBufferFormat == 21 || parameters.backBufferFormat == 22 ? 32 : 16, parameters.refreshRate) ||
-        MacDisplay_SetDepthStencilFormat(dev->context, depthBits, parameters.depthFormat == 75))
+        MacDisplay_SetDepthStencilFormat(dev->context, depthBits, parameters.depthFormat == 75) ||
+        MacDisplay_SetMultisample(dev->context, (int)parameters.multiSampleType))
         return (HRESULT)(int32_t)0x88760869u;
     MacDisplay_SetPresentationInterval(dev->context, parameters.presentationInterval);
 #endif

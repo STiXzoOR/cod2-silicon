@@ -352,7 +352,10 @@ HRESULT CDirect3D_CheckDeviceMultiSampleType(const void *t, UINT a, int dt, D3DF
     unsigned char super, multi, alpha;
     (void)t; (void)a; (void)dt; (void)sf;
     MacDisplay_GetAntiAliasingMultiSampleInfo(&buffers, &samples, &super, &multi, &alpha);
-    if (!ms || w || !super || (UINT)ms > (UINT)samples)
+    /* Mac 1.3 (0xd9ca) refuses windowed multisampling, an AGL limit; the
+     * offscreen frame buffer has none, and Windows 1.3 multisamples windows. */
+    (void)w;
+    if (!ms || !super || (UINT)ms > (UINT)samples)
         return (HRESULT)(int32_t)0x8876086au;
     if (q)
         *q = 1;
@@ -547,9 +550,7 @@ HRESULT CDirect3D_CreateDevice(const void *_this, UINT Adapter, int DeviceType, 
     if (pPresentationParameters) memcpy(&parameters, pPresentationParameters, sizeof(parameters));
     if (!parameters.width) parameters.width = 640;
     if (!parameters.height) parameters.height = 480;
-    /* The selected display advertises no multisample buffers. Reject callers
-     * that bypass capability negotiation instead of silently dropping FSAA. */
-    if (parameters.multiSampleType || parameters.multiSampleQuality)
+    if (!NativePresentation_SamplesValid(&parameters))
         return (HRESULT)(int32_t)0x8876086au;
     int depthBits = NativePresentation_DepthBits(parameters.depthFormat);
     if (!depthBits) return (HRESULT)(int32_t)0x88760869u;

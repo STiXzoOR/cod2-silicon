@@ -30,6 +30,9 @@ typedef struct {
     int depthBits, stencil;
 #if defined(COD2_X64)
     MacPresentationGamma gamma;
+    /* Multisample frame buffer; framebuffer keeps AUX and the resolved scene. */
+    GLuint msFramebuffer, msColor, msDepth;
+    int samples;
 #endif
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
     MacMetalPresenter *metal;
@@ -267,6 +270,76 @@ static int CreateRenderBuffer(MacContext *ctx, int depthBits, int stencil)
     glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
     return glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE_EXT ? 0 : -1;
 }
+#if defined(COD2_X64)
+
+/* Windows 1.3 multisamples only the frame buffer and its depth-stencil; the
+ * AUX render targets use a single-sample depth-stencil (r_rendertarget.c).
+ * The frame buffer draws into its own multisample FBO. AUX attachments and
+ * the resolved scene stay in the single-sample FBO, which every read uses. */
+static void DestroyMultisampleBuffer(MacContext *ctx)
+{
+    if (ctx->msFramebuffer) glDeleteFramebuffersEXT(1, &ctx->msFramebuffer);
+    if (ctx->msColor) glDeleteRenderbuffersEXT(1, &ctx->msColor);
+    if (ctx->msDepth) glDeleteRenderbuffersEXT(1, &ctx->msDepth);
+    ctx->msFramebuffer = ctx->msColor = ctx->msDepth = 0;
+}
+
+/* Leaves the frame buffer as the draw target and the resolved scene as the
+ * read target. Without multisampling both are the single-sample FBO. */
+static void CreateMultisampleBuffer(MacContext *ctx)
+{
+    if (ctx->samples > 1) {
+        glGenFramebuffersEXT(1, &ctx->msFramebuffer);
+        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, ctx->msFramebuffer);
+        glGenRenderbuffersEXT(1, &ctx->msColor);
+        glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, ctx->msColor);
+        glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT, ctx->samples, GL_RGBA8, ctx->width, ctx->height);
+        glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, ctx->msColor);
+        glGenRenderbuffersEXT(1, &ctx->msDepth);
+        glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, ctx->msDepth);
+        glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT, ctx->samples,
+            DepthStencilStorageFormat(ctx->depthBits, ctx->stencil), ctx->width, ctx->height);
+        glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, ctx->msDepth);
+        if (ctx->stencil)
+            glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, ctx->msDepth);
+        glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+        glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+        if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE_EXT) {
+            fprintf(stderr, "CoD2 Silicon %dx multisampling unavailable; rendering without it\n", ctx->samples);
+            DestroyMultisampleBuffer(ctx);
+            ctx->samples = 0;
+        }
+    }
+    glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, ctx->msFramebuffer ? ctx->msFramebuffer : ctx->framebuffer);
+    glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, ctx->framebuffer);
+}
+
+/* D3D resolves a multisample back buffer whenever it is read. Copy the frame
+ * buffer into the single-sample attachment that presentation, screenshots and
+ * screen copies (saved screen, shell shock, post effects) read. */
+static void ResolveFrameBuffer(MacContext *ctx)
+{
+    if (!ctx || !ctx->msFramebuffer)
+        return;
+    GLint drawFramebuffer, readFramebuffer, drawBuffer;
+    GLboolean mask[4], scissor = glIsEnabled(GL_SCISSOR_TEST);
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING_EXT, &drawFramebuffer);
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING_EXT, &readFramebuffer);
+    glGetBooleanv(GL_COLOR_WRITEMASK, mask);
+    glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, ctx->framebuffer);
+    glGetIntegerv(GL_DRAW_BUFFER, &drawBuffer);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+    glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, ctx->msFramebuffer);
+    if (scissor) glDisable(GL_SCISSOR_TEST);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glBlitFramebufferEXT(0, 0, ctx->width, ctx->height, 0, 0, ctx->width, ctx->height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    glColorMask(mask[0], mask[1], mask[2], mask[3]);
+    if (scissor) glEnable(GL_SCISSOR_TEST);
+    glDrawBuffer(drawBuffer);
+    glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, drawFramebuffer);
+    glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, readFramebuffer);
+}
+#endif
 
 #if defined(__APPLE__) && defined(COD2_X64)
 /* Called from the event pump. In exclusive fullscreen, losing focus returns the
@@ -386,11 +459,35 @@ int MacDisplay_SetDepthStencilFormat(void *context, int depthBits, int stencil)
         ctx->stencil = stencil;
         if ((GLuint)renderbuffer == previous) renderbuffer = replacement;
         glDeleteRenderbuffersEXT(1, &previous);
+        if (ctx->msFramebuffer) {
+            GLuint previousFrame = ctx->msFramebuffer;
+            DestroyMultisampleBuffer(ctx);
+            CreateMultisampleBuffer(ctx);
+            if ((GLuint)drawFramebuffer == previousFrame)
+                drawFramebuffer = ctx->msFramebuffer ? ctx->msFramebuffer : ctx->framebuffer;
+        }
     }
     glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, drawFramebuffer);
     glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, readFramebuffer);
     glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, renderbuffer);
     return result;
+}
+
+/* Reset with another D3D multisample type rebuilds only the frame buffer. */
+int MacDisplay_SetMultisample(void *context, int samples)
+{
+    MacContext *ctx = context;
+    if (!ctx || !ctx->context || !ctx->framebuffer) return -1;
+    samples = samples > 1 ? samples : 0;
+    if (ctx->samples == samples && (!samples || ctx->msFramebuffer)) return 0;
+    if (!MacDisplay_MakeContextCurrent(ctx)) return -1;
+    GLint renderbuffer;
+    glGetIntegerv(GL_RENDERBUFFER_BINDING_EXT, &renderbuffer);
+    DestroyMultisampleBuffer(ctx);
+    ctx->samples = samples;
+    CreateMultisampleBuffer(ctx);
+    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, renderbuffer);
+    return ctx->samples == samples ? 0 : -1;
 }
 
 void MacDisplay_SetPresentationInterval(void *context, uint32_t interval)
@@ -406,8 +503,12 @@ void MacDisplay_SetPresentationInterval(void *context, uint32_t interval)
 void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
                                     int quality, int interval, int *hasAux)
 {
+#if defined(COD2_X64)
+    (void)quality;
+#else
     (void)samples;
     (void)quality;
+#endif
 #if !defined(COD2_X64)
     (void)interval;
 #endif
@@ -518,6 +619,13 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
         MacDisplay_ReleaseContext((void **)&ctx);
         return NULL;
     }
+#if defined(COD2_X64)
+    /* Mac 1.3 adds AGL_SAMPLE_BUFFERS_ARB/AGL_SAMPLES_ARB for a D3D type above
+     * one. It drops them in window mode; Windows 1.3 multisamples either way. */
+    ctx->samples = samples > 1 &&
+        strstr((const char *)glGetString(GL_EXTENSIONS), "GL_EXT_framebuffer_multisample") ? samples : 0;
+    CreateMultisampleBuffer(ctx);
+#endif
     screenContext = ctx;
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
     CreateMetalPresentation(ctx);
@@ -544,11 +652,22 @@ void MacGL_DrawBuffer(unsigned int buffer) {
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
     if (MacShim_Metal()) return;
 #endif
+#if defined(COD2_X64)
+    /* The frame buffer draws multisampled; AUX targets stay single-sample. */
+    if (screenContext && screenContext->msFramebuffer)
+        glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, RenderBuffer(buffer) == GL_COLOR_ATTACHMENT0_EXT ?
+            screenContext->msFramebuffer : screenContext->framebuffer);
+#endif
     glDrawBuffer(RenderBuffer(buffer));
 }
 void MacGL_ReadBuffer(unsigned int buffer) {
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
     if (MacShim_Metal()) return;
+#endif
+#if defined(COD2_X64)
+    /* Every frame-buffer read selects BACK first: copy, screenshot, resolve. */
+    if (screenContext && RenderBuffer(buffer) == GL_COLOR_ATTACHMENT0_EXT)
+        ResolveFrameBuffer(screenContext);
 #endif
     glReadBuffer(RenderBuffer(buffer));
 }
@@ -602,6 +721,9 @@ void SDL_GL_SwapWindowDirect(void)
     MacContext *ctx = screenContext;
     if (!ctx)
         return;
+#if defined(COD2_X64)
+    ResolveFrameBuffer(ctx);
+#endif
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
     if (ctx->metal) {
         static int observerChecked;
@@ -722,6 +844,7 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
 #endif
 #if defined(COD2_X64)
         GammaRelease(&ctx->gamma);
+        DestroyMultisampleBuffer(ctx);
 #endif
         glDeleteFramebuffersEXT(1, &ctx->framebuffer);
         glDeleteRenderbuffersEXT(3, ctx->color);
@@ -878,6 +1001,10 @@ uint16_t MacDisplay_SetMode(int w, int h, int d, int r)
             glDeleteRenderbuffersEXT(3, replacement.color);
             glDeleteRenderbuffersEXT(1, &replacement.depth);
             glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, screenContext->framebuffer);
+#if defined(COD2_X64)
+            if (screenContext->msFramebuffer)
+                glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, screenContext->msFramebuffer);
+#endif
             return 1;
         }
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
@@ -892,6 +1019,10 @@ uint16_t MacDisplay_SetMode(int w, int h, int d, int r)
         screenContext->depth = replacement.depth;
         screenContext->width = w;
         screenContext->height = h;
+#if defined(COD2_X64)
+        DestroyMultisampleBuffer(screenContext);
+        CreateMultisampleBuffer(screenContext);
+#endif
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
         CreateMetalPresentation(screenContext);
 #endif
@@ -968,6 +1099,28 @@ float MacDisplay_GetMaxSupportedAnisotropy(void) { GLfloat n = 1; if (MacDisplay
 uint16_t MacDisplay_GetAntiAliasingMultiSampleInfo(int *buffers, int *samples, unsigned char *super, unsigned char *multi, unsigned char *alpha)
 {
     *buffers = *samples = 0; *super = *multi = *alpha = 0;
+#if defined(__APPLE__) && defined(COD2_X64)
+    /* Mac 1.3 0x62df-0x6322: kCGLRPMaxSampleBuffers and kCGLRPMaxSamples of
+     * its renderer; the first and last flags mean more than one sample. This
+     * runs before any context exists, so ask CGL, not the GL context. */
+    CGLRendererInfoObj info = NULL;
+    GLint count = 0;
+    if (CGLQueryRendererInfo(0xffffffffu, &info, &count) == kCGLNoError && info) {
+        for (GLint i = 0; i < count; ++i) {
+            GLint accelerated = 0, maxBuffers = 0, maxSamples = 0;
+            if (CGLDescribeRenderer(info, i, kCGLRPAccelerated, &accelerated) != kCGLNoError || !accelerated ||
+                CGLDescribeRenderer(info, i, kCGLRPMaxSampleBuffers, &maxBuffers) != kCGLNoError ||
+                CGLDescribeRenderer(info, i, kCGLRPMaxSamples, &maxSamples) != kCGLNoError)
+                continue;
+            if (maxSamples > *samples) {
+                *buffers = maxBuffers;
+                *samples = maxSamples;
+            }
+        }
+        CGLDestroyRendererInfo(info);
+    }
+    *super = *alpha = *samples > 1;
+#endif
     return 0;
 }
 uint16_t MacDisplay_SetGammaRamp(const unsigned short *ramp)

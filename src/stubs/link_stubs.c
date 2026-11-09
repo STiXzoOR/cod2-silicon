@@ -226,10 +226,12 @@ int CGLCreateContext()
 {
     return 0;
 }
+#if !(defined(__APPLE__) && defined(COD2_X64))
 int CGLDescribeRenderer()
 {
     return 0;
 }
+#endif
 int CGLDestroyContext()
 {
     return 0;
@@ -238,20 +240,24 @@ int CGLDestroyPixelFormat()
 {
     return 0;
 }
+#if !(defined(__APPLE__) && defined(COD2_X64))
 int CGLDestroyRendererInfo()
 {
     return 0;
 }
+#endif
 #if !(defined(__APPLE__) && defined(COD2_X64))
 int CGLGetCurrentContext()
 {
     return 0;
 }
 #endif
+#if !(defined(__APPLE__) && defined(COD2_X64))
 int CGLQueryRendererInfo()
 {
     return 0;
 }
+#endif
 int CGLSetCurrentContext()
 {
     return 0;
