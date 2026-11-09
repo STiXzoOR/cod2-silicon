@@ -1626,11 +1626,13 @@ void CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState(const CDirect3DDevice *
     void **methods = *(void ***)texture;
     int levels = ((UINT (*)(const void *))methods[13])(texture);
 #if defined(COD2_X64)
-    /* Mac 0x103ff takes the smaller of the stored level count and the count
-     * the image size allows. With the larger, an image stored without mips got
-     * a mip range past its only level: an incomplete texture that drew black
-     * or white. */
-    int lastLevel = (levels >= base ? base : levels) - 1;
+    /* Windows 1.3 (D3D9) samples every stored level. The larger of the level
+     * count and the count the image size allows sent an image stored without
+     * mips past its only level: an incomplete texture that drew black or
+     * white. Mac 0x103ff takes the smaller, which also drops the 2x2 and 1x1
+     * levels of full chains. */
+    int lastLevel = levels - 1;
+    (void)base;
 #else
     int lastLevel = (levels >= base ? levels : base) - 1;
 #endif
