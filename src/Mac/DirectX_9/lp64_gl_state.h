@@ -149,6 +149,20 @@ static inline int NativePresentation_DepthBits(uint32_t format)
     }
 }
 
+/* CheckDeviceMultiSampleType reports quality level one, so the renderer asks
+ * for a sample count of two or more at quality zero. Reject anything else, or
+ * a count the display cannot produce, rather than silently dropping FSAA. */
+static inline int NativePresentation_SamplesValid(const NativePresentationParameters14 *parameters)
+{
+    extern uint16_t MacDisplay_GetAntiAliasingMultiSampleInfo(int *, int *, unsigned char *, unsigned char *, unsigned char *);
+    int buffers, samples;
+    unsigned char super, multi, alpha;
+    if (!parameters->multiSampleType && !parameters->multiSampleQuality) return 1;
+    if (parameters->multiSampleType < 2 || parameters->multiSampleQuality) return 0;
+    MacDisplay_GetAntiAliasingMultiSampleInfo(&buffers, &samples, &super, &multi, &alpha);
+    return super && parameters->multiSampleType <= (uint32_t)samples;
+}
+
 void *COpenGL_GetVAOBindingList(const COpenGL *gl);
 #endif
 #endif
