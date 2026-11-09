@@ -12,6 +12,7 @@ uint16_t MacDisplay_ReleaseContext(void **context);
 #if defined(COD2_X64)
 int MacDisplay_MakeContextCurrent(void *context);
 int MacDisplay_SetDepthStencilFormat(void *context, int depthBits, int stencil);
+int MacDisplay_SetMultisample(void *context, int samples);
 void MacDisplay_SetPresentationInterval(void *context, uint32_t interval);
 #endif
 void MacDisplay_ReleaseDisplay(void);
