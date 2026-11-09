@@ -116,10 +116,14 @@ live authenticated server. The report at
 `docs/macos-port/reports/WS4-cod2x.md` records the engine syntax-check boundary
 and the live-server test procedure.
 
-The HWID2 domain is `opencod2:cod2x:hwid2:v1:` followed by the lowercase canonical
-UUID. The first 16 bytes of SHA-256 become lowercase hexadecimal. Changing this
-rule changes this machine's server identity; keep it stable. Tests never print
-or store the actual UUID or machine ID.
+In the 64-bit build, HWID2 is CoD2x's: its text of nine machine values hashed
+with the Windows 1.3 two-seed MD5 (`docs/macos-port/cod2x-compat.md`).
+`test_cod2x.c` checks synthetic values against digests from a separate model,
+and that this machine's identity is valid and stable. The legacy build keeps the
+old rule: `opencod2:cod2x:hwid2:v1:` followed by the lowercase canonical UUID,
+with the first 16 bytes of SHA-256 as lowercase hexadecimal. Changing either
+rule changes this machine's server identity; keep them stable. Tests never print
+or store the actual values or machine ID.
 
 The CD-key hash uses the stock seeded MD5 initial state and uppercase alphanumeric
 normalization of at most the first 32 source characters. The fixed vectors were

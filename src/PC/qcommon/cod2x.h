@@ -16,7 +16,20 @@
 int Cod2x_ConnectProtocol(int advertised);
 size_t Cod2x_EncodeConnect(char *packet, size_t capacity, const char *userinfo);
 int Cod2x_HwidValid(const char *id);
+#if defined(COD2_X64) && COD2_X64
+/* The machine values CoD2x hashes into cl_hwid2, in the order of its text
+   (cod2x_identity.c). The product UUID is counted but not hashed. */
+enum {
+    COD2X_BIOS_MAKER, COD2X_BIOS_SERIAL, COD2X_CPU_NAME, COD2X_CPU_ID, COD2X_BOARD_MAKER,
+    COD2X_BOARD_SERIAL, COD2X_PRODUCT_UUID, COD2X_DISK_MODEL, COD2X_DISK_SERIAL, COD2X_GPU_NAME,
+    COD2X_MACHINE_VALUES
+};
+#define COD2X_MACHINE_TEXT 128
+/* failed: 1 if the GPU couldn't be queried. Returns 0 when CoD2x would refuse. */
+int Cod2x_HwidFromMachine(char value[COD2X_MACHINE_VALUES][COD2X_MACHINE_TEXT], int failed, char id[33]);
+#else
 int Cod2x_HwidFromUUID(const char *uuid, char id[33]);
+#endif
 int Cod2x_ReadMachineHwid(char id[33]);
 int Cod2x_CDKeyHash(const char *key, char hash[33]);
 int Cod2x_LimitedFPS(int requested, int limited);
