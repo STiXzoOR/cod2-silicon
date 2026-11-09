@@ -13,6 +13,41 @@ int main(void)
     assert(Cod2x_ConnectProtocol(118) == 118);
     assert(Cod2x_ConnectProtocol(117) == 0);
     assert(Cod2x_ConnectProtocol(0) == 0);
+#if defined(COD2_X64) && COD2_X64
+    {
+        /* Synthetic values. Expected digests come from a separate model of CoD2x's
+           text and the Windows 1.3 CL_BuildMD5. */
+        static const char *const values[COD2X_MACHINE_VALUES] = {
+            "Example BIOS Inc.", "BS-0001", "Example CPU 9000", "0000000100000002", "Example Boards Ltd.",
+            "MB-0002", "00000000-0000-0000-0000-000000000001", "Example SSD 1TB", "DS-0003", "Example GPU"
+        };
+        char machine[COD2X_MACHINE_VALUES][COD2X_MACHINE_TEXT];
+        int i;
+        for (i = 0; i < COD2X_MACHINE_VALUES; ++i)
+            snprintf(machine[i], sizeof(machine[i]), "%s", values[i]);
+        assert(Cod2x_HwidFromMachine(machine, 0, id));
+        assert(!strcmp(id, "0ce47427d2cbcac111c8d2a35cb5506e"));
+        /* No GPU name and two empty values: still an identity. */
+        machine[COD2X_BIOS_SERIAL][0] = machine[COD2X_BOARD_SERIAL][0] = machine[COD2X_GPU_NAME][0] = '\0';
+        assert(Cod2x_HwidFromMachine(machine, 0, id));
+        assert(!strcmp(id, "002cdd72c4fdf9c59e0c852b8184d303"));
+        /* A third empty value, or a failed GPU query, refuses like CoD2x. */
+        assert(!Cod2x_HwidFromMachine(machine, 1, other) && !other[0]);
+        machine[COD2X_PRODUCT_UUID][0] = '\0';
+        assert(!Cod2x_HwidFromMachine(machine, 0, other) && !other[0]);
+        /* This machine: stable, valid, and never printed. */
+        if (Cod2x_ReadMachineHwid(id)) {
+            assert(Cod2x_HwidValid(id));
+            assert(Cod2x_ReadMachineHwid(same) && !strcmp(id, same));
+        }
+#if defined(__APPLE__)
+        assert(id[0]);
+#endif
+        assert(Cod2x_HwidFromMachine(machine, 0, id) == 0);
+        snprintf(machine[COD2X_PRODUCT_UUID], COD2X_MACHINE_TEXT, "%s", values[COD2X_PRODUCT_UUID]);
+        assert(Cod2x_HwidFromMachine(machine, 0, id));
+    }
+#else
     assert(Cod2x_HwidFromUUID("00112233-4455-6677-8899-AABBCCDDEEFF", id));
     assert(Cod2x_HwidFromUUID("00112233-4455-6677-8899-aabbccddeeff", same));
     assert(!strcmp(id, same));
@@ -22,6 +57,7 @@ int main(void)
     assert(strcmp(id, other));
     assert(!Cod2x_HwidFromUUID("", other));
     assert(!Cod2x_HwidFromUUID("not-a-uuid", other));
+#endif
     assert(!Cod2x_HwidValid("0123456789abcdef"));
     assert(!Cod2x_HwidValid("g123456789abcdef0123456789abcdef"));
     snprintf(info, sizeof(info), "\\protocol\\118\\protocol_cod2x\\6\\cl_hwid2\\%s\\challenge\\-2147483647\\qport\\65535", id);

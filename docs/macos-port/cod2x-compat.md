@@ -29,7 +29,7 @@ only claim an extension version whose behavior it implements.
 | Advertised protocol 120; stock 118 accepted | `src/shared/shared.h:50`; `src/shared/common.cpp:366`; `src/mss32/master_server.cpp:75` | Both | Required to connect through browser | S: accept exactly 118 and 120 in info responses; retain 118 connect encoding. |
 | Discovery requests for both versions | `src/mss32/master_server.cpp:41` | Client | Required for both server lists | S: request `getservers 118 full empty` and `getservers 120 full empty`; direct IP connect does not require a master. |
 | Connect protocol and extension version | `src/shared/server.cpp:388`; `src/shared/server.cpp:405`; `src/mss32/cgame.cpp:62`; `src/shared/version.h:3` | Both | Required to connect | S: stock protocol 118 plus ROM USERINFO `protocol_cod2x=6`; zero or less than server extension version is rejected. |
-| HWID2 | `src/shared/server.cpp:427`; `src/mss32/hwid.cpp:766`; `src/mss32/hwid.cpp:793`; `src/mss32/hwid.cpp:1046` | Both | Required to connect | M: client produces 32-character MD5-style text; server checks length, not the hardware algorithm or hex alphabet. macOS must deterministically hash its own IOKit IOPlatformUUID, never invent or imitate another machine identity. Do not send raw UUID. |
+| HWID2 | `src/shared/server.cpp:427`; `src/mss32/hwid.cpp:766`; `src/mss32/hwid.cpp:793`; `src/mss32/hwid.cpp:1046` | Both | Required to connect | M: server checks length, not the hardware algorithm or hex alphabet. The client derives it as CoD2x does: the text of nine machine values in `hwid.cpp:766`, hashed with Windows 1.3 `CL_BuildMD5` (CoD2MP_s.exe 0x4bc1d0, two seeded MD5 rounds). Windows reads CoD2x's WMI values; macOS and Linux read this machine's own closest values (table below). No identity when 3 or more are missing, as in CoD2x. Never send raw values, never invent or imitate another machine identity. |
 | Legacy numeric HWID and bans | `src/mss32/hwid.cpp:672`; `src/mss32/hwid.cpp:693`; `src/mss32/hwid.cpp:1045`; `src/shared/server.cpp:437` | Both | Required identity semantics; legacy key optional | S: reference sends `cl_hwid`, but server ignores it for admission and computes nonzero 32-bit FNV-1a from HWID2 for existing GUID bans. Keep arithmetic explicitly unsigned 32-bit and avoid the reference's aliasing cast. |
 | Challenge request and reply | `src/shared/server.cpp:797`; `src/shared/server.cpp:836`; `src/shared/server.cpp:844`; `src/shared/server.cpp:871` | Both | Required to connect | S/M: preserve challenge retransmission, server-address matching and `challengeResponse <integer>` handling. A three-token getchallenge supplies CD-key hash as token 2; absence is not rejected here. LAN can answer immediately; public auth timeout is server-side, 5 seconds. |
 | CD-key authentication | `src/shared/server.cpp:640`; `src/shared/server.cpp:684`; `src/shared/server.cpp:741`; `src/shared/server.cpp:787` | Both | Required to connect to authenticated servers | M: preserve legitimate stock auth and `needcdkey` / rejection handling. Server forwards optional PBHASH to the original auth routine and stores auth status. This is distinct from HWID2. No new client auth opcode is introduced. Stock PBHASH is seeded MD5 (seed 0xB684A3; verified in `src/other/Call_of_Duty_2_Multiplayer_MAC_1.3.c:260725` / `:375944`, Windows `src/other/CoD2MP_s.c:22160`), not standard MD5. Do not substitute HWID for the real CD-key hash. |
@@ -37,6 +37,27 @@ only claim an extension version whose behavior it implements.
 | Version and error strings | `src/shared/common.cpp:322`; `src/shared/common.cpp:330`; `src/shared/common.cpp:361`; `src/shared/server.cpp:390` | Both | Connect diagnostics; branding optional | S: version/shortversion display 1.4.6.8 in reference, while admission checks numeric protocol keys. Preserve stock OOB error parsing, including localized error marker 0x15. An independent port should identify itself truthfully rather than claim to be the Windows patch. |
 | Existing userinfo keys | `src/shared/server.cpp:291`; `src/shared/server.cpp:303`; `src/shared/server.cpp:324`; `src/shared/server.cpp:346`; `src/shared/server.cpp:352`; `src/shared/server.cpp:448` | Both | Required to connect/play | S: retain name, rate, snaps, cl_voice, cl_wwwDownload, challenge and ordinary stock connect fields (qport/password, etc.). New fields must fit the existing bounded info string. |
 | Server-selected compatibility state | `src/shared/game.cpp:9`; `src/shared/server.cpp:1094`; `src/shared/server.cpp:1211`; `src/mss32/cgame.cpp:81` | Both | Required for correct play and stock fallback | M: consume SYSTEMINFO `g_cod2x` and its ordinary server cvar command on ClientBegin (`src/shared/cod2_server.h:138`); reset to 0 on leaving server. Most gameplay corrections start at version 3. Do not leave 1.4 behavior active on a later 1.3 connection. |
+
+HWID2 values (`src/PC/qcommon/cod2x_identity.c`, 64-bit build). The text is
+`BIOS manufacturer: …\nBIOS serial: …\nCPU name: …\nCPU ID: …\nMotherboard manufacturer: …\nMotherboard serial: …\nDisk Model: …\nDisk Serial: …\nGPU Name: …`,
+with an empty value where one is missing. The product UUID is only counted.
+
+| Value | Windows (as CoD2x) | macOS | Linux |
+|---|---|---|---|
+| BIOS manufacturer | `Win32_BIOS.Manufacturer` | `IOPlatformExpertDevice` `manufacturer` | `/sys/class/dmi/id/bios_vendor` |
+| BIOS serial | `Win32_BIOS.SerialNumber` | `IOPlatformSerialNumber` | `/sys/class/dmi/id/product_serial` |
+| CPU name | `Win32_Processor.Name` | `machdep.cpu.brand_string` | `model name` in `/proc/cpuinfo` |
+| CPU ID | `Win32_Processor.ProcessorId` | arm64: `hw.cpufamily` and `hw.cpusubfamily` as `%08X%08X`; Intel: CPUID leaf 1, EDX then EAX | CPUID leaf 1 on x86; empty elsewhere |
+| Motherboard manufacturer | `Win32_BaseBoard.Manufacturer` | `manufacturer` again | `/sys/class/dmi/id/board_vendor` |
+| Motherboard serial | `Win32_BaseBoard.SerialNumber` | `mlb-serial-number` | `/sys/class/dmi/id/board_serial` |
+| Product UUID (counted only) | `Win32_ComputerSystemProduct.UUID` | `IOPlatformUUID` | `product_uuid`, else `/etc/machine-id` |
+| Disk model, serial | Drive behind `C:` | Device Characteristics of the disk under `/` | `device/model`, `device/serial` or `vpd_pg80` of the disk under `/` |
+| Disk serial fallback | `C:` volume serial, else `UnknownSerial` | `UnknownSerial` | 32-bit filesystem ID of `/`, else `UnknownSerial` |
+| GPU name | First discrete PCI adapter over 100 MiB | First `IOAccelerator` `model` not listed as integrated | PCI `vendor:device` of the first non-Intel DRM card |
+
+On Linux the serials and the UUID usually need root, and unreadable counts as
+empty. The legacy (non-`COD2_X64`) build keeps the earlier SHA-256 of
+`IOPlatformUUID`.
 
 PBHASH caveat: opencod2's baseline `src/PC/client_mp/cl_main_mp.c` sends bare
 `getchallenge`. The reference server tolerates that at its own request handler,
