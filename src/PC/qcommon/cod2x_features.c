@@ -914,28 +914,6 @@ void Cod2x_IwdStartup(const char *base)
                   strerror(errno));
 }
 
-/* ---- CoD2x services ----------------------------------------------------------
-   Tests send CoD2x's web requests to a stand-in: COD2X_TEST_SERVICE_URL (for
-   example http://127.0.0.1:8080) replaces "https://cod2x.me" or
-   "https://master.cod2x.me" at the start of a URL. Without it the URL is used as
-   it is. */
-const char *Cod2x_ServiceURL(const char *url, char *buffer, size_t size)
-{
-    static const char *const hosts[] = {"https://master.cod2x.me", "https://cod2x.me"};
-    const char *stand = getenv("COD2X_TEST_SERVICE_URL");
-    size_t i;
-    if (!stand || !*stand)
-        return url;
-    for (i = 0; i < sizeof(hosts) / sizeof(hosts[0]); ++i) {
-        size_t length = strlen(hosts[i]);
-        if (!strncmp(url, hosts[i], length) && (url[length] == '/' || !url[length])) {
-            snprintf(buffer, size, "%s%s", stand, url + length);
-            return buffer;
-        }
-    }
-    return url;
-}
-
 /* ---- zPAM from CoD2x's web site (CoD2x downloading.cpp, zpam.cpp) -------------
    With cl_wwwDownload on, a missing main/zpamNNN.iwd or main/zpam_maps_vNNN.iwd is
    fetched from CoD2x's web site instead of the game server, once per name. A failed

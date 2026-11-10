@@ -1,6 +1,8 @@
 #if defined(COD2_CODX) && COD2_CODX
 #include "cod2x.h"
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 int Cod2x_ConnectProtocol(int advertised)
@@ -39,5 +41,27 @@ int Cod2x_LimitedFPS(int requested, int limited)
 {
     /* CoD2x src/mss32/competitive.cpp:54-59. Zero means unlimited in stock. */
     return limited && (requested < 125 || requested > 250) ? 250 : requested;
+}
+
+/* ---- CoD2x services ----------------------------------------------------------
+   Tests send CoD2x's web requests to a stand-in: COD2X_TEST_SERVICE_URL (for
+   example http://127.0.0.1:8080) replaces "https://cod2x.me" or
+   "https://master.cod2x.me" at the start of a URL. Without it the URL is used as
+   it is. */
+const char *Cod2x_ServiceURL(const char *url, char *buffer, size_t size)
+{
+    static const char *const hosts[] = {"https://master.cod2x.me", "https://cod2x.me"};
+    const char *stand = getenv("COD2X_TEST_SERVICE_URL");
+    size_t i;
+    if (!stand || !*stand)
+        return url;
+    for (i = 0; i < sizeof(hosts) / sizeof(hosts[0]); ++i) {
+        size_t length = strlen(hosts[i]);
+        if (!strncmp(url, hosts[i], length) && (url[length] == '/' || !url[length])) {
+            snprintf(buffer, size, "%s%s", stand, url + length);
+            return buffer;
+        }
+    }
+    return url;
 }
 #endif

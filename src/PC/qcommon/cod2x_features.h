@@ -24,7 +24,6 @@ int Cod2x_HideServerIp(void);
 const char *Cod2x_HideIpText(const char *text, char *buffer, size_t size);
 const short *Cod2x_HideIpCells(const short *cells, int count, short *buffer, int size);
 /* A CoD2x web URL, or its local stand-in in tests (COD2X_TEST_SERVICE_URL). */
-const char *Cod2x_ServiceURL(const char *url, char *buffer, size_t size);
 /* zPAM IWDs from CoD2x's web site: 1 and the URL when remoteName should be fetched there. */
 int Cod2x_ZpamDirectURL(const char *remoteName, int wwwDownload, char *url, size_t size);
 int Cod2x_ZpamDirectActive(void);

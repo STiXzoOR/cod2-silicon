@@ -14,6 +14,8 @@
 #else
 #define COD2X_VERSION "opencod2-cod2x-1.4.6"
 #endif
+/* The platform named in CoD2x reports. */
+#define COD2X_PLATFORM "macOS-arm64"
 
 int Cod2x_ConnectProtocol(int advertised);
 size_t Cod2x_EncodeConnect(char *packet, size_t capacity, const char *userinfo);
@@ -64,5 +66,20 @@ int Cod2x_GameVersion(void);
 int Cod2x_Competitive(void);
 int Cod2x_FrameFPS(int requested);
 const char *Cod2x_Hwid(void);
+
+/* CoD2x's web services (cod2x_protocol.c). Tests point them at a stand-in with
+   COD2X_TEST_SERVICE_URL. */
+const char *Cod2x_ServiceURL(const char *url, char *buffer, size_t size);
+/* Error and crash reports (cod2x_report.c): only faults in CoD2x-layer code go to
+   CoD2x; the rest go to the report receiver of crash_handler.h. */
+int Cod2x_InLayer(const void *address);
+void Cod2x_Log(const char *format, ...);
+size_t Cod2x_LoggerRecent(char *out, size_t size);
+void Cod2x_ReportInit(void);
+void Cod2x_ReportFatal(const char *message, const void *site);
+void Cod2x_ReportError(const char *kind, const char *message);
+/* A dvar's value as CoD2x's report writes it; 0 when there is no such dvar
+   (cod2x_runtime.c). */
+int Cod2x_DvarText(const char *name, char *value, size_t size);
 
 #endif

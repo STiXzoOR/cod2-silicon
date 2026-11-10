@@ -1,4 +1,7 @@
 #include "crash_handler.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#    include "cod2x.h"
+#endif
 
 #ifndef COD2_GIT_HASH
 #    define COD2_GIT_HASH "unknown"
@@ -24,6 +27,21 @@ static char cr_version[64] = "?";
 static char cr_buildDate[64] = "?";
 static char cr_cmdline[2048] = "";
 static char cr_exePath[1024] = "";
+
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static Sys_ReportReceiver cr_receiver;
+
+void Sys_SetReportReceiver(Sys_ReportReceiver receiver)
+{
+    cr_receiver = receiver;
+}
+
+void Sys_CrashReceive(const char *path, const char *reason)
+{
+    if (cr_receiver)
+        cr_receiver(path, reason);
+}
+#endif
 
 #define CR_MAX_FIELDS 24
 static struct {
@@ -488,6 +506,53 @@ static const char *cr_win_exname(DWORD code)
     }
 }
 
+#    if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* 1 when the fault belongs to the CoD2x layer: the first frame of the faulting
+   thread inside the game executable is CoD2x-layer code (cod2x_report.c). */
+static int cr_win_owned(CONTEXT *context)
+{
+    HANDLE process = GetCurrentProcess();
+    HMODULE exe = GetModuleHandleA(NULL);
+    CONTEXT copy;
+    STACKFRAME64 frame;
+    int depth, owned = 0;
+    if (!context)
+        return 0;
+    copy = *context;
+    memset(&frame, 0, sizeof(frame));
+#        if defined(_WIN64)
+    frame.AddrPC.Offset = copy.Rip;
+    frame.AddrFrame.Offset = copy.Rbp;
+    frame.AddrStack.Offset = copy.Rsp;
+#        else
+    frame.AddrPC.Offset = copy.Eip;
+    frame.AddrFrame.Offset = copy.Ebp;
+    frame.AddrStack.Offset = copy.Esp;
+#        endif
+    frame.AddrPC.Mode = frame.AddrFrame.Mode = frame.AddrStack.Mode = AddrModeFlat;
+    SymInitialize(process, NULL, TRUE);
+    for (depth = 0; depth < 64; ++depth) {
+        HMODULE module = NULL;
+#        if defined(_WIN64)
+        const DWORD machine = IMAGE_FILE_MACHINE_AMD64;
+#        else
+        const DWORD machine = IMAGE_FILE_MACHINE_I386;
+#        endif
+        if (depth && !StackWalk64(machine, process, GetCurrentThread(), &frame, &copy, NULL,
+                                  SymFunctionTableAccess64, SymGetModuleBase64, NULL))
+            break;
+        if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                               (LPCSTR)(uintptr_t)frame.AddrPC.Offset, &module) &&
+            module == exe) {
+            owned = Cod2x_InLayer((const void *)(uintptr_t)frame.AddrPC.Offset);
+            break;
+        }
+    }
+    SymCleanup(process);
+    return owned;
+}
+#    endif
+
 static void cr_win_do(EXCEPTION_POINTERS *ep, const char *descIn)
 {
     char path[1024];
@@ -520,6 +585,12 @@ static void cr_win_do(EXCEPTION_POINTERS *ep, const char *descIn)
     cr_emit(fd, "================ END CRASH REPORT ================\n");
     if (fd >= 0)
         close(fd);
+#    if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* CoD2x's own report of a CoD2x-layer fault comes with CoD2x's Windows form;
+       every other fault goes to the report receiver. */
+    if (!cr_win_owned(ep ? ep->ContextRecord : NULL))
+        Sys_CrashReceive(path, desc);
+#    endif
 
     {
         int fd2 = open("Z:\\tmp\\cod2_crash_latest.txt", O_CREAT | O_TRUNC | O_WRONLY, 0644);
@@ -573,6 +644,40 @@ void Sys_InstallCrashHandler(const char *appName, const char *version,
     SetUnhandledExceptionFilter(cr_seh_filter);
     signal(SIGABRT, cr_abort_handler);
 }
+
+#    if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* What cod2x_report.c sends besides a crash: CoD2x's Windows forms. */
+const char *Sys_CrashDirectory(void)
+{
+    return ".";
+}
+
+const char *Sys_Cod2xReportType(void)
+{
+#        if defined(DEDICATED)
+    return "win-server";
+#        else
+    return "win-client";
+#        endif
+}
+
+size_t Sys_Cod2xSystemInfo(char *out, size_t size)
+{
+    return (size_t)snprintf(out, size, "{}");
+}
+
+size_t Sys_Cod2xIdentity(char *out, size_t size)
+{
+    return (size_t)snprintf(out, size, "\"installId\":\"\",\"hwid2\":\"\",");
+}
+
+size_t Sys_Cod2xLogLines(char *out, size_t size)
+{
+    if (size)
+        out[0] = '\0';
+    return 0;
+}
+#    endif
 
 #elif defined(__EMSCRIPTEN__)
 
@@ -774,6 +879,8 @@ void Sys_CrashSetDirectory(const char *path)
         snprintf(cr_reportDirectory, sizeof(cr_reportDirectory), "%s", path);
 }
 
+#        if !(defined(COD2_CODX) && COD2_CODX)
+/* The original engine's freeze report; CoD2x builds write CoD2x's form below. */
 void Sys_CrashFreezeReport(void *context)
 {
     char path[1200];
@@ -790,6 +897,7 @@ void Sys_CrashFreezeReport(void *context)
         cr_emit(-1, "Native freeze diagnostic saved to %s\n", path);
     }
 }
+#        endif
 #    endif
 
 #    if defined(__linux__)
@@ -919,6 +1027,950 @@ static void cr_posix_popup(const char *path, const char *desc)
 
 }
 
+
+#    if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* ---- CoD2x crash and freeze logs (CoD2x linux/exception.cpp) -----------------
+   "cod2x_crash.YYYYMMDD_HHMMSS.<pid>.log" in CoD2x's sections, on Linux and macOS.
+   The registers, frame chain and raw stack are this machine's (64-bit); macOS lists
+   its loaded images where Linux copies /proc/self/maps.
+   A fault in CoD2x-layer code also leaves "<log>.pending.json", CoD2x's report,
+   which is sent to CoD2x on the next start. Every other fault goes to the report
+   receiver only. */
+#        include <sys/resource.h>
+#        include <sys/time.h>
+#        if defined(__APPLE__)
+#            include <mach/mach.h>
+#            include <pthread.h>
+#            include <sys/sysctl.h>
+#        else
+#            include <sched.h>
+#            include <sys/sysinfo.h>
+#            include <sys/syscall.h>
+#            include <sys/uio.h>
+#            include <gnu/libc-version.h>
+#        endif
+
+static char cr_cod2xPath[1200];
+
+/* Read once at start: the handler only copies them. */
+static char cr_sysDistro[160], cr_sysKernel[96], cr_sysArch[65], cr_sysLibc[32], cr_sysCpu[128];
+static char cr_sysVirt[64], cr_sysAffinity[64];
+static int cr_sysPhysical, cr_sysRoot;
+static long cr_sysStackKB = -1, cr_sysCoreKB = -1, cr_sysFiles = -1;
+static time_t cr_sysStart;
+
+static long cr_limit(int resource, int kilobytes)
+{
+    struct rlimit limit;
+    if (getrlimit(resource, &limit) != 0 || limit.rlim_cur == RLIM_INFINITY)
+        return -1;
+    return kilobytes ? (long)(limit.rlim_cur / 1024) : (long)limit.rlim_cur;
+}
+
+static void cr_cod2x_system(void)
+{
+    struct utsname name;
+    cr_sysStart = time(NULL);
+    cr_sysRoot = geteuid() == 0;
+    cr_sysStackKB = cr_limit(RLIMIT_STACK, 1);
+    cr_sysCoreKB = cr_limit(RLIMIT_CORE, 1);
+    cr_sysFiles = cr_limit(RLIMIT_NOFILE, 0);
+    if (uname(&name) == 0) {
+        snprintf(cr_sysKernel, sizeof(cr_sysKernel), "%s", name.release);
+        snprintf(cr_sysArch, sizeof(cr_sysArch), "%s", name.machine);
+    }
+#        if defined(__APPLE__)
+    {
+        char version[64] = "";
+        size_t size = sizeof(version);
+        int value = 0;
+        sysctlbyname("kern.osproductversion", version, &size, NULL, 0);
+        snprintf(cr_sysDistro, sizeof(cr_sysDistro), "macOS %s", version);
+        size = sizeof(cr_sysCpu);
+        sysctlbyname("machdep.cpu.brand_string", cr_sysCpu, &size, NULL, 0);
+        size = sizeof(value);
+        if (sysctlbyname("hw.physicalcpu", &value, &size, NULL, 0) == 0)
+            cr_sysPhysical = value;
+        value = 0;
+        size = sizeof(value);
+        sysctlbyname("kern.hv_vmm_present", &value, &size, NULL, 0);
+        snprintf(cr_sysVirt, sizeof(cr_sysVirt), "%s", value ? "vm" : "none");
+    }
+#        else
+    {
+        char line[512], *value;
+        FILE *file = fopen("/etc/os-release", "r");
+        int physical[256], count = 0, current = -1, i;
+        cpu_set_t set;
+        snprintf(cr_sysLibc, sizeof(cr_sysLibc), "glibc %s", gnu_get_libc_version());
+        while (file && fgets(line, sizeof(line), file)) {
+            if (strncmp(line, "PRETTY_NAME=", 12))
+                continue;
+            value = line + 12;
+            value += *value == '"';
+            value[strcspn(value, "\"\n")] = '\0';
+            snprintf(cr_sysDistro, sizeof(cr_sysDistro), "%s", value);
+        }
+        if (file)
+            fclose(file);
+        file = fopen("/proc/cpuinfo", "r");
+        while (file && fgets(line, sizeof(line), file)) {
+            if (!strncmp(line, "model name", 10) && !cr_sysCpu[0] && (value = strchr(line, ':')) != NULL) {
+                value += 1 + (value[1] == ' ');
+                value[strcspn(value, "\n")] = '\0';
+                snprintf(cr_sysCpu, sizeof(cr_sysCpu), "%s", value);
+            } else if (!strncmp(line, "physical id", 11) && (value = strchr(line, ':')) != NULL) {
+                current = atoi(value + 1);
+            } else if (!strncmp(line, "core id", 7) && (value = strchr(line, ':')) != NULL) {
+                int core = current * 4096 + atoi(value + 1);
+                for (i = 0; i < count && physical[i] != core; ++i) {}
+                if (i == count && count < 256)
+                    physical[count++] = core;
+            }
+        }
+        if (file)
+            fclose(file);
+        cr_sysPhysical = count;
+        snprintf(cr_sysVirt, sizeof(cr_sysVirt), "none");
+        if (access("/.dockerenv", F_OK) == 0)
+            snprintf(cr_sysVirt, sizeof(cr_sysVirt), "docker");
+        else if ((file = fopen("/sys/class/dmi/id/sys_vendor", "r")) != NULL) {
+            if (fgets(line, sizeof(line), file)) {
+                line[strcspn(line, "\n")] = '\0';
+                if (strstr(line, "QEMU") || strstr(line, "VMware") || strstr(line, "innotek") ||
+                    strstr(line, "Microsoft") || strstr(line, "Xen") || strstr(line, "KVM"))
+                    snprintf(cr_sysVirt, sizeof(cr_sysVirt), "%s", line);
+            }
+            fclose(file);
+        }
+        if (sched_getaffinity(0, sizeof(set), &set) == 0)
+            snprintf(cr_sysAffinity, sizeof(cr_sysAffinity), "%d of %ld", CPU_COUNT(&set),
+                     sysconf(_SC_NPROCESSORS_CONF));
+    }
+#        endif
+}
+
+static void cr_cod2x_path(char *path, size_t size, const char *kind)
+{
+    time_t now = time(NULL);
+    struct tm when;
+    const char *directory = ".";
+#        if defined(__APPLE__)
+    directory = cr_reportDirectory;
+#        endif
+    localtime_r(&now, &when);
+    snprintf(path, size, "%s/cod2x_%s.%04d%02d%02d_%02d%02d%02d.%d.log", directory, kind, when.tm_year + 1900,
+             when.tm_mon + 1, when.tm_mday, when.tm_hour, when.tm_min, when.tm_sec, (int)getpid());
+}
+
+/* Reads this process's memory without faulting. */
+static int cr_cod2x_read(uintptr_t address, void *out, size_t length)
+{
+#        if defined(__APPLE__)
+    vm_size_t read = 0;
+    return vm_read_overwrite(mach_task_self(), (vm_address_t)address, length, (vm_address_t)out, &read) ==
+               KERN_SUCCESS &&
+           read == length;
+#        else
+    struct iovec local = {out, length}, remote = {(void *)address, length};
+    return process_vm_readv(getpid(), &local, 1, &remote, 1, 0) == (ssize_t)length;
+#        endif
+}
+
+/* Module name, offset in it and "symbol+0xDISP" of an address. */
+static void cr_cod2x_resolve(uintptr_t address, char *module, size_t moduleSize, uintptr_t *offset, char *symbol,
+                             size_t symbolSize)
+{
+    Dl_info info;
+    const char *name;
+    module[0] = symbol[0] = '\0';
+    *offset = address;
+    if (!dladdr((void *)address, &info) || !info.dli_fname) {
+        snprintf(module, moduleSize, "<unknown>");
+        return;
+    }
+    name = strrchr(info.dli_fname, '/');
+    snprintf(module, moduleSize, "%s", name ? name + 1 : info.dli_fname);
+    *offset = address - (uintptr_t)info.dli_fbase;
+    if (info.dli_sname)
+        snprintf(symbol, symbolSize, "%s+0x%lx", info.dli_sname, (unsigned long)(address - (uintptr_t)info.dli_saddr));
+}
+
+/* "module+0xOFFSET (symbol+0xDISP)" */
+static void cr_cod2x_describe(uintptr_t address, char *out, size_t size)
+{
+    char module[128], symbol[256];
+    uintptr_t offset;
+    cr_cod2x_resolve(address, module, sizeof(module), &offset, symbol, sizeof(symbol));
+    if (!strcmp(module, "<unknown>"))
+        snprintf(out, size, "<unknown>");
+    else if (symbol[0])
+        snprintf(out, size, "%s+0x%lx (%s)", module, (unsigned long)offset, symbol);
+    else
+        snprintf(out, size, "%s+0x%lx", module, (unsigned long)offset);
+}
+
+static void cr_cod2x_frame(void *ucontext, uintptr_t *pc, uintptr_t *sp, uintptr_t *fp, uintptr_t *lr)
+{
+    ucontext_t *uc = (ucontext_t *)ucontext;
+    *pc = *sp = *fp = *lr = 0;
+    if (!uc)
+        return;
+#        if defined(__APPLE__) && (defined(__arm64__) || defined(__aarch64__))
+    *pc = (uintptr_t)__darwin_arm_thread_state64_get_pc(uc->uc_mcontext->__ss);
+    *sp = (uintptr_t)__darwin_arm_thread_state64_get_sp(uc->uc_mcontext->__ss);
+    *fp = (uintptr_t)__darwin_arm_thread_state64_get_fp(uc->uc_mcontext->__ss);
+    *lr = (uintptr_t)__darwin_arm_thread_state64_get_lr(uc->uc_mcontext->__ss);
+#        elif defined(__APPLE__) && defined(__x86_64__)
+    *pc = (uintptr_t)uc->uc_mcontext->__ss.__rip;
+    *sp = (uintptr_t)uc->uc_mcontext->__ss.__rsp;
+    *fp = (uintptr_t)uc->uc_mcontext->__ss.__rbp;
+#        elif defined(__x86_64__)
+    *pc = (uintptr_t)uc->uc_mcontext.gregs[REG_RIP];
+    *sp = (uintptr_t)uc->uc_mcontext.gregs[REG_RSP];
+    *fp = (uintptr_t)uc->uc_mcontext.gregs[REG_RBP];
+#        endif
+}
+
+/* The code addresses of the faulting thread, newest first: the fault, the link
+   register where there is one, then the frame record chain ([FP] is the caller's
+   frame, [FP + 8] the return address). */
+static int cr_cod2x_chain(void *ucontext, uintptr_t *out, int max)
+{
+    uintptr_t pc, sp, fp, lr;
+    int count = 0;
+    cr_cod2x_frame(ucontext, &pc, &sp, &fp, &lr);
+    if (pc && count < max)
+        out[count++] = pc;
+    if (lr && count < max)
+        out[count++] = lr;
+    while (count < max && fp && !(fp & 7)) {
+        uintptr_t record[2];
+        if (!cr_cod2x_read(fp, record, sizeof(record)) || !record[1])
+            break;
+        out[count++] = record[1];
+        if (record[0] <= fp)
+            break;
+        fp = record[0];
+    }
+    return count;
+}
+
+/* 1 when the fault belongs to the CoD2x layer: the first address of the faulting
+   thread inside this executable is CoD2x-layer code. A fault in a system library
+   counts for the code of ours that called it. */
+static int cr_cod2x_owned(void *ucontext)
+{
+    uintptr_t chain[64];
+    Dl_info self, info;
+    int count = cr_cod2x_chain(ucontext, chain, 64), i;
+    if (!dladdr((void *)&Sys_InstallCrashHandler, &self))
+        return 0;
+    for (i = 0; i < count; ++i) {
+        if (dladdr((void *)chain[i], &info) && info.dli_fbase == self.dli_fbase)
+            return Cod2x_InLayer((const void *)chain[i]);
+    }
+    return 0;
+}
+
+static unsigned long cr_cod2x_thread(void)
+{
+#        if defined(__APPLE__)
+    uint64_t id = 0;
+    pthread_threadid_np(NULL, &id);
+    return (unsigned long)id;
+#        else
+    return (unsigned long)syscall(SYS_gettid);
+#        endif
+}
+
+static void cr_cod2x_registers(int fd, void *ucontext)
+{
+    ucontext_t *uc = (ucontext_t *)ucontext;
+    int i;
+    if (!uc)
+        return;
+    cr_emit(fd, "\n=== REGISTERS ===\n");
+#        if defined(__APPLE__) && (defined(__arm64__) || defined(__aarch64__))
+    {
+        const _STRUCT_ARM_THREAD_STATE64 *r = &uc->uc_mcontext->__ss;
+        cr_emit(fd, "PC=0x%016llx  SP=0x%016llx  FP=0x%016llx  LR=0x%016llx\n",
+                (unsigned long long)__darwin_arm_thread_state64_get_pc(*r),
+                (unsigned long long)__darwin_arm_thread_state64_get_sp(*r),
+                (unsigned long long)__darwin_arm_thread_state64_get_fp(*r),
+                (unsigned long long)__darwin_arm_thread_state64_get_lr(*r));
+        for (i = 0; i < 29; ++i)
+            cr_emit(fd, "X%-2d=0x%016llx%s", i, (unsigned long long)r->__x[i], i % 4 == 3 || i == 28 ? "\n" : "  ");
+        cr_emit(fd, "CPSR=0x%08x\n", r->__cpsr);
+    }
+#        elif defined(__x86_64__) && !defined(__APPLE__)
+    {
+        greg_t *r = uc->uc_mcontext.gregs;
+        static const struct {
+            const char *name;
+            int index;
+        } names[] = {{"RIP", REG_RIP}, {"RAX", REG_RAX}, {"RBX", REG_RBX}, {"RCX", REG_RCX}, {"RDX", REG_RDX},
+                     {"RSI", REG_RSI}, {"RDI", REG_RDI}, {"RBP", REG_RBP}, {"RSP", REG_RSP}, {"R8", REG_R8},
+                     {"R9", REG_R9},   {"R10", REG_R10}, {"R11", REG_R11}, {"R12", REG_R12}, {"R13", REG_R13},
+                     {"R14", REG_R14}, {"R15", REG_R15}, {"EFL", REG_EFL}};
+        for (i = 0; i < (int)(sizeof(names) / sizeof(names[0])); ++i)
+            cr_emit(fd, "%s=0x%016llx%s", names[i].name, (unsigned long long)r[names[i].index],
+                    i % 4 == 3 || i == (int)(sizeof(names) / sizeof(names[0])) - 1 ? "\n" : "  ");
+    }
+#        else
+    (void)i;
+    cr_emit(fd, "(not available on this machine)\n");
+#        endif
+}
+
+/* The log after its first lines: CoD2x's sections. */
+static void cr_cod2x_sections(int fd, const char *path, void *ucontext, const char *what)
+{
+    char description[512];
+    uintptr_t pc, sp, fp, lr, chain[64], words[64];
+    void *frames[64];
+    int count, i;
+    cr_cod2x_frame(ucontext, &pc, &sp, &fp, &lr);
+    if (ucontext) {
+        cr_cod2x_describe(pc, description, sizeof(description));
+        cr_emit(fd, "Address:      0x%016lx  %s\n", (unsigned long)pc, description);
+    }
+    cr_cod2x_registers(fd, ucontext);
+
+    cr_emit(fd, "\n=== STACK (frame pointer chain) ===\n");
+    count = cr_cod2x_chain(ucontext, chain, 64);
+    for (i = 0; i < count; ++i) {
+        cr_cod2x_describe(chain[i], description, sizeof(description));
+        cr_emit(fd, "%3d  0x%016lx  %s\n", i, (unsigned long)chain[i], description);
+    }
+
+    cr_emit(fd, "\n=== STACK (backtrace) ===\n");
+    count = backtrace(frames, 64);
+    for (i = 0; i < count; ++i) {
+        cr_cod2x_describe((uintptr_t)frames[i], description, sizeof(description));
+        cr_emit(fd, "%3d  0x%016lx  %s\n", i, (unsigned long)(uintptr_t)frames[i], description);
+    }
+
+    cr_emit(fd, "\n=== RAW STACK ===\n");
+    if (sp && cr_cod2x_read(sp, words, sizeof(words))) {
+        for (i = 0; i < 64; ++i)
+            cr_emit(fd, "%s%016lx", i % 4 == 0 ? (i ? "\n0x" : "0x") : " ", (unsigned long)words[i]);
+        cr_emit(fd, "\n");
+    }
+
+    /* Where every library was, so the addresses above can be resolved later. */
+    cr_emit(fd, "\n=== MAPS ===\n");
+#        if defined(__APPLE__)
+    {
+        uint32_t images = _dyld_image_count(), image;
+        char line[1200];
+        for (image = 0; image < images; ++image) {
+            int length = snprintf(line, sizeof(line), "0x%016lx %s\n",
+                                  (unsigned long)(uintptr_t)_dyld_get_image_header(image), _dyld_get_image_name(image));
+            if (fd >= 0 && length > 0 && write(fd, line, (size_t)length) < 0)
+                break;
+        }
+    }
+#        else
+    {
+        int maps = open("/proc/self/maps", O_RDONLY);
+        if (maps >= 0) {
+            char buffer[1024];
+            ssize_t length;
+            while ((length = read(maps, buffer, sizeof(buffer))) > 0)
+                if (fd >= 0 && write(fd, buffer, (size_t)length) < 0)
+                    break;
+            close(maps);
+        }
+    }
+#        endif
+    cr_emit(fd, "(written to %s only)\n", path);
+    cr_emit(fd, "\n%s report saved to %s\n", what, path);
+}
+
+static const char *cr_cod2x_signal(int sig)
+{
+    switch (sig) {
+    case SIGSEGV:
+        return "SIGSEGV (segmentation fault)";
+    case SIGBUS:
+        return "SIGBUS (bus error)";
+    case SIGFPE:
+        return "SIGFPE (arithmetic exception)";
+    case SIGILL:
+        return "SIGILL (illegal instruction)";
+    case SIGABRT:
+        return "SIGABRT (abort)";
+    default:
+        return "unknown signal";
+    }
+}
+
+/* ---- CoD2x's report (crash JSON of linux/exception.cpp), built in the handler ---- */
+static char cr_json[512 * 1024];
+static size_t cr_jsonLength;
+
+static void cr_jraw(const char *format, ...)
+{
+    va_list args;
+    int written;
+    if (cr_jsonLength + 1 >= sizeof(cr_json))
+        return;
+    va_start(args, format);
+    written = vsnprintf(cr_json + cr_jsonLength, sizeof(cr_json) - cr_jsonLength, format, args);
+    va_end(args);
+    if (written > 0)
+        cr_jsonLength += (size_t)written;
+    if (cr_jsonLength >= sizeof(cr_json))
+        cr_jsonLength = sizeof(cr_json) - 1;
+}
+
+static void cr_jstr(const char *text)
+{
+    const unsigned char *p = (const unsigned char *)(text ? text : "");
+    cr_jraw("\"");
+    for (; *p; ++p) {
+        if (*p == '"' || *p == '\\')
+            cr_jraw("\\%c", *p);
+        else if (*p == '\n')
+            cr_jraw("\\n");
+        else if (*p == '\r')
+            cr_jraw("\\r");
+        else if (*p == '\t')
+            cr_jraw("\\t");
+        else if (*p < 0x20)
+            cr_jraw("\\u%04x", *p);
+        else
+            cr_jraw("%c", *p);
+    }
+    cr_jraw("\"");
+}
+
+static void cr_jkv(const char *key, const char *value)
+{
+    cr_jraw("\"%s\":", key);
+    cr_jstr(value);
+    cr_jraw(",");
+}
+
+static void cr_jframe(int number, uintptr_t address)
+{
+    char module[128], symbol[256];
+    uintptr_t offset;
+    cr_cod2x_resolve(address, module, sizeof(module), &offset, symbol, sizeof(symbol));
+    cr_jraw("%s{\"frameNumber\":%d,\"instructionAddress\":\"0x%08lx\",\"moduleOffset\":\"0x%08lx\",", number ? "," : "",
+            number, (unsigned long)address, (unsigned long)offset);
+    cr_jkv("moduleName", module);
+    cr_jkv("sectionName", "");
+    cr_jraw("\"resolvedSymbol\":");
+    cr_jstr(symbol[0] ? symbol : "<no symbol>");
+    cr_jraw(",\"instruction\":\"\"}");
+}
+
+static void cr_jmemory(const char *name, uintptr_t address, size_t length)
+{
+    unsigned char bytes[512];
+    size_t i;
+    cr_jraw("{");
+    cr_jkv("name", name);
+    cr_jraw("\"address\":\"0x%08lx\",", (unsigned long)address);
+    if (length > sizeof(bytes))
+        length = sizeof(bytes);
+    if (address && cr_cod2x_read(address, bytes, length)) {
+        cr_jraw("\"hex\":\"");
+        for (i = 0; i < length; ++i)
+            cr_jraw("%02x", bytes[i]);
+        cr_jraw("\"");
+    } else {
+        cr_jraw("\"hex\":\"\",\"note\":\"unreadable\"");
+    }
+    cr_jraw("}");
+}
+
+static void cr_jregisters(void *ucontext)
+{
+    ucontext_t *uc = (ucontext_t *)ucontext;
+    int i;
+    cr_jraw("\"registers\":{");
+    if (!uc) {
+        cr_jraw("}");
+        return;
+    }
+#        if defined(__APPLE__) && (defined(__arm64__) || defined(__aarch64__))
+    {
+        const _STRUCT_ARM_THREAD_STATE64 *r = &uc->uc_mcontext->__ss;
+        cr_jraw("\"PC\":\"0x%016llx\",\"SP\":\"0x%016llx\",\"FP\":\"0x%016llx\",\"LR\":\"0x%016llx\",",
+                (unsigned long long)__darwin_arm_thread_state64_get_pc(*r),
+                (unsigned long long)__darwin_arm_thread_state64_get_sp(*r),
+                (unsigned long long)__darwin_arm_thread_state64_get_fp(*r),
+                (unsigned long long)__darwin_arm_thread_state64_get_lr(*r));
+        for (i = 0; i < 29; ++i)
+            cr_jraw("\"X%d\":\"0x%016llx\",", i, (unsigned long long)r->__x[i]);
+        cr_jraw("\"CPSR\":\"0x%08x\"", r->__cpsr);
+    }
+#        elif defined(__x86_64__) && !defined(__APPLE__)
+    {
+        greg_t *r = uc->uc_mcontext.gregs;
+        static const struct {
+            const char *name;
+            int index;
+        } names[] = {{"RIP", REG_RIP}, {"RAX", REG_RAX}, {"RBX", REG_RBX}, {"RCX", REG_RCX}, {"RDX", REG_RDX},
+                     {"RSI", REG_RSI}, {"RDI", REG_RDI}, {"RBP", REG_RBP}, {"RSP", REG_RSP}, {"R8", REG_R8},
+                     {"R9", REG_R9},   {"R10", REG_R10}, {"R11", REG_R11}, {"R12", REG_R12}, {"R13", REG_R13},
+                     {"R14", REG_R14}, {"R15", REG_R15}, {"EFLAGS", REG_EFL}};
+        for (i = 0; i < (int)(sizeof(names) / sizeof(names[0])); ++i)
+            cr_jraw("%s\"%s\":\"0x%016llx\"", i ? "," : "", names[i].name, (unsigned long long)r[names[i].index]);
+    }
+#        else
+    (void)i;
+#        endif
+    cr_jraw("}");
+}
+
+static void cr_jmodules(void)
+{
+    int first = 1;
+    cr_jraw("\"modules\":[");
+#        if defined(__APPLE__)
+    {
+        uint32_t images = _dyld_image_count(), image;
+        for (image = 0; image < images && image < 64; ++image) {
+            const char *path = _dyld_get_image_name(image), *name;
+            if (!path)
+                continue;
+            name = strrchr(path, '/');
+            cr_jraw("%s{\"baseAddress\":\"0x%08lx\",", first ? "" : ",",
+                    (unsigned long)(uintptr_t)_dyld_get_image_header(image));
+            first = 0;
+            cr_jkv("moduleName", name ? name + 1 : path);
+            cr_jraw("\"path\":");
+            cr_jstr(path);
+            cr_jraw("}");
+        }
+    }
+#        else
+    {
+        static char buffer[65536];
+        char seen[64][256], *line, *next;
+        int seenCount = 0, fd = open("/proc/self/maps", O_RDONLY), i;
+        ssize_t total = fd >= 0 ? read(fd, buffer, sizeof(buffer) - 1) : -1;
+        if (fd >= 0)
+            close(fd);
+        buffer[total > 0 ? total : 0] = '\0';
+        for (line = buffer; line && *line; line = next) {
+            unsigned long start = 0;
+            char permissions[8] = {0}, path[256] = {0};
+            const char *name;
+            next = strchr(line, '\n');
+            if (next)
+                *next++ = '\0';
+            if (sscanf(line, "%lx-%*x %7s %*x %*x:%*x %*u %255[^\n]", &start, permissions, path) < 3 ||
+                path[0] != '/' || permissions[2] != 'x')
+                continue;
+            name = strrchr(path, '/') + 1;
+            for (i = 0; i < seenCount && strcmp(seen[i], name); ++i) {}
+            if (i < seenCount || seenCount == 64)
+                continue;
+            snprintf(seen[seenCount++], sizeof(seen[0]), "%s", name);
+            cr_jraw("%s{\"baseAddress\":\"0x%08lx\",", first ? "" : ",", start);
+            first = 0;
+            cr_jkv("moduleName", name);
+            cr_jraw("\"path\":");
+            cr_jstr(path);
+            cr_jraw("}");
+        }
+    }
+#        endif
+    cr_jraw("]");
+}
+
+/* The server dvars CoD2x's report carries (empty before the dvars exist). */
+static void cr_jcvars(void)
+{
+    static const char *const names[] = {"sv_hostname", "mapname",       "g_gametype", "fs_game",      "dedicated",
+                                        "net_port",    "sv_maxclients", "protocol",   "sv_punkbuster"};
+    int first = 1;
+    size_t i;
+    cr_jraw("\"cvars\":{");
+    for (i = 0; i < sizeof(names) / sizeof(names[0]); ++i) {
+        char value[256];
+        if (!Cod2x_DvarText(names[i], value, sizeof(value)))
+            continue;
+        cr_jraw("%s\"%s\":", first ? "" : ",", names[i]);
+        cr_jstr(value);
+        first = 0;
+    }
+    cr_jraw("}");
+}
+
+
+static void cr_jlines(const char *field, const char *text)
+{
+    const char *p = text ? text : "";
+    int first = 1;
+    cr_jraw("\"%s\":[", field);
+    while (*p) {
+        const char *start = p;
+        char line[1024];
+        size_t length;
+        while (*p && *p != '\n' && *p != '\r')
+            ++p;
+        length = (size_t)(p - start);
+        if (length) {
+            if (length >= sizeof(line))
+                length = sizeof(line) - 1;
+            memcpy(line, start, length);
+            line[length] = '\0';
+            cr_jraw("%s", first ? "" : ",");
+            cr_jstr(line);
+            first = 0;
+        }
+        while (*p == '\n' || *p == '\r')
+            ++p;
+    }
+    cr_jraw("]");
+}
+
+static void cr_cod2x_json(const char *kind, int sig, siginfo_t *info, void *ucontext, const char *path,
+                          const char *reason)
+{
+    static char logger[64 * 1024];
+    char module[128], symbol[256], when[32], fault[512], exe[1024] = "", host[128] = "";
+    uintptr_t pc, sp, fp, lr, offset, chain[64], faultAddress;
+    void *frames[64];
+    unsigned long thread = cr_cod2x_thread();
+    long cores = sysconf(_SC_NPROCESSORS_ONLN);
+    time_t now = time(NULL);
+    struct tm local;
+    struct utsname name;
+    char os[256];
+    int count, i;
+    unsigned long totalMB = 0, freeMB = 0, swapTotalMB = 0, swapFreeMB = 0, residentMB = 0;
+    long peakMB = -1, virtualPeakMB = -1, threads = -1, loadUptime = 0;
+    double load = 0;
+
+    cr_cod2x_frame(ucontext, &pc, &sp, &fp, &lr);
+    faultAddress = info && sig != SIGABRT ? (uintptr_t)info->si_addr : 0;
+    cr_cod2x_resolve(pc, module, sizeof(module), &offset, symbol, sizeof(symbol));
+    localtime_r(&now, &local);
+    strftime(when, sizeof(when), "%Y-%m-%d %H:%M:%S", &local);
+    if (reason)
+        snprintf(fault, sizeof(fault), "%s", reason);
+    else
+        snprintf(fault, sizeof(fault), "%s (code %d) at address 0x%08lx%s", cr_cod2x_signal(sig),
+                 info ? info->si_code : 0, (unsigned long)faultAddress,
+                 faultAddress && faultAddress < 0x10000 ? " (near NULL)" : "");
+    snprintf(exe, sizeof(exe), "%s", cr_exePath);
+
+    cr_jsonLength = 0;
+    cr_json[0] = '\0';
+    cr_jraw("{");
+    cr_jkv("version", COD2X_RELEASE);
+    cr_jkv("type", "linux-server");
+    cr_jkv("installId", "");
+
+    cr_jraw("\"crashInfo\":{");
+    cr_jkv("kind", kind);
+    cr_jraw("\"exceptionCode\":\"0x%08x\",", (unsigned)sig);
+    cr_jkv("exceptionName", sig ? cr_cod2x_signal(sig) : "");
+    cr_jraw("\"exceptionAddress\":\"0x%08lx\",", (unsigned long)pc);
+    cr_jkv("moduleName", module[0] ? module : "<unknown>");
+    cr_jraw("\"fileOffset\":\"0x%08lx\",", (unsigned long)offset);
+    cr_jkv("faultDescription", fault);
+    cr_jraw("\"crashThreadId\":\"%lu\",\"currentThreadId\":\"%lu\",", thread, thread);
+    cr_jkv("time", when);
+    cr_jraw("\"test\":0,\"signalCode\":%d},", info ? info->si_code : 0);
+
+    cr_jraw("\"crashContext\":{");
+    cr_jregisters(ucontext);
+    cr_jraw(",\"memory\":[");
+    cr_jmemory("stack", sp, 256);
+    cr_jraw(",");
+    cr_jmemory("code", pc >= 32 ? pc - 32 : 0, 64);
+    cr_jraw("],\"threads\":[],\"stackCodePointers\":[]},");
+
+    cr_jraw("\"stacks\":[{");
+    cr_jkv("threadRole", "crashing thread");
+    cr_jkv("threadName", "");
+    cr_jraw("\"threadId\":\"%lu\",", thread);
+    cr_jkv("method", "frame pointer chain");
+    cr_jraw("\"frames\":[");
+    count = cr_cod2x_chain(ucontext, chain, 64);
+    for (i = 0; i < count; ++i)
+        cr_jframe(i, chain[i]);
+    cr_jraw("],\"diagnostics\":{\"method\":\"frame pointer chain (frame pointer unwind)\"}},{");
+    cr_jkv("threadRole", "crashing thread");
+    cr_jkv("threadName", "");
+    cr_jraw("\"threadId\":\"%lu\",", thread);
+    cr_jkv("method", "backtrace");
+    cr_jraw("\"frames\":[");
+    count = backtrace(frames, 64);
+    for (i = 0; i < count; ++i)
+        cr_jframe(i, (uintptr_t)frames[i]);
+#        if defined(__APPLE__)
+    cr_jraw("],\"diagnostics\":{\"method\":\"libSystem backtrace\"}}],");
+#        else
+    cr_jraw("],\"diagnostics\":{\"method\":\"glibc backtrace\"}}],");
+#        endif
+
+    memset(&name, 0, sizeof(name));
+    uname(&name);
+#        if defined(__APPLE__)
+    {
+        /* A Mac's computer name usually carries its owner's name; CoD2x's
+           Windows client report has no computer name either. */
+        uint64_t memory = 0;
+        size_t size = sizeof(memory);
+        struct xsw_usage swap;
+        vm_statistics64_data_t vm;
+        mach_msg_type_number_t vmCount = HOST_VM_INFO64_COUNT;
+        mach_task_basic_info_data_t task;
+        mach_msg_type_number_t taskCount = MACH_TASK_BASIC_INFO_COUNT;
+        thread_act_array_t list;
+        mach_msg_type_number_t listCount;
+        struct loadavg averages;
+        struct timeval boot;
+        if (sysctlbyname("hw.memsize", &memory, &size, NULL, 0) == 0)
+            totalMB = (unsigned long)(memory / (1024 * 1024));
+        if (host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&vm, &vmCount) == KERN_SUCCESS)
+            freeMB = (unsigned long)(((uint64_t)vm.free_count * vm_page_size) / (1024 * 1024));
+        size = sizeof(swap);
+        if (sysctlbyname("vm.swapusage", &swap, &size, NULL, 0) == 0) {
+            swapTotalMB = (unsigned long)(swap.xsu_total / (1024 * 1024));
+            swapFreeMB = (unsigned long)(swap.xsu_avail / (1024 * 1024));
+        }
+        if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&task, &taskCount) == KERN_SUCCESS) {
+            residentMB = (unsigned long)(task.resident_size / (1024 * 1024));
+            peakMB = (long)(task.resident_size_max / (1024 * 1024));
+        }
+        if (task_threads(mach_task_self(), &list, &listCount) == KERN_SUCCESS) {
+            threads = (long)listCount;
+            for (i = 0; i < (int)listCount; ++i)
+                mach_port_deallocate(mach_task_self(), list[i]);
+            vm_deallocate(mach_task_self(), (vm_address_t)list, listCount * sizeof(list[0]));
+        }
+        size = sizeof(averages);
+        if (sysctlbyname("vm.loadavg", &averages, &size, NULL, 0) == 0 && averages.fscale)
+            load = (double)averages.ldavg[0] / averages.fscale;
+        size = sizeof(boot);
+        if (sysctlbyname("kern.boottime", &boot, &size, NULL, 0) == 0)
+            loadUptime = (long)(now - boot.tv_sec);
+    }
+#        else
+    {
+        struct sysinfo system;
+        unsigned long unit;
+        char text[8192], *field;
+        int fd;
+        gethostname(host, sizeof(host) - 1);
+        memset(&system, 0, sizeof(system));
+        sysinfo(&system);
+        unit = system.mem_unit ? system.mem_unit : 1;
+        totalMB = (unsigned long)(((unsigned long long)system.totalram * unit) / (1024 * 1024));
+        freeMB = (unsigned long)(((unsigned long long)system.freeram * unit) / (1024 * 1024));
+        swapTotalMB = (unsigned long)(((unsigned long long)system.totalswap * unit) / (1024 * 1024));
+        swapFreeMB = (unsigned long)(((unsigned long long)system.freeswap * unit) / (1024 * 1024));
+        load = system.loads[0] / 65536.0;
+        loadUptime = (long)system.uptime;
+        if ((fd = open("/proc/self/statm", O_RDONLY)) >= 0) {
+            ssize_t length = read(fd, text, sizeof(text) - 1);
+            unsigned long pages = 0, resident = 0;
+            close(fd);
+            text[length > 0 ? length : 0] = '\0';
+            if (sscanf(text, "%lu %lu", &pages, &resident) == 2)
+                residentMB = (resident * (unsigned long)sysconf(_SC_PAGESIZE)) / (1024 * 1024);
+        }
+        if ((fd = open("/proc/self/status", O_RDONLY)) >= 0) {
+            ssize_t length = read(fd, text, sizeof(text) - 1);
+            close(fd);
+            text[length > 0 ? length : 0] = '\0';
+            if ((field = strstr(text, "VmPeak:")) != NULL)
+                virtualPeakMB = atol(field + 7) / 1024;
+            if ((field = strstr(text, "VmHWM:")) != NULL)
+                peakMB = atol(field + 6) / 1024;
+            if ((field = strstr(text, "Threads:")) != NULL)
+                threads = atol(field + 8);
+        }
+    }
+#        endif
+
+    cr_jraw("\"systemInfo\":{\"system\":{");
+    snprintf(os, sizeof(os), "%s %s %s", name.sysname, name.release, name.machine);
+    cr_jkv("os", os);
+    cr_jkv("distro", cr_sysDistro);
+    cr_jkv("kernel", cr_sysKernel[0] ? cr_sysKernel : name.release);
+    cr_jkv("arch", cr_sysArch[0] ? cr_sysArch : name.machine);
+    cr_jkv("libc", cr_sysLibc);
+    cr_jkv("cpuModel", cr_sysCpu);
+    cr_jkv("hostname", host);
+    cr_jraw("\"cpuCores\":\"%ld\",\"cpuCoresPhysical\":\"%d\",", cores > 0 ? cores : 0, cr_sysPhysical);
+    cr_jkv("cpuAffinity", cr_sysAffinity);
+    cr_jkv("virtualization", cr_sysVirt);
+    cr_jraw("\"isRoot\":%s,\"ulimitStackKB\":\"%ld\",\"ulimitCoreKB\":\"%ld\",\"ulimitNoFile\":\"%ld\",",
+            cr_sysRoot ? "true" : "false", cr_sysStackKB, cr_sysCoreKB, cr_sysFiles);
+    cr_jraw("\"loadAverage\":\"%.2f\",\"uptimeSeconds\":\"%ld\",", load, loadUptime);
+    /* The build: CoD2x's own servers say "cod2_lnxded" here. */
+    cr_jraw("\"platform\":");
+    cr_jstr(COD2X_VERSION " " COD2X_PLATFORM);
+    cr_jraw("},\"memory\":{\"physicalTotalMB\":\"%lu\",\"physicalAvailableMB\":\"%lu\",\"swapTotalMB\":\"%lu\","
+            "\"swapFreeMB\":\"%lu\"},",
+            totalMB, freeMB, swapTotalMB, swapFreeMB);
+    cr_jraw("\"processMemory\":{\"workingSetMB\":\"%lu\",\"peakWorkingSetMB\":\"%ld\",\"virtualPeakMB\":\"%ld\","
+            "\"threadCount\":\"%ld\",\"processUptimeSeconds\":\"%ld\"},",
+            residentMB, peakMB, virtualPeakMB, threads, (long)(now - cr_sysStart));
+    cr_jraw("\"process\":{\"processId\":\"%d\",\"executablePath\":", (int)getpid());
+    cr_jstr(exe);
+    cr_jraw(",");
+    cr_jkv("reportFile", path);
+    cr_jraw("\"commandLine\":");
+    cr_jstr(cr_cmdline);
+    cr_jraw("},");
+    cr_jmodules();
+    cr_jraw(",");
+    cr_jcvars();
+    cr_jraw("},");
+    Cod2x_LoggerRecent(logger, sizeof(logger));
+    cr_jlines("loggerLines", logger);
+    cr_jraw(",");
+    cr_jlines("logLines", "");
+    cr_jraw("}");
+}
+
+/* "<log>.pending.json": open and write only, safe in the handler. */
+static void cr_cod2x_pending(const char *path)
+{
+    char pending[1300];
+    int fd;
+    snprintf(pending, sizeof(pending), "%s.pending.json", path);
+    fd = open(pending, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    if (fd < 0)
+        return;
+    if (write(fd, cr_json, cr_jsonLength) < 0) {
+        /* nothing more can be done in the handler */
+    }
+    close(fd);
+}
+
+/* After the log: CoD2x's report when the fault is CoD2x's, else the receiver. */
+static void cr_cod2x_route(const char *kind, int sig, siginfo_t *info, void *ucontext, const char *path,
+                           const char *reason)
+{
+    if (cr_cod2x_owned(ucontext)) {
+        cr_cod2x_json(kind, sig, info, ucontext, path, sig ? NULL : reason);
+        cr_cod2x_pending(path);
+    } else {
+        Sys_CrashReceive(path, reason);
+    }
+}
+
+static void cr_cod2x_crash(int sig, siginfo_t *info, void *ucontext, const char *reason)
+{
+    int fd;
+    cr_cod2x_path(cr_cod2xPath, sizeof(cr_cod2xPath), "crash");
+#        if defined(__APPLE__)
+    fd = open(cr_cod2xPath, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+#        else
+    fd = open(cr_cod2xPath, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+#        endif
+    cr_emit(fd, "\n=== COD2X CRASH ===\n");
+    cr_emit(fd, "Version:      %s\n", COD2X_RELEASE);
+    cr_emit(fd, "Signal:       %d %s, code %d\n", sig, cr_cod2x_signal(sig), info ? info->si_code : 0);
+    if (info && sig != SIGABRT) {
+        uintptr_t fault = (uintptr_t)info->si_addr;
+        cr_emit(fd, "Fault addr:   0x%016lx%s\n", (unsigned long)fault, fault < 0x10000 ? " (near NULL)" : "");
+    }
+    cr_cod2x_sections(fd, cr_cod2xPath, ucontext, "Crash");
+    if (fd >= 0)
+        close(fd);
+    cr_cod2x_route("crash", sig, info, ucontext, cr_cod2xPath, reason);
+}
+
+#            if defined(__APPLE__)
+/* The freeze watch (macOS): CoD2x has no freeze log on Linux, so this one takes
+   its crash log's form; CoD2x's report of a freeze has kind "freeze". */
+void Sys_CrashFreezeReport(void *context)
+{
+    static const char reason[] = "main thread heartbeat stopped for more than 12 seconds (process still running)";
+    char path[1200];
+    int fd;
+    cr_cod2x_path(path, sizeof(path), "freeze");
+    fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+    cr_emit(fd, "\n=== COD2X FREEZE ===\n");
+    cr_emit(fd, "Version:      %s\n", COD2X_RELEASE);
+    cr_emit(fd, "Reason:       %s\n", reason);
+    cr_cod2x_sections(fd, path, context, "Freeze");
+    if (fd >= 0)
+        close(fd);
+    cr_cod2x_route("freeze", 0, NULL, context, path, reason);
+}
+#            endif
+
+/* What cod2x_report.c sends besides a crash: CoD2x's Linux forms. */
+const char *Sys_CrashDirectory(void)
+{
+#            if defined(__APPLE__)
+    return cr_reportDirectory;
+#            else
+    return ".";
+#            endif
+}
+
+const char *Sys_Cod2xReportType(void)
+{
+    return "linux-server";
+}
+
+static size_t cr_cod2x_add(char *out, size_t size, size_t used, const char *key, const char *value, int last)
+{
+    const char *p;
+    if (used >= size)
+        return used;
+    used += (size_t)snprintf(out + used, size - used, "\"%s\":\"", key);
+    for (p = value; *p && used + 7 < size; ++p) {
+        if (*p == '"' || *p == '\\')
+            out[used++] = '\\';
+        if ((unsigned char)*p >= 0x20)
+            out[used++] = *p;
+    }
+    if (used < size)
+        used += (size_t)snprintf(out + used, size - used, "\"%s", last ? "" : ",");
+    return used < size ? used : size - 1;
+}
+
+/* CoD2x's exception_getSystemInfoJson (Linux). */
+size_t Sys_Cod2xSystemInfo(char *out, size_t size)
+{
+    char os[256];
+    struct utsname name;
+    size_t used = 1;
+    memset(&name, 0, sizeof(name));
+    uname(&name);
+    snprintf(os, sizeof(os), "%s %s %s", name.sysname, cr_sysKernel, cr_sysArch);
+    out[0] = '{';
+    used = cr_cod2x_add(out, size, used, "os", os, 0);
+    used = cr_cod2x_add(out, size, used, "distro", cr_sysDistro, 0);
+    used = cr_cod2x_add(out, size, used, "arch", cr_sysArch, 0);
+    used = cr_cod2x_add(out, size, used, "libc", cr_sysLibc, 0);
+    used = cr_cod2x_add(out, size, used, "cpuModel", cr_sysCpu, 0);
+    used = cr_cod2x_add(out, size, used, "virtualization", cr_sysVirt, 0);
+    used += (size_t)snprintf(out + used, size - used, "\"isElevated\":%s}", cr_sysRoot ? "true" : "false");
+    return used;
+}
+
+/* CoD2x's Linux reports carry no install id and no hwid2. */
+size_t Sys_Cod2xIdentity(char *out, size_t size)
+{
+    return (size_t)snprintf(out, size, "\"installId\":\"\",\"hwid2\":\"\",");
+}
+
+size_t Sys_Cod2xLogLines(char *out, size_t size)
+{
+    if (size)
+        out[0] = '\0';
+    return 0;
+}
+#    endif
+
 static struct sigaction cr_old[8];
 static const int cr_sigs[] = { SIGSEGV, SIGABRT, SIGFPE, SIGILL, SIGBUS
 #if defined(COD2_X64) && defined(__APPLE__)
@@ -945,13 +1997,19 @@ static void cr_posix_handler(int sig, siginfo_t *info, void *ucontext)
     else
         snprintf(desc, sizeof(desc), "%s", cr_sig_name(sig));
 
-#    if defined(__APPLE__) && defined(COD2_X64) && COD2_X64
+#    if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    (void)fd;
+    cr_cod2x_crash(sig, info, ucontext, desc);
+    snprintf(path, sizeof(path), "%s", cr_cod2xPath);
+#    else
+#        if defined(__APPLE__) && defined(COD2_X64) && COD2_X64
+    /* The original engine in the app: reports go to the game's home. */
     snprintf(path, sizeof(path), "%s/cod2_crash_%d.txt", cr_reportDirectory, (int)getpid());
     fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
-#    else
+#        else
     snprintf(path, sizeof(path), "cod2_crash_%d.txt", (int)getpid());
     fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0644);
-#    endif
+#        endif
 
     cr_emit_common(fd, desc);
     cr_posix_osinfo(fd);
@@ -961,6 +2019,7 @@ static void cr_posix_handler(int sig, siginfo_t *info, void *ucontext)
     cr_emit(fd, "================ END CRASH REPORT ================\n");
     if (fd >= 0)
         close(fd);
+#    endif
 
     cr_posix_popup(path, desc);
 
@@ -998,6 +2057,9 @@ void Sys_InstallCrashHandler(const char *appName, const char *version,
     }
 #    endif
 
+#    if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    cr_cod2x_system();
+#    endif
     ss.ss_sp = altstack;
     ss.ss_size = sizeof(altstack);
     ss.ss_flags = 0;

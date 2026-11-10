@@ -200,3 +200,8 @@ target_sources(cod2_macos_ded PRIVATE src/platform/macos_server.c)
 target_link_options(cod2_macos_ded PRIVATE -Wl,-dead_strip)
 set_source_files_properties(src/PC/qcommon/crash_handler.c PROPERTIES
   COMPILE_DEFINITIONS "COD2_GIT_HASH=\"${COD2_GIT_HASH}\"")
+
+# The CoD2x units link as one run, so a fault can be placed in or out of them.
+include(${CMAKE_SOURCE_DIR}/cmake/cod2x-layer.cmake)
+cod2x_layer_order(cod2_macos)
+cod2x_layer_order(cod2_macos_ded)
