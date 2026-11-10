@@ -343,14 +343,21 @@ static void MixLocked(float *stereo, size_t frame_count)
                 float y = sample->position[1] - listener[1];
                 float z = sample->position[2] - listener[2];
                 float distance = sqrtf(x * x + y * y + z * z);
-                float pan = distance > 0 ? Clamp(x / distance, -1, 1) : 0;
+                /* Windows 1.3 plays 3D sounds through Miles' "Fast 2D Positional
+                 * Audio" provider. Measured there: the pan is linear in the angle
+                 * off the median plane (not a constant-power curve), elevation only
+                 * counts through that angle, and a source behind the ear line plays
+                 * at three quarters, as a step. position[] is right, up, forward. */
+                float lateral = distance > 0 ? Clamp(x / distance, -1, 1) : 0;
+                float pan = asinf(lateral) * (float)(2.0 / M_PI);
+                float rear = z < 0 ? 0.75f : 1.0f;
                 float attenuation = 1.0f;
                 if (rolloff > 0 && distance * distance_factor > sample->min_distance) {
                     float range = fmaxf(sample->max_distance - sample->min_distance, 1);
                     attenuation = powf(Clamp(1 - (distance * distance_factor - sample->min_distance) / range, 0, 1), rolloff);
                 }
-                left *= sqrtf((1 - pan) * 0.5f) * attenuation;
-                right *= sqrtf((1 + pan) * 0.5f) * attenuation;
+                left *= (1 - pan) * 0.5f * rear * attenuation;
+                right *= (1 + pan) * 0.5f * rear * attenuation;
             }
             for (size_t i = 0; i < count; ++i) {
                 int index = sample->active_buffer;
