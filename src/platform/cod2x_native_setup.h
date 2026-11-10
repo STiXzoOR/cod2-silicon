@@ -229,23 +229,25 @@ static NSArray<NSString *> *Cod2xShaderBinaries(NSString *data)
 
 static void Cod2xSetupShaders(NSString *data)
 {
-    NSString *cache = Cod2xSetupOverride("COD2_MAC_SHADER_CACHE") ?: [Cod2xAppHome() stringByAppendingPathComponent:@"shaders"];
-    BOOL verified = Cod2xShadersSetup(Cod2xShaderBinaries(data), cache);
+    /* A cache named by the environment is the developer's choice: use it as it is, and never rebuild it. */
+    NSString *chosen = Cod2xSetupOverride("COD2_MAC_SHADER_CACHE");
+    NSString *cache = chosen ?: [Cod2xAppHome() stringByAppendingPathComponent:@"shaders"];
+    BOOL verified = Cod2xShadersSetup(chosen ? nil : data, Cod2xShaderBinaries(data), cache);
     if (!verified && !Cod2xNoninteractive()) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Original Mac shaders were not found";
-        alert.informativeText = @"For the original rendering, choose a folder containing your licensed Mac Call of Duty 2 app. You can also play now using approximate shaders; lighting and sky may differ.";
+        alert.messageText = @"The original shaders could not be built";
+        alert.informativeText = @"CoD2 Silicon builds them from your game files, and that did not work. If you own the Mac version of Call of Duty 2, choose its folder to use its shaders. You can also play now with approximate shaders; lighting and sky will differ.";
         [alert addButtonWithTitle:@"Choose Mac Game Folder"]; [alert addButtonWithTitle:@"Use Approximate Shaders"];
         if ([alert runModal] == NSAlertFirstButtonReturn) {
             NSOpenPanel *panel = NSOpenPanel.openPanel;
             panel.canChooseDirectories = YES; panel.canChooseFiles = NO; panel.treatsFilePackagesAsDirectories = YES;
-            if ([panel runModal] == NSModalResponseOK) verified = Cod2xShadersSetup(Cod2xShaderBinaries(panel.URL.path), cache);
+            if ([panel runModal] == NSModalResponseOK) verified = Cod2xShadersSetup(nil, Cod2xShaderBinaries(panel.URL.path), cache);
         }
     }
     if (verified) setenv("COD2_MAC_SHADER_CACHE", cache.fileSystemRepresentation, 1);
     else {
         unsetenv("COD2_MAC_SHADER_CACHE");
-        fprintf(stderr, "CoD2 Silicon: no verified licensed Mac shaders; using approximate shaders (lighting and sky may differ).\n");
+        fprintf(stderr, "CoD2 Silicon: no verified original shaders; using approximate shaders (lighting and sky will differ).\n");
     }
 }
 

@@ -22,8 +22,8 @@ rendering comparisons, fullscreen limits and measured performance.
 - An **Apple silicon Mac**; Intel Macs are not supported by this port.
 - **macOS 26 or later**.
 - Your own licensed Call of Duty 2 1.3 game data and CD key.
-- The original Steam Mac copy enables matching shaders; without it the app
-  uses approximate shaders, with visibly different lighting.
+- No Mac copy of the game is needed: the app builds the original shaders from
+  the game's own files.
 
 Keep the game outside this repository. The data folder must contain
 `main/iw_00.iwd` through `main/iw_15.iwd` and matching localized archives.
@@ -71,9 +71,11 @@ browser with favorites and recents, Config Studio, settings, demos/screenshots a
 It finds the game folder automatically or asks you
 to choose the folder containing `main/`. If no CD key is stored, it asks for
 yours and saves it in `~/.cod2/preferences`. Never share that file or your key.
-It extracts the original shaders from your own Steam Mac copy when available,
-otherwise continues with approximate shaders. Configs, logs, demos, screenshots
-and the shader cache live in `~/Library/Application Support/CoD2 Silicon`.
+It builds the original shaders from the game's own shader sources, the way
+the Windows game does when it starts; this takes a few seconds, once. If that
+fails, it can use the shaders from a Steam Mac copy, and otherwise continues
+with approximate shaders. Configs, logs, demos, screenshots and the shader
+cache live in `~/Library/Application Support/CoD2 Silicon`.
 
 Use **Configs** to create and edit loadouts. Choose **Use for Next Game** to make a
 selected loadout active. Its **Settings** tab holds frame cap, mouse, audio and

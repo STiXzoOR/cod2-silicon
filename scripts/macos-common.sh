@@ -65,6 +65,7 @@ build_app() {
     "$python" "$root/tools/catalog/catalog.py" check --source-root "$root" --catalog "$root/launcher/Resources/ConfigCatalog.json" --mode stock
     "$python" "$root/tools/catalog/catalog.py" check --source-root "$root" --catalog "$root/launcher/Resources/ConfigCatalog.json" --mode cod2x
     "$root/scripts/build-sdl.sh" "$build/deps"
+    "$root/scripts/build-vkd3d.sh" "$build/vkd3d"
     local prefix="$build/deps/install" sdk
     sdk=$(/usr/bin/xcrun --sdk macosx --show-sdk-path)
     run_build cmake -S "$root" -B "$build/client" \
@@ -74,10 +75,11 @@ build_app() {
         "-DCOD2_RELEASE_VERSION=$version" \
         "-DCMAKE_PREFIX_PATH=$prefix" "-DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew;/usr/local" \
         "-DZLIB_LIBRARY=$sdk/usr/lib/libz.tbd" "-DZLIB_INCLUDE_DIR=$sdk/usr/include" \
-        "-DCOD2_CURL_LIBRARY=$sdk/usr/lib/libcurl.tbd" \
+        "-DCOD2_CURL_LIBRARY=$sdk/usr/lib/libcurl.tbd" "-DCOD2_VKD3D_PREFIX=$build/vkd3d/install" \
         "${datagen_args[@]}" "-DCOD2_TYPED_DATA_DIR=$build/typed" "-DPython3_EXECUTABLE=$python"
-    run_build cmake --build "$build/client" --target cod2_macos --parallel "${COD2_BUILD_JOBS:-$(/usr/sbin/sysctl -n hw.ncpu)}"
+    run_build cmake --build "$build/client" --target cod2_macos cod2_shadergen --parallel "${COD2_BUILD_JOBS:-$(/usr/sbin/sysctl -n hw.ncpu)}"
     run_build cmake --build "$build/client" --target cod2_launcher --parallel "${COD2_BUILD_JOBS:-3}"
     run_build "$python" "$root/tools/cod2x/make_macos_app.py" \
-        "$build/client/cod2_macos" "$app" --replace --launcher "$build/client/launcher/CoD2Launcher" --frameworks "$prefix" --version "$version"
+        "$build/client/cod2_macos" "$app" --replace --launcher "$build/client/launcher/CoD2Launcher" --frameworks "$prefix" \
+        --shadergen "$build/client/cod2-shadergen" --vkd3d "$build/vkd3d/install" --version "$version"
 }

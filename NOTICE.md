@@ -18,8 +18,14 @@ not incorporated into the port.
 
 No game assets, Activision binaries, original game shaders, extracted shader
 payloads or decompiler dumps are included. Players supply their own licensed
-game data. Original Mac shaders are extracted locally from the player's own
-copy, never distributed with this project.
+game data. Shaders are built locally from the HLSL sources in the player's own
+game data, or extracted locally from the player's own Mac copy, and are never
+distributed with this project.
+
+The app bundles libvkd3d-shader from the vkd3d project as a separate dynamic
+library, under the GNU Lesser General Public License 2.1 or later. Its license
+text is in the app's `Contents/Resources/licenses` folder, and
+`scripts/build-vkd3d.sh` rebuilds it from the pinned source release.
 
 The `build/lp64_gen/` snapshot re-encodes the data blobs that upstream
 opencod2 already commits, as typed C for 64-bit builds, in the same way as

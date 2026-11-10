@@ -7,6 +7,12 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Changed
 
+- The original shaders no longer need a Mac copy of the game. Setup builds
+  them in a few seconds from the shader sources in your own game files, the
+  way the Windows game does when it starts. They follow Windows: flags and
+  other animated surfaces move as they do there, where the Mac 1.3 shaders
+  used an approximation. An existing shader cache is rebuilt once on the next
+  launch. A Mac copy still works as a fallback.
 - The CoD2x machine ID (`cl_hwid2`) is now computed the way CoD2x computes it:
   the same list of hardware details, hashed the same way. Only the hash is
   sent. This changes the ID once for existing Mac players, so a CoD2x server

@@ -21,6 +21,42 @@ def codesign(path):
     subprocess.run(command + [str(path)], check=True)
 
 
+def make_portable(parser, machos, executables, frameworks):
+    """Point each Mach-O at the bundle's own Frameworks folder and check that nothing else is needed."""
+    bundle_rpath = "@executable_path/../Frameworks"
+    for macho in machos:
+        # Edit signed Mach-O files directly and re-sign afterwards. Stripping the
+        # signature first leaves a __LINKEDIT gap that Xcode 16's install_name_tool
+        # rejects, and no-op edits are skipped entirely.
+        dependencies = subprocess.check_output(["otool", "-L", str(macho)], text=True).splitlines()[1:]
+        for line in dependencies:
+            dependency = line.strip().rsplit(" (", 1)[0]
+            name = pathlib.PurePosixPath(dependency).name
+            if (frameworks / name).is_file() and not dependency.startswith(("/System/", "/usr/lib/")) \
+                    and dependency != "@rpath/" + name:
+                subprocess.run(["install_name_tool", "-change", dependency, "@rpath/" + name, str(macho)], check=True)
+        if macho not in executables:
+            current = subprocess.check_output(["otool", "-D", str(macho)], text=True).splitlines()[1:]
+            if [line.strip() for line in current] != ["@rpath/" + macho.name]:
+                subprocess.run(["install_name_tool", "-id", "@rpath/" + macho.name, str(macho)], check=True)
+        commands = subprocess.check_output(["otool", "-l", str(macho)], text=True)
+        rpaths = re.findall(r"cmd LC_RPATH\n.*?path (.*?) \(offset", commands, re.DOTALL)
+        for rpath in rpaths:
+            if rpath != bundle_rpath:
+                subprocess.run(["install_name_tool", "-delete_rpath", rpath, str(macho)], check=True)
+        if bundle_rpath not in rpaths:
+            subprocess.run(["install_name_tool", "-add_rpath", bundle_rpath, str(macho)], check=True)
+    for macho in machos:
+        dependencies = subprocess.check_output(["otool", "-L", str(macho)], text=True).splitlines()[1:]
+        for line in dependencies:
+            dependency = line.strip().rsplit(" (", 1)[0]
+            if not dependency.startswith(("/System/", "/usr/lib/", "@rpath/", "@executable_path/")):
+                parser.error(f"non-portable dependency in {macho.name}: {dependency}")
+        build = subprocess.check_output(["vtool", "-show-build", str(macho)], text=True)
+        if not re.search(r"minos 26\.0(?:\.0)?\s", build):
+            parser.error(f"{macho.name} must be built for macOS 26.0")
+
+
 def build_icon(root, output):
     """Compile CoD2 Silicon.icon, or draw the static fallback without Xcode's actool."""
     result = subprocess.run([str(root / "scripts/compile-launcher-icon.sh"), str(output)])
@@ -51,6 +87,8 @@ def main():
     parser.add_argument("--game-dir", type=pathlib.Path, default=None,
                         help="optional developer override; omitted in release bundles")
     parser.add_argument("--frameworks", type=pathlib.Path, help="pinned SDL install prefix for a self-contained bundle")
+    parser.add_argument("--shadergen", type=pathlib.Path, help="cod2-shadergen executable to bundle")
+    parser.add_argument("--vkd3d", type=pathlib.Path, help="libvkd3d-shader install prefix from scripts/build-vkd3d.sh")
     parser.add_argument("--version", default=(root / "RELEASE_VERSION").read_text().strip())
     parser.add_argument("--resolution", default="1920x1080")
     fullscreen = parser.add_mutually_exclusive_group()
@@ -115,39 +153,28 @@ def main():
             parser.error("SDL install prefix must contain SDL3 and sdl2-compat dylibs")
         shutil.copytree(args.frameworks / "licenses", resources / "licenses")
         machos = [binary] + sorted(p for p in frameworks.glob("*.dylib") if not p.is_symlink())
-        bundle_rpath = "@executable_path/../Frameworks"
-        for macho in machos:
-            # Edit signed Mach-O files directly and re-sign afterwards. Stripping the
-            # signature first leaves a __LINKEDIT gap that Xcode 16's install_name_tool
-            # rejects, and no-op edits are skipped entirely.
-            dependencies = subprocess.check_output(["otool", "-L", str(macho)], text=True).splitlines()[1:]
-            for line in dependencies:
-                dependency = line.strip().rsplit(" (", 1)[0]
-                name = pathlib.PurePosixPath(dependency).name
-                if name.startswith("libSDL") and (frameworks / name).is_file() and dependency != "@rpath/" + name:
-                    subprocess.run(["install_name_tool", "-change", dependency, "@rpath/" + name, str(macho)], check=True)
-            if macho != binary:
-                current = subprocess.check_output(["otool", "-D", str(macho)], text=True).splitlines()[1:]
-                if [line.strip() for line in current] != ["@rpath/" + macho.name]:
-                    subprocess.run(["install_name_tool", "-id", "@rpath/" + macho.name, str(macho)], check=True)
-            commands = subprocess.check_output(["otool", "-l", str(macho)], text=True)
-            rpaths = re.findall(r"cmd LC_RPATH\n.*?path (.*?) \(offset", commands, re.DOTALL)
-            for rpath in rpaths:
-                if rpath != bundle_rpath:
-                    subprocess.run(["install_name_tool", "-delete_rpath", rpath, str(macho)], check=True)
-            if bundle_rpath not in rpaths:
-                subprocess.run(["install_name_tool", "-add_rpath", bundle_rpath, str(macho)], check=True)
-        for macho in machos:
-            dependencies = subprocess.check_output(["otool", "-L", str(macho)], text=True).splitlines()[1:]
-            for line in dependencies:
-                dependency = line.strip().rsplit(" (", 1)[0]
-                if not dependency.startswith(("/System/", "/usr/lib/", "@rpath/", "@executable_path/")):
-                    parser.error(f"non-portable dependency in {macho.name}: {dependency}")
-            build = subprocess.check_output(["vtool", "-show-build", str(macho)], text=True)
-            if not re.search(r"minos 26\.0(?:\.0)?\s", build):
-                parser.error(f"{macho.name} must be built for macOS 26.0")
+        make_portable(parser, machos, {binary}, frameworks)
         for dylib in machos[1:]:
             codesign(dylib)
+    if args.shadergen:
+        # The shader generator and its HLSL compiler travel in the game app, where both
+        # the game and the launcher find them. The compiler stays a separate library.
+        if not args.vkd3d:
+            parser.error("--shadergen needs --vkd3d, the libvkd3d-shader install prefix")
+        frameworks = game_contents / "Frameworks"
+        frameworks.mkdir(exist_ok=True)
+        helpers = game_contents / "Helpers"
+        helpers.mkdir(exist_ok=True)
+        tool = helpers / "cod2-shadergen"
+        library = frameworks / "libvkd3d-shader.1.dylib"
+        shutil.copy2(args.shadergen, tool)
+        shutil.copy2(args.vkd3d / "lib/libvkd3d-shader.1.dylib", library)
+        (resources / "licenses").mkdir(exist_ok=True)
+        for licence in sorted((args.vkd3d / "licenses").iterdir()):
+            shutil.copy2(licence, resources / "licenses" / licence.name)
+        make_portable(parser, [tool, library], {tool}, frameworks)
+        codesign(library)
+        codesign(tool)
     icon_files, icon_keys = build_icon(root, pathlib.Path(staging.name) / "icon")
     for icon_file in icon_files:
         shutil.copy2(icon_file, resources / icon_file.name)

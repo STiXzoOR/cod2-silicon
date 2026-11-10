@@ -215,7 +215,64 @@ static NSDictionary *ShaderExtract(NSData *data)
     return assets;
 }
 
-BOOL Cod2xShadersSetup(NSArray<NSString *> *binaries, NSString *cache)
+/* Where the bundled generator lives: in the game app, which the launcher app
+ * contains, or beside a development build's executable. */
+static NSString *ShaderGenerator(void)
+{
+    NSMutableArray<NSString *> *candidates = [NSMutableArray array];
+    const char *override = getenv("COD2_SHADERGEN");
+    if (override && *override) [candidates addObject:[NSString stringWithUTF8String:override]];
+    NSString *bundle = NSBundle.mainBundle.bundlePath;
+    [candidates addObject:[bundle stringByAppendingPathComponent:@"Contents/Helpers/cod2-shadergen"]];
+    [candidates addObject:[bundle stringByAppendingPathComponent:@"Contents/Helpers/CoD2 Game.app/Contents/Helpers/cod2-shadergen"]];
+    NSString *folder = NSBundle.mainBundle.executablePath.stringByDeletingLastPathComponent;
+    if (folder) [candidates addObject:[folder stringByAppendingPathComponent:@"cod2-shadergen"]];
+    for (NSString *candidate in candidates)
+        if ([NSFileManager.defaultManager isExecutableFileAtPath:candidate]) return candidate;
+    return nil;
+}
+
+/* The generator's standard output, or nil if it did not run to a clean exit. */
+static NSString *ShaderRun(NSString *tool, NSArray<NSString *> *arguments)
+{
+    NSTask *task = [[NSTask alloc] init];
+    NSPipe *pipe = [NSPipe pipe];
+    task.executableURL = [NSURL fileURLWithPath:tool];
+    task.arguments = arguments;
+    task.standardOutput = pipe;
+    if (![task launchAndReturnError:nil]) return nil;
+    NSData *output = [pipe.fileHandleForReading readDataToEndOfFile];
+    [task waitUntilExit];
+    if (task.terminationReason != NSTaskTerminationReasonExit || task.terminationStatus != 0) return nil;
+    NSString *text = [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding];
+    return [text stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+}
+
+/* Which generator version built the cache; nil for one taken from a Mac executable. */
+static NSString *ShaderCacheGenerator(NSString *cache)
+{
+    NSData *json = [NSData dataWithContentsOfFile:[cache stringByAppendingPathComponent:@"manifest.json"]];
+    id manifest = json ? [NSJSONSerialization JSONObjectWithData:json options:0 error:nil] : nil;
+    id generator = [manifest isKindOfClass:NSDictionary.class] ? manifest[@"generator"] : nil;
+    return [generator isKindOfClass:NSString.class] ? generator : nil;
+}
+
+/* Swap a verified staging folder into place, keeping the old cache if the swap fails. */
+static BOOL ShaderInstall(NSString *staging, NSString *cache)
+{
+    NSFileManager *files = NSFileManager.defaultManager;
+    if (!Cod2xShadersVerify(staging)) return NO;
+    NSString *backup = [staging stringByAppendingString:@"-old"];
+    BOOL existed = [files fileExistsAtPath:cache], installed = NO;
+    if (!existed || [files moveItemAtPath:cache toPath:backup error:nil]) {
+        installed = [files moveItemAtPath:staging toPath:cache error:nil];
+        if (!installed && existed) [files moveItemAtPath:backup toPath:cache error:nil];
+        if (installed) [files removeItemAtPath:backup error:nil];
+    }
+    return installed;
+}
+
+BOOL Cod2xShadersSetup(NSString *data, NSArray<NSString *> *binaries, NSString *cache)
 {
     NSFileManager *files = NSFileManager.defaultManager;
     NSString *parent = cache.stringByDeletingLastPathComponent;
@@ -225,6 +282,19 @@ BOOL Cod2xShadersSetup(NSArray<NSString *> *binaries, NSString *cache)
     BOOL verified = NO;
     if (flock(lock, LOCK_EX) != 0) { close(lock); return NO; }
     if (Cod2xShadersVerify(cache)) verified = YES;
+    /* Build from the game's own HLSL, as the Windows game does when it loads. */
+    NSString *tool = data ? ShaderGenerator() : nil;
+    NSString *version = tool ? ShaderRun(tool, @[@"--version"]) : nil;
+    if (version.length && !(verified && [ShaderCacheGenerator(cache) isEqualToString:version])) {
+        NSString *staging = [parent stringByAppendingPathComponent:[@".shaders-" stringByAppendingString:NSUUID.UUID.UUIDString]];
+        if (ShaderRun(tool, @[[data stringByAppendingPathComponent:@"main"], staging]) && ShaderInstall(staging, cache)) {
+            verified = YES;
+            fprintf(stderr, "CoD2 Silicon: built the shaders from the game's HLSL (%s).\n", version.UTF8String);
+        } else {
+            fprintf(stderr, "CoD2 Silicon: the shaders could not be built from the game's HLSL.\n");
+        }
+        [files removeItemAtPath:staging error:nil];
+    }
     for (NSString *binary in binaries) {
         if (verified) break;
         NSData *input = [NSData dataWithContentsOfFile:binary options:NSDataReadingMappedIfSafe error:nil];
@@ -244,15 +314,7 @@ BOOL Cod2xShadersSetup(NSArray<NSString *> *binaries, NSString *cache)
         }
         [manifest appendString:@"  }\n}\n"];
         written &= [manifest writeToFile:[staging stringByAppendingPathComponent:@"manifest.json"] atomically:YES encoding:NSUTF8StringEncoding error:nil];
-        if (written && Cod2xShadersVerify(staging)) {
-            NSString *backup = [staging stringByAppendingString:@"-old"];
-            BOOL existed = [files fileExistsAtPath:cache];
-            if (!existed || [files moveItemAtPath:cache toPath:backup error:nil]) {
-                verified = [files moveItemAtPath:staging toPath:cache error:nil];
-                if (!verified && existed) [files moveItemAtPath:backup toPath:cache error:nil];
-                if (verified) [files removeItemAtPath:backup error:nil];
-            }
-        }
+        if (written) verified = ShaderInstall(staging, cache);
         [files removeItemAtPath:staging error:nil];
     }
     flock(lock, LOCK_UN); close(lock);

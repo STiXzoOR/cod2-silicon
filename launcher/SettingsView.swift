@@ -183,7 +183,7 @@ struct SettingsView: View {
         SettingsGroup {
             // Tall enough that the button keeps the group's corner radius from its top and bottom
             // (plus the point the group hides under its first hairline).
-            SettingsRow(model.dataPathDisplay.isEmpty ? "Not found" : model.dataPathDisplay, detail: model.approximate ? "Approximate shaders · add your Mac copy for the original look" : "Original shaders verified",
+            SettingsRow(model.dataPathDisplay.isEmpty ? "Not found" : model.dataPathDisplay, detail: model.approximate ? "Approximate shaders · run setup again to build the original ones" : "Original shaders verified",
                         typewriter: true, minHeight: ControlMetrics.height(.regular) + 2 * SettingsMetrics.radius + 1) {
                 HStack(spacing: 8) {
                     Button { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: model.dataPath)]) } label: { Image(systemName: "folder").frame(width: 16, height: 16) }
