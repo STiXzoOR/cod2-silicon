@@ -76,6 +76,9 @@ int Cod2x_InLayer(const void *address);
 void Cod2x_Log(const char *format, ...);
 size_t Cod2x_LoggerRecent(char *out, size_t size);
 void Cod2x_ReportInit(void);
+/* This build asks first: the launcher sets the variable to "1" only after the
+   player has agreed to send CoD2x-layer crash and error reports to CoD2x. */
+#define COD2X_REPORT_CONSENT_ENV "COD2_SILICON_COD2X_REPORTS"
 /* Whether reports may go to CoD2x. CoD2x sends them without asking, and so does
    this build. A build that asks the player first defines COD2X_REPORT_CONSENT_ENV
    as the name of an environment variable: reports then go only when it is "1"

@@ -444,7 +444,7 @@ def extract_source(root, mode):
                         loops = list(re.finditer(r'for\s*\(\s*(?:int\s+)?' + variable + r'\s*=\s*(\d+)\s*;\s*' + variable + r'\s*<\s*(\d+)\s*;\s*(?:\+\+\s*' + variable + '|' + variable + r'\s*\+\+)\s*\)', text[:match.start()]))
                         loop = loops[-1] if loops else None
                         prefix = text[loop.end():match.start()] if loop else ''
-                        if (not loop or not re.fullmatch(r'\s*\{?\s*(?:\w+(?:\[[^]]+\])?\s*=\s*)?', prefix)
+                        if (not loop or not re.fullmatch(r'\s*\{?\s*(?:[^;{}]*;\s*)*(?:\w+(?:\[[^]]+\])?\s*=\s*)?(?:\(\s*\w+\s*\*?\s*\)\s*)?', prefix)
                                 or not 0 <= int(loop[1]) <= int(loop[2]) <= len(names)):
                             raise CatalogError('unreviewed table registration index: ' + args[0])
                         names = names[int(loop[1]):int(loop[2])]
