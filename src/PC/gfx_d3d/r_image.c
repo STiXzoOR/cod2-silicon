@@ -307,18 +307,44 @@ void R_SetPicmip(void)
         int dx7 = r_rendererInUse->current.integer == 2;
         int minPicmip = 0;
         int changed = 0;
+#if COD2_APPLE_SDK
+        int picmip, picmipBump, picmipSpec;
+
+        ri.Printf(0, dx7 ? "Texture detail is set automatically for DirectX 7.\n"
+                        : "Texture detail is set automatically.\n");
+        /* Windows 1.3's tiers by available texture memory (0x1000d729 for
+         * Direct3D 7, 0x1000d778 for Direct3D 9). Mac 1.3 had coarser ones:
+         * 1 above 128 MB and 2 below on Direct3D 7, and 2 on Direct3D 9, so
+         * its textures were blurrier than Windows on the same card. */
+        if (dx7) {
+            picmip = picmipBump = picmipSpec = texMemInMegs >= 100 ? 0 : texMemInMegs >= 28 ? 1 : 2;
+        } else if (texMemInMegs >= 300) {
+            picmip = 0; picmipBump = 0; picmipSpec = 0;
+        } else if (texMemInMegs >= 240) {
+            picmip = 0; picmipBump = 0; picmipSpec = 1;
+        } else if (texMemInMegs >= 190) {
+            picmip = 0; picmipBump = 1; picmipSpec = 1;
+        } else if (texMemInMegs >= 150) {
+            picmip = 1; picmipBump = 1; picmipSpec = 1;
+        } else if (texMemInMegs >= 130) {
+            picmip = 1; picmipBump = 1; picmipSpec = 2;
+        } else if (texMemInMegs >= 120) {
+            picmip = 1; picmipBump = 2; picmipSpec = 2;
+        } else {
+            picmip = 2; picmipBump = 2; picmipSpec = 2;
+        }
+        IG_SCALAR(2048) = picmip;
+        IG_SCALAR(2049) = picmipBump;
+        IG_SCALAR(2050) = picmipSpec;
+#else
         int picmip = dx7 && texMemInMegs > 128 ? 1 : 2;
 
         ri.Printf(0, dx7 ? "Texture detail is set automatically for DirectX 7.\n"
                         : "Texture detail is set automatically.\n");
-#if COD2_APPLE_SDK
-        /* Retain the native high-memory policy documented in WS11. */
-        if (!dx7)
-            picmip = texMemInMegs >= 512 && sysMemInMegs >= 1024 ? 0 : texMemInMegs > 128 ? 1 : 2;
-#endif
         IG_SCALAR(2048) = picmip;
         IG_SCALAR(2049) = picmip;
         IG_SCALAR(2050) = picmip;
+#endif
         if (sysMemInMegs <= 383)
             minPicmip = dx7 ? 1 : 2;
         else if (!dx7 && sysMemInMegs <= 479)

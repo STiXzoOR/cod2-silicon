@@ -515,8 +515,9 @@ GfxWorld *R_LoadWorldInternal(const char *name)
 #elif COD2_APPLE_SDK
                 /* Packed directional coefficients are only colors after the ARB
                  * shader combines all four planes. Keep the RGB approximation
-                 * for the fixed-function draw path. */
-                if (!MacShader_UseCachePrograms()) {
+                 * for the fixed-function draw path. Direct3D 7 is always
+                 * fixed-function, with or without a shader cache. */
+                if (rendererInUse == 2 || !MacShader_UseCachePrograms()) {
 
 #else
                 if (rendererInUse != 2) {
