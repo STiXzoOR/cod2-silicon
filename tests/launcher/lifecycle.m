@@ -3,11 +3,9 @@
 #include <unistd.h>
 #include "../../src/PC/qcommon/cod2x_url.h"
 
-/* Built with LIFECYCLE_STOCK, the fixture stands in for the original 1.3 engine, which has no
- * CoD2x layer; it keeps the link handler so a link the launcher must not send would show. */
-#ifndef LIFECYCLE_STOCK
+/* Built with LIFECYCLE_STOCK, the fixture stands in for the original 1.3 engine: the same app layer
+ * (bundle arguments, link handler), no CoD2x layer. */
 int Cod2xNativeApp_Arguments(char *buffer, int capacity) { (void)buffer; (void)capacity; return 0; }
-#endif
 @interface FixtureURLs : NSObject
 - (void)openURL:(NSAppleEventDescriptor *)event reply:(NSAppleEventDescriptor *)reply;
 @end
@@ -17,7 +15,10 @@ int Cod2xNativeApp_Arguments(char *buffer, int capacity) { (void)buffer; (void)c
     (void)reply;
     Cod2xURL link;
     NSString *text = [event paramDescriptorForKeyword:keyDirectObject].stringValue;
-    if (Cod2x_ParseURL(text.UTF8String, &link)) { printf("fixture link %s\n", link.address); fflush(stdout); }
+    if (Cod2x_ParseURL(text.UTF8String, &link)) {
+        printf("fixture link %s%s%s\n", link.address, link.hasPassword ? " password " : "", link.hasPassword ? link.password : "");
+        fflush(stdout);
+    }
 }
 @end
 int main(int argc, char **argv)

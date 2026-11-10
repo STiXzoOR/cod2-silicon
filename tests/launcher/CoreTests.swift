@@ -69,12 +69,12 @@ import Foundation
         precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 31))) != nil)
         try engines(server: server, scratch: scratch)
         try presentation(fixtures)
-        print("PASS: game version: CoD2x by default and kept across saves, both engines found by executable, Original 1.3 joins stock servers on its command line and asks for CoD2x otherwise")
+        print("PASS: game version: CoD2x by default and kept across saves, both engines found by executable, Original 1.3 asks for CoD2x only on CoD2x servers, links and passwords never in argv, crash and freeze reports from either engine")
         print("PASS: real master/status fixtures, malformed packets, colours, native key CRC/private storage, config and URL injection, frame cap 0–1000 (250 by default)")
         print("PASS: cm/360, advanced dvar forms, settings migration, release notes, maps, server facts, media, key tag, player name and scrims")
     }
 
-    /// Settings › Game version: which engine starts, what it can join, and how it's told the server.
+    /// Settings › Game version: which engine starts, what it can join, and what it leaves behind.
     static func engines(server stock: GameServer, scratch: URL) throws {
         precondition(GameSettings().engine == .cod2x)
         let older = try JSONDecoder().decode(GameSettings.self, from: Data(#"{"fps":125,"vsync":true}"#.utf8))
@@ -92,8 +92,6 @@ import Foundation
         let game = scratch.appendingPathComponent("CoD2 Game.app"), macos = game.appendingPathComponent("Contents/MacOS")
         try FileManager.default.createDirectory(at: macos, withIntermediateDirectories: true)
         precondition(GameEngine.installed(in: game).isEmpty)
-        for engine in GameEngine.allCases { precondition(GameEngine(executable: engine.executable(in: game)) == engine) }
-        precondition(GameEngine(executable: macos.appendingPathComponent("cod2-shadergen")) == nil && GameEngine(executable: nil) == nil)
         FileManager.default.createFile(atPath: macos.appendingPathComponent("cod2_macos").path, contents: Data(), attributes: [.posixPermissions: 0o755])
         FileManager.default.createFile(atPath: macos.appendingPathComponent("cod2_macos_stock").path, contents: Data(), attributes: [.posixPermissions: 0o644])
         precondition(GameEngine.installed(in: game) == [.cod2x], "a stock engine that can't run doesn't count")
@@ -105,29 +103,36 @@ import Foundation
         precondition(GameEngine.original.canJoin(stock) && !GameEngine.original.canJoin(codx))
         precondition(GameEngine.cod2x.canJoin(stock) && GameEngine.cod2x.canJoin(codx))
         let link = try LaunchLink.direct("203.0.113.24:28960"), secret = try LaunchLink.direct("203.0.113.24:28960", password: "hunter2")
-        precondition(GameEngine.cod2x.check(secret, server: codx, lookedUp: false) == .go)
-        precondition(GameEngine.original.check(link, server: stock, lookedUp: false) == .go)
-        precondition(GameEngine.original.check(link, server: codx, lookedUp: false) == .needsCoD2x(.cod2xServer))
-        precondition(GameEngine.original.check(secret, server: stock, lookedUp: false) == .needsCoD2x(.password))
-        precondition(GameEngine.original.check(link, server: nil, lookedUp: false) == .lookUp)
-        precondition(GameEngine.original.check(link, server: nil, lookedUp: true) == .go, "an unanswered server is the game's to try")
-        let request = EngineRequest(link: link, reason: .cod2xServer)
+        precondition(GameEngine.cod2x.check(server: codx, lookedUp: false) == .go)
+        precondition(GameEngine.original.check(server: stock, lookedUp: false) == .go)
+        precondition(GameEngine.original.check(server: codx, lookedUp: false) == .needsCoD2x)
+        precondition(GameEngine.original.check(server: nil, lookedUp: false) == .lookUp)
+        precondition(GameEngine.original.check(server: nil, lookedUp: true) == .go, "an unanswered server is the game's to try")
+        let request = EngineRequest(link: link)
         precondition(request.title == "This server needs CoD2x")
         precondition(request.message == "This server runs CoD2x 1.4. Original 1.3 can only join Stock 1.3 servers. CoD2x stays on for later games; you can change this in Settings.")
-        precondition(EngineRequest(link: secret, reason: .password).title == "Joining with a password needs CoD2x")
 
-        // CoD2x takes its server as an Apple event once running; the original on its command line,
-        // last, and never with a password.
-        let codxPlan = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", link: link)
-        precondition(codxPlan.link?.address == link.address && codxPlan.connectsAtStartup == nil && !codxPlan.arguments.contains("+connect"))
-        let stockPlan = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", link: link, forwarded: ["+set", "cg_fov", "80"], engine: .original)
-        precondition(stockPlan.link == nil && stockPlan.connectsAtStartup == "203.0.113.24:28960")
-        precondition(Array(stockPlan.arguments.suffix(2)) == ["+connect", "203.0.113.24:28960"])
-        precondition(Array(stockPlan.arguments.dropLast(2)) == codxPlan.arguments + ["+set", "cg_fov", "80"])
-        do { _ = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", link: secret, engine: .original); fatalError("FAIL: password in argv") }
-        catch { precondition(error.localizedDescription == GameEngine.passwordUnsupported) }
-        let demo = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", demo: "match", engine: .original)
-        precondition(demo.connectsAtStartup == nil && !demo.arguments.contains("+connect") && demo.arguments.suffix(2) == ["+demo", "match"])
+        // Both engines take their server as an Apple event once running: never +connect or a password in argv.
+        let plan = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", link: secret)
+        precondition(plan.link?.address == "203.0.113.24:28960" && plan.link?.password == "hunter2")
+        precondition(!plan.arguments.contains("+connect") && !plan.arguments.joined().contains("hunter2"))
+
+        // Crash and freeze reports, which either engine writes into the app home: the newest since the game started.
+        let reports = scratch.appendingPathComponent("reports")
+        try FileManager.default.createDirectory(at: reports, withIntermediateDirectories: true)
+        let started = Date()
+        func report(_ name: String, _ age: TimeInterval) throws {
+            let url = reports.appendingPathComponent(name)
+            try Data("report\n".utf8).write(to: url)
+            try FileManager.default.setAttributes([.modificationDate: started.addingTimeInterval(age)], ofItemAtPath: url.path)
+        }
+        try report("cod2_crash_101.txt", -60)
+        precondition(CrashReports.latest(in: reports, since: started) == nil, "a report from an earlier game is not this one's")
+        try report("cod2_freeze_202.txt", 5)
+        try report("notes.txt", 9); try report("cod2_crash_303.log", 9)
+        precondition(CrashReports.latest(in: reports, since: started)?.lastPathComponent == "cod2_freeze_202.txt")
+        try report("cod2_crash_202.txt", 7)
+        precondition(CrashReports.latest(in: reports, since: started)?.lastPathComponent == "cod2_crash_202.txt")
     }
 
     static func presentation(_ fixtures: URL) throws {

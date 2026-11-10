@@ -103,7 +103,6 @@ struct MediaEntry: Identifiable {
     let discover: ConfigDiscoverModel
     private var savedSettings = GameSettings()
     private var engine: Process?
-    private var launchedEngine = GameEngine.cod2x
     /// Servers asked for their version before Original 1.3 joins them: answered (or not), and in flight.
     private var checkedAddresses: Set<String> = []
     /// What each engine can't hold of the other's saved settings, from the catalogue.
@@ -121,11 +120,6 @@ struct MediaEntry: Identifiable {
     /// The engine the next game starts with: the one chosen in Settings, when this app carries it.
     var chosenEngine: GameEngine { installedEngines.contains(settings.engine) ? settings.engine : .cod2x }
     var originalAvailable: Bool { installedEngines.contains(.original) }
-    /// The running game's engine, which decides whether it can take a server link.
-    private var runningEngine: GameEngine? {
-        if let engine, engine.isRunning { return launchedEngine }
-        return attachedGames.values.first { !$0.isTerminated }.flatMap { GameEngine(executable: $0.executableURL?.resolvingSymlinksInPath()) }
-    }
     private var activeGamePID: pid_t? {
         if let engine, engine.isRunning { return engine.processIdentifier }
         if let app = attachedGames.values.filter({ !$0.isTerminated }).sorted(by: { $0.processIdentifier < $1.processIdentifier }).first { return app.processIdentifier }
@@ -395,15 +389,15 @@ struct MediaEntry: Identifiable {
         pendingLink = request.link
         play()
     }
-    /// Original 1.3 joins only stock 1.3 servers and can't take a password. Anything else asks to turn
-    /// CoD2x on; a server not seen yet is asked for its version first, once.
+    /// Original 1.3 joins only stock 1.3 servers; a CoD2x server asks to turn CoD2x on, and a server
+    /// not seen yet is asked for its version first, once.
     private func admit(_ link: LaunchLink) -> Bool {
         let address = (try? LaunchLink.canonicalAddress(link.address)) ?? link.address
-        switch chosenEngine.check(link, server: knownServer(address), lookedUp: checkedAddresses.contains(address)) {
+        switch chosenEngine.check(server: knownServer(address), lookedUp: checkedAddresses.contains(address)) {
         case .go: return true
-        case .needsCoD2x(let reason):
+        case .needsCoD2x:
             pendingLink = nil; fastPlay = false
-            engineRequest = EngineRequest(link: link, reason: reason)
+            engineRequest = EngineRequest(link: link)
         case .lookUp:
             guard lookingUp.insert(address).inserted else { break }
             Task {
@@ -532,7 +526,6 @@ struct MediaEntry: Identifiable {
                 // Startup overrides cannot be applied to an already running
                 // game through the read-only launch API.
                 serverConnection.clear()
-                guard runningEngine?.acceptsLinks != false else { notice = GameEngine.switchUnsupported; return }
                 scheduleLink(link, pid: pid)
             } else {
                 // A cold link can arrive before launch finishes; boot() starts the game then, so the
@@ -650,7 +643,6 @@ struct MediaEntry: Identifiable {
             let loadout = ConfigDocument.launchLoadout(home: home, profileID: configLaunch?.profileID)
             let plan = try GameLaunchPlan(settings: settings, dataPath: dataPath, homePath: home.path, link: pendingLink,
                 demo: demo?.deletingPathExtension().lastPathComponent, forwarded: forwardedArguments, configStudio: configLaunch, connection: connectionLaunch,
-                engine: gameEngine,
                 loadout: { loadout?.effectiveSetting(named: $0) })
             let process = Process(); process.executableURL = executable; process.arguments = plan.arguments
             process.currentDirectoryURL = home
@@ -672,14 +664,13 @@ struct MediaEntry: Identifiable {
                 }
             }
             try PrivateFile.write(Data(try settings.launchConfig(migrated: configLaunch != nil).utf8), to: home.appendingPathComponent("main/launcher.cfg"))
-            try process.run(); engine = process; launchedEngine = gameEngine; gameRunning = true; gameStartedAt = Date(); crashReport = nil; notice = ""
+            try process.run(); engine = process; gameRunning = true; gameStartedAt = Date(); crashReport = nil; notice = ""
             configStudio?.gameLaunched(pid: process.processIdentifier)
             if let error = configStudio?.migrationError ?? configStudio?.error { notice = error }
             startGameMonitor()
             // --play and cold links launch once: a later setup completion must not start a second game.
             pendingLink = nil; fastPlay = false; serverConnection.clear()
             if let link = plan.link { scheduleLink(link, pid: process.processIdentifier) }
-            else if let address = plan.connectsAtStartup { library.joined(address); saveLibrary() }
             cancelRefresh()
             handOff(to: process.processIdentifier)
             print("CoD2 Silicon: game started (pid \(process.processIdentifier)).")
@@ -739,9 +730,7 @@ struct MediaEntry: Identifiable {
             notice = "The game exited unexpectedly (\(code)). Your launcher is still open."
         }
         if !closed {
-            crashReport = (try? FileManager.default.contentsOfDirectory(at: home, includingPropertiesForKeys: [.contentModificationDateKey]))?
-                .filter { $0.lastPathComponent.hasPrefix("cod2_crash_") && $0.pathExtension == "txt" && ((try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast) >= gameStartedAt }
-                .sorted { ((try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast) > ((try? $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast) }.first
+            crashReport = CrashReports.latest(in: home, since: gameStartedAt)
         }
         if code == nil && crashReport != nil { notice = "The game closed and produced a crash report. Your launcher is still open." }
         print("CoD2 Silicon: returned to launcher (game exit \(code.map(String.init) ?? "unavailable")).")
