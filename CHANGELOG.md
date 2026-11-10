@@ -96,6 +96,11 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   treated alike. Now a sound behind you is quieter than the same sound in
   front, as in the original, which makes direction easier to judge. Measured
   against the original game's output, every direction is within about 0.1 dB.
+- Two small differences from Mac 1.3, found by compiling every source file
+  with the original compiler and comparing each function with the original
+  game: a failed language load no longer reports a warning when
+  `fs_ignoreLocalized` is set (it checked `developer`), and the errors for a
+  damaged map file show their text as written.
 - Whole-number arithmetic wraps around as it did in the original game.
   The game was written for processors where a number past its largest value
   wraps to the smallest; the Mac build left that case undefined, so the
