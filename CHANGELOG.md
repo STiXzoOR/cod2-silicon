@@ -104,7 +104,11 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   with the original compiler and comparing each function with the original
   game: a failed language load no longer reports a warning when
   `fs_ignoreLocalized` is set (it checked `developer`), and the errors for a
-  damaged map file show their text as written.
+  damaged map file show their text as written. A second pass matched four
+  more error texts, the rate message now printed for `sv_debugRate`, a host
+  no longer applying its own server's settings twice, and the script calls
+  `deactivateReverb` and `deactivateChannelVolumes`, which do nothing in 1.3
+  multiplayer because of a mistake in the original and now do nothing here.
 - Whole-number arithmetic wraps around as it did in the original game.
   The game was written for processors where a number past its largest value
   wraps to the smallest; the Mac build left that case undefined, so the
