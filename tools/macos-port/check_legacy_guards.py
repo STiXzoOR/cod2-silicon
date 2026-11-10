@@ -20,7 +20,7 @@ CONFIGURATIONS = {
 
 
 def body(source, defines):
-    source = re.sub(r'^\s*#\s*include\b[^\n]*', '', source, flags=re.M)
+    source = re.sub(r'^\s*#\s*(?:include|import)\b[^\n]*', '', source, flags=re.M)
     result = subprocess.run(
         ['clang', '-E', '-P', '-x', 'c', '-undef', '-DCOD2_APPLE_SDK=0',
          '-D__LINE__=1', '-D__DATE__="Jan  1 2000"', '-D__TIME__="00:00:00"',
@@ -35,7 +35,9 @@ def main():
     parser.add_argument('--base', required=True, help='the pre-port commit in this checkout')
     args = parser.parse_args()
     paths = subprocess.check_output(['git', 'diff', '--diff-filter=M', '--name-only', args.base], text=True).splitlines()
-    paths = [p for p in paths if p.endswith(('.c', '.h'))]
+    # The inactive configurations never compile the tests or the platform
+    # layer, so those have no guarded text to hold still.
+    paths = [p for p in paths if p.endswith(('.c', '.h')) and not p.startswith(('tests/', 'src/platform/'))]
     failures = []
     for path in paths:
         original = subprocess.check_output(['git', 'show', args.base + ':' + path], text=True)
