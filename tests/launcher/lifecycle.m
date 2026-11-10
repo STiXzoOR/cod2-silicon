@@ -52,6 +52,9 @@ int main(int argc, char **argv)
         for (int i = 1; i < argc; ++i) [arguments addObject:@(argv[i])];
         NSData *receipt = [NSJSONSerialization dataWithJSONObject:arguments options:0 error:nil];
         [receipt writeToFile:[home stringByAppendingPathComponent:@"fixture-arguments.json"] atomically:YES];
+        /* Whether the launcher let CoD2x's own crash reports go to CoD2x (Settings › Privacy). */
+        const char *consent = getenv("COD2_SILICON_COD2X_REPORTS");
+        [(consent ? @(consent) : @"unset") writeToFile:[home stringByAppendingPathComponent:@"fixture-reports-consent.txt"] atomically:YES encoding:NSUTF8StringEncoding error:nil];
         [@"Synthetic crash report\n" writeToFile:[home stringByAppendingPathComponent:@"cod2_crash_fixture.txt"] atomically:YES encoding:NSUTF8StringEncoding error:nil];
         for (;;) {
             if ([NSFileManager.defaultManager fileExistsAtPath:[home stringByAppendingPathComponent:@"exit-fixture"]]) {
@@ -63,7 +66,8 @@ int main(int argc, char **argv)
                 text = [text stringByReplacingOccurrencesOfString:@"seta cl_maxpackets \"125\"" withString:@"seta cl_maxpackets \"30\""];
 #endif
                 if (text) [[text stringByAppendingString:@"seta sensitivity \"6\"\n"] writeToFile:config atomically:YES encoding:NSUTF8StringEncoding error:nil];
-                [@"Synthetic crash report\n" writeToFile:[home stringByAppendingPathComponent:@"cod2_crash_fixture.txt"] atomically:YES encoding:NSUTF8StringEncoding error:nil]; return 37;
+                NSString *report = [NSString stringWithFormat:@"Synthetic crash report\ncrash      : SIGSEGV (synthetic)\nexecutable : %@/fixture\ncommand    : +set fs_homepath \"%@\"\n", NSHomeDirectory(), home];
+                [report writeToFile:[home stringByAppendingPathComponent:@"cod2_crash_fixture.txt"] atomically:YES encoding:NSUTF8StringEncoding error:nil]; return 37;
             }
             NSEvent *event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate dateWithTimeIntervalSinceNow:.05] inMode:NSDefaultRunLoopMode dequeue:YES];
             if (event) [NSApp sendEvent:event];

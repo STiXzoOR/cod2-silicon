@@ -118,6 +118,7 @@ struct MediaEntry: Identifiable {
     private var handOffTask: Task<Void, Never>?
     private var gameStartedAt = Date()
     private var lastExitCode: Int32?
+    private var reportTask: Task<Void, Never>?
     private var gameBundle: URL { Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app") }
     /// Either engine of this app, as running processes report their executables.
     private var gameExecutables: Set<URL> { Set(GameEngine.allCases.map { $0.executable(in: gameBundle).resolvingSymlinksInPath() }) }
@@ -184,6 +185,11 @@ struct MediaEntry: Identifiable {
         if !onboard { step = 0 }
     }
     var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0" }
+    /// This build's crash report receiver (a Sentry DSN written at build time); without one nothing is ever sent
+    /// and Settings doesn't offer it. The review harness shows the switch with a placeholder that is never used.
+    var crashReportService: SentryDSN? {
+        snapshot ? SentryDSN("https://preview@sentry.invalid/1") : SentryDSN(Bundle.main.object(forInfoDictionaryKey: CrashReporting.infoKey) as? String ?? "")
+    }
     var selected: GameServer? { servers.first { $0.address == selectedServer } ?? visibleServers.first }
     var lastServer: GameServer? {
         guard let address = library.recent.first else { return nil }
@@ -695,8 +701,8 @@ struct MediaEntry: Identifiable {
             environment["SDL_VIDEO_MAC_FULLSCREEN_SPACES"] = settings.fullscreen == "spaces" ? "1" : "0"
             if !approximate { environment["COD2_MAC_SHADER_CACHE"] = home.appendingPathComponent("shaders").path }
             else { environment.removeValue(forKey: "COD2_MAC_SHADER_CACHE") }
-            // Reports to CoD2x need the player's agreement; until the launcher asks for it, none are sent.
-            environment.removeValue(forKey: "COD2_SILICON_COD2X_REPORTS")
+            // CoD2x's own reports go to CoD2x only with the player's agreement (Settings › Privacy), and only from CoD2x.
+            CrashReporting.applyConsent(to: &environment, engine: gameEngine, cod2xReports: settings.sendCoD2xReports)
             process.environment = environment
             process.standardInput = FileHandle.standardInput
             process.standardOutput = FileHandle.standardOutput; process.standardError = FileHandle.standardError
@@ -778,12 +784,32 @@ struct MediaEntry: Identifiable {
             crashReport = CrashReports.latest(in: home, since: gameStartedAt)
         }
         if code == nil && crashReport != nil { notice = "The game closed and produced a crash report. Your launcher is still open." }
+        if !closed { sendCrashReports(CrashReports.all(in: home, since: gameStartedAt)) }
         print("CoD2 Silicon: returned to launcher (game exit \(code.map(String.init) ?? "unavailable")).")
         fflush(stdout)
         readPlayerName()
         refreshMatchSummaries()
         if pendingLink != nil { play() }
         else if exitAfterGame { NSApp.terminate(nil) }
+    }
+
+    /// New crash and freeze reports, classified now (before another game can start and send CoD2x's own),
+    /// then sent in order. The crash notice says what happened to them.
+    private func sendCrashReports(_ logs: [URL]) {
+        guard !logs.isEmpty, !snapshot else { return }
+        let sendOurs = settings.sendCrashReports, cod2x = settings.sendCoD2xReports, dsn = crashReportService, home = home
+        let facts = CrashReporting.Facts.current(release: version)
+        let owners = logs.map(CrashReporting.owner)
+        let base = notice, previous = reportTask
+        let pending = sendOurs && dsn != nil && owners.contains(.ours)
+        if pending, !base.isEmpty { notice = base + " " + CrashReporting.sending }
+        let shown = notice
+        reportTask = Task { [weak self] in
+            await previous?.value
+            let status = await CrashReporting.report(logs: logs, owners: owners, home: home, sendOurs: sendOurs, cod2xReports: cod2x, dsn: dsn, facts: facts)
+            guard let self, !base.isEmpty, self.notice == shown else { return }
+            self.notice = status.map { base + " " + $0.message } ?? base
+        }
     }
 
     /// Check-up reads the game's local match summaries from this home at startup and after each
@@ -883,6 +909,13 @@ struct MediaEntry: Identifiable {
         case "settings-cod2x-installed": page = .settings; cod2xFilesInstalled = true; cod2xFilesMessage = CoD2xFiles.Message.installed
         case "settings-cod2x-downloading": page = .settings; cod2xFilesBusy = true; cod2xFilesMessage = CoD2xFiles.Message.downloading
         case "settings-cod2x-error": page = .settings; cod2xFilesMessage = CoD2xFiles.message(CoD2xFiles.Failure.noCoD2x)
+        case "settings-reports": page = .settings; settings.sendCrashReports = true; settings.sendCoD2xReports = true; savedSettings = settings
+        case "home-crash-sent":
+            crashReport = home.appendingPathComponent("cod2_crash_4242.txt")
+            notice = "The game exited unexpectedly (11). Your launcher is still open. " + CrashReporting.Status.sent.message
+        case "home-crash-not-sent":
+            crashReport = home.appendingPathComponent("cod2_crash_4242.txt")
+            notice = "The game exited unexpectedly (11). Your launcher is still open. " + CrashReporting.Status.notSent(.offline).message
         case "library-demos": page = .library
         case "library-screenshots": page = .library; libraryTab = .screenshots
             media = ["toujane-dusk.jpg", "carentan-rooftops.jpg", "leningrad-snow.jpg"].enumerated().map { index, name in

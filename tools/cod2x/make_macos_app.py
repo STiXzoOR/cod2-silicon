@@ -115,6 +115,8 @@ def main():
     parser.add_argument("--no-game-mode", action="store_true", help="disable eligibility for a controlled comparison")
     parser.add_argument("--bundle-id", default="io.github.stixzoor.cod2silicon")
     parser.add_argument("--replace", action="store_true", help="replace an existing bundle with the same ID after verification")
+    parser.add_argument("--sentry-dsn", default="",
+                        help="crash report receiver for the launcher (a Sentry DSN); without one the launcher never sends reports")
     args = parser.parse_args()
     if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", args.version):
         parser.error("version must be N.N.N")
@@ -282,6 +284,13 @@ def main():
         info["CoD2AutomaticShaderSetup"] = False
         info["CoD2DefaultResolution"] = args.resolution
         info["CoD2DefaultFullscreen"] = "borderless" if args.borderless else "exclusive"
+        if args.sentry_dsn:
+            # The launcher reads it (CrashReporting.infoKey) and sends a report only when the player turns sending on.
+            # HTTPS, or a plain-HTTP stand-in on this Mac for tests.
+            if not re.fullmatch(r"https://[A-Za-z0-9]+(:[A-Za-z0-9]*)?@[^/@:\s]+(:\d+)?(/[^\s?#@]*)?/\d+", args.sentry_dsn) and \
+                    not re.fullmatch(r"http://[A-Za-z0-9]+(:[A-Za-z0-9]*)?@(127\.0\.0\.1|localhost)(:\d+)?/\d+", args.sentry_dsn):
+                parser.error("--sentry-dsn must look like https://<public key>@<host>/<project id>")
+            info["CoD2SentryDSN"] = args.sentry_dsn
         # SIL OFL 1.1 typefaces travel with their licence texts; the launcher also
         # registers them at runtime when run outside a bundle.
         fonts = root / "launcher/Resources/Fonts"

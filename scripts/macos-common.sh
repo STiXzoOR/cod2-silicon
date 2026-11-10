@@ -88,5 +88,6 @@ build_app() {
     run_build "$python" "$root/tools/cod2x/make_macos_app.py" \
         "$build/client/cod2_macos" "$app" --replace --launcher "$build/client/launcher/CoD2Launcher" --frameworks "$prefix" \
         --stock-engine "$build/client-stock/cod2_macos" \
-        --shadergen "$build/client/cod2-shadergen" --vkd3d "$build/vkd3d/install" --version "$version"
+        --shadergen "$build/client/cod2-shadergen" --vkd3d "$build/vkd3d/install" --version "$version" \
+        ${COD2_SENTRY_DSN:+--sentry-dsn "$COD2_SENTRY_DSN"}
 }

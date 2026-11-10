@@ -300,6 +300,220 @@ enum CrashReports {
             }
             .max { modified($0) < modified($1) }
     }
+    /// Every report written since `since`, oldest first.
+    static func all(in home: URL, since: Date) -> [URL] {
+        func modified(_ url: URL) -> Date { (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast }
+        let all = ((try? FileManager.default.contentsOfDirectory(at: home, includingPropertiesForKeys: [.contentModificationDateKey])) ?? [])
+            .filter { url in
+                let name = url.lastPathComponent
+                return ((["cod2_crash_", "cod2_freeze_"].contains(where: name.hasPrefix) && url.pathExtension == "txt")
+                    || (["cod2x_crash.", "cod2x_freeze."].contains(where: name.hasPrefix) && url.pathExtension == "log")) && modified(url) >= since
+            }
+        return all.sorted { (modified($0), $0.lastPathComponent) < (modified($1), $1.lastPathComponent) }
+    }
+}
+
+/// A Sentry project's address (its DSN), a value the release build writes into the launcher's
+/// Info.plist as `CoD2SentryDSN`. HTTPS only, except a stand-in on this Mac for tests.
+struct SentryDSN: Equatable, Sendable {
+    let text: String
+    let publicKey: String
+    let secretKey: String?
+    let envelopeURL: URL
+    init?(_ text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let parts = URLComponents(string: trimmed), let scheme = parts.scheme?.lowercased(), let host = parts.host?.lowercased(), !host.isEmpty,
+              let key = parts.user, key.range(of: "\\A[A-Za-z0-9]{1,64}\\z", options: .regularExpression) != nil,
+              parts.query == nil, parts.fragment == nil else { return nil }
+        let loopback = ["127.0.0.1", "localhost", "::1"].contains(host)
+        guard scheme == "https" || (scheme == "http" && loopback) else { return nil }
+        var path = parts.path.split(separator: "/").map(String.init)
+        guard let project = path.popLast(), project.range(of: "\\A[0-9]{1,20}\\z", options: .regularExpression) != nil else { return nil }
+        var endpoint = URLComponents()
+        endpoint.scheme = scheme; endpoint.host = parts.host; endpoint.port = parts.port
+        endpoint.path = "/" + (path + ["api", project, "envelope"]).joined(separator: "/") + "/"
+        guard let url = endpoint.url else { return nil }
+        self.text = trimmed; publicKey = key; envelopeURL = url
+        secretKey = parts.password.flatMap { $0.isEmpty ? nil : $0 }
+    }
+    /// The X-Sentry-Auth header (Sentry's transport authentication, protocol version 7).
+    func authorization(client: String) -> String {
+        "Sentry sentry_version=7, sentry_client=\(client), sentry_key=\(publicKey)" + (secretKey.map { ", sentry_secret=" + $0 } ?? "")
+    }
+}
+
+/// Crash reports leave the Mac only when the player turns sending on in Settings › Privacy.
+/// A fault inside CoD2x's own code is CoD2x's: the CoD2x engine writes `<log>.pending.json`
+/// beside its log and, only when COD2_SILICON_COD2X_REPORTS is 1, sends it to the CoD2x project
+/// at its next start (cod2x_report.c). Every other report is ours: the launcher sends it once to the
+/// project's Sentry, shortened and checked first, and never to CoD2x.
+enum CrashReporting {
+    static let consentVariable = "COD2_SILICON_COD2X_REPORTS"
+    static let infoKey = "CoD2SentryDSN"
+    static let sizeLimit = 1 << 20
+    static let ledgerName = "crash-reports-sent.json"
+
+    /// The engine's switch for CoD2x's own reports: on only for a CoD2x game the player agreed for.
+    static func applyConsent(to environment: inout [String: String], engine: GameEngine, cod2xReports: Bool) {
+        if engine == .cod2x && cod2xReports { environment[consentVariable] = "1" } else { environment.removeValue(forKey: consentVariable) }
+    }
+
+    enum Owner: Equatable, Sendable { case cod2x, ours }
+    /// A CoD2x log with its pending report beside it belongs to CoD2x; everything else is ours.
+    static func owner(of log: URL) -> Owner {
+        let pending = log.deletingLastPathComponent().appendingPathComponent(log.lastPathComponent + ".pending.json")
+        return log.lastPathComponent.hasPrefix("cod2x_") && FileManager.default.fileExists(atPath: pending.path) ? .cod2x : .ours
+    }
+
+    enum Refusal: Error, Equatable, Sendable { case unreadable, tooLarge, key, offline, refused }
+    enum Status: Equatable, Sendable {
+        case sent, notSent(Refusal), cod2x
+        var message: String {
+            switch self {
+            case .sent: "Report sent."
+            case .cod2x: "The CoD2x project gets this report the next time you play CoD2x."
+            case .notSent(let refusal):
+                "Report not sent: " + {
+                    switch refusal {
+                    case .unreadable: "it couldn’t be read."
+                    case .tooLarge: "it was too large."
+                    case .key: "it might contain your CD key, so it stayed on this Mac."
+                    case .offline: "couldn’t reach the report service. Check your connection."
+                    case .refused: "the report service didn’t accept it."
+                    }
+                }()
+            }
+        }
+    }
+    static let sending = "Sending report…"
+
+    /// What goes with a report besides the log.
+    struct Facts: Sendable {
+        var release: String
+        var macOS: String
+        var model: String
+        static func current(release: String) -> Facts {
+            let os = ProcessInfo.processInfo.operatingSystemVersion
+            var size = 0
+            var model = "Mac"
+            if sysctlbyname("hw.model", nil, &size, nil, 0) == 0, size > 1 {
+                var bytes = [CChar](repeating: 0, count: size)
+                if sysctlbyname("hw.model", &bytes, &size, nil, 0) == 0 { model = String(decoding: bytes.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self) }
+            }
+            return Facts(release: release, macOS: "\(os.majorVersion).\(os.minorVersion).\(os.patchVersion)", model: model)
+        }
+    }
+
+    /// The report as it may leave the Mac: home folder names become `~`, lines that carry the game's
+    /// command line are dropped, and anything that looks like a CD key stops it. The preferences
+    /// file that holds the key is never read; a key is recognised by its checksum.
+    static func redact(_ text: String, home: String = NSHomeDirectory()) throws(Refusal) -> String {
+        guard !containsKey(text) else { throw .key }
+        var result = text
+        if !home.isEmpty && home != "/" { result = result.replacingOccurrences(of: home, with: "~") }
+        result = result.replacingOccurrences(of: "/Users/[^/\\s\"'<>:]+", with: "~", options: [.regularExpression, .caseInsensitive])
+        let commandKey = try? NSRegularExpression(pattern: "^\\s*(command|command ?line|cmdline|arguments|argv|args)\\s*[:=]", options: .caseInsensitive)
+        let commandText = try? NSRegularExpression(pattern: "\\+(set|seta|exec|connect|password|demo)\\b", options: .caseInsensitive)
+        result = result.components(separatedBy: "\n").filter { line in
+            let range = NSRange(line.startIndex..., in: line)
+            return commandKey?.firstMatch(in: line, range: range) == nil && commandText?.firstMatch(in: line, range: range) == nil
+        }.joined(separator: "\n")
+        guard !containsKey(result) else { throw .key }
+        return result
+    }
+    /// Twenty key characters, together or in the game's groups of four, that pass the game's key checksum.
+    static func containsKey(_ text: String) -> Bool {
+        if text.range(of: "codkey", options: .caseInsensitive) != nil { return true }
+        guard let pattern = try? NSRegularExpression(pattern: "(?<![A-Za-z0-9])(?=((?:[A-Za-z0-9]{4}[- ]?){4}[A-Fa-f0-9]{4})(?![A-Za-z0-9]))") else { return true }
+        return pattern.matches(in: text, range: NSRange(text.startIndex..., in: text)).contains { match in
+            Range(match.range(at: 1), in: text).map { KeyStore.valid(String(text[$0])) } ?? false
+        }
+    }
+    /// The report's first reason line: `crash :` in the original engine's report, `Reason:` or `Signal:` in CoD2x's.
+    static func reason(_ text: String, name: String) -> String {
+        for line in text.components(separatedBy: "\n") {
+            let parts = line.split(separator: ":", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+            if parts.count == 2, ["crash", "reason", "signal"].contains(parts[0].lowercased()), !parts[1].isEmpty { return String(parts[1].prefix(200)) }
+        }
+        return name.contains("freeze") ? "The game stopped responding" : "The game crashed"
+    }
+
+    /// One Sentry envelope: a fatal event and the shortened log as its attachment.
+    static func envelope(log name: String, text: String, occurred: Date, facts: Facts, dsn: SentryDSN, eventID: String, sentAt: Date) -> Data {
+        let engine = name.hasPrefix("cod2x_") ? "cod2x" : "original"
+        let event: [String: Any] = [
+            "event_id": eventID, "timestamp": Int(occurred.timeIntervalSince1970), "platform": "native", "level": "fatal",
+            "logentry": ["formatted": reason(text, name: name)], "release": facts.release,
+            "tags": ["engine": engine, "macos": facts.macOS, "mac_model": facts.model],
+            "contexts": ["os": ["type": "os", "name": "macOS", "version": facts.macOS], "device": ["type": "device", "model": facts.model]],
+            // No user, and Sentry is told never to take the address the report came from.
+            "sdk": ["name": "cod2-silicon.launcher", "version": facts.release, "settings": ["infer_ip": "never"]],
+        ]
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        func json(_ value: [String: Any]) -> Data {
+            (try? JSONSerialization.data(withJSONObject: value, options: [.sortedKeys, .withoutEscapingSlashes])) ?? Data("{}".utf8)
+        }
+        let body = json(event), attachment = Data(text.utf8)
+        var envelope = json(["event_id": eventID, "dsn": dsn.text, "sent_at": formatter.string(from: sentAt)])
+        envelope += Data("\n".utf8) + json(["type": "event", "length": body.count]) + Data("\n".utf8) + body + Data("\n".utf8)
+        envelope += json(["type": "attachment", "length": attachment.count, "filename": name, "content_type": "text/plain"]) + Data("\n".utf8) + attachment + Data("\n".utf8)
+        return envelope
+    }
+    static func request(_ envelope: Data, dsn: SentryDSN, release: String) -> URLRequest {
+        var request = URLRequest(url: dsn.envelopeURL)
+        request.httpMethod = "POST"; request.httpBody = envelope; request.timeoutInterval = 15
+        request.setValue("application/x-sentry-envelope", forHTTPHeaderField: "Content-Type")
+        request.setValue(dsn.authorization(client: "cod2-silicon-launcher/" + release), forHTTPHeaderField: "X-Sentry-Auth")
+        request.setValue("CoD2-Silicon-Launcher", forHTTPHeaderField: "User-Agent")
+        request.setValue("en", forHTTPHeaderField: "Accept-Language")  // not the Mac's own languages
+        return request
+    }
+
+    /// Reports of ours already sent, by the SHA-256 of the log, so none is ever sent twice.
+    static func sentDigests(home: URL) -> Set<String> {
+        guard let data = try? Data(contentsOf: home.appendingPathComponent(ledgerName)), let list = try? JSONDecoder().decode([String].self, from: data) else { return [] }
+        return Set(list)
+    }
+    private static func recordSent(_ digest: String, home: URL) {
+        let url = home.appendingPathComponent(ledgerName)
+        var list = (try? JSONDecoder().decode([String].self, from: Data(contentsOf: url))) ?? []
+        list.append(digest)
+        if let data = try? JSONEncoder().encode(Array(list.suffix(500))) { try? PrivateFile.write(data, to: url) }
+    }
+
+    /// After a game: CoD2x's own reports are left to the CoD2x engine; ours go to Sentry once each, and
+    /// only with sending on and a DSN in this build. nil when there is nothing to say about sending.
+    /// `owners`, when given, is the classification made as the game ended.
+    static func report(logs: [URL], owners: [Owner]? = nil, home: URL, sendOurs: Bool, cod2xReports: Bool, dsn: SentryDSN?, facts: Facts,
+                       session: URLSession = URLSession(configuration: .ephemeral)) async -> Status? {
+        defer { session.finishTasksAndInvalidate() }
+        let owners = owners ?? logs.map(owner)
+        let ours = zip(logs, owners).filter { $0.1 == .ours }.map(\.0)
+        guard sendOurs, let dsn, !ours.isEmpty else { return ours.count < logs.count && cod2xReports ? .cod2x : nil }
+        var status: Status?
+        for log in ours {
+            let result = await send(log, home: home, dsn: dsn, facts: facts, session: session)
+            if status == nil || status == .sent { status = result }
+        }
+        return status
+    }
+    private static func send(_ log: URL, home: URL, dsn: SentryDSN, facts: Facts, session: URLSession) async -> Status? {
+        guard let values = try? log.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey, .contentModificationDateKey]),
+              values.isRegularFile == true, values.isSymbolicLink != true, let raw = try? Data(contentsOf: log) else { return .notSent(.unreadable) }
+        guard raw.count <= sizeLimit else { return .notSent(.tooLarge) }
+        let digest = CoD2xFiles.sha256(raw)
+        if sentDigests(home: home).contains(digest) { return nil }
+        let text: String
+        do { text = try redact(String(decoding: raw, as: UTF8.self)) } catch { return .notSent(error) }
+        let eventID = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
+        let body = envelope(log: log.lastPathComponent, text: text, occurred: values.contentModificationDate ?? Date(), facts: facts, dsn: dsn, eventID: eventID, sentAt: Date())
+        let response: URLResponse
+        do { (_, response) = try await session.data(for: request(body, dsn: dsn, release: facts.release)) } catch { return .notSent(.offline) }
+        guard let code = (response as? HTTPURLResponse)?.statusCode, (200..<300).contains(code) else { return .notSent(.refused) }
+        recordSent(digest, home: home)
+        return .sent
+    }
 }
 
 /// CoD2x's own menus and icons: the archive `iw_CoD2x_01.iwd` that CoD2x carries inside its Windows
@@ -531,6 +745,9 @@ struct GameSettings: Codable, Sendable, Equatable {
     var matchSummariesEnabled = true
     /// CoD2x unless the player chose the original 1.3 in Settings.
     var engine = GameEngine.cod2x
+    /// Settings › Privacy: crash reports to this project's Sentry, and CoD2x's own to CoD2x. Off until turned on.
+    var sendCrashReports = false
+    var sendCoD2xReports = false
     static let resolutions = ["1280x720", "1920x1080", "2560x1440", "3008x1692", "3840x2160", "5120x2880", "6016x3384"]
     static let anisotropyLevels = [2, 4, 8, 16]
     var cm360: Double? { MouseMath.centimetresPer360(dpi: dpi, sensitivity: sensitivity) }
@@ -552,6 +769,8 @@ struct GameSettings: Codable, Sendable, Equatable {
         matchSummariesEnabled = try c.decodeIfPresent(Bool.self, forKey: .matchSummariesEnabled) ?? d.matchSummariesEnabled
         // An engine this version doesn't know (from a newer launcher) falls back without losing the rest.
         engine = (try? c.decodeIfPresent(GameEngine.self, forKey: .engine)) ?? d.engine
+        sendCrashReports = (try? c.decodeIfPresent(Bool.self, forKey: .sendCrashReports)) ?? d.sendCrashReports
+        sendCoD2xReports = (try? c.decodeIfPresent(Bool.self, forKey: .sendCoD2xReports)) ?? d.sendCoD2xReports
     }
     /// One advanced line as (name, value): `dvar value` as typed in the console, or `dvar=value`.
     static func advancedPair(_ line: String) -> (String, String)? {

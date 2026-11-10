@@ -132,6 +132,15 @@ last-successful cache. Refresh is explicit; opening the app doesn't scan the
 internet. Checking for updates is an explicit HTTPS request to GitHub Releases;
 it refreshes Home's Dispatches and only notifies.
 
+Crash reports leave the Mac only with Settings › Privacy switches the player turned on. A fault in
+CoD2x's own code leaves `<log>.pending.json` beside CoD2x's log; with "Send CoD2x crash reports to
+the CoD2x project" on, the launcher sets `COD2_SILICON_COD2X_REPORTS=1` for a CoD2x game and the
+engine sends it to CoD2x at its next start. Every other report goes, with "Send crash reports to
+CoD2 Silicon" on and a build-time receiver (`make_macos_app.py --sentry-dsn`, or `COD2_SENTRY_DSN`
+for the release scripts), to the project's Sentry as one envelope: home folder names shortened to
+`~`, command-line lines dropped, refused if it holds anything that passes the CD key checksum, and
+recorded in `crash-reports-sent.json` so it is never sent twice (`CrashReporting` in `Core.swift`).
+
 WS21's NSAlert setup remains available in engine-only development/test bundles
 (`make_macos_app.py --engine-only`). Production bundles set automatic setup off
 in the helper because SwiftUI owns setup. The existing native engine URL handler
