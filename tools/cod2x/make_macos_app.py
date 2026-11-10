@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Bundle an arm64 COD2_CODX-enabled client and register its cod2x URL scheme."""
+"""Bundle an arm64 COD2_CODX-enabled client and register its cod2x URL scheme.
+
+With --stock-engine, the original 1.3 engine built from the same sources (without
+COD2_CODX) travels beside it as cod2_macos_stock. It shares the game app's frameworks,
+shader generator, entitlements and signature; the launcher's Settings choose which one starts.
+"""
 import argparse
 import pathlib
 import plistlib
@@ -19,12 +24,14 @@ SIGN_IDENTITY = os.environ.get("COD2_SIGN_IDENTITY", "-")
 ENTITLEMENTS = {"com.apple.security.device.audio-input": True}
 
 
-def codesign(path, entitlements=None):
+def codesign(path, entitlements=None, identifier=None):
     command = ["codesign", "--force", "--sign", SIGN_IDENTITY]
     if SIGN_IDENTITY != "-":
         command += ["--options", "runtime", "--timestamp"]
     if entitlements:
         command += ["--entitlements", str(entitlements)]
+    if identifier:
+        command += ["--identifier", identifier]
     subprocess.run(command + [str(path)], check=True)
 
 
@@ -91,6 +98,8 @@ def main():
     parser.add_argument("app", type=pathlib.Path, help="new output path ending in .app")
     parser.add_argument("--launcher", type=pathlib.Path, help="prebuilt Swift 6 launcher; built locally if omitted")
     parser.add_argument("--engine-only", action="store_true", help="legacy engine-only bundle for native engine fixtures")
+    parser.add_argument("--stock-engine", type=pathlib.Path,
+                        help="original 1.3 engine (built without COD2_CODX) to bundle beside the CoD2x one")
     parser.add_argument("--game-dir", type=pathlib.Path, default=None,
                         help="optional developer override; omitted in release bundles")
     parser.add_argument("--frameworks", type=pathlib.Path, help="pinned SDL install prefix for a self-contained bundle")
@@ -132,6 +141,14 @@ def main():
     symbols = subprocess.check_output(["nm", "-g", str(args.executable)], text=True)
     if "_Cod2xNativeApp_Arguments" not in symbols:
         parser.error("client needs COD2_CODX=1 and bundle argument support; rebuild the native target")
+    if args.stock_engine:
+        if args.engine_only:
+            parser.error("--stock-engine needs the launcher bundle, not --engine-only")
+        if not args.stock_engine.is_file():
+            parser.error("stock engine does not exist")
+        subprocess.run(["lipo", str(args.stock_engine), "-verify_arch", "arm64"], check=True)
+        if "_Cod2xNativeApp_Arguments" in subprocess.check_output(["nm", "-g", str(args.stock_engine)], text=True):
+            parser.error("--stock-engine is a CoD2x build; build it without COD2_CODX")
     destination = args.app.expanduser().resolve()
     destination.parent.mkdir(parents=True, exist_ok=True)
     staging = tempfile.TemporaryDirectory(prefix=".cod2x-build-", dir=destination.parent)
@@ -145,6 +162,12 @@ def main():
     binary = game_macos / "cod2_macos"
     shutil.copy2(args.executable, binary)
     binary.chmod(binary.stat().st_mode | 0o111)
+    engines = [binary]
+    if args.stock_engine:
+        stock = game_macos / "cod2_macos_stock"
+        shutil.copy2(args.stock_engine, stock)
+        stock.chmod(stock.stat().st_mode | 0o111)
+        engines.append(stock)
     resources = contents / "Resources"
     resources.mkdir(parents=True)
     if args.frameworks:
@@ -159,9 +182,9 @@ def main():
         if not (frameworks / "libSDL3.dylib").is_file() or not (frameworks / "libSDL2.dylib").is_file():
             parser.error("SDL install prefix must contain SDL3 and sdl2-compat dylibs")
         shutil.copytree(args.frameworks / "licenses", resources / "licenses")
-        machos = [binary] + sorted(p for p in frameworks.glob("*.dylib") if not p.is_symlink())
-        make_portable(parser, machos, {binary}, frameworks)
-        for dylib in machos[1:]:
+        machos = engines + sorted(p for p in frameworks.glob("*.dylib") if not p.is_symlink())
+        make_portable(parser, machos, set(engines), frameworks)
+        for dylib in machos[len(engines):]:
             codesign(dylib)
     if args.shadergen:
         # The shader generator and its HLSL compiler travel in the game app, where both
@@ -247,6 +270,10 @@ def main():
             shutil.copy2(icon_file, game_resources / icon_file.name)
         with (game_contents / "Info.plist").open("wb") as file:
             plistlib.dump(game_info, file)
+        # A second engine is nested code: it carries its own signature and entitlements
+        # before the game app's signature seals it.
+        for engine in engines[1:]:
+            codesign(engine, entitlements, args.bundle_id + ".game.stock")
         codesign(game_contents.parent, entitlements)
         info["LSSupportsGameMode"] = False
         info["CoD2AutomaticShaderSetup"] = False
