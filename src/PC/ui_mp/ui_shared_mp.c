@@ -3188,8 +3188,17 @@ void Item_Bind_Paint(displayContextDef_t *dc, itemDef_t *item)
 #endif
 
     bindName = item->dvar;
+#if COD2_APPLE_SDK
+    /* Mac 1.3 (0x16a346) returns for neither a missing nor an empty dvar. An
+     * empty one draws the label and the unbound text; a missing one draws
+     * "FIXME" when there is no label, and with a label looks the binding up
+     * through a null pointer, which is the one case left out here. */
+    if (!bindName && item->text)
+        return;
+#else
     if (!bindName || !bindName[0])
         return;
+#endif
 
     if (g_waitingForKey && g_bindItem == item) {
         drawText = UI_SafeTranslateString("EXE_KEYWAIT");
@@ -3200,7 +3209,14 @@ void Item_Bind_Paint(displayContextDef_t *dc, itemDef_t *item)
         goto draw;
     }
 
+#if COD2_APPLE_SDK
+    if (bindName)
+        BindingFromName(bindName, bindText);
+    else
+        bindText[0] = '\0';
+#else
     BindingFromName(bindName, bindText);
+#endif
     drawText = bindText;
 
     int flags = ((itemDef_t *)it)->window.dynamicFlags[0];
