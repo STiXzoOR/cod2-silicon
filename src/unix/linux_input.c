@@ -102,6 +102,7 @@ extern const dvar_t *Dvar_RegisterInt(const char *, int, int, int, unsigned shor
 extern const dvar_t *Dvar_RegisterBool(const char *, unsigned char, unsigned short);
 extern void Dvar_SetInt(const dvar_t *, int);
 extern void Com_Printf(const char *, ...);
+extern void Com_Error(int, const char *, ...);
 static const dvar_t *m_rinput, *m_rinput_hz, *m_rinput_hz_max, *m_enable, *m_debug;
 static Cod2xMouseStats mouseStats;
 static int mouseStatsActive, mouseStatsMode = -1, menuCursorX = -1, menuCursorY = -1;
@@ -120,13 +121,21 @@ static int MacInput_RawMode(void)
     }
     int mode = m_rinput->latched.integer;
     if (mode != mouseStatsMode) {
+        const char *error;
         if (mouseStatsMode > 0)
             Com_Printf("Unregistered raw input device (%s)\n", methods[mouseStatsMode]);
-        Dvar_SetInt(m_rinput, mode);
-        MacRawMouse_SetMode(mode);
-        Cod2x_MouseStatsReset(&mouseStats, MacSystem_Nanoseconds(), MacRawMouse_EventCount());
         Dvar_SetInt(m_rinput_hz, 0);
         Dvar_SetInt(m_rinput_hz_max, 0);
+        error = MacRawMouse_SetMode(mode);
+        if (error) {
+            MacRawMouse_SetMode(0);
+            mouseStatsMode = 0;
+            Dvar_SetInt(m_rinput, 0);
+            Com_Error(1, "%s", error);
+            return 0;
+        }
+        Dvar_SetInt(m_rinput, mode);
+        Cod2x_MouseStatsReset(&mouseStats, MacSystem_Nanoseconds(), MacRawMouse_EventCount());
         if (mode > 0)
             Com_Printf("Registered raw input device (%s)\n", methods[mode]);
         mouseStatsMode = mode;

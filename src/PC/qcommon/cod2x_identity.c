@@ -99,6 +99,16 @@ int Cod2x_ShortHwid(void)
     return cod2x_shortHwid;
 }
 
+static void Cod2x_HwidText(char value[COD2X_MACHINE_VALUES][COD2X_MACHINE_TEXT], char *text, size_t size)
+{
+    snprintf(text, size,
+             "BIOS manufacturer: %s\nBIOS serial: %s\nCPU name: %s\nCPU ID: %s\nMotherboard manufacturer: %s\n"
+             "Motherboard serial: %s\nDisk Model: %s\nDisk Serial: %s\nGPU Name: %s",
+             value[COD2X_BIOS_MAKER], value[COD2X_BIOS_SERIAL], value[COD2X_CPU_NAME], value[COD2X_CPU_ID],
+             value[COD2X_BOARD_MAKER], value[COD2X_BOARD_SERIAL], value[COD2X_DISK_MODEL],
+             value[COD2X_DISK_SERIAL], value[COD2X_GPU_NAME]);
+}
+
 int Cod2x_HwidFromMachine(char value[COD2X_MACHINE_VALUES][COD2X_MACHINE_TEXT], int failed, char id[33])
 {
     char text[1024];
@@ -110,12 +120,7 @@ int Cod2x_HwidFromMachine(char value[COD2X_MACHINE_VALUES][COD2X_MACHINE_TEXT], 
         missing += !value[i][0];
     if (missing >= 3)
         return 0;
-    snprintf(text, sizeof(text),
-             "BIOS manufacturer: %s\nBIOS serial: %s\nCPU name: %s\nCPU ID: %s\nMotherboard manufacturer: %s\n"
-             "Motherboard serial: %s\nDisk Model: %s\nDisk Serial: %s\nGPU Name: %s",
-             value[COD2X_BIOS_MAKER], value[COD2X_BIOS_SERIAL], value[COD2X_CPU_NAME], value[COD2X_CPU_ID],
-             value[COD2X_BOARD_MAKER], value[COD2X_BOARD_SERIAL], value[COD2X_DISK_MODEL],
-             value[COD2X_DISK_SERIAL], value[COD2X_GPU_NAME]);
+    Cod2x_HwidText(value, text, sizeof(text));
     Cod2x_BuildMD5(text, (unsigned int)strlen(text), id);
     cod2x_shortHwid = Cod2x_HwidShortFromMachine(value);
     return 1;
@@ -178,6 +183,7 @@ static void Cod2x_ProcessorId(char out[COD2X_MACHINE_TEXT])
 #endif
 
 #if COD2X_HWID_WMI
+#include "win32/win_cod2x.h"
 extern void Com_Printf(const char *, ...);
 
 /* CoD2x waits at most 3 x 3000 ms for each enumerator step. The whole read gets a
@@ -466,6 +472,145 @@ static DWORD WINAPI Cod2x_MachineThread(LPVOID argument)
     return 0;
 }
 
+static int Cod2x_Base64Encode(const unsigned char *data, size_t length, char *out, size_t capacity)
+{
+    static const char digits[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    size_t i, used = 0;
+    if ((length + 2) / 3 * 4 + 1 > capacity)
+        return -1;
+    for (i = 0; i < length; i += 3) {
+        unsigned int bits = (unsigned int)data[i] << 16;
+        if (i + 1 < length)
+            bits |= (unsigned int)data[i + 1] << 8;
+        if (i + 2 < length)
+            bits |= data[i + 2];
+        out[used++] = digits[bits >> 18 & 63];
+        out[used++] = digits[bits >> 12 & 63];
+        out[used++] = i + 1 < length ? digits[bits >> 6 & 63] : '=';
+        out[used++] = i + 2 < length ? digits[bits & 63] : '=';
+    }
+    out[used] = '\0';
+    return (int)used;
+}
+
+static int Cod2x_Base64Decode(const char *in, unsigned char *out, size_t capacity)
+{
+    static const char digits[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    unsigned int bits = 0;
+    int pending = 0;
+    size_t used = 0;
+    for (; *in && *in != '='; ++in) {
+        const char *digit = strchr(digits, *in);
+        if (!digit)
+            return -1;
+        bits = bits << 6 | (unsigned int)(digit - digits);
+        pending += 6;
+        if (pending >= 8) {
+            pending -= 8;
+            if (used + 1 >= capacity)
+                return -1;
+            out[used++] = (unsigned char)(bits >> pending);
+            bits &= (1u << pending) - 1;
+        }
+    }
+    out[used] = '\0';
+    return (int)used;
+}
+
+/* The next non-empty line, as strtok splits them. */
+static char *Cod2x_NextLine(char **cursor)
+{
+    char *line = *cursor, *end;
+    while (*line == '\n')
+        ++line;
+    if (!*line)
+        return NULL;
+    end = strchr(line, '\n');
+    if (end)
+        *end++ = '\0';
+    else
+        end = line + strlen(line);
+    *cursor = end;
+    return line;
+}
+
+static void Cod2x_HwidFatal(const char *message)
+{
+    Win_Cod2xFatal(message);
+}
+
+/* The values CoD2x keeps beside the game's own (mss32/hwid.cpp): this machine's
+   cl_hwid2, the text it came from, the previous one and what changed, and a random
+   REGID. They stay in the registry; nothing here sends them. */
+static void Cod2x_HwidRegistry(char value[COD2X_MACHINE_VALUES][COD2X_MACHINE_TEXT], const char *id)
+{
+    char text[1024], stored[64] = {0}, source[2048] = {0}, encoded[2048], diff[1024] = {0};
+    unsigned char decoded[2048];
+    const char *previous;
+    DWORD type = 0, size, count;
+    /* 1.4.4.4 changed how the value is made; an older install starts over. */
+    if (Win_Cod2xVersionChanged(&previous) && (!previous[0] || Win_Cod2xCompareVersions(previous, "1.4.4.4") < 0)) {
+        Win_Cod2xRegDelete("HWID");
+        Win_Cod2xRegDelete("HWID_OLD");
+        Win_Cod2xRegDelete("HWID_SOURCE");
+        Win_Cod2xRegDelete("HWID_DIFF");
+        Win_Cod2xRegDelete("HWID_DIFF_COUNT");
+    }
+    Cod2x_HwidText(value, text, sizeof(text));
+    size = sizeof(stored) - 1;
+    if (Win_Cod2xRegRead("HWID", &type, stored, &size) && type == REG_SZ && strcmp(stored, id)) {
+        if (!Win_Cod2xRegWrite("HWID_OLD", REG_SZ, stored, (DWORD)strlen(stored) + 1))
+            Cod2x_HwidFatal("Failed to save old HWID to registry.");
+        count = 1;
+        size = sizeof(count);
+        if (Win_Cod2xRegRead("HWID_DIFF_COUNT", &type, &count, &size) && type == REG_DWORD)
+            ++count;
+        else
+            count = 1;
+        if (!Win_Cod2xRegWrite("HWID_DIFF_COUNT", REG_DWORD, &count, sizeof(count)))
+            Cod2x_HwidFatal("Failed to update HWID_DIFF_COUNT in registry.");
+        size = sizeof(source) - 1;
+        if (Win_Cod2xRegRead("HWID_SOURCE", &type, source, &size) && type == REG_SZ) {
+            char oldLines[2048], newLines[1024], *oldCursor = oldLines, *newCursor = newLines, *oldLine, *newLine;
+            if (Cod2x_Base64Decode(source, decoded, sizeof(decoded)) < 0)
+                Cod2x_HwidFatal("Failed to decode HWID source from Base64.");
+            if (!strcmp((const char *)decoded, text))
+                Cod2x_HwidFatal("HWID source has not changed, but HWID hash is different. This should not happen.");
+            /* Each line that changed, before and after. */
+            snprintf(oldLines, sizeof(oldLines), "%s", (const char *)decoded);
+            snprintf(newLines, sizeof(newLines), "%s", text);
+            oldLine = Cod2x_NextLine(&oldCursor);
+            newLine = Cod2x_NextLine(&newCursor);
+            while (oldLine && newLine) {
+                if (strcmp(oldLine, newLine)) {
+                    char pair[256];
+                    snprintf(pair, sizeof(pair), "%s\n%s\n", oldLine, newLine);
+                    strncat(diff, pair, sizeof(diff) - strlen(diff) - 1);
+                }
+                oldLine = Cod2x_NextLine(&oldCursor);
+                newLine = Cod2x_NextLine(&newCursor);
+            }
+            if (diff[0] && !Win_Cod2xRegWrite("HWID_DIFF", REG_SZ, diff, (DWORD)strlen(diff) + 1))
+                Cod2x_HwidFatal("Failed to save HWID change difference to registry.");
+        }
+    }
+    if (!Win_Cod2xRegWrite("HWID", REG_SZ, id, (DWORD)strlen(id) + 1))
+        Cod2x_HwidFatal("Failed to save HWID to registry.");
+    if (Cod2x_Base64Encode((const unsigned char *)text, strlen(text), encoded, sizeof(encoded)) < 0)
+        Cod2x_HwidFatal("Failed to encode HWID source to Base64.");
+    if (!Win_Cod2xRegWrite("HWID_SOURCE", REG_SZ, encoded, (DWORD)strlen(encoded) + 1))
+        Cod2x_HwidFatal("Failed to save HWID source to registry.");
+    /* REGID tells copies of one disk image apart. */
+    size = sizeof(stored) - 1;
+    memset(stored, 0, sizeof(stored));
+    if (!Win_Cod2xRegRead("REGID", &type, stored, &size) || type != REG_SZ || !stored[0]) {
+        char seed[64], regid[33];
+        snprintf(seed, sizeof(seed), "%u_%u", (unsigned int)GetTickCount(), (unsigned int)rand());
+        Cod2x_BuildMD5(seed, (unsigned int)strlen(seed), regid);
+        Win_Cod2xRegWrite("REGID", REG_SZ, regid, (DWORD)strlen(regid) + 1);
+    }
+}
+
 static int Cod2x_MachineHwid(char id[33])
 {
     Cod2xMachine *machine = calloc(1, sizeof(*machine));
@@ -483,6 +628,7 @@ static int Cod2x_MachineHwid(char id[33])
         Com_Printf("CoD2x: machine identity: WMI did not answer in %d seconds.\n", COD2X_WMI_TOTAL_MS / 1000);
     else if (machine->ok) {
         memcpy(id, machine->id, 33);
+        Cod2x_HwidRegistry(machine->value, id);
         ok = 1;
     } else
         Com_Printf("CoD2x: machine identity: %s.\n", machine->error);

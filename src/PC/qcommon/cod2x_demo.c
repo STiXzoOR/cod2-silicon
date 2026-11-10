@@ -10,21 +10,34 @@ extern void Com_Error(int, const char *, ...);
 
 static Cod2xDemoProgress demo_progress;
 
-/* Only the macOS and Linux builds link libcurl, as for dl_main.c. Elsewhere no upload
-   URL is accepted, nothing is queued and quitting never waits for an upload. */
-#if defined(__APPLE__) || defined(__linux__)
+/* The macOS, Linux and Windows builds link libcurl (Windows a static one, on its
+   own TLS). Elsewhere no upload URL is accepted, nothing is queued and quitting
+   never waits for an upload. */
+#if defined(__APPLE__) || defined(__linux__) || defined(_WIN32)
 #define COD2X_DEMO_UPLOADS 1
 #else
 #define COD2X_DEMO_UPLOADS 0
 #endif
 
 #if COD2X_DEMO_UPLOADS
+#if defined(_WIN32)
+#define CURL_STATICLIB
+#endif
 #include <curl/curl.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#if defined(_WIN32)
+#include <windows.h>
+/* CoD2x prints and opens these paths with backslashes. */
+#define COD2X_DEMO_SEPARATOR '\\'
+#define COD2X_DEMO_OPEN_FLAGS (O_RDONLY | O_BINARY)
+#else
+#define COD2X_DEMO_SEPARATOR '/'
+#define COD2X_DEMO_OPEN_FLAGS (O_RDONLY | O_NOFOLLOW)
+#endif
 
 static CURLM *demo_multi;
 static CURL *demo_easy;
@@ -42,9 +55,26 @@ static struct DemoFailed {
 
 static uint64_t Cod2x_DemoMilliseconds(void)
 {
+#if defined(_WIN32)
+    return (uint64_t)GetTickCount64();
+#else
     struct timespec time;
     clock_gettime(CLOCK_MONOTONIC, &time);
     return (uint64_t)time.tv_sec * 1000 + (uint64_t)time.tv_nsec / 1000000;
+#endif
+}
+
+/* A regular file that is not a link: an upload never follows one. */
+static int Cod2x_DemoRegularFile(const char *path, struct stat *st)
+{
+#if defined(_WIN32)
+    DWORD attributes = GetFileAttributesA(path);
+    if (attributes == INVALID_FILE_ATTRIBUTES || (attributes & FILE_ATTRIBUTE_REPARSE_POINT))
+        return 0;
+    return !stat(path, st) && S_ISREG(st->st_mode);
+#else
+    return !lstat(path, st) && S_ISREG(st->st_mode);
+#endif
 }
 #endif
 
@@ -173,15 +203,23 @@ static void Cod2x_DemoRemoveMarker(void)
 }
 
 /* CoD2x src/mss32/demo.cpp:87-160: the first .upload marker that hasn't failed. */
-static int Cod2x_DemoFind(const char *directory, char marker[4096], char demo[4096])
+static int Cod2x_DemoFind(const char *directoryIn, char marker[4096], char demo[4096])
 {
     DIR *dir;
     struct dirent *entry;
     struct stat st;
-    char path[4096];
+    char directory[4096], path[4096], *p;
     size_t length;
-    if (!directory)
+    if (!directoryIn || strlen(directoryIn) >= sizeof(directory))
         return 0;
+    strcpy(directory, directoryIn);
+#if defined(_WIN32)
+    for (p = directory; *p; ++p)
+        if (*p == '/')
+            *p = COD2X_DEMO_SEPARATOR;
+#else
+    (void)p;
+#endif
     Com_Printf("Checking for demos to upload in directory: '%s'...\n", directory);
     dir = opendir(directory);
     if (!dir) {
@@ -190,12 +228,13 @@ static int Cod2x_DemoFind(const char *directory, char marker[4096], char demo[40
     }
     while ((entry = readdir(dir)) != NULL) {
         const char *extension;
-        if (snprintf(path, sizeof(path), "%s/%s", directory, entry->d_name) >= (int)sizeof(path)) {
-            Com_Printf("Path too long, skipping: %s/%s\n", directory, entry->d_name);
+        if (snprintf(path, sizeof(path), "%s%c%s", directory, COD2X_DEMO_SEPARATOR, entry->d_name) >=
+            (int)sizeof(path)) {
+            Com_Printf("Path too long, skipping: %s%c%s\n", directory, COD2X_DEMO_SEPARATOR, entry->d_name);
             continue;
         }
-        /* lstat: a marker that is a link is never followed. */
-        if (lstat(path, &st) || !S_ISREG(st.st_mode))
+        /* A marker that is a link is never followed. */
+        if (!Cod2x_DemoRegularFile(path, &st))
             continue;
         extension = strrchr(entry->d_name, '.');
         if (!extension || strcmp(extension, ".upload") || Cod2x_DemoFailedMarker(path))
@@ -324,12 +363,12 @@ static void Cod2x_DemoStart(const char *directory, int timeoutSeconds)
     if (!Cod2x_DemoFind(directory, demo_marker, demo_path))
         return;
     /* Only a regular file is uploaded; a link counts as not readable. */
-    if (access(demo_path, R_OK) != 0 || lstat(demo_path, &st) || !S_ISREG(st.st_mode)) {
+    if (access(demo_path, R_OK) != 0 || !Cod2x_DemoRegularFile(demo_path, &st)) {
         Com_Printf("Demo file not found or not readable, removing marker file: '%s'\n", demo_marker);
         Cod2x_DemoRemoveMarker();
         return;
     }
-    fd = open(demo_path, O_RDONLY | O_NOFOLLOW);
+    fd = open(demo_path, COD2X_DEMO_OPEN_FLAGS);
     demo_file = fd >= 0 ? fdopen(fd, "rb") : NULL;
     if (!demo_file) {
         if (fd >= 0)
@@ -365,7 +404,7 @@ static void Cod2x_DemoStart(const char *directory, int timeoutSeconds)
         return;
     }
     memset(&demo_progress, 0, sizeof(demo_progress));
-    snprintf(demo_progress.name, sizeof(demo_progress.name), "%s", strrchr(demo_path, '/') + 1);
+    snprintf(demo_progress.name, sizeof(demo_progress.name), "%s", strrchr(demo_path, COD2X_DEMO_SEPARATOR) + 1);
     demo_progress.total = (uint64_t)st.st_size;
     demo_progress.state = COD2X_DEMO_UPLOAD_ACTIVE;
     demo_progress.attempts = demo_errorCount;

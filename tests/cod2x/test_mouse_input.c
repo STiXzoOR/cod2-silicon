@@ -56,7 +56,8 @@ void Sys_QueEvent(int time, sysEventType_t type, int value, int value2, int leng
 { (void)time; (void)type; (void)value; (void)value2; (void)length; (void)pointer; }
 void MacPlatform_MapWindowPoint(int x, int y, int *rx, int *ry) { *rx = x; *ry = y; }
 int MacRawMouse_Available(void) { return 1; }
-void MacRawMouse_SetMode(int mode) { rawMode = mode; }
+const char *MacRawMouse_SetMode(int mode) { rawMode = mode; return NULL; }
+void Com_Error(int code, const char *format, ...) { (void)code; (void)format; abort(); }
 void MacRawMouse_SetActive(int active) { rawActive = active; }
 uint64_t MacRawMouse_EventCount(void) { return rawEvents; }
 uint64_t MacSystem_Nanoseconds(void) { return now; }

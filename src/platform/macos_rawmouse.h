@@ -8,6 +8,7 @@ int MacRawMouse_Available(void);
 int MacRawMouse_Read(int *dx, int *dy);
 uint64_t MacRawMouse_EventCount(void);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-void MacRawMouse_SetMode(int mode);
+/* NULL, or CoD2x's message when the mode could not be set up. */
+const char *MacRawMouse_SetMode(int mode);
 #endif
 #endif
