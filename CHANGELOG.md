@@ -5,6 +5,12 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-10
+
+The picture now follows the original Windows 1.3 game, checked frame by frame
+in replayed demos, and the original shaders are built from your own game
+files. [What was tested and what was not](docs/macos-port/release-0.3.0-verification.md).
+
 ### Added
 
 - Voice chat sends your microphone. Hold the voice chat key on a server with
@@ -129,6 +135,16 @@ All notable changes to CoD2 Silicon are documented here, following
   range was off by the base vertex, as in Mac 1.3, which Apple's GL tolerated
   but Mesa read past the vertex buffer on. Apple client storage is set only on
   GLs that have it. The picture on macOS is unchanged.
+
+### Known limitations
+
+- Voice chat has not been tested with a real microphone, only with a
+  recording in its place.
+- The launcher skips the intro videos.
+- Third-person player models sit about half a pixel off the original in
+  replayed demos.
+- OpenGL remains the renderer, and frame-pacing hitches remain.
+- The player directory is still unavailable.
 
 ## [0.2.1] - 2026-10-13
 
@@ -301,7 +317,8 @@ All notable changes to CoD2 Silicon are documented here, following
 Evidence and historical qualifications are preserved in the
 [workstream reports](docs/macos-port/README.md).
 
-[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.3.0
 [0.2.1]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.1
 [0.2.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0
 [0.1.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.1.0
