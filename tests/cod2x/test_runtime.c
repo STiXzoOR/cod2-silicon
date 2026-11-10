@@ -98,7 +98,10 @@ int main(void)
     Dvar_RegisterBool("mss_q3fs", 0, 1);
     Cod2x_Init();
     assert(Cod2x_HwidValid(Cod2x_Hwid()));
-    assert(Dvar_FindVar("cl_hwid2")->flags == 0x42);
+    assert(Dvar_FindVar("cl_hwid2")->flags == 0x12);
+#if defined(COD2_X64) && COD2_X64
+    assert(Dvar_FindVar("cl_hwid")->flags == 0x12 && integer("cl_hwid") > 0);
+#endif
     assert(integer("protocol_cod2x") == 6);
     Dvar_SetString(Dvar_FindVar("cl_hwid2"), "server-supplied-identity");
     Cod2x_PrepareConnect();
@@ -136,15 +139,14 @@ int main(void)
     Cod2x_Frame(1, 0);
     assert(fps->domain.integer.max == 1000);
 
-    /* Legacy maxfps policy constrains FPS without forcing network/render policy. */
+    /* CoD2x has no separate FPS-only policy dvar. */
+    assert(!Dvar_FindVar("com_maxfps_limit"));
     Dvar_SetInt(fps, 333);
-    Dvar_SetBool(Dvar_FindVar("com_maxfps_limit"), 1);
     Cod2x_Frame(1, 0);
-    assert(integer("com_maxfps") == 250 && fps->domain.integer.max == 250);
-    assert(Dvar_FindVar("rate")->domain.integer.min == 1000);
+    assert(integer("com_maxfps") == 333 && fps->domain.integer.max == 1000);
     Cod2x_Disconnect();
     assert(animationResets == 1);
-    assert(Cod2x_GameVersion() == 0 && !integer("g_competitive") && !integer("com_maxfps_limit"));
+    assert(Cod2x_GameVersion() == 0 && !integer("g_competitive"));
     assert(fps->domain.integer.max == 1000 && Cod2x_FrameFPS(333) == 333);
     puts("cod2x: runtime policy, demo, reconnect, immutable identity tests passed");
     return 0;

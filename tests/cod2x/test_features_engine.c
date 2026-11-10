@@ -7,7 +7,6 @@
 static dvar_t variables[32];
 static int variableCount, argc, setterCalls;
 static char *argv[3];
-static DvarSetSource lastSource;
 static struct { const char *name; void (*function)(void); } commands[3];
 static int commandCount;
 
@@ -65,18 +64,24 @@ const dvar_t *Dvar_RegisterString(const char *name, const char *value, unsigned 
     return var;
 }
 
-void Dvar_SetIntFromSource(const dvar_t *var, int value, DvarSetSource source)
+/* CoD2x's increase/decrease set the value internally, without the console's source checks. */
+void Dvar_SetInt(const dvar_t *var, int value)
 {
     ++setterCalls;
-    lastSource = source;
+    if (((dvar_t *)var)->current.integer != value)
+        ((dvar_t *)var)->modified = 1;
     ((dvar_t *)var)->current.integer = value;
 }
 
-void Dvar_SetFloatFromSource(const dvar_t *var, float value, DvarSetSource source)
+void Dvar_SetFloat(const dvar_t *var, float value)
 {
     ++setterCalls;
-    lastSource = source;
     ((dvar_t *)var)->current.value = value;
+}
+
+void Dvar_SetBool(const dvar_t *var, unsigned char value)
+{
+    ((dvar_t *)var)->current.enabled = value;
 }
 
 void Dvar_SetString(const dvar_t *var, const char *value)
@@ -118,9 +123,9 @@ int main(void)
     dvar_t *debug;
     Cod2x_FeaturesInit();
     execute("increase", "test_int", NULL);
-    assert(integer->current.integer == 8 && lastSource == DVAR_SOURCE_EXTERNAL);
+    assert(integer->current.integer == 8);
     execute("decrease", "test_float", NULL);
-    assert(number->current.value == -.75f && lastSource == DVAR_SOURCE_EXTERNAL);
+    assert(number->current.value == -.75f);
     execute("increase", "sv_cheats", NULL);
     assert(setterCalls == 2 && !cheats->current.enabled);
     execute("increase", "missing_dvar", NULL);
@@ -134,14 +139,22 @@ int main(void)
     assert(Cod2x_DebugBullets());
     cheats->current.enabled = 0;
     assert(!Cod2x_DebugBullets());
-    execute("match", "login", "match-player-id");
+    execute("match", "LOGIN", "match-player-id");
     assert(Dvar_FindVar("match_login")->flags == 0x12);
+    assert(Dvar_FindVar("com_affinity")->flags == 0x1001 && Dvar_FindVar("com_affinity")->current.integer == -1);
     Cod2x_FeaturesFrame(0, 0);
     assert(!strcmp(Dvar_FindVar("match_login")->current.string, "match-player-id"));
     Cod2x_FeaturesFrame(1, 1);
     assert(Cod2x_FeaturesDemo());
     Cod2x_FeaturesFrame(0, 0);
     assert(!Cod2x_FeaturesDemo());
+    {
+        /* The connect report: a disconnect clears the server revision. */
+        dvar_t *game = (dvar_t *)Dvar_RegisterInt("g_cod2x", 6, 0, 6, 0x18);
+        Cod2x_FeaturesClientState(CA_ACTIVE);
+        Cod2x_FeaturesClientState(CA_DISCONNECTED);
+        assert(game->current.integer == 0 && !game->modified);
+    }
     puts("cod2x client feature command integration: passed");
     return 0;
 }

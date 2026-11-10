@@ -56,6 +56,12 @@ void R_UsedCachedStaticModelSurface(GfxStaticModelSurfaceCached *surf)
     treeIndex = ((unsigned int)((char *)surf - (char *)&s_cache)) / sizeof(static_model_tree_t);
     static_model_tree_t *tree = &s_cache.trees[treeIndex];
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* CoD2x: an entry not linked into the used list yet would be unlinked
+       through a null pointer; leave it as it is. */
+    if (!tree->usedlist.next || !tree->usedlist.prev)
+        return;
+#endif
     tree->frameCount = frontEndDataOut->frameCount;
 
     ((static_model_tree_list_t *)tree->usedlist.next)->prev = tree->usedlist.prev;

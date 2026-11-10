@@ -1744,10 +1744,24 @@ static void FS_AddIwdFilesForGameDirectory(const char *path, const char *pszGame
             selection.version = Cod2x_GameVersion();
         }
 #endif
-        for (i = 0; i < numfiles; ++i)
-            if (Cod2x_IwdAllowed(pszGameFolder, iwdfiles[i], (const char *const *)iwdfiles,
-                                numfiles, &selection))
+        /* CoD2x src/shared/iwd.cpp reports each listing and every decision but the plain ones. */
+        if (numfiles > 0 && !selection.dedicated)
+            Com_Printf("Loading IWD files for CoD2x version: %d\n",
+                       selection.connecting && !selection.listen ? selection.version : COD2X_REVISION);
+        for (i = 0; i < numfiles; ++i) {
+            int reason = Cod2x_IwdAllowed(pszGameFolder, iwdfiles[i], (const char *const *)iwdfiles,
+                                          numfiles, &selection);
+            if (reason == COD2X_IWD_REQUIRED)
+                Com_Printf("Required IWD from server/demo: %s.iwd\n", Cod2x_IwdRequiredName());
+            else if (reason == COD2X_IWD_LATEST_ZPAM)
+                Com_Printf("Allowed latest ZPAM IWD file: %s\n", iwdfiles[i]);
+            else if (reason == COD2X_IWD_LATEST_ZPAM_MAPS)
+                Com_Printf("Allowed latest ZPAM_MAPS IWD file: %s\n", iwdfiles[i]);
+            if (reason)
                 sorted[write++] = iwdfiles[i];
+            else
+                Com_Printf("Filtered out IWD file: %s\n", iwdfiles[i]);
+        }
         numfiles = write;
     }
 #endif

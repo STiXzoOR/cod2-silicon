@@ -20,7 +20,9 @@ int main(void)
     char demo[512], marker[512];
     int i;
     assert(Cod2x_DemoName(name, sizeof(name), "round/one;quit\n", 0));
-    assert(!strcmp(name, "round_one_quit_"));
+    assert(!strcmp(name, "round_one;quit_"));
+    assert(Cod2x_DemoName(name, sizeof(name), "a\\b:c*d?e\"f<g>h|i j", 0));
+    assert(!strcmp(name, "a_b_c_d_e_f_g_h_i j"));
     assert(Cod2x_DemoName(name, sizeof(name), "round/one", 17));
     assert(!strcmp(name, "round_one_17"));
     assert(!Cod2x_DemoName(name, sizeof(name), "", 0));

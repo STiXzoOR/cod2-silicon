@@ -628,6 +628,39 @@ void CL_ClearMutedList(void)
     memset(s_playerMute, 0, sizeof(s_playerMute));
 }
 
+#if defined(COD2_CODX) && COD2_CODX
+/* CoD2x src/mss32/master_server.cpp:22-69 replaces the command: it takes no
+   arguments and asks both masters for 1.3 and 1.4 servers. */
+static void CL_Cod2xGlobalServers(void)
+{
+    static const char *masters[] = { "cod2master.activision.com", "master.cod2x.me" };
+    netadr_t to[2];
+    int resolved[2];
+    int i;
+
+    for (i = 0; i < cls.numglobalservers; i++) {
+        if (cls.globalServers[i].requestCount != 0xFF)
+            cls.globalServers[i].requestCount++;
+    }
+    cls.waitglobalserverresponse = 1;
+    cls.pingUpdateSource = 1;
+    for (i = 0; i < 2; i++) {
+        resolved[i] = NET_StringToAdr(masters[i], &to[i]);
+        if (resolved[i])
+            Com_Printf("Requesting servers from %s...\n", masters[i]);
+        to[i].port = (unsigned short)0xe650; /* 20710, network byte order */
+    }
+    for (i = 0; i < 2; i++) {
+        if (!resolved[i]) {
+            Com_Printf("Failed to resolve master server address: %s\n", masters[i]);
+            continue;
+        }
+        NET_OutOfBandPrint(NS_SERVER, to[i], "getservers 118 full empty");
+        NET_OutOfBandPrint(NS_SERVER, to[i], "getservers 120 full empty");
+    }
+}
+#endif
+
 void CL_GlobalServers_f(void)
 {
     netadr_t to;
@@ -636,6 +669,10 @@ void CL_GlobalServers_f(void)
     int i;
     int count;
 
+#if defined(COD2_CODX) && COD2_CODX
+    CL_Cod2xGlobalServers();
+    return;
+#endif
     if (Cmd_Argc() <= 2) {
         Com_Printf((const char *)"usage: globalservers <master# 0-1> <protocol> [keywords]\n");
         return;
@@ -656,37 +693,6 @@ void CL_GlobalServers_f(void)
 
     Com_Printf((const char *)"Requesting servers from the master...\n");
 
-#if defined(COD2_CODX) && COD2_CODX
-    {
-        static const char *masters[] = { "cod2master.activision.com", "master.cod2x.me" };
-        unsigned int master;
-        cls.waitglobalserverresponse = 1;
-        cls.pingUpdateSource = 1;
-        /* CoD2x src/mss32/master_server.cpp:41-69: query both protocols. */
-        for (master = 0; master < sizeof(masters) / sizeof(masters[0]); ++master) {
-#if defined(COD2_X64) && COD2_X64
-            const char *host = master == 1 ? Dvar_GetString("cl_masterServer") : masters[master];
-            unsigned int port = master == 1 ? Dvar_GetInt("cl_masterPort") : 20710;
-            if (!host[0] || port == 0 || port > 65535) continue;
-            if (!NET_StringToAdr(host, &to)) {
-                Com_Printf("Couldn't resolve master %s\n", host);
-#else
-            if (!NET_StringToAdr(masters[master], &to)) {
-                Com_Printf("Couldn't resolve master %s\n", masters[master]);
-#endif
-                continue;
-            }
-#if defined(COD2_X64) && COD2_X64
-            to.port = (unsigned short)((port >> 8) | (port << 8));
-#else
-            to.port = (unsigned short)0xe650; /* 20710, network byte order */
-#endif
-            NET_OutOfBandPrint(NS_SERVER, to, "getservers 118 full empty");
-            NET_OutOfBandPrint(NS_SERVER, to, "getservers 120 full empty");
-        }
-        return;
-    }
-#endif
     NET_StringToAdr((const char *)"cod2master.activision.com", &to);
 
     {

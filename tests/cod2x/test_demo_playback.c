@@ -81,10 +81,12 @@ int main(void)
     test_developer.current.integer = 0;
     test_cheats.current.enabled = 0;
     Cod2x_DemoPlayback(1);
-    assert(setters == 4 && test_developer.current.integer == 2 && test_cheats.current.enabled);
+    /* As in CoD2x, only the start of playback sets them. */
+    assert(setters == 2 && test_developer.current.integer == 0 && !test_cheats.current.enabled);
+    test_cheats.current.enabled = 1;
     Cod2x_DemoClientDisconnect();
     assert(test_developer.current.integer == 1);
-    assert(test_cheats.current.enabled == 0);
+    assert(test_cheats.current.enabled == 1); /* sv_cheats is never put back */
     assert(!*test_name.current.string && !test_name.modified);
     assert(!*test_url.current.string && !test_url.modified);
     assert(test_gametype.current.integer == 0);

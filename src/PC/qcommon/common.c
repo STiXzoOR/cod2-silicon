@@ -1393,6 +1393,19 @@ void Com_CheckSetRecommended(void)
 
     int needSet;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* CoD2x never applies recommended settings (it removes both calls,
+       src/mss32/hook.cpp:344-346). The machine values are still recorded:
+       nothing else sets them, and with the memory size left at 0 the
+       renderer drops to its lowest texture detail. */
+    {
+        extern void Sys_ArchiveInfo(int checksum);
+        extern const dvar_t *Dvar_FindVar(const char *name);
+        const dvar_t *sum = Dvar_FindVar("sys_configSum");
+        Sys_ArchiveInfo(sum ? sum->current.integer : 0);
+    }
+    return;
+#endif
     if (com_recommendedSet->current.enabled) {
         void *csv;
         int filesize = FS_ReadFile("configure_mp.csv", &csv);

@@ -50,10 +50,11 @@ int Cod2x_DemoName(char *name, size_t capacity, const char *requested, unsigned 
     count = strlen(requested);
     if (count > capacity - endLength - 1)
         count = capacity - endLength - 1;
+    /* CoD2x replaces the characters Windows forbids in file names (src/mss32/demo.cpp:262);
+       control characters go too, so a name can never break a line or a path. */
     for (i = 0; i < count; ++i) {
         unsigned char c = (unsigned char)requested[i];
-        name[i] = ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-                   (c >= '0' && c <= '9') || c == '.' || c == '-' || c == '_') ? (char)c : '_';
+        name[i] = (c < 32 || c == 127 || strchr("\\/:*?\"<>|", c)) ? '_' : (char)c;
     }
     memcpy(name + count, ending, endLength + 1);
     return strcmp(name, ".") != 0 && strcmp(name, "..") != 0;

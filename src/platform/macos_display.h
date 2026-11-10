@@ -20,6 +20,9 @@ void SDL_GL_SwapWindowDirect(void);
 int MacPlatform_GetRenderSize(int *width, int *height);
 void MacPlatform_GetDrawableSize(int *width, int *height);
 uint16_t MacDisplay_SetMode(int width, int height, int depth, int refresh);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+void MacDisplay_WindowMoved(int x, int y);
+#endif
 void MacPlatform_TransformPoint(int x, int y, int logicalWidth, int logicalHeight,
                                 int drawableWidth, int drawableHeight, int *renderX, int *renderY);
 void MacPlatform_MapWindowPoint(int x, int y, int *renderX, int *renderY);

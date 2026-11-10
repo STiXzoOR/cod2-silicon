@@ -76,6 +76,29 @@ static void Cod2x_BuildMD5(const char *data, unsigned int length, char hex[33])
     }
 }
 
+static int cod2x_shortHwid;
+
+int Cod2x_HwidShortFromMachine(char value[COD2X_MACHINE_VALUES][COD2X_MACHINE_TEXT])
+{
+    /* cl_hwid: 32-bit FNV-1a over four of the values, top bit cleared, never 0. */
+    char text[512];
+    const unsigned char *p;
+    unsigned int hash = 2166136261u;
+    snprintf(text, sizeof(text), "%s %s %s %s", value[COD2X_BIOS_SERIAL], value[COD2X_CPU_ID],
+             value[COD2X_BOARD_SERIAL], value[COD2X_PRODUCT_UUID]);
+    for (p = (const unsigned char *)text; *p; ++p) {
+        hash ^= *p;
+        hash *= 16777619u;
+    }
+    hash &= 0x7fffffffu;
+    return hash ? (int)hash : 1;
+}
+
+int Cod2x_ShortHwid(void)
+{
+    return cod2x_shortHwid;
+}
+
 int Cod2x_HwidFromMachine(char value[COD2X_MACHINE_VALUES][COD2X_MACHINE_TEXT], int failed, char id[33])
 {
     char text[1024];
@@ -94,6 +117,7 @@ int Cod2x_HwidFromMachine(char value[COD2X_MACHINE_VALUES][COD2X_MACHINE_TEXT], 
              value[COD2X_BOARD_MAKER], value[COD2X_BOARD_SERIAL], value[COD2X_DISK_MODEL],
              value[COD2X_DISK_SERIAL], value[COD2X_GPU_NAME]);
     Cod2x_BuildMD5(text, (unsigned int)strlen(text), id);
+    cod2x_shortHwid = Cod2x_HwidShortFromMachine(value);
     return 1;
 }
 

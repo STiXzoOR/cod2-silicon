@@ -25,21 +25,23 @@ extern void Com_Printf(const char *, ...);
 extern char *Com_Parse(const char **);
 extern int FS_ReadFile(const char *, void **);
 extern void FS_FreeFile(void *);
-extern qboolean FS_WriteFile(const char *, const void *, int);
+extern void Com_Error(errorParm_t, const char *, ...);
 extern MaterialHandle CL_RegisterMaterial(const char *, int);
 extern const char *CL_GetConfigString(int);
 extern void CG_DrawRotatedPic(float, float, float, float, int, int, float, const vec_t *, MaterialHandle);
-extern FontHandle UI_GetFontHandle(int, float);
 extern void UI_DrawText(const char *, int, FontHandle, float, float, int, int, float, const vec_t *, int);
 extern int UI_TextWidth(const char *, int, FontHandle, float);
+extern int UI_TextHeight(FontHandle, float);
 extern clientActive_t clients;
 extern clientStatic_t cls;
+extern sharedUiInfo_t sharedUiInfo;
 
 static const dvar_t *drawRadar, *radarScale, *mapImage, *imageX, *imageY, *rotation;
 static const dvar_t *entityScale, *entityX, *entityY, *radarX, *radarY, *numberSwitch, *radarColor;
 static char radarMap[64];
 static int calibration, calibrationFrame = -1, lastDrawTime, commandRegistered;
 static float worldPoints[2][2], imagePoints[2][2];
+static const char *radarFields[6] = {"scale", "offsetX", "offsetY", "rotation", "imageOffsetX", "imageOffsetY"};
 static struct {
     int time;
     vec3_t origin;
@@ -87,95 +89,90 @@ static void CG_Cod2xRadarLoad(void)
     if (length <= 0 || !buffer) {
         if (buffer)
             FS_FreeFile(buffer);
+        /* CoD2x names the file without its mp/ folder here. */
+        Com_Printf("^1Radar file not found: maps/%s.radar\n", name);
         return;
     }
+    /* Each value follows its label; an empty value drops the client, as in CoD2x. */
     cursor = buffer;
     Com_Parse(&cursor);
     token = Com_Parse(&cursor);
-    snprintf(image, sizeof(image), "%s", token);
-    for (i = 0; i < 6; ++i) {
-        char *end;
-        Com_Parse(&cursor);
-        token = Com_Parse(&cursor);
-        values[i] = strtof(token, &end);
-        if (!*token || *end || !isfinite(values[i]))
-            break;
-    }
-    FS_FreeFile(buffer);
-    if (!*image || i != 6 || values[0] < 0 || values[0] > 1 ||
-        values[3] < -180 || values[3] > 180) {
-        Com_Printf("Invalid radar definition: %s\n", filename);
+    if (!token || !*token) {
+        FS_FreeFile(buffer);
+        Com_Error(ERR_DROP, "Invalid image name in radar file: maps/%s.radar\n", name);
         return;
     }
+    snprintf(image, sizeof(image), "%s", token);
+    for (i = 0; i < 6; ++i) {
+        Com_Parse(&cursor);
+        token = Com_Parse(&cursor);
+        if (!token || !*token) {
+            FS_FreeFile(buffer);
+            Com_Error(ERR_DROP, "Invalid %s in radar file: maps/%s.radar\n", radarFields[i], name);
+            return;
+        }
+        values[i] = i == 3 ? (float)atoi(token) : (float)atof(token);
+    }
+    FS_FreeFile(buffer);
     Dvar_SetString(mapImage, image);
+    Dvar_SetFloat(imageX, values[4]);
+    Dvar_SetFloat(imageY, values[5]);
     Dvar_SetFloat(entityScale, values[0]);
     Dvar_SetFloat(entityX, values[1]);
     Dvar_SetFloat(entityY, values[2]);
     Dvar_SetInt(rotation, (int)values[3]);
-    Dvar_SetFloat(imageX, values[4]);
-    Dvar_SetFloat(imageY, values[5]);
-}
-
-static void CG_Cod2xRadarSave(void)
-{
-    char filename[128], text[640], name[64];
-    int size;
-    CG_Cod2xRadarMapName(name);
-    if (!*name)
-        return;
-    snprintf(filename, sizeof(filename), "maps/mp/%s.radar", name);
-    size = snprintf(text, sizeof(text),
-                    "image %s\nentityScale %.9g\nentityOffsetX %.9g\nentityOffsetY %.9g\n"
-                    "rotation %d\nimageOffsetX %.9g\nimageOffsetY %.9g\n",
-                    mapImage->current.string, entityScale->current.value, entityX->current.value,
-                    entityY->current.value, rotation->current.integer, imageX->current.value, imageY->current.value);
-    if (size > 0 && size < (int)sizeof(text) && FS_WriteFile(filename, text, size))
-        Com_Printf("Radar calibration saved to your homepath: %s\n", filename);
 }
 
 static void CG_Cod2xRadarCalibrate_f(void)
 {
-    float scale, x, y;
-    int point;
-    if (!cg->snap || !CG_Cod2xRadarCheats()) {
-        Com_Printf("Radar calibration requires cheats or demo playback\n");
+    float diffRadar[2], diffWorld[2], lengthRadar, lengthWorld, scale, offsetX, offsetY;
+    if (!CG_Cod2xRadarCheats()) {
+        Com_Printf("Radar calibration is only available when cheats are enabled or demo is playing.\n");
         return;
     }
-    if (!drawRadar->current.enabled || !*mapImage->current.string) {
-        Com_Printf("Enable cg_drawRadar and select cg_hudRadarMapImage first\n");
+    if (!drawRadar->current.enabled) {
+        Com_Printf("Radar is not enabled.\n");
         return;
     }
+    /* 1: follow the camera for the first world point, 2: move the first map point with
+       the mouse, 3 and 4: the same for the second points, then compute. */
     if (calibration == 0) {
         calibration = 1;
         imagePoints[0][0] = imagePoints[1][0] = 400;
         imagePoints[0][1] = imagePoints[1][1] = 0;
         return;
     }
-    point = calibration > 2;
-    if (calibration & 1) {
-        worldPoints[point][0] = cg->refdef.vieworg[0];
-        worldPoints[point][1] = cg->refdef.vieworg[1];
-    } else if (Cmd_Argc() == 3) {
-        char *endX, *endY;
-        x = strtof(Cmd_Argv(1), &endX);
-        y = strtof(Cmd_Argv(2), &endY);
-        if (*endX || *endY || !isfinite(x) || !isfinite(y))
-            return;
-        imagePoints[point][0] = x;
-        imagePoints[point][1] = y;
-    }
     if (++calibration <= 4)
         return;
     calibration = 0;
-    if (!Cod2x_RadarCalibrate(worldPoints[0], worldPoints[1], imagePoints[0], imagePoints[1], &scale, &x, &y) || scale > 1) {
-        Com_Printf("Radar calibration needs two distinct world and image points\n");
-        return;
+    diffRadar[0] = (imagePoints[1][0] - imagePoints[0][0]) / 4;
+    diffRadar[1] = (imagePoints[1][1] - imagePoints[0][1]) / 4;
+    diffWorld[0] = worldPoints[1][0] - worldPoints[0][0];
+    diffWorld[1] = worldPoints[1][1] - worldPoints[0][1];
+    lengthRadar = sqrtf(diffRadar[0] * diffRadar[0] + diffRadar[1] * diffRadar[1]);
+    lengthWorld = sqrtf(diffWorld[0] * diffWorld[0] + diffWorld[1] * diffWorld[1]);
+    scale = lengthRadar / lengthWorld;
+    offsetX = imagePoints[0][0] / 4 - worldPoints[0][0] * scale;
+    offsetY = imagePoints[0][1] / 4 + worldPoints[0][1] * scale - 100;
+    /* Two identical world points give no scale; keep the old values rather than store NaN. */
+    if (isfinite(scale) && isfinite(offsetX) && isfinite(offsetY)) {
+        Dvar_SetFloat(entityScale, scale);
+        Dvar_SetFloat(entityX, offsetX);
+        Dvar_SetFloat(entityY, offsetY);
     }
-    Dvar_SetFloat(entityScale, scale);
-    Dvar_SetFloat(entityX, x);
-    Dvar_SetFloat(entityY, y);
-    Com_Printf("Radar calibration: scale=%g offset=(%g, %g)\n", scale, x, y);
-    CG_Cod2xRadarSave();
+    Com_Printf("Calibration done\n");
+    Com_Printf("Point 1:        %f, %f\n", imagePoints[0][0], imagePoints[0][1]);
+    Com_Printf("Point 2:        %f, %f\n", imagePoints[1][0], imagePoints[1][1]);
+    Com_Printf("World Point 1:  %f, %f\n", worldPoints[0][0], worldPoints[0][1]);
+    Com_Printf("World Point 2:  %f, %f\n", worldPoints[1][0], worldPoints[1][1]);
+    Com_Printf("Diff Radar:     %f, %f\n", diffRadar[0], diffRadar[1]);
+    Com_Printf("Diff World:     %f, %f\n", diffWorld[0], diffWorld[1]);
+    Com_Printf("Length Radar:   %f\n", lengthRadar);
+    Com_Printf("Length World:   %f\n", lengthWorld);
+    Com_Printf("---\n");
+    Com_Printf("Scale:          %f\n", scale);
+    Com_Printf("OffsetX:        %f\n", offsetX);
+    Com_Printf("OffsetY:        %f\n", offsetY);
 }
 
 void CG_Cod2xRadarInit(void)
@@ -210,9 +207,10 @@ void CG_Cod2xRadarFire(int entityNum)
         return;
     fireIndex = (fireIndex + 1) % 128;
     fireEvents[fireIndex].time = cg->time;
+    /* CoD2x places players at their snapshot position and heading. */
     for (i = 0; i < 3; ++i)
-        fireEvents[fireIndex].origin[i] = cg_entities[entityNum].lerpOrigin[i];
-    fireEvents[fireIndex].yaw = cg_entities[entityNum].lerpAngles[1];
+        fireEvents[fireIndex].origin[i] = cg_entities[entityNum].currentState.pos.trBase[i];
+    fireEvents[fireIndex].yaw = cg_entities[entityNum].nextState.apos.trBase[1];
 }
 
 static void CG_Cod2xRadarCoordinates(const vec_t *origin, float *x, float *y)
@@ -223,12 +221,46 @@ static void CG_Cod2xRadarCoordinates(const vec_t *origin, float *x, float *y)
                     imageY->current.value, rotation->current.integer, x, y);
 }
 
+static void CG_Cod2xRadarDrawCalibration(float x, float y)
+{
+    static const vec4_t red = {1, 0, 0, 1}, picked = {0, 1, 0, .5f};
+    static const char *steps[4] = {
+        "1. Move the camera to the first position on the map",
+        "2. Select current location on the map",
+        "3. Move the camera to the second position on the map",
+        "4. Select current location on the map"
+    };
+    FontHandle font = sharedUiInfo.assets.textFont;
+    vec4_t textColor = {1, 1, 1, 1};
+    int i;
+    /* Blink between white and cyan every second. */
+    textColor[0] = cg->snap->ps.commandTime % 2000 > 1000 ? 1 : 0;
+    UI_DrawText("Calibrating radar", INT_MAX, font, 0, 100, 2, 1, .5f, textColor, 0);
+    if (calibration == 1 || calibration == 3) {
+        worldPoints[calibration > 2][0] = cg->refdef.vieworg[0];
+        worldPoints[calibration > 2][1] = cg->refdef.vieworg[1];
+    } else if (calibrationFrame != cls.realtime) {
+        int index = clients.mouseIndex ^ 1;
+        imagePoints[calibration > 2][0] += clients.mouseDx[index] / 10.0f;
+        imagePoints[calibration > 2][1] += clients.mouseDy[index] / 10.0f;
+    }
+    calibrationFrame = cls.realtime;
+    for (i = 0; i < calibration; ++i)
+        UI_DrawText(steps[i], INT_MAX, font, 0, 120 + 10 * i, 2, 1, .2f, textColor, 3);
+    for (i = 0; i < 2 && calibration >= 2 * (i + 1); ++i) {
+        CG_DrawRotatedPic(x + imagePoints[i][0] - 5, y + imagePoints[i][1] - 5, 10, 10, 1, 1, 0,
+                          picked, cgs->media.whiteMaterial);
+        CG_DrawRotatedPic(x + imagePoints[i][0] - 1, y + imagePoints[i][1] - 1, 2, 2, 1, 1, 0,
+                          red, cgs->media.whiteMaterial);
+    }
+}
+
 void CG_Cod2xRadarDraw(void)
 {
-    static const vec4_t white = {1, 1, 1, 1}, yellow = {1, 1, 0, 1};
-    vec4_t color, teamColors[3] = {{1, .2f, .2f, 1}, {1, .2f, .2f, 1}, {.2f, .7f, 1, 1}};
+    static const vec4_t white = {1, 1, 1, 1}, yellow = {1, 1, 0, 1}, background = {0, 0, 0, .9f};
+    vec4_t color, teamColors[3] = {{1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1}};
     MaterialHandle material, arrow, circle;
-    FontHandle font;
+    FontHandle numberFont, measureFont;
     float x, y, size, factor;
     int i, teamCounts[3] = {0, 0, 0}, teamNumbers[64], clientNum;
     if (!drawRadar || !cg->snap || !cg_entities)
@@ -246,40 +278,26 @@ void CG_Cod2xRadarDraw(void)
     size = factor * 100;
     x = radarX->current.value + imageX->current.value;
     y = radarY->current.value + imageY->current.value;
+    /* The map points are picked on a darkened screen. */
+    if (calibration == 2 || calibration == 4)
+        CG_DrawRotatedPic(0, 0, 640, 480, 4, 4, 0, background, cgs->media.whiteMaterial);
     for (i = 0; i < 3; ++i)
         color[i] = radarColor->current.vector[i];
     color[3] = 1;
     material = CL_RegisterMaterial(mapImage->current.string, 7);
     CG_DrawRotatedPic(x, y, size, size, 1, 1, calibration ? 0 : (float)rotation->current.integer, color, material);
-    font = UI_GetFontHandle(0, .2f);
     if (calibration) {
-        static const char *steps[4] = {
-            "Move camera to first world position; run cg_hudRadarCalibrate",
-            "Move mouse to first image position; run cg_hudRadarCalibrate",
-            "Move camera to second world position; run cg_hudRadarCalibrate",
-            "Move mouse to second image position; run cg_hudRadarCalibrate"
-        };
-        int point = calibration > 2;
-        if (!(calibration & 1) && calibrationFrame != cls.realtime) {
-            int index = clients.mouseIndex ^ 1;
-            imagePoints[point][0] += clients.mouseDx[index] * .1f;
-            imagePoints[point][1] += clients.mouseDy[index] * .1f;
-        }
-        calibrationFrame = cls.realtime;
-        UI_DrawText(steps[calibration - 1], INT_MAX, font, 10, 450, 1, 1, .2f, white, 3);
-        for (i = 0; i < 2; ++i)
-            CG_DrawRotatedPic(x + imagePoints[i][0] - 3, y + imagePoints[i][1] - 3,
-                              6, 6, 1, 1, 0, yellow, cgs->media.whiteMaterial);
+        CG_Cod2xRadarDrawCalibration(x, y);
         return;
     }
     size = 10 * factor;
     material = CL_RegisterMaterial("radar_player_fire", 7);
     for (i = 0; i < 128; ++i) {
         int age = cg->time - fireEvents[i].time;
-        if (!fireEvents[i].time || age < 0 || age >= 1000)
+        if (!fireEvents[i].time || age <= 0 || age >= 1000)
             continue;
         CG_Cod2xRadarCoordinates(fireEvents[i].origin, &x, &y);
-        color[0] = 1; color[1] = color[2] = .5f; color[3] = 1 - age * .001f;
+        color[0] = 1; color[1] = color[2] = .5f; color[3] = 1 - age / 1000.0f;
         CG_DrawRotatedPic(x - size * 2, y - size * 2, size * 4, size * 4, 1, 1,
                           90 + rotation->current.integer - fireEvents[i].yaw, color, material);
     }
@@ -306,6 +324,7 @@ void CG_Cod2xRadarDraw(void)
     }
     arrow = CL_RegisterMaterial("radar_player_arrow", 7);
     circle = CL_RegisterMaterial("radar_player_circle", 7);
+    /* Team colours come from g_TeamColor_*; without them the circles stay white. */
     for (i = TEAM_AXIS; i <= TEAM_ALLIES; ++i) {
         const dvar_t *teamColor = Dvar_FindVar(i == TEAM_ALLIES ? "g_TeamColor_Allies" : "g_TeamColor_Axis");
         if (teamColor && (teamColor->type == 7 || teamColor->type == 8)) {
@@ -330,12 +349,14 @@ void CG_Cod2xRadarDraw(void)
                 teamNumbers[i] = 0;
         }
     }
+    numberFont = sharedUiInfo.assets.bigFont;
+    measureFont = sharedUiInfo.assets.textFont;
     for (i = 0; i < 64; ++i) {
         const centity_t *cent = &cg_entities[i];
         const clientInfo_t *ci;
-        char number[8];
-        int team, n;
-        float highlight;
+        char number[16];
+        int team;
+        float arrowScale = 1, circleScale = 1, heading, textScale;
         if (cent->currentState.eType != 1 || !cent->nextValid ||
             (cent->currentState.eFlags & 0x20001) || cent->currentState.clientNum < 0 ||
             cent->currentState.clientNum >= 64)
@@ -344,17 +365,24 @@ void CG_Cod2xRadarDraw(void)
         team = ci->team;
         if (!ci->infoValid || team >= TEAM_SPECTATOR || team < TEAM_FREE)
             continue;
-        CG_Cod2xRadarCoordinates(cent->lerpOrigin, &x, &y);
-        highlight = cg->snap->ps.clientNum == cent->currentState.clientNum ? 1.5f : 1;
+        CG_Cod2xRadarCoordinates(cent->currentState.pos.trBase, &x, &y);
+        heading = 90 + rotation->current.integer - cent->nextState.apos.trBase[1];
+        /* The followed player has a larger yellow arrow and a slightly larger circle. */
+        if (cg->snap->ps.clientNum == i) {
+            arrowScale = 1.5f;
+            circleScale = 1.2f;
+        }
         size = 10 * factor;
-        CG_DrawRotatedPic(x - size * highlight * .5f, y - size * highlight * .5f, size * highlight,
-                          size * highlight, 1, 1, 90 + rotation->current.integer - cent->lerpAngles[1],
-                          highlight > 1 ? yellow : white, arrow);
-        CG_DrawRotatedPic(x - size * .5f, y - size * .5f, size, size, 1, 1, 0, teamColors[team], circle);
-        n = teamNumbers[i];
-        snprintf(number, sizeof(number), "%d", n);
-        UI_DrawText(number, INT_MAX, font, x - UI_TextWidth(number, 0, font, .2f * factor) * .5f,
-                    y + 3 * factor, 1, 1, .2f * factor, white, 3);
+        CG_DrawRotatedPic(x - size * arrowScale * .5f, y - size * arrowScale * .5f, size * arrowScale,
+                          size * arrowScale, 1, 1, heading, arrowScale > 1 ? yellow : white, arrow);
+        CG_DrawRotatedPic(x - size * circleScale * .5f, y - size * circleScale * .5f, size * circleScale,
+                          size * circleScale, 1, 1, heading, teamColors[team], circle);
+        snprintf(number, sizeof(number), "%d", teamNumbers[i]);
+        /* Measured in the normal font, drawn in the big one, as CoD2x does. */
+        textScale = .1f * circleScale * factor;
+        UI_DrawText(number, INT_MAX, numberFont,
+                    x - UI_TextWidth(number, 0, measureFont, textScale) / 2.0f,
+                    y + UI_TextHeight(measureFont, textScale) / 2.0f, 1, 1, textScale, white, 3);
     }
 }
 #endif

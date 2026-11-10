@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static char cod2x_iwdNames[8192];
+static char cod2x_iwdNames[8192], cod2x_iwdRequired[256];
 static int cod2x_iwdDirty;
 
 static int equaln(const char *a, const char *b, size_t n)
@@ -85,6 +85,11 @@ static int latest(const char *file, const char *prefix, const char *const *files
     return 1;
 }
 
+const char *Cod2x_IwdRequiredName(void)
+{
+    return cod2x_iwdRequired;
+}
+
 int Cod2x_IwdAllowed(const char *folder, const char *file, const char *const *files,
                     size_t count, const Cod2xIwdSelection *s)
 {
@@ -92,17 +97,17 @@ int Cod2x_IwdAllowed(const char *folder, const char *file, const char *const *fi
     size_t n = strlen(file);
     const char *p;
     if (s->dedicated)
-        return 1;
+        return COD2X_IWD_ALLOWED;
     if (n >= sizeof(name) - 1)
-        return 0;
+        return COD2X_IWD_FILTERED;
     snprintf(name, sizeof(name), "/%s", file);
     if (n > 4 && equal(file + n - 4, ".iwd"))
         name[n - 3] = '\0';
     if (Cod2x_IwdStock(name, "", s->connecting && !s->listen ? s->version : 6))
-        return 1;
+        return COD2X_IWD_ALLOWED;
     if (s->connecting && !s->listen) {
         if (s->demo && equal(folder, "movie"))
-            return 1;
+            return COD2X_IWD_ALLOWED;
         p = s->names ? s->names : "";
         while (*p) {
             const char *start;
@@ -111,14 +116,18 @@ int Cod2x_IwdAllowed(const char *folder, const char *file, const char *const *fi
             start = p;
             while (*p && !isspace((unsigned char)*p)) ++p;
             len = (size_t)(p - start);
-            if (len && equaln(file, start, len))
-                return 1;
+            if (len && equaln(file, start, len)) {
+                snprintf(cod2x_iwdRequired, sizeof(cod2x_iwdRequired), "%.*s",
+                         (int)(len < sizeof(cod2x_iwdRequired) ? len : sizeof(cod2x_iwdRequired) - 1), start);
+                return COD2X_IWD_REQUIRED;
+            }
         }
     }
-    if (s->listen && (latest(file, "zpam", files, count) ||
-                      latest(file, "zpam_maps_v", files, count)))
-        return 1;
-    return s->game && *s->game && equal(folder, s->game);
+    if (s->listen && latest(file, "zpam", files, count))
+        return COD2X_IWD_LATEST_ZPAM;
+    if (s->listen && latest(file, "zpam_maps_v", files, count))
+        return COD2X_IWD_LATEST_ZPAM_MAPS;
+    return s->game && *s->game && equal(folder, s->game) ? COD2X_IWD_ALLOWED : COD2X_IWD_FILTERED;
 }
 
 const char *Cod2x_ConfigGame(const char *game, const char *qpath)

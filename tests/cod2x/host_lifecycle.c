@@ -255,10 +255,9 @@ int main(void)
     CHECK(Cod2x_GameVersion() == 0);
 
     /* Explicit defaults and the generic systeminfo loop must respect ownership. */
-    systemInfo("\\g_cod2x\\6\\g_competitive\\1\\com_maxfps_limit\\1\\sv_serverid\\17", 0);
+    systemInfo("\\g_cod2x\\6\\g_competitive\\1\\sv_serverid\\17", 0);
     checkHost();
     CHECK(!Dvar_FindVar("g_competitive")->current.enabled);
-    CHECK(!Dvar_FindVar("com_maxfps_limit")->current.enabled);
     CG_SetClientDvarFromServer("G_COD2X", "6");
     checkHost();
     systemInfo("\\sv_serverid\\18", 0);
@@ -337,7 +336,6 @@ int main(void)
     SV_SpawnServer("fixture_after_remote");
     checkHost();
     CHECK(!Dvar_FindVar("g_competitive")->current.enabled);
-    CHECK(!Dvar_FindVar("com_maxfps_limit")->current.enabled);
     SV_Shutdown("fixture final shutdown");
     CHECK(identityClears == 2 * HOST_HAS_IDENTITY_CLEANUP);
 #endif

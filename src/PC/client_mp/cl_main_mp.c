@@ -16,6 +16,7 @@
 #include "www_download.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x_demo.h"
+#include "../qcommon/cod2x_features.h"
 extern void Dvar_ClearModified(const dvar_t *);
 extern const dvar_t *Dvar_FindVar(const char *name);
 extern const dvar_t *fs_homepath;
@@ -24,7 +25,7 @@ extern void FS_BuildOSPath(const char *base, const char *game, const char *qpath
 extern qboolean FS_WriteFile(const char *qpath, const void *buffer, int size);
 static const dvar_t *cod2x_demoName, *cod2x_demoURL, *cod2x_demoTimeout;
 static const char *cod2x_recordName;
-static int cod2x_stoppingRecord, cod2x_demoPlayback, cod2x_savedDeveloper, cod2x_savedCheats;
+static int cod2x_stoppingRecord, cod2x_demoPlayback, cod2x_savedDeveloper;
 static int cod2x_quitAfterUpload;
 static void Cod2x_DemoClientFrame(void);
 static void Cod2x_DemoPlayback(int playing);
@@ -471,7 +472,7 @@ void CL_StopRecord_f(void)
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     if (!cod2x_stoppingRecord && cod2x_demoName && *cod2x_demoName->current.string) {
-        Com_Printf("Auto demo recording is enabled; stoprecord ignored.\n");
+        Com_Printf("Auto demo recording is enabled, ignoring stoprecord command.\n");
         return;
     }
 #endif
@@ -1453,10 +1454,18 @@ const char *CL_GetServerIPAddress(void)
     } else {
         unsigned short port = serverAddress->port;
         port = (port >> 8) | (port << 8);
+#if defined(COD2_CODX) && COD2_CODX
+        /* CoD2x prints the port unsigned, so ports above 32767 are not negative. */
+        Com_sprintf(szServerIPAddress, 128, "%i.%i.%i.%i:%hu",
+                    serverAddress->ip[0], serverAddress->ip[1],
+                    serverAddress->ip[2], serverAddress->ip[3],
+                    port);
+#else
         Com_sprintf(szServerIPAddress, 128, "%i.%i.%i.%i:%i",
                     serverAddress->ip[0], serverAddress->ip[1],
                     serverAddress->ip[2], serverAddress->ip[3],
                     (int)(short)port);
+#endif
     }
 
     return szServerIPAddress;
@@ -1631,8 +1640,9 @@ void CL_Record_f(void)
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     if (cod2x_recordName) {
+        /* The whole auto-record name names the file, as the upload marker does. */
         I_strncpyz(demoName, cod2x_recordName, sizeof(demoName));
-        Com_sprintf(name, sizeof(name), "demos/%s.dm_1", demoName);
+        Com_sprintf(name, sizeof(name), "demos/%s.dm_1", cod2x_recordName);
     } else
 #endif
     if (Cmd_Argc() == 2) {
@@ -2696,6 +2706,18 @@ void CL_Frame(int msec)
     Cod2x_Frame(clc_p->state >= CA_PRIMED, clc_p->demoplaying);
 #endif
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        /* CoD2x checks on the first frame that sound started (src/mss32/window.cpp). */
+        extern snd_local_t g_snd;
+        static int cod2xSoundChecked;
+        if (!cod2xSoundChecked) {
+            cod2xSoundChecked = 1;
+            if (!g_snd.channelvol)
+                Com_Error(ERR_DROP, "Sound system failed to initialize.\n\nThe game might crash at any time.\n"
+                                    "Please check your sound drivers.");
+        }
+    }
+    Cod2x_FeaturesClientState(clc_p->state);
     Cod2x_DemoClientFrame();
 #endif
 #if defined(COD2_X64)
@@ -3554,22 +3576,20 @@ void CL_InitDownloads(void)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 static void Cod2x_DemoPlayback(int playing)
 {
+    /* CoD2x enables cheats and developer 2 when playback starts and puts back
+       only developer when it ends; sv_cheats stays on. */
     const dvar_t *developer = Dvar_FindVar("developer");
     const dvar_t *cheats = Dvar_FindVar("sv_cheats");
-    if (playing && !cod2x_demoPlayback) {
-        cod2x_savedDeveloper = developer ? developer->current.integer : 0;
-        cod2x_savedCheats = cheats ? cheats->current.enabled : 0;
-    }
+    if (playing == cod2x_demoPlayback)
+        return;
     if (playing) {
-        if (developer && developer->current.integer != 2)
-            Dvar_SetInt(developer, 2);
-        if (cheats && !cheats->current.enabled)
-            Dvar_SetBool(cheats, 1);
-    } else if (cod2x_demoPlayback) {
-        if (developer)
-            Dvar_SetInt(developer, cod2x_savedDeveloper);
         if (cheats)
-            Dvar_SetBool(cheats, cod2x_savedCheats);
+            Dvar_SetBool(cheats, 1);
+        cod2x_savedDeveloper = developer ? developer->current.integer : 0;
+        if (developer)
+            Dvar_SetInt(developer, 2);
+    } else if (developer) {
+        Dvar_SetInt(developer, cod2x_savedDeveloper);
     }
     cod2x_demoPlayback = playing;
 }
@@ -3656,7 +3676,8 @@ static void Cod2x_DemoClientFrame(void)
         Cod2x_DemoClearAutoDvars();
     } else if (cod2x_demoName->modified &&
                (!*cod2x_demoName->current.string || conn->state == CA_ACTIVE)) {
-        char requested[64], name[64], qpath[256], marker[256], url[1024];
+        /* CoD2x keeps up to 255 characters; ours stop where "demos/<name>.dm_1.upload" still fits. */
+        char requested[256], name[238], qpath[256], marker[256], url[1024];
         unsigned suffix = 0;
         I_strncpyz(requested, cod2x_demoName->current.string, sizeof(requested));
         Dvar_ClearModified(cod2x_demoName);

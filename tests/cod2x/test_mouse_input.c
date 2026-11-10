@@ -10,7 +10,7 @@ SDL_Window *sdl_gl_window = (SDL_Window *)(uintptr_t)1;
 static clientActive_t client;
 static clientActive_t *clientPointer = &client;
 void *imp_cl = &clientPointer;
-static dvar_t mouse, raw, variables[4];
+static dvar_t mouse, raw, variables[5];
 dvar_t *in_mouse = &mouse, *in_rawmouse = &raw;
 static int variableCount, relativeMode, rawMode, rawActive, focused = 1;
 static int rawX, rawY, resultX, resultY, pendingMotion;
@@ -22,15 +22,25 @@ void MacDisplay_FocusChanged(int focus) { (void)focus; }
 void MacDisplay_PumpVisibility(void) {}
 int SDL_ShowCursor(int toggle) { (void)toggle; return 0; }
 int MacPlatform_GetRenderSize(int *width, int *height) { *width = 640; *height = 480; return 1; }
+void MacDisplay_WindowMoved(int x, int y) { (void)x; (void)y; }
+void Com_Printf(const char *format, ...) { (void)format; }
 #endif
 
 const dvar_t *Dvar_RegisterInt(const char *name, int value, int min, int max, unsigned short flags)
 {
     (void)min; (void)max;
-    assert(variableCount < 4);
+    assert(variableCount < 5);
     dvar_t *var = &variables[variableCount++];
     var->name = name; var->flags = flags;
     var->current.integer = var->latched.integer = value;
+    return var;
+}
+const dvar_t *Dvar_RegisterBool(const char *name, unsigned char value, unsigned short flags)
+{
+    assert(variableCount < 5);
+    dvar_t *var = &variables[variableCount++];
+    var->name = name; var->flags = flags;
+    var->current.enabled = value;
     return var;
 }
 void Dvar_SetInt(const dvar_t *value, int integer)
@@ -80,22 +90,31 @@ int main(void)
     client.active = 1;
     mouse.current.enabled = raw.current.enabled = 1;
     IN_Frame();
-    assert(variableCount == 4 && rawMode == 1 && rawActive);
+    /* m_rinput is off by default, as in CoD2x. */
+    assert(variableCount == 5 && rawMode == 0 && !rawActive);
     assert(!strcmp(variables[0].name, "m_rinput"));
     assert((variables[0].flags & 0x21) == 0x21);
     assert((variables[1].flags & 0x40) == 0x40);
+    assert(!strcmp(variables[3].name, "m_enable") && variables[3].current.enabled);
+    variables[0].latched.integer = 1;
+    IN_Frame();
+    assert(rawMode == 1 && rawActive);
     pendingMotion = 1; rawX = 2; rawY = -3;
     now = 100000000; rawEvents = 100;
     IN_Frame();
     assert(resultX == 2 && resultY == -3); /* SDL duplicate was suppressed */
-    assert(variables[1].current.integer == 100);
-    assert(variables[2].current.integer == 100 && variables[3].current.integer == 100);
+    assert(variables[1].current.integer == 100 && variables[2].current.integer == 100);
     variables[0].latched.integer = 0;
     pendingMotion = 1;
     IN_Frame();
     assert(rawMode == 0 && !rawActive && variables[0].current.integer == 0);
     assert(resultX == 9 && resultY == -7); /* mode 0 delivers SDL cursor deltas */
     assert(variables[1].current.integer == 0 && variables[2].current.integer == 0);
+    variables[3].current.enabled = 0;
+    pendingMotion = 1;
+    IN_Frame();
+    assert(resultX == 9 && resultY == -7); /* m_enable 0 drops mouse movement */
+    variables[3].current.enabled = 1;
     variables[0].latched.integer = 2;
     IN_Frame();
     assert(rawMode == 2 && rawActive);
