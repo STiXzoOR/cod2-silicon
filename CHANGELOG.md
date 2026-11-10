@@ -96,6 +96,10 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   treated alike. Now a sound behind you is quieter than the same sound in
   front, as in the original, which makes direction easier to judge. Measured
   against the original game's output, every direction is within about 0.1 dB.
+- Sounds keep their treble. The game mixed everything at 48 kHz, which put
+  every sound through a simple resampler and cost about 1 dB at 8 to 12 kHz
+  and 4 dB above 16 kHz against the original. It now mixes at the game's own
+  44.1 kHz, as the original does.
 - Two small differences from Mac 1.3, found by compiling every source file
   with the original compiler and comparing each function with the original
   game: a failed language load no longer reports a warning when
