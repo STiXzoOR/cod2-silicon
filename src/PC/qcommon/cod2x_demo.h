@@ -20,7 +20,7 @@ typedef struct {
 } Cod2xDemoProgress;
 
 int Cod2x_DemoName(char *name, size_t capacity, const char *requested, unsigned suffix);
-int Cod2x_DemoHTTPS(const char *url);
+int Cod2x_DemoUploadAllowed(const char *url);
 int Cod2x_DemoUploadURL(char *url, size_t capacity, const char *base, const char *name);
 int Cod2x_DemoUploadSucceeded(long status);
 /* Looks for the next .upload marker in directory, printing as CoD2x does. */

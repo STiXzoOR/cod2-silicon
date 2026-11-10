@@ -104,13 +104,13 @@ int Cod2x_DemoName(char *name, size_t capacity, const char *requested, unsigned 
 }
 
 #if !COD2X_DEMO_UPLOADS
-int Cod2x_DemoHTTPS(const char *url)
+int Cod2x_DemoUploadAllowed(const char *url)
 {
     (void)url;
     return 0;
 }
 #else
-int Cod2x_DemoHTTPS(const char *url)
+int Cod2x_DemoUploadAllowed(const char *url)
 {
     CURLU *parsed;
     CURLUcode result;
@@ -129,7 +129,7 @@ int Cod2x_DemoHTTPS(const char *url)
     if (!result && !curl_url_get(parsed, CURLUPART_SCHEME, &scheme, 0) &&
         !curl_url_get(parsed, CURLUPART_HOST, &host, 0) &&
         curl_url_get(parsed, CURLUPART_USER, &user, 0) == CURLUE_NO_USER)
-        valid = !strcmp(scheme, "https") && *host;
+        valid = (!strcmp(scheme, "http") || !strcmp(scheme, "https")) && *host;
     curl_free(scheme);
     curl_free(host);
     curl_free(user);
@@ -141,7 +141,7 @@ int Cod2x_DemoHTTPS(const char *url)
 int Cod2x_DemoUploadURL(char *url, size_t capacity, const char *base, const char *name)
 {
     size_t baseLength, nameLength;
-    if (!url || !name || !Cod2x_DemoHTTPS(base))
+    if (!url || !name || !Cod2x_DemoUploadAllowed(base))
         return 0;
     baseLength = strlen(base);
     nameLength = strlen(name);
@@ -149,7 +149,7 @@ int Cod2x_DemoUploadURL(char *url, size_t capacity, const char *base, const char
         return 0;
     memcpy(url, base, baseLength);
     memcpy(url + baseLength, name, nameLength + 1);
-    return Cod2x_DemoHTTPS(url);
+    return Cod2x_DemoUploadAllowed(url);
 }
 
 int Cod2x_DemoUploadSucceeded(long status)
@@ -396,8 +396,9 @@ static void Cod2x_DemoStart(const char *directory, int timeoutSeconds)
     }
     fclose(marker);
     url[strcspn(url, "\r\n")] = '\0';
-    /* Unlike CoD2x, only HTTPS with a verified certificate is accepted. */
-    if (!Cod2x_DemoHTTPS(url)) {
+    /* http and https as in CoD2x; unlike CoD2x, an https server's certificate and host
+       name are checked, and a URL with a user name is refused. */
+    if (!Cod2x_DemoUploadAllowed(url)) {
         Com_Printf("Invalid upload URL in marker file, removing marker file: '%s'\n", demo_marker);
         Cod2x_DemoRemoveMarker();
         Cod2x_DemoRelease();
@@ -441,8 +442,8 @@ static void Cod2x_DemoStart(const char *directory, int timeoutSeconds)
     curl_easy_setopt(demo_easy, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(demo_easy, CURLOPT_SSL_VERIFYPEER, 1L);
     curl_easy_setopt(demo_easy, CURLOPT_SSL_VERIFYHOST, 2L);
-    curl_easy_setopt(demo_easy, CURLOPT_PROTOCOLS_STR, "https");
-    curl_easy_setopt(demo_easy, CURLOPT_REDIR_PROTOCOLS_STR, "https");
+    curl_easy_setopt(demo_easy, CURLOPT_PROTOCOLS_STR, "http,https");
+    curl_easy_setopt(demo_easy, CURLOPT_REDIR_PROTOCOLS_STR, "http,https");
     curl_easy_setopt(demo_easy, CURLOPT_FOLLOWLOCATION, 0L);
     curl_easy_setopt(demo_easy, CURLOPT_CONNECTTIMEOUT, 3L);
     curl_easy_setopt(demo_easy, CURLOPT_TIMEOUT, (long)timeoutSeconds);

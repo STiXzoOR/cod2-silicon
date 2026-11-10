@@ -39,11 +39,12 @@ int main(void)
     assert(!strcmp(name, "round_one_17"));
     assert(!Cod2x_DemoName(name, sizeof(name), "", 0));
     assert(!Cod2x_DemoName(name, sizeof(name), "..", 0));
-    assert(Cod2x_DemoHTTPS("https://example.test:443/demos/"));
-    assert(!Cod2x_DemoHTTPS("http://example.test/demos/"));
-    assert(!Cod2x_DemoHTTPS("file:///tmp/example"));
-    assert(!Cod2x_DemoHTTPS("https://example.test/a\r\nb"));
-    assert(!Cod2x_DemoHTTPS("https://user:pass@example.test/a"));
+    assert(Cod2x_DemoUploadAllowed("https://example.test:443/demos/"));
+    assert(Cod2x_DemoUploadAllowed("http://example.test/demos/"));
+    assert(!Cod2x_DemoUploadAllowed("http://user@example.test/demos/"));
+    assert(!Cod2x_DemoUploadAllowed("file:///tmp/example"));
+    assert(!Cod2x_DemoUploadAllowed("https://example.test/a\r\nb"));
+    assert(!Cod2x_DemoUploadAllowed("https://user:pass@example.test/a"));
     assert(Cod2x_DemoUploadURL(url, sizeof(url), "https://example.test/demos/", "round_17"));
     assert(!strcmp(url, "https://example.test/demos/round_17"));
     assert(!Cod2x_DemoUploadURL(url, 12, "https://example.test/demos/", "round_17"));
@@ -56,7 +57,7 @@ int main(void)
     snprintf(demo, sizeof(demo), "%s/round.dm_1", directory);
     snprintf(marker, sizeof(marker), "%s.upload", demo);
     write_file(demo, "owned demo fixture");
-    write_file(marker, "http://127.0.0.1:9/round");
+    write_file(marker, "http://user@127.0.0.1:9/round");
     assert(Cod2x_DemoUploadsPending(directory));
     Cod2x_DemoUploadFrame(directory, 10, 0);
     assert(Cod2x_DemoUploadsPending(directory));

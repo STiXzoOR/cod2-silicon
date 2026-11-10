@@ -115,7 +115,7 @@ int main(void)
     snprintf(marker, sizeof(marker), "%s/round.dm_1.upload", demos);
     assert(!mkdir(game, 0700) && !mkdir(demos, 0700));
     file = fopen(marker, "wb");
-    assert(file && fputs("http://localhost/upload/round", file) >= 0);
+    assert(file && fputs("http://user@localhost/upload/round", file) >= 0);
     assert(!fclose(file));
     test_home.current.string = directory;
     fs_homepath = &test_home;
@@ -128,7 +128,7 @@ int main(void)
     assert(Cod2x_DemoClientQuitRequested());
     assert(!clientConnections[0].demorecording && closes == 1 && writes == 2);
     assert(!*test_name.current.string && cod2x_quitAfterUpload && cod2x_checkUploads);
-    /* Only a check starts an upload; an http marker is dropped without sending. */
+    /* Only a check starts an upload; a marker whose URL has a user name is dropped without sending. */
     assert(!Cod2x_DemoUploadFrame(demos, 10, 0) && !access(marker, F_OK));
     Cod2x_DemoUploadFrame(demos, 10, 1);
     assert(!Cod2x_DemoClientQuitRequested());
