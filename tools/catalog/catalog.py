@@ -331,6 +331,8 @@ FACTORIES = {
     ('src/PC/game_mp/g_scr_main_mp.c', 'GScr_MakeDvarServerInfo'),
     ('src/PC/client_mp/cl_cgame_mp.c', 'CL_AddCgameCommand'),
     ('src/PC/universal/dvar.c', 'Dvar_RegisterVariantReg'),
+    # Names built at run time from the wallbang surface table.
+    ('src/PC/game_mp/g_cod2x_wallbang.c', 'G_Cod2xWallbangInit'),
 }
 
 
@@ -586,9 +588,7 @@ def build_catalog(root, revision, copy_path):
                      'sources': sorted({s['path'] + ':' + str(s['line']) for s in sites})}
             if any('/platform/' in s['path'] or '/Mac/' in s['path'] and s['name'].lower() in ('in_rawmouse', 'r_presentmode', 'r_borderless') for s in sites):
                 entry['origins'] = ['port']
-            if name in ('com_maxfps_limit', 'cl_masterserver', 'cl_masterport', 'm_rinput_max'):
-                entry['origins'] = ['port']  # Compatibility names absent from upstream 1.4.6.8 registration sites.
-            elif entry['cod2x'] == 'changed':
+            if entry['cod2x'] == 'changed':
                 entry['origins'] = ['stock', 'cod2x']
             if plural == 'settings':
                 entry['guided'] = False

@@ -136,7 +136,7 @@
       "group": "aim",
       "title": "CoD2x raw mouse mode",
       "summary": "Chooses how the game handles raw mouse movement: 0 off, 1 on its own thread, 2 on the main thread.",
-      "details": "CoD2x only. With 0, raw mouse movement is not used even when Raw mouse input is on. 1 and 2 differ in which thread handles the raw movement, and no source says which is better. It is latched, so a change applies after the game restarts. This version of the game starts at 1, where upstream CoD2x starts at 0.",
+      "details": "CoD2x only. With 0, raw mouse movement is not used even when Raw mouse input is on. 1 and 2 differ in which thread handles the raw movement, and no source says which is better. It is latched, so a change applies after the game restarts. The game starts at 0, as upstream CoD2x does; the launcher sets it from Raw mouse input when the loadout does not.",
       "control": {
         "kind": "number",
         "labels": {
@@ -1001,16 +1001,6 @@
         "src/PC/client_mp/cl_input.c: CL_MouseMove"
       ]
     },
-    "m_rinput_max": {
-      "group": "aim",
-      "title": "Old peak mouse rate",
-      "summary": "The highest mouse update rate the game has measured, under an older name.",
-      "details": "The game fills this in itself and treats it as read-only. Current CoD2x calls the same measurement Peak measured mouse input rate, and the README still uses the older name.",
-      "effectSources": [
-        "src/unix/linux_input.c: MacInput_RawMode",
-        "src/platform/macos_rawmouse.m: AttachMouse"
-      ]
-    },
     "cl_pitchspeed": {
       "group": "aim",
       "title": "Keyboard look speed",
@@ -1102,26 +1092,6 @@
       "details": "From 0 to 3,600 milliseconds, 750 by default.",
       "effectSources": [
         "src/PC/client_mp/cl_main_pc_mp.c: CL_ServerStatus"
-      ]
-    },
-    "cl_masterserver": {
-      "group": "net",
-      "title": "Second master server",
-      "summary": "The address of the second master server the game asks for the server list.",
-      "details": "The CoD2x build asks cod2master.activision.com first and then the address here, master.cod2x.me by default, on the port set separately. Current upstream CoD2x no longer registers it, but this version of the game still reads it.",
-      "effectSources": [
-        "src/PC/client_mp/cl_main_pc_mp.c: CL_GlobalServers_f",
-        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Init"
-      ]
-    },
-    "cl_masterport": {
-      "group": "net",
-      "title": "Second master port",
-      "summary": "The network port used to reach the second master server.",
-      "details": "From 1 to 65,535, 20710 by default. Current upstream CoD2x no longer registers it, but this version of the game still reads it.",
-      "effectSources": [
-        "src/PC/client_mp/cl_main_pc_mp.c: CL_GlobalServers_f",
-        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Init"
       ]
     },
     "net_ip": {
@@ -1934,12 +1904,6 @@
       "summary": "How many seconds mini console text stays on screen.",
       "details": "The default is 4 seconds."
     },
-    "con_printdoublecolors": {
-      "group": "hud",
-      "title": "Double colour codes",
-      "summary": "Lets doubled colour codes show in the killfeed and console.",
-      "details": "CoD2x only. With it off, doubled colour codes are removed from console and killfeed text. On by default."
-    },
     "con_inputboxcolor": {
       "group": "hud",
       "title": "Console input colour",
@@ -2389,13 +2353,13 @@
       "group": "gfx",
       "title": "Window left position",
       "summary": "Where the game window sits from the left of the screen when windowed.",
-      "details": "The game saves it every time you move the window. The range is -4,096 to 4,096."
+      "details": "The game saves it every time you move the window. The range is -4,096 to 4,096, or -100,000 to 100,000 with CoD2x."
     },
     "vid_ypos": {
       "group": "gfx",
       "title": "Window top position",
       "summary": "Where the game window sits from the top of the screen when windowed.",
-      "details": "The game saves it every time you move the window. The range is -4,096 to 4,096."
+      "details": "The game saves it every time you move the window. The range is -4,096 to 4,096, or -100,000 to 100,000 with CoD2x."
     },
     "r_railcorewidth": {
       "group": "gfx",
@@ -3146,16 +3110,6 @@
       "title": "Renderer in use",
       "summary": "Which drawing method the game is using right now.",
       "details": "The game sets it itself and treats it as read-only. Choices are none, DirectX 9 and DirectX 7."
-    },
-    "com_maxfps_limit": {
-      "group": "frame",
-      "title": "Legacy frame cap switch",
-      "summary": "The older CoD2x switch servers used to limit frame rates to 125 to 250.",
-      "details": "Competitive rules now use the competitive rules switch instead, and the CoD2x README still describes this older one. This version of the game still registers it and the server sets it, so it is not a player setting.",
-      "effectSources": [
-        "src/PC/qcommon/cod2x_runtime.c: Cod2x_SharedInit",
-        "src/PC/client_mp/cl_parse_mp.c: CL_SystemInfoChanged"
-      ]
     },
     "bg_aimspreadmovespeedthreshold": {
       "group": "frame",
@@ -4902,6 +4856,54 @@
         "src/PC/qcommon/match_summary.c: MatchSummary_Init",
         "src/PC/qcommon/match_summary.c: MatchSummary_Finish"
       ]
+    },
+    "m_enable": {
+      "group": "aim",
+      "title": "Mouse movement",
+      "summary": "Lets the mouse move the view and the menu cursor.",
+      "details": "CoD2x only. With it off, moving the mouse does nothing; its buttons still work. On by default.",
+      "effectSources": [
+        "src/unix/linux_input.c: MacInput_Move"
+      ]
+    },
+    "m_debug": {
+      "group": "aim",
+      "title": "Mouse debug messages",
+      "summary": "Prints every mouse movement and cursor change in the console.",
+      "details": "CoD2x only. A troubleshooting aid; off by default.",
+      "effectSources": [
+        "src/unix/linux_input.c: MacInput_Move"
+      ]
+    },
+    "cl_hideserverip": {
+      "group": "hud",
+      "title": "Hide server addresses",
+      "summary": "Hides the server address on the scoreboard and masks the digits of IP addresses on screen.",
+      "details": "CoD2x only. Useful when streaming or recording. A server can ask for the same with its own setting. Off by default."
+    },
+    "cg_gamemessageoffsetx": {
+      "group": "hud",
+      "title": "Game message horizontal offset",
+      "summary": "Moves the game messages and killfeed left or right.",
+      "details": "CoD2x only. 0 keeps the usual position."
+    },
+    "cg_gamemessageoffsety": {
+      "group": "hud",
+      "title": "Game message vertical offset",
+      "summary": "Moves the game messages and killfeed up or down.",
+      "details": "CoD2x only. 0 keeps the usual position."
+    },
+    "cg_gamemessagescale": {
+      "group": "hud",
+      "title": "Game message size",
+      "summary": "Scales the text of the game messages and killfeed.",
+      "details": "CoD2x only. 1 keeps the usual size."
+    },
+    "com_autoaffinity": {
+      "group": "other",
+      "title": "Use every processor core",
+      "summary": "Puts the game on every processor core once at start.",
+      "details": "CoD2x only. macOS has no per-process core affinity, so on a Mac this setting is accepted and changes nothing."
     }
   },
   "commands": {
@@ -6813,26 +6815,6 @@
         "cod2x": "unchanged",
         "sources": [
           "Source coverage: absent"
-        ]
-      },
-      {
-        "name": "m_enable",
-        "availability": "referenceOnly",
-        "variants": {},
-        "title": "Windows mouse movement",
-        "summary": "A Windows CoD2x setting that is not registered in this native port.",
-        "details": "Upstream CoD2x 1.4.6.8 registers this in its Windows mouse layer. No native default or editable control is asserted.",
-        "group": "aim",
-        "control": {
-          "kind": "text"
-        },
-        "guided": false,
-        "origins": [
-          "cod2x"
-        ],
-        "cod2x": "added",
-        "sources": [
-          "CoD2x 1.4.6.8: src/mss32/window.cpp:802"
         ]
       }
     ],
