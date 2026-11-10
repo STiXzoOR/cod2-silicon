@@ -532,9 +532,17 @@ void R_RegisterDvars(void)
 
     fx_sort = ri.Dvar_RegisterBool("fx_sort", 1, 0x2000);
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* CoD2x registers these first in the executable (-100000..100000, archived,
+       changeable reset); the renderer then adds its own flag. */
+    vid_xpos = ri.Dvar_RegisterInt("vid_xpos", 3, -100000, 100000, 0x3001);
+
+    vid_ypos = ri.Dvar_RegisterInt("vid_ypos", 22, -100000, 100000, 0x3001);
+#else
     vid_xpos = ri.Dvar_RegisterInt("vid_xpos", 3, (int)0xfffff000, 4096, 0x2001);
 
     vid_ypos = ri.Dvar_RegisterInt("vid_ypos", 22, (int)0xfffff000, 4096, 0x2001);
+#endif
 
     developer = ri.Dvar_RegisterInt("developer", 0, 0, 2, 0x2000);
 

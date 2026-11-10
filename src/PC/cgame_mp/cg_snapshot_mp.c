@@ -1,4 +1,7 @@
 #include "common_types.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x_features.h"
+#endif
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include "bytematch.h"
@@ -455,7 +458,16 @@ void CG_SetNextSnap(snapshot_t *snap_param)
                         if (((clientInfo_t *)ci)->name[0] != 0) {
 
                             const char *translated = UI_SafeTranslateString((const char *)"CGAME_PLAYERRENAMES");
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+                            /* CoD2x text.cpp: both names without codes. */
+                            char oldName[64], newName[64];
+                            const char *msg;
+                            SV_Cod2xStripTextCodes(ciName, oldName, sizeof(oldName));
+                            SV_Cod2xStripTextCodes(clName, newName, sizeof(newName));
+                            msg = va((const char *)"%s^7 %s %s", oldName, translated, newName);
+#else
                             const char *msg = va((const char *)"%s^7 %s %s", ciName, translated, clName);
+#endif
                             CG_GameMessage(msg);
                         }
 

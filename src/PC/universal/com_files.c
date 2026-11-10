@@ -6,6 +6,7 @@
 #include "../server_mp/cod2x_server.h"
 extern int Dvar_GetInt(const char *dvarName);
 #ifndef DEDICATED
+#include "../qcommon/cod2x_features.h"
 extern clientConnection_t *clc;
 #endif
 #endif
@@ -412,6 +413,10 @@ Bool FS_RegisterDvars(void)
 {
     const char *homePath;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    /* CoD2x src/shared/iwd.cpp: each file-system start begins a new fs_processedList log. */
+    Cod2x_IwdLogRotate();
+#endif
     if (fs_debug)
         return 0;
 
@@ -436,6 +441,10 @@ Bool FS_RegisterDvars(void)
     fs_gameDirVar = Dvar_RegisterString_mac("fs_game", "", 0x101c);
     fs_restrict = Dvar_RegisterBool_mac("fs_restrict", 0, 0x1010);
     fs_ignoreLocalized = Dvar_RegisterBool_mac("fs_ignoreLocalized", 0, 0x10a0);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    /* CoD2x src/shared/iwd.cpp FS_RegisterDvars: once, before the first search. */
+    Cod2x_IwdStartup(fs_basepath->current.string);
+#endif
 
     return 1;
 }
@@ -1744,10 +1753,23 @@ static void FS_AddIwdFilesForGameDirectory(const char *path, const char *pszGame
             selection.version = Cod2x_GameVersion();
         }
 #endif
-        for (i = 0; i < numfiles; ++i)
-            if (Cod2x_IwdAllowed(pszGameFolder, iwdfiles[i], (const char *const *)iwdfiles,
-                                numfiles, &selection))
+#ifndef DEDICATED
+        /* CoD2x src/shared/iwd.cpp logs each listing and every decision for fs_processedList. */
+        if (numfiles > 0 && !selection.dedicated)
+            Cod2x_IwdLogDirectory(iwdfile, fs_basepath->current.string, fs_gameDirVar->current.string,
+                                  selection.connecting && !selection.listen ? selection.version : COD2X_REVISION,
+                                  selection.names);
+#endif
+        for (i = 0; i < numfiles; ++i) {
+            int reason = Cod2x_IwdAllowed(pszGameFolder, iwdfiles[i], (const char *const *)iwdfiles,
+                                          numfiles, &selection);
+#ifndef DEDICATED
+            if (!selection.dedicated)
+                Cod2x_IwdLogFile(iwdfile, iwdfiles[i], reason);
+#endif
+            if (reason)
                 sorted[write++] = iwdfiles[i];
+        }
         numfiles = write;
     }
 #endif

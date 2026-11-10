@@ -4,6 +4,7 @@
 #if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
 #include "cod2x_features.h"
 #include "cod2x_policy.h"
+#include <stdlib.h>
 #endif
 #if defined(COD2_X64) && COD2_X64 && defined(DEDICATED)
 #include "cod2x_pose.h"
@@ -22,7 +23,7 @@ extern void Dvar_SetBool(const dvar_t *, unsigned char);
 extern void Dvar_SetString(const dvar_t *, const char *);
 extern void Com_Printf(const char *, ...);
 
-static const dvar_t *cod2x_game, *cod2x_competitive, *cod2x_fpsLimit;
+static const dvar_t *cod2x_game, *cod2x_competitive;
 static const dvar_t *cod2x_revision, *cod2x_identity;
 static char cod2x_hwid[33];
 static int cod2x_playing, cod2x_demo;
@@ -45,16 +46,9 @@ int Cod2x_Competitive(void)
            cod2x_competitive && cod2x_competitive->current.enabled;
 }
 
-static int Cod2x_FPSLimited(void)
-{
-    return Cod2x_Competitive() ||
-        (cod2x_playing && !cod2x_demo && Cod2x_GameVersion() > 0 &&
-         cod2x_fpsLimit && cod2x_fpsLimit->current.enabled);
-}
-
 int Cod2x_FrameFPS(int requested)
 {
-    return Cod2x_LimitedFPS(requested, Cod2x_FPSLimited());
+    return Cod2x_LimitedFPS(requested, Cod2x_Competitive());
 }
 
 const char *Cod2x_Hwid(void)
@@ -69,10 +63,6 @@ static void Cod2x_SharedInit(int dedicated)
         return;
     cod2x_game = Dvar_RegisterInt("g_cod2x", 0, 0, COD2X_REVISION, 0x18);
     cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, dedicated ? 0x1008 : 0x18);
-#if !defined(DEDICATED)
-    /* CoD2x servers have no com_maxfps_limit, so a dedicated one sends none. */
-    cod2x_fpsLimit = Dvar_RegisterBool("com_maxfps_limit", 0, 0x98);
-#endif
 }
 
 void Cod2x_ServerInit(int dedicated)
@@ -99,8 +89,6 @@ void Cod2x_ServerSpawn(void)
     Cod2x_SharedInit(0);
     if (!cod2x_serverActive && cod2x_remotePolicy) {
         Dvar_SetBool(cod2x_competitive, 0);
-        if (cod2x_fpsLimit)
-            Dvar_SetBool(cod2x_fpsLimit, 0);
     }
     cod2x_remotePolicy = 0;
     cod2x_serverActive = 1;
@@ -125,8 +113,7 @@ void Cod2x_ServerShutdown(void)
 int Cod2x_SetClientDvar(const char *name, const char *value)
 {
     extern void Dvar_SetFromStringByName(const char *, const char *);
-    if (strcasecmp(name, "g_cod2x") && strcasecmp(name, "g_competitive") &&
-        strcasecmp(name, "com_maxfps_limit"))
+    if (strcasecmp(name, "g_cod2x") && strcasecmp(name, "g_competitive"))
         return 0;
     /* A listen client receives systeminfo/reliable commands in the same process
        as its host. Only remote sessions may change the shared policy view. */
@@ -147,16 +134,28 @@ void Cod2x_Init(void)
 #else
     cod2x_game = Dvar_RegisterInt("g_cod2x", 0, 0, COD2X_REVISION, 0x18);
     cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, 0x18);
-    cod2x_fpsLimit = Dvar_RegisterBool("com_maxfps_limit", 0, 0x98);
 #endif
     cod2x_revision = Dvar_RegisterInt("protocol_cod2x", COD2X_REVISION, COD2X_REVISION, COD2X_REVISION, 0x42);
     Dvar_RegisterString("cl_cod2x_version", COD2X_VERSION, 0x40);
+#if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+    /* CoD2x src/mss32/hwid.cpp:1028-1041: without an identity the game asks to
+       retry or exits. */
+    while (!Cod2x_ReadMachineHwid(cod2x_hwid)) {
+        unsigned int code;
+        const char *error = Cod2x_HwidError(&code);
+        if (!Sys_Cod2xHwidRetry(code, error))
+            exit(1);
+    }
+#else
     if (!Cod2x_ReadMachineHwid(cod2x_hwid))
         Com_Printf("CoD2x: machine identity unavailable; CoD2x servers will reject this client.\n");
-    cod2x_identity = Dvar_RegisterString("cl_hwid2", cod2x_hwid, 0x42);
+#endif
+    /* USERINFO | NOWRITE, as in CoD2x mss32/hwid.cpp: only the engine sets them. */
+#if defined(COD2_X64) && COD2_X64
+    Dvar_RegisterInt("cl_hwid", Cod2x_ShortHwid(), (int)0x80000000u, 0x7fffffff, 0x12);
+#endif
+    cod2x_identity = Dvar_RegisterString("cl_hwid2", cod2x_hwid, 0x12);
 #if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
-    Dvar_RegisterString("cl_masterServer", "master.cod2x.me", 1);
-    Dvar_RegisterInt("cl_masterPort", 20710, 1, 65535, 1);
     Cod2x_FeaturesInit();
 #endif
 }
@@ -200,7 +199,7 @@ void Cod2x_Frame(int active, int demo)
     /* CoD2x src/mss32/competitive.cpp:54-135. */
     for (i = 0; i < sizeof(cod2x_settings) / sizeof(cod2x_settings[0]); ++i) {
         dvar_t *var;
-        if (competitive || (i == 0 && Cod2x_FPSLimited())) {
+        if (competitive) {
             if (!cod2x_settings[i].var) {
                 cod2x_settings[i].var = Dvar_FindVar(cod2x_settings[i].name);
                 if (!cod2x_settings[i].var)
@@ -248,7 +247,5 @@ void Cod2x_Disconnect(void)
         Dvar_SetInt(cod2x_game, 0);
     if (cod2x_competitive)
         Dvar_SetBool(cod2x_competitive, 0);
-    if (cod2x_fpsLimit)
-        Dvar_SetBool(cod2x_fpsLimit, 0);
 }
 #endif

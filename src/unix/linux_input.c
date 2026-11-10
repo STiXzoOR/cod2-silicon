@@ -99,31 +99,68 @@ static float mac_wheel_remainder;
 #include "platform/cod2x_native_mouse.h"
 #include "platform/macos_system.h"
 extern const dvar_t *Dvar_RegisterInt(const char *, int, int, int, unsigned short);
+extern const dvar_t *Dvar_RegisterBool(const char *, unsigned char, unsigned short);
 extern void Dvar_SetInt(const dvar_t *, int);
-static const dvar_t *m_rinput, *m_rinput_hz, *m_rinput_max, *m_rinput_hz_max;
+extern void Com_Printf(const char *, ...);
+extern void Com_Error(int, const char *, ...);
+static const dvar_t *m_rinput, *m_rinput_hz, *m_rinput_hz_max, *m_enable, *m_debug;
 static Cod2xMouseStats mouseStats;
-static int mouseStatsActive, mouseStatsMode = -1;
+static int mouseStatsActive, mouseStatsMode = -1, menuCursorX = -1, menuCursorY = -1;
 
 static int MacInput_RawMode(void)
 {
+    /* CoD2x src/mss32/rinput.cpp and window.cpp. Mode 1 reads the mouse on its
+       own thread, mode 2 on the main thread; 0 uses the system cursor. */
+    static const char *const methods[3] = {"", "dedicated thread method", "main window method"};
     if (!m_rinput) {
-        /* The native default retains WS3's raw-input preference. */
-        m_rinput = Dvar_RegisterInt("m_rinput", 1, 0, 2, 0x1021);
+        m_rinput = Dvar_RegisterInt("m_rinput", 0, 0, 2, 0x1021);
         m_rinput_hz = Dvar_RegisterInt("m_rinput_hz", 0, 0, 0x7fffffff, 0x1040);
-        m_rinput_max = Dvar_RegisterInt("m_rinput_max", 0, 0, 0x7fffffff, 0x1040);
         m_rinput_hz_max = Dvar_RegisterInt("m_rinput_hz_max", 0, 0, 0x7fffffff, 0x1040);
+        m_enable = Dvar_RegisterBool("m_enable", 1, 0x1000);
+        m_debug = Dvar_RegisterBool("m_debug", 0, 0x1000);
     }
     int mode = m_rinput->latched.integer;
     if (mode != mouseStatsMode) {
-        Dvar_SetInt(m_rinput, mode);
-        MacRawMouse_SetMode(mode);
-        Cod2x_MouseStatsReset(&mouseStats, MacSystem_Nanoseconds(), MacRawMouse_EventCount());
+        const char *error;
+        if (mouseStatsMode > 0)
+            Com_Printf("Unregistered raw input device (%s)\n", methods[mouseStatsMode]);
         Dvar_SetInt(m_rinput_hz, 0);
-        Dvar_SetInt(m_rinput_max, 0);
         Dvar_SetInt(m_rinput_hz_max, 0);
+        error = MacRawMouse_SetMode(mode);
+        if (error) {
+            MacRawMouse_SetMode(0);
+            mouseStatsMode = 0;
+            Dvar_SetInt(m_rinput, 0);
+            Com_Error(1, "%s", error);
+            return 0;
+        }
+        Dvar_SetInt(m_rinput, mode);
+        Cod2x_MouseStatsReset(&mouseStats, MacSystem_Nanoseconds(), MacRawMouse_EventCount());
+        if (mode > 0)
+            Com_Printf("Registered raw input device (%s)\n", methods[mode]);
         mouseStatsMode = mode;
     }
     return mode;
+}
+
+/* m_enable 0 stops the mouse moving the view and the menu cursor; buttons still work. */
+static void MacInput_Move(int dx, int dy, int raw)
+{
+    if (m_debug && m_debug->current.enabled && (dx || dy))
+        Com_Printf("Mouse move offset: (%d %d) (source: %s)\n", dx, dy, raw ? "rinput" : "system");
+    if (!m_enable || m_enable->current.enabled)
+        CL_MouseEvent(dx, dy);
+}
+
+static void MacInput_MenuCursor(int x, int y)
+{
+    if (m_debug && m_debug->current.enabled && (x != menuCursorX || y != menuCursorY) &&
+        x >= -20 && x <= 660 && y >= -20 && y <= 500)
+        Com_Printf("New menu cursor: (%d %d) (source: system)\n", x, y);
+    menuCursorX = x;
+    menuCursorY = y;
+    if (!m_enable || m_enable->current.enabled)
+        CL_MouseEventAbsolute(x, y, 0, 0);
 }
 
 static void MacInput_MeasureRaw(void)
@@ -138,7 +175,6 @@ static void MacInput_MeasureRaw(void)
     }
     if (mac_use_raw && Cod2x_MouseStatsUpdate(&mouseStats, now, count)) {
         Dvar_SetInt(m_rinput_hz, mouseStats.hz);
-        Dvar_SetInt(m_rinput_max, mouseStats.maxHz);
         Dvar_SetInt(m_rinput_hz_max, mouseStats.maxHz);
     }
 }
@@ -300,19 +336,31 @@ int SDL_PumpInputEvents(void)
                 extern void MacDisplay_FocusChanged(int focused);
                 MacDisplay_FocusChanged(1);
             }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            else if (ev.window.event == SDL_WINDOWEVENT_MOVED)
+                MacDisplay_WindowMoved(ev.window.data1, ev.window.data2);
+#endif
             break;
 #endif
         case SDL_MOUSEMOTION: {
 #if defined(__APPLE__) && defined(COD2_X64)
             if (mac_relative) {
                 if (!mac_use_raw)
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+                    MacInput_Move(ev.motion.xrel, ev.motion.yrel, 0);
+#else
                     CL_MouseEvent(ev.motion.xrel, ev.motion.yrel);
+#endif
             } else {
                 int x, y, width, height;
                 MacPlatform_MapWindowPoint(ev.motion.x, ev.motion.y, &x, &y);
                 MacPlatform_GetRenderSize(&width, &height);
                 MacInput_RenderToUI(x, y, width, height, &x, &y);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+                MacInput_MenuCursor(x, y);
+#else
                 CL_MouseEventAbsolute(x, y, 0, 0);
+#endif
             }
 #else
             CL_MouseEventAbsolute(ev.motion.x, ev.motion.y,
@@ -450,6 +498,10 @@ void IN_Frame(void)
         static int cursorHidden = -1;
         if (focused != cursorHidden) {
             SDL_ShowCursor(focused ? SDL_DISABLE : SDL_ENABLE);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            if (m_debug && m_debug->current.enabled)
+                Com_Printf(focused ? "Hiding system cursor\n" : "Show system cursor\n");
+#endif
             cursorHidden = focused;
         }
     }
@@ -465,7 +517,11 @@ void IN_Frame(void)
     SDL_PumpInputEvents();
     int dx, dy;
     if (mac_use_raw && MacRawMouse_Read(&dx, &dy))
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        MacInput_Move(dx, dy, 1);
+#else
         CL_MouseEvent(dx, dy);
+#endif
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     MacInput_MeasureRaw();
 #endif

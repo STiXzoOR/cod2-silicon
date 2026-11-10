@@ -171,9 +171,15 @@ struct ConfigConnectionLaunch: Equatable, Sendable {
 struct GameLaunchPlan {
     var arguments: [String]
     var link: LaunchLink?
-    init(settings: GameSettings, dataPath: String, homePath: String, link: LaunchLink? = nil, demo: String? = nil, forwarded: [String] = [], configStudio: ConfigStudioLaunch? = nil, connection: ConfigConnectionLaunch? = nil) throws {
+    /// loadout: the value the game's profile config gives a dvar; with it, what that config leaves
+    /// unset is supplied from GameSettings.loadoutDefaults.
+    init(settings: GameSettings, dataPath: String, homePath: String, link: LaunchLink? = nil, demo: String? = nil, forwarded: [String] = [], configStudio: ConfigStudioLaunch? = nil, connection: ConfigConnectionLaunch? = nil,
+         loadout: ((String) -> String?)? = nil) throws {
         guard GameSettings.safeValue(dataPath), GameSettings.safeValue(homePath) else { throw LauncherError(message: "Game paths contain unsupported characters.") }
         var args = try settings.launchDvars(migrated: configStudio != nil).flatMap { ["+set", $0.0, "\"\($0.1)\""] }
+        if let loadout {
+            args += try settings.loadoutDefaults(migrated: configStudio != nil, loadout: loadout).flatMap { ["+seta", $0.0, "\"\($0.1)\""] }
+        }
         args += ["+set", "fs_basepath", "\"\(dataPath)\"", "+set", "fs_homepath", "\"\(homePath)\""]
         if let configStudio {
             try ConfigStudioLaunch.validateProfileID(configStudio.profileID)
@@ -298,7 +304,7 @@ struct GameSettings: Codable, Sendable, Equatable {
         }
         var pairs = [("r_mode", resolution), ("r_fullscreen", fullscreen == "windowed" ? "0" : "1"),
             ("r_borderless", fullscreen == "borderless" ? "1" : "0"), ("com_maxfps", String(fps)),
-            ("r_swapInterval", vsync ? "1" : "0"), ("in_rawmouse", rawMouse ? "1" : "0"),
+            ("r_swapInterval", vsync ? "1" : "0"), ("in_rawmouse", rawMouse ? "1" : "0"), ("m_rinput", rawMouse ? "1" : "0"),
             ("sensitivity", String(sensitivity)), ("snd_volume", String(volume)), ("r_anisotropy", String(anisotropy)), ("m_filter", "0"), ("cl_mouseAccel", "0"),
             ("logfile", "0"), ("developer", "0"), ("com_introPlayed", "1"), ("cl_matchSummaries", matchSummariesEnabled ? "1" : "0")]
         for line in advanced.components(separatedBy: "\n") where !line.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -315,6 +321,24 @@ struct GameSettings: Codable, Sendable, Equatable {
         }
         guard pairs.reduce(0, { $0 + $1.0.utf8.count + $1.1.utf8.count + 12 }) < 2500 else { throw LauncherError(message: "Advanced options exceed the engine's startup limit.") }
         return pairs
+    }
+    /// What the stock first run wrote from the game's recommended settings (configure_mp.csv)
+    /// on this Mac. CoD2x builds never apply recommended settings, so the launcher supplies
+    /// these while the loadout does not set them, and the first picture stays the same.
+    static let firstRunPicture: [(String, String)] = [("r_glow", "0"), ("r_distortion", "0"), ("r_rendererPreference", "none"),
+        ("r_zfeather", "0"), ("sc_enable", "0"), ("r_dlightLimit", "4"), ("fx_sort", "1"), ("r_depthPrepassModels", "0")]
+    /// Startup values for what neither these settings nor the loadout set: the frame cap and raw
+    /// mouse, which CoD2x registers as 85 and 0, and the stock first-run picture. They are archived
+    /// (seta), as the recommended settings were, so the loadout keeps them from then on.
+    func loadoutDefaults(migrated: Bool, loadout: (String) -> String?) throws -> [(String, String)] {
+        let launched = Set(try launchDvars(migrated: migrated).map { $0.0.lowercased() })
+        var values = Self.firstRunPicture
+        if migrated {
+            let own = Dictionary(try dvars().map { ($0.0.lowercased(), $0.1) }, uniquingKeysWith: { $1 })
+            let raw = loadout("in_rawmouse").map { $0 == "0" ? "0" : "1" } ?? own["m_rinput"] ?? "1"
+            values = [("com_maxfps", own["com_maxfps"] ?? String(fps)), ("m_rinput", raw)] + values
+        }
+        return values.filter { !launched.contains($0.0.lowercased()) && loadout($0.0) == nil }
     }
     func config() throws -> String { try dvars().map { "seta \($0.0) \"\($0.1)\"" }.joined(separator: "\n") + "\n" }
     func arguments() throws -> [String] { try dvars().flatMap { ["+set", $0.0, "\"\($0.1)\""] } }

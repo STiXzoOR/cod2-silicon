@@ -1393,6 +1393,19 @@ void Com_CheckSetRecommended(void)
 
     int needSet;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* CoD2x never applies recommended settings (it removes both calls,
+       src/mss32/hook.cpp:344-346). The machine values are still recorded:
+       nothing else sets them, and with the memory size left at 0 the
+       renderer drops to its lowest texture detail. */
+    {
+        extern void Sys_ArchiveInfo(int checksum);
+        extern const dvar_t *Dvar_FindVar(const char *name);
+        const dvar_t *sum = Dvar_FindVar("sys_configSum");
+        Sys_ArchiveInfo(sum ? sum->current.integer : 0);
+    }
+    return;
+#endif
     if (com_recommendedSet->current.enabled) {
         void *csv;
         int filesize = FS_ReadFile("configure_mp.csv", &csv);
@@ -2721,11 +2734,9 @@ void Com_Init_Try_Block_Function(char *commandLine)
         }
     }
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    com_maxfps = Dvar_RegisterInt("com_maxfps", 250, 0, 1000, 0x1001);
-    Dvar_RegisterBool("com_writeConfig", 1, 0x1);
-#else
     com_maxfps = Dvar_RegisterInt("com_maxfps", 85, 0, 1000, 0x1001);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Dvar_RegisterBool("com_writeConfig", 1, 0x1);
 #endif
     com_developer = Dvar_RegisterInt("developer", 0, 0, 2, 0x1000);
     com_developer_script = Dvar_RegisterBool("developer_script", 0, 0x1000);

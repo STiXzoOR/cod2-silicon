@@ -40,6 +40,14 @@ typedef struct {
 #endif
 } MacContext;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+extern const void *Dvar_FindVar(const char *);
+extern int Dvar_GetInt(const char *);
+extern void Dvar_SetInt(const void *, int);
+extern void Dvar_ClearModified(const void *);
+extern void Com_Printf(const char *, ...);
+#endif
+
 typedef struct { int width, height, depth, refresh; } MacMode;
 static MacMode *modes;
 static int modeCount;
@@ -80,6 +88,31 @@ unsigned char sInWindowMode = 1;
 size_t sDisplayIndex;
 /* Native consumers use SDL modes and GL queries, not i386 CDisplayInfo bytes. */
 void *sDisplayList[3];
+
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+/* CoD2x src/mss32/hwid.cpp: no machine identity, no game. Its two Windows
+   message boxes, shown with SDL before the game window exists. */
+int Sys_Cod2xHwidRetry(unsigned int code, const char *error)
+{
+    char text[1024];
+    int choice = 0;
+    const SDL_MessageBoxButtonData buttons[2] = {
+        {SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Retry"},
+        {SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel"},
+    };
+    const SDL_MessageBoxData question = {
+        SDL_MESSAGEBOX_INFORMATION, NULL, "Retry or Exit",
+        "Do you want to retry or exit?\n\nIf the problem persists, please restart your computer and try again.",
+        2, buttons, NULL};
+    snprintf(text, sizeof(text), "Error while generating HWID.\n\nUnable to load WMI properties.\nError: 0x%08X %s",
+             code, error ? error : "");
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Fatal Error", text, NULL);
+    if (SDL_ShowMessageBox(&question, &choice) != 0 || choice != 1)
+        return 0;
+    SDL_Delay(500);
+    return 1;
+}
+#endif
 
 int MacDisplay_Initialize(void)
 {
@@ -131,8 +164,35 @@ int MacDisplay_Initialize(void)
     return 0;
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static int cod2xInternalMode;
+#endif
 void MacPlatform_ConfigureWindow(int width, int height, int mode, int refresh)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (!cod2xInternalMode) {
+        /* CoD2x: a window as large as the display becomes a borderless window
+           covering it; there is no dvar for this. The lines are printed when the
+           window is created, as CoD2x's R_CreateWindow does. */
+        int creating = !sdl_gl_window;
+        if (mode == MAC_FULLSCREEN) {
+            if (creating)
+                Com_Printf("Attempting %i x %i fullscreen with 32 bpp at %i hz\n", width, height, refresh);
+        } else if (mode == MAC_WINDOWED) {
+            SDL_DisplayMode desktop;
+            SDL_Rect bounds;
+            if (MacDisplay_Initialize() == 0 && SDL_GetDesktopDisplayMode(0, &desktop) == 0 &&
+                desktop.w == width && desktop.h == height && SDL_GetDisplayBounds(0, &bounds) == 0) {
+                if (creating)
+                    Com_Printf("Attempting %i x %i borderless window at (%i, %i)\n", width, height, bounds.x, bounds.y);
+                mode = MAC_BORDERLESS;
+            } else if (creating) {
+                Com_Printf("Attempting %i x %i window at (%i, %i)\n", width, height,
+                           Dvar_GetInt("vid_xpos"), Dvar_GetInt("vid_ypos"));
+            }
+        }
+    }
+#endif
     sdl_gl_width = width;
     sdl_gl_height = height;
     windowMode = mode;
@@ -213,7 +273,16 @@ static int SetWindowMode(void)
         double scaleX = logicalW > 0 ? (double)pixelW / logicalW : 1;
         double scaleY = logicalH > 0 ? (double)pixelH / logicalH : 1;
         SDL_SetWindowSize(sdl_gl_window, (int)(sdl_gl_width / scaleX), (int)(sdl_gl_height / scaleY));
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        {
+            /* vid_xpos/vid_ypos hold the window's outer corner, as on Windows. */
+            int top = 0, left = 0;
+            SDL_GetWindowBordersSize(sdl_gl_window, &top, &left, NULL, NULL);
+            SDL_SetWindowPosition(sdl_gl_window, Dvar_GetInt("vid_xpos") + left, Dvar_GetInt("vid_ypos") + top);
+        }
+#else
         SDL_SetWindowPosition(sdl_gl_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+#endif
     }
 #if defined(__APPLE__) && defined(COD2_X64)
     MacWindow_SetBorderless(windowMode == MAC_BORDERLESS);
@@ -528,7 +597,11 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
             sdl_gl_window = NULL;
         }
         if (!sdl_gl_window)
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            sdl_gl_window = SDL_CreateWindow("Call of Duty 2x Multiplayer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+#else
             sdl_gl_window = SDL_CreateWindow("CoD2 Silicon", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+#endif
                 sdl_gl_width, sdl_gl_height, SDL_WINDOW_METAL | SDL_WINDOW_SHOWN |
                 (windowMode == MAC_WINDOWED ? SDL_WINDOW_ALLOW_HIGHDPI : 0));
         MacContext *native = calloc(1, sizeof(*native));
@@ -564,7 +637,11 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, stencil ? 8 : 0);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     if (!sdl_gl_window)
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        sdl_gl_window = SDL_CreateWindow("Call of Duty 2x Multiplayer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+#else
         sdl_gl_window = SDL_CreateWindow("CoD2 Silicon", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+#endif
                                          sdl_gl_width, sdl_gl_height,
 #if defined(__APPLE__) && defined(COD2_X64)
                                          SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN |
@@ -974,7 +1051,13 @@ uint16_t MacDisplay_SetMode(int w, int h, int d, int r)
     (void)d;
     if (w <= 0 || h <= 0)
         return 1;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    cod2xInternalMode = 1;
+#endif
     MacPlatform_ConfigureWindow(w, h, windowMode, r);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    cod2xInternalMode = 0;
+#endif
     if (sdl_gl_window && SetWindowMode() != 0)
         return 1;
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
@@ -1032,6 +1115,21 @@ uint16_t MacDisplay_SetMode(int w, int h, int d, int r)
 }
 int MacDisplay_SetupDisplay(int w, int h) { sdl_gl_width = w; sdl_gl_height = h; return MacDisplay_Initialize(); }
 int MacDisplay_IsFullscreen(void) { return screenContext && windowMode != MAC_WINDOWED; }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+void MacDisplay_WindowMoved(int x, int y)
+{
+    /* CoD2x keeps the windowed position in vid_xpos/vid_ypos, so it is saved. */
+    const void *xpos = Dvar_FindVar("vid_xpos"), *ypos = Dvar_FindVar("vid_ypos");
+    int top = 0, left = 0;
+    if (!sdl_gl_window || windowMode != MAC_WINDOWED || !xpos || !ypos)
+        return;
+    SDL_GetWindowBordersSize(sdl_gl_window, &top, &left, NULL, NULL);
+    Dvar_SetInt(xpos, x - left);
+    Dvar_SetInt(ypos, y - top);
+    Dvar_ClearModified(xpos);
+    Dvar_ClearModified(ypos);
+}
+#endif
 int MacDisplay_InWindowMode(void) { return windowMode == MAC_WINDOWED; }
 int MacDisplay_IsWindowMode(void) { return MacDisplay_InWindowMode(); }
 void *MacDisplay_GetMainWindow(void) { return sdl_gl_window; }

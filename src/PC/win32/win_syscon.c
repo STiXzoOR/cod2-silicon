@@ -68,7 +68,12 @@ typedef struct {
 
 static WinConData s_wcd;
 
-#    define CONSOLE_BUFFER_SIZE 16384
+#    if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* CoD2x src/mss32/console.cpp: twice the text, and only the older half goes when full. */
+#        define CONSOLE_BUFFER_SIZE 32767
+#    else
+#        define CONSOLE_BUFFER_SIZE 16384
+#    endif
 
 static LONG WINAPI ConWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -286,6 +291,11 @@ void Conbuf_AppendText(const char *pMsg)
     if (!pMsg)
         return;
 
+#    if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* A very long message keeps its end. */
+    if (strlen(pMsg) > CONSOLE_BUFFER_SIZE - 1)
+        pMsg += strlen(pMsg) - CONSOLE_BUFFER_SIZE + 1;
+#    endif
     for (msg = pMsg; *msg && ((b - buffer) < (int)sizeof(buffer) - 2); msg++) {
         if (*msg == '\n' && msg[1] == '\r') {
             *b++ = '\r';
@@ -316,10 +326,20 @@ void Conbuf_AppendText(const char *pMsg)
     if (bufLen > 0) {
         SendMessage(s_wcd.hwndBuffer, EM_SETREADONLY, FALSE, 0);
 
+#    if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        {
+            int total = GetWindowTextLength(s_wcd.hwndBuffer) + bufLen;
+            if (total > CONSOLE_BUFFER_SIZE) {
+                SendMessage(s_wcd.hwndBuffer, EM_SETSEL, 0, total / 2);
+                SendMessage(s_wcd.hwndBuffer, EM_REPLACESEL, FALSE, (LPARAM) "");
+            }
+        }
+#    else
         if (GetWindowTextLength(s_wcd.hwndBuffer) + bufLen >= CONSOLE_BUFFER_SIZE) {
             SendMessage(s_wcd.hwndBuffer, EM_SETSEL, 0, CONSOLE_BUFFER_SIZE / 2);
             SendMessage(s_wcd.hwndBuffer, EM_REPLACESEL, FALSE, (LPARAM) "");
         }
+#    endif
 
         SendMessage(s_wcd.hwndBuffer, EM_SETSEL, (WPARAM)-1, (LPARAM)-1);
         SendMessage(s_wcd.hwndBuffer, EM_REPLACESEL, FALSE, (LPARAM)buffer);

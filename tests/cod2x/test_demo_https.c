@@ -14,6 +14,18 @@ static CURL *TestDemoEasyInit(void)
     assert(curl_easy_setopt(easy, CURLOPT_CAINFO, getenv("COD2X_TEST_CA")) == CURLE_OK);
     return easy;
 }
+void Com_Printf(const char *format, ...)
+{
+    (void)format;
+}
+
+void Com_Error(int code, const char *format, ...)
+{
+    (void)code;
+    (void)format;
+    abort();
+}
+
 #define curl_easy_init TestDemoEasyInit
 #include "../../src/PC/qcommon/cod2x_demo.c"
 #undef curl_easy_init
@@ -25,7 +37,7 @@ int main(int argc, char **argv)
     assert(argc == 3);
     success = !strcmp(argv[2], "success");
     for (i = 0; i < 1000 && Cod2x_DemoUploadsPending(argv[1]); ++i) {
-        Cod2x_DemoUploadFrame(argv[1], 10, 0);
+        Cod2x_DemoUploadFrame(argv[1], 10, 1);
         usleep(10000);
     }
     assert(i < 1000);

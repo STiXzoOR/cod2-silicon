@@ -5,6 +5,9 @@
 #include "headers/PC/cgame_mp/cg_local.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x_features.h"
+#endif
 #endif
 
 #include <string.h>
@@ -174,6 +177,140 @@ void CG_ParseCodinfo(void)
 }
 
 #ifndef __EMSCRIPTEN__
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* CoD2x text.cpp: when a chat message is split, the next line starts with the
+   colour, bar, rainbow and font still in effect, not only the last "^N"; codes
+   take no room in the 90 characters of a line. Colours are kept as the codes
+   Cod2x_TextCode returns ('0'-'9', 'a'-'t', 'A'-'J'). */
+typedef struct {
+    char color, before, bar, font;
+    int rainbow;
+} Cod2xChatState;
+
+static void CG_Cod2xChatState(Cod2xChatState *state, char code)
+{
+    if (code == '7') {
+        state->color = state->before = '7';
+        state->bar = state->font = 0;
+        state->rainbow = 0;
+    } else if (code == '*' || code == '!') {
+        state->rainbow = code == '*';
+    } else if (code == '+' || code == '=' || code == '-') {
+        state->font = code == '-' ? 0 : code;
+    } else if (code == '_') {
+        /* Bar on: the bar takes the colour, the text goes back one colour. */
+        state->bar = state->color;
+        state->color = state->before;
+    } else if (code == '.') {
+        state->bar = 0;
+    } else {
+        state->before = state->color;
+        state->color = code;
+    }
+}
+
+static int CG_Cod2xColorText(char code, char *out)
+{
+    if (code >= 'a' && code <= 'j') {
+        out[0] = '$';
+        out[1] = (char)('0' + code - 'a');
+    } else if (code >= 'k' && code <= 't') {
+        out[0] = '#';
+        out[1] = (char)('0' + code - 'k');
+    } else if (code >= 'A' && code <= 'J') {
+        out[0] = '@';
+        out[1] = (char)('0' + code - 'A');
+    } else {
+        out[0] = '^';
+        out[1] = code;
+    }
+    return 2;
+}
+
+/* The start of a continued line, 10 bytes at most. The bar's colour comes first:
+   the chat background is coloured by a line's first code. */
+static int CG_Cod2xChatPrefix(const Cod2xChatState *state, char *out)
+{
+    char *p = out;
+    if (state->bar) {
+        p += CG_Cod2xColorText(state->bar, p);
+        *p++ = '#';
+        *p++ = '_';
+    }
+    if (!state->bar || state->color != '7')
+        p += CG_Cod2xColorText(state->color, p);
+    if (state->rainbow) {
+        *p++ = '$';
+        *p++ = '*';
+    }
+    if (state->font) {
+        *p++ = '@';
+        *p++ = state->font;
+    }
+    return (int)(p - out);
+}
+
+static void __attribute_regparm__(1) CG_AddToTeamChat(const char *str)
+{
+    int chatHeight = cg_chatHeight->current.integer, len = 0;
+    Cod2xChatState codes = {'7', '7', 0, 0, 0}, spaceCodes;
+    char *dst, *lastSpace = NULL, *end;
+
+    if (chatHeight == 0 || cg_chatTime->current.integer <= 0) {
+        cgs->teamLastChatPos = 0;
+        cgs->teamChatPos = 0;
+        return;
+    }
+    spaceCodes = codes;
+    dst = cgs->teamChatMsgs[cgs->teamChatPos % chatHeight];
+    *dst = '\0';
+    end = dst + sizeof(cgs->teamChatMsgs[0]);
+
+    while (*str) {
+        char code;
+        int length;
+        if (len > 0x59) {
+            if (lastSpace) {
+                str += lastSpace - dst + 1;
+                dst = lastSpace;
+                /* The words after the space are read again, so their codes are too. */
+                codes = spaceCodes;
+            }
+            *dst = '\0';
+            cgs->teamChatMsgTimes[cgs->teamChatPos % chatHeight] = cg->time;
+            cgs->teamChatPos++;
+            dst = cgs->teamChatMsgs[cgs->teamChatPos % chatHeight];
+            end = dst + sizeof(cgs->teamChatMsgs[0]);
+            dst += CG_Cod2xChatPrefix(&codes, dst);
+            len = 0;
+            lastSpace = NULL;
+        }
+        /* A line of codes only must still end inside the 271 bytes. */
+        if (end - dst <= 4)
+            break;
+        length = Cod2x_TextCode(str, &code);
+        if (length) {
+            memcpy(dst, str, (size_t)length);
+            dst += length;
+            str += length;
+            CG_Cod2xChatState(&codes, code);
+            continue;
+        }
+        if (*str == ' ') {
+            lastSpace = dst;
+            spaceCodes = codes;
+        }
+        *dst++ = *str++;
+        len++;
+    }
+
+    *dst = '\0';
+    cgs->teamChatMsgTimes[cgs->teamChatPos % chatHeight] = cg->time;
+    cgs->teamChatPos++;
+    if (chatHeight < cgs->teamChatPos - cgs->teamLastChatPos)
+        cgs->teamLastChatPos = cgs->teamChatPos - chatHeight;
+}
+#else
 static void __attribute_regparm__(1) CG_AddToTeamChat(const char *str)
 {
     int chatHeight;
@@ -266,6 +403,7 @@ static void __attribute_regparm__(1) CG_AddToTeamChat(const char *str)
         cgs->teamLastChatPos = cgs->teamChatPos - chatHeight;
     }
 }
+#endif
 
 static void CG_OpenScriptMenu(void)
 {
@@ -786,12 +924,30 @@ static void CG_ServerCommandChat(const char *context, qboolean addToTeamChat)
     char message[150];
     const char *localized;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        /* CoD2x text.cpp: "&&1" in a player's text is not the placeholder for the name. */
+        char escaped[1024];
+        const char *text = CG_Argv(1);
+        localized = SEH_LocalizeTextMessage(Cod2x_EscapeChatPlaceholder(text, escaped, sizeof(escaped)) ? escaped : text,
+                                            context, 0);
+    }
+#else
     localized = SEH_LocalizeTextMessage(CG_Argv(1), context, 0);
+#endif
     I_strncpyz(message, localized, sizeof(message));
     CG_CopyCleanChatString(message, sizeof(message), message);
 
     if (addToTeamChat) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        /* CoD2x text.cpp: the name in the chat shows in its team colour, without its own codes. */
+        char line[sizeof(message)];
+        I_strncpyz(line, message, sizeof(line));
+        Cod2x_StripChatName(line);
+        CG_AddToTeamChat(line);
+#else
         CG_AddToTeamChat(message);
+#endif
     }
     Com_Printf("%s\n", message);
 }

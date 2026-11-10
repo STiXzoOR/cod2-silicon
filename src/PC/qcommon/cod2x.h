@@ -29,6 +29,13 @@ enum {
 #define COD2X_MACHINE_TEXT 128
 /* failed: 1 if the GPU couldn't be queried. Returns 0 when CoD2x would refuse. */
 int Cod2x_HwidFromMachine(char value[COD2X_MACHINE_VALUES][COD2X_MACHINE_TEXT], int failed, char id[33]);
+int Cod2x_HwidShortFromMachine(char value[COD2X_MACHINE_VALUES][COD2X_MACHINE_TEXT]);
+/* cl_hwid from the last successful machine read, 0 before one. */
+int Cod2x_ShortHwid(void);
+/* Why the last machine read failed, as CoD2x reports it: an HRESULT and a text. */
+const char *Cod2x_HwidError(unsigned int *code);
+/* Shows CoD2x's HWID error and asks to retry; 0 means exit. Client platforms. */
+int Sys_Cod2xHwidRetry(unsigned int code, const char *error);
 #else
 int Cod2x_HwidFromUUID(const char *uuid, char id[33]);
 #endif

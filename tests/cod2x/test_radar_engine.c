@@ -1,10 +1,10 @@
-/* Exercise the production reader's temp-buffer ownership, including empty files. */
+/* Exercise the production reader's temp-buffer ownership, including empty and malformed files. */
 #include "../../src/PC/cgame_mp/cg_cod2x_radar.c"
 #include <assert.h>
 
 unsigned char cgsArray[sizeof(cgs_t)] __attribute__((aligned(16)));
 static dvar_t image;
-static int result, allocations, frees;
+static int result, allocations, frees, drops;
 
 int FS_ReadFile(const char *name, void **buffer)
 {
@@ -34,6 +34,11 @@ void Dvar_SetInt(const dvar_t *var, int value) { (void)var; (void)value; }
 void Dvar_SetFloat(const dvar_t *var, float value) { (void)var; (void)value; }
 char *Com_Parse(const char **cursor) { (void)cursor; return ""; }
 void Com_Printf(const char *format, ...) { (void)format; }
+void Com_Error(errorParm_t code, const char *format, ...)
+{
+    assert(code == ERR_DROP && strstr(format, "Invalid image name"));
+    ++drops;
+}
 
 int main(void)
 {
@@ -49,9 +54,9 @@ int main(void)
     snprintf(cgs->mapname, sizeof(cgs->mapname), "maps/mp/invalid.d3dbsp");
     result = 8;
     CG_Cod2xRadarLoad();
-    assert(allocations == 2 && frees == 2);
+    assert(allocations == 2 && frees == 2 && drops == 1);
     CG_Cod2xRadarLoad();
-    assert(allocations == 2 && frees == 2);
+    assert(allocations == 2 && frees == 2 && drops == 1);
     puts("CoD2x production radar reader buffer ownership: pass");
     return 0;
 }

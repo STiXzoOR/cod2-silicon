@@ -7,6 +7,17 @@
 #undef main
 #include "imports.h"
 
+#if defined(COD2_CODX) && COD2_CODX
+/* CoD2x's obituary helpers live in units this test does not link. */
+int BG_GetNumWeapons(void) { return 0; }
+void CL_DeathMessageExtendedIcons(int extended, const char *const *icons) { (void)extended; (void)icons; }
+void SV_Cod2xStripTextCodes(const char *text, char *out, size_t size)
+{
+    if (size && out != text)
+        snprintf(out, size, "%s", text);
+}
+#endif
+
 snd_local_t g_snd;
 #define SND_GLOB_PTR (&g_snd)
 static struct MssLocal milesGlob;

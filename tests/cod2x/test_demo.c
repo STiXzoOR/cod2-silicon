@@ -6,6 +6,18 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+void Com_Printf(const char *format, ...)
+{
+    (void)format;
+}
+
+void Com_Error(int code, const char *format, ...)
+{
+    (void)code;
+    (void)format;
+    abort();
+}
+
 static void write_file(const char *path, const char *body)
 {
     FILE *file = fopen(path, "wb");
@@ -20,16 +32,19 @@ int main(void)
     char demo[512], marker[512];
     int i;
     assert(Cod2x_DemoName(name, sizeof(name), "round/one;quit\n", 0));
-    assert(!strcmp(name, "round_one_quit_"));
+    assert(!strcmp(name, "round_one;quit_"));
+    assert(Cod2x_DemoName(name, sizeof(name), "a\\b:c*d?e\"f<g>h|i j", 0));
+    assert(!strcmp(name, "a_b_c_d_e_f_g_h_i j"));
     assert(Cod2x_DemoName(name, sizeof(name), "round/one", 17));
     assert(!strcmp(name, "round_one_17"));
     assert(!Cod2x_DemoName(name, sizeof(name), "", 0));
     assert(!Cod2x_DemoName(name, sizeof(name), "..", 0));
-    assert(Cod2x_DemoHTTPS("https://example.test:443/demos/"));
-    assert(!Cod2x_DemoHTTPS("http://example.test/demos/"));
-    assert(!Cod2x_DemoHTTPS("file:///tmp/example"));
-    assert(!Cod2x_DemoHTTPS("https://example.test/a\r\nb"));
-    assert(!Cod2x_DemoHTTPS("https://user:pass@example.test/a"));
+    assert(Cod2x_DemoUploadAllowed("https://example.test:443/demos/"));
+    assert(Cod2x_DemoUploadAllowed("http://example.test/demos/"));
+    assert(!Cod2x_DemoUploadAllowed("http://user@example.test/demos/"));
+    assert(!Cod2x_DemoUploadAllowed("file:///tmp/example"));
+    assert(!Cod2x_DemoUploadAllowed("https://example.test/a\r\nb"));
+    assert(!Cod2x_DemoUploadAllowed("https://user:pass@example.test/a"));
     assert(Cod2x_DemoUploadURL(url, sizeof(url), "https://example.test/demos/", "round_17"));
     assert(!strcmp(url, "https://example.test/demos/round_17"));
     assert(!Cod2x_DemoUploadURL(url, 12, "https://example.test/demos/", "round_17"));
@@ -42,15 +57,17 @@ int main(void)
     snprintf(demo, sizeof(demo), "%s/round.dm_1", directory);
     snprintf(marker, sizeof(marker), "%s.upload", demo);
     write_file(demo, "owned demo fixture");
-    write_file(marker, "http://127.0.0.1:9/round");
+    write_file(marker, "http://user@127.0.0.1:9/round");
     assert(Cod2x_DemoUploadsPending(directory));
     Cod2x_DemoUploadFrame(directory, 10, 0);
+    assert(Cod2x_DemoUploadsPending(directory));
+    Cod2x_DemoUploadFrame(directory, 10, 1);
     assert(!Cod2x_DemoUploadsPending(directory));
     assert(!access(demo, F_OK));
     assert(access(marker, F_OK));
     write_file(marker, "https://127.0.0.1:9/round");
     for (i = 0; i < 500 && Cod2x_DemoUploadsPending(directory); ++i) {
-        Cod2x_DemoUploadFrame(directory, 10, 0);
+        Cod2x_DemoUploadFrame(directory, 10, 1);
         usleep(10000);
     }
     assert(i < 500);

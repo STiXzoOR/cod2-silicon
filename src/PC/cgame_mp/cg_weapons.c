@@ -1077,8 +1077,9 @@ static void CG_Cod2xDebugBullet(int sourceEntityNum, const vec_t *position)
     int axis, i;
     if (!Cod2x_DebugBullets())
         return;
-    Com_Printf("Bullet impact: entity=%d end=(%.2f, %.2f, %.2f)\n", sourceEntityNum,
-               position[0], position[1], position[2]);
+    /* CoD2x labels the shooter "clientNum" and the barrel tag "sourceEntityNum". */
+    Com_Printf("CG_BulletHitEvent called: clientNum=%d, sourceEntityNum=%d, end=(%.2f, %.2f, %.2f)\n",
+               sourceEntityNum, *(unsigned short *)s_barrelTags[0], position[0], position[1], position[2]);
     for (axis = 0; axis < 3; ++axis) {
         for (i = 0; i < 3; ++i)
             start[i] = end[i] = position[i];

@@ -588,6 +588,10 @@ unsigned int CG_DrawCrosshairNames(void)
     if (!name || !name[0]) {
         return 0;
     }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* CoD2x text.cpp: every code goes, so a double "^^11" no longer colours the name. */
+    SV_Cod2xStripTextCodes(name, name, strlen(name) + 1);
+#endif
     I_CleanStr(name);
 
     x = cg_drawCrosshairNamesPosX->current.integer;
@@ -1069,6 +1073,14 @@ qboolean CG_DrawFollow(void)
     } else {
         clientName = "?";
     }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        /* CoD2x text.cpp: the followed player's name without codes. */
+        static char cleanName[64];
+        SV_Cod2xStripTextCodes(clientName, cleanName, sizeof(cleanName));
+        clientName = cleanName;
+    }
+#endif
 
     followingString = SEH_LocalizeTextMessage("CGAME_FOLLOWING\x15", "spectator follow string", 0);
     scale = CL_IsRenderingSplitScreen() ? 0.5f : (1.0f / 3.0f);
@@ -1333,6 +1345,18 @@ unsigned int CG_DrawChatMessages(void)
         }
 
         msg = cgs->teamChatMsgs[index];
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        {
+            /* CoD2x text.cpp: the background takes the colour of the line's first colour code. */
+            char code;
+            color[0] = 1.0f;
+            color[1] = 1.0f;
+            color[2] = 1.0f;
+            if (Cod2x_TextCode(msg, &code) && !Cod2x_IsStyleCode(code) && code != '7' &&
+                !Cod2x_ShadeColor(code, color))
+                CL_LookupColor((unsigned char)code, color);
+        }
+#else
         if (msg[0] == '^' && msg[1] && msg[1] != '^' && msg[1] >= '0' && msg[1] <= '9') {
             CL_LookupColor((unsigned char)msg[1], color);
         } else {
@@ -1340,6 +1364,7 @@ unsigned int CG_DrawChatMessages(void)
             color[1] = 1.0f;
             color[2] = 1.0f;
         }
+#endif
 
         color[0] *= 0.25f;
         color[1] *= 0.25f;
@@ -2600,7 +2625,19 @@ unsigned int CG_Draw2D(void)
             }
             alpha = fade[3];
         }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        {
+            /* CoD2x text.cpp CG_DrawGameMessages: cg_gameMessageOffsetX/Y and cg_gameMessageScale. */
+            extern void Con_DrawNotifyScaled(int xPos, int yPos, int charHeight, float alpha, float scale,
+                                             msgwnd_mode_t mode);
+            int x = 6, y = (int)notifyY, charHeight;
+            float scale;
+            Cod2x_GameMessageLayout(&x, &y, &charHeight, &scale);
+            Con_DrawNotifyScaled(x, y, charHeight, alpha, scale, (msgwnd_mode_t)2);
+        }
+#else
         Con_DrawNotify(6, (int)notifyY, alpha, (msgwnd_mode_t)2);
+#endif
         CG_Draw2D_DrawBottomOverlays(cg);
     }
 

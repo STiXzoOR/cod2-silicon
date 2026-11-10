@@ -409,7 +409,9 @@ void FS_TouchFile_f(void)
 qboolean FS_iwIwd(char *iwd, char *base)
 {
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    return Cod2x_IwdStock(iwd, base, COD2X_REVISION);
+    /* CoD2x passes 1 here, so iw_CoD2x_NN counts as a mod IWD for referencing,
+       downloads and the status "mod" flag (src/shared/iwd.cpp:448-454). */
+    return Cod2x_IwdStock(iwd, base, 1);
 #else
     int i;
     char *p;

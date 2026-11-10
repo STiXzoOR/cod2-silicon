@@ -112,13 +112,14 @@ uint64_t MacRawMouse_EventCount(void)
     return count;
 }
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-void MacRawMouse_SetMode(int mode)
+const char *MacRawMouse_SetMode(int mode)
 {
     if (mode == rawMode)
-        return;
+        return NULL;
     MacRawMouse_SetActive(0);
     rawMode = mode;
     for (GCMouse *mouse in attached)
         mouse.handlerQueue = mode == 2 ? dispatch_get_main_queue() : mouseQueue;
+    return NULL;
 }
 #endif

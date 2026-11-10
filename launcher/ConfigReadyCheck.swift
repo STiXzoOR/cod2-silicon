@@ -76,7 +76,8 @@ struct ConfigReadyCheck: Sendable {
         if facts["sv_maxfps"] != nil || facts["g_maxfps"] != nil {
             unknown = true; limitations.append("The advertised custom FPS limit has no verified rule mapping.")
         }
-        if [facts["com_maxfps_limit"], profile.document.effectiveSetting(named: "com_maxfps_limit")].compactMap({ $0 }).contains(where: { $0 != "0" }) {
+        // Older CoD2x servers may still advertise this flag; the client no longer has it.
+        if let limit = facts["com_maxfps_limit"], limit != "0" {
             unknown = true; limitations.append("The legacy FPS-limit flag has no verified advertised policy mapping.")
         }
         var details: [ConfigRuleEvaluation] = [], fixes: [String: String] = [:]
