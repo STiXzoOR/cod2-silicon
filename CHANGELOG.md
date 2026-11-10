@@ -7,6 +7,10 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Changed
 
+- Tinted map surfaces have the right colour. The colours a map paints onto
+  its walls and ground had red and blue swapped, so warm tints came out
+  cool: the sandy foot of the walls on Toujane was blue-grey. Maps that only
+  use grey shading there, such as Carentan and Burgundy, look the same.
 - The HUD and menus line up with Windows 1.3. Everything 2D sat half a pixel
   right of and below where Windows draws it, and text was drawn twice a
   quarter pixel apart, which made it bolder and blurred its shadow. In a

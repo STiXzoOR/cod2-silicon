@@ -161,6 +161,23 @@ IDirect3DVertexBuffer9 *R_CreateWorldVertexBuffer(GfxWorldVertex *vertices, int 
         }
     }
 
+#if COD2_APPLE_SDK
+    /* World vertex colours are Direct3D colours, blue first in memory, as in
+     * the map file. The draw path hands these two vertex layouts to OpenGL
+     * as red first without converting them per draw, so the copy that goes
+     * to the card is stored red first. Without this, tinted vertex colours
+     * (the sand along the foot of mp_toujane's walls) came out blue. */
+    {
+        int stride = (r_rendererInUse->current.integer == 2) ? 0x20 : 0x44;
+        int colorOffset = (r_rendererInUse->current.integer == 2) ? 0x0c : 0x18;
+        for (vertIndex = 0; vertIndex < vertexCount; vertIndex++) {
+            byte *color = dataPtr + vertIndex * stride + colorOffset;
+            byte blue = color[0];
+            color[0] = color[2];
+            color[2] = blue;
+        }
+    }
+#endif
     R_FinishStaticVertexBuffer(worldVb);
     return (IDirect3DVertexBuffer9 *)worldVb;
 }
