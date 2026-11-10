@@ -95,7 +95,13 @@ qboolean SV_Cod2xBeforeMapChange(qboolean shutdown, const char *source)
         return 0;
     {
         extern void GScr_Cod2xNetBeforeMapChange(int shutdown);
+        extern void GScr_Cod2xDropCallbacks(void);
+        extern void SV_Cod2xMatchBeforeMapChange(int shutdown);
         GScr_Cod2xNetBeforeMapChange(shutdown);
+        SV_Cod2xMatchBeforeMapChange(shutdown);
+        /* Only now: the match's last posts can still answer the mod. */
+        if (shutdown)
+            GScr_Cod2xDropCallbacks();
     }
     return 1;
 }

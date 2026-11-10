@@ -2969,6 +2969,13 @@ void Scr_LoadGameType(void)
 void Scr_StartupGameType(void)
 {
     unsigned int handle = g_scr_data.gametype.startupgametype;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        /* A match's first map starts the match before the mod's callback runs. */
+        extern void SV_Cod2xMatchStartGameType(void);
+        SV_Cod2xMatchStartGameType();
+    }
+#endif
     unsigned int threadId = Scr_ExecThread(handle, 0);
     Scr_FreeThread((unsigned short)threadId);
 }

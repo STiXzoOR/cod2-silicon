@@ -1,6 +1,7 @@
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "cod2x_http.h"
 #include <ctype.h>
+#include <time.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -664,6 +665,35 @@ void Cod2x_HttpFrame(void)
 void Cod2x_HttpFrameFor(Cod2xHttpDone done)
 {
     Http_Deliver(done);
+}
+
+long long Cod2x_UtcMsec(void)
+{
+#ifdef _WIN32
+    FILETIME now;
+    ULARGE_INTEGER value;
+    GetSystemTimeAsFileTime(&now);
+    value.LowPart = now.dwLowDateTime;
+    value.HighPart = now.dwHighDateTime;
+    return (long long)(value.QuadPart / 10000ULL - 11644473600000ULL);
+#else
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME, &now);
+    return (long long)now.tv_sec * 1000LL + now.tv_nsec / 1000000L;
+#endif
+}
+
+void Cod2x_Iso8601(long long msec, char *out, size_t size)
+{
+    time_t seconds = (time_t)(msec / 1000);
+    struct tm utc;
+#ifdef _WIN32
+    gmtime_s(&utc, &seconds);
+#else
+    gmtime_r(&seconds, &utc);
+#endif
+    snprintf(out, size, "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ", utc.tm_year + 1900, utc.tm_mon + 1, utc.tm_mday,
+             utc.tm_hour, utc.tm_min, utc.tm_sec, (int)(msec % 1000));
 }
 
 void Cod2x_Sleep(int msec)

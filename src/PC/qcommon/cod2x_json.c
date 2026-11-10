@@ -42,6 +42,7 @@ static void Json_Put(char *out, size_t size, size_t *used, char c)
 static const char *Json_String(const char *p, char *out, size_t size, size_t *written)
 {
     size_t used = 0;
+    int decode = out != NULL; /* only skipping: any valid escape will do */
     if (*p != '"')
         return NULL;
     for (++p; *p != '"'; ++p) {
@@ -53,38 +54,24 @@ static const char *Json_String(const char *p, char *out, size_t size, size_t *wr
             continue;
         }
         switch (*++p) {
-        case '"': case '\\': case '/': Json_Put(out, size, &used, *p); break;
+        /* CoD2x's reader (mongoose) knows no "\/" and reads "\u00XX" as the
+           byte XX (game text is Latin-1); a string with a larger \u code or
+           "\/" can't be read at all there. */
+        case '"': case '\\': Json_Put(out, size, &used, *p); break;
+        case '/':
+            if (decode)
+                return NULL;
+            break;
         case 'b': Json_Put(out, size, &used, '\b'); break;
         case 'f': Json_Put(out, size, &used, '\f'); break;
         case 'n': Json_Put(out, size, &used, '\n'); break;
         case 'r': Json_Put(out, size, &used, '\r'); break;
         case 't': Json_Put(out, size, &used, '\t'); break;
         case 'u':
-            if (!Json_Hex(p + 1, &code))
+            if (!Json_Hex(p + 1, &code) || (decode && code > 0xff))
                 return NULL;
             p += 4;
-            if (code >= 0xd800 && code <= 0xdbff && p[1] == '\\' && p[2] == 'u') {
-                unsigned int low;
-                if (Json_Hex(p + 3, &low) && low >= 0xdc00 && low <= 0xdfff) {
-                    code = 0x10000 + ((code - 0xd800) << 10) + (low - 0xdc00);
-                    p += 6;
-                }
-            }
-            if (code < 0x80) {
-                Json_Put(out, size, &used, (char)code);
-            } else if (code < 0x800) {
-                Json_Put(out, size, &used, (char)(0xc0 | (code >> 6)));
-                Json_Put(out, size, &used, (char)(0x80 | (code & 0x3f)));
-            } else if (code < 0x10000) {
-                Json_Put(out, size, &used, (char)(0xe0 | (code >> 12)));
-                Json_Put(out, size, &used, (char)(0x80 | ((code >> 6) & 0x3f)));
-                Json_Put(out, size, &used, (char)(0x80 | (code & 0x3f)));
-            } else {
-                Json_Put(out, size, &used, (char)(0xf0 | (code >> 18)));
-                Json_Put(out, size, &used, (char)(0x80 | ((code >> 12) & 0x3f)));
-                Json_Put(out, size, &used, (char)(0x80 | ((code >> 6) & 0x3f)));
-                Json_Put(out, size, &used, (char)(0x80 | (code & 0x3f)));
-            }
+            Json_Put(out, size, &used, (char)code);
             break;
         default:
             return NULL;
@@ -300,10 +287,8 @@ int Cod2x_JsonEach(const char *json, const char *path, Cod2xJsonItem item, void 
             int keep;
             if (!text)
                 return 0;
-            if (*value == '"') {
-                if (!Json_String(value, text, length + 1, NULL))
-                    text[0] = '\0';
-            } else {
+            /* A string CoD2x can't decode comes as its JSON text, quotes and all. */
+            if (*value != '"' || !Json_String(value, text, length + 1, NULL)) {
                 memcpy(text, value, length);
                 text[length] = '\0';
             }

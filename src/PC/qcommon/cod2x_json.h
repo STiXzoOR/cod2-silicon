@@ -8,8 +8,10 @@
 
 /* The value at path and its length in text, or NULL when there is none. */
 const char *Cod2x_JsonFind(const char *json, const char *path, size_t *length);
-/* A string value, decoded; a number is written with no decimals and a boolean
-   as "true" or "false", as CoD2x reads them. Returns 0 when there is none. */
+/* A string value, decoded as CoD2x decodes it ("\u00XX" is the byte XX; a
+   string with "\/" or a larger "\u" code can't be read); a number is written
+   with no decimals and a boolean as "true" or "false". Returns 0 when there
+   is none or it can't be read. */
 int Cod2x_JsonString(const char *json, const char *path, char *out, size_t size);
 int Cod2x_JsonNumber(const char *json, const char *path, double *out);
 int Cod2x_JsonBool(const char *json, const char *path, int *out);

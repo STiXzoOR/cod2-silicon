@@ -59,6 +59,9 @@ void Cod2x_HttpFrame(void);
 void Cod2x_HttpFrameFor(Cod2xHttpDone done);
 /* Waits msec milliseconds. */
 void Cod2x_Sleep(int msec);
+/* Milliseconds since 1970 (UTC), and one as "2026-11-10T19:08:23.512Z". */
+long long Cod2x_UtcMsec(void);
+void Cod2x_Iso8601(long long msec, char *out, size_t size);
 
 /* Blocking download to path, as CoD2x downloads files: GET with
    "User-Agent: CoD2x" and "Connection: close", up to 5 redirects, status 200

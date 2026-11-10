@@ -58,6 +58,7 @@ void SV_Cod2xServerInit(void)
     G_Cod2xWallbangInit();
     SV_Cod2xZpamInit();
     SV_Cod2xUpdaterInit();
+    SV_Cod2xMatchInit();
     Cod2x_HttpInit();
     Cmd_AddCommand("unbanAll", SV_Cod2xUnbanAll);
     Cmd_AddCommand("getIp", SV_Cod2xRequestIp);

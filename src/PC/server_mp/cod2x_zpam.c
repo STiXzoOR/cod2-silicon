@@ -276,10 +276,10 @@ static int ZPAM_CanAutoUpdate(void)
     return ZPAM_Enabled() && ZPAM_WwwDownload() && !ZPAM_FsGameSet();
 }
 
-/* A running match holds the version it started with. */
+/* A match holds the version it started with, also while it downloads and loads. */
 static int ZPAM_MatchRunning(void)
 {
-    return 0;
+    return SV_Cod2xMatchRunning();
 }
 
 static int ZPAM_CanSwitch(void)

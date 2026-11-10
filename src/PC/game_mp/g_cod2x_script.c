@@ -1,6 +1,7 @@
 #include "common_types.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "imports.h"
+#include "g_cod2x_script.h"
 #include "../qcommon/cod2x_http.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,16 +41,9 @@ extern int Scr_IsSystemActive(int inst);
    the same places, so a request made before a map_restart can still answer;
    after any other change its callbacks are not run. A shutdown drops what is
    still on its way, as CoD2x's client is deleted then. */
-typedef struct {
-    char map[64];
-    char gametype[64];
-    unsigned int programLength;
-    unsigned int generation;
-} ScriptScope;
-
 static unsigned int scriptGeneration;
 
-static void Script_ScopeNow(ScriptScope *scope)
+void GScr_Cod2xScopeNow(Cod2xScriptScope *scope)
 {
     snprintf(scope->map, sizeof(scope->map), "%s", Dvar_GetString("mapname"));
     snprintf(scope->gametype, sizeof(scope->gametype), "%s", Dvar_GetString("g_gametype"));
@@ -57,22 +51,22 @@ static void Script_ScopeNow(ScriptScope *scope)
     scope->generation = scriptGeneration;
 }
 
-static int Script_ScopeDropped(const ScriptScope *scope)
+static int Script_ScopeDropped(const Cod2xScriptScope *scope)
 {
     return scope->generation != scriptGeneration;
 }
 
-static int Script_ScopeCallable(const ScriptScope *scope)
+int GScr_Cod2xScopeCallable(const Cod2xScriptScope *scope)
 {
-    ScriptScope now;
+    Cod2xScriptScope now;
     if (Script_ScopeDropped(scope) || !Scr_IsSystemActive(1))
         return 0;
-    Script_ScopeNow(&now);
+    GScr_Cod2xScopeNow(&now);
     return !strcmp(now.map, scope->map) && !strcmp(now.gametype, scope->gametype) &&
            now.programLength == scope->programLength;
 }
 
-static void Script_RunCallback(int handle, unsigned int paramcount)
+void GScr_Cod2xRunCallback(int handle, unsigned int paramcount)
 {
     Scr_FreeThread(Scr_ExecThread(handle, paramcount));
 }
@@ -82,7 +76,7 @@ static void Script_RunCallback(int handle, unsigned int paramcount)
 typedef struct {
     int onDone, onError;
     char *url;
-    ScriptScope scope;
+    Cod2xScriptScope scope;
 } ScriptFetch;
 
 static int fetchPending;
@@ -172,9 +166,9 @@ static void Fetch_Error(ScriptFetch *fetch, const char *error)
 {
     if (Script_ScopeDropped(&fetch->scope))
         return;
-    if (fetch->onError && Script_ScopeCallable(&fetch->scope)) {
+    if (fetch->onError && GScr_Cod2xScopeCallable(&fetch->scope)) {
         Scr_AddString(error);
-        Script_RunCallback(fetch->onError, 1);
+        GScr_Cod2xRunCallback(fetch->onError, 1);
     } else {
         Com_Printf("HTTP error while fetching %s: %s\n", fetch->url, error);
     }
@@ -193,12 +187,12 @@ static void Fetch_Done(void *context, const Cod2xHttpResponse *response)
         --fetchPending;
     if (response->error[0]) {
         Fetch_Error(fetch, !strcmp(response->error, "Response too large") ? "MG_MAX_RECV_SIZE" : response->error);
-    } else if (fetch->onDone && Script_ScopeCallable(&fetch->scope)) {
+    } else if (fetch->onDone && GScr_Cod2xScopeCallable(&fetch->scope)) {
         /* onDone(status, body, headers) */
         Fetch_AddHeaders(response->headers);
         Scr_AddString(response->body);
         Scr_AddInt(response->status);
-        Script_RunCallback(fetch->onDone, 3);
+        GScr_Cod2xRunCallback(fetch->onDone, 3);
     }
     Fetch_Free(fetch);
 }
@@ -233,7 +227,7 @@ static void GScr_Cod2xHttpFetch(void)
     fetch->onDone = onDone;
     fetch->onError = onError;
     fetch->url = Fetch_Copy(url, strlen(url));
-    Script_ScopeNow(&fetch->scope);
+    GScr_Cod2xScopeNow(&fetch->scope);
     ++fetchPending;
 
     memset(&request, 0, sizeof(request));
@@ -257,7 +251,7 @@ static void GScr_Cod2xHttpFetch(void)
 /* ---- map changes and shutdown --------------------------------------------- */
 
 /* After the shutdown's own callbacks: answers still on their way get a second
-   to arrive (frames no longer run), and the rest are dropped. */
+   to arrive (frames no longer run). */
 void GScr_Cod2xNetBeforeMapChange(int shutdown)
 {
     if (!shutdown)
@@ -267,6 +261,10 @@ void GScr_Cod2xNetBeforeMapChange(int shutdown)
         if (fetchPending > 0)
             Cod2x_Sleep(10);
     }
+}
+
+void GScr_Cod2xDropCallbacks(void)
+{
     fetchPending = 0;
     ++scriptGeneration;
 }
@@ -281,6 +279,14 @@ typedef struct {
 
 static const ScriptFunction scriptFunctions[] = {
     {"http_fetch", GScr_Cod2xHttpFetch, 0},
+    {"matchUploadData", GScr_Cod2xMatchUploadData, 0},
+    {"matchSetData", GScr_Cod2xMatchSetData, 0},
+    {"matchGetData", GScr_Cod2xMatchGetData, 0},
+    {"matchRedownloadData", GScr_Cod2xMatchRedownloadData, 0},
+    {"matchClearData", GScr_Cod2xMatchClearData, 0},
+    {"matchIsActivated", GScr_Cod2xMatchIsActivated, 0},
+    {"matchCancel", GScr_Cod2xMatchCancel, 0},
+    {"matchFinish", GScr_Cod2xMatchFinish, 0},
 };
 
 void *GScr_Cod2xGetFunction(const char **name, int *type)

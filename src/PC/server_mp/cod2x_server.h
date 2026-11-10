@@ -20,6 +20,12 @@ void SV_Cod2xStripTextCodes(const char *text, char *out, size_t size);
 /* showPacketStrings: text is the packet after its connectionless marker,
    size the whole packet. */
 void SV_Cod2xShowPacket(int sent, netadr_t address, const void *text, int length, int size);
+/* Match service (cod2x_match.c). */
+void SV_Cod2xMatchInit(void);
+int SV_Cod2xMatchRunning(void);
+void SV_Cod2xMatchStartGameType(void);
+void SV_Cod2xMatchBeforeMapChange(int shutdown);
+void SV_Cod2xMatchFrame(void);
 /* Update check (cod2x_updater.c). */
 void SV_Cod2xUpdaterInit(void);
 void SV_Cod2xUpdaterCheck(void);
