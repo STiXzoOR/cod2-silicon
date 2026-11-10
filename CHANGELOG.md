@@ -7,6 +7,11 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Changed
 
+- The HUD and menus line up with Windows 1.3. Everything 2D sat half a pixel
+  right of and below where Windows draws it, and text was drawn twice a
+  quarter pixel apart, which made it bolder and blurred its shadow. In a
+  replayed demo the ammo counter, grenade icons and compass now match the
+  Windows game pixel for pixel. The 3D view is unchanged.
 - The CoD2x machine ID (`cl_hwid2`) is now computed the way CoD2x computes it:
   the same list of hardware details, hashed the same way. Only the hash is
   sent. This changes the ID once for existing Mac players, so a CoD2x server
