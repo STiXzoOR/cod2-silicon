@@ -26,7 +26,7 @@ extern qboolean FS_WriteFile(const char *qpath, const void *buffer, int size);
 static const dvar_t *cod2x_demoName, *cod2x_demoURL, *cod2x_demoTimeout;
 static const char *cod2x_recordName;
 static int cod2x_stoppingRecord, cod2x_demoPlayback, cod2x_savedDeveloper;
-static int cod2x_quitAfterUpload;
+static int cod2x_quitAfterUpload, cod2x_checkUploads, cod2x_demoClientState = -1;
 static void Cod2x_DemoClientFrame(void);
 static void Cod2x_DemoPlayback(int playing);
 static void Cod2x_DemoClientDisconnect(void);
@@ -3615,12 +3615,7 @@ static void Cod2x_DemoDirectory(char directory[256])
 
 static void Cod2x_DemoClientDisconnect(void)
 {
-    char directory[256];
     const dvar_t *gametype = Dvar_FindVar("ui_joinGametype");
-    if (fs_homepath) {
-        Cod2x_DemoDirectory(directory);
-        (void)Cod2x_DemoUploadsPending(directory);
-    }
     Cod2x_DemoPlayback(0);
     Cod2x_DemoClearAutoDvars();
     if (gametype)
@@ -3638,41 +3633,36 @@ static void Cod2x_DemoStopRecording(void)
 
 int Cod2x_DemoClientQuitRequested(void)
 {
+    /* CoD2x keeps the game open while a demo still has to be uploaded
+       (src/mss32/demo.cpp:66-82). */
     char directory[256];
     if (!cod2x_demoName || !fs_homepath)
         return 0;
-    Cod2x_DemoStopRecording();
-    Dvar_SetString(cod2x_demoName, "");
-    Dvar_ClearModified(cod2x_demoName);
     Cod2x_DemoDirectory(directory);
     if (Cod2x_DemoUploadsPending(directory)) {
-        if (!cod2x_quitAfterUpload)
-            Com_Printf("CoD2x: the game will close after demo uploads finish.\n");
+        Dvar_SetString(cod2x_demoName, "");
+        /* A recording started by hand would hold the upload back for good. */
+        Cod2x_DemoStopRecording();
         cod2x_quitAfterUpload = 1;
+        cod2x_checkUploads = 1;
         return 1;
     }
+    Cod2x_DemoStopRecording();
     Cod2x_DemoUploadShutdown();
     return 0;
-}
-
-static int Cod2x_DemoUploadPaused(int state, int recording)
-{
-    return recording || (!cod2x_quitAfterUpload && state != CA_ACTIVE && state != CA_DISCONNECTED);
 }
 
 static void Cod2x_DemoClientFrame(void)
 {
     clientConnection_t *conn = (clientConnection_t *)clc;
     char directory[256];
-    const Cod2xDemoProgress *progress;
-    static int previousState = -1, previousAttempts = -1;
+    int state = conn->state, changed = state != cod2x_demoClientState;
+    cod2x_demoClientState = state;
     if (!cod2x_demoName || !fs_homepath)
         return;
     Cod2x_DemoPlayback(conn->demoplaying != 0);
-    if (cod2x_quitAfterUpload) {
-        Cod2x_DemoStopRecording();
-        Cod2x_DemoClearAutoDvars();
-    } else if (conn->demoplaying) {
+    if (conn->demoplaying && (cod2x_demoName->modified || cod2x_demoURL->modified)) {
+        /* A demo's own server commands may not start a recording or an upload. */
         Cod2x_DemoClearAutoDvars();
     } else if (cod2x_demoName->modified &&
                (!*cod2x_demoName->current.string || conn->state == CA_ACTIVE)) {
@@ -3681,6 +3671,7 @@ static void Cod2x_DemoClientFrame(void)
         unsigned suffix = 0;
         I_strncpyz(requested, cod2x_demoName->current.string, sizeof(requested));
         Dvar_ClearModified(cod2x_demoName);
+        Cod2x_DemoUploadNewRecording();
         Cod2x_DemoStopRecording();
         if (*requested) {
             do {
@@ -3700,33 +3691,88 @@ static void Cod2x_DemoClientFrame(void)
                 if (conn->demorecording && *cod2x_demoURL->current.string) {
                     if (Cod2x_DemoUploadURL(url, sizeof(url), cod2x_demoURL->current.string, name)) {
                         Com_sprintf(marker, sizeof(marker), "%s.upload", qpath);
-                        if (!FS_WriteFile(marker, url, (int)strlen(url)))
-                            Com_Printf("CoD2x: couldn't create the demo upload marker.\n");
+                        FS_WriteFile(marker, url, (int)strlen(url));
                     } else {
                         Com_Printf("CoD2x: demo upload URL must be HTTPS.\n");
                     }
                 }
             }
         }
+        cod2x_checkUploads = 1;
     }
     Cod2x_DemoDirectory(directory);
-    Cod2x_DemoUploadFrame(directory, cod2x_demoTimeout->current.integer,
-                          Cod2x_DemoUploadPaused(conn->state, conn->demorecording));
-    progress = Cod2x_DemoUploadProgress();
-    if (previousState != progress->state || previousAttempts != progress->attempts) {
-        if (progress->state == COD2X_DEMO_UPLOAD_ACTIVE)
-            Com_Printf("CoD2x: uploading demo %s.\n", progress->name);
-        else if (progress->state == COD2X_DEMO_UPLOAD_DONE)
-            Com_Printf("CoD2x: demo %s uploaded (HTTP %ld).\n", progress->name, progress->httpStatus);
-        else if (progress->state == COD2X_DEMO_UPLOAD_FAILED)
-            Com_Printf("CoD2x: demo %s upload failed (HTTP %ld, attempt %d/3); keeping the demo.\n",
-                       progress->name, progress->httpStatus, progress->attempts);
-        previousState = progress->state;
-        previousAttempts = progress->attempts;
+    /* CoD2x looks for an upload when not recording, with the menu or the game on
+       screen, after a connection change or when something asked it to. */
+    {
+        int check = !conn->demorecording && !Cod2x_DemoUploadShown() &&
+                    (state == CA_DISCONNECTED || state == CA_ACTIVE) && (changed || cod2x_checkUploads);
+        if (check)
+            cod2x_checkUploads = 0;
+        if (changed && state == CA_DISCONNECTED) {
+            Com_Printf("Client disconnected, clearing demo auto-record and upload URL dvars.\n");
+            Dvar_SetString(cod2x_demoName, "");
+            Dvar_SetString(cod2x_demoURL, "");
+        }
+        if (Cod2x_DemoUploadFrame(directory, cod2x_demoTimeout->current.integer, check))
+            cod2x_checkUploads = 1;
     }
-    if (cod2x_quitAfterUpload && !Cod2x_DemoUploadsPending(directory)) {
+    if (cod2x_quitAfterUpload && !Cod2x_DemoUploadShown()) {
+        /* quit asks again, so a demo still waiting keeps the game open, as in CoD2x. */
+        Com_Printf("Demo upload complete, closing the game now.\n");
         cod2x_quitAfterUpload = 0;
         Cbuf_ExecuteText(2, "quit\n");
+    }
+}
+
+void Cod2x_DemoClientDraw(void)
+{
+    /* CoD2x src/mss32/demo.cpp:165-207, drawn over everything else. */
+    extern sharedUiInfo_t sharedUiInfo;
+    extern void CG_DrawRotatedPic(float, float, float, float, int, int, float, const vec_t *, MaterialHandle);
+    extern void UI_DrawText(const char *, int, FontHandle, float, float, int, int, float, const vec_t *, int);
+    extern int UI_TextWidth(const char *, int, FontHandle, float);
+    extern int UI_TextHeight(FontHandle, float);
+    static const vec4_t black = {0, 0, 0, .9f}, white = {1, 1, 1, 1}, red = {1, 0, 0, 1}, green = {0, 1, 0, 1};
+    static const vec4_t bar = {.1f, .1f, .1f, .9f}, progressColor = {0, 0, 1, .2f};
+    const Cod2xDemoProgress *upload = Cod2x_DemoUploadProgress();
+    int state = ((clientConnection_t *)clc)->state;
+    if (!cls.whiteMaterial)
+        return;
+    if (cod2x_quitAfterUpload) {
+        const char *message = "The game will be closed after the demo upload is complete.";
+        FontHandle font = sharedUiInfo.assets.textFont;
+        float width = (float)UI_TextWidth(message, INT_MAX, font, .3f);
+        float height = (float)UI_TextHeight(font, .3f);
+        CG_DrawRotatedPic(0, 0, 896, 480, 1, 1, 0, black, cls.whiteMaterial);
+        CG_DrawRotatedPic(-width / 2 - 10, -height / 2 - 5, width + 20, height + 10, 2, 2, 0, black,
+                          cls.whiteMaterial);
+        UI_DrawText(message, INT_MAX, font, -width / 2, height / 2, 2, 2, .3f, white, 0);
+    }
+    if (Cod2x_DemoUploadShown() && (state == CA_DISCONNECTED || state == CA_ACTIVE)) {
+        char text[256];
+        double percent = 0;
+        const float *color = white;
+        FontHandle font = sharedUiInfo.assets.consoleFont;
+        float width, height, padding = 4;
+        if (upload->error[0]) {
+            snprintf(text, sizeof(text), "Uploading demo '%s': %s", upload->name, upload->error);
+            color = red;
+        } else if (upload->state == COD2X_DEMO_UPLOAD_DONE) {
+            snprintf(text, sizeof(text), "Uploading demo '%s': Successfully uploaded", upload->name);
+            color = green;
+        } else {
+            percent = upload->total ? (double)upload->uploaded / (double)upload->total * 100.0 : 0.0;
+            snprintf(text, sizeof(text), "Uploading demo '%s': %7.2f MB / %7.2f MB (%6.2f%%) Speed: %6.2f MB/s",
+                     upload->name, upload->uploaded / (1024.0 * 1024.0), upload->total / (1024.0 * 1024.0),
+                     percent, upload->bytesPerSecond / (1024.0 * 1024.0));
+        }
+        width = (float)UI_TextWidth(text, INT_MAX, font, .2f);
+        height = (float)UI_TextHeight(font, .2f);
+        CG_DrawRotatedPic(0, -height - padding * 2, width + padding * 2, height + padding * 2, 1, 3, 0, bar,
+                          cls.whiteMaterial);
+        CG_DrawRotatedPic(0, -height - padding * 2, (width + padding * 2) * (float)(percent / 100.0),
+                          height + padding * 2, 1, 3, 0, progressColor, cls.whiteMaterial);
+        UI_DrawText(text, INT_MAX, font, padding, -padding, 1, 3, .2f, color, 0);
     }
 }
 #endif

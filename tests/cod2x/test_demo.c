@@ -6,6 +6,18 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+void Com_Printf(const char *format, ...)
+{
+    (void)format;
+}
+
+void Com_Error(int code, const char *format, ...)
+{
+    (void)code;
+    (void)format;
+    abort();
+}
+
 static void write_file(const char *path, const char *body)
 {
     FILE *file = fopen(path, "wb");
@@ -47,12 +59,14 @@ int main(void)
     write_file(marker, "http://127.0.0.1:9/round");
     assert(Cod2x_DemoUploadsPending(directory));
     Cod2x_DemoUploadFrame(directory, 10, 0);
+    assert(Cod2x_DemoUploadsPending(directory));
+    Cod2x_DemoUploadFrame(directory, 10, 1);
     assert(!Cod2x_DemoUploadsPending(directory));
     assert(!access(demo, F_OK));
     assert(access(marker, F_OK));
     write_file(marker, "https://127.0.0.1:9/round");
     for (i = 0; i < 500 && Cod2x_DemoUploadsPending(directory); ++i) {
-        Cod2x_DemoUploadFrame(directory, 10, 0);
+        Cod2x_DemoUploadFrame(directory, 10, 1);
         usleep(10000);
     }
     assert(i < 500);

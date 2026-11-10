@@ -13,6 +13,12 @@ void Com_Printf(const char *format, ...)
 {
     (void)format;
 }
+void Com_Error(int code, const char *format, ...)
+{
+    (void)code;
+    (void)format;
+    assert(0);
+}
 void FS_FCloseFile(fileHandle_t handle)
 {
     assert(handle == 17);
@@ -119,14 +125,12 @@ int main(void)
     clientConnections[0].demofile = 17;
     CL_StopRecord_f();
     assert(clientConnections[0].demorecording && !closes && !writes);
-    assert(Cod2x_DemoUploadPaused(CA_CONNECTING, 0));
-    assert(!Cod2x_DemoUploadPaused(CA_ACTIVE, 0));
     assert(Cod2x_DemoClientQuitRequested());
     assert(!clientConnections[0].demorecording && closes == 1 && writes == 2);
-    assert(!*test_name.current.string && cod2x_quitAfterUpload);
-    assert(!Cod2x_DemoUploadPaused(CA_CONNECTING, 0));
-    assert(Cod2x_DemoUploadPaused(CA_CONNECTING, 1));
-    Cod2x_DemoUploadFrame(demos, 10, 0);
+    assert(!*test_name.current.string && cod2x_quitAfterUpload && cod2x_checkUploads);
+    /* Only a check starts an upload; an http marker is dropped without sending. */
+    assert(!Cod2x_DemoUploadFrame(demos, 10, 0) && !access(marker, F_OK));
+    Cod2x_DemoUploadFrame(demos, 10, 1);
     assert(!Cod2x_DemoClientQuitRequested());
     assert(access(marker, F_OK));
     assert(!rmdir(demos) && !rmdir(game) && !rmdir(directory));

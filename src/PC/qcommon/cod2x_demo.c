@@ -1,11 +1,27 @@
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "cod2x_demo.h"
-#include <curl/curl.h>
-#include <dirent.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+extern void Com_Printf(const char *, ...);
+extern void Com_Error(int, const char *, ...);
+#define COD2X_DEMO_ERR_FATAL 0
+
+static Cod2xDemoProgress demo_progress;
+
+/* Only the macOS and Linux builds link libcurl, as for dl_main.c. Elsewhere no upload
+   URL is accepted, nothing is queued and quitting never waits for an upload. */
+#if defined(__APPLE__) || defined(__linux__)
+#define COD2X_DEMO_UPLOADS 1
+#else
+#define COD2X_DEMO_UPLOADS 0
+#endif
+
+#if COD2X_DEMO_UPLOADS
+#include <curl/curl.h>
+#include <dirent.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
@@ -14,19 +30,15 @@ static CURLM *demo_multi;
 static CURL *demo_easy;
 static FILE *demo_file;
 static struct curl_slist *demo_headers;
-static char demo_marker[4096];
-static Cod2xDemoProgress demo_progress;
-static uint64_t demo_started, demo_nextScan;
-static int demo_curlInitialized;
-static struct DemoDirectory {
-    char *path;
-    struct DemoDirectory *next;
-} *demo_directories;
-static struct DemoAttempt {
+static char demo_marker[4096], demo_path[4096], demo_response[1024];
+static size_t demo_responseLength;
+static uint64_t demo_started, demo_hideAt;
+static int demo_curlInitialized, demo_errorCount;
+/* Markers that failed three times in a row; skipped until the game restarts. */
+static struct DemoFailed {
     char *marker;
-    unsigned attempts;
-    struct DemoAttempt *next;
-} *demo_attempts;
+    struct DemoFailed *next;
+} *demo_failed;
 
 static uint64_t Cod2x_DemoMilliseconds(void)
 {
@@ -34,6 +46,7 @@ static uint64_t Cod2x_DemoMilliseconds(void)
     clock_gettime(CLOCK_MONOTONIC, &time);
     return (uint64_t)time.tv_sec * 1000 + (uint64_t)time.tv_nsec / 1000000;
 }
+#endif
 
 int Cod2x_DemoName(char *name, size_t capacity, const char *requested, unsigned suffix)
 {
@@ -60,6 +73,13 @@ int Cod2x_DemoName(char *name, size_t capacity, const char *requested, unsigned 
     return strcmp(name, ".") != 0 && strcmp(name, "..") != 0;
 }
 
+#if !COD2X_DEMO_UPLOADS
+int Cod2x_DemoHTTPS(const char *url)
+{
+    (void)url;
+    return 0;
+}
+#else
 int Cod2x_DemoHTTPS(const char *url)
 {
     CURLU *parsed;
@@ -86,6 +106,7 @@ int Cod2x_DemoHTTPS(const char *url)
     curl_url_cleanup(parsed);
     return valid;
 }
+#endif
 
 int Cod2x_DemoUploadURL(char *url, size_t capacity, const char *base, const char *name)
 {
@@ -107,109 +128,96 @@ int Cod2x_DemoUploadSucceeded(long status)
     return status == 200 || status == 201 || status == 409;
 }
 
-static struct DemoAttempt *Cod2x_DemoAttemptFor(const char *marker)
+#if !COD2X_DEMO_UPLOADS
+int Cod2x_DemoUploadsPending(const char *directory)
 {
-    struct DemoAttempt *attempt;
-    for (attempt = demo_attempts; attempt; attempt = attempt->next)
-        if (!strcmp(attempt->marker, marker))
-            return attempt;
-    attempt = calloc(1, sizeof(*attempt));
-    if (!attempt)
-        return NULL;
-    attempt->marker = strdup(marker);
-    if (!attempt->marker) {
-        free(attempt);
-        return NULL;
-    }
-    attempt->next = demo_attempts;
-    demo_attempts = attempt;
-    return attempt;
+    (void)directory;
+    return 0;
 }
 
-static int Cod2x_DemoMarkerInDirectory(const char *directory, char marker[4096], char file[4096])
+int Cod2x_DemoUploadFrame(const char *directory, int timeoutSeconds, int check)
+{
+    (void)directory;
+    (void)timeoutSeconds;
+    (void)check;
+    return 0;
+}
+
+int Cod2x_DemoUploading(void)
+{
+    return 0;
+}
+
+int Cod2x_DemoUploadShown(void)
+{
+    return 0;
+}
+
+void Cod2x_DemoUploadNewRecording(void)
+{
+}
+#else
+static int Cod2x_DemoFailedMarker(const char *marker)
+{
+    struct DemoFailed *failed;
+    for (failed = demo_failed; failed; failed = failed->next)
+        if (!strcmp(failed->marker, marker))
+            return 1;
+    return 0;
+}
+
+static void Cod2x_DemoRemoveMarker(void)
+{
+    if (remove(demo_marker) != 0)
+        Com_Error(COD2X_DEMO_ERR_FATAL, "Failed to delete marker file: %s\n", demo_marker);
+}
+
+/* CoD2x src/mss32/demo.cpp:87-160: the first .upload marker that hasn't failed. */
+static int Cod2x_DemoFind(const char *directory, char marker[4096], char demo[4096])
 {
     DIR *dir;
     struct dirent *entry;
     struct stat st;
+    char path[4096];
     size_t length;
-    int result = 0;
-    if (!directory || !(dir = opendir(directory)))
+    if (!directory)
         return 0;
+    Com_Printf("Checking for demos to upload in directory: '%s'...\n", directory);
+    dir = opendir(directory);
+    if (!dir) {
+        Com_Printf("Failed to open directory: %s\n", directory);
+        return 0;
+    }
     while ((entry = readdir(dir)) != NULL) {
-        struct DemoAttempt *attempt;
-        length = strlen(entry->d_name);
-        if (length <= 12 || strcmp(entry->d_name + length - 12, ".dm_1.upload"))
+        const char *extension;
+        if (snprintf(path, sizeof(path), "%s/%s", directory, entry->d_name) >= (int)sizeof(path)) {
+            Com_Printf("Path too long, skipping: %s/%s\n", directory, entry->d_name);
             continue;
-        if (snprintf(marker, 4096, "%s/%s", directory, entry->d_name) >= 4096)
+        }
+        /* lstat: a marker that is a link is never followed. */
+        if (lstat(path, &st) || !S_ISREG(st.st_mode))
             continue;
-        if (lstat(marker, &st) || !S_ISREG(st.st_mode))
+        extension = strrchr(entry->d_name, '.');
+        if (!extension || strcmp(extension, ".upload") || Cod2x_DemoFailedMarker(path))
             continue;
-        attempt = Cod2x_DemoAttemptFor(marker);
-        if (!attempt || attempt->attempts >= 3)
-            continue;
-        memcpy(file, marker, strlen(marker) - 7);
-        file[strlen(marker) - 7] = '\0';
-        result = 1;
-        break;
+        Com_Printf("Found demo upload marker file: '%s'\n", path);
+        length = strlen(path);
+        memcpy(marker, path, length + 1);
+        memcpy(demo, path, length - 7);
+        demo[length - 7] = '\0';
+        Com_Printf("Demo file for upload: '%s'\n", demo);
+        closedir(dir);
+        return 1;
     }
     closedir(dir);
-    return result;
-}
-
-static void Cod2x_DemoRememberDirectory(const char *path)
-{
-    struct DemoDirectory *directory;
-    if (!path || !*path)
-        return;
-    for (directory = demo_directories; directory; directory = directory->next)
-        if (!strcmp(directory->path, path))
-            return;
-    directory = calloc(1, sizeof(*directory));
-    if (!directory)
-        return;
-    directory->path = strdup(path);
-    if (!directory->path) {
-        free(directory);
-        return;
-    }
-    directory->next = demo_directories;
-    demo_directories = directory;
-}
-
-static int Cod2x_DemoNextMarker(const char *path, char marker[4096], char file[4096])
-{
-    struct DemoDirectory *directory;
-    if (Cod2x_DemoMarkerInDirectory(path, marker, file))
-        return 1;
-    for (directory = demo_directories; directory; directory = directory->next)
-        if ((!path || strcmp(path, directory->path)) &&
-            Cod2x_DemoMarkerInDirectory(directory->path, marker, file))
-            return 1;
+    Com_Printf("No demo upload marker files found.\n");
     return 0;
 }
 
 int Cod2x_DemoUploadsPending(const char *directory)
 {
-    char marker[4096], file[4096];
-    Cod2x_DemoRememberDirectory(directory);
-    return demo_easy != NULL || Cod2x_DemoNextMarker(directory, marker, file);
-}
-
-static FILE *Cod2x_DemoOpen(const char *path)
-{
-    struct stat st;
-    FILE *file;
-    int fd = open(path, O_RDONLY | O_NOFOLLOW);
-    if (fd < 0)
-        return NULL;
-    if (fstat(fd, &st) || !S_ISREG(st.st_mode)) {
-        close(fd);
-        return NULL;
-    }
-    file = fdopen(fd, "rb");
-    if (!file)
-        close(fd);
-    return file;
+    char marker[4096], demo[4096];
+    return Cod2x_DemoFind(directory, marker, demo);
 }
 
 static size_t Cod2x_DemoRead(char *buffer, size_t size, size_t count, void *context)
@@ -219,11 +227,16 @@ static size_t Cod2x_DemoRead(char *buffer, size_t size, size_t count, void *cont
     return ferror(file) ? CURL_READFUNC_ABORT : read * size;
 }
 
-static size_t Cod2x_DemoDiscard(char *buffer, size_t size, size_t count, void *context)
+static size_t Cod2x_DemoResponse(char *buffer, size_t size, size_t count, void *context)
 {
-    (void)buffer;
+    size_t length = size * count, room = sizeof(demo_response) - 1 - demo_responseLength;
     (void)context;
-    return size * count;
+    if (length < room)
+        room = length;
+    memcpy(demo_response + demo_responseLength, buffer, room);
+    demo_responseLength += room;
+    demo_response[demo_responseLength] = '\0';
+    return length;
 }
 
 static int Cod2x_DemoProgress(void *context, curl_off_t downloadTotal, curl_off_t downloaded,
@@ -241,20 +254,8 @@ static int Cod2x_DemoProgress(void *context, curl_off_t downloadTotal, curl_off_
     return 0;
 }
 
-static void Cod2x_DemoFinish(CURLcode result, long status)
+static void Cod2x_DemoRelease(void)
 {
-    struct DemoAttempt *attempt = Cod2x_DemoAttemptFor(demo_marker);
-    demo_progress.httpStatus = status;
-    if (!result && Cod2x_DemoUploadSucceeded(status)) {
-        demo_progress.state = COD2X_DEMO_UPLOAD_DONE;
-        demo_progress.uploaded = demo_progress.total;
-        if (unlink(demo_marker))
-            demo_progress.state = COD2X_DEMO_UPLOAD_FAILED;
-    } else {
-        demo_progress.state = COD2X_DEMO_UPLOAD_FAILED;
-    }
-    if (attempt)
-        demo_progress.attempts = (int)++attempt->attempts;
     if (demo_easy) {
         curl_multi_remove_handle(demo_multi, demo_easy);
         curl_easy_cleanup(demo_easy);
@@ -268,41 +269,110 @@ static void Cod2x_DemoFinish(CURLcode result, long status)
     }
 }
 
+static void Cod2x_DemoFailure(void)
+{
+    /* CoD2x counts failures in a row and gives a marker up after three. */
+    demo_progress.state = COD2X_DEMO_UPLOAD_FAILED;
+    demo_hideAt = Cod2x_DemoMilliseconds() + 3000;
+    demo_progress.attempts = ++demo_errorCount;
+    if (demo_errorCount >= 3) {
+        struct DemoFailed *failed = calloc(1, sizeof(*failed));
+        demo_errorCount = 0;
+        if (failed && (failed->marker = strdup(demo_marker)) != NULL) {
+            failed->next = demo_failed;
+            demo_failed = failed;
+        } else {
+            free(failed);
+        }
+    }
+}
+
+static void Cod2x_DemoFinish(CURLcode result, long status)
+{
+    demo_progress.httpStatus = status;
+    if (result != CURLE_OK) {
+        const char *error = curl_easy_strerror(result);
+        Com_Printf("^1Demo upload error: %s\n", error);
+        snprintf(demo_progress.error, sizeof(demo_progress.error), "Error: %s", error);
+        Cod2x_DemoFailure();
+    } else {
+        Com_Printf("Demo upload completed! Status: %d\n", (int)status);
+        if (Cod2x_DemoUploadSucceeded(status)) {
+            Com_Printf("^2Demo upload successful with status: %d!\n", (int)status);
+            Com_Printf("Deleting marker file: %s\n", demo_marker);
+            Cod2x_DemoRemoveMarker();
+            if (access(demo_marker, F_OK) != -1)
+                Com_Error(COD2X_DEMO_ERR_FATAL, "Marker file still exists after deletion: %s\n", demo_marker);
+            demo_progress.state = COD2X_DEMO_UPLOAD_DONE;
+            demo_progress.uploaded = demo_progress.total;
+            demo_hideAt = Cod2x_DemoMilliseconds() + 2000;
+        } else {
+            Com_Printf("^1Demo upload failed with status: %d. Response: %s\n", (int)status, demo_response);
+            snprintf(demo_progress.error, sizeof(demo_progress.error), "Error: %d", (int)status);
+            Cod2x_DemoFailure();
+        }
+    }
+    Cod2x_DemoRelease();
+}
+
 static void Cod2x_DemoStart(const char *directory, int timeoutSeconds)
 {
-    char path[4096], url[1024];
+    char url[1024];
     struct stat st;
     FILE *marker;
-    CURLMcode added;
-    size_t length;
-    if (!Cod2x_DemoNextMarker(directory, demo_marker, path))
+    int fd;
+    if (!Cod2x_DemoFind(directory, demo_marker, demo_path))
         return;
-    marker = Cod2x_DemoOpen(demo_marker);
-    if (!marker)
-        return;
-    length = fread(url, 1, sizeof(url) - 1, marker);
-    url[length] = '\0';
-    if (ferror(marker) || !feof(marker))
-        url[0] = '\0';
-    fclose(marker);
-    url[strcspn(url, "\r\n")] = '\0';
-    if (!Cod2x_DemoHTTPS(url)) {
-        unlink(demo_marker);
+    /* Only a regular file is uploaded; a link counts as not readable. */
+    if (access(demo_path, R_OK) != 0 || lstat(demo_path, &st) || !S_ISREG(st.st_mode)) {
+        Com_Printf("Demo file not found or not readable, removing marker file: '%s'\n", demo_marker);
+        Cod2x_DemoRemoveMarker();
         return;
     }
-    demo_file = Cod2x_DemoOpen(path);
-    if (!demo_file || fstat(fileno(demo_file), &st) || st.st_size <= 0) {
-        if (demo_file)
-            fclose(demo_file);
-        demo_file = NULL;
-        unlink(demo_marker);
+    fd = open(demo_path, O_RDONLY | O_NOFOLLOW);
+    demo_file = fd >= 0 ? fdopen(fd, "rb") : NULL;
+    if (!demo_file) {
+        if (fd >= 0)
+            close(fd);
+        Com_Error(COD2X_DEMO_ERR_FATAL, "Failed to open demo file: %s\n", demo_path);
+        return;
+    }
+    if (fstat(fileno(demo_file), &st) || st.st_size <= 0) {
+        Com_Printf("Demo file is empty or invalid, deleting marker file: %s\n", demo_marker);
+        Cod2x_DemoRelease();
+        Cod2x_DemoRemoveMarker();
+        return;
+    }
+    marker = fopen(demo_marker, "r");
+    if (!marker) {
+        Cod2x_DemoRelease();
+        Com_Error(COD2X_DEMO_ERR_FATAL, "Failed to open marker file for reading: %s\n", demo_marker);
+        return;
+    }
+    if (!fgets(url, sizeof(url), marker)) {
+        fclose(marker);
+        Cod2x_DemoRelease();
+        Com_Error(COD2X_DEMO_ERR_FATAL, "Failed to read URL from marker file: %s\n", demo_marker);
+        return;
+    }
+    fclose(marker);
+    url[strcspn(url, "\r\n")] = '\0';
+    /* Unlike CoD2x, only HTTPS with a verified certificate is accepted. */
+    if (!Cod2x_DemoHTTPS(url)) {
+        Com_Printf("Invalid upload URL in marker file, removing marker file: '%s'\n", demo_marker);
+        Cod2x_DemoRemoveMarker();
+        Cod2x_DemoRelease();
         return;
     }
     memset(&demo_progress, 0, sizeof(demo_progress));
-    snprintf(demo_progress.name, sizeof(demo_progress.name), "%s", strrchr(path, '/') + 1);
+    snprintf(demo_progress.name, sizeof(demo_progress.name), "%s", strrchr(demo_path, '/') + 1);
     demo_progress.total = (uint64_t)st.st_size;
     demo_progress.state = COD2X_DEMO_UPLOAD_ACTIVE;
+    demo_progress.attempts = demo_errorCount;
+    demo_response[0] = '\0';
+    demo_responseLength = 0;
     demo_started = Cod2x_DemoMilliseconds();
+    Com_Printf("Starting upload of demo '%s' to URL: '%s'\n", demo_progress.name, url);
     if (!demo_curlInitialized) {
         if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
             Cod2x_DemoFinish(CURLE_FAILED_INIT, 0);
@@ -326,7 +396,7 @@ static void Cod2x_DemoStart(const char *directory, int timeoutSeconds)
     curl_easy_setopt(demo_easy, CURLOPT_READDATA, demo_file);
     curl_easy_setopt(demo_easy, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t)st.st_size);
     curl_easy_setopt(demo_easy, CURLOPT_HTTPHEADER, demo_headers);
-    curl_easy_setopt(demo_easy, CURLOPT_WRITEFUNCTION, Cod2x_DemoDiscard);
+    curl_easy_setopt(demo_easy, CURLOPT_WRITEFUNCTION, Cod2x_DemoResponse);
     curl_easy_setopt(demo_easy, CURLOPT_XFERINFOFUNCTION, Cod2x_DemoProgress);
     curl_easy_setopt(demo_easy, CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt(demo_easy, CURLOPT_NOSIGNAL, 1L);
@@ -338,45 +408,62 @@ static void Cod2x_DemoStart(const char *directory, int timeoutSeconds)
     curl_easy_setopt(demo_easy, CURLOPT_CONNECTTIMEOUT, 3L);
     curl_easy_setopt(demo_easy, CURLOPT_TIMEOUT, (long)timeoutSeconds);
     curl_easy_setopt(demo_easy, CURLOPT_MAX_SEND_SPEED_LARGE, (curl_off_t)(5 * 1024 * 1024));
-    added = curl_multi_add_handle(demo_multi, demo_easy);
-    if (added != CURLM_OK)
+    if (curl_multi_add_handle(demo_multi, demo_easy) != CURLM_OK)
         Cod2x_DemoFinish(CURLE_FAILED_INIT, 0);
 }
 
-void Cod2x_DemoUploadFrame(const char *directory, int timeoutSeconds, int recording)
+int Cod2x_DemoUploadFrame(const char *directory, int timeoutSeconds, int check)
 {
     CURLMsg *message;
     int running, messages;
-    Cod2x_DemoRememberDirectory(directory);
-    if (!demo_easy && !recording && Cod2x_DemoMilliseconds() >= demo_nextScan) {
-        demo_nextScan = Cod2x_DemoMilliseconds() + 1000;
+    if (check && !demo_easy)
         Cod2x_DemoStart(directory, timeoutSeconds);
-    }
     if (!demo_easy)
-        return;
+        return 0;
     if (curl_multi_perform(demo_multi, &running) != CURLM_OK) {
         Cod2x_DemoFinish(CURLE_RECV_ERROR, 0);
-        return;
+        return 1;
     }
     while ((message = curl_multi_info_read(demo_multi, &messages)) != NULL) {
         if (message->msg == CURLMSG_DONE && message->easy_handle == demo_easy) {
             long status = 0;
             curl_easy_getinfo(demo_easy, CURLINFO_RESPONSE_CODE, &status);
             Cod2x_DemoFinish(message->data.result, status);
-            break;
+            return 1;
         }
     }
+    return 0;
 }
+
+int Cod2x_DemoUploading(void)
+{
+    return demo_easy != NULL;
+}
+
+int Cod2x_DemoUploadShown(void)
+{
+    return demo_easy != NULL || Cod2x_DemoMilliseconds() < demo_hideAt;
+}
+
+void Cod2x_DemoUploadNewRecording(void)
+{
+    demo_errorCount = 0;
+}
+#endif
 
 const Cod2xDemoProgress *Cod2x_DemoUploadProgress(void)
 {
     return &demo_progress;
 }
 
+#if !COD2X_DEMO_UPLOADS
 void Cod2x_DemoUploadShutdown(void)
 {
-    struct DemoAttempt *attempt;
-    struct DemoDirectory *directory;
+}
+#else
+void Cod2x_DemoUploadShutdown(void)
+{
+    struct DemoFailed *failed;
     if (demo_easy)
         Cod2x_DemoFinish(CURLE_ABORTED_BY_CALLBACK, 0);
     if (demo_multi) {
@@ -387,16 +474,13 @@ void Cod2x_DemoUploadShutdown(void)
         curl_global_cleanup();
         demo_curlInitialized = 0;
     }
-    demo_nextScan = 0;
-    while ((directory = demo_directories) != NULL) {
-        demo_directories = directory->next;
-        free(directory->path);
-        free(directory);
-    }
-    while ((attempt = demo_attempts) != NULL) {
-        demo_attempts = attempt->next;
-        free(attempt->marker);
-        free(attempt);
+    demo_hideAt = 0;
+    demo_errorCount = 0;
+    while ((failed = demo_failed) != NULL) {
+        demo_failed = failed->next;
+        free(failed->marker);
+        free(failed);
     }
 }
+#endif
 #endif
