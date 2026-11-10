@@ -13,8 +13,24 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Added
 
-- Voice chat sends your microphone. Hold the voice chat key on a server with
-  voice on and macOS asks once for microphone access; the microphone is open
+- Play with CoD2x or with the original 1.3. **Settings → Game → Version**
+  chooses which game starts; CoD2x is the default. The original 1.3 can only
+  join stock 1.3 servers, and the launcher offers to turn CoD2x on when you
+  pick a CoD2x server. Config Studio, Check-up and the ready check follow the
+  version you chose, and the few settings one version cannot hold are kept
+  for the other.
+- CoD2x 1.4.6.8 in full, where 0.2.1 covered part of it. As a player: demo
+  upload, CoD2x's text colours and killfeed icons, hidden server addresses on
+  streamed matches, the 32-port LAN search, zPAM downloads from CoD2x's site,
+  the update notice, and vMix control for broadcasts. As a host: your server
+  is a real CoD2x server, with its bans and hardware IDs, wallbang settings,
+  zPAM selection and updates, the match service, and web requests and
+  WebSocket connections for mods. Certificates are checked on every request,
+  which CoD2x itself does not do, and nothing from the CoD2x project is
+  installed or run: updates are only announced.
+- Voice chat sends your microphone when you play the original 1.3. Hold the
+  voice chat key on a server with voice on and macOS asks once for microphone
+  access; the microphone is open
   only while you are sending and for two seconds after, so the system's
   microphone indicator shows exactly when the game listens. The original
   games kept the microphone open the whole time. Tested with a recording in
@@ -22,6 +38,15 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Changed
 
+- With CoD2x on, voice chat is off, as in CoD2x. It works with the original
+  1.3.
+- With CoD2x on, the game no longer writes its recommended graphics settings
+  into a new profile, as in CoD2x. The launcher supplies the same first-run
+  picture, the 250 fps cap and raw mouse input unless your loadout sets them.
+- Crash reports from a CoD2x game are named `cod2x_crash.<date>_<time>.<pid>.log`
+  and follow CoD2x's form; the original 1.3 keeps `cod2_crash_<pid>.txt`.
+  Nothing is sent anywhere: reports to CoD2x for faults in CoD2x's own code
+  stay off until you agree to them.
 - The game's videos play. The `cinematic` console command and the intro
   (publisher and studio logos, then the game's intro film) were switched off
   because they showed a black screen. Started without the launcher, the game

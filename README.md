@@ -111,7 +111,8 @@ caps.
 
 ## Known limitations
 
-- Voice chat records from your microphone only while you hold the voice chat
+- Voice chat works with the original 1.3 only; CoD2x turns it off. It records
+  from your microphone only while you hold the voice chat
   key on a server that has voice on. The sound path was tested with a
   recording in place of a microphone, not yet with a real one, and the level
   meter in the options moves only while you are sending. Device changes while
@@ -136,11 +137,12 @@ new performance claims for every release. Verified development results include:
 - Online stock 1.3 (protocol 118) and CoD2x 1.4 (protocol 120) play: movement,
   firing, reloading, round restart and respawn; HTTP mod downloads also worked.
   The sessions were short and mostly on empty servers. [Online report](docs/macos-port/reports/WS14-online.md)
-- CoD2x's 68-row compatibility inventory has **41 implemented**, **12 native
-  equivalents**, **2 partial** and **13 excluded or server-owned** behaviors.
-  This is implementation coverage, not 68 live acceptance tests. Match-service
-  UI/backend validation remains partial; the auto-updater is excluded.
-  [Compatibility report](docs/macos-port/reports/WS10-cod2x-full.md)
+- The CoD2x layer follows CoD2x 1.4.6.8 for players and for hosted servers,
+  including the match service, zPAM handling, script web requests and vMix.
+  This is implementation coverage checked against local stand-ins, not live
+  acceptance of every feature. Updates are announced, never installed, and
+  certificates are always checked. An earlier inventory counted 41 of 68
+  behaviors. [Earlier compatibility report](docs/macos-port/reports/WS10-cod2x-full.md)
 - In 0.3.0, a demo replayed in the original Windows 1.3 game and in this port
   differs by a mean of **0.11 out of 255** per colour value, over 20 views on
   four maps at 1920x1080 with the shaders built from the game's files. With
