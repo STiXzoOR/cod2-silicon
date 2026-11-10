@@ -3,7 +3,6 @@
 #include "cod2x_server.h"
 #include "../qcommon/cod2x_http.h"
 #include "../qcommon/cod2x_json.h"
-extern void Cod2x_ReportError(const char *kind, const char *message);
 #include <ctype.h>
 #include <dirent.h>
 #include <limits.h>
@@ -721,10 +720,11 @@ void SV_Cod2xZpamFrame(void)
     if (finished) {
         char folder[1024];
         if (error[0]) {
-            char report[1100];
+            extern void Cod2x_ReportError(const char *kind, const char *message);
+            char message[600];
             Com_Printf("zPAM: Update failed: %s\n", error);
-            snprintf(report, sizeof(report), "zPAM update failed: %s", error);
-            Cod2x_ReportError("zpam-update", report);
+            snprintf(message, sizeof(message), "zPAM update failed: %s", error);
+            Cod2x_ReportError("zpam-update", message);
         }
         if (installed[0])
             Com_Printf("zPAM: Installed %s\n", installed);

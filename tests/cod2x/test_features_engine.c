@@ -1,6 +1,7 @@
 #include "common_types.h"
 #include "cod2x.h"
 #include "cod2x_features.h"
+#include "cod2x_http.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -113,9 +114,10 @@ void CL_Cod2xCDKeyHash(char hash[34]) { hash[0] = '\0'; }
 void Sys_Cod2xMachineHistory(Cod2xMachineHistory *out) { memset(out, 0, sizeof(*out)); }
 void Sys_Cod2xMachineHistoryClear(void) {}
 void Cod2x_Log(const char *format, ...) { (void)format; }
-void Cod2x_PostJson(const char *url, const char *json, int timeout, Cod2xPostDone done, void *user)
+int Cod2x_HttpStart(const Cod2xHttpRequest *request, Cod2xHttpDone done, void *context)
 {
-    (void)url, (void)json, (void)timeout, (void)done, (void)user;
+    (void)request, (void)done, (void)context;
+    return 0;
 }
 
 static void execute(const char *cmd, const char *a, const char *b)
@@ -155,7 +157,7 @@ int main(void)
     assert(Cod2x_DebugBullets());
     cheats->current.enabled = 0;
     assert(!Cod2x_DebugBullets());
-    /* The match command itself belongs to the match service (cod2x_match.c). */
+    /* "match login" is the match service's (cod2x_match.c); the client registers the dvar. */
     Dvar_SetString(Dvar_FindVar("match_login"), "match-player-id");
     assert(Dvar_FindVar("match_login")->flags == 0x12);
     assert(Dvar_FindVar("com_autoaffinity")->flags == 0x1001 && Dvar_FindVar("com_autoaffinity")->current.enabled);

@@ -130,7 +130,7 @@ size_t Cod2x_LoggerRecent(char *out, size_t size)
 }
 
 /* ---- JSON text ---- */
-void Cod2x_TextAdd(Cod2xReportText *text, const char *format, ...)
+void Cod2x_ReportTextAdd(Cod2xReportText *text, const char *format, ...)
 {
     va_list args;
     int needed;
@@ -156,33 +156,33 @@ void Cod2x_TextAdd(Cod2xReportText *text, const char *format, ...)
     text->length += (size_t)needed;
 }
 
-void Cod2x_TextString(Cod2xReportText *text, const char *value)
+void Cod2x_ReportTextString(Cod2xReportText *text, const char *value)
 {
     const unsigned char *p = (const unsigned char *)(value ? value : "");
-    Cod2x_TextAdd(text, "\"");
+    Cod2x_ReportTextAdd(text, "\"");
     for (; *p; ++p) {
         if (*p == '"' || *p == '\\')
-            Cod2x_TextAdd(text, "\\%c", *p);
+            Cod2x_ReportTextAdd(text, "\\%c", *p);
         else if (*p == '\n')
-            Cod2x_TextAdd(text, "\\n");
+            Cod2x_ReportTextAdd(text, "\\n");
         else if (*p == '\r')
-            Cod2x_TextAdd(text, "\\r");
+            Cod2x_ReportTextAdd(text, "\\r");
         else if (*p == '\t')
-            Cod2x_TextAdd(text, "\\t");
+            Cod2x_ReportTextAdd(text, "\\t");
         else if (*p < 0x20)
-            Cod2x_TextAdd(text, "\\u%04x", *p);
+            Cod2x_ReportTextAdd(text, "\\u%04x", *p);
         else
-            Cod2x_TextAdd(text, "%c", *p);
+            Cod2x_ReportTextAdd(text, "%c", *p);
     }
-    Cod2x_TextAdd(text, "\"");
+    Cod2x_ReportTextAdd(text, "\"");
 }
 
 /* "field":["line",...], from text split at line ends; empty lines are left out. */
-void Cod2x_TextLines(Cod2xReportText *text, const char *field, const char *lines)
+void Cod2x_ReportTextLines(Cod2xReportText *text, const char *field, const char *lines)
 {
     const char *p = lines ? lines : "";
     int first = 1;
-    Cod2x_TextAdd(text, "\"%s\":[", field);
+    Cod2x_ReportTextAdd(text, "\"%s\":[", field);
     while (*p) {
         const char *start = p;
         char line[1024];
@@ -195,14 +195,14 @@ void Cod2x_TextLines(Cod2xReportText *text, const char *field, const char *lines
                 length = sizeof(line) - 1;
             memcpy(line, start, length);
             line[length] = '\0';
-            Cod2x_TextAdd(text, first ? "" : ",");
-            Cod2x_TextString(text, line);
+            Cod2x_ReportTextAdd(text, first ? "" : ",");
+            Cod2x_ReportTextString(text, line);
             first = 0;
         }
         while (*p == '\n' || *p == '\r')
             ++p;
     }
-    Cod2x_TextAdd(text, "]");
+    Cod2x_ReportTextAdd(text, "]");
 }
 
 /* A top-level string value of a JSON reply ("error" or "message"). */
@@ -235,14 +235,11 @@ static int Cod2x_ReplyString(const char *body, const char *key, char *out, size_
 /* ---- Sending ---- */
 typedef struct {
     char *json;
-    const char *url;
     char pending[1100];
     int exception, timeout;
     volatile int finished;
     volatile int *delivered;
-    Cod2xPostDone done;
     Cod2xCrashSent sent;
-    void *user;
     char reply[16384];
     size_t replyLength;
 } Cod2xPost;
@@ -338,14 +335,7 @@ static void *Cod2x_ReportThread(void *data)
 #endif
 {
     Cod2xPost *post = (Cod2xPost *)data;
-    if (post->done) {
-        long status = 0;
-        CURLcode result = Cod2x_PostSend(post, post->url, &status);
-        post->done(result == CURLE_OK, status, post->reply, result == CURLE_OK ? "" : curl_easy_strerror(result),
-                   post->user);
-    } else {
-        Cod2x_ReportSend(post);
-    }
+    Cod2x_ReportSend(post);
     free(post->json);
     post->json = NULL;
     /* The waiting side may have gone; whoever comes second frees the post. */
@@ -368,8 +358,7 @@ static void Cod2x_Sleep(int milliseconds)
 }
 
 /* Sends on its own thread and waits at most wait ms (0: does not wait). */
-static void Cod2x_PostStart(char *json, int timeout, int wait, volatile int *delivered, const char *url,
-                            Cod2xPostDone done, void *user)
+static void Cod2x_PostStart(char *json, int timeout, int wait, volatile int *delivered)
 {
     Cod2xPost *post = (Cod2xPost *)calloc(1, sizeof(*post));
     int waited = 0;
@@ -385,9 +374,6 @@ static void Cod2x_PostStart(char *json, int timeout, int wait, volatile int *del
     post->json = json;
     post->timeout = timeout;
     post->delivered = delivered;
-    post->url = url;
-    post->done = done;
-    post->user = user;
 #if defined(_WIN32)
     {
         HANDLE thread = CreateThread(NULL, 0, Cod2x_ReportThread, post, 0, NULL);
@@ -419,13 +405,7 @@ static void Cod2x_PostStart(char *json, int timeout, int wait, volatile int *del
 
 static void Cod2x_ReportPost(char *json, int timeout, int wait, volatile int *delivered)
 {
-    Cod2x_PostStart(json, timeout, wait, delivered, NULL, NULL, NULL);
-}
-
-void Cod2x_PostJson(const char *url, const char *json, int timeout, Cod2xPostDone done, void *user)
-{
-    char *copy = json ? strdup(json) : NULL;
-    Cod2x_PostStart(copy, timeout, 0, NULL, url, done, user);
+    Cod2x_PostStart(json, timeout, wait, delivered);
 }
 
 /* A crash or freeze report of CoD2x-layer code, sent at once (CoD2x's Windows
@@ -696,18 +676,18 @@ static char *Cod2x_ErrorJson(const char *kind, const char *message, const char *
     Sys_Cod2xSystemInfo(system, sizeof(system));
     Sys_Cod2xIdentity(identity, sizeof(identity));
     Sys_Cod2xLogLines(logs, sizeof(logs));
-    Cod2x_TextAdd(&text, "{\"version\":");
-    Cod2x_TextString(&text, COD2X_RELEASE);
-    Cod2x_TextAdd(&text, ",\"type\":\"%s\",%s\"errorInfo\":{\"kind\":\"%s\",\"message\":", Sys_Cod2xReportType(),
+    Cod2x_ReportTextAdd(&text, "{\"version\":");
+    Cod2x_ReportTextString(&text, COD2X_RELEASE);
+    Cod2x_ReportTextAdd(&text, ",\"type\":\"%s\",%s\"errorInfo\":{\"kind\":\"%s\",\"message\":", Sys_Cod2xReportType(),
                   identity, kind);
-    Cod2x_TextString(&text, message);
-    Cod2x_TextAdd(&text, ",");
-    Cod2x_TextLines(&text, "stack", stack);
-    Cod2x_TextAdd(&text, "},\"systemInfo\":%s,", system);
-    Cod2x_TextLines(&text, "loggerLines", logger);
-    Cod2x_TextAdd(&text, ",");
-    Cod2x_TextLines(&text, "logLines", logs);
-    Cod2x_TextAdd(&text, "}");
+    Cod2x_ReportTextString(&text, message);
+    Cod2x_ReportTextAdd(&text, ",");
+    Cod2x_ReportTextLines(&text, "stack", stack);
+    Cod2x_ReportTextAdd(&text, "},\"systemInfo\":%s,", system);
+    Cod2x_ReportTextLines(&text, "loggerLines", logger);
+    Cod2x_ReportTextAdd(&text, ",");
+    Cod2x_ReportTextLines(&text, "logLines", logs);
+    Cod2x_ReportTextAdd(&text, "}");
     return text.text;
 }
 

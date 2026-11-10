@@ -29,6 +29,8 @@ int Cod2x_DvarText(const char *name, char *value, size_t size)
 }
 extern int Cod2x_InLayer(const void *address);
 extern int Cod2x_ConnectProtocol(int advertised);
+extern void Cod2x_ReportError(const char *kind, const char *message);
+extern const char *Cod2x_ServiceURL(const char *url, char *buffer, size_t size);
 /* Reports that are not CoD2x's: "<path>|<reason>" lines in receiver.txt. */
 static void receive(const char *path, const char *reason)
 {
@@ -82,6 +84,17 @@ int main(int argc, char **argv)
     Cod2xNative_Init();
     if (argc > 2 && !strcmp(argv[2], "--crash"))
         raise(SIGABRT);
+    /* For the consent probe in run_native.sh: an error report, or a fault in CoD2x-layer code
+       (a NULL URL, with COD2X_TEST_SERVICE_URL set). */
+    if (argc > 2 && !strcmp(argv[2], "--error")) {
+        Cod2x_ReportError("zpam-update", "consent probe");
+        delay(3);
+        return 0;
+    }
+    if (argc > 2 && !strcmp(argv[2], "--layer-crash")) {
+        char url[256];
+        return Cod2x_ServiceURL(NULL, url, sizeof(url)) != NULL;
+    }
     for (int i = 0; i < 14; ++i) {
         Cod2xNative_Heartbeat();
         delay(1);

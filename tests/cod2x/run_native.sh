@@ -61,3 +61,42 @@ assert crash[0].name + '|SIGABRT' in received, received
 assert not list(pathlib.Path(sys.argv[2]).glob('*.pending.json'))
 print('cod2x native watchdog and crash reports passed')
 PY
+# A build that asks first: with COD2X_REPORT_CONSENT_ENV defined, nothing reaches CoD2x's
+# services until the variable is "1", but a CoD2x-layer fault still leaves its pending report.
+mkdir -p "$test_work/consent"
+compile -Wno-unused-function -Wno-typedef-redefinition -Wno-duplicate-decl-specifier -Isrc -Isrc/headers \
+    '-DCOD2X_REPORT_CONSENT_ENV="COD2X_TEST_REPORT_CONSENT"' \
+    tests/cod2x/test_native_freeze.c src/platform/cod2x_native.c src/PC/qcommon/crash_handler.c \
+    src/PC/qcommon/cod2x_layer_start.c src/PC/qcommon/cod2x_protocol.c src/PC/qcommon/cod2x_report.c \
+    src/PC/qcommon/cod2x_layer_stop.c -lcurl -o "$test_work/consent-probe"
+python3 - "$test_work/consent-probe" "$test_work/consent" <<'PY'
+import http.server, os, pathlib, resource, subprocess, sys, threading
+resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+probe, folder = sys.argv[1], pathlib.Path(sys.argv[2])
+requests = []
+class StandIn(http.server.BaseHTTPRequestHandler):
+    def do_POST(self):
+        self.rfile.read(int(self.headers.get('Content-Length') or 0))
+        requests.append(self.path)
+        self.send_response(200)
+        self.send_header('Content-Length', '2')
+        self.end_headers()
+        self.wfile.write(b'{}')
+    def log_message(self, *args):
+        pass
+server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), StandIn)
+threading.Thread(target=server.serve_forever, daemon=True).start()
+base = dict(os.environ, COD2X_TEST_SERVICE_URL='http://127.0.0.1:%d' % server.server_address[1])
+base.pop('COD2X_TEST_REPORT_CONSENT', None)
+def run(mode, consent):
+    env = dict(base, COD2X_TEST_REPORT_CONSENT='1') if consent else base
+    return subprocess.run([probe, str(folder), mode], env=env, capture_output=True, text=True, timeout=60)
+assert run('--error', False).returncode == 0 and requests == [], requests
+crash = run('--layer-crash', False)
+assert crash.returncode < 0 and 'Crash report saved to' in crash.stderr, (crash.returncode, crash.stderr[-400:])
+assert len(list(folder.glob('cod2x_crash.*.log.pending.json'))) == 1 and requests == [], requests
+assert not (folder / 'receiver.txt').exists()
+assert run('--error', True).returncode == 0 and requests == ['/api/telemetry/cod2x-errors'], requests
+server.shutdown()
+print('cod2x report consent: nothing sent without it, pending kept, sent with it')
+PY
