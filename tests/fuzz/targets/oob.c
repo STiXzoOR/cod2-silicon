@@ -163,6 +163,7 @@ void PB_HandleServerOobPacket(netadr_t *from, msg_t *msg) { (void)from; (void)ms
 void SV_GetChallenge(netadr_t from) { (void)from; Reply("challenge"); }
 void SV_DirectConnect(netadr_t from) { (void)from; Reply("connect"); }
 void SV_AuthorizeIpPacket(netadr_t from) { (void)from; Reply("auth"); }
+void SV_UpdateLastTimeMasterServerCommunicated(netadr_t from) { (void)from; }
 
 /* Group voice broadcast is game-side; the harness only exercises the reader. */
 void G_BroadcastVoice(gentity_t *talker, VoicePacket_t *packet) { (void)talker; (void)packet; }

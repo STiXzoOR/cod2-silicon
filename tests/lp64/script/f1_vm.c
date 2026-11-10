@@ -99,11 +99,13 @@ int main(int argc, char **argv)
         assert(saved->size == 2 && n == 34 && refAdds == 1);
     } else if (!strcmp(argv[1], "wait-overflow")) {
         VariableValue v = {.type = 6, .u.intValue = 0x40000000};
-        assert(VM_CandidateWaitTimeFromValue(&v) == 0);
+        Bool negative = 1;
+        /* No previous wait time and no captured receiver type to reject. */
+        assert(VM_CandidateWaitTimeFromValue(&v, 0, -1, &negative) == 0 && !negative);
         v.type = 5; v.u.floatValue = INFINITY;
-        assert(VM_CandidateWaitTimeFromValue(&v) == 0x80000000u);
+        assert(VM_CandidateWaitTimeFromValue(&v, 0, -1, &negative) == 0x80000000u && !negative);
         v.u.floatValue = NAN;
-        assert(VM_CandidateWaitTimeFromValue(&v) == 0x80000000u);
+        assert(VM_CandidateWaitTimeFromValue(&v, 0, -1, &negative) == 0x80000000u && !negative);
     } else if (!strcmp(argv[1], "vector-packed")) {
         char program[32] = {0};
         float expected[3] = {1.0f, -2.0f, 0.25f}, actual[3];

@@ -97,8 +97,10 @@ foreach(target cod2_macos cod2_macos_ded)
   target_include_directories(${target} PRIVATE
     ${COD2_SRC_DIR}/PC/speex ${COD2_SRC_DIR} ${COD2_SRC_DIR}/headers ${CMAKE_SOURCE_DIR})
   # Respect CMAKE_BUILD_TYPE optimization; Debug/unspecified still default to O0.
+  # -fwrapv: the game's arithmetic was written for x86, where signed overflow
+  # wraps (a server time near INT_MAX plus a delta byte, hashes, timers).
   target_compile_options(${target} PRIVATE -g -fcommon -ffp-contract=off
-    -fno-strict-aliasing ${COD2_WNO}
+    -fno-strict-aliasing -fwrapv ${COD2_WNO}
     -Wshorten-64-to-32 -Wpointer-to-int-cast -Wint-to-pointer-cast
     -Wint-conversion -Wincompatible-pointer-types -Wvoid-pointer-to-int-cast
     -Wno-typedef-redefinition -Wno-duplicate-decl-specifier

@@ -86,6 +86,11 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Fixed
 
+- Whole-number arithmetic wraps around as it did in the original game.
+  The game was written for processors where a number past its largest value
+  wraps to the smallest; the Mac build left that case undefined, so the
+  compiler was free to assume it never happens. A network message parser test
+  found one such sum (a server time at its maximum plus a small step).
 - Icons stored without smaller copies (mipmaps) draw again. They showed as
   black squares, or white with approximate shaders: the melee, artillery and
   crush kill-feed icons, the scoreboard's dead icon, and many mod icons. The
