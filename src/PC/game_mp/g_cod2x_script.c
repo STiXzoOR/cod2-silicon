@@ -3,15 +3,17 @@
 #include "imports.h"
 #include "g_cod2x_script.h"
 #include "../qcommon/cod2x_http.h"
+#include "../qcommon/cod2x_websocket.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 /* Script functions CoD2x 1.4.6.8 gives mods for talking to web services:
-   http_fetch here, the websocket and match calls beside it. Answers arrive
+   http_fetch and the websocket calls here, the match calls in cod2x_match.c. Answers arrive
    on later frames and run the script's callbacks. */
 
 extern void Com_Printf(const char *fmt, ...);
+extern void Com_DPrintf(const char *fmt, ...);
 extern const char *va(const char *fmt, ...);
 extern const char *Dvar_GetString(const char *dvarName);
 extern int I_stricmp(const char *s1, const char *s2);
@@ -23,11 +25,13 @@ extern void Scr_Error(const char *error);
 extern void Scr_AddUndefined(void);
 extern void Scr_AddString(const char *value);
 extern void Scr_AddInt(int value);
+extern void Scr_AddBool(int value);
 extern void Scr_MakeArray(void);
 extern void Scr_AddArray(void);
 extern scr_thread_t Scr_ExecThread(scr_func_t handle, unsigned int paramcount);
 extern void Scr_FreeThread(int handle);
 extern int Scr_IsSystemActive(int inst);
+extern level_locals_t level;
 
 /* CoD2x's HTTP client keeps at most this much of an answer. */
 #define FETCH_MAX_RECEIVE (3u * 1024u * 1024u)
@@ -248,19 +252,208 @@ static void GScr_Cod2xHttpFetch(void)
     }
 }
 
+/* ---- websocket_connect, websocket_sendText, websocket_close ---------------- */
+
+#define WEBSOCKET_MAX_CLIENTS 16
+
+typedef struct {
+    Cod2xWebSocket *ws;
+    int connected; /* opened and not closed yet, as the callbacks have seen it */
+    int onConnect, onMessage, onClose, onError;
+    Cod2xScriptScope scope;
+} ScriptWebSocket;
+
+static ScriptWebSocket webSockets[WEBSOCKET_MAX_CLIENTS];
+
+static void WebSocket_Deliver(int index)
+{
+    ScriptWebSocket *slot = &webSockets[index];
+    Cod2xWebSocketEvent event;
+    while (slot->ws && Cod2x_WebSocketNextEvent(slot->ws, &event)) {
+        int callable = GScr_Cod2xScopeCallable(&slot->scope);
+        switch (event.type) {
+        case COD2X_WS_OPEN:
+            slot->connected = 1;
+            Com_DPrintf("WebSocket client #%d connected.\n", index);
+            if (slot->onConnect && callable)
+                GScr_Cod2xRunCallback(slot->onConnect, 0);
+            break;
+        case COD2X_WS_MESSAGE:
+            if (slot->onMessage && callable) {
+                Scr_AddString(event.text ? event.text : "");
+                GScr_Cod2xRunCallback(slot->onMessage, 1);
+            }
+            break;
+        case COD2X_WS_CLOSE:
+            slot->connected = 0;
+            Com_DPrintf("WebSocket client #%d disconnected, isClosedByRemote: %d, isFullyDisconnected: %d\n", index,
+                        event.closedByRemote, event.fullyDisconnected);
+            /* onClose(isClosedByRemote, isFullyDisconnected) */
+            if (slot->onClose && callable) {
+                Scr_AddBool(event.fullyDisconnected);
+                Scr_AddBool(event.closedByRemote);
+                GScr_Cod2xRunCallback(slot->onClose, 2);
+            }
+            break;
+        case COD2X_WS_ERROR:
+            if (slot->onError && callable) {
+                Scr_AddString(event.text ? event.text : "");
+                GScr_Cod2xRunCallback(slot->onError, 1);
+            }
+            break;
+        }
+        free(event.text);
+    }
+}
+
+static void WebSocket_Free(int index)
+{
+    Cod2x_WebSocketFree(webSockets[index].ws);
+    memset(&webSockets[index], 0, sizeof(webSockets[index]));
+}
+
+/* Every frame: the connections' news, and closed ones give their slot back. */
+void GScr_Cod2xWebSocketFrame(void)
+{
+    for (int i = 0; i < WEBSOCKET_MAX_CLIENTS; ++i) {
+        if (!webSockets[i].ws)
+            continue;
+        WebSocket_Deliver(i);
+        if (webSockets[i].ws && Cod2x_WebSocketFinished(webSockets[i].ws))
+            WebSocket_Free(i);
+    }
+}
+
+/* websocket_connect(url, headers, onConnect, onMessage, onClose, onError
+   [, reconnectDelayMs, pingIntervalMs]): the connection's number (0-15), or
+   -1. Both delays count only when both are given (2000 and 15000 otherwise). */
+static void GScr_Cod2xWebSocketConnect(void)
+{
+    unsigned int count = Scr_GetNumParam();
+    unsigned int reconnectMs = 2000, pingMs = 15000;
+    const char *url, *headers;
+    int index = -1, onConnect, onMessage, onClose, onError;
+    Cod2xWebSocket *ws;
+
+    if (count < 6) {
+        Scr_Error(va("websocket_connect: not enough parameters, expected 6, got %u", count));
+        Scr_AddInt(-1);
+        return;
+    }
+    for (int i = 0; i < WEBSOCKET_MAX_CLIENTS && index < 0; ++i)
+        if (!webSockets[i].ws)
+            index = i;
+    if (index < 0) {
+        Scr_Error("No free websocket client slots available.");
+        Scr_AddInt(-1);
+        return;
+    }
+    url = Scr_GetString(0);
+    headers = Scr_GetString(1);
+    onConnect = Scr_GetFunc(2);
+    onMessage = Scr_GetFunc(3);
+    onClose = Scr_GetFunc(4);
+    onError = Scr_GetFunc(5);
+    if (count >= 8) {
+        reconnectMs = (unsigned int)Scr_GetInt(6);
+        pingMs = (unsigned int)Scr_GetInt(7);
+    }
+    ws = Cod2x_WebSocketConnect(url, headers, reconnectMs, pingMs);
+    if (!ws) {
+        Scr_AddInt(-1);
+        return;
+    }
+    webSockets[index].ws = ws;
+    webSockets[index].connected = 0;
+    webSockets[index].onConnect = onConnect;
+    webSockets[index].onMessage = onMessage;
+    webSockets[index].onClose = onClose;
+    webSockets[index].onError = onError;
+    GScr_Cod2xScopeNow(&webSockets[index].scope);
+    Scr_AddInt(index);
+}
+
+static int WebSocket_Index(int index)
+{
+    return index >= 0 && index < WEBSOCKET_MAX_CLIENTS && webSockets[index].ws;
+}
+
+/* websocket_sendText(id, message): false when it is not open. */
+static void GScr_Cod2xWebSocketSendText(void)
+{
+    unsigned int count = Scr_GetNumParam();
+    int index;
+    const char *message;
+    if (count < 2) {
+        Scr_Error(va("websocket_sendText: not enough parameters, expected 2, got %u", count));
+        Scr_AddBool(0);
+        return;
+    }
+    index = Scr_GetInt(0);
+    message = Scr_GetString(1);
+    if (!WebSocket_Index(index) || !webSockets[index].connected) {
+        Scr_AddBool(0);
+        return;
+    }
+    Cod2x_WebSocketSendText(webSockets[index].ws, message);
+    Scr_AddBool(1);
+}
+
+/* websocket_close(id): closes it for good. */
+static void GScr_Cod2xWebSocketClose(void)
+{
+    int index;
+    if (Scr_GetNumParam() < 1) {
+        Scr_AddBool(0);
+        return;
+    }
+    index = Scr_GetInt(0);
+    if (!WebSocket_Index(index)) {
+        Scr_AddBool(0);
+        return;
+    }
+    Cod2x_WebSocketClose(webSockets[index].ws);
+    Scr_AddBool(1);
+}
+
 /* ---- map changes and shutdown --------------------------------------------- */
 
-/* After the shutdown's own callbacks: answers still on their way get a second
-   to arrive (frames no longer run). */
+/* After the mod's StopGameType callback. Answers to http_fetch still on their
+   way get a second on shutdown (frames no longer run). Connections end with a
+   full map change or shutdown: they are closed, their close callbacks run
+   (on shutdown for up to a second), and then they are forgotten. A round
+   restart that keeps the players' data keeps them. */
 void GScr_Cod2xNetBeforeMapChange(int shutdown)
 {
-    if (!shutdown)
-        return;
-    for (int waited = 0; fetchPending > 0 && waited < 1000; waited += 10) {
+    int complete = !level.savepersist, any;
+
+    for (int waited = 0; shutdown && fetchPending > 0 && waited < 1000; waited += 10) {
         Cod2x_HttpFrameFor(Fetch_Done);
         if (fetchPending > 0)
             Cod2x_Sleep(10);
     }
+    if (!complete && !shutdown)
+        return;
+    for (int i = 0; i < WEBSOCKET_MAX_CLIENTS; ++i)
+        if (webSockets[i].ws)
+            Cod2x_WebSocketClose(webSockets[i].ws);
+    /* CoD2x lets each close go out right away, and waits on shutdown. */
+    for (int waited = 0; waited < (shutdown ? 1000 : 100); waited += 10) {
+        any = 0;
+        for (int i = 0; i < WEBSOCKET_MAX_CLIENTS; ++i) {
+            if (!webSockets[i].ws)
+                continue;
+            WebSocket_Deliver(i);
+            if (!Cod2x_WebSocketFinished(webSockets[i].ws))
+                any = 1;
+        }
+        if (!any)
+            break;
+        Cod2x_Sleep(10);
+    }
+    for (int i = 0; i < WEBSOCKET_MAX_CLIENTS; ++i)
+        if (webSockets[i].ws)
+            WebSocket_Free(i);
 }
 
 void GScr_Cod2xDropCallbacks(void)
@@ -279,6 +472,9 @@ typedef struct {
 
 static const ScriptFunction scriptFunctions[] = {
     {"http_fetch", GScr_Cod2xHttpFetch, 0},
+    {"websocket_connect", GScr_Cod2xWebSocketConnect, 0},
+    {"websocket_sendText", GScr_Cod2xWebSocketSendText, 0},
+    {"websocket_close", GScr_Cod2xWebSocketClose, 0},
     {"matchUploadData", GScr_Cod2xMatchUploadData, 0},
     {"matchSetData", GScr_Cod2xMatchSetData, 0},
     {"matchGetData", GScr_Cod2xMatchGetData, 0},

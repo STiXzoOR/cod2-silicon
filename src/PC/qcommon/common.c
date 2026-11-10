@@ -2395,11 +2395,13 @@ void Com_Frame(void)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     {
         extern void Cod2x_HttpFrame(void);
+        extern void GScr_Cod2xWebSocketFrame(void);
         extern void SV_Cod2xMatchFrame(void);
         extern void SV_Cod2xZpamFrame(void);
         extern void SV_Cod2xUpdaterFrame(void);
         /* Finished requests first, then the match, zPAM and the update check, as CoD2x orders them. */
         Cod2x_HttpFrame();
+        GScr_Cod2xWebSocketFrame();
         SV_Cod2xMatchFrame();
         SV_Cod2xZpamFrame();
         SV_Cod2xUpdaterFrame();

@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <sys/file.h>
+#include <sys/select.h>
 #include <unistd.h>
 #endif
 
@@ -703,6 +704,116 @@ void Cod2x_Sleep(int msec)
 #else
     usleep((useconds_t)msec * 1000);
 #endif
+}
+
+/* ---- raw connections ----------------------------------------------------- */
+
+struct Cod2xSocket {
+    CURL *curl;
+    curl_socket_t socket;
+};
+
+/* Waits up to msec for the socket to become readable (or writable). */
+static void Http_Wait(curl_socket_t socket, int write, int msec)
+{
+    fd_set set;
+    struct timeval wait;
+    FD_ZERO(&set);
+    FD_SET(socket, &set);
+    wait.tv_sec = msec / 1000;
+    wait.tv_usec = (msec % 1000) * 1000;
+    select((int)socket + 1, write ? NULL : &set, write ? &set : NULL, NULL, &wait);
+}
+
+Cod2xSocket *Cod2x_SocketOpen(const char *url, int timeoutMs, char *error, size_t errorSize)
+{
+    Cod2xHttpRequest timers = {0};
+    Cod2xSocket *connection;
+    curl_socket_t socket = CURL_SOCKET_BAD;
+    CURLcode code;
+    CURL *curl;
+
+    error[0] = '\0';
+    if (!Cod2x_HttpValidUrl(url)) {
+        snprintf(error, errorSize, "Invalid URL");
+        return NULL;
+    }
+    curl = curl_easy_init();
+    connection = calloc(1, sizeof(*connection));
+    if (!curl || !connection) {
+        snprintf(error, errorSize, "Out of memory");
+        if (curl)
+            curl_easy_cleanup(curl);
+        free(connection);
+        return NULL;
+    }
+    Http_Common(curl);
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
+    if (timeoutMs > 0) {
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, (long)timeoutMs);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, (long)timeoutMs);
+    }
+    code = curl_easy_perform(curl);
+    if (code == CURLE_OK)
+        code = curl_easy_getinfo(curl, CURLINFO_ACTIVESOCKET, &socket);
+    if (code != CURLE_OK || socket == CURL_SOCKET_BAD) {
+        timers.connectTimeoutMs = timeoutMs;
+        timers.timeoutMs = timeoutMs;
+        Http_Error(curl, &timers, code != CURLE_OK ? code : CURLE_COULDNT_CONNECT, error, errorSize);
+        curl_easy_cleanup(curl);
+        free(connection);
+        return NULL;
+    }
+    connection->curl = curl;
+    connection->socket = socket;
+    return connection;
+}
+
+int Cod2x_SocketSend(Cod2xSocket *connection, const void *data, size_t length, int timeoutMs)
+{
+    const char *p = data;
+    int waited = 0;
+    while (length) {
+        size_t sent = 0;
+        CURLcode code = curl_easy_send(connection->curl, p, length, &sent);
+        if (code == CURLE_AGAIN) {
+            if (waited >= timeoutMs)
+                return 0;
+            Http_Wait(connection->socket, 1, 10);
+            waited += 10;
+            continue;
+        }
+        if (code != CURLE_OK)
+            return 0;
+        p += sent;
+        length -= sent;
+    }
+    return 1;
+}
+
+int Cod2x_SocketRecv(Cod2xSocket *connection, void *buffer, size_t size, int waitMs)
+{
+    for (int pass = 0; pass < 2; ++pass) {
+        size_t received = 0;
+        CURLcode code = curl_easy_recv(connection->curl, buffer, size, &received);
+        if (code == CURLE_OK)
+            return received ? (int)received : -1; /* 0 bytes: the other side closed */
+        if (code != CURLE_AGAIN)
+            return -2;
+        /* TLS may hold data the socket no longer shows, so read before waiting. */
+        if (!pass)
+            Http_Wait(connection->socket, 0, waitMs);
+    }
+    return 0;
+}
+
+void Cod2x_SocketClose(Cod2xSocket *connection)
+{
+    if (!connection)
+        return;
+    curl_easy_cleanup(connection->curl);
+    free(connection);
 }
 
 /* ---- file downloads ------------------------------------------------------- */
