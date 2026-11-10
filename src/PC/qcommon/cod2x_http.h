@@ -38,6 +38,10 @@ typedef struct {
 } Cod2xHttpProgress;
 
 int Cod2x_HttpAvailable(void);
+/* CoD2x's URL check: a scheme, "://", something after it, and no spaces,
+   control characters, quotes, backticks, angle brackets or backslashes.
+   Requests that fail it end with "Invalid URL". */
+int Cod2x_HttpValidUrl(const char *url);
 /* Once from the main thread before the first request (curl's global setup). */
 void Cod2x_HttpInit(void);
 
@@ -51,6 +55,10 @@ void Cod2x_HttpResponseFree(Cod2xHttpResponse *response);
 int Cod2x_HttpStart(const Cod2xHttpRequest *request, Cod2xHttpDone done, void *context);
 /* Main thread, every frame: calls done for the finished requests. */
 void Cod2x_HttpFrame(void);
+/* The same for the requests started with done only (e.g. while shutting down). */
+void Cod2x_HttpFrameFor(Cod2xHttpDone done);
+/* Waits msec milliseconds. */
+void Cod2x_Sleep(int msec);
 
 /* Blocking download to path, as CoD2x downloads files: GET with
    "User-Agent: CoD2x" and "Connection: close", up to 5 redirects, status 200

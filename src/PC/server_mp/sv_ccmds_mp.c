@@ -89,7 +89,15 @@ qboolean SV_Cod2xBeforeMapChange(qboolean shutdown, const char *source)
     if (!com_sv_running->current.enabled || cod2xMapChangeAsked)
         return 1;
     cod2xMapChangeAsked = 1;
-    return GScr_Cod2xBeforeMapChange(shutdown, source);
+    /* The mod's callback first: it can still block the change, and its requests
+       are among those the shutdown waits for. */
+    if (!GScr_Cod2xBeforeMapChange(shutdown, source))
+        return 0;
+    {
+        extern void GScr_Cod2xNetBeforeMapChange(int shutdown);
+        GScr_Cod2xNetBeforeMapChange(shutdown);
+    }
+    return 1;
 }
 
 void SV_Cod2xMapChangeFrameDone(void)

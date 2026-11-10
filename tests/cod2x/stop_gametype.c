@@ -91,6 +91,7 @@ int Cod2x_LimitedFPS(int fps, int limited) { return limited && (fps < 125 || fps
 void Cod2x_FeaturesInit(void) {}
 void Cod2x_FeaturesFrame(int active, int demo) { (void)active; (void)demo; }
 void Cod2x_IwdSystemInfo(const char *names) { (void)names; }
+void GScr_Cod2xNetBeforeMapChange(int shutdown) { (void)shutdown; }
 void Cod2x_PoseInit(void) {}
 void SV_Cod2xServerInit(void) {}
 void SV_Cod2xServerSpawned(void) {}

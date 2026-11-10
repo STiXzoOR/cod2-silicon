@@ -1,5 +1,6 @@
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "cod2x_http.h"
+#include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -410,7 +411,25 @@ static void Http_Common(CURL *curl)
 }
 
 /* CoD2x's words for what went wrong, curl's for the rest. */
-static void Http_Error(CURL *curl, CURLcode code, char *error, size_t size)
+int Cod2x_HttpValidUrl(const char *url)
+{
+    const char *p = url;
+    if (!p || !isalpha((unsigned char)*p))
+        return 0;
+    for (++p; isalnum((unsigned char)*p) || *p == '+' || *p == '-' || *p == '.'; ++p)
+        ;
+    if (strncmp(p, "://", 3) || !p[3])
+        return 0;
+    for (p += 3; *p; ++p) {
+        unsigned char c = (unsigned char)*p;
+        if (c <= ' ' || c > '~' || c == '"' || c == '`' || c == '<' || c == '>' || c == '\\')
+            return 0;
+    }
+    return 1;
+}
+
+/* curl's failures in the words CoD2x's own client uses for them. */
+static void Http_Error(CURL *curl, const Cod2xHttpRequest *request, CURLcode code, char *error, size_t size)
 {
     curl_off_t connected = 0;
     switch (code) {
@@ -418,9 +437,20 @@ static void Http_Error(CURL *curl, CURLcode code, char *error, size_t size)
     case CURLE_UNSUPPORTED_PROTOCOL:
         snprintf(error, size, "Invalid URL");
         break;
+    case CURLE_COULDNT_RESOLVE_HOST:
+        snprintf(error, size, "DNS error");
+        break;
+    case CURLE_COULDNT_CONNECT:
+        snprintf(error, size, "socket error");
+        break;
     case CURLE_OPERATION_TIMEDOUT:
+        /* The connect timer runs first while it is the shorter one. */
         curl_easy_getinfo(curl, CURLINFO_CONNECT_TIME_T, &connected);
-        snprintf(error, size, "%s", connected ? "Timeout" : "Connection timeout");
+        snprintf(error, size, "%s",
+                 !connected && request->connectTimeoutMs > 0 &&
+                         (request->timeoutMs <= 0 || request->connectTimeoutMs <= request->timeoutMs)
+                     ? "Connection timeout"
+                     : "Timeout");
         break;
     case CURLE_GOT_NOTHING:
     case CURLE_RECV_ERROR:
@@ -446,9 +476,10 @@ int Cod2x_HttpPerform(const Cod2xHttpRequest *request, Cod2xHttpResponse *respon
     CURL *curl;
 
     memset(response, 0, sizeof(*response));
-    curl = curl_easy_init();
+    curl = Cod2x_HttpValidUrl(request->url) ? curl_easy_init() : NULL;
     if (!curl) {
-        snprintf(response->error, sizeof(response->error), "Out of memory");
+        snprintf(response->error, sizeof(response->error), "%s",
+                 Cod2x_HttpValidUrl(request->url) ? "Out of memory" : "Invalid URL");
         response->body = calloc(1, 1);
         response->headers = calloc(1, 1);
         return 0;
@@ -465,7 +496,8 @@ int Cod2x_HttpPerform(const Cod2xHttpRequest *request, Cod2xHttpResponse *respon
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
     if (post) {
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
-    } else if (strcmp(method, "GET")) {
+    } else if (strcmp(method, "GET") || hasBody) {
+        /* Also a GET with a body, which curl would otherwise send as POST. */
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
         if (!strcmp(method, "HEAD"))
             curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
@@ -487,7 +519,7 @@ int Cod2x_HttpPerform(const Cod2xHttpRequest *request, Cod2xHttpResponse *respon
     if (code == CURLE_WRITE_ERROR && body.tooLarge)
         snprintf(response->error, sizeof(response->error), "Response too large");
     else if (code != CURLE_OK)
-        Http_Error(curl, code, response->error, sizeof(response->error));
+        Http_Error(curl, request, code, response->error, sizeof(response->error));
     else
         response->status = (int)status;
     curl_slist_free_all(list);
@@ -588,15 +620,33 @@ int Cod2x_HttpStart(const Cod2xHttpRequest *request, Cod2xHttpDone done, void *c
     return 1;
 }
 
-void Cod2x_HttpFrame(void)
+/* Takes the finished jobs (all, or those for done), oldest first. */
+static HttpJob *Http_TakeFinished(Cod2xHttpDone done)
+{
+    HttpJob *taken = NULL, **takenTail = &taken, **link;
+    Cod2x_Lock();
+    link = &http_finished;
+    while (*link) {
+        HttpJob *job = *link;
+        if (done && job->done != done) {
+            link = &job->next;
+            continue;
+        }
+        *link = job->next;
+        job->next = NULL;
+        *takenTail = job;
+        takenTail = &job->next;
+    }
+    Cod2x_Unlock();
+    return taken;
+}
+
+static void Http_Deliver(Cod2xHttpDone done)
 {
     HttpJob *jobs;
     if (!http_finished)
         return;
-    Cod2x_Lock();
-    jobs = http_finished;
-    http_finished = NULL;
-    Cod2x_Unlock();
+    jobs = Http_TakeFinished(done);
     while (jobs) {
         HttpJob *next = jobs->next;
         if (jobs->done)
@@ -604,6 +654,25 @@ void Cod2x_HttpFrame(void)
         Http_JobFree(jobs);
         jobs = next;
     }
+}
+
+void Cod2x_HttpFrame(void)
+{
+    Http_Deliver(NULL);
+}
+
+void Cod2x_HttpFrameFor(Cod2xHttpDone done)
+{
+    Http_Deliver(done);
+}
+
+void Cod2x_Sleep(int msec)
+{
+#ifdef _WIN32
+    Sleep((DWORD)msec);
+#else
+    usleep((useconds_t)msec * 1000);
+#endif
 }
 
 /* ---- file downloads ------------------------------------------------------- */
@@ -670,6 +739,10 @@ int Cod2x_HttpDownload(const char *url, const char *path, const char *magic, Cod
     curl_off_t received = 0;
 
     error[0] = '\0';
+    if (!Cod2x_HttpValidUrl(url)) {
+        snprintf(error, errorSize, "Invalid URL");
+        return 0;
+    }
     state.file = fopen(path, "wb");
     if (!state.file) {
         snprintf(error, errorSize, "Failed to open '%s' for writing", path);
@@ -723,7 +796,8 @@ int Cod2x_HttpDownload(const char *url, const char *path, const char *magic, Cod
     } else if (code == CURLE_OPERATION_TIMEDOUT) {
         snprintf(error, errorSize, "Timeout");
     } else if (code != CURLE_OK) {
-        Http_Error(state.curl, code, error, errorSize);
+        Cod2xHttpRequest timers = {0}; /* only the 30 s stall limit */
+        Http_Error(state.curl, &timers, code, error, errorSize);
     } else if (!downloaded) {
         snprintf(error, errorSize, "Received an empty file");
     } else if (magic && !Http_HasMagic(path, magic)) {

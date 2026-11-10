@@ -2773,6 +2773,13 @@ BuiltinFunction Scr_GetFunction(const char **pName, int *type)
         *type = 0;
         return (BuiltinFunction)GScr_Cod2xStripColorCodes;
     }
+    {
+        /* http_fetch, the websocket and match calls (g_cod2x_script.c). */
+        extern void *GScr_Cod2xGetFunction(const char **name, int *type);
+        void *cod2x = GScr_Cod2xGetFunction(pName, type);
+        if (cod2x)
+            return (BuiltinFunction)cod2x;
+    }
 #endif
     return (BuiltinFunction)0;
 }

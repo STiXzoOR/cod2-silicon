@@ -2232,6 +2232,22 @@ int Scr_GetInt(unsigned int index)
 
     return value->u.intValue;
 }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+
+/* A function reference parameter (::name) as a handle for Scr_ExecThread. */
+int Scr_GetFunc(unsigned int index)
+{
+    VariableValue *value = Scr_GetParamValue(index);
+
+    if (index >= scrVmPub.outparamcount)
+        return 0;
+    if (value->type != 9) { /* function */
+        Scr_ParamTypeError(index, "type %s is not a function", value->type);
+        return 0;
+    }
+    return (int)value->u.codePosValue; /* already an offset into the program here */
+}
+#endif
 
 static const char str_dbg_vmexec_top0[] = "DBG ERROR: scrVmPub.top is NULL after VM_Execute!\n";
 static const char str_dbg_null_builtin[] = "DBG ERROR: NULL builtin index=%d pos=%p\n";
