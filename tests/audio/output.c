@@ -156,15 +156,28 @@ static void CheckOutput(float expectedLeft, float expectedRight, int render)
     }
 }
 
+/* The Windows 1.3 provider's law, as measured: linear in the angle off the
+ * median plane, and three quarters behind the ear line. */
+static void ExpectedPan(const float *local, float amplitude, float *left, float *right)
+{
+    float distance = sqrtf(local[0] * local[0] + local[1] * local[1] + local[2] * local[2]);
+    float pan = distance > 0 ? asinf(local[0] / distance) * (float)(2.0 / M_PI) : 0;
+    float rear = local[2] < 0 ? 0.75f : 1.0f;
+    *left = amplitude * (1 - pan) * 0.5f * rear;
+    *right = amplitude * (1 + pan) * 0.5f * rear;
+}
+
 static void PositionCases(void)
 {
-    const float local[][3] = {{0, 0, 100}, {100, 0, 0}, {-100, 0, 0}, {0, 0, -100}, {0, 100, 0}, {0, -100, 0}};
-    const float pan[] = {0, 1, -1, 0, 0, 0};
+    /* Nothing sits exactly on the ear line: the rear step there would turn a
+     * rotated listener's rounding into a quarter of the level. */
+    const float local[][3] = {{0, 0, 100}, {100, 0, 10}, {-100, 0, 10}, {0, 0, -100}, {0, 100, 10}, {0, -100, 10},
+                              {100, 0, -10}, {-60, 30, -80}};
     for (int rotation = 0; rotation < 3; ++rotation) {
         vec3_t angles = {rotation == 2 ? 30 : 0, rotation * 90, rotation == 2 ? 15 : 0}, axis[3];
         AnglesToAxis(angles, axis);
         SND_SetListener(0, g_snd.listeners[0].orient.origin, axis);
-        for (int i = 0; i < 6; ++i) {
+        for (int i = 0; i < 8; ++i) {
             vec3_t world;
             for (int j = 0; j < 3; ++j)
                 world[j] = g_snd.listeners[0].orient.origin[j] - local[i][0] * axis[1][j]
@@ -174,13 +187,13 @@ static void PositionCases(void)
             SND_Set3DPosition(0, world);
             CheckPosition(local[i]);
             AIL_resume_3D_sample(milesGlob.handle_3D[0]);
-            float left = 0.125f * sqrtf((1 - pan[i]) * 0.5f);
-            float right = 0.125f * sqrtf((1 + pan[i]) * 0.5f);
+            float left, right;
+            ExpectedPan(local[i], 0.125f, &left, &right);
             CheckOutput(left, right, 0);
             CheckOutput(left, right, 1);
         }
     }
-    puts("PASS 18 listener-space directions: translated, yawed, pitched/rolled listener; MacAudio_Mix and Render PCM");
+    puts("PASS 24 listener-space directions: translated, yawed, pitched/rolled listener; MacAudio_Mix and Render PCM");
 }
 
 static void UpdateCase(void)
@@ -200,9 +213,10 @@ static void UpdateCase(void)
     /* Yaw 90 maps the offset to world (25,0,12), yielding (92,39,33). */
     const float expected[] = {-10, -8, 75};
     CheckPosition(expected);
-    float distance = sqrtf(5625 + 100 + 64), pan = -10 / distance;
-    float amplitude = 0.125f * (1 - distance / 1000);
-    CheckOutput(amplitude * sqrtf((1 - pan) * 0.5f), amplitude * sqrtf((1 + pan) * 0.5f), 1);
+    float distance = sqrtf(5625 + 100 + 64);
+    float amplitude = 0.125f * (1 - distance / 1000), left, right;
+    ExpectedPan(expected, amplitude, &left, &right);
+    CheckOutput(left, right, 1);
     puts("PASS moving 3D channel preserves entity-space offset through Render PCM");
 }
 
@@ -219,7 +233,7 @@ static void TimelineCase(void)
     CheckOutput(0, 0, 0);
     SND_Update3DChannel(0, 16);
     assert(g_snd.chaninfo[0].startDelay == 0);
-    float amplitude = 0.1125f / sqrtf(2);
+    float amplitude = 0.1125f * 0.5f;
     CheckOutput(amplitude, amplitude, 1);
     AIL_stop_3D_sample(milesGlob.handle_3D[0]);
     CheckOutput(0, 0, 1);
@@ -294,7 +308,7 @@ static void FootstepsCase(void)
         float energy = 0;
         for (int i = 0; i < 8; ++i) {
             assert(isfinite(mixed[i * 2]) && fabsf(mixed[i * 2] - mixed[i * 2 + 1]) < 0.00001f);
-            float expected = ExpectedPcm((size_t)i) * 0.9f / sqrtf(2);
+            float expected = ExpectedPcm((size_t)i) * 0.9f * 0.5f;
             assert(fabsf(mixed[i * 2] - expected) < 0.00001f);
             energy += fabsf(mixed[i * 2]);
         }
