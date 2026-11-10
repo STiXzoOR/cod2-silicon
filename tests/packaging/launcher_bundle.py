@@ -33,7 +33,8 @@ binaries += [p for p in (game / 'Contents/Frameworks').glob('*.dylib') if not p.
 assert sorted(p.name for p in binaries) == ['CoD2Launcher', 'cod2-shadergen', 'cod2_macos', 'cod2_macos_stock',
                                             'libSDL2-2.0.0.dylib', 'libSDL3.0.dylib', 'libvkd3d-shader.1.dylib'], binaries
 symbols = {p.name: subprocess.check_output(['nm', '-g', str(p)], text=True) for p in (game / 'Contents/MacOS').iterdir()}
-assert '_Cod2xNativeApp_Arguments' in symbols['cod2_macos'] and '_Cod2xNativeApp_Arguments' not in symbols['cod2_macos_stock']
+assert '_Cod2x_Init' in symbols['cod2_macos'] and '_Cod2x_Init' not in symbols['cod2_macos_stock']
+assert all('_Cod2xNativeApp_Arguments' in symbols[name] for name in ('cod2_macos', 'cod2_macos_stock'))
 stock = subprocess.run(['codesign', '-d', '--entitlements', '-', '--xml', str(game / 'Contents/MacOS/cod2_macos_stock')],
                        capture_output=True, check=True)
 assert plistlib.loads(stock.stdout) == {'com.apple.security.device.audio-input': True}, stock.stdout

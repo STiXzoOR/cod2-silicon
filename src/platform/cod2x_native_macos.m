@@ -1,4 +1,4 @@
-#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
 #import <AppKit/AppKit.h>
 #include "cod2x_native.h"
 #include "PC/qcommon/cod2x_url.h"

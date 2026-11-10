@@ -765,7 +765,7 @@ static void cr_posix_osinfo(int fd)
         cr_emit(fd, "os         : %s %s %s (%s)\n", u.sysname, u.release, u.version, u.machine);
 }
 
-#    if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#    if defined(__APPLE__) && defined(COD2_X64) && COD2_X64
 static char cr_reportDirectory[1024] = ".";
 
 void Sys_CrashSetDirectory(const char *path)
@@ -945,7 +945,7 @@ static void cr_posix_handler(int sig, siginfo_t *info, void *ucontext)
     else
         snprintf(desc, sizeof(desc), "%s", cr_sig_name(sig));
 
-#    if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#    if defined(__APPLE__) && defined(COD2_X64) && COD2_X64
     snprintf(path, sizeof(path), "%s/cod2_crash_%d.txt", cr_reportDirectory, (int)getpid());
     fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 #    else

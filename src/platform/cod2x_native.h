@@ -3,7 +3,7 @@
 void Cod2xNative_Init(void);
 void Cod2xNative_Frame(void);
 void Cod2xNative_Heartbeat(void);
-#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
 void Cod2xNative_BeginUserWait(void);
 void Cod2xNative_EndUserWait(void);
 #endif
@@ -13,7 +13,7 @@ void Cod2xNativeURL_SetupPaths(void);
 void Cod2xNativeURL_Shutdown(void);
 int Cod2xNativeURL_Queue(const char *url);
 void Cod2xNativeURL_Frame(void);
-#if defined(__APPLE__) && defined(COD2_X64) && defined(COD2_CODX) && COD2_CODX
+#if defined(__APPLE__) && defined(COD2_X64)
 int Cod2xNativeApp_Arguments(char *buffer, int capacity);
 #endif
 void Sys_CrashSetDirectory(const char *path);

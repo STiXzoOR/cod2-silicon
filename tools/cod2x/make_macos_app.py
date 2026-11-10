@@ -147,8 +147,11 @@ def main():
         if not args.stock_engine.is_file():
             parser.error("stock engine does not exist")
         subprocess.run(["lipo", str(args.stock_engine), "-verify_arch", "arm64"], check=True)
-        if "_Cod2xNativeApp_Arguments" in subprocess.check_output(["nm", "-g", str(args.stock_engine)], text=True):
+        stock_symbols = subprocess.check_output(["nm", "-g", str(args.stock_engine)], text=True)
+        if "_Cod2x_Init" in stock_symbols:
             parser.error("--stock-engine is a CoD2x build; build it without COD2_CODX")
+        if "_Cod2xNativeApp_Arguments" not in stock_symbols:
+            parser.error("--stock-engine lacks bundle argument support; rebuild the native target")
     destination = args.app.expanduser().resolve()
     destination.parent.mkdir(parents=True, exist_ok=True)
     staging = tempfile.TemporaryDirectory(prefix=".cod2x-build-", dir=destination.parent)
