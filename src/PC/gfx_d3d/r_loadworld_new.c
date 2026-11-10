@@ -548,8 +548,15 @@ GfxWorld *R_LoadWorldInternal(const char *name)
 
                                 float sunVis = (float)(unsigned char)(*hiResPtr);
 
+                                /* Windows 1.3 rounds these with fistp in Direct3D's
+                                 * single-precision FPU mode (0x10001eb7): an exact
+                                 * half goes to the even value. */
                                 float valR = (float)(unsigned char)(*loR) + sunR * sunVis;
+#if COD2_APPLE_SDK
+                                valR = __builtin_rintf(valR * 0.5f);
+#else
                                 valR = floorf(valR * 0.5f + 0.5f);
+#endif
                                 int iR = (int)valR;
                                 if (iR < 0)
                                     iR = 0;
@@ -557,7 +564,11 @@ GfxWorld *R_LoadWorldInternal(const char *name)
                                     iR = 255;
 
                                 float valG = (float)(unsigned char)loG[x * 4 - 4] + sunG * sunVis;
+#if COD2_APPLE_SDK
+                                valG = __builtin_rintf(valG * 0.5f);
+#else
                                 valG = floorf(valG * 0.5f + 0.5f);
+#endif
                                 int iG = (int)valG;
                                 if (iG < 0)
                                     iG = 0;
@@ -565,7 +576,11 @@ GfxWorld *R_LoadWorldInternal(const char *name)
                                     iG = 255;
 
                                 float valB = (float)(unsigned char)loB[x * 4 - 4] + sunB * sunVis;
+#if COD2_APPLE_SDK
+                                valB = __builtin_rintf(valB * 0.5f);
+#else
                                 valB = floorf(valB * 0.5f + 0.5f);
+#endif
                                 int iB = (int)valB;
                                 if (iB < 0)
                                     iB = 0;
