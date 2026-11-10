@@ -146,7 +146,8 @@ new performance claims for every release. Verified development results include:
   four maps at 1920x1080 with the shaders built from the game's files. With
   the HUD on it is 0.13, and on the Direct3D 7 path 0.15. The original ran
   under Wine with DXVK, not on a Windows machine. The largest remaining
-  difference is fine texture detail on third-person player models.
+  difference is on third-person player models, which sit about half a pixel
+  off in the replay.
 - Before 0.3.0, with the original Mac shaders, three matched Toujane views had
   RGB mean absolute errors of **2.0050, 1.8726 and 0.5856 out of 255** against
   Windows. [Rendering report](docs/macos-port/reports/WS15-render.md)
