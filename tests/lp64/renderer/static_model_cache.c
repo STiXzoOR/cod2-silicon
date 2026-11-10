@@ -106,16 +106,19 @@ static void TestCachedVertexColors(void)
     command.cached = &cached;
     R_SkinStaticModelCachedCmd(&command, &buffers);
 
-    assert(MacShader_ColorByteOrder(64, 24, 3) == COLOR_BYTES_BGRA);
+    /* Model files store colors blue first. The cache hands them on with red
+     * and blue exchanged, so red first, and the draw path must read them
+     * that way. */
+    assert(MacShader_ColorByteOrder(64, 24, 3) == COLOR_BYTES_RGBA);
     for (int i = 0; i < 2; ++i) {
         const byte *pixel = cachedVertices + i * 64 + 24;
-        byte rgba[4] = {pixel[2], pixel[1], pixel[0], pixel[3]};
-        assert(!memcmp(rgba, colors[i], 4));
+        byte exchanged[4] = {pixel[2], pixel[1], pixel[0], pixel[3]};
+        assert(!memcmp(exchanged, colors[i], 4));
     }
     /* Skeletal streams and HUD float4 streams share the stride, but not
      * the producer or color offset. Keep those interfaces distinct. */
     assert(MacShader_ColorByteOrder(64, 12, 3) == COLOR_BYTES_ARGB);
-    assert(MacShader_ColorByteOrder(64, 24, 4) == COLOR_BYTES_BGRA);
+    assert(MacShader_ColorByteOrder(64, 28, 4) == COLOR_BYTES_BGRA);
     assert(MacShader_ColorByteOrder(68, 24, 3) == COLOR_BYTES_RGBA);
 }
 
