@@ -78,6 +78,20 @@ size_t Cod2x_LoggerRecent(char *out, size_t size);
 void Cod2x_ReportInit(void);
 void Cod2x_ReportFatal(const char *message, const void *site);
 void Cod2x_ReportError(const char *kind, const char *message);
+/* POSTs JSON to one of CoD2x's services on a thread of its own, as CoD2x's client
+   does; done runs on that thread with the HTTP status and the reply (ok 0: the
+   request failed, error says why). */
+typedef void (*Cod2xPostDone)(int ok, long status, const char *reply, const char *error, void *user);
+void Cod2x_PostJson(const char *url, const char *json, int timeout, Cod2xPostDone done, void *user);
+/* What CoD2x's update request says about this machine (CoD2x updater.cpp, system.cpp):
+   the install's random id, the identity before its last change, what changed and
+   how often, and the system text. Cleared once an answer came. */
+typedef struct {
+    char regid[33], previous[33], changed[1024], system[256];
+    int changes;
+} Cod2xMachineHistory;
+void Sys_Cod2xMachineHistory(Cod2xMachineHistory *out);
+void Sys_Cod2xMachineHistoryClear(void);
 /* A dvar's value as CoD2x's report writes it; 0 when there is no such dvar
    (cod2x_runtime.c). */
 int Cod2x_DvarText(const char *name, char *value, size_t size);

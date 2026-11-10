@@ -1946,6 +1946,14 @@ static void CL_BuildMd5StrFromCDKey(char *md5Str)
 }
 #endif
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* The CD-key hash CoD2x's update request carries (CoD2x updater.cpp). */
+void CL_Cod2xCDKeyHash(char hash[34])
+{
+    CL_BuildMd5StrFromCDKey(hash);
+}
+#endif
+
 void CL_RequestAuthorization(void)
 {
     char nums[64];

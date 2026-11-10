@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include "cod2x.h"
 #include "cod2x_features.h"
 #include <assert.h>
 #include <stdio.h>
@@ -104,6 +105,16 @@ char *Info_ValueForKey(const char *s, const char *key) { (void)s; (void)key; ret
 int Cod2x_GameVersion(void) { return 6; }
 void Cod2x_PoseInit(void) {}
 const char *Cod2x_IwdRequiredName(void) { return ""; }
+/* The update check's links to the client, the platform and the network: none here. */
+cg_t cgArray[1];
+void CL_Cod2xCDKeyHash(char hash[34]) { hash[0] = '\0'; }
+void Sys_Cod2xMachineHistory(Cod2xMachineHistory *out) { memset(out, 0, sizeof(*out)); }
+void Sys_Cod2xMachineHistoryClear(void) {}
+void Cod2x_Log(const char *format, ...) { (void)format; }
+void Cod2x_PostJson(const char *url, const char *json, int timeout, Cod2xPostDone done, void *user)
+{
+    (void)url, (void)json, (void)timeout, (void)done, (void)user;
+}
 
 static void execute(const char *cmd, const char *a, const char *b)
 {

@@ -240,11 +240,14 @@ static int Cod2x_ReplyString(const char *body, const char *key, char *out, size_
 /* ---- Sending ---- */
 typedef struct {
     char *json;
+    const char *url;
     char pending[1100];
     int exception, timeout;
     volatile int finished;
     volatile int *delivered;
-    char reply[1024];
+    Cod2xPostDone done;
+    void *user;
+    char reply[16384];
     size_t replyLength;
 } Cod2xPost;
 
@@ -258,22 +261,19 @@ static size_t Cod2x_ReportReply(char *data, size_t size, size_t count, void *use
     return length;
 }
 
-/* POSTs the report as CoD2x's client does: HTTP/1.1, Host, Content-Type:
-   application/json and Content-Length, nothing else. */
-static void Cod2x_ReportSend(Cod2xPost *post)
+/* POSTs JSON as CoD2x's client does (HttpClient::postJson): HTTP/1.1 with Host,
+   Content-Type: application/json and Content-Length, nothing else. Returns the
+   curl result; status and reply are the server's. */
+static CURLcode Cod2x_PostSend(Cod2xPost *post, const char *target, long *status)
 {
     char address[512];
-    const char *url = Cod2x_ServiceURL(post->exception ? COD2X_EXCEPTION_URL : COD2X_ERROR_URL, address,
-                                       sizeof(address));
+    const char *url = Cod2x_ServiceURL(target, address, sizeof(address));
     struct curl_slist *headers = NULL;
     CURL *curl = curl_easy_init();
     CURLcode result;
-    long status = 0;
-    if (!curl) {
-        Cod2x_Log(post->exception ? "[EXCEPTION] Failed to send report: %s" : "[ERROR] Failed to send report: %s",
-                  "no connection");
-        return;
-    }
+    *status = 0;
+    if (!curl)
+        return CURLE_FAILED_INIT;
     headers = curl_slist_append(headers, "Content-Type: application/json");
     headers = curl_slist_append(headers, "Accept:");
     headers = curl_slist_append(headers, "Expect:");
@@ -289,9 +289,16 @@ static void Cod2x_ReportSend(Cod2xPost *post)
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Cod2x_ReportReply);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, post);
     result = curl_easy_perform(curl);
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, status);
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
+    return result;
+}
+
+static void Cod2x_ReportSend(Cod2xPost *post)
+{
+    long status = 0;
+    CURLcode result = Cod2x_PostSend(post, post->exception ? COD2X_EXCEPTION_URL : COD2X_ERROR_URL, &status);
     if (result != CURLE_OK) {
         Cod2x_Log(post->exception ? "[EXCEPTION] Failed to send report: %s" : "[ERROR] Failed to send report: %s",
                   curl_easy_strerror(result));
@@ -329,7 +336,14 @@ static void *Cod2x_ReportThread(void *data)
 #endif
 {
     Cod2xPost *post = (Cod2xPost *)data;
-    Cod2x_ReportSend(post);
+    if (post->done) {
+        long status = 0;
+        CURLcode result = Cod2x_PostSend(post, post->url, &status);
+        post->done(result == CURLE_OK, status, post->reply, result == CURLE_OK ? "" : curl_easy_strerror(result),
+                   post->user);
+    } else {
+        Cod2x_ReportSend(post);
+    }
     free(post->json);
     post->json = NULL;
     /* The waiting side may have gone; whoever comes second frees the post. */
@@ -352,7 +366,8 @@ static void Cod2x_Sleep(int milliseconds)
 }
 
 /* Sends on its own thread and waits at most wait ms (0: does not wait). */
-static void Cod2x_ReportPost(char *json, int timeout, int wait, volatile int *delivered)
+static void Cod2x_PostStart(char *json, int timeout, int wait, volatile int *delivered, const char *url,
+                            Cod2xPostDone done, void *user)
 {
     Cod2xPost *post = (Cod2xPost *)calloc(1, sizeof(*post));
     int waited = 0;
@@ -368,6 +383,9 @@ static void Cod2x_ReportPost(char *json, int timeout, int wait, volatile int *de
     post->json = json;
     post->timeout = timeout;
     post->delivered = delivered;
+    post->url = url;
+    post->done = done;
+    post->user = user;
 #if defined(_WIN32)
     {
         HANDLE thread = CreateThread(NULL, 0, Cod2x_ReportThread, post, 0, NULL);
@@ -395,6 +413,17 @@ static void Cod2x_ReportPost(char *json, int timeout, int wait, volatile int *de
     }
     if (__sync_lock_test_and_set(&post->finished, 1))
         free(post);
+}
+
+static void Cod2x_ReportPost(char *json, int timeout, int wait, volatile int *delivered)
+{
+    Cod2x_PostStart(json, timeout, wait, delivered, NULL, NULL, NULL);
+}
+
+void Cod2x_PostJson(const char *url, const char *json, int timeout, Cod2xPostDone done, void *user)
+{
+    char *copy = json ? strdup(json) : NULL;
+    Cod2x_PostStart(copy, timeout, 0, NULL, url, done, user);
 }
 
 /* ---- Error reports (cod2x-errors) ---- */
