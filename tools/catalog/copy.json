@@ -5113,7 +5113,13 @@
       "group": "net",
       "title": "Switch to newer zPAM versions",
       "summary": "Lets a server you host move to the newest zPAM in its main folder.",
-      "details": "CoD2x only. On by default. Nothing is downloaded; it only chooses among the versions already there. It is a setting for a server you host, not something you tune for yourself."
+      "details": "CoD2x only. On by default. With web downloads set up on the server, newer versions are also fetched from the addresses CoD2x's update service names and checked before use. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_update": {
+      "group": "net",
+      "title": "Check for CoD2x updates",
+      "summary": "Lets a server you host ask CoD2x's update service whether a newer CoD2x or zPAM exists.",
+      "details": "CoD2x only. On by default. A newer CoD2x is only reported in the console; nothing is installed. It is a setting for a server you host, not something you tune for yourself."
     }
   },
   "commands": {

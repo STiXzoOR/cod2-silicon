@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceRevision": "71ce1c3e97b30cd9a4072a05c2c678c2c1b8d115",
+  "sourceRevision": "891a1c5f0ecaad382cc3fe4057537de6b8a7e760",
   "groups": [
     {
       "id": "frame",
@@ -16608,7 +16608,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2749,
+              "line": 2765,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -16660,7 +16660,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2749,
+              "line": 2765,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -16699,7 +16699,7 @@
       "details": "The game keeps this up to date itself and treats it as read-only. Some players bind a key to toggle it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1114",
-        "src/PC/qcommon/common.c:2749"
+        "src/PC/qcommon/common.c:2765"
       ],
       "guided": false,
       "control": {
@@ -17948,7 +17948,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2755,
+              "line": 2771,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -17971,7 +17971,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2755,
+              "line": 2771,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -18000,7 +18000,7 @@
       "summary": "A developer switch for checking animations.",
       "details": "A developer aid; its effect is not documented here.",
       "sources": [
-        "src/PC/qcommon/common.c:2755"
+        "src/PC/qcommon/common.c:2771"
       ],
       "guided": false,
       "control": {
@@ -18200,7 +18200,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 670,
+              "line": 703,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -18271,7 +18271,7 @@
       "details": "The game treats this as read-only and sets it itself.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:512",
-        "src/PC/server_mp/sv_init_mp.c:670"
+        "src/PC/server_mp/sv_init_mp.c:703"
       ],
       "guided": false,
       "control": {
@@ -18420,7 +18420,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2754,
+              "line": 2770,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -18444,7 +18444,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2754,
+              "line": 2770,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -18474,7 +18474,7 @@
       "summary": "Skips the opening publisher movies when set.",
       "details": "Set to 1 to skip them. A guide suggests setting it on the launch line.",
       "sources": [
-        "src/PC/qcommon/common.c:2754"
+        "src/PC/qcommon/common.c:2770"
       ],
       "guided": false,
       "control": {
@@ -18489,7 +18489,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2737,
+              "line": 2753,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -18521,7 +18521,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2737,
+              "line": 2753,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -18559,7 +18559,7 @@
       "summary": "The most frames per second the game will draw.",
       "details": "The game turns the cap into whole milliseconds per frame (1000 divided by the cap, rounded down), so only some caps really differ, and 251 to 333 all run at the same rate. Because movement is calculated once per frame, the cap also changes jump height and fall damage, and 333 is commonly reported to jump highest. Servers using CoD2x competitive rules keep it between 125 and 250 and reset anything outside to 250; several league rule texts forbid 333.",
       "sources": [
-        "src/PC/qcommon/common.c:2737"
+        "src/PC/qcommon/common.c:2753"
       ],
       "guided": true,
       "control": {
@@ -18653,7 +18653,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2780,
+              "line": 2796,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -18677,7 +18677,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2780,
+              "line": 2796,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -18707,7 +18707,7 @@
       "summary": "Marks that the game's automatic system check has run.",
       "details": "Present in saved configs. Leave it alone.",
       "sources": [
-        "src/PC/qcommon/common.c:2780"
+        "src/PC/qcommon/common.c:2796"
       ],
       "guided": false,
       "control": {
@@ -18734,7 +18734,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2744,
+              "line": 2760,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -18770,7 +18770,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2744,
+              "line": 2760,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -18801,7 +18801,7 @@
       "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:551",
-        "src/PC/qcommon/common.c:2744"
+        "src/PC/qcommon/common.c:2760"
       ],
       "guided": false,
       "control": {
@@ -18816,7 +18816,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2739,
+              "line": 2755,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 1,
@@ -18845,7 +18845,7 @@
       "summary": "Lets CoD2x write changes to your config file as you play.",
       "details": "CoD2x only, on by default. With it off, changes made in game are not saved, although the change to this setting itself is. Config Studio stays read-only while the game runs either way.",
       "sources": [
-        "src/PC/qcommon/common.c:2739"
+        "src/PC/qcommon/common.c:2755"
       ],
       "guided": false,
       "control": {
@@ -19853,7 +19853,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2048,
+              "line": 2057,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4128,
@@ -19873,7 +19873,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2050,
+              "line": 2059,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -19893,7 +19893,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2730,
+              "line": 2746,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4128,
@@ -19913,7 +19913,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2733,
+              "line": 2749,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -19986,7 +19986,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2048,
+              "line": 2057,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4128,
@@ -20006,7 +20006,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2050,
+              "line": 2059,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -20026,7 +20026,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2730,
+              "line": 2746,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4128,
@@ -20046,7 +20046,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2733,
+              "line": 2749,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -20087,10 +20087,10 @@
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1114",
         "src/PC/game_mp/g_main_mp.c:1120",
-        "src/PC/qcommon/common.c:2048",
-        "src/PC/qcommon/common.c:2050",
-        "src/PC/qcommon/common.c:2730",
-        "src/PC/qcommon/common.c:2733"
+        "src/PC/qcommon/common.c:2057",
+        "src/PC/qcommon/common.c:2059",
+        "src/PC/qcommon/common.c:2746",
+        "src/PC/qcommon/common.c:2749"
       ],
       "guided": false,
       "control": {
@@ -20145,7 +20145,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2741,
+              "line": 2757,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -20217,7 +20217,7 @@
             },
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2741,
+              "line": 2757,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -20257,7 +20257,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1117",
         "src/PC/gfx_d3d/r_dvars.c:547",
-        "src/PC/qcommon/common.c:2741"
+        "src/PC/qcommon/common.c:2757"
       ],
       "guided": false,
       "control": {
@@ -20272,7 +20272,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2742,
+              "line": 2758,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -20295,7 +20295,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2742,
+              "line": 2758,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -20324,7 +20324,7 @@
       "summary": "Prints debug output from game scripts.",
       "details": "A developer aid; its effect is not documented here.",
       "sources": [
-        "src/PC/qcommon/common.c:2742"
+        "src/PC/qcommon/common.c:2758"
       ],
       "guided": false,
       "control": {
@@ -20339,7 +20339,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2746,
+              "line": 2762,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4224,
@@ -20371,7 +20371,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2746,
+              "line": 2762,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4224,
@@ -20409,7 +20409,7 @@
       "summary": "Forces every frame to last a fixed number of milliseconds.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. 0 is off. zPAM sets it to 0 for every player.",
       "sources": [
-        "src/PC/qcommon/common.c:2746"
+        "src/PC/qcommon/common.c:2762"
       ],
       "guided": false,
       "control": {
@@ -20511,7 +20511,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 699,
+              "line": 732,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4112,
@@ -20566,7 +20566,7 @@
       "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:427",
-        "src/PC/universal/com_files.c:699"
+        "src/PC/universal/com_files.c:732"
       ],
       "guided": false,
       "control": {
@@ -20581,7 +20581,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 698,
+              "line": 731,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4112,
@@ -20638,7 +20638,7 @@
       "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:426",
-        "src/PC/universal/com_files.c:698"
+        "src/PC/universal/com_files.c:731"
       ],
       "guided": false,
       "control": {
@@ -20653,7 +20653,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 697,
+              "line": 730,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4112,
@@ -20710,7 +20710,7 @@
       "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:425",
-        "src/PC/universal/com_files.c:697"
+        "src/PC/universal/com_files.c:730"
       ],
       "guided": false,
       "control": {
@@ -20725,7 +20725,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 696,
+              "line": 729,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4112,
@@ -20780,7 +20780,7 @@
       "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:424",
-        "src/PC/universal/com_files.c:696"
+        "src/PC/universal/com_files.c:729"
       ],
       "guided": false,
       "control": {
@@ -20795,7 +20795,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 695,
+              "line": 728,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -20864,7 +20864,7 @@
       "details": "A developer aid; its effect is not documented here. It runs from 0 to 2.",
       "sources": [
         "src/PC/universal/com_files.c:423",
-        "src/PC/universal/com_files.c:695"
+        "src/PC/universal/com_files.c:728"
       ],
       "guided": false,
       "control": {
@@ -20891,7 +20891,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_client_mp.c",
-              "line": 560,
+              "line": 593,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4124,
@@ -20903,7 +20903,7 @@
             },
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 713,
+              "line": 746,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4124,
@@ -20987,9 +20987,9 @@
       "sources": [
         "src/PC/client_mp/cl_ui_mp.c:387",
         "src/PC/server_mp/sv_client_mp.c:395",
-        "src/PC/server_mp/sv_client_mp.c:560",
+        "src/PC/server_mp/sv_client_mp.c:593",
         "src/PC/universal/com_files.c:441",
-        "src/PC/universal/com_files.c:713"
+        "src/PC/universal/com_files.c:746"
       ],
       "guided": false,
       "control": {
@@ -21004,7 +21004,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 712,
+              "line": 745,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4112,
@@ -21061,7 +21061,7 @@
       "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:440",
-        "src/PC/universal/com_files.c:712"
+        "src/PC/universal/com_files.c:745"
       ],
       "guided": false,
       "control": {
@@ -21088,7 +21088,7 @@
             },
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 715,
+              "line": 748,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4256,
@@ -21159,7 +21159,7 @@
         "src/PC/client_mp/cl_main_mp.c:227807",
         "src/PC/client_mp/cl_main_mp.c:227991",
         "src/PC/universal/com_files.c:443",
-        "src/PC/universal/com_files.c:715"
+        "src/PC/universal/com_files.c:748"
       ],
       "guided": false,
       "control": {
@@ -21174,7 +21174,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 714,
+              "line": 747,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4112,
@@ -21229,7 +21229,7 @@
       "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:442",
-        "src/PC/universal/com_files.c:714"
+        "src/PC/universal/com_files.c:747"
       ],
       "guided": false,
       "control": {
@@ -21244,7 +21244,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 700,
+              "line": 733,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -21297,7 +21297,7 @@
       "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/universal/com_files.c:428",
-        "src/PC/universal/com_files.c:700"
+        "src/PC/universal/com_files.c:733"
       ],
       "guided": false,
       "control": {
@@ -23328,7 +23328,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 604,
+              "line": 637,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4132,
@@ -23411,7 +23411,7 @@
         "src/PC/game_mp/g_main_mp.c:1107",
         "src/PC/server_mp/sv_game_mp.c:400",
         "src/PC/server_mp/sv_init_mp.c:446",
-        "src/PC/server_mp/sv_init_mp.c:604"
+        "src/PC/server_mp/sv_init_mp.c:637"
       ],
       "guided": false,
       "control": {
@@ -29179,7 +29179,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2743,
+              "line": 2759,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -29210,7 +29210,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2743,
+              "line": 2759,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -29247,7 +29247,7 @@
       "summary": "Writes the console output to a log file.",
       "details": "From 0 to 2, and 0 is off. It is not saved.",
       "sources": [
-        "src/PC/qcommon/common.c:2743"
+        "src/PC/qcommon/common.c:2759"
       ],
       "guided": false,
       "control": {
@@ -30453,7 +30453,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 492,
+              "line": 525,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4164,
@@ -30465,7 +30465,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 614,
+              "line": 647,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4164,
@@ -30534,9 +30534,9 @@
       "details": "The game treats this as read-only and sets it itself. The server shares it with players.",
       "sources": [
         "src/PC/game_mp/g_cmds_mp.c:460",
-        "src/PC/game_mp/g_cmds_mp.c:492",
+        "src/PC/game_mp/g_cmds_mp.c:525",
         "src/PC/server_mp/sv_init_mp.c:456",
-        "src/PC/server_mp/sv_init_mp.c:614"
+        "src/PC/server_mp/sv_init_mp.c:647"
       ],
       "guided": false,
       "control": {
@@ -30955,7 +30955,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/net_chan_mp.c",
-              "line": 358,
+              "line": 391,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -31008,7 +31008,7 @@
       "details": "Off by default. It is the game's own switch for LAN authorization.",
       "sources": [
         "src/PC/qcommon/net_chan_mp.c:326",
-        "src/PC/qcommon/net_chan_mp.c:358"
+        "src/PC/qcommon/net_chan_mp.c:391"
       ],
       "guided": false,
       "control": {
@@ -31262,7 +31262,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/net_chan_mp.c",
-              "line": 356,
+              "line": 389,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -31331,7 +31331,7 @@
       "details": "Levels run from 0 to 2, and 0 is off. A developer aid.",
       "sources": [
         "src/PC/qcommon/net_chan_mp.c:324",
-        "src/PC/qcommon/net_chan_mp.c:356"
+        "src/PC/qcommon/net_chan_mp.c:389"
       ],
       "guided": false,
       "control": {
@@ -31346,7 +31346,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/net_chan_mp.c",
-              "line": 357,
+              "line": 390,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -31415,7 +31415,7 @@
       "details": "Levels run from 0 to 3, and 0 is off. A developer aid.",
       "sources": [
         "src/PC/qcommon/net_chan_mp.c:325",
-        "src/PC/qcommon/net_chan_mp.c:357"
+        "src/PC/qcommon/net_chan_mp.c:390"
       ],
       "guided": false,
       "control": {
@@ -31884,7 +31884,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 666,
+              "line": 699,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -31937,7 +31937,7 @@
       "details": "It only matters on a server you host. The default is empty.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:508",
-        "src/PC/server_mp/sv_init_mp.c:666"
+        "src/PC/server_mp/sv_init_mp.c:699"
       ],
       "guided": false,
       "control": {
@@ -31952,7 +31952,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/net_chan_mp.c",
-              "line": 354,
+              "line": 387,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -32005,7 +32005,7 @@
       "details": "A developer aid. It is off by default.",
       "sources": [
         "src/PC/qcommon/net_chan_mp.c:322",
-        "src/PC/qcommon/net_chan_mp.c:354"
+        "src/PC/qcommon/net_chan_mp.c:387"
       ],
       "guided": false,
       "control": {
@@ -35032,7 +35032,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 612,
+              "line": 645,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4164,
@@ -35109,7 +35109,7 @@
       "details": "Read-only. Stock CoD2 1.3 uses 118 and CoD2x servers use 120.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:451",
-        "src/PC/server_mp/sv_init_mp.c:612"
+        "src/PC/server_mp/sv_init_mp.c:645"
       ],
       "guided": false,
       "control": {
@@ -46776,7 +46776,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 637,
+              "line": 670,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -46829,7 +46829,7 @@
       "details": "Treat it as private. It is not saved to your config.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:479",
-        "src/PC/server_mp/sv_init_mp.c:637"
+        "src/PC/server_mp/sv_init_mp.c:670"
       ],
       "guided": false,
       "control": {
@@ -49369,7 +49369,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2828,
+              "line": 2844,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4164,
@@ -49394,7 +49394,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2826,
+              "line": 2842,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4164,
@@ -49426,8 +49426,8 @@
       "summary": "The version number this build reports to servers.",
       "details": "The game fills this in itself and treats it as read-only. The CoD2x build reports 1.4.6.8 where stock reports 1.3.",
       "sources": [
-        "src/PC/qcommon/common.c:2826",
-        "src/PC/qcommon/common.c:2828"
+        "src/PC/qcommon/common.c:2842",
+        "src/PC/qcommon/common.c:2844"
       ],
       "guided": false,
       "control": {
@@ -49443,7 +49443,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/net_chan_mp.c",
-              "line": 353,
+              "line": 386,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -49496,7 +49496,7 @@
       "details": "A developer aid. It is off by default.",
       "sources": [
         "src/PC/qcommon/net_chan_mp.c:321",
-        "src/PC/qcommon/net_chan_mp.c:353"
+        "src/PC/qcommon/net_chan_mp.c:386"
       ],
       "guided": false,
       "control": {
@@ -49511,7 +49511,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/net_chan_mp.c",
-              "line": 352,
+              "line": 385,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -49564,7 +49564,7 @@
       "details": "A developer aid. It is off by default and floods the console.",
       "sources": [
         "src/PC/qcommon/net_chan_mp.c:320",
-        "src/PC/qcommon/net_chan_mp.c:352"
+        "src/PC/qcommon/net_chan_mp.c:385"
       ],
       "guided": false,
       "control": {
@@ -49579,7 +49579,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/cod2x_server.c",
-              "line": 54,
+              "line": 55,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -49608,7 +49608,7 @@
       "summary": "Prints the text of every connectionless packet a server you host sends and receives.",
       "details": "CoD2x only. A troubleshooting aid for server owners; off by default.",
       "sources": [
-        "src/PC/server_mp/cod2x_server.c:54"
+        "src/PC/server_mp/cod2x_server.c:55"
       ],
       "guided": false,
       "control": {
@@ -50651,7 +50651,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 625,
+              "line": 658,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4100,
@@ -50706,7 +50706,7 @@
       "details": "Off by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:467",
-        "src/PC/server_mp/sv_init_mp.c:625"
+        "src/PC/server_mp/sv_init_mp.c:658"
       ],
       "guided": false,
       "control": {
@@ -50721,7 +50721,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 642,
+              "line": 675,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -50776,7 +50776,7 @@
       "details": "On by default. Downloads through a web address are controlled separately.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:484",
-        "src/PC/server_mp/sv_init_mp.c:642"
+        "src/PC/server_mp/sv_init_mp.c:675"
       ],
       "guided": false,
       "control": {
@@ -50791,7 +50791,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 651,
+              "line": 684,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -50844,7 +50844,7 @@
       "details": "Its purpose is not documented.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:493",
-        "src/PC/server_mp/sv_init_mp.c:651"
+        "src/PC/server_mp/sv_init_mp.c:684"
       ],
       "guided": false,
       "control": {
@@ -50859,7 +50859,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 652,
+              "line": 685,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -50912,7 +50912,7 @@
       "details": "Its purpose is not documented.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:494",
-        "src/PC/server_mp/sv_init_mp.c:652"
+        "src/PC/server_mp/sv_init_mp.c:685"
       ],
       "guided": false,
       "control": {
@@ -50951,7 +50951,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 630,
+              "line": 663,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4120,
@@ -51062,7 +51062,7 @@
         "src/PC/game_mp/g_main_mp.c:1099",
         "src/PC/gfx_d3d/r_dvars.c:549",
         "src/PC/server_mp/sv_init_mp.c:472",
-        "src/PC/server_mp/sv_init_mp.c:630",
+        "src/PC/server_mp/sv_init_mp.c:663",
         "src/PC/universal/dvar.c:2070"
       ],
       "guided": false,
@@ -51078,7 +51078,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/cod2x_server.c",
-              "line": 53,
+              "line": 54,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -51107,7 +51107,7 @@
       "summary": "Lets players join a server you host whatever the key server says about their key.",
       "details": "CoD2x only. Off by default. The key server's real answer is still kept for scripts. It is a setting for a server you host, not something you tune for yourself.",
       "sources": [
-        "src/PC/server_mp/cod2x_server.c:53"
+        "src/PC/server_mp/cod2x_server.c:54"
       ],
       "guided": false,
       "control": {
@@ -51122,7 +51122,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 658,
+              "line": 691,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -51175,7 +51175,7 @@
       "details": "A developer aid for servers you host.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:500",
-        "src/PC/server_mp/sv_init_mp.c:658"
+        "src/PC/server_mp/sv_init_mp.c:691"
       ],
       "guided": false,
       "control": {
@@ -51190,7 +51190,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 659,
+              "line": 692,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -51243,7 +51243,7 @@
       "details": "No effect is documented for it.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:501",
-        "src/PC/server_mp/sv_init_mp.c:659"
+        "src/PC/server_mp/sv_init_mp.c:692"
       ],
       "guided": false,
       "control": {
@@ -51270,7 +51270,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 627,
+              "line": 660,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4104,
@@ -51339,7 +51339,7 @@
         "src/Mac/Main/mac_main.c:494",
         "src/Mac/Main/mac_main.c:517",
         "src/PC/server_mp/sv_init_mp.c:469",
-        "src/PC/server_mp/sv_init_mp.c:627"
+        "src/PC/server_mp/sv_init_mp.c:660"
       ],
       "guided": false,
       "control": {
@@ -51354,7 +51354,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 624,
+              "line": 657,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4101,
@@ -51411,7 +51411,7 @@
       "details": "On by default. Team changes and score requests are exempt, and extra commands are ignored without removing the player.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:466",
-        "src/PC/server_mp/sv_init_mp.c:624"
+        "src/PC/server_mp/sv_init_mp.c:657"
       ],
       "guided": false,
       "control": {
@@ -51426,7 +51426,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 639,
+              "line": 672,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -51495,7 +51495,7 @@
       "details": "From 10 to 1,000, and 20 by default. It also caps how many updates per second any player can receive. zPAM's competitive rules default to 30 and support 40 on CoD2x. It is a server setting, not something you tune for yourself.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:481",
-        "src/PC/server_mp/sv_init_mp.c:639"
+        "src/PC/server_mp/sv_init_mp.c:672"
       ],
       "guided": false,
       "control": {
@@ -51510,7 +51510,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/cod2x_server.c",
-              "line": 56,
+              "line": 57,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4100,
@@ -51540,7 +51540,7 @@
       "summary": "Tells players' CoD2x games to hide this server's address on screen.",
       "details": "CoD2x only. Off by default. Players can also hide addresses themselves with Hide server addresses. It is a setting for a server you host, not something you tune for yourself.",
       "sources": [
-        "src/PC/server_mp/cod2x_server.c:56"
+        "src/PC/server_mp/cod2x_server.c:57"
       ],
       "guided": false,
       "control": {
@@ -51555,7 +51555,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 617,
+              "line": 650,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4101,
@@ -51612,7 +51612,7 @@
       "details": "It is shown in server lists and can be up to 32 characters in the game's Create Server menu. It is separate from your player name.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:459",
-        "src/PC/server_mp/sv_init_mp.c:617"
+        "src/PC/server_mp/sv_init_mp.c:650"
       ],
       "guided": false,
       "control": {
@@ -51628,7 +51628,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 634,
+              "line": 667,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4168,
@@ -51685,7 +51685,7 @@
       "details": "The server sets this and your game treats it as read-only. While you are connected, the CoD2x client loads only these files plus the game's own.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:476",
-        "src/PC/server_mp/sv_init_mp.c:634"
+        "src/PC/server_mp/sv_init_mp.c:667"
       ],
       "guided": false,
       "control": {
@@ -51700,7 +51700,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 633,
+              "line": 666,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4168,
@@ -51757,7 +51757,7 @@
       "details": "The server sets this and your game treats it as read-only.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:475",
-        "src/PC/server_mp/sv_init_mp.c:633"
+        "src/PC/server_mp/sv_init_mp.c:666"
       ],
       "guided": false,
       "control": {
@@ -51772,7 +51772,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 605,
+              "line": 638,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4100,
@@ -51827,7 +51827,7 @@
       "details": "Empty by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:447",
-        "src/PC/server_mp/sv_init_mp.c:605"
+        "src/PC/server_mp/sv_init_mp.c:638"
       ],
       "guided": false,
       "control": {
@@ -51842,7 +51842,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 655,
+              "line": 688,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4096,
@@ -51911,7 +51911,7 @@
       "details": "From 0 to 3,600 seconds, 300 by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:497",
-        "src/PC/server_mp/sv_init_mp.c:655"
+        "src/PC/server_mp/sv_init_mp.c:688"
       ],
       "guided": false,
       "control": {
@@ -51997,7 +51997,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 656,
+              "line": 689,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -52050,7 +52050,7 @@
       "details": "Written as pairs of the words gametype and map followed by names, for example a game type, then a map. The server keeps the maps still to come in a separate setting.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:498",
-        "src/PC/server_mp/sv_init_mp.c:656"
+        "src/PC/server_mp/sv_init_mp.c:689"
       ],
       "guided": false,
       "control": {
@@ -52065,7 +52065,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 657,
+              "line": 690,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -52118,7 +52118,7 @@
       "details": "The server fills this in itself.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:499",
-        "src/PC/server_mp/sv_init_mp.c:657"
+        "src/PC/server_mp/sv_init_mp.c:690"
       ],
       "guided": false,
       "control": {
@@ -52133,7 +52133,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/cod2x_server.c",
-              "line": 50,
+              "line": 51,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4160,
@@ -52163,7 +52163,7 @@
       "summary": "The first master server a public server you host reports to.",
       "details": "CoD2x only. cod2master.activision.com by default; it cannot be changed while the game runs. Only public servers (dedicated 2) report.",
       "sources": [
-        "src/PC/server_mp/cod2x_server.c:50"
+        "src/PC/server_mp/cod2x_server.c:51"
       ],
       "guided": false,
       "control": {
@@ -52178,7 +52178,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/cod2x_server.c",
-              "line": 51,
+              "line": 52,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4160,
@@ -52208,7 +52208,7 @@
       "summary": "The second master server a public server you host reports to.",
       "details": "CoD2x only. master.cod2x.me by default; it cannot be changed while the game runs. Only public servers (dedicated 2) report.",
       "sources": [
-        "src/PC/server_mp/cod2x_server.c:51"
+        "src/PC/server_mp/cod2x_server.c:52"
       ],
       "guided": false,
       "control": {
@@ -52223,7 +52223,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/cod2x_server.c",
-              "line": 52,
+              "line": 53,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -52252,7 +52252,7 @@
       "summary": "An extra master server a public server you host reports to.",
       "details": "CoD2x only. Empty by default, which reports to no third master.",
       "sources": [
-        "src/PC/server_mp/cod2x_server.c:52"
+        "src/PC/server_mp/cod2x_server.c:53"
       ],
       "guided": false,
       "control": {
@@ -52287,7 +52287,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 616,
+              "line": 649,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4133,
@@ -52307,7 +52307,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 953,
+              "line": 986,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4133,
@@ -52327,7 +52327,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 1022,
+              "line": 1055,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4133,
@@ -52462,12 +52462,12 @@
       "details": "From 1 to 64, with 20 as the default. It is latched and applies after the map restarts. It only affects a server you host.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1108",
-        "src/PC/server_mp/sv_init_mp.c:1022",
+        "src/PC/server_mp/sv_init_mp.c:1055",
         "src/PC/server_mp/sv_init_mp.c:458",
-        "src/PC/server_mp/sv_init_mp.c:616",
+        "src/PC/server_mp/sv_init_mp.c:649",
         "src/PC/server_mp/sv_init_mp.c:795",
         "src/PC/server_mp/sv_init_mp.c:864",
-        "src/PC/server_mp/sv_init_mp.c:953"
+        "src/PC/server_mp/sv_init_mp.c:986"
       ],
       "guided": false,
       "control": {
@@ -52483,7 +52483,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 623,
+              "line": 656,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4101,
@@ -52556,7 +52556,7 @@
       "details": "It is checked only at the moment someone connects, not afterwards, and local network players are exempt. It affects a server you host, not your own connection.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:465",
-        "src/PC/server_mp/sv_init_mp.c:623"
+        "src/PC/server_mp/sv_init_mp.c:656"
       ],
       "guided": false,
       "control": {
@@ -52572,7 +52572,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 621,
+              "line": 654,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4101,
@@ -52645,7 +52645,7 @@
       "details": "0 means no limit and the highest allowed is 25,000. The server uses the smaller of this and each player's own connection speed. zPAM sets it to 25,000.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:463",
-        "src/PC/server_mp/sv_init_mp.c:621"
+        "src/PC/server_mp/sv_init_mp.c:654"
       ],
       "guided": false,
       "control": {
@@ -52661,7 +52661,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 622,
+              "line": 655,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4101,
@@ -52734,7 +52734,7 @@
       "details": "It is checked only at the moment someone connects, not afterwards, and local network players are exempt. It affects a server you host.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:464",
-        "src/PC/server_mp/sv_init_mp.c:622"
+        "src/PC/server_mp/sv_init_mp.c:655"
       ],
       "guided": false,
       "control": {
@@ -52750,7 +52750,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 653,
+              "line": 686,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -52803,7 +52803,7 @@
       "details": "No effect is documented for it.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:495",
-        "src/PC/server_mp/sv_init_mp.c:653"
+        "src/PC/server_mp/sv_init_mp.c:686"
       ],
       "guided": false,
       "control": {
@@ -52818,7 +52818,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 644,
+              "line": 677,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -52887,7 +52887,7 @@
       "details": "A test aid with 0 as the default. Never use it on a live server.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:486",
-        "src/PC/server_mp/sv_init_mp.c:644"
+        "src/PC/server_mp/sv_init_mp.c:677"
       ],
       "guided": false,
       "control": {
@@ -52902,7 +52902,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2748,
+              "line": 2764,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -52934,7 +52934,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2748,
+              "line": 2764,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -52972,7 +52972,7 @@
       "summary": "Whether the server is paused.",
       "details": "The game keeps this up to date itself and treats it as read-only.",
       "sources": [
-        "src/PC/qcommon/common.c:2748"
+        "src/PC/qcommon/common.c:2764"
       ],
       "guided": false,
       "control": {
@@ -53039,7 +53039,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 615,
+              "line": 648,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4100,
@@ -53110,7 +53110,7 @@
       "details": "From 0 to 64, 0 by default. These slots come out of the server's total player slots, and the private password is set separately.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:457",
-        "src/PC/server_mp/sv_init_mp.c:615"
+        "src/PC/server_mp/sv_init_mp.c:648"
       ],
       "guided": false,
       "control": {
@@ -53125,7 +53125,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 638,
+              "line": 671,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -53178,7 +53178,7 @@
       "details": "Treat it as private. Empty by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:480",
-        "src/PC/server_mp/sv_init_mp.c:638"
+        "src/PC/server_mp/sv_init_mp.c:671"
       ],
       "guided": false,
       "control": {
@@ -53193,7 +53193,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 619,
+              "line": 652,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4117,
@@ -53252,7 +53252,7 @@
       "details": "The game's Create Server menu shows it as PunkBuster, and the game protects it from changes here. This version of the game cannot show that a working PunkBuster service exists.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:461",
-        "src/PC/server_mp/sv_init_mp.c:619"
+        "src/PC/server_mp/sv_init_mp.c:652"
       ],
       "guided": false,
       "control": {
@@ -53268,7 +53268,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 632,
+              "line": 665,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4108,
@@ -53325,7 +53325,7 @@
       "details": "Players with modified game files are dropped. zPAM forces it on, and league rules forbid modified game files. It does not change checks on a server someone else hosts.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:474",
-        "src/PC/server_mp/sv_init_mp.c:632"
+        "src/PC/server_mp/sv_init_mp.c:665"
       ],
       "guided": false,
       "control": {
@@ -53489,7 +53489,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 643,
+              "line": 676,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -53560,7 +53560,7 @@
       "details": "From 0 to 1,800 seconds, 3 by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:485",
-        "src/PC/server_mp/sv_init_mp.c:643"
+        "src/PC/server_mp/sv_init_mp.c:676"
       ],
       "guided": false,
       "control": {
@@ -53575,7 +53575,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 636,
+              "line": 669,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4168,
@@ -53632,7 +53632,7 @@
       "details": "The server sets this and your game treats it as read-only.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:478",
-        "src/PC/server_mp/sv_init_mp.c:636"
+        "src/PC/server_mp/sv_init_mp.c:669"
       ],
       "guided": false,
       "control": {
@@ -53647,7 +53647,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 635,
+              "line": 668,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4168,
@@ -53704,7 +53704,7 @@
       "details": "The server sets this and your game treats it as read-only.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:477",
-        "src/PC/server_mp/sv_init_mp.c:635"
+        "src/PC/server_mp/sv_init_mp.c:668"
       ],
       "guided": false,
       "control": {
@@ -53719,7 +53719,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2750,
+              "line": 2766,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4160,
@@ -53743,7 +53743,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2750,
+              "line": 2766,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4160,
@@ -53773,7 +53773,7 @@
       "summary": "Whether a server is running on this computer.",
       "details": "The game keeps this up to date itself and treats it as read-only.",
       "sources": [
-        "src/PC/qcommon/common.c:2750"
+        "src/PC/qcommon/common.c:2766"
       ],
       "guided": false,
       "control": {
@@ -53788,7 +53788,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 631,
+              "line": 664,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4168,
@@ -53861,7 +53861,7 @@
       "details": "The server sets this and your game treats it as read-only.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:473",
-        "src/PC/server_mp/sv_init_mp.c:631"
+        "src/PC/server_mp/sv_init_mp.c:664"
       ],
       "guided": false,
       "control": {
@@ -53876,7 +53876,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 654,
+              "line": 687,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -53929,7 +53929,7 @@
       "details": "No effect is documented for it.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:496",
-        "src/PC/server_mp/sv_init_mp.c:654"
+        "src/PC/server_mp/sv_init_mp.c:687"
       ],
       "guided": false,
       "control": {
@@ -53944,7 +53944,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 626,
+              "line": 659,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -53997,7 +53997,7 @@
       "details": "No effect is documented for it.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:468",
-        "src/PC/server_mp/sv_init_mp.c:626"
+        "src/PC/server_mp/sv_init_mp.c:659"
       ],
       "guided": false,
       "control": {
@@ -54012,7 +54012,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 640,
+              "line": 673,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -54081,11 +54081,55 @@
       "details": "From 0 to 1,800 seconds, 240 by default. A vanished player can hold their slot for about this long.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:482",
-        "src/PC/server_mp/sv_init_mp.c:640"
+        "src/PC/server_mp/sv_init_mp.c:673"
       ],
       "guided": false,
       "control": {
         "kind": "number"
+      }
+    },
+    {
+      "name": "sv_update",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/server_mp/cod2x_updater.c",
+              "line": 63,
+              "mechanism": "Dvar_RegisterBool",
+              "type": "bool",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": true
+              },
+              "name": "sv_update"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Check for CoD2x updates",
+      "summary": "Lets a server you host ask CoD2x's update service whether a newer CoD2x or zPAM exists.",
+      "details": "CoD2x only. On by default. A newer CoD2x is only reported in the console; nothing is installed. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/server_mp/cod2x_updater.c:63"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "switch"
       }
     },
     {
@@ -54096,7 +54140,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/cod2x_zpam.c",
-              "line": 56,
+              "line": 79,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -54123,9 +54167,9 @@
       "group": "net",
       "title": "Switch to newer zPAM versions",
       "summary": "Lets a server you host move to the newest zPAM in its main folder.",
-      "details": "CoD2x only. On by default. Nothing is downloaded; it only chooses among the versions already there. It is a setting for a server you host, not something you tune for yourself.",
+      "details": "CoD2x only. On by default. With web downloads set up on the server, newer versions are also fetched from the addresses CoD2x's update service names and checked before use. It is a setting for a server you host, not something you tune for yourself.",
       "sources": [
-        "src/PC/server_mp/cod2x_zpam.c:56"
+        "src/PC/server_mp/cod2x_zpam.c:79"
       ],
       "guided": false,
       "control": {
@@ -54140,7 +54184,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 628,
+              "line": 661,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4109,
@@ -54199,7 +54243,7 @@
       "details": "The game's Create Server menu has a Voice Chat switch for this. A player only gets voice if their connection speed is 5,000 or more.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:470",
-        "src/PC/server_mp/sv_init_mp.c:628"
+        "src/PC/server_mp/sv_init_mp.c:661"
       ],
       "guided": false,
       "control": {
@@ -54215,7 +54259,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 629,
+              "line": 662,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4104,
@@ -54286,7 +54330,7 @@
       "details": "From 0 to 9, 1 by default. The server sends this to players as part of its system information.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:471",
-        "src/PC/server_mp/sv_init_mp.c:629"
+        "src/PC/server_mp/sv_init_mp.c:662"
       ],
       "guided": false,
       "control": {
@@ -55741,7 +55785,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 673,
+              "line": 706,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4097,
@@ -55796,7 +55840,7 @@
       "details": "Empty by default. zPAM asks for a valid address and suggests one for people who have none.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:515",
-        "src/PC/server_mp/sv_init_mp.c:673"
+        "src/PC/server_mp/sv_init_mp.c:706"
       ],
       "guided": false,
       "control": {
@@ -55811,7 +55855,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 674,
+              "line": 707,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -55866,7 +55910,7 @@
       "details": "Off by default. zPAM's server config turns it off.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:516",
-        "src/PC/server_mp/sv_init_mp.c:674"
+        "src/PC/server_mp/sv_init_mp.c:707"
       ],
       "guided": false,
       "control": {
@@ -55881,7 +55925,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 672,
+              "line": 705,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -55936,7 +55980,7 @@
       "details": "Off by default. Players also need their own redirected downloads setting on. zPAM expects it on, with a valid web address, so its maps download quickly.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:514",
-        "src/PC/server_mp/sv_init_mp.c:672"
+        "src/PC/server_mp/sv_init_mp.c:705"
       ],
       "guided": false,
       "control": {
@@ -55951,7 +55995,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 641,
+              "line": 674,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -56020,7 +56064,7 @@
       "details": "From 0 to 1,800 seconds, 2 by default. Leave it alone.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:483",
-        "src/PC/server_mp/sv_init_mp.c:641"
+        "src/PC/server_mp/sv_init_mp.c:674"
       ],
       "guided": false,
       "control": {
@@ -56464,7 +56508,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2745,
+              "line": 2761,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4232,
@@ -56497,7 +56541,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2745,
+              "line": 2761,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4232,
@@ -56536,7 +56580,7 @@
       "summary": "How fast game time runs.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 1, and servers share it. It is used for demos and slow motion.",
       "sources": [
-        "src/PC/qcommon/common.c:2745"
+        "src/PC/qcommon/common.c:2761"
       ],
       "guided": false,
       "control": {
@@ -58727,7 +58771,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2822,
+              "line": 2838,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4160,
@@ -58751,7 +58795,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2822,
+              "line": 2838,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4160,
@@ -58781,7 +58825,7 @@
       "summary": "The game's build description.",
       "details": "The game treats this as read-only and sets it itself. The registered default is empty and the game fills it in at start-up. The CoD2x build changes the build name and date.",
       "sources": [
-        "src/PC/qcommon/common.c:2822"
+        "src/PC/qcommon/common.c:2838"
       ],
       "guided": false,
       "control": {
@@ -58972,7 +59016,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2747,
+              "line": 2763,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4224,
@@ -59004,7 +59048,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2747,
+              "line": 2763,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4224,
@@ -59042,7 +59086,7 @@
       "summary": "Shows the developer console log over the picture.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 2.",
       "sources": [
-        "src/PC/qcommon/common.c:2747"
+        "src/PC/qcommon/common.c:2763"
       ],
       "guided": false,
       "control": {
@@ -62078,7 +62122,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 719,
+              "line": 733,
               "mechanism": "Cmd_AddCommand",
               "name": "banClient"
             }
@@ -62088,7 +62132,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 701,
+              "line": 715,
               "mechanism": "Cmd_AddCommand",
               "name": "banClient"
             }
@@ -62104,8 +62148,8 @@
       "summary": "Ask the hosted server to ban a player identified by client number.",
       "details": "Requires a running server and a valid client number. The ban routine also handles removal from the server; this is a server operator command.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:701",
-        "src/PC/server_mp/sv_ccmds_mp.c:719"
+        "src/PC/server_mp/sv_ccmds_mp.c:715",
+        "src/PC/server_mp/sv_ccmds_mp.c:733"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -62121,7 +62165,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 718,
+              "line": 732,
               "mechanism": "Cmd_AddCommand",
               "name": "banUser"
             }
@@ -62131,7 +62175,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 700,
+              "line": 714,
               "mechanism": "Cmd_AddCommand",
               "name": "banUser"
             }
@@ -62147,8 +62191,8 @@
       "summary": "Ask the hosted server to ban a player identified by name.",
       "details": "Requires a running server and a matching player name. This is a server operator command, separate from a brief kick ban.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:700",
-        "src/PC/server_mp/sv_ccmds_mp.c:718"
+        "src/PC/server_mp/sv_ccmds_mp.c:714",
+        "src/PC/server_mp/sv_ccmds_mp.c:732"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -62252,7 +62296,7 @@
             {
               "name": "callvote",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1313,
+              "line": 1346,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -62285,7 +62329,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:399",
         "src/PC/game_mp/g_cmds_mp.c:1281",
-        "src/PC/game_mp/g_cmds_mp.c:1313"
+        "src/PC/game_mp/g_cmds_mp.c:1346"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -62716,7 +62760,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 724,
+              "line": 738,
               "mechanism": "Cmd_AddCommand",
               "name": "clientkick"
             }
@@ -62726,7 +62770,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 706,
+              "line": 720,
               "mechanism": "Cmd_AddCommand",
               "name": "clientkick"
             }
@@ -62742,8 +62786,8 @@
       "summary": "Disconnect a player from the hosted server by client number.",
       "details": "Uses the server's numbered-player lookup. The local host cannot be kicked through this routine; no brief GUID ban is added by this command.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:706",
-        "src/PC/server_mp/sv_ccmds_mp.c:724"
+        "src/PC/server_mp/sv_ccmds_mp.c:720",
+        "src/PC/server_mp/sv_ccmds_mp.c:738"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -62845,7 +62889,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2812,
+              "line": 2828,
               "mechanism": "Cmd_AddCommand",
               "name": "cmdLine"
             }
@@ -62861,7 +62905,7 @@
       "summary": "Prints the command line the game started with.",
       "details": "A troubleshooting command.",
       "sources": [
-        "src/PC/qcommon/common.c:2812"
+        "src/PC/qcommon/common.c:2828"
       ],
       "bindable": false,
       "menuLabel": null
@@ -63044,7 +63088,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2804,
+              "line": 2820,
               "mechanism": "Cmd_AddCommand",
               "name": "crash"
             }
@@ -63054,7 +63098,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2804,
+              "line": 2820,
               "mechanism": "Cmd_AddCommand",
               "name": "crash"
             }
@@ -63070,7 +63114,7 @@
       "summary": "Trigger a crash by writing through a null pointer.",
       "details": "This is an internal crash-test command. Running it terminates normal gameplay; it is not a recovery command.",
       "sources": [
-        "src/PC/qcommon/common.c:2804"
+        "src/PC/qcommon/common.c:2820"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63168,7 +63212,7 @@
             {
               "name": "demigod",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1234,
+              "line": 1267,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -63201,7 +63245,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:384",
         "src/PC/game_mp/g_cmds_mp.c:1202",
-        "src/PC/game_mp/g_cmds_mp.c:1234"
+        "src/PC/game_mp/g_cmds_mp.c:1267"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63260,7 +63304,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 735,
+              "line": 749,
               "mechanism": "Cmd_AddCommand",
               "name": "devmap"
             }
@@ -63270,7 +63314,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 717,
+              "line": 731,
               "mechanism": "Cmd_AddCommand",
               "name": "devmap"
             }
@@ -63286,8 +63330,8 @@
       "summary": "Start the named map on the hosted server and enable cheats.",
       "details": "Uses the same map loader as map, but enables sv_cheats for development. It starts a new server map rather than changing a graphics setting.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:717",
-        "src/PC/server_mp/sv_ccmds_mp.c:735"
+        "src/PC/server_mp/sv_ccmds_mp.c:731",
+        "src/PC/server_mp/sv_ccmds_mp.c:749"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63389,7 +63433,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 728,
+              "line": 742,
               "mechanism": "Cmd_AddCommand",
               "name": "dumpuser"
             }
@@ -63399,7 +63443,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 710,
+              "line": 724,
               "mechanism": "Cmd_AddCommand",
               "name": "dumpuser"
             }
@@ -63415,8 +63459,8 @@
       "summary": "Print a named player's user-info fields on the hosted server.",
       "details": "Requires a running server and a matching player. This is an operator diagnostic and does not edit the player's fields.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:710",
-        "src/PC/server_mp/sv_ccmds_mp.c:728"
+        "src/PC/server_mp/sv_ccmds_mp.c:724",
+        "src/PC/server_mp/sv_ccmds_mp.c:742"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63643,7 +63687,7 @@
             {
               "name": "entitycount",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1335,
+              "line": 1368,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -63669,7 +63713,7 @@
       "details": "The client command is handled by the server and only prints when g_cheats is enabled. It is a development diagnostic.",
       "sources": [
         "src/PC/game_mp/g_cmds_mp.c:1303",
-        "src/PC/game_mp/g_cmds_mp.c:1335"
+        "src/PC/game_mp/g_cmds_mp.c:1368"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63727,7 +63771,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2803,
+              "line": 2819,
               "mechanism": "Cmd_AddCommand",
               "name": "error"
             }
@@ -63737,7 +63781,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2803,
+              "line": 2819,
               "mechanism": "Cmd_AddCommand",
               "name": "error"
             }
@@ -63753,7 +63797,7 @@
       "summary": "Raise a fatal test error, or a drop error when an argument is supplied.",
       "details": "This is an internal error-handler test. It interrupts the session and is not a command for diagnosing an existing error.",
       "sources": [
-        "src/PC/qcommon/common.c:2803"
+        "src/PC/qcommon/common.c:2819"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63808,7 +63852,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 730,
+              "line": 744,
               "mechanism": "Cmd_AddCommand",
               "name": "fast_restart"
             }
@@ -63818,7 +63862,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 712,
+              "line": 726,
               "mechanism": "Cmd_AddCommand",
               "name": "fast_restart"
             }
@@ -63834,8 +63878,8 @@
       "summary": "Request a fast restart of the hosted server's game.",
       "details": "Requires a running server. The restart code can fall back to loading the map again when a full restart is required.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:712",
-        "src/PC/server_mp/sv_ccmds_mp.c:730"
+        "src/PC/server_mp/sv_ccmds_mp.c:726",
+        "src/PC/server_mp/sv_ccmds_mp.c:744"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63945,7 +63989,7 @@
             {
               "name": "follownext",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1297,
+              "line": 1330,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -63978,7 +64022,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:401",
         "src/PC/game_mp/g_cmds_mp.c:1265",
-        "src/PC/game_mp/g_cmds_mp.c:1297"
+        "src/PC/game_mp/g_cmds_mp.c:1330"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64001,7 +64045,7 @@
             {
               "name": "followprev",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1302,
+              "line": 1335,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -64034,7 +64078,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:402",
         "src/PC/game_mp/g_cmds_mp.c:1270",
-        "src/PC/game_mp/g_cmds_mp.c:1302"
+        "src/PC/game_mp/g_cmds_mp.c:1335"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64050,7 +64094,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2805,
+              "line": 2821,
               "mechanism": "Cmd_AddCommand",
               "name": "freeze"
             }
@@ -64060,7 +64104,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2805,
+              "line": 2821,
               "mechanism": "Cmd_AddCommand",
               "name": "freeze"
             }
@@ -64076,7 +64120,7 @@
       "summary": "Hold the game loop for the supplied number of seconds.",
       "details": "This development command queues incoming events while waiting. It is a deliberate timing interruption, not the game's pause control.",
       "sources": [
-        "src/PC/qcommon/common.c:2805"
+        "src/PC/qcommon/common.c:2821"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64377,7 +64421,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 734,
+              "line": 748,
               "mechanism": "Cmd_AddCommand",
               "name": "gameCompleteStatus"
             }
@@ -64387,7 +64431,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 716,
+              "line": 730,
               "mechanism": "Cmd_AddCommand",
               "name": "gameCompleteStatus"
             }
@@ -64403,8 +64447,8 @@
       "summary": "Ask the hosted server to send completion status to the master server.",
       "details": "Calls the master-status routine. It is a server reporting command, not a player match-summary reader.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:716",
-        "src/PC/server_mp/sv_ccmds_mp.c:734"
+        "src/PC/server_mp/sv_ccmds_mp.c:730",
+        "src/PC/server_mp/sv_ccmds_mp.c:748"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64420,7 +64464,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/cod2x_server.c",
-              "line": 60,
+              "line": 64,
               "mechanism": "Cmd_AddCommand",
               "name": "getIp"
             }
@@ -64436,7 +64480,7 @@
       "summary": "Asks the CoD2x master server which address it sees this server at.",
       "details": "A server command. The answer is printed in the console.",
       "sources": [
-        "src/PC/server_mp/cod2x_server.c:60"
+        "src/PC/server_mp/cod2x_server.c:64"
       ],
       "bindable": false,
       "menuLabel": null
@@ -64456,7 +64500,7 @@
             {
               "name": "give",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1214,
+              "line": 1247,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -64489,7 +64533,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:381",
         "src/PC/game_mp/g_cmds_mp.c:1182",
-        "src/PC/game_mp/g_cmds_mp.c:1214"
+        "src/PC/game_mp/g_cmds_mp.c:1247"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64594,7 +64638,7 @@
             {
               "name": "god",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1224,
+              "line": 1257,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -64627,7 +64671,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:383",
         "src/PC/game_mp/g_cmds_mp.c:1192",
-        "src/PC/game_mp/g_cmds_mp.c:1224"
+        "src/PC/game_mp/g_cmds_mp.c:1257"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64682,7 +64726,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 716,
+              "line": 730,
               "mechanism": "Cmd_AddCommand",
               "name": "heartbeat"
             }
@@ -64692,7 +64736,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 698,
+              "line": 712,
               "mechanism": "Cmd_AddCommand",
               "name": "heartbeat"
             }
@@ -64708,8 +64752,8 @@
       "summary": "Make the hosted server's next master-server heartbeat due immediately.",
       "details": "Updates the heartbeat timer. The actual network send happens in the server's heartbeat processing.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:698",
-        "src/PC/server_mp/sv_ccmds_mp.c:716"
+        "src/PC/server_mp/sv_ccmds_mp.c:712",
+        "src/PC/server_mp/sv_ccmds_mp.c:730"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64886,7 +64930,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 720,
+              "line": 734,
               "mechanism": "Cmd_AddCommand",
               "name": "kick"
             }
@@ -64896,7 +64940,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 702,
+              "line": 716,
               "mechanism": "Cmd_AddCommand",
               "name": "kick"
             }
@@ -64912,8 +64956,8 @@
       "summary": "Disconnect a named player and briefly ban their GUID.",
       "details": "Uses the same routine as tempBanUser. The local host is protected; the brief ban is distinct from the permanent ban commands.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:702",
-        "src/PC/server_mp/sv_ccmds_mp.c:720"
+        "src/PC/server_mp/sv_ccmds_mp.c:716",
+        "src/PC/server_mp/sv_ccmds_mp.c:734"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64936,7 +64980,7 @@
             {
               "name": "kill",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1286,
+              "line": 1319,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -64969,7 +65013,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:380",
         "src/PC/game_mp/g_cmds_mp.c:1254",
-        "src/PC/game_mp/g_cmds_mp.c:1286"
+        "src/PC/game_mp/g_cmds_mp.c:1319"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64985,7 +65029,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 737,
+              "line": 751,
               "mechanism": "Cmd_AddCommand",
               "name": "killserver"
             }
@@ -64995,7 +65039,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 719,
+              "line": 733,
               "mechanism": "Cmd_AddCommand",
               "name": "killserver"
             }
@@ -65011,8 +65055,8 @@
       "summary": "Shut down the locally running game server.",
       "details": "Calls the engine's server shutdown path. A client connected to another machine cannot stop that remote server with this local command.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:719",
-        "src/PC/server_mp/sv_ccmds_mp.c:737"
+        "src/PC/server_mp/sv_ccmds_mp.c:733",
+        "src/PC/server_mp/sv_ccmds_mp.c:751"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65327,7 +65371,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 731,
+              "line": 745,
               "mechanism": "Cmd_AddCommand",
               "name": "map"
             }
@@ -65337,7 +65381,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 713,
+              "line": 727,
               "mechanism": "Cmd_AddCommand",
               "name": "map"
             }
@@ -65353,8 +65397,8 @@
       "summary": "Start the named multiplayer map on the hosted server.",
       "details": "Checks that a player profile is selected and the map file exists, then starts a server map. Unlike devmap, this command disables cheats.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:713",
-        "src/PC/server_mp/sv_ccmds_mp.c:731"
+        "src/PC/server_mp/sv_ccmds_mp.c:727",
+        "src/PC/server_mp/sv_ccmds_mp.c:745"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65370,7 +65414,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 729,
+              "line": 743,
               "mechanism": "Cmd_AddCommand",
               "name": "map_restart"
             }
@@ -65380,7 +65424,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 711,
+              "line": 725,
               "mechanism": "Cmd_AddCommand",
               "name": "map_restart"
             }
@@ -65396,8 +65440,8 @@
       "summary": "Reload the current hosted-server map and game.",
       "details": "Requires a running server. It requests a full restart rather than the fast_restart path.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:711",
-        "src/PC/server_mp/sv_ccmds_mp.c:729"
+        "src/PC/server_mp/sv_ccmds_mp.c:725",
+        "src/PC/server_mp/sv_ccmds_mp.c:743"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65413,7 +65457,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 733,
+              "line": 747,
               "mechanism": "Cmd_AddCommand",
               "name": "map_rotate"
             }
@@ -65423,7 +65467,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 715,
+              "line": 729,
               "mechanism": "Cmd_AddCommand",
               "name": "map_rotate"
             }
@@ -65439,8 +65483,8 @@
       "summary": "Consume the next map and game-type entries from the hosted server's rotation.",
       "details": "Uses sv_mapRotation and sv_mapRotationCurrent. When no usable map entry remains it falls back to restarting the current game.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:715",
-        "src/PC/server_mp/sv_ccmds_mp.c:733"
+        "src/PC/server_mp/sv_ccmds_mp.c:729",
+        "src/PC/server_mp/sv_ccmds_mp.c:747"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65459,6 +65503,12 @@
               "line": 310,
               "mechanism": "Cmd_AddCommand",
               "name": "match"
+            },
+            {
+              "path": "src/PC/server_mp/cod2x_match.c",
+              "line": 1028,
+              "mechanism": "Cmd_AddCommand",
+              "name": "match"
             }
           ]
         }
@@ -65472,7 +65522,8 @@
       "summary": "Store the token supplied to match login in the match_login setting.",
       "details": "CoD2x-only command. It accepts match login <hash>; storing the token does not itself verify a login with a server.",
       "sources": [
-        "src/PC/qcommon/cod2x_features.c:310"
+        "src/PC/qcommon/cod2x_features.c:310",
+        "src/PC/server_mp/cod2x_match.c:1028"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65576,7 +65627,7 @@
             {
               "name": "mr",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1209,
+              "line": 1242,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -65609,7 +65660,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:371",
         "src/PC/game_mp/g_cmds_mp.c:1177",
-        "src/PC/game_mp/g_cmds_mp.c:1209"
+        "src/PC/game_mp/g_cmds_mp.c:1242"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65669,7 +65720,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/net_chan_mp.c",
-              "line": 359,
+              "line": 392,
               "mechanism": "Cmd_AddCommand",
               "name": "net_dumpprofile"
             }
@@ -65696,7 +65747,7 @@
       "details": "Requires net_profile to be enabled. It reports the selected network profile, not a new network benchmark.",
       "sources": [
         "src/PC/qcommon/net_chan_mp.c:327",
-        "src/PC/qcommon/net_chan_mp.c:359"
+        "src/PC/qcommon/net_chan_mp.c:392"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65763,7 +65814,7 @@
             {
               "name": "noclip",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1254,
+              "line": 1287,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -65796,7 +65847,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:386",
         "src/PC/game_mp/g_cmds_mp.c:1222",
-        "src/PC/game_mp/g_cmds_mp.c:1254"
+        "src/PC/game_mp/g_cmds_mp.c:1287"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65819,7 +65870,7 @@
             {
               "name": "notarget",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1244,
+              "line": 1277,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -65852,7 +65903,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:385",
         "src/PC/game_mp/g_cmds_mp.c:1212",
-        "src/PC/game_mp/g_cmds_mp.c:1244"
+        "src/PC/game_mp/g_cmds_mp.c:1277"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65868,7 +65919,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 717,
+              "line": 731,
               "mechanism": "Cmd_AddCommand",
               "name": "onlykick"
             }
@@ -65878,7 +65929,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 699,
+              "line": 713,
               "mechanism": "Cmd_AddCommand",
               "name": "onlykick"
             }
@@ -65894,8 +65945,8 @@
       "summary": "Disconnect a named player from the hosted server without adding a brief ban.",
       "details": "Uses the named-player kick routine and protects the local host. It differs from kick, which also applies a brief GUID ban.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:699",
-        "src/PC/server_mp/sv_ccmds_mp.c:717"
+        "src/PC/server_mp/sv_ccmds_mp.c:713",
+        "src/PC/server_mp/sv_ccmds_mp.c:731"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -66091,7 +66142,7 @@
             {
               "name": "printentities",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1341,
+              "line": 1374,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -66124,7 +66175,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:403",
         "src/PC/game_mp/g_cmds_mp.c:1309",
-        "src/PC/game_mp/g_cmds_mp.c:1341"
+        "src/PC/game_mp/g_cmds_mp.c:1374"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -66141,7 +66192,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2808,
+              "line": 2824,
               "mechanism": "Cmd_AddCommand",
               "name": "quit"
             }
@@ -66151,7 +66202,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2808,
+              "line": 2824,
               "mechanism": "Cmd_AddCommand",
               "name": "quit"
             }
@@ -66167,7 +66218,7 @@
       "summary": "Shut down the client, server and file systems, then exit the game process.",
       "details": "The native CoD2x path can defer quit while its demo-recording shutdown is completed. This ends gameplay rather than closing the console.",
       "sources": [
-        "src/PC/qcommon/common.c:2808"
+        "src/PC/qcommon/common.c:2824"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -66701,20 +66752,20 @@
             },
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 629,
+              "line": 643,
               "mechanism": "Cmd_AddCommand",
               "name": "say"
             },
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 743,
+              "line": 757,
               "mechanism": "Cmd_AddCommand",
               "name": "say"
             },
             {
               "name": "say",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1152,
+              "line": 1185,
               "mechanism": "ClientCommand:dispatch"
             },
             {
@@ -66735,13 +66786,13 @@
             },
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 611,
+              "line": 625,
               "mechanism": "Cmd_AddCommand",
               "name": "say"
             },
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 725,
+              "line": 739,
               "mechanism": "Cmd_AddCommand",
               "name": "say"
             },
@@ -66771,12 +66822,12 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:392",
         "src/PC/game_mp/g_cmds_mp.c:1120",
-        "src/PC/game_mp/g_cmds_mp.c:1152",
+        "src/PC/game_mp/g_cmds_mp.c:1185",
         "src/PC/game_mp/g_svcmds_mp.c:342",
-        "src/PC/server_mp/sv_ccmds_mp.c:611",
-        "src/PC/server_mp/sv_ccmds_mp.c:629",
-        "src/PC/server_mp/sv_ccmds_mp.c:725",
-        "src/PC/server_mp/sv_ccmds_mp.c:743"
+        "src/PC/server_mp/sv_ccmds_mp.c:625",
+        "src/PC/server_mp/sv_ccmds_mp.c:643",
+        "src/PC/server_mp/sv_ccmds_mp.c:739",
+        "src/PC/server_mp/sv_ccmds_mp.c:757"
       ],
       "bindable": true,
       "menuLabel": null
@@ -66796,7 +66847,7 @@
             {
               "name": "say_team",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1160,
+              "line": 1193,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -66829,7 +66880,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:393",
         "src/PC/game_mp/g_cmds_mp.c:1128",
-        "src/PC/game_mp/g_cmds_mp.c:1160"
+        "src/PC/game_mp/g_cmds_mp.c:1193"
       ],
       "bindable": true,
       "menuLabel": null
@@ -66843,7 +66894,7 @@
             {
               "name": "score",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1201,
+              "line": 1234,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -66869,7 +66920,7 @@
       "details": "The server builds the deathmatch scoreboard response. This requests data; it does not itself display the local scoreboard.",
       "sources": [
         "src/PC/game_mp/g_cmds_mp.c:1169",
-        "src/PC/game_mp/g_cmds_mp.c:1201"
+        "src/PC/game_mp/g_cmds_mp.c:1234"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -66972,7 +67023,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 746,
+              "line": 760,
               "mechanism": "Cmd_AddCommand",
               "name": "scriptUsage"
             }
@@ -66982,7 +67033,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 728,
+              "line": 742,
               "mechanism": "Cmd_AddCommand",
               "name": "scriptUsage"
             }
@@ -66998,8 +67049,8 @@
       "summary": "Print the hosted server's script-thread diagnostics.",
       "details": "Calls the script-thread dump routine. This is an internal server diagnostic, not a player match statistic.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:728",
-        "src/PC/server_mp/sv_ccmds_mp.c:746"
+        "src/PC/server_mp/sv_ccmds_mp.c:742",
+        "src/PC/server_mp/sv_ccmds_mp.c:760"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -67016,7 +67067,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 726,
+              "line": 740,
               "mechanism": "Cmd_AddCommand",
               "name": "serverinfo"
             }
@@ -67026,7 +67077,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 708,
+              "line": 722,
               "mechanism": "Cmd_AddCommand",
               "name": "serverinfo"
             }
@@ -67042,8 +67093,8 @@
       "summary": "Print the hosted server's server-info settings.",
       "details": "Reports settings marked for server information, including script information. It does not query a different server address.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:708",
-        "src/PC/server_mp/sv_ccmds_mp.c:726"
+        "src/PC/server_mp/sv_ccmds_mp.c:722",
+        "src/PC/server_mp/sv_ccmds_mp.c:740"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -67400,7 +67451,7 @@
             {
               "name": "setviewpos",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1330,
+              "line": 1363,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -67433,7 +67484,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:389",
         "src/PC/game_mp/g_cmds_mp.c:1298",
-        "src/PC/game_mp/g_cmds_mp.c:1330"
+        "src/PC/game_mp/g_cmds_mp.c:1363"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -67875,7 +67926,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 725,
+              "line": 739,
               "mechanism": "Cmd_AddCommand",
               "name": "status"
             }
@@ -67885,7 +67936,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 707,
+              "line": 721,
               "mechanism": "Cmd_AddCommand",
               "name": "status"
             }
@@ -67901,8 +67952,8 @@
       "summary": "Print the current map and connected-player status table.",
       "details": "Requires a running server. Lists player numbers, scores, ping, GUIDs and connection information; this is separate from querying a remote server.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:707",
-        "src/PC/server_mp/sv_ccmds_mp.c:725"
+        "src/PC/server_mp/sv_ccmds_mp.c:721",
+        "src/PC/server_mp/sv_ccmds_mp.c:739"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -67961,7 +68012,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 747,
+              "line": 761,
               "mechanism": "Cmd_AddCommand",
               "name": "stringUsage"
             }
@@ -67971,7 +68022,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 729,
+              "line": 743,
               "mechanism": "Cmd_AddCommand",
               "name": "stringUsage"
             }
@@ -67987,8 +68038,8 @@
       "summary": "Print the script memory tree used by the hosted server.",
       "details": "Calls MT_DumpTree. This is an internal allocator diagnostic, not a count of translated UI strings.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:729",
-        "src/PC/server_mp/sv_ccmds_mp.c:747"
+        "src/PC/server_mp/sv_ccmds_mp.c:743",
+        "src/PC/server_mp/sv_ccmds_mp.c:761"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -68005,7 +68056,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 727,
+              "line": 741,
               "mechanism": "Cmd_AddCommand",
               "name": "systeminfo"
             }
@@ -68015,7 +68066,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 709,
+              "line": 723,
               "mechanism": "Cmd_AddCommand",
               "name": "systeminfo"
             }
@@ -68031,8 +68082,8 @@
       "summary": "Print the hosted server's system-info settings.",
       "details": "Reports settings carrying the system-info flag. These are game protocol settings, not a Mac hardware report.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:709",
-        "src/PC/server_mp/sv_ccmds_mp.c:727"
+        "src/PC/server_mp/sv_ccmds_mp.c:723",
+        "src/PC/server_mp/sv_ccmds_mp.c:741"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -68055,7 +68106,7 @@
             {
               "name": "take",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1219,
+              "line": 1252,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -68088,7 +68139,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:382",
         "src/PC/game_mp/g_cmds_mp.c:1187",
-        "src/PC/game_mp/g_cmds_mp.c:1219"
+        "src/PC/game_mp/g_cmds_mp.c:1252"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -68148,13 +68199,13 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 630,
+              "line": 644,
               "mechanism": "Cmd_AddCommand",
               "name": "tell"
             },
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 744,
+              "line": 758,
               "mechanism": "Cmd_AddCommand",
               "name": "tell"
             }
@@ -68164,13 +68215,13 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 612,
+              "line": 626,
               "mechanism": "Cmd_AddCommand",
               "name": "tell"
             },
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 726,
+              "line": 740,
               "mechanism": "Cmd_AddCommand",
               "name": "tell"
             }
@@ -68186,10 +68237,10 @@
       "summary": "Send chat text to a numbered player.",
       "details": "This server console command sends a console-prefixed message to that player.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:612",
-        "src/PC/server_mp/sv_ccmds_mp.c:630",
-        "src/PC/server_mp/sv_ccmds_mp.c:726",
-        "src/PC/server_mp/sv_ccmds_mp.c:744"
+        "src/PC/server_mp/sv_ccmds_mp.c:626",
+        "src/PC/server_mp/sv_ccmds_mp.c:644",
+        "src/PC/server_mp/sv_ccmds_mp.c:740",
+        "src/PC/server_mp/sv_ccmds_mp.c:758"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -68205,7 +68256,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 722,
+              "line": 736,
               "mechanism": "Cmd_AddCommand",
               "name": "tempBanClient"
             }
@@ -68215,7 +68266,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 704,
+              "line": 718,
               "mechanism": "Cmd_AddCommand",
               "name": "tempBanClient"
             }
@@ -68231,8 +68282,8 @@
       "summary": "Disconnect a numbered player and add a brief GUID ban.",
       "details": "Requires the hosted server's numbered-player lookup. The local host cannot be kicked through this routine.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:704",
-        "src/PC/server_mp/sv_ccmds_mp.c:722"
+        "src/PC/server_mp/sv_ccmds_mp.c:718",
+        "src/PC/server_mp/sv_ccmds_mp.c:736"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -68248,7 +68299,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 721,
+              "line": 735,
               "mechanism": "Cmd_AddCommand",
               "name": "tempBanUser"
             }
@@ -68258,7 +68309,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 703,
+              "line": 717,
               "mechanism": "Cmd_AddCommand",
               "name": "tempBanUser"
             }
@@ -68274,8 +68325,8 @@
       "summary": "Disconnect a named player and add a brief GUID ban.",
       "details": "Uses the same routine as kick. This brief ban is distinct from the persistent banUser and banClient commands.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:703",
-        "src/PC/server_mp/sv_ccmds_mp.c:721"
+        "src/PC/server_mp/sv_ccmds_mp.c:717",
+        "src/PC/server_mp/sv_ccmds_mp.c:735"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -68668,7 +68719,7 @@
             {
               "name": "ufo",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1270,
+              "line": 1303,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -68701,7 +68752,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:387",
         "src/PC/game_mp/g_cmds_mp.c:1238",
-        "src/PC/game_mp/g_cmds_mp.c:1270"
+        "src/PC/game_mp/g_cmds_mp.c:1303"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -68759,7 +68810,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/cod2x_server.c",
-              "line": 59,
+              "line": 63,
               "mechanism": "Cmd_AddCommand",
               "name": "unbanAll"
             }
@@ -68775,7 +68826,7 @@
       "summary": "Deletes this server's ban list.",
       "details": "A server command for admins.",
       "sources": [
-        "src/PC/server_mp/cod2x_server.c:59"
+        "src/PC/server_mp/cod2x_server.c:63"
       ],
       "bindable": false,
       "menuLabel": null
@@ -68788,7 +68839,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 723,
+              "line": 737,
               "mechanism": "Cmd_AddCommand",
               "name": "unbanUser"
             }
@@ -68798,7 +68849,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 705,
+              "line": 719,
               "mechanism": "Cmd_AddCommand",
               "name": "unbanUser"
             }
@@ -68814,8 +68865,8 @@
       "summary": "Ask the hosted server's ban routine to remove the named player's ban.",
       "details": "Accepts one name and calls SV_UnbanClient. This is distinct from removing an IP-address filter.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:705",
-        "src/PC/server_mp/sv_ccmds_mp.c:723"
+        "src/PC/server_mp/sv_ccmds_mp.c:719",
+        "src/PC/server_mp/sv_ccmds_mp.c:737"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -69262,7 +69313,7 @@
             {
               "name": "vote",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1318,
+              "line": 1351,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -69295,7 +69346,7 @@
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:400",
         "src/PC/game_mp/g_cmds_mp.c:1286",
-        "src/PC/game_mp/g_cmds_mp.c:1318"
+        "src/PC/game_mp/g_cmds_mp.c:1351"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -69510,7 +69561,7 @@
             {
               "name": "where",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1307,
+              "line": 1340,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -69536,7 +69587,7 @@
       "details": "The native game dispatcher replies with the player's origin. It is distinct from viewpos, which prints local camera coordinates and yaw.",
       "sources": [
         "src/PC/game_mp/g_cmds_mp.c:1275",
-        "src/PC/game_mp/g_cmds_mp.c:1307"
+        "src/PC/game_mp/g_cmds_mp.c:1340"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -69552,7 +69603,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2809,
+              "line": 2825,
               "mechanism": "Cmd_AddCommand",
               "name": "writeconfig"
             }
@@ -69562,7 +69613,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2809,
+              "line": 2825,
               "mechanism": "Cmd_AddCommand",
               "name": "writeconfig"
             }
@@ -69578,7 +69629,7 @@
       "summary": "Write current bindings and saved settings to a named config file.",
       "details": "Accepts a file name and adds .cfg when needed. This is the engine's config writer, separate from Config Studio's loadout transactions and History.",
       "sources": [
-        "src/PC/qcommon/common.c:2809"
+        "src/PC/qcommon/common.c:2825"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -69595,7 +69646,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2810,
+              "line": 2826,
               "mechanism": "Cmd_AddCommand",
               "name": "writedefaults"
             }
@@ -69605,7 +69656,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/common.c",
-              "line": 2810,
+              "line": 2826,
               "mechanism": "Cmd_AddCommand",
               "name": "writedefaults"
             }
@@ -69621,7 +69672,7 @@
       "summary": "Write the engine's registered default settings to a named config file.",
       "details": "Accepts a file name and adds .cfg when needed. The values come from registered defaults rather than the player's current choices.",
       "sources": [
-        "src/PC/qcommon/common.c:2810"
+        "src/PC/qcommon/common.c:2826"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -69641,7 +69692,7 @@
       },
       {
         "path": "src/PC/game_mp/g_scr_main_mp.c",
-        "line": 3699,
+        "line": 3746,
         "mechanism": "Dvar_RegisterString_mac",
         "function": "GScr_MakeDvarServerInfo",
         "nameExpression": "dvarName"
@@ -69748,7 +69799,7 @@
       },
       {
         "path": "src/PC/game_mp/g_scr_main_mp.c",
-        "line": 3649,
+        "line": 3663,
         "mechanism": "Dvar_RegisterString_mac",
         "function": "GScr_MakeDvarServerInfo",
         "nameExpression": "dvarName"
