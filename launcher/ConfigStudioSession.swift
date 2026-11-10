@@ -67,6 +67,10 @@ private final class ConfigGameGuard: @unchecked Sendable {
         var disposableProfileID: String? = nil
     }
     private var archiveURL: URL { store.homeURL.appendingPathComponent("main/players/.studio-game-session.json") }
+    /// Values one engine couldn't keep, saved for the other engine's next game (see `handOff`).
+    private var handOffURL: URL { store.homeURL.appendingPathComponent("main/players/.studio-engine-handoff.json") }
+    /// Engine dialect → loadout → setting → value.
+    private typealias HandOff = [String: [String: [String: String]]]
     var isReadOnly: Bool { guardState.running() }
     var hasDraft: Bool { draft != nil }
     var home: URL { store.homeURL }
@@ -202,6 +206,45 @@ private final class ConfigGameGuard: @unchecked Sendable {
     }
     /// Reads the loadout the next game uses, for callers that must not follow the view.
     func readActive() throws -> ConfigProfileRead? { try activeReviewedID().map { try store.read(id: $0) } }
+
+    /// Both engines read and write each loadout's config_mp.cfg. An engine that can't hold a value
+    /// the other one saved keeps its own default and writes that back, so before a game starts with
+    /// `engine`: what the other engine replaced goes back into each loadout (one History entry per
+    /// loadout), and the values `engine` itself can't hold in the active loadout are remembered for
+    /// the other engine's next game. Settings either engine can hold are never touched.
+    func handOff(to engine: ConfigDialect, limits: ConfigEngineLimits) throws {
+        guard !isReadOnly else { throw ConfigProfileError.gameRunning }
+        guard draft == nil else { throw ConfigProfileError.conflict }
+        try ConfigProfileStore.checkPath(handOffURL, under: store.homeURL)
+        let saved = FileManager.default.fileExists(atPath: handOffURL.path)
+        // An unreadable record must never stop a game from starting; it only loses what it held.
+        var handOff = saved ? ((try? JSONDecoder().decode(HandOff.self, from: Data(contentsOf: handOffURL))) ?? [:]) : [:]
+        for (id, values) in (handOff[engine.rawValue] ?? [:]).sorted(by: { $0.key < $1.key }) {
+            // Removed since (or not a loadout name): nothing to put back.
+            guard (try? ConfigProfileStore.validateIdentifier(id)) != nil, let read = try? store.read(id: id) else { continue }
+            var document = read.document
+            for (name, value) in values.sorted(by: { $0.key < $1.key }) where document.effectiveSetting(named: name) != value {
+                try? document.setSetting(named: name, value: value)
+            }
+            if document.serialized() != read.data {
+                try store.update(id: id, document: document, expected: read.version, summary: engine == .cod2x
+                    ? "Put back CoD2x values that Original 1.3 can’t keep" : "Put back Original 1.3 values that CoD2x can’t keep")
+            }
+        }
+        handOff[engine.rawValue] = nil
+        let other: ConfigDialect = engine == .cod2x ? .stock : .cod2x
+        // No readable active loadout (removed in game, say): nothing to remember.
+        if let active = (try? readActive()) ?? nil {
+            for name in limits.names(from: other) {
+                guard let value = active.document.effectiveSetting(named: name), limits.refuses(value, setting: name, from: other) else { continue }
+                // The first value kept wins: a second game with this engine sees its own write-back.
+                if handOff[other.rawValue]?[active.profile.id]?[name] == nil { handOff[other.rawValue, default: [:]][active.profile.id, default: [:]][name] = value }
+            }
+        }
+        if !handOff.isEmpty { try PrivateFile.write(JSONEncoder().encode(handOff), to: handOffURL) }
+        else if saved { try FileManager.default.removeItem(at: handOffURL) }
+        try refresh()
+    }
     func setDraft(_ document: ConfigDocument) {
         if draft == nil { draftVersion = current?.version; draftProfileID = current?.profile.id }
         draft = document
@@ -475,5 +518,59 @@ private final class ConfigGameGuard: @unchecked Sendable {
         try ConfigProfileStore.checkPath(archiveURL, under: store.homeURL)
         try FileManager.default.removeItem(at: archiveURL)
         self.archive = nil
+    }
+}
+
+/// The saved settings one engine can't hold of the other's, from the catalogue's two modes: an
+/// engine refuses a value outside its own range or choices, and any value of a setting it protects,
+/// keeping its default. Today that is CoD2x's cl_maxpackets (to 125), snaps (to 40) and r_lodScale,
+/// and the original's com_hunkMegs (CoD2x pins it to 512).
+struct ConfigEngineLimits: Sendable, Equatable {
+    struct Limit: Sendable, Equatable {
+        var minimum: Double?
+        var maximum: Double?
+        var choices: Set<String>?
+        var protected = false
+    }
+    /// Keyed by the engine whose saved values are at risk, then the lower-cased setting name:
+    /// the other engine's limits.
+    var limits: [ConfigDialect: [String: Limit]] = [:]
+
+    init(limits: [ConfigDialect: [String: Limit]]) { self.limits = limits }
+    init(catalog: ConfigCatalog) {
+        func number(_ fact: ConfigCatalogFact?) -> Double? {
+            guard fact?.status == .literal, case .number(let value) = fact?.value else { return nil }
+            return value
+        }
+        func choices(_ fact: ConfigCatalogFact?) -> Set<String>? {
+            guard fact?.status == .literal, case .array(let values) = fact?.value else { return nil }
+            return Set(values.compactMap { if case .string(let text) = $0 { return text.lowercased() }; return nil })
+        }
+        for setting in catalog.settings where setting.availability == .registered {
+            for (from, to) in [(ConfigDialect.cod2x, ConfigCatalogMode.stock), (.stock, .cod2x)] {
+                guard let mode = ConfigCatalogMode(rawValue: from.rawValue), let saved = setting.variant(for: mode),
+                      let other = setting.variant(for: to), saved.flags & 1 != 0 else { continue }
+                let limit = Limit(minimum: number(other.minimum), maximum: number(other.maximum), choices: choices(other.enumValues),
+                                  protected: other.flags & 0xd0 != 0 && saved.flags & 0xd0 == 0)
+                let lower = limit.minimum.map { minimum in number(saved.minimum).map { $0 < minimum } ?? true } ?? false
+                let upper = limit.maximum.map { maximum in number(saved.maximum).map { $0 > maximum } ?? true } ?? false
+                let wider = limit.choices.map { other in choices(saved.enumValues).map { !$0.isSubset(of: other) } ?? true } ?? false
+                if limit.protected || lower || upper || wider { limits[from, default: [:]][setting.name.lowercased()] = limit }
+            }
+        }
+    }
+    /// Lower-cased names of the settings whose `dialect` values the other engine may not hold.
+    func names(from dialect: ConfigDialect) -> [String] { (limits[dialect] ?? [:]).keys.sorted() }
+    /// Whether the other engine refuses this `dialect` value (and so writes back its own).
+    func refuses(_ value: String, setting name: String, from dialect: ConfigDialect) -> Bool {
+        guard let limit = limits[dialect]?[name.lowercased()] else { return false }
+        if limit.protected { return true }
+        let trimmed = value.trimmingCharacters(in: .whitespaces)
+        if let choices = limit.choices {
+            if let index = Int(trimmed) { return index < 0 || index >= choices.count }
+            return !choices.contains(trimmed.lowercased())
+        }
+        guard let number = Double(trimmed), number.isFinite else { return false }
+        return limit.minimum.map { number < $0 } == true || limit.maximum.map { number > $0 } == true
     }
 }

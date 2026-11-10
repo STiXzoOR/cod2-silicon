@@ -57,6 +57,10 @@ int main(int argc, char **argv)
                 NSString *active = [NSString stringWithContentsOfFile:[home stringByAppendingPathComponent:@"main/players/active.txt"] encoding:NSUTF8StringEncoding error:nil];
                 NSString *config = [home stringByAppendingPathComponent:[NSString stringWithFormat:@"main/players/%@/config_mp.cfg", active]];
                 NSString *text = [NSString stringWithContentsOfFile:config encoding:NSUTF8StringEncoding error:nil];
+#ifdef LIFECYCLE_STOCK
+                /* Like the original engine: it refuses CoD2x's 125, keeps its default and writes that back. */
+                text = [text stringByReplacingOccurrencesOfString:@"seta cl_maxpackets \"125\"" withString:@"seta cl_maxpackets \"30\""];
+#endif
                 if (text) [[text stringByAppendingString:@"seta sensitivity \"6\"\n"] writeToFile:config atomically:YES encoding:NSUTF8StringEncoding error:nil];
                 [@"Synthetic crash report\n" writeToFile:[home stringByAppendingPathComponent:@"cod2_crash_fixture.txt"] atomically:YES encoding:NSUTF8StringEncoding error:nil]; return 37;
             }

@@ -72,6 +72,12 @@ join passes `+connect <address>` on its command line instead. It can't take a se
 that way, so for passworded servers and CoD2x servers the launcher asks to turn CoD2x on and
 join; joining another server while an original game runs asks the player to quit it first. A
 bundle without `cod2_macos_stock` (the CMake `cod2_macos_app` target) disables the choice.
+Both engines read and write each loadout's `config_mp.cfg`, and an engine that can't hold a
+saved value keeps its own default and writes that back: CoD2x's `cl_maxpackets` above 100,
+`snaps` above 30 and `r_lodScale` (protected in the original), and the original's
+`com_hunkMegs` (CoD2x pins 512). The list comes from the catalogue's two modes. Before each
+game the launcher puts back what the other engine replaced (one History entry per loadout) and
+remembers what this engine can't hold in `main/players/.studio-engine-handoff.json`.
 
 Fast path:
 

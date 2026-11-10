@@ -312,5 +312,83 @@ private enum InjectedFailure: Error { case write }
         try polling.reconcileGames([])
         require(polling.profiles.map(\.id) == ["other"])
         print("PASS: polling detects config, metadata, history, companion, selection and profile changes")
+        try engineHandOff(scratch: scratch)
+    }
+
+    /// Both engines share each loadout's config_mp.cfg. One Original 1.3 game must not change what the
+    /// next CoD2x game uses, and the other way round.
+    @MainActor static func engineHandOff(scratch: URL) throws {
+        let catalog = try ConfigCatalog(data: Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1])))
+        let limits = ConfigEngineLimits(catalog: catalog)
+        require(limits.names(from: .cod2x) == ["cl_maxpackets", "r_lodscale", "snaps"], "CoD2x values the original can't hold: \(limits.names(from: .cod2x))")
+        require(limits.names(from: .stock) == ["com_hunkmegs"], "original values CoD2x can't hold: \(limits.names(from: .stock))")
+        require(limits.refuses("125", setting: "cl_maxpackets", from: .cod2x) && !limits.refuses("100", setting: "CL_MAXPACKETS", from: .cod2x))
+        require(limits.refuses("40", setting: "snaps", from: .cod2x) && !limits.refuses("30", setting: "snaps", from: .cod2x))
+        require(limits.refuses("0.5", setting: "r_lodScale", from: .cod2x), "the original protects r_lodScale")
+        require(limits.refuses("256", setting: "com_hunkMegs", from: .stock) && !limits.refuses("512", setting: "com_hunkMegs", from: .stock))
+        require(!limits.refuses("333", setting: "com_maxfps", from: .cod2x) && !limits.refuses("125", setting: "cl_maxpackets", from: .stock))
+
+        let home = scratch.appendingPathComponent("handoff")
+        let store = try ConfigProfileStore(homeURL: home, dialect: .cod2x)
+        let config = Data("seta cl_maxpackets \"125\"\nseta snaps \"40\"\nseta r_lodScale \"0.5\"\nseta com_maxfps \"333\"\nseta sensitivity \"2\"\n".utf8)
+        _ = try store.create(id: "Main", displayName: "Main", document: ConfigDocument(data: config, dialect: .cod2x))
+        try store.select(id: "Main", expectedActive: nil)
+        _ = try store.create(id: "Spare", displayName: "Spare", document: ConfigDocument(data: config, dialect: .cod2x))
+        let file = home.appendingPathComponent("main/players/Main/config_mp.cfg")
+        let handOff = home.appendingPathComponent("main/players/.studio-engine-handoff.json")
+        let session = try ConfigStudioSession(home: home, dialect: .stock)
+        try session.refresh()
+
+        // Original 1.3 starts: its out-of-range values are remembered; nothing is written to the loadout.
+        try session.handOff(to: .stock, limits: limits)
+        require(try Data(contentsOf: file) == config && FileManager.default.fileExists(atPath: handOff.path))
+        // The original engine refuses them, keeps its defaults and writes those back, with the player's own change.
+        let written = Data("seta cl_maxpackets \"30\"\nseta snaps \"20\"\nseta r_lodScale \"1\"\nseta com_maxfps \"333\"\nseta sensitivity \"2.5\"\nseta com_hunkMegs \"256\"\n".utf8)
+        try PrivateFile.write(written, to: file)
+        // A second Original 1.3 game keeps the CoD2x values it remembered first.
+        try session.handOff(to: .stock, limits: limits)
+        require(try Data(contentsOf: file) == written)
+        let entries = try store.history(id: "Main").count
+
+        // CoD2x starts: its values come back, everything else stays as the original left it.
+        try session.setDialect(.cod2x)
+        try session.handOff(to: .cod2x, limits: limits)
+        let back = try store.read(id: "Main").document
+        for (name, value) in ["cl_maxpackets": "125", "snaps": "40", "r_lodScale": "0.5", "com_maxfps": "333", "sensitivity": "2.5", "com_hunkMegs": "256"] {
+            require(back.effectiveSetting(named: name) == value, "\(name) after CoD2x hand-off: \(back.effectiveSetting(named: name) ?? "nil")")
+        }
+        let history = try store.history(id: "Main")
+        require(history.count == entries + 1 && history.first?.source == .you && history.first?.summary == "Put back CoD2x values that Original 1.3 can’t keep")
+        require(try store.read(id: "Spare").data == config, "a loadout the original never played is untouched")
+
+        // The reverse: CoD2x pins com_hunkMegs to 512, so the original's 256 comes back before its next game.
+        var pinned = back; try pinned.setSetting(named: "com_hunkMegs", value: "512")
+        try PrivateFile.write(pinned.serialized(), to: file)
+        try session.refresh()
+        try session.setDialect(.stock)
+        try session.handOff(to: .stock, limits: limits)
+        let reverse = try store.read(id: "Main").document
+        require(reverse.effectiveSetting(named: "com_hunkMegs") == "256" && reverse.effectiveSetting(named: "cl_maxpackets") == "125")
+        require(try store.history(id: "Main").first?.summary == "Put back Original 1.3 values that CoD2x can’t keep")
+
+        // Nothing to put back writes nothing; a removed loadout is dropped; a running game refuses.
+        let count = try store.history(id: "Main").count
+        try session.setDialect(.cod2x)
+        try session.handOff(to: .cod2x, limits: limits)
+        require(try store.history(id: "Main").count == count, "values CoD2x already has are not rewritten")
+        try store.select(id: "Spare", expectedActive: store.activeSelection().originalBytes)
+        try FileManager.default.removeItem(at: home.appendingPathComponent("main/players/Main"))
+        try session.handOff(to: .stock, limits: limits)
+        try session.handOff(to: .cod2x, limits: limits)
+        let spare = try store.read(id: "Spare").data
+        require(!FileManager.default.fileExists(atPath: handOff.path) && spare == config)
+        try PrivateFile.write(Data("{\"cod2x\": {\"../x\": {\"snaps\": \"40\"}}}".utf8), to: handOff)
+        try session.handOff(to: .cod2x, limits: limits)
+        try PrivateFile.write(Data("not a record".utf8), to: handOff)
+        try session.handOff(to: .cod2x, limits: limits)
+        require(!FileManager.default.fileExists(atPath: handOff.path), "a damaged record never stops a game")
+        session.gameLaunched(pid: 4242)
+        require((try? session.handOff(to: .cod2x, limits: limits)) == nil, "never while a game owns the config")
+        print("PASS: game version hand-off: CoD2x's cl_maxpackets, snaps and r_lodScale survive an Original 1.3 game and the original's com_hunkMegs survives CoD2x; derived from the catalogue")
     }
 }

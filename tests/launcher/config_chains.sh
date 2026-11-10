@@ -18,7 +18,7 @@ taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 \
     -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
     -target arm64-apple-macos26 -sdk "$sdk" "$optimization" -import-objc-header "$root/launcher/NativeSetup.h" \
     "$root/launcher/Core.swift" "$root/launcher/Presentation.swift" \
-    "$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift" "$root/launcher/ConfigHistory.swift" "$root/launcher/ConfigStudioSession.swift" \
+    "$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift" "$root/launcher/ConfigHistory.swift" "$root/launcher/ConfigStudioSession.swift" "$root/launcher/ConfigCatalog.swift" \
     "$root/launcher/ConfigImport.swift" "$root/launcher/ConfigImportSafety.swift" \
     "$root/launcher/ConfigChains.swift" "$root/tests/launcher/ConfigChainsTests.swift" \
     "$scratch/NativeSetup.o" "$scratch/NativeShaders.o" "$scratch/URL.o" \

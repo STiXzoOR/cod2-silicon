@@ -10,7 +10,7 @@ taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 \
     -target arm64-apple-macos26 -sdk "$sdk" -O -import-objc-header "$root/launcher/NativeSetup.h" \
     "$root/launcher/Core.swift" "$root/launcher/Presentation.swift" \
     "$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift" "$root/launcher/ConfigHistory.swift" \
-    "$root/launcher/ConfigStudioSession.swift" "$root/tests/launcher/ConfigLaunchTests.swift" \
+    "$root/launcher/ConfigStudioSession.swift" "$root/launcher/ConfigCatalog.swift" "$root/tests/launcher/ConfigLaunchTests.swift" \
     "$scratch/core/NativeSetup.o" "$scratch/core/NativeShaders.o" "$scratch/core/URL.o" \
     -framework AppKit -lz -o "$scratch/ConfigLaunchTests"
-TMPDIR="$scratch" taskpolicy -b nice -n 19 "$scratch/ConfigLaunchTests"
+TMPDIR="$scratch" taskpolicy -b nice -n 19 "$scratch/ConfigLaunchTests" "$root/launcher/Resources/ConfigCatalog.json"

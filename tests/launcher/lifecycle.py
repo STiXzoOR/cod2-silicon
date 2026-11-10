@@ -74,6 +74,8 @@ with log.open('w') as stream:
         settings = json.loads((apphome/'launcher-settings.json').read_text()); settings['engine'] = 'original'
         (apphome/'launcher-settings.json').write_text(json.dumps(settings))
         (apphome/'fixture-arguments.json').unlink(); exitfile.unlink()
+        loadout = apphome/f'main/players/{active}/config_mp.cfg'
+        loadout.write_text(loadout.read_text() + 'seta cl_maxpackets "125"\n')
         launcher = subprocess.Popen([str(app/'Contents/MacOS/CoD2Launcher'), 'cod2x://connect/localhost:28964'], stdout=stream, stderr=stream, env=env, cwd=out)
         wait(lambda: log.read_text(errors='replace').count('fixture ready') == 2 and (apphome/'fixture-arguments.json').is_file())
         stock = int(re.findall(r'fixture ready (\d+)', log.read_text())[-1])
@@ -89,7 +91,22 @@ with log.open('w') as stream:
         exitfile.touch()
         wait(lambda: log.read_text(errors='replace').count('returned to launcher') == 2)
         assert launcher.poll() is None
+        assert 'seta cl_maxpackets "30"' in loadout.read_text() and 'seta cl_maxpackets "125"' not in loadout.read_text()
         print('PASS: Original 1.3 starts cod2_macos_stock with +connect, is reattached after a force-quit and is never sent a link')
+        # Back to CoD2x: the 125 the original couldn't keep is in the loadout before the CoD2x engine starts,
+        # and the original's own change (sensitivity 6) stays.
+        launcher.terminate(); launcher.wait(timeout=5)
+        settings['engine'] = 'cod2x'; (apphome/'launcher-settings.json').write_text(json.dumps(settings))
+        exitfile.unlink()
+        launcher = subprocess.Popen([str(app/'Contents/MacOS/CoD2Launcher'), '--play'], stdout=stream, stderr=stream, env=env, cwd=out)
+        wait(lambda: log.read_text(errors='replace').count('fixture ready') == 3)
+        cod2x = int(re.findall(r'fixture ready (\d+)', log.read_text())[-1])
+        assert subprocess.check_output(['ps', '-o', 'comm=', '-p', str(cod2x)], text=True).strip().endswith('/MacOS/cod2_macos')
+        text = loadout.read_text()
+        assert 'seta cl_maxpackets "125"' in text and 'seta cl_maxpackets "30"' not in text and text.rstrip().endswith('seta sensitivity "6"'), text
+        summaries = [json.loads(path.read_text())['summary'] for path in (apphome/f'main/players/{active}/history').glob('*.json')]
+        assert summaries.count('Put back CoD2x values that Original 1.3 can’t keep') == 1, summaries
+        print('PASS: the CoD2x value Original 1.3 wrote over (cl_maxpackets 125 to 30) is back before the next CoD2x game, the original\'s own change kept')
         print('PASS: launcher→nested child, Dock handoff, two live cod2x Apple events, no duplicate engine, launcher force-quit/reconnect, game crash→live launcher/Dock restoration/report')
         print('PASS: real launch migration and machine argv, personal config ownership, persisted before-session archive and exactly one snapshot after reattachment/exit')
     finally:

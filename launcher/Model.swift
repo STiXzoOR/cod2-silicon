@@ -106,6 +106,8 @@ struct MediaEntry: Identifiable {
     private var launchedEngine = GameEngine.cod2x
     /// Servers asked for their version before Original 1.3 joins them: answered (or not), and in flight.
     private var checkedAddresses: Set<String> = []
+    /// What each engine can't hold of the other's saved settings, from the catalogue.
+    private var engineLimits: ConfigEngineLimits?
     private var lookingUp: Set<String> = []
     private var attachedGames: [pid_t: NSRunningApplication] = [:]
     private var attachmentTask: Task<Void, Never>?
@@ -618,6 +620,12 @@ struct MediaEntry: Identifiable {
             let gameEngine = chosenEngine
             let executable = gameEngine.executable(in: gameBundle)
             guard FileManager.default.isExecutableFile(atPath: executable.path) else { throw LauncherError(message: "The game helper is missing. Rebuild or reinstall this app.") }
+            // Values the other engine couldn't keep go back before this one reads the loadout.
+            if let configStudio {
+                studio.loadCatalogNow()
+                if engineLimits == nil, let catalog = studio.catalog { engineLimits = ConfigEngineLimits(catalog: catalog) }
+                if let engineLimits { try configStudio.handOff(to: gameEngine.dialect, limits: engineLimits) }
+            }
             var connectionLaunch: ConfigConnectionLaunch?
             var connectionProfileID: String?
             var connectionExpectedVersion: ConfigProfileVersion?
