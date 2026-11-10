@@ -683,10 +683,14 @@ static void SV_Map_f(void)
     if (!map[0])
         return;
 
+#if !(COD2_APPLE_SDK && defined(DEDICATED))
+    /* The Linux 1.3 server has no such check; with it a dedicated server
+     * could not load a map at all. */
     if (!Com_HasPlayerProfile()) {
         Com_Printf("Can't load a map without a player profile selected.\n");
         return;
     }
+#endif
 
 #if defined(COD2_X64)
     Com_DedicatedModified();
