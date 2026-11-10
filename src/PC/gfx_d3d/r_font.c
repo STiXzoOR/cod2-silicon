@@ -405,8 +405,18 @@ static inline __attribute__((always_inline)) int R_TextWidth_inl(const char *tex
     return maxWidth;
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+/* CoD2x text.cpp: cl_hideServerIp masks the digits of IP addresses in all drawn text. */
+extern const char *Cod2x_HideIpText(const char *text, char *buffer, size_t size);
+extern const short *Cod2x_HideIpCells(const short *cells, int count, short *buffer, int size);
+#endif
+
 int R_TextWidth(const char *text, int maxChars, FontHandle font)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    char hidden[1024];
+    text = Cod2x_HideIpText(text, hidden, sizeof(hidden));
+#endif
     return R_TextWidth_inl(text, maxChars, font);
 }
 
@@ -424,6 +434,12 @@ int R_ConsoleTextWidth(const short int *string, int maxChars, FontHandle font)
         return 0;
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    {
+        static short hidden[1024];
+        string = Cod2x_HideIpCells(string, maxChars, hidden, 1024);
+    }
+#endif
     stringRemaining = string;
     width = 0.0f;
 
@@ -467,6 +483,12 @@ int R_DrawConsoleText(const short int *string, int maxChars, FontHandle font, fl
         return 0;
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    {
+        static short hidden[1024];
+        string = Cod2x_HideIpCells(string, maxChars, hidden, 1024);
+    }
+#endif
     stringRemaining = string;
     xOfs = 0.0f;
 

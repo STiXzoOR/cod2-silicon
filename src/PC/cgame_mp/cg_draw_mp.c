@@ -2600,7 +2600,19 @@ unsigned int CG_Draw2D(void)
             }
             alpha = fade[3];
         }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        {
+            /* CoD2x text.cpp CG_DrawGameMessages: cg_gameMessageOffsetX/Y and cg_gameMessageScale. */
+            extern void Con_DrawNotifyScaled(int xPos, int yPos, int charHeight, float alpha, float scale,
+                                             msgwnd_mode_t mode);
+            int x = 6, y = (int)notifyY, charHeight;
+            float scale;
+            Cod2x_GameMessageLayout(&x, &y, &charHeight, &scale);
+            Con_DrawNotifyScaled(x, y, charHeight, alpha, scale, (msgwnd_mode_t)2);
+        }
+#else
         Con_DrawNotify(6, (int)notifyY, alpha, (msgwnd_mode_t)2);
+#endif
         CG_Draw2D_DrawBottomOverlays(cg);
     }
 

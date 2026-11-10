@@ -104,10 +104,10 @@ int Cod2x_IwdAllowed(const char *folder, const char *file, const char *const *fi
     if (n > 4 && equal(file + n - 4, ".iwd"))
         name[n - 3] = '\0';
     if (Cod2x_IwdStock(name, "", s->connecting && !s->listen ? s->version : 6))
-        return COD2X_IWD_ALLOWED;
+        return COD2X_IWD_STOCK;
     if (s->connecting && !s->listen) {
         if (s->demo && equal(folder, "movie"))
-            return COD2X_IWD_ALLOWED;
+            return COD2X_IWD_MOVIE;
         p = s->names ? s->names : "";
         while (*p) {
             const char *start;
@@ -116,7 +116,8 @@ int Cod2x_IwdAllowed(const char *folder, const char *file, const char *const *fi
             start = p;
             while (*p && !isspace((unsigned char)*p)) ++p;
             len = (size_t)(p - start);
-            if (len && equaln(file, start, len)) {
+            /* The name must end where the file's extension or hash starts: "z" is not "zpam408.iwd". */
+            if (len && equaln(file, start, len) && file[len] == '.') {
                 snprintf(cod2x_iwdRequired, sizeof(cod2x_iwdRequired), "%.*s",
                          (int)(len < sizeof(cod2x_iwdRequired) ? len : sizeof(cod2x_iwdRequired) - 1), start);
                 return COD2X_IWD_REQUIRED;
@@ -127,7 +128,7 @@ int Cod2x_IwdAllowed(const char *folder, const char *file, const char *const *fi
         return COD2X_IWD_LATEST_ZPAM;
     if (s->listen && latest(file, "zpam_maps_v", files, count))
         return COD2X_IWD_LATEST_ZPAM_MAPS;
-    return s->game && *s->game && equal(folder, s->game) ? COD2X_IWD_ALLOWED : COD2X_IWD_FILTERED;
+    return s->game && *s->game && equal(folder, s->game) ? COD2X_IWD_GAME : COD2X_IWD_FILTERED;
 }
 
 const char *Cod2x_ConfigGame(const char *game, const char *qpath)

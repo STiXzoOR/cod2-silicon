@@ -7,7 +7,7 @@
 static dvar_t variables[32];
 static int variableCount, argc, setterCalls;
 static char *argv[3];
-static struct { const char *name; void (*function)(void); } commands[3];
+static struct { const char *name; void (*function)(void); } commands[4];
 static int commandCount;
 
 const dvar_t *Dvar_FindVar(const char *name)
@@ -91,7 +91,7 @@ void Dvar_SetString(const dvar_t *var, const char *value)
 
 void Cmd_AddCommand(const char *name, void (*function)(void))
 {
-    assert(commandCount < 3);
+    assert(commandCount < 4);
     commands[commandCount].name = name;
     commands[commandCount++].function = function;
 }
@@ -100,8 +100,10 @@ int Cmd_Argc(void) { return argc; }
 char *Cmd_Argv(int i) { return i < argc ? argv[i] : ""; }
 void Com_Printf(const char *format, ...) { (void)format; }
 void Com_Error(int code, const char *format, ...) { (void)code; (void)format; }
+char *Info_ValueForKey(const char *s, const char *key) { (void)s; (void)key; return (char *)""; }
 int Cod2x_GameVersion(void) { return 6; }
 void Cod2x_PoseInit(void) {}
+const char *Cod2x_IwdRequiredName(void) { return ""; }
 
 static void execute(const char *cmd, const char *a, const char *b)
 {
@@ -142,7 +144,7 @@ int main(void)
     assert(!Cod2x_DebugBullets());
     execute("match", "LOGIN", "match-player-id");
     assert(Dvar_FindVar("match_login")->flags == 0x12);
-    assert(Dvar_FindVar("com_affinity")->flags == 0x1001 && Dvar_FindVar("com_affinity")->current.integer == -1);
+    assert(Dvar_FindVar("com_autoaffinity")->flags == 0x1001 && Dvar_FindVar("com_autoaffinity")->current.enabled);
     Cod2x_FeaturesFrame(0, 0);
     assert(!strcmp(Dvar_FindVar("match_login")->current.string, "match-player-id"));
     Cod2x_FeaturesFrame(1, 1);

@@ -2,13 +2,27 @@
 #define COD2X_FEATURES_H
 
 #include <limits.h>
+#include <stddef.h>
 #include <math.h>
 
 void Cod2x_FeaturesInit(void);
 void Cod2x_FeaturesFrame(int active, int demo);
 void Cod2x_FeaturesClientState(int state);
+/* cl_hideServerIp: updated once a frame with the connected server's info (NULL when not connected). */
+void Cod2x_HideServerIpFrame(const char *serverinfo);
+int Cod2x_HideServerIp(void);
+void Cod2x_HideIpInPlace(char *text, int len);
+const char *Cod2x_HideIpText(const char *text, char *buffer, size_t size);
+const short *Cod2x_HideIpCells(const short *cells, int count, short *buffer, int size);
 /* Once, when the file system first starts: CoD2x's IWD cleanup and iw_CoD2x_01.iwd. */
 void Cod2x_IwdStartup(const char *base);
+/* fs_processedList: the IWD decisions of this file-system start and of the one before. */
+void Cod2x_IwdLogRotate(void);
+void Cod2x_IwdLogDirectory(const char *directory, const char *basepath, const char *game, int version,
+                           const char *names);
+void Cod2x_IwdLogFile(const char *directory, const char *file, int reason);
+/* cg_gameMessageOffsetX/Y and cg_gameMessageScale applied to the game messages' position and line height. */
+void Cod2x_GameMessageLayout(int *x, int *y, int *charHeight, float *scale);
 int Cod2x_ThirdPersonMode(void);
 int Cod2x_DebugBullets(void);
 int Cod2x_PrintDoubleColors(void);

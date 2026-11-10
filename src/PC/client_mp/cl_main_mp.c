@@ -1449,6 +1449,11 @@ const char *CL_GetServerIPAddress(void)
     clientConnection_t *connection = &clientConnections[0];
     netadr_t *serverAddress = &connection->serverAddress;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* CoD2x cgame.cpp: the scoreboard leaves the address out while IPs are hidden. */
+    if (Cod2x_HideServerIp())
+        return "";
+#endif
     if (connection->state <= CA_CHALLENGING) {
         memset(szServerIPAddress, 0, 128);
     } else {
@@ -2124,7 +2129,12 @@ void CL_LocalServers_f(void)
     Com_Memset(&to, 0, sizeof(to));
 
     for (pass = 0; pass < 2; ++pass) {
+#if defined(COD2_CODX) && COD2_CODX
+        /* CoD2x hook.cpp: ports 28960 to 28991 instead of the first four. */
+        for (port = 0x7120; port < 0x7140; ++port) {
+#else
         for (port = 0x7120; port < 0x7124; ++port) {
+#endif
             to.port = (unsigned short)(((port & 0xff) << 8) | ((port >> 8) & 0xff));
             to.type = NA_BROADCAST;
             /* Out-of-band packets start with four 0xFF bytes. This literal had been
@@ -2718,6 +2728,7 @@ void CL_Frame(int msec)
         }
     }
     Cod2x_FeaturesClientState(clc_p->state);
+    Cod2x_HideServerIpFrame(clc_p->state >= CA_CONNECTED ? CL_GetConfigString(0) : NULL);
     Cod2x_DemoClientFrame();
 #endif
 #if defined(COD2_X64)

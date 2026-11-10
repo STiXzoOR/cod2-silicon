@@ -836,6 +836,13 @@ void R_AddCmdDrawTextWithCursor(const char *text, int maxChars, FontHandle font,
     cmdText = cmd->text;
     memcpy(cmdText, text, len);
     cmdText[len] = '\0';
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    {
+        /* CoD2x text.cpp: cl_hideServerIp masks the digits of IP addresses in all drawn text. */
+        extern void Cod2x_HideIpInPlace(char *text, int len);
+        Cod2x_HideIpInPlace(cmdText, len);
+    }
+#endif
 
     if (R_ShouldTraceTextCmd(cmdText)) {
 #if defined(COD2_X64)

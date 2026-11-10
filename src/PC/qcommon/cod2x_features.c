@@ -4,6 +4,8 @@
 #include "cod2x.h"
 #include "cod2x_features.h"
 #include "cod2x_pose.h"
+#include "cod2x_policy.h"
+#include <stdarg.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -17,6 +19,12 @@
 #endif
 #if !defined(_WIN32)
 #include <unistd.h>
+#endif
+
+#if defined(_WIN32)
+#define COD2X_IWD_SEPARATOR "\\"
+#else
+#define COD2X_IWD_SEPARATOR "/"
 #endif
 
 extern const dvar_t *Dvar_RegisterInt(const char *, int, int, int, unsigned short);
@@ -33,13 +41,15 @@ extern int Cmd_Argc(void);
 extern char *Cmd_Argv(int);
 extern void Com_Printf(const char *, ...);
 extern void Com_Error(int, const char *, ...);
+extern char *Info_ValueForKey(const char *, const char *);
 
 static const dvar_t *thirdPersonMode, *debugBullets, *printDoubleColors;
 static const dvar_t *drawSpectatedName, *drawCompass, *compassOffsetX, *compassOffsetY;
 /* The CoD2x release whose client behaviour this implements. */
 #define COD2X_APP_VERSION "1.4.6.8"
 
-static const dvar_t *matchLogin, *affinity;
+static const dvar_t *matchLogin, *hideServerIp, *messageOffsetX, *messageOffsetY, *messageScale;
+static int ipHidden;
 static int playingDemo, lastClientState = -1;
 #if defined(_WIN32)
 /* src/win32/win_system.c */
@@ -120,12 +130,14 @@ static int Cod2x_ProcessorCount(void)
 #endif
 }
 
+/* com_autoaffinity, CoD2x mss32/affinity.cpp: every core, set once at start. CoD2x
+   registers it before the config or the command line is read, so it always applies. */
 #if defined(_WIN32) || defined(__linux__)
-static void Cod2x_SetAffinity(unsigned long long mask)
+static void Cod2x_AutoAffinity(void)
 {
-    unsigned long long bits;
+    int count = Cod2x_ProcessorCount(), applied;
+    unsigned long long mask = count >= 64 ? ~0ULL : (1ULL << count) - 1;
     unsigned long error = 0;
-    int cores = 0, applied;
 #if defined(_WIN32)
     applied = Sys_Cod2xSetAffinity(mask, &error);
 #else
@@ -134,9 +146,8 @@ static void Cod2x_SetAffinity(unsigned long long mask)
     struct dirent *task;
     int cpu;
     CPU_ZERO(&set);
-    for (cpu = 0; cpu < 64 && cpu < CPU_SETSIZE; ++cpu)
-        if (mask & (1ULL << cpu))
-            CPU_SET(cpu, &set);
+    for (cpu = 0; cpu < count && cpu < CPU_SETSIZE; ++cpu)
+        CPU_SET(cpu, &set);
     /* The mask applies to the whole process, as on Windows: every thread, not only this one. */
     applied = !sched_setaffinity(0, sizeof(set), &set);
     if (!applied)
@@ -148,37 +159,133 @@ static void Cod2x_SetAffinity(unsigned long long mask)
         closedir(tasks);
     }
 #endif
-    if (!applied) {
-        Com_Printf("CPU Affinity: Error setting affinity: %lu\n", error);
-        return;
-    }
-    for (bits = mask; bits; bits >>= 1)
-        cores += (int)(bits & 1);
-    Com_Printf("CPU Affinity: Affinity set to %d core%s (mask 0x%08X).\n", cores, cores == 1 ? "" : "s",
-               (unsigned int)mask);
+    if (applied)
+        Com_Printf("CPU Affinity: set to all %lu cores (mask 0x%08X).\n", (unsigned long)count, (unsigned int)mask);
+    else
+        Com_Printf("CPU Affinity: error setting affinity: %lu\n", error);
 }
 #else
-static void Cod2x_SetAffinity(unsigned long long mask)
+static void Cod2x_AutoAffinity(void)
 {
-    /* macOS has no process CPU affinity: com_affinity is accepted and changes nothing. */
-    (void)mask;
+    /* macOS has no process CPU affinity: com_autoaffinity is accepted and changes nothing. */
 }
 #endif
 
-static void Cod2x_AffinityFrame(void)
+/* ---- fs_processedList (CoD2x src/shared/iwd.cpp) ------------------------- */
+typedef struct {
+    char *text;
+    size_t length, capacity;
+} Cod2xLog;
+
+static Cod2xLog processedCurrent, processedPrevious;
+
+static void Cod2x_IwdLog(const char *format, ...)
 {
-    int cores;
-    if (!affinity || !affinity->modified)
-        return;
-    ((dvar_t *)affinity)->modified = 0;
-    cores = affinity->current.integer;
-    if (cores == 0) {
-        Com_Printf("CPU Affinity disabled.\n");
-        return;
+    char line[1024];
+    size_t length;
+    va_list args;
+    va_start(args, format);
+    vsnprintf(line, sizeof(line), format, args);
+    va_end(args);
+    Com_Printf("%s", line);
+    length = strlen(line);
+    if (processedCurrent.length + length + 1 > processedCurrent.capacity) {
+        size_t capacity = processedCurrent.capacity ? processedCurrent.capacity * 2 : 4096;
+        char *text;
+        while (capacity < processedCurrent.length + length + 1)
+            capacity *= 2;
+        text = realloc(processedCurrent.text, capacity);
+        if (!text)
+            return;
+        processedCurrent.text = text;
+        processedCurrent.capacity = capacity;
     }
-    if (cores == -1)
-        cores = affinity->domain.integer.max;
-    Cod2x_SetAffinity(cores >= 64 ? ~0ULL : (1ULL << cores) - 1);
+    memcpy(processedCurrent.text + processedCurrent.length, line, length + 1);
+    processedCurrent.length += length;
+}
+
+/* The directory as the platform writes paths: CoD2x shows Windows paths with backslashes. */
+static const char *Cod2x_IwdLogPath(const char *directory, char *buffer, size_t size)
+{
+#if defined(_WIN32)
+    size_t i;
+    snprintf(buffer, size, "%s", directory);
+    for (i = 0; buffer[i]; ++i)
+        if (buffer[i] == '/')
+            buffer[i] = '\\';
+    return buffer;
+#else
+    (void)buffer;
+    (void)size;
+    return directory;
+#endif
+}
+
+void Cod2x_IwdLogRotate(void)
+{
+    free(processedPrevious.text);
+    processedPrevious = processedCurrent;
+    memset(&processedCurrent, 0, sizeof(processedCurrent));
+}
+
+void Cod2x_IwdLogDirectory(const char *directory, const char *basepath, const char *game, int version,
+                           const char *names)
+{
+    const char *p = names ? names : "";
+    char path[1024];
+    int count = 0;
+    Cod2x_IwdLog("Processing directory ^9%s^7\n", Cod2x_IwdLogPath(directory, path, sizeof(path)));
+    Cod2x_IwdLog("  fs_basepath:        ^9%s^7\n", basepath && *basepath ? basepath : "(empty)");
+    Cod2x_IwdLog("  fs_game:            ^9%s^7\n", game && *game ? game : "(empty)");
+    Cod2x_IwdLog("  CoD2x version:      ^9%d^7\n", version);
+    /* Every name the server requires, quoted: these are what the files are matched against. */
+    for (;;) {
+        while (*p && isspace((unsigned char)*p))
+            ++p;
+        if (!*p)
+            break;
+        ++count;
+        while (*p && !isspace((unsigned char)*p))
+            ++p;
+    }
+    Cod2x_IwdLog("  Required by server: ^9%d file(s)^7\n", count);
+    for (p = names ? names : ""; *p;) {
+        const char *start;
+        while (*p && isspace((unsigned char)*p))
+            ++p;
+        start = p;
+        while (*p && !isspace((unsigned char)*p))
+            ++p;
+        if (p > start)
+            Cod2x_IwdLog("    ^9\"%.*s\"^7\n", (int)(p - start), start);
+    }
+}
+
+void Cod2x_IwdLogFile(const char *directory, const char *file, int reason)
+{
+    char why[300], path[1024];
+    switch (reason) {
+    case COD2X_IWD_STOCK: snprintf(why, sizeof(why), "original IW / localized file"); break;
+    case COD2X_IWD_MOVIE: snprintf(why, sizeof(why), "demo movie folder"); break;
+    case COD2X_IWD_REQUIRED: snprintf(why, sizeof(why), "required by server/demo: %s", Cod2x_IwdRequiredName()); break;
+    case COD2X_IWD_LATEST_ZPAM: snprintf(why, sizeof(why), "latest ZPAM IWD file"); break;
+    case COD2X_IWD_LATEST_ZPAM_MAPS: snprintf(why, sizeof(why), "latest ZPAM_MAPS IWD file"); break;
+    case COD2X_IWD_GAME: snprintf(why, sizeof(why), "fs_game folder"); break;
+    default: snprintf(why, sizeof(why), "not required"); break;
+    }
+    Cod2x_IwdLog(reason ? "  ^2[LOADED]^7 %s" COD2X_IWD_SEPARATOR "%s ^9(%s)^7\n"
+                        : "  ^1[IGNORE]^7 %s" COD2X_IWD_SEPARATOR "%s ^9(%s)^7\n",
+                 Cod2x_IwdLogPath(directory, path, sizeof(path)), file, why);
+}
+
+static void Cod2x_ProcessedList_f(void)
+{
+    Com_Printf("------------------ fs_processedList ------------------\n");
+    Com_Printf("=== Previous session ===\n");
+    Com_Printf("%s", processedPrevious.length ? processedPrevious.text : "(empty)\n");
+    Com_Printf("\n\n=== Current session ===\n");
+    Com_Printf("%s", processedCurrent.length ? processedCurrent.text : "(empty)\n");
+    Com_Printf("------------------------------------------------------\n");
 }
 
 void Cod2x_FeaturesInit(void)
@@ -193,19 +300,24 @@ void Cod2x_FeaturesInit(void)
     compassOffsetX = Dvar_RegisterFloat("cg_hudCompassOffsetX", 0, -640, 640, 0x1000);
     compassOffsetY = Dvar_RegisterFloat("cg_hudCompassOffsetY", 0, -480, 480, 0x1000);
     matchLogin = Dvar_RegisterString("match_login", "", 0x12);
+    /* CoD2x cgame.cpp: hides IP addresses on screen, for streaming. */
+    hideServerIp = Dvar_RegisterBool("cl_hideServerIp", 0, 0x1001);
+    /* CoD2x text.cpp: position and size of the game messages and killfeed, in 640x480 units. */
+    messageOffsetX = Dvar_RegisterFloat("cg_gameMessageOffsetX", 0, -640, 640, 0x1001);
+    messageOffsetY = Dvar_RegisterFloat("cg_gameMessageOffsetY", 0, -480, 480, 0x1001);
+    messageScale = Dvar_RegisterFloat("cg_gameMessageScale", 1, .5f, 3, 0x1001);
     Cmd_AddCommand("increase", Cod2x_IncreaseDecrease_f);
     Cmd_AddCommand("decrease", Cod2x_IncreaseDecrease_f);
     Cmd_AddCommand("match", Cod2x_Match_f);
-    /* -1 uses every processor, 0 leaves the affinity alone, n uses the first n. */
-    affinity = Dvar_RegisterInt("com_affinity", -1, -1, Cod2x_ProcessorCount(), 0x1001);
-    ((dvar_t *)affinity)->modified = 1;
+    Cmd_AddCommand("fs_processedList", Cod2x_ProcessedList_f);
+    Dvar_RegisterBool("com_autoaffinity", 1, 0x1001);
+    Cod2x_AutoAffinity();
 }
 
 void Cod2x_FeaturesFrame(int active, int demo)
 {
     (void)active;
     playingDemo = demo;
-    Cod2x_AffinityFrame();
 }
 
 void Cod2x_FeaturesClientState(int state)
@@ -243,6 +355,159 @@ void Cod2x_FeaturesClientState(int state)
                        game->current.integer, COD2X_APP_VERSION);
     }
     Com_Printf("---------------------------------------------------------------------------------\n");
+}
+
+/* ---- Hidden IP addresses (CoD2x cgame.cpp and text.cpp) -------------------
+   With cl_hideServerIp, or sv_hideServerIp "1" in the connected server's info,
+   the scoreboard leaves the server address out and every IPv4 address drawn on
+   screen has its digits drawn as '*'. Nothing stored changes, so turning it off
+   brings the text back. */
+void Cod2x_HideServerIpFrame(const char *serverinfo)
+{
+    ipHidden = (hideServerIp && hideServerIp->current.enabled) ||
+               (serverinfo && Info_ValueForKey(serverinfo, "sv_hideServerIp")[0] == '1');
+}
+
+int Cod2x_HideServerIp(void)
+{
+    return ipHidden;
+}
+
+static int Cod2x_IpDigit(char c)
+{
+    return c >= '0' && c <= '9';
+}
+
+static int Cod2x_IpAlnum(char c)
+{
+    return Cod2x_IpDigit(c) || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
+/* Length of the address "a.b.c.d[:port]" at text + start, or 0. Octets are
+   0-255; an address of single digits only reads as a version ("1.4.6.8"). */
+static int Cod2x_IpLength(const char *text, int len, int start)
+{
+    int p = start, octet, longer = 0;
+    for (octet = 0; octet < 4; ++octet) {
+        int first = p, value = 0;
+        while (p < len && Cod2x_IpDigit(text[p]) && p - first < 3)
+            value = value * 10 + text[p++] - '0';
+        if (p == first || value > 255 || (p < len && Cod2x_IpDigit(text[p])))
+            return 0;
+        longer |= p - first > 1;
+        if (octet < 3) {
+            if (p >= len || text[p] != '.')
+                return 0;
+            ++p;
+        }
+    }
+    if (p < len && (Cod2x_IpAlnum(text[p]) || (text[p] == '.' && p + 1 < len && Cod2x_IpDigit(text[p + 1]))))
+        return 0;
+    if (!longer)
+        return 0;
+    if (p + 1 < len && text[p] == ':' && Cod2x_IpDigit(text[p + 1]))
+        for (++p; p < len && Cod2x_IpDigit(text[p]); ++p)
+            ;
+    return p - start;
+}
+
+/* Masks text in place; returns whether anything changed. The host of every
+   "connect" command on the line is masked too, so a typed name or a partial
+   address does not show either. */
+static int Cod2x_MaskIpAddresses(char *text, int len)
+{
+    int changed = 0, p, i;
+    char previous = ' ';
+    for (p = 0; p < len;) {
+        while (p < len && (text[p] == ']' || text[p] == '/' || text[p] == '\\' || text[p] == ' '))
+            ++p;
+        if (len - p >= 8 && !strncasecmp(text + p, "connect ", 8)) {
+            for (p += 8; p < len && text[p] == ' '; ++p)
+                ;
+            for (; p < len && text[p] != ' ' && text[p] != ';'; ++p)
+                if (Cod2x_IpAlnum(text[p])) {
+                    text[p] = '*';
+                    changed = 1;
+                }
+        }
+        while (p < len && text[p] != ';')
+            ++p;
+        ++p;
+    }
+    for (i = 0; i < len;) {
+        int length;
+        /* A colour code is not part of an address and separates like a space. */
+        if ((text[i] == '^' || text[i] == '$' || text[i] == '#' || text[i] == '@') && i + 1 < len) {
+            i += 2;
+            previous = ' ';
+            continue;
+        }
+        length = !Cod2x_IpAlnum(previous) && previous != '.' && Cod2x_IpDigit(text[i]) ? Cod2x_IpLength(text, len, i) : 0;
+        if (!length) {
+            previous = text[i++];
+            continue;
+        }
+        previous = text[i + length - 1];
+        for (; length > 0; --length, ++i)
+            if (Cod2x_IpDigit(text[i]))
+                text[i] = '*';
+        changed = 1;
+    }
+    return changed;
+}
+
+void Cod2x_HideIpInPlace(char *text, int len)
+{
+    if (ipHidden && text && len > 0)
+        Cod2x_MaskIpAddresses(text, len);
+}
+
+const char *Cod2x_HideIpText(const char *text, char *buffer, size_t size)
+{
+    size_t len;
+    if (!ipHidden || !text)
+        return text;
+    len = strlen(text);
+    if (len >= size)
+        return text;
+    memcpy(buffer, text, len + 1);
+    return Cod2x_MaskIpAddresses(buffer, (int)len) ? buffer : text;
+}
+
+/* Console cells: the low byte is the character; the killfeed's control cells
+   (types 10 and up) separate the text around them. */
+const short *Cod2x_HideIpCells(const short *cells, int count, short *buffer, int size)
+{
+    char text[1024];
+    int i;
+    if (!ipHidden || !cells || count <= 0 || count > size || count > (int)sizeof(text))
+        return cells;
+    for (i = 0; i < count; ++i) {
+        int type = (cells[i] >> 8) & 0xff;
+        text[i] = type >= 10 && type < 0x40 ? '\1' : (char)(cells[i] & 0xff);
+    }
+    if (!Cod2x_MaskIpAddresses(text, count))
+        return cells;
+    for (i = 0; i < count; ++i) {
+        buffer[i] = cells[i];
+        if (text[i] == '*' && (char)(cells[i] & 0xff) != '*')
+            buffer[i] = (short)((cells[i] & 0xff00) | '*');
+    }
+    return buffer;
+}
+
+/* The line height is whole (it also picks the font); the scale corrects the rest. */
+void Cod2x_GameMessageLayout(int *x, int *y, int *charHeight, float *scale)
+{
+    float height = 12.0f * (messageScale ? messageScale->current.value : 1.0f);
+    *charHeight = (int)(height + 0.5f);
+    if (*charHeight < 1)
+        *charHeight = 1;
+    *scale = height / (float)*charHeight;
+    if (messageOffsetX)
+        *x += (int)floorf(messageOffsetX->current.value + 0.5f);
+    if (messageOffsetY)
+        *y += (int)floorf(messageOffsetY->current.value + 0.5f);
 }
 
 int Cod2x_FeaturesDemo(void)
@@ -289,11 +554,6 @@ void Cod2x_CompassOffset(float *x, float *y)
    file system starts. This build does not carry it: it is copied from the
    player's own CoD2x mss32.dll in the game folder, as tools/cod2x/extract_iwd.py
    does, and nothing is downloaded. */
-#if defined(_WIN32)
-#define COD2X_IWD_SEPARATOR "\\"
-#else
-#define COD2X_IWD_SEPARATOR "/"
-#endif
 #define COD2X_IWD_MAX_DLL (256u * 1024 * 1024)
 #define COD2X_IWD_MAX (64u * 1024 * 1024)
 

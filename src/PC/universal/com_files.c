@@ -6,6 +6,7 @@
 #include "../server_mp/cod2x_server.h"
 extern int Dvar_GetInt(const char *dvarName);
 #ifndef DEDICATED
+#include "../qcommon/cod2x_features.h"
 extern clientConnection_t *clc;
 #endif
 #endif
@@ -412,6 +413,10 @@ Bool FS_RegisterDvars(void)
 {
     const char *homePath;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    /* CoD2x src/shared/iwd.cpp: each file-system start begins a new fs_processedList log. */
+    Cod2x_IwdLogRotate();
+#endif
     if (fs_debug)
         return 0;
 
@@ -437,11 +442,8 @@ Bool FS_RegisterDvars(void)
     fs_restrict = Dvar_RegisterBool_mac("fs_restrict", 0, 0x1010);
     fs_ignoreLocalized = Dvar_RegisterBool_mac("fs_ignoreLocalized", 0, 0x10a0);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
-    {
-        /* CoD2x src/shared/iwd.cpp FS_RegisterDvars: once, before the first search. */
-        extern void Cod2x_IwdStartup(const char *base);
-        Cod2x_IwdStartup(fs_basepath->current.string);
-    }
+    /* CoD2x src/shared/iwd.cpp FS_RegisterDvars: once, before the first search. */
+    Cod2x_IwdStartup(fs_basepath->current.string);
 #endif
 
     return 1;
@@ -1751,23 +1753,22 @@ static void FS_AddIwdFilesForGameDirectory(const char *path, const char *pszGame
             selection.version = Cod2x_GameVersion();
         }
 #endif
-        /* CoD2x src/shared/iwd.cpp reports each listing and every decision but the plain ones. */
+#ifndef DEDICATED
+        /* CoD2x src/shared/iwd.cpp logs each listing and every decision for fs_processedList. */
         if (numfiles > 0 && !selection.dedicated)
-            Com_Printf("Loading IWD files for CoD2x version: %d\n",
-                       selection.connecting && !selection.listen ? selection.version : COD2X_REVISION);
+            Cod2x_IwdLogDirectory(iwdfile, fs_basepath->current.string, fs_gameDirVar->current.string,
+                                  selection.connecting && !selection.listen ? selection.version : COD2X_REVISION,
+                                  selection.names);
+#endif
         for (i = 0; i < numfiles; ++i) {
             int reason = Cod2x_IwdAllowed(pszGameFolder, iwdfiles[i], (const char *const *)iwdfiles,
                                           numfiles, &selection);
-            if (reason == COD2X_IWD_REQUIRED)
-                Com_Printf("Required IWD from server/demo: %s.iwd\n", Cod2x_IwdRequiredName());
-            else if (reason == COD2X_IWD_LATEST_ZPAM)
-                Com_Printf("Allowed latest ZPAM IWD file: %s\n", iwdfiles[i]);
-            else if (reason == COD2X_IWD_LATEST_ZPAM_MAPS)
-                Com_Printf("Allowed latest ZPAM_MAPS IWD file: %s\n", iwdfiles[i]);
+#ifndef DEDICATED
+            if (!selection.dedicated)
+                Cod2x_IwdLogFile(iwdfile, iwdfiles[i], reason);
+#endif
             if (reason)
                 sorted[write++] = iwdfiles[i];
-            else
-                Com_Printf("Filtered out IWD file: %s\n", iwdfiles[i]);
         }
         numfiles = write;
     }

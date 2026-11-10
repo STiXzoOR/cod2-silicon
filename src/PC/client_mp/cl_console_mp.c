@@ -1232,6 +1232,12 @@ void Con_DrawNotify(int xPos, int yPos, float alpha, msgwnd_mode_t mode)
 {
     Con_DrawMessageWindow(&con.messageBuffer->gamemsg, xPos, yPos, 12, 1, 3, alpha, 1.0f, mode);
 }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+void Con_DrawNotifyScaled(int xPos, int yPos, int charHeight, float alpha, float scale, msgwnd_mode_t mode)
+{
+    Con_DrawMessageWindow(&con.messageBuffer->gamemsg, xPos, yPos, charHeight, 1, 3, alpha, scale, mode);
+}
+#endif
 
 static void ConDrawInput_IncrMatchCounter(const char *str)
 {
