@@ -324,7 +324,8 @@ final class Watchdog: @unchecked Sendable {
 }
 
 @main struct Snapshots {
-    static let screens = ["home", "home-first", "servers", "servers-empty", "settings", "settings-original", "settings-original-missing", "library-demos", "library-screenshots", "about",
+    static let screens = ["home", "home-first", "servers", "servers-empty", "settings", "settings-original", "settings-original-missing",
+                          "settings-cod2x-installed", "settings-cod2x-downloading", "settings-cod2x-error", "library-demos", "library-screenshots", "about",
                           "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"] + configScreens
     static let configScreens = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-text", "configs-history", "configs-running",
                                 "discover-unavailable", "discover-players", "discover-saved", "discover-player", "configs-import",

@@ -68,7 +68,9 @@ import Foundation
         precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 32))) == nil)
         precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 31))) != nil)
         try engines(server: server, scratch: scratch)
+        try cod2xFiles(scratch: scratch)
         try presentation(fixtures)
+        print("PASS: CoD2x files: the archive taken from a CoD2x mss32.dll by the engine's rule (none or two refused, a stock DLL named), the release refused at any other size or hash with only the archive kept, present for CoD2x and absent for Original 1.3, the game data folder never written")
         print("PASS: game version: CoD2x by default and kept across saves, both engines found by executable, Original 1.3 asks for CoD2x only on CoD2x servers, links and passwords never in argv, crash and freeze reports from either engine")
         print("PASS: real master/status fixtures, malformed packets, colours, native key CRC/private storage, config and URL injection, frame cap 0–1000 (250 by default)")
         print("PASS: cm/360, advanced dvar forms, settings migration, release notes, maps, server facts, media, key tag, player name and scrims")
@@ -133,6 +135,131 @@ import Foundation
         precondition(CrashReports.latest(in: reports, since: started)?.lastPathComponent == "cod2_freeze_202.txt")
         try report("cod2_crash_202.txt", 7)
         precondition(CrashReports.latest(in: reports, since: started)?.lastPathComponent == "cod2_crash_202.txt")
+    }
+
+    /// Settings › Game › CoD2x files, on synthetic DLLs and releases (no network): CoD2x's archive found by the
+    /// engine's rule, the release pinned by size and hash, and the app home's copy kept for CoD2x only.
+    static func cod2xFiles(scratch: URL) throws {
+        let fm = FileManager.default
+        let iwd = zip([("ui_mp/main.menu", Data("{ menuDef }".utf8), true), ("materials/radar_player_arrow", Data(repeating: 7, count: 130), false),
+                       ("images/radar_player_arrow.iwi", Data(repeating: 1, count: 4096), true)])
+        let other = zip([("readme.txt", Data("not CoD2x".utf8), false)])
+        let cod2xDLL = dll([other, iwd])
+        precondition((try? CoD2xFiles.archive(fromDLL: cod2xDLL)) == iwd, "the embedded archive byte for byte; an unrelated ZIP beside it doesn't count")
+        let shouted = zip([("UI_MP\\Main.menu", Data("x".utf8), false), ("Materials\\Radar_Player_Arrow", Data("y".utf8), false)])
+        precondition((try? CoD2xFiles.archive(fromDLL: dll([shouted]))) == shouted, "names compare as the engine compares them")
+        for (bad, why) in [(dll([]), "a stock Miles DLL holds no archive"), (dll([other]), "an archive without CoD2x's menu and arrow"),
+                           (dll([iwd, iwd]), "two archives"), (iwd, "not a Windows DLL"), (Data(count: 63), "too short")] {
+            do { _ = try CoD2xFiles.archive(fromDLL: bad); preconditionFailure(why) } catch { precondition(error as? CoD2xFiles.Failure == .noCoD2x, why) }
+        }
+
+        // The release: mss32.dll (not mss32_original.dll) once the size and SHA-256 match; anything else is refused.
+        let release = zip([("CoD2x Installation and uninstallation manual.txt", Data("read me".utf8), true), ("mss32.dll", cod2xDLL, true),
+                           ("mss32_original.dll", dll([]), true)])
+        let size = release.count, hash = CoD2xFiles.sha256(release)
+        precondition((try? CoD2xFiles.dll(fromRelease: release, size: size, sha256: hash)) == cod2xDLL)
+        var flipped = release; flipped[flipped.count / 2] ^= 0xff
+        for (bad, size, hash, why) in [(release, CoD2xFiles.releaseSize, CoD2xFiles.releaseSHA256, "not the pinned release"), (release + Data([0]), size, hash, "another size"),
+                                       (flipped, size, hash, "another hash"), (Data(count: CoD2xFiles.releaseSize), CoD2xFiles.releaseSize, CoD2xFiles.releaseSHA256, "the pinned size, another hash")] {
+            do { _ = try CoD2xFiles.dll(fromRelease: bad, size: size, sha256: hash); preconditionFailure(why) } catch { precondition(error as? CoD2xFiles.Failure == .mismatch, why) }
+        }
+        precondition(CoD2xFiles.releaseSize == 2_577_745 && CoD2xFiles.releaseURL.absoluteString.hasSuffix("/v1.4.6.8/CoD2x_1.4.6.8_windows.zip") && CoD2xFiles.version == "1.4.6.8")
+        let refused = scratch.appendingPathComponent("refused home"), downloaded = scratch.appendingPathComponent("release home")
+        do { try CoD2xFiles.install(release: release, home: refused); preconditionFailure("unpinned") } catch {
+            precondition(CoD2xFiles.message(error) == "The download didn’t match CoD2x 1.4.6.8, so it wasn’t used." && !fm.fileExists(atPath: refused.path))
+        }
+        try CoD2xFiles.install(release: release, home: downloaded, size: size, sha256: hash)
+        precondition((try? fm.subpathsOfDirectory(atPath: downloaded.path))?.sorted() == ["cod2x", "cod2x/iw_CoD2x_01.iwd"],
+                     "only the archive is kept: no release, no DLL")
+        precondition((try? Data(contentsOf: CoD2xFiles.stored(home: downloaded))) == iwd)
+
+        // Choose Folder: a Windows game folder's mss32.dll, read and never changed.
+        let windows = scratch.appendingPathComponent("Windows CoD2"), home = scratch.appendingPathComponent("app home")
+        try fm.createDirectory(at: windows.appendingPathComponent("main"), withIntermediateDirectories: true)
+        do { try CoD2xFiles.install(folder: windows, home: home); preconditionFailure("no DLL") } catch { precondition(error as? CoD2xFiles.Failure == .noCoD2x) }
+        try dll([]).write(to: windows.appendingPathComponent("mss32.dll"))
+        do { try CoD2xFiles.install(folder: windows, home: home); preconditionFailure("stock DLL") } catch {
+            precondition(CoD2xFiles.message(error) == "This folder doesn’t have CoD2x installed.", "a stock Miles DLL says the folder has no CoD2x")
+        }
+        try cod2xDLL.write(to: windows.appendingPathComponent("mss32.dll"))
+        let windowsBefore = tree(windows)
+        precondition(CoD2xFiles.status(home: home, dataPath: "") == (false, CoD2xFiles.Message.notInstalled))
+        try CoD2xFiles.install(folder: windows, home: home)
+        precondition((try? Data(contentsOf: CoD2xFiles.stored(home: home))) == iwd && tree(windows) == windowsBefore)
+        precondition(CoD2xFiles.status(home: home, dataPath: "") == (true, "Installed · from your CoD2x folder"), "only the pinned archive is called 1.4.6.8")
+        precondition(CoD2xFiles.Message.installed == "Installed · 1.4.6.8")
+
+        // Before a game: present in the app home's main for CoD2x, absent for Original 1.3; the game data folder is never written.
+        let data = scratch.appendingPathComponent("Game Data"), fresh = scratch.appendingPathComponent("fresh home"), placed = CoD2xFiles.placed(home: home)
+        try fm.createDirectory(at: data.appendingPathComponent("main"), withIntermediateDirectories: true)
+        try Data("stock".utf8).write(to: data.appendingPathComponent("main/iw_00.iwd"))
+        let game = tree(data)
+        precondition(CoD2xFiles.prepare(for: .cod2x, home: fresh, dataPath: data.path) == .none && !fm.fileExists(atPath: fresh.path), "no files: the game still starts")
+        precondition(CoD2xFiles.prepare(for: .cod2x, home: home, dataPath: data.path) == .placed && (try? Data(contentsOf: placed)) == iwd)
+        precondition(CoD2xFiles.prepare(for: .cod2x, home: home, dataPath: data.path) == .inPlace)
+        try Data("older".utf8).write(to: placed)
+        precondition(CoD2xFiles.prepare(for: .cod2x, home: home, dataPath: data.path) == .placed && (try? Data(contentsOf: placed)) == iwd, "a different copy is replaced")
+        precondition(CoD2xFiles.prepare(for: .original, home: home, dataPath: data.path) == .removed && !fm.fileExists(atPath: placed.path))
+        precondition(CoD2xFiles.prepare(for: .original, home: home, dataPath: data.path) == .none)
+        try Data("the player's own".utf8).write(to: placed)
+        precondition(CoD2xFiles.prepare(for: .original, home: home, dataPath: data.path) == .none && fm.fileExists(atPath: placed.path), "only a copy identical to the kept one goes")
+        try fm.removeItem(at: placed)
+        precondition(tree(data) == game, "the game data folder is never written")
+        // A Windows install with CoD2x has its own copy in the game data folder, which stays in charge for both engines.
+        _ = CoD2xFiles.prepare(for: .cod2x, home: home, dataPath: data.path)
+        try iwd.write(to: data.appendingPathComponent("main/iw_CoD2x_01.iwd"))
+        let withCoD2x = tree(data)
+        for engine in [GameEngine.cod2x, .original] {
+            precondition(CoD2xFiles.prepare(for: engine, home: home, dataPath: data.path) == .gameFolder && !fm.fileExists(atPath: placed.path))
+        }
+        precondition(tree(data) == withCoD2x, "the game data folder is never written")
+        precondition(CoD2xFiles.status(home: fresh, dataPath: data.path) == (false, "Found in your game folder"))
+        try fm.removeItem(at: data.appendingPathComponent("main/iw_CoD2x_01.iwd"))
+        let gameAgain = tree(data)
+
+        // Remove: the kept archive and its identical copy only.
+        precondition(CoD2xFiles.prepare(for: .cod2x, home: home, dataPath: data.path) == .placed)
+        try CoD2xFiles.remove(home: home)
+        precondition(!fm.fileExists(atPath: CoD2xFiles.stored(home: home).path) && !fm.fileExists(atPath: placed.path))
+        precondition(CoD2xFiles.status(home: home, dataPath: data.path) == (false, "Not installed") && tree(data) == gameAgain)
+    }
+    /// A small ZIP, each entry stored or raw-deflated (CRCs are left 0; neither reader checks them).
+    static func zip(_ entries: [(name: String, data: Data, deflate: Bool)]) -> Data {
+        func le16(_ v: Int) -> [UInt8] { [UInt8(v & 0xff), UInt8(v >> 8 & 0xff)] }
+        func le32(_ v: Int) -> [UInt8] { le16(v & 0xffff) + le16(v >> 16 & 0xffff) }
+        var body: [UInt8] = [], directory: [UInt8] = []
+        for entry in entries {
+            let payload = entry.deflate ? [UInt8]((try! (entry.data as NSData).compressed(using: .zlib)) as Data) : [UInt8](entry.data)
+            let name = Array(entry.name.utf8), method = entry.deflate ? 8 : 0, offset = body.count
+            let sizes = [le32(0), le32(payload.count), le32(entry.data.count), le16(name.count)].flatMap { $0 }
+            body += [le32(0x04034b50), le16(20), le16(0), le16(method), le16(0), le16(0), sizes, le16(0), name, payload].flatMap { $0 }
+            directory += [le32(0x02014b50), le16(20), le16(20), le16(0), le16(method), le16(0), le16(0), sizes, le16(0), le16(0),
+                          le16(0), le16(0), le32(0), le32(offset), name].flatMap { $0 }
+        }
+        return Data([le32(0x06054b50), le16(0), le16(0), le16(entries.count), le16(entries.count), le32(directory.count), le32(body.count), le16(0)]
+            .reduce(body + directory, +))
+    }
+    /// A Windows DLL as the engine checks one (MZ, PE at the offset in the header), padding, then each ZIP.
+    static func dll(_ zips: [Data]) -> Data {
+        var bytes = [UInt8](repeating: 0xcc, count: 128)
+        bytes[0] = 0x4d; bytes[1] = 0x5a; bytes[60] = 64; bytes[61] = 0; bytes[62] = 0; bytes[63] = 0
+        bytes.replaceSubrange(64..<68, with: [0x50, 0x45, 0, 0])
+        for zip in zips { bytes += [UInt8](zip) + [UInt8](repeating: 0x90, count: 333) }
+        return Data(bytes)
+    }
+    /// Every file and folder under a directory with its size, modification time and SHA-256, so any write shows.
+    static func tree(_ root: URL) -> [String: String] {
+        let keys: [URLResourceKey] = [.isDirectoryKey, .fileSizeKey, .contentModificationDateKey]
+        func entry(_ url: URL) -> String {
+            guard let values = try? url.resourceValues(forKeys: Set(keys)) else { return "unreadable" }
+            let stamp = values.contentModificationDate?.timeIntervalSince1970 ?? 0
+            guard values.isDirectory != true else { return "folder \(stamp)" }
+            return "\(values.fileSize ?? -1) \(stamp) " + ((try? Data(contentsOf: url)).map(CoD2xFiles.sha256) ?? "unreadable")
+        }
+        var result = [root.path: entry(root)]
+        guard let walk = FileManager.default.enumerator(at: root, includingPropertiesForKeys: keys) else { return result }
+        for case let url as URL in walk { result[url.path] = entry(url) }
+        return result
     }
 
     static func presentation(_ fixtures: URL) throws {

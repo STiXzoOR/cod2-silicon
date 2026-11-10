@@ -302,6 +302,219 @@ enum CrashReports {
     }
 }
 
+/// CoD2x's own menus and icons: the archive `iw_CoD2x_01.iwd` that CoD2x carries inside its Windows
+/// `mss32.dll`. CoD2x has no licence, so the app ships neither. Only when the player asks, the launcher
+/// downloads the pinned official release, or reads the `mss32.dll` of a Windows game folder with CoD2x,
+/// and keeps the archive alone in `<app home>/cod2x`. Before each game it goes into `<app home>/main`
+/// (the engines' fs_homepath) for CoD2x and is taken away for the original 1.3. The game data folder
+/// is only ever read.
+enum CoD2xFiles {
+    /// The one release this build uses, pinned by size and SHA-256 next to its version. Never "latest".
+    static let version = "1.4.6.8"
+    static let releaseURL = URL(string: "https://github.com/callofduty2x/CoD2x/releases/download/v1.4.6.8/CoD2x_1.4.6.8_windows.zip")!
+    static let releaseSize = 2_577_745
+    static let releaseSHA256 = "c33f52037e67eaa948746a93967d27d8c70ab58623abab48d07803600a6a8555"
+    /// The archive inside that release's mss32.dll, which tells it apart from a copy of another version.
+    static let archiveSHA256 = "fcb20f972cea3ed57eb2479976626fbe34bc1a58cea2d626135e379b51c2fa16"
+    static let archiveName = "iw_CoD2x_01.iwd"
+    /// The engine's limits (cod2x_features.c): the mss32.dll it reads, and the archive and its contents.
+    static let dllLimit = 256 * 1024 * 1024
+    static let archiveLimit = 64 * 1024 * 1024
+
+    enum Message {
+        static let notInstalled = "Not installed"
+        static let installed = "Installed · \(CoD2xFiles.version)"
+        static let fromFolder = "Installed · from your CoD2x folder"
+        static let gameFolder = "Found in your game folder"
+        static let downloading = "Downloading…"
+        static let copying = "Copying…"
+    }
+    enum Failure: LocalizedError, Equatable {
+        case download, mismatch, noCoD2x, unreadable, save, remove
+        var errorDescription: String? {
+            switch self {
+            case .download: "Couldn’t download. Check your connection and try again."
+            case .mismatch: "The download didn’t match CoD2x \(CoD2xFiles.version), so it wasn’t used."
+            case .noCoD2x: "This folder doesn’t have CoD2x installed."
+            case .unreadable: "Couldn’t read that folder."
+            case .save: "Couldn’t save the files on this Mac."
+            case .remove: "Couldn’t remove the files."
+            }
+        }
+    }
+    static func message(_ error: Error) -> String { ((error as? Failure) ?? .save).errorDescription ?? "" }
+
+    static func stored(home: URL) -> URL { home.appendingPathComponent("cod2x").appendingPathComponent(archiveName) }
+    static func placed(home: URL) -> URL { home.appendingPathComponent("main").appendingPathComponent(archiveName) }
+    /// A Windows install with CoD2x already has the archive in the game data folder's main.
+    static func inGameFolder(dataPath: String) -> Bool {
+        !dataPath.isEmpty && FileManager.default.fileExists(atPath: URL(fileURLWithPath: dataPath).appendingPathComponent("main/" + archiveName).path)
+    }
+    /// Settings: whether an archive is kept, and what to say about it.
+    static func status(home: URL, dataPath: String) -> (installed: Bool, message: String) {
+        if let kept = regularFile(stored(home: home)) { return (true, sha256(kept) == archiveSHA256 ? Message.installed : Message.fromFolder) }
+        return (false, inGameFolder(dataPath: dataPath) ? Message.gameFolder : Message.notInstalled)
+    }
+
+    /// The release, fetched only when the player asks: a plain request in a private session (no cookies,
+    /// cache or headers of ours), its size checked before it is read. The temporary file is deleted.
+    static func download() async throws -> Data {
+        let session = URLSession(configuration: .ephemeral)
+        defer { session.finishTasksAndInvalidate() }
+        let result: (URL, URLResponse)
+        do { result = try await session.download(from: releaseURL) } catch { throw Failure.download }
+        defer { try? FileManager.default.removeItem(at: result.0) }
+        guard (result.1 as? HTTPURLResponse)?.statusCode == 200 else { throw Failure.download }
+        guard (try? result.0.resourceValues(forKeys: [.fileSizeKey]).fileSize) == releaseSize else { throw Failure.mismatch }
+        do { return try Data(contentsOf: result.0) } catch { throw Failure.download }
+    }
+    /// Keeps the archive from the release. The release and its mss32.dll stay in memory only.
+    static func install(release zip: Data, home: URL, size: Int = releaseSize, sha256 expected: String = releaseSHA256) throws {
+        let archive: Data
+        do { archive = try Self.archive(fromDLL: try dll(fromRelease: zip, size: size, sha256: expected)) } catch { throw Failure.mismatch }
+        try keep(archive, home: home)
+    }
+    /// Reads (never changes) a Windows game folder's mss32.dll and keeps its CoD2x archive.
+    static func install(folder: URL, home: URL) throws {
+        let dll = folder.appendingPathComponent("mss32.dll").resolvingSymlinksInPath()
+        guard let values = try? dll.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey]), values.isRegularFile == true,
+              (values.fileSize ?? 0) <= dllLimit else { throw Failure.noCoD2x }
+        let data: Data
+        do { data = try Data(contentsOf: dll) } catch { throw Failure.unreadable }
+        try keep(try archive(fromDLL: data), home: home)
+    }
+    private static func keep(_ archive: Data, home: URL) throws {
+        do { try PrivateFile.write(archive, to: stored(home: home)) } catch { throw Failure.save }
+    }
+    /// Removes the kept archive, and the copy in the app home's main when it is that archive.
+    static func remove(home: URL) throws {
+        let kept = stored(home: home), target = placed(home: home)
+        if let data = regularFile(kept), regularFile(target) == data, (try? FileManager.default.removeItem(at: target)) == nil { throw Failure.remove }
+        if FileManager.default.fileExists(atPath: kept.path), (try? FileManager.default.removeItem(at: kept)) == nil { throw Failure.remove }
+    }
+
+    enum Placement: Equatable { case gameFolder, placed, inPlace, removed, none, failed }
+    /// Before a game: CoD2x finds the kept archive in `<home>/main`, the original 1.3 doesn't. A game data
+    /// folder with CoD2x's own copy keeps it in charge, so only the app's copy is taken away (fs_homepath
+    /// comes after fs_basepath in the search order, so it would win). Only a copy identical to the kept
+    /// archive is ever removed, nothing is written outside the app home, and nothing stops a game.
+    static func prepare(for engine: GameEngine, home: URL, dataPath: String) -> Placement {
+        let main = home.appendingPathComponent("main").resolvingSymlinksInPath().standardizedFileURL
+        guard !dataPath.isEmpty,
+              main.path != URL(fileURLWithPath: dataPath).appendingPathComponent("main").resolvingSymlinksInPath().standardizedFileURL.path else { return .none }
+        let kept = regularFile(stored(home: home)), target = placed(home: home), current = regularFile(target)
+        let ownCopy = inGameFolder(dataPath: dataPath)
+        if engine == .original || ownCopy {
+            guard let kept, current == kept else { return ownCopy ? .gameFolder : .none }
+            guard (try? FileManager.default.removeItem(at: target)) != nil else { return .failed }
+            return ownCopy ? .gameFolder : .removed
+        }
+        guard let kept else { return .none }
+        if current == kept { return .inPlace }
+        let temporary = main.appendingPathComponent(".\(archiveName).\(UUID().uuidString)")
+        do {
+            try FileManager.default.createDirectory(at: main, withIntermediateDirectories: true)
+            try FileManager.default.copyItem(at: stored(home: home), to: temporary)  // a clone on APFS
+            guard rename(temporary.path, target.path) == 0 else { throw Failure.save }
+            return .placed
+        } catch {
+            try? FileManager.default.removeItem(at: temporary)
+            return .failed
+        }
+    }
+
+    /// The release's mss32.dll, once the release matches its pinned size and SHA-256.
+    static func dll(fromRelease zip: Data, size: Int = releaseSize, sha256 expected: String = releaseSHA256) throws -> Data {
+        guard zip.count == size, sha256(zip) == expected else { throw Failure.mismatch }
+        let b = [UInt8](zip)
+        var eocd = b.count - 22
+        while eocd >= max(0, b.count - 22 - 65_535) && le32(b, eocd) != 0x06054b50 { eocd -= 1 }
+        guard eocd >= 0, eocd >= b.count - 22 - 65_535 else { throw Failure.mismatch }
+        let count = le16(b, eocd + 10), directory = le32(b, eocd + 16)
+        guard directory + le32(b, eocd + 12) <= eocd else { throw Failure.mismatch }
+        var position = directory
+        var entry: (method: Int, flags: Int, compressed: Int, expanded: Int, offset: Int)?
+        for _ in 0..<count {
+            guard position + 46 <= eocd, le32(b, position) == 0x02014b50 else { throw Failure.mismatch }
+            let nameLength = le16(b, position + 28)
+            guard position + 46 + nameLength <= eocd else { throw Failure.mismatch }
+            let name = String(decoding: b[(position + 46)..<(position + 46 + nameLength)], as: UTF8.self)
+            if name.split(whereSeparator: { $0 == "/" || $0 == "\\" }).last?.lowercased() == "mss32.dll" {
+                guard entry == nil else { throw Failure.mismatch }
+                entry = (le16(b, position + 10), le16(b, position + 8), le32(b, position + 20), le32(b, position + 24), le32(b, position + 42))
+            }
+            position += 46 + nameLength + le16(b, position + 30) + le16(b, position + 32)
+        }
+        guard let entry, entry.flags & 1 == 0, entry.expanded <= dllLimit, entry.offset + 30 <= directory,
+              le32(b, entry.offset) == 0x04034b50 else { throw Failure.mismatch }
+        let start = entry.offset + 30 + le16(b, entry.offset + 26) + le16(b, entry.offset + 28)
+        guard start + entry.compressed <= directory else { throw Failure.mismatch }
+        let payload = Data(b[start..<(start + entry.compressed)])
+        let dll: Data
+        switch entry.method {
+        case 0: dll = payload
+        case 8:  // raw DEFLATE, which is what the Compression framework calls zlib
+            guard let expanded = try? (payload as NSData).decompressed(using: .zlib) as Data else { throw Failure.mismatch }
+            dll = expanded
+        default: throw Failure.mismatch
+        }
+        guard dll.count == entry.expanded else { throw Failure.mismatch }
+        return dll
+    }
+
+    /// The engine's rule (Cod2x_IwdFromDll in cod2x_features.c): a Windows executable holding exactly one
+    /// ZIP, found from its end-of-central-directory record, whose directory names CoD2x's main menu and
+    /// radar arrow and expands to 64 MB at most. A stock Miles mss32.dll holds none.
+    static func archive(fromDLL data: Data) throws -> Data {
+        let b = [UInt8](data)
+        guard b.count >= 64, b.count <= dllLimit, b[0] == 0x4d, b[1] == 0x5a, le32(b, 60) <= b.count - 4,
+              b[le32(b, 60)..<(le32(b, 60) + 4)].elementsEqual([0x50, 0x45, 0, 0]) else { throw Failure.noCoD2x }
+        var found: Range<Int>?
+        var position = 0
+        while position + 22 <= b.count {
+            defer { position += 1 }
+            guard b[position] == 0x50, le32(b, position) == 0x06054b50 else { continue }
+            let directorySize = le32(b, position + 12), directory = le32(b, position + 16), end = position + 22 + le16(b, position + 20)
+            guard le16(b, position + 4) == 0, le16(b, position + 6) == 0, le16(b, position + 8) == le16(b, position + 10),
+                  directorySize + directory <= position, end <= b.count else { continue }
+            let begin = position - directorySize - directory
+            guard le32(b, begin) == 0x04034b50, end - begin <= archiveLimit,
+                  isArchive(b, begin: begin, end: end, directory: directory, directorySize: directorySize, count: le16(b, position + 10)) else { continue }
+            guard found == nil else { throw Failure.noCoD2x }  // two: not a CoD2x release
+            found = begin..<end
+        }
+        guard let found else { throw Failure.noCoD2x }
+        return Data(b[found])
+    }
+    /// Cod2x_IwdArchive: names compared lowercased with forward slashes, up to a NUL as C compares them.
+    private static func isArchive(_ b: [UInt8], begin: Int, end: Int, directory: Int, directorySize: Int, count: Int) -> Bool {
+        let last = directory + directorySize
+        var position = directory, expanded = 0, menu = false, arrow = false
+        for _ in 0..<count {
+            guard position + 46 <= last, last <= end - begin, le32(b, begin + position) == 0x02014b50 else { return false }
+            expanded += le32(b, begin + position + 24)
+            let nameLength = le16(b, begin + position + 28)
+            guard position + 46 + nameLength <= last else { return false }
+            if nameLength < 256 {
+                let bytes = b[(begin + position + 46)..<(begin + position + 46 + nameLength)].prefix { $0 != 0 }
+                let name = String(decoding: bytes.map { (c: UInt8) -> UInt8 in c == 0x5c ? 0x2f : (c >= 0x41 && c <= 0x5a ? c + 32 : c) }, as: UTF8.self)
+                menu = menu || name == "ui_mp/main.menu"
+                arrow = arrow || name == "materials/radar_player_arrow"
+            }
+            position += 46 + nameLength + le16(b, begin + position + 30) + le16(b, begin + position + 32)
+        }
+        return menu && arrow && expanded <= archiveLimit
+    }
+    private static func le16(_ b: [UInt8], _ i: Int) -> Int { Int(b[i]) | Int(b[i + 1]) << 8 }
+    private static func le32(_ b: [UInt8], _ i: Int) -> Int { le16(b, i) | le16(b, i + 2) << 16 }
+    static func sha256(_ data: Data) -> String { SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() }
+    private static func regularFile(_ url: URL) -> Data? {
+        guard let values = try? url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey]),
+              values.isRegularFile == true, values.isSymbolicLink != true, (values.fileSize ?? 0) <= archiveLimit else { return nil }
+        return try? Data(contentsOf: url)
+    }
+}
+
 struct GameSettings: Codable, Sendable, Equatable {
     static let machineDvarNames: Set<String> = ["r_mode", "r_fullscreen", "r_borderless", "r_swapinterval", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "com_introplayed", "logfile", "developer", "fs_basepath", "fs_homepath", "fs_game", "fs_cdpath", "fs_copyfiles", "fs_restrict", "loc_language", "dedicated", "com_hunkmegs", "net_port", "cl_matchsummaries"]
     var resolution = "1920x1080"

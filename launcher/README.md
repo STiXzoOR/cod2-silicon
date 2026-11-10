@@ -80,6 +80,18 @@ from the catalogue's two modes. Before each game the launcher puts back what the
 replaced (one History entry per loadout) and remembers what this engine can't hold in
 `main/players/.studio-engine-handoff.json`.
 
+CoD2x's own menus and icons live in `iw_CoD2x_01.iwd`, which CoD2x carries inside its Windows
+`mss32.dll`. CoD2x has no licence, so neither ships with the app. Settings › Game › CoD2x files
+gets the archive only when the player asks: Download fetches the pinned 1.4.6.8 release from
+GitHub (refused unless its size and SHA-256 match `CoD2xFiles` in `Core.swift`), and Choose Folder
+reads, without changing it, the `mss32.dll` of a Windows game folder with CoD2x. The archive is
+found by the engine's rule (`Cod2x_IwdFromDll` in `cod2x_features.c`, reimplemented in Swift) and
+only it is kept, in `<app home>/cod2x`. Before a CoD2x game the launcher puts it in
+`<app home>/main` (the engines' `fs_homepath`, searched after `fs_basepath`), and before an
+Original 1.3 game it removes that copy when it is identical to the kept one. A game data folder
+that already has `main/iw_CoD2x_01.iwd` keeps its own, the game data folder is never written, and
+missing files never stop a game.
+
 Fast path:
 
 ```sh
