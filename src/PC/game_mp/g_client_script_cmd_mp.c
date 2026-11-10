@@ -1671,14 +1671,19 @@ extern void G_GetPlayerViewOrigin(const gentity_t *ent, vec_t *origin);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern int I_stricmp(const char *s1, const char *s2);
 
-static gentity_t *PlayerCmd_Cod2xPlayer(scr_entref_t entref)
+extern playerState_t *SV_GameClientNum(int num);
+extern void Scr_AddUndefined(void);
+
+/* As in CoD2x, the CoD2x methods check only that the entity number is a
+   player's; the error leaves undefined. */
+static int PlayerCmd_Cod2xPlayer(scr_entref_t entref)
 {
-    if (entref.classnum != 0 || entref.entnum >= 64) {
-        Scr_ObjectError(entref.classnum != 0 ? "not an entity" :
-                        va("entity %i is not a player", (int)entref.entnum));
-        return NULL;
+    if (entref.entnum >= 64) {
+        Scr_Error(va("entity %i is not a player", (int)entref.entnum));
+        Scr_AddUndefined();
+        return 0;
     }
-    return PlayerCmd_GetPlayerEntity(entref);
+    return 1;
 }
 
 static void PlayerCmd_Cod2xGetIp(scr_entref_t entref)
@@ -1711,29 +1716,41 @@ static void PlayerCmd_Cod2xGetAuthorization(scr_entref_t entref)
         Scr_AddString(SV_Cod2xClientAuthorization(entref.entnum));
 }
 
+static gentity_t *PlayerCmd_Cod2xEntity(scr_entref_t entref)
+{
+    return (gentity_t *)((byte *)imp_g_entities + entref.entnum * sizeof(gentity_t));
+}
+
 static void PlayerCmd_Cod2xGetViewOrigin(scr_entref_t entref)
 {
-    gentity_t *player = PlayerCmd_Cod2xPlayer(entref);
+    gentity_t *player;
     vec3_t origin;
-    if (!player)
+    if (!PlayerCmd_Cod2xPlayer(entref))
         return;
+    player = PlayerCmd_Cod2xEntity(entref);
+    /* CoD2x reads the client unchecked; a slot without one stops here instead. */
+    if (!player->client) {
+        Scr_Error(va("entity %i is not a player", (int)entref.entnum));
+        Scr_AddUndefined();
+        return;
+    }
     G_GetPlayerViewOrigin(player, origin);
     Scr_AddVector(origin);
 }
 
 static void PlayerCmd_Cod2xGetStance(scr_entref_t entref)
 {
-    gentity_t *player = PlayerCmd_Cod2xPlayer(entref);
-    if (player)
-        Scr_AddString((player->client->ps.pm_flags & 2) ? "crouch" :
-                      (player->client->ps.pm_flags & 1) ? "prone" : "stand");
+    const playerState_t *ps;
+    if (!PlayerCmd_Cod2xPlayer(entref))
+        return;
+    ps = SV_GameClientNum(entref.entnum);
+    Scr_AddString((ps->pm_flags & 2) ? "crouch" : (ps->pm_flags & 1) ? "prone" : "stand");
 }
 
 static void PlayerCmd_Cod2xIsUsingTurret(scr_entref_t entref)
 {
-    gentity_t *player = PlayerCmd_Cod2xPlayer(entref);
-    if (player)
-        Scr_AddBool((player->s.eFlags & 0x300) != 0);
+    if (PlayerCmd_Cod2xPlayer(entref))
+        Scr_AddBool((PlayerCmd_Cod2xEntity(entref)->s.eFlags & 0x300) != 0);
 }
 
 /* Separate native table leaves the original builtin table and layout intact. */

@@ -167,22 +167,20 @@ void SV_MatchEnd(void) { ++matchEnds; }
 void ExitLevel(void);
 #include "stop_vm_game.h"
 void ExitLevel(void) {
-#if defined(COD2_CODX) && COD2_CODX && STOP_VM_CALLBACK_IMPLEMENTED
-#if STOP_VM_QUEUE_RETURNS_RESULT
-    if (!GScr_Cod2xQueueExitLevel())
-        return;
-#else
-    GScr_Cod2xQueueExitLevel();
-#endif
-#else
     Cbuf_ExecuteText(2, "map_rotate\n");
-#endif
     level.teamScores[0] = level.teamScores[1] = 0;
 }
 void Hunk_ClearToMark(int mark) { (void)mark; for (size_t i = 0; i < permanentCount; ++i) free(permanent[i]); permanentCount = 0; }
 extern void Scr_EndLoadScripts(void);
 extern void Scr_EndLoadAnimTrees(void);
 #include "stop_vm_errors.h"
+
+static void ClearRequest(void)
+{
+    level.finished = level.savepersist = 0;
+    observedStops = queuedTransitions = matchEnds = 0;
+    queued[0] = 0;
+}
 
 int main(void)
 {
@@ -193,16 +191,18 @@ int main(void)
         snprintf(scriptText, sizeof(scriptText),
                  "main() {} CodeCallback_StartGameType() {} CodeCallback_PlayerConnect() {} "
                  "CodeCallback_PlayerDisconnect() {} CodeCallback_PlayerDamage() {} CodeCallback_PlayerKilled() {} "
-                 "CodeCallback_StopGameType(fromScript, complete, shutdown, source) { probe_stop(fromScript, complete, shutdown, source); map_restart(1); map(\"fixture_next\", false); exitlevel(false); return %s; } "
+                 "CodeCallback_StopGameType(fromScript, complete, shutdown, source) { probe_stop(fromScript, complete, shutdown, source); return %s; } "
                  "requestMap() { map(\"fixture_next\", 1); } requestRestart() { map_restart(1); } requestExit() { exitlevel(1); }", returns[i]);
         GScr_LoadGameTypeScript();
         scrCompilePub.programLen = emitted; scrVarPub.endScriptBuffer = bytecode + emitted;
         scrCompilePub.script_loading = 0;
         assert(Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "CodeCallback_StopGameType"));
-#if defined(COD2_CODX) && COD2_CODX
-#if STOP_VM_CALLBACK_IMPLEMENTED
+#if defined(COD2_CODX) && COD2_CODX && STOP_VM_CALLBACK_IMPLEMENTED
+        /* Only the integer 0 blocks; a shutdown is never blocked. */
+        ClearRequest();
         expectedScript = 0; expectedComplete = 1; expectedShutdown = 0; expectedSource = "map";
         assert(GScr_Cod2xBeforeMapChange(0, "map") == (i != 0));
+        assert(observedStops == 1);
         assert(scrVmPub.outparamcount == 0 && scrVmPub.inparamcount == 0 && scrVmPub.top == scrVmPub.stack);
         expectedShutdown = 1; expectedSource = "shutdown";
         assert(GScr_Cod2xBeforeMapChange(1, "shutdown"));
@@ -213,37 +213,45 @@ int main(void)
             assert(GScr_Cod2xBeforeMapChange(0, "map_restart") == (i != 0));
             assert(scrVmPub.outparamcount == 0 && scrVmPub.inparamcount == 0 && scrVmPub.top == scrVmPub.stack);
         }
+        /* The match-cancel bypass lets exactly one blocked change through. */
+        ClearRequest();
+        expectedScript = 0; expectedComplete = 1; expectedShutdown = 0; expectedSource = "map";
+        GScr_Cod2xAllowOneMapChange();
+        assert(GScr_Cod2xBeforeMapChange(0, "map"));
+        assert(GScr_Cod2xBeforeMapChange(0, "map") == (i != 0));
+        assert(observedStops == 2);
 #endif
+        /* map(), map_restart() and exitLevel() only queue their command, as in
+           the stock game; the callback runs when that command does. */
         static const char *requestFunctions[] = { "requestMap", "requestRestart", "requestExit" };
         static const char *requestSources[] = { "map", "fast_restart", "map_rotate" };
+        static const char *requestCommands[] = { "map fixture_next\n", "fast_restart\n", "map_rotate\n" };
         for (int request = 0; request < 3; ++request) {
-            level.finished = 0; level.savepersist = 0; level.teamScores[0] = level.teamScores[1] = 7;
-            expectedScript = 1; expectedComplete = 0; expectedShutdown = 0; expectedSource = requestSources[request];
-            observedStops = queuedTransitions = matchEnds = 0;
+            ClearRequest();
+            level.teamScores[0] = level.teamScores[1] = 7;
             scr_func_t handle = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", requestFunctions[request]);
             assert(handle);
             Scr_FreeThread(Scr_ExecThread(handle, 0));
-            assert(observedStops == 1 && queuedTransitions == (i != 0));
-            assert(level.finished == (i == 0 ? 0 : request == 0 ? 2 : request == 1 ? 1 : 3));
-            assert(level.savepersist == (i != 0));
-            if (request == 0 && i != 0) assert(!strncmp(queued, "map fixture_next ", 17));
+            assert(observedStops == 0 && queuedTransitions == 1 && !strcmp(queued, requestCommands[request]));
+            assert(level.finished == (request == 0 ? 2 : request == 1 ? 1 : 3) && level.savepersist == 1);
+            assert(matchEnds == (request == 2));
+            assert(level.teamScores[0] == (request == 2 ? 0 : 7));
             assert(scrVmPub.outparamcount == 0 && scrVmPub.inparamcount == 0 && scrVmPub.top == scrVmPub.stack);
-            if (i != 0) {
-#if STOP_VM_CALLBACK_IMPLEMENTED
-                char command[32], target[64], marker[64];
-                if (request == 0) sscanf(queued, "%31s %63s %63s", command, target, marker);
-                else { sscanf(queued, "%31s %63s", command, marker); target[0] = 0; }
-                assert(GScr_Cod2xConsumeMapChange(requestSources[request], command, target, marker));
-                assert(!GScr_Cod2xConsumeMapChange(requestSources[request], command, target, marker));
-                assert(observedStops == 1);
+#if defined(COD2_CODX) && COD2_CODX && STOP_VM_CALLBACK_IMPLEMENTED
+            expectedScript = 1; expectedComplete = 0; expectedShutdown = 0; expectedSource = requestSources[request];
+            assert(GScr_Cod2xBeforeMapChange(0, requestSources[request]) == (i != 0));
+            assert(observedStops == 1);
+            /* A blocked change leaves the level finished and exitLevel's scores reset. */
+            assert(level.finished == (request == 0 ? 2 : request == 1 ? 1 : 3) && level.savepersist == 1);
+            assert(level.teamScores[0] == (request == 2 ? 0 : 7));
+#else
+            (void)requestSources;
 #endif
-            }
         }
-#endif
-        level.finished = level.savepersist = 0;
+        ClearRequest();
         Scr_EndLoadAnimTrees(); Scr_EndLoadScripts();
     }
-#if STOP_VM_CALLBACK_IMPLEMENTED
+#if defined(COD2_CODX) && COD2_CODX && STOP_VM_CALLBACK_IMPLEMENTED
     Scr_BeginLoadScripts();
     snprintf(scriptText, sizeof(scriptText),
              "main() {} CodeCallback_StartGameType() {} CodeCallback_PlayerConnect() {} "

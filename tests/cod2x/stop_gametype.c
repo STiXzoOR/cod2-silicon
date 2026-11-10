@@ -70,8 +70,9 @@ static void SV_MapRestart_f(void);
 static void SV_FastRestart_f(void);
 #if STOP_CALLBACK_IMPLEMENTED
 qboolean GScr_Cod2xBeforeMapChange(qboolean shutdown, const char *source);
-qboolean SV_Cod2xBeginMapChange(qboolean shutdown, const char *source);
-void SV_Cod2xEndMapChange(qboolean shutdown);
+void GScr_Cod2xAllowOneMapChange(void);
+qboolean SV_Cod2xBeforeMapChange(qboolean shutdown, const char *source);
+void SV_Cod2xMapChangeFrameDone(void);
 #endif
 
 extern void Dvar_SetInt(const dvar_t *, int);
@@ -91,6 +92,8 @@ void Cod2x_FeaturesInit(void) {}
 void Cod2x_FeaturesFrame(int active, int demo) { (void)active; (void)demo; }
 void Cod2x_IwdSystemInfo(const char *names) { (void)names; }
 void Cod2x_PoseInit(void) {}
+void SV_Cod2xServerInit(void) {}
+void SV_Cod2xServerSpawned(void) {}
 #if !defined(COD2_CODX) || !COD2_CODX
 int Cod2x_GameVersion(void) { return 0; }
 void Cod2x_Disconnect(void) {}
@@ -275,6 +278,9 @@ static void resetCase(int present, int type, int value, int fromScript, int pers
     freedPersistentClients = scriptShutdownComplete = 0;
     scrVmPub.top = values; scrVmPub.outparamcount = scrVmPub.inparamcount = 0;
     ++com_frameTime; GScr_LoadGameTypeScript();
+#if STOP_CALLBACK_IMPLEMENTED
+    SV_Cod2xMapChangeFrameDone();
+#endif
 }
 static void transition(int source)
 {
@@ -287,97 +293,42 @@ static void transition(int source)
     case 4: SV_Shutdown("synthetic shutdown"); break;
     }
 }
-static void fillCommandBuffer(int freeBytes)
+/* map(), map_restart() and exitLevel() queue their command as in the stock
+   game. On a CoD2x host the callback runs when that command does; a block
+   leaves level.finished set (so asking again is "already called") and keeps
+   exitLevel's score reset. */
+static void scriptRequestCases(int codx)
 {
-    static char padding[0x10000];
-    int size = 0x10000 - freeBytes;
-    memset(padding, '\n', size);
-    padding[size] = 0;
-    Cbuf_AddText(padding);
-    CHECK(cmd_text->cmdsize == size);
-}
-static void transitionBufferCases(int codx)
-{
+    static const char *sources[] = { "fast_restart", "map", "map_rotate" };
     for (int present = 0; present <= 1; ++present) {
-        printf("Transition buffer: mode=%s callback=%d\n", codx ? "codx" : "stock", present);
-        /* Thirteen untagged bytes fit; the approval marker does not. */
-        resetCase(present, 6, 1, 0, 7);
-        scriptArgCount = 1; scriptPersist = 1;
-        fillCommandBuffer(14);
-        GScr_MapRestart();
-        CHECK(cmd_text->cmdsize == 0x10000 - (codx ? 14 : 1));
-        CHECK(level.finished == (codx ? 0 : 1));
-        CHECK(level.savepersist == (codx ? 7 : 1));
-        CHECK(stopped == (codx && present));
-#if STOP_CALLBACK_IMPLEMENTED
-        CHECK(!cod2xStopQueuedSource && !cod2xStopQueuedMarker[0]);
-#endif
-        Cbuf_Execute();
-        CHECK(!cmd_text->cmdsize && gameplayStarts == !codx);
-
-        /* A rejected map must release its string and allow a fresh GSC retry. */
-        resetCase(present, 6, 1, 0, 7);
-        scriptArgCount = 2; scriptPersist = 1;
-        fillCommandBuffer(1);
-        GScr_LoadMap();
-        CHECK(cmd_text->cmdsize == 0x10000 - 1 && !retainedStrings);
-        CHECK(level.finished == (codx ? 0 : 2));
-        CHECK(level.savepersist == (codx ? 7 : 1));
-#if STOP_CALLBACK_IMPLEMENTED
-        CHECK(!cod2xStopQueuedSource && !cod2xStopQueuedMarker[0]);
-#endif
-        Cbuf_Execute();
-        CHECK(!cmd_text->cmdsize && !gameplayStarts);
-        catchRetryError = 1;
-        if (!setjmp(retryError)) {
-            GScr_LoadMap();
-            CHECK(codx);
-        } else {
-            CHECK(!codx);
-        }
-        catchRetryError = 0;
-        if (codx) {
-            CHECK(level.finished == 2 && level.savepersist == 1 && cmd_text->cmdsize > 0);
-            CHECK(stopped == 2 * present && !retainedStrings);
-            Cbuf_Execute();
-            CHECK(gameplayStarts == 1 && persisted == 1 && !cmd_text->cmdsize);
-            CHECK(stopped == 2 * present);
-        }
-
-        /* Full and marker-only rejection must not apply CoD2x exit effects. */
-        for (int freeBytes = 1; freeBytes <= 12; freeBytes += 11) {
-            resetCase(present, 6, 1, 0, 7);
-            scriptArgCount = 1; scriptPersist = 1;
-            gameClients[0].sess.score = 42;
-            gameClients[1].sess.connected = CON_CONNECTING;
-            gameClients[1].sess.score = 24;
-            fillCommandBuffer(freeBytes);
-            GScr_ExitLevel();
-            CHECK(cmd_text->cmdsize == 0x10000 - freeBytes + (codx || freeBytes == 1 ? 0 : 11));
-            CHECK(level.finished == (codx ? 0 : 3));
-            CHECK(level.savepersist == (codx ? 7 : 1));
-            CHECK(matchEnds == !codx);
-            CHECK(level.teamScores[TEAM_AXIS] == (codx ? 10 : 0));
-            CHECK(level.teamScores[TEAM_ALLIES] == (codx ? 20 : 0));
-            CHECK(gameClients[0].sess.score == (codx ? 42 : 0));
-            CHECK(gameClients[0].sess.connected == (codx ? CON_CONNECTED : CON_CONNECTING));
-            CHECK(gameClients[1].sess.score == 24 && gameClients[1].sess.connected == CON_CONNECTING);
-#if STOP_CALLBACK_IMPLEMENTED
-            CHECK(!cod2xStopQueuedSource && !cod2xStopQueuedMarker[0]);
-#endif
-            if (codx) {
-                Cbuf_Execute();
-                catchRetryError = 1;
-                if (!setjmp(retryError)) GScr_ExitLevel();
-                else CHECK(0); /* A rejected append must not trigger already-called. */
-                catchRetryError = 0;
-                CHECK(level.finished == 3 && level.savepersist == 1 && matchEnds == 1);
-                CHECK(level.teamScores[TEAM_AXIS] == 0 && level.teamScores[TEAM_ALLIES] == 0);
-                CHECK(gameClients[0].sess.score == 0 && gameClients[0].sess.connected == CON_CONNECTING);
-                CHECK(stopped == 2 * present);
+        for (int request = 0; request < 3; ++request) {
+            for (int allow = 0; allow <= 1; ++allow) {
+                int veto = codx && present && !allow;
+                printf("Script request: mode=%s callback=%d request=%s allow=%d\n",
+                       codx ? "codx" : "stock", present, sources[request], allow);
+                resetCase(present, 6, allow, 0, 0);
+                scriptArgCount = request == 1 ? 2 : 1; scriptPersist = 1;
+                gameClients[0].sess.score = 42;
+                if (request == 0) GScr_MapRestart(); else if (request == 1) GScr_LoadMap(); else GScr_ExitLevel();
+                CHECK(!stopped && level.finished == (request == 0 ? 1 : request == 1 ? 2 : 3));
+                CHECK(level.savepersist == 1 && matchEnds == (request == 2));
+                CHECK(level.teamScores[TEAM_AXIS] == (request == 2 ? 0 : 10));
+                CHECK(gameClients[0].sess.score == (request == 2 ? 0 : 42));
                 Dvar_SetString(sv_mapRotationCurrent, "map fixture_next");
                 Cbuf_Execute();
-                CHECK(gameplayStarts == 1 && persisted == 1 && stopped == 2 * present);
+                CHECK(!cmd_text->cmdsize && stopped == (codx && present));
+                if (stopped) {
+                    CHECK(!strcmp(callbackSource, sources[request]));
+                    CHECK(callbackArgs[0] == 1 && callbackArgs[1] == 0 && callbackArgs[2] == 0);
+                }
+                CHECK(gameplayStarts == !veto && (destroyedEntities != 0) == !veto);
+                if (veto) {
+                    CHECK(level.finished == (request == 0 ? 1 : request == 1 ? 2 : 3));
+                    CHECK(level.teamScores[TEAM_AXIS] == (request == 2 ? 0 : 10));
+                    catchRetryError = 1;
+                    if (!setjmp(retryError)) { GScr_MapRestart(); CHECK(0); }
+                    catchRetryError = 0;
+                }
             }
         }
     }
@@ -394,7 +345,7 @@ int main(void)
 #if defined(COD2_CODX) && COD2_CODX
     codx = 1;
 #endif
-    transitionBufferCases(codx);
+    scriptRequestCases(codx);
     for (int source = 0; source < 6; ++source) {
         for (int present = 0; present <= 1; ++present) {
             for (int origin = 0; origin <= 1; ++origin) {
@@ -430,32 +381,33 @@ int main(void)
             }
         }
     }
+#if STOP_CALLBACK_IMPLEMENTED
     if (codx) {
-        resetCase(1, 6, 0, 0, 0); transition(0); transition(0);
+        /* Asked once per server frame: a second change in the same frame goes
+           ahead unasked, even after a block. */
+        resetCase(1, 6, 0, 0, 0); transition(0);
+        CHECK(stopped == 1 && !destroyedEntities);
+        transition(0);
+        CHECK(stopped == 1 && destroyedEntities == 1 && destroyedScripts == 1);
+        resetCase(1, 6, 0, 0, 0); transition(0); SV_Cod2xMapChangeFrameDone(); transition(0);
         CHECK(stopped == 2 && !destroyedEntities);
-        returnedInt = 1; transition(0);
-        CHECK(stopped == 3 && destroyedEntities == 1 && destroyedScripts == 1);
-        for (int source = 0; source < 3; ++source) {
-            resetCase(1, 6, 0, 0, 1); scriptArgCount = source == 1 ? 2 : 1; scriptPersist = 0;
-            if (source == 0) GScr_MapRestart(); else if (source == 1) GScr_LoadMap(); else GScr_ExitLevel();
-            CHECK(stopped == 1 && level.finished == 0 && level.savepersist == 1 && !queued[0]);
-            CHECK(callbackArgs[0] == 1 && callbackArgs[1] == 1);
-            CHECK(level.teamScores[TEAM_AXIS] == 10 && level.teamScores[TEAM_ALLIES] == 20 && !matchEnds);
-            CHECK(gameClients[0].sess.connected == CON_CONNECTED);
-        }
-        resetCase(1, 6, 1, 0, 0); scriptArgCount = 1; scriptPersist = 1;
-        GScr_ExitLevel(); CHECK(stopped == 1 && matchEnds == 1 && !strncmp(queued, "map_rotate ", 11));
-        Dvar_SetString(sv_mapRotationCurrent, "map fixture_next");
-        sscanf(queued, "%31s %63s", cmdName, cmdMap); SV_MapRotate_f();
-        CHECK(stopped == 1 && destroyedEntities == 1 && persisted == 1);
-        resetCase(1, 6, 0, 0, 0); nestedRequest = 1; transition(0);
-        CHECK(stopped == 1 && !queued[0] && level.finished == 0 && !destroyedEntities);
-        returnedInt = 1; nestedRequest = 0; transition(0);
-        CHECK(stopped == 2 && destroyedEntities == 1);
+        /* map_rotate runs map in the same frame without asking again. */
+        resetCase(1, 6, 1, 0, 0); transition(3);
+        CHECK(stopped == 1 && !strcmp(callbackSource, "map_rotate") && gameplayStarts == 1);
+        /* The match-cancel bypass. */
+        resetCase(1, 6, 0, 0, 0); GScr_Cod2xAllowOneMapChange(); transition(0);
+        CHECK(stopped == 1 && destroyedEntities == 1);
+        resetCase(1, 6, 0, 0, 0); transition(0);
+        CHECK(stopped == 1 && !destroyedEntities);
+        /* A request made inside the callback is queued as usual and, in the
+           same frame, runs unasked. */
+        resetCase(1, 6, 0, 0, 0); nestedRequest = 1; scriptPersist = 1; transition(0);
+        CHECK(stopped == 1 && !destroyedEntities && level.finished == 1 && !strcmp(queued, "fast_restart\n"));
+        nestedRequest = 0; Cbuf_Execute();
+        CHECK(stopped == 1 && gameplayStarts == 1 && persisted == 1);
+        /* Only the map command asks, not every server spawn. */
         resetCase(1, 6, 0, 0, 0); SV_SpawnServer("fixture_direct");
-        CHECK(stopped == 1 && !destroyedEntities && !destroyedScripts && !gameplayStarts);
-        returnedInt = 1; SV_SpawnServer("fixture_direct");
-        CHECK(stopped == 2 && destroyedEntities == 1 && destroyedScripts == 1 && gameplayStarts == 1);
+        CHECK(!stopped && destroyedEntities == 1 && destroyedScripts == 1 && gameplayStarts == 1);
         resetCase(1, 6, 0, 0, 0); scriptActive = 0; transition(0);
         CHECK(!stopped && destroyedEntities == 1 && destroyedScripts == 1 && gameplayStarts == 1);
         /* A recoverable callback error unwinds through Scr_Abort and shutdown. */
@@ -466,65 +418,13 @@ int main(void)
         CHECK(destroyedEntities == 1 && destroyedScripts == 1);
         resetCase(1, 6, 0, 0, 0); transition(0);
         CHECK(stopped == 1 && !destroyedEntities);
-        /* Failure before the initial server runs must not leave a depth. */
+        /* A failed first start leaves nothing behind. */
         resetCase(1, 6, 1, 0, 0); Dvar_SetBool(com_sv_running, 0); startupError = 1;
         if (!setjmp(transitionError)) { SV_SpawnServer("failed_start"); CHECK(0); }
         startupError = 0; Scr_Abort(); SV_Shutdown("startup drop");
         resetCase(1, 6, 0, 0, 0); transition(0);
         CHECK(stopped == 1 && !destroyedEntities);
-#if STOP_CALLBACK_IMPLEMENTED
-        SV_Cod2xEndMapChange(1);
-#endif
-        /* Real FIFO and wait: an earlier B cannot consume script A's approval. */
-        resetCase(1, 6, 1, 0, 0); Cbuf_ExecuteText(2, "wait 1; map fixture_before\n");
-        scriptArgCount = 2; scriptPersist = 0; GScr_LoadMap(); CHECK(stopped == 1);
-        returnedInt = 0; Cbuf_Execute(); CHECK(!destroyedEntities);
-        Cbuf_Execute();
-        CHECK(stopped == 2 && destroyedEntities == 1);
-        CHECK(strstr(spawnedMap, "fixture_next") != NULL);
-        /* Inserted earlier commands, as well as appended commands, stay distinct. */
-        resetCase(1, 6, 1, 0, 0); scriptArgCount = 2; GScr_LoadMap();
-        Cbuf_ExecuteText(1, "map fixture_inserted"); returnedInt = 0; Cbuf_Execute();
-        CHECK(stopped == 2 && destroyedEntities == 1 && strstr(spawnedMap, "fixture_next"));
-        /* A matching marker expires before failed BSP/profile validation. */
-        for (int failure = 0; failure < 2; ++failure) {
-            char tagged[256];
-            resetCase(1, 6, 1, 0, 0); scriptArgCount = 2; GScr_LoadMap();
-            strcpy(tagged, queued); missingMap = !failure; missingProfile = failure;
-            returnedInt = 0; Cbuf_Execute();
-            CHECK(stopped == 1 && !destroyedEntities);
-            missingMap = missingProfile = 0; Cmd_ExecuteString(tagged);
-            CHECK(stopped == 2 && !destroyedEntities);
-        }
-        /* Altered command form/target consumes the marker without granting it. */
-        for (int form = 0; form < 2; ++form) {
-            char marker[64], name[32], target[64], altered[256];
-            resetCase(1, 6, 1, 0, 0); scriptArgCount = 2; GScr_LoadMap();
-            sscanf(queued, "%31s %63s %63s", name, target, marker);
-            snprintf(altered, sizeof(altered), "%s %s %s", form ? "devmap" : "map", form ? target : "fixture_wrong", marker);
-            returnedInt = 0; Cmd_ExecuteString(altered); Cbuf_Execute();
-            CHECK(stopped == 3 && !destroyedEntities && !sv_cheats->current.enabled);
-        }
-        /* Successfully consumed markers cannot grant a later command. */
-        {
-            char tagged[256];
-            resetCase(1, 6, 1, 0, 0); scriptArgCount = 2; GScr_LoadMap(); strcpy(tagged, queued);
-            returnedInt = 0; Cbuf_Execute(); CHECK(stopped == 1 && destroyedEntities == 1);
-            scriptActive = 1; optionalCallback = 1; GScr_LoadGameTypeScript(); Cmd_ExecuteString(tagged);
-            CHECK(stopped == 2 && destroyedEntities == 1);
-        }
-        /* A command-buffer overflow leaves no permission for an unqueued marker. */
-        resetCase(1, 6, 1, 0, 0); cmd_text->cmdsize = cmd_text->maxsize - 1;
-        scriptArgCount = 2; GScr_LoadMap();
-#if STOP_CALLBACK_IMPLEMENTED
-        CHECK(!cod2xStopQueuedSource && !cod2xStopQueuedMarker[0]);
-#endif
-        /* Map's temporary string ref is also released after callback longjmp. */
-        resetCase(1, 6, 1, 0, 0); callbackError = 1; scriptArgCount = 2;
-        if (!setjmp(transitionError)) { GScr_LoadMap(); CHECK(0); }
-        CHECK(retainedStrings == 1);
-        callbackError = 0; Scr_Abort(); SV_Shutdown("script map drop");
-        CHECK(retainedStrings == 0 && !com_sv_running->current.enabled && !svs.clients);
     }
+#endif
     Dvar_Shutdown(); FINISH("StopGameType commands, script preflight and teardown");
 }

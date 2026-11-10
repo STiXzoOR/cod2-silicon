@@ -69,7 +69,10 @@ static void Cod2x_SharedInit(int dedicated)
         return;
     cod2x_game = Dvar_RegisterInt("g_cod2x", 0, 0, COD2X_REVISION, 0x18);
     cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, dedicated ? 0x1008 : 0x18);
+#if !defined(DEDICATED)
+    /* CoD2x servers have no com_maxfps_limit, so a dedicated one sends none. */
     cod2x_fpsLimit = Dvar_RegisterBool("com_maxfps_limit", 0, 0x98);
+#endif
 }
 
 void Cod2x_ServerInit(int dedicated)
@@ -96,7 +99,8 @@ void Cod2x_ServerSpawn(void)
     Cod2x_SharedInit(0);
     if (!cod2x_serverActive && cod2x_remotePolicy) {
         Dvar_SetBool(cod2x_competitive, 0);
-        Dvar_SetBool(cod2x_fpsLimit, 0);
+        if (cod2x_fpsLimit)
+            Dvar_SetBool(cod2x_fpsLimit, 0);
     }
     cod2x_remotePolicy = 0;
     cod2x_serverActive = 1;

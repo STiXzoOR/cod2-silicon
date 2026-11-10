@@ -245,7 +245,6 @@ typedef struct Cod2x_ClientIdentity
     netadr_t address;
     int challenge;
     int qport;
-    char hwid[33];
     char digest[33];
     char authorization[33];
 } Cod2x_ClientIdentity;
@@ -270,10 +269,13 @@ static const Cod2x_ClientIdentity *SV_Cod2xClientIdentity(int clientNum)
     return identity;
 }
 
+/* The player's current cl_hwid2, as CoD2x reads it. */
 const char *SV_Cod2xClientHwid(int clientNum)
 {
-    const Cod2x_ClientIdentity *identity = SV_Cod2xClientIdentity(clientNum);
-    return identity ? identity->hwid : "";
+    if ((unsigned int)clientNum >= 64 || !svs.clients || !sv_maxclients ||
+        clientNum >= sv_maxclients->current.integer)
+        return "";
+    return Info_ValueForKey(svs.clients[clientNum].userinfo, "cl_hwid2");
 }
 
 const char *SV_Cod2xClientDigest(int clientNum)
@@ -343,19 +345,11 @@ static void SV_Cod2xStoreAuthorization(int slot, const challenge_t *entry, const
         identity->address = entry->adr;
         identity->challenge = entry->challenge;
     }
+    /* A player already admitted (after the timeout) keeps the status it connected with. */
     I_strncpyz(identity->authorization, reason ? reason : "", sizeof(identity->authorization));
-    /* Authorization can arrive after a timeout-admitted client has connected. */
-    for (int i = 0; i < 64; ++i) {
-        const Cod2x_ClientIdentity *clientIdentity = SV_Cod2xClientIdentity(i);
-        if (clientIdentity && clientIdentity->challenge == entry->challenge &&
-            NET_CompareAdr(clientIdentity->address, entry->adr) &&
-            !strcmp(clientIdentity->digest, identity->suppliedDigest))
-            memcpy(cod2xClientIdentities[i].authorization, identity->authorization,
-                   sizeof(identity->authorization));
-    }
 }
 
-static void SV_Cod2xStoreClientIdentity(client_t *client, const char *hwid)
+static void SV_Cod2xStoreClientIdentity(client_t *client)
 {
     int clientNum = SV_ClientNumForClient(client);
     Cod2x_ClientIdentity *identity;
@@ -369,8 +363,6 @@ static void SV_Cod2xStoreClientIdentity(client_t *client, const char *hwid)
     identity->address = client->netchan.remoteAddress;
     identity->challenge = client->challenge;
     identity->qport = client->netchan.qport;
-    if (hwid && strlen(hwid) == 32)
-        memcpy(identity->hwid, hwid, sizeof(identity->hwid));
     challengeIdentity = SV_Cod2xChallengeIdentity(identity->address, identity->challenge);
     if (challengeIdentity) {
         memcpy(identity->digest, challengeIdentity->suppliedDigest, sizeof(identity->digest));
@@ -1831,7 +1823,7 @@ setup_client:
 
     I_strncpyz(cl->userinfo, userinfo, sizeof(cl->userinfo));
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    SV_Cod2xStoreClientIdentity(cl, from.type != NA_BOT ? Info_ValueForKey(userinfo, "cl_hwid2") : NULL);
+    SV_Cod2xStoreClientIdentity(cl);
 #endif
 
     denied = ClientConnect(clientNum, cl->scriptId);

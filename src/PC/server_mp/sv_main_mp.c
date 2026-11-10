@@ -10,6 +10,7 @@
 #include "cod2x_host_protocol.h"
 #include "cod2x_udp_operations_impl.h"
 #include "cod2x_server.h"
+#include "cod2x_stop_gametype.h"
 #endif
 #include <stdarg.h>
 /* dvar globals */
@@ -1000,6 +1001,7 @@ void SV_RunFrame(void)
     SV_ResetSkeletonCache();
     G_RunFrame(*(int *)((char *)&svs + 4));
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    SV_Cod2xMapChangeFrameDone();
     SV_Cod2xUdpStats();
 #endif
 }
@@ -1314,6 +1316,7 @@ void SV_Frame(int msec)
 #endif
         G_RunFrame(svs.time);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        SV_Cod2xMapChangeFrameDone();
         SV_Cod2xUdpStats();
 #endif
         Scr_SetLoading(0);

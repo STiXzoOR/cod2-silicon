@@ -61,12 +61,12 @@ def function(text, name):
 
 init = active(source_path)
 commands = active('src/PC/server_mp/sv_ccmds_mp.c')
-has_map_change_guard = 'SV_Cod2xBeginMapChangeApproved' in commands
+has_map_change_guard = 'SV_Cod2xBeforeMapChange' in commands
 map_change_source = ''
 if has_map_change_guard:
-    map_change_source = re.search(r'^static unsigned int cod2xMapChangeDepth;', commands, re.M)[0] + '\n'
+    map_change_source = re.search(r'^static qboolean cod2xMapChangeAsked;', commands, re.M)[0] + '\n'
     map_change_source += ''.join(function(commands, name) for name in
-                               ('SV_Cod2xBeginMapChangeApproved', 'SV_Cod2xBeginMapChange', 'SV_Cod2xEndMapChange'))
+                               ('SV_Cod2xBeforeMapChange', 'SV_Cod2xMapChangeFrameDone'))
 (out / 'host_map_change_source.h').write_text(map_change_source)
 globals_ = sorted(set(re.findall(r'^extern const dvar_t \*(\w+);', init, re.M)))
 (out / 'host_globals.h').write_text(

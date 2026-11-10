@@ -172,12 +172,6 @@ qboolean GScr_Cod2xBeforeMapChange(qboolean shutdown, const char *source)
 {
     (void)shutdown; (void)source; return 1;
 }
-qboolean GScr_Cod2xConsumeMapChange(const char *source, const char *command,
-                                  const char *target, const char *marker)
-{
-    (void)source; (void)command; (void)target; (void)marker; return 0;
-}
-void GScr_Cod2xResetMapChange(void) {}
 char *SV_Cmd_Argv(int arg) { (void)arg; return ""; }
 #endif
 #include "host_map_change_source.h"

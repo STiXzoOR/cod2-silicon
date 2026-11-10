@@ -264,6 +264,7 @@ void SV_ChangeMaxClients(void);
 void SV_SpawnServer(const char *server);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "cod2x_stop_gametype.h"
+void Com_DPrintf(const char *fmt, ...);
 #endif
 
 static void SV_ClearServer(void);
@@ -625,16 +626,12 @@ void SV_Shutdown(char *finalmsg)
     int i, j;
     int maxclients;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Com_DPrintf("SV_Shutdown(%s)\n", finalmsg);
+#endif
 #if defined(COD2_X64)
     if (!com_sv_running || !com_sv_running->current.enabled)
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    {
-        SV_Cod2xEndMapChange(1);
         return;
-    }
-#else
-        return;
-#endif
 #else
     {
         dvar_t *dvar = (dvar_t *)(com_sv_running);
@@ -649,8 +646,7 @@ void SV_Shutdown(char *finalmsg)
 #endif
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    if (!SV_Cod2xBeginMapChange(1, "shutdown"))
-        return;
+    SV_Cod2xBeforeMapChange(1, "shutdown");
 #endif
     Com_Printf("----- Server Shutdown -----\n");
 
@@ -758,7 +754,6 @@ void SV_Shutdown(char *finalmsg)
     Dvar_SetBool( (dvar_t *)(com_sv_running), 0);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     Cod2x_ServerShutdown();
-    SV_Cod2xEndMapChange(1);
 #endif
     Com_Printf("---------------------------\n");
 
@@ -947,10 +942,6 @@ void SV_SpawnServer(const char *server)
     byte *ent;
     netadr_t addr;
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    if (!SV_Cod2xBeginMapChange(0, "map"))
-        return;
-#endif
     Scr_ParseGameTypeList();
     SV_SetGametype();
 
@@ -1283,7 +1274,6 @@ void SV_SpawnServer(const char *server)
 
     Com_Printf("-----------------------------------\n");
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    SV_Cod2xEndMapChange(0);
     SV_Cod2xServerSpawned();
 #endif
 }

@@ -1906,7 +1906,10 @@ static const dvar_t *Dvar_RegisterVariant_impl(
 
     if (dvarCount > DVAR_MAX_COUNT - 1) {
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-        Com_Error(0, "Dvar pool exhausted (%i): cannot create '%s'. Reduce the mod's dvars or restart the client.", DVAR_MAX_COUNT, dvarName);
+        Com_Error(0, "Error while registering cvar '%s'.\nUnable to create more than %i dvars.\n\n"
+                  "There is too many cvars in your config!\nClean your config from unused dvars and try again.\n\n"
+                  "Normal config should contains no more than 400 lines of dvars. Compare your config with a default one to find the differences.",
+                  dvarName, DVAR_MAX_COUNT);
 #else
         Com_Error(0, "Can't create dvar '%s': %i dvars already exist", dvarName, DVAR_MAX_COUNT);
 #endif
