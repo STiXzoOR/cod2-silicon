@@ -13,7 +13,8 @@ int Cod2x_TextCode(const char *p, char *code);
 int Cod2x_IsStyleCode(char code);
 int Cod2x_ConsoleCode(const char *text, int *color);
 int Cod2x_ShadeColor(char code, float *rgb);
-void Cod2x_StripTextCodes(const char *text, char *out, size_t size);
+/* The one CoD2x code stripper, shared with the server (cod2x_server.c). */
+void SV_Cod2xStripTextCodes(const char *text, char *out, size_t size);
 void Cod2x_StripChatName(char *line);
 int Cod2x_EscapeChatPlaceholder(const char *text, char *out, size_t size);
 const char *Cod2x_ResolveDoubleColors(const char *text, char *buffer, size_t size);

@@ -441,40 +441,6 @@ int Cod2x_TextCode(const char *p, char *code)
     return 0;
 }
 
-/* Every code out, vanilla doubles ("^^11", "^^^111") included. out may be text. */
-void Cod2x_StripTextCodes(const char *text, char *out, size_t size)
-{
-    size_t length = 0;
-    const char *p = text;
-    if (!size)
-        return;
-    while (*p && length < size - 1) {
-        if (p[0] == '^') {
-            int carets = 0, digits = 0;
-            while (p[carets] == '^')
-                ++carets;
-            while (digits < carets && p[carets + digits] >= '0' && p[carets + digits] <= '9')
-                ++digits;
-            if (digits) {
-                p += carets + digits;
-                continue;
-            }
-        } else if (p[0] == '$' || p[0] == '#' || p[0] == '@') {
-            if (p[1] == p[0] && ((p[2] >= '0' && p[2] <= '9' && p[3] >= '0' && p[3] <= '9') ||
-                                 (Cod2x_StyleCode(p[0], p[2]) && p[3] == p[2]))) {
-                p += 4;
-                continue;
-            }
-            if ((p[1] >= '0' && p[1] <= '9') || Cod2x_StyleCode(p[0], p[1])) {
-                p += 2;
-                continue;
-            }
-        }
-        out[length++] = *p++;
-    }
-    out[length] = '\0';
-}
-
 /* A chat line is team colour + name + "^7: " + message. The name loses its codes,
    so it shows in the team colour; the team colour and the message keep theirs. */
 void Cod2x_StripChatName(char *line)

@@ -332,7 +332,7 @@ static void CG_Obituary(centity_t *cent)
         I_strncat(targetName, 0x22, (const char *)"^7");
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
         /* CoD2x text.cpp: player names are coloured only on the scoreboard. */
-        Cod2x_StripTextCodes(targetName, targetName, 0x22);
+        SV_Cod2xStripTextCodes(targetName, targetName, 0x22);
 #endif
 
 #if defined(COD2_X64)
@@ -372,7 +372,7 @@ static void CG_Obituary(centity_t *cent)
 
         I_strncat(attackerName, 0x22, (const char *)"^7");
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-        Cod2x_StripTextCodes(attackerName, attackerName, 0x22);
+        SV_Cod2xStripTextCodes(attackerName, attackerName, 0x22);
 #endif
 
 #if defined(COD2_X64)

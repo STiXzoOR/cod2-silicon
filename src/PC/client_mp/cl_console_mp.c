@@ -2390,7 +2390,7 @@ static void CL_WriteDeathMessageText(const char *text, int color)
         return;
     /* CoD2x text.cpp: names in the team colour lose every code, doubles and CoD2x codes too. */
     if (color >= 0) {
-        Cod2x_StripTextCodes(text, clean, sizeof(clean));
+        SV_Cod2xStripTextCodes(text, clean, sizeof(clean));
         text = clean;
     }
     while (con.lineOffset < con.linewidth && (ch = Cod2x_NextConsoleChar(&text, color, 1, &currentColor)) >= 0)
@@ -2546,7 +2546,7 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
         }
         CL_WriteDeathMessageText(" ", defaultColor);
         CL_AddConsoleInfoColor(0x0a, victimColor);
-        Cod2x_StripTextCodes(victimName ? victimName : "", cleanVictim, sizeof(cleanVictim));
+        SV_Cod2xStripTextCodes(victimName ? victimName : "", cleanVictim, sizeof(cleanVictim));
         if ((int)strlen(cleanVictim) + con.lineOffset + 3 >= limit ||
             (cg_gameMessageWidth &&
              CL_Cod2xKillfeedLineWidth() + (int)strlen(cleanVictim) > cg_gameMessageWidth->current.integer)) {
