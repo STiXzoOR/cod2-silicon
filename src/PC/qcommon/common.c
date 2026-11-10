@@ -2835,7 +2835,16 @@ void Com_Init_Try_Block_Function(char *commandLine)
         dedicated_val = 2;
 #endif
         if (!dedicated_val) {
-#if defined(COD2_X64)
+#if COD2_APPLE_SDK
+            /* Windows 1.3 start-up. The Mac game first plays its distributor's
+             * "legal" movie, which the PC game data does not have, and does not
+             * skip the intro when a command line already says what to do. */
+            if (!com_introPlayed->current.enabled && !Com_HasStartupCommandsOtherThanSet()) {
+                Cbuf_AddText("cinematic atvi\n");
+                Dvar_SetString(nextmap, "cinematic IW_logo; set nextmap cinematic cod_intro");
+                Dvar_SetBool(com_introPlayed, 1);
+            }
+#elif defined(COD2_X64)
             Cbuf_AddText("unskippablecinematic legal\n");
             if (!com_introPlayed->current.enabled)
                 Dvar_SetString(nextmap, "cinematic atvi; set nextmap \"cinematic IW_logo; set nextmap cinematic cod_intro\"");
