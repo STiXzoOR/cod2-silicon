@@ -3,6 +3,8 @@
 #include "common_types.h"
 #include "cod2x.h"
 #include "cod2x_features.h"
+#include "cod2x_http.h"
+#include "cod2x_json.h"
 #include "cod2x_pose.h"
 #include "cod2x_policy.h"
 #include <stdarg.h>
@@ -48,7 +50,7 @@ static const dvar_t *drawSpectatedName, *drawCompass, *compassOffsetX, *compassO
 /* The CoD2x release whose client behaviour this implements. */
 #define COD2X_APP_VERSION "1.4.6.8"
 
-static const dvar_t *matchLogin, *hideServerIp, *messageOffsetX, *messageOffsetY, *messageScale;
+static const dvar_t *hideServerIp, *messageOffsetX, *messageOffsetY, *messageScale;
 static int ipHidden;
 static int playingDemo, lastClientState = -1;
 /* The update prompt's dvars (the CoD2x update check below). */
@@ -261,7 +263,8 @@ void Cod2x_FeaturesInit(void)
     drawCompass = Dvar_RegisterBool("cg_drawCompass", 1, 0x1000);
     compassOffsetX = Dvar_RegisterFloat("cg_hudCompassOffsetX", 0, -640, 640, 0x1000);
     compassOffsetY = Dvar_RegisterFloat("cg_hudCompassOffsetY", 0, -480, 480, 0x1000);
-    matchLogin = Dvar_RegisterString("match_login", "", 0x12);
+    /* Sent to servers; set by the match service's "match login" (cod2x_match.c). */
+    Dvar_RegisterString("match_login", "", 0x12);
     /* CoD2x cgame.cpp: hides IP addresses on screen, for streaming. */
     hideServerIp = Dvar_RegisterBool("cl_hideServerIp", 0, 0x1001);
     /* CoD2x text.cpp: position and size of the game messages and killfeed, in 640x480 units. */
@@ -902,145 +905,64 @@ void Cod2x_IwdStartup(const char *base)
 extern cg_t cgArray[1];
 extern void CL_Cod2xCDKeyHash(char hash[34]);
 
-static volatile int updateRunning, updateAnswered;
-static int updateForced, updateLastState = -1, updateLastRender = -1;
-static struct {
-    int ok, available;
-    char url[1024], version[64], error[256];
-} updateAnswer;
+static int updateRunning, updateForced, updateLastState = -1, updateLastRender = -1;
 
-static void Cod2x_JsonAdd(char *json, size_t size, const char *name, const char *value)
-{
-    size_t used = strlen(json);
-    const char *p;
-    used += (size_t)snprintf(json + used, used < size ? size - used : 0, ",\"%s\":\"", name);
-    for (p = value; *p && used + 8 < size; ++p) {
-        if (*p == '"' || *p == '\\')
-            used += (size_t)snprintf(json + used, size - used, "\\%c", *p);
-        else if (*p == '\n')
-            used += (size_t)snprintf(json + used, size - used, "\\n");
-        else if ((unsigned char)*p < 0x20)
-            used += (size_t)snprintf(json + used, size - used, "\\u%04x", (unsigned char)*p);
-        else
-            json[used++] = *p;
-    }
-    if (used + 2 < size)
-        snprintf(json + used, size - used, "\"");
-}
+static void Cod2x_UpdateDone(void *context, const Cod2xHttpResponse *response);
 
-/* The value of key in the "update" object of the answer: a string or a number. */
-static int Cod2x_UpdateValue(const char *reply, const char *key, char *out, size_t size)
+static void Cod2x_JsonField(Cod2xText *body, const char *name, const char *value)
 {
-    char pattern[32];
-    const char *p = strstr(reply, "\"update\""), *end;
-    size_t used = 0;
-    int depth = 0;
-    if (!p || !(p = strchr(p, '{')))
-        return 0;
-    for (end = p; *end; ++end) {
-        if (*end == '{')
-            ++depth;
-        else if (*end == '}' && --depth == 0)
-            break;
-    }
-    snprintf(pattern, sizeof(pattern), "\"%s\"", key);
-    for (p = strstr(p, pattern); p && p < end; p = strstr(p + 1, pattern)) {
-        const char *value = p + strlen(pattern);
-        while (*value == ' ' || *value == '\t' || *value == '\r' || *value == '\n')
-            ++value;
-        if (*value != ':')
-            continue;
-        ++value;
-        while (*value == ' ' || *value == '\t' || *value == '\r' || *value == '\n')
-            ++value;
-        if (*value == '"') {
-            for (++value; *value && *value != '"' && used + 1 < size; ++value) {
-                if (*value == '\\' && value[1])
-                    ++value;
-                out[used++] = *value;
-            }
-        } else {
-            while (*value && *value != ',' && *value != '}' && *value != ' ' && used + 1 < size)
-                out[used++] = *value++;
-        }
-        out[used] = '\0';
-        return 1;
-    }
-    return 0;
-}
-
-/* On the request's own thread. */
-static void Cod2x_UpdateDone(int ok, long status, const char *reply, const char *error, void *user)
-{
-    char available[16] = "";
-    (void)user;
-    memset(&updateAnswer, 0, sizeof(updateAnswer));
-    snprintf(updateAnswer.error, sizeof(updateAnswer.error), "%s", "No response");
-    if (!ok) {
-        snprintf(updateAnswer.error, sizeof(updateAnswer.error), "%s", error);
-        Cod2x_Log("[UPDATER-HTTPS] Request failed: %s", error);
-    } else if (status < 200 || status >= 300) {
-        snprintf(updateAnswer.error, sizeof(updateAnswer.error), "HTTP %ld", status);
-        Cod2x_Log("[UPDATER-HTTPS] Request rejected by endpoint (HTTP %d): %s", (int)status, reply);
-    } else if (!Cod2x_UpdateValue(reply, "available", available, sizeof(available)) ||
-               (strcmp(available, "0") && strcmp(available, "1") && strcmp(available, "2"))) {
-        snprintf(updateAnswer.error, sizeof(updateAnswer.error), "%s", "Invalid response");
-        Cod2x_Log("[UPDATER-HTTPS] Failed to parse response: %s", reply);
-    } else {
-        updateAnswer.available = available[0] - '0';
-        Cod2x_UpdateValue(reply, "url", updateAnswer.url, sizeof(updateAnswer.url));
-        Cod2x_UpdateValue(reply, "version", updateAnswer.version, sizeof(updateAnswer.version));
-        if (updateAnswer.available && !updateAnswer.url[0]) {
-            snprintf(updateAnswer.error, sizeof(updateAnswer.error), "%s", "Invalid response");
-            Cod2x_Log("[UPDATER-HTTPS] Failed to parse response: %s", reply);
-        } else {
-            updateAnswer.ok = 1;
-            updateAnswer.error[0] = '\0';
-            Cod2x_Log("[UPDATER-HTTPS] available=%d version='%s' url='%s'", updateAnswer.available,
-                      updateAnswer.version, updateAnswer.url);
-        }
-    }
-    __sync_synchronize();
-    updateAnswered = 1;
-    updateRunning = 0;
+    Cod2x_TextPrintf(body, ",\"%s\":\"", name);
+    Cod2x_TextAppendJson(body, value, strlen(value));
+    Cod2x_TextAppendString(body, "\"");
 }
 
 static void Cod2x_UpdateCheck(void)
 {
-    char json[4096], hash[34] = "";
+    char hash[34] = "", service[512];
     const dvar_t *hwid = Dvar_FindVar("cl_hwid"), *hwid2 = Dvar_FindVar("cl_hwid2");
     Cod2xMachineHistory history;
-    size_t used;
-    if (!__sync_bool_compare_and_swap(&updateRunning, 0, 1))
+    Cod2xText body = {0};
+    Cod2xHttpRequest request;
+    if (updateRunning)
         return;
     memset(&history, 0, sizeof(history));
     Sys_Cod2xMachineHistory(&history);
     CL_Cod2xCDKeyHash(hash);
     /* CoD2x's update service knows its Windows client; macOS asks as that client. */
-    snprintf(json, sizeof(json), "{\"game\":\"CoD2x MP\"");
-    Cod2x_JsonAdd(json, sizeof(json), "version", COD2X_RELEASE);
-    Cod2x_JsonAdd(json, sizeof(json), "os", "win-x86");
-    Cod2x_JsonAdd(json, sizeof(json), "type", "client");
+    Cod2x_TextAppendString(&body, "{\"game\":\"CoD2x MP\"");
+    Cod2x_JsonField(&body, "version", COD2X_RELEASE);
+    Cod2x_JsonField(&body, "os", "win-x86");
+    Cod2x_JsonField(&body, "type", "client");
     if (hash[0])
-        Cod2x_JsonAdd(json, sizeof(json), "cdkeyHash", hash);
+        Cod2x_JsonField(&body, "cdkeyHash", hash);
     if (history.regid[0])
-        Cod2x_JsonAdd(json, sizeof(json), "regid", history.regid);
-    used = strlen(json);
-    snprintf(json + used, sizeof(json) - used, ",\"hwid\":%d", hwid ? hwid->current.integer : 0);
+        Cod2x_JsonField(&body, "regid", history.regid);
+    Cod2x_TextPrintf(&body, ",\"hwid\":%d", hwid ? hwid->current.integer : 0);
     if (hwid2 && hwid2->current.string && hwid2->current.string[0])
-        Cod2x_JsonAdd(json, sizeof(json), "hwid2", hwid2->current.string);
+        Cod2x_JsonField(&body, "hwid2", hwid2->current.string);
     if (history.previous[0])
-        Cod2x_JsonAdd(json, sizeof(json), "hwid2Old", history.previous);
+        Cod2x_JsonField(&body, "hwid2Old", history.previous);
     if (history.changed[0])
-        Cod2x_JsonAdd(json, sizeof(json), "hwid2Diff", history.changed);
-    used = strlen(json);
-    snprintf(json + used, sizeof(json) - used, ",\"hwid2DiffCnt\":%d", history.changes);
+        Cod2x_JsonField(&body, "hwid2Diff", history.changed);
+    Cod2x_TextPrintf(&body, ",\"hwid2DiffCnt\":%d", history.changes);
     if (history.system[0])
-        Cod2x_JsonAdd(json, sizeof(json), "systemInfo", history.system);
-    used = strlen(json);
-    snprintf(json + used, sizeof(json) - used, "}");
+        Cod2x_JsonField(&body, "systemInfo", history.system);
+    Cod2x_TextAppendString(&body, "}");
+    if (body.failed) {
+        Cod2x_TextFree(&body);
+        return;
+    }
+    memset(&request, 0, sizeof(request));
+    request.method = "POST";
+    request.url = Cod2x_ServiceURL(COD2X_UPDATE_URL, service, sizeof(service));
+    request.headers = "Content-Type: application/json\r\n";
+    request.body = body.data;
+    request.bodyLength = body.length;
+    request.timeoutMs = 5000;
+    request.connectTimeoutMs = 5000;
     Com_Printf("Auto-Updater: Checking for updates...\n");
-    Cod2x_PostJson(COD2X_UPDATE_URL, json, 5000, Cod2x_UpdateDone, NULL);
+    updateRunning = Cod2x_HttpStart(&request, Cod2x_UpdateDone, NULL);
+    Cod2x_TextFree(&body);
 }
 
 static void Cod2x_UpdateRequired(void)
@@ -1049,22 +971,17 @@ static void Cod2x_UpdateRequired(void)
               updateVersion->current.string);
 }
 
-static void Cod2x_UpdateAnswer(void)
+static void Cod2x_UpdateAnswer(int available, const char *url, const char *version)
 {
-    if (!updateAnswer.ok) {
-        /* CoD2x then asks over UDP (getUpdateInfo3); this build asks only over https. */
-        Com_Printf("Auto-Updater: Request failed: %s\n", updateAnswer.error);
-        return;
-    }
     Com_Printf("-----------------------------------\n");
     Sys_Cod2xMachineHistoryClear();
-    if (updateAnswer.available) {
-        Com_Printf("CoD2x: Update available: %s -> %s\n", COD2X_RELEASE, updateAnswer.version);
+    if (available) {
+        Com_Printf("CoD2x: Update available: %s -> %s\n", COD2X_RELEASE, version);
         Dvar_SetBool(updateAvailable, 1);
-        Dvar_SetString(updateFiles, updateAnswer.url);
-        Dvar_SetString(updateVersion, updateAnswer.version);
+        Dvar_SetString(updateFiles, url);
+        Dvar_SetString(updateVersion, version);
         Dvar_SetString(updateOldVersion, COD2X_RELEASE);
-        if (updateAnswer.available == 2) {
+        if (available == 2) {
             updateForced = 1;
             if (lastClientState > CA_DISCONNECTED && lastClientState < CA_CONNECTED && !playingDemo)
                 Cod2x_UpdateRequired();
@@ -1074,6 +991,39 @@ static void Cod2x_UpdateAnswer(void)
         Dvar_SetBool(updateAvailable, 0);
     }
     Com_Printf("-----------------------------------\n");
+}
+
+/* On the main thread, from Cod2x_HttpFrame. The client hands no zPAM manifest on:
+   CoD2x's zpam_applyManifest does nothing when dedicated is 0. */
+static void Cod2x_UpdateDone(void *context, const Cod2xHttpResponse *response)
+{
+    char available[16] = "", url[1024] = "", version[64] = "", error[256];
+    (void)context;
+    updateRunning = 0;
+    snprintf(error, sizeof(error), "%s", response->error[0] ? response->error : "No response");
+    if (response->error[0]) {
+        Cod2x_Log("[UPDATER-HTTPS] Request failed: %s", response->error);
+    } else if (response->status < 200 || response->status >= 300) {
+        snprintf(error, sizeof(error), "HTTP %d", response->status);
+        Cod2x_Log("[UPDATER-HTTPS] Request rejected by endpoint (HTTP %d): %s", response->status, response->body);
+    } else if (!Cod2x_JsonString(response->body, "$.update.available", available, sizeof(available)) ||
+               (strcmp(available, "0") && strcmp(available, "1") && strcmp(available, "2"))) {
+        snprintf(error, sizeof(error), "%s", "Invalid response");
+        Cod2x_Log("[UPDATER-HTTPS] Failed to parse response: %s", response->body);
+    } else {
+        Cod2x_JsonString(response->body, "$.update.url", url, sizeof(url));
+        Cod2x_JsonString(response->body, "$.update.version", version, sizeof(version));
+        if (available[0] != '0' && !url[0]) {
+            snprintf(error, sizeof(error), "%s", "Invalid response");
+            Cod2x_Log("[UPDATER-HTTPS] Failed to parse response: %s", response->body);
+        } else {
+            Cod2x_Log("[UPDATER-HTTPS] available=%d version='%s' url='%s'", available[0] - '0', version, url);
+            Cod2x_UpdateAnswer(available[0] - '0', url, version);
+            return;
+        }
+    }
+    /* CoD2x then asks over UDP (getUpdateInfo3); this client asks only over https. */
+    Com_Printf("Auto-Updater: Request failed: %s\n", error);
 }
 
 /* The update prompt's "getautoupdate". CoD2x downloads its mss32.dll and restarts. */
@@ -1088,12 +1038,6 @@ static void Cod2x_UpdateFrame(int state)
     int render = cgArray[0].renderScreen, last = updateLastState, lastRender = updateLastRender;
     updateLastState = state;
     updateLastRender = render;
-    /* The answer is read before another request may overwrite it. */
-    if (updateAnswered) {
-        __sync_synchronize();
-        updateAnswered = 0;
-        Cod2x_UpdateAnswer();
-    }
     if (updateForced && state > CA_DISCONNECTED && state < CA_CONNECTED && !playingDemo)
         Cod2x_UpdateRequired();
     if (state != last && state == CA_DISCONNECTED)

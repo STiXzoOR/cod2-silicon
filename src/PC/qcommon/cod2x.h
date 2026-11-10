@@ -76,22 +76,19 @@ int Cod2x_InLayer(const void *address);
 void Cod2x_Log(const char *format, ...);
 size_t Cod2x_LoggerRecent(char *out, size_t size);
 void Cod2x_ReportInit(void);
-/* This build asks first: the launcher sets the variable to "1" only after the
-   player has agreed to send CoD2x-layer crash and error reports to CoD2x. */
+/* Name of an environment variable that must be "1" for reports to be sent; undefined means always send, as CoD2x does.
+   This build asks first: the launcher sets the variable only after the player has
+   agreed to send CoD2x-layer crash and error reports to CoD2x. */
+#ifndef COD2X_REPORT_CONSENT_ENV
 #define COD2X_REPORT_CONSENT_ENV "COD2_SILICON_COD2X_REPORTS"
-/* Whether reports may go to CoD2x. CoD2x sends them without asking, and so does
-   this build. A build that asks the player first defines COD2X_REPORT_CONSENT_ENV
-   as the name of an environment variable: reports then go only when it is "1"
-   (its launcher sets it once the player has agreed); otherwise a CoD2x-layer fault
-   leaves only its log. */
+#endif
+/* Every send to CoD2x's error and crash services checks this. Without consent
+   nothing is sent, but a CoD2x-layer fault still leaves its pending report, which
+   the start after consent sends under CoD2x's rules; the report receiver for other
+   faults is not affected. */
 int Cod2x_ReportConsent(void);
 void Cod2x_ReportFatal(const char *message, const void *site);
 void Cod2x_ReportError(const char *kind, const char *message);
-/* POSTs JSON to one of CoD2x's services on a thread of its own, as CoD2x's client
-   does; done runs on that thread with the HTTP status and the reply (ok 0: the
-   request failed, error says why). */
-typedef void (*Cod2xPostDone)(int ok, long status, const char *reply, const char *error, void *user);
-void Cod2x_PostJson(const char *url, const char *json, int timeout, Cod2xPostDone done, void *user);
 typedef void (*Cod2xCrashSent)(int delivered, const char *error);
 void Cod2x_ReportCrash(const char *json, const char *pending, int timeout, int wait, Cod2xCrashSent sent);
 /* A GET on its own thread, with the headers CoD2x's client sends (Host,
@@ -113,9 +110,9 @@ typedef struct {
     char *text;
     size_t length, size;
 } Cod2xReportText;
-void Cod2x_TextAdd(Cod2xReportText *text, const char *format, ...);
-void Cod2x_TextString(Cod2xReportText *text, const char *value);
-void Cod2x_TextLines(Cod2xReportText *text, const char *field, const char *lines);
+void Cod2x_ReportTextAdd(Cod2xReportText *text, const char *format, ...);
+void Cod2x_ReportTextString(Cod2xReportText *text, const char *value);
+void Cod2x_ReportTextLines(Cod2xReportText *text, const char *field, const char *lines);
 /* What CoD2x's update request says about this machine (CoD2x updater.cpp, system.cpp):
    the install's random id, the identity before its last change, what changed and
    how often, and the system text. Cleared once an answer came. */

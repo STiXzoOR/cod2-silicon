@@ -26,7 +26,7 @@ for test in policy features mouse url dvar_pool info; do
     "$work/$test"
 done
 clang $flags tests/cod2x/test_features_engine.c src/PC/qcommon/cod2x_features.c src/PC/qcommon/cod2x_protocol.c \
-    -o "$work/features-engine"
+    src/PC/qcommon/cod2x_json.c -o "$work/features-engine"
 "$work/features-engine"
 clang $flags -Wl,-dead_strip tests/cod2x/test_radar_engine.c -o "$work/radar-engine"
 "$work/radar-engine"
