@@ -3236,6 +3236,11 @@ draw:;
         textX = (((itemDef_s*)(it))->textRect[0].x) + (((itemDef_s*)(it))->textRect[0].w) + 8.0f;
     } else {
         textX = (((itemDef_s*)(it))->textRect[0].x);
+#if COD2_APPLE_SDK
+        /* Mac 1.3 (0x16a346): a bind item without a label draws this text,
+         * not the key. Stock menus always give the label. */
+        drawText = "FIXME";
+#endif
     }
     textY = (((rectDef_t*)(textRect))->y);
     font = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, ((itemDef_t *)it)->textscale);

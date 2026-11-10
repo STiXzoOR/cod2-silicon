@@ -921,7 +921,16 @@ void PlayerCmd_DeactivateReverb(scr_entref_t entref)
         fadetime = Scr_GetFloat(1);
 
     priority = PlayerCmd_GetEnvEffectPriority(0);
+#if COD2_APPLE_SDK
+    /* 1.3 on every platform builds this command with the activate format
+     * (Mac 0x1c1b42) and hands it a double where the text goes. The text comes
+     * out as "(null)" and three stray numbers follow, so the client counts
+     * six arguments, prints its error and deactivates nothing. Send that. */
+    (void)fadetime;
+    SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i \"%s\" %g %g %g", 'D', priority, "(null)", 0.0, 0.0, 0.0));
+#else
     SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i %g", 'D', priority, fadetime));
+#endif
 }
 
 void PlayerCmd_SetChannelVolumes(scr_entref_t entref)
@@ -965,7 +974,16 @@ void PlayerCmd_DeactivateChannelVolumes(scr_entref_t entref)
         fadetime = Scr_GetFloat(1);
 
     priority = PlayerCmd_GetChannelVolPriority(0);
+#if COD2_APPLE_SDK
+    /* 1.3 on every platform builds this command with the activate format
+     * (Mac 0x1c1dfc) and hands it a double where the text goes. The text comes
+     * out as "(null)" and three stray numbers follow, so the client counts
+     * six arguments, prints its error and deactivates nothing. Send that. */
+    (void)fadetime;
+    SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i \"%s\" %g %g %g", 'F', priority, "(null)", 0.0, 0.0, 0.0));
+#else
     SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i %g", 'F', priority, fadetime));
+#endif
 }
 
 void ScrCmd_IsLookingAt(scr_entref_t entref)

@@ -20,9 +20,14 @@ Font *R_LoadFont(const char *fontName, int imageTrack)
     len = FS_FOpenFileRead(fontName, &fileHandle, 1);
     if (len < 0) {
         if (len == -2) {
+#if COD2_APPLE_SDK
+            Com_Printf("^1ERROR: Couldn't find font in iwd files or localized directories '%s'\n",
+                       fontName);
+#else
             Com_Printf("^1ERROR: Couldn't find font in iwd files or localized direct"
                        "ory: '%s'\n",
                        fontName);
+#endif
         } else {
             Com_Printf("^1ERROR: Couldn't find font '%s'\n", fontName);
         }

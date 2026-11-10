@@ -780,7 +780,12 @@ void R_RenderScene(const refdef_t *refdef)
     {
         void *world = rgp_p->world;
         if (!world) {
+#if COD2_APPLE_SDK
+            /* Mac 1.3 (0xc5e5c) and the Windows 1.3 renderer both say this. */
+            R_Error(1, "\x15R_RenderScene: NULL worldmodel");
+#else
             R_Error(1, "R_RenderScene: no world loaded");
+#endif
 
         }
     }

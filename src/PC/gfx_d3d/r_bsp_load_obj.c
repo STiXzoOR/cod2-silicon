@@ -7,9 +7,11 @@
 #if COD2_APPLE_SDK
 #define LOADMAP_FUNNY_LUMP_OFFSET "\x15LoadMap: funny lump offset in %s"
 #define LOADMAP_FUNNY_LUMP_SIZE "\x15LoadMap: funny lump size in %s"
+#define LOADMAP_LUMP_PAST_END "\x15LoadMap: lump extends past end of file in %s"
 #else
 #define LOADMAP_FUNNY_LUMP_OFFSET "LoadMap: funny lump offset in %s"
 #define LOADMAP_FUNNY_LUMP_SIZE "LoadMap: funny lump size in %s"
+#define LOADMAP_LUMP_PAST_END "LoadMap: lump extends past end of file in %s"
 #endif
 
 extern const dvar_t *r_showGroundLit;
@@ -103,7 +105,7 @@ static int R_ValidateLump(const GfxBspLoad *load, int lumpOfs, int elemSize, con
     int count;
 
     if (lumpFileOfs + lumpSize > load->fileSize)
-        R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
+        R_Error(1, LOADMAP_LUMP_PAST_END, s_world.name);
 #if defined(COD2_X64)
     if (lumpFileOfs <= 3)
         R_Error(1, LOADMAP_FUNNY_LUMP_OFFSET, s_world.name);
@@ -147,7 +149,7 @@ static inline __attribute__((always_inline)) int R_ValidateLumpInline(const GfxB
     int count;
 
     if (lumpFileOfs + lumpSize > load->fileSize)
-        R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
+        R_Error(1, LOADMAP_LUMP_PAST_END, s_world.name);
     if (lumpFileOfs <= 3)
         R_Error(1, LOADMAP_FUNNY_LUMP_OFFSET, s_world.name);
 
@@ -1064,7 +1066,7 @@ static void R_LoadOccluders_impl(const GfxBspLoad *load)
 
     int occLumpSize = *(int *)(bspHeader + 0x98);
     if (*(int *)(bspHeader + 0x9C) + occLumpSize > fileSize)
-        R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
+        R_Error(1, LOADMAP_LUMP_PAST_END, s_world.name);
     if (*(int *)(bspHeader + 0x9C) <= 3)
         R_Error(1, LOADMAP_FUNNY_LUMP_OFFSET, s_world.name);
     int occluderCount = occLumpSize / 20;
@@ -1079,7 +1081,7 @@ static void R_LoadOccluders_impl(const GfxBspLoad *load)
 
     int planeLumpSize = *(int *)(bspHeader + 0xA0);
     if (*(int *)(bspHeader + 0xA4) + planeLumpSize > fileSize)
-        R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
+        R_Error(1, LOADMAP_LUMP_PAST_END, s_world.name);
     if (*(int *)(bspHeader + 0xA4) <= 3)
         R_Error(1, LOADMAP_FUNNY_LUMP_OFFSET, s_world.name);
     int planeIdxCount = planeLumpSize / 4;
@@ -1090,7 +1092,7 @@ static void R_LoadOccluders_impl(const GfxBspLoad *load)
 
     int edgeLumpSize = *(int *)(bspHeader + 0xA8);
     if (*(int *)(bspHeader + 0xAC) + edgeLumpSize > fileSize)
-        R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
+        R_Error(1, LOADMAP_LUMP_PAST_END, s_world.name);
     if (*(int *)(bspHeader + 0xAC) <= 3)
         R_Error(1, LOADMAP_FUNNY_LUMP_OFFSET, s_world.name);
     int edgeCount = edgeLumpSize / 4;
