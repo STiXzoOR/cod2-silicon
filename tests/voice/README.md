@@ -65,8 +65,8 @@ taskpolicy -b nice -n 19 python3 tests/voice/playback_init.py --rate-contract \
 Repeat with the CoD2x database. `--baseline 26cf9bb` reproduces the 11025 Hz
 failure. The same production receive/decode/queue/render path consumes 64 fixed
 packets independently encoded by unmodified Xiph Speex 1.0.4 from a synthetic
-512 Hz integer sine at 8192 Hz. The 10240 decoded samples must occupy 60000
-48 kHz output frames (1.25 s), within one output frame; a windowed spectral
+512 Hz integer sine at 8192 Hz. The 10240 decoded samples must occupy 55125
+44.1 kHz output frames (1.25 s), within one output frame; a windowed spectral
 peak search must find 512 Hz within 0.25 Hz. Zero and negative recording-rate
 globals must retain the same playback semantics through the fallback.
 
@@ -76,7 +76,7 @@ existing-output-unit sentinel, retaining format validation and the shared
 default-rate update while skipping hardware creation. Native sample type,
 playback-rate setting, PCM conversion, buffer queues, linear resampling and
 `Render` are real. An unrelated
-48 kHz sample must retain exactly 480 frames of constant stereo PCM before
+44.1 kHz sample must retain exactly 480 frames of constant stereo PCM before
 voice startup, after startup and after shutdown; a newly allocated game sample
 is also checked after startup. No audio device, game or UDP socket opens.
 These checks establish rendered timing/pitch and that bounded

@@ -109,7 +109,7 @@ static void Setup(void)
     sound.info.format = 1;
     sound.info.data_ptr = pcm;
     sound.info.data_len = sizeof(pcm);
-    sound.info.rate = 48000;
+    sound.info.rate = 44100;
     sound.info.bits = 16;
     sound.info.channels = 1;
     sound.info.samples = 480;
@@ -202,7 +202,7 @@ static void UpdateCase(void)
     entities[1].lerpOrigin[1] = 29;
     entities[1].lerpOrigin[2] = 41;
     vec3_t world = {117, 4, 53};
-    SND_SetChannelInfo(0, 1, &sampleAlias, &sampleAlias, 0, world, 0.5f, 1, 1, 48000, 10, 0, 0, 0, SASYS_CGAME);
+    SND_SetChannelInfo(0, 1, &sampleAlias, &sampleAlias, 0, world, 0.5f, 1, 1, 44100, 10, 0, 0, 0, SASYS_CGAME);
     assert(g_snd.chaninfo[0].offset[0] == 0 && g_snd.chaninfo[0].offset[1] == -25 && g_snd.chaninfo[0].offset[2] == 12);
     /* Move and turn the emitter after its entity-local offset is recorded. */
     memcpy(entities[1].lerpOrigin, (vec3_t){67,39,21}, sizeof(vec3_t));
@@ -227,7 +227,7 @@ static void TimelineCase(void)
     entities[1].lerpOrigin[1] = 29;
     entities[1].lerpOrigin[2] = 41;
     assert(SND_StartAlias3DSample(&sampleAlias, &sampleAlias, 0, 1, world, 0.5f, 2, 0, 0, 32, 0, NULL, SASYS_CGAME) == 37);
-    assert(AIL_3D_sample_playback_rate(milesGlob.handle_3D[0]) == 96000);
+    assert(AIL_3D_sample_playback_rate(milesGlob.handle_3D[0]) == 88200);
     CheckOutput(0, 0, 1);
     SND_Update3DChannel(0, 16);
     CheckOutput(0, 0, 0);
@@ -244,14 +244,14 @@ static void TimelineCase(void)
         assert(fabsf(mixed[i] - amplitude) < 0.00001f);
     CheckOutput(0, 0, 1);
     assert(AIL_3D_sample_status(milesGlob.handle_3D[0]) == 2);
-    puts("PASS sample start: 48k PCM, 96k playback, delay, stop/resume cursor and exact 240 output-frame duration");
+    puts("PASS sample start: 44.1k PCM, 88.2k playback, delay, stop/resume cursor and exact 240 output-frame duration");
 }
 
 static float ExpectedPcm(size_t frame)
 {
     const unsigned char *data = sound.info.data_ptr;
     size_t samples = sound.info.data_len / 2;
-    double cursor = (double)frame * sound.info.rate / 48000;
+    double cursor = (double)frame * sound.info.rate / 44100;
     size_t current = (size_t)cursor;
     if (current >= samples)
         return 0;

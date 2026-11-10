@@ -26,7 +26,7 @@ Coverage:
   through both `MacAudio_Mix` and `Render`.
 - An entity translated and yawed after recording a nonzero local offset checks
   the real channel-offset producer, update consumer and rendered PCM.
-- Sample start checks a 32 ms delay, 48 kHz input with 96 kHz playback,
+- Sample start checks a 32 ms delay, 44.1 kHz input with 88.2 kHz playback,
   stop/resume cursor preservation and exactly 240 output frames from a
   480-sample input.
 - All 138 run/walk/prone first/third-person surface events check the emitted

@@ -6,7 +6,7 @@
 
 extern int g_sound_recordFrequency;
 
-#define OUTPUT_RATE 48000
+#define OUTPUT_RATE 44100 /* the mixer's rate */
 #define OUTPUT_FRAMES 65536
 
 static double TonePower(const float *pcm, int start, int count, double frequency)
@@ -56,12 +56,12 @@ static void CheckGameSound(void *sample)
         input[i] = 4096;
     AIL_set_sample_type(sample, 1, 0);
     AIL_set_sample_address(sample, input, sizeof(input));
-    AIL_set_sample_playback_rate(sample, 48000);
+    AIL_set_sample_playback_rate(sample, OUTPUT_RATE);
     AIL_resume_sample(sample);
     float pcm[962];
     int silent;
     assert(AudioOutput_Render(pcm, 481, &silent) == 0 && !silent);
-    assert(AIL_sample_playback_rate(sample) == 48000 && AIL_sample_status(sample) == 2);
+    assert(AIL_sample_playback_rate(sample) == OUTPUT_RATE && AIL_sample_status(sample) == 2);
     for (int i = 0; i < 960; i++)
         assert(pcm[i] == 0.125f);
     assert(pcm[960] == 0 && pcm[961] == 0);
@@ -123,8 +123,8 @@ int main(int argc, char **argv)
         }
     }
     double hz = DominantFrequency(pcm);
-    /* 64 * 160 / 8192 = 1.25 s = exactly 60000 output frames. */
-    int durationOK = abs(last + 1 - 60000) <= 1;
+    /* 64 * 160 / 8192 = 1.25 s = exactly 55125 output frames. */
+    int durationOK = abs(last + 1 - 55125) <= 1;
     int pitchOK = fabs(hz - 512) <= 0.25;
     int rateOK = strcmp(argv[2], "default") || g_sound_recordFrequency == g_encoder_samplerate;
     printf("{\"case\":\"%s\",\"rendered_frames\":%d,\"duration_seconds\":%.9f,"
