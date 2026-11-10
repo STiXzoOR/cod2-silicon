@@ -185,6 +185,16 @@ void Sys_Error(const char *error, ...)
 {
     char text[4096];
     va_list argptr;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* A fatal error is reported once (CoD2x linux/error.cpp): to CoD2x when
+       CoD2x-layer code raised it, else to the report receiver. During Com_Error the
+       site is Com_Error's caller. */
+    extern qboolean com_errorEntered;
+    extern const void *com_errorCaller;
+    extern void Cod2x_ReportFatal(const char *message, const void *site);
+    static int reported;
+    const void *site = com_errorEntered && com_errorCaller ? com_errorCaller : __builtin_return_address(0);
+#endif
 
 #if defined(COD2_X64)
     extern qboolean com_errorEntered;
@@ -193,6 +203,12 @@ void Sys_Error(const char *error, ...)
     va_start(argptr, error);
     vsnprintf(text, sizeof(text), error, argptr);
     va_end(argptr);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (!reported) {
+        reported = 1;
+        Cod2x_ReportFatal(text, site);
+    }
+#endif
 
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2xNative_Shutdown();
@@ -563,6 +579,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         Cod2xNative_Frame();
 #endif
         Com_Frame();
+#if (defined(__APPLE__) || (defined(COD2_WINDOWS_NATIVE) && COD2_WINDOWS_NATIVE)) && defined(COD2_X64) && COD2_X64 && \
+    defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+        Cod2xNative_FrameDone();
+#endif
         Sys_StateHashFrame();
     }
 

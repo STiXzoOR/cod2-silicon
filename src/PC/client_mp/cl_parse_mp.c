@@ -6,6 +6,9 @@
 #include "../qcommon/cod2x.h"
 #if defined(COD2_X64) && COD2_X64
 #include "../qcommon/cod2x_policy.h"
+#if !defined(DEDICATED)
+#include "../qcommon/cod2x_features.h"
+#endif
 #endif
 #endif
 #include "common_types.h"
@@ -642,12 +645,34 @@ void CL_WWWDownload(void)
 
         if (cls.wwwDlDisconnected)
             Cbuf_ExecuteText(2, "reconnect\n");
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+        /* CoD2x: the server did not redirect a zPAM download from CoD2x's site, so it gets
+           no "wwwdl done"; the client's next "donedl" is enough. */
+        else if (!Cod2x_ZpamDirectActive())
+            CL_AddReliableCommand("wwwdl done");
+        Cod2x_ZpamDirectEnd(0);
+#else
         else
             CL_AddReliableCommand("wwwdl done");
+#endif
 
         cls.wwwDlInProgress = 0;
         CL_NextDownload();
     } else {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+        if (Cod2x_ZpamDirectActive()) {
+            /* CoD2x: the download from CoD2x's site failed, so the game server is asked. */
+            char localName[64], remoteName[64];
+            I_strncpyz(localName, cls.originalDownloadName, sizeof(localName));
+            I_strncpyz(remoteName, Cod2x_ZpamDirectRemote(), sizeof(remoteName));
+            extern void CL_BeginDownload(const char *localName, const char *remoteName);
+            Cod2x_ZpamDirectEnd(0);
+            remove(cls.downloadTempName);
+            cls.wwwDlInProgress = 0;
+            CL_BeginDownload(localName, remoteName);
+            return;
+        }
+#endif
         if (cls.wwwDlDisconnected) {
             char *err = va("Download failure while getting '%s'\n", cls.downloadName);
             cls.wwwDlDisconnected = 0;

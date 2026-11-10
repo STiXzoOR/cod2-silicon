@@ -65,7 +65,7 @@ list(FILTER MACOS_DED_C EXCLUDE REGEX "/PC/(snd|win32/cinematics)\\.c$")
 list(FILTER MACOS_DED_C EXCLUDE REGEX "/Mac/Main/(mac_input|mac_decode|mac_sound)\\.c$")
 # A dedicated build never loads the client sound driver or group voice output.
 list(FILTER MACOS_DED_C EXCLUDE REGEX "/PC/win32/(snd_driver|win_voice)\\.c$")
-list(FILTER MACOS_DED_C EXCLUDE REGEX "/PC/qcommon/cod2x_(features|demo|url)\\.c$")
+list(FILTER MACOS_DED_C EXCLUDE REGEX "/PC/qcommon/cod2x_(features|demo|url|vmix)\\.c$")
 
 # Typed LP64 data generated from the Mac binary's STABS (WS2, tools/datagen).
 include(${CMAKE_SOURCE_DIR}/cmake/datagen.cmake)
@@ -200,3 +200,8 @@ target_sources(cod2_macos_ded PRIVATE src/platform/macos_server.c)
 target_link_options(cod2_macos_ded PRIVATE -Wl,-dead_strip)
 set_source_files_properties(src/PC/qcommon/crash_handler.c PROPERTIES
   COMPILE_DEFINITIONS "COD2_GIT_HASH=\"${COD2_GIT_HASH}\"")
+
+# The CoD2x units link as one run, so a fault can be placed in or out of them.
+include(${CMAKE_SOURCE_DIR}/cmake/cod2x-layer.cmake)
+cod2x_layer_order(cod2_macos)
+cod2x_layer_order(cod2_macos_ded)

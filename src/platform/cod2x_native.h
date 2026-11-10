@@ -2,6 +2,7 @@
 #define COD2X_NATIVE_H
 void Cod2xNative_Init(void);
 void Cod2xNative_Frame(void);
+void Cod2xNative_FrameDone(void);
 void Cod2xNative_Heartbeat(void);
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
 void Cod2xNative_BeginUserWait(void);

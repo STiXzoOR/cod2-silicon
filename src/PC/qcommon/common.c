@@ -373,6 +373,12 @@ static void Com_SetErrorMessage(const char *errMsg)
     }
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* Where the last error was raised: a fatal one is CoD2x's to hear about only when
+   CoD2x-layer code raised it (Cod2x_ReportFatal). */
+const void *com_errorCaller;
+#endif
+
 void Com_Error(errorParm_t code, const char *fmt, ...)
 {
 #if !COD2_APPLE_SDK || !defined(DEDICATED)
@@ -383,6 +389,9 @@ void Com_Error(errorParm_t code, const char *fmt, ...)
     extern char *cls;
     va_list argptr;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    com_errorCaller = __builtin_return_address(0);
+#endif
 
     if (com_errorEntered) {
         Sys_Error("recursive error after: %s", com_errorMessage);

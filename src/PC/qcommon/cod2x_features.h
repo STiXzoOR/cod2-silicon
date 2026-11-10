@@ -8,6 +8,9 @@
 void Cod2x_FeaturesInit(void);
 void Cod2x_FeaturesFrame(int active, int demo);
 void Cod2x_FeaturesClientState(int state);
+/* cod2x_vmix.c */
+void Cod2x_VmixInit(void);
+void Cod2x_VmixFrame(int clientState);
 /* CoD2x text codes: player names are coloured only on the scoreboard. */
 int Cod2x_TextCode(const char *p, char *code);
 int Cod2x_IsStyleCode(char code);
@@ -23,6 +26,14 @@ void Cod2x_HideServerIpFrame(const char *serverinfo);
 int Cod2x_HideServerIp(void);
 const char *Cod2x_HideIpText(const char *text, char *buffer, size_t size);
 const short *Cod2x_HideIpCells(const short *cells, int count, short *buffer, int size);
+/* A CoD2x web URL, or its local stand-in in tests (COD2X_TEST_SERVICE_URL). */
+/* zPAM IWDs from CoD2x's web site: 1 and the URL when remoteName should be fetched there. */
+int Cod2x_ZpamDirectURL(const char *remoteName, int wwwDownload, char *url, size_t size);
+int Cod2x_ZpamDirectActive(void);
+const char *Cod2x_ZpamDirectRemote(void);
+void Cod2x_ZpamDirectEnd(int cancelled);
+/* The update prompt's "getautoupdate" menu command. */
+void Cod2x_UpdateConfirmed(void);
 /* Once, when the file system first starts: CoD2x's IWD cleanup and iw_CoD2x_01.iwd. */
 void Cod2x_IwdStartup(const char *base);
 /* fs_processedList: the IWD decisions of this file-system start and of the one before. */

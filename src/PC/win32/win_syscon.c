@@ -316,6 +316,14 @@ void Conbuf_AppendText(const char *pMsg)
     *b = '\0';
     bufLen = (int)(b - buffer);
     (void)i;
+#    if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* Kept for CoD2x's crash and error reports (CoD2x console.cpp). */
+    {
+        extern void Cod2x_ConsoleMirror(const char *text, size_t length);
+        if (bufLen > 0)
+            Cod2x_ConsoleMirror(buffer, (size_t)bufLen);
+    }
+#    endif
 
     if (!s_wcd.hwndBuffer) {
         fputs(buffer, stdout);

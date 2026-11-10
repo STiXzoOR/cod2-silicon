@@ -2,6 +2,12 @@
 #include "common_types.h"
 #include "cod2x_native.h"
 #include "macos_system.h"
+#include "PC/qcommon/cod2x.h"
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+/* <sys/sysctl.h> clashes with the engine's token_t. */
+extern int sysctlbyname(const char *name, void *value, size_t *size, void *newValue, size_t newSize);
 #include <pthread.h>
 #include <signal.h>
 #include <stdatomic.h>
@@ -102,6 +108,37 @@ void Cod2xNative_Frame(void)
     if (freezeWatch)
         atomic_store_explicit(&enabled, freezeWatch->current.enabled, memory_order_relaxed);
     Cod2xNativeURL_Frame();
+}
+
+/* Windows' crash report says whether a crash was inside Com_Frame; macOS's doesn't. */
+void Cod2xNative_FrameDone(void)
+{
+}
+
+/* What CoD2x's update request says about this machine. macOS keeps no history of
+   identity changes; the system text takes CoD2x's Windows order: build, product,
+   version, country, virtualisation, (no compatibility flags), admin or user. */
+void Sys_Cod2xMachineHistory(Cod2xMachineHistory *out)
+{
+    char build[64] = "", version[64] = "", country[8] = "??";
+    const char *language = getenv("LANG");
+    size_t size;
+    int virtualMachine = 0;
+    memset(out, 0, sizeof(*out));
+    size = sizeof(build);
+    sysctlbyname("kern.osversion", build, &size, NULL, 0);
+    size = sizeof(version);
+    sysctlbyname("kern.osproductversion", version, &size, NULL, 0);
+    size = sizeof(virtualMachine);
+    sysctlbyname("kern.hv_vmm_present", &virtualMachine, &size, NULL, 0);
+    if (language && strlen(language) >= 5 && language[2] == '_')
+        snprintf(country, sizeof(country), "%.2s", language + 3);
+    snprintf(out->system, sizeof(out->system), "%s\nmacOS\n%s\n%s\n%s\n\n%s", build, version, country,
+             virtualMachine ? "VM" : "0", geteuid() == 0 ? "admin" : "user");
+}
+
+void Sys_Cod2xMachineHistoryClear(void)
+{
 }
 
 void Cod2xNative_Shutdown(void)

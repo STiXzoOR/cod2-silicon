@@ -86,6 +86,9 @@ int CL_ClearStaticDownload(void)
     cls.wwwDlInProgress = 0;
     cls.wwwDlDisconnected = 0;
     cls.downloadFlags = 0;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    Cod2x_ZpamDirectEnd(1);
+#endif
     DL_CancelDownload();
     return 0;
 }
@@ -1943,6 +1946,14 @@ static void CL_BuildMd5StrFromCDKey(char *md5Str)
 }
 #endif
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* The CD-key hash CoD2x's update request carries (CoD2x updater.cpp). */
+void CL_Cod2xCDKeyHash(char hash[34])
+{
+    CL_BuildMd5StrFromCDKey(hash);
+}
+#endif
+
 void CL_RequestAuthorization(void)
 {
     char nums[64];
@@ -2398,7 +2409,10 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 #endif
 
     if (I_stricmp(cmd, (const char *)"v") == 0) {
+        /* CoD2x drops voice packets: its client never sets voice up (Voice_Init). */
+#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
         CL_VoicePacket(msg);
+#endif
         result = 1;
         goto finish;
     }
@@ -3449,12 +3463,55 @@ void CL_DownloadsComplete(void)
     CL_WritePacket();
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED) && \
+    COD2_FEATURE_WWW_DOWNLOAD
+extern void DL_Cod2xExpectZip(void);
+extern const dvar_t *com_developer;
+extern char *Dvar_GetString(const char *dvarName);
+
+/* CoD2x downloading.cpp: a zPAM IWD comes from CoD2x's web site, set up as a
+   server's www redirect would be but without the wwwdl replies. */
+static int CL_Cod2xDirectDownload(const char *localName, const char *remoteName)
+{
+    char url[256], temp[256];
+    if (!Cod2x_ZpamDirectURL(remoteName, cl_wwwDownload && cl_wwwDownload->current.enabled, url, sizeof(url)))
+        return 0;
+    I_strncpyz(clc->downloadName, localName, sizeof(clc->downloadName));
+    Com_sprintf(clc->downloadTempName, sizeof(clc->downloadTempName), "%s.tmp", localName);
+    I_strncpyz(cls.originalDownloadName, localName, sizeof(cls.originalDownloadName));
+    Com_sprintf(temp, sizeof(temp), "%s.tmp", localName);
+    FS_BuildOSPath(Dvar_GetString("fs_homepath"), temp, "", cls.downloadTempName);
+    if (cls.downloadTempName[0])
+        cls.downloadTempName[strlen(cls.downloadTempName) - 1] = '\0';
+    I_strncpyz(cls.downloadName, url, sizeof(cls.downloadName));
+    cls.downloadFlags = 0;
+    cls.wwwDlDisconnected = 0;
+    legacyHacks->cl_downloadSize = 0;
+    legacyHacks->cl_downloadCount = 0;
+    legacyHacks->cl_downloadTime = cls.realtime;
+    Com_Printf("Downloading '%s'\n", url);
+    DL_Cod2xExpectZip();
+    if (!DL_BeginDownload(cls.downloadTempName, url, com_developer->current.integer)) {
+        /* Not started: the server is asked instead. */
+        Cod2x_ZpamDirectEnd(0);
+        return 0;
+    }
+    cls.wwwDlInProgress = 1;
+    return 1;
+}
+#endif
+
 void CL_BeginDownload(const char *localName, const char *remoteName)
 {
     clientConnection_t *conn;
     const char *cmd;
     int sequence;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED) && \
+    COD2_FEATURE_WWW_DOWNLOAD
+    if (CL_Cod2xDirectDownload(localName, remoteName))
+        return;
+#endif
     Com_DPrintf((const char *)"***** CL_BeginDownload *****\nLocalname: %s\nRemotename: %s\n****************************\n", localName, remoteName);
     conn = (clientConnection_t *)clc;
     I_strncpyz(conn->downloadName, localName, sizeof(conn->downloadName));

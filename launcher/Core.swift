@@ -291,7 +291,13 @@ enum CrashReports {
     static func latest(in home: URL, since: Date) -> URL? {
         func modified(_ url: URL) -> Date { (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast }
         return ((try? FileManager.default.contentsOfDirectory(at: home, includingPropertiesForKeys: [.contentModificationDateKey])) ?? [])
-            .filter { ["cod2_crash_", "cod2_freeze_"].contains(where: $0.lastPathComponent.hasPrefix) && $0.pathExtension == "txt" && modified($0) >= since }
+            .filter { url in
+                // The original engine writes cod2_crash_<pid>.txt; CoD2x builds use CoD2x's names, cod2x_crash.<time>.<pid>.log.
+                let name = url.lastPathComponent
+                let original = ["cod2_crash_", "cod2_freeze_"].contains(where: name.hasPrefix) && url.pathExtension == "txt"
+                let cod2x = ["cod2x_crash.", "cod2x_freeze."].contains(where: name.hasPrefix) && url.pathExtension == "log"
+                return (original || cod2x) && modified(url) >= since
+            }
             .max { modified($0) < modified($1) }
     }
 }

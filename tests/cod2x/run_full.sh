@@ -25,7 +25,8 @@ for test in policy features mouse url dvar_pool info; do
     clang $flags -Wl,-dead_strip "tests/cod2x/test_$test.c" $source -o "$work/$test"
     "$work/$test"
 done
-clang $flags tests/cod2x/test_features_engine.c src/PC/qcommon/cod2x_features.c -o "$work/features-engine"
+clang $flags tests/cod2x/test_features_engine.c src/PC/qcommon/cod2x_features.c src/PC/qcommon/cod2x_protocol.c \
+    -o "$work/features-engine"
 "$work/features-engine"
 clang $flags -Wl,-dead_strip tests/cod2x/test_radar_engine.c -o "$work/radar-engine"
 "$work/radar-engine"
@@ -65,7 +66,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/cod2x -p test_ex
 PYTHONDONTWRITEBYTECODE=1 python3 tests/cod2x/test_demo_https.py
 if [ "${COD2X_SANITIZERS:-0}" != 1 ]; then
     clang $flags -Wl,-dead_strip tests/cod2x/test_native_freeze.c src/platform/cod2x_native.c \
-        src/PC/qcommon/crash_handler.c -o "$work/freeze"
+        src/PC/qcommon/crash_handler.c src/PC/qcommon/cod2x_layer_start.c src/PC/qcommon/cod2x_protocol.c \
+        src/PC/qcommon/cod2x_report.c src/PC/qcommon/cod2x_layer_stop.c -lcurl -o "$work/freeze"
     "$work/freeze" "$work" > "$work/freeze.log" 2>&1
     python3 - "$work" <<'PY'
 from pathlib import Path
@@ -74,16 +76,19 @@ import stat
 import subprocess
 import sys
 directory = Path(sys.argv[1])
-freeze = list(directory.glob("cod2_freeze_*.txt"))
+freeze = list(directory.glob("cod2x_freeze.*.log"))
 assert len(freeze) == 1
-assert "pc=" in freeze[0].read_text() and "x28=" in freeze[0].read_text()
+assert "PC=0x" in freeze[0].read_text() and "X28=0x" in freeze[0].read_text()
 assert stat.S_IMODE(freeze[0].stat().st_mode) == 0o600
 resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 crash = subprocess.run([str(directory / "freeze"), str(directory), "--crash"], capture_output=True)
 assert crash.returncode != 0
-reports = list(directory.glob("cod2_crash_*.txt"))
-assert len(reports) == 1 and "pc=" in reports[0].read_text() and "x28=" in reports[0].read_text()
+reports = list(directory.glob("cod2x_crash.*.log"))
+assert len(reports) == 1 and "PC=0x" in reports[0].read_text() and "X28=0x" in reports[0].read_text()
 assert stat.S_IMODE(reports[0].stat().st_mode) == 0o600
+received = (directory / "receiver.txt").read_text()
+assert freeze[0].name + "|main thread heartbeat stopped" in received and reports[0].name + "|SIGABRT" in received
+assert not list(directory.glob("*.pending.json"))
 print("CoD2x watchdog heartbeat/disable/stall and native crash report: passed")
 PY
 fi

@@ -51,6 +51,8 @@ static const dvar_t *drawSpectatedName, *drawCompass, *compassOffsetX, *compassO
 static const dvar_t *matchLogin, *hideServerIp, *messageOffsetX, *messageOffsetY, *messageScale;
 static int ipHidden;
 static int playingDemo, lastClientState = -1;
+/* The update prompt's dvars (the CoD2x update check below). */
+static const dvar_t *updateAvailable, *updateFiles, *updateVersion, *updateOldVersion;
 #if defined(_WIN32)
 /* src/win32/win_system.c */
 int Sys_Cod2xProcessorCount(void);
@@ -78,46 +80,6 @@ static void Cod2x_IncreaseDecrease_f(void)
         Dvar_SetFloat(var, Cod2x_StepFloat(var->current.value, direction));
     else
         Com_Printf("%s is not an int or float\n", Cmd_Argv(1));
-}
-
-static void Cod2x_MatchUsage(void)
-{
-    Com_Printf("USAGE: match <command> <options>\n");
-    Com_Printf("Client:\n");
-    Com_Printf("  match login <hash>\n");
-    Com_Printf("    <hash> - The hash to login with to the match server; will be removed after disconnect\n");
-    Com_Printf("Server:\n");
-    Com_Printf("  match create <endpoint>\n");
-    Com_Printf("    <endpoint> - URL for getting match data\n");
-    Com_Printf("    Example: match create http://web.com/matches/MATCHID1\n");
-    Com_Printf("  match status\n");
-    Com_Printf("    Displays the current match status\n");
-    Com_Printf("  match upload\n");
-    Com_Printf("    Forces upload of match data\n");
-    Com_Printf("  match cancel\n");
-    Com_Printf("    Cancels the current match\n");
-}
-
-static void Cod2x_Match_f(void)
-{
-    const dvar_t *dedicated;
-    const char *hash;
-    if (Cmd_Argc() < 2 || strcasecmp(Cmd_Argv(1), "login")) {
-        /* The server commands belong to the match service, which this client does not run. */
-        Cod2x_MatchUsage();
-        return;
-    }
-    dedicated = Dvar_FindVar("dedicated");
-    if (dedicated && dedicated->current.integer > 0) {
-        Com_Printf("Match login command is only available for clients.\n");
-        return;
-    }
-    hash = Cmd_Argv(2);
-    if (!*hash) {
-        Com_Printf("Please provide a hash to login.\n");
-        return;
-    }
-    Dvar_SetString(matchLogin, hash);
 }
 
 static int Cod2x_ProcessorCount(void)
@@ -291,6 +253,7 @@ static void Cod2x_ProcessedList_f(void)
 void Cod2x_FeaturesInit(void)
 {
     Cod2x_PoseInit();
+    Cod2x_VmixInit();
     /* CoD2x cgame.cpp:65 and drawing.cpp:270-279 describe these controls. */
     thirdPersonMode = Dvar_RegisterInt("cg_thirdPersonMode", 0, 0, 1, 0x1080);
     debugBullets = Dvar_RegisterBool("cg_debugBullets", 0, 0x1080);
@@ -307,10 +270,14 @@ void Cod2x_FeaturesInit(void)
     messageScale = Dvar_RegisterFloat("cg_gameMessageScale", 1, .5f, 3, 0x1001);
     Cmd_AddCommand("increase", Cod2x_IncreaseDecrease_f);
     Cmd_AddCommand("decrease", Cod2x_IncreaseDecrease_f);
-    Cmd_AddCommand("match", Cod2x_Match_f);
     Cmd_AddCommand("fs_processedList", Cod2x_ProcessedList_f);
     Dvar_RegisterBool("com_autoaffinity", 1, 0x1001);
     Cod2x_AutoAffinity();
+    /* The Windows 1.3 client's update dvars, which its menus read. */
+    updateAvailable = Dvar_RegisterBool("cl_updateavailable", 0, 0x1040);
+    updateFiles = Dvar_RegisterString("cl_updatefiles", "", 0x1040);
+    updateOldVersion = Dvar_RegisterString("cl_updateoldversion", "", 0x1040);
+    updateVersion = Dvar_RegisterString("cl_updateversion", "", 0x1040);
 }
 
 void Cod2x_FeaturesFrame(int active, int demo)
@@ -319,12 +286,16 @@ void Cod2x_FeaturesFrame(int active, int demo)
     playingDemo = demo;
 }
 
+static void Cod2x_UpdateFrame(int state);
+
 void Cod2x_FeaturesClientState(int state)
 {
+    Cod2x_VmixFrame(state);
     /* CoD2x reports the server's revision whenever g_cod2x changes, and again
        when a 1.3 server's map becomes active. */
     dvar_t *game = (dvar_t *)Dvar_FindVar("g_cod2x");
     int changed = state != lastClientState, previous = lastClientState;
+    Cod2x_UpdateFrame(state);
     lastClientState = state;
     if (changed && state == CA_CONNECTED) {
         /* A server may have turned the mouse off with m_enable; a new connection turns it back on. */
@@ -701,6 +672,12 @@ int Cod2x_FeaturesDemo(void)
     return playingDemo;
 }
 
+/* The client state the last frame saw, for crash reports. */
+int Cod2x_ClientState(void)
+{
+    return lastClientState < 0 ? 0 : lastClientState;
+}
+
 int Cod2x_ThirdPersonMode(void)
 {
     return thirdPersonMode ? thirdPersonMode->current.integer : 0;
@@ -913,4 +890,275 @@ void Cod2x_IwdStartup(const char *base)
         Com_Error(0, "Error while extracting IWD file to '%s'. Error while writing to file: %s\n", target,
                   strerror(errno));
 }
+
+/* ---- CoD2x's update check (CoD2x updater.cpp, updater_https.cpp) --------------
+   Each time the client reaches the main menu, and when the menu is opened in a
+   game, it asks CoD2x's update service for the current CoD2x version. An update
+   shows the game's own "Auto Update" button and prompt; a required one stops
+   connecting, as in CoD2x. CoD2x then downloads its mss32.dll and restarts the
+   game; this build never downloads or installs CoD2x's files. */
+#define COD2X_UPDATE_URL "https://master.cod2x.me/api/updater/check"
+
+extern cg_t cgArray[1];
+extern void CL_Cod2xCDKeyHash(char hash[34]);
+
+static volatile int updateRunning, updateAnswered;
+static int updateForced, updateLastState = -1, updateLastRender = -1;
+static struct {
+    int ok, available;
+    char url[1024], version[64], error[256];
+} updateAnswer;
+
+static void Cod2x_JsonAdd(char *json, size_t size, const char *name, const char *value)
+{
+    size_t used = strlen(json);
+    const char *p;
+    used += (size_t)snprintf(json + used, used < size ? size - used : 0, ",\"%s\":\"", name);
+    for (p = value; *p && used + 8 < size; ++p) {
+        if (*p == '"' || *p == '\\')
+            used += (size_t)snprintf(json + used, size - used, "\\%c", *p);
+        else if (*p == '\n')
+            used += (size_t)snprintf(json + used, size - used, "\\n");
+        else if ((unsigned char)*p < 0x20)
+            used += (size_t)snprintf(json + used, size - used, "\\u%04x", (unsigned char)*p);
+        else
+            json[used++] = *p;
+    }
+    if (used + 2 < size)
+        snprintf(json + used, size - used, "\"");
+}
+
+/* The value of key in the "update" object of the answer: a string or a number. */
+static int Cod2x_UpdateValue(const char *reply, const char *key, char *out, size_t size)
+{
+    char pattern[32];
+    const char *p = strstr(reply, "\"update\""), *end;
+    size_t used = 0;
+    int depth = 0;
+    if (!p || !(p = strchr(p, '{')))
+        return 0;
+    for (end = p; *end; ++end) {
+        if (*end == '{')
+            ++depth;
+        else if (*end == '}' && --depth == 0)
+            break;
+    }
+    snprintf(pattern, sizeof(pattern), "\"%s\"", key);
+    for (p = strstr(p, pattern); p && p < end; p = strstr(p + 1, pattern)) {
+        const char *value = p + strlen(pattern);
+        while (*value == ' ' || *value == '\t' || *value == '\r' || *value == '\n')
+            ++value;
+        if (*value != ':')
+            continue;
+        ++value;
+        while (*value == ' ' || *value == '\t' || *value == '\r' || *value == '\n')
+            ++value;
+        if (*value == '"') {
+            for (++value; *value && *value != '"' && used + 1 < size; ++value) {
+                if (*value == '\\' && value[1])
+                    ++value;
+                out[used++] = *value;
+            }
+        } else {
+            while (*value && *value != ',' && *value != '}' && *value != ' ' && used + 1 < size)
+                out[used++] = *value++;
+        }
+        out[used] = '\0';
+        return 1;
+    }
+    return 0;
+}
+
+/* On the request's own thread. */
+static void Cod2x_UpdateDone(int ok, long status, const char *reply, const char *error, void *user)
+{
+    char available[16] = "";
+    (void)user;
+    memset(&updateAnswer, 0, sizeof(updateAnswer));
+    snprintf(updateAnswer.error, sizeof(updateAnswer.error), "%s", "No response");
+    if (!ok) {
+        snprintf(updateAnswer.error, sizeof(updateAnswer.error), "%s", error);
+        Cod2x_Log("[UPDATER-HTTPS] Request failed: %s", error);
+    } else if (status < 200 || status >= 300) {
+        snprintf(updateAnswer.error, sizeof(updateAnswer.error), "HTTP %ld", status);
+        Cod2x_Log("[UPDATER-HTTPS] Request rejected by endpoint (HTTP %d): %s", (int)status, reply);
+    } else if (!Cod2x_UpdateValue(reply, "available", available, sizeof(available)) ||
+               (strcmp(available, "0") && strcmp(available, "1") && strcmp(available, "2"))) {
+        snprintf(updateAnswer.error, sizeof(updateAnswer.error), "%s", "Invalid response");
+        Cod2x_Log("[UPDATER-HTTPS] Failed to parse response: %s", reply);
+    } else {
+        updateAnswer.available = available[0] - '0';
+        Cod2x_UpdateValue(reply, "url", updateAnswer.url, sizeof(updateAnswer.url));
+        Cod2x_UpdateValue(reply, "version", updateAnswer.version, sizeof(updateAnswer.version));
+        if (updateAnswer.available && !updateAnswer.url[0]) {
+            snprintf(updateAnswer.error, sizeof(updateAnswer.error), "%s", "Invalid response");
+            Cod2x_Log("[UPDATER-HTTPS] Failed to parse response: %s", reply);
+        } else {
+            updateAnswer.ok = 1;
+            updateAnswer.error[0] = '\0';
+            Cod2x_Log("[UPDATER-HTTPS] available=%d version='%s' url='%s'", updateAnswer.available,
+                      updateAnswer.version, updateAnswer.url);
+        }
+    }
+    __sync_synchronize();
+    updateAnswered = 1;
+    updateRunning = 0;
+}
+
+static void Cod2x_UpdateCheck(void)
+{
+    char json[4096], hash[34] = "";
+    const dvar_t *hwid = Dvar_FindVar("cl_hwid"), *hwid2 = Dvar_FindVar("cl_hwid2");
+    Cod2xMachineHistory history;
+    size_t used;
+    if (!__sync_bool_compare_and_swap(&updateRunning, 0, 1))
+        return;
+    memset(&history, 0, sizeof(history));
+    Sys_Cod2xMachineHistory(&history);
+    CL_Cod2xCDKeyHash(hash);
+    /* CoD2x's update service knows its Windows client; macOS asks as that client. */
+    snprintf(json, sizeof(json), "{\"game\":\"CoD2x MP\"");
+    Cod2x_JsonAdd(json, sizeof(json), "version", COD2X_RELEASE);
+    Cod2x_JsonAdd(json, sizeof(json), "os", "win-x86");
+    Cod2x_JsonAdd(json, sizeof(json), "type", "client");
+    if (hash[0])
+        Cod2x_JsonAdd(json, sizeof(json), "cdkeyHash", hash);
+    if (history.regid[0])
+        Cod2x_JsonAdd(json, sizeof(json), "regid", history.regid);
+    used = strlen(json);
+    snprintf(json + used, sizeof(json) - used, ",\"hwid\":%d", hwid ? hwid->current.integer : 0);
+    if (hwid2 && hwid2->current.string && hwid2->current.string[0])
+        Cod2x_JsonAdd(json, sizeof(json), "hwid2", hwid2->current.string);
+    if (history.previous[0])
+        Cod2x_JsonAdd(json, sizeof(json), "hwid2Old", history.previous);
+    if (history.changed[0])
+        Cod2x_JsonAdd(json, sizeof(json), "hwid2Diff", history.changed);
+    used = strlen(json);
+    snprintf(json + used, sizeof(json) - used, ",\"hwid2DiffCnt\":%d", history.changes);
+    if (history.system[0])
+        Cod2x_JsonAdd(json, sizeof(json), "systemInfo", history.system);
+    used = strlen(json);
+    snprintf(json + used, sizeof(json) - used, "}");
+    Com_Printf("Auto-Updater: Checking for updates...\n");
+    Cod2x_PostJson(COD2X_UPDATE_URL, json, 5000, Cod2x_UpdateDone, NULL);
+}
+
+static void Cod2x_UpdateRequired(void)
+{
+    Com_Error(1, "Update required\n\nA new version of CoD2x must be installed.\nPlease update to version %s.\n",
+              updateVersion->current.string);
+}
+
+static void Cod2x_UpdateAnswer(void)
+{
+    if (!updateAnswer.ok) {
+        /* CoD2x then asks over UDP (getUpdateInfo3); this build asks only over https. */
+        Com_Printf("Auto-Updater: Request failed: %s\n", updateAnswer.error);
+        return;
+    }
+    Com_Printf("-----------------------------------\n");
+    Sys_Cod2xMachineHistoryClear();
+    if (updateAnswer.available) {
+        Com_Printf("CoD2x: Update available: %s -> %s\n", COD2X_RELEASE, updateAnswer.version);
+        Dvar_SetBool(updateAvailable, 1);
+        Dvar_SetString(updateFiles, updateAnswer.url);
+        Dvar_SetString(updateVersion, updateAnswer.version);
+        Dvar_SetString(updateOldVersion, COD2X_RELEASE);
+        if (updateAnswer.available == 2) {
+            updateForced = 1;
+            if (lastClientState > CA_DISCONNECTED && lastClientState < CA_CONNECTED && !playingDemo)
+                Cod2x_UpdateRequired();
+        }
+    } else {
+        Com_Printf("CoD2x: No updates available.\n");
+        Dvar_SetBool(updateAvailable, 0);
+    }
+    Com_Printf("-----------------------------------\n");
+}
+
+/* The update prompt's "getautoupdate". CoD2x downloads its mss32.dll and restarts. */
+void Cod2x_UpdateConfirmed(void)
+{
+    Com_Error(1, "CoD2x %s is available.\n\nThis build does not download or install CoD2x's files.\n",
+              updateVersion ? updateVersion->current.string : "");
+}
+
+static void Cod2x_UpdateFrame(int state)
+{
+    int render = cgArray[0].renderScreen, last = updateLastState, lastRender = updateLastRender;
+    updateLastState = state;
+    updateLastRender = render;
+    /* The answer is read before another request may overwrite it. */
+    if (updateAnswered) {
+        __sync_synchronize();
+        updateAnswered = 0;
+        Cod2x_UpdateAnswer();
+    }
+    if (updateForced && state > CA_DISCONNECTED && state < CA_CONNECTED && !playingDemo)
+        Cod2x_UpdateRequired();
+    if (state != last && state == CA_DISCONNECTED)
+        Cod2x_UpdateCheck();
+    if (state == CA_ACTIVE && !render && render != lastRender)
+        Cod2x_UpdateCheck();
+}
+
+/* ---- zPAM from CoD2x's web site (CoD2x downloading.cpp, zpam.cpp) -------------
+   With cl_wwwDownload on, a missing main/zpamNNN.iwd or main/zpam_maps_vNNN.iwd is
+   fetched from CoD2x's web site instead of the game server, once per name. A failed
+   download asks the game server as usual; a cancelled one may be tried again. */
+#define COD2X_ZPAM_URL "https://cod2x.me/zpam"
+
+static char zpamTried[64][64], zpamRemote[64];
+static int zpamTriedCount, zpamActive;
+
+static int Cod2x_ZpamVersion(const char *name, const char *prefix)
+{
+    size_t length = strlen(prefix);
+    const char *p = name + length;
+    if (strncasecmp(name, prefix, length) || !isdigit((unsigned char)*p))
+        return -1;
+    while (isdigit((unsigned char)*p))
+        ++p;
+    return strcasecmp(p, ".iwd") ? -1 : atoi(name + length);
+}
+
+int Cod2x_ZpamDirectURL(const char *remoteName, int wwwDownload, char *url, size_t size)
+{
+    char address[256], stand[256];
+    int i;
+    zpamActive = 0;
+    if (!wwwDownload || !remoteName || strncasecmp(remoteName, "main/", 5) ||
+        (Cod2x_ZpamVersion(remoteName + 5, "zpam") < 0 && Cod2x_ZpamVersion(remoteName + 5, "zpam_maps_v") < 0))
+        return 0;
+    for (i = 0; i < zpamTriedCount; ++i)
+        if (!strcmp(zpamTried[i], remoteName))
+            return 0;
+    if (zpamTriedCount == (int)(sizeof(zpamTried) / sizeof(zpamTried[0])))
+        return 0;
+    snprintf(zpamTried[zpamTriedCount++], sizeof(zpamTried[0]), "%s", remoteName);
+    snprintf(zpamRemote, sizeof(zpamRemote), "%s", remoteName);
+    snprintf(address, sizeof(address), "%s/%s", COD2X_ZPAM_URL, remoteName);
+    snprintf(url, size, "%s", Cod2x_ServiceURL(address, stand, sizeof(stand)));
+    zpamActive = 1;
+    return 1;
+}
+
+int Cod2x_ZpamDirectActive(void)
+{
+    return zpamActive;
+}
+
+const char *Cod2x_ZpamDirectRemote(void)
+{
+    return zpamRemote;
+}
+
+/* The direct download ended; a cancelled one is not counted as tried. */
+void Cod2x_ZpamDirectEnd(int cancelled)
+{
+    if (zpamActive && cancelled && zpamTriedCount > 0)
+        --zpamTriedCount;
+    zpamActive = 0;
+}
 #endif
+

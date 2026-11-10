@@ -1023,9 +1023,7 @@ static void SV_Cod2xMatch_f(void)
 
 void SV_Cod2xMatchInit(void)
 {
-    /* A client's own match command (cod2x_features.c) already has the name there. */
-    if (Dvar_GetInt("dedicated") > 0)
-        Cmd_AddCommand("match", SV_Cod2xMatch_f);
+    Cmd_AddCommand("match", SV_Cod2xMatch_f);
 }
 
 /* ---- script calls ---------------------------------------------------------- */

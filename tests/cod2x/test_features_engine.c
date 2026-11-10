@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include "cod2x.h"
 #include "cod2x_features.h"
 #include <assert.h>
 #include <stdio.h>
@@ -104,6 +105,18 @@ char *Info_ValueForKey(const char *s, const char *key) { (void)s; (void)key; ret
 int Cod2x_GameVersion(void) { return 6; }
 void Cod2x_PoseInit(void) {}
 const char *Cod2x_IwdRequiredName(void) { return ""; }
+/* vMix and the update check's links to the client, the platform and the network: none here. */
+void Cod2x_VmixInit(void) {}
+void Cod2x_VmixFrame(int clientState) { (void)clientState; }
+cg_t cgArray[1];
+void CL_Cod2xCDKeyHash(char hash[34]) { hash[0] = '\0'; }
+void Sys_Cod2xMachineHistory(Cod2xMachineHistory *out) { memset(out, 0, sizeof(*out)); }
+void Sys_Cod2xMachineHistoryClear(void) {}
+void Cod2x_Log(const char *format, ...) { (void)format; }
+void Cod2x_PostJson(const char *url, const char *json, int timeout, Cod2xPostDone done, void *user)
+{
+    (void)url, (void)json, (void)timeout, (void)done, (void)user;
+}
 
 static void execute(const char *cmd, const char *a, const char *b)
 {
@@ -142,7 +155,8 @@ int main(void)
     assert(Cod2x_DebugBullets());
     cheats->current.enabled = 0;
     assert(!Cod2x_DebugBullets());
-    execute("match", "LOGIN", "match-player-id");
+    /* The match command itself belongs to the match service (cod2x_match.c). */
+    Dvar_SetString(Dvar_FindVar("match_login"), "match-player-id");
     assert(Dvar_FindVar("match_login")->flags == 0x12);
     assert(Dvar_FindVar("com_autoaffinity")->flags == 0x1001 && Dvar_FindVar("com_autoaffinity")->current.enabled);
     Cod2x_FeaturesFrame(0, 0);

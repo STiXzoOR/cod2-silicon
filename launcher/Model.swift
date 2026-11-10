@@ -652,6 +652,8 @@ struct MediaEntry: Identifiable {
             environment["SDL_VIDEO_MAC_FULLSCREEN_SPACES"] = settings.fullscreen == "spaces" ? "1" : "0"
             if !approximate { environment["COD2_MAC_SHADER_CACHE"] = home.appendingPathComponent("shaders").path }
             else { environment.removeValue(forKey: "COD2_MAC_SHADER_CACHE") }
+            // Reports to CoD2x need the player's agreement; until the launcher asks for it, none are sent.
+            environment.removeValue(forKey: "COD2_SILICON_COD2X_REPORTS")
             process.environment = environment
             process.standardInput = FileHandle.standardInput
             process.standardOutput = FileHandle.standardOutput; process.standardError = FileHandle.standardError

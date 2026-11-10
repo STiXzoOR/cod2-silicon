@@ -714,6 +714,14 @@ void Item_RunScript(displayContextDef_t *dc, itemDef_t *item, const char *s)
                 }
             }
         }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        /* Windows 1.3 has getautoupdate in its command list; CoD2x answers it. */
+        if (I_stricmp(command, "getautoupdate") == 0) {
+            extern void Cod2x_UpdateConfirmed(void);
+            Cod2x_UpdateConfirmed();
+            goto next_command;
+        }
+#endif
         UI_RunMenuScript(&p);
     next_command:;
     }
