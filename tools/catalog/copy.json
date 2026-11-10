@@ -4904,6 +4904,216 @@
       "title": "Use every processor core",
       "summary": "Puts the game on every processor core once at start.",
       "details": "CoD2x only. macOS has no per-process core affinity, so on a Mac this setting is accepted and changes nothing."
+    },
+    "sv_wallbang": {
+      "group": "net",
+      "title": "Bullets through walls",
+      "summary": "Lets bullets pass through thin walls on a server you host, as CoD2x servers can.",
+      "details": "CoD2x only. Off by default. How far a bullet gets depends on the wall depth, the surface and the walls already passed. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_depth": {
+      "group": "net",
+      "title": "Wall depth a bullet passes",
+      "summary": "How thick a wall a rifle bullet can pass, before the surface scale.",
+      "details": "CoD2x only. From 0 to 256 units, 24 by default. Each surface multiplies it by its own scale. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_damage": {
+      "group": "net",
+      "title": "Damage after a wall",
+      "summary": "The share of damage a bullet keeps after passing a wall.",
+      "details": "CoD2x only. From 0 to 1, 0.6 by default. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_maxwalls": {
+      "group": "net",
+      "title": "Walls a bullet passes",
+      "summary": "How many walls one bullet can pass.",
+      "details": "CoD2x only. From 1 to 8, 2 by default. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_debug": {
+      "group": "net",
+      "title": "Show bullet paths through walls",
+      "summary": "Draws where bullets entered, passed and stopped in walls.",
+      "details": "CoD2x only. A troubleshooting aid for server owners; off by default."
+    },
+    "sv_wallbang_surface_none": {
+      "group": "net",
+      "title": "Wall scale: no surface type",
+      "summary": "How much of the wall depth a bullet passes through surfaces without a type.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_bark": {
+      "group": "net",
+      "title": "Wall scale: bark",
+      "summary": "How much of the wall depth a bullet passes through bark.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_brick": {
+      "group": "net",
+      "title": "Wall scale: brick",
+      "summary": "How much of the wall depth a bullet passes through brick.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_carpet": {
+      "group": "net",
+      "title": "Wall scale: carpet",
+      "summary": "How much of the wall depth a bullet passes through carpet.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_cloth": {
+      "group": "net",
+      "title": "Wall scale: cloth",
+      "summary": "How much of the wall depth a bullet passes through cloth.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_concrete": {
+      "group": "net",
+      "title": "Wall scale: concrete",
+      "summary": "How much of the wall depth a bullet passes through concrete.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_dirt": {
+      "group": "net",
+      "title": "Wall scale: dirt",
+      "summary": "How much of the wall depth a bullet passes through dirt.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_flesh": {
+      "group": "net",
+      "title": "Wall scale: flesh",
+      "summary": "How much of the wall depth a bullet passes through flesh.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_foliage": {
+      "group": "net",
+      "title": "Wall scale: foliage",
+      "summary": "How much of the wall depth a bullet passes through foliage.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_glass": {
+      "group": "net",
+      "title": "Wall scale: glass",
+      "summary": "How much of the wall depth a bullet passes through glass.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_grass": {
+      "group": "net",
+      "title": "Wall scale: grass",
+      "summary": "How much of the wall depth a bullet passes through grass.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_gravel": {
+      "group": "net",
+      "title": "Wall scale: gravel",
+      "summary": "How much of the wall depth a bullet passes through gravel.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_ice": {
+      "group": "net",
+      "title": "Wall scale: ice",
+      "summary": "How much of the wall depth a bullet passes through ice.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_metal": {
+      "group": "net",
+      "title": "Wall scale: metal",
+      "summary": "How much of the wall depth a bullet passes through metal.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_mud": {
+      "group": "net",
+      "title": "Wall scale: mud",
+      "summary": "How much of the wall depth a bullet passes through mud.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_paper": {
+      "group": "net",
+      "title": "Wall scale: paper",
+      "summary": "How much of the wall depth a bullet passes through paper.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_plaster": {
+      "group": "net",
+      "title": "Wall scale: plaster",
+      "summary": "How much of the wall depth a bullet passes through plaster.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_rock": {
+      "group": "net",
+      "title": "Wall scale: rock",
+      "summary": "How much of the wall depth a bullet passes through rock.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_sand": {
+      "group": "net",
+      "title": "Wall scale: sand",
+      "summary": "How much of the wall depth a bullet passes through sand.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_snow": {
+      "group": "net",
+      "title": "Wall scale: snow",
+      "summary": "How much of the wall depth a bullet passes through snow.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_water": {
+      "group": "net",
+      "title": "Wall scale: water",
+      "summary": "How much of the wall depth a bullet passes through water.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_wood": {
+      "group": "net",
+      "title": "Wall scale: wood",
+      "summary": "How much of the wall depth a bullet passes through wood.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_wallbang_surface_asphalt": {
+      "group": "net",
+      "title": "Wall scale: asphalt",
+      "summary": "How much of the wall depth a bullet passes through asphalt.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_master1": {
+      "group": "net",
+      "title": "First master server",
+      "summary": "The first master server a public server you host reports to.",
+      "details": "CoD2x only. cod2master.activision.com by default; it cannot be changed while the game runs. Only public servers (dedicated 2) report."
+    },
+    "sv_master2": {
+      "group": "net",
+      "title": "Second master server",
+      "summary": "The second master server a public server you host reports to.",
+      "details": "CoD2x only. master.cod2x.me by default; it cannot be changed while the game runs. Only public servers (dedicated 2) report."
+    },
+    "sv_master3": {
+      "group": "net",
+      "title": "Third master server",
+      "summary": "An extra master server a public server you host reports to.",
+      "details": "CoD2x only. Empty by default, which reports to no third master."
+    },
+    "sv_cracked": {
+      "group": "net",
+      "title": "Accept every CD key",
+      "summary": "Lets players join a server you host whatever the key server says about their key.",
+      "details": "CoD2x only. Off by default. The key server's real answer is still kept for scripts. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "showpacketstrings": {
+      "group": "net",
+      "title": "Print server packets",
+      "summary": "Prints the text of every connectionless packet a server you host sends and receives.",
+      "details": "CoD2x only. A troubleshooting aid for server owners; off by default."
+    },
+    "sv_hideserverip": {
+      "group": "net",
+      "title": "Ask players to hide the address",
+      "summary": "Tells players' CoD2x games to hide this server's address on screen.",
+      "details": "CoD2x only. Off by default. Players can also hide addresses themselves with Hide server addresses. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "sv_updatezpam": {
+      "group": "net",
+      "title": "Switch to newer zPAM versions",
+      "summary": "Lets a server you host move to the newest zPAM in its main folder.",
+      "details": "CoD2x only. On by default. Nothing is downloaded; it only chooses among the versions already there. It is a setting for a server you host, not something you tune for yourself."
     }
   },
   "commands": {
@@ -6741,6 +6951,26 @@
         "src/PC/client_mp/cl_cin_mp.c: CL_PlayUnskippableCinematic_f",
         "src/PC/client_mp/cl_cin_mp.c: SCR_StopCinematic"
       ]
+    },
+    "getip": {
+      "title": "Ask for this server's address",
+      "summary": "Asks the CoD2x master server which address it sees this server at.",
+      "details": "A server command. The answer is printed in the console."
+    },
+    "unbanall": {
+      "title": "Remove all bans",
+      "summary": "Deletes this server's ban list.",
+      "details": "A server command for admins."
+    },
+    "cmdline": {
+      "title": "Show the command line",
+      "summary": "Prints the command line the game started with.",
+      "details": "A troubleshooting command."
+    },
+    "fs_processedlist": {
+      "title": "Show loaded game files",
+      "summary": "Lists why each IWD file was loaded or ignored, for this start of the file system and the one before.",
+      "details": "A troubleshooting command."
     }
   },
   "supplemental": {

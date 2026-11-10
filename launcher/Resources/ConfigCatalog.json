@@ -49603,10 +49603,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Show packet strings",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Print server packets",
+      "summary": "Prints the text of every connectionless packet a server you host sends and receives.",
+      "details": "CoD2x only. A troubleshooting aid for server owners; off by default.",
       "sources": [
         "src/PC/server_mp/cod2x_server.c:54"
       ],
@@ -51103,9 +51103,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Cracked",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Accept every CD key",
+      "summary": "Lets players join a server you host whatever the key server says about their key.",
+      "details": "CoD2x only. Off by default. The key server's real answer is still kept for scripts. It is a setting for a server you host, not something you tune for yourself.",
       "sources": [
         "src/PC/server_mp/cod2x_server.c:53"
       ],
@@ -51536,9 +51536,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Hide server ip",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Ask players to hide the address",
+      "summary": "Tells players' CoD2x games to hide this server's address on screen.",
+      "details": "CoD2x only. Off by default. Players can also hide addresses themselves with Hide server addresses. It is a setting for a server you host, not something you tune for yourself.",
       "sources": [
         "src/PC/server_mp/cod2x_server.c:56"
       ],
@@ -52159,9 +52159,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Master1",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "First master server",
+      "summary": "The first master server a public server you host reports to.",
+      "details": "CoD2x only. cod2master.activision.com by default; it cannot be changed while the game runs. Only public servers (dedicated 2) report.",
       "sources": [
         "src/PC/server_mp/cod2x_server.c:50"
       ],
@@ -52204,9 +52204,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Master2",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Second master server",
+      "summary": "The second master server a public server you host reports to.",
+      "details": "CoD2x only. master.cod2x.me by default; it cannot be changed while the game runs. Only public servers (dedicated 2) report.",
       "sources": [
         "src/PC/server_mp/cod2x_server.c:51"
       ],
@@ -52248,9 +52248,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Master3",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Third master server",
+      "summary": "An extra master server a public server you host reports to.",
+      "details": "CoD2x only. Empty by default, which reports to no third master.",
       "sources": [
         "src/PC/server_mp/cod2x_server.c:52"
       ],
@@ -54121,9 +54121,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Update zpam",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Switch to newer zPAM versions",
+      "summary": "Lets a server you host move to the newest zPAM in its main folder.",
+      "details": "CoD2x only. On by default. Nothing is downloaded; it only chooses among the versions already there. It is a setting for a server you host, not something you tune for yourself.",
       "sources": [
         "src/PC/server_mp/cod2x_zpam.c:56"
       ],
@@ -54326,9 +54326,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Wallbang",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Bullets through walls",
+      "summary": "Lets bullets pass through thin walls on a server you host, as CoD2x servers can.",
+      "details": "CoD2x only. Off by default. How far a bullet gets depends on the wall depth, the surface and the walls already passed. It is a setting for a server you host, not something you tune for yourself.",
       "sources": [
         "src/PC/game_mp/g_cod2x_wallbang.c:95"
       ],
@@ -54378,9 +54378,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Wallbang damage",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Damage after a wall",
+      "summary": "The share of damage a bullet keeps after passing a wall.",
+      "details": "CoD2x only. From 0 to 1, 0.6 by default. It is a setting for a server you host, not something you tune for yourself.",
       "sources": [
         "src/PC/game_mp/g_cod2x_wallbang.c:97"
       ],
@@ -54422,9 +54422,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Wallbang debug",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show bullet paths through walls",
+      "summary": "Draws where bullets entered, passed and stopped in walls.",
+      "details": "CoD2x only. A troubleshooting aid for server owners; off by default.",
       "sources": [
         "src/PC/game_mp/g_cod2x_wallbang.c:99"
       ],
@@ -54474,9 +54474,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Wallbang depth",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Wall depth a bullet passes",
+      "summary": "How thick a wall a rifle bullet can pass, before the surface scale.",
+      "details": "CoD2x only. From 0 to 256 units, 24 by default. Each surface multiplies it by its own scale. It is a setting for a server you host, not something you tune for yourself.",
       "sources": [
         "src/PC/game_mp/g_cod2x_wallbang.c:96"
       ],
@@ -54526,11 +54526,1207 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Wallbang max walls",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Walls a bullet passes",
+      "summary": "How many walls one bullet can pass.",
+      "details": "CoD2x only. From 1 to 8, 2 by default. It is a setting for a server you host, not something you tune for yourself.",
       "sources": [
         "src/PC/game_mp/g_cod2x_wallbang.c:98"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_asphalt",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 0.15
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_asphalt"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: asphalt",
+      "summary": "How much of the wall depth a bullet passes through asphalt.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_bark",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 1.0
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_bark"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: bark",
+      "summary": "How much of the wall depth a bullet passes through bark.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_brick",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 0.25
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_brick"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: brick",
+      "summary": "How much of the wall depth a bullet passes through brick.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_carpet",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 4.0
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_carpet"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: carpet",
+      "summary": "How much of the wall depth a bullet passes through carpet.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_cloth",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 4.0
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_cloth"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: cloth",
+      "summary": "How much of the wall depth a bullet passes through cloth.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_concrete",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 0.15
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_concrete"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: concrete",
+      "summary": "How much of the wall depth a bullet passes through concrete.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_dirt",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 0.6
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_dirt"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: dirt",
+      "summary": "How much of the wall depth a bullet passes through dirt.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_flesh",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 1.0
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_flesh"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: flesh",
+      "summary": "How much of the wall depth a bullet passes through flesh.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_foliage",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 4.0
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_foliage"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: foliage",
+      "summary": "How much of the wall depth a bullet passes through foliage.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_glass",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 2.0
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_glass"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: glass",
+      "summary": "How much of the wall depth a bullet passes through glass.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_grass",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 0.6
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_grass"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: grass",
+      "summary": "How much of the wall depth a bullet passes through grass.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_gravel",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 0.3
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_gravel"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: gravel",
+      "summary": "How much of the wall depth a bullet passes through gravel.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_ice",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 0.5
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_ice"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: ice",
+      "summary": "How much of the wall depth a bullet passes through ice.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_metal",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 0.1
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_metal"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: metal",
+      "summary": "How much of the wall depth a bullet passes through metal.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_mud",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 0.45
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_mud"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: mud",
+      "summary": "How much of the wall depth a bullet passes through mud.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_none",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 10.0
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_none"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: no surface type",
+      "summary": "How much of the wall depth a bullet passes through surfaces without a type.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_paper",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 4.0
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_paper"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: paper",
+      "summary": "How much of the wall depth a bullet passes through paper.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_plaster",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 0.8
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_plaster"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: plaster",
+      "summary": "How much of the wall depth a bullet passes through plaster.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_rock",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 0.1
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_rock"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: rock",
+      "summary": "How much of the wall depth a bullet passes through rock.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_sand",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 0.4
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_sand"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: sand",
+      "summary": "How much of the wall depth a bullet passes through sand.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_snow",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 1.5
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_snow"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: snow",
+      "summary": "How much of the wall depth a bullet passes through snow.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_water",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 0.5
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_water"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: water",
+      "summary": "How much of the wall depth a bullet passes through water.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_wallbang_surface_wood",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/game_mp/g_cod2x_wallbang.c",
+              "line": 102,
+              "mechanism": "Dvar_RegisterFloat:table:wallbangSurfaces",
+              "type": "float",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": 1.0
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 10
+              },
+              "name": "sv_wallbang_surface_wood"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Wall scale: wood",
+      "summary": "How much of the wall depth a bullet passes through wood.",
+      "details": "CoD2x only. From 0 to 10; the default is CoD2x's own value for this surface. It multiplies the wall depth setting. It is a setting for a server you host, not something you tune for yourself.",
+      "sources": [
+        "src/PC/game_mp/g_cod2x_wallbang.c:102"
       ],
       "guided": false,
       "control": {
@@ -61661,9 +62857,9 @@
         "cod2x"
       ],
       "group": "other",
-      "title": "Cmd line",
-      "summary": "An engine command. See Expert for where it is registered.",
-      "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
+      "title": "Show the command line",
+      "summary": "Prints the command line the game started with.",
+      "details": "A troubleshooting command.",
       "sources": [
         "src/PC/qcommon/common.c:2812"
       ],
@@ -62951,9 +64147,9 @@
         "cod2x"
       ],
       "group": "other",
-      "title": "Fs processed list",
-      "summary": "An engine command. See Expert for where it is registered.",
-      "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
+      "title": "Show loaded game files",
+      "summary": "Lists why each IWD file was loaded or ignored, for this start of the file system and the one before.",
+      "details": "A troubleshooting command.",
       "sources": [
         "src/PC/qcommon/cod2x_features.c:311"
       ],
@@ -63236,9 +64432,9 @@
         "cod2x"
       ],
       "group": "other",
-      "title": "Get ip",
-      "summary": "An engine command. See Expert for where it is registered.",
-      "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
+      "title": "Ask for this server's address",
+      "summary": "Asks the CoD2x master server which address it sees this server at.",
+      "details": "A server command. The answer is printed in the console.",
       "sources": [
         "src/PC/server_mp/cod2x_server.c:60"
       ],
@@ -67575,9 +68771,9 @@
         "cod2x"
       ],
       "group": "other",
-      "title": "Unban all",
-      "summary": "An engine command. See Expert for where it is registered.",
-      "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
+      "title": "Remove all bans",
+      "summary": "Deletes this server's ban list.",
+      "details": "A server command for admins.",
       "sources": [
         "src/PC/server_mp/cod2x_server.c:59"
       ],
@@ -68549,13 +69745,6 @@
         "mechanism": "Cmd_AddCommand",
         "function": "CL_AddCgameCommand",
         "nameExpression": "cmdName"
-      },
-      {
-        "path": "src/PC/game_mp/g_cod2x_wallbang.c",
-        "line": 102,
-        "mechanism": "Dvar_RegisterFloat",
-        "function": "G_Cod2xWallbangInit",
-        "nameExpression": "names[i]"
       },
       {
         "path": "src/PC/game_mp/g_scr_main_mp.c",

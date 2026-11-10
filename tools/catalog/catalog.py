@@ -261,6 +261,39 @@ def tables(text):
     return found
 
 
+def formatted_table(text, start, args, arrays):
+    """A loop over a struct table that writes each name with
+    snprintf(buffer[i], sizeof(buffer[i]), "prefix%s", table[i].field) and then
+    registers buffer[i]. Returns the table, its names and, when the default is
+    table[i].other, each entry's default expression; None for any other shape."""
+    target = re.fullmatch(r'(\w+)\[(\w+)\]', args[0])
+    if not target:
+        return None
+    buffer, index = re.escape(target[1]), re.escape(target[2])
+    loops = list(re.finditer(r'for\s*\(\s*(?:int\s+)?' + index + r'\s*=\s*(\d+)\s*;\s*' + index + r'\s*<\s*(\d+)\s*;\s*(?:\+\+\s*' + index + '|' + index + r'\s*\+\+)\s*\)', text[:start]))
+    if not loops:
+        return None
+    write = re.fullmatch(r'\s*\{\s*snprintf\s*\(\s*' + buffer + r'\[' + index + r'\]\s*,\s*sizeof\s*\(\s*' + buffer + r'\[' + index + r'\]\s*\)\s*,\s*'
+                         r'("(?:\\.|[^"\\])*")\s*,\s*(\w+)\[' + index + r'\]\.(\w+)\s*\)\s*;\s*(?:\w+(?:\[[^]]+\])?\s*=\s*)?', text[loops[-1].end():start])
+    if not write or write[2] not in arrays:
+        return None
+    pattern = ast.literal_eval(write[1])
+    declaration = re.search(r'struct\s*\{([^{}]*)\}\s*' + re.escape(write[2]) + r'\s*\[', text)
+    if pattern.count('%') != 1 or '%s' not in pattern or not declaration:
+        return None
+    fields = [re.findall(r'\w+', member)[-1] for member in declaration[1].split(';') if member.strip()]
+    entries = [split_args(entry) for entry in re.findall(r'\{([^{}]*)\}', arrays[write[2]])]
+    if (write[3] not in fields or not entries or any(len(entry) != len(fields) for entry in entries)
+            or int(loops[-1][1]) != 0 or int(loops[-1][2]) != len(entries)):
+        raise CatalogError('unreviewed formatted table registration: ' + args[0])
+    values = [literal(entry[fields.index(write[3])]) for entry in entries]
+    if not all(isinstance(value, str) for value in values):
+        raise CatalogError('formatted table registration without literal names: ' + args[0])
+    default = re.fullmatch(re.escape(write[2]) + r'\[' + index + r'\]\.(\w+)', args[1]) if len(args) > 1 else None
+    defaults = [entry[fields.index(default[1])] for entry in entries] if default and default[1] in fields else None
+    return write[2], [pattern.replace('%s', value) for value in values], defaults
+
+
 def function_at(text, offset):
     text = re.sub(r'__attribute__\s*\(\([^\n]*?\)\)', '', text[:offset])
     matches = list(re.finditer(r'^[A-Za-z_][^\n;{}()]*?\b(\w+)\s*\([^;{}]*\)\s*\{', text, re.M))
@@ -331,8 +364,6 @@ FACTORIES = {
     ('src/PC/game_mp/g_scr_main_mp.c', 'GScr_MakeDvarServerInfo'),
     ('src/PC/client_mp/cl_cgame_mp.c', 'CL_AddCgameCommand'),
     ('src/PC/universal/dvar.c', 'Dvar_RegisterVariantReg'),
-    # Names built at run time from the wallbang surface table.
-    ('src/PC/game_mp/g_cod2x_wallbang.c', 'G_Cod2xWallbangInit'),
 }
 
 
@@ -385,6 +416,7 @@ def extract_source(root, mode):
             rel, evidence_line = numbers[line_index]
             site = {'path': rel, 'line': evidence_line, 'mechanism': func}
             names = [literal(args[0])]
+            name_defaults = None
             owner = function_at(text, match.start())
             if (rel == 'src/PC/universal/dvar.c' and owner in {
                     'Dvar_RegisterBool', 'Dvar_RegisterInt', 'Dvar_RegisterFloat',
@@ -417,6 +449,9 @@ def extract_source(root, mode):
                             raise CatalogError('unreviewed table registration index: ' + args[0])
                         names = names[int(loop[1]):int(loop[2])]
                     site['mechanism'] += ':table:' + table[1]
+                elif formatted := formatted_table(text, match.start(), args, arrays):
+                    names, name_defaults = formatted[1], formatted[2]
+                    site['mechanism'] += ':table:' + formatted[0]
                 elif rel == 'src/PC/cgame_mp/cg_consolecmds_mp.c' and owner == 'CG_InitConsoleCommands':
                     names = [ast.literal_eval(s) for s in re.findall(r'\{\s*("(?:\\.|[^"\\])*")', arrays['commandsList'])]
                     site['mechanism'] += ':table:commandsList'
@@ -467,8 +502,10 @@ def extract_source(root, mode):
                 site['default'] = fact(args[1], typ)
                 if typ in ('int', 'float'):
                     site['minimum'], site['maximum'] = fact(args[2], typ), fact(args[3], typ)
-            for name in names:
+            for position, name in enumerate(names):
                 named_site = dict(site, name=name)
+                if name_defaults:
+                    named_site['default'] = fact(name_defaults[position], typ)
                 additions = startup_privacy_flag_additions(text, match.start(), end, numbers,
                                                           rel, owner, name, flags, args[-1])
                 if additions:
