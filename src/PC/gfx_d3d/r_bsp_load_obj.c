@@ -2,6 +2,16 @@
 #include "imports.h"
 #include "bytematch.h"
 
+/* Mac 1.3's text for these errors starts with \x15, which shows the message as
+ * written instead of looking it up as a localized string. */
+#if COD2_APPLE_SDK
+#define LOADMAP_FUNNY_LUMP_OFFSET "\x15LoadMap: funny lump offset in %s"
+#define LOADMAP_FUNNY_LUMP_SIZE "\x15LoadMap: funny lump size in %s"
+#else
+#define LOADMAP_FUNNY_LUMP_OFFSET "LoadMap: funny lump offset in %s"
+#define LOADMAP_FUNNY_LUMP_SIZE "LoadMap: funny lump size in %s"
+#endif
+
 extern const dvar_t *r_showGroundLit;
 
 extern struct r_globals_load_t rgl;
@@ -96,7 +106,7 @@ static int R_ValidateLump(const GfxBspLoad *load, int lumpOfs, int elemSize, con
         R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
 #if defined(COD2_X64)
     if (lumpFileOfs <= 3)
-        R_Error(1, "LoadMap: funny lump offset in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_OFFSET, s_world.name);
 #else
     if (lumpFileOfs <= 3) {
 
@@ -105,7 +115,7 @@ static int R_ValidateLump(const GfxBspLoad *load, int lumpOfs, int elemSize, con
                 *outData = NULL;
             return 0;
         }
-        R_Error(1, "LoadMap: funny lump offset in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_OFFSET, s_world.name);
     }
 
 #endif
@@ -113,13 +123,13 @@ static int R_ValidateLump(const GfxBspLoad *load, int lumpOfs, int elemSize, con
 #if defined(COD2_X64)
     count = lumpSize / elemSize;
     if (lumpSize < 0 || count * elemSize != lumpSize)
-        R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_SIZE, s_world.name);
 #else
     count = lumpSize / elemSize;
     if (lumpSize < 0)
         count = (lumpSize + elemSize - 1) / elemSize;
     if (count * elemSize != lumpSize)
-        R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_SIZE, s_world.name);
 
 #endif
 
@@ -139,11 +149,11 @@ static inline __attribute__((always_inline)) int R_ValidateLumpInline(const GfxB
     if (lumpFileOfs + lumpSize > load->fileSize)
         R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
     if (lumpFileOfs <= 3)
-        R_Error(1, "LoadMap: funny lump offset in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_OFFSET, s_world.name);
 
     count = lumpSize / elemSize;
     if (lumpSize < 0 || count * elemSize != lumpSize)
-        R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_SIZE, s_world.name);
 
     if (outData)
         *outData = load->fileBase + lumpFileOfs;
@@ -1056,10 +1066,10 @@ static void R_LoadOccluders_impl(const GfxBspLoad *load)
     if (*(int *)(bspHeader + 0x9C) + occLumpSize > fileSize)
         R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
     if (*(int *)(bspHeader + 0x9C) <= 3)
-        R_Error(1, "LoadMap: funny lump offset in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_OFFSET, s_world.name);
     int occluderCount = occLumpSize / 20;
     if (occLumpSize < 0 || occluderCount * 20 != occLumpSize)
-        R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_SIZE, s_world.name);
     const byte *diskOcc = bspData + *(int *)(bspHeader + 0x9C);
 #if defined(COD2_X64)
     byte *occluders = (byte *)Hunk_AllocInternal(occluderCount * sizeof(GfxOccluder));
@@ -1071,10 +1081,10 @@ static void R_LoadOccluders_impl(const GfxBspLoad *load)
     if (*(int *)(bspHeader + 0xA4) + planeLumpSize > fileSize)
         R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
     if (*(int *)(bspHeader + 0xA4) <= 3)
-        R_Error(1, "LoadMap: funny lump offset in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_OFFSET, s_world.name);
     int planeIdxCount = planeLumpSize / 4;
     if (planeLumpSize < 0 || planeIdxCount * 4 != planeLumpSize)
-        R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_SIZE, s_world.name);
     const byte *planeIndices = bspData + *(int *)(bspHeader + 0xA4);
     byte *sidePlanes = (byte *)Hunk_AllocInternal(planeIdxCount * 20);
 
@@ -1082,10 +1092,10 @@ static void R_LoadOccluders_impl(const GfxBspLoad *load)
     if (*(int *)(bspHeader + 0xAC) + edgeLumpSize > fileSize)
         R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
     if (*(int *)(bspHeader + 0xAC) <= 3)
-        R_Error(1, "LoadMap: funny lump offset in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_OFFSET, s_world.name);
     int edgeCount = edgeLumpSize / 4;
     if (edgeLumpSize < 0 || edgeCount * 4 != edgeLumpSize)
-        R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_SIZE, s_world.name);
     const byte *diskEdges = bspData + *(int *)(bspHeader + 0xAC);
 #if defined(COD2_X64)
     byte *edges = (byte *)Hunk_AllocInternal(edgeCount * sizeof(GfxOccluderEdge));

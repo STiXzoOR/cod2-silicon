@@ -1190,7 +1190,11 @@ GfxEntity *R_AddRefEntityToScene(const GfxEntity *refEnt, GfxModel sceneModel, c
             }
 
             if (refEnt->reType > 9)
+#if COD2_APPLE_SDK
+                R_Error(1, "\x15R_AddRefEntityToScene: bad reType %i", refEnt->reType); /* as Mac 1.3 */
+#else
                 R_Error(1, "R_AddRefEntityToScene: bad reType %i", refEnt->reType);
+#endif
 
             buf = frontEndDataOut;
             if ((unsigned int)buf->entityCount > 0x1ff7) {

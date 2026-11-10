@@ -215,7 +215,16 @@ static qboolean SEH_StringEd_SetLanguageStrings(int iLanguage)
         return 1;
     }
 
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if COD2_APPLE_SDK
+    /* Mac 1.3 (0x317f1) and Windows 1.3 (0x4ab4b0) stay quiet here when
+     * localized files are being ignored; they do not look at developer. */
+    {
+        extern const dvar_t *fs_ignoreLocalized;
+        if (fs_ignoreLocalized && fs_ignoreLocalized->current.enabled) {
+            return 0;
+        }
+    }
+#elif defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
     if (com_developer && com_developer->current.enabled) {
         return 0;

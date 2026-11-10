@@ -6,6 +6,16 @@ extern dvar_t *r_rendererInUse;
 #include <math.h>
 #include <string.h>
 
+/* Mac 1.3's text for these errors starts with \x15, which shows the message as
+ * written instead of looking it up as a localized string. */
+#if COD2_APPLE_SDK
+#define LOADMAP_FUNNY_LUMP_OFFSET "\x15LoadMap: funny lump offset in %s"
+#define LOADMAP_FUNNY_LUMP_SIZE "\x15LoadMap: funny lump size in %s"
+#else
+#define LOADMAP_FUNNY_LUMP_OFFSET "LoadMap: funny lump offset in %s"
+#define LOADMAP_FUNNY_LUMP_SIZE "LoadMap: funny lump size in %s"
+#endif
+
 extern GfxWorld s_world;
 extern struct r_globals_load_t rgl;
 extern refimport_t ri;
@@ -68,7 +78,7 @@ static int R_ValidateLumpRaw(const byte *header, const byte *fileBase, int fileS
         R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
 #if defined(COD2_X64)
     if (lumpFileOfs <= 3)
-        R_Error(1, "LoadMap: funny lump offset in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_OFFSET, s_world.name);
 #else
     if (lumpFileOfs <= 3) {
         Com_Printf("DBG funny lump offset: byteOfs=0x%x size=%d fileOfs=%d\n", lumpByteOfs, lumpSize, lumpFileOfs);
@@ -80,7 +90,7 @@ static int R_ValidateLumpRaw(const byte *header, const byte *fileBase, int fileS
                 *dataOut = NULL;
             return 0;
         }
-        R_Error(1, "LoadMap: funny lump offset in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_OFFSET, s_world.name);
     }
 
 #endif
@@ -88,7 +98,7 @@ static int R_ValidateLumpRaw(const byte *header, const byte *fileBase, int fileS
 #if defined(COD2_X64)
     count = lumpSize / elemSize;
     if (lumpSize < 0 || count * elemSize != lumpSize)
-        R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_SIZE, s_world.name);
 #else
     if (lumpSize < 0)
         count = (lumpSize + elemSize - 1) / elemSize;
@@ -96,7 +106,7 @@ static int R_ValidateLumpRaw(const byte *header, const byte *fileBase, int fileS
         count = lumpSize / elemSize;
 
     if (count * elemSize != lumpSize)
-        R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_SIZE, s_world.name);
 
 #endif
 
@@ -225,7 +235,7 @@ GfxWorld *R_LoadWorldInternal(const char *name)
     }
 
     if (lmapPageCount != 0 && lmapPageCount != origLmapCount)
-        R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
+        R_Error(1, LOADMAP_FUNNY_LUMP_SIZE, s_world.name);
 
     memset(lmapVertCount, 0, sizeof(int) * MAX_LIGHTMAPS);
     memset(coupling, 0, sizeof(int) * MAX_LIGHTMAPS * MAX_LIGHTMAPS);
