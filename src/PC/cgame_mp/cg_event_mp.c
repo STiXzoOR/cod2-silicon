@@ -1,5 +1,8 @@
 #if defined(COD2_X64)
 #include "PC/qcommon/port_debug.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x_features.h"
+#endif
 #endif
 #include "common_types.h"
 #include "imports.h"
@@ -327,6 +330,10 @@ static void CG_Obituary(centity_t *cent)
 #endif
 
         I_strncat(targetName, 0x22, (const char *)"^7");
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        /* CoD2x text.cpp: player names are coloured only on the scoreboard. */
+        Cod2x_StripTextCodes(targetName, targetName, 0x22);
+#endif
 
 #if defined(COD2_X64)
         CG_DrawScoreboard_GetTeamColor(((clientInfo_t *)victimCI)->oldteam, victimColor);
@@ -364,6 +371,9 @@ static void CG_Obituary(centity_t *cent)
 #endif
 
         I_strncat(attackerName, 0x22, (const char *)"^7");
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        Cod2x_StripTextCodes(attackerName, attackerName, 0x22);
+#endif
 
 #if defined(COD2_X64)
         CG_DrawScoreboard_GetTeamColor(((clientInfo_t *)attackerCI)->oldteam, attackerColor);
@@ -458,8 +468,38 @@ static void CG_Obituary(centity_t *cent)
     if (cg->inKillCam != 0)
         return;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        /* CoD2x text.cpp: when the mod's obituary() sent icons (entity dmgFlags, four shader
+           config string indexes), the line shows the weapon's own icon, also for a headshot
+           or melee, followed by those icons. */
+        extern void CL_DeathMessageExtendedIcons(int extended, const char *const *icons);
+        extern int BG_GetNumWeapons(void);
+        const char *icons[4] = {NULL, NULL, NULL, NULL};
+        int i;
+        if (es->dmgFlags) {
+            if (es->weapon > 0 && es->weapon <= BG_GetNumWeapons()) {
+                WeaponDef *weaponDef = BG_GetWeaponDef(es->weapon);
+                if (weaponDef && weaponDef->killIcon && weaponDef->killIcon[0]) {
+                    iconShader = weaponDef->killIcon;
+                    iconWidth = weaponDef->wideKillIcon ? f_2_8 : f_1_4;
+                    iconHorzFlip = weaponDef->flipKillIcon != 0;
+                }
+            }
+            for (i = 0; i < 4; ++i) {
+                int shader = (int)(((unsigned int)es->dmgFlags >> (8 * i)) & 0xff);
+                icons[i] = shader ? CL_GetConfigString(0x61e + shader) : NULL;
+            }
+        }
+        CL_DeathMessageExtendedIcons(es->dmgFlags != 0, icons);
+        CL_DeathMessagePrint(attackerName, attackerColor, targetName,
+                             victimColor, iconShader, iconWidth, 1.4f, iconColor, iconHorzFlip);
+        CL_DeathMessageExtendedIcons(0, NULL);
+    }
+#else
     CL_DeathMessagePrint(attackerName, attackerColor, targetName,
                          victimColor, iconShader, iconWidth, 1.4f, iconColor, iconHorzFlip);
+#endif
 }
 
 void CG_EntityEvent(centity_t *cent, int event)

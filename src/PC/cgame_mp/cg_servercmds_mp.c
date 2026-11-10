@@ -5,6 +5,9 @@
 #include "headers/PC/cgame_mp/cg_local.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x_features.h"
+#endif
 #endif
 
 #include <string.h>
@@ -786,12 +789,30 @@ static void CG_ServerCommandChat(const char *context, qboolean addToTeamChat)
     char message[150];
     const char *localized;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        /* CoD2x text.cpp: "&&1" in a player's text is not the placeholder for the name. */
+        char escaped[1024];
+        const char *text = CG_Argv(1);
+        localized = SEH_LocalizeTextMessage(Cod2x_EscapeChatPlaceholder(text, escaped, sizeof(escaped)) ? escaped : text,
+                                            context, 0);
+    }
+#else
     localized = SEH_LocalizeTextMessage(CG_Argv(1), context, 0);
+#endif
     I_strncpyz(message, localized, sizeof(message));
     CG_CopyCleanChatString(message, sizeof(message), message);
 
     if (addToTeamChat) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        /* CoD2x text.cpp: the name in the chat shows in its team colour, without its own codes. */
+        char line[sizeof(message)];
+        I_strncpyz(line, message, sizeof(line));
+        Cod2x_StripChatName(line);
+        CG_AddToTeamChat(line);
+#else
         CG_AddToTeamChat(message);
+#endif
     }
     Com_Printf("%s\n", message);
 }

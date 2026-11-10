@@ -588,6 +588,10 @@ unsigned int CG_DrawCrosshairNames(void)
     if (!name || !name[0]) {
         return 0;
     }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* CoD2x text.cpp: every code goes, so a double "^^11" no longer colours the name. */
+    Cod2x_StripTextCodes(name, name, strlen(name) + 1);
+#endif
     I_CleanStr(name);
 
     x = cg_drawCrosshairNamesPosX->current.integer;
@@ -1069,6 +1073,14 @@ qboolean CG_DrawFollow(void)
     } else {
         clientName = "?";
     }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        /* CoD2x text.cpp: the followed player's name without codes. */
+        static char cleanName[64];
+        Cod2x_StripTextCodes(clientName, cleanName, sizeof(cleanName));
+        clientName = cleanName;
+    }
+#endif
 
     followingString = SEH_LocalizeTextMessage("CGAME_FOLLOWING\x15", "spectator follow string", 0);
     scale = CL_IsRenderingSplitScreen() ? 0.5f : (1.0f / 3.0f);

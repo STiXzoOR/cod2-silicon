@@ -43,7 +43,7 @@ extern void Com_Printf(const char *, ...);
 extern void Com_Error(int, const char *, ...);
 extern char *Info_ValueForKey(const char *, const char *);
 
-static const dvar_t *thirdPersonMode, *debugBullets, *printDoubleColors;
+static const dvar_t *thirdPersonMode, *debugBullets;
 static const dvar_t *drawSpectatedName, *drawCompass, *compassOffsetX, *compassOffsetY;
 /* The CoD2x release whose client behaviour this implements. */
 #define COD2X_APP_VERSION "1.4.6.8"
@@ -294,7 +294,6 @@ void Cod2x_FeaturesInit(void)
     /* CoD2x cgame.cpp:65 and drawing.cpp:270-279 describe these controls. */
     thirdPersonMode = Dvar_RegisterInt("cg_thirdPersonMode", 0, 0, 1, 0x1080);
     debugBullets = Dvar_RegisterBool("cg_debugBullets", 0, 0x1080);
-    printDoubleColors = Dvar_RegisterBool("con_printDoubleColors", 1, 0x1000);
     drawSpectatedName = Dvar_RegisterBool("cg_drawSpectatedPlayerName", 1, 0x1000);
     drawCompass = Dvar_RegisterBool("cg_drawCompass", 1, 0x1000);
     compassOffsetX = Dvar_RegisterFloat("cg_hudCompassOffsetX", 0, -640, 640, 0x1000);
@@ -355,6 +354,170 @@ void Cod2x_FeaturesClientState(int state)
                        game->current.integer, COD2X_APP_VERSION);
     }
     Com_Printf("---------------------------------------------------------------------------------\n");
+}
+
+/* ---- Text codes (CoD2x src/mss32/text.cpp, src/shared/shared.cpp) ----------
+   Besides the vanilla ^0-^9, CoD2x reads $N, #N and @N as dark, light and deep
+   shades of ten colour families, $* $- as rainbow on/off, @+ @= @- as bold,
+   console and default font, and #_ #- as a background bar on/off. A doubled
+   prefix ("$$11", "@@++") is the same code. Each code is kept as one character:
+   '0'-'9' vanilla, 'a'-'t' and 'A'-'J' the shades, and * ! + = - _ . the styles. */
+static char Cod2x_StyleCode(char prefix, char symbol)
+{
+    static const char styles[][3] = {
+        {'$', '*', '*'}, {'$', '-', '!'}, {'@', '+', '+'}, {'@', '=', '='},
+        {'@', '-', '-'}, {'#', '_', '_'}, {'#', '-', '.'},
+    };
+    size_t i;
+    for (i = 0; i < sizeof(styles) / sizeof(styles[0]); ++i)
+        if (styles[i][0] == prefix && styles[i][1] == symbol)
+            return styles[i][2];
+    return 0;
+}
+
+int Cod2x_IsStyleCode(char code)
+{
+    return code && strchr("*!+=-_.", code) != NULL;
+}
+
+int Cod2x_TextCode(const char *p, char *code)
+{
+    int shade;
+    if (!p[0] || !p[1])
+        return 0;
+    if (p[0] == '^') {
+        if (p[1] < '0' || p[1] > '9')
+            return 0;
+        *code = p[1];
+        return 2;
+    }
+    shade = p[0] == '$' ? 0 : p[0] == '#' ? 1 : p[0] == '@' ? 2 : -1;
+    if (shade < 0)
+        return 0;
+    if (p[1] == p[0] && p[2] >= '0' && p[2] <= '9' && p[3] >= '0' && p[3] <= '9') {
+        int index = shade * 10 + p[3] - '0';
+        *code = (char)(index < 20 ? 'a' + index : 'A' + index - 20);
+        return 4;
+    }
+    if (p[1] >= '0' && p[1] <= '9') {
+        int index = shade * 10 + p[1] - '0';
+        *code = (char)(index < 20 ? 'a' + index : 'A' + index - 20);
+        return 2;
+    }
+    if (p[1] == p[0] && p[2] && p[3] == p[2] && Cod2x_StyleCode(p[0], p[2])) {
+        *code = Cod2x_StyleCode(p[0], p[2]);
+        return 4;
+    }
+    if (Cod2x_StyleCode(p[0], p[1])) {
+        *code = Cod2x_StyleCode(p[0], p[1]);
+        return 2;
+    }
+    return 0;
+}
+
+/* Every code out, vanilla doubles ("^^11", "^^^111") included. out may be text. */
+void Cod2x_StripTextCodes(const char *text, char *out, size_t size)
+{
+    size_t length = 0;
+    const char *p = text;
+    if (!size)
+        return;
+    while (*p && length < size - 1) {
+        if (p[0] == '^') {
+            int carets = 0, digits = 0;
+            while (p[carets] == '^')
+                ++carets;
+            while (digits < carets && p[carets + digits] >= '0' && p[carets + digits] <= '9')
+                ++digits;
+            if (digits) {
+                p += carets + digits;
+                continue;
+            }
+        } else if (p[0] == '$' || p[0] == '#' || p[0] == '@') {
+            if (p[1] == p[0] && ((p[2] >= '0' && p[2] <= '9' && p[3] >= '0' && p[3] <= '9') ||
+                                 (Cod2x_StyleCode(p[0], p[2]) && p[3] == p[2]))) {
+                p += 4;
+                continue;
+            }
+            if ((p[1] >= '0' && p[1] <= '9') || Cod2x_StyleCode(p[0], p[1])) {
+                p += 2;
+                continue;
+            }
+        }
+        out[length++] = *p++;
+    }
+    out[length] = '\0';
+}
+
+/* A chat line is team colour + name + "^7: " + message. The name loses its codes,
+   so it shows in the team colour; the team colour and the message keep theirs. */
+void Cod2x_StripChatName(char *line)
+{
+    char *end = strstr(line, "^7: "), *out = line, code;
+    const char *p = line;
+    if (!end)
+        return;
+    if (p[0] == '^' && Cod2x_TextCode(p, &code) == 2) {
+        out += 2;
+        p += 2;
+    }
+    while (p < end) {
+        int length = Cod2x_TextCode(p, &code);
+        if (length && p + length <= end) {
+            p += length;
+            continue;
+        }
+        *out++ = *p++;
+    }
+    memmove(out, end, strlen(end) + 1);
+}
+
+/* "&&1" in a chat message's arguments is written "^7&^7&^7", so a name like
+   "&&1foo" is not read as the placeholder for the name. Returns whether it changed. */
+int Cod2x_EscapeChatPlaceholder(const char *text, char *out, size_t size)
+{
+    int changed = 0, arguments = strchr(text, 0x14) == NULL;
+    size_t length = 0, i;
+    for (i = 0; text[i] && length < size - 1; ++i) {
+        if (text[i] == 0x14)
+            arguments = 1;
+        if (arguments && text[i] == '&' && text[i + 1] == '&' && text[i + 2] == '1' &&
+            (text[i + 3] < '0' || text[i + 3] > '9')) {
+            const char *escaped = "^7&^7&^7";
+            while (*escaped && length < size - 1)
+                out[length++] = *escaped++;
+            ++i;
+            changed = 1;
+            continue;
+        }
+        out[length++] = text[i];
+    }
+    out[length] = '\0';
+    return changed;
+}
+
+/* Vanilla double colours ("^^11Name") drawn as the colour they stand for ("^1Name"). */
+const char *Cod2x_ResolveDoubleColors(const char *text, char *buffer, size_t size)
+{
+    const char *p;
+    size_t length = 0;
+    int changed = 0;
+    if (!text || !strstr(text, "^^"))
+        return text;
+    for (p = text; *p;) {
+        if (length + 2 >= size)
+            return text;
+        if (p[0] == '^' && p[1] == '^' && p[2] >= '0' && p[2] <= '9' && p[3] >= '0' && p[3] <= '9') {
+            buffer[length++] = '^';
+            buffer[length++] = p[3];
+            p += 4;
+            changed = 1;
+            continue;
+        }
+        buffer[length++] = *p++;
+    }
+    buffer[length] = '\0';
+    return changed ? buffer : text;
 }
 
 /* ---- Hidden IP addresses (CoD2x cgame.cpp and text.cpp) -------------------
@@ -524,11 +687,6 @@ int Cod2x_DebugBullets(void)
 {
     const dvar_t *cheats = Dvar_FindVar("sv_cheats");
     return debugBullets && debugBullets->current.enabled && cheats && cheats->current.enabled;
-}
-
-int Cod2x_PrintDoubleColors(void)
-{
-    return !printDoubleColors || printDoubleColors->current.enabled;
 }
 
 int Cod2x_DrawSpectatedName(void)

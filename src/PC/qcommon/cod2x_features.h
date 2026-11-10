@@ -8,6 +8,13 @@
 void Cod2x_FeaturesInit(void);
 void Cod2x_FeaturesFrame(int active, int demo);
 void Cod2x_FeaturesClientState(int state);
+/* CoD2x text codes: player names are coloured only on the scoreboard. */
+int Cod2x_TextCode(const char *p, char *code);
+int Cod2x_IsStyleCode(char code);
+void Cod2x_StripTextCodes(const char *text, char *out, size_t size);
+void Cod2x_StripChatName(char *line);
+int Cod2x_EscapeChatPlaceholder(const char *text, char *out, size_t size);
+const char *Cod2x_ResolveDoubleColors(const char *text, char *buffer, size_t size);
 /* cl_hideServerIp: updated once a frame with the connected server's info (NULL when not connected). */
 void Cod2x_HideServerIpFrame(const char *serverinfo);
 int Cod2x_HideServerIp(void);
@@ -25,7 +32,6 @@ void Cod2x_IwdLogFile(const char *directory, const char *file, int reason);
 void Cod2x_GameMessageLayout(int *x, int *y, int *charHeight, float *scale);
 int Cod2x_ThirdPersonMode(void);
 int Cod2x_DebugBullets(void);
-int Cod2x_PrintDoubleColors(void);
 int Cod2x_DrawSpectatedName(void);
 int Cod2x_DrawCompass(void);
 void Cod2x_CompassOffset(float *x, float *y);

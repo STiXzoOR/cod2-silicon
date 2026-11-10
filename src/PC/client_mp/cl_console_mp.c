@@ -2363,10 +2363,15 @@ static void CL_WriteDeathMessageText(const char *text, int color)
 {
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     int ch, currentColor = color < 0 ? 7 : color;
+    char clean[256];
     if (!text)
         return;
-    while (con.lineOffset < con.linewidth &&
-           (ch = Cod2x_NextConsoleChar(&text, color, Cod2x_PrintDoubleColors(), &currentColor)) >= 0)
+    /* CoD2x text.cpp: names in the team colour lose every code, doubles and CoD2x codes too. */
+    if (color >= 0) {
+        Cod2x_StripTextCodes(text, clean, sizeof(clean));
+        text = clean;
+    }
+    while (con.lineOffset < con.linewidth && (ch = Cod2x_NextConsoleChar(&text, color, 1, &currentColor)) >= 0)
         CL_WriteConsoleEncodedByte(currentColor, ch);
 #else
     const char *cursor;
@@ -2415,6 +2420,62 @@ static void CL_WriteDeathMessageIcon(const char *iconShader, float iconWidth, fl
 #endif
 
 #if defined(COD2_X64)
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* CoD2x text.cpp killfeed icons. A mod's obituary() can send the weapon and up to
+   four more icons (shader config strings); CG_Obituary hands them over just before
+   the line is printed. */
+static const char *cod2xKillfeedIcons[4];
+static int cod2xKillfeedExtended;
+
+void CL_DeathMessageExtendedIcons(int extended, const char *const *icons)
+{
+    int i;
+    cod2xKillfeedExtended = extended;
+    for (i = 0; i < 4; ++i)
+        cod2xKillfeedIcons[i] = extended && icons ? icons[i] : NULL;
+}
+
+/* An icon the table does not have yet is added, as the renderer loads it by name. */
+static int CL_Cod2xKillfeedIconIndex(const char *shader)
+{
+    int index;
+    for (index = 0; index < registeredIconMaterialCount; index++)
+        if (!strcmp(hudMsgIconMaterials[index], shader))
+            return index;
+    if (registeredIconMaterialCount >= 256)
+        return 0;
+    CL_RegisterHudMsgIconMaterial(shader);
+    return registeredIconMaterialCount - 1;
+}
+
+static void CL_Cod2xKillfeedIcon(const char *shader, float width, float height, const vec_t *color, int flip)
+{
+    CL_AddConsoleInfoColor(0x0d, color);
+    CL_WriteConsoleEncodedByte(flip ? 0x13 : 0x10, (int)(width * 32.0f));
+    CL_WriteConsoleEncodedByte(0x11, (int)(height * 32.0f));
+    CL_WriteConsoleEncodedByte(0x12, CL_Cod2xKillfeedIconIndex(shader));
+}
+
+/* Characters the line takes on screen; an icon counts as many as it is wide
+   (a character is about half the font height, icon widths are in 1/32 of it). */
+static int CL_Cod2xKillfeedLineWidth(void)
+{
+    int row = con.currentLine % con.totallines, i, width = 0;
+    for (i = 0; i < con.lineOffset; ++i) {
+        int index = row * con.linewidth + i, type, value;
+        if ((unsigned int)index >= sizeof(con.textBuffer) / sizeof(con.textBuffer[0]))
+            break;
+        type = (con.textBuffer[index] >> 8) & 0xff;
+        value = con.textBuffer[index] & 0xff;
+        if (type < 10 || type >= 0x40)
+            ++width;
+        else if (type == 0x10 || type == 0x13)
+            width += (value + 15) / 16;
+    }
+    return width;
+}
+#endif
+
 void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, const char *victimName, const vec_t *victimColor, const char *iconShader, float iconWidth, float iconHeight, const vec_t *iconColor, int horzFlipIcon)
 {
     const dvar_t *noPrint;
@@ -2444,6 +2505,34 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
         CL_WriteDeathMessageText(" ", defaultColor);
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        /* CoD2x text.cpp: lines keep at most 78 cells; with a mod's icons the weapon icon,
+           then the extra ones while there is room for the victim behind them. The victim
+           wraps by its length without codes, or when the line would pass cg_gameMessageWidth. */
+        extern const dvar_t *cg_gameMessageWidth;
+        int limit = initialLinewidth > 78 ? 78 : initialLinewidth, i;
+        char cleanVictim[256];
+        CL_Cod2xKillfeedIcon(iconShader, iconWidth, iconHeight, iconColor, (unsigned char)horzFlipIcon);
+        for (i = 0; cod2xKillfeedExtended && i < 4; ++i) {
+            const char *shader = cod2xKillfeedIcons[i];
+            if (!shader || !shader[0] || !strcmp(shader, iconShader))
+                continue;
+            if (con.lineOffset + 6 + 4 >= limit)
+                break;
+            CL_Cod2xKillfeedIcon(shader, iconHeight, iconHeight, iconColor, 0);
+        }
+        CL_WriteDeathMessageText(" ", defaultColor);
+        CL_AddConsoleInfoColor(0x0a, victimColor);
+        Cod2x_StripTextCodes(victimName ? victimName : "", cleanVictim, sizeof(cleanVictim));
+        if ((int)strlen(cleanVictim) + con.lineOffset + 3 >= limit ||
+            (cg_gameMessageWidth &&
+             CL_Cod2xKillfeedLineWidth() + (int)strlen(cleanVictim) > cg_gameMessageWidth->current.integer)) {
+            Con_Linefeed(PMSG_GAME, duration);
+            CL_AddConsoleInfoColor(0x0a, victimColor);
+        }
+    }
+#else
     CL_AddConsoleInfoColor(0x0d, iconColor);
     CL_WriteDeathMessageIcon(iconShader, iconWidth, iconHeight, horzFlipIcon);
     CL_WriteDeathMessageText(" ", defaultColor);
@@ -2453,6 +2542,7 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
         Con_Linefeed(PMSG_GAME, duration);
         CL_AddConsoleInfoColor(0x0a, victimColor);
     }
+#endif
 
     CL_WriteDeathMessageText(victimName, defaultColor);
     Con_Linefeed(PMSG_GAME, duration);

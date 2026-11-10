@@ -167,9 +167,21 @@ int R_TextHeight(FontHandle font)
     return font->pixelHeight;
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+/* CoD2x text.cpp: double colours and cl_hideServerIp in drawn text. */
+extern const char *Cod2x_HideIpText(const char *text, char *buffer, size_t size);
+extern const char *Cod2x_ResolveDoubleColors(const char *text, char *buffer, size_t size);
+extern const short *Cod2x_HideIpCells(const short *cells, int count, short *buffer, int size);
+#endif
+
 int R_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style)
 {
 #if defined(COD2_X64)
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    /* CoD2x text.cpp: vanilla double colours ("^^11Name") draw as the colour they stand for. */
+    char resolved[1024];
+    text = Cod2x_ResolveDoubleColors(text, resolved, sizeof(resolved));
+#endif
     R_AddCmdDrawTextWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, -1, 0);
     return 0;
 #else
@@ -405,16 +417,12 @@ static inline __attribute__((always_inline)) int R_TextWidth_inl(const char *tex
     return maxWidth;
 }
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
-/* CoD2x text.cpp: cl_hideServerIp masks the digits of IP addresses in all drawn text. */
-extern const char *Cod2x_HideIpText(const char *text, char *buffer, size_t size);
-extern const short *Cod2x_HideIpCells(const short *cells, int count, short *buffer, int size);
-#endif
-
 int R_TextWidth(const char *text, int maxChars, FontHandle font)
 {
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
-    char hidden[1024];
+    char resolved[1024], hidden[1024];
+    /* CoD2x text.cpp: "^^11" measures like "^1". */
+    text = Cod2x_ResolveDoubleColors(text, resolved, sizeof(resolved));
     text = Cod2x_HideIpText(text, hidden, sizeof(hidden));
 #endif
     return R_TextWidth_inl(text, maxChars, font);
