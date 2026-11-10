@@ -2385,8 +2385,13 @@ void Com_Frame(void)
     }
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     {
+        extern void Cod2x_HttpFrame(void);
         extern void SV_Cod2xZpamFrame(void);
+        extern void SV_Cod2xUpdaterFrame(void);
+        /* Finished requests first, then zPAM and the update check, as CoD2x orders them. */
+        Cod2x_HttpFrame();
         SV_Cod2xZpamFrame();
+        SV_Cod2xUpdaterFrame();
     }
 #endif
 
@@ -2964,6 +2969,11 @@ void Com_Init_Try_Block_Function(char *commandLine)
 #endif
     }
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        /* Needs the dedicated setting and the network. */
+        extern void SV_Cod2xUpdaterCheck(void);
+        SV_Cod2xUpdaterCheck();
+    }
     Com_Printf("-----------------------------------\n");
     Com_Printf("CoD2x %s loaded\n", COD2X_RELEASE);
     Com_Printf("-----------------------------------\n");
