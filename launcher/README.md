@@ -74,10 +74,11 @@ join asks to turn CoD2x on and join; a server not seen yet is asked for its vers
 bundle without `cod2_macos_stock` (the CMake `cod2_macos_app` target) disables the choice.
 Both engines read and write each loadout's `config_mp.cfg`, and an engine that can't hold a
 saved value keeps its own default and writes that back: CoD2x's `cl_maxpackets` above 100,
-`snaps` above 30 and `r_lodScale` (protected in the original), and the original's
-`com_hunkMegs` (CoD2x pins 512). The list comes from the catalogue's two modes. Before each
-game the launcher puts back what the other engine replaced (one History entry per loadout) and
-remembers what this engine can't hold in `main/players/.studio-engine-handoff.json`.
+`snaps` above 30, `r_lodScale` (protected in the original) and a window position past ±4096
+(`vid_xpos`, `vid_ypos`), and the original's `com_hunkMegs` (CoD2x pins 512). The list comes
+from the catalogue's two modes. Before each game the launcher puts back what the other engine
+replaced (one History entry per loadout) and remembers what this engine can't hold in
+`main/players/.studio-engine-handoff.json`.
 
 Fast path:
 

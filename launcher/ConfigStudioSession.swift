@@ -523,8 +523,8 @@ private final class ConfigGameGuard: @unchecked Sendable {
 
 /// The saved settings one engine can't hold of the other's, from the catalogue's two modes: an
 /// engine refuses a value outside its own range or choices, and any value of a setting it protects,
-/// keeping its default. Today that is CoD2x's cl_maxpackets (to 125), snaps (to 40) and r_lodScale,
-/// and the original's com_hunkMegs (CoD2x pins it to 512).
+/// keeping its default. Today that is CoD2x's cl_maxpackets (to 125), snaps (to 40), r_lodScale and
+/// window position (vid_xpos/vid_ypos past ±4096), and the original's com_hunkMegs (CoD2x pins it to 512).
 struct ConfigEngineLimits: Sendable, Equatable {
     struct Limit: Sendable, Equatable {
         var minimum: Double?

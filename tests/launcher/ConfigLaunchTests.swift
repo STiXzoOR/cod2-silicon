@@ -320,11 +320,12 @@ private enum InjectedFailure: Error { case write }
     @MainActor static func engineHandOff(scratch: URL) throws {
         let catalog = try ConfigCatalog(data: Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1])))
         let limits = ConfigEngineLimits(catalog: catalog)
-        require(limits.names(from: .cod2x) == ["cl_maxpackets", "r_lodscale", "snaps"], "CoD2x values the original can't hold: \(limits.names(from: .cod2x))")
+        require(limits.names(from: .cod2x) == ["cl_maxpackets", "r_lodscale", "snaps", "vid_xpos", "vid_ypos"], "CoD2x values the original can't hold: \(limits.names(from: .cod2x))")
         require(limits.names(from: .stock) == ["com_hunkmegs"], "original values CoD2x can't hold: \(limits.names(from: .stock))")
         require(limits.refuses("125", setting: "cl_maxpackets", from: .cod2x) && !limits.refuses("100", setting: "CL_MAXPACKETS", from: .cod2x))
         require(limits.refuses("40", setting: "snaps", from: .cod2x) && !limits.refuses("30", setting: "snaps", from: .cod2x))
         require(limits.refuses("0.5", setting: "r_lodScale", from: .cod2x), "the original protects r_lodScale")
+        require(limits.refuses("5120", setting: "vid_xpos", from: .cod2x) && !limits.refuses("-1920", setting: "vid_ypos", from: .cod2x), "the original's window position stops at ±4096")
         require(limits.refuses("256", setting: "com_hunkMegs", from: .stock) && !limits.refuses("512", setting: "com_hunkMegs", from: .stock))
         require(!limits.refuses("333", setting: "com_maxfps", from: .cod2x) && !limits.refuses("125", setting: "cl_maxpackets", from: .stock))
 
