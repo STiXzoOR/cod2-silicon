@@ -475,6 +475,111 @@ void Cod2x_ReportCrash(const char *json, const char *pending, int timeout, int w
         free(post);
 }
 
+/* ---- GETs (CoD2x HttpClient::get), for vMix ---- */
+typedef struct {
+    Cod2xGet *get;
+    int timeout;
+} Cod2xGetJob;
+
+static size_t Cod2x_GetReply(char *data, size_t size, size_t count, void *user)
+{
+    Cod2xGet *get = (Cod2xGet *)user;
+    size_t length = size * count;
+    char *grown = (char *)realloc(get->body, get->length + length + 1);
+    if (!grown)
+        return 0;
+    memcpy(grown + get->length, data, length);
+    get->body = grown;
+    get->length += length;
+    get->body[get->length] = '\0';
+    return length;
+}
+
+#if defined(_WIN32)
+static DWORD WINAPI Cod2x_GetThread(LPVOID data)
+#else
+static void *Cod2x_GetThread(void *data)
+#endif
+{
+    Cod2xGetJob *job = (Cod2xGetJob *)data;
+    Cod2xGet *get = job->get;
+    CURL *curl = curl_easy_init();
+    CURLcode result = CURLE_FAILED_INIT;
+    struct curl_slist *headers = curl_slist_append(NULL, "Accept:");
+    /* CoD2x's client puts the URL on the request line as it is; libcurl would cut it
+       at a '#' and refuse a space, so these two go escaped, which the server reads
+       back as the same characters. */
+    char *wire = (char *)malloc(strlen(get->url) * 3 + 1), *w = wire;
+    const char *p;
+    headers = curl_slist_append(headers, "Content-Length: 0");
+    if (wire) {
+        for (p = get->url; *p; ++p) {
+            if (*p == '#' || *p == ' ')
+                w += sprintf(w, "%%%02X", (unsigned char)*p);
+            else
+                *w++ = *p;
+        }
+        *w = '\0';
+    }
+    if (curl && wire) {
+        curl_easy_setopt(curl, CURLOPT_URL, wire);
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_PROTOCOLS_STR, "http,https");
+        curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, (long)CURL_HTTP_VERSION_1_1);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, (long)job->timeout);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, (long)job->timeout);
+        curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Cod2x_GetReply);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, get);
+        result = curl_easy_perform(curl);
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &get->status);
+    }
+    if (curl)
+        curl_easy_cleanup(curl);
+    curl_slist_free_all(headers);
+    free(wire);
+    free(job);
+    if (result != CURLE_OK) {
+        get->failed = 1;
+        snprintf(get->error, sizeof(get->error), "%s", curl_easy_strerror(result));
+    }
+    __sync_synchronize();
+    get->done = 1;
+#if defined(_WIN32)
+    return 0;
+#else
+    return NULL;
+#endif
+}
+
+int Cod2x_GetStart(Cod2xGet *get, int timeout)
+{
+    Cod2xGetJob *job = (Cod2xGetJob *)calloc(1, sizeof(*job));
+    if (!job)
+        return 0;
+    job->get = get;
+    job->timeout = timeout;
+#if defined(_WIN32)
+    {
+        HANDLE thread = CreateThread(NULL, 0, Cod2x_GetThread, job, 0, NULL);
+        if (thread) {
+            CloseHandle(thread);
+            return 1;
+        }
+    }
+#else
+    {
+        pthread_t thread;
+        if (pthread_create(&thread, NULL, Cod2x_GetThread, job) == 0) {
+            pthread_detach(thread);
+            return 1;
+        }
+    }
+#endif
+    free(job);
+    return 0;
+}
+
 /* ---- The console's text, kept for crash reports (CoD2x console.cpp) ---- */
 #define COD2X_CONSOLE_MIRROR 65536
 static char consoleMirror[COD2X_CONSOLE_MIRROR];

@@ -85,6 +85,18 @@ typedef void (*Cod2xPostDone)(int ok, long status, const char *reply, const char
 void Cod2x_PostJson(const char *url, const char *json, int timeout, Cod2xPostDone done, void *user);
 typedef void (*Cod2xCrashSent)(int delivered, const char *error);
 void Cod2x_ReportCrash(const char *json, const char *pending, int timeout, int wait, Cod2xCrashSent sent);
+/* A GET on its own thread, with the headers CoD2x's client sends (Host,
+   Content-Length: 0); done turns 1 when it has finished. 0 when it cannot start. */
+typedef struct {
+    char *url;
+    volatile int done;
+    int failed;
+    long status;
+    char error[256];
+    char *body;
+    size_t length;
+} Cod2xGet;
+int Cod2x_GetStart(Cod2xGet *get, int timeout);
 void Cod2x_ConsoleMirror(const char *text, size_t length);
 size_t Cod2x_ConsoleLogs(char *out, size_t size);
 /* JSON text that grows as it is written. */

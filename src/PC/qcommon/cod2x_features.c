@@ -293,6 +293,7 @@ static void Cod2x_ProcessedList_f(void)
 void Cod2x_FeaturesInit(void)
 {
     Cod2x_PoseInit();
+    Cod2x_VmixInit();
     /* CoD2x cgame.cpp:65 and drawing.cpp:270-279 describe these controls. */
     thirdPersonMode = Dvar_RegisterInt("cg_thirdPersonMode", 0, 0, 1, 0x1080);
     debugBullets = Dvar_RegisterBool("cg_debugBullets", 0, 0x1080);
@@ -330,6 +331,7 @@ static void Cod2x_UpdateFrame(int state);
 
 void Cod2x_FeaturesClientState(int state)
 {
+    Cod2x_VmixFrame(state);
     /* CoD2x reports the server's revision whenever g_cod2x changes, and again
        when a 1.3 server's map becomes active. */
     dvar_t *game = (dvar_t *)Dvar_FindVar("g_cod2x");

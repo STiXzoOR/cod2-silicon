@@ -105,7 +105,9 @@ char *Info_ValueForKey(const char *s, const char *key) { (void)s; (void)key; ret
 int Cod2x_GameVersion(void) { return 6; }
 void Cod2x_PoseInit(void) {}
 const char *Cod2x_IwdRequiredName(void) { return ""; }
-/* The update check's links to the client, the platform and the network: none here. */
+/* vMix and the update check's links to the client, the platform and the network: none here. */
+void Cod2x_VmixInit(void) {}
+void Cod2x_VmixFrame(int clientState) { (void)clientState; }
 cg_t cgArray[1];
 void CL_Cod2xCDKeyHash(char hash[34]) { hash[0] = '\0'; }
 void Sys_Cod2xMachineHistory(Cod2xMachineHistory *out) { memset(out, 0, sizeof(*out)); }

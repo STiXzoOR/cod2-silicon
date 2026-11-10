@@ -8,6 +8,9 @@
 void Cod2x_FeaturesInit(void);
 void Cod2x_FeaturesFrame(int active, int demo);
 void Cod2x_FeaturesClientState(int state);
+/* cod2x_vmix.c */
+void Cod2x_VmixInit(void);
+void Cod2x_VmixFrame(int clientState);
 /* CoD2x text codes: player names are coloured only on the scoreboard. */
 int Cod2x_TextCode(const char *p, char *code);
 int Cod2x_IsStyleCode(char code);
