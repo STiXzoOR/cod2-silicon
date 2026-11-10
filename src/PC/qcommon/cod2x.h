@@ -76,6 +76,12 @@ int Cod2x_InLayer(const void *address);
 void Cod2x_Log(const char *format, ...);
 size_t Cod2x_LoggerRecent(char *out, size_t size);
 void Cod2x_ReportInit(void);
+/* Whether reports may go to CoD2x. CoD2x sends them without asking, and so does
+   this build. A build that asks the player first defines COD2X_REPORT_CONSENT_ENV
+   as the name of an environment variable: reports then go only when it is "1"
+   (its launcher sets it once the player has agreed); otherwise a CoD2x-layer fault
+   leaves only its log. */
+int Cod2x_ReportConsent(void);
 void Cod2x_ReportFatal(const char *message, const void *site);
 void Cod2x_ReportError(const char *kind, const char *message);
 /* POSTs JSON to one of CoD2x's services on a thread of its own, as CoD2x's client

@@ -433,8 +433,11 @@ void Cod2x_PostJson(const char *url, const char *json, int timeout, Cod2xPostDon
    outcome on the sending thread. Waits at most wait ms. */
 void Cod2x_ReportCrash(const char *json, const char *pending, int timeout, int wait, Cod2xCrashSent sent)
 {
-    Cod2xPost *post = (Cod2xPost *)calloc(1, sizeof(*post));
+    Cod2xPost *post;
     int waited = 0;
+    if (!Cod2x_ReportConsent())
+        return;
+    post = (Cod2xPost *)calloc(1, sizeof(*post));
     if (!post)
         return;
     post->json = json ? strdup(json) : NULL;
@@ -708,6 +711,20 @@ static char *Cod2x_ErrorJson(const char *kind, const char *message, const char *
     return text.text;
 }
 
+int Cod2x_ReportConsent(void)
+{
+#if defined(COD2X_REPORT_CONSENT_ENV)
+    static int consent = -1;
+    if (consent < 0) {
+        const char *value = getenv(COD2X_REPORT_CONSENT_ENV);
+        consent = value && !strcmp(value, "1");
+    }
+    return consent;
+#else
+    return 1;
+#endif
+}
+
 /* A fatal error (Sys_Error). site: where the error was raised. CoD2x waits up to
    3 seconds for the report before the game goes. */
 void Cod2x_ReportFatal(const char *message, const void *site)
@@ -717,6 +734,8 @@ void Cod2x_ReportFatal(const char *message, const void *site)
         Sys_CrashReceive(NULL, message);
         return;
     }
+    if (!Cod2x_ReportConsent())
+        return;
     Cod2x_CallerStack(stack, sizeof(stack), 2);
     Cod2x_ReportPost(Cod2x_ErrorJson("fatal", message, stack), 5000, COD2X_FATAL_WAIT_MS, NULL);
 }
@@ -734,6 +753,8 @@ void Cod2x_ReportError(const char *kind, const char *message)
     static int next;
     time_t now = time(NULL);
     int i;
+    if (!Cod2x_ReportConsent())
+        return;
     for (i = 0; i < 32; ++i) {
         if (reports[i].sent && !strncmp(reports[i].message, message, sizeof(reports[i].message) - 1)) {
             if (reports[i].delivered && now - reports[i].sent < COD2X_ERROR_REPEAT_SECONDS)
@@ -838,6 +859,13 @@ static void *Cod2x_ResendThread(void *unused)
     (void)unused;
     /* Not while the game is still starting. */
     Cod2x_Sleep(10000);
+    if (!Cod2x_ReportConsent()) {
+#if defined(_WIN32)
+        return 0;
+#else
+        return NULL;
+#endif
+    }
 #if defined(_WIN32)
     {
         char exe[MAX_PATH] = "", prefix[MAX_PATH + 1];
@@ -864,6 +892,8 @@ void Cod2x_ReportInit(void)
     if (started)
         return;
     started = 1;
+    /* Read now, not from a signal handler. */
+    Cod2x_ReportConsent();
     curl_global_init(CURL_GLOBAL_DEFAULT);
 #if defined(_WIN32)
     {

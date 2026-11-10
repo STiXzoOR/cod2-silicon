@@ -1853,8 +1853,10 @@ static void cr_cod2x_route(const char *kind, int sig, siginfo_t *info, void *uco
                            const char *reason)
 {
     if (cr_cod2x_owned(ucontext)) {
-        cr_cod2x_json(kind, sig, info, ucontext, path, sig ? NULL : reason);
-        cr_cod2x_pending(path);
+        if (Cod2x_ReportConsent()) {
+            cr_cod2x_json(kind, sig, info, ucontext, path, sig ? NULL : reason);
+            cr_cod2x_pending(path);
+        }
     } else {
         Sys_CrashReceive(path, reason);
     }
