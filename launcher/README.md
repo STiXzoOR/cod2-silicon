@@ -63,6 +63,23 @@ than spawning another engine. Normal Quit waits until the game closes. A game cr
 leaves the launcher running and exposes any native crash report in the app home.
 Only a single launcher window exists; Deploy is guarded against duplicate children.
 
+The game app carries two engines built from the same sources: `cod2_macos` with CoD2x and
+`cod2_macos_stock`, the original 1.3 (CoD2x is compiled in, so it can't be switched at run
+time). Settings › Game › Version chooses which one starts; CoD2x is the default and the choice
+is saved in `launcher-settings.json`. Config Studio's dialect and settings, Check-up's rules and
+the server ready check follow it. Both engines carry the app layer (link handler, bundle
+arguments, freeze watcher, crash and freeze reports in the app home), so links, passworded ones
+included, reach either engine the same way. The original 1.3 can't join a CoD2x server, so that
+join asks to turn CoD2x on and join; a server not seen yet is asked for its version first. A
+bundle without `cod2_macos_stock` (the CMake `cod2_macos_app` target) disables the choice.
+Both engines read and write each loadout's `config_mp.cfg`, and an engine that can't hold a
+saved value keeps its own default and writes that back: CoD2x's `cl_maxpackets` above 100,
+`snaps` above 30, `r_lodScale` (protected in the original) and a window position past ±4096
+(`vid_xpos`, `vid_ypos`), and the original's `com_hunkMegs` (CoD2x pins 512). The list comes
+from the catalogue's two modes. Before each game the launcher puts back what the other engine
+replaced (one History entry per loadout) and remembers what this engine can't hold in
+`main/players/.studio-engine-handoff.json`.
+
 Fast path:
 
 ```sh

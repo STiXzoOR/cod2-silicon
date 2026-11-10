@@ -13,7 +13,7 @@
 extern void MacServer_InstallSignals(void);
 extern void MacServer_CheckQuit(void);
 #endif
-#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
 #include "platform/cod2x_native.h"
 #include <strings.h>
 #endif
@@ -194,7 +194,7 @@ void Sys_Error(const char *error, ...)
     vsnprintf(text, sizeof(text), error, argptr);
     va_end(argptr);
 
-#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2xNative_Shutdown();
 #endif
     Sys_DestroySplashWindow();
@@ -317,7 +317,7 @@ void Sys_Init(void)
 void Sys_LoadingKeepAlive(void)
 {
 
-#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2xNative_Heartbeat();
 #endif
     UpdateSystemActivity(0);
@@ -455,13 +455,18 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 #ifndef __EMSCRIPTEN__
 
-#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+#if defined(COD2_CODX) && COD2_CODX
     Sys_InstallCrashHandler("opencod2 CoD2x native", "1.4.6.8 compatibility",
                             COD2_VERSION_DATE, "native launch (command line omitted)");
+#else
+    Sys_InstallCrashHandler("CoD2 MP " COD2_VERSION_SHORT, COD2_VERSION_SHORT,
+                            COD2_VERSION_DATE, "native launch (command line omitted)");
+#endif
     Cod2xNativeURL_Install();
     if (lpCmdLine && !strncasecmp(lpCmdLine, "cod2x://", 8)) {
         if (!Cod2xNativeURL_Queue(lpCmdLine))
-            fprintf(stderr, "CoD2x: rejected launch link; only connect and password are accepted.\n");
+            fprintf(stderr, "CoD2 Silicon: rejected launch link; only connect and password are accepted.\n");
         lpCmdLine = "";
     }
 #else
@@ -483,7 +488,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #endif
     Win_InitLocalization();
     Dvar_Init();
-#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2xNativeURL_SetupPaths();
 #endif
 
@@ -538,7 +543,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Com_Init(lpCmdLine);
 #endif
 
-#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2xNative_Init();
 #endif
 
@@ -554,7 +559,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #if COD2_APPLE_SDK && defined(DEDICATED)
         MacServer_CheckQuit();
 #endif
-#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
         Cod2xNative_Frame();
 #endif
         Com_Frame();
@@ -570,7 +575,7 @@ void Sys_Quit(void)
     int i;
     sysEvent_t *ev;
 
-#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2xNative_Shutdown();
 #endif
     timeEndPeriod(1);

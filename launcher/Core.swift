@@ -168,6 +168,20 @@ struct ConfigConnectionLaunch: Equatable, Sendable {
     }
 }
 
+/// Which engine a game starts with. CoD2x is compiled into the engine, so the app carries two:
+/// `cod2_macos` with CoD2x and `cod2_macos_stock`, the original 1.3 from the same sources.
+enum GameEngine: String, Codable, Sendable, CaseIterable {
+    case cod2x, original
+    var executableName: String { self == .cod2x ? "cod2_macos" : "cod2_macos_stock" }
+    /// The engines a game app carries, by their executables.
+    static func installed(in gameBundle: URL) -> Set<GameEngine> {
+        Set(allCases.filter { FileManager.default.isExecutableFile(atPath: $0.executable(in: gameBundle).path) })
+    }
+    func executable(in gameBundle: URL) -> URL { gameBundle.appendingPathComponent("Contents/MacOS/" + executableName) }
+    /// Whether this engine can play on the server: CoD2x joins both kinds, the original only stock 1.3.
+    func canJoin(_ server: GameServer) -> Bool { self == .cod2x || !ServerFacts(server).isCoD2x }
+}
+
 struct GameLaunchPlan {
     var arguments: [String]
     var link: LaunchLink?
@@ -203,7 +217,7 @@ struct GameLaunchPlan {
             throw LauncherError(message: "Temporary server settings require an isolated connection write owner.")
         }
         arguments = try EngineCommandLine.validate(args + forwarded + (try connection?.arguments(for: link) ?? []))
-        // Links are delivered as Apple events after startup, never serialized into argv.
+        // Links are delivered as Apple events after startup, never serialized into argv (both engines).
         self.link = link
     }
 }
@@ -249,6 +263,39 @@ enum KeyStore {
     }
 }
 
+extension GameEngine {
+    enum JoinCheck: Equatable { case go, needsCoD2x, lookUp }
+    /// Before a game starts on a server. Original 1.3 joins only stock 1.3 servers; a server not seen
+    /// yet is looked up once, and if it doesn't answer the game tries (and reports a version mismatch itself).
+    func check(server: GameServer?, lookedUp: Bool) -> JoinCheck {
+        guard self == .original else { return .go }
+        if let server { return canJoin(server) ? .go : .needsCoD2x }
+        return lookedUp ? .go : .lookUp
+    }
+}
+
+/// A CoD2x server joined while Original 1.3 is chosen; the launcher asks whether to turn CoD2x on and join.
+struct EngineRequest: Identifiable, Sendable {
+    let link: LaunchLink
+    var id: String { link.address }
+    var title: String { "This server needs CoD2x" }
+    var message: String {
+        "This server runs CoD2x 1.4. Original 1.3 can only join Stock 1.3 servers. CoD2x stays on for later games; you can change this in Settings."
+    }
+}
+
+/// The reports either engine writes into the app home (its fs_homepath) when it crashes
+/// (`cod2_crash_<pid>.txt`) or its main thread stalls (`cod2_freeze_<pid>.txt`).
+enum CrashReports {
+    /// The newest report written since `since`.
+    static func latest(in home: URL, since: Date) -> URL? {
+        func modified(_ url: URL) -> Date { (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast }
+        return ((try? FileManager.default.contentsOfDirectory(at: home, includingPropertiesForKeys: [.contentModificationDateKey])) ?? [])
+            .filter { ["cod2_crash_", "cod2_freeze_"].contains(where: $0.lastPathComponent.hasPrefix) && $0.pathExtension == "txt" && modified($0) >= since }
+            .max { modified($0) < modified($1) }
+    }
+}
+
 struct GameSettings: Codable, Sendable, Equatable {
     static let machineDvarNames: Set<String> = ["r_mode", "r_fullscreen", "r_borderless", "r_swapinterval", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "com_introplayed", "logfile", "developer", "fs_basepath", "fs_homepath", "fs_game", "fs_cdpath", "fs_copyfiles", "fs_restrict", "loc_language", "dedicated", "com_hunkmegs", "net_port", "cl_matchsummaries"]
     var resolution = "1920x1080"
@@ -263,6 +310,8 @@ struct GameSettings: Codable, Sendable, Equatable {
     var anisotropy = 8
     var advanced = ""
     var matchSummariesEnabled = true
+    /// CoD2x unless the player chose the original 1.3 in Settings.
+    var engine = GameEngine.cod2x
     static let resolutions = ["1280x720", "1920x1080", "2560x1440", "3008x1692", "3840x2160", "5120x2880", "6016x3384"]
     static let anisotropyLevels = [2, 4, 8, 16]
     var cm360: Double? { MouseMath.centimetresPer360(dpi: dpi, sensitivity: sensitivity) }
@@ -282,6 +331,8 @@ struct GameSettings: Codable, Sendable, Equatable {
         anisotropy = try c.decodeIfPresent(Int.self, forKey: .anisotropy) ?? d.anisotropy
         advanced = try c.decodeIfPresent(String.self, forKey: .advanced) ?? d.advanced
         matchSummariesEnabled = try c.decodeIfPresent(Bool.self, forKey: .matchSummariesEnabled) ?? d.matchSummariesEnabled
+        // An engine this version doesn't know (from a newer launcher) falls back without losing the rest.
+        engine = (try? c.decodeIfPresent(GameEngine.self, forKey: .engine)) ?? d.engine
     }
     /// One advanced line as (name, value): `dvar value` as typed in the console, or `dvar=value`.
     static func advancedPair(_ line: String) -> (String, String)? {

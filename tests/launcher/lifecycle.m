@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include "../../src/PC/qcommon/cod2x_url.h"
 
+/* Built with LIFECYCLE_STOCK, the fixture stands in for the original 1.3 engine: the same app layer
+ * (bundle arguments, link handler), no CoD2x layer. */
 int Cod2xNativeApp_Arguments(char *buffer, int capacity) { (void)buffer; (void)capacity; return 0; }
 @interface FixtureURLs : NSObject
 - (void)openURL:(NSAppleEventDescriptor *)event reply:(NSAppleEventDescriptor *)reply;
@@ -13,7 +15,10 @@ int Cod2xNativeApp_Arguments(char *buffer, int capacity) { (void)buffer; (void)c
     (void)reply;
     Cod2xURL link;
     NSString *text = [event paramDescriptorForKeyword:keyDirectObject].stringValue;
-    if (Cod2x_ParseURL(text.UTF8String, &link)) { printf("fixture link %s\n", link.address); fflush(stdout); }
+    if (Cod2x_ParseURL(text.UTF8String, &link)) {
+        printf("fixture link %s%s%s\n", link.address, link.hasPassword ? " password " : "", link.hasPassword ? link.password : "");
+        fflush(stdout);
+    }
 }
 @end
 int main(int argc, char **argv)
@@ -53,6 +58,10 @@ int main(int argc, char **argv)
                 NSString *active = [NSString stringWithContentsOfFile:[home stringByAppendingPathComponent:@"main/players/active.txt"] encoding:NSUTF8StringEncoding error:nil];
                 NSString *config = [home stringByAppendingPathComponent:[NSString stringWithFormat:@"main/players/%@/config_mp.cfg", active]];
                 NSString *text = [NSString stringWithContentsOfFile:config encoding:NSUTF8StringEncoding error:nil];
+#ifdef LIFECYCLE_STOCK
+                /* Like the original engine: it refuses CoD2x's 125, keeps its default and writes that back. */
+                text = [text stringByReplacingOccurrencesOfString:@"seta cl_maxpackets \"125\"" withString:@"seta cl_maxpackets \"30\""];
+#endif
                 if (text) [[text stringByAppendingString:@"seta sensitivity \"6\"\n"] writeToFile:config atomically:YES encoding:NSUTF8StringEncoding error:nil];
                 [@"Synthetic crash report\n" writeToFile:[home stringByAppendingPathComponent:@"cod2_crash_fixture.txt"] atomically:YES encoding:NSUTF8StringEncoding error:nil]; return 37;
             }

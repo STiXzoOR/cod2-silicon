@@ -4,7 +4,7 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/cod2-config-discover.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT INT TERM
-sdk=$(/usr/bin/xcrun --show-sdk-path)
+sdk=$(/usr/bin/xcrun --sdk macosx --show-sdk-path)
 for object in "launcher/NativeSetup.m:NativeSetup" "src/platform/cod2x_native_shaders.m:NativeShaders"; do
     taskpolicy -b nice -n 19 /usr/bin/xcrun clang -target arm64-apple-macos26 -isysroot "$sdk" -fobjc-arc -DCOD2_X64=1 -DCOD2_CODX=1 \
         -c "$root/${object%%:*}" -o "$scratch/${object##*:}.o"

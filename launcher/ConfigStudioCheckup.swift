@@ -152,8 +152,19 @@ struct ConfigAppliedSuggestion: Identifiable {
             let rules = try loadRules()
             optimizer = try loadOptimizer()
             self.rules = rules
-            if rulesetIDs.isEmpty, let first = available.first(where: { $0.id == "public-cod2x" }) ?? available.first { rulesetIDs = [first.id] }
+            if rulesetIDs.isEmpty { selectDefaultRules() }
         } catch { loadError = "Check-up’s rules or advice data are missing or damaged. Reinstall CoD2 Silicon to restore them." }
+    }
+
+    private func selectDefaultRules() {
+        if let first = available.first(where: { $0.id == "public-cod2x" }) ?? available.first { rulesetIDs = [first.id] }
+    }
+    /// The engine changed in Settings: rules for the other engine no longer apply.
+    func followMode() {
+        reportCache = nil; showing = []
+        guard rules != nil else { return }
+        rulesetIDs = []
+        selectDefaultRules()
     }
 
     /// Rule sets for this engine; a stock policy can't judge a CoD2x client.
@@ -172,7 +183,7 @@ struct ConfigAppliedSuggestion: Identifiable {
         return ConfigCheckup(catalog: catalog, rules: rules, optimizer: optimizer)
     }
     private var scope: String {
-        "\(studio.current?.profile.id ?? "")|\(rulesetIDs.sorted().joined(separator: ","))|\(tuneFor.rawValue)"
+        "\(studio.mode.rawValue)|\(studio.current?.profile.id ?? "")|\(rulesetIDs.sorted().joined(separator: ","))|\(tuneFor.rawValue)"
     }
     var dismissedHere: Set<String> { dismissed[scope] ?? [] }
 

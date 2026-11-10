@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 
     cmdLine[0] = '\0';
     offset = 0;
-#if defined(__APPLE__) && defined(COD2_X64) && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED)
     extern int Cod2xNativeApp_Arguments(char *, int);
     offset = Cod2xNativeApp_Arguments(cmdLine, sizeof(cmdLine));
     if (offset < 0) {

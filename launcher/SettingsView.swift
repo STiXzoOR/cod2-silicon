@@ -25,6 +25,7 @@ struct SettingsView: View {
                 HStack(alignment: .top, spacing: 22) {
                     VStack(alignment: .leading, spacing: 22) {
                         SettingsSection("Game data") { setupGroup }
+                        SettingsSection("Game") { gameGroup }
                         SettingsSection("Display") { displayGroup }
                         SettingsSection("Renderer") { rendererGroup }
                         if legacy {
@@ -75,6 +76,20 @@ struct SettingsView: View {
             SettingsNote(text: Self.modeHint(model.settings.fullscreen))
             SettingsRow("Vertical sync", detail: "Off keeps input latency lowest.") {
                 Toggle("Vertical sync", isOn: $model.settings.vsync).toggleStyle(.switch).labelsHidden()
+            }
+        }
+    }
+
+    /// CoD2x is built into the engine, so the app carries two and starts the one chosen here.
+    private var gameGroup: some View {
+        SettingsGroup {
+            SettingsRow("Version", detail: model.originalAvailable ? "Original 1.3 can only join Stock 1.3 servers." : "Original 1.3 isn’t included in this build.") {
+                Picker("Game version", selection: Binding(get: { model.chosenEngine }, set: { model.settings.engine = $0 })) {
+                    Text("CoD2x").tag(GameEngine.cod2x); Text("Original 1.3").tag(GameEngine.original)
+                }
+                .pickerStyle(.segmented).labelsHidden().fixedSize()
+                .disabled(!model.originalAvailable)
+                .accessibilityHint(model.originalAvailable ? "" : "Original 1.3 isn’t included in this build")
             }
         }
     }
