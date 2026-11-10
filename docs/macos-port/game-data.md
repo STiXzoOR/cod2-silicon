@@ -58,19 +58,44 @@ depot or historical version is available. Valve's
 an alternative downloader on a compatible machine. Its macOS archive does
 not prove that the executable runs on arm64 or supports old 32-bit programs.
 
-## Original Mac shaders
+## Original shaders
 
-The Steam Mac multiplayer executable tested in [WS18](reports/WS18-ship.md)
-is at:
+The Windows game compiles its shaders from HLSL sources in `main/iw_07.iwd`
+(`materials/shaders/*.hlsl`) each time it starts. CoD2 Silicon does the same
+work once, at setup, with the bundled `cod2-shadergen`:
+
+1. It reads the 242 HLSL files from your game's `.iwd` archives.
+2. It makes the one edit OpenGL needs: vertex shaders write their clip position
+   with an OpenGL projection matrix. Everything else compiles as shipped.
+3. It compiles each shader's `vs_main` and `ps_main` to Direct3D 9 bytecode with
+   [vkd3d-shader](https://gitlab.winehq.org/wine/vkd3d), and translates the
+   bytecode to the OpenGL programs and constant tables the renderer loads.
+
+The result is 834 files in a local cache with a SHA-256 manifest. It takes a
+few seconds and is reused on later launches. A new app version rebuilds the
+cache if its generator changed. Nothing derived from the game is bundled or
+downloaded by this project. The generator's sources are in
+[`tools/shadergen`](../../tools/shadergen); `scripts/build-vkd3d.sh` builds the
+compiler library from pinned sources.
+
+These shaders follow Windows. The Mac 1.3 game shipped precompiled shaders
+with three 2006 workarounds (a scaled `normalize`, a series approximation of
+`sin` and `cos` that is visibly off on flags, and power-of-two render-target
+clamps); the generated ones leave those out.
+
+### Mac 1.3 shaders as a fallback
+
+If the shaders cannot be built from your game files, the app can take the
+precompiled ones from a Mac copy. The Steam Mac multiplayer executable tested
+in [WS18](reports/WS18-ship.md) is at:
 
 ```text
 ~/Games/CoD2-mac-bin/Call of Duty 2.app/Contents/Call of Duty 2 Multiplayer.app/Contents/MacOS/Call of Duty 2 Multiplayer
 ```
 
-It contains the original ARB programs and constant metadata. The app extracts
-834 files into a local cache, validates their manifest and reuses them on
-later launches. It continues with approximate shaders if extraction is
-unavailable. No original shader is bundled or downloaded by this project.
+It contains the Mac ARB programs and constant metadata. The app extracts
+834 files into the same local cache and validates their manifest. It
+continues with approximate shaders if neither source is available.
 
 Extraction is native code inside the app; no Python or developer tools are
 needed at runtime. The app looks for the Mac executable in your game folder,

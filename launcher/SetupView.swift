@@ -157,27 +157,27 @@ struct SetupView: View {
                 SetupGlyph(kind: .shaders).frame(width: 54, height: 54)
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Original shaders").font(.system(size: 21, weight: .bold)).foregroundStyle(palette.text)
-                    Text("Lighting and sky exactly as the game shipped, taken from your own Mac copy of Call of Duty 2.")
+                    Text("Lighting, sky and water as the game draws them on Windows, built on this Mac from your own game files.")
                         .font(.system(size: 14)).foregroundStyle(palette.dark ? Palette.hex(0xc9c1ad) : palette.secondary).lineSpacing(5).fixedSize(horizontal: false, vertical: true)
                 }
             }
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Text(model.approximate && !model.shaderBusy ? "Original Mac shaders weren't found" : model.shaderMessage)
+                    Text(model.approximate && !model.shaderBusy ? "The original shaders couldn't be built" : model.shaderMessage)
                     Spacer()
                     Text("\(model.shaderCount) / 834").font(.typewriter(13)).monospacedDigit()
                 }
                 .font(.system(size: 13)).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.text)
                 ShaderProgressBar(fraction: Double(model.shaderCount) / 834)
-                    .accessibilityElement().accessibilityLabel("Shader extraction").accessibilityValue("\(model.shaderCount) of 834")
+                    .accessibilityElement().accessibilityLabel("Shader setup").accessibilityValue("\(model.shaderCount) of 834")
                 if model.approximate && !model.shaderBusy {
                     HStack(spacing: 10) {
-                        Text("Approximate shaders lose clouds and most lighting detail.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
+                        Text("Approximate shaders lose clouds and most lighting detail. If you own the Mac version, its shaders work too.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
                         Spacer()
                         Button("Choose Mac Copy…", action: model.pickShaders).glassAction().actionControlSize()
                     }
                 } else {
-                    Text("No Mac copy? You can still play, without clouds and most lighting detail, and add it later in Settings.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
+                    Text("This happens once and takes a few seconds. Nothing is downloaded.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
                 }
             }
         }

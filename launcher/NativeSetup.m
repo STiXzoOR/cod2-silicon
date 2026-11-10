@@ -35,7 +35,8 @@ BOOL LauncherPrepareShaders(NSString *data, NSString *selected)
     NSMutableArray *binaries = Cod2xShaderBinaries(selected ?: data).mutableCopy;
     if (selected && [NSFileManager.defaultManager fileExistsAtPath:selected isDirectory:&directory] && !directory)
         [binaries insertObject:selected atIndex:0];
-    return Cod2xShadersSetup(binaries, [Cod2xAppHome() stringByAppendingPathComponent:@"shaders"]);
+    /* A Mac copy the player picked is used only when building from the game files fails. */
+    return Cod2xShadersSetup(data, binaries, [Cod2xAppHome() stringByAppendingPathComponent:@"shaders"]);
 }
 BOOL LauncherVerifyShaders(void)
 {

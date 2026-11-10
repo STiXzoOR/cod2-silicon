@@ -34,7 +34,7 @@ struct MediaEntry: Identifiable {
     @Published var keyInput = ""
     @Published var shaderBusy = false
     @Published var shaderCount = 0
-    @Published var shaderMessage = "Lighting and sky exactly as the game shipped, taken from your own Mac copy of Call of Duty 2."
+    @Published var shaderMessage = "Lighting, sky and water as the game draws them on Windows, built on this Mac from your own game files."
     @Published var approximate = false
     @Published var settings = GameSettings() {
         didSet {
@@ -110,6 +110,7 @@ struct MediaEntry: Identifiable {
     private var fastPlay = false
     private var booted = false
     private var setupTask: Task<Void, Never>?
+    private var shaderRefresh: Task<Void, Never>?
     var forwardedArguments: [String] = []
     var exitAfterGame = false
     /// Creates the native export dialog; callers configure it before presentation.
@@ -199,6 +200,7 @@ struct MediaEntry: Identifiable {
         if let url = args.first(where: { $0.hasPrefix("cod2x://") }) { openLink(url) }
         studio.loadCatalog()
         refreshMatchSummaries()
+        if ProcessInfo.processInfo.environment["COD2_SETUP_NONINTERACTIVE"] != "1" { refreshShaders() }
         if ProcessInfo.processInfo.environment["COD2_SETUP_NONINTERACTIVE"] == "1" {
             setupTask = Task {
                 do {
@@ -273,17 +275,28 @@ struct MediaEntry: Identifiable {
             notice = ""
         } catch { notice = error.localizedDescription }
     }
+    /// After an update, builds the shaders again if this version's generator is newer than the
+    /// ones on disk. It takes a few seconds once; `play` waits for it.
+    private func refreshShaders() {
+        guard !snapshot, !onboard, !dataPath.isEmpty, shaderRefresh == nil else { return }
+        let data = dataPath
+        shaderRefresh = Task {
+            let verified = await Task.detached(priority: .userInitiated) { LauncherPrepareShaders(data, nil) }.value
+            approximate = !verified
+            shaderRefresh = nil
+        }
+    }
     func backSetup() { if step > 0 && !shaderBusy { withAnimation(.launcherSpring) { step -= 1 } } }
     func prepareShaders(selected: String? = nil) {
         guard !shaderBusy, !snapshot else { return }
-        shaderBusy = true; shaderCount = 0; shaderMessage = "Reading your Mac copy of Call of Duty 2…"
+        shaderBusy = true; shaderCount = 0; shaderMessage = "Reading your game files…"
         let data = dataPath, parent = home
         let progress = Task { [weak self] in
             while !Task.isCancelled {
                 let count = await Task.detached(priority: .utility) { Self.stagedShaderCount(in: parent) }.value
                 if let self, self.shaderBusy, let count {
                     self.shaderCount = min(834, max(self.shaderCount, count))
-                    self.shaderMessage = "Extracting from Call of Duty 2 Multiplayer…"
+                    self.shaderMessage = "Building shaders from your game files…"
                 }
                 try? await Task.sleep(for: .milliseconds(120))
             }
@@ -293,7 +306,7 @@ struct MediaEntry: Identifiable {
             progress.cancel()
             withAnimation(.launcherSpring) { shaderCount = verified ? 834 : 0 }
             shaderBusy = false; approximate = !verified
-            shaderMessage = verified ? "All shaders verified" : "Original Mac shaders weren't found. Approximate shaders lose clouds and most lighting detail."
+            shaderMessage = verified ? "All shaders verified" : "The original shaders couldn't be built. Approximate shaders lose clouds and most lighting detail."
         }
     }
     /// Payloads written so far into the extractor's private staging folder in the app home.
@@ -306,7 +319,7 @@ struct MediaEntry: Identifiable {
     }
     func pickShaders() {
         let panel = NSOpenPanel(); panel.canChooseDirectories = true; panel.canChooseFiles = true; panel.treatsFilePackagesAsDirectories = true
-        panel.message = "Choose your own Mac Call of Duty 2 folder or multiplayer executable."
+        panel.message = "Choose your Mac Call of Duty 2 folder or its multiplayer app to use its shaders."
         if panel.runModal() == .OK, let url = panel.url { prepareShaders(selected: url.path) }
     }
     func finishSetup() {
@@ -514,6 +527,7 @@ struct MediaEntry: Identifiable {
     }
     func play(demo: URL? = nil) {
         guard !snapshot, !gameRunning else { return }
+        if let refresh = shaderRefresh { Task { await refresh.value; play(demo: demo) }; return }
         if attachExistingGame() {
             if let link = pendingLink { pendingLink = nil; openLink(link.url) }
             return
@@ -731,7 +745,7 @@ struct MediaEntry: Identifiable {
         case "setup-data": onboard = true; step = 0
         case "setup-data-missing": onboard = true; step = 0; dataPath = ""
         case "setup-key": onboard = true; step = 1; keyInput = "7Q4M 2KX9 LP3R"
-        case "setup-shaders": onboard = true; step = 2; shaderBusy = true; shaderCount = 518; shaderMessage = "Extracting from Call of Duty 2 Multiplayer…"
+        case "setup-shaders": onboard = true; step = 2; shaderBusy = true; shaderCount = 518; shaderMessage = "Building shaders from your game files…"
         case "setup-ready": onboard = true; step = 2; shaderCount = 834; shaderMessage = "All shaders verified"
         case "servers": page = .servers
         case "servers-empty": page = .servers; search = "zzz"
