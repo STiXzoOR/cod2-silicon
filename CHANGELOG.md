@@ -7,6 +7,14 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Changed
 
+- The game's videos play. The `cinematic` console command and the intro
+  (publisher and studio logos, then the game's intro film) were switched off
+  because they showed a black screen. Started without the launcher, the game
+  plays the intro once on its first run, as on Windows; any key skips each
+  part. The launcher still goes straight to the menu.
+- A dedicated server build keeps its settings in `config_mp_server.cfg` and
+  its log in `console_mp_server.log`, like the original Linux server, and no
+  longer needs a player profile to load a map.
 - Bushes, grass and trees have the right colour. The colours baked into
   static models had red and blue swapped on the default render path, so
   foliage came out slightly blue-green where the original is yellow-green.

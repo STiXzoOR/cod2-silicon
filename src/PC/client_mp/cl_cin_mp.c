@@ -29,11 +29,7 @@ e_status CIN_RunCinematic(int handle)
 
 int CIN_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBits)
 {
-#if COD2_APPLE_SDK
-    return -1;
-#else
     return ROQ_PlayCinematic(arg, x, y, w, h, systemBits);
-#endif
 }
 
 void CIN_SetExtents(int handle, int x, int y, int w, int h)
@@ -51,30 +47,14 @@ void CL_PlayCinematic_f(void)
 #if defined(COD2_X64)
     cin_skippable = 1;
 #endif
-#if COD2_APPLE_SDK
-    extern const dvar_t *nextmap, *com_introPlayed;
-    extern void Dvar_SetString(const dvar_t *, const char *);
-    extern void Dvar_SetBool(const dvar_t *, qboolean);
-    Dvar_SetString(nextmap, "");
-    Dvar_SetBool(com_introPlayed, 1);
-#else
     ROQ_PlayCinematic_f();
-#endif
 }
 
 #if defined(COD2_X64)
 void CL_PlayUnskippableCinematic_f(void)
 {
     cin_skippable = 0;
-#if COD2_APPLE_SDK
-    extern const dvar_t *nextmap, *com_introPlayed;
-    extern void Dvar_SetString(const dvar_t *, const char *);
-    extern void Dvar_SetBool(const dvar_t *, qboolean);
-    Dvar_SetString(nextmap, "");
-    Dvar_SetBool(com_introPlayed, 1);
-#else
     ROQ_PlayCinematic_f();
-#endif
 }
 #endif
 
