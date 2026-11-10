@@ -7,6 +7,9 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Changed
 
+- Bushes, grass and trees have the right colour. The colours baked into
+  static models had red and blue swapped on the default render path, so
+  foliage came out slightly blue-green where the original is yellow-green.
 - Tinted map surfaces have the right colour. The colours a map paints onto
   its walls and ground had red and blue swapped, so warm tints came out
   cool: the sandy foot of the walls on Toujane was blue-grey. Maps that only
