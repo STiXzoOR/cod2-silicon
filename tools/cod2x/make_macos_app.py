@@ -14,10 +14,17 @@ import os
 SIGN_IDENTITY = os.environ.get("COD2_SIGN_IDENTITY", "-")
 
 
-def codesign(path):
+# Voice chat records from the microphone. The hardened runtime refuses that
+# without this entitlement, whatever the player answers when macOS asks.
+ENTITLEMENTS = {"com.apple.security.device.audio-input": True}
+
+
+def codesign(path, entitlements=None):
     command = ["codesign", "--force", "--sign", SIGN_IDENTITY]
     if SIGN_IDENTITY != "-":
         command += ["--options", "runtime", "--timestamp"]
+    if entitlements:
+        command += ["--entitlements", str(entitlements)]
     subprocess.run(command + [str(path)], check=True)
 
 
@@ -176,6 +183,9 @@ def main():
         codesign(library)
         codesign(tool)
     icon_files, icon_keys = build_icon(root, pathlib.Path(staging.name) / "icon")
+    entitlements = pathlib.Path(staging.name) / "entitlements.plist"
+    with entitlements.open("wb") as file:
+        plistlib.dump(ENTITLEMENTS, file)
     for icon_file in icon_files:
         shutil.copy2(icon_file, resources / icon_file.name)
     info = {
@@ -190,6 +200,8 @@ def main():
         **icon_keys,
         "LSMinimumSystemVersion": "26.0",
         "NSHighResolutionCapable": not args.engine_only,
+        # macOS shows this when voice chat first opens the microphone.
+        "NSMicrophoneUsageDescription": "Voice chat sends your microphone to the players on your server while you hold the voice chat key.",
         "LSApplicationCategoryType": "public.app-category.action-games",
         "LSSupportsGameMode": not args.no_game_mode,
         "CoD2AutomaticShaderSetup": True,
@@ -235,7 +247,7 @@ def main():
             shutil.copy2(icon_file, game_resources / icon_file.name)
         with (game_contents / "Info.plist").open("wb") as file:
             plistlib.dump(game_info, file)
-        codesign(game_contents.parent)
+        codesign(game_contents.parent, entitlements)
         info["LSSupportsGameMode"] = False
         info["CoD2AutomaticShaderSetup"] = False
         info["CoD2DefaultResolution"] = args.resolution
@@ -252,7 +264,7 @@ def main():
             shutil.copy2(root / name, resources / name)
     with (contents / "Info.plist").open("wb") as file:
         plistlib.dump(info, file)
-    codesign(app)
+    codesign(app, entitlements)
     subprocess.run(["codesign", "--verify", "--deep", "--strict", str(app)], check=True)
     if destination.exists():
         previous = pathlib.Path(staging.name) / "previous.app"

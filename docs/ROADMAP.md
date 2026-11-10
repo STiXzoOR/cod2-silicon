@@ -60,10 +60,8 @@ This is preparation; Metal is not yet available in the released application.
 - **185 placeholder globals:** classify and replace the remaining zero-filled
   placeholders using verified type, size, initialization and ownership facts.
   Keep the ABI audit at zero mismatches and the i386 output unchanged.
-- **Voice capture:** a native microphone path that handles permissions and
-  device changes and encodes compatibly, without blocking gameplay.
-- **Intro cinematics:** restore playback from player-owned content, with safe
-  timing, skip and cleanup behavior.
+- **Voice capture:** test with a real microphone and follow input device
+  changes while talking. Capture, permission and the encoded stream are in.
 - **CoD2x server features:** server-side CoD2x 1.4 behavior for the native
   dedicated server.
 

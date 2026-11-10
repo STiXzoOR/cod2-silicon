@@ -110,8 +110,13 @@ caps.
 
 ## Known limitations
 
-- Incoming voice playback and server relay are implemented; native microphone
-  capture and intro cinematics remain unavailable.
+- Voice chat records from your microphone only while you hold the voice chat
+  key on a server that has voice on. The sound path was tested with a
+  recording in place of a microphone, not yet with a real one, and the level
+  meter in the options moves only while you are sending. Device changes while
+  talking are not handled.
+- The launcher skips the intro videos. `cinematic cod_intro` in the console
+  plays the intro film.
 - The native dedicated server is available from source; see the
   [server guide](docs/server.md).
 - Frame-pacing hitches remain; active Game Mode and quiet-desktop display
