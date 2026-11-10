@@ -711,6 +711,12 @@ int Cod2x_FeaturesDemo(void)
     return playingDemo;
 }
 
+/* The client state the last frame saw, for crash reports. */
+int Cod2x_ClientState(void)
+{
+    return lastClientState < 0 ? 0 : lastClientState;
+}
+
 int Cod2x_ThirdPersonMode(void)
 {
     return thirdPersonMode ? thirdPersonMode->current.integer : 0;

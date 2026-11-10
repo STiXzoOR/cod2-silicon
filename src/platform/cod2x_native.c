@@ -110,6 +110,11 @@ void Cod2xNative_Frame(void)
     Cod2xNativeURL_Frame();
 }
 
+/* Windows' crash report says whether a crash was inside Com_Frame; macOS's doesn't. */
+void Cod2xNative_FrameDone(void)
+{
+}
+
 /* What CoD2x's update request says about this machine. macOS keeps no history of
    identity changes; the system text takes CoD2x's Windows order: build, product,
    version, country, virtualisation, (no compatibility flags), admin or user. */

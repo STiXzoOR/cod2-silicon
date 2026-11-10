@@ -130,12 +130,7 @@ size_t Cod2x_LoggerRecent(char *out, size_t size)
 }
 
 /* ---- JSON text ---- */
-typedef struct {
-    char *text;
-    size_t length, size;
-} Cod2xText;
-
-static void Cod2x_TextAdd(Cod2xText *text, const char *format, ...)
+void Cod2x_TextAdd(Cod2xText *text, const char *format, ...)
 {
     va_list args;
     int needed;
@@ -161,7 +156,7 @@ static void Cod2x_TextAdd(Cod2xText *text, const char *format, ...)
     text->length += (size_t)needed;
 }
 
-static void Cod2x_TextString(Cod2xText *text, const char *value)
+void Cod2x_TextString(Cod2xText *text, const char *value)
 {
     const unsigned char *p = (const unsigned char *)(value ? value : "");
     Cod2x_TextAdd(text, "\"");
@@ -183,7 +178,7 @@ static void Cod2x_TextString(Cod2xText *text, const char *value)
 }
 
 /* "field":["line",...], from text split at line ends; empty lines are left out. */
-static void Cod2x_TextLines(Cod2xText *text, const char *field, const char *lines)
+void Cod2x_TextLines(Cod2xText *text, const char *field, const char *lines)
 {
     const char *p = lines ? lines : "";
     int first = 1;
@@ -246,6 +241,7 @@ typedef struct {
     volatile int finished;
     volatile int *delivered;
     Cod2xPostDone done;
+    Cod2xCrashSent sent;
     void *user;
     char reply[16384];
     size_t replyLength;
@@ -302,6 +298,8 @@ static void Cod2x_ReportSend(Cod2xPost *post)
     if (result != CURLE_OK) {
         Cod2x_Log(post->exception ? "[EXCEPTION] Failed to send report: %s" : "[ERROR] Failed to send report: %s",
                   curl_easy_strerror(result));
+        if (post->sent)
+            post->sent(0, curl_easy_strerror(result));
         return;
     }
     if (!post->exception) {
@@ -320,12 +318,16 @@ static void Cod2x_ReportSend(Cod2xPost *post)
         remove(post->pending);
     if (status >= 200 && status < 300) {
         Cod2x_Log("[EXCEPTION] Report sent successfully (HTTP %d)", (int)status);
+        if (post->sent)
+            post->sent(1, "");
     } else {
         char message[128] = "", error[160];
         if (post->reply[0] == '{' && !Cod2x_ReplyString(post->reply, "error", message, sizeof(message)))
             Cod2x_ReplyString(post->reply, "message", message, sizeof(message));
         snprintf(error, sizeof(error), "HTTP %d%s%s", (int)status, message[0] ? ": " : "", message);
         Cod2x_Log("[EXCEPTION] Report rejected by endpoint: %s", error);
+        if (post->sent)
+            post->sent(0, error);
     }
 }
 
@@ -424,6 +426,109 @@ void Cod2x_PostJson(const char *url, const char *json, int timeout, Cod2xPostDon
 {
     char *copy = json ? strdup(json) : NULL;
     Cod2x_PostStart(copy, timeout, 0, NULL, url, done, user);
+}
+
+/* A crash or freeze report of CoD2x-layer code, sent at once (CoD2x's Windows
+   client): pending is deleted once delivered or refused for good; sent hears the
+   outcome on the sending thread. Waits at most wait ms. */
+void Cod2x_ReportCrash(const char *json, const char *pending, int timeout, int wait, Cod2xCrashSent sent)
+{
+    Cod2xPost *post = (Cod2xPost *)calloc(1, sizeof(*post));
+    int waited = 0;
+    if (!post)
+        return;
+    post->json = json ? strdup(json) : NULL;
+    post->exception = 1;
+    post->timeout = timeout;
+    post->sent = sent;
+    snprintf(post->pending, sizeof(post->pending), "%s", pending ? pending : "");
+    if (!post->json) {
+        free(post);
+        return;
+    }
+#if defined(_WIN32)
+    {
+        HANDLE thread = CreateThread(NULL, 0, Cod2x_ReportThread, post, 0, NULL);
+        if (!thread) {
+            free(post->json);
+            free(post);
+            return;
+        }
+        CloseHandle(thread);
+    }
+#else
+    {
+        pthread_t thread;
+        if (pthread_create(&thread, NULL, Cod2x_ReportThread, post) != 0) {
+            free(post->json);
+            free(post);
+            return;
+        }
+        pthread_detach(thread);
+    }
+#endif
+    while (waited < wait && !post->finished) {
+        Cod2x_Sleep(10);
+        waited += 10;
+    }
+    if (__sync_lock_test_and_set(&post->finished, 1))
+        free(post);
+}
+
+/* ---- The console's text, kept for crash reports (CoD2x console.cpp) ---- */
+#define COD2X_CONSOLE_MIRROR 65536
+static char consoleMirror[COD2X_CONSOLE_MIRROR];
+static size_t consoleMirrorLength;
+static volatile long consoleMirrorSequence;
+
+/* Keeps the newest 64 KB; a reader sees an even sequence when no write is under way. */
+void Cod2x_ConsoleMirror(const char *text, size_t length)
+{
+    size_t room;
+    if (!text || !length)
+        return;
+    __sync_fetch_and_add(&consoleMirrorSequence, 1);
+    if (length >= COD2X_CONSOLE_MIRROR - 1) {
+        text += length - (COD2X_CONSOLE_MIRROR - 1);
+        length = COD2X_CONSOLE_MIRROR - 1;
+        consoleMirrorLength = 0;
+    }
+    room = COD2X_CONSOLE_MIRROR - 1 - consoleMirrorLength;
+    if (length > room) {
+        size_t drop = length - room;
+        if (drop >= consoleMirrorLength) {
+            consoleMirrorLength = 0;
+        } else {
+            memmove(consoleMirror, consoleMirror + drop, consoleMirrorLength - drop);
+            consoleMirrorLength -= drop;
+        }
+    }
+    memcpy(consoleMirror + consoleMirrorLength, text, length);
+    consoleMirrorLength += length;
+    consoleMirror[consoleMirrorLength] = '\0';
+    __sync_fetch_and_add(&consoleMirrorSequence, 1);
+}
+
+/* The kept console text, or "(no logs)" when there is none or it could not be read. */
+size_t Cod2x_ConsoleLogs(char *out, size_t size)
+{
+    int tries;
+    if (!out || size < 2)
+        return 0;
+    for (tries = 0; tries < 8; ++tries) {
+        long before = consoleMirrorSequence;
+        size_t length;
+        if (before & 1)
+            continue;
+        __sync_synchronize();
+        length = consoleMirrorLength < size - 1 ? consoleMirrorLength : size - 1;
+        memcpy(out, consoleMirror + consoleMirrorLength - length, length);
+        out[length] = '\0';
+        __sync_synchronize();
+        if (consoleMirrorSequence == before && length)
+            return length;
+    }
+    return (size_t)snprintf(out, size, "(no logs)\r\n");
 }
 
 /* ---- Error reports (cod2x-errors) ---- */

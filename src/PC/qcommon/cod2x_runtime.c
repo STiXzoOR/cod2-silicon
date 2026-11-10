@@ -190,6 +190,29 @@ int Cod2x_DvarText(const char *name, char *value, size_t size)
     }
     return 1;
 }
+
+/* A dvar's value in CoD2x's Windows report form: an enum with its name,
+   "<not registered>" for a missing dvar. */
+int Cod2x_DvarTextNamed(const char *name, char *value, size_t size)
+{
+    const dvar_t *dvar = Dvar_FindVar(name);
+    if (!dvar) {
+        snprintf(value, size, "<not registered>");
+        return 0;
+    }
+    if (dvar->type == 6 && dvar->domain.enumeration.strings && dvar->current.integer >= 0 &&
+        dvar->current.integer < dvar->domain.enumeration.stringCount) {
+        snprintf(value, size, "%s (%d)", dvar->domain.enumeration.strings[dvar->current.integer],
+                 dvar->current.integer);
+    } else if (dvar->type == 7) {
+        snprintf(value, size, "%s", dvar->current.string ? dvar->current.string : "<null>");
+    } else if (dvar->type == 0 || dvar->type == 1 || dvar->type == 5 || dvar->type == 6) {
+        Cod2x_DvarText(name, value, size);
+    } else {
+        snprintf(value, size, "<type %d>", (int)dvar->type);
+    }
+    return 1;
+}
 #endif
 
 void Cod2x_PrepareConnect(void)

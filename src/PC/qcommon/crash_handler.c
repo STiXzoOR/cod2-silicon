@@ -586,8 +586,8 @@ static void cr_win_do(EXCEPTION_POINTERS *ep, const char *descIn)
     if (fd >= 0)
         close(fd);
 #    if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    /* CoD2x's own report of a CoD2x-layer fault comes with CoD2x's Windows form;
-       every other fault goes to the report receiver. */
+    /* A dedicated server here writes no CoD2x report: every fault but a
+       CoD2x-layer one goes to the report receiver. */
     if (!cr_win_owned(ep ? ep->ContextRecord : NULL))
         Sys_CrashReceive(path, desc);
 #    endif
@@ -652,15 +652,13 @@ const char *Sys_CrashDirectory(void)
     return ".";
 }
 
+/* CoD2x's Windows reports say win-client, also from a dedicated server. */
 const char *Sys_Cod2xReportType(void)
 {
-#        if defined(DEDICATED)
-    return "win-server";
-#        else
     return "win-client";
-#        endif
 }
 
+#        if !defined(CR_COD2X_DIALOG)
 size_t Sys_Cod2xSystemInfo(char *out, size_t size)
 {
     return (size_t)snprintf(out, size, "{}");
@@ -673,10 +671,9 @@ size_t Sys_Cod2xIdentity(char *out, size_t size)
 
 size_t Sys_Cod2xLogLines(char *out, size_t size)
 {
-    if (size)
-        out[0] = '\0';
-    return 0;
+    return Cod2x_ConsoleLogs(out, size);
 }
+#        endif
 #    endif
 
 #elif defined(__EMSCRIPTEN__)

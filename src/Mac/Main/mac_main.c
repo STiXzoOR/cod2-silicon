@@ -579,6 +579,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         Cod2xNative_Frame();
 #endif
         Com_Frame();
+#if (defined(__APPLE__) || (defined(COD2_WINDOWS_NATIVE) && COD2_WINDOWS_NATIVE)) && defined(COD2_X64) && COD2_X64 && \
+    defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+        Cod2xNative_FrameDone();
+#endif
         Sys_StateHashFrame();
     }
 
