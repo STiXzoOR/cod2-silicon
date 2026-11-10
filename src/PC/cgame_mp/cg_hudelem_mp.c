@@ -576,8 +576,17 @@ static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *h
         }
 
         if (moveLerp == 1.0f) {
+#if COD2_APPLE_SDK
+            /* Windows 1.3 rounds here with fistp(x + 2^-30) (0x4dd1ab). Direct3D
+             * leaves the FPU in single precision, where the bias is lost, so an
+             * exact half goes to the even pixel: an element at 22.5 is drawn at
+             * 22. Mac 1.3 rounded halves up, one pixel lower or further right. */
+            cghe->x = __builtin_rintf(cghe->x);
+            cghe->y = __builtin_rintf(cghe->y);
+#else
             cghe->x = (float)(int)floorf(cghe->x + 0.5f);
             cghe->y = (float)(int)floorf(cghe->y + 0.5f);
+#endif
         }
     }
 

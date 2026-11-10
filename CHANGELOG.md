@@ -7,6 +7,15 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Changed
 
+- The HUD and menus line up with Windows 1.3. Everything 2D sat half a pixel
+  right of and below where Windows draws it, and text was drawn twice a
+  quarter pixel apart, which made it bolder and blurred its shadow. In a
+  replayed demo the ammo counter, grenade icons, compass and match timer now
+  match the Windows game pixel for pixel. The 3D view is unchanged.
+- Text and script HUD elements (timers, scores, objective text) that fall
+  exactly between two pixels go to the same pixel as on Windows 1.3. Mac 1.3
+  put them one pixel lower or further right. At 1920x1080 this moved the
+  match timer and some lines of menu and hint text up one pixel.
 - The Direct3D 7 renderer (`r_rendererPreference dx7`) draws correctly. With
   the game's shaders installed the world came out pink and teal, because its
   lightmaps were built for the shader path; trees and bushes also had red and
@@ -22,6 +31,7 @@ All notable changes to CoD2 Silicon are documented here, following
   other animated surfaces move as they do there, where the Mac 1.3 shaders
   used an approximation. An existing shader cache is rebuilt once on the next
   launch. A Mac copy still works as a fallback.
+||||||| 1f3d9e68
 ||||||| 1f3d9e68
 - The CoD2x machine ID (`cl_hwid2`) is now computed the way CoD2x computes it:
   the same list of hardware details, hashed the same way. Only the hash is

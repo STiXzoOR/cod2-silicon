@@ -2139,8 +2139,17 @@ static void RB_Set2D(void)
     transform[0] = 2.0f * invW;
     transform[5] = -2.0f * invH;
     transform[10] = 1.0f;
+#if COD2_APPLE_SDK
+    /* Windows 1.3 (0x1002e561) moves 2D half a pixel up and left, so that a
+     * Direct3D 9 pixel center lands on a texel center. Mac 1.3 left it out.
+     * The projection conversion below reproduces Direct3D's pixel centers,
+     * so without this the HUD sat half a pixel right of and below Windows. */
+    transform[12] = -1.0f - invW;
+    transform[13] = 1.0f + invH;
+#else
     transform[12] = -1.0f;
     transform[13] = 1.0f;
+#endif
     transform[15] = 1.0f;
 
     MatrixIdentity44( (vec4_t *)(identity));
@@ -3923,6 +3932,9 @@ static void RB_BACKEND_REGPARM3_SSE_ABI RB_DrawTextWithCursor_impl(const char *t
     int count, ch;
     Glyph *glyph;
 
+    /* Mac 1.3 drew every glyph a second time a quarter pixel right and down,
+     * which made text bolder than on Windows 1.3. Windows draws each glyph
+     * once (0x100329c0), so the second draw is left out here. */
     x += xScale * -0.5f;
     y += yScale * -0.5f;
     xOrig = x;
@@ -4012,8 +4024,10 @@ static void RB_BACKEND_REGPARM3_SSE_ABI RB_DrawTextWithCursor_impl(const char *t
                     float shadowX = glyphX + shadowOffset;
                     RB_DrawStretchPic(material, shadowX, shadowY, w, h,
                                       glyph->s0, glyph->t0, glyph->s1, glyph->t1, newBlack.packed, (GfxPrimStatsTarget)8);
+#if !COD2_APPLE_SDK
                     RB_DrawStretchPic(material, shadowX + 0.25f, shadowY + 0.25f, w, h,
                                       glyph->s0, glyph->t0, glyph->s1, glyph->t1, newBlack.packed, (GfxPrimStatsTarget)8);
+#endif
                 }
 
             } else {
@@ -4047,8 +4061,10 @@ static void RB_BACKEND_REGPARM3_SSE_ABI RB_DrawTextWithCursor_impl(const char *t
             RB_DrawStretchPic(material, glyphX, glyphY, w, h,
                               glyph->s0, glyph->t0, glyph->s1, glyph->t1, newColor.packed, (GfxPrimStatsTarget)8);
             savedGlyphX2 = glyphX + 0.25f;
+#if !COD2_APPLE_SDK
             RB_DrawStretchPic(material, savedGlyphX2, glyphY + 0.25f, w, h,
                               glyph->s0, glyph->t0, glyph->s1, glyph->t1, newColor.packed, (GfxPrimStatsTarget)8);
+#endif
         }
 
         if (count == cursorPos) {
@@ -4063,8 +4079,10 @@ static void RB_BACKEND_REGPARM3_SSE_ABI RB_DrawTextWithCursor_impl(const char *t
                 float cy = yPos + (float)(signed char)cg->y0 * yScale;
                 RB_DrawStretchPic(material, glyphX, cy, cw, ch_,
                                   cg->s0, cg->t0, cg->s1, cg->t1, newColor.packed, (GfxPrimStatsTarget)8);
+#if !COD2_APPLE_SDK
                 RB_DrawStretchPic(material, savedGlyphX2, cy + 0.25f, cw, ch_,
                                   cg->s0, cg->t0, cg->s1, cg->t1, newColor.packed, (GfxPrimStatsTarget)8);
+#endif
             }
         }
 
@@ -4085,8 +4103,10 @@ static void RB_BACKEND_REGPARM3_SSE_ABI RB_DrawTextWithCursor_impl(const char *t
             float cy = yPos + (float)(signed char)cg->y0 * yScale;
             RB_DrawStretchPic(material, cursorX, cy, cw, ch_,
                               cg->s0, cg->t0, cg->s1, cg->t1, newColor.packed, (GfxPrimStatsTarget)8);
+#if !COD2_APPLE_SDK
             RB_DrawStretchPic(material, cursorX + 0.25f, cy + 0.25f, cw, ch_,
                               cg->s0, cg->t0, cg->s1, cg->t1, newColor.packed, (GfxPrimStatsTarget)8);
+#endif
         }
     }
 }

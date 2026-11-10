@@ -2037,8 +2037,15 @@ void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float
     CalcSplitScreenTextOffset(font, &y);
     CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
 
+#if COD2_APPLE_SDK
+    /* Windows 1.3 rounds with fistp(x + 2^-30) in Direct3D's single-precision
+     * FPU mode (0x5322ee, 0x53238e): an exact half goes to the even pixel. */
+    x = __builtin_rintf(x);
+    y = __builtin_rintf(y);
+#else
     x = (float)(int)floorf(x + 0.5f);
     y = (float)(int)floorf(y + 0.5f);
+#endif
 
     CL_DrawTextPhysical(text, maxChars, font, x, y, xScale, yScale, color, style);
 }
@@ -2054,8 +2061,15 @@ void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, floa
     CalcSplitScreenTextOffset(font, &y);
     CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
 
+#if COD2_APPLE_SDK
+    /* Windows 1.3 rounds with fistp(x + 2^-30) in Direct3D's single-precision
+     * FPU mode (0x5322ee, 0x53238e): an exact half goes to the even pixel. */
+    x = __builtin_rintf(x);
+    y = __builtin_rintf(y);
+#else
     x = (float)(int)floorf(x + 0.5f);
     y = (float)(int)floorf(y + 0.5f);
+#endif
 
     CL_DrawTextPhysicalWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, (signed char)cursor);
 }
@@ -6286,8 +6300,15 @@ void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float
     CalcSplitScreenTextOffset(font, &y);
     CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
 
+#if COD2_APPLE_SDK
+    /* Windows 1.3 rounds with fistp(x + 2^-30) in Direct3D's single-precision
+     * FPU mode (0x5322ee, 0x53238e): an exact half goes to the even pixel. */
+    x = __builtin_rintf(x);
+    y = __builtin_rintf(y);
+#else
     x = (float)(int)floorf(x + 0.5f);
     y = (float)(int)floorf(y + 0.5f);
+#endif
 
     CL_DrawTextPhysical(text, maxChars, font, x, y, xScale, yScale, color, style);
 }
