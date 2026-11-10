@@ -90,6 +90,7 @@ int Cod2x_LimitedFPS(int fps, int limited) { return limited && (fps < 125 || fps
 void Cod2x_FeaturesInit(void) {}
 void Cod2x_FeaturesFrame(int active, int demo) { (void)active; (void)demo; }
 void Cod2x_IwdSystemInfo(const char *names) { (void)names; }
+void Cod2x_PoseInit(void) {}
 #if !defined(COD2_CODX) || !COD2_CODX
 int Cod2x_GameVersion(void) { return 0; }
 void Cod2x_Disconnect(void) {}

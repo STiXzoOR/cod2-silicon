@@ -36,9 +36,9 @@ int Cod2x_LimitedFPS(int requested, int limited);
 
 void Cod2x_Init(void);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-/* Host revision remains stock until shared gameplay and admission contracts
-   have been reviewed together. The remote-client revision above is independent. */
-#define COD2X_HOST_REVISION 0
+/* A host runs as a CoD2x 1.4.6 server: g_cod2x is forced to this revision,
+   the protocol dvar is 120 and the revision 6 admission rules apply. */
+#define COD2X_HOST_REVISION COD2X_REVISION
 void Cod2x_ServerInit(int dedicated);
 void Cod2x_ServerSpawn(void);
 void Cod2x_ServerShutdown(void);

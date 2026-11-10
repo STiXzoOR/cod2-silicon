@@ -400,7 +400,7 @@ static inline __attribute__((always_inline)) unsigned int BG_ControllerTagName(i
 extern playerState_t *SV_GameClientNum(int clientNum);
 #endif
 #include "cod2x_animation.h"
-#if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+#if defined(COD2_X64) && COD2_X64
 #include "PC/qcommon/cod2x_pose.h"
 #endif
 #endif
@@ -417,7 +417,7 @@ void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es
     float maxAngleChange;
     int i;
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     if (Cod2x_GameVersion() >= 3 && es->eType == 1 && Cod2x_PoseNeutral()) {
         memset(goals, 0, sizeof(goals));
     } else
@@ -594,13 +594,13 @@ void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es
         cod2xAnimationState_t *state = BG_Cod2xState(ci);
         if (state) {
             float fraction;
-#if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+#if defined(COD2_X64) && COD2_X64
             if (!(es->eFlags & 0x300) && !(es->eType == 1 && Cod2x_PoseNeutral()))
 #else
             if (!(es->eFlags & 0x300))
 #endif
                 BG_Cod2xControllerGoals(es, ci, goals, leanFrac, state);
-#if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+#if defined(COD2_X64) && COD2_X64
             Cod2x_PoseOffsets(goals);
             Cod2x_PoseDiagnostics(es, ci, bgs->anim_user != 0, frametime);
 #endif
@@ -1050,7 +1050,7 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
     (void)pDObj;
     (void)GetLeanFraction(ci->lerpLean);
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     if (Cod2x_GameVersion() >= 3)
         Cod2x_PoseReset(es);
 #endif

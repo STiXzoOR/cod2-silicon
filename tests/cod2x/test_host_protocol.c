@@ -204,12 +204,13 @@ static void discovery(void)
 {
     for (int host = 0; host <= 6; host += 6) {
         reset(); revision=host; argc=2; argv[0]="getinfo"; argv[1]="nonce";
-        const char *expected = "118";
-#if defined(COD2_CODX) && COD2_CODX
-        if (host == 6) expected = "120";
-#endif
         void (*responses[])(netadr_t) = {SVC_Info, SVC_Status, SVC_GameCompleteStatus};
         for (unsigned i = 0; i < sizeof(responses) / sizeof(responses[0]); ++i) {
+            /* getinfo keeps the stock 118, as in CoD2x; the others carry the protocol dvar. */
+            const char *expected = "118";
+#if defined(COD2_CODX) && COD2_CODX
+            if (host == 6 && responses[i] != SVC_Info) expected = "120";
+#endif
             responses[i](remote);
             const char *info = strchr(packet, '\n');
             char line[8192] = "";

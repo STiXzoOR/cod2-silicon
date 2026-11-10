@@ -5,6 +5,9 @@
 #include "cod2x_features.h"
 #include "cod2x_policy.h"
 #endif
+#if defined(COD2_X64) && COD2_X64 && defined(DEDICATED)
+#include "cod2x_pose.h"
+#endif
 #include <string.h>
 #if defined(COD2_X64) && COD2_X64
 #include <strings.h>
@@ -73,6 +76,9 @@ void Cod2x_ServerInit(int dedicated)
 {
     /* Dedicated startup has no client identity, features, or connection state. */
     Cod2x_SharedInit(dedicated);
+#if defined(DEDICATED)
+    Cod2x_PoseInit();
+#endif
 }
 
 int Cod2x_ServerActive(void)
