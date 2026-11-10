@@ -913,4 +913,86 @@ void Cod2x_IwdStartup(const char *base)
         Com_Error(0, "Error while extracting IWD file to '%s'. Error while writing to file: %s\n", target,
                   strerror(errno));
 }
+
+/* ---- CoD2x services ----------------------------------------------------------
+   Tests send CoD2x's web requests to a stand-in: COD2X_TEST_SERVICE_URL (for
+   example http://127.0.0.1:8080) replaces "https://cod2x.me" or
+   "https://master.cod2x.me" at the start of a URL. Without it the URL is used as
+   it is. */
+const char *Cod2x_ServiceURL(const char *url, char *buffer, size_t size)
+{
+    static const char *const hosts[] = {"https://master.cod2x.me", "https://cod2x.me"};
+    const char *stand = getenv("COD2X_TEST_SERVICE_URL");
+    size_t i;
+    if (!stand || !*stand)
+        return url;
+    for (i = 0; i < sizeof(hosts) / sizeof(hosts[0]); ++i) {
+        size_t length = strlen(hosts[i]);
+        if (!strncmp(url, hosts[i], length) && (url[length] == '/' || !url[length])) {
+            snprintf(buffer, size, "%s%s", stand, url + length);
+            return buffer;
+        }
+    }
+    return url;
+}
+
+/* ---- zPAM from CoD2x's web site (CoD2x downloading.cpp, zpam.cpp) -------------
+   With cl_wwwDownload on, a missing main/zpamNNN.iwd or main/zpam_maps_vNNN.iwd is
+   fetched from CoD2x's web site instead of the game server, once per name. A failed
+   download asks the game server as usual; a cancelled one may be tried again. */
+#define COD2X_ZPAM_URL "https://cod2x.me/zpam"
+
+static char zpamTried[64][64], zpamRemote[64];
+static int zpamTriedCount, zpamActive;
+
+static int Cod2x_ZpamVersion(const char *name, const char *prefix)
+{
+    size_t length = strlen(prefix);
+    const char *p = name + length;
+    if (strncasecmp(name, prefix, length) || !isdigit((unsigned char)*p))
+        return -1;
+    while (isdigit((unsigned char)*p))
+        ++p;
+    return strcasecmp(p, ".iwd") ? -1 : atoi(name + length);
+}
+
+int Cod2x_ZpamDirectURL(const char *remoteName, int wwwDownload, char *url, size_t size)
+{
+    char address[256], stand[256];
+    int i;
+    zpamActive = 0;
+    if (!wwwDownload || !remoteName || strncasecmp(remoteName, "main/", 5) ||
+        (Cod2x_ZpamVersion(remoteName + 5, "zpam") < 0 && Cod2x_ZpamVersion(remoteName + 5, "zpam_maps_v") < 0))
+        return 0;
+    for (i = 0; i < zpamTriedCount; ++i)
+        if (!strcmp(zpamTried[i], remoteName))
+            return 0;
+    if (zpamTriedCount == (int)(sizeof(zpamTried) / sizeof(zpamTried[0])))
+        return 0;
+    snprintf(zpamTried[zpamTriedCount++], sizeof(zpamTried[0]), "%s", remoteName);
+    snprintf(zpamRemote, sizeof(zpamRemote), "%s", remoteName);
+    snprintf(address, sizeof(address), "%s/%s", COD2X_ZPAM_URL, remoteName);
+    snprintf(url, size, "%s", Cod2x_ServiceURL(address, stand, sizeof(stand)));
+    zpamActive = 1;
+    return 1;
+}
+
+int Cod2x_ZpamDirectActive(void)
+{
+    return zpamActive;
+}
+
+const char *Cod2x_ZpamDirectRemote(void)
+{
+    return zpamRemote;
+}
+
+/* The direct download ended; a cancelled one is not counted as tried. */
+void Cod2x_ZpamDirectEnd(int cancelled)
+{
+    if (zpamActive && cancelled && zpamTriedCount > 0)
+        --zpamTriedCount;
+    zpamActive = 0;
+}
 #endif
+
