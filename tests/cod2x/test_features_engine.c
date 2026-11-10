@@ -155,7 +155,8 @@ int main(void)
     assert(Cod2x_DebugBullets());
     cheats->current.enabled = 0;
     assert(!Cod2x_DebugBullets());
-    execute("match", "LOGIN", "match-player-id");
+    /* The match command itself belongs to the match service (cod2x_match.c). */
+    Dvar_SetString(Dvar_FindVar("match_login"), "match-player-id");
     assert(Dvar_FindVar("match_login")->flags == 0x12);
     assert(Dvar_FindVar("com_autoaffinity")->flags == 0x1001 && Dvar_FindVar("com_autoaffinity")->current.enabled);
     Cod2x_FeaturesFrame(0, 0);

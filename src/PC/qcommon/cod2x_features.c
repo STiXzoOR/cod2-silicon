@@ -82,46 +82,6 @@ static void Cod2x_IncreaseDecrease_f(void)
         Com_Printf("%s is not an int or float\n", Cmd_Argv(1));
 }
 
-static void Cod2x_MatchUsage(void)
-{
-    Com_Printf("USAGE: match <command> <options>\n");
-    Com_Printf("Client:\n");
-    Com_Printf("  match login <hash>\n");
-    Com_Printf("    <hash> - The hash to login with to the match server; will be removed after disconnect\n");
-    Com_Printf("Server:\n");
-    Com_Printf("  match create <endpoint>\n");
-    Com_Printf("    <endpoint> - URL for getting match data\n");
-    Com_Printf("    Example: match create http://web.com/matches/MATCHID1\n");
-    Com_Printf("  match status\n");
-    Com_Printf("    Displays the current match status\n");
-    Com_Printf("  match upload\n");
-    Com_Printf("    Forces upload of match data\n");
-    Com_Printf("  match cancel\n");
-    Com_Printf("    Cancels the current match\n");
-}
-
-static void Cod2x_Match_f(void)
-{
-    const dvar_t *dedicated;
-    const char *hash;
-    if (Cmd_Argc() < 2 || strcasecmp(Cmd_Argv(1), "login")) {
-        /* The server commands belong to the match service, which this client does not run. */
-        Cod2x_MatchUsage();
-        return;
-    }
-    dedicated = Dvar_FindVar("dedicated");
-    if (dedicated && dedicated->current.integer > 0) {
-        Com_Printf("Match login command is only available for clients.\n");
-        return;
-    }
-    hash = Cmd_Argv(2);
-    if (!*hash) {
-        Com_Printf("Please provide a hash to login.\n");
-        return;
-    }
-    Dvar_SetString(matchLogin, hash);
-}
-
 static int Cod2x_ProcessorCount(void)
 {
 #if defined(_WIN32)
@@ -310,7 +270,6 @@ void Cod2x_FeaturesInit(void)
     messageScale = Dvar_RegisterFloat("cg_gameMessageScale", 1, .5f, 3, 0x1001);
     Cmd_AddCommand("increase", Cod2x_IncreaseDecrease_f);
     Cmd_AddCommand("decrease", Cod2x_IncreaseDecrease_f);
-    Cmd_AddCommand("match", Cod2x_Match_f);
     Cmd_AddCommand("fs_processedList", Cod2x_ProcessedList_f);
     Dvar_RegisterBool("com_autoaffinity", 1, 0x1001);
     Cod2x_AutoAffinity();

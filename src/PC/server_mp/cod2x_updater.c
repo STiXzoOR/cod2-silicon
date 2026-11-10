@@ -1,6 +1,7 @@
 #include "common_types.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "cod2x_server.h"
+extern const char *Cod2x_ServiceURL(const char *url, char *buffer, size_t size);
 #include "../qcommon/cod2x.h"
 #include "../qcommon/cod2x_http.h"
 #include "../qcommon/cod2x_json.h"
@@ -94,7 +95,11 @@ static void Updater_Report(int available, const char *version)
 static void Updater_SendUdp(void)
 {
     const char *test = getenv("COD2X_TEST_UPDATER_ADDRESS");
+    const char *stand = getenv("COD2X_TEST_SERVICE_URL");
     int port = UPDATER_PORT;
+    /* A test that redirects the web requests must not reach the real host here either. */
+    if (!(test && test[0]) && stand && stand[0])
+        test = "127.0.0.1:9";
     char name[256];
     snprintf(name, sizeof(name), "%s", test && test[0] ? test : UPDATER_HOST);
     if (test && test[0] && strrchr(name, ':')) {
@@ -218,7 +223,7 @@ static void Updater_Done(void *context, const Cod2xHttpResponse *response)
 static void Updater_SendHttps(int periodic)
 {
     const char *url = getenv("COD2X_TEST_UPDATER_URL");
-    char zpam[256];
+    char zpam[256], stand[512];
     Cod2xText body = {0};
     Cod2xHttpRequest request;
     UpdaterCheck *check;
@@ -243,7 +248,7 @@ static void Updater_SendHttps(int periodic)
     check->periodic = periodic;
     memset(&request, 0, sizeof(request));
     request.method = "POST";
-    request.url = url && url[0] ? url : UPDATER_URL;
+    request.url = url && url[0] ? url : Cod2x_ServiceURL(UPDATER_URL, stand, sizeof(stand));
     request.headers = "Content-Type: application/json\r\n";
     request.body = body.data;
     request.bodyLength = body.length;

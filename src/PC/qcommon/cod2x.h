@@ -109,10 +109,10 @@ size_t Cod2x_ConsoleLogs(char *out, size_t size);
 typedef struct {
     char *text;
     size_t length, size;
-} Cod2xText;
-void Cod2x_TextAdd(Cod2xText *text, const char *format, ...);
-void Cod2x_TextString(Cod2xText *text, const char *value);
-void Cod2x_TextLines(Cod2xText *text, const char *field, const char *lines);
+} Cod2xReportText;
+void Cod2x_TextAdd(Cod2xReportText *text, const char *format, ...);
+void Cod2x_TextString(Cod2xReportText *text, const char *value);
+void Cod2x_TextLines(Cod2xReportText *text, const char *field, const char *lines);
 /* What CoD2x's update request says about this machine (CoD2x updater.cpp, system.cpp):
    the install's random id, the identity before its last change, what changed and
    how often, and the system text. Cleared once an answer came. */

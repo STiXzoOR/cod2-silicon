@@ -130,7 +130,7 @@ size_t Cod2x_LoggerRecent(char *out, size_t size)
 }
 
 /* ---- JSON text ---- */
-void Cod2x_TextAdd(Cod2xText *text, const char *format, ...)
+void Cod2x_TextAdd(Cod2xReportText *text, const char *format, ...)
 {
     va_list args;
     int needed;
@@ -156,7 +156,7 @@ void Cod2x_TextAdd(Cod2xText *text, const char *format, ...)
     text->length += (size_t)needed;
 }
 
-void Cod2x_TextString(Cod2xText *text, const char *value)
+void Cod2x_TextString(Cod2xReportText *text, const char *value)
 {
     const unsigned char *p = (const unsigned char *)(value ? value : "");
     Cod2x_TextAdd(text, "\"");
@@ -178,7 +178,7 @@ void Cod2x_TextString(Cod2xText *text, const char *value)
 }
 
 /* "field":["line",...], from text split at line ends; empty lines are left out. */
-void Cod2x_TextLines(Cod2xText *text, const char *field, const char *lines)
+void Cod2x_TextLines(Cod2xReportText *text, const char *field, const char *lines)
 {
     const char *p = lines ? lines : "";
     int first = 1;
@@ -691,7 +691,7 @@ static char *Cod2x_ErrorJson(const char *kind, const char *message, const char *
     static char logger[COD2X_LOG_CAPACITY * (COD2X_LOG_LENGTH + 32)];
     char system[4096], identity[512];
     static char logs[64 * 1024];
-    Cod2xText text = {NULL, 0, 0};
+    Cod2xReportText text = {NULL, 0, 0};
     Cod2x_LoggerRecent(logger, sizeof(logger));
     Sys_Cod2xSystemInfo(system, sizeof(system));
     Sys_Cod2xIdentity(identity, sizeof(identity));
