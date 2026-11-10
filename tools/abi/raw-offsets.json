@@ -4508,13 +4508,6 @@
     "reason": "Byte buffer contains the four-byte network sequence/OOB marker; payload copies skip that wire header, independently of native pointer width."
   },
   {
-    "file": "src/PC/qcommon/net_chan_mp.c",
-    "text": "memcpy(string + 4, format, len);",
-    "count": 1,
-    "classification": "safe",
-    "reason": "Byte buffer contains the four-byte network sequence/OOB marker; payload copies skip that wire header, independently of native pointer width."
-  },
-  {
     "file": "src/PC/script/scr_compiler.c",
     "text": "*(unsigned short *)((byte *)SCR_VEC_PTR(value->u) - 4) += 1;",
     "count": 1,
@@ -7698,5 +7691,439 @@
     "count": 1,
     "classification": "safe",
     "reason": "The duplicate-parts string begins with four 32-bit bone-mask words followed by byte bone-index pairs. Typed int-pointer addition skips its 16-byte pointer-free mask on both ABIs; DObjCalcSkel Mac 1.3 0x7561a and the synthetic duplicate-mask fixture confirm the format."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "text": "void *surface = calloc(1, 128);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Native child surface allocation: CDirect3DSurface.c asserts sizeof(CDirect3DSurfaceImpl) <= 128, so the block holds the LP64 object; it is not an i386 size."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "text": "_Static_assert(__builtin_offsetof(CDirect3DCubeTextureClean, refCount) == 3 * sizeof(void *) + 11 * sizeof(UINT32), \"native texture prefix extent\");",
+    "count": 1,
+    "classification": "safe",
+    "reason": "A compile-time check of the native texture prefix, written in pointer and UINT32 sizes; it guards the layout and reads no memory."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "DeviceDraw_SaveSampler(target, (void *)((void **)g_boundTextures[sampler] + 1));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Skips exactly one pointer slot (the primary vtable) to reach the embedded native texture state, the same typed prefix the texture constructors assert; the step is sizeof(void *), not an i386 constant."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "COpenGLTextureStateNative *info = (void *)((void **)texture + 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Skips exactly one pointer slot (the primary vtable) to reach the embedded native texture state, the same typed prefix the texture constructors assert; the step is sizeof(void *), not an i386 constant."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "code = separator + 2;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Shader-cache text parsing: steps over a one or two character separator and allocates the name plus its terminator; character counts in a NUL-terminated string."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "code = source + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Shader-cache text parsing: steps over a one or two character separator and allocates the name plus its terminator; character counts in a NUL-terminated string."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "name = (char *)malloc(nameLength + 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Shader-cache text parsing: steps over a one or two character separator and allocates the name plus its terminator; character counts in a NUL-terminated string."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "memcpy(raw, matrix, 64);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "A 4x4 float matrix is 64 bytes on every target; source and destination are float[16] storage."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "memcpy(dev->convertedView, matrix, 64);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "A 4x4 float matrix is 64 bytes on every target; source and destination are float[16] storage."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "memcpy(&bits, &dev->convertedView[i], 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Copies one 32-bit float to or from a same-sized bit pattern; 4 is sizeof(float)."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "memcpy(&dev->convertedView[i], &bits, 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Copies one 32-bit float to or from a same-sized bit pattern; 4 is sizeof(float)."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "memcpy(dev->projMatrix, matrix, 64);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "A 4x4 float matrix is 64 bytes on every target; source and destination are float[16] storage."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "memcpy(converted, matrix, 64);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "A 4x4 float matrix is 64 bytes on every target; source and destination are float[16] storage."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "memcpy(stage->matrix, matrix, 64);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "A 4x4 float matrix is 64 bytes on every target; source and destination are float[16] storage."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "memcpy(dev->texMatrix, matrix, 64);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "A 4x4 float matrix is 64 bytes on every target; source and destination are float[16] storage."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "void *backBuffer = calloc(1, 0x80);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Default back-buffer surface: 0x80 is the same 128-byte allowance CDirect3DSurface.c asserts for CDirect3DSurfaceImpl on LP64."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "packet.vtable = (void **)((byte *)imp___ZTV22CVAOPacketProgrammable + 2 * sizeof(void *));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Itanium address point: two pointer slots (offset-to-top and RTTI) past the vtable symbol, written with sizeof(void *)."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "packet.vtable = (void **)((byte *)imp___ZTV23CVAOPacketFixedFunction + 2 * sizeof(void *));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Itanium address point: two pointer slots (offset-to-top and RTTI) past the vtable symbol, written with sizeof(void *)."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "const void *defaultTexture = dev->saveSurface ? (const void *)((void **)dev->saveSurface + 1) : NULL;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Skips exactly one pointer slot (the primary vtable) to reach the embedded native texture state, the same typed prefix the texture constructors assert; the step is sizeof(void *), not an i386 constant."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "text": "void *surface = calloc(1, 128);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Native child surface allocation: CDirect3DSurface.c asserts sizeof(CDirect3DSurfaceImpl) <= 128, so the block holds the LP64 object; it is not an i386 size."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "text": "_Static_assert(__builtin_offsetof(CDirect3DTextureClean, refCount) == 3 * sizeof(void *) + 11 * sizeof(UINT32), \"native texture prefix extent\");",
+    "count": 1,
+    "classification": "safe",
+    "reason": "A compile-time check of the native texture prefix, written in pointer and UINT32 sizes; it guards the layout and reads no memory."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "text": "_Static_assert(__builtin_offsetof(CDirect3DVolumeTextureClean, refCount) == 3 * sizeof(void *) + 11 * sizeof(UINT32), \"native texture prefix extent\");",
+    "count": 1,
+    "classification": "safe",
+    "reason": "A compile-time check of the native texture prefix, written in pointer and UINT32 sizes; it guards the layout and reads no memory."
+  },
+  {
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "text": "array->vtable = (void **)((char *)vtable + 2 * sizeof(void *));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Itanium address point: two pointer slots (offset-to-top and RTTI) past the vtable symbol, written with sizeof(void *)."
+  },
+  {
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "text": "((CBaseVAImpl *)_this)->vtable = (void **)((char *)imp___ZTV7CBaseVA + 2 * sizeof(void *));",
+    "count": 12,
+    "classification": "safe",
+    "reason": "Itanium address point: two pointer slots (offset-to-top and RTTI) past the vtable symbol, written with sizeof(void *)."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "text": "(void **)((char *)imp___ZTV23CVAOPacketFixedFunction + 2 * sizeof(void *));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Itanium address point: two pointer slots (offset-to-top and RTTI) past the vtable symbol, written with sizeof(void *)."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "text": "(void **)((char *)imp___ZTV22CVAOPacketProgrammable + 2 * sizeof(void *));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Itanium address point: two pointer slots (offset-to-top and RTTI) past the vtable symbol, written with sizeof(void *)."
+  },
+  {
+    "file": "src/Mac/DirectX_9/D3DXTex.c",
+    "text": "g_ShadowCookieMemory + (size_t)cookie * 0x00c00000);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Shadow-cookie staging memory: each cookie owns 1024*768*4 = 0xc00000 bytes of RGBA pixels, the size passed to glTexImage2D on the same line; a pixel-buffer stride, not an object offset."
+  },
+  {
+    "file": "src/Mac/Main/mac_main.c",
+    "text": "char *text = (char *)Z_MallocInternal(1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "One byte for an empty NUL-terminated clipboard string that callers free with Z_FreeInternal."
+  },
+  {
+    "file": "src/PC/EffectsCore/FxArchive.c",
+    "text": "memcpy(&entity->rotation, wire + 4, 100);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Saved-effect wire record: a 32-bit material token then 100 bytes of scalars; the function asserts offsetof(endpos) - offsetof(rotation) + sizeof(vec3_t) == 100 for the native FxGfxEntity."
+  },
+  {
+    "file": "src/PC/EffectsCore/FxArchive.c",
+    "text": "memcpy(wire + 4, &entity->rotation, 100);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Saved-effect wire record: a 32-bit material token then 100 bytes of scalars; the function asserts offsetof(endpos) - offsetof(rotation) + sizeof(vec3_t) == 100 for the native FxGfxEntity."
+  },
+  {
+    "file": "src/PC/EffectsCore/FxTemplate.c",
+    "text": "sscanf(GPV_STRING(p), \"%f %f %f %f\", key, key + 1, key + 2, key + 3);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Indexes consecutive floats of a typed float key array for sscanf; element arithmetic on float *."
+  },
+  {
+    "file": "src/PC/EffectsCore/FxTemplate.c",
+    "text": "sscanf(GPV_STRING(p), \"%f %f\", key, key + 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Indexes consecutive floats of a typed float key array for sscanf; element arithmetic on float *."
+  },
+  {
+    "file": "src/PC/botlib/l_precomp.c",
+    "text": "strncat((char *)token, (char *)t, sizeof(token->string) - 1 - len);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Bounded by sizeof(token->string) - 1 - len; the token string is the first member, so the cast addresses the same character array."
+  },
+  {
+    "file": "src/PC/botlib/l_precomp.c",
+    "text": "strncat((char *)token, (const char *)\"\\\"\", sizeof(token->string) - 1 - len);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Bounded by sizeof(token->string) - 1 - len; the token string is the first member, so the cast addresses the same character array."
+  },
+  {
+    "file": "src/PC/cgame_mp/cg_hudelem_mp.c",
+    "text": "current = (hudelem_t *)(ps + 0x1728);",
+    "count": 2,
+    "classification": "safe",
+    "reason": "Byte offsets of playerState_t.hud's two hudelem_t[31] arrays. Checked 2026-11-10 by compiling offsetof with the client's flags: hud.current is 0x7a8, hud.archival is 0x1728, hudelem_t is 128 bytes with no pointers, and the snapshot's ps is at 0xc. The names are swapped against the header on purpose: commit 226a2afb reconciled the collection order with Mac 1.3."
+  },
+  {
+    "file": "src/PC/cgame_mp/cg_hudelem_mp.c",
+    "text": "archival = (hudelem_t *)(ps + 0x7a8);",
+    "count": 2,
+    "classification": "safe",
+    "reason": "Byte offsets of playerState_t.hud's two hudelem_t[31] arrays. Checked 2026-11-10 by compiling offsetof with the client's flags: hud.current is 0x7a8, hud.archival is 0x1728, hudelem_t is 128 bytes with no pointers, and the snapshot's ps is at 0xc. The names are swapped against the header on purpose: commit 226a2afb reconciled the collection order with Mac 1.3."
+  },
+  {
+    "file": "src/PC/client_mp/cl_console_mp.c",
+    "text": "buf = word + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Character arithmetic inside a NUL-terminated text buffer (skipping a fixed prefix or separator); no object layout is involved."
+  },
+  {
+    "file": "src/PC/client_mp/cl_main_pc_mp.c",
+    "text": "if (buffend - buffptr >= 4 && memcmp(buffptr + 1, \"EOT\", 3) == 0)",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Character arithmetic inside a NUL-terminated text buffer (skipping a fixed prefix or separator); no object layout is involved."
+  },
+  {
+    "file": "src/PC/game_mp/g_spawn_mp.c",
+    "text": "ent->s.index.brushmodel = (unsigned short)atoi(value + 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Character arithmetic inside a NUL-terminated text buffer (skipping a fixed prefix or separator); no object layout is involved."
+  },
+  {
+    "file": "src/PC/gfx_d3d/r_material_load_obj.c",
+    "text": "routingStorage.registerCount = *(const unsigned short *)(constEntry + 8);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "D3D shader constant-table record (D3DXSHADER_CONSTANTINFO): RegisterCount is the 16-bit field at byte 8 of the on-disk bytecode format, the same on every target."
+  },
+  {
+    "file": "src/PC/groupvoice/record.c",
+    "text": "memcpy((byte *)audio_buffer + partial * 2,",
+    "count": 1,
+    "classification": "safe",
+    "reason": "16-bit PCM: partial counts samples and each is two bytes; audio_buffer is short[4096]."
+  },
+  {
+    "file": "src/PC/qcommon/common.c",
+    "text": "Sys_ArchiveInfo((int)checksum + 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Integer arithmetic on a checksum value; the cast is to int, not a pointer."
+  },
+  {
+    "file": "src/PC/qcommon/dl_main.c",
+    "text": "authority = schemeEnd + 3;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Character arithmetic inside a NUL-terminated text buffer (skipping a fixed prefix or separator); no object layout is involved."
+  },
+  {
+    "file": "src/PC/qcommon/dvar_cmds.c",
+    "text": "arglen = (int)strlen(arg + 1) + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Character arithmetic inside a NUL-terminated text buffer (skipping a fixed prefix or separator); no object layout is involved."
+  },
+  {
+    "file": "src/PC/qcommon/net_chan_mp.c",
+    "text": "memcpy(string + 4, format, len);",
+    "count": 2,
+    "classification": "safe",
+    "reason": "Out-of-band packet framing: four 0xff bytes then the text, the protocol's wire format in a char buffer."
+  },
+  {
+    "file": "src/PC/qcommon/net_chan_mp.c",
+    "text": "memset(string, 0xff, 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Out-of-band packet framing: four 0xff bytes then the text, the protocol's wire format in a char buffer."
+  },
+  {
+    "file": "src/PC/script/scr_parser.c",
+    "text": "buf = (char *)(Z_MallocInternal((int)filenameLen + len + 2));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Allocation for two strings and their terminators; byte counts of characters."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "consumedReference = !*((const byte *)SCR_VEC_PTR((*top)->u) - 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Script vectors keep a one-byte reference count immediately before the float data; the step is one byte by design of the allocator on every target."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "if ((*top - 1)->type == VAR_POINTER && scrVmPub.function_count <= 30)",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Typed VariableValue stack arithmetic: one element below the top."
+  },
+  {
+    "file": "src/PC/server_mp/sv_main_mp.c",
+    "text": "if (strcmp(cmd + 1, entry->cmd + 1) == 0) {",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Character arithmetic inside a NUL-terminated text buffer (skipping a fixed prefix or separator); no object layout is involved."
+  },
+  {
+    "file": "src/PC/server_mp/sv_main_mp.c",
+    "text": "a = cmd + 2;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Character arithmetic inside a NUL-terminated text buffer (skipping a fixed prefix or separator); no object layout is involved."
+  },
+  {
+    "file": "src/PC/server_mp/sv_main_mp.c",
+    "text": "b = entry->cmd + 2;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Character arithmetic inside a NUL-terminated text buffer (skipping a fixed prefix or separator); no object layout is involved."
+  },
+  {
+    "file": "src/PC/stringed/stringed_ingame.c",
+    "text": "scan = comment + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Character arithmetic inside a NUL-terminated text buffer (skipping a fixed prefix or separator); no object layout is involved."
+  },
+  {
+    "file": "src/PC/stringed/stringed_ingame.c",
+    "text": "base = p + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Character arithmetic inside a NUL-terminated text buffer (skipping a fixed prefix or separator); no object layout is involved."
+  },
+  {
+    "file": "src/PC/stringed/stringed_ingame.c",
+    "text": "language = line + 5;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Character arithmetic inside a NUL-terminated text buffer (skipping a fixed prefix or separator); no object layout is involved."
+  },
+  {
+    "file": "src/PC/stringed/stringed_ingame.c",
+    "text": "removed = ((Cod2MacStringRep *)files->data - 1)->length;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Typed step back by one string-rep header from the character data, the old GCC string layout the port models with Cod2MacStringRep; sizeof comes from the type."
+  },
+  {
+    "file": "src/PC/ui_mp/ui_shared_mp.c",
+    "text": "float endX = r->x + r->w - 16.0f;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Floating-point screen geometry (a 16-unit scroll bar), not a pointer or offset."
+  },
+  {
+    "file": "src/PC/ui_mp/ui_shared_mp.c",
+    "text": "float barX = r->x + r->w - 16.0f;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Floating-point screen geometry (a 16-unit scroll bar), not a pointer or offset."
+  },
+  {
+    "file": "src/PC/win32/cinematics.c",
+    "text": "memcpy(&value, src + word * 8, 8);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "RoQ row copy in 8-byte words, as the original does with doubles; byte arithmetic on pixel buffers."
+  },
+  {
+    "file": "src/PC/win32/cinematics.c",
+    "text": "memcpy(dst + word * 8, &value, 8);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "RoQ row copy in 8-byte words, as the original does with doubles; byte arithmetic on pixel buffers."
+  },
+  {
+    "file": "src/PC/win32/cinematics.c",
+    "text": "framedata = nextHeader + 8;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "RoQ chunk header is 8 bytes in the file format."
+  },
+  {
+    "file": "src/platform/macos_record.c",
+    "text": "memcpy(source, \"Mac\", 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Writes the 4-byte string \"Mac\" (with terminator) into the engine's 256-byte old_rec_source buffer, as the Mac game does."
   }
 ]
