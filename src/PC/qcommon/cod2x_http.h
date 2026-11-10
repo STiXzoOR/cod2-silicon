@@ -71,6 +71,17 @@ void Cod2x_Iso8601(long long msec, char *out, size_t size);
 int Cod2x_HttpDownload(const char *url, const char *path, const char *magic, Cod2xHttpProgress *progress,
                        char *error, size_t errorSize);
 
+/* A raw connection to an http:// or https:// address (TLS checked as above),
+   for protocols of their own such as WebSocket. Blocking; for worker threads.
+   Open gives NULL and an error text on failure. Send sends all or returns 0.
+   Recv returns the bytes read, 0 when none came within waitMs, -1 when the
+   other side closed and -2 on an error. */
+typedef struct Cod2xSocket Cod2xSocket;
+Cod2xSocket *Cod2x_SocketOpen(const char *url, int timeoutMs, char *error, size_t errorSize);
+int Cod2x_SocketSend(Cod2xSocket *connection, const void *data, size_t length, int timeoutMs);
+int Cod2x_SocketRecv(Cod2xSocket *connection, void *buffer, size_t size, int waitMs);
+void Cod2x_SocketClose(Cod2xSocket *connection);
+
 /* SHA-256 of a file as lowercase hex; 0 when it can't be read. */
 int Cod2x_Sha256File(const char *path, char hex[65]);
 
