@@ -2721,11 +2721,9 @@ void Com_Init_Try_Block_Function(char *commandLine)
         }
     }
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    com_maxfps = Dvar_RegisterInt("com_maxfps", 250, 0, 1000, 0x1001);
-    Dvar_RegisterBool("com_writeConfig", 1, 0x1);
-#else
     com_maxfps = Dvar_RegisterInt("com_maxfps", 85, 0, 1000, 0x1001);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Dvar_RegisterBool("com_writeConfig", 1, 0x1);
 #endif
     com_developer = Dvar_RegisterInt("developer", 0, 0, 2, 0x1000);
     com_developer_script = Dvar_RegisterBool("developer_script", 0, 0x1000);
