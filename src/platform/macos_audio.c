@@ -13,7 +13,13 @@
 #include <string.h>
 #include <unistd.h>
 
-#define AUDIO_RATE 48000
+/* The game mixes at 44.1 kHz (snd_khz 44), and so does this mixer: a sound
+ * played at its own rate then reaches the output sample for sample, as in the
+ * original. The output unit converts to the device's rate. Mixing at 48 kHz
+ * put every sound through the linear resampler, which dulls the treble. */
+#define AUDIO_RATE 44100
+/* Reverb delays are times; these turn 48 kHz frame counts into frames here. */
+#define REVERB_DELAY(frames48k) ((int)((frames48k) * (AUDIO_RATE / 48000.0) + 0.5))
 #define AUDIO_SAMPLES 256
 #define AUDIO_MAX_BYTES (256u * 1024u * 1024u)
 #define AUDIO_DRIVER ((void *)(uintptr_t)1)
@@ -52,7 +58,7 @@ static float listener[3], rolloff = 1.0f, distance_factor = 1.0f;
 static float master_dry = 1.0f, master_wet = 0.0f;
 static float reverb[REVERB_FRAMES * 2];
 static size_t reverb_cursor;
-static int reverb_delay = 4093;
+static int reverb_delay = REVERB_DELAY(4093);
 static char last_error[256];
 static MacAudioOpenCallback file_open;
 static MacAudioCloseCallback file_close;
@@ -747,7 +753,7 @@ void AIL_set_digital_master_room_type(void *driver, int room)
 {
     (void)driver;
     pthread_mutex_lock(&audio_mutex);
-    reverb_delay = 2401 + (int)((unsigned int)room % 16) * 337;
+    reverb_delay = REVERB_DELAY(2401 + (int)((unsigned int)room % 16) * 337);
     pthread_mutex_unlock(&audio_mutex);
 }
 

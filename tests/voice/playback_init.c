@@ -21,11 +21,14 @@ extern int Decode_Sample(char *packet, int length, short *output, int frameSize)
 extern int g_voice_initialized, g_frame_size, g_speex_initialized;
 void *g_decoder;
 int g_decode_frame_size;
-extern char g_recording_initialized, g_currently_recording;
+/* The recorder is a fixture boundary: the engine's capture unit opens a real
+ * device, so its state and entry points are stood in for here. */
+char g_recording_initialized, g_currently_recording;
 extern float voice_current_voicelevel;
 extern const dvar_t *winvoice_mic_reclevel;
 extern int AudioOutput_Render(float *pcm, unsigned int frames, int *silent);
-extern int Native_Record_Init(int initialize, const void *handle);
+static int Native_Record_Init(int initialize, const void *handle) { (void)initialize; (void)handle; return 0; }
+int Record_DestroySample(recordingSample_t *sample) { (void)sample; return 1; }
 
 int g_encoder_samplerate = 8192, g_encoder_quality = 1;
 void *imp_speex_nb_mode, *imp_speex_wb_mode, *imp_speex_uwb_mode;
