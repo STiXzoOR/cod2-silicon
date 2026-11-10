@@ -251,6 +251,26 @@ import Foundation
         require(try Data(contentsOf: activeFile) == active)
         print("PASS: new loadouts from a copy or defaults never change the active loadout")
 
+        // Settings › Game version: with Original 1.3 the loadouts are read, checked and edited as the original game does.
+        model.checkup.load()
+        require(model.checkup.rulesetIDs == ["public-cod2x"])
+        let codxSpecs = model.specs.count, viewed = try require(session.current)
+        let codxOnly = try require(catalog.settings.first { $0.variant(for: .cod2x) != nil && $0.variant(for: .stock) == nil && model.spec(named: $0.name) != nil })
+        try session.setDialect(.stock); model.setDialect(.stock)
+        require(session.configDialect == .stock && session.current?.document.dialect == .stock && session.current?.data == viewed.data,
+                "loadouts are read again in the original game's language, bytes unchanged")
+        require(model.mode == .stock && model.spec(named: codxOnly.name) == nil && model.specs.allSatisfy { $0.setting.variant(for: .stock) != nil },
+                "only settings the original game has")
+        require(!model.checkup.rulesetIDs.contains("public-cod2x") && model.checkup.rulesetIDs.allSatisfy { id in model.checkup.available.contains { $0.id == id } },
+                "Check-up judges with rules for the original game")
+        let pending = bytes("seta sensitivity \"3\"\n")
+        session.setDraft(ConfigDocument(data: pending, dialect: .stock))
+        try session.setDialect(.cod2x); model.setDialect(.cod2x)
+        require(session.draft?.dialect == .cod2x && session.draft?.serialized() == pending, "an unsaved draft keeps its bytes")
+        try session.discardDraft()
+        require(model.mode == .cod2x && model.specs.count == codxSpecs && model.checkup.rulesetIDs == ["public-cod2x"])
+        print("PASS: the game version switches loadouts, settings and Check-up rules between CoD2x and Original 1.3")
+
         let resources = URL(fileURLWithPath: CommandLine.arguments[1]).deletingLastPathComponent()
         try ConfigStudioTabsTests.run(scratch: scratch, catalog: catalog, resources: resources)
         try ConfigStudioAcceptanceTests.run(scratch: scratch, catalog: catalog, resources: resources)

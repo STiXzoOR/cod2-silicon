@@ -63,6 +63,16 @@ than spawning another engine. Normal Quit waits until the game closes. A game cr
 leaves the launcher running and exposes any native crash report in the app home.
 Only a single launcher window exists; Deploy is guarded against duplicate children.
 
+The game app carries two engines built from the same sources: `cod2_macos` with CoD2x and
+`cod2_macos_stock`, the original 1.3 (CoD2x is compiled in, so it can't be switched at run
+time). Settings › Game › Version chooses which one starts; CoD2x is the default and the choice
+is saved in `launcher-settings.json`. Config Studio's dialect and settings, Check-up's rules and
+the server ready check follow it. The original engine has no Apple-event link handler, so a cold
+join passes `+connect <address>` on its command line instead. It can't take a server password
+that way, so for passworded servers and CoD2x servers the launcher asks to turn CoD2x on and
+join; joining another server while an original game runs asks the player to quit it first. A
+bundle without `cod2_macos_stock` (the CMake `cod2_macos_app` target) disables the choice.
+
 Fast path:
 
 ```sh

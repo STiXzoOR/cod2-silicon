@@ -20,6 +20,11 @@ enum ServerFilter: String, CaseIterable, Identifiable { case all = "All", stock 
 enum ServerSort: String { case ping, players, name }
 enum LibraryTab: String, CaseIterable, Identifiable { case demos = "Demos", screenshots = "Screenshots"; var id: String { rawValue } }
 
+extension GameEngine {
+    var dialect: ConfigDialect { self == .cod2x ? .cod2x : .stock }
+    var catalogMode: ConfigCatalogMode { self == .cod2x ? .cod2x : .stock }
+}
+
 struct MediaEntry: Identifiable {
     var url: URL
     var facts: MediaFacts
@@ -42,8 +47,13 @@ struct MediaEntry: Identifiable {
             if settings.matchSummariesEnabled != oldValue.matchSummariesEnabled {
                 studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
             }
+            if settings.engine != oldValue.engine { followEngine() }
         }
     }
+    /// A join that needs CoD2x while Original 1.3 is chosen; Root asks before switching.
+    @Published var engineRequest: EngineRequest?
+    /// The engines this app carries. Without the original one, Settings explains and CoD2x plays.
+    private(set) var installedEngines: Set<GameEngine>
     /// True right after Save, until the next change.
     @Published var settingsSaved = false
     @Published var library = LauncherLibrary()
@@ -93,6 +103,10 @@ struct MediaEntry: Identifiable {
     let discover: ConfigDiscoverModel
     private var savedSettings = GameSettings()
     private var engine: Process?
+    private var launchedEngine = GameEngine.cod2x
+    /// Servers asked for their version before Original 1.3 joins them: answered (or not), and in flight.
+    private var checkedAddresses: Set<String> = []
+    private var lookingUp: Set<String> = []
     private var attachedGames: [pid_t: NSRunningApplication] = [:]
     private var attachmentTask: Task<Void, Never>?
     private var connectionTask: Task<Void, Never>?
@@ -100,6 +114,16 @@ struct MediaEntry: Identifiable {
     private var gameStartedAt = Date()
     private var lastExitCode: Int32?
     private var gameBundle: URL { Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app") }
+    /// Either engine of this app, as running processes report their executables.
+    private var gameExecutables: Set<URL> { Set(GameEngine.allCases.map { $0.executable(in: gameBundle).resolvingSymlinksInPath() }) }
+    /// The engine the next game starts with: the one chosen in Settings, when this app carries it.
+    var chosenEngine: GameEngine { installedEngines.contains(settings.engine) ? settings.engine : .cod2x }
+    var originalAvailable: Bool { installedEngines.contains(.original) }
+    /// The running game's engine, which decides whether it can take a server link.
+    private var runningEngine: GameEngine? {
+        if let engine, engine.isRunning { return launchedEngine }
+        return attachedGames.values.first { !$0.isTerminated }.flatMap { GameEngine(executable: $0.executableURL?.resolvingSymlinksInPath()) }
+    }
     private var activeGamePID: pid_t? {
         if let engine, engine.isRunning { return engine.processIdentifier }
         if let app = attachedGames.values.filter({ !$0.isTerminated }).sorted(by: { $0.processIdentifier < $1.processIdentifier }).first { return app.processIdentifier }
@@ -121,7 +145,9 @@ struct MediaEntry: Identifiable {
         home = URL(fileURLWithPath: snapshot ? "/Preview/CoD2 Silicon" : LauncherHome())
         artwork = MapArtworkStore(home: home)
         preferences = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".cod2/preferences")
-        let expected = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app/Contents/MacOS/cod2_macos").resolvingSymlinksInPath()
+        let gameApp = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app")
+        installedEngines = snapshot ? Set(GameEngine.allCases) : GameEngine.installed(in: gameApp)
+        let expected = Set(GameEngine.allCases.map { $0.executable(in: gameApp).resolvingSymlinksInPath() })
         let identifier = (Bundle.main.bundleIdentifier ?? "") + ".game"
         var sessionError: String?
         if snapshot { configStudio = nil }
@@ -129,7 +155,7 @@ struct MediaEntry: Identifiable {
             do {
                 configStudio = try ConfigStudioSession(home: home, dialect: .cod2x, discoverGames: {
                     Set(NSRunningApplication.runningApplications(withBundleIdentifier: identifier).filter {
-                        !$0.isTerminated && $0.executableURL?.resolvingSymlinksInPath() == expected
+                        !$0.isTerminated && $0.executableURL.map { expected.contains($0.resolvingSymlinksInPath()) } == true
                     }.map(\.processIdentifier))
                 })
             } catch { configStudio = nil; sessionError = error.localizedDescription }
@@ -144,6 +170,7 @@ struct MediaEntry: Identifiable {
         LauncherMigrate()
         if let data = try? Data(contentsOf: home.appendingPathComponent("launcher-settings.json")), let value = try? JSONDecoder().decode(GameSettings.self, from: data) { settings = value }
         savedSettings = settings
+        followEngine()
         studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
         if let data = try? Data(contentsOf: home.appendingPathComponent("launcher-library.json")), let value = try? JSONDecoder().decode(LauncherLibrary.self, from: data) { library = value; servers = value.cache }
         dataPath = LauncherFindData(nil) ?? ""
@@ -343,6 +370,57 @@ struct MediaEntry: Identifiable {
             studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
         } catch { notice = error.localizedDescription }
     }
+    /// Config Studio reads, checks and edits loadouts in the language of the engine the next game starts with.
+    private func followEngine() {
+        let dialect = chosenEngine.dialect
+        do {
+            try configStudio?.setDialect(dialect)
+            if let attached = studio.session, attached !== configStudio { try attached.setDialect(dialect) }
+        } catch { notice = error.localizedDescription }
+        studio.setDialect(dialect)
+    }
+    /// The answer to `engineRequest`: CoD2x is saved as the engine (other unsaved changes stay unsaved),
+    /// then the join goes ahead.
+    func turnOnCoD2x(andJoin request: EngineRequest) {
+        engineRequest = nil
+        savedSettings.engine = .cod2x
+        settings.engine = .cod2x
+        if !snapshot {
+            do { try PrivateFile.write(JSONEncoder().encode(savedSettings), to: home.appendingPathComponent("launcher-settings.json")) }
+            catch { notice = error.localizedDescription }
+        }
+        do { try serverConnection.select(address: request.link.address) } catch { notice = error.localizedDescription; return }
+        pendingLink = request.link
+        play()
+    }
+    /// Original 1.3 joins only stock 1.3 servers and can't take a password. Anything else asks to turn
+    /// CoD2x on; a server not seen yet is asked for its version first, once.
+    private func admit(_ link: LaunchLink) -> Bool {
+        let address = (try? LaunchLink.canonicalAddress(link.address)) ?? link.address
+        switch chosenEngine.check(link, server: knownServer(address), lookedUp: checkedAddresses.contains(address)) {
+        case .go: return true
+        case .needsCoD2x(let reason):
+            pendingLink = nil; fastPlay = false
+            engineRequest = EngineRequest(link: link, reason: reason)
+        case .lookUp:
+            guard lookingUp.insert(address).inserted else { break }
+            Task {
+                if let server = await ServerQueries.server(address) { remember(server) }
+                lookingUp.remove(address); checkedAddresses.insert(address)
+                if pendingLink?.url == link.url, !gameRunning { play() }
+            }
+        }
+        return false
+    }
+    private func knownServer(_ address: String) -> GameServer? {
+        func same(_ server: GameServer) -> Bool { (try? LaunchLink.canonicalAddress(server.address)) == address }
+        return servers.first(where: same) ?? library.cache.first(where: same)
+    }
+    private func remember(_ server: GameServer) {
+        let normalized = try? LaunchLink.canonicalAddress(server.address)
+        if let index = servers.firstIndex(where: { (try? LaunchLink.canonicalAddress($0.address)) == normalized }) { servers[index] = server }
+        else { servers.append(server) }
+    }
     func saveLibrary() {
         guard !snapshot else { return }
         do { try PrivateFile.write(JSONEncoder().encode(library), to: home.appendingPathComponent("launcher-library.json")) }
@@ -401,7 +479,7 @@ struct MediaEntry: Identifiable {
         let server = servers.first { (try? LaunchLink.canonicalAddress($0.address)) == normalized }
         let chosenID = serverConnection.address == normalized ? serverConnection.profileID : nil
         guard let profile = try chosenID.map(configStudio.readProfile) ?? configStudio.readActive() else { return nil }
-        return readyChecker.evaluate(server: server, profile: profile, mode: .cod2x,
+        return readyChecker.evaluate(server: server, profile: profile, mode: chosenEngine.catalogMode,
             advancedChain: try configStudio.readAdvancedChain(profileID: profile.profile.id))
     }
     func fixForServerOnly(_ address: String) throws {
@@ -452,6 +530,7 @@ struct MediaEntry: Identifiable {
                 // Startup overrides cannot be applied to an already running
                 // game through the read-only launch API.
                 serverConnection.clear()
+                guard runningEngine?.acceptsLinks != false else { notice = GameEngine.switchUnsupported; return }
                 scheduleLink(link, pid: pid)
             } else {
                 // A cold link can arrive before launch finishes; boot() starts the game then, so the
@@ -484,9 +563,9 @@ struct MediaEntry: Identifiable {
     // MARK: Game lifecycle
     private func attachExistingGame() -> Bool {
         guard !snapshot, !gameRunning, let identifier = Bundle.main.bundleIdentifier else { return false }
-        let expected = gameBundle.appendingPathComponent("Contents/MacOS/cod2_macos").resolvingSymlinksInPath()
+        let expected = gameExecutables
         let apps = NSRunningApplication.runningApplications(withBundleIdentifier: identifier + ".game").filter {
-            !$0.isTerminated && $0.executableURL?.resolvingSymlinksInPath() == expected
+            !$0.isTerminated && $0.executableURL.map { expected.contains($0.resolvingSymlinksInPath()) } == true
         }
         guard let app = apps.first else { return false }
         attachedGames = Dictionary(uniqueKeysWithValues: apps.map { ($0.processIdentifier, $0) })
@@ -511,10 +590,10 @@ struct MediaEntry: Identifiable {
     }
     private func synchronizeGames() {
         if let engine, !engine.isRunning { lastExitCode = engine.terminationStatus; self.engine = nil }
-        let expected = gameBundle.appendingPathComponent("Contents/MacOS/cod2_macos").resolvingSymlinksInPath()
+        let expected = gameExecutables
         let identifier = (Bundle.main.bundleIdentifier ?? "") + ".game"
         let apps = NSRunningApplication.runningApplications(withBundleIdentifier: identifier).filter {
-            !$0.isTerminated && $0.executableURL?.resolvingSymlinksInPath() == expected
+            !$0.isTerminated && $0.executableURL.map { expected.contains($0.resolvingSymlinksInPath()) } == true
         }
         attachedGames = Dictionary(uniqueKeysWithValues: apps.map { ($0.processIdentifier, $0) })
         var pids = Set(attachedGames.keys)
@@ -533,10 +612,11 @@ struct MediaEntry: Identifiable {
             return
         }
         if onboard { return }
+        if demo == nil, let link = pendingLink, !admit(link) { return }
         do {
             try rememberData()
-            let bundle = gameBundle
-            let executable = bundle.appendingPathComponent("Contents/MacOS/cod2_macos")
+            let gameEngine = chosenEngine
+            let executable = gameEngine.executable(in: gameBundle)
             guard FileManager.default.isExecutableFile(atPath: executable.path) else { throw LauncherError(message: "The game helper is missing. Rebuild or reinstall this app.") }
             var connectionLaunch: ConfigConnectionLaunch?
             var connectionProfileID: String?
@@ -562,6 +642,7 @@ struct MediaEntry: Identifiable {
             let loadout = ConfigDocument.launchLoadout(home: home, profileID: configLaunch?.profileID)
             let plan = try GameLaunchPlan(settings: settings, dataPath: dataPath, homePath: home.path, link: pendingLink,
                 demo: demo?.deletingPathExtension().lastPathComponent, forwarded: forwardedArguments, configStudio: configLaunch, connection: connectionLaunch,
+                engine: gameEngine,
                 loadout: { loadout?.effectiveSetting(named: $0) })
             let process = Process(); process.executableURL = executable; process.arguments = plan.arguments
             process.currentDirectoryURL = home
@@ -583,13 +664,14 @@ struct MediaEntry: Identifiable {
                 }
             }
             try PrivateFile.write(Data(try settings.launchConfig(migrated: configLaunch != nil).utf8), to: home.appendingPathComponent("main/launcher.cfg"))
-            try process.run(); engine = process; gameRunning = true; gameStartedAt = Date(); crashReport = nil; notice = ""
+            try process.run(); engine = process; launchedEngine = gameEngine; gameRunning = true; gameStartedAt = Date(); crashReport = nil; notice = ""
             configStudio?.gameLaunched(pid: process.processIdentifier)
             if let error = configStudio?.migrationError ?? configStudio?.error { notice = error }
             startGameMonitor()
             // --play and cold links launch once: a later setup completion must not start a second game.
             pendingLink = nil; fastPlay = false; serverConnection.clear()
             if let link = plan.link { scheduleLink(link, pid: process.processIdentifier) }
+            else if let address = plan.connectsAtStartup { library.joined(address); saveLibrary() }
             cancelRefresh()
             handOff(to: process.processIdentifier)
             print("CoD2 Silicon: game started (pid \(process.processIdentifier)).")
@@ -754,6 +836,8 @@ struct MediaEntry: Identifiable {
         case "servers": page = .servers
         case "servers-empty": page = .servers; search = "zzz"
         case "settings": page = .settings
+        case "settings-original": page = .settings; settings.engine = .original; savedSettings = settings
+        case "settings-original-missing": page = .settings; installedEngines = [.cod2x]
         case "library-demos": page = .library
         case "library-screenshots": page = .library; libraryTab = .screenshots
             media = ["toujane-dusk.jpg", "carentan-rooftops.jpg", "leningrad-snow.jpg"].enumerated().map { index, name in

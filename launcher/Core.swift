@@ -168,12 +168,36 @@ struct ConfigConnectionLaunch: Equatable, Sendable {
     }
 }
 
+/// Which engine a game starts with. CoD2x is compiled into the engine, so the app carries two:
+/// `cod2_macos` with CoD2x and `cod2_macos_stock`, the original 1.3 from the same sources.
+enum GameEngine: String, Codable, Sendable, CaseIterable {
+    case cod2x, original
+    var executableName: String { self == .cod2x ? "cod2_macos" : "cod2_macos_stock" }
+    /// Only the CoD2x engine handles server links sent while it runs (the Apple-event link handler is
+    /// part of its CoD2x layer). The original engine is told its server on the command line instead.
+    var acceptsLinks: Bool { self == .cod2x }
+    init?(executable: URL?) {
+        guard let name = executable?.lastPathComponent, let engine = Self.allCases.first(where: { $0.executableName == name }) else { return nil }
+        self = engine
+    }
+    /// The engines a game app carries, by their executables.
+    static func installed(in gameBundle: URL) -> Set<GameEngine> {
+        Set(allCases.filter { FileManager.default.isExecutableFile(atPath: $0.executable(in: gameBundle).path) })
+    }
+    func executable(in gameBundle: URL) -> URL { gameBundle.appendingPathComponent("Contents/MacOS/" + executableName) }
+    /// Whether this engine can play on the server: CoD2x joins both kinds, the original only stock 1.3.
+    func canJoin(_ server: GameServer) -> Bool { self == .cod2x || !ServerFacts(server).isCoD2x }
+}
+
 struct GameLaunchPlan {
     var arguments: [String]
+    /// The link the launcher delivers once the game is up; nil when the engine takes it on the command line.
     var link: LaunchLink?
+    /// The server the original engine connects to as it starts.
+    var connectsAtStartup: String?
     /// loadout: the value the game's profile config gives a dvar; with it, what that config leaves
     /// unset is supplied from GameSettings.loadoutDefaults.
-    init(settings: GameSettings, dataPath: String, homePath: String, link: LaunchLink? = nil, demo: String? = nil, forwarded: [String] = [], configStudio: ConfigStudioLaunch? = nil, connection: ConfigConnectionLaunch? = nil,
+    init(settings: GameSettings, dataPath: String, homePath: String, link: LaunchLink? = nil, demo: String? = nil, forwarded: [String] = [], configStudio: ConfigStudioLaunch? = nil, connection: ConfigConnectionLaunch? = nil, engine: GameEngine = .cod2x,
          loadout: ((String) -> String?)? = nil) throws {
         guard GameSettings.safeValue(dataPath), GameSettings.safeValue(homePath) else { throw LauncherError(message: "Game paths contain unsupported characters.") }
         var args = try settings.launchDvars(migrated: configStudio != nil).flatMap { ["+set", $0.0, "\"\($0.1)\""] }
@@ -202,9 +226,16 @@ struct GameLaunchPlan {
         if connection?.values.isEmpty == false && configStudio?.connectionIsolated != true {
             throw LauncherError(message: "Temporary server settings require an isolated connection write owner.")
         }
-        arguments = try EngineCommandLine.validate(args + forwarded + (try connection?.arguments(for: link) ?? []))
+        var connect: [String] = []
+        if !engine.acceptsLinks, demo == nil, let link {
+            // Passwords never go into process arguments, and this engine has no other way to take one.
+            guard link.password.isEmpty else { throw LauncherError(message: GameEngine.passwordUnsupported) }
+            connect = ["+connect", link.address]
+            connectsAtStartup = link.address
+        }
+        arguments = try EngineCommandLine.validate(args + forwarded + (try connection?.arguments(for: link) ?? []) + connect)
         // Links are delivered as Apple events after startup, never serialized into argv.
-        self.link = link
+        self.link = engine.acceptsLinks ? link : nil
     }
 }
 
@@ -249,6 +280,35 @@ enum KeyStore {
     }
 }
 
+extension GameEngine {
+    enum JoinCheck: Equatable { case go, needsCoD2x(EngineRequest.Reason), lookUp }
+    /// Before a game starts on a server. Original 1.3 joins only stock 1.3 servers and can't take a
+    /// password; a server not seen yet is looked up once, and if it doesn't answer the game tries
+    /// (and reports a version mismatch itself).
+    func check(_ link: LaunchLink, server: GameServer?, lookedUp: Bool) -> JoinCheck {
+        guard self == .original else { return .go }
+        if !link.password.isEmpty { return .needsCoD2x(.password) }
+        if let server { return canJoin(server) ? .go : .needsCoD2x(.cod2xServer) }
+        return lookedUp ? .go : .lookUp
+    }
+    static let passwordUnsupported = "Original 1.3 can’t join a server with a password from CoD2 Silicon. Turn on CoD2x in Settings to join it."
+    static let switchUnsupported = "Original 1.3 can’t switch servers while it’s running. Quit the game, then join again."
+}
+
+/// A join Original 1.3 can't make; the launcher asks whether to turn CoD2x on and join.
+struct EngineRequest: Identifiable, Sendable {
+    enum Reason: Equatable, Sendable { case cod2xServer, password }
+    let link: LaunchLink
+    let reason: Reason
+    var id: String { link.address }
+    var title: String { reason == .cod2xServer ? "This server needs CoD2x" : "Joining with a password needs CoD2x" }
+    var message: String {
+        (reason == .cod2xServer ? "This server runs CoD2x 1.4. Original 1.3 can only join Stock 1.3 servers."
+                                : "Original 1.3 can’t take a server password from CoD2 Silicon.")
+            + " CoD2x stays on for later games; you can change this in Settings."
+    }
+}
+
 struct GameSettings: Codable, Sendable, Equatable {
     static let machineDvarNames: Set<String> = ["r_mode", "r_fullscreen", "r_borderless", "r_swapinterval", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "com_introplayed", "logfile", "developer", "fs_basepath", "fs_homepath", "fs_game", "fs_cdpath", "fs_copyfiles", "fs_restrict", "loc_language", "dedicated", "com_hunkmegs", "net_port", "cl_matchsummaries"]
     var resolution = "1920x1080"
@@ -263,6 +323,8 @@ struct GameSettings: Codable, Sendable, Equatable {
     var anisotropy = 8
     var advanced = ""
     var matchSummariesEnabled = true
+    /// CoD2x unless the player chose the original 1.3 in Settings.
+    var engine = GameEngine.cod2x
     static let resolutions = ["1280x720", "1920x1080", "2560x1440", "3008x1692", "3840x2160", "5120x2880", "6016x3384"]
     static let anisotropyLevels = [2, 4, 8, 16]
     var cm360: Double? { MouseMath.centimetresPer360(dpi: dpi, sensitivity: sensitivity) }
@@ -282,6 +344,8 @@ struct GameSettings: Codable, Sendable, Equatable {
         anisotropy = try c.decodeIfPresent(Int.self, forKey: .anisotropy) ?? d.anisotropy
         advanced = try c.decodeIfPresent(String.self, forKey: .advanced) ?? d.advanced
         matchSummariesEnabled = try c.decodeIfPresent(Bool.self, forKey: .matchSummariesEnabled) ?? d.matchSummariesEnabled
+        // An engine this version doesn't know (from a newer launcher) falls back without losing the rest.
+        engine = (try? c.decodeIfPresent(GameEngine.self, forKey: .engine)) ?? d.engine
     }
     /// One advanced line as (name, value): `dvar value` as typed in the console, or `dvar=value`.
     static func advancedPair(_ line: String) -> (String, String)? {

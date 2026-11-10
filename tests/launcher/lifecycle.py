@@ -4,10 +4,11 @@ import base64, json, os, pathlib, re, subprocess, time
 root = pathlib.Path(__file__).resolve().parents[2]
 out = pathlib.Path(os.environ.get('COD2_LAUNCHER_TEST_OUTPUT', str(root/'output/ws25'))) / 'lifecycle.noindex';out.mkdir(parents=True, exist_ok=True)
 fixture = out/'fixture'
-subprocess.run(['taskpolicy','-b','nice','-n','19','clang','-fobjc-arc','-mmacosx-version-min=26.0','-DCOD2_X64=1','-DCOD2_CODX=1',str(root/'tests/launcher/lifecycle.m'),str(root/'src/PC/qcommon/cod2x_url.c'),'-framework','AppKit','-o',str(fixture)],check=True)
+for variant, flags in [(fixture, []), (out/'fixture-stock', ['-DLIFECYCLE_STOCK'])]:
+    subprocess.run(['taskpolicy','-b','nice','-n','19','clang','-fobjc-arc','-mmacosx-version-min=26.0','-DCOD2_X64=1','-DCOD2_CODX=1',*flags,str(root/'tests/launcher/lifecycle.m'),str(root/'src/PC/qcommon/cod2x_url.c'),'-framework','AppKit','-o',str(variant)],check=True)
 app = out/'Lifecycle.app'
 subprocess.run([str(root/'scripts/build-launcher.sh'), str(out/'launcher')], check=True)
-subprocess.run(['python3',str(root/'tools/cod2x/make_macos_app.py'),str(fixture),str(app),'--replace','--bundle-id','io.github.stixzoor.cod2silicon.ws25fixture','--launcher',str(out/'launcher/CoD2Launcher')],check=True)
+subprocess.run(['python3',str(root/'tools/cod2x/make_macos_app.py'),str(fixture),str(app),'--replace','--bundle-id','io.github.stixzoor.cod2silicon.ws25fixture','--launcher',str(out/'launcher/CoD2Launcher'),'--stock-engine',str(out/'fixture-stock')],check=True)
 home = out/'home';home.mkdir(exist_ok=True)
 game = home/'Games/CoD2/main';game.mkdir(parents=True,exist_ok=True)
 for i in range(16):(game/f'iw_{i:02}.iwd').touch()
@@ -66,6 +67,29 @@ with log.open('w') as stream:
         assert b'seta sensitivity "5.0"' in base64.b64decode(sessions[0]['beforeData'])
         assert b'seta sensitivity "6"' in base64.b64decode(sessions[0]['data'])
         assert not (apphome/'main/players/.studio-game-session.json').exists()
+        # Settings › Game version: Original 1.3 starts its own engine, which takes its server on the
+        # command line (it has no link handler), is found again after a launcher force-quit and is
+        # never sent a link while it runs. The unknown server is asked for its version first (no answer).
+        launcher.terminate(); launcher.wait(timeout=5)
+        settings = json.loads((apphome/'launcher-settings.json').read_text()); settings['engine'] = 'original'
+        (apphome/'launcher-settings.json').write_text(json.dumps(settings))
+        (apphome/'fixture-arguments.json').unlink(); exitfile.unlink()
+        launcher = subprocess.Popen([str(app/'Contents/MacOS/CoD2Launcher'), 'cod2x://connect/localhost:28964'], stdout=stream, stderr=stream, env=env, cwd=out)
+        wait(lambda: log.read_text(errors='replace').count('fixture ready') == 2 and (apphome/'fixture-arguments.json').is_file())
+        stock = int(re.findall(r'fixture ready (\d+)', log.read_text())[-1])
+        assert subprocess.check_output(['ps', '-o', 'comm=', '-p', str(stock)], text=True).strip().endswith('/MacOS/cod2_macos_stock')
+        assert json.loads((apphome/'fixture-arguments.json').read_text())[-2:] == ['+connect', 'localhost:28964']
+        launcher.kill(); launcher.wait(timeout=5)
+        launcher = subprocess.Popen([str(app/'Contents/MacOS/CoD2Launcher'), '--play'], stdout=stream, stderr=stream, env=env, cwd=out)
+        wait(lambda: log.read_text(errors='replace').count('reconnected to existing game') == 2)
+        subprocess.run([str(fixture), 'event', str(launcher.pid), 'cod2x://connect/localhost:28965'], check=True)
+        time.sleep(1.5)
+        text = log.read_text(errors='replace')
+        assert 'fixture link localhost:28964' not in text and 'fixture link localhost:28965' not in text and text.count('fixture ready') == 2
+        exitfile.touch()
+        wait(lambda: log.read_text(errors='replace').count('returned to launcher') == 2)
+        assert launcher.poll() is None
+        print('PASS: Original 1.3 starts cod2_macos_stock with +connect, is reattached after a force-quit and is never sent a link')
         print('PASS: launcher→nested child, Dock handoff, two live cod2x Apple events, no duplicate engine, launcher force-quit/reconnect, game crash→live launcher/Dock restoration/report')
         print('PASS: real launch migration and machine argv, personal config ownership, persisted before-session archive and exactly one snapshot after reattachment/exit')
     finally:

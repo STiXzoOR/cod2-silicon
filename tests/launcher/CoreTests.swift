@@ -67,9 +67,67 @@ import Foundation
         precondition(plan.arguments.contains("\"/Game Data\""))
         precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 32))) == nil)
         precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 31))) != nil)
+        try engines(server: server, scratch: scratch)
         try presentation(fixtures)
+        print("PASS: game version: CoD2x by default and kept across saves, both engines found by executable, Original 1.3 joins stock servers on its command line and asks for CoD2x otherwise")
         print("PASS: real master/status fixtures, malformed packets, colours, native key CRC/private storage, config and URL injection, frame cap 0–1000 (250 by default)")
         print("PASS: cm/360, advanced dvar forms, settings migration, release notes, maps, server facts, media, key tag, player name and scrims")
+    }
+
+    /// Settings › Game version: which engine starts, what it can join, and how it's told the server.
+    static func engines(server stock: GameServer, scratch: URL) throws {
+        precondition(GameSettings().engine == .cod2x)
+        let older = try JSONDecoder().decode(GameSettings.self, from: Data(#"{"fps":125,"vsync":true}"#.utf8))
+        precondition(older.engine == .cod2x && older.fps == 125 && older.vsync, "settings saved before the choice existed play CoD2x")
+        var original = GameSettings(); original.engine = .original; original.fps = 333
+        let reread = try JSONDecoder().decode(GameSettings.self, from: JSONEncoder().encode(original))
+        precondition(reread == original && reread.engine == .original)
+        let newer = try JSONDecoder().decode(GameSettings.self, from: Data(#"{"fps":200,"engine":"metal"}"#.utf8))
+        precondition(newer.engine == .cod2x && newer.fps == 200, "an engine this version doesn't know falls back without losing the rest")
+        var same = original; same.engine = .cod2x
+        let written = try original.config(), unchanged = try same.config()
+        precondition(written == unchanged, "the game version is not a dvar")
+
+        // The app's engines, by executable. A build without the original carries CoD2x only.
+        let game = scratch.appendingPathComponent("CoD2 Game.app"), macos = game.appendingPathComponent("Contents/MacOS")
+        try FileManager.default.createDirectory(at: macos, withIntermediateDirectories: true)
+        precondition(GameEngine.installed(in: game).isEmpty)
+        for engine in GameEngine.allCases { precondition(GameEngine(executable: engine.executable(in: game)) == engine) }
+        precondition(GameEngine(executable: macos.appendingPathComponent("cod2-shadergen")) == nil && GameEngine(executable: nil) == nil)
+        FileManager.default.createFile(atPath: macos.appendingPathComponent("cod2_macos").path, contents: Data(), attributes: [.posixPermissions: 0o755])
+        FileManager.default.createFile(atPath: macos.appendingPathComponent("cod2_macos_stock").path, contents: Data(), attributes: [.posixPermissions: 0o644])
+        precondition(GameEngine.installed(in: game) == [.cod2x], "a stock engine that can't run doesn't count")
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: macos.appendingPathComponent("cod2_macos_stock").path)
+        precondition(GameEngine.installed(in: game) == [.cod2x, .original])
+
+        // Original 1.3 joins stock 1.3 servers only; CoD2x joins both.
+        var codx = stock; codx.fields["shortversion"] = "1.4.6.8"
+        precondition(GameEngine.original.canJoin(stock) && !GameEngine.original.canJoin(codx))
+        precondition(GameEngine.cod2x.canJoin(stock) && GameEngine.cod2x.canJoin(codx))
+        let link = try LaunchLink.direct("203.0.113.24:28960"), secret = try LaunchLink.direct("203.0.113.24:28960", password: "hunter2")
+        precondition(GameEngine.cod2x.check(secret, server: codx, lookedUp: false) == .go)
+        precondition(GameEngine.original.check(link, server: stock, lookedUp: false) == .go)
+        precondition(GameEngine.original.check(link, server: codx, lookedUp: false) == .needsCoD2x(.cod2xServer))
+        precondition(GameEngine.original.check(secret, server: stock, lookedUp: false) == .needsCoD2x(.password))
+        precondition(GameEngine.original.check(link, server: nil, lookedUp: false) == .lookUp)
+        precondition(GameEngine.original.check(link, server: nil, lookedUp: true) == .go, "an unanswered server is the game's to try")
+        let request = EngineRequest(link: link, reason: .cod2xServer)
+        precondition(request.title == "This server needs CoD2x")
+        precondition(request.message == "This server runs CoD2x 1.4. Original 1.3 can only join Stock 1.3 servers. CoD2x stays on for later games; you can change this in Settings.")
+        precondition(EngineRequest(link: secret, reason: .password).title == "Joining with a password needs CoD2x")
+
+        // CoD2x takes its server as an Apple event once running; the original on its command line,
+        // last, and never with a password.
+        let codxPlan = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", link: link)
+        precondition(codxPlan.link?.address == link.address && codxPlan.connectsAtStartup == nil && !codxPlan.arguments.contains("+connect"))
+        let stockPlan = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", link: link, forwarded: ["+set", "cg_fov", "80"], engine: .original)
+        precondition(stockPlan.link == nil && stockPlan.connectsAtStartup == "203.0.113.24:28960")
+        precondition(Array(stockPlan.arguments.suffix(2)) == ["+connect", "203.0.113.24:28960"])
+        precondition(Array(stockPlan.arguments.dropLast(2)) == codxPlan.arguments + ["+set", "cg_fov", "80"])
+        do { _ = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", link: secret, engine: .original); fatalError("FAIL: password in argv") }
+        catch { precondition(error.localizedDescription == GameEngine.passwordUnsupported) }
+        let demo = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", demo: "match", engine: .original)
+        precondition(demo.connectsAtStartup == nil && !demo.arguments.contains("+connect") && demo.arguments.suffix(2) == ["+demo", "match"])
     }
 
     static func presentation(_ fixtures: URL) throws {

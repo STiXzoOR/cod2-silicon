@@ -499,8 +499,9 @@ struct ConfigStudioFailure: Identifiable {
 @MainActor final class ConfigStudioModel: ObservableObject {
     /// Optional: preview mode and an initialization error leave Configs unavailable.
     @Published private(set) var session: ConfigStudioSession?
-    let mode: ConfigCatalogMode
-    let dialect: ConfigDialect
+    /// Follow the engine chosen in Settings; `setDialect` switches both.
+    @Published private(set) var mode: ConfigCatalogMode
+    private(set) var dialect: ConfigDialect
     @Published private(set) var catalog: ConfigCatalog?
     @Published private(set) var catalogError: String?
     private var catalogLoading = false
@@ -570,6 +571,17 @@ struct ConfigStudioFailure: Identifiable {
         let url = folder.appendingPathComponent("ConfigCatalog.json")
         guard FileManager.default.fileExists(atPath: url.path) else { throw ConfigCatalogError.missingResource }
         return try ConfigCatalog(data: Data(contentsOf: url))
+    }
+
+    /// Settings › Game version changed the engine: specs, caches and Check-up's rules follow it.
+    func setDialect(_ dialect: ConfigDialect) {
+        guard dialect != self.dialect else { return }
+        self.dialect = dialect
+        mode = dialect == .stock ? .stock : .cod2x
+        valueCache = nil; diffCache = [:]; sinceCache = nil
+        if let catalog { install(catalog) }
+        if textMode { validateText() }
+        checkup.followMode()
     }
 
     /// The review harness hosts a session over a temporary home.

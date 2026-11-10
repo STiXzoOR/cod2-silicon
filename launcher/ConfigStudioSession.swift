@@ -31,7 +31,7 @@ private final class ConfigGameGuard: @unchecked Sendable {
     @Published private(set) var launchReserved = false
     @Published private(set) var migrationCompleted = false
     @Published private(set) var recovery: ConfigTransactionRecovery?
-    private let store: ConfigProfileStore
+    private var store: ConfigProfileStore
     private let guardState: ConfigGameGuard
     private var observedDisk: [String: DiskStamp]?
     private struct DiskStamp: Equatable {
@@ -94,6 +94,17 @@ private final class ConfigGameGuard: @unchecked Sendable {
             }
             archive = saved
         }
+    }
+
+    /// The game's config language follows the engine the launcher starts (Settings › Game version).
+    /// Loadouts are read again in the new one; an unsaved draft keeps its bytes.
+    func setDialect(_ dialect: ConfigDialect) throws {
+        guard dialect != store.dialect else { return }
+        let guardState = guardState
+        store = try ConfigProfileStore(homeURL: store.homeURL, dialect: dialect, gameIsRunning: { guardState.running() })
+        if let draft { self.draft = ConfigDocument(data: draft.serialized(), dialect: dialect) }
+        current = nil; observedDisk = nil
+        try refresh()
     }
 
     /// Reads the game's current bytes without rebasing or clearing an unsaved draft.

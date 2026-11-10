@@ -20,6 +20,11 @@ struct LauncherRoot: View {
         .capsuleControls()
         .background(palette.ground)
         .overlay(alignment: .bottom) { NoticeBanner(model: model).padding(.bottom, 24) }
+        .alert(model.engineRequest?.title ?? "", isPresented: Binding(get: { model.engineRequest != nil }, set: { if !$0 { model.engineRequest = nil } }),
+               presenting: model.engineRequest) { request in
+            Button("Turn On CoD2x and Join") { model.turnOnCoD2x(andJoin: request) }
+            Button("Cancel", role: .cancel) { model.engineRequest = nil }
+        } message: { request in Text(request.message) }
         // The minimum window is 1100×760 points in all. This view sits below the unified toolbar's
         // 52 points of safe area, so asking it for 760 would hang 26 points off the window's bottom.
         .frame(minWidth: 1100, minHeight: 760 - 52)
