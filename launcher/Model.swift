@@ -559,8 +559,10 @@ struct MediaEntry: Identifiable {
             let configLaunch = try configStudio?.prepareLaunch(settings: settings, forwarded: forwardedArguments,
                 connectionProfileID: connectionProfileID, connection: connectionLaunch,
                 connectionExpectedVersion: connectionExpectedVersion, connectionChainBytes: connectionChainBytes)
+            let loadout = ConfigDocument.launchLoadout(home: home, profileID: configLaunch?.profileID)
             let plan = try GameLaunchPlan(settings: settings, dataPath: dataPath, homePath: home.path, link: pendingLink,
-                demo: demo?.deletingPathExtension().lastPathComponent, forwarded: forwardedArguments, configStudio: configLaunch, connection: connectionLaunch)
+                demo: demo?.deletingPathExtension().lastPathComponent, forwarded: forwardedArguments, configStudio: configLaunch, connection: connectionLaunch,
+                loadout: { loadout?.effectiveSetting(named: $0) })
             let process = Process(); process.executableURL = executable; process.arguments = plan.arguments
             process.currentDirectoryURL = home
             var environment = ProcessInfo.processInfo.environment
@@ -641,10 +643,12 @@ struct MediaEntry: Identifiable {
         engine = nil; gameRunning = false
         restoreRegularPolicy()
         NSApp.windows.first?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
-        if let code, code != 0 {
+        // 1 is Exit in CoD2x's machine identity dialog, a normal close.
+        let closed = code == 0 || code == 1
+        if let code, !closed {
             notice = "The game exited unexpectedly (\(code)). Your launcher is still open."
         }
-        if code == nil || code != 0 {
+        if !closed {
             crashReport = (try? FileManager.default.contentsOfDirectory(at: home, includingPropertiesForKeys: [.contentModificationDateKey]))?
                 .filter { $0.lastPathComponent.hasPrefix("cod2_crash_") && $0.pathExtension == "txt" && ((try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast) >= gameStartedAt }
                 .sorted { ((try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast) > ((try? $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast) }.first

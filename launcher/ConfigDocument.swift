@@ -69,6 +69,19 @@ enum ConfigEditError: Error, LocalizedError, Sendable {
 /// A byte document, not a Unicode text serializer. All ranges are zero-based byte
 /// offsets in serialized(). Parsed commands include empty CRLF commands and the
 /// byte consumed by the engine when a command reaches its line limit.
+extension ConfigDocument {
+    /// The profile config the game reads at launch: the launching loadout, or else the game's
+    /// active profile (main/players/active.txt). nil when there is none yet, as on a first run.
+    static func launchLoadout(home: URL, profileID: String?) -> ConfigDocument? {
+        let players = home.appendingPathComponent("main/players")
+        let active = (try? String(contentsOf: players.appendingPathComponent("active.txt"), encoding: .utf8))?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let id = profileID ?? active, (try? ConfigStudioLaunch.validateProfileID(id)) != nil,
+              let data = try? Data(contentsOf: players.appendingPathComponent(id).appendingPathComponent("config_mp.cfg")) else { return nil }
+        return ConfigDocument(data: data, dialect: .cod2x)
+    }
+}
+
 struct ConfigDocument: Sendable {
     private var bytes: [UInt8]
     let dialect: ConfigDialect
