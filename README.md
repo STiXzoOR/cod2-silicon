@@ -9,10 +9,11 @@ Duty 2: no game content is included.
 
 ## Status
 
-The `0.2.1` release is playable on stock 1.3 and CoD2x 1.4 servers, with a
+The `0.3.0` release is playable on stock 1.3 and CoD2x 1.4 servers, with a
 native launcher, server browser and Config Studio. Movement, firing, grenades, mounted
 turrets, HTTP mod downloads and round restarts have been tested, and every
-menu is opened by an automated sweep.
+menu is opened by an automated sweep. The picture is compared with the
+original Windows game frame by frame in replayed demos.
 Smoother frame pacing and active Game Mode remain goals. See the
 [verified results below](#verified-results) for compatibility coverage,
 rendering comparisons, fullscreen limits and measured performance.
@@ -27,15 +28,15 @@ rendering comparisons, fullscreen limits and measured performance.
 
 Keep the game outside this repository. The data folder must contain
 `main/iw_00.iwd` through `main/iw_15.iwd` and matching localized archives.
-Existing Windows 1.3 data works too; the Mac executable is needed separately
-for shader extraction. See [getting your game data](docs/macos-port/game-data.md).
+Existing Windows 1.3 data works as it is. See
+[getting your game data](docs/macos-port/game-data.md).
 
 ## Install
 
 ### Prebuilt app
 
 1. Open [GitHub Releases](https://github.com/STiXzoOR/cod2-silicon/releases).
-2. Download `CoD2-Silicon-0.2.1-macos-arm64.zip` and `SHA256SUMS` into the same
+2. Download `CoD2-Silicon-0.3.0-macos-arm64.zip` and `SHA256SUMS` into the same
    folder. Verify the archive, then unzip it:
 
    ```sh
@@ -83,7 +84,7 @@ graphics controls; **Binds**, **Check-up** and **History** cover bindings, rule
 checks and earlier changes. **Settings** in the sidebar controls this Mac: game
 data, display, renderer, updates, privacy and advanced launch options.
 
-The **Players** directory is unavailable in 0.2.1. Shared setups need redistribution
+The **Players** directory is not available yet. Shared setups need redistribution
 permission and a signed publication before they can appear. You can still bring
 in your own configs through import review.
 
@@ -140,10 +141,15 @@ new performance claims for every release. Verified development results include:
   This is implementation coverage, not 68 live acceptance tests. Match-service
   UI/backend validation remains partial; the auto-updater is excluded.
   [Compatibility report](docs/macos-port/reports/WS10-cod2x-full.md)
-- With the original Mac shaders, three matched Toujane views have RGB mean
-  absolute errors of **2.0050, 1.8726 and 0.5856 out of 255** against Windows.
-  Full post-processing, shadows and combat FX parity are still unverified.
-  [Rendering report](docs/macos-port/reports/WS15-render.md)
+- In 0.3.0, a demo replayed in the original Windows 1.3 game and in this port
+  differs by a mean of **0.11 out of 255** per colour value, over 20 views on
+  four maps at 1920x1080 with the shaders built from the game's files. With
+  the HUD on it is 0.13, and on the Direct3D 7 path 0.15. The original ran
+  under Wine with DXVK, not on a Windows machine. The largest remaining
+  difference is fine texture detail on third-person player models.
+- Before 0.3.0, with the original Mac shaders, three matched Toujane views had
+  RGB mean absolute errors of **2.0050, 1.8726 and 0.5856 out of 255** against
+  Windows. [Rendering report](docs/macos-port/reports/WS15-render.md)
 - Fullscreen rendering up to **6016×3384 (6K)**, with desktop-fullscreen fallback
   when an exclusive mode is unavailable. [Fullscreen report](docs/macos-port/reports/WS17-fullscreen.md)
 - A ten-minute combat soak completed without a crash after fixing the first-shot

@@ -115,6 +115,8 @@ All notable changes to CoD2 Silicon are documented here, following
   stream channel.
 - Release and launcher builds take the macOS SDK from the selected Xcode, so
   packaging works on Xcode 27 when the Command Line Tools SDK is also present.
+  The layered app icon is now compiled the same way; on such a Mac the package
+  got the flat fallback icon.
 - A script call on something that is not an object no longer crashes the
   server. This happened with the stock test-client script once a map rotation
   left the server full. The call is skipped and the script carries on, as on
