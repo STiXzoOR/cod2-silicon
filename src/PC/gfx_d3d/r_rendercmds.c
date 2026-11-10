@@ -802,7 +802,27 @@ void R_AddCmdDrawStretchRaw(int x, int y, int w, int h, int cols, int rows, cons
     cmd->dirty = dirty;
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+/* CoD2x text.cpp: drawn text first has its IP addresses hidden (cl_hideServerIp),
+   then text with CoD2x codes is drawn in pieces (r_font.c); the rest is one command. */
+extern const char *Cod2x_HideIpText(const char *text, char *buffer, size_t size);
+extern int R_Cod2xDrawText(const char *text, int maxChars, FontHandle font, float x, float y, float xScale,
+                           float yScale, const vec_t *color, int style, int cursorPos, int cursor);
+void R_AddCmdDrawTextCmd(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor);
+
 void R_AddCmdDrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor)
+{
+    static char hidden[4096];
+    text = Cod2x_HideIpText(text, hidden, sizeof(hidden));
+    if (R_Cod2xDrawText(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, cursor))
+        return;
+    R_AddCmdDrawTextCmd(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, cursor);
+}
+
+void R_AddCmdDrawTextCmd(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor)
+#else
+void R_AddCmdDrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor)
+#endif
 {
     int byteCount;
     int len;
@@ -836,13 +856,6 @@ void R_AddCmdDrawTextWithCursor(const char *text, int maxChars, FontHandle font,
     cmdText = cmd->text;
     memcpy(cmdText, text, len);
     cmdText[len] = '\0';
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
-    {
-        /* CoD2x text.cpp: cl_hideServerIp masks the digits of IP addresses in all drawn text. */
-        extern void Cod2x_HideIpInPlace(char *text, int len);
-        Cod2x_HideIpInPlace(cmdText, len);
-    }
-#endif
 
     if (R_ShouldTraceTextCmd(cmdText)) {
 #if defined(COD2_X64)

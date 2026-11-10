@@ -11,6 +11,8 @@ void Cod2x_FeaturesClientState(int state);
 /* CoD2x text codes: player names are coloured only on the scoreboard. */
 int Cod2x_TextCode(const char *p, char *code);
 int Cod2x_IsStyleCode(char code);
+int Cod2x_ConsoleCode(const char *text, int *color);
+int Cod2x_ShadeColor(char code, float *rgb);
 void Cod2x_StripTextCodes(const char *text, char *out, size_t size);
 void Cod2x_StripChatName(char *line);
 int Cod2x_EscapeChatPlaceholder(const char *text, char *out, size_t size);
@@ -18,7 +20,6 @@ const char *Cod2x_ResolveDoubleColors(const char *text, char *buffer, size_t siz
 /* cl_hideServerIp: updated once a frame with the connected server's info (NULL when not connected). */
 void Cod2x_HideServerIpFrame(const char *serverinfo);
 int Cod2x_HideServerIp(void);
-void Cod2x_HideIpInPlace(char *text, int len);
 const char *Cod2x_HideIpText(const char *text, char *buffer, size_t size);
 const short *Cod2x_HideIpCells(const short *cells, int count, short *buffer, int size);
 /* Once, when the file system first starts: CoD2x's IWD cleanup and iw_CoD2x_01.iwd. */

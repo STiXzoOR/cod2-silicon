@@ -1345,6 +1345,18 @@ unsigned int CG_DrawChatMessages(void)
         }
 
         msg = cgs->teamChatMsgs[index];
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        {
+            /* CoD2x text.cpp: the background takes the colour of the line's first colour code. */
+            char code;
+            color[0] = 1.0f;
+            color[1] = 1.0f;
+            color[2] = 1.0f;
+            if (Cod2x_TextCode(msg, &code) && !Cod2x_IsStyleCode(code) && code != '7' &&
+                !Cod2x_ShadeColor(code, color))
+                CL_LookupColor((unsigned char)code, color);
+        }
+#else
         if (msg[0] == '^' && msg[1] && msg[1] != '^' && msg[1] >= '0' && msg[1] <= '9') {
             CL_LookupColor((unsigned char)msg[1], color);
         } else {
@@ -1352,6 +1364,7 @@ unsigned int CG_DrawChatMessages(void)
             color[1] = 1.0f;
             color[2] = 1.0f;
         }
+#endif
 
         color[0] *= 0.25f;
         color[1] *= 0.25f;

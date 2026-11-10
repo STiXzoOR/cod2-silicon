@@ -1511,11 +1511,22 @@ static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int d
             const char *word = buf;
             unsigned int ch = SEH_ReadCharFromString(&word, NULL);
             int charWidth;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            {
+                /* CoD2x text.cpp: CoD2x codes become the colour byte too. */
+                int length = Cod2x_ConsoleCode(buf, &color);
+                if (length) {
+                    buf += length;
+                    continue;
+                }
+            }
+#else
             if (ch == '^' && word && *word != '^' && (signed char)*word > '/' && (signed char)*word <= '9') {
                 color = (unsigned char)ColorIndex((unsigned char)*word);
                 buf = word + 1;
                 continue;
             }
+#endif
             word = buf;
             {
                 int wordChars = con.lineOffset;
@@ -1578,11 +1589,22 @@ static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int d
         while (*buf) {
             unsigned char c = (unsigned char)*buf;
             int wordLen = 0;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            {
+                /* CoD2x text.cpp: CoD2x codes become the colour byte too. */
+                int length = Cod2x_ConsoleCode(buf, &color);
+                if (length) {
+                    buf += length;
+                    continue;
+                }
+            }
+#else
             if (c == '^' && buf[1] && buf[1] != '^' && (unsigned char)buf[1] > '/' && (unsigned char)buf[1] <= '9') {
                 color = (unsigned char)ColorIndex((unsigned char)buf[1]);
                 buf += 2;
                 continue;
             }
+#endif
             if (linewidth > 0 && c > ' ') {
                 do {
                     wordLen++;

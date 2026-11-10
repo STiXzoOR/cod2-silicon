@@ -375,6 +375,32 @@ static char Cod2x_StyleCode(char prefix, char symbol)
     return 0;
 }
 
+/* Dark ($), light (#) and deep (@) shades of brown, red, green, yellow, blue, cyan,
+   pink, grey, orange and violet. */
+static const float cod2xShades[30][3] = {
+    {0.25f, 0.13f, 0.07f}, {0.45f, 0.05f, 0.10f}, {0.05f, 0.35f, 0.15f}, {0.50f, 0.47f, 0.10f},
+    {0.05f, 0.10f, 0.40f}, {0.00f, 0.45f, 0.45f}, {0.45f, 0.10f, 0.40f}, {0.30f, 0.30f, 0.30f},
+    {0.60f, 0.25f, 0.05f}, {0.25f, 0.10f, 0.50f},
+    {0.80f, 0.62f, 0.42f}, {1.00f, 0.50f, 0.45f}, {0.65f, 0.95f, 0.20f}, {1.00f, 0.95f, 0.65f},
+    {0.45f, 0.70f, 1.00f}, {0.70f, 0.95f, 1.00f}, {1.00f, 0.65f, 0.85f}, {0.80f, 0.80f, 0.80f},
+    {1.00f, 0.75f, 0.55f}, {0.75f, 0.65f, 1.00f},
+    {0.55f, 0.30f, 0.12f}, {0.80f, 0.05f, 0.20f}, {0.00f, 0.72f, 0.40f}, {0.95f, 0.75f, 0.10f},
+    {0.15f, 0.35f, 0.95f}, {0.10f, 0.80f, 0.85f}, {0.95f, 0.15f, 0.60f}, {0.50f, 0.50f, 0.50f},
+    {1.00f, 0.50f, 0.00f}, {0.55f, 0.15f, 0.95f},
+};
+
+/* The colour of a shade code ('a'-'t', 'A'-'J'); 0 for any other code. */
+int Cod2x_ShadeColor(char code, float *rgb)
+{
+    int index = code >= 'a' && code <= 't' ? code - 'a' : code >= 'A' && code <= 'J' ? 20 + code - 'A' : -1;
+    if (index < 0)
+        return 0;
+    rgb[0] = cod2xShades[index][0];
+    rgb[1] = cod2xShades[index][1];
+    rgb[2] = cod2xShades[index][2];
+    return 1;
+}
+
 int Cod2x_IsStyleCode(char code)
 {
     return code && strchr("*!+=-_.", code) != NULL;
@@ -470,6 +496,43 @@ void Cod2x_StripChatName(char *line)
         *out++ = *p++;
     }
     memmove(out, end, strlen(end) + 1);
+}
+
+/* The console keeps a code as the colour byte of the characters after it (see
+   r_font.c): 0-9 vanilla, or 0x40 + colour + 40 * rainbow, colours 10-39 being the
+   shades. Font and bar codes have no effect there; "#_" goes back to the default.
+   Returns the code's length, 0 when the text has no code here. */
+int Cod2x_ConsoleCode(const char *text, int *color)
+{
+    char code;
+    int length = Cod2x_TextCode(text, &code), value, index = 7, rainbow = 0;
+    if (!length)
+        return 0;
+    value = *color & 0xff;
+    if (value <= 9) {
+        index = value;
+    } else if (value >= 0x40 && value < 0x40 + 80) {
+        index = (value - 0x40) % 40;
+        rainbow = (value - 0x40) / 40;
+    }
+    if (code == '7') {
+        index = 7;
+        rainbow = 0;
+    } else if (code >= '0' && code <= '9') {
+        index = code - '0';
+    } else if (code >= 'a' && code <= 't') {
+        index = 10 + code - 'a';
+    } else if (code >= 'A' && code <= 'J') {
+        index = 30 + code - 'A';
+    } else if (code == '*') {
+        rainbow = 1;
+    } else if (code == '!') {
+        rainbow = 0;
+    } else if (code == '_') {
+        index = 7;
+    }
+    *color = !rainbow && index <= 9 ? index : 0x40 + index + 40 * rainbow;
+    return length;
 }
 
 /* "&&1" in a chat message's arguments is written "^7&^7&^7", so a name like
@@ -617,12 +680,6 @@ static int Cod2x_MaskIpAddresses(char *text, int len)
         changed = 1;
     }
     return changed;
-}
-
-void Cod2x_HideIpInPlace(char *text, int len)
-{
-    if (ipHidden && text && len > 0)
-        Cod2x_MaskIpAddresses(text, len);
 }
 
 const char *Cod2x_HideIpText(const char *text, char *buffer, size_t size)
