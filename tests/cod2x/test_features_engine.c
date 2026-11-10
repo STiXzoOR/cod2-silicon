@@ -99,6 +99,7 @@ void Cmd_AddCommand(const char *name, void (*function)(void))
 int Cmd_Argc(void) { return argc; }
 char *Cmd_Argv(int i) { return i < argc ? argv[i] : ""; }
 void Com_Printf(const char *format, ...) { (void)format; }
+void Com_Error(int code, const char *format, ...) { (void)code; (void)format; }
 int Cod2x_GameVersion(void) { return 6; }
 void Cod2x_PoseInit(void) {}
 

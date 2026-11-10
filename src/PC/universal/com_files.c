@@ -436,6 +436,13 @@ Bool FS_RegisterDvars(void)
     fs_gameDirVar = Dvar_RegisterString_mac("fs_game", "", 0x101c);
     fs_restrict = Dvar_RegisterBool_mac("fs_restrict", 0, 0x1010);
     fs_ignoreLocalized = Dvar_RegisterBool_mac("fs_ignoreLocalized", 0, 0x10a0);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    {
+        /* CoD2x src/shared/iwd.cpp FS_RegisterDvars: once, before the first search. */
+        extern void Cod2x_IwdStartup(const char *base);
+        Cod2x_IwdStartup(fs_basepath->current.string);
+    }
+#endif
 
     return 1;
 }

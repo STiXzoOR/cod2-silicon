@@ -7,6 +7,8 @@
 void Cod2x_FeaturesInit(void);
 void Cod2x_FeaturesFrame(int active, int demo);
 void Cod2x_FeaturesClientState(int state);
+/* Once, when the file system first starts: CoD2x's IWD cleanup and iw_CoD2x_01.iwd. */
+void Cod2x_IwdStartup(const char *base);
 int Cod2x_ThirdPersonMode(void);
 int Cod2x_DebugBullets(void);
 int Cod2x_PrintDoubleColors(void);

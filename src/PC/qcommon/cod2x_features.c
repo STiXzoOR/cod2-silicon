@@ -4,14 +4,16 @@
 #include "cod2x.h"
 #include "cod2x_features.h"
 #include "cod2x_pose.h"
-#include <stdio.h>
-#include <string.h>
-#include <strings.h>
-#if defined(__linux__)
+#include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
-#include <sched.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/stat.h>
+#if defined(__linux__)
+#include <sched.h>
 #endif
 #if !defined(_WIN32)
 #include <unistd.h>
@@ -30,6 +32,7 @@ extern void Cmd_AddCommand(const char *, void (*)(void));
 extern int Cmd_Argc(void);
 extern char *Cmd_Argv(int);
 extern void Com_Printf(const char *, ...);
+extern void Com_Error(int, const char *, ...);
 
 static const dvar_t *thirdPersonMode, *debugBullets, *printDoubleColors;
 static const dvar_t *drawSpectatedName, *drawCompass, *compassOffsetX, *compassOffsetY;
@@ -279,5 +282,194 @@ void Cod2x_CompassOffset(float *x, float *y)
         *x += compassOffsetX->current.value;
     if (compassOffsetY)
         *y += compassOffsetY->current.value;
+}
+
+/* ---- iw_CoD2x_01.iwd (CoD2x src/shared/iwd.cpp) ----------------------------
+   CoD2x carries its data IWD inside its mss32.dll and writes it to main/ when the
+   file system starts. This build does not carry it: it is copied from the
+   player's own CoD2x mss32.dll in the game folder, as tools/cod2x/extract_iwd.py
+   does, and nothing is downloaded. */
+#if defined(_WIN32)
+#define COD2X_IWD_SEPARATOR "\\"
+#else
+#define COD2X_IWD_SEPARATOR "/"
+#endif
+#define COD2X_IWD_MAX_DLL (256u * 1024 * 1024)
+#define COD2X_IWD_MAX (64u * 1024 * 1024)
+
+static unsigned int Cod2x_Le16(const unsigned char *p)
+{
+    return (unsigned int)p[0] | (unsigned int)p[1] << 8;
+}
+
+static unsigned int Cod2x_Le32(const unsigned char *p)
+{
+    return Cod2x_Le16(p) | Cod2x_Le16(p + 2) << 16;
+}
+
+/* A ZIP whose central directory names CoD2x's menu and radar arrow. */
+static int Cod2x_IwdArchive(const unsigned char *zip, size_t size, size_t directory, size_t directorySize,
+                            unsigned int count)
+{
+    size_t position = directory, end = directory + directorySize;
+    unsigned long long expanded = 0;
+    int menu = 0, arrow = 0;
+    unsigned int i;
+    for (i = 0; i < count; ++i) {
+        char name[256];
+        unsigned int nameLength, extra, comment, k;
+        if (position + 46 > end || end > size || Cod2x_Le32(zip + position) != 0x02014b50u)
+            return 0;
+        expanded += Cod2x_Le32(zip + position + 24);
+        nameLength = Cod2x_Le16(zip + position + 28);
+        extra = Cod2x_Le16(zip + position + 30);
+        comment = Cod2x_Le16(zip + position + 32);
+        if (position + 46 + nameLength > end)
+            return 0;
+        if (nameLength < sizeof(name)) {
+            for (k = 0; k < nameLength; ++k) {
+                char c = (char)zip[position + 46 + k];
+                name[k] = c == '\\' ? '/' : (char)tolower((unsigned char)c);
+            }
+            name[nameLength] = '\0';
+            menu |= !strcmp(name, "ui_mp/main.menu");
+            arrow |= !strcmp(name, "materials/radar_player_arrow");
+        }
+        position += 46 + nameLength + extra + comment;
+    }
+    return menu && arrow && expanded <= COD2X_IWD_MAX;
+}
+
+/* The one CoD2x IWD embedded in a CoD2x mss32.dll: found by its end-of-directory
+   record, as the extraction tool does. */
+static int Cod2x_IwdFromDll(const unsigned char *data, size_t size, size_t *start, size_t *length)
+{
+    size_t position, found = 0;
+    if (size < 64 || data[0] != 'M' || data[1] != 'Z' || Cod2x_Le32(data + 60) > size - 4 ||
+        memcmp(data + Cod2x_Le32(data + 60), "PE\0\0", 4))
+        return 0;
+    for (position = 0; position + 22 <= size; ++position) {
+        size_t directorySize, directory, begin, end;
+        if (memcmp(data + position, "PK\5\6", 4))
+            continue;
+        directorySize = Cod2x_Le32(data + position + 12);
+        directory = Cod2x_Le32(data + position + 16);
+        end = position + 22 + Cod2x_Le16(data + position + 20);
+        if (Cod2x_Le16(data + position + 4) || Cod2x_Le16(data + position + 6) ||
+            Cod2x_Le16(data + position + 8) != Cod2x_Le16(data + position + 10) ||
+            directorySize + directory > position || end > size)
+            continue;
+        begin = position - directorySize - directory;
+        if (memcmp(data + begin, "PK\3\4", 4) || end - begin > COD2X_IWD_MAX ||
+            !Cod2x_IwdArchive(data + begin, end - begin, directory, directorySize, Cod2x_Le16(data + position + 10)))
+            continue;
+        if (found++)
+            return 0; /* more than one: not a release the tool would accept either */
+        *start = begin;
+        *length = end - begin;
+    }
+    return found != 0;
+}
+
+static unsigned char *Cod2x_ReadFile(const char *path, size_t *size)
+{
+    FILE *file = fopen(path, "rb");
+    unsigned char *data = NULL;
+    long length;
+    if (!file)
+        return NULL;
+    if (!fseek(file, 0, SEEK_END) && (length = ftell(file)) > 0 && (unsigned long)length <= COD2X_IWD_MAX_DLL &&
+        !fseek(file, 0, SEEK_SET) && (data = malloc((size_t)length)) != NULL &&
+        fread(data, 1, (size_t)length, file) == (size_t)length) {
+        *size = (size_t)length;
+    } else {
+        free(data);
+        data = NULL;
+    }
+    fclose(file);
+    return data;
+}
+
+/* Newer and test builds of CoD2x leave iw_CoD2x_NN with NN above 01, or
+   iw_CoD2x_01_<version>.iwd; CoD2x 1.4.6.8 deletes them. */
+static int Cod2x_IwdObsolete(const char *name)
+{
+    size_t length = strlen(name);
+    if (length < 4 || strcasecmp(name + length - 4, ".iwd") || strncasecmp(name, "iw_CoD2x_", 9) ||
+        !isdigit((unsigned char)name[9]) || !isdigit((unsigned char)name[10]))
+        return 0;
+    return (name[9] - '0') * 10 + (name[10] - '0') > 1 || name[11] != '.';
+}
+
+static void Cod2x_IwdCleanup(const char *base)
+{
+    char directory[1024], path[1280];
+    struct dirent *entry;
+    struct stat st;
+    DIR *dir;
+    snprintf(directory, sizeof(directory), "%s" COD2X_IWD_SEPARATOR "main", base);
+    dir = opendir(directory);
+    if (!dir)
+        return;
+    while ((entry = readdir(dir)) != NULL) {
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, ".."))
+            continue;
+        snprintf(path, sizeof(path), "%s" COD2X_IWD_SEPARATOR "%s", directory, entry->d_name);
+        if ((!stat(path, &st) && S_ISDIR(st.st_mode)) || !Cod2x_IwdObsolete(entry->d_name))
+            continue;
+        if (remove(path) == 0)
+            Com_Printf("Deleted CoD2x IWD: %s\n", path);
+        else
+            Com_Error(0, "Failed to delete CoD2x IWD: %s (errno=%d)\n", path, errno);
+    }
+    closedir(dir);
+}
+
+void Cod2x_IwdStartup(const char *base)
+{
+    char dll[1024], target[1024];
+    unsigned char *data;
+    size_t size = 0, start = 0, length = 0, written;
+    struct stat st;
+    FILE *file;
+    if (!base || !*base) {
+        Com_Printf("CoD2x IWD cleanup: fs_basepath not set, skipping.\n");
+        return;
+    }
+    Cod2x_IwdCleanup(base);
+    snprintf(dll, sizeof(dll), "%s" COD2X_IWD_SEPARATOR "mss32.dll", base);
+    data = Cod2x_ReadFile(dll, &size);
+    if (!data)
+        return;
+    if (!Cod2x_IwdFromDll(data, size, &start, &length)) {
+        free(data);
+        return;
+    }
+    snprintf(target, sizeof(target), "%s" COD2X_IWD_SEPARATOR "main" COD2X_IWD_SEPARATOR "iw_CoD2x_01.iwd", base);
+    if (!stat(target, &st)) {
+        if ((size_t)st.st_size == length) {
+            free(data);
+            return;
+        }
+        if (remove(target)) {
+            free(data);
+            Com_Error(0, "Error while extracting IWD file to '%s'. Error while deleting existing file: %s\n", target,
+                      strerror(errno));
+            return;
+        }
+    }
+    file = fopen(target, "wb");
+    if (!file) {
+        free(data);
+        Com_Error(0, "Error while extracting IWD file to '%s'. Error while opening file: %s\n", target,
+                  strerror(errno));
+        return;
+    }
+    written = fwrite(data + start, 1, length, file);
+    fclose(file);
+    free(data);
+    if (written != length)
+        Com_Error(0, "Error while extracting IWD file to '%s'. Error while writing to file: %s\n", target,
+                  strerror(errno));
 }
 #endif
