@@ -219,6 +219,13 @@ void Com_InitPlayerProfiles(void)
 
     com_playerProfile = Dvar_RegisterString("com_playerProfile", "", 0x1040);
 
+#if COD2_APPLE_SDK && defined(DEDICATED)
+    /* A dedicated server has no player profiles. The Linux 1.3 server runs
+     * Com_StartupConfigs here, which executes one fixed file. */
+    Com_ExecStartupConfigs("config_mp_server.cfg");
+    return;
+#endif
+
     if (FS_ReadFile("players/active.txt", &buf) < 0) {
 
 #if defined(COD2_X64)

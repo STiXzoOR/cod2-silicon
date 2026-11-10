@@ -289,7 +289,12 @@ void Com_PrintMessage(print_msg_type_t type, const char *msg)
             time(&aclock);
 #if defined(COD2_X64)
             newtime = localtime(&aclock);
+#if COD2_APPLE_SDK && defined(DEDICATED)
+            /* The Linux 1.3 server's name for it. */
+            logfile = FS_FOpenTextFileWrite("console_mp_server.log");
+#else
             logfile = FS_FOpenTextFileWrite("console_mp.log");
+#endif
             Com_Printf("logfile opened on %s\n", asctime(newtime));
 #else
             logfile = FS_FOpenTextFileWrite("qconsole_mp.log");
@@ -1776,7 +1781,11 @@ void Com_ExecStartupConfigs(const char *configFile)
     Cbuf_Execute();
     Dvar_SetInAutoExec(0);
     if (Com_SafeMode())
+#if COD2_APPLE_SDK && defined(DEDICATED)
+        Cbuf_AddText("exec safemode_mp_server.cfg\n");
+#else
         Cbuf_AddText("exec safemode_mp.cfg\n");
+#endif
     Cbuf_Execute();
 }
 
@@ -2057,11 +2066,16 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
 
     if (com_fullyInitialized && (dvar_modifiedFlags & 1)) {
         dvar_modifiedFlags &= ~1;
+#if COD2_APPLE_SDK && defined(DEDICATED)
+        /* Linux 1.3 Com_WriteConfiguration: one fixed file, no profile. */
+        Com_WriteConfigToFile("config_mp_server.cfg");
+#else
         if (Com_HasPlayerProfile()) {
             char path[64];
             Com_BuildPlayerProfilePath(path, 64, "config_mp.cfg");
             Com_WriteConfigToFile(path);
         }
+#endif
     }
 
     if (com_viewlog->modified) {
@@ -2668,8 +2682,11 @@ void Com_Init_Try_Block_Function(char *commandLine)
 #endif
     Cbuf_Execute();
 
+#if !(COD2_APPLE_SDK && defined(DEDICATED))
+    /* The Linux 1.3 server has neither: it does not configure graphics. */
     com_recommendedSet = Dvar_RegisterBool("com_recommendedSet", 0, 0x1001);
     Com_CheckSetRecommended();
+#endif
     Com_StartupVariable(NULL);
 #if !defined(COD2_X64)
     SEH_InitLanguage();

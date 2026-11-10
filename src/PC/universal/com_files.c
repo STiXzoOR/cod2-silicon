@@ -2624,7 +2624,11 @@ void FS_Restart(int checksumFeed)
     }
 
     if (I_stricmp(fs_gameDirVar->current.string, lastValidGame) && !Com_SafeMode()) {
+#if COD2_APPLE_SDK && defined(DEDICATED)
+        Cbuf_AddText(va("exec %s\n", "config_mp_server.cfg"));
+#else
         Cbuf_AddText(va("exec %s\n", "config_mp.cfg"));
+#endif
     }
 
     I_strncpyz(lastValidBase, fs_basepath->current.string, sizeof(lastValidBase));
