@@ -2187,7 +2187,12 @@ gentity_t *SV_AddTestClient(void)
             return NULL;
     }
 
+#if COD2_APPLE_SDK
+    /* The Mac, Windows and Linux 1.3 binaries all send cl_punkbuster. */
+    sprintf(userinfo, "connect \"\\cg_predictItems\\1\\cl_punkbuster\\0\\cl_anonymous\\0\\color\\4\\head\\default\\model\\multi\\snaps\\20\\rate\\5000\\name\\bot%d\\protocol\\%d\"", botport, 0x76);
+#else
     sprintf(userinfo, "connect \"\\cg_predictItems\\1\\cl_anonymous\\0\\color\\4\\head\\default\\model\\multi\\snaps\\20\\rate\\5000\\name\\bot%d\\protocol\\%d\"", botport, 0x76);
+#endif
     SV_Cmd_TokenizeString(userinfo);
 
     memset(&adr, 0, sizeof(adr));

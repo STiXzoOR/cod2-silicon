@@ -2427,7 +2427,13 @@ static inline __attribute__((always_inline)) void Scr_CastBool_core(VariableValu
 
     RemoveRefToValue_core(type, value->u);
     value->type = SCRVL_VAR_UNDEFINED;
+#if COD2_APPLE_SDK
+    /* Windows and Linux 1.3 say "bool"; the Mac build's "Bool" is its own
+     * type name leaking into the message. */
+    Scr_Error(va("cannot cast %s to bool", var_typename[type]));
+#else
     Scr_Error(va("cannot cast %s to Bool", var_typename[type]));
+#endif
 }
 
 void Scr_EvalBoolNot(VariableValue *value)
