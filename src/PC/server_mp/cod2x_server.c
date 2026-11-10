@@ -1,6 +1,7 @@
 #include "common_types.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "cod2x_server.h"
+#include "../qcommon/cod2x_http.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -56,6 +57,9 @@ void SV_Cod2xServerInit(void)
     sv_hideServerIp = Dvar_RegisterBool("sv_hideServerIp", 0, 0x1004);
     G_Cod2xWallbangInit();
     SV_Cod2xZpamInit();
+    SV_Cod2xUpdaterInit();
+    SV_Cod2xMatchInit();
+    Cod2x_HttpInit();
     Cmd_AddCommand("unbanAll", SV_Cod2xUnbanAll);
     Cmd_AddCommand("getIp", SV_Cod2xRequestIp);
 }

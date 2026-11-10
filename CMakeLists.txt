@@ -91,6 +91,8 @@ if(NOT (COD2_X64 AND COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)"))
     src/PC/qcommon/cod2x_demo.c src/PC/qcommon/cod2x_url.c src/PC/qcommon/cod2x_pose.c
     src/PC/cgame_mp/cg_cod2x_radar.c src/PC/server_mp/cod2x_server.c
     src/PC/game_mp/g_cod2x_wallbang.c src/PC/server_mp/cod2x_zpam.c
+    src/PC/server_mp/cod2x_updater.c src/PC/qcommon/cod2x_http.c src/PC/qcommon/cod2x_json.c
+    src/PC/game_mp/g_cod2x_script.c src/PC/server_mp/cod2x_match.c
     PROPERTIES HEADER_FILE_ONLY TRUE)
 endif()
 

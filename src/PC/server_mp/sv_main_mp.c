@@ -900,6 +900,10 @@ void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
     }
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (I_stricmp(c, "updateResponse") == 0) {
+        SV_Cod2xUpdateResponse(from);
+        return;
+    }
     if (I_stricmp(c, "getIpResponse") == 0) {
         SV_Cod2xIpResponse(from);
         return;

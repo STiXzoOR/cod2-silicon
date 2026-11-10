@@ -812,6 +812,15 @@ static void Com_SkipConfigureBlankLines(const char **text)
         Com_SkipRestOfLine(text);
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* The message of the error being handled, NULL when there is none (the match
+   service reports it when the server goes down with it). */
+const char *Com_Cod2xErrorMessage(void)
+{
+    return com_errorEntered && com_errorMessage[0] ? com_errorMessage : NULL;
+}
+
+#endif
 static void Com_WriteConfigToFile(const char *filename)
 {
     int f;
@@ -2385,8 +2394,15 @@ void Com_Frame(void)
     }
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     {
+        extern void Cod2x_HttpFrame(void);
+        extern void SV_Cod2xMatchFrame(void);
         extern void SV_Cod2xZpamFrame(void);
+        extern void SV_Cod2xUpdaterFrame(void);
+        /* Finished requests first, then the match, zPAM and the update check, as CoD2x orders them. */
+        Cod2x_HttpFrame();
+        SV_Cod2xMatchFrame();
         SV_Cod2xZpamFrame();
+        SV_Cod2xUpdaterFrame();
     }
 #endif
 
@@ -2964,6 +2980,11 @@ void Com_Init_Try_Block_Function(char *commandLine)
 #endif
     }
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        /* Needs the dedicated setting and the network. */
+        extern void SV_Cod2xUpdaterCheck(void);
+        SV_Cod2xUpdaterCheck();
+    }
     Com_Printf("-----------------------------------\n");
     Com_Printf("CoD2x %s loaded\n", COD2X_RELEASE);
     Com_Printf("-----------------------------------\n");

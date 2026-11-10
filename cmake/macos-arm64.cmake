@@ -183,6 +183,10 @@ if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
     VERBATIM)
 endif()
 target_compile_definitions(cod2_macos_ded PRIVATE DEDICATED)
+if(COD2_X64 AND COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
+  # CoD2x's update check, zPAM downloads and script HTTP (src/PC/qcommon/cod2x_http.c).
+  target_link_libraries(cod2_macos_ded PRIVATE ${COD2_CURL_LIBRARY})
+endif()
 target_sources(cod2_macos_ded PRIVATE src/platform/macos_server.c)
 target_link_options(cod2_macos_ded PRIVATE -Wl,-dead_strip)
 set_source_files_properties(src/PC/qcommon/crash_handler.c PROPERTIES

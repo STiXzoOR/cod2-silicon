@@ -1753,6 +1753,11 @@ static void PlayerCmd_Cod2xIsUsingTurret(scr_entref_t entref)
         Scr_AddBool((PlayerCmd_Cod2xEntity(entref)->s.eFlags & 0x300) != 0);
 }
 
+/* The match service's player methods (cod2x_match.c). */
+extern void GScr_Cod2xMatchPlayerGetData(scr_entref_t entref);
+extern void GScr_Cod2xMatchPlayerSetData(scr_entref_t entref);
+extern void GScr_Cod2xMatchPlayerIsAllowed(scr_entref_t entref);
+
 /* Separate native table leaves the original builtin table and layout intact. */
 BuiltinMethod Player_Cod2xGetMethod(const char **pName, int *type)
 {
@@ -1764,6 +1769,9 @@ BuiltinMethod Player_Cod2xGetMethod(const char **pName, int *type)
         { "getViewOrigin", (BuiltinMethod)PlayerCmd_Cod2xGetViewOrigin, 0 },
         { "getStance", (BuiltinMethod)PlayerCmd_Cod2xGetStance, 0 },
         { "isUsingTurret", (BuiltinMethod)PlayerCmd_Cod2xIsUsingTurret, 0 },
+        { "matchPlayerGetData", (BuiltinMethod)GScr_Cod2xMatchPlayerGetData, 0 },
+        { "matchPlayerSetData", (BuiltinMethod)GScr_Cod2xMatchPlayerSetData, 0 },
+        { "matchPlayerIsAllowed", (BuiltinMethod)GScr_Cod2xMatchPlayerIsAllowed, 0 },
         { NULL, NULL, 0 },
     };
     for (const BuiltinMethodDef *method = extensionMethods; method->actionString; ++method) {
