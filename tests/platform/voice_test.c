@@ -9,16 +9,13 @@ extern int DSound_Init(int channels, const unsigned char *handle);
 extern void *DSound_NewSample(void);
 extern int DSound_UpdateSample(void *handle, char *data, unsigned int size);
 extern void DSound_Shutdown(void);
-extern int Record_Init(int initialize, const void *handle);
-extern int Record_DestroySample(void *handle);
+extern int DSOUNDRecord_DestroySample(void *handle);
 extern int g_sound_recordFrequency;
 
 int main(void)
 {
     _Static_assert(sizeof(AILSOUNDINFO) == sizeof(MacAudioSoundInfo), "native sound metadata size");
     _Static_assert(offsetof(AILSOUNDINFO, initial_ptr) == offsetof(MacAudioSoundInfo, initial_ptr), "native metadata field offsets");
-    if (Record_Init(0, NULL))
-        return 1;
     g_sound_recordFrequency = 11025;
     if (!DSound_Init(1, NULL)) {
         fprintf(stderr, "%s\n", AIL_last_error());
@@ -38,7 +35,7 @@ int main(void)
     MacAudio_GetStats(&after);
     int result = after.audible_frames > before.audible_frames && after.callbacks > before.callbacks;
     printf("voice PCM output: %s callbacks=%llu audible=%llu peak=%.6f\n", result ? "PASS" : "FAIL", (unsigned long long)(after.callbacks - before.callbacks), (unsigned long long)(after.audible_frames - before.audible_frames), after.peak);
-    if (!Record_DestroySample(voice))
+    if (!DSOUNDRecord_DestroySample(voice))
         result = 0;
     DSound_Shutdown();
     AIL_shutdown();

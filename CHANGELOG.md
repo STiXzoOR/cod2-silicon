@@ -5,6 +5,15 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
+### Added
+
+- Voice chat sends your microphone. Hold the voice chat key on a server with
+  voice on and macOS asks once for microphone access; the microphone is open
+  only while you are sending and for two seconds after, so the system's
+  microphone indicator shows exactly when the game listens. The original
+  games kept the microphone open the whole time. Tested with a recording in
+  place of a microphone between two clients, not yet with a real one.
+
 ### Changed
 
 - The game's videos play. The `cinematic` console command and the intro

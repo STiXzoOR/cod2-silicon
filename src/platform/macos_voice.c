@@ -1,9 +1,18 @@
 #if defined(__APPLE__) && defined(COD2_X64)
 #include "common_types.h"
 #include "macos_audio.h"
+#include "macos_record.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+_Static_assert(sizeof(MacRecordBlock) == sizeof(audioSample_t) &&
+               offsetof(MacRecordBlock, lengthInBytes) == offsetof(audioSample_t, lengthInBytes) &&
+               offsetof(MacRecordBlock, frequency) == offsetof(audioSample_t, frequency) &&
+               offsetof(MacRecordBlock, stereo) == offsetof(audioSample_t, stereo) &&
+               offsetof(MacRecordBlock, channels) == offsetof(audioSample_t, channels) &&
+               offsetof(MacRecordBlock, sampleOffset) == offsetof(audioSample_t, sampleOffset),
+               "the capture block matches the engine's audioSample_t");
 
 #define VOICE_QUEUE_BYTES 32768
 #define VOICE_PACKET_BYTES 4096
@@ -19,10 +28,7 @@ typedef struct {
 
 /* Mac 1.3 narrowband PCM rate, shared by recording and voice playback. */
 int g_sound_recordFrequency = 8192;
-int g_sound_recordVolume;
 int g_sound_channels = 1;
-char g_recording_initialized;
-char g_currently_recording;
 
 static MacVoiceSample voice_samples[VOICE_SAMPLES];
 static int voice_initialized;
@@ -135,38 +141,12 @@ void DSound_Shutdown(void)
     voice_initialized = 0;
 }
 
-/* Fail before entering the original recorder's fixed-address object layout. */
-int DSOUNDRecord_Init(int initialize, const void *handle)
+/* The engine destroys playback voices through the recorder's entry, as the
+ * Windows layer does, where both come from one pool. The one capture sample
+ * is not in the pool and needs no release. */
+int DSOUNDRecord_DestroySample(void *sample)
 {
-    (void)initialize;
-    (void)handle;
-    static int reported;
-    if (!reported) {
-        fputs("Native microphone capture is unavailable; voice recording disabled.\n", stderr);
-        reported = 1;
-    }
-    g_recording_initialized = g_currently_recording = 0;
-    return 0;
+    DestroyVoice(sample);
+    return 1;
 }
-
-int Record_Init(int initialize, const void *handle) { return DSOUNDRecord_Init(initialize, handle); }
-int DSOUNDRecord_Start(void *sample) { (void)sample; return -1; }
-int DSOUNDRecord_Stop(void *sample) { (void)sample; return -1; }
-void *DSOUNDRecord_NewSample(void) { return NULL; }
-int DSOUNDRecord_DestroySample(void *sample) { return DestroyVoice(sample); }
-void DSOUNDRecord_Shutdown(void) { g_recording_initialized = g_currently_recording = 0; }
-void DSOUNDRecord_Frame(void) {}
-int Record_Start(void *sample) { return DSOUNDRecord_Start(sample); }
-int Record_Stop(void *sample) { return DSOUNDRecord_Stop(sample); }
-void *Record_NewSample(void) { return NULL; }
-int Record_DestroySample(void *sample) { return DestroyVoice(sample); }
-void Record_Shutdown(void) { DSOUNDRecord_Shutdown(); }
-void Record_Frame(void) {}
-int Record_QueueAudioDataForEncoding(void *sample) { (void)sample; return 0; }
-int Record_AudioCallback(void *sample) { (void)sample; return 0; }
-int mixerGetRecordSource(char *source) { if (source) source[0] = 0; return 0; }
-int mixerSetRecordSource(const char *source) { (void)source; return 0; }
-int mixerGetRecordLevel(const char *source) { (void)source; return 0; }
-int mixerSetRecordLevel(const char *source, int level) { (void)source; (void)level; return 0; }
-int mixerSetMicrophoneMute(int muted) { (void)muted; return 0; }
 #endif

@@ -54,7 +54,6 @@ list(APPEND MACOS_C src/unix/linux_common.c src/unix/linux_net.c src/unix/sysdif
 set_property(SOURCE src/platform/macos_threads.c src/Mac/DirectX_9/COpenGLVAO.c
   APPEND PROPERTY COMPILE_OPTIONS -fexceptions)
 list(FILTER MACOS_C EXCLUDE REGEX "/Mac/Main/(mac_play_dsound|mac_record_dsound)\\.c$")
-list(FILTER MACOS_C EXCLUDE REGEX "/PC/groupvoice/record\\.c$")
 set(MACOS_DED_C ${MACOS_C})
 list(FILTER MACOS_DED_C EXCLUDE REGEX "/(Mac/DirectX_9|PC/gfx_d3d|PC/cgame|PC/cgame_mp|PC/ui|PC/ui_mp|PC/EffectsCore|PC/client_mp|PC/groupvoice)/")
 # Retain the CPU effect templates, lengths and server visibility implementation.
@@ -119,6 +118,7 @@ endforeach()
 target_link_options(cod2_macos PRIVATE "LINKER:-alias,_vidConfig,_r_limits_ptr")
 target_sources(cod2_macos PRIVATE src/unix/linux_input.c src/platform/macos_display.c src/platform/macos_window.m
   src/platform/macos_rawmouse.m src/platform/macos_audio.c src/platform/macos_voice.c
+  src/platform/macos_record.c src/platform/macos_microphone.m
   src/platform/macos_jpeg.c)
 set_property(SOURCE src/platform/macos_rawmouse.m APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
 # Native object/resource/presentation providers; Classic remains the default.
@@ -137,7 +137,7 @@ set_source_files_properties(src/PC/gfx_d3d/rb_state.c src/PC/gfx_d3d/r_screensho
 target_link_libraries(cod2_macos PRIVATE SDL2::SDL2 ${COD2_OPENGL_FRAMEWORK} ${COD2_CURL_LIBRARY}
   ${COD2_AUDIO_FRAMEWORK} ${COD2_COREAUDIO_FRAMEWORK}
   ${COD2_GAMECONTROLLER_FRAMEWORK} ${COD2_FOUNDATION_FRAMEWORK}
-  "-framework ImageIO" "-framework CoreGraphics" "-framework AppKit")
+  "-framework ImageIO" "-framework CoreGraphics" "-framework AppKit" "-framework AVFoundation")
 if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
   find_library(COD2_APPKIT_FRAMEWORK AppKit REQUIRED)
