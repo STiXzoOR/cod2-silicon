@@ -76,6 +76,22 @@ static int dl_isMotd = 0;
 static dlStatus_t dl_status = DL_STATUS_IDLE;
 static int dl_debug = 0;
 static char dl_localName[1024];
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* CoD2x downloading.cpp: a file from an https server must start with "PK", so a host
+   that answers with a web page and status 200 fails the download. */
+static int dl_needsZip;
+extern int I_strnicmp(const char *s0, const char *s1, size_t n);
+
+static int DL_Cod2xZipStart(const char *path)
+{
+    unsigned char start[2];
+    FILE *file = fopen(path, "rb");
+    size_t read = file ? fread(start, 1, sizeof(start), file) : 0;
+    if (file)
+        fclose(file);
+    return read == 2 && start[0] == 'P' && start[1] == 'K';
+}
+#endif
 
 #if defined(COD2_X64)
 static unsigned int dl_bytesRead;
@@ -156,6 +172,9 @@ int DL_BeginDownload(const char *localName, const char *remoteName, int debug)
     dl_status = DL_STATUS_FAILED;
     dl_debug = debug;
     dl_isMotd = 0;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    dl_needsZip = remoteName && !I_strnicmp(remoteName, "https://", 8);
+#endif
 
     if (!localName || !remoteName) {
         Com_DPrintf("Empty download URL or empty local file name\n");
@@ -256,6 +275,12 @@ void DL_DownloadLoop(void)
                 dl_status = DL_STATUS_FAILED;
             }
             DL_Teardown();
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            if (dl_status == DL_STATUS_DONE && dl_needsZip && !DL_Cod2xZipStart(dl_localName)) {
+                Com_Printf("DL_DownloadLoop: request terminated with failure: %s\n", "Unexpected file content");
+                dl_status = DL_STATUS_FAILED;
+            }
+#endif
             return;
         }
     }
@@ -264,6 +289,12 @@ void DL_DownloadLoop(void)
 
         dl_status = DL_STATUS_DONE;
         DL_Teardown();
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        if (dl_status == DL_STATUS_DONE && dl_needsZip && !DL_Cod2xZipStart(dl_localName)) {
+            Com_Printf("DL_DownloadLoop: request terminated with failure: %s\n", "Unexpected file content");
+            dl_status = DL_STATUS_FAILED;
+        }
+#endif
     }
 }
 
