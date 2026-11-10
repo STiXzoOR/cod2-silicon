@@ -7,6 +7,8 @@
 #define COD2X_PROTOCOL 120
 #define COD2X_CONNECT_PROTOCOL 118
 #define COD2X_REVISION 6
+/* The CoD2x release this layer follows, as CoD2x prints it to players and admins. */
+#define COD2X_RELEASE "1.4.6.8"
 #if defined(COD2_X64) && COD2_X64
 #define COD2X_VERSION "opencod2-native-CoD2x-1.4.6.8"
 #else

@@ -9,6 +9,7 @@
 #include "PC/qcommon/net_hardening.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "cod2x_host_protocol.h"
+#include "cod2x_server.h"
 #endif
 #include <stddef.h>
 #include <string.h>
@@ -233,7 +234,6 @@ typedef struct Cod2x_ChallengeIdentity
 {
     netadr_t address;
     int challenge;
-    char digest[33];
     char suppliedDigest[33];
     char authorization[33];
 } Cod2x_ChallengeIdentity;
@@ -321,12 +321,6 @@ static Cod2x_ChallengeIdentity *SV_Cod2xChallengeIdentity(netadr_t from, int cha
     return NULL;
 }
 
-static const char *SV_Cod2xChallengeDigest(netadr_t from, int challenge)
-{
-    const Cod2x_ChallengeIdentity *identity = SV_Cod2xChallengeIdentity(from, challenge);
-    return identity && identity->digest[0] ? identity->digest : NULL;
-}
-
 static void SV_Cod2xStoreChallengeDigest(int slot, const challenge_t *entry, const char *digest)
 {
     Cod2x_ChallengeIdentity *identity = &cod2xChallengeIdentities[slot];
@@ -337,11 +331,8 @@ static void SV_Cod2xStoreChallengeDigest(int slot, const challenge_t *entry, con
         identity->authorization[0] = '\0';
     identity->address = entry->adr;
     identity->challenge = entry->challenge;
-    /* Keep the untrusted token for local scripts, separately from forwarding. */
+    /* Kept for getCDKeyHash(); the token isn't trusted. */
     I_strncpyz(identity->suppliedDigest, supplied, sizeof(identity->suppliedDigest));
-    identity->digest[0] = '\0';
-    if (SV_Cod2xDigestValid(digest))
-        memcpy(identity->digest, digest, sizeof(identity->digest));
 }
 
 static void SV_Cod2xStoreAuthorization(int slot, const challenge_t *entry, const char *reason)
@@ -598,14 +589,22 @@ void SV_AuthorizeIpPacket(netadr_t from)
     reason = SV_Cmd_Argv(3);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     SV_Cod2xStoreAuthorization(i, challengeInfo, reason);
+    /* sv_cracked admits every key; the real reply is still kept for scripts. */
+    if (SV_Cod2xCracked()) {
+        status = "accept";
+        reason = "KEY_IS_GOOD";
+    }
 #endif
 
     if (!I_stricmp(status, "demo")) {
+        /* A CoD2x server refuses demo keys even with fs_restrict. */
+#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
         if (Dvar_GetBool("fs_restrict")) {
             NET_OutOfBandPrint(NS_SERVER, challengeInfo->adr,
                                va("challengeResponse %i", challengeInfo->challenge));
             return;
         }
+#endif
 
         NET_OutOfBandPrint(NS_SERVER, challengeInfo->adr, "error\nEXE_ERR_NOT_A_DEMO_SERVER");
         memset(challengeInfo, 0, sizeof(*challengeInfo));
@@ -668,9 +667,17 @@ void SV_AuthorizeIpPacket(netadr_t from)
         } else if (!I_stricmp(reason, "BANNED_CDKEY")) {
             message = "error\nEXE_ERR_BAD_CDKEY";
         } else {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            /* CoD2x answers nothing to a denial it doesn't know. */
+            message = NULL;
+#else
             message = "error\nEXE_ERR_BAD_CDKEY";
+#endif
         }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        if (message)
+#endif
         NET_OutOfBandPrint(NS_SERVER, challengeInfo->adr, message);
         memset(challengeInfo, 0, sizeof(*challengeInfo));
         return;
@@ -1352,7 +1359,9 @@ void SV_GetChallenge(netadr_t from)
 
 challenge_found:
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    SV_Cod2xStoreChallengeDigest(i, challenge, SV_Cmd_Argc() == 3 ? SV_Cmd_Argv(2) : NULL);
+    /* The CD-key hash a client supplies is kept until it sends another. */
+    if (SV_Cmd_Argc() == 3)
+        SV_Cod2xStoreChallengeDigest(i, challenge, SV_Cmd_Argv(2));
 #endif
     if (!(*(const dvar_t **)imp_net_lanauthorize)->current.enabled && Sys_IsLANAddress(from)) {
         challenge->pingTime = svsLocal->time;
@@ -1361,7 +1370,11 @@ challenge_found:
     }
 
     if (svsLocal->authorizeAddress.ip[0] == 0 && svsLocal->authorizeAddress.type != NA_BAD) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        Com_Printf("Resolving authorization server %s\n", "cod2master.activision.com");
+#else
         Com_Printf("Resolving %s\n", "cod2master.activision.com");
+#endif
         if (!NET_StringToAdr("cod2master.activision.com", &svsLocal->authorizeAddress)) {
             Com_Printf("Couldn't resolve address\n");
             return;
@@ -1380,6 +1393,15 @@ challenge_found:
 #endif
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* CoD2x admits a player 5 s after the first request when the authorization
+       server is silent, unless the request comes from a master server. The
+       supplied hash is forwarded as sent. */
+    if (svsLocal->time - challenge->firstTime <= 5000 || SV_Cod2xIsMasterAddress(from)) {
+        SV_AuthorizeRequest(from, challenge->challenge, SV_Cmd_Argc() == 3 ? SV_Cmd_Argv(2) : NULL);
+        return;
+    }
+#else
 #if defined(COD2_X64) && COD2_IS_PATCH_13
     if (svsLocal->time - svsLocal->sv_lastTimeMasterServerCommunicated <= 1200000 ||
         svsLocal->time - challenge->firstTime <= 7000 || NET_CompareAdr(from, *SV_MasterAddress())) {
@@ -1388,16 +1410,13 @@ challenge_found:
 #endif
 #if COD2_IS_PATCH_13
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-        SV_AuthorizeRequest(from, challenge->challenge, SV_Cod2xChallengeDigest(from, challenge->challenge));
-#else
         SV_AuthorizeRequest(from, challenge->challenge, NULL);
-#endif
 #else
         SV_AuthorizeRequest(from, challenge->challenge);
 #endif
         return;
     }
+#endif
 
     Com_DPrintf("authorize server timed out\n");
     challenge->pingTime = svsLocal->time;
@@ -1557,6 +1576,92 @@ void SV_BanClient(client_t *cl)
     cl->lastPacketTime = svs.time;
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static int SV_Cod2xTempBanned(int guid)
+{
+    float duration = (*(const dvar_t **)imp_sv_kickBanTime)->current.value * 1000.0f;
+    for (int i = 0; i < 16; ++i) {
+        if (svs.tempBans[i].guid == guid && (float)(svs.time - svs.tempBans[i].banTime) <= duration)
+            return 1;
+    }
+    return 0;
+}
+
+/* The checks a CoD2x server makes before the stock connect, in its order:
+   protocol, CoD2x revision, HWID2, the challenge, then the HWID bans. The
+   GUID becomes the FNV-1a hash of HWID2. Returns 0 when the connection ends here. */
+static int SV_Cod2xAdmitConnect(netadr_t from, const char *userinfo)
+{
+    int version = atoi(Info_ValueForKey(userinfo, "protocol"));
+    int revision;
+    int hwid;
+    int slot = -1;
+
+    if (version != 0x76) {
+        const char *reason;
+        switch (version) {
+        case 115: reason = "Your version is 1.0\nYou need version 1.3 and CoD2x"; break;
+        case 116: reason = "Your version is 1.1\nYou need version 1.3 and CoD2x"; break;
+        case 117: reason = "Your version is 1.2\nYou need version 1.3 and CoD2x"; break;
+        default: reason = "Your CoD2 version is unknown"; break;
+        }
+        NET_OutOfBandPrint(NS_SERVER, from,
+                           va("error\nEXE_SERVER_IS_DIFFERENT_VER\x15%s%s\n", COD2X_RELEASE "\n\n", reason));
+        Com_DPrintf("    rejected connect from protocol version %i (should be %i)\n", version, 0x76);
+        return 0;
+    }
+
+    revision = atoi(Info_ValueForKey(userinfo, "protocol_cod2x"));
+    if (!revision) {
+        NET_OutOfBandPrint(NS_SERVER, from, "error\nEXE_SERVER_IS_DIFFERENT_VER\x15" COD2X_RELEASE
+                           "\n\nDownload CoD2x at:\nhttp://cod2x.me/\n");
+        Com_DPrintf("    rejected connect from non-CoD2x version\n");
+        return 0;
+    }
+    if (revision < COD2X_REVISION) {
+        NET_OutOfBandPrint(NS_SERVER, from, "error\nEXE_SERVER_IS_DIFFERENT_VER\x15" COD2X_RELEASE
+                           "\n\nUpdate CoD2x to version " COD2X_RELEASE " or above\n");
+        Com_DPrintf("    rejected connect from CoD2x version %i (should be %i)\n", revision, COD2X_REVISION);
+        return 0;
+    }
+
+    hwid = SV_Cod2xHwidGuid(Info_ValueForKey(userinfo, "cl_hwid2"));
+    if (!hwid) {
+        Com_Printf("rejected connection from client without HWID2\n");
+        NET_OutOfBandPrint(NS_SERVER, from, "error\n\x15You have invalid HWID2");
+        return 0;
+    }
+
+    if (!NET_IsLocalAddress(from)) {
+        int challenge = atoi(Info_ValueForKey(userinfo, "challenge"));
+        for (slot = 0; slot < 1024; ++slot) {
+            if (NET_CompareAdr(from, svs.challenges[slot].adr) && challenge == svs.challenges[slot].challenge)
+                break;
+        }
+        /* An unknown challenge gets no answer. */
+        if (slot == 1024)
+            return 0;
+        svs.challenges[slot].guid = hwid;
+    }
+
+    if (SV_IsBannedGuid(hwid)) {
+        Com_Printf("rejected connection from permanently banned HWID %i\n", hwid);
+        NET_OutOfBandPrint(NS_SERVER, from, "error\n\x15You are permanently banned from this server");
+        if (slot >= 0)
+            memset(&svs.challenges[slot], 0, sizeof(svs.challenges[slot]));
+        return 0;
+    }
+    if (SV_Cod2xTempBanned(hwid)) {
+        Com_Printf("rejected connection from temporarily banned HWID %i\n", hwid);
+        NET_OutOfBandPrint(NS_SERVER, from, "error\n\x15You are temporarily banned from this server");
+        if (slot >= 0)
+            memset(&svs.challenges[slot], 0, sizeof(svs.challenges[slot]));
+        return 0;
+    }
+    return 1;
+}
+#endif
+
 void SV_DirectConnect(netadr_t from)
 {
     char userinfo[1024];
@@ -1573,37 +1678,29 @@ void SV_DirectConnect(netadr_t from)
     const char *denied;
     client_t *cl;
     serverStatic_t *svs = (serverStatic_t *)imp_svs;
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    int cod2xGuid = 0;
-#endif
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Com_DPrintf("SV_DirectConnect(%s)\n", NET_AdrToString(from));
+#else
     Com_DPrintf("SV_DirectConnect()\n");
+#endif
 
     I_strncpyz(userinfo, SV_Cmd_Argv(1), sizeof(userinfo));
 
     version = atoi(Info_ValueForKey(userinfo, "protocol"));
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* Bots join through the stock checks, as on CoD2x servers. */
+    if (SV_Cod2xHostAdmission() && from.type != NA_BOT) {
+        if (!SV_Cod2xAdmitConnect(from, userinfo))
+            return;
+    } else
+#endif
     if (version != 0x76) {
         NET_OutOfBandPrint((netsrc_t)1, from, va("error\nEXE_SERVER_IS_DIFFERENT_VER\x15%s\n", "1.3"));
         Com_DPrintf("    rejected connect from protocol version %i (should be %i)\n", version, 0x76);
         return;
     }
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    if (SV_Cod2xHostAdmission() && from.type != NA_BOT) {
-        int extension = atoi(Info_ValueForKey(userinfo, "protocol_cod2x"));
-        if (extension < COD2X_REVISION) {
-            NET_OutOfBandPrint(NS_SERVER, from,
-                               "error\nEXE_SERVER_IS_DIFFERENT_VER\x15This server requires CoD2x revision 6 or newer\n");
-            return;
-        }
-        cod2xGuid = SV_Cod2xHwidGuid(Info_ValueForKey(userinfo, "cl_hwid2"));
-        if (!cod2xGuid) {
-            NET_OutOfBandPrint(NS_SERVER, from, "error\n\x15This server requires a 32-byte HWID2\n");
-            return;
-        }
-    }
-
-#endif
     challenge = atoi(Info_ValueForKey(userinfo, "challenge"));
     qport = atoi(Info_ValueForKey(userinfo, "qport"));
 
@@ -1681,32 +1778,6 @@ void SV_DirectConnect(netadr_t from)
             }
         }
     }
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-
-    if (cod2xGuid) {
-        int banned = SV_IsBannedGuid(cod2xGuid);
-        if (!banned) {
-            float duration = (*(const dvar_t **)imp_sv_kickBanTime)->current.value * 1000.0f;
-            for (int i = 0; i < 16; ++i) {
-                if (svs->tempBans[i].guid == cod2xGuid && (float)(svs->time - svs->tempBans[i].banTime) <= duration) {
-                    banned = 2;
-                    break;
-                }
-            }
-        }
-        if (banned) {
-            NET_OutOfBandPrint(NS_SERVER, from, banned == 1 ?
-                               "error\n\x15You are permanently banned from this server" :
-                               "error\n\x15You are temporarily banned from this server");
-            if (challengeIndex >= 0)
-                memset(&svs->challenges[challengeIndex], 0, sizeof(svs->challenges[challengeIndex]));
-            return;
-        }
-        guid = cod2xGuid;
-        if (challengeIndex >= 0)
-            svs->challenges[challengeIndex].guid = guid;
-    }
-#endif
 
     for (clientNum = 0, cl = svs->clients; clientNum < maxClients; ++clientNum, ++cl) {
         if (!cl->state) {
@@ -1760,7 +1831,7 @@ setup_client:
 
     I_strncpyz(cl->userinfo, userinfo, sizeof(cl->userinfo));
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    SV_Cod2xStoreClientIdentity(cl, cod2xGuid ? Info_ValueForKey(userinfo, "cl_hwid2") : NULL);
+    SV_Cod2xStoreClientIdentity(cl, from.type != NA_BOT ? Info_ValueForKey(userinfo, "cl_hwid2") : NULL);
 #endif
 
     denied = ClientConnect(clientNum, cl->scriptId);
@@ -2051,12 +2122,7 @@ void SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
         }
 
 #if COD2_IS_PATCH_13
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-        SV_AuthorizeRequest(cl->netchan.remoteAddress, cl->challenge,
-                            SV_Cod2xChallengeDigest(cl->netchan.remoteAddress, cl->challenge));
-#else
         SV_AuthorizeRequest(cl->netchan.remoteAddress, cl->challenge, NULL);
-#endif
 #else
         SV_AuthorizeRequest(cl->netchan.remoteAddress, cl->challenge);
 #endif

@@ -62,7 +62,10 @@ def main():
             start = client.index('typedef struct Cod2x_ChallengeIdentity')
             end = client.index('\nvoid SV_AuthorizeRequest', start)
             generated += client[start:end] + '\n'
-        for name in ('SV_AuthorizeRequest', 'SV_AuthorizeIpPacket', 'SV_GetChallenge', 'SV_UserinfoChanged', 'SV_DirectConnect'):
+        names = ['SV_AuthorizeRequest', 'SV_AuthorizeIpPacket', 'SV_GetChallenge', 'SV_UserinfoChanged']
+        if 'SV_Cod2xAdmitConnect' in client:
+            names += ['SV_Cod2xTempBanned', 'SV_Cod2xAdmitConnect']
+        for name in names + ['SV_DirectConnect']:
             generated += function(client, name)
         for name in ('SVC_Info', 'SVC_Status', 'SVC_GameCompleteStatus'):
             generated += function(main, name)

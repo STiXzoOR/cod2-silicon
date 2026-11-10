@@ -11,6 +11,7 @@
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "PC/qcommon/cod2x.h"
 #include "cod2x_udp_operations.h"
+#include "cod2x_server.h"
 #endif
 #include <string.h>
 #include <stdlib.h>
@@ -437,6 +438,7 @@ void SV_Init(void)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     Cod2x_ServerInit(com_dedicated->current.integer != 0);
     SV_Cod2xUdpInit();
+    SV_Cod2xServerInit();
 #endif
     SV_AddOperatorCommands();
 
