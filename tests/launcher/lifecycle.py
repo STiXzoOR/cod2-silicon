@@ -17,6 +17,10 @@ apphome.mkdir(parents=True, exist_ok=True)
 (apphome/'main').mkdir(exist_ok=True)
 (apphome/'main/config_mp.cfg').write_bytes(b'seta sensitivity "2"\r\n')
 (apphome/'launcher-settings.json').write_text(json.dumps({'advanced': 'net_port 29972'}))
+# Settings › Game › CoD2x files: a kept (synthetic) archive goes into the app home's main for CoD2x only.
+kept = b'synthetic CoD2x archive'
+(apphome/'cod2x').mkdir(exist_ok=True); (apphome/'cod2x/iw_CoD2x_01.iwd').write_bytes(kept)
+placed = apphome/'main/iw_CoD2x_01.iwd'
 env = {**os.environ,'CFFIXED_USER_HOME':str(home),'HOME':str(home),'COD2_SETUP_NONINTERACTIVE':'1','COD2_SETUP_CD_KEY':'000000000000000086D3','WS25_FIXTURE_HOME':str(apphome)}
 exitfile = apphome/'exit-fixture'
 exitfile.unlink(missing_ok=True)
@@ -34,6 +38,7 @@ with log.open('w') as stream:
         wait(lambda: 'fixture ready' in log.read_text(errors='replace'))
         wait(lambda: 'fixture link localhost:28963' in log.read_text(errors='replace'))
         child=int(re.search(r'fixture ready (\d+)',log.read_text()).group(1))
+        assert placed.read_bytes() == kept and not (game/'iw_CoD2x_01.iwd').exists(), 'CoD2x starts with the kept archive in the app home only'
         wait(lambda: (apphome/'fixture-arguments.json').is_file())
         arguments = json.loads((apphome/'fixture-arguments.json').read_text())
         assert 'sensitivity' not in arguments and 'com_maxfps' not in arguments
@@ -80,6 +85,7 @@ with log.open('w') as stream:
         wait(lambda: log.read_text(errors='replace').count('fixture ready') == 2 and (apphome/'fixture-arguments.json').is_file())
         wait(lambda: 'fixture link localhost:28964 password s3cret+x' in log.read_text(errors='replace'))
         stock = int(re.findall(r'fixture ready (\d+)', log.read_text())[-1])
+        assert not placed.exists() and (apphome/'cod2x/iw_CoD2x_01.iwd').read_bytes() == kept, 'Original 1.3 starts without the CoD2x archive'
         assert subprocess.check_output(['ps', '-o', 'comm=', '-p', str(stock)], text=True).strip().endswith('/MacOS/cod2_macos_stock')
         arguments = json.loads((apphome/'fixture-arguments.json').read_text())
         assert '+connect' not in arguments and not any('s3cret' in a or 'password' in a.lower() for a in arguments), arguments
@@ -93,7 +99,7 @@ with log.open('w') as stream:
         wait(lambda: log.read_text(errors='replace').count('returned to launcher') == 2)
         assert launcher.poll() is None
         assert 'seta cl_maxpackets "30"' in loadout.read_text() and 'seta cl_maxpackets "125"' not in loadout.read_text()
-        print('PASS: Original 1.3 starts cod2_macos_stock, takes a passworded cold link and a live link as Apple events (never in argv) and is reattached after a force-quit')
+        print('PASS: Original 1.3 starts cod2_macos_stock without the CoD2x archive, takes a passworded cold link and a live link as Apple events (never in argv) and is reattached after a force-quit')
         # Back to CoD2x: the 125 the original couldn't keep is in the loadout before the CoD2x engine starts,
         # and the original's own change (sensitivity 6) stays.
         launcher.terminate(); launcher.wait(timeout=5)
@@ -102,6 +108,7 @@ with log.open('w') as stream:
         launcher = subprocess.Popen([str(app/'Contents/MacOS/CoD2Launcher'), '--play'], stdout=stream, stderr=stream, env=env, cwd=out)
         wait(lambda: log.read_text(errors='replace').count('fixture ready') == 3)
         cod2x = int(re.findall(r'fixture ready (\d+)', log.read_text())[-1])
+        assert placed.read_bytes() == kept and sorted(p.name for p in game.iterdir()) == [f'iw_{i:02}.iwd' for i in range(16)]
         assert subprocess.check_output(['ps', '-o', 'comm=', '-p', str(cod2x)], text=True).strip().endswith('/MacOS/cod2_macos')
         text = loadout.read_text()
         assert 'seta cl_maxpackets "125"' in text and 'seta cl_maxpackets "30"' not in text and text.rstrip().endswith('seta sensitivity "6"'), text

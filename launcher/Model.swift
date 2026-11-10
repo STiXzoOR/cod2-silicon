@@ -56,6 +56,10 @@ struct MediaEntry: Identifiable {
     private(set) var installedEngines: Set<GameEngine>
     /// True right after Save, until the next change.
     @Published var settingsSaved = false
+    /// Settings › Game › CoD2x files: CoD2x's menus and icons, kept in the app home (CoD2xFiles).
+    @Published var cod2xFilesInstalled = false
+    @Published var cod2xFilesBusy = false
+    @Published var cod2xFilesMessage = CoD2xFiles.Message.notInstalled
     @Published var library = LauncherLibrary()
     @Published var servers: [GameServer] = []
     @Published var selectedServer: String? {
@@ -170,6 +174,7 @@ struct MediaEntry: Identifiable {
         studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
         if let data = try? Data(contentsOf: home.appendingPathComponent("launcher-library.json")), let value = try? JSONDecoder().decode(LauncherLibrary.self, from: data) { library = value; servers = value.cache }
         dataPath = LauncherFindData(nil) ?? ""
+        refreshCoD2xFiles()
         keyVerified = KeyStore.hasValidKey(at: preferences)
         approximate = !LauncherVerifyShaders()
         readPlayerName()
@@ -374,6 +379,42 @@ struct MediaEntry: Identifiable {
             if let attached = studio.session, attached !== configStudio { try attached.setDialect(dialect) }
         } catch { notice = error.localizedDescription }
         studio.setDialect(dialect)
+    }
+    /// What the app home keeps of CoD2x's files now.
+    func refreshCoD2xFiles() {
+        guard !snapshot, !cod2xFilesBusy else { return }
+        let status = CoD2xFiles.status(home: home, dataPath: dataPath)
+        cod2xFilesInstalled = status.installed; cod2xFilesMessage = status.message
+    }
+    /// Only when the player asks: CoD2x's pinned release from GitHub, of which only the archive is kept.
+    func downloadCoD2xFiles() {
+        getCoD2xFiles(CoD2xFiles.Message.downloading) { home in try CoD2xFiles.install(release: try await CoD2xFiles.download(), home: home) }
+    }
+    /// Without a download: a Windows game folder with CoD2x installed, read and never changed.
+    func chooseCoD2xFolder() {
+        guard !snapshot, !cod2xFilesBusy else { return }
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true; panel.canChooseFiles = false; panel.treatsFilePackagesAsDirectories = true
+        panel.message = "Choose a Windows Call of Duty 2 folder that has CoD2x installed."
+        guard panel.runModal() == .OK, let folder = panel.url else { return }
+        getCoD2xFiles(CoD2xFiles.Message.copying) { home in try CoD2xFiles.install(folder: folder, home: home) }
+    }
+    private func getCoD2xFiles(_ progress: String, _ work: @escaping @Sendable (URL) async throws -> Void) {
+        guard !snapshot, !cod2xFilesBusy else { return }
+        cod2xFilesBusy = true; cod2xFilesMessage = progress
+        let home = self.home
+        Task {
+            var failure: String?
+            do { try await Task.detached(priority: .userInitiated) { try await work(home) }.value }
+            catch { failure = CoD2xFiles.message(error) }
+            cod2xFilesBusy = false
+            refreshCoD2xFiles()
+            if let failure { cod2xFilesMessage = failure }
+        }
+    }
+    func removeCoD2xFiles() {
+        guard !snapshot, !cod2xFilesBusy else { return }
+        do { try CoD2xFiles.remove(home: home); refreshCoD2xFiles() } catch { cod2xFilesMessage = CoD2xFiles.message(error) }
     }
     /// The answer to `engineRequest`: CoD2x is saved as the engine (other unsaved changes stay unsaved),
     /// then the join goes ahead.
@@ -613,6 +654,8 @@ struct MediaEntry: Identifiable {
             let gameEngine = chosenEngine
             let executable = gameEngine.executable(in: gameBundle)
             guard FileManager.default.isExecutableFile(atPath: executable.path) else { throw LauncherError(message: "The game helper is missing. Rebuild or reinstall this app.") }
+            // CoD2x's menus and icons for a CoD2x game, none for the original 1.3. Missing files never stop a game.
+            _ = CoD2xFiles.prepare(for: gameEngine, home: home, dataPath: dataPath)
             // Values the other engine couldn't keep go back before this one reads the loadout.
             if let configStudio {
                 studio.loadCatalogNow()
@@ -837,6 +880,9 @@ struct MediaEntry: Identifiable {
         case "settings": page = .settings
         case "settings-original": page = .settings; settings.engine = .original; savedSettings = settings
         case "settings-original-missing": page = .settings; installedEngines = [.cod2x]
+        case "settings-cod2x-installed": page = .settings; cod2xFilesInstalled = true; cod2xFilesMessage = CoD2xFiles.Message.installed
+        case "settings-cod2x-downloading": page = .settings; cod2xFilesBusy = true; cod2xFilesMessage = CoD2xFiles.Message.downloading
+        case "settings-cod2x-error": page = .settings; cod2xFilesMessage = CoD2xFiles.message(CoD2xFiles.Failure.noCoD2x)
         case "library-demos": page = .library
         case "library-screenshots": page = .library; libraryTab = .screenshots
             media = ["toujane-dusk.jpg", "carentan-rooftops.jpg", "leningrad-snow.jpg"].enumerated().map { index, name in

@@ -55,7 +55,7 @@ struct SettingsView: View {
         .scrollIndicators(.automatic)
         .ignoresSafeArea(.container, edges: .top)
         .background(WindowOriginReader(origin: $origin))
-        .onAppear { customFPS = !FrameCap.isPreset(model.settings.fps) }
+        .onAppear { customFPS = !FrameCap.isPreset(model.settings.fps); model.refreshCoD2xFiles() }
         .modifier(SaveToolbar(saved: model.settingsSaved, save: model.saveSettings))
     }
 
@@ -91,6 +91,29 @@ struct SettingsView: View {
                 .disabled(!model.originalAvailable)
                 .accessibilityHint(model.originalAvailable ? "" : "Original 1.3 isn’t included in this build")
             }
+            cod2xFilesRow
+            SettingsNote(text: model.chosenEngine == .original ? "Only CoD2x uses these files. Choose CoD2x above to change them."
+                : "CoD2x’s own menus and icons. Downloaded from the CoD2x project’s release on GitHub (2.6\u{00A0}MB) and kept on this Mac.")
+        }
+    }
+
+    /// CoD2x's menus and icons, which the app doesn't ship: fetched or copied only when the player asks.
+    private var cod2xFilesRow: some View {
+        let original = model.chosenEngine == .original
+        return SettingsRow("CoD2x files", detail: model.cod2xFilesMessage) {
+            HStack(spacing: 10) {
+                if model.cod2xFilesBusy { ProgressView().controlSize(.small).accessibilityLabel(model.cod2xFilesMessage) }
+                if model.cod2xFilesInstalled {
+                    Button("Remove", action: model.removeCoD2xFiles).glassAction()
+                } else {
+                    Button("Choose Folder…", action: model.chooseCoD2xFolder).glassAction()
+                        .help("Copy them from a Windows Call of Duty 2 folder that has CoD2x installed")
+                    Button("Download", action: model.downloadCoD2xFiles).glassAction()
+                }
+            }
+            .fixedSize()
+            .disabled(original || model.cod2xFilesBusy)
+            .accessibilityHint(original ? "Only CoD2x uses these files" : "")
         }
     }
 
