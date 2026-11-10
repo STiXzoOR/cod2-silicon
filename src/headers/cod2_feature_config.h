@@ -52,6 +52,15 @@
   #define COD2_VERSION_DATE  "Apr 18 2006"
 #endif
 
+/* The compile date each shipped 1.3 binary prints in its startup banner. */
+#if defined(_WIN32)
+  #define COD2_BANNER_DATE "May  1 2006"
+#elif defined(__linux__)
+  #define COD2_BANNER_DATE "Jun 23 2006"
+#else
+  #define COD2_BANNER_DATE "Aug 30 2006"
+#endif
+
 #if COD2_IS_PATCH_13
   #define MAX_GAMESTATE_CHARS      0x20000
   #define MAX_MSGLEN               0x20000

@@ -11,9 +11,11 @@ extern dvar_t *r_rendererInUse;
 #if COD2_APPLE_SDK
 #define LOADMAP_FUNNY_LUMP_OFFSET "\x15LoadMap: funny lump offset in %s"
 #define LOADMAP_FUNNY_LUMP_SIZE "\x15LoadMap: funny lump size in %s"
+#define LOADMAP_LUMP_PAST_END "\x15LoadMap: lump extends past end of file in %s"
 #else
 #define LOADMAP_FUNNY_LUMP_OFFSET "LoadMap: funny lump offset in %s"
 #define LOADMAP_FUNNY_LUMP_SIZE "LoadMap: funny lump size in %s"
+#define LOADMAP_LUMP_PAST_END "LoadMap: lump extends past end of file in %s"
 #endif
 
 extern GfxWorld s_world;
@@ -75,7 +77,7 @@ static int R_ValidateLumpRaw(const byte *header, const byte *fileBase, int fileS
     int count;
 
     if (lumpFileOfs + lumpSize > fileSize)
-        R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
+        R_Error(1, LOADMAP_LUMP_PAST_END, s_world.name);
 #if defined(COD2_X64)
     if (lumpFileOfs <= 3)
         R_Error(1, LOADMAP_FUNNY_LUMP_OFFSET, s_world.name);

@@ -153,7 +153,11 @@ void __attribute_regparm__(1) CG_RegisterGraphics(const char *mapname)
         if (str[0] == '\0')
             break;
         if (!CG_LoadShellShockDvars(str)) {
+#if COD2_APPLE_SDK
+            Com_Error(ERR_DROP, "\x15" "couldn't register shell shock '%s' -- see console\n", str);
+#else
             Com_Error(ERR_DROP, "couldn't register shell shock '%s' -- see console\n", str);
+#endif
         }
         CG_SetShellShockParmsFromDvars(&cgs->shellshockParms[i]);
     }
@@ -165,7 +169,11 @@ void __attribute_regparm__(1) CG_RegisterGraphics(const char *mapname)
 
     cgs->media.fx = CG_RegisterImpactEffects(mapname);
     if (!cgs->media.fx) {
+#if COD2_APPLE_SDK
+        Com_Error(ERR_DROP, "\x15" "Error reading CSV files in the fx directory to identify impact effects");
+#else
         Com_Error(ERR_DROP, "Error reading CSV files in the fx directory to identify impact effects");
+#endif
     }
     cgs->media.fxNoBloodFleshHit = (EffectTemplate *)(FX_RegisterEffect("fx/impacts/flesh_hit_noblood.efx"));
 

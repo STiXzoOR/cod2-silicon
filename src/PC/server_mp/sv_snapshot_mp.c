@@ -17,6 +17,9 @@ extern const dvar_t *sv_maxRate;
 extern const dvar_t *sv_maxclients;
 extern const dvar_t *sv_showAverageBPS;
 extern const dvar_t *showpackets;
+#if COD2_APPLE_SDK
+extern const dvar_t *sv_debugRate;
+#endif
 extern const dvar_t *sv_fps;
 extern server_t sv;
 extern serverStatic_t svs;
@@ -1162,7 +1165,13 @@ void SV_SendMessageToClient(msg_t *msg, client_t *client)
 
     rateMsec = (messageSize * 5 * 5 * 5 * 8 + 0xbb80) / rate;
 
-    if ((*(dvar_t **)(showpackets_dvar))->current.enabled != 0) {
+#if COD2_APPLE_SDK
+    /* Mac 1.3 (0x19591b) prints this for sv_debugRate, not showpackets. */
+    if (sv_debugRate->current.enabled != 0)
+#else
+    if ((*(dvar_t **)(showpackets_dvar))->current.enabled != 0)
+#endif
+    {
         Com_Printf("It would take %ims to send %i bytes to client %s (rate %i)\n",
                    rateMsec, messageSize, client->name, client->rate);
     }
@@ -2252,7 +2261,12 @@ void SV_SendClientMessages(void)
 
             rateMsec = (msgBytes + 0xbb80) / rate;
 
-            if (showpackets->current.enabled != 0) {
+#if COD2_APPLE_SDK
+            if (sv_debugRate->current.enabled != 0) /* Mac 1.3 (0x197471) */
+#else
+            if (showpackets->current.enabled != 0)
+#endif
+            {
                 Com_Printf("It would take %ims to send %i bytes to client %s (rate %i)\n",
                            rateMsec, messageSize, c->name, c->rate);
             }

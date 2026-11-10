@@ -186,7 +186,15 @@ void CL_SystemInfoChanged(void)
 
     FS_PureServerSetReferencedIwds(s, Info_ValueForKey(systemInfo, "sv_referencedIwdNames"));
 
-    if (!com_dedicated->current.integer) {
+#if COD2_APPLE_SDK
+    /* Mac 1.3 (0x1d5472) tests whether a server runs here, so a host does
+     * not apply its own server's values a second time. */
+    extern const dvar_t *com_sv_running;
+    if (!com_sv_running->current.enabled)
+#else
+    if (!com_dedicated->current.integer)
+#endif
+    {
 
         s = systemInfo;
         while (s) {

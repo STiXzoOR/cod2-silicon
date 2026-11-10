@@ -2590,7 +2590,11 @@ void Com_Init_Try_Block_Function(char *commandLine)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     Com_Printf("%s — native macOS arm64 client; protocols 118 / 120\n", COD2X_VERSION);
 #else
+#if COD2_APPLE_SDK && COD2_IS_PATCH_13
+    Com_Printf("%s %s build %s %s\n", "CoD2 MP", COD2_VERSION_SHORT, "MacOSXS-i386", COD2_BANNER_DATE);
+#else
     Com_Printf("%s %s build %s %s\n", "CoD2 MP", COD2_VERSION_SHORT, "MacOSXS-i386", COD2_VERSION_DATE);
+#endif
 #endif
 
     memset(com_pushedEvents, 0, sizeof(com_pushedEvents));
