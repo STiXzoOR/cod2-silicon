@@ -7,12 +7,22 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Changed
 
+- The Direct3D 7 renderer (`r_rendererPreference dx7`) draws correctly. With
+  the game's shaders installed the world came out pink and teal, because its
+  lightmaps were built for the shader path; trees and bushes also had red and
+  blue swapped. Replayed demos now match the Windows game on that path about
+  as closely as the default renderer does.
+- Automatic texture detail follows Windows 1.3's memory tiers. On the Direct3D
+  7 path this means full-resolution textures, where Mac 1.3 halved them. The
+  default renderer already used full resolution on Apple silicon and looks
+  the same.
 - The original shaders no longer need a Mac copy of the game. Setup builds
   them in a few seconds from the shader sources in your own game files, the
   way the Windows game does when it starts. They follow Windows: flags and
   other animated surfaces move as they do there, where the Mac 1.3 shaders
   used an approximation. An existing shader cache is rebuilt once on the next
   launch. A Mac copy still works as a fallback.
+||||||| 1f3d9e68
 - The CoD2x machine ID (`cl_hwid2`) is now computed the way CoD2x computes it:
   the same list of hardware details, hashed the same way. Only the hash is
   sent. This changes the ID once for existing Mac players, so a CoD2x server
