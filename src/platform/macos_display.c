@@ -89,6 +89,31 @@ size_t sDisplayIndex;
 /* Native consumers use SDL modes and GL queries, not i386 CDisplayInfo bytes. */
 void *sDisplayList[3];
 
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+/* CoD2x src/mss32/hwid.cpp: no machine identity, no game. Its two Windows
+   message boxes, shown with SDL before the game window exists. */
+int Sys_Cod2xHwidRetry(unsigned int code, const char *error)
+{
+    char text[1024];
+    int choice = 0;
+    const SDL_MessageBoxButtonData buttons[2] = {
+        {SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Retry"},
+        {SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel"},
+    };
+    const SDL_MessageBoxData question = {
+        SDL_MESSAGEBOX_INFORMATION, NULL, "Retry or Exit",
+        "Do you want to retry or exit?\n\nIf the problem persists, please restart your computer and try again.",
+        2, buttons, NULL};
+    snprintf(text, sizeof(text), "Error while generating HWID.\n\nUnable to load WMI properties.\nError: 0x%08X %s",
+             code, error ? error : "");
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Fatal Error", text, NULL);
+    if (SDL_ShowMessageBox(&question, &choice) != 0 || choice != 1)
+        return 0;
+    SDL_Delay(500);
+    return 1;
+}
+#endif
+
 int MacDisplay_Initialize(void)
 {
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)

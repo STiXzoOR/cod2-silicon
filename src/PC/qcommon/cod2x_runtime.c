@@ -4,6 +4,7 @@
 #if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
 #include "cod2x_features.h"
 #include "cod2x_policy.h"
+#include <stdlib.h>
 #endif
 #if defined(COD2_X64) && COD2_X64 && defined(DEDICATED)
 #include "cod2x_pose.h"
@@ -136,8 +137,19 @@ void Cod2x_Init(void)
 #endif
     cod2x_revision = Dvar_RegisterInt("protocol_cod2x", COD2X_REVISION, COD2X_REVISION, COD2X_REVISION, 0x42);
     Dvar_RegisterString("cl_cod2x_version", COD2X_VERSION, 0x40);
+#if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+    /* CoD2x src/mss32/hwid.cpp:1028-1041: without an identity the game asks to
+       retry or exits. */
+    while (!Cod2x_ReadMachineHwid(cod2x_hwid)) {
+        unsigned int code;
+        const char *error = Cod2x_HwidError(&code);
+        if (!Sys_Cod2xHwidRetry(code, error))
+            exit(1);
+    }
+#else
     if (!Cod2x_ReadMachineHwid(cod2x_hwid))
         Com_Printf("CoD2x: machine identity unavailable; CoD2x servers will reject this client.\n");
+#endif
     /* USERINFO | NOWRITE, as in CoD2x mss32/hwid.cpp: only the engine sets them. */
 #if defined(COD2_X64) && COD2_X64
     Dvar_RegisterInt("cl_hwid", Cod2x_ShortHwid(), (int)0x80000000u, 0x7fffffff, 0x12);

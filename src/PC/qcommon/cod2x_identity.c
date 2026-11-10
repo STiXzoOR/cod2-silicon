@@ -77,6 +77,37 @@ static void Cod2x_BuildMD5(const char *data, unsigned int length, char hex[33])
 }
 
 static int cod2x_shortHwid;
+static unsigned int cod2x_hwidCode;
+static char cod2x_hwidError[512];
+
+const char *Cod2x_HwidError(unsigned int *code)
+{
+    *code = cod2x_hwidCode;
+    return cod2x_hwidError;
+}
+
+/* CoD2x's text when 3 or more values are missing; the names are the ones its WMI
+   read uses, on every platform. */
+static void Cod2x_HwidMissing(char value[COD2X_MACHINE_VALUES][COD2X_MACHINE_TEXT], int failed, char *text,
+                              size_t size)
+{
+    static const char *const names[COD2X_GPU_NAME] = {
+        "Win32_BIOS.Manufacturer", "Win32_BIOS.SerialNumber", "Win32_Processor.Name",
+        "Win32_Processor.ProcessorId", "Win32_BaseBoard.Manufacturer", "Win32_BaseBoard.SerialNumber",
+        "Win32_ComputerSystemProduct.UUID", "Disc Model", "Disc Serial Number"};
+    char list[512] = {0};
+    int i, missing = failed;
+    for (i = 0; i < COD2X_GPU_NAME; ++i) {
+        if (!value[i][0]) {
+            ++missing;
+            strncat(list, names[i], sizeof(list) - strlen(list) - 1);
+            strncat(list, " ", sizeof(list) - strlen(list) - 1);
+        }
+    }
+    if (failed)
+        strncat(list, "Video Controller ", sizeof(list) - strlen(list) - 1);
+    snprintf(text, size, "Too many missing WMI properties (%d/%d). Missing: %s", missing, 7, list);
+}
 
 int Cod2x_HwidShortFromMachine(char value[COD2X_MACHINE_VALUES][COD2X_MACHINE_TEXT])
 {
@@ -195,8 +226,9 @@ extern void Com_Printf(const char *, ...);
 typedef struct {
     volatile LONG refs;
     int ok, failed;
+    HRESULT code;
     char id[33];
-    char error[160];
+    char error[512];
     char value[COD2X_MACHINE_VALUES][COD2X_MACHINE_TEXT];
 } Cod2xMachine;
 
@@ -407,6 +439,7 @@ static int Cod2x_WmiMachine(Cod2xMachine *machine)
     HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     int i, ok = 0;
     if (FAILED(hr)) {
+        machine->code = hr;
         snprintf(machine->error, sizeof(machine->error), "COM failed (0x%08lX)", (unsigned long)hr);
         return 0;
     }
@@ -420,6 +453,7 @@ static int Cod2x_WmiMachine(Cod2xMachine *machine)
     if (SUCCEEDED(hr))
         hr = Cod2x_WmiBlanket((IUnknown *)services);
     if (FAILED(hr)) {
+        machine->code = hr;
         snprintf(machine->error, sizeof(machine->error), "WMI unavailable (0x%08lX)", (unsigned long)hr);
         goto done;
     }
@@ -430,13 +464,20 @@ static int Cod2x_WmiMachine(Cod2xMachine *machine)
             IWbemClassObject_Release(row);
         }
         if (FAILED(hr)) {
-            snprintf(machine->error, sizeof(machine->error), "WMI %s failed (0x%08lX)", reads[i].label,
-                     (unsigned long)hr);
+            machine->code = hr;
+            if (hr == HRESULT_FROM_WIN32(WAIT_TIMEOUT))
+                snprintf(machine->error, sizeof(machine->error),
+                         "Timeout while reading WMI property '%s'. Please check your system's WMI service.",
+                         reads[i].label);
+            else
+                snprintf(machine->error, sizeof(machine->error), "Failed to read WMI property '%s' (Error: 0x%08X).",
+                         reads[i].label, (unsigned int)hr);
             goto done;
         }
     }
     hr = Cod2x_WmiSystemDisk(services, machine->value[COD2X_DISK_MODEL], machine->value[COD2X_DISK_SERIAL]);
     if (FAILED(hr)) {
+        machine->code = hr;
         snprintf(machine->error, sizeof(machine->error), "WMI system disk failed (0x%08lX)", (unsigned long)hr);
         goto done;
     }
@@ -465,8 +506,10 @@ static DWORD WINAPI Cod2x_MachineThread(LPVOID argument)
     Cod2xMachine *machine = argument;
     if (Cod2x_WmiMachine(machine)) {
         machine->ok = Cod2x_HwidFromMachine(machine->value, machine->failed, machine->id);
-        if (!machine->ok)
-            snprintf(machine->error, sizeof(machine->error), "3 or more WMI values are empty");
+        if (!machine->ok) {
+            machine->code = E_FAIL;
+            Cod2x_HwidMissing(machine->value, machine->failed, machine->error, sizeof(machine->error));
+        }
     }
     Cod2x_ReleaseMachine(machine);
     return 0;
@@ -624,14 +667,18 @@ static int Cod2x_MachineHwid(char id[33])
         free(machine);
         return 0;
     }
-    if (WaitForSingleObject(thread, COD2X_WMI_TOTAL_MS) != WAIT_OBJECT_0)
-        Com_Printf("CoD2x: machine identity: WMI did not answer in %d seconds.\n", COD2X_WMI_TOTAL_MS / 1000);
-    else if (machine->ok) {
+    if (WaitForSingleObject(thread, COD2X_WMI_TOTAL_MS) != WAIT_OBJECT_0) {
+        cod2x_hwidCode = (unsigned int)HRESULT_FROM_WIN32(WAIT_TIMEOUT);
+        snprintf(cod2x_hwidError, sizeof(cod2x_hwidError),
+                 "Timeout while reading WMI properties. Please check your system's WMI service.");
+    } else if (machine->ok) {
         memcpy(id, machine->id, 33);
         Cod2x_HwidRegistry(machine->value, id);
         ok = 1;
-    } else
-        Com_Printf("CoD2x: machine identity: %s.\n", machine->error);
+    } else {
+        cod2x_hwidCode = (unsigned int)machine->code;
+        snprintf(cod2x_hwidError, sizeof(cod2x_hwidError), "%s", machine->error);
+    }
     CloseHandle(thread);
     Cod2x_ReleaseMachine(machine);
     return ok;
@@ -980,6 +1027,10 @@ static int Cod2x_MachineHwid(char id[33])
     int ok;
     memset(value, 0, sizeof(value));
     ok = Cod2x_ReadMachine(value) && Cod2x_HwidFromMachine(value, 0, id);
+    if (!ok) {
+        cod2x_hwidCode = 0x80004005u; /* E_FAIL, as CoD2x reports it */
+        Cod2x_HwidMissing(value, 0, cod2x_hwidError, sizeof(cod2x_hwidError));
+    }
     memset(value, 0, sizeof(value));
     return ok;
 }
