@@ -2409,7 +2409,10 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 #endif
 
     if (I_stricmp(cmd, (const char *)"v") == 0) {
+        /* CoD2x drops voice packets: its client never sets voice up (Voice_Init). */
+#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
         CL_VoicePacket(msg);
+#endif
         result = 1;
         goto finish;
     }

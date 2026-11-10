@@ -114,6 +114,13 @@ Bool Voice_Init(void)
     int i;
     int level;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* CoD2x turns voice chat off: its client returns at once from the Windows
+       function that opens and levels the microphone (0x4b8dd0), so voice is never
+       set up, and it drops incoming voice (CL_ConnectionlessPacket). */
+    return 0;
+#endif
+
     winvoice_mic_mute = Dvar_RegisterBool("winvoice_mic_mute", 1, 0x1001);
     winvoice_mic_reclevel = Dvar_RegisterFloat("winvoice_mic_reclevel", 65535.0f, 0.0f, 65535.0f, 0x1001);
     winvoice_save_voice = Dvar_RegisterBool("winvoice_save_voice", 0, 0x1001);
