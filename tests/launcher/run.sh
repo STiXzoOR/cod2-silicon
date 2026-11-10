@@ -38,7 +38,7 @@ fi
 echo "PASS: every button style comes from launcher/Theme.swift"
 
 # Keep the material rendering path typechecked for accessibility and explicit fallback captures.
-sdk=$(/usr/bin/xcrun --show-sdk-path)
+sdk=$(/usr/bin/xcrun --sdk macosx --show-sdk-path)
 views=""
 for file in Core Presentation MatchSummaries ConfigDocument ConfigProfiles ConfigHistory ConfigStudioSession ConfigCatalog ConfigRules ConfigReadyCheck \
     ConfigCheckup ConfigBindings InputDevices ConfigChains ConfigImport ConfigImportSafety WindowsProfiles ConfigImportSession \

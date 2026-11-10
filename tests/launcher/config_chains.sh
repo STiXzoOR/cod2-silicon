@@ -3,7 +3,7 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/cod2-config-chains.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT INT TERM
-sdk=$(/usr/bin/xcrun --show-sdk-path)
+sdk=$(/usr/bin/xcrun --sdk macosx --show-sdk-path)
 optimization=-O
 if [ "${CONFIG_CHAINS_DEBUG:-0}" = 1 ]; then optimization=-Onone; fi
 for unit in NativeSetup NativeShaders URL; do

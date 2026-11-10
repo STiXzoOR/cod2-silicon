@@ -3,7 +3,7 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/cod2-import-session.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT INT TERM
-sdk=$(/usr/bin/xcrun --show-sdk-path)
+sdk=$(/usr/bin/xcrun --sdk macosx --show-sdk-path)
 taskpolicy -b nice -n 19 bash "$root/scripts/build-launcher.sh" "$scratch/core" --test
 taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 \
     -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
