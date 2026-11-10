@@ -55,14 +55,10 @@ names = ['GScr_MapRestart', 'GScr_LoadMap', 'GScr_ExitLevel',
          'GScr_LoadScriptFunction', 'GScr_LoadGameTypeScript', 'Scr_RandomInt']
 implemented = 'GScr_Cod2xBeforeMapChange' in game
 prefix = '#define STOP_VM_CALLBACK_IMPLEMENTED ' + str(int(implemented)) + '\n'
-queue_result = implemented and not function(game, 'GScr_Cod2xQueueExitLevel').lstrip().startswith('void ')
-prefix += '#define STOP_VM_QUEUE_RETURNS_RESULT ' + str(int(queue_result)) + '\n'
 (out / 'stop_vm_features.h').write_text(prefix)
-if 'GScr_Cod2xBeforeMapChange' in game:
-    prefix += '\n'.join(re.findall(r'^static .*\bcod2xStop\w*[^\n]*;', game, re.M)) + '\n'
-    names = ['GScr_Cod2xResetMapChange', 'GScr_Cod2xCallStopGameType', 'GScr_Cod2xBeforeMapChange',
-             'GScr_Cod2xConsumeMapChange', 'GScr_Cod2xQueueMapChange', 'GScr_Cod2xQueueCommand', 'GScr_Cod2xQueueExitLevel',
-             *names]
+if implemented:
+    prefix += '\n'.join(re.findall(r'^static .*\bcod2x(?:Stop|AllowOne)\w*[^\n]*;', game, re.M)) + '\n'
+    names = ['GScr_Cod2xAllowOneMapChange', 'GScr_Cod2xBeforeMapChange', *names]
 (out / 'stop_vm_game.h').write_text(prefix + ''.join(function(game, n) for n in names))
 errors = ''
 for path, name in [('src/PC/qcommon/common.c', 'Com_Error'),

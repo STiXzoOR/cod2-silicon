@@ -1,7 +1,11 @@
 #include "cod2_feature_config.h"
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* A dedicated server registers the controls and applies them to its own
+   controllers, as CoD2x servers do; only the debug drawing is client side. */
 #include "cod2x_pose.h"
+#if !defined(DEDICATED)
 #include "cod2x_features.h"
+#endif
 #include <float.h>
 #include <stdio.h>
 #include <string.h>
@@ -22,7 +26,11 @@ static const dvar_t *debug, *eyePosition, *offsetEnable, *neutral, *offsets[8];
 static int Cod2x_PoseCheats(void)
 {
     const dvar_t *cheats = Dvar_FindVar("sv_cheats");
-    return Cod2x_FeaturesDemo() || (cheats && cheats->current.enabled);
+#if !defined(DEDICATED)
+    if (Cod2x_FeaturesDemo())
+        return 1;
+#endif
+    return cheats && cheats->current.enabled;
 }
 
 void Cod2x_PoseInit(void)
@@ -73,6 +81,9 @@ void Cod2x_PoseOffsets(vec3_t goals[8])
 
 void Cod2x_PoseDiagnostics(const entityState_t *entity, const clientInfo_t *info, int fromServer, int frametime)
 {
+#if defined(DEDICATED)
+    (void)entity, (void)info, (void)fromServer, (void)frametime;
+#else
     static const vec4_t color = {1, .5f, .5f, 1};
     vec3_t origin, start, end;
     char text[256];
@@ -119,5 +130,6 @@ void Cod2x_PoseDiagnostics(const entityState_t *entity, const clientInfo_t *info
         origin[2] -= 5;
         CL_AddDebugString(origin, color, .25f, text, fromServer);
     }
+#endif
 }
 #endif

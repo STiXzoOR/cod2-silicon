@@ -167,6 +167,35 @@ void SV_LinkEntity(gentity_t *ent) { assert(ent == &entities[1]); ++linkCalls; }
 void SV_UnlinkEntity(gentity_t *ent) { assert(ent == &entities[1]); ++unlinkCalls; }
 gentity_t *G_TempEntity(const vec_t *origin, int event) { (void)origin; (void)event; abort(); }
 const byte DirToByte(const vec_t *dir) { (void)dir; return 0; }
+#ifdef G_COD2X_DAMAGE_WALLBANG
+/* sv_wallbang 0: each bullet is fired once and stops where it hits. */
+void G_Cod2xWallbangFire(G_Cod2xBulletFire fire, const gentity_t *source, gentity_s (*attacker)[16], vec_t *start,
+                         vec_t *end, float spread, const weaponParms *wp, const gentity_t *weaponEnt, int gametime)
+{
+    fire(source, attacker, start, end, spread, 0, wp, weaponEnt, gametime);
+}
+void G_Cod2xWallbangStart(const vec_t *start) { (void)start; }
+int G_Cod2xWallbangWalls(void) { return 0; }
+void G_Cod2xWallbangBehind(const vec_t *start, const vec_t *hitPos) { (void)start; (void)hitPos; }
+void G_Cod2xWallbangPenetrate(G_Cod2xBulletFire fire, const gentity_t *source, gentity_t *attacker,
+                              const vec_t *start, const vec_t *end, const vec_t *hitPos, const trace_t *tr,
+                              float spread, int recursion, const weaponParms *wp, const gentity_t *weaponEnt,
+                              int gametime)
+{
+    (void)fire; (void)source; (void)attacker; (void)start; (void)end; (void)hitPos; (void)tr;
+    (void)spread; (void)recursion; (void)wp; (void)weaponEnt; (void)gametime;
+}
+int G_Cod2xWallbangDamage(const weaponParms *wp, const vec_t *hitPos, float spread)
+{
+    (void)wp; (void)hitPos; (void)spread;
+    abort();
+}
+void G_Cod2xWallbangHit(gentity_t *attacker, const gentity_t *target, const trace_t *tr, const vec_t *hitPos,
+                        int damage, int healthBefore)
+{
+    (void)attacker; (void)target; (void)tr; (void)hitPos; (void)damage; (void)healthBefore;
+}
+#endif
 int Dvar_GetInt(const char *name) { assert(!strcmp(name, "scr_friendlyfire")); return 0; }
 qboolean OnSameTeam(gentity_t *a, gentity_t *b) { (void)a; (void)b; return 1; }
 void Com_DPrintf(const char *fmt, ...) { (void)fmt; abort(); }

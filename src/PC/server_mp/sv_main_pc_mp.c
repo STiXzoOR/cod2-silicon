@@ -2,6 +2,7 @@
 #include "imports.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "cod2x_udp_operations.h"
+#include "cod2x_server.h"
 #endif
 #include <stddef.h>
 #include <string.h>
@@ -216,7 +217,8 @@ const netadr_t *SV_MasterAddress(void)
 
 void SV_MasterGameCompleteStatus(void)
 {
-#if COD2_APPLE_SDK && defined(DEDICATED)
+    /* A CoD2x server sends this to Activision only, so it takes the stock path. */
+#if COD2_APPLE_SDK && defined(DEDICATED) && !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
     extern void MacServer_MasterGameCompleteStatus(void);
     MacServer_MasterGameCompleteStatus();
 #else
@@ -247,7 +249,9 @@ void SV_MasterGameCompleteStatus(void)
 
 void SV_MasterHeartbeat(const char *hbname)
 {
-#if COD2_APPLE_SDK && defined(DEDICATED)
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    SV_Cod2xMasterHeartbeat(hbname);
+#elif COD2_APPLE_SDK && defined(DEDICATED)
     extern void MacServer_MasterHeartbeat(const char *);
     MacServer_MasterHeartbeat(hbname);
 #else

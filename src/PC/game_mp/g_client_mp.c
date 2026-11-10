@@ -792,7 +792,12 @@ void ClientUserinfoChanged(int clientNum)
                     if (*src == '^') {
                         if (src[1] == 0)
                             break;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+                        /* CoD2x keeps every code, so "^0" (black) stays in the name. */
+                        {
+#else
                         if (ColorIndex((unsigned char)src[1])) {
+#endif
                             if (len > 29)
                                 break;
                             *dst++ = '^';
@@ -852,7 +857,12 @@ void ClientUserinfoChanged(int clientNum)
                 if (*src == '^') {
                     if (src[1] == 0)
                         break;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+                    /* CoD2x keeps every code, so "^0" (black) stays in the name. */
+                    {
+#else
                     if (ColorIndex((unsigned char)src[1])) {
+#endif
                         if (len > 29)
                             break;
                         *dst++ = '^';

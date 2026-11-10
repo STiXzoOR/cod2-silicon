@@ -6,6 +6,7 @@
 #include <string.h>
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "PC/server_mp/cod2x_stop_gametype.h"
+#include "PC/server_mp/cod2x_server.h"
 #endif
 /* dvar globals */
 extern const dvar_t *loc_warningsAsErrors;
@@ -21,20 +22,7 @@ extern void Scr_AddExecThread(scr_func_t handle, unsigned int paramcount);
 extern int Scr_IsSystemActive(int inst);
 extern scrVmPub_t scrVmPub;
 extern void RemoveRefToValue(int type, VariableUnion value);
-extern void SL_AddRefToString(unsigned int value);
-extern void SL_RemoveRefToString(unsigned int value);
-extern cmd_t *cmd_text;
-extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 static scr_func_t cod2xStopGameType;
-static qboolean cod2xStopActive;
-static const char *cod2xStopQueuedSource;
-static const char *cod2xStopQueuedCommand;
-static char cod2xStopQueuedTarget[4096];
-static char cod2xStopQueuedMarker[40];
-static unsigned long long cod2xStopSequence;
-static unsigned int cod2xStopMapString;
-static int cod2xStopQueuedFinished;
-static int cod2xStopQueuedPersist;
 #endif
 extern BuiltinMethod ScriptEnt_GetMethod(const char **pName);
 extern BuiltinMethod HudElem_GetMethod(const char **pName);
@@ -722,119 +710,46 @@ void Scr_LoadLevel(void)
     return;
 }
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static qboolean cod2xAllowOneMapChange;
 
-void GScr_Cod2xResetMapChange(void)
+void GScr_Cod2xAllowOneMapChange(void)
 {
-    cod2xStopActive = 0;
-    cod2xStopQueuedSource = NULL;
-    cod2xStopQueuedMarker[0] = 0;
-    if (cod2xStopMapString) {
-        SL_RemoveRefToString(cod2xStopMapString);
-        cod2xStopMapString = 0;
-    }
+    cod2xAllowOneMapChange = 1;
 }
 
-static qboolean GScr_Cod2xCallStopGameType(qboolean fromScript, qboolean complete, qboolean shutdown, const char *source)
-{
-    qboolean allow = 1;
-
-    /* Com_ErrorCleanup aborts the VM before shutdown after a longjmp. */
-    if (!Scr_IsSystemActive(1)) {
-        GScr_Cod2xResetMapChange();
-        return 1;
-    }
-    /* A callback cannot start another transition while its VM is executing. */
-    if (cod2xStopActive)
-        return 0;
-    if (!cod2xStopGameType)
-        return 1;
-
-    cod2xStopActive = 1;
-    Scr_AddString(source);
-    Scr_AddBool(shutdown);
-    Scr_AddBool(complete);
-    Scr_AddBool(fromScript);
-    Scr_AddExecThread(cod2xStopGameType, 4);
-    if (Scr_GetType(0) == 6 && Scr_GetInt(0) == 0)
-        allow = 0;
-
-    /* The reconstructed VM has no exported Scr_ClearOutParams entry point. */
-    while (scrVmPub.outparamcount) {
-        RemoveRefToValue(scrVmPub.top->type, scrVmPub.top->u);
-        --scrVmPub.top;
-        --scrVmPub.outparamcount;
-    }
-    cod2xStopActive = 0;
-    if (!allow && !shutdown)
-        Com_Printf("Map change is disabled (prevented by script)\n");
-    return allow || shutdown;
-}
-
+/* fromScript is set when map(), map_restart() or exitLevel() asked for the
+   change, complete unless they asked to keep persistent variables. A return
+   of the integer 0 blocks it; a shutdown can't be blocked. */
 qboolean GScr_Cod2xBeforeMapChange(qboolean shutdown, const char *source)
 {
-    return GScr_Cod2xCallStopGameType(level.finished != 0, level.savepersist == 0, shutdown, source);
-}
+    qboolean allow = 1;
+    qboolean fromScript = level.finished > 0;
+    qboolean complete = !level.savepersist;
 
-qboolean GScr_Cod2xConsumeMapChange(const char *source, const char *command, const char *target, const char *marker)
-{
-    qboolean approved;
-    if (!cod2xStopQueuedSource || strcmp(marker, cod2xStopQueuedMarker))
-        return 0;
-    approved = !strcmp(source, cod2xStopQueuedSource) &&
-        !strcmp(command, cod2xStopQueuedCommand) && !strcmp(target, cod2xStopQueuedTarget) &&
-        level.finished == cod2xStopQueuedFinished && level.savepersist == cod2xStopQueuedPersist;
-    /* Presenting the marker consumes it even when validation/form later fails. */
-    cod2xStopQueuedSource = NULL;
-    cod2xStopQueuedMarker[0] = 0;
-    return approved;
-}
+    if (cod2xStopGameType && Scr_IsSystemActive(1)) {
+        Com_DPrintf("------- StopGameType(fromScript: %d, bComplete: %d, shutdown: %d, source: %s) -------\n",
+                    fromScript, complete, shutdown, source);
+        Scr_AddString(source);
+        Scr_AddBool(shutdown);
+        Scr_AddBool(complete);
+        Scr_AddBool(fromScript);
+        Scr_AddExecThread(cod2xStopGameType, 4);
+        if (Scr_GetType(0) == 6 && Scr_GetInt(0) == 0)
+            allow = 0;
+        /* The reconstructed VM has no exported Scr_ClearOutParams entry point. */
+        while (scrVmPub.outparamcount) {
+            RemoveRefToValue(scrVmPub.top->type, scrVmPub.top->u);
+            --scrVmPub.top;
+            --scrVmPub.outparamcount;
+        }
+        Com_DPrintf("------- StopGameType returned allowMapChange: %d -------\n", allow);
+    }
 
-static qboolean GScr_Cod2xQueueMapChange(int finished, int persist, const char *source, const char *target)
-{
-    if (!GScr_Cod2xCallStopGameType(1, persist == 0, 0, source))
-        return 0;
-    cod2xStopQueuedSource = source;
-    cod2xStopQueuedCommand = finished == 1 ? "fast_restart" : finished == 2 ? "map" : "map_rotate";
-    I_strncpyz(cod2xStopQueuedTarget, target, sizeof(cod2xStopQueuedTarget));
-    if (!++cod2xStopSequence)
-        ++cod2xStopSequence;
-    Com_sprintf(cod2xStopQueuedMarker, sizeof(cod2xStopQueuedMarker), "__cod2x_stop_%llu", cod2xStopSequence);
-    cod2xStopQueuedFinished = finished;
-    cod2xStopQueuedPersist = persist;
-    return 1;
-}
-
-static qboolean GScr_Cod2xQueueCommand(void)
-{
-    int before = cmd_text->cmdsize;
-    int length;
-    const char *text;
-    if (cod2xStopQueuedTarget[0])
-        text = va("%s %s %s\n", cod2xStopQueuedCommand, cod2xStopQueuedTarget, cod2xStopQueuedMarker);
-    else
-        text = va("%s %s\n", cod2xStopQueuedCommand, cod2xStopQueuedMarker);
-    length = (int)strlen(text);
-    Cbuf_ExecuteText(2, text);
-    if (cmd_text->cmdsize != before + length) {
-        cod2xStopQueuedSource = NULL;
-        cod2xStopQueuedMarker[0] = 0;
+    if (!allow && !shutdown && !cod2xAllowOneMapChange) {
+        Com_Printf("Map change is disabled (prevented by script)\n");
         return 0;
     }
-    level.finished = cod2xStopQueuedFinished;
-    level.savepersist = cod2xStopQueuedPersist;
-    return 1;
-}
-
-qboolean GScr_Cod2xQueueExitLevel(void)
-{
-    if (cod2xStopQueuedSource && !strcmp(cod2xStopQueuedSource, "map_rotate")) {
-        if (!GScr_Cod2xQueueCommand())
-            return 0;
-        /* Script match-end effects require a successfully queued transition. */
-        SV_MatchEnd();
-    } else {
-        Cbuf_ExecuteText(2, "map_rotate\n");
-    }
+    cod2xAllowOneMapChange = 0;
     return 1;
 }
 #endif
@@ -844,7 +759,6 @@ void GScr_FreeScripts(void)
     int classnum;
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     cod2xStopGameType = 0;
-    GScr_Cod2xResetMapChange();
 #endif
     for (classnum = 0; classnum < 4; classnum++) {
         Scr_RemoveClassMap(classnum);
@@ -1284,6 +1198,33 @@ unsigned int GScr_WorldEntNumber(void)
 #endif
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* obituary(victim, attacker, weapon, meansOfDeath[, icon1 .. icon4]): up to four
+   precached shaders after the weapon, for CoD2x clients' kill feed. With icons,
+   the weapon goes in s.weapon (also for a headshot or melee) and the shader
+   indexes, 8 bits each, in s.dmgFlags. Without icons the event stays stock. */
+static void GScr_Cod2xObituaryIcons(gentity_t *ent)
+{
+    unsigned int params = Scr_GetNumParam();
+    int icons = 0;
+    int count = 0;
+    for (unsigned int i = 4; i < params && count < 4; ++i) {
+        const char *shader;
+        if (Scr_GetType(i) == 0)
+            continue;
+        shader = Scr_GetString(i);
+        if (!shader[0])
+            continue;
+        icons |= (G_ShaderIndex(shader) & 0xff) << (8 * count);
+        ++count;
+    }
+    if (!icons)
+        return;
+    ent->s.weapon = G_GetWeaponIndexForName(Scr_GetString(2)) & 0x7f;
+    ent->s.dmgFlags = icons;
+}
+#endif
+
 void GScr_Obituary(void)
 {
     int iWeaponNum;
@@ -1296,6 +1237,9 @@ void GScr_Obituary(void)
     pOtherEnt = Scr_GetEntity(0);
 
     pEnt = G_TempEntity(*(vec3_t *)imp_vec3_origin, 0xc6);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    GScr_Cod2xObituaryIcons(pEnt);
+#endif
     pEnt->s.otherEntityNum = pOtherEnt->s.number;
 
     if (Scr_GetType(1) == 1 && Scr_GetPointerType(1) == 0x15)
@@ -2360,24 +2304,13 @@ void GScr_MapRestart(void)
 {
     level_locals_t *lvl = &level;
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    if (cod2xStopActive)
-        return;
-#endif
     if (lvl->finished)
         Scr_Error(lvl->finished == 1 ? "map_restart already called" : "exitlevel already called");
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    if (!GScr_Cod2xQueueMapChange(1, Scr_GetNumParam() ? Scr_GetInt(0) : 0, "fast_restart", ""))
-        return;
-    GScr_Cod2xQueueCommand();
-    return;
-#else
     lvl->finished = 1;
     lvl->savepersist = 0;
     if (Scr_GetNumParam())
         lvl->savepersist = Scr_GetInt(0);
-#endif
     Cbuf_ExecuteText(2, "fast_restart\n");
 }
 
@@ -2386,10 +2319,6 @@ void GScr_LoadMap(void)
     const char *mapname;
     level_locals_t *lvl;
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    if (cod2xStopActive)
-        return;
-#endif
     if (!Scr_GetNumParam())
         return;
 
@@ -2401,56 +2330,27 @@ void GScr_LoadMap(void)
     if (lvl->finished)
         Scr_Error(lvl->finished == 2 ? "map already called" : "exitlevel already called");
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    {
-        unsigned int mapString = Scr_GetConstString(0);
-        int persist = Scr_GetNumParam() > 1 ? Scr_GetInt(1) : 0;
-        qboolean allow;
-        /* Adding callback arguments releases the builtin's string argument. */
-        SL_AddRefToString(mapString);
-        cod2xStopMapString = mapString;
-        allow = GScr_Cod2xQueueMapChange(2, persist, "map", mapname);
-        if (allow)
-            GScr_Cod2xQueueCommand();
-        if (cod2xStopMapString)
-            SL_RemoveRefToString(cod2xStopMapString);
-        cod2xStopMapString = 0;
-        return;
-    }
-#else
     lvl->finished = 2;
     lvl->savepersist = 0;
     if (Scr_GetNumParam() > 1)
         lvl->savepersist = Scr_GetInt(1);
     Cbuf_ExecuteText(2, va("map %s\n", mapname));
     return;
-#endif
 }
 
 void GScr_ExitLevel(void)
 {
     level_locals_t *lvl = &level;
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    if (cod2xStopActive)
-        return;
-#endif
     if (lvl->finished)
         Scr_Error(lvl->finished == 1 ? "map_restart already called" : "exitlevel already called");
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    if (!GScr_Cod2xQueueMapChange(3, Scr_GetNumParam() ? Scr_GetInt(0) : 0, "map_rotate", ""))
-        return;
-#else
     lvl->finished = 3;
     lvl->savepersist = 0;
     if (Scr_GetNumParam())
         lvl->savepersist = Scr_GetInt(0);
-#endif
 
-#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
     SV_MatchEnd();
-#endif
     ExitLevel();
 }
 
@@ -2833,6 +2733,16 @@ static unsigned int Scr_XenonStub(void)
 }
 #endif
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* stripColorCodes(text): the text without colour and style codes. */
+static void GScr_Cod2xStripColorCodes(void)
+{
+    char clean[1024];
+    SV_Cod2xStripTextCodes(Scr_GetString(0), clean, sizeof(clean));
+    Scr_AddString(clean);
+}
+#endif
+
 BuiltinFunction Scr_GetFunction(const char **pName, int *type)
 {
     int i;
@@ -2857,6 +2767,13 @@ BuiltinFunction Scr_GetFunction(const char **pName, int *type)
     }
 #endif
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (I_stricmp(*pName, "stripColorCodes") == 0) {
+        *pName = "stripColorCodes";
+        *type = 0;
+        return (BuiltinFunction)GScr_Cod2xStripColorCodes;
+    }
+#endif
     return (BuiltinFunction)0;
 }
 
@@ -3648,7 +3565,16 @@ unsigned int Scr_ConstructMessageString(int firstParmIndex, int lastParmIndex, c
             if (!ent->client)
                 Scr_ParamError(parmIndex, "Entity is not a player");
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            {
+                /* The name without colour codes, as CoD2x sends it. */
+                char cleanName[64];
+                SV_Cod2xStripTextCodes(ent->client->sess.cs.name, cleanName, sizeof(cleanName));
+                token = va("%s^7", cleanName);
+            }
+#else
             token = va("%s^7", ent->client->sess.cs.name);
+#endif
             tokenLen = strlen(token);
             GScr_CheckMessageLength(parmIndex, errorContext, stringLimit, stringLen, tokenLen);
         } else {
@@ -4877,7 +4803,6 @@ void GScr_LoadGameTypeScript(void)
     g_scr_data.gametype.playerkilled = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_PlayerKilled", 1);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     cod2xStopGameType = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_StopGameType", 0);
-    GScr_Cod2xResetMapChange();
 #endif
 }
 

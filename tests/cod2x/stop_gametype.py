@@ -77,13 +77,11 @@ for text, names, header in [
 ]:
     prefix = ''
     if implemented and header == 'stop_game_source.h':
-        prefix = '\n'.join(re.findall(r'^static .*\bcod2xStop\w*[^\n]*;', text, re.M)) + '\n'
-        names = ['GScr_Cod2xResetMapChange', 'GScr_Cod2xCallStopGameType', 'GScr_Cod2xBeforeMapChange',
-                 'GScr_Cod2xConsumeMapChange', 'GScr_Cod2xQueueMapChange', 'GScr_Cod2xQueueCommand',
-                 'GScr_Cod2xQueueExitLevel', *names]
+        prefix = '\n'.join(re.findall(r'^static .*\bcod2x(?:Stop|AllowOne)\w*[^\n]*;', text, re.M)) + '\n'
+        names = ['GScr_Cod2xAllowOneMapChange', 'GScr_Cod2xBeforeMapChange', *names]
     if implemented and header == 'stop_commands_source.h':
-        prefix = '\n'.join(re.findall(r'^static .*\bcod2xMapChangeDepth[^\n]*;', text, re.M)) + '\n'
-        names = ['SV_Cod2xBeginMapChangeApproved', 'SV_Cod2xBeginMapChange', 'SV_Cod2xEndMapChange', *names]
+        prefix = '\n'.join(re.findall(r'^static .*\bcod2xMapChangeAsked[^\n]*;', text, re.M)) + '\n'
+        names = ['SV_Cod2xBeforeMapChange', 'SV_Cod2xMapChangeFrameDone', *names]
     if header == 'stop_server_source.h' and 'SV_Cod2xUdpInit();' in text:
         for policy_header in ('cod2x_udp_operations.h', 'cod2x_udp_operations_impl.h'):
             (out / policy_header).write_bytes(source('src/PC/server_mp/' + policy_header))

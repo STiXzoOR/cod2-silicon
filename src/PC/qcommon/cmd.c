@@ -54,7 +54,7 @@ void Cmd_Wait_f(void)
 {
 #if defined(COD2_CODX) && COD2_CODX
     if (Cod2x_Competitive()) {
-        Com_Printf("Wait command is disabled by this server.\n");
+        Com_Printf("Wait command is disabled by the server via competitive settings.\n");
         return;
     }
 #endif

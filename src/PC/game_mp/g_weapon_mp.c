@@ -1,6 +1,9 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "g_cod2x_wallbang.h"
+#endif
 /* dvar globals */
 extern const dvar_t *g_antilag;
 extern const dvar_t *player_meleeHeight;
@@ -371,6 +374,11 @@ static void Bullet_Fire_Extended(const gentity_t *source, gentity_s (*attacker)[
 
     weapDef = wp->weapDef;
     attackerEnt = (gentity_t *)attacker;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* A new bullet starts with full power and no walls passed. */
+    if (recursion == 0)
+        G_Cod2xWallbangStart(start);
+#endif
 
     if (weapDef->bRifleBullet) {
         dflags = 0x20;
@@ -384,12 +392,20 @@ static void Bullet_Fire_Extended(const gentity_t *source, gentity_s (*attacker)[
 
     if (weapDef->armorPiercing)
         dflags |= 2;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* Script can tell a bullet that came through a wall by this flag. */
+    if (G_Cod2xWallbangWalls() > 0)
+        dflags |= G_COD2X_DAMAGE_WALLBANG;
+#endif
 
     G_LocationalTrace(&tr, start, end, source->s.number, 0x2802831, priorityMap);
 
     endpos[0] = start[0] + (end[0] - start[0]) * tr.fraction;
     endpos[1] = start[1] + (end[1] - start[1]) * tr.fraction;
     endpos[2] = start[2] + (end[2] - start[2]) * tr.fraction;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    G_Cod2xWallbangBehind(start, endpos);
+#endif
 
     G_CheckHitTriggerDamage(attackerEnt, start, endpos, weapDef->damage, iMOD);
 
@@ -442,8 +458,19 @@ static void Bullet_Fire_Extended(const gentity_t *source, gentity_s (*attacker)[
         return;
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* sv_wallbang: a rifle bullet may go on through what it hit. */
+    if (!traceEnt->takedamage) {
+        G_Cod2xWallbangPenetrate(Bullet_Fire_Extended, source, attackerEnt, start, end, endpos, &tr,
+                                 damageMultiplier, recursion, wp, weaponEnt, gametime);
+        return;
+    }
+    if (traceEnt == attackerEnt)
+        return;
+#else
     if (!traceEnt->takedamage || traceEnt == attackerEnt)
         return;
+#endif
 
     distance = sqrtf((start[0] - endpos[0]) * (start[0] - endpos[0]) +
                      (start[1] - endpos[1]) * (start[1] - endpos[1]) +
@@ -469,9 +496,28 @@ static void Bullet_Fire_Extended(const gentity_t *source, gentity_s (*attacker)[
         damage = weapDef->minDamage;
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        int healthBefore;
+
+        damage = (int)((float)damage * damageMultiplier);
+        /* Behind a wall the range counts from where the bullet was fired and the
+           damage falls with the power left; nothing is done at zero. */
+        if (G_Cod2xWallbangWalls() > 0) {
+            damage = G_Cod2xWallbangDamage(wp, endpos, damageMultiplier);
+            if (damage <= 0)
+                return;
+        }
+        healthBefore = traceEnt->health;
+        G_Damage(traceEnt, attackerEnt, attackerEnt, (const vec_t *)wp, endpos, damage, dflags, iMOD,
+                 (hitLocation_t)tr.partGroup, level.time - gametime);
+        G_Cod2xWallbangHit(attackerEnt, traceEnt, &tr, endpos, damage, healthBefore);
+    }
+#else
     G_Damage(traceEnt, attackerEnt, attackerEnt, (const vec_t *)wp, endpos,
              (int)((float)damage * damageMultiplier), dflags, iMOD,
              (hitLocation_t)tr.partGroup, level.time - gametime);
+#endif
 
     if (traceEnt->client && (dflags & 0x20)) {
         if (Dvar_GetInt("scr_friendlyfire") || !OnSameTeam(traceEnt, attackerEnt)) {
@@ -652,15 +698,25 @@ void Bullet_Fire(gentity_s (*attacker)[16], float spread, weaponParms *wp, genti
             else
 #endif
             Bullet_Endpos(spread, end, wp, wp->weapDef->fMinDamageRange);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            G_Cod2xWallbangFire(Bullet_Fire_Extended, (gentity_t *)weaponEnt, attacker, start, end, 1.0f, wp,
+                                (gentity_t *)weaponEnt, gametime);
+#else
             Bullet_Fire_Extended((gentity_t *)weaponEnt, attacker, start, end,
                                  1.0f, 0, wp, (gentity_t *)weaponEnt,
                                  gametime);
+#endif
         }
     } else {
         Bullet_Endpos(spread, end, wp, 8192.0f);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        G_Cod2xWallbangFire(Bullet_Fire_Extended, (gentity_t *)weaponEnt, attacker, wp->muzzleTrace, end, 1.0f, wp,
+                            (gentity_t *)weaponEnt, gametime);
+#else
         Bullet_Fire_Extended((gentity_t *)weaponEnt, attacker, wp->muzzleTrace,
                              end, 1.0f, 0, wp, (gentity_t *)weaponEnt,
                              gametime);
+#endif
     }
 
     if (antilag && antilag->current.enabled) {

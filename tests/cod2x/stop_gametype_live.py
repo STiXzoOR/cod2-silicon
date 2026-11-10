@@ -40,12 +40,6 @@ CodeCallback_StopGameType(fromScript, complete, shutdown, source)
 {
     println("WS81_STOP:" + fromScript + ":" + complete + ":" + shutdown + ":" + source);
     if (getcvarint("ws81_error")) randomint(0);
-    if (fromScript && getcvarint("ws81_fifo"))
-    {
-        setcvar("ws81_fifo", "0");
-        setcvar("ws81_allow", "0");
-        return 1;
-    }
     return getcvarint("ws81_allow");
 }
 WS81_DriveTransitions()
@@ -69,7 +63,6 @@ launch_command = [str(binary), '+set', 'fs_basepath', '"' + str(args.data.resolv
            '+set', 'dedicated', '1', '+set', 'logfile', '2', '+set', 'sv_punkbuster', '0',
            '+set', 'developer', '1', '+set', 'developer_script', '1',
            '+set', 'net_ip', '127.0.0.1', '+set', 'net_port', str(args.port),
-           '+set', 'sv_master1', '""', '+set', 'sv_master2', '""',
            '+set', 'g_gametype', 'dm', '+set', 'ws81_allow', '0',
            '+set', 'ws81_error', '0', '+map', args.map]
 (out / 'run.json').write_text(json.dumps({'command': launch_command, 'binary_sha256':
@@ -109,44 +102,47 @@ with (out / 'console.log').open('w') as log:
         assert console().count('------ Server Initialization ------') == initializations
         receipts.append({'command': command, 'callback': marker, 'veto_kept_level': True})
 
+    def reload_allowed(command, marker):
+        # Each ask runs in a later server frame than the one before.
+        time.sleep(0.2)
+        before = console()
+        ready = before.count('WS81_READY')
+        count = before.count(marker)
+        send('set ws81_allow 1')
+        time.sleep(0.2)
+        send(command)
+        wait_for(lambda text: text.count('WS81_READY') == ready + 1, 'allowed ' + command)
+        assert console().count(marker) == count + 1, marker
+        send('set ws81_allow 0')
+        time.sleep(0.2)
+        receipts.append({'command': command, 'callback': marker, 'allowed': True})
+
     try:
         wait_for(lambda text: 'WS81_READY' in text, 'initial real script startup')
+        # Console commands: asked when they run, not from a script.
         for command, source in [('map_restart', 'map_restart'), ('fast_restart', 'fast_restart'),
                                 ('devmap ' + args.map, 'map'), ('map ' + args.map, 'map')]:
             check_veto(command, 'WS81_STOP:0:1:0:' + source)
+            time.sleep(0.2)
         send('set sv_mapRotation "map ' + args.map + '"')
         check_veto('map_rotate', 'WS81_STOP:0:1:0:map_rotate')
-        for request, source, complete in [('restart', 'fast_restart', 0), ('restart', 'fast_restart', 0),
-                                          ('map', 'map', 1), ('rotate', 'map_rotate', 0)]:
+        # Script requests: asked when the queued command runs. A block leaves the
+        # level finished, so the next console map is still "from script".
+        for request, source, complete in [('restart', 'fast_restart', 0), ('map', 'map', 1),
+                                          ('rotate', 'map_rotate', 0)]:
+            time.sleep(0.2)
             check_veto('set ws81_request ' + request, f'WS81_STOP:1:{complete}:0:' + source)
-        before = console()
-        ready = before.count('WS81_READY')
-        stops = before.count('WS81_STOP:0:1:0:map')
-        send('set ws81_allow 1')
-        send('map ' + args.map)
-        wait_for(lambda text: text.count('WS81_READY') == ready + 1, 'allowed map loading')
-        assert console().count('WS81_STOP:0:1:0:map') == stops + 1
-        receipts.append({'command': 'map ' + args.map, 'allowed': True, 'callback_count': 1})
-        before = console()
-        ready = before.count('WS81_READY')
-        stops = len(re.findall(r'WS81_STOP:[01]:1:0:map(?:\n|\r)', before))
-        initializations = before.count('------ Server Initialization ------')
-        send('set ws81_fifo 1; set ws81_request map; wait 10; map ' + args.other_map)
-        wait_for(lambda text: text.count('WS81_READY') == ready + 1, 'approved script map after earlier waited map veto')
-        current = console()
-        assert len(re.findall(r'WS81_STOP:[01]:1:0:map(?:\n|\r)', current)) == stops + 2
-        assert current.count('------ Server Initialization ------') == initializations + 1
-        assert ('Server: ' + args.other_map + '\n') not in current[len(before):]
-        receipts.append({'command': 'wait 10; map B followed by script map A', 'earlier_map_vetoed': True,
-                         'approved_map_loaded': True, 'callback_count': 2})
+            reload_allowed('map ' + args.map, f'WS81_STOP:1:{complete}:0:map')
         before = console()
         ready = before.count('WS81_READY')
         stops = before.count('WS81_STOP:1:0:0:fast_restart')
         send('set ws81_allow 1')
+        time.sleep(0.2)
         send('set ws81_request restart')
         wait_for(lambda text: text.count('WS81_READY') == ready + 1, 'allowed persistent script restart')
         assert console().count('WS81_STOP:1:0:0:fast_restart') == stops + 1
         receipts.append({'command': 'script map_restart(true)', 'allowed': True, 'callback_count': 1})
+        time.sleep(0.2)
         before = console()
         shutdowns = before.count('----- Server Shutdown -----')
         ready = before.count('WS81_READY')
@@ -168,7 +164,7 @@ with (out / 'console.log').open('w') as log:
         check_veto('map ' + args.map, 'WS81_STOP:0:1:0:map')
         receipts.append({'command': 'StopGameType randomint(0), recover, fresh map and veto',
                          'server_torn_down': True, 'sv_running_cleared': True, 'fresh_engine_callback_checked': True})
-        send('set ws81_allow 0')
+        time.sleep(0.2)
         send('quit')
         process.wait(timeout=20)
         assert process.returncode == 0

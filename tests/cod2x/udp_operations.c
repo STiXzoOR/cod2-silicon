@@ -38,6 +38,14 @@ void Com_DPrintf(const char *format, ...) { (void)format; }
 void Cod2x_ServerInit(int dedicated) { (void)dedicated; }
 int Cod2x_ServerGameVersion(void) { return 0; }
 void SV_AddOperatorCommands(void) {}
+void SV_Cod2xServerInit(void) {}
+void SV_Cod2xIpResponse(netadr_t from) { (void)from; }
+void SV_Cod2xShowPacket(int sent, netadr_t address, const void *text, int length, int size)
+{
+    (void)sent; (void)address; (void)text; (void)length; (void)size;
+}
+void SV_Cod2xMapChangeFrameDone(void) {}
+void SV_UpdateLastTimeMasterServerCommunicated(netadr_t from) { (void)from; }
 void SV_Cmd_TokenizeString(const char *s)
 {
     snprintf(tokens, sizeof(tokens), "%s", s);

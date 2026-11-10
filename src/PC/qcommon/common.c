@@ -2370,6 +2370,12 @@ void Com_Frame(void)
         Com_ErrorCleanup();
         Com_StartHunkUsers();
     }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        extern void SV_Cod2xZpamFrame(void);
+        SV_Cod2xZpamFrame();
+    }
+#endif
 
     {
         /* per-frame state-hash hook; a no-op unless SYSDIFF_STATEHASH is set in the
@@ -2545,6 +2551,72 @@ static void Com_Freeze_f(void)
     }
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static const char *com_cod2xCommandLine;
+static char com_cod2xCommandLineCopy[1024];
+
+/* The command line as CoD2x splits it: '+', a new line or ',' starts a command,
+   and the text before the first one is dropped. Quotes protect separators, \"
+   inside them is kept as text, a quote closes at " +", and a line quoted whole
+   loses its outer quotes. Empty commands are skipped. */
+static void Com_Cod2xParseCommandLine(char *commandLine)
+{
+    int quoted = 0;
+    size_t length;
+    char *p;
+
+    com_numConsoleLines = 0;
+    com_cod2xCommandLine = commandLine;
+    if (strlen(commandLine) >= sizeof(com_cod2xCommandLineCopy)) {
+        Com_Error(1, "Command line too long: %s", commandLine);
+        return;
+    }
+    strcpy(com_cod2xCommandLineCopy, commandLine);
+    p = com_cod2xCommandLineCopy;
+    length = strlen(p);
+    if (length && p[0] == '"' && p[length - 1] == '"') {
+        p[length - 1] = '\0';
+        ++p;
+    }
+
+    for (; *p; ++p) {
+        if (quoted && p[0] == '\\' && p[1] == '"') {
+            ++p;
+            continue;
+        }
+        if (quoted && p[0] == ' ' && p[1] == '+')
+            quoted = 0;
+        else if (*p == '"')
+            quoted = !quoted;
+        else if (quoted)
+            continue;
+        if (*p != '+' && *p != '\n' && *p != ',')
+            continue;
+        if (com_numConsoleLines == 32)
+            return;
+        quoted = 0;
+        if (p[1] && p[1] != '+' && p[1] != '\n' && p[1] != ',')
+            com_consoleLines[com_numConsoleLines++] = p + 1;
+        *p = '\0';
+    }
+}
+
+/* cmdLine: the command line as given, then each command it ran. */
+static void Com_Cod2xCommandLine_f(void)
+{
+    Com_Printf("Command line: \n");
+    Com_Printf("%s\n", com_cod2xCommandLine ? com_cod2xCommandLine : "");
+    for (int i = 0; i < com_numConsoleLines; ++i) {
+        if (i)
+            Com_Printf("\n");
+        Com_Printf("  '%s'", com_consoleLines[i]);
+    }
+    if (!com_numConsoleLines)
+        Com_Printf("''");
+    Com_Printf("\n");
+}
+#endif
+
 void Com_Init_Try_Block_Function(char *commandLine)
 {
 #if !COD2_APPLE_SDK || !defined(DEDICATED)
@@ -2588,7 +2660,8 @@ void Com_Init_Try_Block_Function(char *commandLine)
     int i;
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    Com_Printf("%s — native macOS arm64 client; protocols 118 / 120\n", COD2X_VERSION);
+    Com_Printf("Command line: '%s'\n", commandLine);
+    Com_Printf("%s %s build %s %s\n", "CoD2 MP", COD2X_RELEASE, "macOS-arm64", __DATE__ " " __TIME__);
 #else
 #if COD2_APPLE_SDK && COD2_IS_PATCH_13
     Com_Printf("%s %s build %s %s\n", "CoD2 MP", COD2_VERSION_SHORT, "MacOSXS-i386", COD2_BANNER_DATE);
@@ -2601,6 +2674,10 @@ void Com_Init_Try_Block_Function(char *commandLine)
     com_pushedEventsHead = 0;
     com_pushedEventsTail = 0;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    (void)p;
+    Com_Cod2xParseCommandLine(commandLine);
+#else
     com_consoleLines[0] = commandLine;
     com_numConsoleLines = 1;
     p = commandLine;
@@ -2616,6 +2693,7 @@ void Com_Init_Try_Block_Function(char *commandLine)
         }
         p++;
     }
+#endif
 
     Swap_Init();
     Cbuf_Init();
@@ -2645,7 +2723,7 @@ void Com_Init_Try_Block_Function(char *commandLine)
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     com_maxfps = Dvar_RegisterInt("com_maxfps", 250, 0, 1000, 0x1001);
-    Dvar_RegisterBool("com_writeConfig", 1, 0x1001);
+    Dvar_RegisterBool("com_writeConfig", 1, 0x1);
 #else
     com_maxfps = Dvar_RegisterInt("com_maxfps", 85, 0, 1000, 0x1001);
 #endif
@@ -2719,10 +2797,14 @@ void Com_Init_Try_Block_Function(char *commandLine)
     Cmd_AddCommand("quit", Com_Quit_f);
     Cmd_AddCommand("writeconfig", Com_WriteConfig_f);
     Cmd_AddCommand("writedefaults", Com_WriteDefaults_f);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Cmd_AddCommand("cmdLine", Com_Cod2xCommandLine_f);
+#endif
 
     {
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-        char *s = va("%s build %s macOS-arm64", COD2X_VERSION, getBuildNumber());
+        /* CoD2x's version text, without its author's name in the build field. */
+        char *s = va("%s %s build %s %s", "CoD2 MP", COD2X_RELEASE, __DATE__ " " __TIME__, "macOS-arm64");
 #else
         char *s = va("%s %s build %s %s", "CoD2 MP", COD2_VERSION_SHORT, getBuildNumber(), "MacOSXS-i386");
 #endif
@@ -2870,6 +2952,11 @@ void Com_Init_Try_Block_Function(char *commandLine)
     ;
 #endif
     }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Com_Printf("-----------------------------------\n");
+    Com_Printf("CoD2x %s loaded\n", COD2X_RELEASE);
+    Com_Printf("-----------------------------------\n");
+#endif
 }
 
 void Com_Init(char *commandLine)
