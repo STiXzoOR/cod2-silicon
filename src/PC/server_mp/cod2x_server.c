@@ -23,11 +23,12 @@ extern const dvar_t *fs_homepath;
 extern char fs_gamedir[256];
 extern const dvar_t *com_dedicated;
 extern serverStatic_t svs;
+extern void G_Cod2xWallbangInit(void);
 
 /* Masters as on a CoD2x server: Activision and CoD2x fixed, a third for the admin. */
 static const dvar_t *sv_cod2xMasters[COD2X_MASTER_COUNT];
 static netadr_t sv_cod2xMasterAddresses[COD2X_MASTER_COUNT];
-static const dvar_t *sv_cracked, *sv_showPacketStrings;
+static const dvar_t *sv_cracked, *sv_showPacketStrings, *sv_hideServerIp;
 /* When to ask the CoD2x master for this server's public address; 0 when not. */
 static int sv_cod2xIpTime;
 
@@ -51,6 +52,10 @@ void SV_Cod2xServerInit(void)
     sv_cod2xMasters[2] = Dvar_RegisterString("sv_master3", "", 0x1000);
     sv_cracked = Dvar_RegisterBool("sv_cracked", 0, 0x1000);
     sv_showPacketStrings = Dvar_RegisterBool("showPacketStrings", 0, 0x1000);
+    /* Tells CoD2x clients to hide this server's address, for streamed matches. */
+    sv_hideServerIp = Dvar_RegisterBool("sv_hideServerIp", 0, 0x1004);
+    G_Cod2xWallbangInit();
+    SV_Cod2xZpamInit();
     Cmd_AddCommand("unbanAll", SV_Cod2xUnbanAll);
     Cmd_AddCommand("getIp", SV_Cod2xRequestIp);
 }
@@ -151,6 +156,46 @@ void SV_Cod2xMasterHeartbeat(const char *name)
         sv_cod2xIpTime = 0;
         SV_Cod2xRequestIp();
     }
+}
+
+static int SV_Cod2xIsStyleCode(char prefix, char c)
+{
+    return (prefix == '$' && (c == '*' || c == '-')) ||
+           (prefix == '@' && (c == '+' || c == '=' || c == '-')) ||
+           (prefix == '#' && (c == '_' || c == '-'));
+}
+
+void SV_Cod2xStripTextCodes(const char *text, char *out, size_t size)
+{
+    size_t used = 0;
+    const char *p = text;
+    if (!size)
+        return;
+    while (*p && used < size - 1) {
+        if (*p == '^') {
+            int carets = 0, digits = 0;
+            while (p[carets] == '^')
+                ++carets;
+            while (digits < carets && p[carets + digits] >= '0' && p[carets + digits] <= '9')
+                ++digits;
+            if (digits) {
+                p += carets + digits;
+                continue;
+            }
+        } else if (*p == '$' || *p == '#' || *p == '@') {
+            if (p[1] == p[0] && ((p[2] >= '0' && p[2] <= '9' && p[3] >= '0' && p[3] <= '9') ||
+                                 (SV_Cod2xIsStyleCode(p[0], p[2]) && p[3] == p[2]))) {
+                p += 4;
+                continue;
+            }
+            if ((p[1] >= '0' && p[1] <= '9') || SV_Cod2xIsStyleCode(p[0], p[1])) {
+                p += 2;
+                continue;
+            }
+        }
+        out[used++] = *p++;
+    }
+    out[used] = '\0';
 }
 
 /* showPacketStrings: connectionless packets in both directions, escaped. */

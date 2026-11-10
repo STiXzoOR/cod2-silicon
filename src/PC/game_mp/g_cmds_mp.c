@@ -1,6 +1,9 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/server_mp/cod2x_server.h"
+#endif
 extern scr_const_t scr_const;
 
 /* File-scope alias: bound where no local can shadow `scr_const`, so uses below
@@ -740,6 +743,10 @@ void G_Say(gentity_t *ent, gentity_t *target, int mode, const char *chatText)
         mode = 0;
 
     I_strncpyz(cleanname, ent->client->sess.cs.name, sizeof(cleanname));
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* Names keep their colours only on the scoreboard, as on CoD2x servers. */
+    SV_Cod2xStripTextCodes(cleanname, cleanname, strlen(cleanname) + 1);
+#endif
     I_CleanStr(cleanname);
 
     switch (ent->client->sess.cs.team) {

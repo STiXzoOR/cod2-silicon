@@ -1463,7 +1463,14 @@ void SV_DropClient(client_t *drop, const char *reason)
 
     localized = SEH_StringEd_GetString(reason) != NULL;
     if (I_stricmp(reason, "EXE_DISCONNECTED") != 0) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        /* Without colour codes in the name, as CoD2x sends it to everyone. */
+        char cleanName[64];
+        SV_Cod2xStripTextCodes(playerName, cleanName, sizeof(cleanName));
+        SV_SendServerCommand(NULL, SV_CMD_CAN_IGNORE, "%c \"\x15%s^7 %s%s\"", 0x65, cleanName, localized ? "\x14" : "", reason);
+#else
         SV_SendServerCommand(NULL, SV_CMD_CAN_IGNORE, "%c \"\x15%s^7 %s%s\"", 0x65, playerName, localized ? "\x14" : "", reason);
+#endif
     }
 
     Com_Printf("%i:%s %s\n", clientNum, playerName, reason);

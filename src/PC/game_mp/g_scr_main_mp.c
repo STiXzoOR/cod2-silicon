@@ -6,6 +6,7 @@
 #include <string.h>
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "PC/server_mp/cod2x_stop_gametype.h"
+#include "PC/server_mp/cod2x_server.h"
 #endif
 /* dvar globals */
 extern const dvar_t *loc_warningsAsErrors;
@@ -1197,6 +1198,33 @@ unsigned int GScr_WorldEntNumber(void)
 #endif
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* obituary(victim, attacker, weapon, meansOfDeath[, icon1 .. icon4]): up to four
+   precached shaders after the weapon, for CoD2x clients' kill feed. With icons,
+   the weapon goes in s.weapon (also for a headshot or melee) and the shader
+   indexes, 8 bits each, in s.dmgFlags. Without icons the event stays stock. */
+static void GScr_Cod2xObituaryIcons(gentity_t *ent)
+{
+    unsigned int params = Scr_GetNumParam();
+    int icons = 0;
+    int count = 0;
+    for (unsigned int i = 4; i < params && count < 4; ++i) {
+        const char *shader;
+        if (Scr_GetType(i) == 0)
+            continue;
+        shader = Scr_GetString(i);
+        if (!shader[0])
+            continue;
+        icons |= (G_ShaderIndex(shader) & 0xff) << (8 * count);
+        ++count;
+    }
+    if (!icons)
+        return;
+    ent->s.weapon = G_GetWeaponIndexForName(Scr_GetString(2)) & 0x7f;
+    ent->s.dmgFlags = icons;
+}
+#endif
+
 void GScr_Obituary(void)
 {
     int iWeaponNum;
@@ -1209,6 +1237,9 @@ void GScr_Obituary(void)
     pOtherEnt = Scr_GetEntity(0);
 
     pEnt = G_TempEntity(*(vec3_t *)imp_vec3_origin, 0xc6);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    GScr_Cod2xObituaryIcons(pEnt);
+#endif
     pEnt->s.otherEntityNum = pOtherEnt->s.number;
 
     if (Scr_GetType(1) == 1 && Scr_GetPointerType(1) == 0x15)
@@ -2702,6 +2733,16 @@ static unsigned int Scr_XenonStub(void)
 }
 #endif
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* stripColorCodes(text): the text without colour and style codes. */
+static void GScr_Cod2xStripColorCodes(void)
+{
+    char clean[1024];
+    SV_Cod2xStripTextCodes(Scr_GetString(0), clean, sizeof(clean));
+    Scr_AddString(clean);
+}
+#endif
+
 BuiltinFunction Scr_GetFunction(const char **pName, int *type)
 {
     int i;
@@ -2726,6 +2767,13 @@ BuiltinFunction Scr_GetFunction(const char **pName, int *type)
     }
 #endif
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (I_stricmp(*pName, "stripColorCodes") == 0) {
+        *pName = "stripColorCodes";
+        *type = 0;
+        return (BuiltinFunction)GScr_Cod2xStripColorCodes;
+    }
+#endif
     return (BuiltinFunction)0;
 }
 
@@ -3517,7 +3565,16 @@ unsigned int Scr_ConstructMessageString(int firstParmIndex, int lastParmIndex, c
             if (!ent->client)
                 Scr_ParamError(parmIndex, "Entity is not a player");
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            {
+                /* The name without colour codes, as CoD2x sends it. */
+                char cleanName[64];
+                SV_Cod2xStripTextCodes(ent->client->sess.cs.name, cleanName, sizeof(cleanName));
+                token = va("%s^7", cleanName);
+            }
+#else
             token = va("%s^7", ent->client->sess.cs.name);
+#endif
             tokenLen = strlen(token);
             GScr_CheckMessageLength(parmIndex, errorContext, stringLimit, stringLen, tokenLen);
         } else {

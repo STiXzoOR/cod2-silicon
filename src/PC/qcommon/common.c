@@ -2370,6 +2370,12 @@ void Com_Frame(void)
         Com_ErrorCleanup();
         Com_StartHunkUsers();
     }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        extern void SV_Cod2xZpamFrame(void);
+        SV_Cod2xZpamFrame();
+    }
+#endif
 
     {
         /* per-frame state-hash hook; a no-op unless SYSDIFF_STATEHASH is set in the

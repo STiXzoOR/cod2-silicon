@@ -3,6 +3,8 @@
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
 #include "../qcommon/cod2x_policy.h"
+#include "../server_mp/cod2x_server.h"
+extern int Dvar_GetInt(const char *dvarName);
 #ifndef DEDICATED
 extern clientConnection_t *clc;
 #endif
@@ -1712,6 +1714,15 @@ static void FS_AddIwdFilesForGameDirectory(const char *path, const char *pszGame
     iwdfile[strlen(iwdfile) - 1] = '\0';
 
     iwdfiles = Sys_ListFiles(iwdfile, "iwd", NULL, &numfiles, 0);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* A server loads every iwd but only one zPAM version of each kind. */
+#ifdef DEDICATED
+    if (numfiles > 0)
+#else
+    if (numfiles > 0 && Dvar_GetInt("dedicated") > 0)
+#endif
+        numfiles = SV_Cod2xZpamFilterIwds(iwdfile, iwdfiles, numfiles);
+#endif
     if (numfiles > 1024) {
         Com_Printf("WARNING: Exceeded max number of iwd files in %s/%s (%1/%1)\n", path, pszGameFolder, numfiles, 1024);
         numfiles = 1024;
@@ -1723,7 +1734,8 @@ static void FS_AddIwdFilesForGameDirectory(const char *path, const char *pszGame
             fs_gameDirVar->current.string, Cod2x_IwdNames()};
         int write = 0;
 #ifndef DEDICATED
-        selection.dedicated = 0;
+        /* A client run as a dedicated server loads like one. */
+        selection.dedicated = Dvar_GetInt("dedicated") > 0;
         if (clc) {
             selection.connecting = clc->state >= CA_CONNECTING;
             selection.demo = clc->demoplaying;

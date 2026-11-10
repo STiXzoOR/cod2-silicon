@@ -1306,6 +1306,13 @@ void SV_Frame(int msec)
 
 #if !COD2_APPLE_SDK || !defined(DEDICATED)
         CL_FlushDebugData(1);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+        {
+            /* The wallbang damage labels outlive the flush. */
+            extern void G_Cod2xWallbangLabelsFrame(void);
+            G_Cod2xWallbangLabelsFrame();
+        }
+#endif
 #endif
         SV_ResetSkeletonCache();
 #if defined(COD2_X64)
