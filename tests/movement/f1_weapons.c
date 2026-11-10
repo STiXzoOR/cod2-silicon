@@ -153,7 +153,7 @@ int main(void)
         assert(offset == 1.0f && speed == -1.0f);
 #if !defined(F1_BASELINE)
         ps.bobCycle = 63;
-        assert(BG_GetBobCycleSingle(&ps) == BM_I2F(0x40fabc6e));
+        assert(BG_GetBobCycle(&ps) == BM_I2F(0x40fabc6e));
 #endif
     }
     for (loadDefaults = 0; loadDefaults <= 1; loadDefaults++) {

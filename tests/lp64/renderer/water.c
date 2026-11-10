@@ -64,6 +64,7 @@ const dvar_t *r_drawPrimFloor = &zeroDvar, *r_drawPrimCap = &zeroDvar;
 const dvar_t *r_debugShader = &zeroDvar;
 const dvar_t *r_objectiveColorDx7Min = &zeroDvar, *r_objectiveColorDx7Max = &zeroDvar;
 const dvar_t *sc_enable = &zeroDvar, *r_lightMap = &zeroDvar;
+const dvar_t *r_colorMap = &zeroDvar, *r_normalMap = &zeroDvar, *r_specularMap = &zeroDvar;
 const dvar_t *r_outdoorAwayBias = &zeroDvar, *r_outdoorDownBias = &zeroDvar;
 int alwaysfails;
 volatile int g_rigid_step, g_lastdraw[6];
@@ -455,7 +456,8 @@ static void CheckVertices(void)
                     expected[v * stride + colors[s] + c] = input[v * stride + colors[s] + 3 - c];
         RB_SetVertexData(0, input, 2, stride);
         assert(slot.used == offset + size && dxState.streams[0].offset == offset);
-        assert(lastLockFlags == (offset ? 0 : 0x2000));
+        /* Mac 0xf6e4d: DISCARD at offset zero, NOOVERWRITE after. */
+        assert(lastLockFlags == (offset ? 0x1000 : 0x2000));
         assert(!memcmp(storage + offset, expected, size));
         assert(!memcmp(storage, prior, offset));
         vertexSnapshotSize = size;
@@ -472,11 +474,13 @@ static void CheckVertices(void)
     }
     dx.gpuSync = 0;
     RB_SetVertexData(0, input, 1, 20);
-    assert(lastLockFlags == 0x2000 && buffer.data == originalStorage);
-    /* Characterize the native unsupported-stride fallback; no fidelity claim. */
+    /* Mac 0xf6e4d does not consult gpuSync: still NOOVERWRITE past offset zero. */
+    assert(lastLockFlags == 0x1000 && buffer.data == originalStorage);
+    /* Mac's jump table at 0x32b5c0 skips a stride it does not know: nothing is copied. */
     int offset = slot.used;
+    memcpy(prior, storage + offset, 28);
     RB_SetVertexData(0, input, 1, 28);
-    assert(!memcmp(storage + offset, input, 28));
+    assert(!memcmp(storage + offset, prior, 28));
 }
 
 int main(int argc, char **argv)
