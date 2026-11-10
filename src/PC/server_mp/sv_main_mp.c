@@ -9,6 +9,7 @@
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "cod2x_host_protocol.h"
 #include "cod2x_udp_operations_impl.h"
+#include "cod2x_server.h"
 #endif
 #include <stdarg.h>
 /* dvar globals */
@@ -801,12 +802,18 @@ void SVC_Info(netadr_t from)
 void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
 {
     const char *c;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    const char *line;
+#endif
 
     MSG_BeginReading(msg);
     MSG_ReadLong(msg);
     SV_Netchan_AddOOBProfilePacket(msg->cursize);
 
     c = MSG_ReadStringLine(msg);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    line = c;
+#endif
     SV_Cmd_TokenizeString(c);
     c = SV_Cmd_Argv(0);
 #if defined(COD2_X64)
@@ -827,6 +834,10 @@ void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
 
     if (sv_packet_info->current.enabled)
         Com_Printf("SV packet %s : %s\n", NET_AdrToString(from), c);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* As CoD2x does, this shows the line as read, over the packet's length. */
+    SV_Cod2xShowPacket(0, from, line, msg->cursize - 4 < 1024 ? msg->cursize - 4 : 1024, msg->cursize);
+#endif
 
     if (I_stricmp(c, "v") == 0) {
         SV_VoicePacket(from, msg);
@@ -887,6 +898,12 @@ void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
         return;
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (I_stricmp(c, "getIpResponse") == 0) {
+        SV_Cod2xIpResponse(from);
+        return;
+    }
+#endif
     I_stricmp(c, "disconnect");
 }
 
@@ -1271,7 +1288,11 @@ void SV_Frame(int msec)
 #endif
         } else {
 #if defined(COD2_X64)
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            /* CoD2x servers leave this line out. */
+#else
             Com_DPrintf("Giving %s a 999 ping - !count:\n", cl->name);
+#endif
 #endif
             cl->ping = 999;
         }

@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #endif
 #include "imports.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/server_mp/cod2x_server.h"
+#endif
 /* dvar globals */
 extern const dvar_t *com_sv_running;
 
@@ -460,6 +463,10 @@ Bool NET_SendPacket(netsrc_t sock, int length, const void *data, netadr_t to)
             Com_Printf("[client %i] send packet %4i\n", 0, length);
         }
     }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (*(const int *)data == -1)
+        SV_Cod2xShowPacket(1, to, (const char *)data + 4, length - 4, length);
+#endif
 
     if (to.type == 2) {
 

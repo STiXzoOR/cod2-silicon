@@ -1284,5 +1284,6 @@ void SV_SpawnServer(const char *server)
     Com_Printf("-----------------------------------\n");
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     SV_Cod2xEndMapChange(0);
+    SV_Cod2xServerSpawned();
 #endif
 }
