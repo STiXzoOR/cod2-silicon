@@ -1026,6 +1026,8 @@ struct LauncherLibrary: Codable {
     var cachedAt: Date? = nil
     var dispatches: [Dispatch] = []
     var dispatchesCheckedAt: Date? = nil
+    /// ship-home-library: when each recent server was last joined (Home's “Played yesterday at 21:14”).
+    var played: [String: Date] = [:]
     init() {}
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -1035,6 +1037,12 @@ struct LauncherLibrary: Codable {
         cachedAt = try c.decodeIfPresent(Date.self, forKey: .cachedAt)
         dispatches = Array((try c.decodeIfPresent([Dispatch].self, forKey: .dispatches) ?? []).prefix(5))
         dispatchesCheckedAt = try c.decodeIfPresent(Date.self, forKey: .dispatchesCheckedAt)
+        // Older libraries have no dates; a damaged entry loses only the dates, never the library.
+        let recent = recent
+        played = ((try? c.decodeIfPresent([String: Date].self, forKey: .played)) ?? [:]).filter { recent.contains($0.key) }
     }
-    mutating func joined(_ address: String) { recent.removeAll { $0 == address }; recent.insert(address, at: 0); recent = Array(recent.prefix(30)) }
+    mutating func joined(_ address: String) {
+        recent.removeAll { $0 == address }; recent.insert(address, at: 0); recent = Array(recent.prefix(30))
+        played[address] = Date(); played = played.filter { recent.contains($0.key) }
+    }
 }

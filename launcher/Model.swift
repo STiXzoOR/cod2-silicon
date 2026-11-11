@@ -59,7 +59,7 @@ enum UpdateState: Equatable {
 
 enum ServerFilter: String, CaseIterable, Identifiable { case all = "All", stock = "Stock 1.3", codx = "CoD2x 1.4"; var id: String { rawValue } }
 enum ServerSort: String { case ping, players, name }
-enum LibraryTab: String, CaseIterable, Identifiable { case demos = "Demos", screenshots = "Screenshots"; var id: String { rawValue } }
+enum LibraryTab: String, CaseIterable, Identifiable { case matches = "Matches", demos = "Demos", screenshots = "Screenshots"; var id: String { rawValue } }
 
 extension GameEngine {
     var dialect: ConfigDialect { self == .cod2x ? .cod2x : .stock }
@@ -222,6 +222,14 @@ struct MediaEntry: Identifiable {
     @Published var mediaMessage: String?
     @Published var mediaError = false
     @Published var renamingMedia: MediaEntry?
+    /// The file Move to Trash last moved (its place before and in the Trash), for the banner's Undo.
+    @Published var trashedMedia: (original: URL, trashed: URL)?
+    /// Each Library tab's scroll offset, kept while the launcher runs.
+    var libraryOffsets: [LibraryTab: CGFloat] = [:]
+    /// Game data that was found once and has since gone missing (Home's attention chip).
+    @Published var dataMissing = false
+    /// Quit Game was clicked and the game hasn't closed yet.
+    @Published var quittingGame = false
 
     // MARK: - ship-configs state (Configs lives in `studio` and `discover`)
 
@@ -675,12 +683,12 @@ struct MediaEntry: Identifiable {
         // 1 is Exit in CoD2x's machine identity dialog, a normal close.
         let closed = code == 0 || code == 1
         if code != nil && !closed {
-            notice = "The game closed unexpectedly. Your launcher is still open."
+            notice = "The game closed unexpectedly. Your settings and loadouts are safe."
         }
         if !closed {
             crashReport = CrashReports.latest(in: home, since: gameStartedAt)
         }
-        if code == nil && crashReport != nil { notice = "The game closed and produced a crash report. Your launcher is still open." }
+        if code == nil && crashReport != nil { notice = "The game closed and left a crash report. Your settings and loadouts are safe." }
         if !closed { sendCrashReports(CrashReports.all(in: home, since: gameStartedAt)) }
         print("CoD2 Silicon: returned to launcher (game exit \(code.map(String.init) ?? "unavailable")).")
         fflush(stdout)
