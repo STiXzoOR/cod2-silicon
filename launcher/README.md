@@ -168,6 +168,15 @@ Spaces sets `SDL_VIDEO_MAC_FULLSCREEN_SPACES=1`. Anisotropic filtering maps to
 `r_anisotropy`. The current release uses Classic OpenGL. Renderer choices, render
 scale, MetalFX and HDR are not shown until they are available.
 
+<!-- MARK: - ship-configs -->
+Deleting a loadout (Loadout › Delete Loadout…, More Actions or the row's context menu) asks
+first, never applies to the loadout the next game uses or while the game runs, and moves the
+whole `main/players/<profile>` folder to the Trash. Its advanced-binds companion travels inside
+as `.studio-advanced-binds.cfg` and goes back to `main/` when the folder is read again, so Undo
+(the banner's button or ⌘Z) and Finder's Put Back both restore it. Tests and the review harness
+replace `ConfigStudioSession.trashItem` with a scratch folder and never use the Mac's Trash.
+<!-- /ship-configs -->
+
 Server discovery sends both protocols to both masters, collects multiple UDP
 packets, deduplicates addresses and limits discovery to 2048 endpoints. Queries
 use Network.framework with a maximum of six concurrent endpoints, 40 ms between
