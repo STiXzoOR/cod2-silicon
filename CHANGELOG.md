@@ -5,10 +5,46 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-10
+
+The picture now follows the original Windows 1.3 game, checked frame by frame
+in replayed demos, and the original shaders are built from your own game
+files. [What was tested and what was not](docs/macos-port/release-0.3.0-verification.md).
+
 ### Added
 
-- Voice chat sends your microphone. Hold the voice chat key on a server with
-  voice on and macOS asks once for microphone access; the microphone is open
+- Play with CoD2x or with the original 1.3. **Settings → Game → Version**
+  chooses which game starts; CoD2x is the default. The original 1.3 can only
+  join stock 1.3 servers, and the launcher offers to turn CoD2x on when you
+  pick a CoD2x server. Config Studio, Check-up and the ready check follow the
+  version you chose, and the few settings one version cannot hold are kept
+  for the other.
+- CoD2x 1.4.6.8 in full, where 0.2.1 covered part of it. As a player: demo
+  upload, CoD2x's text colours and killfeed icons, hidden server addresses on
+  streamed matches, the 32-port LAN search, zPAM downloads from CoD2x's site,
+  the update notice, and vMix control for broadcasts. As a host: your server
+  is a real CoD2x server, with its bans and hardware IDs, wallbang settings,
+  zPAM selection and updates, the match service, and web requests and
+  WebSocket connections for mods. Certificates are checked on every request,
+  which CoD2x itself does not do, and nothing from the CoD2x project is
+  installed or run: updates are only announced.
+- CoD2x's own menus and icons. **Settings → Game → CoD2x files** downloads
+  the official CoD2x 1.4.6.8 release from the CoD2x project's GitHub page,
+  checks it, and keeps only those files on this Mac; or copies them from a
+  Windows game folder that has CoD2x installed. They are used for CoD2x games
+  only, and your game folder is never changed.
+- Install updates from the launcher. When a newer release is found, **Install
+  Update** downloads it, checks it against the release's checksum and
+  signature, replaces the app and restarts it. Nothing installs without that
+  click.
+- Crash reports you can choose to send. Two switches in **Settings →
+  Privacy**, both off unless you turn them on: one sends CoD2x's reports for
+  faults in CoD2x's own code to the CoD2x project, as CoD2x itself does; the
+  other, in builds that have a report address, sends everything else to this
+  project, with your home folder's name left out and never your CD key.
+- Voice chat sends your microphone when you play the original 1.3. Hold the
+  voice chat key on a server with voice on and macOS asks once for microphone
+  access; the microphone is open
   only while you are sending and for two seconds after, so the system's
   microphone indicator shows exactly when the game listens. The original
   games kept the microphone open the whole time. Tested with a recording in
@@ -16,6 +52,14 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Changed
 
+- With CoD2x on, voice chat is off, as in CoD2x. It works with the original
+  1.3.
+- With CoD2x on, the game no longer writes its recommended graphics settings
+  into a new profile, as in CoD2x. The launcher supplies the same first-run
+  picture, the 250 fps cap and raw mouse input unless your loadout sets them.
+- Crash reports from a CoD2x game are named `cod2x_crash.<date>_<time>.<pid>.log`
+  and follow CoD2x's form; the original 1.3 keeps `cod2_crash_<pid>.txt`.
+  Nothing is sent unless you turn a report switch on in Settings.
 - The game's videos play. The `cinematic` console command and the intro
   (publisher and studio logos, then the game's intro film) were switched off
   because they showed a black screen. Started without the launcher, the game
@@ -55,8 +99,6 @@ All notable changes to CoD2 Silicon are documented here, following
   other animated surfaces move as they do there, where the Mac 1.3 shaders
   used an approximation. An existing shader cache is rebuilt once on the next
   launch. A Mac copy still works as a fallback.
-||||||| 1f3d9e68
-||||||| 1f3d9e68
 - The CoD2x machine ID (`cl_hwid2`) is now computed the way CoD2x computes it:
   the same list of hardware details, hashed the same way. Only the hash is
   sent. This changes the ID once for existing Mac players, so a CoD2x server
@@ -86,6 +128,25 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Fixed
 
+- Sounds in the world are placed as in Windows 1.3. A sound straight ahead
+  was 3 dB louder than in the original and one behind you 5.5 dB louder,
+  because sounds were panned on a different curve and front and back were
+  treated alike. Now a sound behind you is quieter than the same sound in
+  front, as in the original, which makes direction easier to judge. Measured
+  against the original game's output, every direction is within about 0.1 dB.
+- Sounds keep their treble. The game mixed everything at 48 kHz, which put
+  every sound through a simple resampler and cost about 1 dB at 8 to 12 kHz
+  and 4 dB above 16 kHz against the original. It now mixes at the game's own
+  44.1 kHz, as the original does.
+- Two small differences from Mac 1.3, found by compiling every source file
+  with the original compiler and comparing each function with the original
+  game: a failed language load no longer reports a warning when
+  `fs_ignoreLocalized` is set (it checked `developer`), and the errors for a
+  damaged map file show their text as written. A second pass matched four
+  more error texts, the rate message now printed for `sv_debugRate`, a host
+  no longer applying its own server's settings twice, and the script calls
+  `deactivateReverb` and `deactivateChannelVolumes`, which do nothing in 1.3
+  multiplayer because of a mistake in the original and now do nothing here.
 - Whole-number arithmetic wraps around as it did in the original game.
   The game was written for processors where a number past its largest value
   wraps to the smallest; the Mac build left that case undefined, so the
@@ -117,6 +178,8 @@ All notable changes to CoD2 Silicon are documented here, following
   stream channel.
 - Release and launcher builds take the macOS SDK from the selected Xcode, so
   packaging works on Xcode 27 when the Command Line Tools SDK is also present.
+  The layered app icon is now compiled the same way; on such a Mac the package
+  got the flat fallback icon.
 - A script call on something that is not an object no longer crashes the
   server. This happened with the stock test-client script once a map rotation
   left the server full. The call is skipped and the script carries on, as on
@@ -129,6 +192,16 @@ All notable changes to CoD2 Silicon are documented here, following
   range was off by the base vertex, as in Mac 1.3, which Apple's GL tolerated
   but Mesa read past the vertex buffer on. Apple client storage is set only on
   GLs that have it. The picture on macOS is unchanged.
+
+### Known limitations
+
+- Voice chat has not been tested with a real microphone, only with a
+  recording in its place.
+- The launcher skips the intro videos.
+- Third-person player models sit about half a pixel off the original in
+  replayed demos.
+- OpenGL remains the renderer, and frame-pacing hitches remain.
+- The player directory is still unavailable.
 
 ## [0.2.1] - 2026-10-13
 
@@ -301,7 +374,8 @@ All notable changes to CoD2 Silicon are documented here, following
 Evidence and historical qualifications are preserved in the
 [workstream reports](docs/macos-port/README.md).
 
-[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.3.0
 [0.2.1]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.1
 [0.2.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0
 [0.1.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.1.0
