@@ -144,7 +144,7 @@
         "cod2x": "40"
       },
       "title": "Request more server updates",
-      "why": "Stock 1.3 supports up to 30 server updates per second; CoD2x supports up to 40. This uses the value allowed by your selected rules.",
+      "why": "Original 1.3 supports up to 30 server updates per second; CoD2x supports up to 40. This uses the value allowed by your selected rules.",
       "notice": "You request more frequent updates. The server determines how many arrive.",
       "evidence": "Based on your game version and selected rules.",
       "sources": [
@@ -181,7 +181,7 @@
         "cod2x": "125"
       },
       "title": "Send more frequent updates",
-      "why": "Stock supports up to 100 outgoing updates per second; CoD2x supports up to 125. Your frame rate also affects how often they are sent.",
+      "why": "Original 1.3 supports up to 100 outgoing updates per second; CoD2x supports up to 125. Your frame rate also affects how often they are sent.",
       "notice": "The game can send your actions more frequently, up to the selected limit.",
       "evidence": "Based on your game version and saved settings.",
       "sources": [

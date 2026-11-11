@@ -5,7 +5,7 @@
   "rulesets": [
     {
       "id": "stock-1.3",
-      "title": "Stock 1.3",
+      "title": "Original 1.3",
       "version": "1.3",
       "mode": "stock",
       "baseID": null,
@@ -22,7 +22,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "Frame rate cap: use a value in the supported stock range (0–1000).",
+          "reason": "Frame rate cap: use a value Original 1.3 supports (0–1000).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/qcommon/common.c",
@@ -45,7 +45,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "Connection speed: use a value in the supported stock range (1000–25000).",
+          "reason": "Connection speed: use a value Original 1.3 supports (1000–25000).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -68,7 +68,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "Updates you receive: use a value in the supported stock range (1–30).",
+          "reason": "Updates you receive: use a value Original 1.3 supports (1–30).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -91,7 +91,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "Updates you send: use a value in the supported stock range (10–100).",
+          "reason": "Updates you send: use a value Original 1.3 supports (10–100).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -137,7 +137,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "Mouse acceleration: use a value in the supported stock range (0.0–100.0).",
+          "reason": "Mouse acceleration: use a value Original 1.3 supports (0.0–100.0).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -160,7 +160,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "Texture detail: use a value in the supported stock range (0–3).",
+          "reason": "Texture detail: use a value Original 1.3 supports (0–3).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/gfx_d3d/r_dvars.c",
@@ -687,7 +687,7 @@
     },
     {
       "id": "zpam-3.36",
-      "title": "Stock / zPAM 3.36",
+      "title": "Original 1.3 / zPAM 3.36",
       "version": "3.36",
       "mode": "stock",
       "baseID": "stock-1.3",
