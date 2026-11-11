@@ -54,6 +54,8 @@ struct SettingsTabBar: View {
                     .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 }
                 .buttonStyle(.plain)
+                // Like a settings toolbar, the tabs don't take the window's first keyboard focus.
+                .focusable(false)
                 .accessibilityLabel(pane.title)
                 .accessibilityAddTraits(selected ? [.isSelected] : [])
             }

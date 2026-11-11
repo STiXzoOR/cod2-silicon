@@ -168,6 +168,7 @@ struct DisplayPane: View {
                 .frame(width: 150, alignment: .trailing)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("\(MouseMath.label(model.settings.cm360)) centimetres per full turn")
+                .accessibilityAddTraits(.isStaticText)
             }
             SettingsRow("Volume", fixedLabel: 120) {
                 Slider(value: $model.settings.volume, in: 0...1).accessibilityLabel("Game volume")

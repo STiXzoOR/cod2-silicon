@@ -1435,7 +1435,7 @@ extension Snapshots {
         let saving: Bool
         private let acceptedTargets: Set<URL>
         private(set) var seen = false, timedOut = false, destinationVerified = false, destinationValidated = false
-        private var ticks = 0, seenAt = 0, finished = false, timer: Timer?
+        private var ticks = 0, seenAt = 0, finishedAt = 0, finished = false, savedByAction = false, timer: Timer?
         private let interactive = ProcessInfo.processInfo.environment["COD2_SNAPSHOT_INTERACTIVE_EXPORT"] == "1"
         private var deadline = 0.0
         private var deadlineWork: DispatchWorkItem?
@@ -1446,7 +1446,13 @@ extension Snapshots {
             // are compared lexically; no candidate outside it is inspected on disk.
             let resolved = original.deletingLastPathComponent().resolvingSymlinksInPath().appendingPathComponent(original.lastPathComponent)
             self.target = resolved
-            self.acceptedTargets = [original, resolved]
+            // The panel may name the same folder through /private (the real path of /var and /tmp).
+            self.acceptedTargets = Set([original, resolved].flatMap { url -> [URL] in
+                let path = url.path
+                if path.hasPrefix("/private/") { return [url, URL(fileURLWithPath: String(path.dropFirst("/private".count)))] }
+                if path.hasPrefix("/var/") || path.hasPrefix("/tmp/") { return [url, URL(fileURLWithPath: "/private" + path)] }
+                return [url]
+            })
             self.saving = saving
             super.init()
         }
@@ -1468,6 +1474,7 @@ extension Snapshots {
         }
         func panel(_ sender: Any, validate url: URL) throws {
             guard let panel = sender as? NSSavePanel, panel === ownedPanel, accepts(url) else {
+                fputs("NOTE: the export destination was refused: \(url.path)\n", stderr)
                 throw NSError(domain: "LauncherSnapshot", code: 1,
                               userInfo: [NSLocalizedDescriptionKey: "The export must stay in the synthetic test folder."])
             }
@@ -1508,12 +1515,20 @@ extension Snapshots {
             } else if panel === ownedPanel, !finished, ticks >= seenAt + 6,
                       NSApp.isActive, NSApp.keyWindow === panel, panel.isKeyWindow,
                       panel.delegate === self, acceptsDirectory(panel.directoryURL), accepts(panel.url) {
-                destinationVerified = true; finished = true
+                destinationVerified = true; finished = true; finishedAt = ticks
                 if saving && interactive {
                     fputs("EXPORT READY: click Save in the real panel; exact synthetic destination verified.\n", stderr)
                 } else if saving {
                     ConfigsPreview.press(panel, keyCode: 36, characters: "\r")
                 } else { panel.cancel(nil) }
+            } else if panel === ownedPanel, finished, saving, !interactive, !savedByAction, ticks >= finishedAt + 15, let url = panel.url {
+                // macOS 27 hosts the panel's controls in a remote view (its first responder) that
+                // ignores an in-process Return, and the panel's own `ok:` blocks on that service.
+                // Run Save's delegate validation of the exact synthetic destination here, then end
+                // the panel with OK as Save does; a refused destination still fails the check.
+                savedByAction = true
+                fputs("NOTE: the save panel ignored Return; validating its destination and ending it with OK.\n", stderr)
+                if (try? self.panel(panel, validate: url)) != nil { NSApp.stopModal(withCode: .OK) }
             }
         }
     }

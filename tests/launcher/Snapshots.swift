@@ -359,7 +359,7 @@ final class Watchdog: @unchecked Sendable {
     static let exampleScreens = ["foundations", "foundations-popover", "sheet-keyboard-shortcuts", "settings-sheet-acknowledgements"]
     static let exampleLabels: [String: [String]] = [
         "foundations": ["Foundations", "Local match summaries", "Display mode", "Show in Finder", "Server address", "Search servers"],
-        "sheet-keyboard-shortcuts": ["Keyboard shortcuts", "Done", "Command 1"],
+        "sheet-keyboard-shortcuts": ["Keyboard shortcuts", "Done", "Home, Command 1"],
     ]
     /// A window-driving check run by `--suite NAME`; snapshots.py runs every suite `--list-suites`
     /// prints, each with a private HOME below its output folder.
