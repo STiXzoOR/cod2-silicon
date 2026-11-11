@@ -30,7 +30,9 @@ struct LauncherRoot: View {
         .background(palette.ground)
         .background(LauncherWindowReader(model: model))
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            if !model.notice.isEmpty { NoticeBanner(model: model).padding(12).frame(maxWidth: .infinity).background(palette.ground) }
+            // Over setup the message takes the window's width; beside the sidebar it stays in the page
+            // (LauncherSplitView), so the player plate is never covered.
+            if model.onboard && !model.notice.isEmpty { NoticeBanner(model: model).padding(12).frame(maxWidth: .infinity).background(palette.ground) }
         }
         .onChange(of: model.notice, initial: true) { _, message in
             guard !message.isEmpty else { return }
@@ -84,6 +86,9 @@ struct LauncherSplitView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if !model.notice.isEmpty { NoticeBanner(model: model).padding(12).frame(maxWidth: .infinity).background(palette.ground) }
+            }
             .background(palette.ground)
         }
         .hiddenToolbarTitle()
@@ -280,18 +285,43 @@ struct NoticeBanner: View {
                 .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
         }
     }
+    /// On one line it is 48 points tall, a capsule with 28-point buttons 10 points in (concentric with
+    /// its 24-point ends). A message that wraps keeps every word; the buttons stay 10 points from the
+    /// bottom corner, and from the second line on the top corner is clear of them.
     private var banner: some View {
-        Toast(symbol: model.crashReport == nil ? "info.circle" : "exclamationmark.triangle", message: model.notice) {
-            if model.gameRunning { Button("Return to Game", action: model.returnToGame).glassAction().actionControlSize() }
-            if let report = model.crashReport {
-                Button("Show Crash Report") { NSWorkspace.shared.activateFileViewerSelecting([report]) }.glassAction().actionControlSize()
+        GlassContainer {
+            HStack(alignment: .bottom, spacing: 12) {
+                message.padding(.vertical, 16).frame(maxWidth: .infinity, alignment: .leading)
+                actions.padding(.bottom, 10)
             }
-            if !model.gameRunning {
-                Button("Dismiss") { withAnimation(.easeInOut(duration: 0.15)) { model.notice = "" } }
-                    .glassAction().actionControlSize().accessibilityLabel("Dismiss message")
-            }
+            .padding(.leading, 20).padding(.trailing, 10)
+            .frame(minHeight: 48)
+            .frame(maxWidth: 720)
+            .glassSurface(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Status message")
+    }
+    private var message: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Image(systemName: model.crashReport == nil ? "info.circle" : "exclamationmark.triangle")
+                .foregroundStyle(model.crashReport == nil ? palette.accent : palette.caution).accessibilityHidden(true)
+            Text(model.notice).font(.system(size: 13)).foregroundStyle(palette.text).textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true).id(model.notice)
+        }
+    }
+    @ViewBuilder private var actions: some View {
+        HStack(spacing: 8) {
+            if model.gameRunning { Button("Return to Game", action: model.returnToGame).glassAction().controlSize(.large) }
+            if let report = model.crashReport {
+                Button("Show Crash Report") { NSWorkspace.shared.activateFileViewerSelecting([report]) }.glassAction().controlSize(.large)
+            }
+            if !model.gameRunning {
+                SymbolButton("xmark", label: "Dismiss message", help: "Dismiss") {
+                    withAnimation(.easeInOut(duration: 0.15)) { model.notice = "" }
+                }
+                .controlSize(.large)
+            }
+        }
     }
 }
