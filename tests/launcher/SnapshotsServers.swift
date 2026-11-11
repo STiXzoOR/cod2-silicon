@@ -5,11 +5,12 @@ import SwiftUI
 // server sheets) and the servers part of the page actions.
 
 extension Snapshots {
-    static let serversScreens = ["servers", "servers-filters", "servers-connect", "servers-connect-error", "servers-password", "servers-version"]
+    static let serversScreens = ["servers", "servers-filters", "servers-connect", "servers-connect-error", "servers-password", "servers-version",
+                                 "servers-remove-favorite"]
     /// Also rendered in the `--group pages` runs and read by `--accessibility`.
     static let serversPageScreens = ["servers-refreshing", "servers-refreshing-empty", "servers-never", "servers-filtered", "servers-no-reply",
                                      "servers-favorites", "servers-favorites-empty", "servers-recent", "servers-inspector-empty"]
-    static let serversAccessibilityScreens = ["servers", "servers-filters", "servers-connect", "servers-password", "servers-version"]
+    static let serversAccessibilityScreens = ["servers", "servers-filters", "servers-connect", "servers-password", "servers-version", "servers-remove-favorite"]
     static let serversLabels: [String: [String]] = [
         "servers": ["Which servers", "Search servers, maps or mods", "Filters", "Connect to Address…", "Refresh server list", "Sorted by ping",
                     "Launch on Northern Lights | Public", "Copy address", "Remove from favorites", "Roster, 18 of 24 players"],
@@ -19,6 +20,7 @@ extension Snapshots {
         "servers-connect-error": ["Use a host name or IP address"],
         "servers-password": ["“Silicon Sessions” needs a password", "Password for Silicon Sessions", "Remember for this server, on this Mac only", "Launch"],
         "servers-version": ["“Sunday Rifles · EU” runs Original 1.3", "Don’t ask again; always use the version the server runs", "Launch with Original 1.3"],
+        "servers-remove-favorite": ["Remove “Desert Fox SD” from Favorites?", "Remove", "Cancel"],
         "servers-refreshing": ["Stop refreshing", "86 of 212 answered"],
         "servers-refreshing-empty": ["Stop refreshing", "FINDING SERVERS"],
         "servers-never": ["NO CONTACT YET", "Refresh Server List", "Not refreshed yet"],

@@ -624,6 +624,10 @@ enum ServerPasswords {
             library.cachedAt = Calendar.current.date(bySettingHour: 14, minute: 2, second: 0, of: Date())
         case "servers-favorites": page = .servers; serverScope = .favorites
         case "servers-favorites-empty": page = .servers; serverScope = .favorites; library.favorites = []; selectedServer = nil
+        case "servers-remove-favorite":
+            // The star in the Favorites scope asks first (AllSheets › Remove favorite).
+            page = .servers; serverScope = .favorites
+            if let server = base.first(where: { QuakeColors.plain($0.name) == "Desert Fox SD" }) { selectedServer = server.address; toggleFavorite(server) }
         case "servers-recent": page = .servers; serverScope = .recent
         case "servers-inspector-empty": page = .servers; selectedServer = nil
         case "servers-connect", "servers-connect-error":
