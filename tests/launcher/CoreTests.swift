@@ -544,7 +544,7 @@ import Foundation
         let codx = ServerFacts(server(["shortversion": "1.4.6.8", "clients": "24", "sv_maxclients": "24", "sv_maxfps": "250", "pswrd": "1"]))
         precondition(codx.isCoD2x && codx.versionLabel == "CoD2x 1.4.6.8" && codx.occupancy == .full && codx.frameCap == "250 fps" && codx.access == "Password")
         let stock = ServerFacts(server(["protocol": "118", "clients": "0", "sv_maxclients": "20"], ping: 88))
-        precondition(!stock.isCoD2x && stock.versionLabel == "Stock 1.3" && stock.occupancy == .empty && stock.frameCap == "Not set" && stock.pingLevel == 1)
+        precondition(!stock.isCoD2x && stock.versionLabel == "Original 1.3" && stock.occupancy == .empty && stock.frameCap == "Not set" && stock.pingLevel == 1)
         precondition(ServerFacts(server(["protocol": "120"])).versionLabel == "CoD2x 1.4")
         precondition([18, 39, 40, 59, 60, 79, 80].map(ServerFacts.pingLevel) == [4, 4, 3, 3, 2, 2, 1])
 

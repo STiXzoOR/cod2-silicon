@@ -74,7 +74,7 @@ struct ServerFacts: Equatable {
         let version = server.version
         isCoD2x = version.hasPrefix("1.4") || server.fields["protocol"] == "120"
         let shown = version == "1.4.x" ? "1.4" : String(version.prefix(16))
-        versionLabel = isCoD2x ? "CoD2x \(shown)" : "Stock \(shown)"
+        versionLabel = isCoD2x ? "CoD2x \(shown)" : "Original \(shown)"
         pingLevel = Self.pingLevel(server.ping)
         occupancy = server.playerCount == 0 ? .empty : (server.maxPlayers > 0 && server.playerCount >= server.maxPlayers ? .full : .open)
         if let fps = Int(server.fps), fps > 0 { frameCap = "\(fps) fps" } else { frameCap = "Not set" }
