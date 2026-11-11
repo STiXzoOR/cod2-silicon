@@ -62,9 +62,10 @@ struct ConfigSettingsView: View {
             }
         }
         .background {
-            // Command-F: the page search lives in Expert.
+            // Command-F: the page search lives in Expert. Edit › Find asks through `findRequest`.
             Button("") { studio.level = .expert; searchFocused = true }.keyboardShortcut("f", modifiers: .command).opacity(0).accessibilityHidden(true)
         }
+        .onChange(of: studio.findRequest) { _, _ in studio.level = .expert; searchFocused = true }
     }
 }
 
@@ -101,8 +102,10 @@ private struct GroupRail: View {
         }
         .listStyle(.sidebar)
         .scrollContentBackground(.hidden)
+        // The list's own selection shows where the focus is; no ring around the whole rail.
         .focusable()
         .focused($focused)
+        .focusEffectDisabled()
         .simultaneousGesture(TapGesture().onEnded { focused = true })
         .onMoveCommand { direction in
             guard direction == .up || direction == .down else { return }
@@ -508,18 +511,8 @@ private struct ExpertTools: View {
     }
 
     private var search: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass").foregroundStyle(palette.secondary).accessibilityHidden(true)
-            TextField("Find a setting", text: $studio.search).textFieldStyle(.plain).focused(searchFocused).frame(width: 150)
-                .onExitCommand { studio.search = ""; searchFocused.wrappedValue = false }
-            if !studio.search.isEmpty {
-                Button { studio.search = "" } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(palette.tertiary).accessibilityLabel("Clear search")
-            }
-        }
-        .padding(.horizontal, 12).frame(height: ControlMetrics.height(.large))
-        .background(palette.dark ? Color.white.opacity(0.07) : Color.white.opacity(0.6), in: Capsule())
-        .overlay(Capsule().stroke(palette.wellStroke, lineWidth: 1))
-        .help("Find a setting by name, description or console name (⌘F)")
+        SearchPill("Find a setting", text: $studio.search, focus: searchFocused, width: 210)
+            .help("Find a setting by name, description or console name (⌘F)")
     }
 
     private var textToggle: some View {
@@ -679,15 +672,11 @@ private struct ExpertRow: View {
             }
             Text(spec.name).font(StudioTypography.consoleName).foregroundStyle(palette.address).lineLimit(1).textSelection(.enabled)
             if let badge = checkup.badge(spec) {
-                Label(badge.text, systemImage: badge.tone.symbol).font(.system(size: 10.5, weight: .semibold))
-                    .foregroundStyle(badge.tone.color(in: palette)).labelStyle(.titleOnly)
-                    .padding(.horizontal, 7).frame(height: 18)
-                    .overlay(Capsule().strokeBorder(badge.tone.color(in: palette).opacity(0.55), lineWidth: 1))
+                Badge(badge.text, tone: badge.tone == .negative ? .negative : badge.tone == .caution ? .accent : .neutral)
                     .accessibilityLabel("Rules: \(badge.text)")
             }
             if spec.setting.variant(for: studio.mode)?.serverControlled == true {
-                Text("Servers can set this").font(.system(size: 10.5, weight: .semibold)).foregroundStyle(palette.chipText)
-                    .padding(.horizontal, 7).frame(height: 18).overlay(Capsule().strokeBorder(palette.dark ? Color.white.opacity(0.16) : palette.wellStroke, lineWidth: 1))
+                Badge("Servers can set this")
             }
         }
     }
@@ -804,7 +793,7 @@ private struct IconAction: View {
     @Environment(\.isEnabled) private var enabled
     var body: some View {
         Button(action: action) {
-            Image(systemName: symbol).font(.system(size: 12, weight: .medium))
+            Image(systemName: symbol).font(.system(size: 13, weight: .medium))
                 .foregroundStyle(on ? palette.accent : palette.chipIcon)
                 .frame(width: StudioMetrics.minimumHitTarget, height: StudioMetrics.minimumHitTarget)
                 .contentShape(Circle())

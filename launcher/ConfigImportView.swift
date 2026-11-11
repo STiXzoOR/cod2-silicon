@@ -95,42 +95,36 @@ private struct LinkStep: View {
     @ObservedObject var discover: ConfigDiscoverModel
     @State var text: String
     @State private var problem: String?
-    @FocusState private var focused: Bool
     @Environment(\.palette) private var palette
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            SheetTitle(title: "Add a config from a link")
-            Text("CoD2 Silicon reads the link as plain text and shows you every line before anything changes.")
-                .font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
-            TextField("Link", text: $text, prompt: Text("https://"))
-                .textFieldStyle(.roundedBorder).font(.system(size: 13)).focused($focused)
-                .onSubmit(submit)
-                .accessibilityLabel("Config link")
-            VStack(alignment: .leading, spacing: 6) {
-                hint("A file on the web, starting with https://")
-                hint("A GitHub file or gist, from github.com or gist.github.com")
-                hint("A server on this Mac, such as http://localhost:8000/config.cfg")
+        let empty = text.trimmingCharacters(in: .whitespaces).isEmpty
+        SheetScaffold(icon: .symbol("link"), title: "Add a config from a link",
+                      message: "CoD2 Silicon reads the link as plain text and shows you every line before anything changes.",
+                      actions: [.cancel { discover.closeImport() }, .primary("Review", enabled: !empty, submit)]) {
+            VStack(alignment: .leading, spacing: 12) {
+                LauncherTextField("Config link", text: $text, prompt: "https://", shape: .capsule, invalid: problem != nil, autofocus: true)
+                    .onChange(of: text) { _, _ in problem = nil }
+                if let problem {
+                    Label(problem, systemImage: "exclamationmark.circle").font(StudioTypography.help).foregroundStyle(palette.negative)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    hint("A file on the web, starting with https://")
+                    hint("A GitHub file or gist, from github.com or gist.github.com")
+                    hint("A server on this Mac, such as http://localhost:8000/config.cfg")
+                }
             }
-            if let problem {
-                Label(problem, systemImage: "exclamationmark.circle").font(StudioTypography.help).foregroundStyle(palette.negative)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            HStack(spacing: 10) {
-                Spacer()
-                Button("Cancel", role: .cancel) { discover.closeImport() }.glassAction().keyboardShortcut(.cancelAction)
-                Button("Review", action: submit).prominentAction().keyboardShortcut(.defaultAction)
-                    .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
+        } note: {
+            if empty { Text("Paste or type a link to review it.") }
         }
-        .padding(26).frame(width: 520)
-        .onAppear { focused = true }
     }
     private func hint(_ text: String) -> some View {
         Label(text, systemImage: "checkmark").font(StudioTypography.help).foregroundStyle(palette.secondary)
     }
     private func submit() {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
         guard let url = URL(string: trimmed), ConfigImportLoader.permittedURL(url) else {
             problem = "Use an https:// link, a GitHub file or gist, or http://localhost for a server on this Mac. Links with passwords in them aren’t accepted."
             return
@@ -166,14 +160,21 @@ private struct LinkStep: View {
             self.scanning = false
         }
     }
-    func chooseFolder() {
+    /// The folder chooser, attached to the import sheet it was opened from.
+    func chooseFolder(in window: NSWindow? = NSApp?.keyWindow) {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.allowsMultipleSelection = false
         panel.message = "Choose your Call of Duty 2 folder, its players folder, or one player profile."
         panel.prompt = "Look Here"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        folders.append(url)
-        scan()
+        let chosen: @MainActor (URL) -> Void = { [weak self] url in self?.folders.append(url); self?.scan() }
+        if let window, window.isVisible, window.attachedSheet == nil {
+            panel.beginSheetModal(for: window) { response in
+                guard response == .OK, let url = panel.url else { return }
+                MainActor.assumeIsolated { chosen(url) }
+            }
+        } else if panel.runModal() == .OK, let url = panel.url {
+            chosen(url)
+        }
     }
 }
 
@@ -184,46 +185,49 @@ private struct WindowsStep: View {
     @Environment(\.palette) private var palette
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            SheetTitle(title: "Bring in your Windows setup")
-            Text("CoD2 Silicon looks for Call of Duty 2 player profiles in the usual install folders on drives connected to this Mac. Each profile you import becomes a new loadout, and your Windows files are never changed.")
-                .font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
-            Group {
-                if finder.scanning || finder.discovery == nil {
-                    HStack(spacing: 10) { ProgressView().controlSize(.small); Text("Looking on connected drives…").font(.system(size: 13)).foregroundStyle(palette.secondary) }
-                        .frame(maxWidth: .infinity, minHeight: 200).accessibilityElement(children: .combine)
-                } else if let discovery = finder.discovery, !discovery.profiles.isEmpty {
-                    List(selection: $choice) {
-                        let main = discovery.profiles.filter { !$0.isBackup }, backups = discovery.profiles.filter(\.isBackup)
-                        if !main.isEmpty { Section("Profiles") { ForEach(main) { row($0) } } }
-                        if !backups.isEmpty { Section("Backups (optional)") { ForEach(backups) { row($0) } } }
+        let found = !(finder.discovery?.profiles.isEmpty ?? true)
+        SheetScaffold(icon: .symbol("pc"), title: "Bring in your Windows setup",
+                      message: "CoD2 Silicon looks for Call of Duty 2 player profiles in the usual install folders on drives connected to this Mac. Each profile you import becomes a new loadout, and your Windows files are never changed.",
+                      width: 560,
+                      actions: [SheetAction(title: "Choose Folder…", role: .leading) { finder.chooseFolder() },
+                                .cancel { discover.closeImport() }, .primary("Review", enabled: choice != nil) { review() }]) {
+            VStack(alignment: .leading, spacing: 12) {
+                Group {
+                    if finder.scanning || finder.discovery == nil {
+                        HStack(spacing: 10) { ProgressView().controlSize(.small); Text("Looking on connected drives…").font(.system(size: 13)).foregroundStyle(palette.secondary) }
+                            .frame(maxWidth: .infinity, minHeight: 200).accessibilityElement(children: .combine)
+                    } else if let discovery = finder.discovery, found {
+                        List(selection: $choice) {
+                            let main = discovery.profiles.filter { !$0.isBackup }, backups = discovery.profiles.filter(\.isBackup)
+                            if !main.isEmpty { Section("Profiles") { ForEach(main) { row($0) } } }
+                            if !backups.isEmpty { Section("Backups (optional)") { ForEach(backups) { row($0) } } }
+                        }
+                        .listStyle(.inset(alternatesRowBackgrounds: false))
+                        .scrollContentBackground(.hidden)
+                        .frame(minHeight: 220)
+                        .background(palette.well, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
+                    } else {
+                        EmptyState("No profiles found", message: "Choose the folder that holds your Call of Duty 2 install, its players folder, or one profile.",
+                                   actionTitle: "Choose Folder…") { finder.chooseFolder() }
+                            .padding(.vertical, 30)
                     }
-                    .listStyle(.inset(alternatesRowBackgrounds: false))
-                    .frame(minHeight: 220)
-                } else {
-                    StudioEmptyState(title: "NO PROFILES FOUND",
-                                     message: "Choose the folder that holds your Call of Duty 2 install, its players folder, or one profile.")
-                        .frame(maxWidth: .infinity)
+                }
+                if let discovery = finder.discovery, !finder.scanning {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(finder.searched.isEmpty ? "No drives to look on." : "Looked on: \(finder.searched.joined(separator: ", ")).")
+                        if discovery.unreadableDirectories > 0 {
+                            Text("\(discovery.unreadableDirectories) folder\(discovery.unreadableDirectories == 1 ? "" : "s") couldn’t be read. If your profiles are there, choose the folder yourself.")
+                        }
+                        if discovery.truncated { Text("The search stopped early because a folder was very large. Choose the profile folder to look there.") }
+                    }
+                    .font(StudioTypography.help).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
                 }
             }
-            if let discovery = finder.discovery, !finder.scanning {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(finder.searched.isEmpty ? "No drives to look on." : "Looked on: \(finder.searched.joined(separator: ", ")).")
-                    if discovery.unreadableDirectories > 0 {
-                        Text("\(discovery.unreadableDirectories) folder\(discovery.unreadableDirectories == 1 ? "" : "s") couldn’t be read. If your profiles are there, choose the folder yourself.")
-                    }
-                    if discovery.truncated { Text("The search stopped early because a folder was very large. Choose the profile folder to look there.") }
-                }
-                .font(StudioTypography.help).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
-            }
-            HStack(spacing: 10) {
-                Button("Choose Folder…") { finder.chooseFolder() }.glassAction()
-                Spacer()
-                Button("Cancel", role: .cancel) { discover.closeImport() }.glassAction().keyboardShortcut(.cancelAction)
-                Button("Review") { review() }.prominentAction().keyboardShortcut(.defaultAction).disabled(choice == nil)
-            }
+        } note: {
+            if found && choice == nil { Text("Choose a profile to review.") }
         }
-        .padding(26).frame(width: 560)
         .onAppear { finder.scan(discover.findWindowsProfiles) }
     }
 
@@ -257,7 +261,7 @@ private struct ImportReviewSheet: View {
     @ObservedObject var discover: ConfigDiscoverModel
     var undo: UndoManager?
     @Environment(\.palette) private var palette
-    @State private var confirming = false
+    @State private var confirming: ConfirmationRequest?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -271,7 +275,7 @@ private struct ImportReviewSheet: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity).accessibilityElement(children: .combine)
             case .failed(let message):
-                StudioEmptyState(title: "COULDN’T READ IT", message: message)
+                EmptyState("Couldn’t read it", message: message, actionTitle: "Close", prominent: false) { discover.closeImport() }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .ready:
                 ScrollView { reviewBody.padding(.vertical, 16).padding(.horizontal, 26) }
@@ -280,12 +284,7 @@ private struct ImportReviewSheet: View {
             footer
         }
         .frame(width: 780).frame(minHeight: 460, idealHeight: 720, maxHeight: .infinity)
-        .confirmationDialog(confirmTitle, isPresented: $confirming) {
-            Button(review.applyTitle) { apply() }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text(confirmMessage)
-        }
+        .confirmationAlert($confirming)
     }
 
     private var title: String {
@@ -354,11 +353,11 @@ private struct ImportReviewSheet: View {
         let items = review.items
         VStack(alignment: .leading, spacing: 12) {
             if review.mode == .everything, review.riskyCount > 0 {
-                StudioBanner(title: "This imports \(review.riskyCount == 1 ? "1 line" : "\(review.riskyCount) lines") that need your OK",
-                             detail: review.consequences.joined(separator: ". ") + ". Switch to Review to leave them out.", tone: .negative)
+                Banner(.error, title: "This imports \(review.riskyCount == 1 ? "1 line" : "\(review.riskyCount) lines") that need your OK",
+                       message: review.consequences.joined(separator: ". ") + ". Switch to Review to leave them out.")
             }
             if let error = review.applyError {
-                StudioBanner(title: "Nothing was imported.", detail: error, tone: .negative)
+                Banner(.error, title: "Nothing was imported.", message: error)
             }
             HStack(alignment: .firstTextBaseline) {
                 Text(review.summary).font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
@@ -368,8 +367,8 @@ private struct ImportReviewSheet: View {
                     .accessibilityHint("Shows the exact lines")
             }
             if items.isEmpty {
-                StudioEmptyState(title: "NOTHING TO IMPORT", message: "This config has no settings or key bindings to bring in.")
-                    .frame(maxWidth: .infinity)
+                EmptyState("Nothing to import", message: "This config has no settings or key bindings to bring in.")
+                    .padding(.vertical, 30)
             }
             ForEach(ConfigImportPresentation.groupOrder(catalog: discover.studio.catalog), id: \.self) { group in
                 let rows = items.filter { $0.section == .change(group) }
@@ -403,16 +402,26 @@ private struct ImportReviewSheet: View {
         }
     }
 
+    /// Why Apply is dimmed, said beside it; nil when it can apply.
+    private var applyBlock: String? {
+        if discover.studio.isReadOnly { return "Configs are read-only while Call of Duty 2 is running." }
+        if review.receipt != nil { return "Already imported." }
+        if review.selectedCount == 0 { return "Tick at least one change to import." }
+        return nil
+    }
     private var footer: some View {
         HStack(spacing: 12) {
-            Text("Nothing changes until you confirm. Each import is one History snapshot you can undo.")
-                .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+            Group {
+                if case .ready = review.phase, let reason = applyBlock { Text(reason) }
+                else { Text("Nothing applies until you confirm · Undo anytime from History") }
+            }
+            .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 8)
             if case .ready = review.phase {
                 Button("Cancel", role: .cancel) { discover.closeImport() }.glassAction().actionControlSize().keyboardShortcut(.cancelAction)
                 Button(review.applyTitle, action: requestApply).prominentAction().actionControlSize().keyboardShortcut(.defaultAction)
-                    .disabled(review.selectedCount == 0 || review.receipt != nil || discover.studio.isReadOnly)
-                    .help(discover.studio.isReadOnly ? "Quit Call of Duty 2 to import" : "Apply the ticked changes as one History snapshot")
+                    .disabled(applyBlock != nil)
+                    .help(applyBlock ?? "Apply the ticked changes as one History snapshot")
             } else {
                 Button("Close", role: .cancel) { discover.closeImport() }.glassAction().actionControlSize().keyboardShortcut(.cancelAction)
             }
@@ -432,7 +441,8 @@ private struct ImportReviewSheet: View {
         return what + into
     }
     private func requestApply() {
-        if review.mode == .everything || !review.riskySelected.isEmpty { confirming = true } else { apply() }
+        guard review.mode == .everything || !review.riskySelected.isEmpty else { apply(); return }
+        confirming = ConfirmationRequest(title: confirmTitle, message: confirmMessage, actionTitle: review.applyTitle, destructive: false) { apply() }
     }
     private func apply() {
         let existing = review.targetID != nil, name = review.targetName
@@ -547,11 +557,7 @@ private struct ReviewRow: View {
             HStack(spacing: 8) {
                 Text(item.title).font(.system(size: 14, weight: item.risky ? .semibold : .regular))
                     .foregroundStyle(item.selectable ? palette.text : (palette.dark ? Palette.hex(0xcfc6b1) : palette.text))
-                ForEach(item.labels, id: \.self) { label in
-                    Text(label).font(.system(size: 10.5, weight: .semibold)).foregroundStyle(palette.secondary)
-                        .padding(.horizontal, 7).frame(height: 18)
-                        .overlay(Capsule().stroke(palette.track, lineWidth: 1))
-                }
+                ForEach(item.labels, id: \.self) { Badge($0) }
             }
             if let detail = item.detail, !detail.isEmpty {
                 Text(detail).font(StudioTypography.help).foregroundStyle(palette.secondary)
