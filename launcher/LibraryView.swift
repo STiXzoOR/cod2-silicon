@@ -60,6 +60,8 @@ private struct LibraryTabContent: View {
     init(model: LauncherModel, origin: CGPoint, quickLookURL: Binding<URL?>) {
         self.model = model; self.origin = origin; _quickLookURL = quickLookURL
         checkup = model.studio.checkup; artwork = model.artwork; tab = model.libraryTab
+        // Opens where this tab was left; onAppear repeats it once the rows are laid out.
+        _position = State(initialValue: ScrollPosition(y: model.libraryOffsets[model.libraryTab] ?? 0))
     }
 
     var body: some View {
@@ -80,7 +82,7 @@ private struct LibraryTabContent: View {
                 .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentOffset.y + $0.contentInsets.top }) { _, offset in model.libraryOffsets[tab] = offset }
                 .onAppear {
                     guard let offset = model.libraryOffsets[tab], offset > 1 else { return }
-                    Task { @MainActor in await Task.yield(); position.scrollTo(y: offset) }
+                    Task { @MainActor in try? await Task.sleep(for: .milliseconds(60)); position.scrollTo(y: offset) }
                 }
                 .focusable(tab != .matches, interactions: .edit).focused($listFocused).focusEffectDisabled()
                 .onKeyPress(keys: [.upArrow, .downArrow, .leftArrow, .rightArrow]) { press in
@@ -102,12 +104,16 @@ private struct LibraryTabContent: View {
                     guard let entry = selected else { return .ignored }
                     preview(entry); return .handled
                 }
-                .onKeyPress(keys: [.delete], phases: .down) { press in
-                    guard press.modifiers.contains(.command), let entry = selected else { return .ignored }
-                    model.requestTrash(entry); return .handled
-                }
                 .onExitCommand { model.selectedMedia = nil }
                 .accessibilityLabel(tab.rawValue)
+                // ⌘⌫ (Move to Trash, as the context menus show it) is a key equivalent: it reaches the
+                // window as one, not as a key press, so a focus-independent shortcut carries it.
+                .background {
+                    Button("Move to Trash") { if let entry = selected { model.requestTrash(entry) } }
+                        .keyboardShortcut(.delete, modifiers: .command)
+                        .disabled(tab == .matches || selected == nil)
+                        .opacity(0).frame(width: 0, height: 0).allowsHitTesting(false).accessibilityHidden(true)
+                }
             }
         }
     }
