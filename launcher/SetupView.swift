@@ -193,7 +193,7 @@ struct SetupView: View {
                     Spacer()
                     Text("\(model.shaderCount) of \(LauncherModel.shaderTotal) shaders").monospacedDigit()
                 }.font(.system(size: 13)).foregroundStyle(palette.secondary)
-                ProgressView(value: Double(model.shaderCount), total: Double(LauncherModel.shaderTotal)).tint(palette.control)
+                ProgressBar("Shader setup", value: Double(model.shaderCount) / Double(max(1, LauncherModel.shaderTotal)))
                     .accessibilityLabel("Shader setup").accessibilityValue("\(model.shaderCount) of \(LauncherModel.shaderTotal) shaders")
                 Text("This usually takes a few seconds. Nothing is downloaded. You can leave setup while it finishes.")
                     .font(.system(size: 13)).foregroundStyle(palette.secondary)

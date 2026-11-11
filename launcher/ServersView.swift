@@ -97,10 +97,10 @@ struct ServersView: View {
                     .pickerStyle(.segmented).labelsHidden().fixedSize()
             }
             ToolbarItem(placement: .navigation) {
-                Toggle("Hide empty", isOn: $model.hideEmpty).toggleStyle(.checkbox).accessibilityLabel("Hide empty servers")
+                Checkbox("Hide empty", isOn: $model.hideEmpty).accessibilityLabel("Hide empty servers")
             }
             ToolbarItem(placement: .navigation) {
-                Toggle("Hide full", isOn: $model.hideFull).toggleStyle(.checkbox).accessibilityLabel("Hide full servers")
+                Checkbox("Hide full", isOn: $model.hideFull).accessibilityLabel("Hide full servers")
             }
         }
         .trailingToolbar {

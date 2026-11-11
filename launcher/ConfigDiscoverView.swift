@@ -168,22 +168,10 @@ enum NativeMenu {
 private struct DiscoverSearchField: View {
     @Binding var text: String
     @FocusState private var focused: Bool
-    @Environment(\.palette) private var palette
     var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass").foregroundStyle(palette.secondary).accessibilityHidden(true)
-            TextField("Search a player, team or style", text: $text).textFieldStyle(.plain).focused($focused)
-                .onExitCommand { text = ""; focused = false }
-                .accessibilityLabel("Search players")
-            if !text.isEmpty {
-                Button { text = "" } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(palette.tertiary).accessibilityLabel("Clear search")
-            }
-        }
-        .padding(.horizontal, 14).frame(width: 260, height: ControlMetrics.action)
-        .background(palette.dark ? Color.black.opacity(0.22) : Color.white.opacity(0.6), in: Capsule())
-        .overlay(Capsule().stroke(palette.wellStroke, lineWidth: 1))
-        .help("Search players by name, team, role or style (⌘F)")
-        .background { Button("") { focused = true }.keyboardShortcut("f", modifiers: .command).opacity(0).accessibilityHidden(true) }
+        SearchPill("Search a player, team or style", text: $text, focus: $focused, width: 260, label: "Search players")
+            .help("Search players by name, team, role or style (⌘F)")
+            .background { Button("") { focused = true }.keyboardShortcut("f", modifiers: .command).opacity(0).accessibilityHidden(true) }
     }
 }
 

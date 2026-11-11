@@ -756,9 +756,11 @@ struct SearchPill: View {
     @Binding var text: String
     var focus: FocusState<Bool>.Binding
     var width: CGFloat? = 240
+    /// The VoiceOver name when it should be shorter than the prompt (“Search players”).
+    var label: String?
     @Environment(\.palette) private var palette
-    init(_ prompt: String, text: Binding<String>, focus: FocusState<Bool>.Binding, width: CGFloat? = 240) {
-        self.prompt = prompt; _text = text; self.focus = focus; self.width = width
+    init(_ prompt: String, text: Binding<String>, focus: FocusState<Bool>.Binding, width: CGFloat? = 240, label: String? = nil) {
+        self.prompt = prompt; _text = text; self.focus = focus; self.width = width; self.label = label
     }
     var body: some View {
         HStack(spacing: 8) {
@@ -766,8 +768,8 @@ struct SearchPill: View {
             TextField(prompt, text: $text, prompt: Text(prompt).foregroundStyle(palette.tertiary))
                 .textFieldStyle(.plain).font(.system(size: 13)).foregroundStyle(palette.text)
                 .focused(focus)
-                .onExitCommand { text = "" }
-                .accessibilityLabel(prompt)
+                .onExitCommand { text = ""; focus.wrappedValue = false }
+                .accessibilityLabel(label ?? prompt)
             if !text.isEmpty {
                 Button { text = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(palette.tertiary) }
                     .buttonStyle(.plain).accessibilityLabel("Clear search").help("Clear search")

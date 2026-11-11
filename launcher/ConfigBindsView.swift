@@ -448,7 +448,7 @@ private struct ChainEditor: View {
                 }
                 HStack(spacing: 8) {
                     Button(draft.isNew ? "Discard" : "Delete Bind", role: .destructive) { binds.deleteChain(undo: undo) }
-                        .glassAction().controlSize(.small).disabled(studio.isReadOnly && !draft.isNew)
+                        .destructiveAction().controlSize(.small).disabled(studio.isReadOnly && !draft.isNew)
                     Spacer()
                     Button("Save Bind") {
                         if binds.chainNeedsConfirmation { confirming = true } else { binds.saveChain(undo: undo) }

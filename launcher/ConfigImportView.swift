@@ -364,7 +364,7 @@ private struct ImportReviewSheet: View {
                 Text(review.summary).font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 12)
                 Button(review.showDetails ? "Hide Details" : "Show Details") { review.showDetails.toggle() }
-                    .buttonStyle(.plain).foregroundStyle(palette.link).font(.system(size: 13, weight: .semibold))
+                    .quietAction()
                     .accessibilityHint("Shows the exact lines")
             }
             if items.isEmpty {
