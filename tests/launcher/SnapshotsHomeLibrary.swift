@@ -143,7 +143,8 @@ extension Snapshots {
             .write(to: stats.appendingPathComponent("matches.jsonl"))
         model.libraryTab = .matches
         try await Task.sleep(for: .milliseconds(500))
-        let rows = AccessibilityTree.elements(of: window).map(\.label)
+        // A row is one static-text element: VoiceOver reads its words from the value.
+        let rows = AccessibilityTree.elements(of: window).map { $0.label.isEmpty ? $0.value : $0.label }
         guard model.storedMatches.count == 2,
               let toujane = rows.firstIndex(where: { $0.hasPrefix("Toujane, Search & Destroy") && $0.hasSuffix("connection Steady") }),
               let carentan = rows.firstIndex(where: { $0.hasPrefix("Carentan, Team Deathmatch") && $0.hasSuffix("connection Some dips") }), toujane < carentan else {

@@ -227,28 +227,38 @@ private struct LibraryTabContent: View {
                 ForEach(model.media) { entry in
                     let isSelected = entry.url == model.selectedMedia
                     DemoRow(entry: entry, image: entry.facts.map.flatMap { artwork.image(for: $0) }, selected: isSelected, focused: listFocused,
-                            play: { model.play(demo: entry.url) }, select: { select(entry) }) { demoMenu(entry, inContext: false) }
+                            play: { model.play(demo: entry.url) }, select: { select(entry) },
+                            more: { select(entry); return moreEntries(entry) })
                         .onTapGesture(count: 2) { model.play(demo: entry.url) }
                         .onTapGesture { select(entry) }
-                        .contextMenu { demoMenu(entry, inContext: true) }
+                        .contextMenu { demoMenu(entry) }
                         .id(entry.id)
                 }
             }
         }
     }
-    /// The demo's actions (Menus board): the More button and the context menu. Only the context menu
-    /// shows the shortcuts, which act on the selected demo.
-    @ViewBuilder private func demoMenu(_ entry: MediaEntry, inContext: Bool) -> some View {
+    /// The demo's actions (Menus board), as the context menu. The shortcuts shown are the list's own
+    /// (Space, ⌘⌫), which act on the selected demo.
+    @ViewBuilder private func demoMenu(_ entry: MediaEntry) -> some View {
         Button("Play") { model.play(demo: entry.url) }
-        if inContext { Button("Quick Look") { preview(entry) }.keyboardShortcut(.space, modifiers: []) }
-        else { Button("Quick Look") { preview(entry) } }
+        Button("Quick Look") { preview(entry) }.keyboardShortcut(.space, modifiers: [])
         Button("Show in Finder") { model.revealMedia(entry) }
         Divider()
         Button("Rename…") { model.renamingMedia = entry }
         Button("Copy") { model.copyDemo(entry) }
         Divider()
-        if inContext { Button("Move to Trash") { model.requestTrash(entry) }.keyboardShortcut(.delete, modifiers: .command) }
-        else { Button("Move to Trash") { model.requestTrash(entry) } }
+        Button("Move to Trash") { model.requestTrash(entry) }.keyboardShortcut(.delete, modifiers: .command)
+    }
+    /// The same actions for the row's More button, which selects the row first so the shortcuts apply to it.
+    private func moreEntries(_ entry: MediaEntry) -> [PullDownMenu.Entry] {
+        [.item("Play") { model.play(demo: entry.url) },
+         .item("Quick Look", key: " ") { preview(entry) },
+         .item("Show in Finder") { model.revealMedia(entry) },
+         .separator,
+         .item("Rename…") { model.renamingMedia = entry },
+         .item("Copy") { model.copyDemo(entry) },
+         .separator,
+         .item("Move to Trash", key: "\u{8}", modifiers: .command) { model.requestTrash(entry) }]
     }
 
     // MARK: Screenshots
@@ -433,16 +443,18 @@ private struct MediaRenameSheet: View {
     }
 }
 
-struct DemoRow<Actions: View>: View {
+struct DemoRow: View {
     var entry: MediaEntry
     var image: NSImage?
     var selected = false
     var focused = false
     var play: () -> Void
     var select: () -> Void
-    @ViewBuilder var actions: Actions
+    /// The More menu's entries, built when it opens.
+    var more: () -> [PullDownMenu.Entry]
     @Environment(\.palette) private var palette
     @State private var hovering = false
+    @State private var anchor = PullDownAnchorBox()
     var body: some View {
         let map = entry.facts.map.map { "mp_" + $0 } ?? entry.url.lastPathComponent
         let name = entry.url.lastPathComponent
@@ -468,13 +480,15 @@ struct DemoRow<Actions: View>: View {
             Button(action: play) { Label("Play", systemImage: "play.fill").font(.system(size: 13, weight: .semibold)) }
                 .glassAction()
                 .accessibilityLabel("Play \(name)")
-            // The label's title is the menu button's VoiceOver name; only its symbol is drawn.
-            Menu { actions } label: {
-                Label("More actions for \(name)", systemImage: "ellipsis.circle").labelStyle(.iconOnly)
-                    .font(.system(size: 17)).foregroundStyle(palette.chipIcon)
+            Button {
+                let entries = more()
+                if let view = anchor.view { PullDownMenu.show(entries, below: view) }
+            } label: {
+                Image(systemName: "ellipsis.circle").font(.system(size: 17)).foregroundStyle(palette.chipIcon)
+                    .frame(width: 28, height: 28).contentShape(Circle())
             }
-                .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
-                .frame(width: 28, height: 28).contentShape(Circle())
+                .buttonStyle(.plain)
+                .background(PullDownAnchor(box: anchor))
                 .accessibilityLabel("More actions for \(name)")
                 .help("More actions")
         }

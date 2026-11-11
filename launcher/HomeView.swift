@@ -381,51 +381,13 @@ private struct HomeChips: View {
     private var capFace: (numeral: String?, text: String, spoken: String) {
         let info = model.nextGameFrameCap
         let loadout = info.name.map { " · \($0) loadout" } ?? ""
-        guard let fps = info.value else { return (nil, "Frame cap unavailable" + loadout, "Frame cap unavailable" + loadout) }
+        guard let fps = info.value else { return (nil, "Frame cap unavailable" + loadout, "Frame cap unavailable" + (info.name.map { ", \($0) loadout" } ?? "")) }
         let chip = FrameCap.chip(fps)
         let spokenLoadout = info.name.map { "\($0) loadout, " } ?? ""
         return (chip.numeral, chip.text + loadout, spokenLoadout + (fps > 0 ? "\(fps) frames per second cap" : "no frame cap"))
     }
 
-    @ViewBuilder private var loadoutChip: some View {
-        let face = capFace
-        let choices = model.loadoutChoices
-        if choices.isEmpty {
-            // Before loadouts exist the cap is a launcher setting: the chip opens it.
-            Chip(face.spoken + ". Open Display settings", size: .large, glass: true, action: model.openFrameSettings) { capLabel(face) }
-        } else {
-            let current = choices.first(where: \.inUse) ?? choices[0]
-            Menu {
-                Section("Use for your next game") {
-                    Picker("Use for your next game", selection: Binding(get: { current.id }, set: { model.useLoadoutForNextGame($0) })) {
-                        ForEach(choices) { choice in
-                            Text(choice.cap.map { "\(choice.name) · \($0 > 0 ? "\($0) fps" : "no cap")" } ?? choice.name).tag(choice.id)
-                        }
-                    }
-                    .pickerStyle(.inline).labelsHidden()
-                    .disabled(model.gameRunning)
-                }
-                Divider()
-                Button("Edit \(current.name) in Configs…", action: model.openFrameSettings).disabled(!model.canNavigate)
-            } label: {
-                HStack(spacing: 10) {
-                    capLabel(face)
-                    Image(systemName: "chevron.down").font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.secondary)
-                }
-                .font(.system(size: 13)).foregroundStyle(palette.chipText).lineLimit(1)
-                .padding(.horizontal, 18).frame(height: 40)
-                .contentShape(Capsule())
-            }
-            .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
-            .glassSurface(Capsule(), interactive: true)
-            .accessibilityLabel(face.spoken + ". Choose the loadout for your next game")
-            .help("Choose the loadout for your next game")
-        }
-    }
-    @ViewBuilder private func capLabel(_ face: (numeral: String?, text: String, spoken: String)) -> some View {
-        if let numeral = face.numeral { Text(numeral).font(.stencil(20)).foregroundStyle(palette.accent) }
-        Text(face.text).lineLimit(1)
-    }
+    private var loadoutChip: some View { LoadoutChip(model: model, face: capFace) }
 
     private var displayChip: some View {
         let size = model.settings.resolution.replacingOccurrences(of: "x", with: " × ")
@@ -446,6 +408,45 @@ private struct HomeChips: View {
         .overlay(Capsule().strokeBorder(palette.selectionStroke, lineWidth: 1).allowsHitTesting(false))
         .disabled(model.gameRunning || model.installingUpdate)
         .help(item.fix)
+    }
+}
+
+/// The next game's loadout and frame cap. With loadouts, it opens a menu to pick the one the next game uses
+/// or edit it in Configs; before loadouts exist the cap is a launcher setting, and the chip opens it.
+private struct LoadoutChip: View {
+    @ObservedObject var model: LauncherModel
+    var face: (numeral: String?, text: String, spoken: String)
+    @Environment(\.palette) private var palette
+    @State private var anchor = PullDownAnchorBox()
+    var body: some View {
+        let choices = model.loadoutChoices
+        if choices.isEmpty {
+            Chip(face.spoken + ". Open Display settings", size: .large, glass: true, action: model.openFrameSettings) { capLabel }
+        } else {
+            Chip(face.spoken + ". Choose the loadout for your next game", size: .large, glass: true, action: { showMenu(choices) }) {
+                capLabel
+                Image(systemName: "chevron.down").font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.secondary).accessibilityHidden(true)
+            }
+            .background(PullDownAnchor(box: anchor))
+            .help("Choose the loadout for your next game")
+        }
+    }
+    @ViewBuilder private var capLabel: some View {
+        if let numeral = face.numeral { Text(numeral).font(.stencil(20)).foregroundStyle(palette.accent) }
+        Text(face.text).lineLimit(1)
+    }
+    private func showMenu(_ choices: [LoadoutChoice]) {
+        guard let view = anchor.view else { return }
+        let current = choices.first(where: \.inUse) ?? choices[0]
+        // While the game runs, it keeps the loadout it started with: the choice applies next time, so it waits.
+        let entries: [PullDownMenu.Entry] = [.header("Use for your next game")]
+            + choices.map { choice in
+                .item(choice.name, detail: choice.cap.map { $0 > 0 ? "\($0) fps" : "No cap" }, checked: choice.inUse, enabled: !model.gameRunning) {
+                    model.useLoadoutForNextGame(choice.id)
+                }
+            }
+            + [.separator, .item("Edit \(current.name) in Configs…", enabled: model.canNavigate, action: model.openFrameSettings)]
+        PullDownMenu.show(entries, below: view)
     }
 }
 
