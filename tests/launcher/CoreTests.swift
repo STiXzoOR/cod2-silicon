@@ -3,6 +3,8 @@ import Foundation
 @main struct CoreTests {
     static func main() throws {
         let fixtures = URL(fileURLWithPath: CommandLine.arguments[1])
+        precondition(Dispatch.bundled.first?.title == "CoD2 Silicon 0.3.0", "bundled news must describe the shipping release")
+        precondition(!Dispatch.bundled.contains { $0.summary.contains("Planned for 0.3") }, "future work has no promised version")
         let master = try Data(contentsOf: fixtures.appendingPathComponent("master.cod2x.me-120.bin"))
         let servers = WireParser.master(master)
         precondition(servers.count > 50 && servers.contains("151.80.40.237:28962"))

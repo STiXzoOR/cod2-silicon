@@ -9,12 +9,13 @@ struct SettingsView: View {
 
     /// Personal settings (frame cap, mouse, sound, filtering) live in loadouts once CoD2 Silicon has
     /// brought them over. Until then the launcher still applies them, so they stay here.
-    private var legacy: Bool { !model.snapshot && model.configStudio?.migrationCompleted != true }
+    private var legacy: Bool { !model.usesLoadouts }
 
     var body: some View {
+        ScrollViewReader { reader in
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                PageHeader(eyebrow: "Field manual", title: "Settings", subtitle: "This Mac and the app. How the game plays lives in your loadouts.")
+                PageHeader(eyebrow: "Field manual", title: "Settings", subtitle: legacy ? "Settings for your next game." : "This Mac and the app. How the game plays lives in your loadouts.")
                     .padding(.leading, 16).padding(.bottom, 4)
                 if legacy {
                     StudioBanner(title: "Your loadouts aren’t set up yet, so the mouse, sound and frame rate settings below still apply to every game.",
@@ -22,32 +23,42 @@ struct SettingsView: View {
                 } else {
                     ConfigsLink { model.page = .configs; model.studio.loadCatalog() }
                 }
+                Text("Changes save automatically and apply from your next game.")
+                    .font(.system(size: 12)).foregroundStyle(palette.secondary).padding(.leading, 6)
+                if let error = model.settingsSaveError {
+                    HStack {
+                        Label(error, systemImage: "exclamationmark.triangle").font(.system(size: 13)).foregroundStyle(palette.negative)
+                        Button("Try Again", action: model.saveSettings).glassAction()
+                    }
+                }
                 HStack(alignment: .top, spacing: 22) {
                     VStack(alignment: .leading, spacing: 22) {
                         SettingsSection("Game data") { setupGroup }
                         SettingsSection("Game") { gameGroup }
                         SettingsSection("Display") { displayGroup }
-                        SettingsSection("Renderer") { rendererGroup }
                         if legacy {
                             SettingsSection("Frame rate") {
                                 FrameRateCrates(fps: $model.settings.fps, custom: $customFPS)
                             } footer: {
-                                Text("Any cap from 0 to 1000, where 0 means no cap. Servers can enforce their own; CoD2x competitive servers keep it between 125 and 250.")
+                                Text("Any cap from 0 to 1000 fps, where 0 means no cap. Servers can enforce their own; CoD2x competitive servers keep it between 125 and 250 fps.")
                             }
+                            .id("legacy-frame")
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     VStack(alignment: .leading, spacing: 22) {
-                        SettingsSection("Updates") { updatesGroup }
+                        SettingsSection("Updates") { updatesGroup }.id("updates")
                         SettingsSection("Privacy") { privacyGroup } footer: {
-                            Text("Changes apply from your next game. Match summaries already on this Mac stay there; turning them off doesn’t delete them.")
+                            Text("Turning off match summaries keeps the ones already on this Mac.")
                                 .fixedSize(horizontal: false, vertical: true)
                         }
-                        SettingsSection("Advanced launch options") { advancedGroup }
+                        SettingsSection("Advanced launch options") { advancedGroup }.id("advanced-options")
                         if legacy {
                             SettingsSection("Mouse and sound") { mouseGroup }
                             SettingsSection("Graphics") { filteringGroup }
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             .padding(.leading, max(24, 264 - origin.x)).padding(.trailing, 24).padding(.top, 30).padding(.bottom, 32)
@@ -56,7 +67,18 @@ struct SettingsView: View {
         .ignoresSafeArea(.container, edges: .top)
         .background(WindowOriginReader(origin: $origin))
         .onAppear { customFPS = !FrameCap.isPreset(model.settings.fps); model.refreshCoD2xFiles() }
-        .modifier(SaveToolbar(saved: model.settingsSaved, save: model.saveSettings))
+        .onDisappear { model.flushSettings() }
+        .task(id: model.advancedError) {
+            guard model.advancedError != nil else { return }
+            await Task.yield()
+            reader.scrollTo("advanced-options", anchor: .bottom)
+        }
+        .task(id: model.checkingUpdates) {
+            guard model.checkingUpdates else { return }
+            await Task.yield()
+            reader.scrollTo("updates", anchor: .center)
+        }
+        }
     }
 
     private var displayGroup: some View {
@@ -67,11 +89,11 @@ struct SettingsView: View {
                 }
                 .labelsHidden().fixedSize()
             }
-            SettingsRow("Fullscreen") {
-                Picker("Fullscreen", selection: $model.settings.fullscreen) {
-                    Text("Exclusive").tag("exclusive"); Text("Borderless").tag("borderless"); Text("Native Space").tag("spaces"); Text("Window").tag("windowed")
+            SettingsRow("Display mode") {
+                Picker("Display mode", selection: $model.settings.fullscreen) {
+                    Text("Exclusive").tag("exclusive"); Text("Borderless").tag("borderless"); Text("macOS full screen").tag("spaces"); Text("Window").tag("windowed")
                 }
-                .pickerStyle(.segmented).labelsHidden().fixedSize()
+                .pickerStyle(.menu).labelsHidden().fixedSize()
             }
             SettingsNote(text: Self.modeHint(model.settings.fullscreen))
             SettingsRow("Vertical sync", detail: "Off keeps input latency lowest.") {
@@ -83,13 +105,16 @@ struct SettingsView: View {
     /// CoD2x is built into the engine, so the app carries two and starts the one chosen here.
     private var gameGroup: some View {
         SettingsGroup {
-            SettingsRow("Version", detail: model.originalAvailable ? "Original 1.3 can only join Stock 1.3 servers." : "Original 1.3 isn’t included in this build.") {
-                Picker("Game version", selection: Binding(get: { model.chosenEngine }, set: { model.settings.engine = $0 })) {
-                    Text("CoD2x").tag(GameEngine.cod2x); Text("Original 1.3").tag(GameEngine.original)
+            SettingsRow("Version", detail: model.originalAvailable ? "Original 1.3 can only join Stock 1.3 servers." : "This copy includes CoD2x only. Download the full app to use Original 1.3.") {
+                if model.originalAvailable {
+                    Picker("Game version", selection: Binding(get: { model.chosenEngine }, set: { model.settings.engine = $0 })) {
+                        Text("CoD2x").tag(GameEngine.cod2x); Text("Original 1.3").tag(GameEngine.original)
+                    }
+                    .pickerStyle(.segmented).labelsHidden().fixedSize()
+                } else {
+                    Text("CoD2x").font(.system(size: 13, weight: .semibold))
+                    Link("View Release", destination: AppUpdate.releases).font(.system(size: 13)).foregroundStyle(palette.link)
                 }
-                .pickerStyle(.segmented).labelsHidden().fixedSize()
-                .disabled(!model.originalAvailable)
-                .accessibilityHint(model.originalAvailable ? "" : "Original 1.3 isn’t included in this build")
             }
             cod2xFilesRow
             SettingsNote(text: model.chosenEngine == .original ? "Only CoD2x uses these files. Choose CoD2x above to change them."
@@ -103,7 +128,9 @@ struct SettingsView: View {
         return SettingsRow("CoD2x files", detail: model.cod2xFilesMessage) {
             HStack(spacing: 10) {
                 if model.cod2xFilesBusy { ProgressView().controlSize(.small).accessibilityLabel(model.cod2xFilesMessage) }
-                if model.cod2xFilesInstalled {
+                if model.cod2xFilesBusy {
+                    Button("Cancel", action: model.cancelCoD2xFiles).glassAction()
+                } else if model.cod2xFilesInstalled {
                     Button("Remove", action: model.removeCoD2xFiles).glassAction()
                 } else {
                     Button("Choose Folder…", action: model.chooseCoD2xFolder).glassAction()
@@ -112,7 +139,7 @@ struct SettingsView: View {
                 }
             }
             .fixedSize()
-            .disabled(original || model.cod2xFilesBusy)
+            .disabled(original && !model.cod2xFilesBusy)
             .accessibilityHint(original ? "Only CoD2x uses these files" : "")
         }
     }
@@ -150,18 +177,6 @@ struct SettingsView: View {
         }
     }
 
-    private var rendererGroup: some View {
-        SettingsGroup {
-            SettingsRow("Renderer", detail: "Classic OpenGL is the reference look today. Metal 4 arrives in 0.3, with MetalFX upscaling and HDR on displays that support it.") {
-                Picker("Renderer", selection: .constant("gl")) {
-                    Text("Classic OpenGL").tag("gl"); Text("Metal 4").tag("metal").selectionDisabled()
-                }
-                .pickerStyle(.segmented).labelsHidden().fixedSize()
-                .accessibilityHint("Metal 4 is coming in version 0.3")
-            }
-        }
-    }
-
     private var filteringGroup: some View {
         SettingsGroup {
             SettingsRow("Anisotropic filtering") {
@@ -177,13 +192,13 @@ struct SettingsView: View {
     private var privacyGroup: some View {
         SettingsGroup {
             SettingsRow("Local match summaries",
-                        detail: "On by default. After each match the game saves a short summary for Check-up: map, mode, frame times, ping and missed server updates. It stays on this Mac, which keeps the last \(MatchSummaries.recordLimit) matches, and is never sent anywhere.") {
+                        detail: "On by default. Keeps your last \(MatchSummaries.recordLimit) matches on this Mac for Check-up: map, mode, frame times, ping and missed server updates. Never sent anywhere.") {
                 Toggle("Local match summaries", isOn: $model.settings.matchSummariesEnabled).toggleStyle(.switch).labelsHidden()
             }
             // Only a build with a report receiver offers it; without one nothing is ever sent.
             if model.crashReportService != nil {
                 SettingsRow("Send crash reports to CoD2 Silicon",
-                            detail: "Off unless you turn it on. When the game crashes or stops responding, its crash report goes to the CoD2 Silicon project’s Sentry: what went wrong and where in the game, your macOS version and Mac model. Never your CD key, and your home folder’s name is left out.", titleLines: 2) {
+                            detail: "Off by default. Sends crashes and freezes to CoD2 Silicon’s Sentry: what failed, where in the game, macOS version and Mac model. Never your CD key or home folder’s name.", titleLines: 2) {
                     Toggle("Send crash reports to CoD2 Silicon", isOn: $model.settings.sendCrashReports).toggleStyle(.switch).labelsHidden()
                 }
             }
@@ -196,7 +211,7 @@ struct SettingsView: View {
         let original = model.chosenEngine == .original
         return SettingsRow("Send CoD2x crash reports to the CoD2x project",
                            detail: original ? "Only CoD2x sends these. Choose CoD2x in Game › Version to change this."
-                               : "Off unless you turn it on. When a crash happens inside CoD2x’s own code, the game reports it to the CoD2x project the way CoD2x itself does, including the paths of the game’s settings folders and the list of files it had loaded.", titleLines: 2) {
+                               : "Off by default. Sends faults in CoD2x’s own code to the CoD2x project, as CoD2x does. Includes settings-folder paths and the list of loaded files.", titleLines: 2) {
             Toggle("Send CoD2x crash reports to the CoD2x project", isOn: $model.settings.sendCoD2xReports).toggleStyle(.switch).labelsHidden()
                 .disabled(original)
                 .accessibilityHint(original ? "Only CoD2x sends these reports" : "")
@@ -204,33 +219,15 @@ struct SettingsView: View {
     }
 
     private var updatesGroup: some View {
-        SettingsGroup {
-            SettingsRow("CoD2 Silicon \(model.version)", detail: model.updateMessage,
-                        minHeight: ControlMetrics.height(.regular) + 2 * SettingsMetrics.radius + 1) {
-                // A narrow window keeps the button whole and drops the link; the Releases page also opens when installing here can't.
-                ViewThatFits(in: .horizontal) { updateControls(link: true); updateControls(link: false) }
-            }
-        }
-    }
-    private func updateControls(link: Bool) -> some View {
-        HStack(spacing: 10) {
-            if model.installingUpdate { ProgressView().controlSize(.small).accessibilityLabel(model.updateMessage) }
-            if link, let url = model.releaseURL { Link("View Release", destination: url).font(.system(size: 13)).foregroundStyle(palette.link) }
-            if model.updateOffer != nil {
-                Button("Install Update", action: model.installUpdate).glassAction().disabled(model.installingUpdate)
-                    .help("Download this version, check it and replace the app. CoD2 Silicon restarts.")
-            } else {
-                Button(model.checkingUpdates ? "Checking…" : "Check Now", action: model.checkUpdates).glassAction().disabled(model.checkingUpdates)
-            }
-        }
-        .fixedSize()
+        UpdateStatusView(model: model)
+            .padding(SettingsMetrics.radius).contentSurface(RoundedRectangle(cornerRadius: SettingsMetrics.radius))
     }
 
     private var advancedGroup: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Extra options passed to the game when it starts, one per line. For experts.")
                 .font(.system(size: 13)).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.text)
-            TextEditor(text: $model.settings.advanced)
+            TextEditor(text: Binding(get: { model.advancedDraft ?? model.settings.advanced }, set: model.editAdvancedOptions))
                 .font(.typewriter(13)).scrollContentBackgroundHidden()
                 .padding(.horizontal, 8).padding(.vertical, 8)
                 .frame(height: 112)
@@ -238,6 +235,11 @@ struct SettingsView: View {
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(palette.wellStroke, lineWidth: 1))
                 .shapeAudit(.inset, .rounded(12), "dvar editor")
                 .accessibilityLabel("Extra launch options")
+            if let error = model.advancedError {
+                Label(error, systemImage: "exclamationmark.triangle").font(.system(size: 12)).foregroundStyle(palette.negative)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Your last valid options still apply.").font(.system(size: 12)).foregroundStyle(palette.secondary)
+            }
             Text(legacy ? "Paths, passwords and your CD key are managed by the launcher and can't be set here."
                         : "Paths, passwords and your CD key are managed by the launcher and can't be set here. Settings that belong to a loadout are changed in Configs; the game ignores them here.")
                 .font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
@@ -306,41 +308,42 @@ private struct ConfigsLink: View {
     }
 }
 
-/// The save note sits on the toolbar without its own glass; Save is the view's one prominent action.
-private struct SaveToolbar: ViewModifier {
-    var saved: Bool
-    var save: () -> Void
+/// The same release status and actions wherever someone checks for an update.
+struct UpdateStatusView: View {
+    @ObservedObject var model: LauncherModel
     @Environment(\.palette) private var palette
-    func body(content: Content) -> some View {
-        #if COD2_LIQUID_GLASS
-        if #available(macOS 26.0, *) {
-            content.toolbar {
-                ToolbarSpacer(.flexible)
-                ToolbarItem(placement: .automatic) { note }.sharedBackgroundVisibility(.hidden)
-                ToolbarItem(placement: .automatic) { button.prominentAction() }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
+                if model.checkingUpdates || model.installingUpdate { ProgressView().controlSize(.small).accessibilityLabel(model.updateMessage) }
+                else { Image(systemName: model.updateError ? "exclamationmark.triangle" : model.releaseURL != nil ? "arrow.down.circle" : model.updateWasChecked ? "checkmark.circle" : "arrow.clockwise").foregroundStyle(model.updateError ? palette.negative : palette.secondary).accessibilityHidden(true) }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("CoD2 Silicon \(model.version)").font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.heading)
+                    Text(model.updateMessage).font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                }
             }
-        } else { legacy(content) }
-        #else
-        legacy(content)
-        #endif
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) { actions }
+                VStack(alignment: .leading, spacing: 10) { actions }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .contain)
     }
-    private func legacy(_ content: Content) -> some View {
-        content.toolbar { ToolbarItem(placement: .automatic) { Spacer() }; ToolbarItemGroup(placement: .automatic) { note; button.prominentAction() } }
-    }
-    private var note: some View {
-        Text(saved ? "Saved. Applies on next launch" : "Applies on next launch").font(.system(size: 12)).foregroundStyle(palette.secondary).fixedSize()
-    }
-    private var button: some View {
-        Button("Save", action: save).keyboardShortcut("s", modifiers: .command)
+    @ViewBuilder private var actions: some View {
+        if model.updateOffer != nil {
+            Button("Install Update", action: model.installUpdate).glassAction().disabled(model.installingUpdate || model.checkingUpdates)
+                .help("Download this version, check it and replace the app. CoD2 Silicon restarts.")
+        } else {
+            Button(model.checkingUpdates ? "Checking…" : "Check for Updates…", action: model.checkUpdates).glassAction().disabled(model.checkingUpdates)
+        }
+        if let url = model.releaseURL { Link("View Release", destination: url).font(.system(size: 13)).foregroundStyle(palette.link) }
     }
 }
 
 private extension View {
     @ViewBuilder func scrollContentBackgroundHidden() -> some View {
         self.scrollContentBackground(.hidden)
-    }
-    @ViewBuilder func selectionDisabled() -> some View {
-        if #available(macOS 14.0, *) { self.selectionDisabled(true) } else { self }
     }
 }
 
@@ -395,16 +398,14 @@ struct SettingsRow<Control: View>: View {
     var detail: String?
     var fixedLabel: CGFloat?
     var typewriter = false
-    /// In the design but waiting on the Metal renderer (0.3): labelled, dimmed and inert.
-    var upcoming = false
     var minHeight: CGFloat = 52
     /// Long titles that name where something goes wrap rather than truncate in a narrow window.
     var titleLines = 1
     @ViewBuilder var control: Control
     @Environment(\.palette) private var palette
-    init(_ title: String, detail: String? = nil, fixedLabel: CGFloat? = nil, typewriter: Bool = false, upcoming: Bool = false, minHeight: CGFloat = 52,
+    init(_ title: String, detail: String? = nil, fixedLabel: CGFloat? = nil, typewriter: Bool = false, minHeight: CGFloat = 52,
          titleLines: Int = 1, @ViewBuilder control: () -> Control) {
-        self.title = title; self.detail = detail; self.fixedLabel = fixedLabel; self.typewriter = typewriter; self.upcoming = upcoming
+        self.title = title; self.detail = detail; self.fixedLabel = fixedLabel; self.typewriter = typewriter
         self.minHeight = minHeight; self.titleLines = titleLines; self.control = control()
     }
     var body: some View {
@@ -413,19 +414,13 @@ struct SettingsRow<Control: View>: View {
                 HStack(spacing: 8) {
                     Text(title).font(typewriter ? .typewriter(14) : .system(size: 14)).foregroundStyle(palette.dark ? Palette.hex(0xe6dfcf) : palette.text).lineLimit(titleLines)
                         .fixedSize(horizontal: false, vertical: titleLines > 1)
-                        .opacity(upcoming ? 0.55 : 1)
-                    if upcoming {
-                        Text("0.3").font(.stencil(11, heavy: false)).tracking(1.2).foregroundStyle(palette.accent)
-                            .padding(.horizontal, 6).padding(.vertical, 1)
-                            .overlay(Capsule().stroke(palette.selectionStroke, lineWidth: 1))
-                            .accessibilityLabel("Upcoming in version 0.3")
-                    }
+
                 }
-                if let detail { Text(detail).font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true).opacity(upcoming ? 0.7 : 1) }
+                if let detail { Text(detail).font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true) }
             }
             .frame(width: fixedLabel, alignment: .leading)
             .frame(maxWidth: fixedLabel == nil ? .infinity : nil, alignment: .leading)
-            control.disabled(upcoming).opacity(upcoming ? 0.45 : 1)
+            control
         }
         .padding(.horizontal, SettingsMetrics.radius).padding(.vertical, detail == nil ? 10 : 9)
         .frame(minHeight: minHeight)
@@ -450,34 +445,36 @@ struct FrameRateCrates: View {
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
-        HStack(spacing: 10) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 10)], alignment: .leading, spacing: 10) {
             ForEach(FrameCap.presets, id: \.value) { preset in
                 crate("\(preset.value)", preset.caption, selected: !custom && fps == preset.value) { fps = preset.value; custom = false }
             }
-            Button { withAnimation(reduceMotion ? nil : .launcherSpring) { custom = true } } label: {
+            if custom {
                 VStack(alignment: .leading, spacing: 6) {
-                    if custom {
-                        TextField("FPS", value: $fps, format: .number.grouping(.never)).textFieldStyle(.plain)
-                            .font(.stencil(34)).foregroundStyle(palette.dark ? palette.accent : Palette.hex(0x4e5b2f)).frame(height: 34)
-                            .onSubmit { fps = min(1000, max(0, fps)) }
-                            .accessibilityLabel("Custom frame cap, 0 to 1000, 0 for no cap")
-                    } else {
-                        Text("—").font(.stencil(34)).foregroundStyle(palette.numeral).frame(height: 34)
-                    }
-                    Text(custom ? FrameCap.customCaption(fps) : "Custom value").font(.system(size: 11)).foregroundStyle(palette.secondary)
+                    TextField("FPS", value: Binding(get: { fps }, set: { fps = min(1000, max(0, $0)) }), format: .number.grouping(.never)).textFieldStyle(.plain)
+                        .font(.stencil(34)).foregroundStyle(palette.dark ? palette.accent : Palette.hex(0x4e5b2f)).frame(height: 34)
+                        .accessibilityLabel("Custom frame cap, 0 to 1000 frames per second, 0 for no cap")
+                    Text("fps · \(FrameCap.customCaption(fps))").font(.system(size: 11)).foregroundStyle(palette.secondary)
                 }
-                .crateStyle(selected: custom, palette: palette)
+                .crateStyle(selected: true, palette: palette)
+            } else {
+                Button { withAnimation(reduceMotion ? nil : .launcherSpring) { custom = true } } label: {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("—").font(.stencil(34)).foregroundStyle(palette.numeral).frame(height: 34)
+                        Text("Custom value").font(.system(size: 11)).foregroundStyle(palette.secondary)
+                    }
+                    .crateStyle(selected: false, palette: palette)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Custom frame cap")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Custom frame cap")
-            .accessibilityAddTraits(custom ? .isSelected : [])
         }
     }
     private func crate(_ number: String, _ caption: String, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(number).font(.stencil(34)).tracking(0.68).foregroundStyle(selected ? (palette.dark ? palette.accent : Palette.hex(0x4e5b2f)) : palette.numeral).frame(height: 34)
-                Text(caption).font(.system(size: 11)).foregroundStyle(palette.secondary).lineSpacing(1.5).fixedSize(horizontal: false, vertical: true)
+                Text("fps · \(caption)").font(.system(size: 11)).foregroundStyle(palette.secondary).lineSpacing(1.5).fixedSize(horizontal: false, vertical: true)
             }
             .crateStyle(selected: selected, palette: palette)
         }

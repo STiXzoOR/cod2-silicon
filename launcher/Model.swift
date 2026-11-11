@@ -43,7 +43,7 @@ struct MediaEntry: Identifiable {
     @Published var approximate = false
     @Published var settings = GameSettings() {
         didSet {
-            if settings != savedSettings { settingsSaved = false }
+            if settingsReady && settings != oldValue { scheduleSettingsSave() }
             if settings.matchSummariesEnabled != oldValue.matchSummariesEnabled {
                 studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
             }
@@ -54,43 +54,61 @@ struct MediaEntry: Identifiable {
     @Published var engineRequest: EngineRequest?
     /// The engines this app carries. Without the original one, Settings explains and CoD2x plays.
     private(set) var installedEngines: Set<GameEngine>
-    /// True right after Save, until the next change.
-    @Published var settingsSaved = false
+    @Published var settingsSaveError: String?
+    @Published var advancedDraft: String?
+    @Published var advancedError: String?
+    private var settingsReady = false
+    private var settingsSaveTask: Task<Void, Never>?
+    private var settingsTerminationObserver: NSObjectProtocol?
     /// Settings › Game › CoD2x files: CoD2x's menus and icons, kept in the app home (CoD2xFiles).
     @Published var cod2xFilesInstalled = false
     @Published var cod2xFilesBusy = false
     @Published var cod2xFilesMessage = CoD2xFiles.Message.notInstalled
+    private var cod2xFilesTask: Task<Void, Never>?
     @Published var library = LauncherLibrary()
     @Published var servers: [GameServer] = []
     @Published var selectedServer: String? {
-        didSet { do { try serverConnection.select(address: selectedServer) } catch { serverConnection.clear(); notice = error.localizedDescription } }
+        didSet { if selectedServer != oldValue { serverPassword = "" }; do { try serverConnection.select(address: selectedServer) } catch { serverConnection.clear(); notice = error.localizedDescription } }
     }
     @Published var refreshing = false
     @Published var queryProgress = ""
     @Published var search = ""
     @Published var filter: ServerFilter = .all
     @Published var sort: ServerSort = .ping
+    @Published var sortAscending = true
+    @Published var serverSearchRequested = false
     @Published var hideEmpty = false
     @Published var hideFull = false
     @Published var directAddress = "" {
         didSet {
             guard directAddress != oldValue else { return }
+            directConnectError = nil
             do { try serverConnection.select(address: directAddress.isEmpty ? nil : directAddress) }
             catch { try? serverConnection.select(address: nil) }
         }
     }
     @Published var serverPassword = ""
+    @Published var directPassword = ""
+    @Published var directConnectError: String?
+    @Published var refreshResult = ""
     @Published var gameRunning = false
     @Published var notice = ""
     @Published var crashReport: URL?
     @Published var updateMessage = "Check for the latest release when you're ready."
     @Published var checkingUpdates = false
+    @Published var updateWasChecked = false
+    @Published var updateError = false
     @Published var releaseURL: URL?
     /// The newer release Install Update installs, when it carries this Mac's archive and SHA256SUMS.
     @Published var updateOffer: AppUpdate.Offer?
     @Published var installingUpdate = false
     @Published var media: [MediaEntry] = []
     @Published var libraryTab: LibraryTab = .demos
+    @Published var selectedMedia: URL?
+    @Published var mediaMessage: String?
+    @Published var mediaError = false
+    @Published var renamingMedia: MediaEntry?
+    @Published var trashingMedia: MediaEntry?
     @Published var playerName = PlayerProfile.unnamed
     @Published var keyVerified = false
     let artwork: MapArtworkStore
@@ -174,6 +192,10 @@ struct MediaEntry: Identifiable {
         LauncherMigrate()
         if let data = try? Data(contentsOf: home.appendingPathComponent("launcher-settings.json")), let value = try? JSONDecoder().decode(GameSettings.self, from: data) { settings = value }
         savedSettings = settings
+        settingsReady = true
+        settingsTerminationObserver = NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.flushSettings() }
+        }
         followEngine()
         studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
         if let data = try? Data(contentsOf: home.appendingPathComponent("launcher-library.json")), let value = try? JSONDecoder().decode(LauncherLibrary.self, from: data) { library = value; servers = value.cache }
@@ -187,13 +209,13 @@ struct MediaEntry: Identifiable {
         step = dataPath.isEmpty ? 0 : (keyVerified ? 2 : 1)
         if !onboard { step = 0 }
     }
-    var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0" }
+    var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.3.0" }
     /// This build's crash report receiver (a Sentry DSN written at build time); without one nothing is ever sent
     /// and Settings doesn't offer it. The review harness shows the switch with a placeholder that is never used.
     var crashReportService: SentryDSN? {
         snapshot ? SentryDSN("https://preview@sentry.invalid/1") : SentryDSN(Bundle.main.object(forInfoDictionaryKey: CrashReporting.infoKey) as? String ?? "")
     }
-    var selected: GameServer? { servers.first { $0.address == selectedServer } ?? visibleServers.first }
+    var selected: GameServer? { visibleServers.first { $0.address == selectedServer } }
     var lastServer: GameServer? {
         guard let address = library.recent.first else { return nil }
         return servers.first { $0.address == address } ?? library.cache.first { $0.address == address }
@@ -212,13 +234,16 @@ struct MediaEntry: Identifiable {
             (filter != .stock || !ServerFacts($0).isCoD2x) && (filter != .codx || ServerFacts($0).isCoD2x) &&
             (!hideEmpty || $0.playerCount > 0) && (!hideFull || $0.maxPlayers == 0 || $0.playerCount < $0.maxPlayers)
         }
-        return result.sorted {
+        return result.sorted { lhs, rhs in
+            let a = sortAscending ? lhs : rhs, b = sortAscending ? rhs : lhs
             switch sort {
-            case .players: if $0.playerCount != $1.playerCount { return $0.playerCount > $1.playerCount }
-            case .name: return QuakeColors.plain($0.name).localizedStandardCompare(QuakeColors.plain($1.name)) == .orderedAscending
-            case .ping: if $0.ping != $1.ping { return $0.ping < $1.ping }
+            case .players: if a.playerCount != b.playerCount { return a.playerCount < b.playerCount }
+            case .name:
+                let order = QuakeColors.plain(a.name).localizedStandardCompare(QuakeColors.plain(b.name))
+                if order != .orderedSame { return order == .orderedAscending }
+            case .ping: if a.ping != b.ping { return a.ping < b.ping }
             }
-            return $0.address < $1.address
+            return a.address < b.address
         }
     }
     func boot() {
@@ -370,15 +395,65 @@ struct MediaEntry: Identifiable {
     func restartSetup() { keyInput = ""; step = 0; withAnimation(.launcherSpring) { onboard = true } }
 
     // MARK: Settings and library
+    var usesLoadouts: Bool { (studio.session ?? configStudio)?.migrationCompleted == true }
+    var nextGameFrameCap: (value: Int?, name: String?) {
+        guard usesLoadouts else { return (settings.fps, nil) }
+        guard let session = studio.session ?? configStudio else { return (nil, nil) }
+        do {
+            let connection = serverConnection.address == lastServer?.address
+            let profile = try (connection ? serverConnection.profileID : nil).map(session.readProfile) ?? session.readActive()
+            guard let profile else { return (nil, nil) }
+            let raw = (connection ? serverConnection.overrides["com_maxfps"] : nil) ?? profile.document.effectiveSetting(named: "com_maxfps")
+            return (raw.flatMap(Int.init), profile.profile.displayName)
+        } catch { return (nil, nil) }
+    }
+    func openFrameSettings() {
+        guard usesLoadouts else { page = .settings; return }
+        page = .configs
+        studio.loadCatalogNow()
+        let target = (serverConnection.address == lastServer?.address ? serverConnection.profileID : nil) ?? studio.activeProfile?.id
+        if let target { studio.select(target) }
+        studio.tab = .settings; studio.group = .frame; studio.search = ""; studio.filter = nil
+    }
+    private func scheduleSettingsSave() {
+        settingsSaveTask?.cancel()
+        settingsSaveTask = Task { [weak self] in
+            do { try await Task.sleep(for: .milliseconds(250)) } catch { return }
+            self?.saveSettings()
+        }
+    }
+    func flushSettings() {
+        settingsSaveTask?.cancel()
+        if settings != savedSettings { saveSettings() }
+    }
+    /// Invalid text remains editable, while launches and saved settings keep the last valid options.
+    func editAdvancedOptions(_ text: String) {
+        advancedDraft = text
+        var candidate = settings
+        for (index, line) in text.components(separatedBy: "\n").enumerated() where !line.trimmingCharacters(in: .whitespaces).isEmpty {
+            candidate.advanced = line
+            guard (try? candidate.launchConfig(migrated: configStudio?.migrationCompleted == true)) != nil else {
+                advancedError = "Line \(index + 1) can’t be used. Enter one setting and value, without quotes or command separators. Paths and private information are managed by the app."
+                return
+            }
+        }
+        candidate.advanced = text
+        guard (try? candidate.launchConfig(migrated: configStudio?.migrationCompleted == true)) != nil else {
+            advancedError = "These options are too long. Remove some lines and try again."
+            return
+        }
+        advancedError = nil
+        settings = candidate
+    }
     func saveSettings() {
         do {
             let text = try settings.launchConfig(migrated: configStudio?.migrationCompleted == true)
-            guard !snapshot else { settingsSaved = true; return }
+            guard !snapshot else { savedSettings = settings; settingsSaveError = nil; return }
             try PrivateFile.write(Data(text.utf8), to: home.appendingPathComponent("main/launcher.cfg"))
             try PrivateFile.write(JSONEncoder().encode(settings), to: home.appendingPathComponent("launcher-settings.json"))
-            savedSettings = settings; settingsSaved = true
+            savedSettings = settings; settingsSaveError = nil
             studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
-        } catch { notice = error.localizedDescription }
+        } catch { settingsSaveError = "Your changes couldn’t be saved. Check that your CoD2 Silicon folder is writable, then try again." }
     }
     /// Config Studio reads, checks and edits loadouts in the language of the engine the next game starts with.
     private func followEngine() {
@@ -397,7 +472,11 @@ struct MediaEntry: Identifiable {
     }
     /// Only when the player asks: CoD2x's pinned release from GitHub, of which only the archive is kept.
     func downloadCoD2xFiles() {
-        getCoD2xFiles(CoD2xFiles.Message.downloading) { home in try CoD2xFiles.install(release: try await CoD2xFiles.download(), home: home) }
+        getCoD2xFiles(CoD2xFiles.Message.downloading) { home in
+            let release = try await CoD2xFiles.download()
+            try Task.checkCancellation()
+            try CoD2xFiles.install(release: release, home: home)
+        }
     }
     /// Without a download: a Windows game folder with CoD2x installed, read and never changed.
     func chooseCoD2xFolder() {
@@ -405,28 +484,33 @@ struct MediaEntry: Identifiable {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true; panel.canChooseFiles = false; panel.treatsFilePackagesAsDirectories = true
         panel.message = "Choose a Windows Call of Duty 2 folder that has CoD2x installed."
-        guard panel.runModal() == .OK, let folder = panel.url else { return }
-        getCoD2xFiles(CoD2xFiles.Message.copying) { home in try CoD2xFiles.install(folder: folder, home: home) }
+        guard let window = NSApp.keyWindow else { return }
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let folder = panel.url else { return }
+            self?.getCoD2xFiles(CoD2xFiles.Message.copying) { home in try CoD2xFiles.install(folder: folder, home: home) }
+        }
     }
     private func getCoD2xFiles(_ progress: String, _ work: @escaping @Sendable (URL) async throws -> Void) {
         guard !snapshot, !cod2xFilesBusy else { return }
         cod2xFilesBusy = true; cod2xFilesMessage = progress
         let home = self.home
-        Task {
+        cod2xFilesTask = Task {
             var failure: String?
-            do { try await Task.detached(priority: .userInitiated) { try await work(home) }.value }
-            catch { failure = CoD2xFiles.message(error) }
+            do { try await work(home) }
+            catch { if !Task.isCancelled { failure = CoD2xFiles.message(error) } }
             cod2xFilesBusy = false
             refreshCoD2xFiles()
             if let failure { cod2xFilesMessage = failure }
+            if Task.isCancelled { cod2xFilesMessage = "Download cancelled. You can try again whenever you’re ready." }
+            studio.announce(cod2xFilesMessage)
         }
     }
+    func cancelCoD2xFiles() { cod2xFilesTask?.cancel() }
     func removeCoD2xFiles() {
         guard !snapshot, !cod2xFilesBusy else { return }
         do { try CoD2xFiles.remove(home: home); refreshCoD2xFiles() } catch { cod2xFilesMessage = CoD2xFiles.message(error) }
     }
-    /// The answer to `engineRequest`: CoD2x is saved as the engine (other unsaved changes stay unsaved),
-    /// then the join goes ahead.
+    /// The answer to `engineRequest`: save CoD2x as the engine, then join.
     func turnOnCoD2x(andJoin request: EngineRequest) {
         engineRequest = nil
         savedSettings.engine = .cod2x
@@ -477,13 +561,41 @@ struct MediaEntry: Identifiable {
         saveLibrary()
     }
     func showServer(_ address: String) {
+        clearServerFilters()
         withAnimation(.launcherSpring) { page = .servers; selectedServer = address }
     }
 
     // MARK: Servers
+    func clearServerFilters() { search = ""; filter = .all; hideEmpty = false; hideFull = false }
+    func sortServers(by key: ServerSort) {
+        if sort == key { sortAscending.toggle() }
+        else { sort = key; sortAscending = key != .players }
+    }
+    var serverCacheAge: String {
+        guard let date = library.cachedAt else { return "Not refreshed yet" }
+        if Date().timeIntervalSince(date) < 60 { return "Refreshed just now" }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return "Refreshed \(formatter.localizedString(for: date, relativeTo: Date()))"
+    }
+    var directAddressError: String? {
+        let address = directAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !address.isEmpty else { return nil }
+        guard (try? LaunchLink.canonicalAddress(address)) != nil else {
+            return "Use a hostname or IP address, with an optional port from 1 to 65535. For example, 203.0.113.24:28960."
+        }
+        return nil
+    }
+    func copyServer(_ server: GameServer, link: Bool = false) {
+        let value = link ? (try? LaunchLink.direct(server.address).url) : server.address
+        guard let value else { return }
+        NSPasteboard.general.clearContents(); NSPasteboard.general.setString(value, forType: .string)
+        notice = link ? "Server link copied." : "Server address copied."
+        studio.announce(notice)
+    }
     func refresh() {
         guard !snapshot, !refreshing else { return }
-        refreshing = true; queryProgress = "Contacting both master servers…"
+        refreshing = true; refreshResult = ""; queryProgress = "Contacting both master servers…"
         browserTask = Task {
             let discovered = await ServerQueries.masterAddresses()
             let addresses = Array(Set(discovered).union(library.favorites).union(library.recent)).sorted()
@@ -500,11 +612,14 @@ struct MediaEntry: Identifiable {
                     for await value in group { if let value { fresh.append(value) } }
                 }
                 servers = fresh + library.cache.filter { cached in !fresh.contains { $0.address == cached.address } }
-                queryProgress = "Queried \(min(start + 6, addresses.count)) of \(addresses.count)"
+                queryProgress = "Asking \(min(start + 6, addresses.count)) of \(addresses.count) servers…"
             }
             if fresh.isEmpty && !Task.isCancelled { notice = "No servers responded. Your cached results remain available; try direct connect or refresh later." }
             if !fresh.isEmpty { servers = fresh; library.cache = fresh; library.cachedAt = Date(); saveLibrary() }
+            refreshResult = Task.isCancelled ? "Refresh stopped. \(fresh.count) servers answered." : "\(fresh.count) servers answered."
+            if fresh.isEmpty && !Task.isCancelled { refreshResult += " Try refreshing again." }
             refreshing = false
+            studio.announce(refreshResult)
             loadArtwork()
         }
     }
@@ -553,13 +668,17 @@ struct MediaEntry: Identifiable {
             notice = "Enter a server address, such as 203.0.113.24:28960."; return
         }
         do {
-            let link = try LaunchLink.direct(server?.address ?? directAddress, password: serverPassword)
+            if server == nil, let error = directAddressError { directConnectError = error; return }
+            let link = try LaunchLink.direct(server?.address ?? directAddress.trimmingCharacters(in: .whitespacesAndNewlines), password: server == nil ? directPassword : serverPassword)
             try serverConnection.select(address: link.address)
-            serverPassword = ""
+            if server == nil { directPassword = ""; directConnectError = nil } else { serverPassword = "" }
             if activeGamePID != nil { openLink(link.url) }
             else { pendingLink = link; play() }
         }
-        catch { notice = error.localizedDescription }
+        catch {
+            if server == nil { directConnectError = "This connection couldn’t be opened. Check the address and password and try again." }
+            else { notice = error.localizedDescription }
+        }
     }
     /// Home's Deploy: rejoin the last server, or open the game's menu when there is none.
     func deploy() {
@@ -650,9 +769,16 @@ struct MediaEntry: Identifiable {
         if wasRunning && !gameRunning { gameEnded(code: lastExitCode); lastExitCode = nil }
     }
     func play(demo: URL? = nil) {
+        if let demo {
+            guard !gameRunning else { mediaError = true; mediaMessage = "Close the game before playing a recording."; return }
+            guard mediaFileExists(demo) else { return }
+            pendingLink = nil
+        }
         guard !snapshot, !gameRunning else { return }
+        flushSettings()
         if let refresh = shaderRefresh { Task { await refresh.value; play(demo: demo) }; return }
         if attachExistingGame() {
+            if demo != nil { mediaError = true; mediaMessage = "Close the game before playing a recording." }
             if let link = pendingLink { pendingLink = nil; openLink(link.url) }
             return
         }
@@ -780,8 +906,8 @@ struct MediaEntry: Identifiable {
         NSApp.windows.first?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
         // 1 is Exit in CoD2x's machine identity dialog, a normal close.
         let closed = code == 0 || code == 1
-        if let code, !closed {
-            notice = "The game exited unexpectedly (\(code)). Your launcher is still open."
+        if code != nil && !closed {
+            notice = "The game closed unexpectedly. Your launcher is still open."
         }
         if !closed {
             crashReport = CrashReports.latest(in: home, since: gameStartedAt)
@@ -792,6 +918,7 @@ struct MediaEntry: Identifiable {
         fflush(stdout)
         readPlayerName()
         refreshMatchSummaries()
+        loadMedia()
         if pendingLink != nil { play() }
         else if exitAfterGame { NSApp.terminate(nil) }
     }
@@ -826,25 +953,85 @@ struct MediaEntry: Identifiable {
     func loadMedia() {
         guard !snapshot else { return }
         let folder = home.appendingPathComponent(libraryTab == .demos ? "main/demos" : "main/screenshots")
-        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let extensions = libraryTab == .demos ? ["dm_1"] : ["jpg", "jpeg", "png", "tga"]
-        let keys: [URLResourceKey] = [.contentModificationDateKey, .fileSizeKey]
-        media = ((try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: keys)) ?? [])
-            .filter { extensions.contains($0.pathExtension.lowercased()) }
-            .map { url in
+        let keys: [URLResourceKey] = [.contentModificationDateKey, .fileSizeKey, .isRegularFileKey]
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            media = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: keys)
+            .filter { extensions.contains($0.pathExtension.lowercased()) && (try? $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true }
+            .map { url -> MediaEntry in
                 let values = try? url.resourceValues(forKeys: Set(keys))
                 return MediaEntry(url: url, facts: MediaFacts(name: url.lastPathComponent, date: values?.contentModificationDate, bytes: values?.fileSize))
             }
-            .sorted { ($0.url.lastPathComponent) > ($1.url.lastPathComponent) }
+            .sorted {
+                let a = $0.facts.modifiedAt ?? .distantPast, b = $1.facts.modifiedAt ?? .distantPast
+                return a == b ? $0.url.lastPathComponent < $1.url.lastPathComponent : a > b
+            }
+            mediaMessage = nil; mediaError = false
+            if !media.contains(where: { $0.url == selectedMedia }) { selectedMedia = nil }
+            loadArtwork()
+        } catch { mediaError = true; mediaMessage = "Your library couldn’t be read. Check the folder in Finder, then try again." }
     }
-    func openMediaFolder() { NSWorkspace.shared.open(home.appendingPathComponent(libraryTab == .demos ? "main/demos" : "main/screenshots")) }
+    func mediaFileExists(_ url: URL) -> Bool {
+        guard !snapshot else { return true }
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            mediaError = true; mediaMessage = "“\(url.lastPathComponent)” is no longer in this folder. Refresh your library to see what’s available."
+            return false
+        }
+        return true
+    }
+    func openMedia(_ entry: MediaEntry) {
+        guard mediaFileExists(entry.url), !snapshot else { return }
+        if !NSWorkspace.shared.open(entry.url) { mediaError = true; mediaMessage = "This screenshot couldn’t be opened. Show it in Finder to choose an app." }
+    }
+    func revealMedia(_ entry: MediaEntry) {
+        guard mediaFileExists(entry.url), !snapshot else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([entry.url])
+    }
+    func copyMedia(_ entry: MediaEntry) {
+        guard mediaFileExists(entry.url), !snapshot else { return }
+        guard let image = NSImage(contentsOf: entry.url) else { mediaError = true; mediaMessage = "This screenshot couldn’t be copied. Show it in Finder and try again."; return }
+        NSPasteboard.general.clearContents(); NSPasteboard.general.writeObjects([image, entry.url as NSURL])
+        mediaError = false; mediaMessage = "Screenshot copied."; studio.announce("Screenshot copied.")
+    }
+    func renameMedia(_ entry: MediaEntry, to name: String) -> String? {
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.hasPrefix(".") else { return "Choose a name that doesn’t start with a dot, so the recording stays visible." }
+        guard !name.isEmpty, ![".", ".."].contains(name), !name.contains("/"), !name.contains(":"),
+              !name.unicodeScalars.contains(where: { $0.value < 32 }) else { return "Enter a name without slashes or colons." }
+        let target = entry.url.deletingLastPathComponent().appendingPathComponent(name).appendingPathExtension(entry.url.pathExtension)
+        if target == entry.url { return nil }
+        guard !FileManager.default.fileExists(atPath: target.path) else { return "A recording already has that name. Choose another." }
+        guard !snapshot else { return nil }
+        do {
+            try FileManager.default.moveItem(at: entry.url, to: target)
+            selectedMedia = target; loadMedia(); studio.announce("Recording renamed.")
+            return nil
+        } catch { return "This recording couldn’t be renamed. Check that it’s still in the folder and try again." }
+    }
+    func trashMedia(_ entry: MediaEntry) {
+        guard !snapshot else { return }
+        do {
+            try FileManager.default.trashItem(at: entry.url, resultingItemURL: nil)
+            loadMedia(); mediaMessage = "Moved to Trash. You can put it back using Finder."; studio.announce("Moved to Trash.")
+        } catch { mediaError = true; mediaMessage = "This file couldn’t be moved to Trash. Show it in Finder and try again." }
+    }
+    func openMediaFolder() {
+        guard !snapshot else { return }
+        let folder = home.appendingPathComponent(libraryTab == .demos ? "main/demos" : "main/screenshots")
+        do { try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true); NSWorkspace.shared.open(folder) }
+        catch { mediaError = true; mediaMessage = "The folder couldn’t be opened. Check that your CoD2 Silicon folder is writable." }
+    }
     func openHomeFolder() { NSWorkspace.shared.open(home) }
     /// Explicit HTTPS request to GitHub Releases. Nothing is downloaded or installed until Install Update.
     func checkUpdates() {
         guard !snapshot, !checkingUpdates, !installingUpdate else { return }
+        if ![.deploy, .settings, .about].contains(page) { page = .about }
+        updateWasChecked = true; updateError = false
         checkingUpdates = true; updateMessage = "Checking GitHub Releases…"
+        studio.announce(updateMessage)
         Task {
-            defer { checkingUpdates = false }
+            defer { checkingUpdates = false; studio.announce(updateMessage) }
             do {
                 var request = URLRequest(url: URL(string: "https://api.github.com/repos/STiXzoOR/cod2-silicon/releases?per_page=10")!)
                 request.timeoutInterval = 15; request.setValue("CoD2-Silicon-Launcher", forHTTPHeaderField: "User-Agent")
@@ -859,7 +1046,7 @@ struct MediaEntry: Identifiable {
                     releaseURL = URL(string: "https://github.com/STiXzoOR/cod2-silicon/releases")
                     updateOffer = AppUpdate.offer(version: latest, assets: feed.latestAssets)
                 } else { updateMessage = "You're up to date · \(version)"; releaseURL = nil; updateOffer = nil }
-            } catch { updateMessage = error.localizedDescription }
+            } catch { updateMessage = "Updates couldn’t be checked. Check your internet connection and try again."; updateError = true }
         }
     }
 
@@ -896,6 +1083,7 @@ struct MediaEntry: Identifiable {
         }
     }
     private func updateFailed(_ error: Error) {
+        updateError = true
         updateMessage = AppUpdate.message(error)
         if (error as? AppUpdate.Failure)?.opensReleases == true { NSWorkspace.shared.open(AppUpdate.releases) }
     }
@@ -955,26 +1143,51 @@ struct MediaEntry: Identifiable {
         case "setup-ready": onboard = true; step = 2; shaderCount = 834; shaderMessage = "All shaders verified"
         case "servers": page = .servers
         case "servers-empty": page = .servers; search = "zzz"
+        case "servers-no-cache": page = .servers; servers = []; library.cache = []; library.cachedAt = nil; selectedServer = nil
+        case "servers-inspector-empty": page = .servers; selectedServer = nil
+        case "servers-direct-error": page = .servers; directAddress = "invalid address;quit"
+        case "servers-refreshing": page = .servers; refreshing = true; queryProgress = "Asking 24 of 120 servers…"
+        case "servers-refreshing-empty": page = .servers; servers = []; library.cache = []; library.cachedAt = nil; selectedServer = nil; refreshing = true; queryProgress = "Contacting both master servers…"
+        case "settings-legacy": page = .settings
+        case "settings-legacy-custom": page = .settings; settings.fps = 144
+        case "settings-invalid": page = .settings; editAdvancedOptions("name invalid;quit")
+        case "settings-save-error": page = .settings; settingsSaveError = "Your changes couldn’t be saved. Check that your CoD2 Silicon folder is writable, then try again."
+        case "home-checking": updateWasChecked = true; checkingUpdates = true; updateMessage = "Checking GitHub Releases…"
+        case "home-current": updateWasChecked = true; updateMessage = "You’re up to date · \(version)"
+        case "home-update-error": updateWasChecked = true; updateError = true; updateMessage = "Updates couldn’t be checked. Check your internet connection and try again."
+        case "library-empty": page = .library; media = []
+        case "library-empty-screenshots": page = .library; libraryTab = .screenshots; media = []
+        case "library-error": page = .library; media = []; mediaError = true; mediaMessage = "Your library couldn’t be read. Check the folder in Finder, then try again."
+        case "library-reloaded":
+            page = .library
+            let name = "new-match.dm_1"
+            media.insert(MediaEntry(url: home.appendingPathComponent("main/demos/" + name), facts: MediaFacts(name: name, date: Date(), bytes: 540_000)), at: 0)
+            selectedMedia = media.first?.url
+        case "library-renaming", "library-rename-error": page = .library; renamingMedia = media.first
+        case "library-trash": page = .library; trashingMedia = media.first
+        case "library-trashed": page = .library; media = []; mediaMessage = "Moved to Trash. You can put it back using Finder."
+        case "library-running": page = .library; gameRunning = true; mediaError = true; mediaMessage = "Close the game before playing a recording."
+        case "library-missing": page = .library; mediaError = true; mediaMessage = "This recording is no longer in the folder. Refresh your library to see what’s available."
         case "settings": page = .settings
         case "settings-original": page = .settings; settings.engine = .original; savedSettings = settings
         case "settings-original-missing": page = .settings; installedEngines = [.cod2x]
         case "settings-cod2x-installed": page = .settings; cod2xFilesInstalled = true; cod2xFilesMessage = CoD2xFiles.Message.installed
         case "settings-cod2x-downloading": page = .settings; cod2xFilesBusy = true; cod2xFilesMessage = CoD2xFiles.Message.downloading
         case "settings-cod2x-error": page = .settings; cod2xFilesMessage = CoD2xFiles.message(CoD2xFiles.Failure.noCoD2x)
-        case "settings-update", "about-update", "settings-update-installing", "settings-update-error":
-            page = screen.hasPrefix("about") ? .about : .settings
+        case "home-update", "settings-update", "about-update", "settings-update-installing", "settings-update-error":
+            page = screen.hasPrefix("home") ? .deploy : screen.hasPrefix("about") ? .about : .settings
             releaseURL = AppUpdate.releases
             updateOffer = AppUpdate.Offer(version: "0.4.0", archive: AppUpdate.releases, archiveSize: 1, sums: AppUpdate.releases)
             updateMessage = "Version 0.4.0 is available. Download it when you're ready."
             if screen == "settings-update-installing" { installingUpdate = true; updateMessage = AppUpdate.Message.downloading("0.4.0") }
-            if screen == "settings-update-error" { updateMessage = AppUpdate.message(AppUpdate.Failure.mismatch) }
+            if screen == "settings-update-error" { updateError = true; updateMessage = AppUpdate.message(AppUpdate.Failure.mismatch) }
         case "settings-reports": page = .settings; settings.sendCrashReports = true; settings.sendCoD2xReports = true; savedSettings = settings
         case "home-crash-sent":
             crashReport = home.appendingPathComponent("cod2_crash_4242.txt")
-            notice = "The game exited unexpectedly (11). Your launcher is still open. " + CrashReporting.Status.sent.message
+            notice = "The game closed unexpectedly. Your launcher is still open. " + CrashReporting.Status.sent.message
         case "home-crash-not-sent":
             crashReport = home.appendingPathComponent("cod2_crash_4242.txt")
-            notice = "The game exited unexpectedly (11). Your launcher is still open. " + CrashReporting.Status.notSent(.offline).message
+            notice = "The game closed unexpectedly. Your launcher is still open. " + CrashReporting.Status.notSent(.offline).message
         case "library-demos": page = .library
         case "library-screenshots": page = .library; libraryTab = .screenshots
             media = ["toujane-dusk.jpg", "carentan-rooftops.jpg", "leningrad-snow.jpg"].enumerated().map { index, name in

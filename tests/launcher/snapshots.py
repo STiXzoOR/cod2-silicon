@@ -5,7 +5,12 @@ Needs a login session whose window server supplies rendered window pixels (macOS
 can return transparent captures while locked). Uses only the original fallback art
 and fake documentation-range servers; no game data is read.
 """
+import os
+import atexit
+import time
+from contextlib import contextmanager
 import json
+import hashlib
 import pathlib
 import plistlib
 import shutil
@@ -15,8 +20,8 @@ import sys
 
 root = pathlib.Path(__file__).resolve().parents[2]
 out = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else root / "output/ws28/unit/snapshots"
-build = out.parent / "snapshot-harness"
-subprocess.run([str(root / "scripts/build-launcher.sh"), str(build), "--snapshots"], check=True)
+build = out.parent / "snapshot-harness.noindex"
+subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", str(root / "scripts/build-launcher.sh"), str(build), "--snapshots"], check=True)
 # A normal bundle gives the review host a stable application identity for native
 # window activation and external interaction with AppKit's remote Save panel.
 app = build / "LauncherSnapshots.app"
@@ -32,15 +37,63 @@ for name in ["Fonts", "Assets.car", "ConfigCatalog.json", "ConfigRulesets.json",
     elif source.exists():
         shutil.copy2(source, resources / name)
 info = plistlib.loads((build / "Info.plist").read_bytes())
-info.update(CFBundleExecutable="LauncherSnapshots", CFBundleName="CoD2 Launcher Review", CFBundlePackageType="APPL")
+identity = hashlib.sha256(str(build.resolve()).encode()).hexdigest()[:12]
+info.update(CFBundleIdentifier=f"io.github.stixzoor.cod2silicon.snapshots.{identity}", CFBundleExecutable="LauncherSnapshots", CFBundleName="CoD2 Launcher Review", CFBundlePackageType="APPL", CFBundleShortVersionString="0.3.0", LSMinimumSystemVersion="26.0")
 (app / "Contents/Info.plist").write_bytes(plistlib.dumps(info))
 harness = macos / "LauncherSnapshots"
 
 
-def run(target, *extra):
+@contextmanager
+def window_lease():
+    # Optional shared bench for engineers running separate worktrees on one Mac.
+    lock = os.environ.get("COD2_LAUNCHER_BENCH_LOCK")
+    if not lock:
+        yield
+        return
+    path = pathlib.Path(lock)
+    owner = f"{root.name} {os.getpid()} {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}\n"
+    while True:
+        try:
+            with path.open("x") as stream:
+                stream.write(owner)
+            break
+        except FileExistsError:
+            current = path.read_text()
+            try:
+                os.kill(int(current.split()[1]), 0)
+            except ProcessLookupError:
+                print("Taking over dead window lease:", current.strip(), flush=True)
+                path.unlink()
+                continue
+            print("Waiting for window lease:", current.strip(), flush=True)
+            time.sleep(60)
+    try:
+        yield
+    finally:
+        if path.exists() and path.read_text() == owner:
+            path.unlink()
+
+
+def run(target, *extra, env=None):
     target.mkdir(parents=True, exist_ok=True)
-    # Python's own timeout: GNU timeout is not on a default non-interactive macOS PATH.
-    subprocess.run([str(harness), str(target), *extra], check=True, timeout=300)
+    status = target / "exit-status"
+    status.unlink(missing_ok=True)
+    log = target / "harness.log"
+    log.write_text("")
+    command = ["open", "-n", "-W", "--stdout", str(log), "--stderr", str(log)]
+    for key, value in (env or {}).items():
+        command.extend(["--env", f"{key}={value}"])
+    command.extend([str(app), "--args", str(target), *extra])
+    with window_lease():
+        subprocess.run(command, check=True, timeout=600)
+    print(log.read_text(), end="", flush=True)
+    assert status.exists(), f"Harness did not finish: {log}"
+    assert status.read_text() == "0", f"Harness failed: {log}"
+
+
+atexit.register(lambda: subprocess.run([
+    "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister",
+    "-u", str(app)], check=False))
 
 
 # The window server captures at the display's scale: 1440x900 points is 2880x1800 on a Retina display.
@@ -70,7 +123,14 @@ configs = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-te
            # Settings page held while its catalog loads.
            "configs-import-windows-profiles", "configs-catalog-loading"]
 screens = ["home", "home-first", "servers", "servers-empty", "settings", "library-demos", "library-screenshots", "about",
-           "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"] + configs
+           "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready",
+           "settings-original", "settings-original-missing", "settings-cod2x-installed", "settings-cod2x-downloading",
+           "settings-cod2x-error", "settings-reports", "home-crash-sent", "home-crash-not-sent", "settings-update",
+           "settings-update-installing", "settings-update-error", "about-update",
+           "servers-no-cache", "servers-inspector-empty", "servers-direct-error", "servers-refreshing",
+           "home-update", "home-checking", "home-current", "settings-invalid", "library-empty",
+           "library-empty-screenshots", "library-reloaded", "library-error", "library-renaming", "library-rename-error", "library-trash",
+           "library-running", "library-missing", "library-trashed", "settings-save-error", "home-update-error", "home-loadout", "home-loadout-unreadable", "servers-refreshing-empty", "settings-legacy", "settings-legacy-custom"] + configs
 for screen in screens:
     shots = {}
     for appearance in ["dark", "light"]:
@@ -137,21 +197,21 @@ for screen in configs:
 
 # Real clicks on Config Studio controls (including a Binds key capture and Check-up Apply and
 # Undo) write exact bytes and History rows in a temporary home.
-subprocess.run([str(harness), str(out / "actions"), "--actions"], check=True, timeout=300)
+run(out / "actions", "--actions")
 # A Mouse speed keyboard step or typed value never lands on the loadout chosen before it saved, and
 # Show Controls with a text draft asks to Apply, Discard or Keep Editing; each with a positive save.
-subprocess.run([str(harness), str(out / "actions"), "--actions", "--only", "review-controls"], check=True, timeout=300)
+run(out / "actions", "--actions", "--only", "review-controls")
 
 # Every Config Studio control has a name in the accessibility tree VoiceOver reads; the trees
 # are written in reading order for review.
-subprocess.run([str(harness), str(out), "--accessibility"], check=True, timeout=300)
+run(out, "--accessibility")
 for screen in configs:
     assert (out / "accessibility" / f"{screen}.txt").stat().st_size > 1000, screen
 
 # Sheets, popovers and alerts, opened by real clicks and captured over their window.
 overlays = ["configs-jump", "configs-new-loadout", "configs-expert-note", "configs-binds-keyboard", "configs-binds-pointer", "configs-binds-confirm",
             "configs-import-confirm"]
-subprocess.run([str(harness), str(out / "overlays"), "--overlays"], check=True, timeout=300)
+run(out / "overlays", "--overlays")
 for overlay in overlays:
     for appearance in ["dark", "light"]:
         (width, height), length = size(out / "overlays" / f"overlay-{overlay}-{appearance}.png")
@@ -166,9 +226,29 @@ for step in ["active", "inactive", "sidebar-hidden", "sidebar-shown", "minimum",
         (width, height), length = size(navigation / f"navigation-{step}-{appearance}.png")
         assert (width, height) in (MINIMUM if step.startswith("minimum") else WINDOW) and length > 40_000, (step, appearance, width, height, length)
 
+# Page actions use actual saved settings and media, isolated from the player's home.
+private_home = out / "page-actions-home"
+if private_home.exists():
+    shutil.rmtree(private_home)
+private_home.mkdir(parents=True, exist_ok=True)
+run(out / "page-actions", "--page-actions", env={"HOME": str(private_home), "CFFIXED_USER_HOME": str(private_home)})
+
+for variant in ["increase-contrast", "reduce-transparency", "reduce-motion"]:
+    folder = out / f"pages-{variant}"
+    run(folder, "--group", "pages", f"--{variant}")
+    for screen in screens:
+        if not (screen.startswith(("home", "servers", "settings", "about", "library")) and screen != "servers-ready-fixed"):
+            continue
+        for appearance in ["dark", "light"]:
+            png = folder / f"{screen}-{appearance}.png"
+            (width, height), length = size(png)
+            assert (width, height) in WINDOW and length > 60_000, png
+
 # The harness exits non-zero on any shape-audit finding, so reaching here means none.
 print(f"PASS: {len(screens) * 2} launcher screens at 1440x900 points in dark and light, plus the material fallback, with bundled fonts"
       " and a clean shape audit (capsule buttons, concentric nesting, equal insets); Config Studio under Increase Contrast,"
       f" Reduce Transparency and Reduce Motion, and {len(screens) * 2} captures at the 1100x760 minimum; Config Studio clicks"
-      " write exact bytes; every Config Studio control is named for VoiceOver;"
+      " write exact bytes; every launcher page control is named for VoiceOver;"
       f" {len(overlays) * 2} sheet, popover and alert captures")
+
+print("PASS: page actions persist settings and reload media; page captures under all three accessibility appearance preferences")

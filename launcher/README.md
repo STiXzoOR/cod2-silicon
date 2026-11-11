@@ -108,7 +108,11 @@ process arguments or cached. CD keys are validated
 by WS21's native CRC routine, written using mode-600 temporary files and rename,
 and removed from the child environment. The raw key is never printed.
 
-App settings and library state live in the app home. Config Studio edits the
+App settings and library state live in the app home. Settings save automatically
+after a short debounce and flush before quitting; invalid advanced text stays in
+the editor while the last valid options remain in force. Library refreshes on
+appearance, app activation and game exit, and orders files by modification date,
+newest first. Config Studio edits the
 selected loadout's `main/players/<profile>/config_mp.cfg` through the shared
 profile store, with history and disk-conflict checks. The selected loadout and
 the one used for the next game are separate. After migration succeeds,
@@ -121,8 +125,8 @@ Advanced values accept `dvar value` or `dvar=value`, reject command separators,
 and the complete startup is limited to the engine's 31 commands/3900 bytes;
 startup paths/credentials and upcoming renderer options are reserved. Native
 Spaces sets `SDL_VIDEO_MAC_FULLSCREEN_SPACES=1`. Anisotropic filtering maps to
-`r_anisotropy`. The renderer choice, render scale, MetalFX and HDR are shown as
-upcoming until the Metal renderer provides `r_renderer`.
+`r_anisotropy`. The current release uses Classic OpenGL. Renderer choices, render
+scale, MetalFX and HDR are not shown until they are available.
 
 Server discovery sends both protocols to both masters, collects multiple UDP
 packets, deduplicates addresses and limits discovery to 2048 endpoints. Queries
