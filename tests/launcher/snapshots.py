@@ -9,6 +9,7 @@ import atexit
 import os
 import time
 import json
+import hashlib
 import pathlib
 import plistlib
 import shutil
@@ -20,7 +21,7 @@ import tempfile
 root = pathlib.Path(__file__).resolve().parents[2]
 out = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else root / "output/ws28/unit/snapshots"
 build = out.parent / "snapshot-harness.noindex"
-subprocess.run([str(root / "scripts/build-launcher.sh"), str(build), "--snapshots"], check=True)
+subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", str(root / "scripts/build-launcher.sh"), str(build), "--snapshots"], check=True)
 # A normal bundle gives the review host a stable application identity for native
 # window activation and external interaction with AppKit's remote Save panel.
 app = build / "LauncherSnapshots.app"
@@ -36,7 +37,8 @@ for name in ["Fonts", "Assets.car", "ConfigCatalog.json", "ConfigRulesets.json",
     elif source.exists():
         shutil.copy2(source, resources / name)
 info = plistlib.loads((build / "Info.plist").read_bytes())
-info.update(CFBundleExecutable="LauncherSnapshots", CFBundleName="CoD2 Launcher Review", CFBundlePackageType="APPL")
+identity = hashlib.sha256(str(build.resolve()).encode()).hexdigest()[:12]
+info.update(CFBundleIdentifier=f"io.github.stixzoor.cod2silicon.snapshots.{identity}", CFBundleExecutable="LauncherSnapshots", CFBundleName="CoD2 Launcher Review", CFBundlePackageType="APPL", CFBundleShortVersionString="0.3.0", LSMinimumSystemVersion="26.0")
 (app / "Contents/Info.plist").write_bytes(plistlib.dumps(info))
 harness = macos / "LauncherSnapshots"
 atexit.register(lambda: subprocess.run(["/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister", "-u", str(app)], check=False))
@@ -78,7 +80,7 @@ def take_lease():
             time.sleep(60)
 
 
-def run(target, *extra):
+def run(target, *extra, env=None):
     take_lease()
     target.mkdir(parents=True, exist_ok=True)
     # LaunchServices activates the real app; a shell-launched process may have no key window.
@@ -88,8 +90,10 @@ def run(target, *extra):
             folder = pathlib.Path(temporary)
             result, stdout, stderr = [folder / name for name in ["result", "stdout", "stderr"]]
             try:
-                subprocess.run(["open", "-n", "-W", str(app), "--stdout", str(stdout), "--stderr", str(stderr),
-                                "--args", str(target), *extra, "--result-file", str(result)], check=True, timeout=600)
+                command = ["open", "-n", "-W", "--stdout", str(stdout), "--stderr", str(stderr)]
+                for key, value in (env or {}).items():
+                    command.extend(["--env", f"{key}={value}"])
+                subprocess.run(command + [str(app), "--args", str(target), *extra, "--result-file", str(result)], check=True, timeout=600)
             except subprocess.TimeoutExpired:
                 if result.exists():
                     try:
@@ -137,7 +141,14 @@ configs = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-te
            "configs-import-windows-profiles", "configs-catalog-loading"]
 screens = ["home", "home-first", "servers", "servers-empty", "settings", "library-demos", "library-screenshots", "about",
            "home-notice", "home-game-running", "setup-data", "setup-data-missing", "setup-folder-error", "setup-key", "setup-key-invalid", "setup-key-stored", "setup-key-replace", "setup-shaders-ready",
-           "setup-shaders", "setup-ready", "setup-summary-ready", "setup-summary-approximate", "setup-summary-link", "setup-cancelable"] + configs
+           "setup-shaders", "setup-ready", "setup-summary-ready", "setup-summary-approximate", "setup-summary-link", "setup-cancelable",
+           "settings-original", "settings-original-missing", "settings-cod2x-installed", "settings-cod2x-downloading",
+           "settings-cod2x-error", "settings-reports", "home-crash-sent", "home-crash-not-sent", "settings-update",
+           "settings-update-installing", "settings-update-error", "about-update",
+           "servers-no-cache", "servers-inspector-empty", "servers-direct-error", "servers-refreshing",
+           "home-update", "home-checking", "home-current", "settings-invalid", "library-empty",
+           "library-empty-screenshots", "library-reloaded", "library-error", "library-renaming", "library-rename-error", "library-trash",
+           "library-running", "library-missing", "library-trashed", "settings-save-error", "home-update-error", "home-loadout", "home-loadout-unreadable", "servers-refreshing-empty", "settings-legacy", "settings-legacy-custom"] + configs
 for screen in screens:
     shots = {}
     for appearance in ["dark", "light"]:
@@ -239,9 +250,29 @@ for step in ["active", "inactive", "sidebar-hidden", "sidebar-shown", "minimum",
         (width, height), length = size(navigation / f"navigation-{step}-{appearance}.png")
         assert (width, height) in (MINIMUM if step.startswith("minimum") else WINDOW) and length > 40_000, (step, appearance, width, height, length)
 
+# Page actions use actual saved settings and media, isolated from the player's home.
+private_home = out / "page-actions-home"
+if private_home.exists():
+    shutil.rmtree(private_home)
+private_home.mkdir(parents=True, exist_ok=True)
+run(out / "page-actions", "--page-actions", env={"HOME": str(private_home), "CFFIXED_USER_HOME": str(private_home)})
+
+for variant in ["increase-contrast", "reduce-transparency", "reduce-motion"]:
+    folder = out / f"pages-{variant}"
+    run(folder, "--group", "pages", f"--{variant}")
+    for screen in screens:
+        if not (screen.startswith(("home", "servers", "settings", "about", "library")) and screen != "servers-ready-fixed"):
+            continue
+        for appearance in ["dark", "light"]:
+            png = folder / f"{screen}-{appearance}.png"
+            (width, height), length = size(png)
+            assert (width, height) in WINDOW and length > 60_000, png
+
 # The harness exits non-zero on any shape-audit finding, so reaching here means none.
 print(f"PASS: {len(screens) * 2} launcher screens at 1440x900 points in dark and light, plus the material fallback, with bundled fonts"
       " and a clean shape audit (capsule buttons, concentric nesting, equal insets); Config Studio under Increase Contrast,"
       f" Reduce Transparency and Reduce Motion, and {len(screens) * 2} captures at the 1100x760 minimum; Config Studio clicks"
-      " write exact bytes; every Config Studio control is named for VoiceOver;"
+      " write exact bytes; every launcher page control is named for VoiceOver;"
       f" {len(overlays) * 2} sheet, popover and alert captures")
+
+print("PASS: page actions persist settings and reload media; page captures under all three accessibility appearance preferences")

@@ -121,9 +121,10 @@ struct Dispatch: Codable, Equatable, Sendable {
     var summary: String
     var link: String?
     static let bundled = [
-        Dispatch(stamp: "04 OCT", title: "CoD2 Silicon 0.1.0", summary: "First public release: native Apple silicon client with CoD2x 1.4 compatibility.",
+        Dispatch(stamp: "11 NOV", title: "CoD2 Silicon 0.3.0", summary: "The original’s picture, CoD2x or Original 1.3, and updates you can install from the launcher.",
                  link: "https://github.com/STiXzoOR/cod2-silicon/releases"),
-        Dispatch(stamp: "IN FIELD", title: "Native Metal renderer", summary: "Metal 4 on macOS 26 and later, with MetalFX and HDR options. Planned for 0.3.", link: nil),
+        Dispatch(stamp: "AHEAD", title: "What’s next", summary: "Longer match testing and launcher improvements come next. Metal is planned, but isn’t in this release.",
+                 link: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/ROADMAP.md"),
     ]
 }
 
@@ -196,10 +197,12 @@ enum ReleaseNotes {
 struct ReleaseAsset: Equatable, Sendable { var name: String; var size: Int; var url: URL }
 
 struct MediaFacts: Equatable {
+    var modifiedAt: Date?
     var map: String?
     var stamp: String
     var size: String
     init(name: String, date: Date?, bytes: Int?, calendar: Calendar = .current) {
+        modifiedAt = date
         map = Self.mapHint(name)
         stamp = date.map { StencilDate.dayAndTime($0, calendar: calendar) } ?? ""
         size = bytes.map(Self.sizeLabel) ?? ""

@@ -61,6 +61,16 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Changed
 
+- Launcher settings save automatically. Invalid advanced options stay editable
+  with an explanation, while your last valid options remain in use.
+- The server browser shows how old its results are, explains empty lists, and
+  offers native search, reversible sorting and server context menus. Direct
+  connect reports invalid addresses beside the field.
+- Library refreshes when you return to the launcher and lists the newest files
+  first. Recordings can be renamed or moved to Trash; screenshots support native
+  Quick Look, copying and file actions.
+- Home shows the frame cap of the loadout your next game uses. Update checks
+  share the same visible progress and results across Home, Settings and About.
 - With CoD2x on, voice chat is off, as in CoD2x. It works with the original
   1.3.
 - With CoD2x on, the game no longer writes its recommended graphics settings

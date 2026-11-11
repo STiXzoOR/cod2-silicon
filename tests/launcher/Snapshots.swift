@@ -126,6 +126,7 @@ final class SnapshotWindow: NSWindow {
         return .value(node.perform(selector, with: attribute)?.takeUnretainedValue())
     }
     static func ask<T>(_ node: NSObject, _ getter: String, _ attribute: String, _ what: String, _ modern: (AnyObject) -> T?) -> Answer<Any> {
+        if ProcessInfo.processInfo.environment["COD2_SNAPSHOT_AX_TRACE"] == "1" { fputs("AX \(what): \(getter)\n", stderr) }
         Watchdog.shared.begin("\(what): \(getter)")
         defer { Watchdog.shared.end() }
         if responds(node, getter) { return .value(modern(node)) }
@@ -315,7 +316,7 @@ final class Watchdog: @unchecked Sendable {
                 while true {
                     Thread.sleep(forTimeInterval: 1)
                     lock.lock(); let stuck = current.flatMap { Date().timeIntervalSince($0.since) > Self.limit ? $0.what : nil }; lock.unlock()
-                    if let stuck { fputs("FAIL: accessibility query did not return within \(Int(Self.limit)) s: \(stuck)\n", stderr); exit(1) }
+                    if let stuck { fputs("FAIL: accessibility query did not return within \(Int(Self.limit)) s: \(stuck)\n", stderr); Darwin.exit(1) }
                 }
             }
         }
@@ -331,10 +332,17 @@ final class Watchdog: @unchecked Sendable {
         guard let index = arguments.firstIndex(of: "--result-file"), arguments.count > index + 1 else { return }
         try? "\(getpid())\n\(status)\n".write(toFile: arguments[index + 1], atomically: true, encoding: .utf8)
     }
-    static func finish(_ status: Int32) -> Never { writeResult(status); exit(status) }
+    @MainActor static var outputDirectory: URL?
+    @MainActor static func finish(_ status: Int32) -> Never {
+        writeResult(status)
+        if let outputDirectory { try? String(status).write(to: outputDirectory.appendingPathComponent("exit-status"), atomically: true, encoding: .utf8) }
+        Darwin.exit(status)
+    }
+    static let pageScreens = ["servers-no-cache", "servers-inspector-empty", "servers-direct-error", "servers-refreshing",
+                              "home-update", "home-checking", "home-current", "settings-invalid", "library-empty", "library-empty-screenshots", "library-reloaded", "library-error", "library-renaming", "library-rename-error", "library-trash", "library-running", "library-missing", "library-trashed", "settings-save-error", "home-update-error", "home-loadout", "home-loadout-unreadable", "servers-refreshing-empty", "settings-legacy", "settings-legacy-custom"]
     static let screens = ["home", "home-first", "servers", "servers-empty", "settings", "settings-original", "settings-original-missing",
                           "settings-cod2x-installed", "settings-cod2x-downloading", "settings-cod2x-error", "settings-reports", "home-crash-sent", "home-crash-not-sent", "settings-update", "settings-update-installing", "settings-update-error", "about-update", "library-demos", "library-screenshots", "about",
-                          "home-notice", "home-game-running"] + setupScreens + configScreens
+                          "home-notice", "home-game-running"] + setupScreens + pageScreens + configScreens
     static let setupScreens = ["setup-data", "setup-data-missing", "setup-folder-error", "setup-key", "setup-key-invalid", "setup-key-stored", "setup-key-replace", "setup-shaders-ready",
                                "setup-shaders", "setup-ready", "setup-summary-ready", "setup-summary-approximate", "setup-summary-link", "setup-cancelable"]
     static let configScreens = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-text", "configs-history", "configs-running",
@@ -349,13 +357,16 @@ final class Watchdog: @unchecked Sendable {
 
     @MainActor static func main() {
         writeResult(-1)
+        setbuf(stdout, nil)
         let arguments = CommandLine.arguments
-        guard arguments.count >= 2 else { fputs("usage: LauncherSnapshots OUTPUT [--data GAME_DIR] [--fallback] [--scale2] [--only SCREEN]\n", stderr); exit(2) }
+        guard arguments.count >= 2 else { fputs("usage: LauncherSnapshots OUTPUT [--data GAME_DIR] [--fallback] [--scale2] [--only SCREEN]\n", stderr); Snapshots.finish(2) }
         let output = URL(fileURLWithPath: arguments[1])
+        outputDirectory = output
         let data = arguments.firstIndex(of: "--data").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil }
         let fallback = arguments.contains("--fallback"), scale2 = arguments.contains("--scale2")
         let only = arguments.firstIndex(of: "--only").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil }
-        let configsOnly = arguments.firstIndex(of: "--group").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil } == "configs"
+        let group = arguments.firstIndex(of: "--group").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil }
+        let configsOnly = group == "configs", pagesOnly = group == "pages"
         if arguments.contains("--minimum") { windowSize = NSSize(width: 1100, height: 760) }
         let accessibility = Accessibility(increaseContrast: arguments.contains("--increase-contrast"), reduceTransparency: arguments.contains("--reduce-transparency"),
                                           reduceMotion: arguments.contains("--reduce-motion"))
@@ -364,53 +375,57 @@ final class Watchdog: @unchecked Sendable {
         app.setActivationPolicy(.regular)
         LauncherFonts.register()
         guard NSFont(name: LauncherFonts.stencilHeavy, size: 12) != nil, NSFont(name: LauncherFonts.typewriter, size: 12) != nil else {
-            fputs("Bundled fonts did not register.\n", stderr); exit(1)
+            fputs("Bundled fonts did not register.\n", stderr); Snapshots.finish(1)
         }
-        do { try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true) } catch { fputs("\(error)\n", stderr); exit(1) }
+        do { try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true) } catch { fputs("\(error)\n", stderr); Snapshots.finish(1) }
         if arguments.contains("--contrast") {
-            guard let data else { fputs("--contrast needs --data GAME_DIR\n", stderr); exit(2) }
-            finish(contrastReport(data: data, output: output) ? 0 : 1)
+            guard let data else { fputs("--contrast needs --data GAME_DIR\n", stderr); Snapshots.finish(2) }
+            Snapshots.finish(contrastReport(data: data, output: output) ? 0 : 1)
         }
         if arguments.contains("--shell-actions") {
-            Task { @MainActor in finish(await ShellPreview.actions(output: output) ? 0 : 1) }
+            Task { @MainActor in Snapshots.finish(await ShellPreview.actions(output: output) ? 0 : 1) }
             app.run()
         }
         if arguments.contains("--shell-accessibility") {
-            Task { @MainActor in finish(await ShellPreview.accessibility(output: output) ? 0 : 1) }
+            Task { @MainActor in Snapshots.finish(await ShellPreview.accessibility(output: output) ? 0 : 1) }
+            app.run()
+        }
+        if arguments.contains("--page-actions") {
+            Task { @MainActor in Snapshots.finish(await PagesPreview.actions(output: output) ? 0 : 1) }
             app.run()
         }
         if arguments.contains("--actions") {
             Task { @MainActor in
                 let passed = if let only { await ConfigsPreview.action(only) } else { await ConfigsPreview.actions() }
-                finish(passed ? 0 : 1)
+                Snapshots.finish(passed ? 0 : 1)
             }
             app.run()
         }
         if arguments.contains("--accessibility") {
-            Task { @MainActor in finish(await ConfigsPreview.accessibility(output: output, only: only) ? 0 : 1) }
+            Task { @MainActor in Snapshots.finish(await ConfigsPreview.accessibility(output: output, only: only) ? 0 : 1) }
             app.run()
         }
         if arguments.contains("--overlays") {
-            Task { @MainActor in finish(await ConfigsPreview.overlays(output: output, only: only) ? 0 : 1) }
+            Task { @MainActor in Snapshots.finish(await ConfigsPreview.overlays(output: output, only: only) ? 0 : 1) }
             app.run()
         }
         if arguments.contains("--navigation") {
-            Task { @MainActor in finish(await ConfigsPreview.navigation(output: output) ? 0 : 1) }
+            Task { @MainActor in Snapshots.finish(await ConfigsPreview.navigation(output: output) ? 0 : 1) }
             app.run()
         }
         Task { @MainActor in
             var written = 0, checked = 0
             var findings: [String] = [], report: [[String: Any]] = []
             for dark in [true, false] {
-                for screen in screens where (only == nil || only == screen) && (!configsOnly || configScreens.contains(screen)) {
+                for screen in screens where (only == nil || only == screen) && (!configsOnly || configScreens.contains(screen)) && (!pagesOnly || pageScreens.contains(screen) || screen.hasPrefix("home") || screen.hasPrefix("settings") || screen.hasPrefix("about") || ["servers", "servers-empty", "library-demos", "library-screenshots", "servers-ready"].contains(screen)) {
                     let gate = screen == "configs-catalog-loading" ? PreviewCatalogGate() : nil
                     defer { gate?.release() }
                     let model = LauncherModel(snapshot: true, catalog: { try gate?.load() ?? ConfigStudioModel.bundledCatalog() })
                     model.preview(screen)
                     var home: URL?
-                    if configScreens.contains(screen) {
+                    if configScreens.contains(screen) || screen.hasPrefix("home-loadout") || screen.hasPrefix("settings") {
                         do { home = try ConfigsPreview.seed(model, screen: screen); try await ConfigsPreview.prepare(model, screen: screen, home: home!) }
-                        catch { fputs("Config Studio preview failed for \(screen): \(error)\n", stderr); exit(1) }
+                        catch { fputs("Config Studio preview failed for \(screen): \(error)\n", stderr); Snapshots.finish(1) }
                     }
                     defer { if let home { try? FileManager.default.removeItem(at: home) } }
                     if let data {
@@ -419,7 +434,7 @@ final class Watchdog: @unchecked Sendable {
                     }
                     let name = "\(screen)-\(dark ? "dark" : "light")"
                     let audit = ShapeAudit()
-                    let captured = await capture(model: model, dark: dark, fallback: fallback, audit: audit, accessibility: accessibility)
+                    let captured = await capture(model: model, dark: dark, fallback: fallback, audit: audit, accessibility: accessibility, screen: screen)
                     if let sheet = captured.sheet { try? write(sheet, to: output.appendingPathComponent(name + "-sheet.png")); written += 1 }
                     if let image = captured.window {
                         try? write(image, to: output.appendingPathComponent(name + ".png")); written += 1
@@ -441,7 +456,7 @@ final class Watchdog: @unchecked Sendable {
             }
             findings.forEach { print("SHAPE: \($0)") }
             print("Shape audit: \(checked) shapes checked, \(findings.count) findings")
-            finish(written > 0 && findings.isEmpty ? 0 : 1)
+            Snapshots.finish(written > 0 && findings.isEmpty ? 0 : 1)
         }
         app.run()
     }
@@ -479,14 +494,42 @@ final class Watchdog: @unchecked Sendable {
     }
 
     /// The window, and an attached sheet (the import review) as its own image.
-    @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit, accessibility: Accessibility = .init()) async -> (window: CGImage?, sheet: CGImage?) {
+    @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit, accessibility: Accessibility = .init(), screen: String? = nil) async -> (window: CGImage?, sheet: CGImage?) {
         let window = await show(model: model, dark: dark, glass: !fallback, audit: audit, accessibility: accessibility)
+        await preparePageWindow(window, screen: screen)
         let image = WindowCapture.image(of: window)
         let sheet = window.attachedSheet.flatMap { WindowCapture.image(of: $0) }
         geometry(window, "capture", image: image)
         window.attachedSheet.map { window.endSheet($0) }
         window.orderOut(nil); window.close()
         return (image, sheet)
+    }
+
+    /// Reach validation through the actual sheet controls, without a production preview override.
+    @MainActor static func preparePageWindow(_ window: NSWindow, screen: String?) async {
+        if screen?.hasPrefix("settings-legacy") == true, let content = window.contentView,
+           let scroll = ConfigsPreview.views(NSScrollView.self, in: content).max(by: {
+               ($0.documentView?.bounds.height ?? 0) - $0.contentSize.height < ($1.documentView?.bounds.height ?? 0) - $1.contentSize.height
+           }), let document = scroll.documentView {
+            scroll.contentView.scroll(to: NSPoint(x: 0, y: max(0, document.bounds.height - scroll.contentSize.height)))
+            scroll.reflectScrolledClipView(scroll.contentView)
+            try? await Task.sleep(for: .milliseconds(300))
+            return
+        }
+        guard screen == "library-rename-error" else { return }
+        AccessibilityTree.wake(window)
+        let elements = AccessibilityTree.elements(of: window)
+        guard let field = elements.first(where: { $0.role == "AXTextField" && $0.label == "Recording name" }),
+              let rename = elements.first(where: { $0.role == "AXButton" && $0.label == "Rename" }) else {
+            fputs("FAIL: Rename validation fixture is missing its field or action.\n", stderr); finish(1)
+        }
+        AccessibilityTree.setValue(field, "invalid/name")
+        try? await Task.sleep(for: .milliseconds(100))
+        guard AccessibilityTree.press(rename) else { finish(1) }
+        try? await Task.sleep(for: .milliseconds(300))
+        guard AccessibilityTree.elements(of: window).contains(where: { $0.label.contains("without slashes") || $0.value.contains("without slashes") }) else {
+            fputs("FAIL: Rename did not show its inline validation error.\n", stderr); finish(1)
+        }
     }
 
     /// 1440×900, or the launcher's 1100×760 minimum with --minimum.
@@ -521,9 +564,17 @@ final class Watchdog: @unchecked Sendable {
         try? await Task.sleep(for: .milliseconds(400))
         geometry(window, "settled")
         let keyTarget = window.attachedSheet ?? window
+        // Launch Services can finish activation after the initial layout pass. Keep the
+        // actual focus assertion, allowing the normal activation request time to settle.
+        for _ in 0..<10 {
+            if NSApp.isActive, NSApp.keyWindow === keyTarget, keyTarget.isKeyWindow { break }
+            NSApp.activate(); keyTarget.makeKeyAndOrderFront(nil)
+            try? await Task.sleep(for: .milliseconds(200))
+        }
         guard NSApp.isActive, NSApp.keyWindow === keyTarget, keyTarget.isKeyWindow else {
+            print("Focus diagnostic: active=\(NSApp.isActive), targetKey=\(keyTarget.isKeyWindow), key=\(String(describing: NSApp.keyWindow)), front=\(NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "none")")
             fputs("FAIL: the real snapshot window or its attached sheet did not become active and key; no focus or material proof is possible.\n", stderr)
-            exit(1)
+            Snapshots.finish(1)
         }
         return window
     }
@@ -843,10 +894,19 @@ final class PreviewCatalogGate: Sendable {
         let running = screen == "configs-running"
         let session = try ConfigStudioSession(home: home, dialect: .cod2x, discoverGames: { running ? [4242] : [] })
         try session.refresh()
+        if screen.hasPrefix("home-loadout") || (screen.hasPrefix("settings") && !screen.hasPrefix("settings-legacy")) {
+            var settings = model.settings
+            settings.fps = 333
+            try session.initialize(settings: settings)
+        }
         model.studio.deviceProvider = { PreviewInputProvider() }
         let setup = PreviewCaptureSource()
         if screen == "configs-binds-verify" || screen == "configs-binds-learn" { model.studio.captureSource = { _ in setup } }
         model.studio.attach(session)
+        if screen == "home-loadout-unreadable" {
+            guard let active = try session.readActive() else { throw ConfigProfileError.missingProfile }
+            try FileManager.default.removeItem(at: home.appendingPathComponent("main/players/\(active.profile.id)/config_mp.cfg"))
+        }
         // The loading fixture supplies a bounded catalog source; onAppear starts the real load.
         if screen != "configs-catalog-loading" { model.studio.loadCatalogNow() }
         model.studio.checkup.load()
@@ -1989,6 +2049,7 @@ final class PreviewCatalogGate: Sendable {
         setup(model)
         trace("open \(screen): seeded")
         let window = await Snapshots.show(model: model, dark: dark, glass: true)
+        await Snapshots.preparePageWindow(window, screen: screen)
         trace("open \(screen): shown")
         // SwiftUI builds its accessibility nodes once something asks for them.
         AccessibilityTree.wake(window)
@@ -2014,6 +2075,27 @@ final class PreviewCatalogGate: Sendable {
 
     /// Labels each screen must expose, so an empty or unbuilt tree can't pass.
     static let expectedLabels: [String: [String]] = [
+        "home-first": ["Find a server", "Open game menu"],
+        "home-update": ["Install Update", "View Release"],
+        "home-checking": ["Checking GitHub Releases"],
+        "home-current": ["You’re up to date"],
+        "home-loadout": ["Frame cap 333 frames per second · Main loadout"],
+        "home-loadout-unreadable": ["Frame cap unavailable"],
+        "servers": ["Hide empty servers", "Hide full servers"],
+        "servers-empty": ["Clear Filters", "Server address"],
+        "servers-no-cache": ["Refresh", "Server address"],
+        "servers-refreshing-empty": ["Stop Refreshing", "Server address"],
+        "servers-inspector-empty": ["CHOOSE A SERVER", "Select First Server"],
+        "servers-direct-error": ["Use a hostname or IP address"],
+        "settings-invalid": ["Extra launch options", "Your last valid options still apply"],
+        "settings-legacy": ["125 frames per second", "Custom frame cap", "Game volume"],
+        "settings-legacy-custom": ["Custom frame cap, 0 to 1000 frames per second", "Game volume"],
+        "library-empty": ["Show Folder in Finder"],
+        "library-empty-screenshots": ["Show Folder in Finder"],
+        "library-renaming": ["Rename recording", "Recording name", "Cancel", "Rename"],
+        "library-rename-error": ["Enter a name without slashes or colons", "Cancel", "Rename"],
+        "library-trash": ["Move to Trash", "Cancel"],
+        "library-trashed": ["Moved to Trash", "NO RECORDINGS", "Show Folder in Finder"],
         "configs-guided": ["Jump to Any Setting", "Frame rate cap"],
         "configs-binds-list": ["Primary key for Throw frag grenade", "Find an action or key", "Advanced binds"],
         "configs-binds-advanced": ["Key for this bind", "Save Bind", "Step 1"],
@@ -2041,7 +2123,7 @@ final class PreviewCatalogGate: Sendable {
         let folder = output.appendingPathComponent("accessibility")
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         var ok = true
-        for screen in Snapshots.configScreens where only == nil || only == screen {
+        for screen in Snapshots.configScreens + ["home", "home-first", "servers", "servers-empty", "settings", "library-demos", "library-screenshots", "about"] + Snapshots.pageScreens where only == nil || only == screen {
             let gate = screen == "configs-catalog-loading" ? PreviewCatalogGate() : nil
             defer { gate?.release() }
             guard let (_, window, home) = await open(screen, dark: true, catalogGate: gate) else { return false }
@@ -2065,7 +2147,7 @@ final class PreviewCatalogGate: Sendable {
             print("A11Y \(screen): \(elements.count) elements, \(controls.count) controls, \(unnamed.count) without a name, \(roleless.count) without a role, \(tree.problems.count) unreadable")
             ok = ok && unnamed.isEmpty && roleless.isEmpty && missing.isEmpty && tree.problems.isEmpty && controls.count > 5
         }
-        print(ok ? "PASS: every Config Studio control has a name and every named element a role VoiceOver can read" : "FAIL: accessibility tree problems above")
+        print(ok ? "PASS: every launcher page control has a name and every named element a role VoiceOver can read" : "FAIL: accessibility tree problems above")
         return ok
     }
 
@@ -2154,7 +2236,7 @@ final class PreviewCatalogGate: Sendable {
     /// AppKit turns into a move command.
     static func pressArrow(_ window: NSWindow, keyCode: UInt16) {
         guard NSApp.isActive, NSApp.keyWindow === window, window.isKeyWindow, window.firstResponder != nil else {
-            fputs("FAIL: key event target is not the actual active key window with a first responder.\n", stderr); exit(1)
+            fputs("FAIL: key event target is not the actual active key window with a first responder.\n", stderr); Snapshots.finish(1)
         }
         let scalar: UInt32 = [123: 0xF702, 124: 0xF703, 125: 0xF701, 126: 0xF700][keyCode] ?? 0xF703
         let characters = String(Character(UnicodeScalar(scalar)!))
@@ -2224,7 +2306,7 @@ final class PreviewCatalogGate: Sendable {
         }
         nonisolated private static func deadlineExpired() {
             FileHandle.standardError.write(Data("FAIL: synthetic export panel exceeded its deadline.\n".utf8))
-            exit(1)
+            Darwin.exit(1)
         }
         func start() {
             let timeout: TimeInterval = interactive && saving ? 120 : 12
@@ -2247,7 +2329,7 @@ final class PreviewCatalogGate: Sendable {
                 // Exit only this synthetic host, even if an owned child modal intercepted
                 // Cancel. Never abort an unrelated application's modal interaction.
                 fputs("FAIL: synthetic export panel exceeded its deadline.\n", stderr)
-                exit(1)
+                Snapshots.finish(1)
             }
             ticks += 1
             guard let panel = NSApp.modalWindow as? NSSavePanel else { return }
@@ -2405,7 +2487,7 @@ final class PreviewCatalogGate: Sendable {
     /// A key press delivered through the application, where Binds' local monitor listens.
     static func press(_ window: NSWindow, keyCode: UInt16, characters: String, modifiers: NSEvent.ModifierFlags = [], charactersIgnoringModifiers: String? = nil) {
         guard NSApp.isActive, NSApp.keyWindow === window, window.isKeyWindow, window.firstResponder != nil else {
-            fputs("FAIL: key event target is not the actual active key window with a first responder.\n", stderr); exit(1)
+            fputs("FAIL: key event target is not the actual active key window with a first responder.\n", stderr); Snapshots.finish(1)
         }
         for type in [NSEvent.EventType.keyDown, .keyUp] {
             if let event = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: modifiers, timestamp: ProcessInfo.processInfo.systemUptime,
@@ -2539,5 +2621,136 @@ final class PreviewCatalogGate: Sendable {
         }
         print(passed ? "PASS: every setup control is named, all steps have roles, and each primary action is present" : "FAIL: setup accessibility")
         return passed
+    }
+}
+
+/// Page regressions run with an explicitly private HOME supplied by snapshots.py.
+@MainActor enum PagesPreview {
+    static func actions(output: URL) async -> Bool {
+        guard let privateHome = ProcessInfo.processInfo.environment["CFFIXED_USER_HOME"],
+              privateHome.hasPrefix(output.deletingLastPathComponent().path + "/"), NSHomeDirectory() == privateHome else {
+            print("FAIL: page actions require a private home below the test output"); return false
+        }
+        let model = LauncherModel()
+        model.onboard = false
+        let saved = model.home.appendingPathComponent("launcher-settings.json")
+        let cfg = model.home.appendingPathComponent("main/launcher.cfg")
+        do {
+            model.settings.vsync = true
+            try await Task.sleep(for: .milliseconds(500))
+            let settings = try JSONDecoder().decode(GameSettings.self, from: Data(contentsOf: saved))
+            guard settings.vsync, try String(contentsOf: cfg, encoding: .utf8).contains("seta r_swapInterval \"1\"") else {
+                print("FAIL: auto-save did not persist the same value to JSON and game config"); return false
+            }
+            let validJSON = try Data(contentsOf: saved), validConfig = try Data(contentsOf: cfg)
+            model.editAdvancedOptions("name invalid;quit")
+            try await Task.sleep(for: .milliseconds(350))
+            guard model.advancedError != nil, model.settings.advanced.isEmpty,
+                  try Data(contentsOf: saved) == validJSON, try Data(contentsOf: cfg) == validConfig else {
+                print("FAIL: invalid advanced text replaced the last valid settings"); return false
+            }
+            model.editAdvancedOptions("net_port 29980")
+            try await Task.sleep(for: .milliseconds(350))
+            guard model.advancedError == nil,
+                  try String(contentsOf: cfg, encoding: .utf8).contains("seta net_port \"29980\"") else { return false }
+            // Quitting before the debounce fires still persists the new setting.
+            model.settings.vsync = false
+            NotificationCenter.default.post(name: NSApplication.willTerminateNotification, object: NSApp)
+            guard try !JSONDecoder().decode(GameSettings.self, from: Data(contentsOf: saved)).vsync else { return false }
+            print("PASS: debounced settings save to JSON and game config; invalid text keeps both last-valid files; termination flushes pending changes")
+
+            let sample = LauncherModel(snapshot: true)
+            model.servers = sample.servers; model.library = sample.library
+            model.selectedServer = model.servers.first?.address
+            model.search = "no server matches this"
+            guard model.selected == nil else { print("FAIL: filtered-out server remained in the inspector"); return false }
+            model.page = .servers
+            let window = await Snapshots.show(model: model, dark: true, glass: true)
+            defer { window.orderOut(nil); window.close() }
+            AccessibilityTree.wake(window)
+            try await Task.sleep(for: .milliseconds(400))
+            print("PAGE: read the filtered server list")
+            guard let clear = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label == "Clear Filters" }) else {
+                print("FAIL: Clear Filters is not accessible in the empty list"); return false
+            }
+            ConfigsPreview.click(window, element: clear)
+            try await Task.sleep(for: .milliseconds(300))
+            guard model.search.isEmpty, model.selected != nil else { print("FAIL: Clear Filters did not restore the list and selection"); return false }
+            let ascending = model.visibleServers.map(\.address)
+            model.sortServers(by: .ping)
+            guard model.visibleServers.map(\.address) == ascending.reversed() else { print("FAIL: active sort did not reverse"); return false }
+            try await Task.sleep(for: .milliseconds(300))
+            print("PAGE: read the sorted server list")
+            guard let serverRow = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label.hasPrefix(QuakeColors.plain(model.visibleServers[0].name) + ",") }),
+                  AccessibilityTree.press(serverRow) else { print("FAIL: server row has no selection action"); return false }
+            try await Task.sleep(for: .milliseconds(200))
+            ConfigsPreview.pressArrow(window, keyCode: 125)
+            try await Task.sleep(for: .milliseconds(200))
+            guard model.selected?.address == model.visibleServers[1].address else { print("FAIL: the server Down arrow did not move selection"); return false }
+            model.directPassword = "direct-only"; model.serverPassword = "selected-only"
+            model.directAddress = "bad address;quit"
+            model.connect()
+            guard model.directConnectError != nil, model.directPassword == "direct-only", model.serverPassword == "selected-only" else { return false }
+            model.directAddress = "203.0.113.24:28960"
+            guard model.directAddressError == nil else { return false }
+            print("PASS: real Clear Filters click restores rows; hidden selection clears; active sort reverses; direct validation and passwords stay separate")
+
+            let demos = model.home.appendingPathComponent("main/demos")
+            try FileManager.default.createDirectory(at: demos, withIntermediateDirectories: true)
+            let older = demos.appendingPathComponent("z-older.dm_1"), newer = demos.appendingPathComponent("a-newer.dm_1")
+            try Data("older".utf8).write(to: older); try Data("newer".utf8).write(to: newer)
+            try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSince1970: 100)], ofItemAtPath: older.path)
+            try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSince1970: 200)], ofItemAtPath: newer.path)
+            model.libraryTab = .demos; model.loadMedia()
+            guard model.media.map(\.url) == [newer, older] else { print("FAIL: media is not newest first"); return false }
+            model.page = .library
+            try await Task.sleep(for: .milliseconds(400))
+            let latest = demos.appendingPathComponent("latest.dm_1")
+            try Data("returned match".utf8).write(to: latest)
+            NotificationCenter.default.post(name: NSApplication.didBecomeActiveNotification, object: NSApp)
+            try await Task.sleep(for: .milliseconds(300))
+            guard model.media.first?.url == latest else { print("FAIL: returning to the app did not refresh media"); return false }
+            guard let entry = model.media.first, model.renameMedia(entry, to: "renamed-match") == nil,
+                  model.media.first?.url.lastPathComponent == "renamed-match.dm_1" else { print("FAIL: rename did not update disk and library"); return false }
+            guard model.renameMedia(model.media[0], to: "../escape") != nil else { return false }
+            guard model.renameMedia(model.media[0], to: ".hidden") != nil else { return false }
+            model.gameRunning = true; model.play(demo: model.media[0].url)
+            guard model.mediaMessage?.contains("Close the game") == true else { return false }
+            model.gameRunning = false
+            let gone = model.media[0].url
+            try FileManager.default.removeItem(at: gone)
+            model.play(demo: gone)
+            guard model.mediaMessage?.contains("no longer") == true else { return false }
+            print("PASS: real media files sort by date, appear on app activation, rename safely, and missing/running-game playback failures stay in Library")
+
+            let screenshots = model.home.appendingPathComponent("main/screenshots")
+            try FileManager.default.createDirectory(at: screenshots, withIntermediateDirectories: true)
+            let picture = NSImage(size: NSSize(width: 64, height: 64))
+            picture.lockFocus(); NSColor.systemOrange.setFill(); NSRect(x: 0, y: 0, width: 64, height: 64).fill(); picture.unlockFocus()
+            guard let tiff = picture.tiffRepresentation, let bitmap = NSBitmapImageRep(data: tiff),
+                  let png = bitmap.representation(using: .png, properties: [:]) else { return false }
+            try png.write(to: screenshots.appendingPathComponent("review-one.png"))
+            try png.write(to: screenshots.appendingPathComponent("review-two.png"))
+            model.libraryTab = .screenshots; model.loadMedia()
+            try await Task.sleep(for: .milliseconds(500))
+            guard let tile = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label.hasPrefix(model.media[0].url.lastPathComponent) }),
+                  AccessibilityTree.press(tile) else { print("FAIL: screenshot selection has no accessibility action"); return false }
+            try await Task.sleep(for: .milliseconds(200))
+            ConfigsPreview.pressArrow(window, keyCode: 124)
+            try await Task.sleep(for: .milliseconds(200))
+            guard model.selectedMedia == model.media[1].url else {
+                print("FAIL: the screenshot Right arrow did not move selection (selected: \(model.selectedMedia?.lastPathComponent ?? "none"); responder: \(String(describing: window.firstResponder)))")
+                return false
+            }
+            ConfigsPreview.press(window, keyCode: 49, characters: " ")
+            try await Task.sleep(for: .milliseconds(600))
+            guard let panel = NSApp.keyWindow, panel !== window, panel.isVisible,
+                  String(describing: type(of: panel)).contains("QLPreviewPanel") else { print("FAIL: Space did not open native Quick Look"); return false }
+            ConfigsPreview.press(panel, keyCode: 53, characters: "\u{1b}")
+            try await Task.sleep(for: .milliseconds(300))
+            guard NSApp.keyWindow === window else { print("FAIL: Escape did not return from Quick Look"); return false }
+            print("PASS: accessible screenshot selection accepts arrow keys; Space opens the native Quick Look panel and Escape returns")
+            return true
+        } catch { print("FAIL: page actions: \(error)"); return false }
     }
 }

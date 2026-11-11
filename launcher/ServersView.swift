@@ -7,6 +7,8 @@ struct ServersView: View {
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @FocusState private var searchFocused: Bool
+    @FocusState private var listFocused: Bool
+    @State private var searchPresented = false
     @State private var origin = CGPoint.zero
     init(model: LauncherModel) { self.model = model; artwork = model.artwork }
 
@@ -19,29 +21,52 @@ struct ServersView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     PageHeader(title: "Servers", subtitle: "Stock 1.3 and CoD2x 1.4 from the public master servers. Pings refresh when you ask.")
                     .padding(.leading, 16).padding(.top, 92 - 52)
-                    ColumnHeaders(sort: $model.sort, compact: compact).padding(.top, 18)
+                    HStack(spacing: 8) {
+                        Text("\(rows.count) of \(model.servers.count) servers")
+                        TimelineView(.periodic(from: .now, by: 60)) { _ in Text("· \(model.serverCacheAge)") }
+                    }.font(.system(size: 12)).foregroundStyle(palette.secondary).padding(.leading, 16).padding(.top, 10)
+                    ColumnHeaders(sort: model.sort, ascending: model.sortAscending, compact: compact, select: model.sortServers).padding(.top, 18)
                     ScrollViewReader { reader in
                         ScrollView {
                             LazyVStack(spacing: 4) {
+                                if model.refreshing && !rows.isEmpty {
+                                    HStack { ProgressView().controlSize(.small); Text(model.queryProgress) }
+                                        .font(.system(size: 13)).foregroundStyle(palette.secondary).padding(16)
+                                } else if !model.refreshResult.isEmpty {
+                                    Label(model.refreshResult, systemImage: model.refreshResult.hasPrefix("0 ") ? "exclamationmark.triangle" : model.refreshResult.hasPrefix("Refresh stopped") ? "stop.circle" : "checkmark.circle").font(.system(size: 12))
+                                        .foregroundStyle(palette.secondary).padding(8).accessibilityAddTraits(.updatesFrequently)
+                                }
                                 ForEach(rows) { server in
                                     ServerRow(server: server, image: artwork.image(for: server.map), selected: server.address == model.selected?.address,
-                                    favorite: model.library.favorites.contains(server.address), compact: compact) {
-                                        withAnimation(reduceMotion ? nil : .launcherSpring) { model.selectedServer = server.address }
+                                    favorite: model.library.favorites.contains(server.address), compact: compact, focused: listFocused) {
+                                        withAnimation(reduceMotion ? nil : .launcherSpring) { model.selectedServer = server.address; listFocused = true }
                                     } toggleFavorite: { model.favorite(server.address) } deploy: { model.connect(server) }
+                                    .contextMenu {
+                                        Button("Deploy") { model.connect(server) }
+                                        Button(model.library.favorites.contains(server.address) ? "Remove from Favorites" : "Add to Favorites") { model.favorite(server.address) }
+                                        Divider()
+                                        Button("Copy Address") { model.copyServer(server) }
+                                        Button("Copy Link") { model.copyServer(server, link: true) }
+                                    }
                                     .id(server.address)
                                 }
-                                if rows.isEmpty { NoContact(refreshing: model.refreshing, hasServers: !model.servers.isEmpty) }
+                                if rows.isEmpty { NoContact(model: model) }
                             }
                             .padding(.bottom, 12)
                         }
                         .scrollIndicators(.automatic)
                         .bottomEdgeUnderBar()
-                        .focusable()
-                        .onMoveCommand { direction in
-                            guard let index = rows.firstIndex(where: { $0.address == model.selected?.address }) else { return }
-                            let next = direction == .down ? min(rows.count - 1, index + 1) : direction == .up ? max(0, index - 1) : index
+                        .focusable(interactions: .edit).focused($listFocused).focusEffectDisabled()
+                        .accessibilityLabel("Server list")
+                        .onKeyPress(keys: [.upArrow, .downArrow]) { press in
+                            guard !rows.isEmpty else { return .ignored }
+                            guard let index = rows.firstIndex(where: { $0.address == model.selected?.address }) else {
+                                model.selectedServer = rows[0].address; reader.scrollTo(rows[0].address); return .handled
+                            }
+                            let next = press.key == .downArrow ? min(rows.count - 1, index + 1) : max(0, index - 1)
                             model.selectedServer = rows[next].address
                             reader.scrollTo(rows[next].address)
+                            return .handled
                         }
                         // Return deploys only while the list has focus; a default button would also
                         // swallow Return in the search and direct-connect fields.
@@ -50,7 +75,7 @@ struct ServersView: View {
                     }
                 }
                 .frame(maxWidth: 790)
-                ServerDetails(model: model, server: model.selected, image: model.selected.flatMap { artwork.image(for: $0.map) })
+                ServerDetails(model: model, server: model.selected, image: model.selected.flatMap { artwork.image(for: $0.map) }, compact: geometry.size.height < 830)
                 .frame(width: 352)
                 .padding(.top, 88 - 52).padding(.bottom, 22)
             }
@@ -62,34 +87,25 @@ struct ServersView: View {
         .ignoresSafeArea(.container, edges: .top)
         .background(WindowOriginReader(origin: $origin))
         .onChange(of: model.visibleServers.count) { _, _ in model.loadArtwork() }
+        .searchable(text: $model.search, isPresented: $searchPresented, placement: .toolbar, prompt: "Search servers, maps or mods")
+        .searchFocused($searchFocused)
+        .onChange(of: model.serverSearchRequested) { _, _ in searchPresented = true; searchFocused = true }
+        .background { Button("Find servers") { searchPresented = true; searchFocused = true }.keyboardShortcut("f", modifiers: .command).hidden().accessibilityHidden(true) }
         .toolbar {
             ToolbarItem(placement: .navigation) {
-                HStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass").foregroundStyle(palette.secondary)
-                    TextField("Search servers, maps or mods", text: $model.search).textFieldStyle(.plain).focused($searchFocused).frame(width: 250)
-                    if !model.search.isEmpty {
-                        Button { model.search = "" } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(palette.tertiary).accessibilityLabel("Clear search")
-                    }
-                }
-                .padding(.horizontal, 10)
-                .background { Button("") { searchFocused = true }.keyboardShortcut("f", modifiers: .command).opacity(0).accessibilityHidden(true) }
+                Picker("Server version", selection: $model.filter) { ForEach(ServerFilter.allCases) { Text($0.rawValue).tag($0) } }
+                    .pickerStyle(.segmented).labelsHidden().fixedSize()
             }
-            // Three toolbar groups (HIG): search, filters, then count and refresh on the trailing edge.
             ToolbarItem(placement: .navigation) {
-                HStack(spacing: 14) {
-                    Picker("Server version", selection: $model.filter) { ForEach(ServerFilter.allCases) { Text($0.rawValue).tag($0) } }
-                        .pickerStyle(.segmented).labelsHidden().fixedSize()
-                    Toggle("Hide empty", isOn: $model.hideEmpty)
-                    Toggle("Hide full", isOn: $model.hideFull)
-                }
-                .toggleStyle(.checkbox).font(.system(size: 13)).padding(.trailing, 10)
+                Toggle("Hide empty", isOn: $model.hideEmpty).toggleStyle(.checkbox).accessibilityLabel("Hide empty servers")
+            }
+            ToolbarItem(placement: .navigation) {
+                Toggle("Hide full", isOn: $model.hideFull).toggleStyle(.checkbox).accessibilityLabel("Hide full servers")
             }
         }
         .trailingToolbar {
-            Text(model.refreshing ? model.queryProgress : "\(rows.count) of \(model.servers.count) servers")
-                .font(.system(size: 12)).foregroundStyle(palette.secondary).monospacedDigit().padding(.leading, 10)
             Button { model.refreshing ? model.cancelRefresh() : model.refresh() } label: {
-                Label(model.refreshing ? "Stop refreshing" : "Refresh server list", systemImage: model.refreshing ? "stop.fill" : "arrow.clockwise")
+                Label(model.refreshing ? "Stop Refreshing" : "Refresh", systemImage: model.refreshing ? "stop.circle.fill" : "arrow.clockwise").labelStyle(.titleAndIcon)
             }
             .help(model.refreshing ? "Stop querying servers" : "Ask both master servers and ping every server (⌘R)")
         }
@@ -108,8 +124,10 @@ private extension View {
 }
 
 struct ColumnHeaders: View {
-    @Binding var sort: ServerSort
+    var sort: ServerSort
+    var ascending: Bool
     var compact = false
+    var select: (ServerSort) -> Void
     @Environment(\.palette) private var palette
     var body: some View {
         HStack(spacing: 16) {
@@ -130,14 +148,16 @@ struct ColumnHeaders: View {
         .padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.trailing).padding(.bottom, 8)
     }
     private func header(_ title: String, _ key: ServerSort) -> some View {
-        Button { sort = key } label: {
+        Button { select(key) } label: {
             HStack(spacing: 4) {
                 Text(title)
-                if sort == key { Image(systemName: key == .ping || key == .name ? "chevron.up" : "chevron.down").font(.system(size: 8, weight: .bold)) }
+                if sort == key { Image(systemName: ascending ? "chevron.up" : "chevron.down").font(.system(size: 8, weight: .bold)) }
             }
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Sort by \(title.lowercased())")
+        .accessibilityValue(sort == key ? (ascending ? "Ascending" : "Descending") : "Not sorted")
+        .accessibilityHint(sort == key ? "Activate to reverse the order" : "Activate to sort")
         .accessibilityAddTraits(sort == key ? .isSelected : [])
     }
 }
@@ -148,6 +168,7 @@ struct ServerRow: View {
     var selected: Bool
     var favorite: Bool
     var compact = false
+    var focused = false
     var select: () -> Void
     var toggleFavorite: () -> Void
     var deploy: () -> Void
@@ -207,7 +228,7 @@ struct ServerRow: View {
         }
         .padding(.vertical, RowMetrics.inset).padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.trailing)
         .background(selected ? palette.selection : (palette.dark ? Color.white : Color.black).opacity(hovering ? 0.045 : 0), in: RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous).stroke(selected ? palette.selectionStroke : .clear, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous).stroke(selected ? (focused ? palette.accent : palette.selectionStroke) : .clear, lineWidth: focused && selected ? 3 : 1))
         .contentShape(RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous))
         .shapeAudit(.container, .rounded(RowMetrics.radius), "server row")
         .onTapGesture(count: 2, perform: deploy)
@@ -248,7 +269,7 @@ struct ServerRow: View {
         Button(action: toggleFavorite) {
             Image(systemName: favorite ? "star.fill" : "star").font(.system(size: 13))
                 .foregroundStyle(favorite ? (palette.dark ? Palette.hex(0xc99a4c) : palette.link) : palette.secondary)
-                .frame(width: 22, height: 22).contentShape(Rectangle())
+                .frame(width: 28, height: 28).contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(favorite ? "Remove \(QuakeColors.plain(server.name)) from favorites" : "Add \(QuakeColors.plain(server.name)) to favorites")
@@ -269,17 +290,19 @@ struct VersionBadge: View {
 }
 
 struct NoContact: View {
-    var refreshing: Bool
-    var hasServers: Bool
+    @ObservedObject var model: LauncherModel
     @Environment(\.palette) private var palette
     var body: some View {
-        VStack(spacing: 8) {
-            Text("NO CONTACT").font(.stencil(26)).tracking(3.1).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.text)
-            Text(refreshing ? "Listening for servers…" : hasServers ? "No servers match these filters." : "Refresh to ask the master servers, or connect directly below.")
-                .font(.system(size: 13)).foregroundStyle(palette.secondary)
+        VStack(spacing: 12) {
+            Text(model.refreshing ? "FINDING SERVERS" : "NO CONTACT").font(.stencil(26)).tracking(3.1).foregroundStyle(palette.heading)
+            Text(model.refreshing ? "You can stop the search at any time." : model.servers.isEmpty ? "Find a server to join from the public server lists." : "No servers match these filters.")
+                .font(.system(size: 13)).foregroundStyle(palette.secondary).multilineTextAlignment(.center)
+            if model.refreshing { Button("Stop Refreshing", action: model.cancelRefresh).glassAction() }
+            else if model.servers.isEmpty { Button("Refresh", action: model.refresh).glassAction() }
+            else { Button("Clear Filters", action: model.clearServerFilters).glassAction() }
         }
-        .frame(maxWidth: .infinity).padding(.vertical, 80)
-        .accessibilityElement(children: .combine)
+        .frame(maxWidth: .infinity).padding(.vertical, 60)
+        .accessibilityElement(children: .contain)
     }
 }
 
@@ -287,6 +310,7 @@ struct ServerDetails: View {
     @ObservedObject var model: LauncherModel
     var server: GameServer?
     var image: NSImage?
+    var compact = false
     @Environment(\.palette) private var palette
     @Namespace private var glass
     private let radius: CGFloat = 26, inset: CGFloat = 14
@@ -296,26 +320,35 @@ struct ServerDetails: View {
                 VStack(alignment: .leading, spacing: 14) {
                     if let server {
                         let facts = ServerFacts(server)
+                        if !compact {
                         ZStack {
                             MapArt(map: server.map, image: image)
                             LinearGradient(stops: [.init(color: .clear, location: 0.55), .init(color: .black.opacity(0.55), location: 1)], startPoint: .top, endPoint: .bottom)
                         }
-                        .frame(height: 168)
+                        .frame(height: 104)
                         .clipShape(RoundedRectangle(cornerRadius: Concentric.radius(in: radius, inset: inset), style: .continuous))
                         .shapeAudit(.inset, .rounded(Concentric.radius(in: radius, inset: inset)), "inspector art")
+                        }
                         VStack(alignment: .leading, spacing: 6) {
                             Eyebrow(text: "\(MapCatalog.displayName(server.map)) · \(GameModes.long(server.gametype))", size: 12, tracking: 0.28)
                             QuakeName(name: server.name).font(.system(size: 19, weight: .bold)).lineLimit(2)
                             Text(server.address).font(.typewriter(13)).foregroundStyle(palette.address).textSelection(.enabled)
-                            .accessibilityLabel("Address \(server.address)")
                         }
                         .padding(.horizontal, 6)
+                        if compact {
+                            Text("\(facts.versionLabel) · \(server.mod.isEmpty ? "Classic" : server.mod) · \(facts.access)")
+                                .font(.system(size: 12)).foregroundStyle(palette.secondary).padding(.horizontal, 6)
+                        } else {
                         Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
                             GridRow { fact("Version", facts.versionLabel.replacingOccurrences(of: "Stock ", with: "Stock ")); fact("Mod", server.mod.isEmpty ? "Classic" : server.mod) }
                             GridRow { fact("Frame cap", facts.frameCap); fact("Access", facts.access) }
                         }
                         .padding(.horizontal, 6)
+                        }
                         ReadyCheckCard(model: model, studio: model.studio, connection: model.serverConnection, server: server)
+                        // This group contains its own cards and picker. Its controls aren't direct
+                        // children of the surrounding inspector panel's rounded corners.
+                        .shapeAudit(.container, .rounded(0), "ready-check group")
                         .padding(.horizontal, 6)
                         if server.password {
                             SecureField("Server password", text: $model.serverPassword).textFieldStyle(.plain)
@@ -334,7 +367,7 @@ struct ServerDetails: View {
                                 HStack(spacing: 10) {
                                     QuakeName(name: player.name).font(.system(size: 13)).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
                                     Text("\(player.score)").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text).frame(width: 34, alignment: .trailing)
-                                    Text("\(player.ping)").font(.system(size: 13)).foregroundStyle(palette.tertiary).frame(width: 34, alignment: .trailing)
+                                    Text("\(player.ping) ms").font(.system(size: 13)).foregroundStyle(palette.tertiary).frame(width: 52, alignment: .trailing)
                                 }
                                 .frame(height: 26)
                                 .accessibilityElement(children: .combine)
@@ -344,7 +377,14 @@ struct ServerDetails: View {
                         .padding(.horizontal, 6)
                     } else {
                         Spacer()
-                        Text("Select a server to see who's playing.").font(.system(size: 13)).foregroundStyle(palette.secondary).frame(maxWidth: .infinity)
+                        VStack(spacing: 12) {
+                            Text("CHOOSE A SERVER").font(.stencil(24)).foregroundStyle(palette.heading)
+                            Text("Select a server in the list to see who’s playing.").font(.system(size: 13)).foregroundStyle(palette.secondary).multilineTextAlignment(.center)
+                            Button(model.servers.isEmpty ? "Refresh" : model.visibleServers.isEmpty ? "Clear Filters" : "Select First Server") {
+                                if model.servers.isEmpty { model.refresh() }
+                                else { model.clearServerFilters(); model.selectedServer = model.visibleServers.first?.address }
+                            }.glassAction().disabled(model.refreshing)
+                        }.frame(maxWidth: .infinity).padding(.top, 40)
                         Spacer()
                     }
                 }
@@ -407,8 +447,12 @@ struct DirectConnectBar: View {
     private let inset: CGFloat = 11
     var body: some View {
         // One container: the bar's glass and Connect's are drawn together, not glass sampling glass.
-        GlassContainer {
-            bar
+        VStack(alignment: .leading, spacing: 8) {
+            if let error = model.directAddressError ?? model.directConnectError {
+                Label(error, systemImage: "exclamationmark.triangle").font(.system(size: 12)).foregroundStyle(palette.negative)
+                    .padding(.horizontal, 20).fixedSize(horizontal: false, vertical: true)
+            }
+            GlassContainer { bar }
         }
     }
     private var bar: some View {
@@ -419,10 +463,11 @@ struct DirectConnectBar: View {
                 .padding(.horizontal, 14).frame(height: ControlMetrics.action).wellCapsule()
                 .onSubmit { model.connect() }
                 .accessibilityLabel("Server address")
-            SecureField("Password (optional)", text: $model.serverPassword).textFieldStyle(.plain)
+            SecureField("Password (optional)", text: $model.directPassword).textFieldStyle(.plain)
                 .padding(.horizontal, 14).frame(width: 190, height: ControlMetrics.action).wellCapsule()
                 .accessibilityLabel("Server password, optional")
-            Button("Connect") { model.connect() }.prominentAction().actionControlSize()
+            Button("Connect") { model.connect() }.glassAction().actionControlSize()
+                .disabled(model.directAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
         .padding(.leading, 20).padding(.trailing, inset)
         .frame(height: ControlMetrics.action + 2 * inset)

@@ -5,6 +5,7 @@ struct HomeView: View {
     @ObservedObject var model: LauncherModel
     @ObservedObject private var artwork: MapArtworkStore
     @Environment(\.palette) private var palette
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var origin = CGPoint.zero
     init(model: LauncherModel) { self.model = model; artwork = model.artwork }
 
@@ -12,34 +13,42 @@ struct HomeView: View {
         let last = model.lastServer
         let map = last?.map ?? "mp_toujane"
         GeometryReader { proxy in
+            ScrollViewReader { reader in
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     heroText(last).padding(.top, 150)
+                    if model.updateWasChecked || model.updateOffer != nil {
+                        UpdateStatusView(model: model).padding(20).contentSurface(RoundedRectangle(cornerRadius: 20)).padding(.top, 20).id("updates")
+                    }
                     Spacer(minLength: 28)
                     StatusChips(model: model)
                     HStack(alignment: .top, spacing: 20) {
                         RecentServersPanel(model: model)
                         DispatchesPanel(model: model)
                     }
-                    .frame(height: max(242, proxy.size.height - 632))
+                    .frame(minHeight: max(242, proxy.size.height - 632))
                     .padding(.top, 32)
                 }
                 .padding(.leading, max(32, 300 - origin.x)).padding(.trailing, 32).padding(.bottom, 28)
                 .frame(minHeight: max(proxy.size.height, 760), alignment: .top)
             }
-            .scrollIndicators(.never)
+            .scrollIndicators(.automatic)
+            .task(id: model.checkingUpdates) {
+                guard model.checkingUpdates else { return }
+                await Task.yield()
+                reader.scrollTo("updates", anchor: .center)
+            }
             .background(alignment: .topLeading) {
                 // The window-space slice of the hero; the system mirrors it under the floating sidebar.
                 HeroBackdrop(map: map, image: artwork.image(for: map), leading: origin.x)
                     .frame(width: proxy.size.width, height: 620)
                     .heroExtension()
             }
+            }
         }
         .ignoresSafeArea(.container, edges: .top)
         .background(WindowOriginReader(origin: $origin))
         .trailingToolbar {
-            Button { model.checkUpdates() } label: { Label("Check for updates", systemImage: "arrow.down.to.line") }
-                .help("Check GitHub Releases for a newer version. Nothing is downloaded.")
             Button { model.openHomeFolder() } label: { Label("Show CoD2 Silicon folder", systemImage: "folder") }
                 .help("Show configs, demos and screenshots in Finder.")
         }
@@ -57,19 +66,25 @@ struct HomeView: View {
             } else {
                 Eyebrow(text: "Ready for deployment", size: 15, tracking: 0.34)
                 StencilTitle(text: "COD2 SILICON")
-                MetaLine(items: [AnyView(Text("No recent servers yet")), AnyView(Text("Deploy opens the main menu"))])
+                MetaLine(items: [AnyView(Text("No recent servers yet")), AnyView(Text("Find a server to join your first match"))])
             }
             HStack(spacing: 14) {
-                Button(action: model.deploy) {
-                    Label("Deploy", systemImage: "play.fill").labelStyle(HeroLabelStyle())
+                if last == nil {
+                    Button { model.page = .servers } label: {
+                        Label("Find a server", systemImage: "dot.radiowaves.left.and.right").labelStyle(HeroLabelStyle())
+                    }.prominentAction().actionControlSize()
+                    Button(action: model.deploy) { Label("Open game menu", systemImage: "play.fill").labelStyle(HeroLabelStyle()) }
+                        .glassAction().actionControlSize()
+                } else {
+                    Button(action: model.deploy) { Label("Deploy", systemImage: "play.fill").labelStyle(HeroLabelStyle()) }
+                        .prominentAction().actionControlSize()
+                        .accessibilityLabel("Deploy to \(last.map { QuakeColors.plain($0.name) } ?? "the main menu")")
+                    Button { withAnimation(reduceMotion ? nil : .launcherSpring) { model.page = .servers } } label: {
+                        Label("Find a server", systemImage: "dot.radiowaves.left.and.right").labelStyle(HeroLabelStyle())
+                    }.glassAction().actionControlSize()
+                    Text("⌘↩ to deploy").font(.system(size: 12)).foregroundStyle(palette.dark ? HeroInk.hint.dark : HeroInk.hint.light).padding(.leading, 6)
+                        .accessibilityLabel("Command Return to deploy")
                 }
-                .prominentAction().actionControlSize()
-                .accessibilityLabel(last.map { "Deploy to \(QuakeColors.plain($0.name))" } ?? "Deploy to the main menu")
-                Button { withAnimation(.launcherSpring) { model.page = .servers } } label: {
-                    Label("Find a server", systemImage: "dot.radiowaves.left.and.right").labelStyle(HeroLabelStyle())
-                }
-                .glassAction().actionControlSize()
-                Text("⌘ Return to deploy").font(.system(size: 12)).foregroundStyle(palette.dark ? HeroInk.hint.dark : HeroInk.hint.light).padding(.leading, 6)
             }
             .padding(.top, 14)
         }
@@ -229,23 +244,36 @@ struct StatusChips: View {
     @Environment(\.palette) private var palette
     var body: some View {
         GlassContainer(spacing: 10) {
-            HStack(spacing: 10) {
-                let cap = FrameCap.chip(model.settings.fps)
-                chip(label: FrameCap.spoken(model.settings.fps)) {
-                    if let numeral = cap.numeral { Text(numeral).font(.stencil(20)).foregroundStyle(palette.dark ? palette.accent : Palette.hex(0x4e5b2f)) }
-                    Text(cap.text)
-                } action: { model.page = .settings }
-                chip(label: "Display \(resolutionText)") {
-                    Image(systemName: "display").font(.system(size: 14)).foregroundStyle(palette.chipIcon)
-                    Text(resolutionText)
-                } action: { model.page = .settings }
-                chip(label: model.approximate ? "Approximate shaders" : "Original shaders ready") {
-                    Image(systemName: model.approximate ? "exclamationmark.shield" : "checkmark.shield").font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(model.approximate ? palette.accent : palette.positive)
-                    Text(model.approximate ? "Approximate shaders" : "Original shaders ready")
-                } action: { if model.approximate { model.restartSetup(at: 2) } else { model.page = .settings } }
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) { frameChip; displayChip; shaderChip }
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 10) { frameChip; displayChip }
+                    shaderChip
+                }
             }
         }
+    }
+    private var frameChip: some View {
+        let info = model.nextGameFrameCap
+        let cap = info.value.map(FrameCap.chip)
+        let name = info.name.map { " · \($0) loadout" } ?? ""
+        return chip(label: (info.value.map(FrameCap.spoken) ?? "Frame cap unavailable") + name) {
+            if let numeral = cap?.numeral { Text(numeral).font(.stencil(20)).foregroundStyle(palette.accent) }
+            Text((cap?.text ?? "Frame cap unavailable") + name).lineLimit(1)
+        } action: { model.openFrameSettings() }
+    }
+    private var displayChip: some View {
+        chip(label: "Display \(resolutionText)") {
+            Image(systemName: "display").font(.system(size: 14)).foregroundStyle(palette.chipIcon)
+            Text(resolutionText)
+        } action: { model.page = .settings }
+    }
+    private var shaderChip: some View {
+        chip(label: model.approximate ? "Approximate shaders" : "Original shaders ready") {
+            Image(systemName: model.approximate ? "exclamationmark.shield" : "checkmark.shield").font(.system(size: 14, weight: .medium))
+                .foregroundStyle(model.approximate ? palette.accent : palette.positive)
+            Text(model.approximate ? "Approximate shaders" : "Original shaders ready")
+        } action: { if model.approximate { model.restartSetup(at: 2) } else { model.page = .settings } }
     }
     private var resolutionText: String {
         let size = model.settings.resolution.replacingOccurrences(of: "x", with: " × ")
@@ -289,7 +317,11 @@ struct RecentServersPanel: View {
             PanelHeading(title: "Recent servers", action: "Show all") { model.page = .servers }
             VStack(spacing: 6) {
                 if model.recentServers.isEmpty {
-                    Text("Servers you join appear here.").font(.system(size: 13)).foregroundStyle(palette.secondary).frame(maxWidth: .infinity, alignment: .leading).padding(.top, 8)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("NO RECENT SERVERS").font(.stencil(22)).foregroundStyle(palette.heading)
+                        Text("Servers you join appear here.").font(.system(size: 13)).foregroundStyle(palette.secondary)
+                        Button("Find a server") { model.page = .servers }.glassAction()
+                    }.frame(maxWidth: .infinity, alignment: .leading).padding(.top, 8)
                 }
                 ForEach(model.recentServers.prefix(3)) { server in
                     let facts = ServerFacts(server)
@@ -309,6 +341,12 @@ struct RecentServersPanel: View {
                         .padding(8).contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous)).shapeAudit(.container, .rounded(16), "recent row")
                     }
                     .buttonStyle(RowButtonStyle(radius: 16))
+                    .contextMenu {
+                        Button("Deploy") { model.connect(server) }
+                        Button("Show in Server List") { model.showServer(server.address) }
+                        Button(model.library.favorites.contains(server.address) ? "Remove from Favorites" : "Add to Favorites") { model.favorite(server.address) }
+                        Button("Copy Address") { model.copyServer(server) }
+                    }
                     .padding(.horizontal, -8)
                     .accessibilityLabel("\(QuakeColors.plain(server.name)), \(MapCatalog.displayName(server.map)), \(server.playerCount) of \(server.maxPlayers) players, \(server.ping) milliseconds")
                 }
