@@ -30,9 +30,12 @@ extension ConfigRuleStatus {
 struct ConfigCheckupGauge: Identifiable {
     let area: ConfigCheckupArea
     let value: String
+    /// What the player would notice, in plain words.
     let detail: String
     let status: String
     let tone: StudioStatusTone
+    /// The raw figures behind the words, for Show details; empty when there are none.
+    var figures: String = ""
     var id: ConfigCheckupArea { area }
 }
 
@@ -122,6 +125,8 @@ struct ConfigAppliedSuggestion: Identifiable {
 
     /// Local match summaries: read after a game exits or on Refresh, never on a timer.
     @Published private(set) var matchState: ConfigMatchState = .notRead
+    /// The match Check-up measures from (Library › Matches, Home's Last match); nil is the latest.
+    @Published var focusedMatchID: String?
     /// The current Settings › Privacy choice. Turning it off applies from the next game and
     /// leaves summaries already on this Mac where they are.
     @Published var matchSummariesEnabled = true
@@ -212,14 +217,35 @@ struct ConfigAppliedSuggestion: Identifiable {
     }
     var latestMatch: MatchSummary? { if case .read(let all) = matchState { return all.last }; return nil }
     var matchCount: Int { if case .read(let all) = matchState { return all.count }; return 0 }
+    /// Opens Check-up on one match (`MatchSummary.id`), or the latest with nil. Reads the
+    /// summaries first if nothing has read them yet.
+    func show(match id: String?) {
+        if case .notRead = matchState { refreshMatches() }
+        focusedMatchID = id
+    }
+    /// The match the dials measure from: the one asked for when it's still recorded, else the latest.
+    var shownMatch: MatchSummary? {
+        guard case .read(let all) = matchState else { return nil }
+        if let id = focusedMatchID, let match = all.last(where: { $0.id == id }) { return match }
+        return all.last
+    }
+    /// A match was asked for that this Mac no longer has; the latest is shown instead.
+    var focusedMatchMissing: Bool {
+        guard let id = focusedMatchID, case .read(let all) = matchState else { return false }
+        return !all.contains { $0.id == id }
+    }
+    private var showingLatest: Bool { shownMatch == nil || shownMatch?.id == latestMatch?.id }
+    private func matchName(_ match: MatchSummary) -> String {
+        (showingLatest ? "Your last match: " : "Your match on ") + "\(MapCatalog.displayName(match.map)), \(GameModes.long(match.mode))"
+    }
 
-    /// What the latest match measured, for A1. A p99 past the exact range is only an upper
+    /// What the shown match measured, for A1. A p99 past the exact range is only an upper
     /// bound, so it isn't passed on as a measurement; mouse polling is never recorded.
     var measurements: ConfigCheckupMeasurements {
-        guard let match = latestMatch else { return .init() }
+        guard let match = shownMatch else { return .init() }
         return ConfigCheckupMeasurements(frameTimeP99MS: match.frameQuantilesAreExact ? match.frameTimeP99MS : nil, mousePollingHz: nil,
                                          pingMS: match.pingAverageMS, packetLossPercent: match.packetLossPercent,
-                                         source: "Your last match: \(MapCatalog.displayName(match.map)), \(GameModes.long(match.mode))")
+                                         source: matchName(match))
     }
 
     var matchPresentation: ConfigMatchPresentation? {
@@ -228,17 +254,18 @@ struct ConfigAppliedSuggestion: Identifiable {
         case .failed(let message):
             return .init(title: "Couldn’t read your match summaries", detail: message + " Nothing here is shown as measured until they can be read.", lines: [], tone: .negative)
         case .read(let all):
-            guard let match = all.last else {
+            guard let match = shownMatch else {
                 return matchSummariesEnabled
                     ? .init(title: "No matches recorded yet", detail: "After your next match, the game saves a short summary on this Mac and Check-up shows it here.", lines: [], tone: .unknown)
                     : .init(title: "Match summaries are off", detail: "Turn on local match summaries in Settings › Privacy to see measurements from your next game.", lines: [], tone: .unknown)
             }
             let off = matchSummariesEnabled ? "" : " Match summaries are off now, so new games aren’t added."
             let ended = Self.matchDate(match.endedAt).map { StencilDate.dayAndTime($0) } ?? match.endedAt
-            return .init(title: "Your last match: \(MapCatalog.displayName(match.map)), \(GameModes.long(match.mode))",
-                         detail: "Measured by the game on this Mac. It may have used a different loadout than the one shown here." + off,
+            let missing = focusedMatchMissing ? " The match you opened isn’t recorded on this Mac any more, so this is your last one." : ""
+            return .init(title: matchName(match),
+                         detail: "Measured by the game on this Mac. It may have used a different loadout than the one shown here." + missing + off,
                          lines: ["Ended \(ended) · \(Self.duration(match.durationSeconds))",
-                                 all.count == 1 ? "1 match recorded on this Mac" : "\(all.count) matches recorded on this Mac"],
+                                 all.count == 1 ? "1 match recorded on this Mac" : "\(all.count.formatted()) matches recorded on this Mac"],
                          tone: .information)
         }
     }
@@ -258,10 +285,10 @@ struct ConfigAppliedSuggestion: Identifiable {
     /// Milliseconds and percentages to one decimal place, as people read them.
     static func figure(_ value: Double) -> String { ConfigValues.format((value * 10).rounded() / 10) }
 
-    /// The movement dial from a match that recorded frames: p50, p99, maximum, frames within the
-    /// cap, the cap recorded at the end and the frame count. Quantiles at or past the exact range
-    /// are said as bounds. The cap can change during a match, so the capped-frame counts are never
-    /// attributed to the final cap.
+    /// The movement dial from a match that recorded frames: how often the Mac kept up with the cap,
+    /// in words; p50, p99, maximum, frames within the cap, the cap recorded at the end and the frame
+    /// count go under Show details. Quantiles at or past the exact range are said as bounds. The cap
+    /// can change during a match, so the capped-frame counts are never attributed to the final cap.
     private func frameGauge(_ match: MatchSummary) -> ConfigCheckupGauge? {
         guard match.frameCount > 0, let p50 = match.frameTimeP50MS, let p99 = match.frameTimeP99MS, let max = match.frameTimeMaxMS else { return nil }
         let limit = match.frameTimeHistogramLimitMS
@@ -270,37 +297,85 @@ struct ConfigAppliedSuggestion: Identifiable {
             // A sample at the limit lands in the overflow bucket: at least the limit.
             return value < limit ? "\(name) \(Self.figure(value)) ms" : "\(name) at least \(Self.figure(limit)) ms (at most \(Self.figure(value)) ms)"
         }
-        var parts = [quantile("p50", p50), quantile("p99", p99), "max \(Self.figure(max)) ms"]
+        var parts = ["Frame time " + quantile("p50", p50), quantile("p99", p99), "max \(Self.figure(max)) ms"]
         if let under = match.framesUnderCap, match.capSampleFrames > 0 {
-            parts.append("\(under) of \(match.capSampleFrames) capped frames (\(Self.figure(100 * Double(under) / Double(match.capSampleFrames)))%) within the cap in force")
+            parts.append("\(under.formatted()) of \(match.capSampleFrames.formatted()) capped frames (\(Self.figure(100 * Double(under) / Double(match.capSampleFrames)))%) within the cap in force")
         } else {
             parts.append("frames within the cap: Not measured")
         }
         parts.append(match.capFPS > 0 ? "cap at the end of the match \(match.capFPS) fps" : "no cap at the end of the match")
-        parts.append(match.frameCount == 1 ? "1 frame" : "\(match.frameCount) frames")
-        let exact = match.frameQuantilesAreExact
-        return .init(area: .movement, value: (exact ? "" : "≤ ") + Self.figure(p99) + " MS",
-                     detail: "Frame time in your last match: " + parts.joined(separator: " · ") + ".",
-                     status: exact ? "Measured" : "Upper bound", tone: .information)
+        parts.append(match.frameCount == 1 ? "1 frame" : "\(match.frameCount.formatted()) frames")
+        let figures = parts.joined(separator: " · ") + "."
+        // The typical frame rate: half the frames came at least this fast.
+        let typical = p50 > 0 && p50 < (limit ?? .infinity) ? "\(Int((1000 / p50).rounded()).formatted()) FPS" : "—"
+        let pace = typical == "—" ? "" : " Most of it ran at about \(Int((1000 / p50).rounded()).formatted()) fps."
+        guard match.frameQuantilesAreExact else {
+            let pause = limit.map { "\(Self.figure($0)) ms" } ?? "a long time"
+            return .init(area: .movement, value: typical, detail: "Some frames took \(pause) or more, long enough to feel like a freeze." + pace,
+                         status: "Long pauses", tone: .caution, figures: figures)
+        }
+        guard let under = match.framesUnderCap, match.capSampleFrames > 0 else {
+            return .init(area: .movement, value: typical, detail: "No frame rate cap was on, so there was no cap to keep up with." + pace,
+                         status: "No cap", tone: .unknown, figures: figures)
+        }
+        let share = Double(under) / Double(match.capSampleFrames)
+        let slow = Swift.max(1, Int(((1 - share) * 100).rounded()))
+        if share >= 0.99 {
+            return .init(area: .movement, value: typical, detail: share == 1 ? "Your Mac kept up with your frame rate cap the whole match."
+                                                                      : "Your Mac kept up with your frame rate cap for almost the whole match.",
+                         status: "Smooth", tone: .positive, figures: figures)
+        }
+        if share >= 0.95 {
+            return .init(area: .movement, value: typical,
+                         detail: "Now and then your Mac fell below your frame rate cap, about \(slow) in every 100 frames. Jumps can feel different when it does.",
+                         status: "Watch", tone: .caution, figures: figures)
+        }
+        return .init(area: .movement, value: typical,
+                     detail: "Your Mac often fell below your frame rate cap, about \(slow) in every 100 frames, so jumps and aim felt less even.",
+                     status: "Could be better", tone: .caution, figures: figures)
     }
-    /// The connection dial from a match: ping, and server updates that never arrived.
+    /// The connection dial from a match: how steady it was in words; ping and server updates that
+    /// never arrived, as figures, under Show details.
     private func connectionGauge(_ match: MatchSummary) -> ConfigCheckupGauge {
-        let ping: String
+        let ping: String, said: String
+        let measured = match.pingSamples > 0 ? match.pingAverageMS : nil
         if match.pingSamples > 0, let average = match.pingAverageMS, let highest = match.pingMaximumMS {
-            ping = "Ping in your last match: average \(Self.figure(average)) ms, highest \(Self.figure(highest)) ms over \(match.pingSamples) sample\(match.pingSamples == 1 ? "" : "s")."
+            ping = "Ping in this match: average \(Self.figure(average)) ms, highest \(Self.figure(highest)) ms over \(match.pingSamples.formatted()) sample\(match.pingSamples == 1 ? "" : "s")."
+            said = " Your ping averaged \(Int(average.rounded())) ms and peaked at \(Int(highest.rounded())) ms."
         } else {
-            ping = "Ping: Not measured in your last match."
+            ping = "Ping: Not measured in this match."
+            said = ""
         }
         let missing: String
+        var loss: Double?
         let (expected, overflow) = match.packetsReceived.addingReportingOverflow(match.packetsLost)
-        if match.packetsReceived > 0, !overflow, let loss = match.packetLossPercent {
-            missing = "Missing server updates: \(Self.figure(loss))% (\(match.packetsLost) of \(expected)), inferred from gaps in the update sequence; not a precise packet-loss measurement."
+        if match.packetsReceived > 0, !overflow, let measuredLoss = match.packetLossPercent {
+            loss = measuredLoss
+            missing = "Missing server updates: \(Self.figure(measuredLoss))% (\(match.packetsLost.formatted()) of \(expected.formatted())), inferred from gaps in the update sequence; not a precise packet-loss measurement."
         } else {
             missing = "Missing server updates: Not measured."
         }
-        let measured = match.pingSamples > 0 ? match.pingAverageMS : nil
-        return .init(area: .connection, value: measured.map { Self.figure($0) + " MS" } ?? "—", detail: ping + " " + missing,
-                     status: measured == nil ? "Not measured" : "Measured", tone: measured == nil ? .unknown : .information)
+        let value = measured.map { "\(Int($0.rounded())) MS" } ?? "—"
+        let figures = ping + " " + missing
+        guard let loss else {
+            return .init(area: .connection, value: value,
+                         detail: measured == nil ? "Your ping and how steady your connection was weren’t recorded in this match."
+                                                 : "How steady your connection was wasn’t recorded." + said,
+                         status: "Not measured", tone: .unknown, figures: figures)
+        }
+        let lost = Swift.max(1, Int(loss.rounded()))
+        if loss < 1 {
+            return .init(area: .connection, value: value, detail: "Almost every update from the server arrived." + said,
+                         status: "Steady", tone: .positive, figures: figures)
+        }
+        if loss < 5 {
+            return .init(area: .connection, value: value,
+                         detail: "About \(lost) in every 100 updates from the server never arrived, so other players may have skipped now and then." + said,
+                         status: "Watch", tone: .caution, figures: figures)
+        }
+        return .init(area: .connection, value: value,
+                     detail: "About \(lost) in every 100 updates from the server never arrived, so other players often skipped." + said,
+                     status: "Could be better", tone: .caution, figures: figures)
     }
 
     /// Why the review holds its advice back, found the way A1 looks: lines whose effect
@@ -373,7 +448,14 @@ struct ConfigAppliedSuggestion: Identifiable {
             return ("CoD2 Silicon source \(parts.count == 3 ? String(parts[2]) : source.sourceURL)", nil)
         }
         let url = URL(string: source.sourceURL)
-        return (url?.host.map { "\($0) · \(source.sourceDate)" } ?? source.sourceURL, url)
+        return (url?.host.map { "\($0) · \(Self.sourceDate(source.sourceDate))" } ?? source.sourceURL, url)
+    }
+    /// A source's ISO date (“2026-10-04”) in the app's date style (“04 OCT 2026”); anything else as written.
+    static func sourceDate(_ text: String) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX"); formatter.dateFormat = "yyyy-MM-dd"; formatter.timeZone = .current
+        guard let date = formatter.date(from: String(text.prefix(10))) else { return text }
+        return "checked " + StencilDate.day(date) + " " + String(Calendar.current.component(.year, from: date))
     }
     func evidenceText(_ suggestion: ConfigCheckupSuggestion) -> String {
         suggestion.evidence.first { $0.kind == .inference }?.detail ?? "Based on your settings"
@@ -382,27 +464,33 @@ struct ConfigAppliedSuggestion: Identifiable {
     /// The four dials. Movement and Connection come from the latest recorded match when there
     /// is one; every value it didn't record reads “Not measured”, alongside what the loadout says.
     func gauges(_ report: ConfigCheckupReport) -> [ConfigCheckupGauge] {
-        let match = latestMatch
+        let match = shownMatch
         return report.dials.map { dial in
             switch dial.area {
             case .movement:
                 if let match, let gauge = frameGauge(match) { return gauge }
                 let cap = studio.spec(named: "com_maxfps").map { studio.state($0) }
                 let value = cap?.number.map { $0 == 0 ? "NO CAP" : "\(ConfigValues.format($0, integer: true)) FPS" } ?? "—"
-                return .init(area: .movement, value: value, detail: "Your frame rate cap. The frame rate you actually get isn’t measured.",
-                             status: cap?.number == nil ? "Not measured" : "From settings", tone: cap?.number == nil ? .unknown : .information)
+                let next = matchSummariesEnabled ? "Play a match to see how often your Mac keeps up with it."
+                                                  : "Turn on match summaries in Settings › Privacy to see how often your Mac keeps up with it."
+                return .init(area: .movement, value: value, detail: "Your frame rate cap. " + next,
+                             status: cap?.number == nil ? "Not measured" : "From settings", tone: cap?.number == nil ? .unknown : .information,
+                             figures: "The frame rate you actually get isn’t measured until a match is recorded.")
             case .aim:
                 let dpi = studio.metadata?.dpi
                 let speed = studio.spec(named: "sensitivity").flatMap { studio.state($0).number }
                 let yaw = studio.spec(named: "m_yaw").flatMap { studio.state($0).number } ?? 0.022
                 let distance = dpi.flatMap { dpi in speed.flatMap { MouseMath.centimetresPer360(dpi: dpi, sensitivity: $0, yaw: yaw) } }
                 return .init(area: .aim, value: distance.map { MouseMath.label($0) + " CM" } ?? "—",
-                             detail: distance == nil ? "Enter your mouse’s DPI in Settings › Aim to see how far you turn. Polling rate isn’t measured."
-                                                     : "Per full turn at \(ConfigValues.format(dpi ?? 0)) DPI. Polling rate isn’t measured.",
-                             status: distance == nil ? "Not measured" : "From settings", tone: distance == nil ? .unknown : .information)
+                             detail: distance == nil ? "Enter your mouse’s DPI in Settings › Aim & input to see how far you move it for a full turn."
+                                                     : "How far you move the mouse for a full turn, at \(ConfigValues.format(dpi ?? 0)) DPI.",
+                             status: distance == nil ? "Not measured" : "From settings", tone: distance == nil ? .unknown : .information,
+                             figures: "Polling rate isn’t measured.")
             case .connection:
                 if let match { return connectionGauge(match) }
-                return .init(area: .connection, value: "—", detail: "Ping and missing server updates aren’t measured.", status: "Not measured", tone: .unknown)
+                return .init(area: .connection, value: "—", detail: matchSummariesEnabled ? "Play a match to see your ping and how steady your connection was."
+                                                                                         : "Turn on match summaries in Settings › Privacy to see your ping and how steady your connection was.",
+                             status: "Not measured", tone: .unknown, figures: "Ping and missing server updates aren’t measured until a match is recorded.")
             case .visibility:
                 let names = Set((studio.catalog?.settings(in: .vis) ?? []).map { $0.name.lowercased() })
                 let relevant = report.policy.filter { names.contains($0.setting.lowercased()) }

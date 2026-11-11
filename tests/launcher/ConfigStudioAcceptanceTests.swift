@@ -439,16 +439,30 @@ enum ConfigStudioAcceptanceTests {
         require(measured.detail.contains("may have used a different loadout") && !measured.detail.contains("Main"), "a match isn't claimed for the selected loadout")
         require(measured.lines.contains("2 matches recorded on this Mac") && measured.lines.contains { $0.hasPrefix("Ended ") && $0.contains("21 min") })
         let gauges = checkup.gauges(report)
-        require(gauges[0].value == "7 MS" && gauges[0].status == "Measured" && gauges[0].tone == .information)
-        require(gauges[0].detail.contains("p50 3 ms · p99 7 ms · max 20 ms"), gauges[0].detail)
+        // The card says the outcome in words (the typical frame rate, how often the Mac fell below the
+        // cap); the exact figures sit behind Show Details.
+        require(gauges[0].value == "333 FPS" && gauges[0].status == "Watch" && gauges[0].tone == .caution, "\(gauges[0].value) \(gauges[0].status)")
+        require(gauges[0].detail.contains("about 2 in every 100 frames") && !gauges[0].detail.contains("p50"), gauges[0].detail)
+        require(gauges[0].figures.contains("p50 3 ms · p99 7 ms · max 20 ms"), gauges[0].figures)
         // The cap can change during a match: the counts aren't attributed to the cap recorded at the end.
-        require(gauges[0].detail.contains("98 of 100 capped frames (98%) within the cap in force") && gauges[0].detail.contains("cap at the end of the match 333 fps")
-                && !gauges[0].detail.contains("within the 333 fps cap"), gauges[0].detail)
+        require(gauges[0].figures.contains("98 of 100 capped frames (98%) within the cap in force") && gauges[0].figures.contains("cap at the end of the match 333 fps")
+                && !gauges[0].figures.contains("within the 333 fps cap"), gauges[0].figures)
         require(gauges[1].status == "Not measured" || gauges[1].status == "From settings", "mouse polling is never invented")
-        require(!gauges[1].detail.contains("Hz") && gauges[1].detail.contains("Polling rate isn’t measured"))
-        require(gauges[2].value == "40 MS" && gauges[2].detail.contains("average 40 ms, highest 50 ms over 3 samples"), gauges[2].detail)
-        require(gauges[2].detail.contains("Missing server updates: 40% (2 of 5), inferred from gaps in the update sequence; not a precise packet-loss measurement."), gauges[2].detail)
-        require(gauges.allSatisfy { !$0.detail.lowercased().contains("score") && !$0.value.lowercased().contains("score") })
+        require(!gauges[1].detail.contains("Hz") && !gauges[1].figures.contains("Hz") && gauges[1].figures.contains("Polling rate isn’t measured"))
+        require(gauges[2].value == "40 MS" && gauges[2].status == "Could be better" && gauges[2].figures.contains("average 40 ms, highest 50 ms over 3 samples"), gauges[2].figures)
+        require(gauges[2].figures.contains("Missing server updates: 40% (2 of 5), inferred from gaps in the update sequence; not a precise packet-loss measurement."), gauges[2].figures)
+        require(gauges.allSatisfy { !($0.detail + $0.figures + $0.value).lowercased().contains("score") })
+        // Opened for the older match (Library › Matches): that match, named as such, until Show Last Match.
+        guard case .read(let recorded) = checkup.matchState, let olderMatch = recorded.first(where: { $0.map == "mp_carentan" }) else {
+            fatalError("FAIL: both matches are recorded")
+        }
+        checkup.show(match: olderMatch.id)
+        require(checkup.shownMatch?.map == "mp_carentan" && value(checkup.matchPresentation).title == "Your match on Carentan, Search & Destroy"
+                && checkup.gauges(value(checkup.report))[2].value == "45 MS" && reads == 2, value(checkup.matchPresentation).title)
+        checkup.show(match: "2020-01-01T00:00:00Z 203.0.113.9:28960 mp_gone")
+        require(checkup.focusedMatchMissing && checkup.shownMatch?.map == "mp_toujane", "a match this Mac no longer has falls back to the latest")
+        checkup.show(match: nil)
+        require(value(checkup.matchPresentation).title == "Your last match: Toujane, Search & Destroy")
 
         // Overflow: the p99 is beyond the exact range, so it is an upper bound only.
         let slow = row.replacingOccurrences(of: "\"frameTimeP99MS\":7,\"frameTimeMaxMS\":20,\"frameTimeHistogramLimitMS\":250",
@@ -457,20 +471,20 @@ enum ConfigStudioAcceptanceTests {
         checkup.refreshMatches()
         require(checkup.latestMatch?.frameQuantilesAreExact == false && checkup.report?.dials[0].value == nil, "an upper bound isn't passed on as a measured p99")
         let bound = checkup.gauges(value(checkup.report))[0]
-        require(bound.value == "≤ 300 MS" && bound.status == "Upper bound" && bound.detail.contains("p99 at least 250 ms (at most 300 ms)") && !bound.detail.contains("p99 300 ms"), bound.detail)
+        require(bound.value == "333 FPS" && bound.status == "Long pauses" && bound.figures.contains("p99 at least 250 ms (at most 300 ms)") && !bound.figures.contains("p99 300 ms"), bound.figures)
         // A p99 sample at exactly the limit is in the overflow bucket: at least the limit, not longer than it.
         let edge = row.replacingOccurrences(of: "\"frameTimeP99MS\":7,\"frameTimeMaxMS\":20,\"frameTimeHistogramLimitMS\":250",
                                             with: "\"frameTimeP99MS\":250,\"frameTimeMaxMS\":250,\"frameTimeHistogramLimitMS\":250")
         try (edge + "\n").write(to: file, atomically: true, encoding: .utf8)
         checkup.refreshMatches()
         let atLimit = checkup.gauges(value(checkup.report))[0]
-        require(checkup.latestMatch?.frameQuantilesAreExact == false && atLimit.value == "≤ 250 MS" && atLimit.detail.contains("p99 at least 250 ms")
-                && !atLimit.detail.contains("longer than"), atLimit.detail)
+        require(checkup.latestMatch?.frameQuantilesAreExact == false && atLimit.status == "Long pauses" && atLimit.figures.contains("p99 at least 250 ms")
+                && !atLimit.figures.contains("longer than"), atLimit.figures)
         // A cap that ended the match off still keeps the frames counted under earlier caps.
         let uncapped = row.replacingOccurrences(of: "\"capFPS\":333", with: "\"capFPS\":0")
         try (uncapped + "\n").write(to: file, atomically: true, encoding: .utf8)
         checkup.refreshMatches()
-        let capOff = checkup.gauges(value(checkup.report))[0].detail
+        let capOff = checkup.gauges(value(checkup.report))[0].figures
         require(capOff.contains("98 of 100 capped frames (98%) within the cap in force") && capOff.contains("no cap at the end of the match"), capOff)
 
         // The largest values the reader accepts format without trapping: a duration of UInt64.max
@@ -482,8 +496,8 @@ enum ConfigStudioAcceptanceTests {
         checkup.refreshMatches()
         require(checkup.latestMatch?.packetsReceived == UInt64.max - 2, "the reader accepts the largest packet sum")
         require(value(checkup.matchPresentation).lines.contains { $0.hasPrefix("Ended ") && $0.hasSuffix(" min") })
-        let largest = checkup.gauges(value(checkup.report))[2].detail
-        require(largest.contains("(2 of 18446744073709551615)"), largest)
+        let largest = checkup.gauges(value(checkup.report))[2].figures
+        require(largest.contains("(2 of 18,446,744,073,709,551,615)"), largest)
 
         // Values a match didn't record stay Not measured.
         let quiet = row.replacingOccurrences(of: "\"pingAverageMS\":40,\"pingMaximumMS\":50,\"pingSamples\":3,\"packetsReceived\":3,\"packetsLost\":2,\"packetLossPercent\":40",
@@ -491,7 +505,7 @@ enum ConfigStudioAcceptanceTests {
         try (quiet + "\n").write(to: file, atomically: true, encoding: .utf8)
         checkup.refreshMatches()
         let connection = checkup.gauges(value(checkup.report))[2]
-        require(connection.value == "—" && connection.status == "Not measured" && connection.detail.contains("Missing server updates: Not measured"), connection.detail)
+        require(connection.value == "—" && connection.status == "Not measured" && connection.figures.contains("Missing server updates: Not measured"), connection.figures)
         require(checkup.report?.limitations.contains("Packet loss: Not measured.") == true)
 
         // A read failure is said plainly and measures nothing.
