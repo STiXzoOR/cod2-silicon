@@ -38,7 +38,7 @@ entity-conversion, view and animation services. It exercises production
 `StuckInClient` path, then checks stored player movement state and server
 flags. External services outside the selected paths abort if called.
 
-Both stock and CoD2x historical runs at `8cec375` produced exactly three
+Both stock and CoD2x historical runs at `bd590c3` produced exactly three
 failures and six passing controls. The failures were null `tagInfo` with count
 0, nonzero `tagInfo` with count 1, and a high-bit nonzero handle with count 1.
 Passing controls covered the other null/nonzero-count combinations, noclip
@@ -66,14 +66,14 @@ done
 ```
 
 The `red-stock` and `red-codx` runs used the same command before the edit.
-`--baseline 8cec375` permits reproducing those historical failures after it.
+`--baseline bd590c3` permits reproducing those historical failures after it.
 The initial `baseline-stock` attempt stopped at link time while the fixture's
 external service declarations were being completed; it is not counted as a
 behavioral red run.
 
-`unifdef -UCOD2_X64` output for the production file exactly matches `8cec375`
+`unifdef -UCOD2_X64` output for the production file exactly matches `bd590c3`
 by `cmp`: 45,738 bytes. All five inactive legacy guard configurations matched,
-and `python3 tests/fixes13/legacy.py --base 8cec375` reported one changed source
+and `python3 tests/fixes13/legacy.py --base bd590c3` reported one changed source
 file, ten configurations, zero mismatches. `git diff --check` passed. These
 source checks do not substitute for the unavailable Linux i386 object/binary
 comparison.
@@ -97,7 +97,7 @@ four changed paths on `decomp/f1-dead-state` without commits.
 
 The canonical integration repeated both nine-case sanitizer fixtures, linked
 stock and CoD2x client and dedicated-server targets, and passed the scoped
-legacy, fixes13 and game legacy checks against `8cec375`. Function ABI audits
+legacy, fixes13 and game legacy checks against `bd590c3`. Function ABI audits
 covered 634 stock and 651 CoD2x translation units with zero errors or
 mismatches. The fixture is registered in CI for both configurations.
 

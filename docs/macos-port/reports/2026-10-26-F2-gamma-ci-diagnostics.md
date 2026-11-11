@@ -15,15 +15,15 @@ ASan's StackDepot with corrupted metadata. That prevents identifying the owner
 or proving an application free caused the error.
 
 The three relevant production/test files (`macos_display.c`, `macos_gamma.h`,
-`gamma.c`) were unchanged from `715b45f` through investigation base `5ce6fb0`.
+`gamma.c`) were unchanged from `c3e87eb` through investigation base `0eee705`.
 Downloaded complete job logs establish this dependency/outcome matrix:
 
 | Commit / Actions run | SDL2 compatibility / SDL3 | Sanitized default / software gamma |
 | --- | --- | --- |
-| `7e1e610` / `40296490956` | 2.32.74 / 3.4.18 | fail / pass |
-| `4818b1a` / `40297984747` | 2.32.74 / 3.4.18 | pass / pass |
-| `c2360e9` / `40299290723` | 2.32.74 / 3.4.18 | pass / pass |
-| `5ce6fb0` / `40308572709` | 2.32.74 / 3.4.18 | pass / fail |
+| `812605b` / `40296490956` | 2.32.74 / 3.4.18 | fail / pass |
+| `c4e46fc` / `40297984747` | 2.32.74 / 3.4.18 | pass / pass |
+| `0b5c81f` / `40299290723` | 2.32.74 / 3.4.18 | pass / pass |
+| `0eee705` / `40308572709` | 2.32.74 / 3.4.18 | pass / fail |
 
 The final row comes from the signed-in GitHub live log, transcribed while the
 job was still running. All three downloaded runs use macOS 26.6.2 (25G83);

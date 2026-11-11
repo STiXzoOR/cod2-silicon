@@ -1,6 +1,6 @@
 # F1 missile impact branching
 
-Baseline `1c8fc45`, branch `decomp/f1-shared-wave5`. Native stock and CoD2x
+Baseline `e1f3f12`, branch `decomp/f1-shared-wave5`. Native stock and CoD2x
 behavior changes; legacy source remains unchanged under `COD2_X64=OFF`.
 
 `G_RunMissile` now bounces a missile with zero direct damage when it hits a

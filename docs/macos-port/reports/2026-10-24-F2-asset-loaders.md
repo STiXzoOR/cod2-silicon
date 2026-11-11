@@ -1,6 +1,6 @@
 # F2 light and model surface loaders
 
-Base: `06275b3`. Behavior changed: **yes**, for native light-load failure.
+Base: `ea9a554`. Behavior changed: **yes**, for native light-load failure.
 
 `R_LoadLightDef` now returns NULL after the requested file is missing, including
 `default`. Previously it retried `light_dynamic` for that name. Fallback belongs
@@ -51,7 +51,7 @@ From this worktree, the exact commands were:
 taskpolicy -b nice -n 19 python3 tests/lp64/renderer/run_light_loader.py \
   --compile-db /Users/stix/Projects/cod2-native-wt/decomp-f1-script/build-macos/compile_commands.engine.json \
   --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-asset-loaders.noindex/red" \
-  --baseline 06275b3
+  --baseline ea9a554
 taskpolicy -b nice -n 19 python3 tests/lp64/renderer/run_light_loader.py \
   --compile-db /Users/stix/Projects/cod2-native-wt/decomp-f1-script/build-macos/compile_commands.engine.json \
   --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-asset-loaders.noindex/stock"
@@ -67,7 +67,7 @@ sanitizers. Logs are in the private output directories and their sibling
 compiler warnings remain unchanged.
 
 `unifdef -UCOD2_X64` output for the sole modified engine source,
-`r_light_load_obj.c`, compares byte-identical with `06275b3` using `cmp`.
+`r_light_load_obj.c`, compares byte-identical with `ea9a554` using `cmp`.
 Private `before.off`, `after.off`, and `off.log` retain that result.
 `git diff --check` passes. Neither surface source was modified.
 

@@ -88,7 +88,7 @@ for build in build-macos build-macos-codx; do
 done
 ```
 
-The runner rebases source/include paths to its own checkout. `--baseline c2360e9`
+The runner rebases source/include paths to its own checkout. `--baseline 0b5c81f`
 selects the earlier engine source without changing the fixture. The engine
 translation unit also compiles separately with each original production command.
 The unchanged `tests/online/time_delta.c` large-epoch regression passes in both
@@ -101,8 +101,8 @@ existing process-group cleanup with `Operation not permitted`; the targeted
 retry passed. That transient cleanup failure is retained in private evidence,
 not attributed to game timing and not hidden by changing process cleanup.
 
-`unifdef -UCOD2_X64` output compares byte-for-byte with `c2360e9` for the engine
-file. `tools/abi/legacy.py --base c2360e9` reports one file, five configurations,
+`unifdef -UCOD2_X64` output compares byte-for-byte with `0b5c81f` for the engine
+file. `tools/abi/legacy.py --base 0b5c81f` reports one file, five configurations,
 zero mismatches. The optional actual arm64 SDK preprocessing check with
 `COD2_X64` removed cannot run this legacy translation unit: its original
 `mmintrin.h` rejects the arm64 target. This is not an i386 object-equivalence
@@ -119,7 +119,7 @@ checks do not establish full multiplayer or animation parity.
 The canonical integration passes all 13 timing groups with ASan/UBSan in both
 configurations and links both Release clients and both dedicated servers.
 CI runs the new fixture in both configurations. Exact OFF output remains
-43,386 bytes, identical to `60b94db`; five guard and ten fixes13 configurations
+43,386 bytes, identical to `01c9c74`; five guard and ten fixes13 configurations
 pass. The integrated wrapper test reproduces the previously reported EPERM
 cleanup failure; that separate tooling issue is under diagnosis. No wrapper
 success is claimed for this integration run.

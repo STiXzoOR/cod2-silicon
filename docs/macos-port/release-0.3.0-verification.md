@@ -7,7 +7,7 @@ checks below were run on that Mac.
 ## What was run
 
 - **The Mac CI job, locally.** Every step of `.github/workflows/ci.yml`'s
-  `macos-arm64` job ran in a clean clone of `7ee1e700` and passed: both
+  `macos-arm64` job ran in a clean clone of `7ae595cd` and passed: both
   clients built from scratch (stock 1.3 and CoD2x), the ABI audits, the CoD2x
   suites, the sanitizer platform tests and the source fixtures.
 - **The raw-offset gate** reports no unreviewed site in 417 sources.
@@ -28,7 +28,7 @@ checks below were run on that Mac.
   stock 1.3 server and loaded its map, and CoD2x joined a public CoD2x
   1.4.6.8 server, downloaded the two zPAM files that server needed and loaded
   its map. Both servers were empty and each visit lasted under a minute.
-  Earlier in this cycle, at `1f3d9e68`, the client also played on such
+  Earlier in this cycle, at `0e449e01`, the client also played on such
   servers for longer.
 - **Both engines.** The original 1.3 engine and the CoD2x engine each give
   the same 0.11 in the replay comparison. Against a local original 1.3

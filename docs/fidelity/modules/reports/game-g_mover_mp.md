@@ -1,6 +1,6 @@
 # game/g_mover_mp module reconciliation
 
-Updated 2026-11-04; baseline `d5af588`.
+Updated 2026-11-04; baseline `7eebadb`.
 
 **12/12 reconciled: 10 equal, 2 fixed.** All seven Mac exports were compared across
 their complete bodies and every literal was decoded from the binary. The five Linux-only
@@ -44,7 +44,7 @@ difference.
 ## Verification and limits
 
 `tests/lp64/game/f1_mover.c` gains two groups. `hint_strings` covers allocation, reuse
-and the overflow diagnostic; it fails on `d5af588` only at the diagnostic text. `jitter`
+and the overflow diagnostic; it fails on `7eebadb` only at the diagnostic text. `jitter`
 is a control that pins the search order and old-position fallback through nine outcomes
 plus the fully blocked case; it passes before and after, confirming the existing code. Both pass in stock and CoD2x
 under ASan and UBSan with assertions on.

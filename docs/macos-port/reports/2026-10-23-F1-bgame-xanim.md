@@ -1,6 +1,6 @@
 # F1a — bgame and xanim reconciliation, 2026-10-23
 
-Branch: `decomp/f1-bgame-xanim`. Starting commit: `4f0ba1000cd6f8032d9ebd9b44e6e043181db1c7`.
+Branch: `decomp/f1-bgame-xanim`. Starting commit: `1847a3532693420771954cbe2b384b3307e76e80`.
 
 ## Scope and dispositions
 
@@ -27,7 +27,7 @@ Private evidence root: `~/Library/Application Support/CoD2-native-decomp/F1-bgam
 - `Pmove`/our `PmoveSingle`: linked types 1 and 7 select their weapon update before the default turret path. The jump table at `0x329210` sends both to `0x712ef`; weapon call `0x713db` differs from turret reset `0x710be`.
 - `Mantle_Check`/`Mantle_CheckLedge`: restore original diagnostic strings (`0x9f6c6`, `0x9ef56`).
 
-WS43 movement, friction precedence `5a907af`, signed-zero acceleration `9bd5d79`, and angle interpolation `742bf1f` remain. Mac `PM_Accelerate` MAXSS at `0x6b9f8` selects wishspeed on equal operands; Linux/x87 is not the oracle for its signed-zero result.
+WS43 movement, friction precedence `57c43ee`, signed-zero acceleration `a431566`, and angle interpolation `6683f43` remain. Mac `PM_Accelerate` MAXSS at `0x6b9f8` selects wishspeed on equal operands; Linux/x87 is not the oracle for its signed-zero result.
 
 ### Weapons and shared player logic
 
@@ -79,7 +79,7 @@ The main run contains 113 commands and six initial nonzero exits. Two were obsol
 
 The inactive-CoD2x check against this wave's starting commit reports 114 differences: 80 in configurations defining `COD2_X64=0` and 34 in the two native `COD2_CODX=0` configurations. The former use a configuration CONTRIBUTING explicitly disallows as the OFF build. The latter include intentional stock native repairs and fixture assertions; the checker also processes the CoD2x-only helper header outside its include context. All configurations leaving `COD2_X64` undefined match. This source comparison remains red; it is distinct from the supplied cumulative 436 count and was not rebaselined.
 
-Both full stub gates are red: 466 existing candidates and the same nine candidates absent from their baseline, all in untouched Metal files. These are `MacMetalBackend_BeginScene`, `MacMetalDraws_Update`, `ObjectsReleased`, `CacheNamespace`, `GLInvoke`, `MacMetalTargets_StopGPU`, `MacMetalTargets_CancelClears`, `MacMetalTargets_HasClears`, and `VolumeD1`. No bgame/xanim candidate was added. `git diff --exit-code 4f0ba1000cd6f8032d9ebd9b44e6e043181db1c7 -- src/Mac/Metal` exits 0; the stub checker and baseline were not changed. This is an inherited red relative to the stub baseline, not a passing merge gate.
+Both full stub gates are red: 466 existing candidates and the same nine candidates absent from their baseline, all in untouched Metal files. These are `MacMetalBackend_BeginScene`, `MacMetalDraws_Update`, `ObjectsReleased`, `CacheNamespace`, `GLInvoke`, `MacMetalTargets_StopGPU`, `MacMetalTargets_CancelClears`, `MacMetalTargets_HasClears`, and `VolumeD1`. No bgame/xanim candidate was added. `git diff --exit-code 1847a3532693420771954cbe2b384b3307e76e80 -- src/Mac/Metal` exits 0; the stub checker and baseline were not changed. This is an inherited red relative to the stub baseline, not a passing merge gate.
 
 Exact commands and exit codes for the complete gate run are in private `checks-results.json`; the final incremental rebuild/rechecks are in `final-checks-results.json`. Core reproduction commands, run from this worktree with the actual engine compile databases and assertion-enabled fixture databases prepared as in CONTRIBUTING:
 
@@ -98,7 +98,7 @@ python3 "$E/legacy_views.py"
 git diff --check
 ```
 
-The private legacy script obtains each starting file with `git show 4f0ba1000cd6f8032d9ebd9b44e6e043181db1c7:PATH`, runs `unifdef -UCOD2_X64` on both versions and executes `cmp` on the resulting files; it checks every changed engine C/header file.
+The private legacy script obtains each starting file with `git show 1847a3532693420771954cbe2b384b3307e76e80:PATH`, runs `unifdef -UCOD2_X64` on both versions and executes `cmp` on the resulting files; it checks every changed engine C/header file.
 
 Heavy commands ran under `taskpolicy -b nice -n 19`, sequentially, with build/audit worker counts capped at two. The private runner's `limitjobs/sitecustomize.py` caps the existing Python executor defaults without changing audit results or repository tools. `TMPDIR` and fixed fixture-output paths point into this unit's evidence directory; the temporary native-app probe unregisters and deletes its bundle on exit.
 

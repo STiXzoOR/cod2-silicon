@@ -1,6 +1,6 @@
 # F1 builtin and entity-field error recovery
 
-Baseline: `6c6edd0`. Native-only correction in `src/PC/script/scr_vm.c`.
+Baseline: `8670b51`. Native-only correction in `src/PC/script/scr_vm.c`.
 No changes to notify matching, imports, dvar lifetime or transport behavior.
 
 The native interpreter resumed after a builtin's `longjmp` without releasing
@@ -51,7 +51,7 @@ The entity fixture holds an engine reference so legitimate entity destruction
 is not mistaken for a leak.
 
 Private evidence: `~/Library/Application Support/CoD2-native-decomp/F1-error-recovery.noindex/`.
-The `baseline/` directory uses a private `git show 6c6edd0:src/PC/script/scr_vm.c`
+The `baseline/` directory uses a private `git show 8670b51:src/PC/script/scr_vm.c`
 copy and fails the original six cases; `green/` now passes all thirteen with
 CoD2x flags and `stock/` passes all thirteen with stock flags. The baseline invalid
 receiver fails with ASan BUS in `VM_PushInt`; the other cases detect a defined

@@ -7935,14 +7935,14 @@
     "text": "current = (hudelem_t *)(ps + 0x1728);",
     "count": 2,
     "classification": "safe",
-    "reason": "Byte offsets of playerState_t.hud's two hudelem_t[31] arrays. Checked 2026-11-10 by compiling offsetof with the client's flags: hud.current is 0x7a8, hud.archival is 0x1728, hudelem_t is 128 bytes with no pointers, and the snapshot's ps is at 0xc. The names are swapped against the header on purpose: commit 226a2afb reconciled the collection order with Mac 1.3."
+    "reason": "Byte offsets of playerState_t.hud's two hudelem_t[31] arrays. Checked 2026-11-10 by compiling offsetof with the client's flags: hud.current is 0x7a8, hud.archival is 0x1728, hudelem_t is 128 bytes with no pointers, and the snapshot's ps is at 0xc. The names are swapped against the header on purpose: commit f3571b0d reconciled the collection order with Mac 1.3."
   },
   {
     "file": "src/PC/cgame_mp/cg_hudelem_mp.c",
     "text": "archival = (hudelem_t *)(ps + 0x7a8);",
     "count": 2,
     "classification": "safe",
-    "reason": "Byte offsets of playerState_t.hud's two hudelem_t[31] arrays. Checked 2026-11-10 by compiling offsetof with the client's flags: hud.current is 0x7a8, hud.archival is 0x1728, hudelem_t is 128 bytes with no pointers, and the snapshot's ps is at 0xc. The names are swapped against the header on purpose: commit 226a2afb reconciled the collection order with Mac 1.3."
+    "reason": "Byte offsets of playerState_t.hud's two hudelem_t[31] arrays. Checked 2026-11-10 by compiling offsetof with the client's flags: hud.current is 0x7a8, hud.archival is 0x1728, hudelem_t is 128 bytes with no pointers, and the snapshot's ps is at 0xc. The names are swapped against the header on purpose: commit f3571b0d reconciled the collection order with Mac 1.3."
   },
   {
     "file": "src/PC/client_mp/cl_console_mp.c",

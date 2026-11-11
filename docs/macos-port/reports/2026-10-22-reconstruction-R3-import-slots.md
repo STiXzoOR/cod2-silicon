@@ -58,7 +58,7 @@ Private evidence is under the analysis store's `reconstruction/phase-r3`:
 
 Original binary SHA-256:
 `15efec53aa25a3bc686745edbb32ad4b565b9e82606e1cc5349c61753a708f12`.
-The worker baseline was `aca861317791e8d0a3534bf9b42061908f1a7895`;
+The worker baseline was `c66582113bc251d3b31d517e6ef2ea5d93cffadf`;
 the intervening friction report changes no consumed production or discovery input.
 This static unit changes no runtime source and requires no production test run.
 A later classification application needs its own explicit ledger transition and

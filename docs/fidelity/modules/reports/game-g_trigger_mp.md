@@ -1,6 +1,6 @@
 # game/g_trigger_mp module reconciliation
 
-Updated 2026-11-04; baseline `c05b9ff`.
+Updated 2026-11-04; baseline `b56d712`.
 
 **22/22 reconciled: 16 equal, 6 fixed.** Mac 1.3 is the authority; Linux 1.3 was read only. The legacy source is unchanged.
 

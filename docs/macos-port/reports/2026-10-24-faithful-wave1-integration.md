@@ -2,7 +2,7 @@
 
 ## F1a
 
-Integrated and pushed `4397bbe` (F1a `11a9e6e` over `e8d863d`). The test
+Integrated and pushed `21f8984` (F1a `ca39846` over `f4a171c`). The test
 worktree was clean at that merge and its reflog confirms that the inherited
 verification ran after selecting it. Existing evidence under private
 `~/Library/Application Support/CoD2-native-decomp/orchestrator/f1a-integrated/`
@@ -31,7 +31,7 @@ server replay scenarios or the inherited red gates in the F1a report.
 
 ## F0b/F0c oracle integration
 
-Merged `a32ffbe` and `09f6a38` onto `4397bbe`. These change tooling and
+Merged `059aaa3` and `dcc9677` onto `21f8984`. These change tooling and
 documentation only. Reviewed the bootstrap, container adapter, rebuild path,
 instrumentation workload and coverage checks. Retained reference evidence
 reports successful toolchain/check/verify/coverage steps and two matching
@@ -64,7 +64,7 @@ The VM stayed stopped; its completed reference rebuild/replays were not rerun.
 ## F1c rollback result (corrected after the live-player investigation)
 
 At the start of this investigation, `decomp/f1-script` was clean at WIP
-`db07fc3` and none of it was integrated. Reviewed the single-file rollback experiment under private
+`feed277` and none of it was integrated. Reviewed the single-file rollback experiment under private
 `.../orchestrator/f1c-bisect/`. Reverting `yyparse_impl.h` alone produced
 2,000 Toujane frames with no script runtime errors. Reverting
 `scr_compiler.c` also completed but retained script errors, so it is not a
@@ -92,7 +92,7 @@ match the corresponding pre-F1c native results. No parser rollback is included.
 ## Remaining oracle blockers
 
 The reversed weapon-index/grenade-time arguments in native `player_die` were
-fixed in `3de7fcc`; see the [focused report](2026-10-24-F1-grenade-death.md).
+fixed in `4e6e5f9`; see the [focused report](2026-10-24-F1-grenade-death.md).
 Native corpus completion is verified. Original/native replay agreement is
 still missing: the frame-4 entity-count mismatch and spectator one-ULP difference
 remain unresolved. Repository legacy ABI/inactive-CoD2x and Metal stub reds remain

@@ -1,6 +1,6 @@
 # F2 — client browser packet handlers
 
-Date: 2026-10-26. Base: `c2360e9`. Scope: `CL_ServerInfoPacket`,
+Date: 2026-10-26. Base: `0b5c81f`. Scope: `CL_ServerInfoPacket`,
 `CL_ServerStatusResponse`, and `CL_ServersResponsePacket` in
 `src/PC/client_mp/cl_main_pc_mp.c`.
 
@@ -91,10 +91,10 @@ Commands, run under `taskpolicy -b nice -n 19` for compilation:
 ```sh
 python3 tests/online/run_browser_packets.py --compile-db <engine-db> --output <private-output>
 # The same fixture can load the historical client source:
-python3 tests/online/run_browser_packets.py --compile-db <engine-db> --output <private-output> --baseline c2360e9
+python3 tests/online/run_browser_packets.py --compile-db <engine-db> --output <private-output> --baseline 0b5c81f
 python3 tests/online/run.py <engine-db> master_response
-python3 tools/abi/legacy.py --base c2360e9
-python3 tests/fixes13/legacy.py --base c2360e9
+python3 tools/abi/legacy.py --base 0b5c81f
+python3 tests/fixes13/legacy.py --base 0b5c81f
 git diff --check
 ```
 
@@ -129,7 +129,7 @@ query was performed.
 The combined integration source passes both full function ABI audits (634 stock
 and 651 CoD2x translation units), callback, strict-AST and import checks. All four
 Release targets link. Every changed engine file preserves exact
-`unifdef -UCOD2_X64` output against `c2360e9`; the five-configuration guard
+`unifdef -UCOD2_X64` output against `0b5c81f`; the five-configuration guard
 comparison and ten-configuration fixes13 comparison also pass. The general
 `tools/abi/legacy.py` invocation reports ten mismatches solely in the two
 intentionally changed online test-harness files, not engine source. This result

@@ -1,6 +1,6 @@
 # F2 command scheduling and download cleanup
 
-2026-10-26; base `f494bf9`; native stock and CoD2x.
+2026-10-26; base `db45eb2`; native stock and CoD2x.
 
 Client packets now use the original minimum intervals: 50 ms while a download
 temporary name is present, and 1,000 ms before the primed/active states otherwise.
@@ -76,7 +76,7 @@ Both default builds pass nine groups covering:
 - WWW completion, normal disconnect, detached-download preservation, and
   suppression of `donedl` while detached.
 
-The unchanged `--baseline f494bf9` fails eight groups (29 assertions) in both
+The unchanged `--baseline db45eb2` fails eight groups (29 assertions) in both
 builds; the ordinary active/demo controls pass. These are intended behavioral
 failures. Both builds also pass with `--net-hardening`, exercising optional
 invalid-name cleanup, and with `--no-www`, exercising UDP-only name production
@@ -87,10 +87,10 @@ skips HTTP execution; its remaining nine groups include disconnect checks.
 # Run serially with each matching stock/CoD2x engine database.
 taskpolicy -b nice -n 19 python3 tests/input/run_scheduling.py \
   --compile-db <build>/compile_commands.engine.json --output <private-output>
-# Use a separate output directory for --baseline f494bf9, --net-hardening,
+# Use a separate output directory for --baseline db45eb2, --net-hardening,
 # and --no-www variants.
-python3 tests/fixes13/legacy.py --base f494bf9
-python3 tools/abi/legacy.py --base f494bf9 \
+python3 tests/fixes13/legacy.py --base db45eb2
+python3 tools/abi/legacy.py --base db45eb2 \
   --compile-commands <private-remapped-engine-database>
 ```
 
@@ -125,7 +125,7 @@ The canonical stock/CoD2x CI registration received supplemental local review.
 
 The review identified an unsupported assumption in the native non-1.3 fallback.
 Root therefore limited all scheduling changes to patch 1.3, preserving the old
-behavior for other native patches. Exact source projections against `f494bf9`
+behavior for other native patches. Exact source projections against `db45eb2`
 pass for all three files with native code disabled and with native non-1.3
 selected, with WWW both enabled and disabled (`review-config-preservation.log`). This removes the new compatibility
 risk without claiming Mac 1.0 reconciliation.

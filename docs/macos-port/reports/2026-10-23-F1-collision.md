@@ -1,7 +1,7 @@
 # F1b: Mac 1.3 collision traversal
 
 Branch: `decomp/f1-cmtrace`. Starting commit:
-`4f0ba1000cd6f8032d9ebd9b44e6e043181db1c7`.
+`1847a3532693420771954cbe2b384b3307e76e80`.
 
 Restored native brush-node descent and the brush clipper it calls. The wider
 `cm_*.c` comparison also found and fixed disabled partition construction,
@@ -124,15 +124,15 @@ cmake --build build-macos-codx --target cod2_macos --parallel 2
 python3 tests/collision/run.py --build build-macos
 python3 tests/collision/run.py --build build-macos-codx
 python3 tests/collision/run.py --build build-macos \
-  --baseline 4f0ba1000cd6f8032d9ebd9b44e6e043181db1c7
+  --baseline 1847a3532693420771954cbe2b384b3307e76e80
 python3 tests/collision/maps.py --build build-macos \
-  --baseline 4f0ba1000cd6f8032d9ebd9b44e6e043181db1c7 --queries 120000 --sanitize \
+  --baseline 1847a3532693420771954cbe2b384b3307e76e80 --queries 120000 --sanitize \
   --output "$HOME/Library/Application Support/CoD2-native-decomp/F1b.noindex/maps-final-asan"
 python3 tools/fidelity/spotcheck_collision.py --build build-macos \
   --output "$HOME/Library/Application Support/CoD2-native-decomp/F1b.noindex/spotcheck-stock.json"
 python3 tools/fidelity/spotcheck_collision.py --build build-macos-codx \
   --output "$HOME/Library/Application Support/CoD2-native-decomp/F1b.noindex/spotcheck-codx.json"
-python3 tests/fixes13/legacy.py --base 4f0ba1000cd6f8032d9ebd9b44e6e043181db1c7
+python3 tests/fixes13/legacy.py --base 1847a3532693420771954cbe2b384b3307e76e80
 python3 -m unittest discover -s tools/tests -v
 python3 -m unittest discover -s tools/fidelity -v
 git diff --check
@@ -176,7 +176,7 @@ for mode in stock codx; do
     --json "$ev/imports-$mode.json" --check
   python3 tools/abi/astdump_strict.py "$ev/$mode-collision-compile.json" --jobs 2
   python3 "$ev/limit_jobs.py" tools/abi/legacy.py \
-    --base 4f0ba1000cd6f8032d9ebd9b44e6e043181db1c7 \
+    --base 1847a3532693420771954cbe2b384b3307e76e80 \
     --compile-commands "$ev/$mode-collision-compile.json"
 done
 ```

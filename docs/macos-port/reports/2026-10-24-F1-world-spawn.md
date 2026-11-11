@@ -40,7 +40,7 @@ allocates fresh class maps and entity arrays before spawning; the subsequent
 
 ## Verification
 
-- `unifdef -UCOD2_X64` output for `g_main_mp.c` matches commit `6c6edd0`
+- `unifdef -UCOD2_X64` output for `g_main_mp.c` matches commit `8670b51`
   byte for byte.
 - `git diff --check -- src/PC/game_mp/g_main_mp.c` passes.
 - Stock and CoD2x client/dedicated targets build with the combined wave changes.

@@ -1,6 +1,6 @@
 # F1 FX scheduler spawn filters
 
-Baseline `bd18d2f0983e9ec8d268c4e76dd81fb98c06e5f9`, shared branch
+Baseline `9ba33d99de3919f652de937d733663efaa3c0552`, shared branch
 `decomp/f1-mover-fx`, checkout `decomp-f0-oracle`. Root-owned mover changes and
 untracked `build-f0-stock` were preserved. No commits/index changes/game runs.
 
@@ -56,7 +56,7 @@ taskpolicy -b nice -n 19 python3 tests/platform/run_fx_primitives.py \
 Both returned 0 with `native FX: nine primitive lifecycles, scheduler dispatch,
 bolting, impact axes and spawn filters passed`.
 
-Legacy check: `git show bd18d2f:src/PC/EffectsCore/FxScheduler.c` into the private
+Legacy check: `git show 9ba33d9:src/PC/EffectsCore/FxScheduler.c` into the private
 output directory, `unifdef -UCOD2_X64` on baseline/current, then `cmp`: identical.
 `unifdef` status 1 accepted as changed output. `git diff --check` passed. This
 proves inactive-gate source preservation, not Linux i386 binary identity.

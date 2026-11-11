@@ -1,6 +1,6 @@
 # game/g_cmds_mp module reconciliation
 
-Updated 2026-11-04; baseline `01c5fb6`.
+Updated 2026-11-04; baseline `d9834fa`.
 
 **30/30 reconciled: 21 equal, 5 fixed, 4 intentional.** Mac 1.3 is the authority; Linux 1.3 was read only. The legacy source is unchanged.
 

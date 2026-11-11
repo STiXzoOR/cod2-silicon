@@ -58,7 +58,7 @@ health 37 and maximum health 200, expecting 50 at 25 percent and 220 for the
 fatal branch. Zero fall damage permits the following event; a nonplayer fall
 terminates processing before that event.
 
-Before production edits, revision `18cf588` failed eight groups in each
+Before production edits, revision `e014aab` failed eight groups in each
 build: fire, melee, offhand, binocular, inactive, fall, fall-fatal and ring.
 Suicide and fall-controls passed. The proof fixtures were then held unchanged.
 After the repair all ten groups pass in both stock and CoD2x with ASan/UBSan.
@@ -73,7 +73,7 @@ for mode in stock codx; do
   if [ "$mode" = codx ]; then build=build-macos-codx; fi
   taskpolicy -b nice -n 19 python3 tests/lp64/game/client_events.py \
     --compile-db "$integration/$build/compile_commands.engine.json" \
-    --output "$evidence/baseline-$mode" --baseline 18cf588
+    --output "$evidence/baseline-$mode" --baseline e014aab
   # Baseline intentionally exits nonzero; run the following command separately.
   taskpolicy -b nice -n 19 python3 tests/lp64/game/client_events.py \
     --compile-db "$integration/$build/compile_commands.engine.json" \
@@ -87,12 +87,12 @@ under `taskpolicy -b nice -n 19`, using one shared compiler slot.
 
 ## Preservation and limits
 
-- Exact `unifdef -UCOD2_X64` output compared by `cmp` against `18cf588`:
+- Exact `unifdef -UCOD2_X64` output compared by `cmp` against `e014aab`:
   45,738 bytes unchanged for `g_active_mp.c`.
 - Five inactive legacy preprocessing configurations: zero mismatches.
-- `python3 tests/fixes13/legacy.py --base 18cf588`: ten configurations,
+- `python3 tests/fixes13/legacy.py --base e014aab`: ten configurations,
   zero mismatches.
-- `python3 tests/lp64/game/check_legacy.py --base 18cf588`: ten inactive
+- `python3 tests/lp64/game/check_legacy.py --base e014aab`: ten inactive
   patch configurations, zero mismatches.
 - `git diff --check`: passed.
 
@@ -125,15 +125,15 @@ The integration owner reran all ten fixture groups in each configuration and
 linked both clients and both dedicated servers. Function ABI checks passed
 634 stock and 651 CoD2x translation units with zero errors or mismatches. Exact
 OFF source remains 45,738 bytes. General legacy, fixes13 and game inactive
-checks pass (five, ten and ten configurations respectively) against `dfc0ddc`.
-An earlier aggregate legacy invocation against `18cf588` reported five
+checks pass (five, ten and ten configurations respectively) against `6432cd5`.
+An earlier aggregate legacy invocation against `e014aab` reported five
 differences solely in the separately committed gamma diagnostic fixture; no
 engine projection differed. Its failed log remains in private evidence.
 
 The shared CI update registers this fixture for stock and CoD2x. No oracle,
 comparator tolerance, reference trace or recording workload was changed.
 
-A fresh stock baseline at `18cf588` and the repaired executable each completed
+A fresh stock baseline at `e014aab` and the repaired executable each completed
 the same original 2,000-frame command stream. The baseline reproduced extra
 entities at frame 280 (172 versus the reference's 170), followed by client 0
 health 46 versus 100 at frame 349. With this repair, active-entity counts,

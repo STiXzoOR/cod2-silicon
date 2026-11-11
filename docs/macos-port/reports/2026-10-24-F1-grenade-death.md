@@ -1,6 +1,6 @@
 # F1 — held grenade on player death, 2026-10-24
 
-Starting integration commit: `a6bc43a`. This is one focused gameplay fix;
+Starting integration commit: `1e83bd5`. This is one focused gameplay fix;
 it does not complete the game_mp reconciliation.
 
 ## Cause and change
@@ -29,7 +29,7 @@ Both client/dedicated builds and all 13 game fixtures pass in both modes.
 The fixture compile databases retain `-UNDEBUG`. The wave-relative legacy
 check reports one source file, ten configurations, zero mismatches. Separate
 `unifdef -UCOD2_X64` output for the changed engine file compares byte-identical
-with `a6bc43a` using `cmp`; this is not a Linux object/binary comparison.
+with `1e83bd5` using `cmp`; this is not a Linux object/binary comparison.
 
 ```sh
 for B in build-macos build-macos-codx; do
@@ -37,7 +37,7 @@ for B in build-macos build-macos-codx; do
         --target cod2_macos cod2_macos_ded --parallel 2
     taskpolicy -b nice -n 19 python3 tests/lp64/game/run.py --build "$B"
 done
-python3 tests/fixes13/legacy.py --base a6bc43a
+python3 tests/fixes13/legacy.py --base 1e83bd5
 git diff --check
 ```
 

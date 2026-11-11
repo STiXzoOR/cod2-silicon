@@ -6,7 +6,7 @@ and yaw correction. It also initializes the movement flag before the
 no-new-command branch and clears the ADS perturbation latch when reticle zoom
 is unavailable. All three changes are restricted to `COD2_X64`.
 
-Baseline: canonical checkout at `d497f60905e580743828cbee6492d9b252bfbdcf`,
+Baseline: canonical checkout at `453c4e1637273b79dd5d397e8b01183fc9301c2e`,
 initially clean. `behavior_changed: true`. No shared headers or CoD2x-specific
 rules changed.
 
@@ -82,7 +82,7 @@ is in `red-final-stock`:
 taskpolicy -b nice -n 19 python3 tests/camera/run_prediction.py \
   --compile-db /Users/stix/Projects/cod2-native-wt/decomp-f1-script/build-macos/compile_commands.engine.json \
   --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-prediction.noindex/red-final-stock" \
-  --baseline d497f60
+  --baseline 453c4e1
 for mode in stock codx; do
   build=build-macos
   if [ "$mode" = codx ]; then build=build-macos-codx; fi

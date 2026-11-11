@@ -103,7 +103,7 @@ taskpolicy -b nice -n 19 python3 tests/voice/playback_init.py --relay-contract \
 ```
 
 Repeat with the CoD2x database and a fresh output directory. `--baseline
-596c1ef` reproduces the incorrect spectator team bypass. The fixture follows
+a94ecc4` reproduces the incorrect spectator team bypass. The fixture follows
 production `Client_SendVoiceData`, `CL_WriteVoicePacket`, `SV_VoicePacket`,
 `SV_UserVoice`, `G_BroadcastVoice`, server queue/send, `CL_VoicePacket`, Speex,
 native playback queues and `Render`. It checks byte-preserving cross-client

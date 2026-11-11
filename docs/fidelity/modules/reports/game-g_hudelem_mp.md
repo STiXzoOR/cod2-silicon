@@ -1,6 +1,6 @@
 # game/g_hudelem_mp module reconciliation
 
-Updated 2026-11-03; baseline `a890e30`.
+Updated 2026-11-03; baseline `0542741`.
 
 Complete comparison: **55/55 entries — 41 equal, 14 fixed**. Four shared
 corrections account for the fixed entries; forwarding wrappers are accepted

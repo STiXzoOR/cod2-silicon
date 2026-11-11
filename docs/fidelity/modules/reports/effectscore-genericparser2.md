@@ -36,11 +36,11 @@ Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/re
 
 ## Integrated batch verification
 
-Integrated source cef44cb passed both dedicated builds and every local CI step 02–13, including stock/CoD2x Release clients, platform sanitizer fixtures, function/callback ABI audits and existing source fixtures. All nine changed production source files differ only under linux-x86_64-port-on; the five inactive configurations remain unchanged. The existing owner-draw fixture correction applies across configurations and its runner extracts the required production helpers; no new test cases were added. No changed source contains line-number diagnostics or static assertions. These checks do not establish i386 binary-byte parity.
+Integrated source 6b334b3 passed both dedicated builds and every local CI step 02–13, including stock/CoD2x Release clients, platform sanitizer fixtures, function/callback ABI audits and existing source fixtures. All nine changed production source files differ only under linux-x86_64-port-on; the five inactive configurations remain unchanged. The existing owner-draw fixture correction applies across configurations and its runner extracts the required production helpers; no new test cases were added. No changed source contains line-number diagnostics or static assertions. These checks do not establish i386 binary-byte parity.
 
 Parent inspection covered all six units; independent reviews covered protocol/snapshots, HUD, weapons/offhand and shellshock, including their relevant providers. Review corrected five HUD fade paths and a weapon diagnostic newline. Parent checks of the small effects foundation/parser changes included original arithmetic and loader storage boundaries. Nineteen effects identities or malformed-EOF boundaries remain unchecked rather than inferred from neighboring code.
 
-Both 2,000-frame stock and CoD2x replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. Dedicated replay does not exercise client HUD, camera, sound or weapon rendering; unreached corrections remain compiled and reviewed.
+Both 2,000-frame stock and CoD2x replays exactly match both 819d282 baselines and each other in players, state hashes and entities. All six logic fields agree with the original Linux recording; maximum origin drift remains 0.11792 and velocity drift 2.0. Dedicated replay does not exercise client HUD, camera, sound or weapon rendering; unreached corrections remain compiled and reviewed.
 
 Catalog coverage passed without semantic catalog changes. Hosted ILP32 comparison remains unavailable because the unchanged reference fails to compile; no byte parity is claimed.
 
@@ -57,7 +57,7 @@ The final integrated snapshot passed both dedicated builds, full local CI02–13
 
 ## Remaining API identity follow-up
 
-The eleven open rows were investigated again from integration `89e09ab8`. **No additional row is reconciled: 42 equal, 1 fixed, 2 intentional, 11 unchecked.** All 45 resolved status/evidence records are preserved exactly, including the intentional `GetToken` malformed-EOF boundary. Production source and fixtures are unchanged.
+The eleven open rows were investigated again from integration `bb62e554`. **No additional row is reconciled: 42 equal, 1 fixed, 2 intentional, 11 unchecked.** All 45 resolved status/evidence records are preserved exactly, including the intentional `GetToken` malformed-EOF boundary. Production source and fixtures are unchanged.
 
 The full Mac symbol table contains STABS declarations for both `Duplicate` methods, all three lookups, both counts, the three `Write` methods and `GPObject::WriteText`. Thus “Linux-only” above describes their executable ledger identities, not an absence of Mac declarations. The Mac signatures include the parent argument of `GPGroup::Duplicate(TextPool **, GPGroup *)` and distinguish the parser's `Write(TextPool *)` from the group's/value's `Write(TextPool **, int)`. None of these declarations provides a body. Neither a callable symbol nor a complete inline operation was established. The two count methods have absolute-zero `.eh` labels, which are not executable addresses.
 

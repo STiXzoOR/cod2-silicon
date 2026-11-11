@@ -60,7 +60,7 @@ The F1 gate now also runs brush partition construction (`load.c`), direct mesh
 edge/border contracts (`mesh.c`), entity sector and sight-hint contracts
 (`world.c`), and point-contents sentinel/boundary contracts (`contents.c`).
 All five suites run from `run.py`; each uses ASan/UBSan and the selected
-engine flags. The F1 baseline is `4f0ba1000cd6f8032d9ebd9b44e6e043181db1c7`.
+engine flags. The F1 baseline is `1847a3532693420771954cbe2b384b3307e76e80`.
 The added swept brush cases cover near/far ordering, an empty split range,
 deep one-sided descent, capsule support, endpoint epsilon, and axial material
 ties. Mesh cases include finite edges, a ceiling's upper-cap pass, borders
@@ -75,7 +75,7 @@ than fixture math services. It does not load static XModels or entities.
 
 ```sh
 taskpolicy -b nice -n 19 python3 tests/collision/maps.py \
-  --build build-macos --baseline 4f0ba1000cd6f8032d9ebd9b44e6e043181db1c7 \
+  --build build-macos --baseline 1847a3532693420771954cbe2b384b3307e76e80 \
   --data "$HOME/Games/CoD2" --queries 120000 --sanitize \
   --output "$HOME/Library/Application Support/CoD2-native-decomp/F1b.noindex/maps"
 ```

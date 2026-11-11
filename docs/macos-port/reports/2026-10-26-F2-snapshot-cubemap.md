@@ -54,7 +54,7 @@ processed number, reads, interpolation calls, solid-list updates and times.
 The existing twelve transition/corpse cases remain included.
 
 Both stock and CoD2x configurations pass **25/25 case groups**. Running the
-same final fixtures against baseline `7e1e610` fails **10 groups** and passes
+same final fixtures against baseline `812605b` fails **10 groups** and passes
 15 controls/previous groups in each configuration. Before the wider
 whole-function reconciliation, the initial capture-only fixture also failed
 both due/before-current capture cases on the baseline and passed after the
@@ -70,8 +70,8 @@ taskpolicy -b nice -n 19 python3 tests/camera/run_snapshot.py \
 taskpolicy -b nice -n 19 python3 tests/camera/run_snapshot.py \
   --compile-db "$integration/build-macos-codx/compile_commands.engine.json" \
   --output "$evidence/final-codx"
-# Repeat each with --baseline 7e1e610 and a distinct output directory.
-taskpolicy -b nice -n 19 python3 tests/fixes13/legacy.py --base 7e1e610
+# Repeat each with --baseline 812605b and a distinct output directory.
+taskpolicy -b nice -n 19 python3 tests/fixes13/legacy.py --base 812605b
 git diff --check
 ```
 

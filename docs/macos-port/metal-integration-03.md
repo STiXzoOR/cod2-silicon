@@ -9,7 +9,7 @@ The user authorized U1 and requested a Rizin/REA decompilation plan; see the
 
 | Role | Immutable identity |
 | --- | --- |
-| Current main, refreshed from origin | `b3e6880056812e0951ba7bc6553b062dd2a6774e` |
+| Current main, refreshed from origin | `3eda8ee05de634b67bd9f508cd79433dfa30486b` |
 | Metal donor, formerly `port/metal-cert` | `bf71e8ecd9985a57c69f27edf442516a8dd02074` |
 | Verified merge base | `3ef770ba088808f87805ba748839db2ca53e9dad` |
 | Pre-cleanup bundle SHA-256 | `db4559c5b684bcdd9b647b8ecbe328ab9755833e7f47f7c17d0dc5a155dae64c` |

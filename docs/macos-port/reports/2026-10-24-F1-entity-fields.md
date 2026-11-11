@@ -1,6 +1,6 @@
 # F1 entity-field callbacks
 
-Baseline: `6c6edd0`. Native `g_spawn_mp.c` registered all ten entity fields
+Baseline: `8670b51`. Native `g_spawn_mp.c` registered all ten entity fields
 with null callbacks. Restore the six callbacks present in the Mac 1.3 table:
 origin and angles update trajectories, health updates player health or the
 nonplayer maximum, and classname/model/spawnflags reject script assignment.

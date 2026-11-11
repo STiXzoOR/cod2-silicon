@@ -1,6 +1,6 @@
 # F2 client input: held stance and jump commands
 
-2026-10-26; base `6737ada`; `src/PC/client_mp/cl_input.c`.
+2026-10-26; base `5491c91`; `src/PC/client_mp/cl_input.c`.
 
 Two native command-construction omissions are repaired. Holding `+movedown`
 now requests crouch, holding `+prone` takes priority over it, and releasing
@@ -63,7 +63,7 @@ Both stock and CoD2x pass nine groups:
 - Dual-key movement, fractional timing, ADS/binoculars, UI/shellshock flags,
   command timestamp cap, weapon indices, and angle encoding.
 
-Against unchanged `--baseline 6737ada`, the same fixture has six failing groups
+Against unchanged `--baseline 5491c91`, the same fixture has six failing groups
 (40 assertions) and three passing control groups in each build. These are
 behavioral failures, not compiler or extraction errors. The existing
 `tests/cod2x/run_mouse_sensitivity.py` suite also passes in both builds.
@@ -74,11 +74,11 @@ taskpolicy -b nice -n 19 python3 tests/input/run_stance.py \
   --compile-db <build>/compile_commands.engine.json --output <private-output>
 taskpolicy -b nice -n 19 python3 tests/input/run_stance.py \
   --compile-db <build>/compile_commands.engine.json --output <private-baseline> \
-  --baseline 6737ada
+  --baseline 5491c91
 taskpolicy -b nice -n 19 python3 tests/cod2x/run_mouse_sensitivity.py \
   --compile-db <build>/compile_commands.engine.json --output <private-mouse>
-python3 tests/fixes13/legacy.py --base 6737ada
-python3 tools/abi/legacy.py --base 6737ada
+python3 tests/fixes13/legacy.py --base 5491c91
+python3 tools/abi/legacy.py --base 5491c91
 ```
 
 `unifdef -UCOD2_X64 -U__aarch64__ -U__arm64__` produces byte-identical old/new

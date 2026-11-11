@@ -1,6 +1,6 @@
 # game/g_missile_mp module reconciliation
 
-Updated 2026-11-04; baseline `862d548`.
+Updated 2026-11-04; baseline `4fb6c80`.
 
 **12/12 reconciled: 6 equal, 6 fixed.** All six Mac exports were compared across
 their complete bodies, 6,787 bytes in total, and every float literal was decoded
@@ -59,7 +59,7 @@ float 1.0 as Mac does at 0x1c977b-0x1c978c; Linux uses a double there, and Mac w
 ## Verification and limits
 
 `tests/lp64/game/f1_missile.c` gains six cases: `impact-event`, `impact-splash`,
-`inner-sign`, `impact-owner`, `grenade-pass` and `bounce-nan`. All six fail on `862d548`
+`inner-sign`, `impact-owner`, `grenade-pass` and `bounce-nan`. All six fail on `4fb6c80`
 and pass in stock and CoD2x under ASan and UBSan with assertions on. All 19 cases and
 the `grenades` fixture pass in both builds. Compile-time assertions tie the water-splash
 stores at 0xa0, 0xd8, 0x88 and 0x74 to the native fields. Every step of the macOS CI job
@@ -67,7 +67,7 @@ passes locally except that its dependency setup step was skipped, the machine al
 having those dependencies. The x86 ILP32 job could not be run on this machine.
 
 Fresh 2,000-frame dedicated replays match in every state and player field: stock against
-a build of `862d548`, and stock against CoD2x. Comparison with the original trace is
+a build of `4fb6c80`, and stock against CoD2x. Comparison with the original trace is
 unchanged, with the first state difference at frame 116 and the first player difference
 at frame 102.
 

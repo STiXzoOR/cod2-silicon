@@ -1,6 +1,6 @@
 # bgame/bg_slidemove module reconciliation
 
-Updated 2026-11-04; baseline `3355f0e`.
+Updated 2026-11-04; baseline `7c1a4f2`.
 
 **4/4 reconciled: 2 equal, 2 fixed.** Mac 1.3 is the authority; Linux 1.3 was read only. The legacy source is unchanged.
 

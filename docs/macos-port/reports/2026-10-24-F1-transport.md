@@ -1,6 +1,6 @@
 # F1 transport: transmission limit and crash localization
 
-Baseline: `6c6edd0343259966e2697c8ca561fe6d1c2c5cbe`, verified before edits.
+Baseline: `8670b517050a54a972554602c389b102d67d85fe`, verified before edits.
 No staging, commits, build-directory writes or full builds performed.
 
 `behavior_changed: true`: native `Netchan_Transmit` now accepts messages through

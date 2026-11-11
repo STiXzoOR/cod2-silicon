@@ -6,7 +6,7 @@ recording and both replays pass. Both native HEAD replays crash after frame
 No engine discrepancy was fixed. The F0/F0b sections below are historical;
 see the F0c continuation at the end for current results.
 Branch: `decomp/f0-oracle`; starting commit:
-`4f0ba1000cd6f8032d9ebd9b44e6e043181db1c7` (clean worktree).
+`1847a3532693420771954cbe2b384b3307e76e80` (clean worktree).
 
 Private evidence: `~/Library/Application Support/CoD2-native-decomp/F0.noindex/`.
 The [oracle README](../../../tools/oracle/README.md) gives VM, rebuild,
@@ -171,7 +171,7 @@ For each of the three modified engine files, `unifdef -UCOD2_X64` output from
 the starting commit and working source passed actual `cmp`:
 
 ```sh
-base=4f0ba1000cd6f8032d9ebd9b44e6e043181db1c7
+base=1847a3532693420771954cbe2b384b3307e76e80
 for file in src/unix/sysdiff_statehash.c src/PC/server_mp/sv_client_mp.c src/PC/server_mp/sv_main_mp.c; do
   cmp <(git show "$base:$file" | unifdef -UCOD2_X64) <(unifdef -UCOD2_X64 "$file") || exit 1
 done
@@ -205,7 +205,7 @@ further SSH attempt or alternate access method followed that failure. No key
 was generated, copied, printed or moved. The VM was cleanly shut down through
 a power-down request and remains present and stopped.
 
-Started at `02094fd` on `decomp/f0-oracle`. The pre-existing untracked
+Started at `df8281c` on `decomp/f0-oracle`. The pre-existing untracked
 `build-f0-stock/` was reused for the requested stock rebuild and is excluded
 from the commit. Execution was inline Codex, no delegated workers, remote
 operations, engine changes or standalone shipping workflow.
@@ -321,7 +321,7 @@ not as a finished oracle. The orchestrator owns integrated merge verification.
 
 ## F0c continuation — 2026-10-23
 
-Started at `a32ffbec185e044c8e3c9595f2ac7a90b5288a9a`, on
+Started at `059aaa3db31e433c2f5d74366e35f77be7dca2fa`, on
 `decomp/f0-oracle`. The only inherited tracked edit was the orchestrator's
 `docker-cli` addition to guest setup; it is included as requested. The existing
 `build-f0-stock/` was reused and remains untracked. Execution was inline, with
@@ -414,11 +414,11 @@ not evidence that transcendental functions match hardware or Mac SSE.
 ### Native comparison and actionable engine findings
 
 The primary native runs are `native-f0c-head-a` / `native-f0c-head-b`, ports
-29239/29240. CMake was configured at **a32ffbe** and the stock Release arm64
+29239/29240. CMake was configured at **059aaa3** and the stock Release arm64
 dedicated target rebuilt with two jobs before these runs. The inherited cache's
-crash stamp initially still said `4f0ba10`; those earlier `native-f0c-live-*`
+crash stamp initially still said `1847a35`; those earlier `native-f0c-live-*`
 attempts are exploratory. The primary crash reports correctly identify
-`a32ffbe`. All five primary runs use **the same 28 IWD hashes**.
+`059aaa3`. All five primary runs use **the same 28 IWD hashes**.
 
 Both primary native attempts exit via **SIGSEGV (-11)** after emitting **370
 frames, 4–373**. The recorder returns **1** for each failed run. Comparison of

@@ -6,8 +6,8 @@ engine change or parser rollback was needed to run valid weapon selections.
 
 ## Diagnosis
 
-The isolated branch starts at WIP `db07fc3` and incorporates integration
-`3de7fcc` (including F1a and the held-grenade death fix). The original WIP
+The isolated branch starts at WIP `feed277` and incorporates integration
+`4e6e5f9` (including F1a and the held-grenade death fix). The original WIP
 branch remains available. Private evidence is under
 `~/Library/Application Support/CoD2-native-decomp/F1-parser-regression.noindex/`.
 
@@ -70,7 +70,7 @@ was run through its existing inventory/check functions with one preprocessing
 worker, honoring the shared-machine job limit.
 
 The legacy source check reports ten changed engine files, ten configurations,
-zero mismatches against `3de7fcc`. For each of those ten files, separate
+zero mismatches against `4e6e5f9`. For each of those ten files, separate
 `unifdef -UCOD2_X64` outputs compare byte-identical with `cmp`. This does not
 replace the unavailable Linux object/binary comparison.
 
@@ -103,7 +103,7 @@ done
 python3 -m unittest discover -s tools/tests -v
 python3 -m unittest discover -s tools/fidelity -v
 python3 tools/abi/test_raw_offsets.py
-python3 tests/fixes13/legacy.py --base 3de7fcc
+python3 tests/fixes13/legacy.py --base 4e6e5f9
 git diff --check
 ```
 
@@ -118,7 +118,7 @@ entry point intact and replacing its M1 Carbine choice with a Thompson.
 
 Both stock and CoD2x complete the saved F0 2,000-frame command stream without
 script errors. Each has 3,776 live player records, first live at frame 116.
-Each matches its corresponding pre-F1c `3de7fcc` native replay on every
+Each matches its corresponding pre-F1c `4e6e5f9` native replay on every
 recorded frame, relative time, active entity count, quantized entity hash and
 player field. This establishes no change to that recorded native workload;
 it is not original-server agreement. Observed actions include movement,

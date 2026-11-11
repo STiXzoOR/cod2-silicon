@@ -1,6 +1,6 @@
 # game/g_load_utils module reconciliation
 
-Updated 2026-11-03; baseline `216eb34`.
+Updated 2026-11-03; baseline `ce8b539`.
 
 **5/5 complete — 3 equal, 2 fixed.** All four Mac exports and the Linux inline
 helper were compared across their complete bodies. Native changes restore only

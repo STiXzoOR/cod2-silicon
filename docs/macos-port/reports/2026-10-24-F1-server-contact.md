@@ -1,6 +1,6 @@
 # F1 server contact and friendly-visibility corrections
 
-Native stock and CoD2x behavior changes in `sv_game_mp.c`, based on `bd18d2f`.
+Native stock and CoD2x behavior changes in `sv_game_mp.c`, based on `9ba33d9`.
 
 `SV_EntityContact` now accepts points strictly inside the expanded cylinder
 radius and at/outside the disk threshold. Both comparisons were reversed.

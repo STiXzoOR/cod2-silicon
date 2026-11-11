@@ -45,11 +45,11 @@ taskpolicy -b nice -n 19 python3 tests/lp64/renderer/run_screenshot.py \
 taskpolicy -b nice -n 19 python3 tests/lp64/renderer/run_screenshot.py \
   --compile-db /Users/stix/.codex/worktrees/metal-u1-integration/cod2-native/build-macos-codx/compile_commands.engine.json \
   --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-screenshot.noindex/codx"
-python3 tests/fixes13/legacy.py --base 4d51bcf
+python3 tests/fixes13/legacy.py --base ba01f3d
 git diff --check
 ```
 
-Both modes: **3/3 ASan/UBSan cases pass**. Against `4d51bcf`, both modes fail
+Both modes: **3/3 ASan/UBSan cases pass**. Against `ba01f3d`, both modes fail
 the TGA red-channel assertion; JPEG and failed-readback controls pass.
 `unifdef -UCOD2_X64` output compared with `cmp` is byte-identical to the
 pre-change source. Ten legacy preprocessor configurations report zero

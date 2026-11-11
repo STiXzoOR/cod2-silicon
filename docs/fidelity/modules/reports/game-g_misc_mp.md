@@ -1,6 +1,6 @@
 # game/g_misc_mp module reconciliation
 
-Updated 2026-11-03; baseline `af7d4c6`.
+Updated 2026-11-03; baseline `651c417`.
 
 **28/28 reconciled: 21 equal, six fixed, one intentional omission.** All Mac exports and retained Linux helper boundaries were compared. Corrections restore a turret-use angle threshold and five fatal diagnostic prefixes; motion, ownership, firing and animation behavior otherwise match within the stated domains.
 

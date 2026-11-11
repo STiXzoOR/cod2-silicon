@@ -1,6 +1,6 @@
 # F1 emitter integration
 
-Baseline `83aacfb`. Native Emitter_UpdateEmitFx and Emitter_Update restore child orientation,
+Baseline `995db1e`. Native Emitter_UpdateEmitFx and Emitter_Update restore child orientation,
 attachment, emission spacing, and original timing/state updates. The caller
 now calculates axes before emission, damps stationary angular velocity, and
 preserves the original model gate and attachment movement calculation.
@@ -42,6 +42,6 @@ creation as well as both update bodies; the module report records why.
 Finding #1 is resolved: the new bounded regression failed first with UBSan
 float-cast-overflow, then passed in stock and CoD2x under ASan/UBSan after
 the explicit conversion and wrapping arithmetic. Both full client/dedicated
-builds passed again. Final OFF comparison against 83aacfb and whitespace
+builds passed again. Final OFF comparison against 995db1e and whitespace
 checks pass. No justified review finding remains unresolved; original
 zero-progress behavior is documented rather than silently redesigned.

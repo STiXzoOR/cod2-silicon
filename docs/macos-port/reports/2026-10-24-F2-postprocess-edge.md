@@ -29,7 +29,7 @@ adaptation; it does not restore an old GPU-specific offset globally.
 
 Private evidence is in
 `~/Library/Application Support/CoD2-native-decomp/F2-postprocess-edge.noindex/`.
-The worktree began clean at `dfa30ec` on `decomp/f2-postprocess-edge`.
+The worktree began clean at `b875b15` on `decomp/f2-postprocess-edge`.
 
 - A production projection CGL probe showed a completely unpainted top row at
   320x180, 321x181, 640x360 and 1280x720. The bottom row was painted.
@@ -59,7 +59,7 @@ The worktree began clean at `dfa30ec` on `decomp/f2-postprocess-edge`.
   bottom edge, with sharp HUD. Baseline port 29576 and fixed port 29577 both
   exit normally with code 0 and release the game lease. No combat cycle was
   repeated for this focused reproduction.
-- `unifdef -UCOD2_X64` plus `cmp` against `dfa30ec` is exact for the only changed
+- `unifdef -UCOD2_X64` plus `cmp` against `b875b15` is exact for the only changed
   engine file, `rb_imagefilter.c`. `git diff --check` passes. This source check
   does not substitute for the unavailable Linux object-identity gate.
 
@@ -73,10 +73,10 @@ taskpolicy -b nice -n 19 python3 tests/lp64/renderer/run_imagefilter.py \
 ```
 
 Use `build-macos-codx` and a distinct output directory for CoD2x. The baseline
-check can be reproduced with `--baseline dfa30ec` and a fresh output directory.
+check can be reproduced with `--baseline b875b15` and a fresh output directory.
 Private `probe-build.py`, `fixed-build.py`, `run.py`, and the results in
 `baseline/`, `fixed/`, `readbacks/`, and `fixed-readbacks/` preserve the live
-reproduction. Root build objects were read-only at `dfa30ec` during private
+reproduction. Root build objects were read-only at `b875b15` during private
 linking and released before integration rebuilt them.
 
 ## Limits

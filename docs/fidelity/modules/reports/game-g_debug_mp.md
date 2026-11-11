@@ -1,6 +1,6 @@
 # game/g_debug_mp module reconciliation
 
-Updated 2026-11-03; baseline `41d5e1b`.
+Updated 2026-11-03; baseline `5a6836d`.
 
 **5/5 entries reconciled as intentional Linux-only debug-helper omissions.**
 No engine implementation changes are required. This does not classify these
@@ -42,7 +42,7 @@ behavior is changed, and no diagnostic renderer is being replaced by a new stub.
 
 This batch changes only reconciliation metadata and documentation. The completed
 stock/CoD2x builds, ABI/legacy checks and 2,000-frame replay evidence from combat
-baseline `41d5e1b` remain applicable to the unchanged engine. No duplicate build
+baseline `5a6836d` remain applicable to the unchanged engine. No duplicate build
 or runtime rerun is required. One independent local review found no findings and confirmed all five
 classifications. Its receipt is retained in the private evidence directory.
 

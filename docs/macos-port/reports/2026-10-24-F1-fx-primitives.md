@@ -65,7 +65,7 @@ taskpolicy -b nice -n 19 python3 tests/platform/run_fx_primitives.py \
 git diff --check
 ```
 
-`unifdef -UCOD2_X64` outputs for `FxPrimitives.c` at `bd18d2f` and this change
+`unifdef -UCOD2_X64` outputs for `FxPrimitives.c` at `9ba33d9` and this change
 compare byte-identically with `cmp`. This is a source-preservation check, not
 an i386 object comparison. No full build, live game, or reference capture was
 run in this worker; integration owns those checks.

@@ -35,7 +35,7 @@ Apple lists Metal 4 for Apple-silicon Macs running macOS 26 or later. Backend ad
 
 ## Existing Metal work changes the starting point
 
-The integrated release base `7e1851faeee45d45ed8dbf0ded2d8ec813b8e577` contains no native Metal backend. However, donor commit `bf71e8ecd9985a57c69f27edf442516a8dd02074` from `port/metal-cert` contains substantial implementation and reports. The donor is recoverable from the cleanup archive even if its old branch and checkout are removed. Paths in this section refer to that immutable donor, not files already present on the release base.
+The integrated release base `a734b90cafa012a3178fc9d9d634247db83e63c3` contains no native Metal backend. However, donor commit `bf71e8ecd9985a57c69f27edf442516a8dd02074` from `port/metal-cert` contains substantial implementation and reports. The donor is recoverable from the cleanup archive even if its old branch and checkout are removed. Paths in this section refer to that immutable donor, not files already present on the release base.
 
 The implementation includes `src/Mac/Metal/arb_to_msl.cpp` with parser/register-IR/MSL stages, `shader_setup.mm`, `shader_provider.mm`, `shader_archive.mm`, resource/state/target/draw providers, native presentation in `src/platform/macos_metal_present.m`, `tests/metal/`, and `tools/metal/`. ABI-1 integration is documented in `docs/macos-port/metal-interfaces.md`. The donor reports 208 vertex and 209 fragment programs, plus 417 constant-table files: the existing 834-file cache is not 834 shader programs.
 

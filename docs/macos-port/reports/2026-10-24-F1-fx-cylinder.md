@@ -16,7 +16,7 @@ Changed paths:
 
 Worktree: `/Users/stix/.codex/worktrees/faithful-fx-cylinder/cod2-native`, branch
 `decomp/f1-fx-cylinder`. Clean starting HEAD was verified as
-`3eff16fd9c7c50baa6185402d5325959e998c1b9`. No commits were made.
+`fa4d2899bb2b3a59dff73954ee25cc63cd2d92a7`. No commits were made.
 
 ## Original behavior reconciled
 
@@ -74,7 +74,7 @@ Private evidence directory:
 `~/Library/Application Support/CoD2-native-decomp/F1-fx-cylinder.noindex`.
 Commands below run from this unit's worktree, one compiler at a time.
 
-Before changing production, the strengthened fixture against `3eff16f` failed
+Before changing production, the strengthened fixture against `fa4d289` failed
 with **68 assertions** (66 cylinder checks and two cylinder-only attachment
 expectations), runner exit 1. No sanitizer failure was reported. Exact command:
 
@@ -101,7 +101,7 @@ taskpolicy -b nice -n 19 python3 tests/platform/run_fx_primitives.py \
 git diff --check
 ```
 
-OFF evidence: `git show 3eff16f:src/PC/EffectsCore/FxPrimitives.c` and the working
+OFF evidence: `git show fa4d289:src/PC/EffectsCore/FxPrimitives.c` and the working
 file were each passed through `unifdef -UCOD2_X64` using Python subprocess stdin
 (accepting unifdef exit 0 or 1), saved as `base-off.c` / `current-off.c` in the
 private evidence directory, and compared with `cmp`: byte-identical. A separate

@@ -1,6 +1,6 @@
 # bgame/bg_jump module reconciliation
 
-Updated 2026-11-04; baseline `3355f0e`.
+Updated 2026-11-04; baseline `7c1a4f2`.
 
 **14/14 reconciled: 14 equal.** Mac 1.3 is the authority; Linux 1.3 was read only. All constants were read from the
 binary. No source changed.

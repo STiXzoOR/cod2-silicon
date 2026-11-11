@@ -1,6 +1,6 @@
 # game/g_scr_mover_mp module reconciliation
 
-Updated 2026-11-04; baseline `c05b9ff`.
+Updated 2026-11-04; baseline `b56d712`.
 
 **29/29 reconciled: 25 equal, 4 fixed.** Mac 1.3 is the authority; Linux 1.3 was read only. The legacy source is unchanged.
 

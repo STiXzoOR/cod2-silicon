@@ -82,6 +82,6 @@ git diff --check
 ```
 
 `unifdef -UCOD2_X64` outputs compare byte-identically with `cmp` against
-`bd18d2f`. This preserves the disabled source, not proof of unchanged original
+`9ba33d9`. This preserves the disabled source, not proof of unchanged original
 i386 objects. Full builds, live game validation and reference captures remain
 integration work; this worker did not run them.

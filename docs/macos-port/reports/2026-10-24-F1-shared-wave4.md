@@ -1,6 +1,6 @@
 # F1 combat, contact and missile integration
 
-Baseline `bd18d2f`; implementation evidence is in the dated combat-trigger,
+Baseline `9ba33d9`; implementation evidence is in the dated combat-trigger,
 server-contact and missile module reports. This batch fixes thirteen confirmed
 behavior differences across four engine sources. It is not completion of F1.
 

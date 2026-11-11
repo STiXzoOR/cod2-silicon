@@ -6,7 +6,7 @@ Requested model preference for this work is Sol 6.1 at xhigh. Model selection
 must be verified in the host; the assistant cannot change the current chat's
 model through available tools.
 
-U1 is committed as `9f7249b`. This phase inventories known reference/game roots
+U1 is committed as `2cde734`. This phase inventories known reference/game roots
 and selects three owned Mac i386 inputs. It does not claim coverage of every
 CoD2 release or completion of whole-program analysis.
 

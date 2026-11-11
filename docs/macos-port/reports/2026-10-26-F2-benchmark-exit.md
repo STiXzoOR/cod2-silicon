@@ -10,7 +10,7 @@ no game, VM, renderer or external network was involved.
 `run.sh` launches the engine and `tee` as a pipeline. `benchmark.stop()` sends
 SIGTERM to that entire group, then probes the group with signal zero. On this
 Mac, the probe can report EPERM while group members are exiting. The previous
-repair (`f494bf9`) reaped the known leader and immediately retried once. It
+repair (`db45eb2`) reaped the known leader and immediately retried once. It
 assumed both that an exiting leader was already reapable and that reaping it
 finished the whole group's teardown. Neither assumption holds.
 
@@ -69,7 +69,7 @@ Private evidence is under
   recorded in `exact-fixed-0.log` through `exact-fixed-4.log`.
 - `git diff --check` passes.
 
-The worktree started clean at `60b94db` on `decomp/f2-benchmark-exit`. Only
+The worktree started clean at `01c9c74` on `decomp/f2-benchmark-exit`. Only
 `tools/macos/benchmark.py`, `tools/tests/test_verification.py` and this report
 belong to the change. Engine fidelity, live animation speed and game benchmark
 performance are outside this repair. Root integration owns fresh simplification

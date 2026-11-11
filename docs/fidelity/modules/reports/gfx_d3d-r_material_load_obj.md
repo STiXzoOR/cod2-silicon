@@ -20,7 +20,7 @@ Include open/close were checked with exact-symbol disassembly. Shader text order
 
 The current `lp64_shader_cache.h` provider returns validated extracted CTAB data when available and a zero-count table for generic ARB shaders. The existing generic sampler/channel-mixer mapping remains that concrete no-CTAB adapter. Counts above 256 retain the native rejection instead of reproducing Mac's mismatched byte-count allocation and full-count traversal.
 
-Actual pending System 5f88bd5 source was read against 02a2156. Its minimum shader-version clamp and truncate-before-shift program length belong to `Material_LoadPassShader`; those hunks remain for integration before this unit. The existing native shader-blob cleanup also survives. Image/font 84ba122 and device 9f05cde call boundaries were inspected.
+Actual pending System c1be798 source was read against d26c2d3. Its minimum shader-version clamp and truncate-before-shift program length belong to `Material_LoadPassShader`; those hunks remain for integration before this unit. The existing native shader-blob cleanup also survives. Image/font 54f9bd3 and device b3accc3 call boundaries were inspected.
 
 ## Verification and limits
 
@@ -32,8 +32,8 @@ Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/re
 
 ## Integrated batch 16 verification
 
-Engine 28e3856 and fixture-only follow-up ea23228 passed both dedicated builds, complete local CI steps 02–13, native-only source guards, per-unit parent/independent reviews and a fresh combined-source review. All five inactive configurations are unchanged; no changed production file uses line macros. Initial step 07 exposed an omitted CTAB register-count input in the existing shader-argument fixture. Supplying the restored field made the complete step 07 rerun pass with unchanged cases and assertions. Packet-container integration also removed a duplicated preprocessor guard, restoring the exact independently reviewed initializer.
+Engine d7e6ca9 and fixture-only follow-up 935519b passed both dedicated builds, complete local CI steps 02–13, native-only source guards, per-unit parent/independent reviews and a fresh combined-source review. All five inactive configurations are unchanged; no changed production file uses line macros. Initial step 07 exposed an omitted CTAB register-count input in the existing shader-argument fixture. Supplying the restored field made the complete step 07 rerun pass with unchanged cases and assertions. Packet-container integration also removed a duplicated preprocessor guard, restoring the exact independently reviewed initializer.
 
-Both 2,000-frame replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six Linux logic fields agree, with maximum origin/velocity drift 0.11792/2.0. Existing accelerated-GL raster/saved-screen checks and all 18 depth cases passed ASan/UBSan. No new tests, cases or assertions were added; no i386 byte-parity claim is made.
+Both 2,000-frame replays exactly match both 819d282 baselines and each other in players, state hashes and entities. All six Linux logic fields agree, with maximum origin/velocity drift 0.11792/2.0. Existing accelerated-GL raster/saved-screen checks and all 18 depth cases passed ASan/UBSan. No new tests, cases or assertions were added; no i386 byte-parity claim is made.
 
 This batch closes 334 math, shader, array, material, command and frame/setup entries. Fixes cover arithmetic/aliasing, shader ownership/declarations, array and cache lifetime, constant-table routing, command/buffer order, light partitioning and screenshot handling. Full device registration/state/draw and timing gaps remain explicit for separate follow-ups. Dedicated replays do not exercise client rendering; unreached client/error paths remain compiled and reviewed. These checks do not establish a complete rendered frame.

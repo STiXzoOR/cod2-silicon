@@ -3,7 +3,7 @@
 An independent parent replay reproduces 61 exact-state differences between
 original Mac MP 1.3 `PM_Friction` and each native build. This accepts the bounded
 characterization, not a correction or whole-game equivalence. The source baseline
-is `aca861317791e8d0a3534bf9b42061908f1a7895`.
+is `c66582113bc251d3b31d517e6ef2ea5d93cffadf`.
 
 The frozen domain contains 672 combinations of movement flags, timer boundaries,
 slowdown enablement, velocity and frame time, plus 128 walking, surface, movement

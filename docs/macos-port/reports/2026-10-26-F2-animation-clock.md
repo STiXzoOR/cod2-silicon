@@ -89,7 +89,7 @@ omitted the separate script end event produced when the final slice starts at
 time 1. A private diagnostic observed the authored note followed by `g_end`;
 the original consumer's time-1 branch confirms that contract. That single proof
 expectation was corrected before freezing the fixture. With the final fixture
-and `--baseline 5ce6fb0`, the same four failures and three passing controls are
+and `--baseline 0eee705`, the same four failures and three passing controls are
 reproduced in both modes. The failed first expectation and private diagnostic
 remain in evidence; no production change was added to accommodate it.
 
@@ -97,7 +97,7 @@ Both existing full xanim suites also pass unchanged. Three existing narrowing
 warnings in unrelated xanim string allocation remain visible in compile logs.
 The new fixture does not disable shift sanitization; the older suite retains
 its existing shift-sanitizer exception. Exact `unifdef -UCOD2_X64` output is
-identical to `5ce6fb0` using `cmp`; the legacy checker reports one engine file,
+identical to `0eee705` using `cmp`; the legacy checker reports one engine file,
 five configurations, zero mismatches. This is source preservation, not the
 unavailable original Linux i386 object-equivalence check.
 
@@ -112,12 +112,12 @@ for build in build-macos build-macos-codx; do
     --output "$evidence/reproduce-$build"
   taskpolicy -b nice -n 19 python3 tests/xanim/run_sync_notify.py \
     --compile-db "$integration/$build/compile_commands.engine.json" \
-    --output "$evidence/reproduce-historical-$build" --baseline 5ce6fb0
+    --output "$evidence/reproduce-historical-$build" --baseline 0eee705
   taskpolicy -b nice -n 19 python3 tests/xanim/run.py \
     --compile-db "$integration/$build/compile_commands.engine.json" \
     --output "$evidence/reproduce-existing-$build"
 done
-python3 tools/abi/legacy.py --base 5ce6fb0
+python3 tools/abi/legacy.py --base 0eee705
 git diff --check
 ```
 
@@ -148,7 +148,7 @@ forms were executed locally with private output paths and passed.
 The integration owner reran the focused fixtures in both configurations using
 the engine compile databases; all passed with ASan/UBSan. Stock and CoD2x
 clients and dedicated servers linked successfully. Exact OFF projections for
-both engine files match `5ce6fb0`; the integrated legacy checks report zero
+both engine files match `0eee705`; the integrated legacy checks report zero
 mismatches across five general and ten fixes13 configurations.
 
 Fresh ordinary live-map runs walked, fired and reloaded, produced three captures

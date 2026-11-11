@@ -1,6 +1,6 @@
 # F1 shared wave6 integration
 
-Baseline `d6b7d32`. The corpse landing buffer now holds all three output angles.
+Baseline `6cde1e0`. The corpse landing buffer now holds all three output angles.
 Four particle functions restore Mac stopping, bolt-space velocity and secondary
 channel flag behavior. Module reports contain the interpreted Mac evidence.
 

@@ -35,7 +35,7 @@ are retained in validation-commands.json beside the logs. The standalone
 registered command is the clang invocation in tests/lp64/renderer/run.sh with
 name=specularity; add -DCOD2_CODX=1 for the CoD2x variant.
 
-Both files pass unifdef -UCOD2_X64 comparison against 3eff16f; r_outdoor.c
+Both files pass unifdef -UCOD2_X64 comparison against fa4d289; r_outdoor.c
 is entirely unchanged. Private commands, red/green logs and bounded assembly
 are under F2-outdoor-specularity.noindex in the private decomp evidence
 folder. The original logarithm input is read directly from its immediate

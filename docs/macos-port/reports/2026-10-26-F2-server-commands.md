@@ -1,6 +1,6 @@
 # F2 — Reliable server commands
 
-2026-10-26; base `4d51bcf`. Two native client repairs derived from the owned
+2026-10-26; base `ba01f3d`. Two native client repairs derived from the owned
 Mac 1.3 MP assembly. The inactive original source remains exact.
 
 ## Repairs
@@ -53,13 +53,13 @@ taskpolicy -b nice -n 19 python3 tests/camera/run_server_commands.py \
   --compile-db build-macos/compile_commands.engine.json --output "$E/stock"
 taskpolicy -b nice -n 19 python3 tests/camera/run_server_commands.py \
   --compile-db build-macos-codx/compile_commands.engine.json --output "$E/codx"
-# --baseline 4d51bcf reproduces the three intended failing groups.
+# --baseline ba01f3d reproduces the three intended failing groups.
 ```
 
 The worker used the canonical integration checkout's two engine databases;
 the runner remaps source/include paths to its own checkout. Evidence is under
 `~/Library/Application Support/CoD2-native-decomp/F2-server-commands.noindex/`.
-`unifdef -UCOD2_X64` plus `cmp` is exact against `4d51bcf` for the changed
+`unifdef -UCOD2_X64` plus `cmp` is exact against `ba01f3d` for the changed
 engine file, and `git diff --check` passes. These are focused checks, not a
 Linux i386 object comparison, whole-game audio capture or new full build.
 

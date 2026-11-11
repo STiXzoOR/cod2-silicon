@@ -1,6 +1,6 @@
 # Config Studio catalog
 
-The committed resource describes **integration `af63a27`**, including the CoD2x 1.4.6.8 client dvars, the CoD2x packet and snapshot defaults,
+The committed resource describes **integration `318cc83`**, including the CoD2x 1.4.6.8 client dvars, the CoD2x packet and snapshot defaults,
 the restored renderer mode/refresh registration sites and startup privacy freeze for local match summaries. This tool uses Python's standard library
 and Clang's preprocessor. It reads source; it neither builds nor runs the game,
 and consumes no game data, player profiles, reference binary or private tools.
@@ -8,7 +8,7 @@ and consumes no game data, player profiles, reference binary or private tools.
 ```sh
 python3 -m unittest discover -s tools/catalog -v
 python3 tools/catalog/catalog.py generate \
-  --source-root /path/to/source-export --source-revision af63a27c649035900dc5e6a65b04f5815a36da1e \
+  --source-root /path/to/source-export --source-revision 318cc831eab118db78f0078ac56c99dd0a710675 \
   --output launcher/Resources/ConfigCatalog.json
 python3 tools/catalog/catalog.py check \
   --source-root /path/to/source-export --catalog launcher/Resources/ConfigCatalog.json --mode stock

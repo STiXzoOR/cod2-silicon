@@ -1,6 +1,6 @@
 # game/g_main_mp module reconciliation
 
-Updated 2026-11-03; baseline `d827e02`.
+Updated 2026-11-03; baseline `3075413`.
 
 **34/34 reconciled: 20 equal, 12 fixed, two intentional differences.** Complete Mac bodies and the Linux helper union were compared. The corrections restore game initialization and shutdown order, objective visibility, one-shot intermission scoreboards, vote-clock arithmetic, callback typing and diagnostic metadata. Documented CoD2x extensions remain.
 
@@ -19,7 +19,7 @@ Complete Mac 1acb42, 0x1adb42 (171 bytes). Clears both counters, scans level.max
 
 ### CheckVote (fixed)
 
-Complete Mac 1adb2a, 0x1aeb2a..0x1aec93 (362 bytes). Execute-time strict signed JL matches. Deadline CMP at 0x1aeb53 / JS at 0x1aeb59 tests wrapped subtraction sign, unlike native relational <. Passed schedule ADD 0xbb8 at 0x1aec52 wraps, while both native time+3000 expressions incur signed UB with actual Darwin flags. Both build modes baseline d827e02 fail four dedicated rollover cases; remaining vote tests pass. All majority/abstention thresholds, float ceilf pipeline, command/config IDs/literals and callback/store ordering match. Root applied all three COD2_X64 guarded corrections; complete patched body reread and votes-green-stock/votes-green-codx pass all 11 case groups each with ASan/UBSan, including four baseline-red rollover groups.
+Complete Mac 1adb2a, 0x1aeb2a..0x1aec93 (362 bytes). Execute-time strict signed JL matches. Deadline CMP at 0x1aeb53 / JS at 0x1aeb59 tests wrapped subtraction sign, unlike native relational <. Passed schedule ADD 0xbb8 at 0x1aec52 wraps, while both native time+3000 expressions incur signed UB with actual Darwin flags. Both build modes baseline 3075413 fail four dedicated rollover cases; remaining vote tests pass. All majority/abstention thresholds, float ceilf pipeline, command/config IDs/literals and callback/store ordering match. Root applied all three COD2_X64 guarded corrections; complete patched body reread and votes-green-stock/votes-green-codx pass all 11 case groups each with ASan/UBSan, including four baseline-red rollover groups.
 
 ### DebugDumpAnims (fixed)
 

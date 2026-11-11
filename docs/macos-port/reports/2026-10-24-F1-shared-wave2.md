@@ -1,6 +1,6 @@
 # F1 shared-code follow-up
 
-This batch starts from `6c6edd0` and fixes five bounded areas. It does not
+This batch starts from `8670b51` and fixes five bounded areas. It does not
 complete the shared-module reconciliation or establish full Mac parity.
 
 - [Entity fields](2026-10-24-F1-entity-fields.md): restore native transform,

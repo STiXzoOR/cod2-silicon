@@ -1,6 +1,6 @@
 # game/g_svcmds_mp module reconciliation
 
-Updated 2026-11-04; baseline `c05b9ff`.
+Updated 2026-11-04; baseline `b56d712`.
 
 **9/9 reconciled: 4 equal, 4 fixed, 1 intentional.** Mac 1.3 is the authority; Linux 1.3 was read only. The legacy source is unchanged.
 

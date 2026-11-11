@@ -22,7 +22,7 @@ and covered by a test that fails on the previous code.
 CI repairs in the same batch: the Config Studio catalog now records the Mac
 `gamedate` default, and the `fixes13` level-script, script-load and
 corpse-tree fixtures extract the native `G_InitGame`/`G_ShutdownGame` that
-`af7d4c6` introduced (the corpse fixture now follows the Mac shutdown contract
+`651c417` introduced (the corpse fixture now follows the Mac shutdown contract
 already asserted by `tests/lp64/game/main_shutdown.c`).
 
 Ledger entries keep `unchecked` status with evidence notes: these are partial

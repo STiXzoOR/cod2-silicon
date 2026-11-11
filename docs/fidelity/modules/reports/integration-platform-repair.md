@@ -1,6 +1,6 @@
 # Platform repair after batch 22
 
-The user authorized pushing batch 22 candidate `1f8e4ea2` with its recorded platform failures, then fixing them. The ledger remains 354 unchecked, 4,754 equal, 1,180 fixed and 3,169 intentional. The original failed runs remain evidence; this follow-up does not turn those runs into passes.
+The user authorized pushing batch 22 candidate `ab50e37e` with its recorded platform failures, then fixing them. The ledger remains 354 unchecked, 4,754 equal, 1,180 fixed and 3,169 intentional. The original failed runs remain evidence; this follow-up does not turn those runs into passes.
 
 ## Metal fixture
 

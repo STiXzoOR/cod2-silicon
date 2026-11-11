@@ -4,7 +4,7 @@
 three-binary Mac corpus. This completes the catalog and its evidence audit;
 complete type recovery and behavioral equivalence remain unproven.
 
-Source identity: `95db9c12922d7460633eab3ef5c038ae8df88b9a`; source-tree object
+Source identity: `8b8138347b2c5181421c16b7ac1b8884c647d76d`; source-tree object
 `4ec6695155930f24b78a31fb389755e9085cd6f8`. No runtime source changed.
 
 The existing STABS parser recovered 82,983 type nodes, 25,877 named references,

@@ -1,6 +1,6 @@
 # game/g_combat_mp module reconciliation
 
-Updated 2026-11-03; implementation baseline `eccf71a`.
+Updated 2026-11-03; implementation baseline `4653571`.
 
 Complete function comparison: **13/13 — 10 equal, 2 fixed, 1 intentional**.
 Build, review and integrated replay acceptance are complete within the limits below.
@@ -82,7 +82,7 @@ comparison oracle remain unchanged.
 
 Both stock and CoD2x client and dedicated builds pass. Scoped ABI audits of the
 changed translation unit pass in both modes. Both source-specific legacy checks
-pass all ten inactive configurations against `eccf71a`. No public signatures or
+pass all ten inactive configurations against `4653571`. No public signatures or
 layouts changed; no i386 binary identity is claimed.
 
 The one independent local review checked all nine exports, inline helper

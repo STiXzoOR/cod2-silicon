@@ -1,6 +1,6 @@
 # F1 shared wave5 integration
 
-Baseline `1c8fc45`. This batch corrects three mover behaviors, two FX scheduler
+Baseline `e1f3f12`. This batch corrects three mover behaviors, two FX scheduler
 filters and three missile-impact branches. Module reports describe Mac evidence
 and targeted regressions. It remains a bounded part of the faithful MP plan.
 

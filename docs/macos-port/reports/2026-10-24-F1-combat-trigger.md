@@ -1,6 +1,6 @@
 # F1 nonclient damage callback and trigger filter fixes
 
-Baseline `184775985e2d85ff8e6aab3f53ef8cadbf3eb44c`, branch
+Baseline `ff9d96c7c11cc8a817cfb5f45b30cbd5631b3746`, branch
 `decomp/f1-combat-trigger`, checkout
 `/Users/stix/Projects/cod2-native-wt/decomp-ref-mtld3d`. HEAD/branch/clean state
 were verified before edits. Worker writes are limited to:
@@ -105,7 +105,7 @@ Compiler lane released after verification.
 For each of `g_combat_mp.c` and `g_trigger_mp.c`:
 
 ```sh
-git show 184775985e2d85ff8e6aab3f53ef8cadbf3eb44c:src/PC/game_mp/$FILE > "$OUT/$FILE.baseline.c"
+git show ff9d96c7c11cc8a817cfb5f45b30cbd5631b3746:src/PC/game_mp/$FILE > "$OUT/$FILE.baseline.c"
 unifdef -UCOD2_X64 "$OUT/$FILE.baseline.c" > "$OUT/$FILE.baseline.legacy.c"
 unifdef -UCOD2_X64 src/PC/game_mp/$FILE > "$OUT/$FILE.current.legacy.c"
 cmp "$OUT/$FILE.baseline.legacy.c" "$OUT/$FILE.current.legacy.c"

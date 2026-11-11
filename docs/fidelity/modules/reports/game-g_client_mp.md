@@ -1,6 +1,6 @@
 # game/g_client_mp module reconciliation
 
-Updated 2026-11-03; implementation baseline `596c1ef`.
+Updated 2026-11-03; implementation baseline `a94ecc4`.
 
 Function comparison and focused validation: **11/11 complete — 5 equal, 6 fixed**.
 One independent local batch review found no actionable defects. Integrated replay acceptance is complete within the limits below.
@@ -86,7 +86,7 @@ source-pointer identity, and that output assertion also fails on the baseline.
 All seven groups pass afterward in both modes.
 
 The existing production voice relay fixture first passes codec/cadence controls
-then fails the corrected spectator-filter expectation against `596c1ef`. Both-mode
+then fails the corrected spectator-filter expectation against `a94ecc4`. Both-mode
 updated runs pass, including all 4x4 session-state pairs with deadChat off/on,
 intermission and spectator team rules, free-team talkers, mute, subscription,
 local echo, packet serialization and decoding/playback. This supersedes the game
@@ -94,7 +94,7 @@ routing claim in `docs/macos-port/reports/WS119-voice-relay.md`.
 
 Stock and CoD2x client and dedicated builds pass. The changed translation unit
 passes scoped ABI audits in both modes. Both source-specific legacy checks pass
-all ten inactive configurations against `596c1ef`; no i386 binary identity claim
+all ten inactive configurations against `a94ecc4`; no i386 binary identity claim
 is made. No public signatures or layouts changed.
 
 Machine-local evidence:

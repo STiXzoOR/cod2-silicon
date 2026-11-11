@@ -1,6 +1,6 @@
 # Windows rendering reference recovery
 
-2026-10-16, `codex/metal-u1-integration`, starting at `10f6a4a` with a clean tree.
+2026-10-16, `codex/metal-u1-integration`, starting at `27adff5` with a clean tree.
 
 The earlier WS8/WS15 Windows rendering reference runs again in a separate
 private environment. Menu rendering, Toujane DM client initialization, joining

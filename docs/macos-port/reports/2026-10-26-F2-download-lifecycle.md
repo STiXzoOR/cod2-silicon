@@ -1,6 +1,6 @@
 # F2 detached download lifecycle
 
-2026-10-26; base `352d494`; native patch 1.3, stock and CoD2x.
+2026-10-26; base `6bec976`; native patch 1.3, stock and CoD2x.
 
 Detached WWW downloads now retain the remaining file queue and filesystem-restart
 request across `CL_Disconnect`. Previously those two values lived in the native
@@ -75,7 +75,7 @@ not a complete two-file network lifecycle.
 Both stock and CoD2x pass all 12 groups with default settings, with
 `--net-hardening`, and with `--no-www`. The no-WWW variant runs initialization
 and UDP/disconnect controls using the real disabled downloader helpers, and
-skips HTTP execution. Both unchanged `--baseline 352d494` runs fail three groups
+skips HTTP execution. Both unchanged `--baseline 6bec976` runs fail three groups
 with 11 intended assertions: stale connected names, stale initialization state,
 and the detached completion chain. All other groups, including the failed-start
 quirk, pass on that baseline.
@@ -85,12 +85,12 @@ quirk, pass on that baseline.
 taskpolicy -b nice -n 19 python3 tests/input/run_scheduling.py \
   --compile-db <integration-build>/compile_commands.engine.json \
   --output <private-output>
-# Repeat with --baseline 352d494, --net-hardening and --no-www.
-python3 tests/fixes13/legacy.py --base 352d494
+# Repeat with --baseline 6bec976, --net-hardening and --no-www.
+python3 tests/fixes13/legacy.py --base 6bec976
 ```
 
 The ten fixes13 legacy configurations pass. Direct `unifdef` comparisons against
-`352d494` are byte-identical for both changed engine files with native code
+`6bec976` are byte-identical for both changed engine files with native code
 removed, and with native non-1.3 selected with WWW enabled and disabled. These
 are source-preservation checks, not Linux i386 object comparisons.
 
@@ -130,7 +130,7 @@ applicable controls. This fixture does not parse a demo file or execute a real
 HTTP transfer.
 
 All stock and CoD2x client/dedicated Release targets link after the correction.
-Fresh exact OFF/native-non-1.3 projections match `7e1e610` for both engine
+Fresh exact OFF/native-non-1.3 projections match `812605b` for both engine
 files, and all ten fixes13 legacy configurations pass. The review's sole
 P2 is resolved; its local-handoff coverage qualification remains explicit.
 Private integration evidence includes `review-demo-red.log`,

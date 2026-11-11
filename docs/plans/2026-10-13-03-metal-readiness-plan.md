@@ -76,7 +76,7 @@ MetalFX/render scale, supersampling, anisotropic-option expansion, EDR/HDR, ProM
 
 ### Starting Evidence
 
-The integrated base is `7e1851faeee45d45ed8dbf0ded2d8ec813b8e577`. The immutable renderer donor is `bf71e8ecd9985a57c69f27edf442516a8dd02074`, formerly `port/metal-cert`; ancestor is `3ef770ba088808f87805ba748839db2ca53e9dad`. Preserve/recover those objects from the verified cleanup archive if the local refs have been removed. Donor file paths below are restoration candidates and do not exist on the integrated base until selected for integration.
+The integrated base is `a734b90cafa012a3178fc9d9d634247db83e63c3`. The immutable renderer donor is `bf71e8ecd9985a57c69f27edf442516a8dd02074`, formerly `port/metal-cert`; ancestor is `3ef770ba088808f87805ba748839db2ca53e9dad`. Preserve/recover those objects from the verified cleanup archive if the local refs have been removed. Donor file paths below are restoration candidates and do not exist on the integrated base until selected for integration.
 
 The donor's WS29–WS35, WS37 and WS39 reports map core, resources, state, shader, draw, target and certification work. WS39 retains three promotion blockers: presentation freshness, complete logical-input/factory receipts and visible dense FX/combat. Its historical 417-program translation result does not cover current source or all-program semantic parity. The [research study](../research/2026-10-13-iw4l-highball.md) records source pins, upstream lessons and limitations.
 

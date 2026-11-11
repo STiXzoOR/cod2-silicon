@@ -31,7 +31,7 @@ All changes are in `r_screenshot.c`, behind `COD2_X64`:
 - `R_LevelShot` converts RGB readback to BGR before writing its TGA. Original
   Mac readback supplies BGR, while native readback intentionally supplies RGB
   to the platform JPEG encoder. This is the same serialization boundary
-  mismatch fixed for ordinary TGA screenshots in `204fb19`.
+  mismatch fixed for ordinary TGA screenshots in `c6dd757`.
 
 Evidence comes from the full-STABS Mac binary and its private instruction
 export, checked against fresh symbol-scoped `otool` output. No reference
@@ -58,20 +58,20 @@ taskpolicy -b nice -n 19 python3 tests/lp64/renderer/run_screenshot.py \
 taskpolicy -b nice -n 19 python3 tests/lp64/renderer/run_screenshot.py \
   --compile-db /Users/stix/.codex/worktrees/metal-u1-integration/cod2-native/build-macos-codx/compile_commands.engine.json \
   --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-resampler.noindex/codx-final"
-python3 tests/fixes13/legacy.py --base 204fb19
+python3 tests/fixes13/legacy.py --base c6dd757
 git diff --check
 ```
 
 Stock and CoD2x: **12/12 ASan/UBSan cases pass**, including 1280×720→128²,
 1280×720→512², expansion, both mixed-axis directions, same-size capture,
 allocation/header extent checks, and failed-readback cleanup. With
-`--baseline 204fb19`, both modes produce eight expected failures and four
+`--baseline c6dd757`, both modes produce eight expected failures and four
 passing controls. Savegame hits a heap-buffer-overflow during readback;
 levelshot's more distant out-of-allocation write produces an ASan write fault.
 The direct endpoint fixtures independently report stack-buffer-overflow write
 and read failures. No test expectation was weakened to obtain green results.
 
-`unifdef -UCOD2_X64` plus `cmp` gives byte-identical source against `204fb19`;
+`unifdef -UCOD2_X64` plus `cmp` gives byte-identical source against `c6dd757`;
 ten legacy preprocessor configurations also report zero mismatches. This is
 source preservation, not Linux i386 object identity. No full game build, live
 capture, real GL context, or VM run was performed by this unit.

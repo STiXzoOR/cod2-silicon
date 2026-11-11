@@ -55,7 +55,7 @@ Both actual arm64 Release Apple client objects, `CDirect3DDevice.c` and
 `CDirect3DPixelShader.c`, compiled successfully using the remapped renderer
 compilation database, sequentially under `taskpolicy -b nice -n 19`. The five
 inactive source configurations match the prepared base
-`c1d2ada4ebdb4123dc48583f777041ec7881db50`. Twelve additional comparisons
+`c6dd2b11fd4264b3261d46650c76651384bdcee4`. Twelve additional comparisons
 preserving actual `__LINE__` expansions passed: those five configurations for
 both files and each complete Apple client preprocessing path with `COD2_X64`
 removed. Neither changed file uses `__LINE__` or `COD2_ASSERT_FIELD`.
@@ -71,7 +71,7 @@ Private evidence: `~/Library/Application Support/CoD2-native-decomp/recon-pixel-
 
 ## Integrated batch 19 verification
 
-Production 6ae3bd5 and the catalog/existing-fixture follow-ups through 4ee16df passed both dedicated builds, full local CI02–13, source guards, actual OFF line expansion checks including the C++ bridge and Objective-C owner, unit parent/independent reviews and independent combined-source review. Integrated production/build/fixture files exactly match the reviewed private composition. Both 2,000-frame dedicated replays exactly match both d873794 baselines in players, state hashes and entities; all six Linux logic fields agree, maximum origin/velocity drift0.11792/2.0.
+Production f65aaad and the catalog/existing-fixture follow-ups through 3f45bb4 passed both dedicated builds, full local CI02–13, source guards, actual OFF line expansion checks including the C++ bridge and Objective-C owner, unit parent/independent reviews and independent combined-source review. Integrated production/build/fixture files exactly match the reviewed private composition. Both 2,000-frame dedicated replays exactly match both 819d282 baselines in players, state hashes and entities; all six Linux logic fields agree, maximum origin/velocity drift0.11792/2.0.
 
 Existing raster/saved-screen checks and 18 depth cases passed ASan/UBSan. The depth fixture uses the actual typed vertex-shader owner and provider accessors, real borrowed-buffer AddRef/Release methods, existing outer depth defaults and actual fence/index/dispatch providers. Its fallback mode explicitly covers the approximation path, not shader-free native validation. GL cases and result assertions are unchanged. The catalog was generated twice identically: only the restored r_mode/r_displayRefresh registration sites change factual metadata; other changes are source provenance. Initial CI02 failed stale coverage and its complete retry passed after regeneration. The existing Swift loader then passed after updating its revision literal and display consensus expectation; no assertions/cases were added or removed. Fresh source/resource review confirms the preserved copy/restrictions and consumer contract. No tests, cases or assertions were added.
 

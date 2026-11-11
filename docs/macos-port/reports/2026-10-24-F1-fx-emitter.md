@@ -125,7 +125,7 @@ git diff --check
 ```
 
 `unifdef -UCOD2_X64` plus `cmp` confirms `FxPrimitives.c` still matches
-`bd18d2f` byte-for-byte with native code disabled. This does not replace the
+`9ba33d9` byte-for-byte with native code disabled. This does not replace the
 unavailable original i386 object comparison. No full build, game run or visual
 reference capture was performed by this worker; integration owns those checks.
 This does not claim the whole EffectsCore module is reconciled.
@@ -149,4 +149,4 @@ from bolt origin at `0x5b6ae–0x5b6bf`, so the review's separate spacing/rate
 candidate is original behavior rather than a new fidelity regression.
 
 The bounded regression passes under stock/CoD2x ASan/UBSan after the fix;
-both full builds pass and the final OFF source still matches 83aacfb.
+both full builds pass and the final OFF source still matches 995db1e.

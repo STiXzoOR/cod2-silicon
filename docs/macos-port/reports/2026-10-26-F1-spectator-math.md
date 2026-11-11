@@ -1,6 +1,6 @@
 # Spectator vertical movement arithmetic — 2026-10-26
 
-Base: `5ce6fb0`. This is a bounded continuation of the faithful-decompilation
+Base: `0eee705`. This is a bounded continuation of the faithful-decompilation
 plan, not completion of shared movement reconciliation or replay parity.
 
 ## Repair
@@ -51,7 +51,7 @@ taskpolicy -b nice -n 19 python3 tests/movement/run.py \
 taskpolicy -b nice -n 19 python3 tests/movement/run.py \
   --compile-db <integration>/build-macos-codx/compile_commands.engine.json \
   --output <private>/full-codx --revision-matrix
-python3 tests/fixes13/legacy.py --base 5ce6fb0
+python3 tests/fixes13/legacy.py --base 0eee705
 git diff --check
 ```
 
@@ -105,7 +105,7 @@ The shared CI update registers both spectator selections in stock and CoD2x.
 The integration owner reran the focused fixtures in both configurations using
 the engine compile databases; all passed with ASan/UBSan. Stock and CoD2x
 clients and dedicated servers linked successfully. Exact OFF projections for
-both engine files match `5ce6fb0`; the integrated legacy checks report zero
+both engine files match `0eee705`; the integrated legacy checks report zero
 mismatches across five general and ten fixes13 configurations.
 
 Fresh ordinary live-map runs walked, fired and reloaded, produced three captures

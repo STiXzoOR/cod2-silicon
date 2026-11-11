@@ -60,7 +60,7 @@ DB=/Users/stix/Projects/cod2-native-wt/decomp-f1-script
 # Expected failure: 16 failing transition/default cases, 2 reattach controls pass.
 taskpolicy -b nice -n 19 python3 tests/lp64/renderer/run_depth_surface.py \
   --compile-db "$DB/build-macos/compile_commands.engine.json" \
-  --output "$EVIDENCE/red" --baseline d497f60
+  --output "$EVIDENCE/red" --baseline 453c4e1
 # Each command passes 18 cases (9 each for ARB and fixed-function draws).
 taskpolicy -b nice -n 19 python3 tests/lp64/renderer/run_depth_surface.py \
   --compile-db "$DB/build-macos/compile_commands.engine.json" \
@@ -92,7 +92,7 @@ It does not claim the fallback path is GL-error-free. All fallback pixel and
 state assertions remain active.
 
 For both changed production files, `unifdef -UCOD2_X64` followed by exact `cmp`
-against `git show d497f60:<path>` passed; outputs are under `off/`. This proves
+against `git show 453c4e1:<path>` passed; outputs are under `off/`. This proves
 inactive-source equality, not the unavailable Linux i386 object/binary gate.
 No full engine build, live game, reference capture, or screenshot parity was
 run by this unit. This closes this bounded GL state mismatch, not all stencil

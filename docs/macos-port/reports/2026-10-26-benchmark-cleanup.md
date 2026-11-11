@@ -1,6 +1,6 @@
 # Benchmark cleanup: Darwin zombie groups
 
-2026-10-26; base `204fb19`. This repairs the tooling failure encountered while
+2026-10-26; base `c6dd757`. This repairs the tooling failure encountered while
 running the faithful-decompilation merge gates; no engine behavior changes.
 
 ## Cause and evidence

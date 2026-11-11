@@ -14,7 +14,7 @@ imported bound. Mac weapon setup at `0x7ee82`–`0x7eecc` fills an item without
 changing the count.
 
 Native input instead supplied a one-byte zero placeholder. The datagen snapshot
-preserved it. F1 commit `11a9e6e` removed the artificial count growth in weapon
+preserved it. F1 commit `ca39846` removed the artificial count growth in weapon
 setup to match Mac behavior, exposing the missing initial value. Both live build
 objects contained zero; the later event, prediction and snapshot changes did
 not modify this data or the item bounds check. WS16 had already recorded the
@@ -57,7 +57,7 @@ compiler. Private logs are under
 - `python3 tools/datagen/snapshot.py <private-roundtrip-output> build/lp64_gen`:
   **all five files byte-identical**.
 - `unifdef -D__SIZEOF_POINTER__=4` gives an exact source match for the changed
-  snapshot file against `3ff2eae`; no engine source changed. `git diff --check`
+  snapshot file against `838afcf`; no engine source changed. `git diff --check`
   passes.
 
 After integration, the orchestrator rebuilt both client and dedicated targets

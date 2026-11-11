@@ -1,6 +1,6 @@
 # F1 attachment and filesystem integration
 
-Baseline `e31321c`. This batch restores six effect update returns when an
+Baseline `3d665d8`. This batch restores six effect update returns when an
 existing attachment is invalid, takes the tail endpoint from the preceding
 motion position, and removes a second world transform. It also fixes the
 filesystem short-path lookup base and the zero-byte general IWD seek result.
@@ -13,7 +13,7 @@ Worker fixtures observed 24 failures for tail/particle motion and another
 The integrated stock and CoD2x FX and filesystem fixtures pass under
 ASan/UBSan, including the preceding emitter overflow regression. Both full
 client/dedicated builds pass. Both changed engine files remain byte-identical
-under unifdef -UCOD2_X64 against e31321c; whitespace checks pass.
+under unifdef -UCOD2_X64 against 3d665d8; whitespace checks pass.
 
 Private evidence: F1-shared-wave8.noindex, F1-fx-tail-motion.noindex and
 F1-files.noindex. Module reports record original Mac evidence and exact

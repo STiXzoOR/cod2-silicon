@@ -1,6 +1,6 @@
 # game/g_active_mp module reconciliation
 
-Reconciliation updated 2026-11-03; implementation baseline `a604676`.
+Reconciliation updated 2026-11-03; implementation baseline `9f57854`.
 
 Function reconciliation: **24/24 complete — 18 equal, 6 fixed, 0 unchecked**.
 Stock and CoD2x client/dedicated builds and 2,000-frame replay runs pass.
@@ -47,7 +47,7 @@ All 2,032 exported bytes (0x1a47a8-0x1a4f97) compared. Native fixes now select p
 
 ### ClientEvents (fixed)
 
-Whole 136-instruction634-byte Mac function read, all40 jump-table entries decoded directly from binary0x33be00; all23 fall event IDs checked. Commit8cec375 repairs dispatch IDs and max-health field. Native matches ring clipping/dynamic event count, eType fall early exit, binary32 constants loaded from binary0x3262f0/0x3263c0 and truncation, antilag time choice, five script notices, forced-death guards/state/9arguments, default noops. Linux full body also compared; FireWeapon name maps native FireWeaponAntiLag. Existing both-mode fixture and2k replay receipts in F1-server-events report remain applicable; this agent did not rerun tests.
+Whole 136-instruction634-byte Mac function read, all40 jump-table entries decoded directly from binary0x33be00; all23 fall event IDs checked. Commitbd590c3 repairs dispatch IDs and max-health field. Native matches ring clipping/dynamic event count, eType fall early exit, binary32 constants loaded from binary0x3262f0/0x3263c0 and truncation, antilag time choice, five script notices, forced-death guards/state/9arguments, default noops. Linux full body also compared; FireWeapon name maps native FireWeaponAntiLag. Existing both-mode fixture and2k replay receipts in F1-server-events report remain applicable; this agent did not rerun tests.
 
 ### ClientImpacts (equal)
 
@@ -123,7 +123,7 @@ All Mac blocks: PMF_PLAYER0x00800000 gate, false without copying; memcpy0x26a8 t
 
 ### P_DamageFeedback (fixed)
 
-The complete 620-byte Mac body is reconciled. Native preserves DIVSS angle/360 then MULSS 256 at 0x1a357d-0x1a35a0 before truncation. Real production vectoangles reaches angle bits 0x40e0ffff from direction (1, float bits 0x3dfc98c1, 0), producing Mac yaw 4 where the old folded ratio produced 5; the corresponding negative Z input demonstrates pitch too. Both new regressions fail on a604676 and pass after the fix. Whole-production gameplay/math TU tests also cover dead/no-damage/invalid-health returns, world feedback, minimum kick, damage/spread clamps and event/time/blood writeback in stock and CoD2x.
+The complete 620-byte Mac body is reconciled. Native preserves DIVSS angle/360 then MULSS 256 at 0x1a357d-0x1a35a0 before truncation. Real production vectoangles reaches angle bits 0x40e0ffff from direction (1, float bits 0x3dfc98c1, 0), producing Mac yaw 4 where the old folded ratio produced 5; the corresponding negative Z input demonstrates pitch too. Both new regressions fail on 9f57854 and pass after the fix. Whole-production gameplay/math TU tests also cover dead/no-damage/invalid-health returns, world feedback, minimum kick, damage/spread clamps and event/time/blood writeback in stock and CoD2x.
 
 ### SpectatorClientEndFrame (equal)
 
@@ -159,7 +159,7 @@ private evidence directory). It covers the production/test diff, not overall
 project acceptance. No external review or five-lens cleanup was performed.
 
 Both source-specific legacy checks pass all 10 inactive configurations against
-`a604676`. The broad `tools/abi/legacy.py` also inspects changed test fixtures
+`9f57854`. The broad `tools/abi/legacy.py` also inspects changed test fixtures
 and reports their intentional edits as five mismatches; it reports no production
 source mismatch. These are preprocessing checks, not i386 object identity.
 
@@ -196,7 +196,7 @@ must be distinguished from newly reconciled function work.
 
 ## Fresh original-server replay after the dead-state fix
 
-After `36f4fd5`, the restored SSH agent was used to run the unchanged original
+After `509ee10`, the restored SSH agent was used to run the unchanged original
 server instrumentation on the VM with the frozen command stream. The original
 anchor checksum passed; the new 2,000-frame original trace matches the saved
 original trace under the unchanged quantized-state and raw-player comparator.

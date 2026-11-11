@@ -20,11 +20,11 @@ The registry hashes, collision probes, limits, shader/literal comparisons, defau
 
 Native keeps full-width technique-pointer ordering instead of a wrapped i386 pointer subtraction, the opt-in allocation-canary probe in registration, and the external-renderer/null-name registration adapter. These are the three intentional entries.
 
-The actual image/font source at 84ba122, System source at 5f88bd5 and device source at 9f05cde were inspected. The System diff from 02a2156 adds render-thread synchronization and pointer-count sorting thresholds to `Material_Sort`; this unit leaves those provider-owned hunks for integration before this commit. Native device declaration/shader creation remains the GL provider.
+The actual image/font source at 54f9bd3, System source at c1be798 and device source at b3accc3 were inspected. The System diff from d26c2d3 adds render-thread synchronization and pointer-count sorting thresholds to `Material_Sort`; this unit leaves those provider-owned hunks for integration before this commit. Native device declaration/shader creation remains the GL provider.
 
 ## Verification and limits
 
-The arm64 Release `cod2_macos_ded` target built with two low-priority jobs. Both changed Apple client objects compiled separately with their generated compile commands. Ten inactive-source comparisons passed against 28b9601; neither source has `__LINE__` diagnostic sites. `git diff --check` passed.
+The arm64 Release `cod2_macos_ded` target built with two low-priority jobs. Both changed Apple client objects compiled separately with their generated compile commands. Ten inactive-source comparisons passed against f0d941a; neither source has `__LINE__` diagnostic sites. `git diff --check` passed.
 
 No new tests, full CI or replays were run. These corrections were compiled and reviewed, not exercised. The valid stream tables use stream zero, so the declaration insertion correction needs a suitable runtime caller to exercise that branch.
 
@@ -32,8 +32,8 @@ Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/re
 
 ## Integrated batch 16 verification
 
-Engine 28e3856 and fixture-only follow-up ea23228 passed both dedicated builds, complete local CI steps 02–13, native-only source guards, per-unit parent/independent reviews and a fresh combined-source review. All five inactive configurations are unchanged; no changed production file uses line macros. Initial step 07 exposed an omitted CTAB register-count input in the existing shader-argument fixture. Supplying the restored field made the complete step 07 rerun pass with unchanged cases and assertions. Packet-container integration also removed a duplicated preprocessor guard, restoring the exact independently reviewed initializer.
+Engine d7e6ca9 and fixture-only follow-up 935519b passed both dedicated builds, complete local CI steps 02–13, native-only source guards, per-unit parent/independent reviews and a fresh combined-source review. All five inactive configurations are unchanged; no changed production file uses line macros. Initial step 07 exposed an omitted CTAB register-count input in the existing shader-argument fixture. Supplying the restored field made the complete step 07 rerun pass with unchanged cases and assertions. Packet-container integration also removed a duplicated preprocessor guard, restoring the exact independently reviewed initializer.
 
-Both 2,000-frame replays exactly match both d873794 baselines and each other in players, state hashes and entities. All six Linux logic fields agree, with maximum origin/velocity drift 0.11792/2.0. Existing accelerated-GL raster/saved-screen checks and all 18 depth cases passed ASan/UBSan. No new tests, cases or assertions were added; no i386 byte-parity claim is made.
+Both 2,000-frame replays exactly match both 819d282 baselines and each other in players, state hashes and entities. All six Linux logic fields agree, with maximum origin/velocity drift 0.11792/2.0. Existing accelerated-GL raster/saved-screen checks and all 18 depth cases passed ASan/UBSan. No new tests, cases or assertions were added; no i386 byte-parity claim is made.
 
 This batch closes 334 math, shader, array, material, command and frame/setup entries. Fixes cover arithmetic/aliasing, shader ownership/declarations, array and cache lifetime, constant-table routing, command/buffer order, light partitioning and screenshot handling. Full device registration/state/draw and timing gaps remain explicit for separate follow-ups. Dedicated replays do not exercise client rendering; unreached client/error paths remain compiled and reviewed. These checks do not establish a complete rendered frame.

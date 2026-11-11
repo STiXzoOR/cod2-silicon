@@ -1,6 +1,6 @@
 # game/g_scr_main_mp module reconciliation
 
-Updated 2026-11-04; baseline `9b7c4ec`.
+Updated 2026-11-04; baseline `086534d`.
 
 **242/242 reconciled: 225 equal, 11 fixed, 6 intentional.** All 229 Mac functions were
 compared with the live native bodies and their helpers, 36,592 bytes in total. The Linux-only
@@ -57,7 +57,7 @@ deliberate and outside this comparison.
 ## Verification and limits
 
 `tests/lp64/game/scr_main.c` is a new test of the production translation unit with seven groups:
-`table`, `trig`, `shader`, `spawn`, `playfx`, `loopsound` and `radius`. All seven fail on `9b7c4ec`
+`table`, `trig`, `shader`, `spawn`, `playfx`, `loopsound` and `radius`. All seven fail on `086534d`
 and pass in stock and CoD2x under ASan and UBSan with assertions on. `table` also resolves all 145
 Mac builtin names in order. Compile-time assertions tie entity
 and script-constant offsets used by these builtins to the Mac values. The harness binds symbols

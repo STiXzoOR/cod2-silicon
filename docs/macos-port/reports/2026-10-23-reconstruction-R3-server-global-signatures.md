@@ -70,6 +70,6 @@ Private evidence is under `reconstruction/phase-r3/`:
   `20261023-eighteenth-wave-parent-verification`.
 
 Native full suites were not repeated for this report-only change. The completed
-CI run at code commit `455333e` passed its harness and Apple Silicon jobs; its
+CI run at code commit `43b8f42` passed its harness and Apple Silicon jobs; its
 x86 comparison job failed while compiling the old baseline, before comparing
 objects. The overall workflow success is not byte-identity evidence.

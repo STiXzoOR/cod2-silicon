@@ -1,6 +1,6 @@
 # game/g_client_fields_mp module reconciliation
 
-Updated 2026-11-04; baseline `01c5fb6`.
+Updated 2026-11-04; baseline `d9834fa`.
 
 **21/21 reconciled: 20 equal, 1 fixed.** Mac 1.3 is the authority; Linux 1.3 was read only. The legacy source is unchanged.
 

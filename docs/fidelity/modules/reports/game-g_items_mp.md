@@ -1,6 +1,6 @@
 # game/g_items_mp module reconciliation
 
-Updated 2026-11-03; baseline `be7cda9`.
+Updated 2026-11-03; baseline `489a8da`.
 
 Complete comparison: **29/29 entries — 21 equal, 8 fixed**. Mac 1.3 is the
 behavioral authority; Linux is read-only mapping/reference material. Every

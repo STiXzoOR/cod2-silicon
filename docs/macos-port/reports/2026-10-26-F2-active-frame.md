@@ -68,7 +68,7 @@ info/snapshot/map/render gates, fractional view height, shellshock selection,
 FX threshold, and invalid weapon selection. Both builds also pass all seven
 existing camera fixture groups.
 
-With `--baseline 4818b1a`, both modes fail recoil, limits, entities, and producer
+With `--baseline c4e46fc`, both modes fail recoil, limits, entities, and producer
 while passing gates. The baseline switch changes only `cg_view_mp.c`; fixture
 expectations and producer/consumer dependencies remain the same.
 
@@ -86,7 +86,7 @@ for mode in stock codx; do
         --output "$evidence/$mode"
     taskpolicy -b nice -n 19 python3 tests/camera/run_active_frame.py \
         --compile-commands "$reference/$build/compile_commands.engine.json" \
-        --output "$evidence/$mode-baseline" --baseline 4818b1a
+        --output "$evidence/$mode-baseline" --baseline c4e46fc
     taskpolicy -b nice -n 19 python3 tests/camera/run.py \
         --compile-commands "$reference/$build/compile_commands.engine.json" \
         --output "$evidence/camera-$mode"
@@ -100,11 +100,11 @@ warning was reported from the changed production file.
 Exact inactive-source preservation passed:
 
 ```sh
-git show 4818b1a:src/PC/cgame_mp/cg_view_mp.c > "$evidence/before.c"
+git show c4e46fc:src/PC/cgame_mp/cg_view_mp.c > "$evidence/before.c"
 unifdef -UCOD2_X64 "$evidence/before.c" > "$evidence/before-off.c"
 unifdef -UCOD2_X64 src/PC/cgame_mp/cg_view_mp.c > "$evidence/after-off.c"
 cmp "$evidence/before-off.c" "$evidence/after-off.c"
-python3 tools/abi/legacy.py --base 4818b1a
+python3 tools/abi/legacy.py --base c4e46fc
 git diff --check
 ```
 
@@ -182,7 +182,7 @@ player/corpse render functions, corpse lerp and mover adjustment:
   bits `3f808000`, `3f800000`, `bf800000`; expected values are not calculated by
   repeating the production expression. Input/output aliasing is exercised.
 
-All eight groups pass in stock and CoD2x. Against historical `4818b1a`, seven
+All eight groups pass in stock and CoD2x. Against historical `c4e46fc`, seven
 fail and the bounds control passes in both configurations. Before the mover
 repair alone, its three regression cases failed while the other five passed.
 The pre-existing player `byte *`/`GfxEntity *` and turret
@@ -195,8 +195,8 @@ Commands (from the assigned worktree, with one compiler slot):
 taskpolicy -b nice -n 19 python3 tests/camera/run_entity_animation.py \
   --compile-commands /Users/stix/.codex/worktrees/metal-u1-integration/cod2-native/build-macos/compile_commands.engine.json \
   --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-entity-animation.noindex/final-eight-stock"
-# Add --baseline 4818b1a for the intentional seven-red/one-green historical run.
-taskpolicy -b nice -n 19 python3 tools/abi/legacy.py --base 4818b1a
+# Add --baseline c4e46fc for the intentional seven-red/one-green historical run.
+taskpolicy -b nice -n 19 python3 tools/abi/legacy.py --base c4e46fc
 git diff --check
 ```
 
@@ -275,7 +275,7 @@ is under `F2-active-frame.noindex/normal-speed-*`, `normal-speed-results.json`,
 The combined integration source passes both full function ABI audits (634 stock
 and 651 CoD2x translation units), callback, strict-AST and import checks. All four
 Release targets link. Every changed engine file preserves exact
-`unifdef -UCOD2_X64` output against `c2360e9`; the five-configuration guard
+`unifdef -UCOD2_X64` output against `0b5c81f`; the five-configuration guard
 comparison and ten-configuration fixes13 comparison also pass. The general
 `tools/abi/legacy.py` invocation reports ten mismatches solely in the two
 intentionally changed online test-harness files, not engine source. This result
