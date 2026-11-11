@@ -11,33 +11,55 @@ struct LauncherRoot: View {
             if model.onboard {
                 SetupView(model: model).transition(.opacity)
             } else {
-                LauncherSplitView(model: model).transition(.opacity)
+                LauncherSplitView(model: model).disabled(model.gameRunning).transition(.opacity)
             }
         }
         // Controls follow the app accent (NSAccentColorName: brass in dark, olive in light);
         // only the one prominent action per view is tinted explicitly.
-        .environment(\.palette, palette)
         .capsuleControls()
         .background(palette.ground)
-        .overlay(alignment: .bottom) { NoticeBanner(model: model).padding(.bottom, 24) }
-        .alert(model.engineRequest?.title ?? "", isPresented: Binding(get: { model.engineRequest != nil }, set: { if !$0 { model.engineRequest = nil } }),
+        .background(LauncherWindowReader(model: model))
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if !model.notice.isEmpty { NoticeBanner(model: model).padding(12).frame(maxWidth: .infinity).background(palette.ground) }
+        }
+        .onChange(of: model.notice, initial: true) { _, message in
+            guard !message.isEmpty else { return }
+            NSAccessibility.post(element: model.launcherWindow ?? NSApplication.shared, notification: .announcementRequested,
+                                 userInfo: [.announcement: message, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+        }
+        .alert("Turn on CoD2x for this server?", isPresented: Binding(get: { model.engineRequest != nil }, set: { if !$0 { model.engineRequest = nil } }),
                presenting: model.engineRequest) { request in
-            Button("Turn On CoD2x and Join") { model.turnOnCoD2x(andJoin: request) }
             Button("Cancel", role: .cancel) { model.engineRequest = nil }
+            Button("Turn On CoD2x and Join") { model.turnOnCoD2x(andJoin: request) }.keyboardShortcut(.defaultAction)
         } message: { request in Text(request.message) }
         // The minimum window is 1100×760 points in all. This view sits below the unified toolbar's
         // 52 points of safe area, so asking it for 760 would hang 26 points off the window's bottom.
         .frame(minWidth: 1100, minHeight: 760 - 52)
+        .environment(\.palette, palette)
+    }
+}
+
+/// Keep file panels attached to this window, including in the review harness.
+private struct LauncherWindowReader: NSViewRepresentable {
+    let model: LauncherModel
+    func makeNSView(context: Context) -> WindowView { WindowView(model: model) }
+    func updateNSView(_ view: WindowView, context: Context) { view.model = model; if let window = view.window { model.launcherWindow = window } }
+    final class WindowView: NSView {
+        var model: LauncherModel
+        init(model: LauncherModel) { self.model = model; super.init(frame: .zero) }
+        required init?(coder: NSCoder) { nil }
+        override func viewDidMoveToWindow() { super.viewDidMoveToWindow(); if let window { model.launcherWindow = window } }
     }
 }
 
 struct LauncherSplitView: View {
     @ObservedObject var model: LauncherModel
-    @State private var columns = NavigationSplitViewVisibility.all
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.palette) private var palette
     var body: some View {
-        NavigationSplitView(columnVisibility: $columns) {
+        NavigationSplitView(columnVisibility: $model.sidebarVisibility) {
             Sidebar(model: model)
+                .disabled(!model.canNavigate)
                 .navigationSplitViewColumnWidth(min: 220, ideal: 232, max: 300)
         } detail: {
             Group {
@@ -54,6 +76,7 @@ struct LauncherSplitView: View {
             .background(palette.ground)
         }
         .hiddenToolbarTitle()
+        .animation(reduceMotion ? .easeInOut(duration: 0.15) : .launcherSpring, value: model.page)
     }
 }
 
@@ -71,9 +94,7 @@ struct Sidebar: View {
     var body: some View {
         List(selection: Binding(get: { model.page }, set: { page in
             guard let page else { return }
-            withAnimation(.launcherSpring) { model.page = page }
-            if page == .library { model.loadMedia() }
-            if page == .configs { model.studio.loadCatalog() }
+            model.navigate(to: page)
         })) {
             Section {
                 // Icons take the app accent (brass/olive), or the accent the person chose in System Settings.
@@ -89,6 +110,17 @@ struct Sidebar: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("Favorite server \(QuakeColors.plain(server.name))")
+                        .contextMenu {
+                            Button("Deploy") { model.connect(server) }.disabled(!model.canNavigate)
+                            Button("Show in Server List") { model.showServer(server.address) }
+                            Divider()
+                            Button("Remove from Favorites") { model.favorite(server.address) }
+                            Button("Copy Address") {
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(server.address, forType: .string)
+                                model.notice = "Server address copied."
+                            }
+                        }
                     }
                 } header: { Text("Favorites") }
             }
@@ -97,7 +129,8 @@ struct Sidebar: View {
         .sidebarRowSize()
         .safeAreaInset(edge: .top, spacing: 0) { BrandHeader().padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 18) }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            PlayerTag(name: model.playerName, verified: model.keyVerified).padding(.horizontal, 12).padding(.bottom, 12)
+            PlayerTag(name: model.playerName, verified: model.keyVerified)
+                .help("Your player name comes from the active in-game profile.").padding(.horizontal, 12).padding(.bottom, 12)
         }
     }
     static func shortName(_ name: String) -> String {
@@ -145,7 +178,9 @@ struct PlayerTag: View {
         .padding(12)
         .modifier(PlayerTagPlate(fill: palette.dark ? Color.white.opacity(0.05) : Color.white.opacity(0.5),
                                  stroke: palette.dark ? Color.white.opacity(0.07) : Color.white.opacity(0.8)))
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Player: \(QuakeColors.plain(name)). \(verified ? "CD key verified" : "CD key needed"). Name from your active in-game profile.")
+        .accessibilityAddTraits(.isStaticText)
     }
 }
 
@@ -226,19 +261,31 @@ struct NoticeBanner: View {
         }
     }
     private var banner: some View {
-        HStack(spacing: 12) {
-            Image(systemName: model.crashReport == nil ? "info.circle" : "exclamationmark.triangle").foregroundStyle(palette.accent)
-            Text(model.notice).font(.system(size: 13)).foregroundStyle(palette.text).textSelection(.enabled).lineLimit(3)
-            if let report = model.crashReport {
-                Button("Show Crash Report") { NSWorkspace.shared.activateFileViewerSelecting([report]) }.glassAction()
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: model.crashReport == nil ? "info.circle" : "exclamationmark.triangle").foregroundStyle(palette.accent)
+                Text(model.notice).font(.system(size: 13)).foregroundStyle(palette.text).textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
+                    .id(model.notice)
             }
-            Button { withAnimation(reduceMotion ? nil : .launcherSpring) { model.notice = "" } } label: { Image(systemName: "xmark") }
-                .buttonStyle(.plain).foregroundStyle(palette.secondary).accessibilityLabel("Dismiss message")
+            .padding(.horizontal, 8).padding(.top, 8)
+            HStack(spacing: 8) {
+                Spacer(minLength: 0)
+                if model.gameRunning { Button("Return to Game", action: model.returnToGame).glassAction().actionControlSize() }
+                if let report = model.crashReport {
+                    Button("Show Crash Report") { NSWorkspace.shared.activateFileViewerSelecting([report]) }.glassAction().actionControlSize()
+                }
+                if !model.gameRunning {
+                    Button("Dismiss") { withAnimation(.easeInOut(duration: 0.15)) { model.notice = "" } }
+                        .glassAction().actionControlSize().accessibilityLabel("Dismiss message")
+                }
+            }
         }
-        .padding(.vertical, 12).padding(.horizontal, 18)
+        .padding(12)
         .frame(maxWidth: 720)
-        .glassSurface(Capsule())
+        .glassSurface(RoundedRectangle(cornerRadius: 30))
         .accessibilityElement(children: .contain)
+        .accessibilityLabel("Status message")
     }
 }
 

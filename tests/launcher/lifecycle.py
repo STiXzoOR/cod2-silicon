@@ -16,8 +16,11 @@ class Receiver(http.server.BaseHTTPRequestHandler):
     def log_message(self, *args): pass
 receiver = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Receiver)
 threading.Thread(target=receiver.serve_forever, daemon=True).start()
-subprocess.run([str(root/'scripts/build-launcher.sh'), str(out/'launcher')], check=True)
-subprocess.run(['python3',str(root/'tools/cod2x/make_macos_app.py'),str(fixture),str(app),'--replace','--bundle-id','io.github.stixzoor.cod2silicon.ws25fixture','--launcher',str(out/'launcher/CoD2Launcher'),'--stock-engine',str(out/'fixture-stock'),
+launcher_binary = os.environ.get('COD2_LAUNCHER_BINARY')
+if not launcher_binary:
+    subprocess.run(['taskpolicy', '-b', 'nice', '-n', '19', str(root/'scripts/build-launcher.sh'), str(out/'launcher')], check=True)
+    launcher_binary = str(out/'launcher/CoD2Launcher')
+subprocess.run(['python3',str(root/'tools/cod2x/make_macos_app.py'),str(fixture),str(app),'--replace','--bundle-id','io.github.stixzoor.cod2silicon.ws25fixture','--launcher',launcher_binary,'--stock-engine',str(out/'fixture-stock'),
                 '--sentry-dsn',f'http://lifecyclekey@127.0.0.1:{receiver.server_address[1]}/7'],check=True)
 home = out/'home';home.mkdir(exist_ok=True)
 game = home/'Games/CoD2/main';game.mkdir(parents=True,exist_ok=True)
@@ -63,6 +66,11 @@ with log.open('w') as stream:
         def policy(pid):return subprocess.check_output([str(fixture),'policy',str(pid)],text=True).strip()
         assert policy(launcher.pid)=='1' # accessory: the launcher has no Dock tile
         assert policy(child)=='0' # regular: the game owns the Dock
+        subprocess.run([str(fixture), 'quit', str(launcher.pid)], check=True)
+        wait(lambda: policy(launcher.pid) == '0')
+        wait(lambda: int(subprocess.check_output([str(fixture), 'visible-windows', str(launcher.pid)], text=True)) > 0)
+        assert launcher.poll() is None
+        print('PASS: Quit during play is refused and restores a visible regular launcher window for the explanation')
         for address in ['127.0.0.1:28960','localhost:28961']:
             subprocess.run([str(fixture),'event',str(launcher.pid),'cod2x://connect/'+address],check=True)
             wait(lambda: 'fixture link '+address in log.read_text(errors='replace'))

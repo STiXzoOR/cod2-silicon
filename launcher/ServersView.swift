@@ -91,7 +91,6 @@ struct ServersView: View {
             Button { model.refreshing ? model.cancelRefresh() : model.refresh() } label: {
                 Label(model.refreshing ? "Stop refreshing" : "Refresh server list", systemImage: model.refreshing ? "stop.fill" : "arrow.clockwise")
             }
-            .keyboardShortcut("r", modifiers: .command)
             .help(model.refreshing ? "Stop querying servers" : "Ask both master servers and ping every server (⌘R)")
         }
     }

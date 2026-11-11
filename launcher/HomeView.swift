@@ -243,7 +243,7 @@ struct StatusChips: View {
                     Image(systemName: model.approximate ? "exclamationmark.shield" : "checkmark.shield").font(.system(size: 14, weight: .medium))
                         .foregroundStyle(model.approximate ? palette.accent : palette.positive)
                     Text(model.approximate ? "Approximate shaders" : "Original shaders ready")
-                } action: { if model.approximate { model.restartSetup() } else { model.page = .settings } }
+                } action: { if model.approximate { model.restartSetup(at: 2) } else { model.page = .settings } }
             }
         }
     }
