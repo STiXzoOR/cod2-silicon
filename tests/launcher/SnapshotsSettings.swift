@@ -25,7 +25,7 @@ extension Snapshots {
         "settings-invalid": ["Extra launch options", "Your last valid options still apply"],
         "settings-legacy": ["125 frames per second", "Custom frame cap", "Game volume"],
         "settings-legacy-custom": ["Custom frame cap, 0 to 1000 frames per second", "Game volume"],
-        "settings-save-error": ["Your changes couldn’t be saved", "Try Again"],
+        "settings-save-error": ["Problem: Your changes couldn’t be saved", "Try Again"],
         "settings": ["General", "Display", "Game Data", "Privacy", "Updates", "Advanced", "About", "Game version",
                      "Hide CoD2 Silicon while the game is running", "Appearance", "Refresh the server list when Servers opens", "Open Configs"],
         "settings-display": ["Preview: the game fills the display", "Mode", "Resolution", "Vertical sync", "Restore Defaults"],
