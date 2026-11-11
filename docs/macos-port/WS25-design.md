@@ -15,8 +15,8 @@ activation policy, the same original icon, its own `.game` bundle identifier,
 and `LSSupportsGameMode`. Only the outer bundle registers `cod2x`.
 
 The launcher owns setup and validated arguments, starts the nested executable,
-becomes an accessory app while the engine owns the Dock, and restores its
-window/Dock presence after termination. A URL received while playing is sent
+hides its windows while the engine plays (keeping its Dock tile and Dock menu since
+0.3.0), and brings them back after termination. A URL received while playing is sent
 directly to the engine's existing validated Apple-event handler. Cold URLs,
 server joins and `--play` bypass Home after setup. CLI arguments following
 `--` are forwarded to the engine for developer/test use. Neither process
