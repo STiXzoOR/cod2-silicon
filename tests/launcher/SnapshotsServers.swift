@@ -82,6 +82,13 @@ extension Snapshots {
         guard Set(model.visibleServers.map(\.address)) == model.library.favorites else { print("FAIL: Favorites shows other servers"); return false }
         model.serverScope = .recent
         guard model.visibleServers.allSatisfy({ model.library.recent.contains($0.address) }) else { print("FAIL: Recent shows other servers"); return false }
+        // Home › All Recent: the Recent scope with nothing hiding a recent server.
+        model.serverScope = .all; model.search = "zzz"; model.serverFilters.version = .stock
+        model.showRecentServers()
+        guard model.page == .servers, model.serverScope == .recent, model.search.isEmpty, model.serverFilters.count == 0,
+              model.visibleServers.count == model.scopedServers.count, !model.visibleServers.isEmpty else {
+            print("FAIL: All Recent did not show every recent server"); return false
+        }
         model.serverScope = .all
         model.serverFilters.hidePassworded = true; model.serverFilters.version = .codx
         guard model.serverFilters.count == 2, !model.visibleServers.isEmpty,
@@ -89,7 +96,7 @@ extension Snapshots {
         let saved = try? JSONDecoder().decode(ServerBrowserPrefs.self, from: Data(contentsOf: model.home.appendingPathComponent("launcher-servers.json")))
         guard saved?.filters == model.serverFilters else { print("FAIL: filters were not saved"); return false }
         model.serverFilters = ServerFilters()
-        print("PASS: Favorites and Recent scopes; filters hide what they say, count themselves and are saved")
+        print("PASS: Favorites and Recent scopes, and All Recent from Home; filters hide what they say, count themselves and are saved")
 
         // Connect to Address input and the join link.
         let inputs: [(String, String?)] = [("203.0.113.24:28960", "203.0.113.24:28960"), ("game.example", "game.example:28960"),

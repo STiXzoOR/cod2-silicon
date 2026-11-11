@@ -60,7 +60,8 @@ struct ServerFilters: Codable, Equatable {
 struct ServerBrowserPrefs: Codable {
     var filters = ServerFilters()
     /// The Switching game version sheet's “Don’t ask again”. MERGE(ship-settings): this moves to
-    /// `GameSettings.alwaysUseServerVersion`; `LauncherModel.alwaysUseServerVersion` is the one accessor.
+    /// `settings.dismissedWarnings` (key `DismissibleWarning.switchVersion`); `LauncherModel.alwaysUseServerVersion`
+    /// is the one accessor, and this field goes.
     var alwaysUseServerVersion = false
     /// When you last launched on each server (canonical address), for Connect to Address's recent list.
     var launchedAt: [String: Date] = [:]
@@ -230,6 +231,14 @@ enum ServerPasswords {
         selectedServer = address
         if selected == nil { clearServerFilters(); selectedServer = address }
     }
+    /// Home › All Recent: Servers on the Recent scope, with nothing hiding a recent server.
+    func showRecentServers() {
+        navigate(to: .servers)
+        guard page == .servers else { return }
+        serverScope = .recent
+        search = ""
+        if visibleServers.count < scopedServers.count { serverFilters = ServerFilters() }
+    }
     /// Clear Search and Filters.
     func clearServerFilters() { search = ""; serverFilters = ServerFilters() }
     func sortServers(by key: ServerSort) {
@@ -363,10 +372,13 @@ enum ServerPasswords {
         catch { notice = "Your server filters couldn’t be saved." }
     }
     /// Settings › General › Refresh the server list when Servers opens.
-    /// MERGE(ship-settings): `settings.refreshServersOnOpen`. Default until then: false (nothing is contacted until Refresh).
+    /// MERGE(ship-settings, ship/settings 9b87bf05): replace the body with `settings.refreshServersOnOpen`.
+    /// Default until then: false (nothing is contacted until Refresh).
     var refreshServersOnOpen: Bool { false }
     /// Switching game version › “Don’t ask again; always use the version the server runs”.
-    /// MERGE(ship-settings): `settings.alwaysUseServerVersion` (Settings › Advanced › Reset Warnings sets it back to false).
+    /// MERGE(ship-settings, ship/settings 9b87bf05): get → `isWarningDismissed(DismissibleWarning.switchVersion)`;
+    /// set true → `dismissWarning(DismissibleWarning.switchVersion)` (only true is ever set here; Settings ›
+    /// Advanced › Reset Warnings clears it). Then drop `ServerBrowserPrefs.alwaysUseServerVersion`.
     var alwaysUseServerVersion: Bool {
         get { loadServerPrefsOnce(); return serverPrefs.alwaysUseServerVersion }
         set { loadServerPrefsOnce(); serverPrefs.alwaysUseServerVersion = newValue; saveServerPrefs() }
