@@ -107,6 +107,32 @@ extension Snapshots {
               model.trashedMedia == nil else { print("FAIL: Undo did not put the demo back"); return false }
         print("PASS: Move to Trash moves the demo and says so; Undo puts it back and selects it")
 
+        // Each tab keeps its scroll position: scroll Demos down, visit Screenshots, come back.
+        let extra = (0..<30).map { demos.appendingPathComponent(String(format: "scroll-%02d.dm_1", $0)) }
+        for url in extra { try Data("demo".utf8).write(to: url) }
+        defer { for url in extra { try? FileManager.default.removeItem(at: url) } }
+        model.loadMedia()
+        try await Task.sleep(for: .milliseconds(500))
+        func listScroll() -> NSScrollView? {
+            func scrollViews(_ view: NSView) -> [NSScrollView] {
+                var found = view.subviews.flatMap(scrollViews)
+                if let scroll = view as? NSScrollView { found.append(scroll) }
+                return found
+            }
+            return window.contentView.map(scrollViews)?.max { ($0.documentView?.frame.height ?? 0) < ($1.documentView?.frame.height ?? 0) }
+        }
+        guard let scroll = listScroll() else { print("FAIL: Demos has no scroll view"); return false }
+        scroll.contentView.scroll(to: NSPoint(x: 0, y: 500)); scroll.reflectScrolledClipView(scroll.contentView)
+        try await Task.sleep(for: .milliseconds(300))
+        model.libraryTab = .screenshots
+        try await Task.sleep(for: .milliseconds(500))
+        model.libraryTab = .demos
+        try await Task.sleep(for: .milliseconds(700))
+        guard let back = listScroll()?.contentView.bounds.origin.y, abs(back - 500) < 40 else {
+            print("FAIL: Demos did not come back where it was left (kept \(model.libraryOffsets[.demos] ?? -1), now \(listScroll()?.contentView.bounds.origin.y ?? -1))"); return false
+        }
+        print("PASS: each Library tab comes back at the scroll position it was left at")
+
         // Stored match summaries: Matches lists them newest first.
         let stats = model.home.appendingPathComponent("main/stats")
         try FileManager.default.createDirectory(at: stats, withIntermediateDirectories: true)

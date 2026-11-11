@@ -543,25 +543,30 @@ private struct RecentRow: View {
                                 listed ? (ServerFacts(server).isCoD2x ? "CoD2x" : "Original 1.3") : nil].compactMap { $0 }
         let subtitle = listed || !detail.isEmpty ? detail.joined(separator: " · ") : "Joined by address"
         let played = model.lastPlayed(server.address)
-        HStack(spacing: 12) {
-            Button { model.showServer(server.address) } label: {
-                HStack(spacing: 12) {
-                    MapArtFrame(map: server.knownMap ?? "mp_toujane", image: server.knownMap == nil ? nil : image, size: .card, radius: Concentric.radius(in: 16, inset: 7))
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(name).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1)
-                        Text(subtitle).font(.system(size: 12)).foregroundStyle(palette.secondary).lineLimit(1)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    if let played {
-                        Text(PlayedDate.day(played)).font(.typewriter(12)).foregroundStyle(palette.tertiary).lineLimit(1).fixedSize()
-                    }
-                }
-                .contentShape(Rectangle())
+        // Clicking the row shows the server in Servers; a server no list has shown, or a page change
+        // while the game runs, leaves the row as plain text rather than a button that does nothing.
+        let opens = listed && model.canNavigate
+        let label = "\(name), \(subtitle)" + (played.map { ", played \(PlayedDate.spoken($0))" } ?? "")
+        let content = HStack(spacing: 12) {
+            MapArtFrame(map: server.knownMap ?? "mp_toujane", image: server.knownMap == nil ? nil : image, size: .card, radius: Concentric.radius(in: 16, inset: 7))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(name).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1)
+                Text(subtitle).font(.system(size: 12)).foregroundStyle(palette.secondary).lineLimit(1)
             }
-            .buttonStyle(.plain)
-            .disabled(!listed || !model.canNavigate)
-            .accessibilityLabel("\(name), \(subtitle)" + (played.map { ", played \(PlayedDate.spoken($0))" } ?? ""))
-            .accessibilityHint(listed ? "Shows this server in Servers" : "")
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if let played {
+                Text(PlayedDate.day(played)).font(.typewriter(12)).foregroundStyle(palette.tertiary).lineLimit(1).fixedSize()
+            }
+        }
+        HStack(spacing: 12) {
+            if opens {
+                Button { model.showServer(server.address) } label: { content.contentShape(Rectangle()) }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(label)
+                    .accessibilityHint("Shows this server in Servers")
+            } else {
+                content.accessibilityElement(children: .ignore).accessibilityLabel(label).accessibilityAddTraits(.isStaticText)
+            }
             Button { model.connect(server) } label: { Label("Launch", systemImage: "play.fill").font(.system(size: 12, weight: .semibold)) }
                 .glassAction().controlSize(.small)
                 .accessibilityLabel("Launch on \(name)")
@@ -569,12 +574,12 @@ private struct RecentRow: View {
         }
         // The Launch capsule sits as far from the row's end as from its top and bottom (art 48 + 2 × 7).
         .padding(.vertical, 7).padding(.leading, 7).padding(.trailing, (48 + 14 - ControlMetrics.height(.small)) / 2)
-        .background(hovering ? palette.hover : .clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(hovering && opens ? palette.hover : .clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .shapeAudit(.container, .rounded(16), "recent row")
         .onHover { hovering = $0 }
         .contextMenu {
             Button("Launch") { model.connect(server) }
-            Button("Show in Servers") { model.showServer(server.address) }.disabled(!listed || !model.canNavigate)
+            Button("Show in Servers") { model.showServer(server.address) }.disabled(!opens)
             Divider()
             Button(model.library.favorites.contains(server.address) ? "Remove from Favorites" : "Add to Favorites") { model.favorite(server.address) }
             Button("Copy Address") { model.copyServer(server) }
