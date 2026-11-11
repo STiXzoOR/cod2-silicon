@@ -196,6 +196,23 @@ enum ReleaseNotes {
 
 struct ReleaseAsset: Equatable, Sendable { var name: String; var size: Int; var url: URL }
 
+// MARK: - ship-settings
+
+/// Settings › General › Appearance. `system` follows macOS.
+enum LauncherAppearance: String, Codable, Sendable, CaseIterable {
+    case system, light, dark
+    var title: String {
+        switch self { case .system: "Match System"; case .light: "Light"; case .dark: "Dark" }
+    }
+}
+
+/// Keys of the “Don’t ask again” choices kept in `GameSettings.dismissedWarnings`. A unit that adds a
+/// prompt adds its key here; Settings › Advanced › Reset Warnings brings every one back.
+enum DismissibleWarning {
+    /// Servers: launching on a server that runs the other game version (ship-servers).
+    static let switchVersion = "switch-version"
+}
+
 struct MediaFacts: Equatable {
     var modifiedAt: Date?
     var map: String?

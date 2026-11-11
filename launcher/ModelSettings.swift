@@ -165,6 +165,11 @@ import SwiftUI
     }
 
     // MARK: State other units read
+    /// “Don’t ask again” prompts (keys in `DismissibleWarning`): whether the player turned one off,
+    /// turning one off, and Settings › Advanced › Reset Warnings. Saved with the other settings.
+    func isWarningDismissed(_ key: String) -> Bool { settings.dismissedWarnings.contains(key) }
+    func dismissWarning(_ key: String) { settings.dismissedWarnings.insert(key) }
+    func resetWarnings() { settings.dismissedWarnings.removeAll() }
     /// Where updates stand: Home's pill, Settings › Updates and the app menu read this.
     var updateState: UpdateState {
         if installingUpdate { return .installing(message: updateMessage) }
