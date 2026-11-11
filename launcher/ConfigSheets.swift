@@ -51,8 +51,12 @@ struct NewLoadoutSheet: View {
 struct RenameLoadoutSheet: View {
     @ObservedObject var model: LauncherModel
     @ObservedObject var studio: ConfigStudioModel
-    @State private var name = ""
-    init(model: LauncherModel) { self.model = model; studio = model.studio }
+    @State private var name: String
+    init(model: LauncherModel) {
+        self.model = model; studio = model.studio
+        // Starts from the current name, set before the field first appears (no onAppear race with typing).
+        _name = State(initialValue: model.studio.current?.profile.displayName ?? "")
+    }
 
     var body: some View {
         let current = studio.current?.profile
@@ -72,7 +76,6 @@ struct RenameLoadoutSheet: View {
         } note: {
             if let reason { Text(reason) }
         }
-        .onAppear { name = current?.displayName ?? "" }
     }
 }
 

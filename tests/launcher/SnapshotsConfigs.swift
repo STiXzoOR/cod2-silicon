@@ -13,7 +13,10 @@ extension Snapshots {
                                 "configs-binds-verify", "configs-binds-learn", "configs-expert-player",
                                 "configs-checkup-measured", "configs-checkup-off", "configs-checkup-error",
                                 "configs-import-link", "configs-import-windows", "configs-import-loading",
-                                "discover-saved-removed", "configs-save-failure", "configs-import-windows-profiles", "configs-catalog-loading"]
+                                "discover-saved-removed", "configs-save-failure", "configs-import-windows-profiles", "configs-catalog-loading",
+                                // ship-configs: Discover hidden, loadout management and a chosen match.
+                                "configs-discover-hidden", "configs-other-loadout", "configs-delete-confirm", "configs-new-loadout-sheet",
+                                "configs-rename-sheet", "configs-checkup-match"]
 }
 
 /// Synthetic loadouts for the Config Studio screens, written through the real store into a
@@ -82,6 +85,14 @@ extension Snapshots {
 
         let running = screen == "configs-running"
         let session = try ConfigStudioSession(home: home, dialect: .cod2x, discoverGames: { running ? [4242] : [] })
+        // Deleted loadouts go to a folder in the preview home, never the Mac's Trash.
+        let trash = home.appendingPathComponent("preview-trash")
+        session.trashItem = { url in
+            try FileManager.default.createDirectory(at: trash, withIntermediateDirectories: true)
+            let target = trash.appendingPathComponent(url.lastPathComponent + " " + UUID().uuidString.prefix(6))
+            try FileManager.default.moveItem(at: url, to: target)
+            return target
+        }
         try session.refresh()
         if screen.hasPrefix("home-loadout") || (screen.hasPrefix("settings") && !screen.hasPrefix("settings-legacy")) {
             var settings = model.settings
@@ -110,15 +121,24 @@ extension Snapshots {
         case "configs-binds-visual": model.studio.binds.layout = .visual; model.studio.binds.selectedKey = EngineKey(spelling: "w")
         case "configs-binds-advanced": model.studio.binds.selectChain("greetings"); model.studio.binds.showLines = true
         case "configs-guided-rules", "configs-expert-rules": model.studio.checkup.rulesetIDs = ["zpam-4.08"]
-        case "configs-checkup", "configs-checkup-measured", "configs-checkup-off", "configs-checkup-error":
+        case "configs-other-loadout": model.studio.select("Scrim")
+        case "configs-delete-confirm":
+            // The Delete Loadout alert for a loadout that isn't in use, as the menu asks it.
+            model.studio.select("Scrim")
+            if let scrim = model.studio.current?.profile { model.confirmation = model.deleteConfirmation(scrim) }
+        case "configs-checkup", "configs-checkup-measured", "configs-checkup-off", "configs-checkup-error", "configs-checkup-match":
             // Check-up reads the isolated home's own summaries, as the app reads its home after a game.
             model.page = .configs; model.studio.tab = .checkup
             let checkup = model.studio.checkup
             checkup.rulesetIDs = ["zpam-4.08"]
-            if screen == "configs-checkup-measured" { try writeMatches(home) }
+            if screen == "configs-checkup-measured" || screen == "configs-checkup-match" { try writeMatches(home) }
             if screen == "configs-checkup-off" { checkup.matchSummariesEnabled = false }
             if screen == "configs-checkup-error" { checkup.readMatches = { _ in throw CocoaError(.fileReadNoPermission) } }
             checkup.refreshMatches(home: home)
+            // Opened from Library › Matches for the older match (Carentan), not the latest.
+            if screen == "configs-checkup-match", case .read(let all) = checkup.matchState, let older = all.first(where: { $0.map == "mp_carentan" }) {
+                checkup.show(match: older.id)
+            }
         case "configs-save-failure":
             // A real failed write: the loadout's folder refuses it, then is writable again for cleanup.
             model.page = .configs; model.studio.level = .guided; model.studio.group = .aim
@@ -171,7 +191,11 @@ extension Snapshots {
             }
         }
         switch screen {
-        case "discover-unavailable": await discover.reload()
+        case "discover-unavailable", "configs-discover-hidden": await discover.reload()
+        case "configs-guided":
+            // As drawn: Discover in the column, with two saved players.
+            try await fixture()
+            discover.setSaved("player-2", true); discover.setSaved("player-4", true)
         case "discover-players": try await fixture()
         case "discover-saved":
             try await fixture()
@@ -210,7 +234,8 @@ extension Snapshots {
             // and no profile is read unless one is reviewed.
             let players = home.appendingPathComponent("windows-preview/players")
             func candidate(_ name: String, active: Bool = false, backup: Bool = false) -> WindowsProfileCandidate {
-                WindowsProfileCandidate(profileName: name, configURL: players.appendingPathComponent(name + "/config_mp.cfg"), playersURL: players,
+                // A backup sits in the profile's backup folder, as the search finds it.
+                WindowsProfileCandidate(profileName: name, configURL: players.appendingPathComponent(name + (backup ? "/backup/config_mp.cfg.bak" : "/config_mp.cfg")), playersURL: players,
                                         isActive: active, isBackup: backup)
             }
             let found = WindowsProfileDiscovery(profiles: [candidate("Morrow", active: true), candidate("Scrim"), candidate("Morrow", backup: true)],
@@ -409,6 +434,7 @@ extension Snapshots {
         guard await groupRailAction() else { return false }
         guard await compareAction() else { return false }
         guard await loadoutMenuActions() else { return false }
+        guard await deleteLoadoutAction() else { return false }
         guard await importAction() else { return false }
         guard await readyAction() else { return false }
         // Last, so a window that keeps synthesized keys from SwiftUI can't hide the checks above.
@@ -422,6 +448,7 @@ extension Snapshots {
         case "group-rail": return await groupRailAction()
         case "compare": return await compareAction()
         case "loadout-menu": return await loadoutMenuActions()
+        case "delete-loadout": return await deleteLoadoutAction()
         case "import": return await importAction()
         case "ready": return await readyAction()
         case "tab-exit": return await tabExitAction()
@@ -1275,7 +1302,7 @@ extension Snapshots {
         "configs-binds-learn": ["Learn your mouse buttons", "Press down on the scroll wheel", "I Don’t Have This Button"],
         "configs-expert-player": ["Compare markers show [Player 1]’s values", "Take [Player 1]’s Mouse speed"],
         "discover-player": ["Compare in Expert", "Try This Setup"],
-        "configs-checkup-measured": ["Your last match: Toujane, Search & Destroy", "Movement: 5.2 MS", "Connection: 38 MS", "Refresh match summaries"],
+        "configs-checkup-measured": ["Your last match: Toujane, Search & Destroy", "Movement: 333 FPS", "Connection: 38 MS", "Show the movement figures", "Refresh match summaries"],
         "configs-checkup-off": ["Match summaries are off", "Refresh match summaries"],
         "configs-checkup-error": ["Couldn’t read your match summaries", "Connection: no value, Not measured"],
         "configs-import-link": ["Config link", "Review"],
@@ -1285,6 +1312,12 @@ extension Snapshots {
         "configs-save-failure": ["Couldn’t save: Changed Mouse speed"],
         "configs-import-windows-profiles": ["Bring in your Windows setup", "Morrow", "Scrim", "Choose Folder…"],
         "configs-catalog-loading": ["Loading settings"],
+        "configs-discover-hidden": ["Add a Config", "New Loadout", "Main, in use for your next game"],
+        "configs-other-loadout": ["Use for Next Game", "Scrim"],
+        "configs-delete-confirm": ["Delete the loadout “Scrim”?", "Delete Loadout", "Cancel"],
+        "configs-new-loadout-sheet": ["New loadout", "Name", "Start from", "Create Loadout", "Cancel"],
+        "configs-rename-sheet": ["Rename “Main”", "Name", "Rename", "Cancel"],
+        "configs-checkup-match": ["Your match on Carentan, Search & Destroy", "Show Last Match", "Movement: 333 FPS"],
     ]
 
     /// Every Config Studio screen's accessibility tree in reading order, with unnamed controls as failures.
@@ -1616,23 +1649,34 @@ extension Snapshots {
         let before = disk(), count = session.history.count
         guard await chooseMoreAction(window, "Rename “Main”") else { return false }
         try? await Task.sleep(for: .milliseconds(900))
-        guard window.attachedSheet != nil, let field = sheetElement("AXTextField", "Name"), let rename = sheetElement("AXButton", "Rename") else {
+        guard window.attachedSheet != nil, sheetElement("AXTextField", "Name") != nil, sheetElement("AXButton", "Rename") != nil else {
             print("FAIL: Rename “Main”… did not open the rename sheet"); return false
         }
-        AccessibilityTree.setValue(field, "Scrim Night")
+        // The sheet focuses its name field: select its text and type over it with key events, as a
+        // person does (a value set through accessibility doesn't reach a focused plain SwiftUI field).
+        func typeName(_ text: String) {
+            guard let sheet = window.attachedSheet else { return }
+            (sheet.firstResponder as? NSTextView)?.selectAll(nil)
+            for character in text { press(sheet, keyCode: character == " " ? 49 : 0, characters: String(character)) }
+        }
+        typeName("Scrim Night")
         try? await Task.sleep(for: .milliseconds(400))
+        // Read the button again: it was dimmed until the name changed, and SwiftUI renews its node.
+        guard let rename = sheetElement("AXButton", "Rename") else { print("FAIL: the rename sheet lost its Rename button"); return false }
         AccessibilityTree.press(rename)
         try? await Task.sleep(for: .milliseconds(900))
         let renamed = disk()
         guard model.studio.metadata?.displayName == "Scrim Night", renamed[0] == before[0], renamed[2] == before[2], renamed[1] != before[1],
               session.history.count == count + 1, session.history.first?.summary == "Renamed to Scrim Night", window.attachedSheet == nil else {
-            print("FAIL: Rename did not change only the display name (\(model.studio.metadata?.displayName ?? "none"))"); return false
+            print("FAIL: Rename did not change only the display name (\(model.studio.metadata?.displayName ?? "none"); field “\(sheetElement("AXTextField", "Name")?.value ?? "gone")”, "
+                  + "sheet \(window.attachedSheet != nil ? "open" : "closed"), failure \(model.studio.failure?.message ?? "none"))"); return false
         }
         print("PASS: More Actions › Rename wrote only the display name, Scrim Night, as one History row; config and active loadout unchanged")
         guard await chooseMoreAction(window, "Rename “Scrim Night”") else { return false }
         try? await Task.sleep(for: .milliseconds(900))
         guard let again = sheetElement("AXTextField", "Name"), let cancel = sheetElement("AXButton", "Cancel") else { print("FAIL: the rename sheet did not reopen"); return false }
-        AccessibilityTree.setValue(again, "Discarded")
+        _ = again
+        typeName("Discarded")
         try? await Task.sleep(for: .milliseconds(300))
         AccessibilityTree.press(cancel)
         try? await Task.sleep(for: .milliseconds(900))
@@ -1665,6 +1709,76 @@ extension Snapshots {
             print("FAIL: cancelling the export panel wrote something"); return false
         }
         print("PASS: cancelling the export save panel wrote nothing")
+        return true
+    }
+
+    /// Delete Loadout: the loadout in use can't be deleted (model, More menu and row menu all refuse it).
+    /// Another one, chosen from the More menu, asks first; Cancel writes nothing; Delete Loadout moves
+    /// its whole folder to the (private) Trash; the banner's Undo puts the same bytes back.
+    static func deleteLoadoutAction() async -> Bool {
+        guard let (model, window, home) = await open("configs-guided", dark: true) else { return false }
+        defer { window.orderOut(nil); window.close(); try? FileManager.default.removeItem(at: home) }
+        let players = home.appendingPathComponent("main/players"), trash = home.appendingPathComponent("preview-trash")
+        func tree(_ folder: URL) -> [String: Data] {
+            var files: [String: Data] = [:]
+            let base = folder.standardizedFileURL.path
+            guard let walk = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: nil) else { return files }
+            for case let url as URL in walk {
+                if let data = try? Data(contentsOf: url) { files[String(url.standardizedFileURL.path.dropFirst(base.count))] = data }
+            }
+            return files
+        }
+        func button(_ label: String) -> AccessibilityTree.Element? {
+            for host in [window.attachedSheet, window].compactMap({ $0 }) {
+                if let found = AccessibilityTree.elements(of: host).first(where: { $0.role == "AXButton" && $0.label == label }) { return found }
+            }
+            return nil
+        }
+        window.makeKey()
+        let active = try? Data(contentsOf: players.appendingPathComponent("active.txt"))
+
+        // The loadout in use: nothing offers to delete it.
+        model.requestDeleteLoadout("Main")
+        guard !model.canDeleteLoadout, model.confirmation == nil, model.studio.deleteBlock("Main") != nil else {
+            print("FAIL: the loadout in use could be deleted"); return false
+        }
+        print("PASS: Delete Loadout is unavailable for the loadout in use (\(model.studio.deleteBlock("Main") ?? ""))")
+
+        // Scrim, from the More menu: Cancel first, then Delete Loadout.
+        model.studio.select("Scrim")
+        try? await Task.sleep(for: .milliseconds(600))
+        let scrim = tree(players.appendingPathComponent("Scrim"))
+        guard !scrim.isEmpty, model.canDeleteLoadout, await chooseMoreAction(window, "Delete “Scrim”") else { print("FAIL: More › Delete “Scrim”… is not available"); return false }
+        try? await Task.sleep(for: .milliseconds(900))
+        guard let cancel = button("Cancel"), button("Delete Loadout") != nil else { print("FAIL: Delete “Scrim”… did not ask first"); return false }
+        AccessibilityTree.press(cancel)
+        try? await Task.sleep(for: .milliseconds(900))
+        guard tree(players.appendingPathComponent("Scrim")) == scrim, model.studio.profiles.contains(where: { $0.id == "Scrim" }) else {
+            print("FAIL: cancelling Delete Loadout removed something"); return false
+        }
+        print("PASS: cancelling the Delete Loadout alert left Scrim as it was")
+        guard await chooseMoreAction(window, "Delete “Scrim”") else { return false }
+        try? await Task.sleep(for: .milliseconds(900))
+        guard let delete = button("Delete Loadout") else { print("FAIL: the Delete Loadout alert did not reopen"); return false }
+        AccessibilityTree.press(delete)
+        try? await Task.sleep(for: .milliseconds(900))
+        let trashed = (try? FileManager.default.contentsOfDirectory(at: trash, includingPropertiesForKeys: nil)) ?? []
+        guard !FileManager.default.fileExists(atPath: players.appendingPathComponent("Scrim").path), trashed.count == 1, tree(trashed[0]) == scrim,
+              !model.studio.profiles.contains(where: { $0.id == "Scrim" }), (try? Data(contentsOf: players.appendingPathComponent("active.txt"))) == active,
+              model.studio.notice?.hasPrefix("Moved “Scrim” to the Trash") == true, model.studio.noticeAction?.title == "Undo" else {
+            print("FAIL: Delete Loadout did not move exactly Scrim's folder to the Trash (notice: \(model.studio.notice ?? "none"))"); return false
+        }
+        print("PASS: Delete Loadout moved Scrim's whole folder to the Trash; the loadout in use is unchanged")
+
+        // The banner's Undo puts it back, byte for byte.
+        guard let undo = button("Undo") else { print("FAIL: the banner has no Undo"); return false }
+        AccessibilityTree.press(undo)
+        try? await Task.sleep(for: .milliseconds(900))
+        guard tree(players.appendingPathComponent("Scrim")) == scrim, model.studio.profiles.contains(where: { $0.id == "Scrim" }),
+              ((try? FileManager.default.contentsOfDirectory(atPath: trash.path)) ?? []).isEmpty, model.studio.current?.profile.id == "Scrim" else {
+            print("FAIL: Undo did not put Scrim back as it was"); return false
+        }
+        print("PASS: the banner's Undo put Scrim back from the Trash with the same files")
         return true
     }
 

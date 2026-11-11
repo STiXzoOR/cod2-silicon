@@ -203,7 +203,8 @@ private struct MatchPanel: View {
     private var buttons: some View {
         HStack(spacing: 8) {
             if checkup.focusedMatchID != nil, checkup.shownMatch?.id != checkup.latestMatch?.id {
-                Button { checkup.focusedMatchID = nil } label: { Label("Show Last Match", systemImage: "clock.arrow.circlepath") }
+                // Both labels are one height, so the two capsules line up whatever their symbols.
+                Button { checkup.focusedMatchID = nil } label: { Label("Show Last Match", systemImage: "clock.arrow.circlepath").frame(height: 16) }
                     .glassAction().controlSize(.small).fixedSize()
                     .help("Measure from your most recent match instead")
             }
@@ -211,7 +212,7 @@ private struct MatchPanel: View {
         }
     }
     private var refresh: some View {
-        Button { checkup.refreshMatches() } label: { Label("Refresh", systemImage: "arrow.clockwise") }
+        Button { checkup.refreshMatches() } label: { Label("Refresh", systemImage: "arrow.clockwise").frame(height: 16) }
             .glassAction().controlSize(.small).fixedSize()
             .help("Read the match summaries the game saved on this Mac again")
             .accessibilityLabel("Refresh match summaries")
