@@ -324,9 +324,19 @@ final class Watchdog: @unchecked Sendable {
 }
 
 @main struct Snapshots {
+    /// LaunchServices gives the review app focus, but `open -W` does not relay its exit code.
+    /// Keep a per-run result so the Python runner still fails on crashes and failed checks.
+    static func writeResult(_ status: Int32) {
+        let arguments = CommandLine.arguments
+        guard let index = arguments.firstIndex(of: "--result-file"), arguments.count > index + 1 else { return }
+        try? "\(getpid())\n\(status)\n".write(toFile: arguments[index + 1], atomically: true, encoding: .utf8)
+    }
+    static func finish(_ status: Int32) -> Never { writeResult(status); exit(status) }
     static let screens = ["home", "home-first", "servers", "servers-empty", "settings", "settings-original", "settings-original-missing",
                           "settings-cod2x-installed", "settings-cod2x-downloading", "settings-cod2x-error", "settings-reports", "home-crash-sent", "home-crash-not-sent", "settings-update", "settings-update-installing", "settings-update-error", "about-update", "library-demos", "library-screenshots", "about",
-                          "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"] + configScreens
+                          "home-notice", "home-game-running"] + setupScreens + configScreens
+    static let setupScreens = ["setup-data", "setup-data-missing", "setup-folder-error", "setup-key", "setup-key-invalid", "setup-key-stored", "setup-key-replace", "setup-shaders-ready",
+                               "setup-shaders", "setup-ready", "setup-summary-ready", "setup-summary-approximate", "setup-summary-link", "setup-cancelable"]
     static let configScreens = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-text", "configs-history", "configs-running",
                                 "discover-unavailable", "discover-players", "discover-saved", "discover-player", "configs-import",
                                 "configs-import-everything", "servers-ready", "servers-ready-fixed",
@@ -338,6 +348,7 @@ final class Watchdog: @unchecked Sendable {
                                 "discover-saved-removed", "configs-save-failure", "configs-import-windows-profiles", "configs-catalog-loading"]
 
     @MainActor static func main() {
+        writeResult(-1)
         let arguments = CommandLine.arguments
         guard arguments.count >= 2 else { fputs("usage: LauncherSnapshots OUTPUT [--data GAME_DIR] [--fallback] [--scale2] [--only SCREEN]\n", stderr); exit(2) }
         let output = URL(fileURLWithPath: arguments[1])
@@ -358,25 +369,33 @@ final class Watchdog: @unchecked Sendable {
         do { try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true) } catch { fputs("\(error)\n", stderr); exit(1) }
         if arguments.contains("--contrast") {
             guard let data else { fputs("--contrast needs --data GAME_DIR\n", stderr); exit(2) }
-            exit(contrastReport(data: data, output: output) ? 0 : 1)
+            finish(contrastReport(data: data, output: output) ? 0 : 1)
+        }
+        if arguments.contains("--shell-actions") {
+            Task { @MainActor in finish(await ShellPreview.actions(output: output) ? 0 : 1) }
+            app.run()
+        }
+        if arguments.contains("--shell-accessibility") {
+            Task { @MainActor in finish(await ShellPreview.accessibility(output: output) ? 0 : 1) }
+            app.run()
         }
         if arguments.contains("--actions") {
             Task { @MainActor in
                 let passed = if let only { await ConfigsPreview.action(only) } else { await ConfigsPreview.actions() }
-                exit(passed ? 0 : 1)
+                finish(passed ? 0 : 1)
             }
             app.run()
         }
         if arguments.contains("--accessibility") {
-            Task { @MainActor in exit(await ConfigsPreview.accessibility(output: output, only: only) ? 0 : 1) }
+            Task { @MainActor in finish(await ConfigsPreview.accessibility(output: output, only: only) ? 0 : 1) }
             app.run()
         }
         if arguments.contains("--overlays") {
-            Task { @MainActor in exit(await ConfigsPreview.overlays(output: output, only: only) ? 0 : 1) }
+            Task { @MainActor in finish(await ConfigsPreview.overlays(output: output, only: only) ? 0 : 1) }
             app.run()
         }
         if arguments.contains("--navigation") {
-            Task { @MainActor in exit(await ConfigsPreview.navigation(output: output) ? 0 : 1) }
+            Task { @MainActor in finish(await ConfigsPreview.navigation(output: output) ? 0 : 1) }
             app.run()
         }
         Task { @MainActor in
@@ -422,7 +441,7 @@ final class Watchdog: @unchecked Sendable {
             }
             findings.forEach { print("SHAPE: \($0)") }
             print("Shape audit: \(checked) shapes checked, \(findings.count) findings")
-            exit(written > 0 && findings.isEmpty ? 0 : 1)
+            finish(written > 0 && findings.isEmpty ? 0 : 1)
         }
         app.run()
     }
@@ -2395,5 +2414,130 @@ final class PreviewCatalogGate: Sendable {
                 NSApp.sendEvent(event)
             }
         }
+    }
+}
+
+/// Shell and setup checks exercise the shipping views with synthetic data only.
+@MainActor enum ShellPreview {
+    struct Failure: Error { let message: String }
+    static func require(_ condition: Bool, _ message: String) throws {
+        if !condition { throw Failure(message: message) }
+    }
+    static func settle() async { try? await Task.sleep(for: .milliseconds(650)) }
+    static func click(_ title: String, in window: NSWindow) async throws {
+        guard let button = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label == title }) else {
+            throw Failure(message: "Missing button: \(title)")
+        }
+        ConfigsPreview.click(window, element: button)
+        await settle()
+    }
+    static func actions(output: URL) async -> Bool {
+        let model = LauncherModel(snapshot: true)
+        model.preview("setup-key-stored")
+        let window = await Snapshots.show(model: model, dark: true, glass: true)
+        defer { window.orderOut(nil); window.close() }
+        AccessibilityTree.wake(window)
+        do {
+            try require(model.keyReady, "A saved key must enable Continue")
+            try await click("Continue", in: window)
+            try require(model.step == 2, "Stored-key Continue reaches shaders")
+            try await click("Back", in: window)
+            try require(model.step == 1 && model.keyReady && model.keyInput.isEmpty, "Back preserves the verified stored key")
+            try await click("Replace Key…", in: window)
+            try require(!model.keyReady && model.replacingKey, "Replacing a key requires valid replacement input")
+            try await click("Keep Stored Key", in: window)
+            try require(model.keyReady && !model.replacingKey, "Keeping the stored key restores Continue")
+            print("PASS: stored key → Continue → Back; Replace Key and Keep Stored Key use real controls")
+
+            model.onboard = false; model.navigate(to: .library); model.restartSetup()
+            let original = model.dataPath
+            let folder = output.appendingPathComponent("synthetic-game")
+            try FileManager.default.createDirectory(at: folder.appendingPathComponent("main"), withIntermediateDirectories: true)
+            defer { try? FileManager.default.removeItem(at: folder) }
+            for index in 0..<16 { try Data().write(to: folder.appendingPathComponent(String(format: "main/iw_%02d.iwd", index))) }
+            try require(model.chooseData(folder), "Complete dropped/selected folders are accepted")
+            await settle()
+            ConfigsPreview.press(window, keyCode: 53, characters: "\u{1b}")
+            await settle()
+            try require(!model.onboard && model.page == .library && model.dataPath == original, "Escape cancels and restores the unconfirmed folder and originating page")
+            model.restartSetup()
+            try require(!model.chooseData(folder.appendingPathComponent("missing")) && !model.dataError.isEmpty && !model.setupCanContinue, "An incomplete folder blocks Continue and explains why inline")
+            try require(model.notice.isEmpty, "Folder validation does not use the toast")
+            print("PASS: folder validation and Escape restore the unconfirmed folder and Library page")
+
+            var panel: NSOpenPanel?
+            model.makeSetupPanel = { let value = NSOpenPanel(); panel = value; return value }
+            await settle()
+            try await click("Choose Folder…", in: window)
+            try require(window.attachedSheet != nil && panel?.sheetParent === window, "Choose Folder must attach its native panel to the launcher")
+            panel?.cancel(nil)
+            await settle()
+            try require(window.attachedSheet == nil, "Cancel closes only the folder sheet")
+            print("PASS: Choose Folder opens an attached native sheet; Cancel returns to setup")
+
+            model.cancelSetup(); model.preview("setup-summary-approximate")
+            await settle()
+            try require(AccessibilityTree.elements(of: window).contains { $0.label.contains("Clouds and much") || $0.value.contains("Clouds and much") }, "Approximate summary states the visual compromise")
+            ConfigsPreview.press(window, keyCode: 36, characters: "\r")
+            await settle()
+            try require(!model.onboard && model.page == .deploy, "Return on summary opens the launcher without starting a game")
+            model.preview("setup-summary-ready")
+            await settle()
+            try await click("Find a Server", in: window)
+            try require(!model.onboard && model.page == .servers, "Find a Server completes setup into Servers")
+            print("PASS: summary Return opens Deploy; Find a Server completes into Servers")
+
+            model.preview("home-notice")
+            await settle()
+            let elements = AccessibilityTree.elements(of: window)
+            let dismiss = elements.first { $0.label == "Dismiss message" && $0.role == "AXButton" }
+            let deploy = elements.first { $0.label.hasPrefix("Deploy to ") && $0.role == "AXButton" }
+            try require(dismiss != nil, "The status must have a Dismiss message button")
+            try require(deploy != nil, "Deploy must remain in the accessibility tree: \(elements.filter { $0.role == "AXButton" }.map(\.label))")
+            try require(!dismiss!.frame.intersects(deploy!.frame), "Status must not cover Deploy")
+            let oldNotice = model.notice
+            model.notice = "The game closed. You can deploy again."
+            await settle()
+            let updatedStatus = AccessibilityTree.elements(of: window)
+            try require(updatedStatus.contains { $0.label == model.notice || $0.value == model.notice }, "Updated status is available to VoiceOver")
+            try require(!updatedStatus.contains { $0.label == oldNotice || $0.value == oldNotice }, "Status must not retain a stale accessible label")
+            try await click("Dismiss message", in: window)
+            try require(model.notice.isEmpty, "Dismiss clears the status")
+            model.gameRunning = true
+            try require(!model.canNavigate && !model.canImport, "Game-running command guards")
+            model.preview("home-game-running")
+            await settle()
+            let runningButtons = AccessibilityTree.elements(of: window).filter { $0.role == "AXButton" }.map(\.label)
+            try require(runningButtons.contains("Return to Game") && !runningButtons.contains("Dismiss message"), "The running-game explanation must keep its way back to the game")
+            model.gameRunning = false; model.onboard = true
+            try require(!model.canNavigate && !model.canImport, "Setup command guards")
+            print("PASS: status leaves Deploy accessible; setup and game-running command guards hold")
+            return true
+        } catch {
+            print("FAIL: shell actions: \((error as? Failure)?.message ?? error.localizedDescription)")
+            return false
+        }
+    }
+    static func accessibility(output: URL) async -> Bool {
+        var passed = true
+        for screen in Snapshots.setupScreens {
+            let model = LauncherModel(snapshot: true); model.preview(screen)
+            let window = await Snapshots.show(model: model, dark: true, glass: true)
+            AccessibilityTree.wake(window)
+            await settle()
+            let tree = AccessibilityTree.read(window)
+            let unnamed = AccessibilityTree.unnamed(tree.elements)
+            let roleless = AccessibilityTree.roleless(tree.elements)
+            let primary = tree.elements.contains { $0.role == "AXButton" && $0.label == (model.step == 3 ? model.setupCompletionTitle : model.step == 2 ? (model.shaderBusy ? "Preparing Shaders…" : "Review Setup") : model.step == 1 && (!model.keyVerified || model.replacingKey) ? "Save Key and Continue" : "Continue") }
+            let indicators = tree.elements.filter { $0.label.hasPrefix("Step ") || $0.value.hasPrefix("Step ") }
+            passed = passed && unnamed.isEmpty && roleless.isEmpty && tree.problems.isEmpty && primary && indicators.count == 4
+            print("A11Y \(screen): \(unnamed.count) unnamed controls, \(roleless.count) roleless elements, \(indicators.count) steps, primary \(primary)")
+            for item in roleless { print("A11Y roleless: \(item.line)") }
+            for (item, why) in unnamed { print("A11Y unnamed: \(item.line) \(why)") }
+            try? tree.elements.map(\.line).joined(separator: "\n").write(to: output.appendingPathComponent(screen + ".txt"), atomically: true, encoding: .utf8)
+            window.orderOut(nil); window.close()
+        }
+        print(passed ? "PASS: every setup control is named, all steps have roles, and each primary action is present" : "FAIL: setup accessibility")
+        return passed
     }
 }

@@ -5,6 +5,9 @@ Needs a login session whose window server supplies rendered window pixels (macOS
 can return transparent captures while locked). Uses only the original fallback art
 and fake documentation-range servers; no game data is read.
 """
+import atexit
+import os
+import time
 import json
 import pathlib
 import plistlib
@@ -12,10 +15,11 @@ import shutil
 import struct
 import subprocess
 import sys
+import tempfile
 
 root = pathlib.Path(__file__).resolve().parents[2]
 out = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else root / "output/ws28/unit/snapshots"
-build = out.parent / "snapshot-harness"
+build = out.parent / "snapshot-harness.noindex"
 subprocess.run([str(root / "scripts/build-launcher.sh"), str(build), "--snapshots"], check=True)
 # A normal bundle gives the review host a stable application identity for native
 # window activation and external interaction with AppKit's remote Save panel.
@@ -35,12 +39,74 @@ info = plistlib.loads((build / "Info.plist").read_bytes())
 info.update(CFBundleExecutable="LauncherSnapshots", CFBundleName="CoD2 Launcher Review", CFBundlePackageType="APPL")
 (app / "Contents/Info.plist").write_bytes(plistlib.dumps(info))
 harness = macos / "LauncherSnapshots"
+atexit.register(lambda: subprocess.run(["/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister", "-u", str(app)], check=False))
+
+
+lease = root.parent / "_agents/bench.lock"
+lease_owned = False
+
+
+def release_lease():
+    if lease_owned and lease.exists() and lease.read_text().startswith(f"{root.name} {os.getpid()} "):
+        lease.unlink()
+
+
+atexit.register(release_lease)
+
+
+def take_lease():
+    global lease_owned
+    # Parallel worktrees share one desktop. Standalone checkouts have no agent bench.
+    if not lease.parent.exists() or lease_owned:
+        return
+    while True:
+        try:
+            with lease.open("x") as stream:
+                stream.write(f"{root.name} {os.getpid()} {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}\n")
+            lease_owned = True
+            return
+        except FileExistsError:
+            owner = lease.read_text()
+            try:
+                os.kill(int(owner.split()[1]), 0)
+            except ProcessLookupError:
+                if lease.read_text() == owner:
+                    lease.unlink()
+                print(f"Reclaimed inactive window lease: {owner.strip()}", flush=True)
+                continue
+            print(f"Waiting for window lease: {owner.strip()}", flush=True)
+            time.sleep(60)
 
 
 def run(target, *extra):
+    take_lease()
     target.mkdir(parents=True, exist_ok=True)
-    # Python's own timeout: GNU timeout is not on a default non-interactive macOS PATH.
-    subprocess.run([str(harness), str(target), *extra], check=True, timeout=300)
+    # LaunchServices activates the real app; a shell-launched process may have no key window.
+    # `open -W` masks app exit codes, so require the harness's own success result as well.
+    for attempt in range(3):
+        with tempfile.TemporaryDirectory(prefix="run-", dir=build) as temporary:
+            folder = pathlib.Path(temporary)
+            result, stdout, stderr = [folder / name for name in ["result", "stdout", "stderr"]]
+            try:
+                subprocess.run(["open", "-n", "-W", str(app), "--stdout", str(stdout), "--stderr", str(stderr),
+                                "--args", str(target), *extra, "--result-file", str(result)], check=True, timeout=600)
+            except subprocess.TimeoutExpired:
+                if result.exists():
+                    try:
+                        os.kill(int(result.read_text().splitlines()[0]), 15)
+                    except ProcessLookupError:
+                        pass
+                raise
+            finally:
+                logs = "".join(log.read_text() for log in [stdout, stderr] if log.exists())
+                print(logs, end="", flush=True)
+            if result.exists() and result.read_text().splitlines()[1] == "0":
+                return
+            # macOS can refuse activation even through LaunchServices. Retry only this
+            # environmental failure; shape, accessibility and action failures still fail.
+            if "did not become active and key" not in logs or attempt == 2:
+                raise AssertionError(f"Review harness failed: {target} {extra}")
+            print("Retrying the review app after macOS refused key-window activation", flush=True)
 
 
 # The window server captures at the display's scale: 1440x900 points is 2880x1800 on a Retina display.
@@ -70,7 +136,8 @@ configs = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-te
            # Settings page held while its catalog loads.
            "configs-import-windows-profiles", "configs-catalog-loading"]
 screens = ["home", "home-first", "servers", "servers-empty", "settings", "library-demos", "library-screenshots", "about",
-           "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"] + configs
+           "home-notice", "home-game-running", "setup-data", "setup-data-missing", "setup-folder-error", "setup-key", "setup-key-invalid", "setup-key-stored", "setup-key-replace", "setup-shaders-ready",
+           "setup-shaders", "setup-ready", "setup-summary-ready", "setup-summary-approximate", "setup-summary-link", "setup-cancelable"] + configs
 for screen in screens:
     shots = {}
     for appearance in ["dark", "light"]:
@@ -135,23 +202,29 @@ for screen in configs:
         (width, height), length = size(motion / f"{screen}-{appearance}.png")
         assert (width, height) in WINDOW and length > 60_000, (screen, appearance, width, height, length)
 
+# Setup keyboard, stored keys, cancellation, inline validation and completion.
+run(out / "shell-actions", "--shell-actions")
+run(out / "shell-accessibility", "--shell-accessibility")
+for variant in ["increase-contrast", "reduce-transparency", "reduce-motion"]:
+    run(out / variant, "--only", "setup-summary-approximate", f"--{variant}")
+
 # Real clicks on Config Studio controls (including a Binds key capture and Check-up Apply and
 # Undo) write exact bytes and History rows in a temporary home.
-subprocess.run([str(harness), str(out / "actions"), "--actions"], check=True, timeout=300)
+run(out / "actions", "--actions")
 # A Mouse speed keyboard step or typed value never lands on the loadout chosen before it saved, and
 # Show Controls with a text draft asks to Apply, Discard or Keep Editing; each with a positive save.
-subprocess.run([str(harness), str(out / "actions"), "--actions", "--only", "review-controls"], check=True, timeout=300)
+run(out / "actions", "--actions", "--only", "review-controls")
 
 # Every Config Studio control has a name in the accessibility tree VoiceOver reads; the trees
 # are written in reading order for review.
-subprocess.run([str(harness), str(out), "--accessibility"], check=True, timeout=300)
+run(out, "--accessibility")
 for screen in configs:
     assert (out / "accessibility" / f"{screen}.txt").stat().st_size > 1000, screen
 
 # Sheets, popovers and alerts, opened by real clicks and captured over their window.
 overlays = ["configs-jump", "configs-new-loadout", "configs-expert-note", "configs-binds-keyboard", "configs-binds-pointer", "configs-binds-confirm",
             "configs-import-confirm"]
-subprocess.run([str(harness), str(out / "overlays"), "--overlays"], check=True, timeout=300)
+run(out / "overlays", "--overlays")
 for overlay in overlays:
     for appearance in ["dark", "light"]:
         (width, height), length = size(out / "overlays" / f"overlay-{overlay}-{appearance}.png")

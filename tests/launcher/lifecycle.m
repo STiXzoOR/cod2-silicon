@@ -33,6 +33,18 @@ int main(int argc, char **argv)
             NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:atoi(argv[2])];
             printf("%ld\n", (long)app.activationPolicy); return app ? 0 : 1;
         }
+        if (argc == 3 && !strcmp(argv[1], "quit")) {
+            NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:atoi(argv[2])];
+            return app && [app terminate] ? 0 : 1;
+        }
+        if (argc == 3 && !strcmp(argv[1], "visible-windows")) {
+            int pid = atoi(argv[2]), count = 0;
+            NSArray *windows = CFBridgingRelease(CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID));
+            for (NSDictionary *window in windows) {
+                if ([window[(id)kCGWindowOwnerPID] intValue] == pid && [window[(id)kCGWindowLayer] intValue] == 0) ++count;
+            }
+            printf("%d\n", count); return 0;
+        }
         if (argc == 4 && !strcmp(argv[1], "event")) {
             NSAppleEventDescriptor *event = [[NSAppleEventDescriptor alloc] initWithEventClass:kInternetEventClass eventID:kAEGetURL
                 targetDescriptor:[NSAppleEventDescriptor descriptorWithProcessIdentifier:atoi(argv[2])]

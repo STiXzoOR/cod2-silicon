@@ -21,6 +21,24 @@ Source layout:
   binding, directory and match-summary models supply Configs through the shared
   session and store.
 
+First-run setup walks through game data, a CD key, shaders and a completion summary.
+Game folders can be dropped onto the data well or chosen in a window-attached sheet;
+validation stays beside the input. A verified stored key can be kept or replaced.
+Continue saves the folder/key choice. Repeating setup offers Cancel (Escape), which
+restores an unconfirmed folder choice and returns to the originating page; first-run
+setup offers Quit. Shader preparation may finish in the background after leaving.
+The summary states whether original or approximate shaders are available and offers
+repairs. Open CoD2 Silicon opens Deploy, Find a Server opens Servers, and a pending
+server link or `--play` gets an explicitly labelled Join Server or Open Game Menu action.
+
+The native menus own navigation (⌘1–4), Deploy (⌘Return), Open Game Menu
+(⇧⌘Return), Settings (⌘,), config import (⌘O / ⇧⌘V), and Servers refresh (⌘R).
+Commands follow setup, game and update availability. Page commands and the Dock reopen
+the single launcher window after it closes. Help links to the project manual, game
+data instructions, releases and issues. Status messages reserve space below the page,
+wrap without truncation, and are announced to assistive technology. A Quit request
+during play brings back the launcher with an explanation and Return to Game.
+
 Launcher checks: `sh tests/launcher/run.sh`. This runs core, network, artwork,
 Config Studio, directory and match-summary tests, the font checksum check, a
 strict typecheck of the material branch under the current SDK, and real-window

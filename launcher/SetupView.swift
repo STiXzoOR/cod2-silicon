@@ -2,8 +2,7 @@ import SwiftUI
 import AppKit
 import Carbon.HIToolbox
 
-/// The key field stays readable so it can stamp the dog tag, but like NSSecureTextField it
-/// turns on secure event input while focused, so other processes can't observe keystrokes.
+/// Protect typed keys from other processes while the entry field has focus.
 @MainActor enum SecureKeyEntry {
     private static var active = false
     static func set(_ on: Bool) {
@@ -17,241 +16,256 @@ struct SetupView: View {
     @ObservedObject var model: LauncherModel
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @FocusState private var keyFocused: Bool
-    /// Back and Continue sit this far from the card's bottom and side edges, concentric with its corners.
+    private enum Focus: Hashable { case folder, key, primary }
+    @FocusState private var focus: Focus?
+    @State private var dropTarget = false
     private let footerInset: CGFloat = 14
     private var cardRadius: CGFloat { footerInset + ControlMetrics.action / 2 }
 
     var body: some View {
-        ZStack {
-            SetupBackdrop()
-            VStack(spacing: 0) {
+        ScrollView {
+            VStack(spacing: 24) {
                 VStack(spacing: 10) {
-                    Eyebrow(text: "Reporting for duty", size: 14, tracking: 0.4, color: palette.dark ? palette.accent : palette.accent)
-                    Text("Set up CoD2 Silicon").font(.system(size: 34, weight: .bold)).foregroundStyle(palette.dark ? Palette.hex(0xf6efdf) : palette.heading).accessibilityAddTraits(.isHeader)
-                    Text("Three things from your own copy of the game. Nothing leaves this Mac.").font(.system(size: 15)).foregroundStyle(palette.dark ? Palette.hex(0xc9c1ad) : palette.secondary)
+                    Eyebrow(text: "Reporting for duty", size: 14, tracking: 0.4)
+                    Text("Set up CoD2 Silicon").font(.system(size: 34, weight: .bold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+                    Text("Your game files, your CD key, your Mac.").font(.system(size: 15)).foregroundStyle(palette.secondary)
                 }
-                .padding(.top, 70)
-                StepIndicator(step: model.step, done: model.step == 2 && model.shaderCount >= 834 && !model.shaderBusy).padding(.top, 34)
-                card.padding(.top, 32)
-                Spacer(minLength: 24)
+                StepIndicator(step: model.step, approximate: model.approximate)
+                card
             }
+            .padding(.top, 36).padding(.bottom, 24)
             .frame(maxWidth: .infinity)
         }
-        .ignoresSafeArea()
+        .background { SetupBackdrop().ignoresSafeArea() }
+        .task(id: model.step * 2 + (model.replacingKey ? 1 : 0)) {
+            // The new step must be mounted before its focus target can accept focus.
+            focus = nil
+            try? await Task.sleep(for: .milliseconds(250))
+            if !Task.isCancelled { focusStep() }
+        }
+        .onChange(of: focus) { _, value in SecureKeyEntry.set(value == .key && !model.snapshot) }
+        .onDisappear { SecureKeyEntry.set(false) }
+        .animation(.easeInOut(duration: reduceMotion ? 0.15 : 0.22), value: model.step)
     }
-
+    private func focusStep() {
+        focus = model.step == 0 ? .folder : model.step == 1 && (!model.keyVerified || model.replacingKey) ? .key : .primary
+    }
     private var card: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Group {
-                switch model.step {
-                case 0: dataStep
-                case 1: keyStep
-                default: shaderStep
+            VStack(alignment: .leading, spacing: 16) {
+                Group {
+                    switch model.step {
+                    case 0: dataStep
+                    case 1: keyStep
+                    case 2: shaderStep
+                    default: summaryStep
+                    }
+                }
+                .id(model.step).transition(.opacity)
+                if !model.setupError.isEmpty {
+                    Label(model.setupError, systemImage: "exclamationmark.circle")
+                        .font(.system(size: 13)).foregroundStyle(palette.negative).fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .transition(reduceMotion ? .opacity : .asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .move(edge: .leading).combined(with: .opacity)))
-            .id(model.step)
-            .padding(.top, 34).padding(.horizontal, 38)
-            HStack {
+            .padding(.top, 28).padding(.horizontal, 28)
+            HStack(spacing: 8) {
                 Button("Back", action: model.backSetup).glassAction().actionControlSize()
                     .disabled(model.step == 0 || model.shaderBusy)
-                Spacer()
-                if model.step == 2 && !model.shaderBusy {
-                    Button(action: model.nextSetup) {
-                        Label(model.approximate ? "Deploy with approximate shaders" : "Deploy", systemImage: "play.fill")
-                    }
-                    .prominentAction().actionControlSize().keyboardShortcut(.defaultAction)
+                if model.canCancelSetup {
+                    Button("Cancel", action: model.cancelSetup).glassAction().actionControlSize().keyboardShortcut(.cancelAction)
                 } else {
-                    Button("Continue", action: model.nextSetup).prominentAction().actionControlSize().keyboardShortcut(.defaultAction)
-                        .disabled((model.step == 0 && model.dataPath.isEmpty) || (model.step == 1 && !model.keyReady) || model.shaderBusy)
+                    Button("Quit") { NSApp.terminate(nil) }.glassAction().actionControlSize().keyboardShortcut(.cancelAction)
                 }
+                Spacer(minLength: 8)
+                if model.step == 3 && !model.hasPendingLaunch && !model.approximate {
+                    Button("Find a Server") { model.finishSetup(findServer: true) }.glassAction().actionControlSize()
+                }
+                Button(primaryTitle, action: model.nextSetup)
+                    .prominentAction().actionControlSize().keyboardShortcut(.defaultAction)
+                    .disabled(!model.setupCanContinue).focused($focus, equals: .primary)
             }
-            .padding(.top, 26).padding([.horizontal, .bottom], footerInset)
+            .padding(.top, 24).padding([.horizontal, .bottom], footerInset)
         }
-        .frame(width: 680)
+        .frame(width: 720)
         .contentSurface(RoundedRectangle(cornerRadius: cardRadius, style: .continuous))
-        .animation(reduceMotion ? nil : .launcherSpring, value: model.step)
         .accessibilityElement(children: .contain)
     }
-
-    @ViewBuilder private var dataStep: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            let found = !model.dataPath.isEmpty
-            HStack(alignment: .top, spacing: 18) {
-                SetupGlyph(kind: found ? .folderFound : .folderMissing).frame(width: 54, height: 54)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(found ? "Game data found" : "Find your game data").font(.system(size: 21, weight: .bold)).foregroundStyle(palette.text)
-                    Text(found ? "We use your installed Call of Duty 2 files where they are. Configs, demos and screenshots get their own folder."
-                               : "Choose the Call of Duty 2 folder from your own copy. Windows or Mac 1.3 data works; nothing is copied.")
-                        .font(.system(size: 14)).foregroundStyle(palette.dark ? Palette.hex(0xc9c1ad) : palette.secondary).lineSpacing(5).fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(found ? model.dataPathDisplay : "No folder chosen").font(.typewriter(15)).foregroundStyle(palette.dark ? Palette.hex(0xefe7d3) : palette.text).lineLimit(1).truncationMode(.middle)
-                    Text(found ? "All 16 game archives present · Version 1.3" : "Needs main/iw_00.iwd through iw_15.iwd")
-                        .font(.system(size: 13)).foregroundStyle(found ? palette.positive : palette.secondary)
-                }
-                Spacer()
-                Button(found ? "Change…" : "Choose Folder…", action: model.pickData).glassAction().actionControlSize()
-            }
-            // The button sits 20 points from the well's top, bottom and trailing edge.
-            .padding(.vertical, 16).padding(.horizontal, 20).frame(minHeight: ControlMetrics.action + 40)
-            .background(palette.well, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(palette.wellStroke, lineWidth: 1))
-            .shapeAudit(.container, .rounded(18), "data well")
-            HStack(spacing: 4) {
-                Text("Don't have the files yet?").foregroundStyle(palette.secondary)
-                Link("Where to find your game data", destination: URL(string: "https://github.com/STiXzoOR/cod2-silicon#game-data")!).foregroundStyle(palette.link)
-            }
-            .font(.system(size: 13))
+    private var primaryTitle: String {
+        switch model.step {
+        case 0: "Continue"
+        case 1: model.keyVerified && !model.replacingKey ? "Continue" : "Save Key and Continue"
+        case 2: model.shaderBusy ? "Preparing Shaders…" : "Review Setup"
+        default: model.setupCompletionTitle
         }
     }
-
-    @ViewBuilder private var keyStep: some View {
-        let raw = KeyFormat.groups(model.keyInput).joined()
-        HStack(alignment: .center, spacing: 30) {
-            StampedDogTag(lines: KeyFormat.tag(model.keyInput))
-            VStack(alignment: .leading, spacing: 14) {
-                Text("Your CD key").font(.system(size: 21, weight: .bold)).foregroundStyle(palette.text)
-                Text("The 20-character key that came with your game. It unlocks multiplayer on official and CoD2x servers.")
-                    .font(.system(size: 14)).foregroundStyle(palette.dark ? Palette.hex(0xc9c1ad) : palette.secondary).lineSpacing(5).fixedSize(horizontal: false, vertical: true)
-                TextField("", text: Binding(get: { KeyFormat.display(model.keyInput) }, set: { model.keyInput = KeyFormat.display($0) }),
-                          prompt: Text("XXXX XXXX XXXX XXXX XXXX").foregroundColor(palette.dark ? Palette.hex(0x6f6a5d) : palette.tertiary.opacity(0.7)))
-                    .textFieldStyle(.plain).font(.typewriter(22, bold: true)).tracking(2.6)
-                    .foregroundStyle(palette.dark ? Palette.hex(0xf1ead9) : palette.text)
-                    .autocorrectionDisabled().focused($keyFocused)
-                    .padding(.horizontal, 24).frame(height: 56)
-                    .background(palette.dark ? Color.black.opacity(0.3) : Color.white.opacity(0.55), in: Capsule())
-                    .overlay(Capsule().stroke(keyFocused ? palette.selectionStroke.opacity(1.5) : palette.wellStroke, lineWidth: keyFocused ? 1.5 : 1))
-                    .shapeAudit(.field, .capsule, "key field")
-                    .onSubmit { if model.keyReady { model.nextSetup() } }
-                    .accessibilityLabel("CD key, twenty characters")
-                    .onAppear { keyFocused = !model.snapshot }
-                    .onChange(of: keyFocused) { _, focused in SecureKeyEntry.set(focused && !model.snapshot) }
-                    .onDisappear { SecureKeyEntry.set(false) }
-                Text(keyHint(raw)).font(.system(size: 13)).foregroundStyle(raw.count == 20 ? (model.keyReady ? palette.positive : palette.negative) : palette.secondary)
-                    .accessibilityAddTraits(.updatesFrequently)
+    private func heading(_ title: String, detail: String, symbol: String) -> some View {
+        HStack(alignment: .top, spacing: 16) {
+            Image(systemName: symbol).font(.system(size: 34, weight: .light)).foregroundStyle(palette.accent)
+                .frame(width: 44, height: 44).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title).font(.system(size: 22, weight: .bold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+                Text(detail).font(.system(size: 14)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
             }
         }
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "lock.shield").font(.system(size: 16)).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.secondary).accessibilityHidden(true)
-            Text("Stored only on this Mac, in a file only your account can read. Like the original game, joining a server sends the authorization service a one-way hash of it; the key itself never leaves this Mac.")
-                .font(.system(size: 13)).foregroundStyle(palette.dark ? Palette.hex(0xbdb5a1) : palette.secondary).lineSpacing(6).fixedSize(horizontal: false, vertical: true)
+    }
+    private var dataStep: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            heading(model.dataError.isEmpty && !model.dataPath.isEmpty ? "Game data found" : "Find your game data",
+                    detail: "Choose the Call of Duty 2 folder from your own copy. Your game files stay where they are.", symbol: "folder")
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(model.dataError.isEmpty ? (model.dataPath.isEmpty ? "Drop your game folder here" : model.dataPathDisplay) : (model.attemptedDataPath as NSString).abbreviatingWithTildeInPath)
+                            .font(.system(size: 14, weight: .medium)).foregroundStyle(palette.text)
+                            .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+                            .id(model.dataPath + model.attemptedDataPath + model.dataError)
+                        if model.dataError.isEmpty && !model.dataPath.isEmpty {
+                            Label("All 16 game archives found", systemImage: "checkmark.circle.fill").foregroundStyle(palette.positive)
+                        } else if model.dataError.isEmpty {
+                            Text("Or choose a folder below.").foregroundStyle(palette.secondary)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                    Button(model.dataPath.isEmpty || !model.dataError.isEmpty ? "Choose Folder…" : "Change…", action: model.pickData)
+                        .glassAction().actionControlSize().focused($focus, equals: .folder)
+                }
+                if !model.dataError.isEmpty {
+                    Label(model.dataError, systemImage: "exclamationmark.circle.fill").foregroundStyle(palette.negative)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .font(.system(size: 13)).padding(20)
+            .background(palette.well, in: RoundedRectangle(cornerRadius: 18))
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(dropTarget ? palette.accent : palette.wellStroke, lineWidth: dropTarget ? 3 : 1))
+            .shapeAudit(.container, .rounded(18), "data well")
+            .dropDestination(for: URL.self) { urls, _ in
+                guard let url = urls.first else { return false }
+                _ = model.chooseData(url)
+                return true
+            } isTargeted: { dropTarget = $0 }
+            Link("Where to find your game data", destination: URL(string: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/macos-port/game-data.md")!)
+                .font(.system(size: 13)).foregroundStyle(palette.link)
         }
-        .padding(.vertical, 14).padding(.horizontal, 16)
-        .background(palette.dark ? Color.black.opacity(0.24) : Color.white.opacity(0.4), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(palette.wellStroke.opacity(0.7), lineWidth: 1))
-        .shapeAudit(.container, .rounded(16), "key notice")
+    }
+    @ViewBuilder private var keyStep: some View {
+        if model.keyVerified && !model.replacingKey {
+            heading("CD key verified", detail: "Your key is stored on this Mac. You can continue without entering it again.", symbol: "checkmark.shield")
+            HStack {
+                Label("Stored on this Mac", systemImage: "lock.fill").foregroundStyle(palette.positive)
+                Spacer()
+                Button("Replace Key…", action: model.replaceKey).glassAction().actionControlSize()
+            }
+            .font(.system(size: 14)).padding(20).background(palette.well, in: RoundedRectangle(cornerRadius: 18))
+        } else {
+            heading(model.keyVerified ? "Replace your CD key" : "Your CD key", detail: "Enter the 20-character key that came with your game to unlock multiplayer.", symbol: "key")
+            TextField("CD key", text: Binding(get: { KeyFormat.display(model.keyInput) }, set: { model.keyInput = KeyFormat.display($0); model.setupError = "" }),
+                      prompt: Text("XXXX XXXX XXXX XXXX XXXX").foregroundColor(palette.tertiary))
+                .textFieldStyle(.plain).font(.typewriter(22, bold: true)).tracking(2)
+                .foregroundStyle(palette.text).autocorrectionDisabled().focused($focus, equals: .key)
+                .padding(.horizontal, 20).frame(height: 54)
+                .background(palette.well, in: Capsule())
+                .overlay(Capsule().stroke(focus == .key ? palette.accent : palette.wellStroke, lineWidth: focus == .key ? 3 : 1))
+                .shapeAudit(.field, .capsule, "key field")
+                .onSubmit { if model.keyReady { model.nextSetup() } }
+                .accessibilityLabel("CD key, twenty characters")
+            let raw = KeyFormat.groups(model.keyInput).joined()
+            Label(keyHint(raw), systemImage: raw.count == 20 ? (KeyStore.valid(model.keyInput) ? "checkmark.circle" : "exclamationmark.circle") : "info.circle")
+                .font(.system(size: 13)).foregroundStyle(raw.count == 20 ? (KeyStore.valid(model.keyInput) ? palette.positive : palette.negative) : palette.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            if model.keyVerified {
+                Button("Keep Stored Key", action: model.keepStoredKey).glassAction()
+            }
+        }
+        Label("Only your account can read the saved key. Joining a server uses it to verify your copy of the game.", systemImage: "lock.shield")
+            .font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
     }
     private func keyHint(_ raw: String) -> String {
         if raw.isEmpty { return "Spaces and dashes are fine." }
         if raw.count < 20 { return "\(20 - raw.count) characters to go" }
-        return model.keyReady ? "Checksum verified." : "The checksum doesn't match. Check for a mistyped character."
+        return KeyStore.valid(model.keyInput) ? "Key verified. Save it to continue." : "This key doesn’t match. Check each character against the key that came with your game."
     }
-
-    @ViewBuilder private var shaderStep: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack(alignment: .top, spacing: 18) {
-                SetupGlyph(kind: .shaders).frame(width: 54, height: 54)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Original shaders").font(.system(size: 21, weight: .bold)).foregroundStyle(palette.text)
-                    Text("Lighting, sky and water as the game draws them on Windows, built on this Mac from your own game files.")
-                        .font(.system(size: 14)).foregroundStyle(palette.dark ? Palette.hex(0xc9c1ad) : palette.secondary).lineSpacing(5).fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            VStack(alignment: .leading, spacing: 10) {
+    private var shaderStep: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            heading("Original shaders", detail: "Prepare the game’s original lighting, sky and water from your own game files.", symbol: "sun.horizon")
+            if model.shaderBusy {
                 HStack {
-                    Text(model.approximate && !model.shaderBusy ? "The original shaders couldn't be built" : model.shaderMessage)
+                    Text(model.shaderMessage)
                     Spacer()
-                    Text("\(model.shaderCount) / 834").font(.typewriter(13)).monospacedDigit()
-                }
-                .font(.system(size: 13)).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.text)
-                ShaderProgressBar(fraction: Double(model.shaderCount) / 834)
-                    .accessibilityElement().accessibilityLabel("Shader setup").accessibilityValue("\(model.shaderCount) of 834")
-                if model.approximate && !model.shaderBusy {
-                    HStack(spacing: 10) {
-                        Text("Approximate shaders lose clouds and most lighting detail. If you own the Mac version, its shaders work too.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
-                        Spacer()
-                        Button("Choose Mac Copy…", action: model.pickShaders).glassAction().actionControlSize()
-                    }
-                } else {
-                    Text("This happens once and takes a few seconds. Nothing is downloaded.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
-                }
+                    Text("\(model.shaderCount) of \(LauncherModel.shaderTotal) shaders").monospacedDigit()
+                }.font(.system(size: 13)).foregroundStyle(palette.secondary)
+                ProgressView(value: Double(model.shaderCount), total: Double(LauncherModel.shaderTotal)).tint(palette.control)
+                    .accessibilityLabel("Shader setup").accessibilityValue("\(model.shaderCount) of \(LauncherModel.shaderTotal) shaders")
+                Text("This usually takes a few seconds. Nothing is downloaded. You can leave setup while it finishes.")
+                    .font(.system(size: 13)).foregroundStyle(palette.secondary)
+            } else {
+                Label(model.approximate ? "Approximate shaders available" : "Original shaders ready", systemImage: model.approximate ? "exclamationmark.triangle" : "checkmark.circle")
+                    .foregroundStyle(model.approximate ? palette.caution : palette.positive)
+                if model.approximate { shaderFix }
             }
         }
     }
-}
-
-/// The design's line glyphs for the data and shader steps (24-point artboard, drawn at 54).
-struct SetupGlyph: View {
-    enum Kind { case folderFound, folderMissing, shaders }
-    var kind: Kind
-    @Environment(\.palette) private var palette
-    var body: some View {
-        Canvas { context, size in
-            let scale = CGAffineTransform(scaleX: size.width / 24, y: size.height / 24)
-            let line = StrokeStyle(lineWidth: 1.4 * size.width / 24, lineCap: .round, lineJoin: .round)
-            switch kind {
-            case .folderFound, .folderMissing:
-                let folder = SVGPath.parse("M3 7.5a2 2 0 0 1 2-2h4.2l2 2.2H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", transform: scale)
-                context.stroke(folder, with: .color(palette.accent), style: line)
-                if kind == .folderFound {
-                    context.stroke(SVGPath.parse("M8 13.2l2.6 2.6L16 10.6", transform: scale), with: .color(palette.positive),
-                                   style: StrokeStyle(lineWidth: 1.8 * size.width / 24, lineCap: .round, lineJoin: .round))
-                } else {
-                    context.stroke(SVGPath.parse("M12 10.4v5.4M9.3 13.1h5.4", transform: scale), with: .color(palette.accent), style: line)
-                }
-            case .shaders:
-                context.stroke(Path(ellipseIn: CGRect(x: 3.5, y: 3.5, width: 17, height: 17)).applying(scale), with: .color(palette.accent), style: line)
-                context.fill(SVGPath.parse("M12 3.5a8.5 8.5 0 0 1 0 17Z", transform: scale), with: .color(palette.accent.opacity(0.25)))
-                context.stroke(SVGPath.parse("M3.5 12h17", transform: scale), with: .color(palette.accent), style: line)
+    private var summaryStep: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            heading("Ready for deployment", detail: model.approximate ? "You can play now with simpler lighting, or add the original shaders below." : "Your game is ready. Choose what you’d like to do next.", symbol: model.approximate ? "exclamationmark.triangle" : "checkmark.circle")
+            VStack(spacing: 0) {
+                summaryRow("Game data found", detail: model.dataPathDisplay, symbol: "folder", caution: false)
+                Divider().overlay(palette.separator)
+                summaryRow("CD key verified", detail: "Stored on this Mac", symbol: "lock.shield", caution: false)
+                Divider().overlay(palette.separator)
+                summaryRow(model.approximate ? "Approximate shaders" : "Original shaders ready", detail: model.approximate ? "Clouds and much of the lighting detail will be missing." : "Original lighting, sky and water", symbol: model.approximate ? "exclamationmark.triangle" : "sun.horizon", caution: model.approximate)
+            }
+            .background(palette.well, in: RoundedRectangle(cornerRadius: 18))
+            if model.approximate { shaderFix }
+            if let address = model.setupServerAddress {
+                Label("Next: join \(address)", systemImage: "network").font(.system(size: 13)).foregroundStyle(palette.secondary)
             }
         }
-        .accessibilityHidden(true)
     }
-}
-
-struct ShaderProgressBar: View {
-    var fraction: Double
-    @Environment(\.palette) private var palette
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule().fill(palette.dark ? Color.white.opacity(0.1) : Color.black.opacity(0.08))
-                Capsule().fill(LinearGradient(colors: palette.dark ? [Palette.hex(0xb8893f), Palette.hex(0xe8c47e)] : [palette.prominentBottom, palette.prominentTop], startPoint: .leading, endPoint: .trailing))
-                    .frame(width: max(10, proxy.size.width * min(1, max(0, fraction))))
-                    .opacity(fraction > 0 ? 1 : 0)
+    private func summaryRow(_ title: String, detail: String, symbol: String, caution: Bool) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: symbol).frame(width: 20).foregroundStyle(caution ? palette.caution : palette.positive).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text)
+                Text(detail).font(.system(size: 12)).foregroundStyle(palette.secondary).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
             }
+            Spacer(minLength: 0)
+        }.padding(16).accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(title). \(detail)").accessibilityAddTraits(.isStaticText)
+    }
+    private var shaderFix: some View {
+        HStack(spacing: 8) {
+            Text("Try again, or use shaders from your Mac copy.").font(.system(size: 12)).foregroundStyle(palette.secondary)
+            Spacer(minLength: 0)
+            Button("Try Again") { model.prepareShaders() }.glassAction().actionControlSize()
+            Button("Choose Mac Copy…", action: model.pickShaders).glassAction().actionControlSize()
         }
-        .frame(height: 10)
-        .animation(.easeOut(duration: 0.3), value: fraction)
     }
 }
 
 struct StepIndicator: View {
     var step: Int
-    var done: Bool
+    var approximate: Bool
     @Environment(\.palette) private var palette
     var body: some View {
         HStack(spacing: 14) {
-            ForEach(Array(["Game data", "CD key", "Shaders"].enumerated()), id: \.offset) { index, label in
-                let complete = index < step || (done && index == 2), current = index == step && !complete
+            ForEach(Array(["Game data", "CD key", "Shaders", "Summary"].enumerated()), id: \.offset) { index, label in
+                let complete = index < step, current = index == step
+                let caution = complete && index == 2 && approximate
                 HStack(spacing: 10) {
                     ZStack {
-                        Circle().fill(complete ? palette.positive : current ? palette.accent : (palette.dark ? Color.white.opacity(0.1) : Color.black.opacity(0.06)))
+                        Circle().fill(caution ? palette.caution : complete ? palette.positive : current ? palette.accent : (palette.dark ? Color.white.opacity(0.1) : Color.black.opacity(0.06)))
                         if !complete && !current { Circle().stroke(palette.dark ? Color.white.opacity(0.18) : Color.black.opacity(0.15), lineWidth: 1) }
-                        if complete { Image(systemName: "checkmark").font(.system(size: 12, weight: .bold)).foregroundStyle(palette.dark ? Palette.hex(0x10140c) : .white) }
-                        else { Text("\(index + 1)").font(.system(size: 13, weight: .bold)).foregroundStyle(current ? (palette.dark ? palette.prominentText : .white) : palette.secondary) }
+                        if complete { Image(systemName: caution ? "exclamationmark.triangle.fill" : "checkmark").font(.system(size: 12, weight: .bold)).foregroundStyle(palette.dark ? Palette.hex(0x10140c) : .white) }
+                        else { Text("\(index + 1)").font(.system(size: 13, weight: .bold)).foregroundStyle(caution ? palette.caution : current ? (palette.dark ? palette.prominentText : .white) : palette.secondary) }
                     }
                     .frame(width: 28, height: 28)
                     Text(label).font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(current ? (palette.dark ? Palette.hex(0xf6efdf) : palette.heading) : complete ? (palette.dark ? Palette.hex(0xcfe3c4) : palette.positive) : palette.secondary)
-                    if index < 2 { Rectangle().fill(palette.dark ? Color.white.opacity(0.18) : Color.black.opacity(0.15)).frame(width: 56, height: 1).padding(.leading, 4) }
+                        .foregroundStyle(caution ? palette.caution : current ? (palette.dark ? Palette.hex(0xf6efdf) : palette.heading) : complete ? (palette.dark ? Palette.hex(0xcfe3c4) : palette.positive) : palette.secondary)
+                    if index < 3 { Rectangle().fill(palette.dark ? Color.white.opacity(0.18) : Color.black.opacity(0.15)).frame(width: 28, height: 1).padding(.leading, 4) }
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Step \(index + 1), \(label), \(complete ? "complete" : current ? "current" : "not started")")
+                .accessibilityLabel("Step \(index + 1) of 4, \(label), \(complete ? (index == 2 && approximate ? "approximate" : "complete") : current ? "current" : "not started")")
+                .accessibilityAddTraits(.isStaticText)
             }
         }
     }
