@@ -10,14 +10,17 @@ off untrusted networks unless you accept those risks.
 
 Use [GitHub private vulnerability reporting](https://github.com/STiXzoOR/cod2-silicon/security/advisories/new)
 from this repository's **Security → Advisories → Report a vulnerability**.
-Do not open a public issue with an exploit or sensitive logs. The maintainer
-must enable private reporting in the repository settings before publication.
+Do not open a public issue with an exploit or sensitive logs.
 
 Include the affected version/commit, macOS version, reproduction steps,
 impact and a minimal non-proprietary example if possible. Redact CD keys,
 key digests, HWIDs, Steam credentials, passwords and tokens. Never attach game
 archives, Activision binaries or decompiler dumps. The maintainer will use
 the private advisory to coordinate investigation and disclosure.
+
+The README lists [what the app sends](README.md#what-the-app-sends) and to
+whom. Crash reports are opt-in; a report leaves out your home folder's name
+and is refused if it contains anything that looks like a CD key.
 
 Security fixes target the current development branch and latest release;
 there is no guaranteed response time or supported legacy-release window.

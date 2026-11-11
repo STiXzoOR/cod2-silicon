@@ -109,6 +109,24 @@ a 250 fps cap, vsync off and raw mouse input. The cap can be set anywhere from
 0 (no cap) to 1000. Competitive CoD2x servers enforce their own 125–250 fps
 caps.
 
+## What the app sends
+
+- **As the original game does:** the game's master and key servers, and the
+  servers you browse and join.
+- **With CoD2x on:** the CoD2x project's master server for its server list, and
+  CoD2x's update check each time the main menu opens. Like CoD2x on Windows,
+  that check carries your CoD2x version, an MD5 hash of your CD key, an install
+  ID, your CoD2x hardware IDs and a short description of your Mac, over HTTPS
+  or, when that fails, plain UDP. CoD2x servers you join receive your hardware
+  ID hash. zPAM files a server needs are downloaded from the CoD2x project's
+  site.
+- **With the original 1.3 chosen** in **Settings → Game → Version**, the game
+  sends nothing to the CoD2x project.
+- **The launcher** contacts GitHub when you check for updates, install one, or
+  download the CoD2x files, and asks both master servers for its server list.
+- **Crash reports** are sent only if you turn a switch on in **Settings →
+  Privacy**. Your CD key is never part of one.
+
 ## Known limitations
 
 - Voice chat works with the original 1.3 only; CoD2x turns it off. It records
@@ -140,8 +158,8 @@ new performance claims for every release. Verified development results include:
 - The CoD2x layer follows CoD2x 1.4.6.8 for players and for hosted servers,
   including the match service, zPAM handling, script web requests and vMix.
   This is implementation coverage checked against local stand-ins, not live
-  acceptance of every feature. Updates are announced, never installed, and
-  certificates are always checked. An earlier inventory counted 41 of 68
+  acceptance of every feature. CoD2x updates are announced, never installed,
+  and certificates are always checked. An earlier inventory counted 41 of 68
   behaviors. [Earlier compatibility report](docs/macos-port/reports/WS10-cod2x-full.md)
 - In 0.3.0, a demo replayed in the original Windows 1.3 game and in this port
   differs by a mean of **0.11 out of 255** per colour value, over 20 views on

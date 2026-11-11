@@ -66,6 +66,10 @@ This adds `Signed-off-by: Your Name <your-email>` and certifies your right to
 submit the contribution. AI assistance does not replace that responsibility:
 review the output, verify it and describe substantial AI use in the PR.
 
+GitHub Actions are switched off for this repository at the moment, so no
+check runs on a pull request by itself. Run the merge gate below on your Mac
+and say in the pull request what you ran.
+
 The x86 byte-for-byte CI comparison is temporarily non-blocking because
 upstream `410342a` does not compile with GCC 14 on Linux; see
 [the tracking issue](https://github.com/STiXzoOR/cod2-silicon/issues/10).
