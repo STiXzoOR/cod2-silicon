@@ -92,26 +92,11 @@ static void Updater_Report(int available, const char *version)
     Com_Printf("-----------------------------------\n");
 }
 
-/* The test address for the UDP request: COD2X_TEST_UPDATER_ADDRESS, or the
-   host:port of COD2X_TEST_SERVICE_URL; NULL without either. */
-static const char *Updater_TestAddress(char *out, size_t size)
-{
-    const char *test = getenv("COD2X_TEST_UPDATER_ADDRESS"), *service = getenv("COD2X_TEST_SERVICE_URL"), *host;
-    if (test && test[0])
-        return test;
-    if (!service || !service[0])
-        return NULL;
-    host = strstr(service, "://");
-    host = host ? host + 3 : service;
-    snprintf(out, size, "%.*s", (int)strcspn(host, "/"), host);
-    return out[0] ? out : NULL;
-}
-
 /* The old request, a UDP packet to the update port of CoD2x's master. */
 static void Updater_SendUdp(void)
 {
     char testAddress[256];
-    const char *test = Updater_TestAddress(testAddress, sizeof(testAddress));
+    const char *test = Cod2x_TestUpdaterAddress(testAddress, sizeof(testAddress));
     int port = UPDATER_PORT;
     char name[256];
     snprintf(name, sizeof(name), "%s", test && test[0] ? test : UPDATER_HOST);

@@ -70,6 +70,7 @@ const char *Cod2x_Hwid(void);
 /* CoD2x's web services (cod2x_protocol.c). Tests point them at a stand-in with
    COD2X_TEST_SERVICE_URL. */
 const char *Cod2x_ServiceURL(const char *url, char *buffer, size_t size);
+const char *Cod2x_TestUpdaterAddress(char *out, size_t size);
 /* Error and crash reports (cod2x_report.c): only faults in CoD2x-layer code go to
    CoD2x; the rest go to the report receiver of crash_handler.h. */
 int Cod2x_InLayer(const void *address);

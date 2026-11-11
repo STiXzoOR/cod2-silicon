@@ -899,13 +899,26 @@ void Cod2x_IwdStartup(const char *base)
    game, it asks CoD2x's update service for the current CoD2x version. An update
    shows the game's own "Auto Update" button and prompt; a required one stops
    connecting, as in CoD2x. CoD2x then downloads its mss32.dll and restarts the
-   game; this build never downloads or installs CoD2x's files. */
+   game; this build never downloads or installs CoD2x's files.
+   When the https request fails, the same data goes to the update port of CoD2x's
+   master in one UDP packet. No answer to that in five seconds starts the check
+   again, five times at most until the menu is reached anew. */
 #define COD2X_UPDATE_URL "https://master.cod2x.me/api/updater/check"
+#define COD2X_UPDATE_HOST "master.cod2x.me"
+#define COD2X_UPDATE_PORT 20720
 
 extern cg_t cgArray[1];
 extern void CL_Cod2xCDKeyHash(char hash[34]);
+extern void Com_DPrintf(const char *, ...);
+extern int Sys_Milliseconds(void);
+extern const char *NET_AdrToString(netadr_t a);
+extern qboolean NET_StringToAdr(const char *s, netadr_t *a);
+extern qboolean NET_CompareBaseAdr(netadr_t a, netadr_t b);
+extern Bool NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *data);
 
 static int updateRunning, updateForced, updateLastState = -1, updateLastRender = -1;
+static netadr_t updateAddress;
+static int updateResolved, updateWaiting, updateWaitingSince, updateRepeats;
 
 static void Cod2x_UpdateDone(void *context, const Cod2xHttpResponse *response);
 
@@ -971,9 +984,100 @@ static void Cod2x_UpdateRequired(void)
               updateVersion->current.string);
 }
 
+/* Base64 with padding; 0 when out is too small. */
+static int Cod2x_UpdateBase64(const char *text, char *out, size_t size)
+{
+    static const char digits[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    size_t length = strlen(text), i, used = 0;
+    if ((length + 2) / 3 * 4 + 1 > size)
+        return 0;
+    for (i = 0; i < length; i += 3) {
+        unsigned int bits = (unsigned int)(unsigned char)text[i] << 16;
+        if (i + 1 < length)
+            bits |= (unsigned int)(unsigned char)text[i + 1] << 8;
+        if (i + 2 < length)
+            bits |= (unsigned char)text[i + 2];
+        out[used++] = digits[bits >> 18 & 63];
+        out[used++] = digits[bits >> 12 & 63];
+        out[used++] = i + 1 < length ? digits[bits >> 6 & 63] : '=';
+        out[used++] = i + 2 < length ? digits[bits & 63] : '=';
+    }
+    out[used] = '\0';
+    return 1;
+}
+
+/* CRC16-CCITT: polynomial 0x1021, starting from 0xffff. */
+static unsigned int Cod2x_UpdateCrc(const char *text)
+{
+    unsigned int crc = 0xffff;
+    for (; *text; ++text) {
+        int bit;
+        crc ^= (unsigned int)(unsigned char)*text << 8;
+        for (bit = 0; bit < 8; ++bit)
+            crc = (crc & 0x8000 ? crc << 1 ^ 0x1021 : crc << 1) & 0xffff;
+    }
+    return crc;
+}
+
+/* The address is looked up once; a failed lookup stays failed, as in CoD2x. */
+static void Cod2x_UpdateResolve(void)
+{
+    char testAddress[256], name[256];
+    const char *test = Cod2x_TestUpdaterAddress(testAddress, sizeof(testAddress));
+    int port = COD2X_UPDATE_PORT;
+    if (updateResolved)
+        return;
+    updateResolved = 1;
+    snprintf(name, sizeof(name), "%s", test ? test : COD2X_UPDATE_HOST);
+    if (test && strrchr(name, ':')) {
+        port = atoi(strrchr(name, ':') + 1);
+        *strrchr(name, ':') = '\0';
+    }
+    Com_DPrintf("Resolving AutoUpdate Server %s...\n", name);
+    if (!NET_StringToAdr(name, &updateAddress)) {
+        updateAddress.type = NA_BAD;
+        Com_Printf("\nFailed to resolve AutoUpdate server %s.\n", name);
+        return;
+    }
+    updateAddress.port = (unsigned short)(((port & 0xff) << 8) | ((port >> 8) & 0xff));
+    Com_DPrintf("AutoUpdate resolved to %s\n", NET_AdrToString(updateAddress));
+}
+
+/* getUpdateInfo3: the game, version, system and kind in the clear, then a CRC and
+   the machine's values, each quoted, in base64. */
+static void Cod2x_UpdateSendUdp(void)
+{
+    char hash[34] = "", changed[1024], data[2048], encoded[2800], packet[4096];
+    const dvar_t *hwid = Dvar_FindVar("cl_hwid"), *hwid2 = Dvar_FindVar("cl_hwid2");
+    Cod2xMachineHistory history;
+    size_t i;
+    Cod2x_UpdateResolve();
+    Com_Printf("Auto-Updater: Checking for updates...\n");
+    memset(&history, 0, sizeof(history));
+    Sys_Cod2xMachineHistory(&history);
+    CL_Cod2xCDKeyHash(hash);
+    for (i = 0; i + 1 < sizeof(changed) && history.changed[i]; ++i)
+        changed[i] = history.changed[i] == '"' ? '\'' : history.changed[i];
+    changed[i] = '\0';
+    snprintf(data, sizeof(data), "\"%s\" \"%s\" \"%i\" \"%s\" \"%s\" \"%i\" \"%s\" \"%s\"", hash, history.regid,
+             hwid ? hwid->current.integer : 0, hwid2 && hwid2->current.string ? hwid2->current.string : "",
+             history.previous, history.changes, changed, history.system);
+    if (!Cod2x_UpdateBase64(data, encoded, sizeof(encoded)))
+        Com_Error(0, "Failed to encode data for Auto-Update request.");
+    snprintf(packet, sizeof(packet), "getUpdateInfo3 \"CoD2x MP\" \"" COD2X_RELEASE "\" \"win-x86\" \"client\" \"%04x\" \"%s\"\n",
+             Cod2x_UpdateCrc(encoded), encoded);
+    if (updateAddress.type != NA_BAD)
+        NET_OutOfBandPrint(NS_CLIENT1, updateAddress, packet);
+    updateWaiting = 1;
+    updateWaitingSince = Sys_Milliseconds();
+    Com_Printf("-----------------------------------\n");
+}
+
 static void Cod2x_UpdateAnswer(int available, const char *url, const char *version)
 {
     Com_Printf("-----------------------------------\n");
+    updateWaiting = 0;
+    updateRepeats = 0;
     Sys_Cod2xMachineHistoryClear();
     if (available) {
         Com_Printf("CoD2x: Update available: %s -> %s\n", COD2X_RELEASE, version);
@@ -1022,8 +1126,25 @@ static void Cod2x_UpdateDone(void *context, const Cod2xHttpResponse *response)
             return;
         }
     }
-    /* CoD2x then asks over UDP (getUpdateInfo3); this client asks only over https. */
     Com_Printf("Auto-Updater: Request failed: %s\n", error);
+    Com_Printf("Auto-Updater: Trying UDP...\n");
+    Cod2x_UpdateSendUdp();
+}
+
+/* "updateResponse" from the update port: whether there is an update (2: a required
+   one), its file and its version. */
+void Cod2x_UpdatePacket(netadr_t from)
+{
+    if (updateAddress.type == NA_BAD) {
+        Com_DPrintf("Auto-Updater has bad address\n");
+        return;
+    }
+    Com_DPrintf("Auto-Updater response from %s\n", NET_AdrToString(from));
+    if (!updateResolved || !NET_CompareBaseAdr(updateAddress, from)) {
+        Com_DPrintf("Received update packet from unexpected IP.\n");
+        return;
+    }
+    Cod2x_UpdateAnswer(atoi(Cmd_Argv(1)), Cmd_Argv(2), Cmd_Argv(3));
 }
 
 /* The update prompt's "getautoupdate". CoD2x downloads its mss32.dll and restarts. */
@@ -1040,10 +1161,20 @@ static void Cod2x_UpdateFrame(int state)
     updateLastRender = render;
     if (updateForced && state > CA_DISCONNECTED && state < CA_CONNECTED && !playingDemo)
         Cod2x_UpdateRequired();
-    if (state != last && state == CA_DISCONNECTED)
+    if (state != last && state == CA_DISCONNECTED) {
+        updateRepeats = 0;
         Cod2x_UpdateCheck();
-    if (state == CA_ACTIVE && !render && render != lastRender)
+    }
+    if (state == CA_ACTIVE && !render && render != lastRender) {
+        updateRepeats = 0;
         Cod2x_UpdateCheck();
+    }
+    if (updateWaiting && (unsigned int)(Sys_Milliseconds() - updateWaitingSince) > 5000 && updateRepeats < 5) {
+        Com_Printf("Auto-Updater: Request timed out.\n");
+        updateWaiting = 0;
+        updateRepeats++;
+        Cod2x_UpdateCheck();
+    }
 }
 
 /* ---- zPAM from CoD2x's web site (CoD2x downloading.cpp, zpam.cpp) -------------

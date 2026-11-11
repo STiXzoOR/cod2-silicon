@@ -114,6 +114,12 @@ void CL_Cod2xCDKeyHash(char hash[34]) { hash[0] = '\0'; }
 void Sys_Cod2xMachineHistory(Cod2xMachineHistory *out) { memset(out, 0, sizeof(*out)); }
 void Sys_Cod2xMachineHistoryClear(void) {}
 void Cod2x_Log(const char *format, ...) { (void)format; }
+void Com_DPrintf(const char *format, ...) { (void)format; }
+int Sys_Milliseconds(void) { return 0; }
+const char *NET_AdrToString(netadr_t a) { (void)a; return ""; }
+qboolean NET_StringToAdr(const char *s, netadr_t *a) { (void)s, (void)a; return 0; }
+qboolean NET_CompareBaseAdr(netadr_t a, netadr_t b) { (void)a, (void)b; return 0; }
+Bool NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *data) { (void)sock, (void)adr, (void)data; return 0; }
 int Cod2x_HttpStart(const Cod2xHttpRequest *request, Cod2xHttpDone done, void *context)
 {
     (void)request, (void)done, (void)context;
