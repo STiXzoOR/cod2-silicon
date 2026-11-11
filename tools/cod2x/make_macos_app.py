@@ -239,11 +239,26 @@ def main():
             f'+set r_fullscreen 1 +set r_borderless {int(args.borderless)} '
             '+set r_swapInterval 0 +set in_rawmouse 1 +set m_filter 0 +set cl_mouseAccel 0 '
             '+set logfile 0 +set developer 0 +set com_introPlayed 1',
+        # Join links: cod2x://host:port, and cod2:// read the same way. Both open Connect to Address.
         "CFBundleURLTypes": [{
             "CFBundleURLName": "CoD2x server link",
             "CFBundleTypeRole": "Viewer",
-            "CFBundleURLSchemes": ["cod2x"],
+            "CFBundleURLSchemes": ["cod2x", "cod2"],
         }],
+        # Opening a recording plays it; opening a config shows the import review (only as an
+        # alternate handler, so .cfg files keep opening in the player's text editor by default).
+        "CFBundleDocumentTypes": [
+            {"CFBundleTypeName": "Call of Duty 2 demo", "CFBundleTypeRole": "Viewer", "LSHandlerRank": "Default",
+             "LSItemContentTypes": ["io.github.stixzoor.cod2silicon.demo"]},
+            {"CFBundleTypeName": "Call of Duty 2 config", "CFBundleTypeRole": "Viewer", "LSHandlerRank": "Alternate",
+             "LSItemContentTypes": ["io.github.stixzoor.cod2silicon.config"]},
+        ],
+        "UTImportedTypeDeclarations": [
+            {"UTTypeIdentifier": "io.github.stixzoor.cod2silicon.demo", "UTTypeDescription": "Call of Duty 2 demo",
+             "UTTypeConformsTo": ["public.data"], "UTTypeTagSpecification": {"public.filename-extension": ["dm_1"]}},
+            {"UTTypeIdentifier": "io.github.stixzoor.cod2silicon.config", "UTTypeDescription": "Call of Duty 2 config",
+             "UTTypeConformsTo": ["public.plain-text"], "UTTypeTagSpecification": {"public.filename-extension": ["cfg"]}},
+        ],
     }
     if game_dir:
         info["CoD2GameDirectory"] = game_dir
@@ -267,7 +282,8 @@ def main():
         game_info = dict(info)
         game_info.update(CFBundleExecutable="cod2_macos", CFBundleIdentifier=args.bundle_id + ".game",
                          NSHighResolutionCapable=False, CoD2AutomaticShaderSetup=False, CoD2LaunchArguments="")
-        game_info.pop("CFBundleURLTypes", None)
+        for key in ("CFBundleURLTypes", "CFBundleDocumentTypes", "UTImportedTypeDeclarations"):
+            game_info.pop(key, None)
         game_info.pop("CoD2GameDirectory", None)
         game_resources = game_contents / "Resources"
         game_resources.mkdir()
