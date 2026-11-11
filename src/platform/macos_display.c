@@ -1307,3 +1307,11 @@ int aglGetInteger(void *ctx, unsigned int name, int *values)
 int aglGetError(void) { return *SDL_GetError() ? 1 : 0; }
 const char *aglErrorString(int error) { return error ? SDL_GetError() : "no error"; }
 void glVertexArrayParameteriAPPLE(GLenum name, GLint value) { (void)name; (void)value; }
+
+#if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED)
+/* The game's link handler (cod2x_native_macos.m) takes this one's place; a
+ * program built without it has no handler to restore. */
+__attribute__((weak)) void Cod2xNativeURL_Install(void)
+{
+}
+#endif
