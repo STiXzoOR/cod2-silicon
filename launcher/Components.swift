@@ -550,7 +550,7 @@ struct Toast<Actions: View>: View {
             // ship-home-library: a wrapped message makes the toast at least 66 tall, so the buttons sit
             // clear of the top-trailing corner and stay concentric with the bottom-trailing one alone
             // (at 62 they were 20 from the top and 6 from the side of a 24-point corner).
-            .frame(minHeight: textHeight > ControlMetrics.action + 0.5 ? 66 : 48)
+            .frame(minHeight: textHeight > ControlMetrics.action + 0.5 ? 66 : 48, alignment: .bottom)
             .frame(maxWidth: 720)
             .glassSurface(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
