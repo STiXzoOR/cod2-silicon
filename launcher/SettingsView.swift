@@ -39,7 +39,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 22) {
                         SettingsSection("Updates") { updatesGroup }
                         SettingsSection("Privacy") { privacyGroup } footer: {
-                            Text("Turning this off applies from your next game. Summaries already on this Mac stay there; turning it off doesn’t delete them.")
+                            Text("Changes apply from your next game. Match summaries already on this Mac stay there; turning them off doesn’t delete them.")
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         SettingsSection("Advanced launch options") { advancedGroup }
@@ -180,6 +180,26 @@ struct SettingsView: View {
                         detail: "On by default. After each match the game saves a short summary for Check-up: map, mode, frame times, ping and missed server updates. It stays on this Mac, which keeps the last \(MatchSummaries.recordLimit) matches, and is never sent anywhere.") {
                 Toggle("Local match summaries", isOn: $model.settings.matchSummariesEnabled).toggleStyle(.switch).labelsHidden()
             }
+            // Only a build with a report receiver offers it; without one nothing is ever sent.
+            if model.crashReportService != nil {
+                SettingsRow("Send crash reports to CoD2 Silicon",
+                            detail: "Off unless you turn it on. When the game crashes or stops responding, its crash report goes to the CoD2 Silicon project’s Sentry: what went wrong and where in the game, your macOS version and Mac model. Never your CD key, and your home folder’s name is left out.", titleLines: 2) {
+                    Toggle("Send crash reports to CoD2 Silicon", isOn: $model.settings.sendCrashReports).toggleStyle(.switch).labelsHidden()
+                }
+            }
+            cod2xReportsRow
+        }
+    }
+
+    /// CoD2x's own crash reports, which the CoD2x engine sends the way CoD2x does once the player agrees.
+    private var cod2xReportsRow: some View {
+        let original = model.chosenEngine == .original
+        return SettingsRow("Send CoD2x crash reports to the CoD2x project",
+                           detail: original ? "Only CoD2x sends these. Choose CoD2x in Game › Version to change this."
+                               : "Off unless you turn it on. When a crash happens inside CoD2x’s own code, the game reports it to the CoD2x project the way CoD2x itself does, including the paths of the game’s settings folders and the list of files it had loaded.", titleLines: 2) {
+            Toggle("Send CoD2x crash reports to the CoD2x project", isOn: $model.settings.sendCoD2xReports).toggleStyle(.switch).labelsHidden()
+                .disabled(original)
+                .accessibilityHint(original ? "Only CoD2x sends these reports" : "")
         }
     }
 
@@ -187,12 +207,23 @@ struct SettingsView: View {
         SettingsGroup {
             SettingsRow("CoD2 Silicon \(model.version)", detail: model.updateMessage,
                         minHeight: ControlMetrics.height(.regular) + 2 * SettingsMetrics.radius + 1) {
-                HStack(spacing: 10) {
-                    if let url = model.releaseURL { Link("View Release", destination: url).font(.system(size: 13)).foregroundStyle(palette.link) }
-                    Button(model.checkingUpdates ? "Checking…" : "Check Now", action: model.checkUpdates).glassAction().disabled(model.checkingUpdates)
-                }
+                // A narrow window keeps the button whole and drops the link; the Releases page also opens when installing here can't.
+                ViewThatFits(in: .horizontal) { updateControls(link: true); updateControls(link: false) }
             }
         }
+    }
+    private func updateControls(link: Bool) -> some View {
+        HStack(spacing: 10) {
+            if model.installingUpdate { ProgressView().controlSize(.small).accessibilityLabel(model.updateMessage) }
+            if link, let url = model.releaseURL { Link("View Release", destination: url).font(.system(size: 13)).foregroundStyle(palette.link) }
+            if model.updateOffer != nil {
+                Button("Install Update", action: model.installUpdate).glassAction().disabled(model.installingUpdate)
+                    .help("Download this version, check it and replace the app. CoD2 Silicon restarts.")
+            } else {
+                Button(model.checkingUpdates ? "Checking…" : "Check Now", action: model.checkUpdates).glassAction().disabled(model.checkingUpdates)
+            }
+        }
+        .fixedSize()
     }
 
     private var advancedGroup: some View {
@@ -367,18 +398,21 @@ struct SettingsRow<Control: View>: View {
     /// In the design but waiting on the Metal renderer (0.3): labelled, dimmed and inert.
     var upcoming = false
     var minHeight: CGFloat = 52
+    /// Long titles that name where something goes wrap rather than truncate in a narrow window.
+    var titleLines = 1
     @ViewBuilder var control: Control
     @Environment(\.palette) private var palette
     init(_ title: String, detail: String? = nil, fixedLabel: CGFloat? = nil, typewriter: Bool = false, upcoming: Bool = false, minHeight: CGFloat = 52,
-         @ViewBuilder control: () -> Control) {
+         titleLines: Int = 1, @ViewBuilder control: () -> Control) {
         self.title = title; self.detail = detail; self.fixedLabel = fixedLabel; self.typewriter = typewriter; self.upcoming = upcoming
-        self.minHeight = minHeight; self.control = control()
+        self.minHeight = minHeight; self.titleLines = titleLines; self.control = control()
     }
     var body: some View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
-                    Text(title).font(typewriter ? .typewriter(14) : .system(size: 14)).foregroundStyle(palette.dark ? Palette.hex(0xe6dfcf) : palette.text).lineLimit(1)
+                    Text(title).font(typewriter ? .typewriter(14) : .system(size: 14)).foregroundStyle(palette.dark ? Palette.hex(0xe6dfcf) : palette.text).lineLimit(titleLines)
+                        .fixedSize(horizontal: false, vertical: titleLines > 1)
                         .opacity(upcoming ? 0.55 : 1)
                     if upcoming {
                         Text("0.3").font(.stencil(11, heavy: false)).tracking(1.2).foregroundStyle(palette.accent)

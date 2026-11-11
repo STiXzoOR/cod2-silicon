@@ -128,8 +128,10 @@ struct Dispatch: Codable, Equatable, Sendable {
 }
 
 enum ReleaseNotes {
-    struct Feed: Equatable { var dispatches: [Dispatch]; var latestVersion: String? }
+    struct Feed: Equatable { var dispatches: [Dispatch]; var latestVersion: String?; var latestAssets: [ReleaseAsset] = [] }
+    private struct Asset: Decodable { var name: String?; var size: Int?; var browser_download_url: String? }
     private struct Release: Decodable {
+        var assets: [Asset]?
         var tag_name: String?
         var name: String?
         var body: String?
@@ -138,7 +140,8 @@ enum ReleaseNotes {
         var draft: Bool?
         var prerelease: Bool?
     }
-    /// Parses GitHub's `GET /repos/{owner}/{repo}/releases` response. Notify only: nothing is downloaded.
+    /// Parses GitHub's `GET /repos/{owner}/{repo}/releases` response. Nothing is downloaded here; the
+    /// latest release's files are only listed, for Install Update (AppUpdate).
     static func parse(_ data: Data, limit: Int = 3, calendar: Calendar = .current) throws -> Feed {
         guard data.count <= 1_000_000 else { throw LauncherError(message: "The release feed is too large.") }
         let releases = try JSONDecoder().decode([Release].self, from: data).prefix(50).filter { $0.draft != true }
@@ -152,8 +155,12 @@ enum ReleaseNotes {
             dispatches.append(Dispatch(stamp: stamp, title: title.isEmpty ? "CoD2 Silicon \(version(tag))" : title,
                                        summary: summary(release.body ?? ""), link: link))
         }
-        let latest = releases.first { $0.prerelease != true }.flatMap { $0.tag_name }.map(version)
-        return Feed(dispatches: dispatches, latestVersion: latest)
+        let newest = releases.first { $0.prerelease != true }
+        let assets = (newest?.assets ?? []).prefix(64).compactMap { asset -> ReleaseAsset? in
+            guard let name = asset.name, let size = asset.size, let link = asset.browser_download_url, let url = URL(string: link) else { return nil }
+            return ReleaseAsset(name: name, size: size, url: url)
+        }
+        return Feed(dispatches: dispatches, latestVersion: newest?.tag_name.map(version), latestAssets: assets)
     }
     static func version(_ tag: String) -> String {
         String(tag.trimmingCharacters(in: .whitespaces).drop { $0 == "v" || $0 == "V" }.prefix(32))
@@ -185,6 +192,8 @@ enum ReleaseNotes {
         return words.joined(separator: " ") + "…"
     }
 }
+
+struct ReleaseAsset: Equatable, Sendable { var name: String; var size: Int; var url: URL }
 
 struct MediaFacts: Equatable {
     var map: String?

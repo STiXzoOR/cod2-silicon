@@ -1,14 +1,24 @@
 #!/usr/bin/env python3
 """Real app/Apple-event/child-crash test, with synthetic game content only."""
-import base64, json, os, pathlib, re, subprocess, time
+import base64, http.server, json, os, pathlib, re, subprocess, threading, time
 root = pathlib.Path(__file__).resolve().parents[2]
 out = pathlib.Path(os.environ.get('COD2_LAUNCHER_TEST_OUTPUT', str(root/'output/ws25'))) / 'lifecycle.noindex';out.mkdir(parents=True, exist_ok=True)
 fixture = out/'fixture'
 for variant, flags in [(fixture, []), (out/'fixture-stock', ['-DLIFECYCLE_STOCK'])]:
     subprocess.run(['taskpolicy','-b','nice','-n','19','clang','-fobjc-arc','-mmacosx-version-min=26.0','-DCOD2_X64=1','-DCOD2_CODX=1',*flags,str(root/'tests/launcher/lifecycle.m'),str(root/'src/PC/qcommon/cod2x_url.c'),'-framework','AppKit','-o',str(variant)],check=True)
 app = out/'Lifecycle.app'
+# A stand-in crash report receiver on this Mac; the bundle names it as its build-time Sentry DSN.
+received = []
+class Receiver(http.server.BaseHTTPRequestHandler):
+    def do_POST(self):
+        received.append((self.path, dict(self.headers), self.rfile.read(int(self.headers['Content-Length']))))
+        self.send_response(200); self.send_header('Content-Length', '2'); self.end_headers(); self.wfile.write(b'{}')
+    def log_message(self, *args): pass
+receiver = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Receiver)
+threading.Thread(target=receiver.serve_forever, daemon=True).start()
 subprocess.run([str(root/'scripts/build-launcher.sh'), str(out/'launcher')], check=True)
-subprocess.run(['python3',str(root/'tools/cod2x/make_macos_app.py'),str(fixture),str(app),'--replace','--bundle-id','io.github.stixzoor.cod2silicon.ws25fixture','--launcher',str(out/'launcher/CoD2Launcher'),'--stock-engine',str(out/'fixture-stock')],check=True)
+subprocess.run(['python3',str(root/'tools/cod2x/make_macos_app.py'),str(fixture),str(app),'--replace','--bundle-id','io.github.stixzoor.cod2silicon.ws25fixture','--launcher',str(out/'launcher/CoD2Launcher'),'--stock-engine',str(out/'fixture-stock'),
+                '--sentry-dsn',f'http://lifecyclekey@127.0.0.1:{receiver.server_address[1]}/7'],check=True)
 home = out/'home';home.mkdir(exist_ok=True)
 game = home/'Games/CoD2/main';game.mkdir(parents=True,exist_ok=True)
 for i in range(16):(game/f'iw_{i:02}.iwd').touch()
@@ -21,7 +31,9 @@ apphome.mkdir(parents=True, exist_ok=True)
 kept = b'synthetic CoD2x archive'
 (apphome/'cod2x').mkdir(exist_ok=True); (apphome/'cod2x/iw_CoD2x_01.iwd').write_bytes(kept)
 placed = apphome/'main/iw_CoD2x_01.iwd'
-env = {**os.environ,'CFFIXED_USER_HOME':str(home),'HOME':str(home),'COD2_SETUP_NONINTERACTIVE':'1','COD2_SETUP_CD_KEY':'000000000000000086D3','WS25_FIXTURE_HOME':str(apphome)}
+# An inherited CoD2x report switch never reaches the game unless the player turned it on.
+env = {**os.environ,'CFFIXED_USER_HOME':str(home),'HOME':str(home),'COD2_SETUP_NONINTERACTIVE':'1','COD2_SETUP_CD_KEY':'000000000000000086D3','WS25_FIXTURE_HOME':str(apphome),
+       'COD2_SILICON_COD2X_REPORTS':'1'}
 exitfile = apphome/'exit-fixture'
 exitfile.unlink(missing_ok=True)
 log = out/'console.log'
@@ -39,6 +51,7 @@ with log.open('w') as stream:
         wait(lambda: 'fixture link localhost:28963' in log.read_text(errors='replace'))
         child=int(re.search(r'fixture ready (\d+)',log.read_text()).group(1))
         assert placed.read_bytes() == kept and not (game/'iw_CoD2x_01.iwd').exists(), 'CoD2x starts with the kept archive in the app home only'
+        assert (apphome/'fixture-reports-consent.txt').read_text() == 'unset', 'CoD2x reports are off until turned on'
         wait(lambda: (apphome/'fixture-arguments.json').is_file())
         arguments = json.loads((apphome/'fixture-arguments.json').read_text())
         assert 'sensitivity' not in arguments and 'com_maxfps' not in arguments
@@ -76,7 +89,7 @@ with log.open('w') as stream:
         # passworded ones included, never +connect or a password in argv, and is found again after a
         # launcher force-quit. The unknown server is asked for its version first (no answer).
         launcher.terminate(); launcher.wait(timeout=5)
-        settings = json.loads((apphome/'launcher-settings.json').read_text()); settings['engine'] = 'original'
+        settings = json.loads((apphome/'launcher-settings.json').read_text()); settings['engine'] = 'original'; settings['sendCoD2xReports'] = True
         (apphome/'launcher-settings.json').write_text(json.dumps(settings))
         (apphome/'fixture-arguments.json').unlink(); exitfile.unlink()
         loadout = apphome/f'main/players/{active}/config_mp.cfg'
@@ -86,6 +99,7 @@ with log.open('w') as stream:
         wait(lambda: 'fixture link localhost:28964 password s3cret+x' in log.read_text(errors='replace'))
         stock = int(re.findall(r'fixture ready (\d+)', log.read_text())[-1])
         assert not placed.exists() and (apphome/'cod2x/iw_CoD2x_01.iwd').read_bytes() == kept, 'Original 1.3 starts without the CoD2x archive'
+        assert (apphome/'fixture-reports-consent.txt').read_text() == 'unset', 'only a CoD2x game gets the CoD2x report switch'
         assert subprocess.check_output(['ps', '-o', 'comm=', '-p', str(stock)], text=True).strip().endswith('/MacOS/cod2_macos_stock')
         arguments = json.loads((apphome/'fixture-arguments.json').read_text())
         assert '+connect' not in arguments and not any('s3cret' in a or 'password' in a.lower() for a in arguments), arguments
@@ -103,7 +117,7 @@ with log.open('w') as stream:
         # Back to CoD2x: the 125 the original couldn't keep is in the loadout before the CoD2x engine starts,
         # and the original's own change (sensitivity 6) stays.
         launcher.terminate(); launcher.wait(timeout=5)
-        settings['engine'] = 'cod2x'; (apphome/'launcher-settings.json').write_text(json.dumps(settings))
+        settings['engine'] = 'cod2x'; settings['sendCrashReports'] = True; (apphome/'launcher-settings.json').write_text(json.dumps(settings))
         exitfile.unlink()
         launcher = subprocess.Popen([str(app/'Contents/MacOS/CoD2Launcher'), '--play'], stdout=stream, stderr=stream, env=env, cwd=out)
         wait(lambda: log.read_text(errors='replace').count('fixture ready') == 3)
@@ -115,9 +129,28 @@ with log.open('w') as stream:
         summaries = [json.loads(path.read_text())['summary'] for path in (apphome/f'main/players/{active}/history').glob('*.json')]
         assert summaries.count('Put back CoD2x values that Original 1.3 can’t keep') == 1, summaries
         print('PASS: the CoD2x value Original 1.3 wrote over (cl_maxpackets 125 to 30) is back before the next CoD2x game, the original\'s own change kept')
+        # Settings › Privacy: CoD2x's switch reaches the CoD2x game; with sending on, the crash report goes once, shortened.
+        assert (apphome/'fixture-reports-consent.txt').read_text() == '1'
+        assert not received, 'nothing was sent while sending was off'
+        exitfile.touch()
+        wait(lambda: log.read_text(errors='replace').count('returned to launcher') == 3 and received)
+        time.sleep(1)
+        assert len(received) == 1, received
+        path, headers, body = received[0]
+        assert path == '/api/7/envelope/' and headers['X-Sentry-Auth'].startswith('Sentry sentry_version=7, sentry_client=cod2-silicon-launcher/') \
+            and headers['X-Sentry-Auth'].endswith(', sentry_key=lifecyclekey') and headers['Content-Type'] == 'application/x-sentry-envelope', headers
+        lines = body.split(b'\n')
+        event = json.loads(lines[2])
+        assert event['level'] == 'fatal' and event['logentry']['formatted'] == 'SIGSEGV (synthetic)' and 'user' not in event and event['sdk']['settings'] == {'infer_ip': 'never'}
+        assert json.loads(lines[3])['filename'] == 'cod2_crash_fixture.txt'
+        text = body.decode()
+        assert 'command' not in text and 'fs_homepath' not in text and str(home) not in text and str(pathlib.Path.home()) not in text and 'executable : ~/fixture' in text, text
+        assert len(json.loads((apphome/'crash-reports-sent.json').read_text())) == 1
+        print('PASS: crash reports: CoD2x\'s report switch only for a CoD2x game with it on (an inherited value removed), nothing sent while off, one shortened envelope to the build\'s receiver once on')
         print('PASS: launcher→nested child, Dock handoff, two live cod2x Apple events, no duplicate engine, launcher force-quit/reconnect, game crash→live launcher/Dock restoration/report')
         print('PASS: real launch migration and machine argv, personal config ownership, persisted before-session archive and exactly one snapshot after reattachment/exit')
     finally:
+        receiver.shutdown()
         launcher.terminate()
         try:launcher.wait(timeout=5)
         except subprocess.TimeoutExpired:launcher.kill();launcher.wait()
