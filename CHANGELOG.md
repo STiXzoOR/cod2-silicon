@@ -28,6 +28,20 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   WebSocket connections for mods. Certificates are checked on every request,
   which CoD2x itself does not do, and nothing from the CoD2x project is
   installed or run: updates are only announced.
+- CoD2x's own menus and icons. **Settings → Game → CoD2x files** downloads
+  the official CoD2x 1.4.6.8 release from the CoD2x project's GitHub page,
+  checks it, and keeps only those files on this Mac; or copies them from a
+  Windows game folder that has CoD2x installed. They are used for CoD2x games
+  only, and your game folder is never changed.
+- Install updates from the launcher. When a newer release is found, **Install
+  Update** downloads it, checks it against the release's checksum and
+  signature, replaces the app and restarts it. Nothing installs without that
+  click.
+- Crash reports you can choose to send. Two switches in **Settings →
+  Privacy**, both off unless you turn them on: one sends CoD2x's reports for
+  faults in CoD2x's own code to the CoD2x project, as CoD2x itself does; the
+  other, in builds that have a report address, sends everything else to this
+  project, with your home folder's name left out and never your CD key.
 - Voice chat sends your microphone when you play the original 1.3. Hold the
   voice chat key on a server with voice on and macOS asks once for microphone
   access; the microphone is open
@@ -45,8 +59,7 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   picture, the 250 fps cap and raw mouse input unless your loadout sets them.
 - Crash reports from a CoD2x game are named `cod2x_crash.<date>_<time>.<pid>.log`
   and follow CoD2x's form; the original 1.3 keeps `cod2_crash_<pid>.txt`.
-  Nothing is sent anywhere: reports to CoD2x for faults in CoD2x's own code
-  stay off until you agree to them.
+  Nothing is sent unless you turn a report switch on in Settings.
 - The game's videos play. The `cinematic` console command and the intro
   (publisher and studio logos, then the game's intro film) were switched off
   because they showed a black screen. Started without the launcher, the game
