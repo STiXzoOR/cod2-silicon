@@ -33,10 +33,10 @@ checks below were run on that Mac.
 - **Both engines.** The original 1.3 engine and the CoD2x engine each give
   the same 0.11 in the replay comparison. Against a local original 1.3
   server, the original engine joined from a link sent while it was running.
-- **CoD2x's services.** The update check, zPAM updates, script web requests,
-  WebSocket connections, the match service, vMix control, and crash and error
-  reports were run against stand-ins on this Mac, never against the CoD2x
-  project's servers.
+- **CoD2x's services.** The update check and its UDP fallback, zPAM updates,
+  script web requests, WebSocket connections, the match service, vMix
+  control, and crash and error reports were run against stand-ins on this
+  Mac, never against the CoD2x project's servers.
 
 ## What was not
 

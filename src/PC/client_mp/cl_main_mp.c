@@ -2513,6 +2513,15 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
         goto finish;
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (I_stricmp(cmd, "updateResponse") == 0) {
+        extern void Cod2x_UpdatePacket(netadr_t from);
+        Cod2x_UpdatePacket(from);
+        result = 1;
+        goto finish;
+    }
+#endif
+
     if (I_stricmp(cmd, (const char *)"print") == 0) {
         const char *text = MSG_ReadBigString(msg);
 

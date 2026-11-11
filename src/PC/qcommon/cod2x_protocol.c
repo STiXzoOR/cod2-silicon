@@ -64,4 +64,20 @@ const char *Cod2x_ServiceURL(const char *url, char *buffer, size_t size)
     }
     return url;
 }
+
+/* The stand-in for the update port of CoD2x's master in tests:
+   COD2X_TEST_UPDATER_ADDRESS, or the host:port of COD2X_TEST_SERVICE_URL; NULL
+   without either. */
+const char *Cod2x_TestUpdaterAddress(char *out, size_t size)
+{
+    const char *test = getenv("COD2X_TEST_UPDATER_ADDRESS"), *service = getenv("COD2X_TEST_SERVICE_URL"), *host;
+    if (test && test[0])
+        return test;
+    if (!service || !service[0])
+        return NULL;
+    host = strstr(service, "://");
+    host = host ? host + 3 : service;
+    snprintf(out, size, "%.*s", (int)strcspn(host, "/"), host);
+    return out[0] ? out : NULL;
+}
 #endif
