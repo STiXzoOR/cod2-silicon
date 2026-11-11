@@ -569,26 +569,36 @@ struct UpdateCard: View {
     }
 }
 
-/// The same release status and actions where Home shows them (ship-home-library may replace this with its pill).
+/// Home's release status and actions, as before the redesign (ship-home-library may replace this with its pill).
 struct UpdateStatusView: View {
     @ObservedObject var model: LauncherModel
     @Environment(\.palette) private var palette
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("CoD2 Silicon \(model.version)").font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.heading)
-                Text(model.updateMessage).font(.system(size: 13)).foregroundStyle(model.updateError ? palette.negative : palette.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
+                if model.checkingUpdates || model.installingUpdate { ProgressView().controlSize(.small).accessibilityLabel(model.updateMessage) }
+                else { Image(systemName: model.updateError ? "exclamationmark.triangle" : model.releaseURL != nil ? "arrow.down.circle" : model.updateWasChecked ? "checkmark.circle" : "arrow.clockwise").foregroundStyle(model.updateError ? palette.negative : palette.secondary).accessibilityHidden(true) }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("CoD2 Silicon \(model.version)").font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.heading)
+                    Text(model.updateMessage).font(.system(size: 13)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .combine).accessibilityAddTraits(.isStaticText)
-            if model.checkingUpdates || model.installingUpdate { ProgressView().controlSize(.small).accessibilityLabel(model.updateMessage) }
-            else if model.updateOffer != nil {
-                Button("What’s New", action: model.showWhatsNew).glassAction()
-                Button("Install and Relaunch", action: model.installUpdate).glassAction().disabled(model.gameRunning)
-            } else { Button("Check Now", action: model.checkUpdates).glassAction() }
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) { actions }
+                VStack(alignment: .leading, spacing: 10) { actions }
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .contain)
+    }
+    @ViewBuilder private var actions: some View {
+        if model.updateOffer != nil {
+            Button("Install Update", action: model.installUpdate).glassAction().disabled(model.installingUpdate || model.checkingUpdates)
+                .help("Download this version, check it and replace the app. CoD2 Silicon restarts.")
+        } else {
+            Button(model.checkingUpdates ? "Checking…" : "Check for Updates…", action: model.checkUpdates).glassAction().disabled(model.checkingUpdates)
+        }
+        if let url = model.releaseURL { Link("View Release", destination: url).font(.system(size: 13)).foregroundStyle(palette.link) }
     }
 }
 
