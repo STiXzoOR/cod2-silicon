@@ -527,8 +527,6 @@ struct Toast<Actions: View>: View {
     var message: String
     @ViewBuilder var actions: Actions
     @Environment(\.palette) private var palette
-    /// The message's height with its padding (ship-home-library: see the minimum height below).
-    @State private var textHeight: CGFloat = 0
     init(symbol: String = "info.circle", tone: BannerTone = .neutral, message: String, @ViewBuilder actions: () -> Actions) {
         self.symbol = symbol; self.tone = tone; self.message = message; self.actions = actions()
     }
@@ -543,14 +541,10 @@ struct Toast<Actions: View>: View {
                         .id(message)
                 }
                 .padding(.vertical, 9)
-                .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { textHeight = $0 }
                 HStack(spacing: 8) { actions }
             }
             .padding(.leading, 18).padding(.trailing, 6).padding(.vertical, 6)
-            // ship-home-library: a wrapped message makes the toast at least 66 tall, so the buttons sit
-            // clear of the top-trailing corner and stay concentric with the bottom-trailing one alone
-            // (at 62 they were 20 from the top and 6 from the side of a 24-point corner).
-            .frame(minHeight: textHeight > ControlMetrics.action + 0.5 ? 66 : 48, alignment: .bottom)
+            .frame(minHeight: 48)
             .frame(maxWidth: 720)
             .glassSurface(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
