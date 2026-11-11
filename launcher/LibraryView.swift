@@ -113,7 +113,7 @@ private struct LibraryTabContent: View {
     }
 
     private var selected: MediaEntry? { model.media.first { $0.url == model.selectedMedia } }
-    private var showingMatches: Bool { model.settings.matchSummariesEnabled && !model.storedMatches.isEmpty }
+    private var showingMatches: Bool { !model.storedMatches.isEmpty }
 
     private var header: some View {
         HStack(alignment: .bottom) {
@@ -166,7 +166,8 @@ private struct LibraryTabContent: View {
     // MARK: Matches
 
     @ViewBuilder private func matches(width: CGFloat) -> some View {
-        if !model.settings.matchSummariesEnabled {
+        // Turning summaries off stops new ones; those already kept stay listed (and deletable) until deleted.
+        if !model.settings.matchSummariesEnabled && model.storedMatches.isEmpty {
             EmptyState("Match summaries are off", message: "Turn them on to see how each match ran. They stay on this Mac.",
                        actionTitle: "Turn On in Settings…", prominent: false) { model.openSettings(.privacy) }
                 .padding(.top, 130)
@@ -182,6 +183,12 @@ private struct LibraryTabContent: View {
             let columns = MatchColumns(width: width)
             let stored = model.storedMatches
             VStack(alignment: .leading, spacing: 4) {
+                if !model.settings.matchSummariesEnabled {
+                    Banner(.neutral, symbol: "pause.circle", message: "Match summaries are off, so new matches aren’t added. These stay on this Mac until you delete them.") {
+                        Button("Turn On in Settings…") { model.openSettings(.privacy) }.glassAction()
+                    }
+                    .padding(.bottom, 14)
+                }
                 MatchColumnHeader(columns: columns)
                 LazyVStack(spacing: 4) {
                     ForEach(Array(stored.enumerated().reversed()), id: \.offset) { index, summary in
@@ -488,7 +495,8 @@ struct ScreenshotTile: View {
             ZStack {
                 Palette.hex(0x1b1d16)
                 if let thumbnail { Image(nsImage: thumbnail).resizable().aspectRatio(contentMode: .fit) }
-                else { SceneThumbnail(scenery: MapCatalog.scenery(entry.facts.map ?? entry.url.lastPathComponent), dark: palette.dark) }
+                // A screenshot is a picture of the game, so its stand-in doesn't follow the appearance.
+                else { SceneThumbnail(scenery: MapCatalog.scenery(entry.facts.map ?? entry.url.lastPathComponent), dark: true) }
             }
             .aspectRatio(4 / 3, contentMode: .fit)
             .clipped()

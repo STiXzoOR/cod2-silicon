@@ -30,6 +30,12 @@ enum HomeAttention: String, CaseIterable, Identifiable {
     }
 }
 
+extension GameServer {
+    /// The map and mode the server reported; nil for an address only ever joined (never seen in a list).
+    var knownMap: String? { fields["mapname"] }
+    var knownMode: String? { fields["g_gametype"] ?? fields["gametype"] }
+}
+
 /// Home's Dispatches: this version's release headline, then what comes next. Nothing here names a
 /// version that isn't out or promises a date.
 enum HomeDispatches {
@@ -140,6 +146,23 @@ enum PlayedDate {
 
     var dispatches: [Dispatch] { HomeDispatches.list(version: version, feed: library.dispatches) }
 
+    /// The server behind a recent address: what the launcher last saw of it, or for one it never listed
+    /// (joined by address), a bare entry with the map and mode of its newest match summary, if any.
+    func recentServer(_ address: String) -> GameServer {
+        if let known = knownServer((try? LaunchLink.canonicalAddress(address)) ?? address) { return known }
+        var fields: [String: String] = [:]
+        let wanted = (try? LaunchLink.canonicalAddress(address)) ?? address
+        if let match = storedMatches.last(where: { $0.serverAddress == address || (try? LaunchLink.canonicalAddress($0.serverAddress)) == wanted }) {
+            fields["mapname"] = match.map; fields["g_gametype"] = match.mode
+        }
+        return GameServer(address: address, fields: fields, ping: 0, players: [])
+    }
+    /// Home's hero and Jump back in: the most recent joins, newest first, including servers joined by address.
+    var homeRecent: [GameServer] { library.recent.prefix(3).map(recentServer) }
+    var homeLastServer: GameServer? { library.recent.first.map(recentServer) }
+    /// Whether the launcher has seen `server` in a server list (so its name, map and version are known).
+    func isListed(_ server: GameServer) -> Bool { knownServer((try? LaunchLink.canonicalAddress(server.address)) ?? server.address) != nil }
+
     /// When `address` was last joined: the launcher's record, else the end of the newest match summary from it.
     func lastPlayed(_ address: String) -> Date? {
         if let date = library.played[address] { return date }
@@ -149,7 +172,7 @@ enum PlayedDate {
     }
     /// The server the running game was sent to by this launcher (nil when it was started on its own menu).
     var serverInPlay: GameServer? {
-        guard gameRunning, let server = lastServer, let date = library.played[server.address], date >= gameStartedAt.addingTimeInterval(-2) else { return nil }
+        guard gameRunning, let server = homeLastServer, let date = library.played[server.address], date >= gameStartedAt.addingTimeInterval(-2) else { return nil }
         return server
     }
     var nextGameFrameCap: (value: Int?, name: String?) {
@@ -273,7 +296,7 @@ enum PlayedDate {
     /// none of them cancels the others).
     func loadLibraryArtwork() {
         guard !snapshot, !dataPath.isEmpty else { return }
-        var maps = recentServers.map(\.map) + visibleServers.prefix(32).map(\.map)
+        var maps = homeRecent.map(\.map) + recentServers.map(\.map) + visibleServers.prefix(32).map(\.map)
         if let selected { maps.append(selected.map) }
         maps += media.compactMap(\.facts.map) + storedMatches.suffix(24).map(\.map)
         let path = dataPath
@@ -386,11 +409,17 @@ enum PlayedDate {
                 if screen == "home-crash-not-sent" { notice += " " + CrashReporting.Status.notSent(.offline).message }
             }
         case "home-first": page = .home; library.recent = []; library.played = [:]
+        case "home-address":
+            // Last joined by address: a server no list has shown, with no match summary from it.
+            page = .home; previewMatches()
+            let address = "203.0.113.77:28960"
+            library.played[address] = Date().addingTimeInterval(-50 * 60); library.recent.insert(address, at: 0)
         case "home-loadout", "home-loadout-unreadable": page = .home
         case "home-update-installing": page = .home; previewUpdateOffer(); installingUpdate = true; updateMessage = AppUpdate.Message.downloading("0.4.0")
         case "library-matches": page = .library; libraryTab = .matches; previewMatches()
         case "library-matches-empty": page = .library; libraryTab = .matches; previewMatches([])
         case "library-matches-off": page = .library; libraryTab = .matches; previewMatches([]); settings.matchSummariesEnabled = false; studio.checkup.matchSummariesEnabled = false
+        case "library-matches-off-kept": page = .library; libraryTab = .matches; previewMatches(); settings.matchSummariesEnabled = false; studio.checkup.matchSummariesEnabled = false
         case "library-matches-error": page = .library; libraryTab = .matches
             studio.checkup.readMatches = { _ in throw CocoaError(.fileReadNoPermission) }; studio.checkup.refreshMatches(home: home)
         case "library-demos": page = .library; libraryTab = .demos

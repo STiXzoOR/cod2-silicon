@@ -4,20 +4,21 @@ import SwiftUI
 // Review harness, owner ship-home-library. Home and Library screens and the Library part of the page actions.
 
 extension Snapshots {
-    static let homeLibraryScreens = ["home", "home-first", "home-attention", "home-running", "home-crash", "home-matches-off",
+    static let homeLibraryScreens = ["home", "home-first", "home-address", "home-attention", "home-running", "home-crash", "home-matches-off",
                                      "library-matches", "library-demos", "library-screenshots"]
     /// Also rendered in the `--group pages` runs and read by `--accessibility`.
     static let homeLibraryPageScreens = ["home-update", "home-update-installing", "home-crash-sent", "home-crash-not-sent",
-                                         "library-matches-empty", "library-matches-off", "library-matches-error", "library-demos-selected",
+                                         "library-matches-empty", "library-matches-off", "library-matches-off-kept", "library-matches-error", "library-demos-selected",
                                          "library-screenshots-selected", "library-empty", "library-empty-screenshots", "library-reloaded",
                                          "library-error", "library-renaming", "library-rename-error", "library-trash", "library-running", "library-missing",
                                          "library-trashed", "home-loadout", "home-loadout-unreadable"]
-    static let homeLibraryAccessibilityScreens = ["home", "home-first", "home-attention", "home-running", "home-matches-off",
+    static let homeLibraryAccessibilityScreens = ["home", "home-first", "home-address", "home-attention", "home-running", "home-matches-off",
                                                   "library-matches", "library-demos", "library-screenshots"]
     static let homeLibraryLabels: [String: [String]] = [
         "home": ["Launch on Northern Lights | Public", "Find a Server", "Jump back in", "All Recent", "Launch on Sunday Rifles · EU",
                  "Last match", "All Matches", "Connection Steady", "Open Check-up", "Dispatches", "Release Notes"],
         "home-first": ["Find a Server", "Open Game Menu", "NOTHING PLAYED YET", "NOT MEASURED YET"],
+        "home-address": ["Launch on 203.0.113.77:28960", "203.0.113.77:28960, Joined by address"],
         "home-attention": ["Approximate shaders. Build the original shaders"],
         "home-running": ["Return to Game", "Quit Game"],
         "home-matches-off": ["MATCH SUMMARIES ARE OFF", "Turn On in Settings…"],
@@ -28,6 +29,7 @@ extension Snapshots {
         "library-matches": ["Toujane, Search & Destroy", "Check-up for Toujane · Search & Destroy", "Kept on this Mac", "Delete Summaries…"],
         "library-matches-empty": ["NO MATCHES YET", "Find a Server"],
         "library-matches-off": ["MATCH SUMMARIES ARE OFF", "Turn On in Settings…"],
+        "library-matches-off-kept": ["Match summaries are off, so new matches aren’t added", "Turn On in Settings…", "Toujane, Search & Destroy", "Delete Summaries…"],
         "library-matches-error": ["MATCHES UNAVAILABLE", "Try Again"],
         "library-demos": ["Demo toujane_tdm_1110_2114.dm_1", "Play toujane_tdm_1110_2114.dm_1", "More actions for toujane_tdm_1110_2114.dm_1", "Show in Finder"],
         "library-screenshots": ["Screenshot, Toujane", "Show in Finder"],

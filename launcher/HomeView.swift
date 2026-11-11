@@ -15,8 +15,9 @@ struct HomeView: View {
 
     var body: some View {
         let running = model.gameRunning
-        let shown = running ? model.serverInPlay : model.lastServer
-        let map = shown?.map ?? model.lastServer?.map ?? "mp_toujane"
+        let shown = running ? model.serverInPlay : model.homeLastServer
+        // A server joined by address with no match summary has no known map: the backdrop keeps the default scene.
+        let map = (shown ?? model.homeLastServer).flatMap(\.knownMap) ?? "mp_toujane"
         GeometryReader { proxy in
             let height = proxy.size.height
             let lead = max(32, 300 - origin.x)
@@ -36,7 +37,7 @@ struct HomeView: View {
                         .padding(.top, heroTop)
                     VStack(alignment: .leading, spacing: 32) {
                         HomeChips(model: model)
-                        HomeCards(model: model, stacked: stacked, cardHeight: cardHeight)
+                        HomeCards(model: model, stacked: stacked, cardHeight: cardHeight, returning: !model.library.recent.isEmpty)
                     }
                     .padding(.bottom, 28)
                     .frame(maxHeight: .infinity, alignment: .bottom)
@@ -72,14 +73,14 @@ private struct HomeHero: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             if running {
-                Eyebrow(text: (["In the field now", server.flatMap { MapCatalog.region($0.map) }].compactMap { $0 }).joined(separator: " · "), size: 15, tracking: 0.34)
-                StencilTitle(text: (server.map { MapCatalog.displayName($0.map) } ?? "CoD2 Silicon").uppercased())
+                Eyebrow(text: (["In the field now", server?.knownMap.flatMap(MapCatalog.region)].compactMap { $0 }).joined(separator: " · "), size: 15, tracking: 0.34)
+                StencilTitle(text: (server?.knownMap.map(MapCatalog.displayName) ?? "CoD2 Silicon").uppercased())
                 TimelineView(.periodic(from: .now, by: 30)) { context in
                     MetaLine(items: meta(server, when: Self.playing(since: model.gameStartedAt, now: context.date)))
                 }
             } else if let server {
-                Eyebrow(text: (["Last played", MapCatalog.region(server.map)].compactMap { $0 }).joined(separator: " · "), size: 15, tracking: 0.34)
-                StencilTitle(text: MapCatalog.displayName(server.map).uppercased())
+                Eyebrow(text: (["Last played", server.knownMap.flatMap(MapCatalog.region)].compactMap { $0 }).joined(separator: " · "), size: 15, tracking: 0.34)
+                StencilTitle(text: (server.knownMap.map(MapCatalog.displayName) ?? "CoD2 Silicon").uppercased())
                 MetaLine(items: meta(server, when: model.lastPlayed(server.address).map { PlayedDate.sentence($0) }))
             } else {
                 Eyebrow(text: "Ready to play", size: 15, tracking: 0.34)
@@ -97,7 +98,7 @@ private struct HomeHero: View {
         var items: [AnyView] = []
         if let server {
             items.append(AnyView(QuakeName(name: server.name).font(.system(size: 16, weight: .semibold))))
-            items.append(AnyView(Text(GameModes.long(server.gametype))))
+            if let mode = server.knownMode { items.append(AnyView(Text(GameModes.long(mode)))) }
         }
         if let when { items.append(AnyView(Text(when))) }
         return items
@@ -108,6 +109,7 @@ private struct HomeHero: View {
         return minutes < 60 ? "Playing for \(minutes) min" : "Playing for \(minutes / 60) h \(minutes % 60) min"
     }
     @ViewBuilder private var buttons: some View {
+        let canNavigate = model.canNavigate
         if running {
             Button(action: model.returnToGame) { Label("Return to Game", systemImage: "play.fill").labelStyle(HeroLabelStyle()) }
                 .prominentAction().actionControlSize()
@@ -121,12 +123,12 @@ private struct HomeHero: View {
                 .accessibilityLabel("Launch on \(server.map { QuakeColors.plain($0.name) } ?? "the last server")")
             Button { model.navigate(to: .servers) } label: {
                 Label("Find a Server", systemImage: "dot.radiowaves.left.and.right").labelStyle(HeroLabelStyle())
-            }.glassAction().actionControlSize()
+            }.glassAction().actionControlSize().disabled(!canNavigate)
             hint("⌘↩ launches and rejoins this server").accessibilityLabel("Command Return launches and rejoins this server")
         } else {
             Button { model.navigate(to: .servers) } label: {
                 Label("Find a Server", systemImage: "dot.radiowaves.left.and.right").labelStyle(HeroLabelStyle())
-            }.prominentAction().actionControlSize()
+            }.prominentAction().actionControlSize().disabled(!canNavigate)
             Button(action: model.openGameMenu) { Label("Open Game Menu", systemImage: "play.fill").labelStyle(HeroLabelStyle()) }
                 .glassAction().actionControlSize()
             hint("⇧⌘↩").accessibilityLabel("Shift Command Return opens the game menu")
@@ -299,7 +301,21 @@ private struct UpdatePillToolbar: ViewModifier {
         case .failed: model.updateOffer != nil
         default: false
         }
-        if shown { content.trailingToolbar { UpdatePill(model: model, state: state) } } else { content }
+        if shown { toolbar(content, state: state) } else { content }
+    }
+    /// The pill draws its own glass around its prominent button (as on the board), so the toolbar's
+    /// shared glass is hidden for it; otherwise the system tints the whole item with the button's colour.
+    @ViewBuilder private func toolbar(_ content: Content, state: UpdateState) -> some View {
+        #if COD2_LIQUID_GLASS
+        if #available(macOS 26.0, *) {
+            content.toolbar {
+                ToolbarSpacer(.flexible)
+                ToolbarItem(placement: .automatic) { UpdatePill(model: model, state: state) }.sharedBackgroundVisibility(.hidden)
+            }
+        } else { content.trailingToolbar { UpdatePill(model: model, state: state) } }
+        #else
+        content.trailingToolbar { UpdatePill(model: model, state: state) }
+        #endif
     }
 }
 
@@ -308,6 +324,18 @@ private struct UpdatePill: View {
     var state: UpdateState
     @Environment(\.palette) private var palette
     var body: some View {
+        // 44 tall; Install Update is 36 tall and 4 in from the end, concentric with the pill.
+        GlassContainer(spacing: 4) {
+            content
+                .padding(.leading, 16).padding(.trailing, endsWithButton ? 4 : 16)
+                .frame(height: 44)
+                .glassSurface(Capsule())
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Update")
+    }
+    private var endsWithButton: Bool { if case .ready = state { return true }; return false }
+    @ViewBuilder private var content: some View {
         HStack(spacing: 12) {
             switch state {
             case .installing(let message):
@@ -323,14 +351,11 @@ private struct UpdatePill: View {
                 Text(version.isEmpty ? "A new version of CoD2 Silicon is available" : installable ? "CoD2 Silicon \(version) is ready to install" : "CoD2 Silicon \(version) is available")
                     .font(.system(size: 13)).foregroundStyle(palette.text).lineLimit(1)
                 Button("What’s New", action: model.showWhatsNew).quietAction()
-                if installable { Button("Install Update", action: model.installUpdate).prominentAction() }
-                else { Button("View Release") { NSWorkspace.shared.open(model.releaseURL ?? AppUpdate.releases) }.prominentAction() }
+                if installable { Button("Install Update", action: model.installUpdate).prominentAction().actionControlSize() }
+                else { Button("View Release") { NSWorkspace.shared.open(model.releaseURL ?? AppUpdate.releases) }.prominentAction().actionControlSize() }
             default: EmptyView()
             }
         }
-        .padding(.leading, 10)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Update")
     }
 }
 
@@ -430,6 +455,9 @@ private struct HomeCards: View {
     @ObservedObject var model: LauncherModel
     var stacked: Bool
     var cardHeight: CGFloat
+    /// Recent servers are listed: Jump back in takes the width its rows need, as on the Home board
+    /// (508 : 298 : 266 at 1440 wide); with nothing played the cards keep the 1.22 : 0.9 : 1 grid.
+    var returning: Bool
     var body: some View {
         if stacked {
             VStack(spacing: 18) {
@@ -441,13 +469,13 @@ private struct HomeCards: View {
                 .frame(height: cardHeight)
             }
         } else {
-            // The board's 1.22 : 0.9 : 1 grid.
             GeometryReader { proxy in
-                let unit = (proxy.size.width - 36) / 3.12
+                let shares: [CGFloat] = returning ? [508, 298, 266] : [1.22, 0.9, 1]
+                let unit = (proxy.size.width - 36) / shares.reduce(0, +)
                 HStack(alignment: .top, spacing: 18) {
-                    JumpBackInCard(model: model).frame(width: unit * 1.22)
-                    LastMatchCard(model: model).frame(width: unit * 0.9)
-                    DispatchesCard(model: model).frame(width: unit)
+                    JumpBackInCard(model: model).frame(width: unit * shares[0])
+                    LastMatchCard(model: model).frame(width: unit * shares[1])
+                    DispatchesCard(model: model).frame(width: unit * shares[2])
                 }
             }
             .frame(height: cardHeight)
@@ -480,11 +508,14 @@ private struct JumpBackInCard: View {
     init(model: LauncherModel) { self.model = model; artwork = model.artwork }
     var body: some View {
         ContentPanel(radius: 20, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
+            // ship-servers adds the Recent scope; at merge this opens Servers on Recent.
             PanelHeading(title: "Jump back in", action: "All Recent") { model.navigate(to: .servers) }
-            let recent = Array(model.recentServers.prefix(3))
+                .disabled(!model.canNavigate)
+            let recent = model.homeRecent
             if recent.isEmpty {
                 CardEmpty(heading: "Nothing played yet", message: "Servers you join appear here, ready to rejoin.",
                           action: ("Find a Server", { model.navigate(to: .servers) }))
+                    .disabled(!model.canNavigate)
             } else {
                 VStack(spacing: 4) {
                     ForEach(recent) { server in RecentRow(model: model, server: server, image: artwork.image(for: server.map)) }
@@ -506,16 +537,19 @@ private struct RecentRow: View {
     @State private var hovering = false
     var body: some View {
         let name = QuakeColors.plain(server.name)
-        let version = ServerFacts(server).isCoD2x ? "CoD2x" : "Original 1.3"
+        // A server joined by address and never listed: its version is unknown and Servers can't show it.
+        let listed = model.isListed(server)
+        let detail: [String] = [server.knownMap.map(MapCatalog.displayName), server.knownMode.map(GameModes.long),
+                                listed ? (ServerFacts(server).isCoD2x ? "CoD2x" : "Original 1.3") : nil].compactMap { $0 }
+        let subtitle = listed || !detail.isEmpty ? detail.joined(separator: " · ") : "Joined by address"
         let played = model.lastPlayed(server.address)
         HStack(spacing: 12) {
             Button { model.showServer(server.address) } label: {
                 HStack(spacing: 12) {
-                    MapArtFrame(map: server.map, image: image, size: .card, radius: Concentric.radius(in: 16, inset: 7))
+                    MapArtFrame(map: server.knownMap ?? "mp_toujane", image: server.knownMap == nil ? nil : image, size: .card, radius: Concentric.radius(in: 16, inset: 7))
                     VStack(alignment: .leading, spacing: 3) {
                         Text(name).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1)
-                        Text("\(MapCatalog.displayName(server.map)) · \(GameModes.long(server.gametype)) · \(version)")
-                            .font(.system(size: 12)).foregroundStyle(palette.secondary).lineLimit(1)
+                        Text(subtitle).font(.system(size: 12)).foregroundStyle(palette.secondary).lineLimit(1)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     if let played {
@@ -525,19 +559,22 @@ private struct RecentRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("\(name), \(MapCatalog.displayName(server.map)), \(GameModes.long(server.gametype)), \(version)" + (played.map { ", played \(PlayedDate.spoken($0))" } ?? ""))
-            .accessibilityHint("Shows this server in Servers")
+            .disabled(!listed || !model.canNavigate)
+            .accessibilityLabel("\(name), \(subtitle)" + (played.map { ", played \(PlayedDate.spoken($0))" } ?? ""))
+            .accessibilityHint(listed ? "Shows this server in Servers" : "")
             Button { model.connect(server) } label: { Label("Launch", systemImage: "play.fill").font(.system(size: 12, weight: .semibold)) }
                 .glassAction().controlSize(.small)
                 .accessibilityLabel("Launch on \(name)")
+                .help("Launch and join \(name)")
         }
-        .padding(.vertical, 7).padding(.leading, 7).padding(.trailing, 8)
+        // The Launch capsule sits as far from the row's end as from its top and bottom (art 48 + 2 × 7).
+        .padding(.vertical, 7).padding(.leading, 7).padding(.trailing, (48 + 14 - ControlMetrics.height(.small)) / 2)
         .background(hovering ? palette.hover : .clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .shapeAudit(.container, .rounded(16), "recent row")
         .onHover { hovering = $0 }
         .contextMenu {
             Button("Launch") { model.connect(server) }
-            Button("Show in Servers") { model.showServer(server.address) }
+            Button("Show in Servers") { model.showServer(server.address) }.disabled(!listed || !model.canNavigate)
             Divider()
             Button(model.library.favorites.contains(server.address) ? "Remove from Favorites" : "Add to Favorites") { model.favorite(server.address) }
             Button("Copy Address") { model.copyServer(server) }
@@ -555,6 +592,7 @@ private struct LastMatchCard: View {
     var body: some View {
         ContentPanel(radius: 20, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
             PanelHeading(title: "Last match", action: "All Matches") { model.libraryTab = .matches; model.navigate(to: .library) }
+                .disabled(!model.canNavigate)
             VStack(alignment: .leading, spacing: 0) { content }.padding(.top, 12)
         }
         .frame(maxHeight: .infinity)
@@ -595,6 +633,8 @@ private struct LastMatchCard: View {
                 Text("Kept on this Mac.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
                 Spacer(minLength: 8)
                 Button("Open Check-up") { model.openCheckup(match: facts.id) }.glassAction().controlSize(.small)
+                    .disabled(!model.canNavigate)
+                    .help("Open Check-up for this match")
             }
         } else {
             CardEmpty(heading: "Not measured yet", message: "After your first match, its frame rate and connection show up here.")
