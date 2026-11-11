@@ -7,6 +7,13 @@ refer to that snapshot, not opencod2. This records behavior, not copied code.
 The reference has no project license file; its implementation must not be
 transplanted. Windows binary addresses and layout assumptions are not portable.
 
+**Status in 0.3.0:** this matrix is the planning record from October. Since
+then the CoD2x layer follows 1.4.6.8 in full for players and for hosted
+servers, and the client has joined public CoD2x servers. The
+[changelog](../../CHANGELOG.md) and the
+[0.3.0 verification](release-0.3.0-verification.md) say what exists and what
+was tested; the sentences below about nothing being verified describe October.
+
 This matrix describes requirements and effort, **not completed implementation**.
 For delivered changes, checks, remaining limitations and live test instructions,
 see `reports/WS4-cod2x.md`. No live game or server interoperability has been

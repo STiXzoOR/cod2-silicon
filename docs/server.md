@@ -1,6 +1,8 @@
 # CoD2 Silicon dedicated server
 
-`cod2_macos_ded` is the native arm64, stock CoD2 1.3 server. It uses no SDL,
+`cod2_macos_ded` is the native arm64 dedicated server. Built as shown below it
+is the stock CoD2 1.3 server; built with the CoD2x flag it is a CoD2x 1.4.6.8
+server (see [CoD2x servers](#cod2x-servers)). It uses no SDL,
 OpenGL, renderer, window or audio device. A locked user session can run it.
 See [WS26 validation](macos-port/reports/WS26-dedicated.md) for current gameplay
 limits and the checks still required before release.
@@ -145,9 +147,32 @@ start it and inspect the logs and `getstatus` before clients reconnect. Keep
 configuration and licensed data out of binary updates. To change install paths,
 stop and uninstall, then reinstall with the new paths; configuration is preserved.
 
-CoD2x client builds fall back to stock 1.3/protocol 118 behavior here. CoD2x
-server extensions, protocol 120 and server-side competitive features are outside
-this server's scope. See the validation report for the tested client baseline.
+## CoD2x servers
+
+Add `-DCOD2_FEATURE_CFLAGS=-DCOD2_CODX=1` to the configure line, in its own
+build directory, and the same target is a CoD2x 1.4.6.8 server: it is listed
+under protocol 120 and has CoD2x's bans and hardware IDs, wallbang settings,
+zPAM selection, the match service, and web requests and WebSocket connections
+for scripts. It keeps its settings in `main/config_mp_server.cfg` and its log
+in `main/console_mp_server.log`.
+
+A CoD2x server talks to the CoD2x project's servers, as CoD2x's own server
+does:
+
+- A public server (`dedicated 2`) reports to `cod2master.activision.com` and
+  `master.cod2x.me` (`sv_master1` to `sv_master3`).
+- With `sv_update` on, the default, it asks `master.cod2x.me` whether a newer
+  CoD2x or zPAM exists, when a map starts and every 30 to 35 minutes, over
+  HTTPS and then UDP. A newer CoD2x is only reported in the console; nothing
+  is installed. To that service a Mac server names itself as CoD2x's Linux
+  server, the only kind it knows.
+- With `sv_updatezpam` on, the default, it moves to the newest zPAM in its
+  `main` folder, and with web downloads set up it fetches newer ones from the
+  addresses the update service names and checks them before use.
+
+Set `sv_update 0` to keep the server from contacting the update service. These
+features were tested against stand-ins on a Mac, not against the CoD2x
+project's servers, and the server has not hosted a public match.
 
 A separate `scripts/server/package-server.sh [binary] [output-directory]` makes
 a local server tarball and SHA-256 sidecar. It includes the native binary,

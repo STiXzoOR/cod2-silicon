@@ -5,7 +5,7 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-11-10
+## [0.3.0] - 2026-11-11
 
 The picture now follows the original Windows 1.3 game, checked frame by frame
 in replayed demos, and the original shaders are built from your own game
@@ -28,6 +28,15 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   WebSocket connections for mods. Certificates are checked on every request,
   which CoD2x itself does not do, and nothing from the CoD2x project is
   installed or run: updates are only announced.
+- CoD2x's update check, done the way CoD2x does it. With CoD2x on, the game
+  asks the CoD2x project's update server for the current CoD2x version each
+  time the main menu opens, and shows the game's Auto-Update notice. As in
+  CoD2x on Windows, the request carries your CoD2x version, an MD5 hash of
+  your CD key, an install ID, your CoD2x hardware IDs and a short description
+  of your Mac. It goes over HTTPS, and over plain UDP when that fails. If
+  CoD2x marks an update as required, the game stops joining servers until
+  this app has a release for it. The original 1.3 sends none of this.
+  [What the app sends](README.md#what-the-app-sends) lists everything.
 - CoD2x's own menus and icons. **Settings → Game → CoD2x files** downloads
   the official CoD2x 1.4.6.8 release from the CoD2x project's GitHub page,
   checks it, and keeps only those files on this Mac; or copies them from a
@@ -125,6 +134,10 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   SDL libraries, icons, bundle metadata and verification with that minimum.
 - Build and audit the complete release package on macOS 26 for pull requests,
   including launcher core and isolated first-run checks before release tagging.
+- Commit IDs from 0.2.1 onward changed on 2026-11-11, when a personal email
+  address was removed from the commit history. The files in every commit are
+  the same, and the `v0.2.1` tag moved to the matching commit. An existing
+  clone needs a fresh clone or a hard reset to `origin/main`.
 
 ### Fixed
 
@@ -198,6 +211,12 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 - Voice chat has not been tested with a real microphone, only with a
   recording in its place.
 - The launcher skips the intro videos.
+- CoD2x's services (the update check, zPAM updates, the match service, script
+  web requests, vMix, and crash and error reports) were tested against
+  stand-ins on a Mac, not against the CoD2x project's own servers.
+- The new Settings rows (CoD2x files, the report switches, Install Update)
+  were tested through the launcher's tests, and nobody has installed an update
+  from a real release yet: 0.3.0 is the first version that can.
 - Third-person player models sit about half a pixel off the original in
   replayed demos.
 - OpenGL remains the renderer, and frame-pacing hitches remain.

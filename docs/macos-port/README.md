@@ -50,15 +50,19 @@ existing cross-references continue to work.
 - [WS40: grenades](reports/WS40-grenades.md) — grenade bounce flag, effect colour curves and projectile impacts.
 - [WS41: blast-dark](reports/WS41-blast-dark.md) — the backbuffer copy behind grenade screen feedback.
 
-WS7, WS23 and WS24 have no separate report in this checkout, and the Metal renderer reports (WS29–WS35, WS37 and WS39) arrive with the renderer in 0.3; the numbering is retained.
+WS7, WS23 and WS24 have no separate report in this checkout, and the Metal renderer reports (WS29–WS35, WS37 and WS39) arrive with the renderer; the numbering is retained.
 
 Commit hashes quoted in these reports refer to the development history before
 publication. The author email was normalized to a GitHub noreply address
 before the first public push, which changed those hashes; commit subjects and
-order are unchanged, so `git log --grep` finds them.
+order are unchanged, so `git log --grep` finds them. On 2026-11-11 the hashes
+of commits from 0.2.1 onward changed once more, when an email address was
+removed from commit messages; references inside this repository were updated
+to the new ones.
 
 ## Deeper references
 
+- [Release 0.3.0 verification](release-0.3.0-verification.md) — what was tested for the current release and what was not.
 - [Game data](game-data.md) — licensed content and local shader inputs.
 - [CoD2x compatibility](cod2x-compat.md) — reference behaviors and feature gates.
 - [Parity methodology](parity.md) — simulation, build and timing comparisons.
