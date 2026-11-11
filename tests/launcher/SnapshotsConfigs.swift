@@ -1309,7 +1309,8 @@ extension Snapshots {
         "configs-import-windows": ["Review Morrow from Windows", "From Windows"],
         "configs-import-loading": ["Reading and checking every line"],
         "discover-saved-removed": ["Remove this saved setup"],
-        "configs-save-failure": ["Couldn’t save: Changed Mouse speed"],
+        // The shared Banner names an error as a problem first.
+        "configs-save-failure": ["Problem: Couldn’t save: Changed Mouse speed"],
         "configs-import-windows-profiles": ["Bring in your Windows setup", "Morrow", "Scrim", "Choose Folder…"],
         "configs-catalog-loading": ["Loading settings"],
         "configs-discover-hidden": ["Add a Config", "New Loadout", "Main, in use for your next game"],
