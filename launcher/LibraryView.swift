@@ -467,7 +467,11 @@ struct DemoRow<Actions: View>: View {
             Button(action: play) { Label("Play", systemImage: "play.fill").font(.system(size: 13, weight: .semibold)) }
                 .glassAction()
                 .accessibilityLabel("Play \(name)")
-            Menu { actions } label: { Image(systemName: "ellipsis.circle").font(.system(size: 17)).foregroundStyle(palette.chipIcon) }
+            // The label's title is the menu button's VoiceOver name; only its symbol is drawn.
+            Menu { actions } label: {
+                Label("More actions for \(name)", systemImage: "ellipsis.circle").labelStyle(.iconOnly)
+                    .font(.system(size: 17)).foregroundStyle(palette.chipIcon)
+            }
                 .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
                 .frame(width: 28, height: 28).contentShape(Circle())
                 .accessibilityLabel("More actions for \(name)")
