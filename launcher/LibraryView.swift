@@ -107,10 +107,11 @@ private struct LibraryTabContent: View {
                 .onExitCommand { model.selectedMedia = nil }
                 .accessibilityLabel(tab.rawValue)
                 // ⌘⌫ (Move to Trash, as the context menus show it) is a key equivalent: it reaches the
-                // window as one, not as a key press, so a focus-independent shortcut carries it.
+                // window as one, not as a key press, so a focus-independent shortcut carries it. The
+                // Delete key sends U+007F; SwiftUI's `.delete` is U+0008 and never matches it.
                 .background {
                     Button("Move to Trash") { if let entry = selected { model.requestTrash(entry) } }
-                        .keyboardShortcut(.delete, modifiers: .command)
+                        .keyboardShortcut(KeyEquivalent("\u{7f}"), modifiers: .command)
                         .disabled(tab == .matches || selected == nil)
                         .opacity(0).frame(width: 0, height: 0).allowsHitTesting(false).accessibilityHidden(true)
                 }
