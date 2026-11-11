@@ -195,6 +195,9 @@ struct MediaEntry: Identifiable {
     @Published var settingsFeedback: SettingsFeedback?
     /// Acknowledgements: the component whose licence is showing.
     @Published var selectedAcknowledgement: String?
+    /// Integration hook: called with (version, installsOnQuit) when the automatic check finds a newer release.
+    /// ship-shell connects it to `notifyUpdateReady(version:installsOnQuit:)` at merge; nil until then.
+    var onUpdateReady: ((String, Bool) -> Void)?
     @Published var shaderRebuildMessage: String?
     /// Settings › Privacy › See What's Sent… is open.
     @Published var privacyDetailsShown = false

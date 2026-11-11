@@ -487,11 +487,15 @@ extension KeyStore {
                 library.dispatchesCheckedAt = Date(); saveLibrary()
                 updateWasChecked = true; updateError = false; updateFailedStage = nil
                 if let latest = feed.latestVersion, ReleaseNotes.isNewer(latest, than: version) {
+                    let announced = availableVersion
                     updateMessage = "Version \(latest) is available."
                     releaseURL = feed.dispatches.first?.link.flatMap(URL.init(string:)) ?? AppUpdate.releases
                     updateOffer = AppUpdate.offer(version: latest, assets: feed.latestAssets)
                     availableVersion = latest
                     updateNotes = feed.latestNotes
+                    // Integration hook (ship-shell's notifyUpdateReady): a version the automatic check finds, once per version.
+                    // Nothing installs at quit, so installsOnQuit is always false.
+                    if automatic, announced != latest { onUpdateReady?(latest, false) }
                 } else { updateMessage = "You’re up to date · \(version)"; releaseURL = nil; updateOffer = nil; availableVersion = nil; updateNotes = [] }
             } catch {
                 if automatic { updateMessage = before.message; updateError = before.error; updateFailedStage = before.stage; return }

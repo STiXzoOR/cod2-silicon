@@ -72,7 +72,9 @@ struct GeneralPane: View {
     }
     @ViewBuilder private var versionControl: some View {
         if model.originalAvailable {
-            Picker("Game version", selection: Binding(get: { model.chosenEngine }, set: { model.settings.engine = $0 })) {
+            // The player's own choice, not a one-match switch to a server's version (Servers may set chosenEngine for that).
+            Picker("Game version", selection: Binding(get: { model.installedEngines.contains(model.settings.engine) ? model.settings.engine : .cod2x },
+                                                      set: { model.settings.engine = $0 })) {
                 ForEach(model.engineOptions, id: \.value) { Text($0.title).tag($0.value) }
             }
             .pickerStyle(.segmented).labelsHidden().fixedSize()
