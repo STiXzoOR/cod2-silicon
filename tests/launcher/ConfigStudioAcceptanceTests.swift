@@ -23,7 +23,101 @@ enum ConfigStudioAcceptanceTests {
         try takeTheirs(scratch: scratch, catalog: catalog)
         try takeTheirsRetries(scratch: scratch, catalog: catalog)
         try matches(scratch: scratch, catalog: catalog, rules: rules, optimizer: optimizer)
+        try loadouts(scratch: scratch, catalog: catalog)
         standing()
+    }
+
+    /// Every file under `folder`, by its path inside it.
+    static func files(_ folder: URL) -> [String: Data] {
+        var found: [String: Data] = [:]
+        let base = folder.standardizedFileURL.path
+        guard let walk = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: nil) else { return found }
+        for case let url as URL in walk {
+            if let data = try? Data(contentsOf: url) { found[String(url.standardizedFileURL.path.dropFirst(base.count))] = data }
+        }
+        return found
+    }
+
+    /// Loadout management: Duplicate names its copy; Delete never takes the loadout in use, moves the
+    /// whole folder (advanced binds included) to the Trash, and Undo or ⌘Z puts back the same bytes.
+    @MainActor static func loadouts(scratch: URL, catalog: ConfigCatalog) throws {
+        let home = scratch.appendingPathComponent("acceptance-loadouts"), trash = scratch.appendingPathComponent("acceptance-loadouts-trash")
+        let (model, session, store) = try studio(home, config: "seta sensitivity \"2.6\"\nbind w \"+forward\"\n", catalog: catalog)
+        final class Switch: @unchecked Sendable { var on = false }
+        let trashFails = Switch()
+        session.trashItem = { url in
+            if trashFails.on { throw CocoaError(.fileWriteNoPermission) }
+            try FileManager.default.createDirectory(at: trash, withIntermediateDirectories: true)
+            let target = trash.appendingPathComponent(url.lastPathComponent + " " + UUID().uuidString.prefix(6))
+            try FileManager.default.moveItem(at: url, to: target)
+            return target
+        }
+        let players = home.appendingPathComponent("main/players")
+
+        // Duplicate: “Copy of Main”, then “Copy of Main 2”, each shown at once.
+        require(model.duplicateLoadout() && model.current?.profile.displayName == "Copy of Main")
+        model.select("Main")
+        require(model.duplicateLoadout() && model.current?.profile.displayName == "Copy of Main 2" && model.activeProfile?.id == "Main",
+                "a copy isn't used for the next game until chosen")
+
+        // Scrim, with an advanced bind whose companion lives in main/.
+        require(model.createLoadout(named: "Scrim", copyingCurrent: false) && model.current?.profile.id == "Scrim")
+        let scrimRead = try store.read(id: "Scrim")
+        try ConfigChains.apply(try ConfigChains.prepare(chains: [ConfigChain(id: "greetings", key: "n", behavior: .commandCycle(steps: [["say gl"], ["say hf"], ["say gg"]]))],
+                                                        read: scrimRead), to: store)
+        try session.refresh()
+        let chain = home.appendingPathComponent("main/" + (try ConfigStudioLaunch.chainBasename(profileID: "Scrim")))
+        let chainBytes = try Data(contentsOf: chain)
+        let scrim = files(players.appendingPathComponent("Scrim")), active = try Data(contentsOf: players.appendingPathComponent("active.txt"))
+
+        // The loadout in use is never deleted, by the model or the store.
+        require(model.deleteBlock("Main")?.contains("in use for your next game") == true && model.deleteBlock("Scrim") == nil)
+        model.moveToTrash("Main")
+        require(FileManager.default.fileExists(atPath: players.appendingPathComponent("Main/config_mp.cfg").path) && !FileManager.default.fileExists(atPath: trash.path))
+        do {
+            _ = try store.moveToTrash(id: "Main", expected: try store.read(id: "Main").version) { _ in fatalError("FAIL: the loadout in use reached the Trash") }
+            fatalError("FAIL: the store moved the loadout in use")
+        } catch ConfigProfileError.inUse {}
+
+        // A Trash that refuses: nothing moves and the companion stays where the game reads it.
+        trashFails.on = true
+        model.moveToTrash("Scrim")
+        require(model.failure != nil && files(players.appendingPathComponent("Scrim")) == scrim && (try? Data(contentsOf: chain)) == chainBytes,
+                "a refused move to the Trash changes nothing")
+        model.failure = nil; trashFails.on = false
+
+        // Delete: the folder goes to the Trash with its companion inside; the banner offers Undo.
+        let undo = UndoManager()
+        model.moveToTrash("Scrim", undo: undo)
+        let moved = try FileManager.default.contentsOfDirectory(at: trash, includingPropertiesForKeys: nil)
+        require(moved.count == 1 && !FileManager.default.fileExists(atPath: players.appendingPathComponent("Scrim").path) && !FileManager.default.fileExists(atPath: chain.path))
+        var inTrash = files(moved[0])
+        require(inTrash.removeValue(forKey: "/" + ConfigProfileStore.trashedChainName) == chainBytes && inTrash == scrim, "the whole folder, and its advanced binds, go to the Trash")
+        require(!model.profiles.contains { $0.id == "Scrim" } && (try? Data(contentsOf: players.appendingPathComponent("active.txt"))) == active)
+        require(model.notice?.hasPrefix("Moved “Scrim” to the Trash") == true && model.noticeAction?.title == "Undo" && undo.canUndo && undo.undoActionName == "Delete Loadout")
+
+        // The banner's Undo puts back the same files and the companion; ⌘Z afterwards changes nothing.
+        model.noticeAction?.run()
+        require(files(players.appendingPathComponent("Scrim")) == scrim && (try? Data(contentsOf: chain)) == chainBytes && model.current?.profile.id == "Scrim"
+                && ((try? FileManager.default.contentsOfDirectory(atPath: trash.path)) ?? []).isEmpty, "Undo restores the exact folder and advanced binds")
+        undo.undo()
+        require(model.failure == nil && files(players.appendingPathComponent("Scrim")) == scrim)
+
+        // ⌘Z on its own, too.
+        let again = UndoManager()
+        model.moveToTrash("Scrim", undo: again)
+        require(!FileManager.default.fileExists(atPath: players.appendingPathComponent("Scrim").path))
+        again.undo()
+        require(files(players.appendingPathComponent("Scrim")) == scrim && (try? Data(contentsOf: chain)) == chainBytes, "⌘Z puts it back")
+
+        // A companion left in a restored folder by an interrupted Undo goes back on the next read.
+        model.moveToTrash("Scrim")
+        let left = try FileManager.default.contentsOfDirectory(at: trash, includingPropertiesForKeys: nil)
+        require(left.count == 1)
+        try FileManager.default.moveItem(at: left[0], to: players.appendingPathComponent("Scrim"))
+        _ = try store.list()
+        require((try? Data(contentsOf: chain)) == chainBytes && files(players.appendingPathComponent("Scrim")) == scrim, "reading a put-back folder restores its companion")
+        print("PASS: Duplicate names its copy; Delete spares the loadout in use, moves the whole folder to the Trash and Undo puts the same bytes back")
     }
 
     @MainActor static func studio(_ home: URL, config: String, catalog: ConfigCatalog) throws -> (ConfigStudioModel, ConfigStudioSession, ConfigProfileStore) {

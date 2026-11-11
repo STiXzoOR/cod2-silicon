@@ -23,6 +23,12 @@ enum AppSheet: Identifiable {
     case keyboardShortcuts
     case gameCouldNotStart(reason: String)
 
+    // MARK: ship-configs (ConfigSheets.swift)
+    /// Loadout › New Loadout… (⌘N) and Configs' New Loadout row.
+    case newLoadout
+    /// Loadout › Rename… for the loadout Configs shows.
+    case renameLoadout
+
     var id: String {
         switch self {
         case .connect: "connect"
@@ -34,6 +40,8 @@ enum AppSheet: Identifiable {
         case .acknowledgements: "acknowledgements"
         case .keyboardShortcuts: "keyboard-shortcuts"
         case .gameCouldNotStart: "game-could-not-start"
+        case .newLoadout: "new-loadout"
+        case .renameLoadout: "rename-loadout"
         }
     }
 }
@@ -53,6 +61,8 @@ struct AppSheetView: View {
         case .acknowledgements: AcknowledgementsSheet(model: model)
         case .keyboardShortcuts: KeyboardShortcutsSheet(model: model)
         case .gameCouldNotStart(let reason): GameCouldNotStartSheet(model: model, reason: reason)
+        case .newLoadout: NewLoadoutSheet(model: model)
+        case .renameLoadout: RenameLoadoutSheet(model: model)
         }
     }
 }
