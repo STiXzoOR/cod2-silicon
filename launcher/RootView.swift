@@ -11,7 +11,17 @@ struct LauncherRoot: View {
             if model.onboard {
                 SetupView(model: model).transition(.opacity)
             } else {
-                LauncherSplitView(model: model).disabled(model.gameRunning).transition(.opacity)
+                // While the game runs Home shows Return to Game and Quit Game; the sidebar and the
+                // menus keep other pages out of reach until it ends (`canNavigate`).
+                LauncherSplitView(model: model).transition(.opacity)
+                    .overlay { if model.jumpPresented { JumpToPalette(model: model) } }
+                    .dropDestination(for: URL.self) { urls, _ in
+                        // A config or a demo dropped on the window: import review, or the demo plays.
+                        let files = urls.filter { $0.isFileURL && ["cfg", "dm_1"].contains($0.pathExtension.lowercased()) }
+                        guard !files.isEmpty else { return false }
+                        model.open(files)
+                        return true
+                    }
             }
         }
         // Controls follow the app accent (NSAccentColorName: brass in dark, olive in light);
@@ -55,8 +65,7 @@ struct LauncherSplitView: View {
     var body: some View {
         NavigationSplitView(columnVisibility: $model.sidebarVisibility) {
             Sidebar(model: model)
-                .disabled(!model.canNavigate)
-                .navigationSplitViewColumnWidth(min: 220, ideal: 232, max: 300)
+                .navigationSplitViewColumnWidth(min: 220, ideal: 240, max: 300)
         } detail: {
             Group {
                 switch model.page {
@@ -82,6 +91,8 @@ private extension View {
 
 // MARK: - Sidebar
 
+/// The sidebar (Side board): brand, the four pages with their shortcuts, starred servers, a labelled
+/// Settings row, and the player's plate, which opens the player card.
 struct Sidebar: View {
     @ObservedObject var model: LauncherModel
     @Environment(\.palette) private var palette
@@ -91,51 +102,88 @@ struct Sidebar: View {
             model.navigate(to: page)
         })) {
             Section {
-                // Icons take the app accent (brass/olive), or the accent the person chose in System Settings.
                 ForEach(LauncherPage.navigation) { page in
-                    Label(page.title, systemImage: page.symbol).tag(page)
+                    SidebarRow(title: page.title, symbol: page.symbol, keys: "⌘\(page.shortcut)", spoken: "Command \(page.shortcut)")
+                        .tag(page)
                 }
             }
-            if !model.favoriteServers.isEmpty {
+            .disabled(!model.canNavigate)
+            let favorites = model.favoriteServers
+            if !favorites.isEmpty {
                 Section {
-                    ForEach(model.favoriteServers.prefix(6)) { server in
-                        Button { model.showServer(server.address) } label: {
-                            Label { Text(Self.shortName(server.name)).lineLimit(1) } icon: { Image(systemName: "star.fill").foregroundStyle(palette.dark ? Palette.hex(0xc99a4c) : palette.link) }
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Favorite server \(QuakeColors.plain(server.name))")
-                        .contextMenu {
-                            Button("Launch") { model.connect(server) }.disabled(!model.canNavigate)
-                            Button("Show in Server List") { model.showServer(server.address) }
-                            Divider()
-                            Button("Remove from Favorites") { model.favorite(server.address) }
-                            Button("Copy Address") {
-                                NSPasteboard.general.clearContents()
-                                NSPasteboard.general.setString(server.address, forType: .string)
-                                model.notice = "Server address copied."
-                            }
-                        }
-                    }
+                    ForEach(favorites) { server in FavoriteRow(model: model, server: server) }
                 } header: { Text("Favorites") }
-            }
-            Section {
-                // Settings is its own window (⌘,), not a page; this row opens it.
-                Button { model.openSettings() } label: { Label("Settings", systemImage: "gearshape") }
-                    .buttonStyle(.plain)
-                    .help("Open Settings (⌘,)")
             }
         }
         .listStyle(.sidebar)
         .sidebarRowSize()
         .safeAreaInset(edge: .top, spacing: 0) { BrandHeader().padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 18) }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            PlayerTag(name: model.playerName, verified: model.keyVerified)
-                .help("Your player name comes from the active in-game profile.").padding(.horizontal, 12).padding(.bottom, 12)
+            VStack(spacing: 0) {
+                // Settings is its own window (⌘,): a visible row, so nobody has to know the shortcut.
+                Button { model.openSettings() } label: {
+                    SidebarRow(title: "Settings", symbol: "gearshape", keys: "⌘,", spoken: "Command comma")
+                        .padding(.horizontal, 10).frame(height: 36).contentShape(Rectangle())
+                }
+                .buttonStyle(RowButtonStyle(radius: 10))
+                .disabled(model.onboard || model.installingUpdate)
+                .help("Open Settings (⌘,)")
+                .padding(.horizontal, 10)
+                Rectangle().fill(palette.separator).frame(height: 1).padding(.horizontal, 18).padding(.vertical, 8)
+                PlayerPlate(model: model).padding(.horizontal, 12).padding(.bottom, 12)
+            }
         }
     }
     static func shortName(_ name: String) -> String {
         let plain = QuakeColors.plain(name)
         return plain.split(separator: "|").first.map { $0.trimmingCharacters(in: .whitespaces) } ?? plain
+    }
+}
+
+/// One sidebar row: symbol, title and its shortcut, read as “Home, Command 1”.
+private struct SidebarRow: View {
+    var title: String, symbol: String, keys: String, spoken: String
+    @Environment(\.palette) private var palette
+    var body: some View {
+        HStack(spacing: 8) {
+            Label(title, systemImage: symbol)
+            Spacer(minLength: 6)
+            Text(keys).font(.system(size: 12)).foregroundStyle(palette.secondary).opacity(0.85).monospacedDigit()
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(title), \(spoken)")
+        .accessibilityAddTraits(.isStaticText)
+    }
+}
+
+/// A starred server: click shows it in Servers; Control-click has the Menus board's context menu.
+private struct FavoriteRow: View {
+    @ObservedObject var model: LauncherModel
+    var server: GameServer
+    @Environment(\.palette) private var palette
+    var body: some View {
+        let name = Sidebar.shortName(server.name)
+        let count = server.maxPlayers > 0 ? "\(server.playerCount)/\(server.maxPlayers)" : nil
+        Button { model.showServer(server.address) } label: {
+            HStack(spacing: 8) {
+                Label { Text(name).lineLimit(1).truncationMode(.tail) } icon: { Image(systemName: "star.fill").foregroundStyle(palette.accent) }
+                Spacer(minLength: 6)
+                if let count { Text(count).font(.system(size: 12)).foregroundStyle(palette.secondary).monospacedDigit() }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!model.canNavigate)
+        .accessibilityLabel("Favorite server \(name)" + (count.map { _ in ", \(server.playerCount) of \(server.maxPlayers) players" } ?? ""))
+        .accessibilityHint("Shows it in Servers")
+        .contextMenu {
+            Button("Launch") { model.connect(server) }.disabled(!model.canNavigate)
+            Button("Show in Servers") { model.showServer(server.address) }.disabled(!model.canNavigate)
+            Divider()
+            Button("Copy Address") { model.copyServer(server) }
+            Divider()
+            Button("Remove from Favorites…") { model.requestRemoveFavorite(server) }
+        }
     }
 }
 
@@ -162,29 +210,37 @@ struct BrandHeader: View {
     }
 }
 
-struct PlayerTag: View {
-    var name: String
-    var verified: Bool
+/// The player's plate at the bottom of the sidebar: their name in its colours and the next game's
+/// loadout. It opens the player card.
+struct PlayerPlate: View {
+    @ObservedObject var model: LauncherModel
     @Environment(\.palette) private var palette
     var body: some View {
-        HStack(spacing: 12) {
-            MiniDogTag()
-            VStack(alignment: .leading, spacing: 4) {
-                QuakeName(name: name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
-                Text(verified ? "CD key verified" : "CD key needed").font(.system(size: 11)).foregroundStyle(palette.secondary)
+        let plain = QuakeColors.plain(model.playerName)
+        Button { model.playerCardPresented.toggle() } label: {
+            HStack(spacing: 12) {
+                MiniDogTag().scaleEffect(0.87).frame(width: 26, height: 33)
+                VStack(alignment: .leading, spacing: 3) {
+                    QuakeName(name: model.playerName).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                    Text(model.playerPlateDetail).font(.system(size: 11)).foregroundStyle(palette.secondary).lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.tertiary)
             }
-            Spacer(minLength: 0)
+            .padding(.horizontal, 12).padding(.vertical, 10)
+            .contentShape(Rectangle())
         }
-        .padding(12)
+        .buttonStyle(.plain)
         .modifier(PlayerTagPlate(fill: palette.dark ? Color.white.opacity(0.05) : Color.white.opacity(0.5),
                                  stroke: palette.dark ? Color.white.opacity(0.07) : Color.white.opacity(0.8)))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Player: \(QuakeColors.plain(name)). \(verified ? "CD key verified" : "CD key needed"). Name from your active in-game profile.")
-        .accessibilityAddTraits(.isStaticText)
+        .disabled(model.onboard)
+        .help("Your name, CD key and the loadout for your next game")
+        .accessibilityLabel("\(plain), \(model.keyVerified ? "CD key verified" : "no CD key yet"). Open your player card")
+        .popover(isPresented: $model.playerCardPresented, arrowEdge: .trailing) { PlayerCardPopover(model: model) }
     }
 }
 
-/// The tag sits in the window's bottom corner: on macOS 26 its corners follow the window's
+/// The plate sits in the window's bottom corner: on macOS 26 its corners follow the window's
 /// (concentric, never tighter than 10 points); earlier versions keep a fixed 16.
 private struct PlayerTagPlate: ViewModifier {
     var fill: Color, stroke: Color
