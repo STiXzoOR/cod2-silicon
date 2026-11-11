@@ -155,7 +155,7 @@ struct HeroBackdrop: View {
     var body: some View {
         ZStack {
             if let image {
-                MapArt(map: map, image: image, hero: true)
+                MapArtFrame(map: map, image: image, size: .fill, hero: true)
                 let stats = HeroLuminance.stats(image)
                 if palette.dark {
                     // Sized for the dimmest text over the art (the brass eyebrow and the hint), and held
@@ -266,14 +266,14 @@ struct StatusChips: View {
         chip(label: "Display \(resolutionText)") {
             Image(systemName: "display").font(.system(size: 14)).foregroundStyle(palette.chipIcon)
             Text(resolutionText)
-        } action: { model.page = .settings }
+        } action: { model.openSettings(.display) }
     }
     private var shaderChip: some View {
         chip(label: model.approximate ? "Approximate shaders" : "Original shaders ready") {
             Image(systemName: model.approximate ? "exclamationmark.shield" : "checkmark.shield").font(.system(size: 14, weight: .medium))
                 .foregroundStyle(model.approximate ? palette.accent : palette.positive)
             Text(model.approximate ? "Approximate shaders" : "Original shaders ready")
-        } action: { if model.approximate { model.restartSetup(at: 2) } else { model.page = .settings } }
+        } action: { if model.approximate { model.restartSetup(at: 2) } else { model.openSettings(.gameData) } }
     }
     private var resolutionText: String {
         let size = model.settings.resolution.replacingOccurrences(of: "x", with: " × ")
@@ -281,29 +281,7 @@ struct StatusChips: View {
         return "\(size) · \(mode)"
     }
     private func chip<Content: View>(label: String, @ViewBuilder content: () -> Content, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 10) { content() }
-                .font(.system(size: 13)).foregroundStyle(palette.chipText)
-                .padding(.horizontal, 18).frame(height: 40)
-                .glassSurface(Capsule(), interactive: true)
-                .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
-    }
-}
-
-struct PanelHeading: View {
-    var title: String
-    var action: String?
-    var perform: (() -> Void)?
-    @Environment(\.palette) private var palette
-    var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title).font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.dark ? Palette.hex(0xefe9db) : palette.heading).accessibilityAddTraits(.isHeader)
-            Spacer()
-            if let action, let perform { Button(action, action: perform).buttonStyle(.plain).font(.system(size: 13)).foregroundStyle(palette.link) }
-        }
+        Chip(label, size: .large, glass: true, action: action, content: content)
     }
 }
 
@@ -327,8 +305,7 @@ struct RecentServersPanel: View {
                     let facts = ServerFacts(server)
                     Button { model.showServer(server.address) } label: {
                         HStack(spacing: 14) {
-                            MapArt(map: server.map, image: artwork.image(for: server.map))
-                                .frame(width: 72, height: 44).clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous)).shapeAudit(.inset, .rounded(8), "row art")
+                            MapArtFrame(map: server.map, image: artwork.image(for: server.map), size: .card, radius: Concentric.radius(in: 16, inset: 8))
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(QuakeColors.plain(server.name)).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1)
                                 Text("\(MapCatalog.displayName(server.map)) · \(GameModes.long(server.gametype)) · \(facts.isCoD2x ? "CoD2x 1.4" : "Stock 1.3")")
@@ -354,18 +331,6 @@ struct RecentServersPanel: View {
             .padding(.top, 10)
             Spacer(minLength: 0)
         }
-    }
-}
-
-/// Hover and press feedback for content rows.
-struct RowButtonStyle: ButtonStyle {
-    var radius: CGFloat
-    @State private var hovering = false
-    @Environment(\.palette) private var palette
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .background((palette.dark ? Color.white : Color.black).opacity(configuration.isPressed ? 0.07 : hovering ? 0.04 : 0), in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .onHover { hovering = $0 }
     }
 }
 

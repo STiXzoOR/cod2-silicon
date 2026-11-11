@@ -1,19 +1,60 @@
 import AppKit
 import SwiftUI
 
+// The launcher's one model. Shared file: stored state sits in per-unit MARK regions below (add yours
+// to your own region only); each unit's methods live in its own extension file (ModelSetup.swift,
+// ModelServers.swift, ModelLibrary.swift, ModelSettings.swift, ConfigLauncherModel.swift). This file
+// keeps the core: start-up, navigation, windows and sheets, the game's lifecycle and the harness states.
+
+/// The four places in the sidebar (⌘1–⌘4). Settings is its own window, About one of its panes.
 enum LauncherPage: String, CaseIterable, Identifiable, Hashable {
-    case home, servers, library, configs, settings, about
+    case home, servers, library, configs
     var id: String { rawValue }
     var title: String {
-        switch self { case .home: "Home"; case .servers: "Servers"; case .library: "Library"; case .configs: "Configs"; case .settings: "Settings"; case .about: "About" }
+        switch self { case .home: "Home"; case .servers: "Servers"; case .library: "Library"; case .configs: "Configs" }
     }
     var symbol: String {
         switch self {
-        case .home: "house"; case .servers: "dot.radiowaves.left.and.right"; case .library: "film"
-        case .configs: "square.stack"; case .settings: "slider.horizontal.3"; case .about: "info.circle"
+        case .home: "house"; case .servers: "dot.radiowaves.left.and.right"; case .library: "film"; case .configs: "square.stack"
         }
     }
-    static let navigation: [LauncherPage] = [.home, .servers, .library, .configs, .settings]
+    /// The digit of its ⌘ shortcut.
+    var shortcut: Character {
+        switch self { case .home: "1"; case .servers: "2"; case .library: "3"; case .configs: "4" }
+    }
+    static let navigation: [LauncherPage] = [.home, .servers, .library, .configs]
+}
+
+/// The Settings window's panes, in toolbar order (SettingsWin board).
+enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
+    case general, display, gameData, privacy, updates, advanced, about
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .general: "General"; case .display: "Display"; case .gameData: "Game Data"; case .privacy: "Privacy"
+        case .updates: "Updates"; case .advanced: "Advanced"; case .about: "About"
+        }
+    }
+    var symbol: String {
+        switch self {
+        case .general: "gearshape"; case .display: "display"; case .gameData: "folder"; case .privacy: "lock"
+        case .updates: "arrow.down.circle"; case .advanced: "slider.horizontal.3"; case .about: "info.circle"
+        }
+    }
+}
+
+/// The launcher's two windows, for sheets and alerts that must attach to the one in front.
+enum LauncherWindowID: String { case main = "launcher", settings }
+
+/// Where updates stand, for Home's pill, Settings › Updates and the app menu.
+enum UpdateState: Equatable {
+    case notChecked
+    case checking
+    case upToDate(version: String)
+    /// A newer release this app can install (`updateOffer`), or only view (`releaseURL`). Notes: `releaseNotes`.
+    case ready(version: String, installable: Bool)
+    case installing(message: String)
+    case failed(message: String)
 }
 
 enum ServerFilter: String, CaseIterable, Identifiable { case all = "All", stock = "Stock 1.3", codx = "CoD2x 1.4"; var id: String { rawValue } }
@@ -32,26 +73,30 @@ struct MediaEntry: Identifiable {
 }
 
 @MainActor final class LauncherModel: ObservableObject {
+    // MARK: - Core state (ship-foundation)
     @Published var page: LauncherPage = .home
-    @Published var sidebarVisibility = NavigationSplitViewVisibility.all
     @Published var onboard = true
-    static let shaderTotal = 834
-    @Published var step = 0
-    @Published var dataError = ""
-    @Published var attemptedDataPath = ""
-    @Published var setupError = ""
-    @Published var replacingKey = false
-    @Published private(set) var setupReturnPage: LauncherPage?
-    private var confirmedDataPath = ""
-    private var dataChanged = false
+    @Published var gameRunning = false
+    /// The toast at the bottom of the main window (things that happened elsewhere).
+    @Published var notice = ""
+    @Published var crashReport: URL?
+    /// The sheet over the main window and over the Settings window. Present with `present(_:)`.
+    @Published var sheet: AppSheet?
+    @Published var settingsSheet: AppSheet?
+    /// A single decision over either window. Ask with `confirm(_:)`.
+    @Published var confirmation: ConfirmationRequest?
+    @Published var settingsConfirmation: ConfirmationRequest?
+    /// The Settings window's selected pane; `openSettings(_:)` sets it and brings the window forward.
+    @Published var settingsPane: SettingsPane = .general
+    /// Opens a window scene by id ("launcher", "settings"). The app's scenes register it; the harness its own.
+    var openWindowHandler: ((LauncherWindowID) -> Void)?
     weak var launcherWindow: NSWindow?
-    var makeSetupPanel: @MainActor () -> NSOpenPanel = { NSOpenPanel() }
+    weak var settingsWindow: NSWindow?
+    @Published var playerName = PlayerProfile.unnamed
+    @Published var keyVerified = false
     @Published var dataPath = ""
-    @Published var keyInput = ""
-    @Published var shaderBusy = false
-    @Published var shaderCount = 0
-    @Published var shaderMessage = "Lighting, sky and water as the game draws them on Windows, built on this Mac from your own game files."
     @Published var approximate = false
+    @Published var library = LauncherLibrary()
     @Published var settings = GameSettings() {
         didSet {
             if settingsReady && settings != oldValue { scheduleSettingsSave() }
@@ -61,22 +106,80 @@ struct MediaEntry: Identifiable {
             if settings.engine != oldValue.engine { followEngine() }
         }
     }
-    /// A join that needs CoD2x while Original 1.3 is chosen; Root asks before switching.
-    @Published var engineRequest: EngineRequest?
+    let artwork: MapArtworkStore
+    let home: URL
+    let preferences: URL
+    let snapshot: Bool
+    let configStudio: ConfigStudioSession?
+    let serverConnection = ConfigServerConnection()
+    /// The Configs page's view store over the same session.
+    let studio: ConfigStudioModel
+    /// Discover and import. The player directory has no signed publication yet, so it reports itself unavailable.
+    let discover: ConfigDiscoverModel
     /// The engines this app carries. Without the original one, Settings explains and CoD2x plays.
-    private(set) var installedEngines: Set<GameEngine>
+    var installedEngines: Set<GameEngine>
+    var engine: Process?
+    /// What each engine can't hold of the other's saved settings, from the catalogue.
+    var engineLimits: ConfigEngineLimits?
+    var attachedGames: [pid_t: NSRunningApplication] = [:]
+    var attachmentTask: Task<Void, Never>?
+    var connectionTask: Task<Void, Never>?
+    var handOffTask: Task<Void, Never>?
+    var gameStartedAt = Date()
+    var lastExitCode: Int32?
+    var reportTask: Task<Void, Never>?
+    @Published var pendingLink: LaunchLink?
+    @Published var fastPlay = false
+    var booted = false
+    var forwardedArguments: [String] = []
+    var exitAfterGame = false
+    /// Creates the native export dialog; callers configure it before presentation.
+    var makeExportPanel: @MainActor () -> NSSavePanel = { NSSavePanel() }
+
+    // MARK: - ship-shell state (setup, sidebar, player card, Jump)
+    @Published var sidebarVisibility = NavigationSplitViewVisibility.all
+    static let shaderTotal = 834
+    @Published var step = 0
+    @Published var dataError = ""
+    @Published var attemptedDataPath = ""
+    @Published var setupError = ""
+    @Published var replacingKey = false
+    @Published var setupReturnPage: LauncherPage?
+    var confirmedDataPath = ""
+    var dataChanged = false
+    var makeSetupPanel: @MainActor () -> NSOpenPanel = { NSOpenPanel() }
+    @Published var keyInput = ""
+    @Published var shaderBusy = false
+    @Published var shaderCount = 0
+    @Published var shaderMessage = "Lighting, sky and water as the game draws them on Windows, built on this Mac from your own game files."
+    var setupTask: Task<Void, Never>?
+    var shaderRefresh: Task<Void, Never>?
+    /// Jump to… (⌘K) is open over the main window.
+    @Published var jumpPresented = false
+
+    // MARK: - ship-settings state (settings saving, CoD2x files, updates)
     @Published var settingsSaveError: String?
     @Published var advancedDraft: String?
     @Published var advancedError: String?
-    private var settingsReady = false
-    private var settingsSaveTask: Task<Void, Never>?
-    private var settingsTerminationObserver: NSObjectProtocol?
-    /// Settings › Game › CoD2x files: CoD2x's menus and icons, kept in the app home (CoD2xFiles).
+    var settingsReady = false
+    var settingsSaveTask: Task<Void, Never>?
+    var settingsTerminationObserver: NSObjectProtocol?
+    var savedSettings = GameSettings()
+    /// Settings › General › CoD2x files: CoD2x's menus and icons, kept in the app home (CoD2xFiles).
     @Published var cod2xFilesInstalled = false
     @Published var cod2xFilesBusy = false
     @Published var cod2xFilesMessage = CoD2xFiles.Message.notInstalled
-    private var cod2xFilesTask: Task<Void, Never>?
-    @Published var library = LauncherLibrary()
+    var cod2xFilesTask: Task<Void, Never>?
+    @Published var updateMessage = "Check for the latest release when you're ready."
+    @Published var checkingUpdates = false
+    @Published var updateWasChecked = false
+    @Published var updateError = false
+    @Published var releaseURL: URL?
+    /// The newer release Install Update installs, when it carries this Mac's archive and SHA256SUMS.
+    @Published var updateOffer: AppUpdate.Offer?
+    @Published var installingUpdate = false
+
+    // MARK: - ship-servers state (list, filters, connection)
     @Published var servers: [GameServer] = []
     @Published var selectedServer: String? {
         didSet { if selectedServer != oldValue { serverPassword = "" }; do { try serverConnection.select(address: selectedServer) } catch { serverConnection.clear(); notice = error.localizedDescription } }
@@ -102,76 +205,38 @@ struct MediaEntry: Identifiable {
     @Published var directPassword = ""
     @Published var directConnectError: String?
     @Published var refreshResult = ""
-    @Published var gameRunning = false
-    @Published var notice = ""
-    @Published var crashReport: URL?
-    @Published var updateMessage = "Check for the latest release when you're ready."
-    @Published var checkingUpdates = false
-    @Published var updateWasChecked = false
-    @Published var updateError = false
-    @Published var releaseURL: URL?
-    /// The newer release Install Update installs, when it carries this Mac's archive and SHA256SUMS.
-    @Published var updateOffer: AppUpdate.Offer?
-    @Published var installingUpdate = false
+    var browserTask: Task<Void, Never>?
+    /// Servers asked for their version before Original 1.3 joins them: answered (or not), and in flight.
+    var checkedAddresses: Set<String> = []
+    var lookingUp: Set<String> = []
+    lazy var readyRules = try? ConfigRules.load()
+    var readyChecker: ConfigReadyCheck? {
+        guard let catalog = studio.catalog, let rules = readyRules else { return nil }
+        return ConfigReadyCheck(catalog: catalog, rules: rules)
+    }
+
+    // MARK: - ship-home-library state (Home, demos and screenshots)
     @Published var media: [MediaEntry] = []
     @Published var libraryTab: LibraryTab = .demos
     @Published var selectedMedia: URL?
     @Published var mediaMessage: String?
     @Published var mediaError = false
     @Published var renamingMedia: MediaEntry?
-    @Published var trashingMedia: MediaEntry?
-    @Published var playerName = PlayerProfile.unnamed
-    @Published var keyVerified = false
-    let artwork: MapArtworkStore
-    let home: URL
-    let preferences: URL
-    let snapshot: Bool
-    let configStudio: ConfigStudioSession?
-    let serverConnection = ConfigServerConnection()
-    private lazy var readyRules = try? ConfigRules.load()
-    private var readyChecker: ConfigReadyCheck? {
-        guard let catalog = studio.catalog, let rules = readyRules else { return nil }
-        return ConfigReadyCheck(catalog: catalog, rules: rules)
-    }
-    /// The Configs page's view store over the same session.
-    let studio: ConfigStudioModel
-    /// Discover and import. The player directory has no signed publication yet, so it reports itself unavailable.
-    let discover: ConfigDiscoverModel
-    private var savedSettings = GameSettings()
-    private var engine: Process?
-    /// Servers asked for their version before Original 1.3 joins them: answered (or not), and in flight.
-    private var checkedAddresses: Set<String> = []
-    /// What each engine can't hold of the other's saved settings, from the catalogue.
-    private var engineLimits: ConfigEngineLimits?
-    private var lookingUp: Set<String> = []
-    private var attachedGames: [pid_t: NSRunningApplication] = [:]
-    private var attachmentTask: Task<Void, Never>?
-    private var connectionTask: Task<Void, Never>?
-    private var handOffTask: Task<Void, Never>?
-    private var gameStartedAt = Date()
-    private var lastExitCode: Int32?
-    private var reportTask: Task<Void, Never>?
-    private var gameBundle: URL { Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app") }
+
+    // MARK: - ship-configs state (Configs lives in `studio` and `discover`)
+
+    // MARK: - Core
+    var gameBundle: URL { Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app") }
     /// Either engine of this app, as running processes report their executables.
-    private var gameExecutables: Set<URL> { Set(GameEngine.allCases.map { $0.executable(in: gameBundle).resolvingSymlinksInPath() }) }
+    var gameExecutables: Set<URL> { Set(GameEngine.allCases.map { $0.executable(in: gameBundle).resolvingSymlinksInPath() }) }
     /// The engine the next game starts with: the one chosen in Settings, when this app carries it.
     var chosenEngine: GameEngine { installedEngines.contains(settings.engine) ? settings.engine : .cod2x }
     var originalAvailable: Bool { installedEngines.contains(.original) }
-    private var activeGamePID: pid_t? {
+    var activeGamePID: pid_t? {
         if let engine, engine.isRunning { return engine.processIdentifier }
         if let app = attachedGames.values.filter({ !$0.isTerminated }).sorted(by: { $0.processIdentifier < $1.processIdentifier }).first { return app.processIdentifier }
         return nil
     }
-    private var browserTask: Task<Void, Never>?
-    @Published private var pendingLink: LaunchLink?
-    @Published private var fastPlay = false
-    private var booted = false
-    private var setupTask: Task<Void, Never>?
-    private var shaderRefresh: Task<Void, Never>?
-    var forwardedArguments: [String] = []
-    var exitAfterGame = false
-    /// Creates the native export dialog; callers configure it before presentation.
-    var makeExportPanel: @MainActor () -> NSSavePanel = { NSSavePanel() }
 
     init(snapshot: Bool = false, catalog: @escaping @Sendable () throws -> ConfigCatalog = { try ConfigStudioModel.bundledCatalog() }) {
         self.snapshot = snapshot
@@ -228,37 +293,7 @@ struct MediaEntry: Identifiable {
     var crashReportService: SentryDSN? {
         snapshot ? SentryDSN("https://preview@sentry.invalid/1") : SentryDSN(Bundle.main.object(forInfoDictionaryKey: CrashReporting.infoKey) as? String ?? "")
     }
-    var selected: GameServer? { visibleServers.first { $0.address == selectedServer } }
-    var lastServer: GameServer? {
-        guard let address = library.recent.first else { return nil }
-        return servers.first { $0.address == address } ?? library.cache.first { $0.address == address }
-    }
-    var recentServers: [GameServer] {
-        library.recent.prefix(12).compactMap { address in servers.first { $0.address == address } ?? library.cache.first { $0.address == address } }
-    }
-    var favoriteServers: [GameServer] {
-        library.favorites.sorted().compactMap { address in servers.first { $0.address == address } ?? library.cache.first { $0.address == address } }
-    }
-    var dispatches: [Dispatch] { library.dispatches.isEmpty ? Dispatch.bundled : Array(library.dispatches.prefix(2)) }
     var dataPathDisplay: String { (dataPath as NSString).abbreviatingWithTildeInPath }
-    var visibleServers: [GameServer] {
-        let result = servers.filter {
-            (search.isEmpty || [QuakeColors.plain($0.name), $0.map, MapCatalog.displayName($0.map), $0.mod, $0.address].joined(separator: " ").localizedCaseInsensitiveContains(search)) &&
-            (filter != .stock || !ServerFacts($0).isCoD2x) && (filter != .codx || ServerFacts($0).isCoD2x) &&
-            (!hideEmpty || $0.playerCount > 0) && (!hideFull || $0.maxPlayers == 0 || $0.playerCount < $0.maxPlayers)
-        }
-        return result.sorted { lhs, rhs in
-            let a = sortAscending ? lhs : rhs, b = sortAscending ? rhs : lhs
-            switch sort {
-            case .players: if a.playerCount != b.playerCount { return a.playerCount < b.playerCount }
-            case .name:
-                let order = QuakeColors.plain(a.name).localizedStandardCompare(QuakeColors.plain(b.name))
-                if order != .orderedSame { return order == .orderedAscending }
-            case .ping: if a.ping != b.ping { return a.ping < b.ping }
-            }
-            return a.address < b.address
-        }
-    }
     func boot() {
         guard !snapshot else { return }
         booted = true
@@ -306,7 +341,7 @@ struct MediaEntry: Identifiable {
         Task { await artwork.load(dataPath: path, maps: maps) }
     }
     /// The in-game name, read the way the engine loads it: the active profile's config_mp.cfg, then main's.
-    private func readPlayerName() {
+    func readPlayerName() {
         let main = home.appendingPathComponent("main")
         var configs: [URL] = []
         if let active = try? String(contentsOf: main.appendingPathComponent("players/active.txt"), encoding: .isoLatin1),
@@ -332,226 +367,73 @@ struct MediaEntry: Identifiable {
         if destination == .configs { studio.loadCatalog() }
     }
 
-    // MARK: Setup
-    var canCancelSetup: Bool { setupReturnPage != nil }
-    var hasPendingLaunch: Bool { pendingLink != nil || fastPlay }
-    var setupCompletionTitle: String { pendingLink != nil ? "Join Server" : fastPlay ? "Open Game Menu" : "Open CoD2 Silicon" }
-    var setupServerAddress: String? { pendingLink?.address }
-    var setupCanContinue: Bool {
-        guard !shaderBusy else { return false }
-        switch step {
-        case 0: return !dataPath.isEmpty && dataError.isEmpty
-        case 1: return keyReady
-        default: return true
-        }
+    // MARK: Windows, sheets and confirmations
+    /// Brings the main window forward (reopening it if it was closed).
+    func showMainWindow() {
+        openWindowHandler?(.main)
+        NSApp.activate(ignoringOtherApps: true)
     }
-    func pickData() {
-        guard !shaderBusy, let window = launcherWindow ?? NSApp.keyWindow, window.attachedSheet == nil else { return }
-        let panel = makeSetupPanel()
-        panel.canChooseDirectories = true; panel.canChooseFiles = false; panel.treatsFilePackagesAsDirectories = true
-        panel.prompt = "Choose Folder"
-        panel.message = "Choose your Call of Duty 2 folder. Its main folder must contain all 16 game archives, iw_00.iwd through iw_15.iwd."
-        panel.beginSheetModal(for: window) { [weak self] response in
-            guard response == .OK, let url = panel.url else { return }
-            self?.chooseData(url)
-        }
+    /// The one way into Settings: selects `pane` (or keeps the last one) and brings the window forward.
+    func openSettings(_ pane: SettingsPane? = nil) {
+        if let pane { settingsPane = pane }
+        openWindowHandler?(.settings)
+        settingsWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
-    @discardableResult func chooseData(_ url: URL) -> Bool {
-        guard url.isFileURL, !shaderBusy else { return false }
-        attemptedDataPath = url.path
-        if let valid = LauncherFindData(url.path) {
-            dataPath = valid; dataError = ""; setupError = ""
-            return true
-        }
-        dataError = "This folder is incomplete. Choose the Call of Duty 2 folder with all 16 game archives in its main folder, from iw_00.iwd through iw_15.iwd."
-        return false
+    /// Whether the Settings window is the one in front, so a sheet or an alert attaches to it.
+    var settingsInFront: Bool { settingsWindow.map { $0.isVisible && $0.isKeyWindow } ?? false }
+    /// Shows `sheet` attached to the window in front (Settings when it's key, otherwise the main window).
+    func present(_ sheet: AppSheet) {
+        if settingsInFront { settingsSheet = sheet; return }
+        if launcherWindow?.isVisible != true { openWindowHandler?(.main) }
+        self.sheet = sheet
     }
-    func rememberData() throws {
-        guard !dataPath.isEmpty, GameSettings.safeValue(dataPath), GameSettings.safeValue(home.path) else { throw LauncherError(message: "Choose a path without quotes, plus signs, semicolons or control characters.") }
-        try PrivateFile.write(Data((dataPath + "\n").utf8), to: home.appendingPathComponent("data-path.txt"))
-    }
-    var keyReady: Bool { (keyVerified && !replacingKey) || KeyStore.valid(keyInput) }
-    func replaceKey() { replacingKey = true; keyInput = ""; setupError = "" }
-    func keepStoredKey() { replacingKey = false; keyInput = ""; setupError = "" }
-    func nextSetup() {
-        guard setupCanContinue else { return }
-        setupError = ""
-        do {
-            switch step {
-            case 0:
-                guard snapshot || LauncherFindData(dataPath) != nil else {
-                    _ = chooseData(URL(fileURLWithPath: dataPath)); return
-                }
-                if !snapshot { try rememberData() }
-                dataChanged = dataChanged || dataPath != confirmedDataPath
-                confirmedDataPath = dataPath
-                step = 1
-            case 1:
-                if replacingKey || !keyVerified {
-                    if !snapshot { try KeyStore.save(keyInput, at: preferences) }
-                    keyInput = ""; keyVerified = true; replacingKey = false
-                }
-                step = 2
-                if approximate || dataChanged { prepareShaders() }
-            case 2: step = 3
-            default: finishSetup()
-            }
-        } catch { setupError = error.localizedDescription }
-    }
-    /// After an update, builds the shaders again if this version's generator is newer than the
-    /// ones on disk. It takes a few seconds once; `play` waits for it.
-    private func refreshShaders() {
-        guard !snapshot, !onboard, !dataPath.isEmpty, shaderRefresh == nil else { return }
-        let data = dataPath
-        shaderRefresh = Task {
-            let verified = await Task.detached(priority: .userInitiated) { LauncherPrepareShaders(data, nil) }.value
-            approximate = !verified
-            shaderRefresh = nil
-        }
-    }
-    func backSetup() { if step > 0 && !shaderBusy { setupError = ""; step -= 1 } }
-    func prepareShaders(selected: String? = nil) {
-        guard !shaderBusy, !snapshot, shaderRefresh == nil else { return }
-        step = 2; setupError = ""
-        shaderBusy = true; shaderCount = 0; shaderMessage = "Reading your game files…"
-        let data = dataPath, parent = home
-        let progress = Task { [weak self] in
-            while !Task.isCancelled {
-                let count = await Task.detached(priority: .utility) { Self.stagedShaderCount(in: parent) }.value
-                if let self, self.shaderBusy, let count {
-                    self.shaderCount = min(Self.shaderTotal, max(self.shaderCount, count))
-                    self.shaderMessage = "Building shaders from your game files…"
-                }
-                try? await Task.sleep(for: .milliseconds(120))
-            }
-        }
-        setupTask = Task {
-            let verified = await Task.detached(priority: .utility) { LauncherPrepareShaders(data, selected) }.value
-            progress.cancel()
-            shaderCount = verified ? Self.shaderTotal : 0
-            shaderBusy = false; approximate = !verified
-            dataChanged = false
-            shaderMessage = verified ? "Original shaders ready" : "The original shaders couldn’t be built."
-            if onboard && step == 2 { step = 3 }
-        }
-    }
-    /// Payloads written so far into the extractor's private staging folder in the app home.
-    nonisolated static func stagedShaderCount(in parent: URL) -> Int? {
-        guard let entries = try? FileManager.default.contentsOfDirectory(at: parent, includingPropertiesForKeys: nil) else { return nil }
-        let staging = entries.filter { $0.lastPathComponent.hasPrefix(".shaders-") && !$0.lastPathComponent.hasSuffix("-old") }
-        guard let folder = staging.first else { return nil }
-        let names = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
-        return names.filter { !$0.hasPrefix(".") && $0 != "manifest.json" }.count
-    }
-    func pickShaders() {
-        guard !shaderBusy, let window = launcherWindow ?? NSApp.keyWindow, window.attachedSheet == nil else { return }
-        let panel = makeSetupPanel()
-        panel.canChooseDirectories = true; panel.canChooseFiles = true; panel.treatsFilePackagesAsDirectories = true
-        panel.prompt = "Use Mac Copy"
-        panel.message = "Choose your Mac Call of Duty 2 folder or its multiplayer app to use its original lighting, sky and water."
-        panel.beginSheetModal(for: window) { [weak self] response in
-            guard response == .OK, let url = panel.url else { return }
-            self?.prepareShaders(selected: url.path)
-        }
-    }
-    func finishSetup(findServer: Bool = false) {
-        guard !shaderBusy, keyVerified, !dataPath.isEmpty else { return }
-        do {
-            if !snapshot { try PrivateFile.write(Data("prepared\n".utf8), to: home.appendingPathComponent(".launcher-setup-complete")) }
-            onboard = false; setupReturnPage = nil
-            navigate(to: findServer ? .servers : .home)
-            loadArtwork()
-            if !findServer && hasPendingLaunch { play() }
-        } catch { setupError = "Couldn’t save setup. Try again. " + error.localizedDescription }
-    }
-    func restartSetup() { restartSetup(at: 0) }
-    func restartSetup(at requestedStep: Int) {
-        guard !gameRunning, !installingUpdate else { return }
-        if !onboard, keyVerified, !dataPath.isEmpty, snapshot || LauncherFindData(dataPath) != nil {
-            setupReturnPage = page; confirmedDataPath = dataPath
-        }
-        keyInput = ""; replacingKey = false; setupError = ""; dataError = ""; attemptedDataPath = ""
-        step = min(2, max(0, requestedStep)); onboard = true
-        if step == 2 && approximate { prepareShaders() }
-    }
-    func cancelSetup() {
-        guard let destination = setupReturnPage else { return }
-        dataPath = confirmedDataPath; keyInput = ""; replacingKey = false
-        setupError = ""; dataError = ""; attemptedDataPath = ""
-        setupReturnPage = nil; onboard = false
-        pendingLink = nil; fastPlay = false
-        navigate(to: destination)
-    }
-    func returnToGame() {
-        guard let pid = activeGamePID, let game = NSRunningApplication(processIdentifier: pid) else { return }
-        launcherWindow?.orderOut(nil)
-        NSApp.setActivationPolicy(.accessory)
-        game.activate(options: .activateAllWindows)
+    func dismissSheet() { sheet = nil; settingsSheet = nil }
+    /// Asks a single question as an alert on the window in front.
+    func confirm(_ request: ConfirmationRequest) {
+        if settingsInFront { settingsConfirmation = request } else { confirmation = request }
     }
 
-    // MARK: Settings and library
+    // MARK: Menu commands every unit can call (Menus board; ship-shell builds the menus)
+    /// File › Open Game Menu (⇧⌘↩): the game's own menu, without joining a server.
+    func openGameMenu() { play() }
+    /// File › Show Game Data in Finder.
+    func showGameDataInFinder() {
+        guard !dataPath.isEmpty else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: dataPath)])
+    }
+    /// File › Show My Files in Finder: the app home (configs, demos, screenshots, reports).
+    func showMyFilesInFinder() { openHomeFolder() }
+    /// Help › Show Logs in Finder: the app home, with the newest crash or freeze report selected when there is one.
+    func showLogsInFinder() {
+        if let report = CrashReports.latest(in: home, since: .distantPast) { NSWorkspace.shared.activateFileViewerSelecting([report]) }
+        else { openHomeFolder() }
+    }
+    /// Help › CoD2 Silicon Help: the project's documentation page.
+    func openHelp() { NSWorkspace.shared.open(URL(string: "https://github.com/STiXzoOR/cod2-silicon")!) }
+    /// Help › Release Notes.
+    func openReleaseNotes() { NSWorkspace.shared.open(AppUpdate.releases) }
+    /// Help › Keyboard Shortcuts.
+    func showKeyboardShortcuts() { present(.keyboardShortcuts) }
+    /// Help › Report a Problem… and Settings › About.
+    func reportProblem() { present(.reportProblem) }
+    /// View › Hide Sidebar / Show Sidebar (⌃⌘S).
+    func toggleSidebar() { sidebarVisibility = sidebarVisibility == .detailOnly ? .all : .detailOnly }
+    /// Edit › Find (⌘F): focuses the current page's search. Servers listens to `serverSearchRequested`;
+    /// Configs keeps its own ⌘F inside the page (ship-configs may move it here).
+    func findInPage() {
+        switch page {
+        case .servers: serverSearchRequested.toggle()
+        case .home, .library, .configs: break
+        }
+    }
+    /// View › Jump to… (⌘K). ship-shell builds the palette that `jumpPresented` shows.
+    func showJump() { guard canNavigate else { return }; jumpPresented = true }
+
+    // MARK: Loadouts and engine
     var usesLoadouts: Bool { (studio.session ?? configStudio)?.migrationCompleted == true }
-    var nextGameFrameCap: (value: Int?, name: String?) {
-        guard usesLoadouts else { return (settings.fps, nil) }
-        guard let session = studio.session ?? configStudio else { return (nil, nil) }
-        do {
-            let connection = serverConnection.address == lastServer?.address
-            let profile = try (connection ? serverConnection.profileID : nil).map(session.readProfile) ?? session.readActive()
-            guard let profile else { return (nil, nil) }
-            let raw = (connection ? serverConnection.overrides["com_maxfps"] : nil) ?? profile.document.effectiveSetting(named: "com_maxfps")
-            return (raw.flatMap(Int.init), profile.profile.displayName)
-        } catch { return (nil, nil) }
-    }
-    func openFrameSettings() {
-        guard usesLoadouts else { page = .settings; return }
-        page = .configs
-        studio.loadCatalogNow()
-        let target = (serverConnection.address == lastServer?.address ? serverConnection.profileID : nil) ?? studio.activeProfile?.id
-        if let target { studio.select(target) }
-        studio.tab = .settings; studio.group = .frame; studio.search = ""; studio.filter = nil
-    }
-    private func scheduleSettingsSave() {
-        settingsSaveTask?.cancel()
-        settingsSaveTask = Task { [weak self] in
-            do { try await Task.sleep(for: .milliseconds(250)) } catch { return }
-            self?.saveSettings()
-        }
-    }
-    func flushSettings() {
-        settingsSaveTask?.cancel()
-        if settings != savedSettings { saveSettings() }
-    }
-    /// Invalid text remains editable, while launches and saved settings keep the last valid options.
-    func editAdvancedOptions(_ text: String) {
-        advancedDraft = text
-        var candidate = settings
-        for (index, line) in text.components(separatedBy: "\n").enumerated() where !line.trimmingCharacters(in: .whitespaces).isEmpty {
-            candidate.advanced = line
-            guard (try? candidate.launchConfig(migrated: configStudio?.migrationCompleted == true)) != nil else {
-                advancedError = "Line \(index + 1) can’t be used. Enter one setting and value, without quotes or command separators. Paths and private information are managed by the app."
-                return
-            }
-        }
-        candidate.advanced = text
-        guard (try? candidate.launchConfig(migrated: configStudio?.migrationCompleted == true)) != nil else {
-            advancedError = "These options are too long. Remove some lines and try again."
-            return
-        }
-        advancedError = nil
-        settings = candidate
-    }
-    func saveSettings() {
-        do {
-            let text = try settings.launchConfig(migrated: configStudio?.migrationCompleted == true)
-            guard !snapshot else { savedSettings = settings; settingsSaveError = nil; return }
-            try PrivateFile.write(Data(text.utf8), to: home.appendingPathComponent("main/launcher.cfg"))
-            try PrivateFile.write(JSONEncoder().encode(settings), to: home.appendingPathComponent("launcher-settings.json"))
-            savedSettings = settings; settingsSaveError = nil
-            studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
-        } catch { settingsSaveError = "Your changes couldn’t be saved. Check that your CoD2 Silicon folder is writable, then try again." }
-    }
     /// Config Studio reads, checks and edits loadouts in the language of the engine the next game starts with.
-    private func followEngine() {
+    func followEngine() {
         let dialect = chosenEngine.dialect
         do {
             try configStudio?.setDialect(dialect)
@@ -559,223 +441,13 @@ struct MediaEntry: Identifiable {
         } catch { notice = error.localizedDescription }
         studio.setDialect(dialect)
     }
-    /// What the app home keeps of CoD2x's files now.
-    func refreshCoD2xFiles() {
-        guard !snapshot, !cod2xFilesBusy else { return }
-        let status = CoD2xFiles.status(home: home, dataPath: dataPath)
-        cod2xFilesInstalled = status.installed; cod2xFilesMessage = status.message
-    }
-    /// Only when the player asks: CoD2x's pinned release from GitHub, of which only the archive is kept.
-    func downloadCoD2xFiles() {
-        getCoD2xFiles(CoD2xFiles.Message.downloading) { home in
-            let release = try await CoD2xFiles.download()
-            try Task.checkCancellation()
-            try CoD2xFiles.install(release: release, home: home)
-        }
-    }
-    /// Without a download: a Windows game folder with CoD2x installed, read and never changed.
-    func chooseCoD2xFolder() {
-        guard !snapshot, !cod2xFilesBusy else { return }
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true; panel.canChooseFiles = false; panel.treatsFilePackagesAsDirectories = true
-        panel.message = "Choose a Windows Call of Duty 2 folder that has CoD2x installed."
-        guard let window = NSApp.keyWindow else { return }
-        panel.beginSheetModal(for: window) { [weak self] response in
-            guard response == .OK, let folder = panel.url else { return }
-            self?.getCoD2xFiles(CoD2xFiles.Message.copying) { home in try CoD2xFiles.install(folder: folder, home: home) }
-        }
-    }
-    private func getCoD2xFiles(_ progress: String, _ work: @escaping @Sendable (URL) async throws -> Void) {
-        guard !snapshot, !cod2xFilesBusy else { return }
-        cod2xFilesBusy = true; cod2xFilesMessage = progress
-        let home = self.home
-        cod2xFilesTask = Task {
-            var failure: String?
-            do { try await work(home) }
-            catch { if !Task.isCancelled { failure = CoD2xFiles.message(error) } }
-            cod2xFilesBusy = false
-            refreshCoD2xFiles()
-            if let failure { cod2xFilesMessage = failure }
-            if Task.isCancelled { cod2xFilesMessage = "Download cancelled. You can try again whenever you’re ready." }
-            studio.announce(cod2xFilesMessage)
-        }
-    }
-    func cancelCoD2xFiles() { cod2xFilesTask?.cancel() }
-    func removeCoD2xFiles() {
-        guard !snapshot, !cod2xFilesBusy else { return }
-        do { try CoD2xFiles.remove(home: home); refreshCoD2xFiles() } catch { cod2xFilesMessage = CoD2xFiles.message(error) }
-    }
-    /// The answer to `engineRequest`: save CoD2x as the engine, then join.
-    func turnOnCoD2x(andJoin request: EngineRequest) {
-        engineRequest = nil
-        savedSettings.engine = .cod2x
-        settings.engine = .cod2x
-        if !snapshot {
-            do { try PrivateFile.write(JSONEncoder().encode(savedSettings), to: home.appendingPathComponent("launcher-settings.json")) }
-            catch { notice = error.localizedDescription }
-        }
-        do { try serverConnection.select(address: request.link.address) } catch { notice = error.localizedDescription; return }
-        pendingLink = request.link
-        play()
-    }
-    /// Original 1.3 joins only stock 1.3 servers; a CoD2x server asks to turn CoD2x on, and a server
-    /// not seen yet is asked for its version first, once.
-    private func admit(_ link: LaunchLink) -> Bool {
-        let address = (try? LaunchLink.canonicalAddress(link.address)) ?? link.address
-        switch chosenEngine.check(server: knownServer(address), lookedUp: checkedAddresses.contains(address)) {
-        case .go: return true
-        case .needsCoD2x:
-            pendingLink = nil; fastPlay = false
-            engineRequest = EngineRequest(link: link)
-        case .lookUp:
-            guard lookingUp.insert(address).inserted else { break }
-            Task {
-                if let server = await ServerQueries.server(address) { remember(server) }
-                lookingUp.remove(address); checkedAddresses.insert(address)
-                if pendingLink?.url == link.url, !gameRunning { play() }
-            }
-        }
-        return false
-    }
-    private func knownServer(_ address: String) -> GameServer? {
-        func same(_ server: GameServer) -> Bool { (try? LaunchLink.canonicalAddress(server.address)) == address }
-        return servers.first(where: same) ?? library.cache.first(where: same)
-    }
-    private func remember(_ server: GameServer) {
-        let normalized = try? LaunchLink.canonicalAddress(server.address)
-        if let index = servers.firstIndex(where: { (try? LaunchLink.canonicalAddress($0.address)) == normalized }) { servers[index] = server }
-        else { servers.append(server) }
-    }
     func saveLibrary() {
         guard !snapshot else { return }
         do { try PrivateFile.write(JSONEncoder().encode(library), to: home.appendingPathComponent("launcher-library.json")) }
         catch { notice = "Could not save your server library." }
     }
-    func favorite(_ address: String) {
-        if library.favorites.contains(address) { library.favorites.remove(address) } else { library.favorites.insert(address) }
-        saveLibrary()
-    }
-    func showServer(_ address: String) {
-        navigate(to: .servers)
-        clearServerFilters()
-        selectedServer = address
-    }
 
-    // MARK: Servers
-    func clearServerFilters() { search = ""; filter = .all; hideEmpty = false; hideFull = false }
-    func sortServers(by key: ServerSort) {
-        if sort == key { sortAscending.toggle() }
-        else { sort = key; sortAscending = key != .players }
-    }
-    var serverCacheAge: String {
-        guard let date = library.cachedAt else { return "Not refreshed yet" }
-        if Date().timeIntervalSince(date) < 60 { return "Refreshed just now" }
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        return "Refreshed \(formatter.localizedString(for: date, relativeTo: Date()))"
-    }
-    var directAddressError: String? {
-        let address = directAddress.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !address.isEmpty else { return nil }
-        guard (try? LaunchLink.canonicalAddress(address)) != nil else {
-            return "Use a hostname or IP address, with an optional port from 1 to 65535. For example, 203.0.113.24:28960."
-        }
-        return nil
-    }
-    func copyServer(_ server: GameServer, link: Bool = false) {
-        let value = link ? (try? LaunchLink.direct(server.address).url) : server.address
-        guard let value else { return }
-        NSPasteboard.general.clearContents(); NSPasteboard.general.setString(value, forType: .string)
-        notice = link ? "Server link copied." : "Server address copied."
-        studio.announce(notice)
-    }
-    func refresh() {
-        guard !snapshot, !refreshing else { return }
-        refreshing = true; refreshResult = ""; queryProgress = "Contacting both master servers…"
-        browserTask = Task {
-            let discovered = await ServerQueries.masterAddresses()
-            let addresses = Array(Set(discovered).union(library.favorites).union(library.recent)).sorted()
-            if discovered.isEmpty && !Task.isCancelled { notice = "Master servers did not respond. Cached servers and direct connect remain available." }
-            var fresh: [GameServer] = []
-            for start in stride(from: 0, to: addresses.count, by: 6) {
-                if Task.isCancelled { break }
-                let batch = Array(addresses[start..<min(start + 6, addresses.count)])
-                await withTaskGroup(of: GameServer?.self) { group in
-                    for address in batch {
-                        group.addTask { await ServerQueries.server(address) }
-                        try? await Task.sleep(for: .milliseconds(40))
-                    }
-                    for await value in group { if let value { fresh.append(value) } }
-                }
-                servers = fresh + library.cache.filter { cached in !fresh.contains { $0.address == cached.address } }
-                queryProgress = "Asking \(min(start + 6, addresses.count)) of \(addresses.count) servers…"
-            }
-            if fresh.isEmpty && !Task.isCancelled { notice = "No servers responded. Your cached results remain available; try direct connect or refresh later." }
-            if !fresh.isEmpty { servers = fresh; library.cache = fresh; library.cachedAt = Date(); saveLibrary() }
-            refreshResult = Task.isCancelled ? "Refresh stopped. \(fresh.count) servers answered." : "\(fresh.count) servers answered."
-            if fresh.isEmpty && !Task.isCancelled { refreshResult += " Try refreshing again." }
-            refreshing = false
-            studio.announce(refreshResult)
-            loadArtwork()
-        }
-    }
-    func cancelRefresh() { browserTask?.cancel() }
-    /// The session the ready check reads: Configs' own (the review harness attaches one to a preview).
-    private var readySession: ConfigStudioSession? { studio.session ?? configStudio }
-    /// A connection alternative does not change the active loadout in Studio.
-    func useLoadoutForServer(_ id: String, address: String) throws {
-        guard let configStudio = readySession, !configStudio.isReadOnly else { throw ConfigProfileError.gameRunning }
-        _ = try configStudio.readProfile(id)
-        try serverConnection.select(address: address)
-        try serverConnection.useProfile(id)
-        objectWillChange.send()
-    }
-    func readyCheck(for address: String) throws -> ConfigReadyReport? {
-        guard let readyChecker, let configStudio = readySession else { return nil }
-        let normalized = try LaunchLink.canonicalAddress(address)
-        let server = servers.first { (try? LaunchLink.canonicalAddress($0.address)) == normalized }
-        let chosenID = serverConnection.address == normalized ? serverConnection.profileID : nil
-        guard let profile = try chosenID.map(configStudio.readProfile) ?? configStudio.readActive() else { return nil }
-        return readyChecker.evaluate(server: server, profile: profile, mode: chosenEngine.catalogMode,
-            advancedChain: try configStudio.readAdvancedChain(profileID: profile.profile.id))
-    }
-    func fixForServerOnly(_ address: String) throws {
-        guard let configStudio = readySession, !configStudio.isReadOnly else { throw ConfigProfileError.gameRunning }
-        try serverConnection.select(address: address)
-        guard let report = try readyCheck(for: address) else { throw ConfigReadyCheckError.noVerifiedFix }
-        try serverConnection.fix(report: report)
-        objectWillChange.send()
-    }
-    /// Query one endpoint, including direct-connect addresses absent from the
-    /// master list. Selection and staged choices remain the caller's decision.
-    func refreshReadyCheck(for address: String) async throws -> ConfigReadyReport? {
-        let normalized = try LaunchLink.canonicalAddress(address)
-        if let server = await ServerQueries.server(normalized) {
-            if let index = servers.firstIndex(where: { (try? LaunchLink.canonicalAddress($0.address)) == normalized }) {
-                servers[index] = server
-            } else {
-                servers.append(server)
-            }
-        }
-        return try readyCheck(for: normalized)
-    }
-    func connect(_ server: GameServer? = nil) {
-        if server == nil && directAddress.trimmingCharacters(in: .whitespaces).isEmpty {
-            notice = "Enter a server address, such as 203.0.113.24:28960."; return
-        }
-        do {
-            if server == nil, let error = directAddressError { directConnectError = error; return }
-            let link = try LaunchLink.direct(server?.address ?? directAddress.trimmingCharacters(in: .whitespacesAndNewlines), password: server == nil ? directPassword : serverPassword)
-            try serverConnection.select(address: link.address)
-            if server == nil { directPassword = ""; directConnectError = nil } else { serverPassword = "" }
-            if activeGamePID != nil { openLink(link.url) }
-            else { pendingLink = link; play() }
-        }
-        catch {
-            if server == nil { directConnectError = "This connection couldn’t be opened. Check the address and password and try again." }
-            else { notice = error.localizedDescription }
-        }
-    }
+    // MARK: Launching
     /// Home's Launch: rejoin the last server, or open the game's menu when there is none.
     func launch() {
         guard !onboard else { return }
@@ -1045,155 +717,8 @@ struct MediaEntry: Identifiable {
         studio.checkup.refreshMatches(home: home)
     }
 
-    // MARK: Library, folders and updates
-    func loadMedia() {
-        guard !snapshot else { return }
-        let folder = home.appendingPathComponent(libraryTab == .demos ? "main/demos" : "main/screenshots")
-        let extensions = libraryTab == .demos ? ["dm_1"] : ["jpg", "jpeg", "png", "tga"]
-        let keys: [URLResourceKey] = [.contentModificationDateKey, .fileSizeKey, .isRegularFileKey]
-        do {
-            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            media = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: keys)
-            .filter { extensions.contains($0.pathExtension.lowercased()) && (try? $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true }
-            .map { url -> MediaEntry in
-                let values = try? url.resourceValues(forKeys: Set(keys))
-                return MediaEntry(url: url, facts: MediaFacts(name: url.lastPathComponent, date: values?.contentModificationDate, bytes: values?.fileSize))
-            }
-            .sorted {
-                let a = $0.facts.modifiedAt ?? .distantPast, b = $1.facts.modifiedAt ?? .distantPast
-                return a == b ? $0.url.lastPathComponent < $1.url.lastPathComponent : a > b
-            }
-            mediaMessage = nil; mediaError = false
-            if !media.contains(where: { $0.url == selectedMedia }) { selectedMedia = nil }
-            loadArtwork()
-        } catch { mediaError = true; mediaMessage = "Your library couldn’t be read. Check the folder in Finder, then try again." }
-    }
-    func mediaFileExists(_ url: URL) -> Bool {
-        guard !snapshot else { return true }
-        guard FileManager.default.fileExists(atPath: url.path) else {
-            mediaError = true; mediaMessage = "“\(url.lastPathComponent)” is no longer in this folder. Refresh your library to see what’s available."
-            return false
-        }
-        return true
-    }
-    func openMedia(_ entry: MediaEntry) {
-        guard mediaFileExists(entry.url), !snapshot else { return }
-        if !NSWorkspace.shared.open(entry.url) { mediaError = true; mediaMessage = "This screenshot couldn’t be opened. Show it in Finder to choose an app." }
-    }
-    func revealMedia(_ entry: MediaEntry) {
-        guard mediaFileExists(entry.url), !snapshot else { return }
-        NSWorkspace.shared.activateFileViewerSelecting([entry.url])
-    }
-    func copyMedia(_ entry: MediaEntry) {
-        guard mediaFileExists(entry.url), !snapshot else { return }
-        guard let image = NSImage(contentsOf: entry.url) else { mediaError = true; mediaMessage = "This screenshot couldn’t be copied. Show it in Finder and try again."; return }
-        NSPasteboard.general.clearContents(); NSPasteboard.general.writeObjects([image, entry.url as NSURL])
-        mediaError = false; mediaMessage = "Screenshot copied."; studio.announce("Screenshot copied.")
-    }
-    func renameMedia(_ entry: MediaEntry, to name: String) -> String? {
-        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.hasPrefix(".") else { return "Choose a name that doesn’t start with a dot, so the recording stays visible." }
-        guard !name.isEmpty, ![".", ".."].contains(name), !name.contains("/"), !name.contains(":"),
-              !name.unicodeScalars.contains(where: { $0.value < 32 }) else { return "Enter a name without slashes or colons." }
-        let target = entry.url.deletingLastPathComponent().appendingPathComponent(name).appendingPathExtension(entry.url.pathExtension)
-        if target == entry.url { return nil }
-        guard !FileManager.default.fileExists(atPath: target.path) else { return "A recording already has that name. Choose another." }
-        guard !snapshot else { return nil }
-        do {
-            try FileManager.default.moveItem(at: entry.url, to: target)
-            selectedMedia = target; loadMedia(); studio.announce("Recording renamed.")
-            return nil
-        } catch { return "This recording couldn’t be renamed. Check that it’s still in the folder and try again." }
-    }
-    func trashMedia(_ entry: MediaEntry) {
-        guard !snapshot else { return }
-        do {
-            try FileManager.default.trashItem(at: entry.url, resultingItemURL: nil)
-            loadMedia(); mediaMessage = "Moved to Trash. You can put it back using Finder."; studio.announce("Moved to Trash.")
-        } catch { mediaError = true; mediaMessage = "This file couldn’t be moved to Trash. Show it in Finder and try again." }
-    }
-    func openMediaFolder() {
-        guard !snapshot else { return }
-        let folder = home.appendingPathComponent(libraryTab == .demos ? "main/demos" : "main/screenshots")
-        do { try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true); NSWorkspace.shared.open(folder) }
-        catch { mediaError = true; mediaMessage = "The folder couldn’t be opened. Check that your CoD2 Silicon folder is writable." }
-    }
+    // MARK: Folders
     func openHomeFolder() { NSWorkspace.shared.open(home) }
-    /// Explicit HTTPS request to GitHub Releases. Nothing is downloaded or installed until Install Update.
-    func checkUpdates() {
-        guard !snapshot, !checkingUpdates, !installingUpdate else { return }
-        if ![.home, .settings, .about].contains(page) { page = .about }
-        updateWasChecked = true; updateError = false
-        checkingUpdates = true; updateMessage = "Checking GitHub Releases…"
-        studio.announce(updateMessage)
-        Task {
-            defer { checkingUpdates = false; studio.announce(updateMessage) }
-            do {
-                var request = URLRequest(url: URL(string: "https://api.github.com/repos/STiXzoOR/cod2-silicon/releases?per_page=10")!)
-                request.timeoutInterval = 15; request.setValue("CoD2-Silicon-Launcher", forHTTPHeaderField: "User-Agent")
-                request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-                let (data, response) = try await URLSession.shared.data(for: request)
-                guard let response = response as? HTTPURLResponse, response.statusCode == 200 else { throw LauncherError(message: "Release service is unavailable. Try again later.") }
-                let feed = try ReleaseNotes.parse(data)
-                if !feed.dispatches.isEmpty { library.dispatches = feed.dispatches }
-                library.dispatchesCheckedAt = Date(); saveLibrary()
-                if let latest = feed.latestVersion, ReleaseNotes.isNewer(latest, than: version) {
-                    updateMessage = "Version \(latest) is available. Download it when you're ready."
-                    releaseURL = URL(string: "https://github.com/STiXzoOR/cod2-silicon/releases")
-                    updateOffer = AppUpdate.offer(version: latest, assets: feed.latestAssets)
-                } else { updateMessage = "You're up to date · \(version)"; releaseURL = nil; updateOffer = nil }
-            } catch { updateMessage = "Updates couldn’t be checked. Check your internet connection and try again."; updateError = true }
-        }
-    }
-
-    /// Install Update: only on the player's click; refused while a game runs or where the app can't replace
-    /// itself (then the Releases page opens, as before). Progress and errors replace the update message.
-    func installUpdate() {
-        guard !snapshot, !installingUpdate, !checkingUpdates, let offer = updateOffer else { return }
-        let app = Bundle.main.bundleURL, bundleID = Bundle.main.bundleIdentifier ?? ""
-        if let refusal = AppUpdate.refusal(app: app, gameRunning: gameRunning) { updateFailed(refusal); return }
-        installingUpdate = true; updateMessage = AppUpdate.Message.downloading(offer.version)
-        Task {
-            var folder: URL?
-            do {
-                let staged = try await AppUpdate.download(offer, beside: app)
-                folder = staged.folder
-                updateMessage = AppUpdate.Message.checking
-                let candidate = try await Task.detached {
-                    try AppUpdate.verify(staged.archive, size: offer.archiveSize, sha256: staged.sha256)
-                    let unpacked = try AppUpdate.unpack(staged.archive, in: staged.folder)
-                    try AppUpdate.check(unpacked, bundleID: bundleID, version: offer.version, team: AppUpdate.teamIdentifier(of: app))
-                    return unpacked
-                }.value
-                if let refusal = AppUpdate.refusal(app: app, gameRunning: gameRunning) { throw refusal }
-                updateMessage = AppUpdate.Message.installing(offer.version)
-                try AppUpdate.swap(app, with: candidate)
-                try? FileManager.default.removeItem(at: staged.folder)
-                updateMessage = AppUpdate.Message.restarting
-                relaunch(app)
-            } catch {
-                if let folder { try? FileManager.default.removeItem(at: folder) }
-                installingUpdate = false
-                updateFailed(error)
-            }
-        }
-    }
-    private func updateFailed(_ error: Error) {
-        updateError = true
-        updateMessage = AppUpdate.message(error)
-        if (error as? AppUpdate.Failure)?.opensReleases == true { NSWorkspace.shared.open(AppUpdate.releases) }
-    }
-    /// Starts the new app once this one has quit.
-    private func relaunch(_ app: URL) {
-        let helper = Process()
-        helper.executableURL = URL(fileURLWithPath: "/bin/sh")
-        helper.arguments = ["-c", "while /bin/kill -0 \"$1\" 2>/dev/null; do /bin/sleep 0.2; done; /usr/bin/open \"$2\"",
-                            "cod2-silicon-update", String(getpid()), app.path]
-        do { try helper.run() } catch {
-            installingUpdate = false; updateMessage = "Version \(updateOffer?.version ?? "") is installed. Quit and open CoD2 Silicon to use it."; return
-        }
-        NSApp.terminate(nil)
-    }
 
     // MARK: Preview data for the review harness (documentation-range addresses, invented names)
     private func seedPreview() {
@@ -1229,96 +754,21 @@ struct MediaEntry: Identifiable {
             MediaEntry(url: home.appendingPathComponent("main/demos/" + $0.0), facts: MediaFacts(name: $0.0, date: $0.1, bytes: $0.2))
         }
     }
-    /// Screen states for the review harness.
+    /// Screen states for the review harness: each unit's `preview<Unit>(_:)` sets up its own screens
+    /// (in its model file); the core keeps the shared examples.
     func preview(_ screen: String) {
+        if previewCore(screen) || previewShell(screen) || previewHomeLibrary(screen) || previewServers(screen) || previewSettings(screen) || previewConfigs(screen) { return }
+        page = .home
+    }
+    /// Shared examples: the Foundations gallery and a sheet over each window.
+    private func previewCore(_ screen: String) -> Bool {
         switch screen {
-        case "setup-data": onboard = true; step = 0
-        case "setup-data-missing": onboard = true; step = 0; dataPath = ""
-        case "setup-key": onboard = true; step = 1; keyVerified = false; keyInput = "7Q4M 2KX9 LP3R"
-        case "setup-shaders": onboard = true; step = 2; shaderBusy = true; shaderCount = 518; shaderMessage = "Building shaders from your game files…"
-        case "setup-ready", "setup-summary-ready": onboard = true; step = 3; shaderCount = Self.shaderTotal; approximate = false
-        case "setup-key-replace": onboard = true; step = 1; keyVerified = true; replacingKey = true
-        case "setup-shaders-ready": onboard = true; step = 2; shaderCount = Self.shaderTotal; approximate = false
-        case "setup-key-stored": onboard = true; step = 1; keyVerified = true
-        case "setup-key-invalid": onboard = true; step = 1; keyVerified = false; keyInput = "1111 1111 1111 1111 1111"
-        case "setup-summary-approximate": onboard = true; step = 3; approximate = true; shaderCount = 0
-        case "setup-summary-link": onboard = true; step = 3; pendingLink = try? LaunchLink.direct("192.0.2.10:28960")
-        case "setup-cancelable": navigate(to: .settings); restartSetup()
-        case "setup-folder-error": onboard = true; step = 0; dataPath = ""; attemptedDataPath = "/Users/Player/Downloads/Call of Duty 2"; dataError = "This folder is incomplete. Choose the Call of Duty 2 folder with all 16 game archives in its main folder, from iw_00.iwd through iw_15.iwd."
-        case "home-notice": page = .home; notice = "Couldn’t open the game. Your files are safe. Choose your Call of Duty 2 folder again in Settings, then try Launch. If the folder is on an external drive, connect the drive first. You can select and copy this message, or dismiss it when you’re ready."
-        case "home-game-running": page = .home; gameRunning = true; notice = "Call of Duty 2 is still running. Quit the game first, then quit CoD2 Silicon."
-        case "servers": page = .servers
-        case "servers-empty": page = .servers; search = "zzz"
-        case "servers-no-cache": page = .servers; servers = []; library.cache = []; library.cachedAt = nil; selectedServer = nil
-        case "servers-inspector-empty": page = .servers; selectedServer = nil
-        case "servers-direct-error": page = .servers; directAddress = "invalid address;quit"
-        case "servers-refreshing": page = .servers; refreshing = true; queryProgress = "Asking 24 of 120 servers…"
-        case "servers-refreshing-empty": page = .servers; servers = []; library.cache = []; library.cachedAt = nil; selectedServer = nil; refreshing = true; queryProgress = "Contacting both master servers…"
-        case "settings-legacy": page = .settings
-        case "settings-legacy-custom": page = .settings; settings.fps = 144
-        case "settings-invalid": page = .settings; editAdvancedOptions("name invalid;quit")
-        case "settings-save-error": page = .settings; settingsSaveError = "Your changes couldn’t be saved. Check that your CoD2 Silicon folder is writable, then try again."
-        case "home-checking": updateWasChecked = true; checkingUpdates = true; updateMessage = "Checking GitHub Releases…"
-        case "home-current": updateWasChecked = true; updateMessage = "You’re up to date · \(version)"
-        case "home-update-error": updateWasChecked = true; updateError = true; updateMessage = "Updates couldn’t be checked. Check your internet connection and try again."
-        case "library-empty": page = .library; media = []
-        case "library-empty-screenshots": page = .library; libraryTab = .screenshots; media = []
-        case "library-error": page = .library; media = []; mediaError = true; mediaMessage = "Your library couldn’t be read. Check the folder in Finder, then try again."
-        case "library-reloaded":
-            page = .library
-            let name = "new-match.dm_1"
-            media.insert(MediaEntry(url: home.appendingPathComponent("main/demos/" + name), facts: MediaFacts(name: name, date: Date(), bytes: 540_000)), at: 0)
-            selectedMedia = media.first?.url
-        case "library-renaming", "library-rename-error": page = .library; renamingMedia = media.first
-        case "library-trash": page = .library; trashingMedia = media.first
-        case "library-trashed": page = .library; media = []; mediaMessage = "Moved to Trash. You can put it back using Finder."
-        case "library-running": page = .library; gameRunning = true; mediaError = true; mediaMessage = "Close the game before playing a recording."
-        case "library-missing": page = .library; mediaError = true; mediaMessage = "This recording is no longer in the folder. Refresh your library to see what’s available."
-        case "settings": page = .settings
-        case "settings-original": page = .settings; settings.engine = .original; savedSettings = settings
-        case "settings-original-missing": page = .settings; installedEngines = [.cod2x]
-        case "settings-cod2x-installed": page = .settings; cod2xFilesInstalled = true; cod2xFilesMessage = CoD2xFiles.Message.installed
-        case "settings-cod2x-downloading": page = .settings; cod2xFilesBusy = true; cod2xFilesMessage = CoD2xFiles.Message.downloading
-        case "settings-cod2x-error": page = .settings; cod2xFilesMessage = CoD2xFiles.message(CoD2xFiles.Failure.noCoD2x)
-        case "home-update", "settings-update", "about-update", "settings-update-installing", "settings-update-error":
-            page = screen.hasPrefix("home") ? .home : screen.hasPrefix("about") ? .about : .settings
-            releaseURL = AppUpdate.releases
-            updateOffer = AppUpdate.Offer(version: "0.4.0", archive: AppUpdate.releases, archiveSize: 1, sums: AppUpdate.releases)
-            updateMessage = "Version 0.4.0 is available. Download it when you're ready."
-            if screen == "settings-update-installing" { installingUpdate = true; updateMessage = AppUpdate.Message.downloading("0.4.0") }
-            if screen == "settings-update-error" { updateError = true; updateMessage = AppUpdate.message(AppUpdate.Failure.mismatch) }
-        case "settings-reports": page = .settings; settings.sendCrashReports = true; settings.sendCoD2xReports = true; savedSettings = settings
-        case "home-crash-sent":
-            crashReport = home.appendingPathComponent("cod2_crash_4242.txt")
-            notice = "The game closed unexpectedly. Your launcher is still open. " + CrashReporting.Status.sent.message
-        case "home-crash-not-sent":
-            crashReport = home.appendingPathComponent("cod2_crash_4242.txt")
-            notice = "The game closed unexpectedly. Your launcher is still open. " + CrashReporting.Status.notSent(.offline).message
-        case "library-demos": page = .library
-        case "library-screenshots": page = .library; libraryTab = .screenshots
-            media = ["toujane-dusk.jpg", "carentan-rooftops.jpg", "leningrad-snow.jpg"].enumerated().map { index, name in
-                MediaEntry(url: home.appendingPathComponent("main/screenshots/" + name),
-                           facts: MediaFacts(name: name, date: Calendar(identifier: .gregorian).date(from: DateComponents(year: 2026, month: 10, day: 4 - min(index, 1), hour: 21 - index * 2, minute: 17 + index * 13)), bytes: 412_000))
-            }
-        case "about": page = .about
-        case "home-first": library.recent = []
-        // The review harness attaches a session over a temporary home with synthetic loadouts.
-        case "configs-guided", "configs-guided-rules": page = .configs; studio.level = .guided; studio.group = .frame
-        case "configs-expert-rules": page = .configs; studio.level = .expert; studio.group = .net
-        case "configs-guided-aim", "configs-running": page = .configs; studio.level = .guided; studio.group = .aim
-        case "configs-expert": page = .configs; studio.level = .expert; studio.group = .aim
-        case "configs-text": page = .configs; studio.level = .expert; studio.group = .aim
-        case "configs-history": page = .configs; studio.tab = .history
-        // Discover and import: the harness supplies a signed fixture directory or a reviewed import.
-        case "discover-unavailable", "discover-players": page = .configs; discover.page = .players
-        case "discover-saved": page = .configs; discover.page = .saved
-        case "discover-player": page = .configs
-        case "configs-import", "configs-import-everything": page = .configs
-        case "servers-ready", "servers-ready-fixed": page = .servers
-        case "configs-binds-list", "configs-binds-visual", "configs-binds-advanced": page = .configs; studio.tab = .binds
-        case "configs-checkup": page = .configs; studio.tab = .checkup
-        default: page = .home
+        case "foundations", "foundations-popover": page = .home
+        case "sheet-keyboard-shortcuts": page = .home; sheet = .keyboardShortcuts
+        case "settings-sheet-acknowledgements": settingsPane = .about; settingsSheet = .acknowledgements
+        default: return false
         }
+        return true
     }
 }
 

@@ -323,9 +323,9 @@ private struct ImportReviewSheet: View {
 
     private var source: some View {
         HStack(spacing: 8) {
-            Chip(text: review.provenance.source, symbol: review.provenance.symbol)
-            if review.provenance.signed { Chip(text: "Signed catalog entry", symbol: "checkmark.seal", tone: .positive) }
-            if review.provenance.windows { Chip(text: "From Windows", symbol: "pc") }
+            ProvenanceChip(text: review.provenance.source, symbol: review.provenance.symbol)
+            if review.provenance.signed { ProvenanceChip(text: "Signed catalog entry", symbol: "checkmark.seal", tone: .positive) }
+            if review.provenance.windows { ProvenanceChip(text: "From Windows", symbol: "pc") }
             if let credit = review.provenance.credit {
                 Text("Credit: \(credit)" + (review.provenance.permission ? " · Shared with permission" : ""))
                     .font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1)
@@ -440,7 +440,7 @@ private struct ImportReviewSheet: View {
     }
 }
 
-private struct Chip: View {
+private struct ProvenanceChip: View {
     var text: String
     var symbol: String
     var tone: StudioStatusTone? = nil

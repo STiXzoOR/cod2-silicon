@@ -185,9 +185,7 @@ struct ServerRow: View {
                         favoriteButton
                     }
                     HStack(alignment: .bottom, spacing: 12) {
-                        MapArt(map: server.map, image: image).frame(width: 64, height: 52)
-                        .clipShape(RoundedRectangle(cornerRadius: RowMetrics.artRadius, style: .continuous))
-                        .shapeAudit(.inset, .rounded(RowMetrics.artRadius), "row art")
+                        MapArtFrame(map: server.map, image: image, size: .card, radius: RowMetrics.artRadius)
                         VStack(alignment: .leading, spacing: 8) {
                             mapAndMode(lines: 2)
                             HStack(spacing: 12) {
@@ -204,8 +202,7 @@ struct ServerRow: View {
                 }
             } else {
                 HStack(spacing: 16) {
-                    MapArt(map: server.map, image: image).frame(width: 96, height: 60)
-                    .clipShape(RoundedRectangle(cornerRadius: RowMetrics.artRadius, style: .continuous)).shapeAudit(.inset, .rounded(RowMetrics.artRadius), "row art")
+                    MapArtFrame(map: server.map, image: image, size: .row, radius: RowMetrics.artRadius)
                     VStack(alignment: .leading, spacing: 6) {
                         serverName
                         HStack(spacing: 8) {
@@ -278,15 +275,7 @@ struct ServerRow: View {
 
 struct VersionBadge: View {
     var facts: ServerFacts
-    @Environment(\.palette) private var palette
-    var body: some View {
-        Text(facts.versionLabel)
-            .font(.system(size: 11, weight: .semibold))
-            .lineLimit(1).fixedSize()
-            .foregroundStyle(facts.isCoD2x ? palette.accent : (palette.dark ? Palette.hex(0xbdb5a1) : palette.secondary))
-            .padding(.vertical, 2).padding(.horizontal, 7)
-            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(facts.isCoD2x ? palette.selectionStroke : palette.track, lineWidth: 1))
-    }
+    var body: some View { Badge(facts.versionLabel, tone: facts.isCoD2x ? .accent : .neutral) }
 }
 
 struct NoContact: View {
@@ -322,7 +311,7 @@ struct ServerDetails: View {
                         let facts = ServerFacts(server)
                         if !compact {
                         ZStack {
-                            MapArt(map: server.map, image: image)
+                            MapArtFrame(map: server.map, image: image, size: .fill)
                             LinearGradient(stops: [.init(color: .clear, location: 0.55), .init(color: .black.opacity(0.55), location: 1)], startPoint: .top, endPoint: .bottom)
                         }
                         .frame(height: 104)
@@ -494,14 +483,6 @@ struct ContourBackdrop: View {
         }
         .accessibilityHidden(true)
     }
-}
-
-/// List rows (servers, demos): 60-point art 10 points in, concentric with a 20-point corner. Trailing
-/// content keeps the corner radius from the edge; a button there sits as far in as from the top.
-enum RowMetrics {
-    static let inset: CGFloat = 10, radius: CGFloat = 20, trailing: CGFloat = 20, height: CGFloat = 60 + 2 * 10
-    static var artRadius: CGFloat { Concentric.radius(in: radius, inset: inset) }
-    static func buttonTrailing(_ size: ControlSize) -> CGFloat { (height - ControlMetrics.height(size)) / 2 }
 }
 
 private extension View {

@@ -5,7 +5,9 @@ import AppKit
     static let model = LauncherModel()
     static var reopen: (() -> Void)?
     static func registerWindowAction(_ openWindow: OpenWindowAction) {
-        reopen = { openWindow(id: "launcher") }
+        reopen = { openWindow(id: LauncherWindowID.main.rawValue) }
+        // The model opens either window (Settings from a Home chip, the main window for setup).
+        model.openWindowHandler = { openWindow(id: $0.rawValue) }
     }
     static func showWindow() {
         NSApp.setActivationPolicy(.regular)
@@ -51,13 +53,28 @@ import AppKit
         LauncherFonts.register()
     }
     var body: some Scene {
-        Window("CoD2 Silicon", id: "launcher") {
+        Window("CoD2 Silicon", id: LauncherWindowID.main.rawValue) {
             LauncherScene().frame(idealWidth: 1440, idealHeight: 900)
         }
         .defaultSize(width: 1440, height: 900)
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unified)
         .commands { LauncherCommands(model: LauncherState.model) }
+        // Settings is its own window (SettingsWin board); `model.openSettings(_:)` picks the pane.
+        Window("Settings", id: LauncherWindowID.settings.rawValue) {
+            SettingsScene()
+        }
+        .defaultSize(width: SettingsWindowMetrics.width, height: SettingsWindowMetrics.height)
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
+    }
+}
+
+private struct SettingsScene: View {
+    @Environment(\.openWindow) private var openWindow
+    var body: some View {
+        SettingsWindowRoot(model: LauncherState.model)
+            .onAppear { LauncherState.registerWindowAction(openWindow) }
     }
 }
 
@@ -85,16 +102,16 @@ struct LauncherCommands: Commands {
         // URL launches may never create a view. Commands still supply the scene-opening action.
         let _ = LauncherState.registerWindowAction(openWindow)
         CommandGroup(replacing: .appInfo) {
-            Button("About CoD2 Silicon") { show(.about) }.disabled(!model.canNavigate)
-            Button("Check for Updates…") { show(.about); model.checkUpdates() }
+            Button("About CoD2 Silicon") { model.openSettings(.about) }.disabled(!model.canNavigate)
+            Button("Check for Updates…") { model.openSettings(.updates); model.checkUpdates() }
                 .disabled(!model.canNavigate || model.checkingUpdates || model.installingUpdate)
         }
         CommandGroup(replacing: .appSettings) {
-            Button("Settings…") { show(.settings) }.keyboardShortcut(",", modifiers: .command).disabled(!model.canNavigate)
+            Button("Settings…") { model.openSettings() }.keyboardShortcut(",", modifiers: .command).disabled(!model.canNavigate)
         }
         CommandGroup(replacing: .newItem) {
             Button("Launch") { show(.home); model.launch() }.keyboardShortcut(.return, modifiers: .command).disabled(!model.canNavigate)
-            Button("Open Game Menu") { show(.home); model.play() }.keyboardShortcut(.return, modifiers: [.command, .shift]).disabled(!model.canNavigate)
+            Button("Open Game Menu") { show(.home); model.openGameMenu() }.keyboardShortcut(.return, modifiers: [.command, .shift]).disabled(!model.canNavigate)
             Divider()
             Button("Import a Config…") { show(.configs); discover.chooseFile() }
                 .keyboardShortcut("o", modifiers: .command).disabled(!model.canImport)
@@ -128,10 +145,11 @@ struct LauncherCommands: Commands {
                 .disabled(model.gameRunning)
         }
         CommandGroup(replacing: .help) {
-            Button("CoD2 Silicon Help") { openHelp("") }
+            Button("CoD2 Silicon Help") { model.openHelp() }
             Button("Where to Find Your Game Data") { openHelp("/blob/main/docs/macos-port/game-data.md") }
-            Button("Release Notes") { openHelp("/releases") }
-            Button("Report a Problem…") { openHelp("/issues") }
+            Button("Keyboard Shortcuts") { model.showMainWindow(); model.showKeyboardShortcuts() }
+            Button("Release Notes") { model.openReleaseNotes() }
+            Button("Report a Problem…") { model.reportProblem() }
         }
     }
     private func selection(_ page: LauncherPage) -> Binding<Bool> {

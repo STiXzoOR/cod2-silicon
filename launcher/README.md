@@ -10,16 +10,31 @@ Source layout:
 - `Core.swift`, `Presentation.swift`: validated settings, links, key storage and the
   Foundation-only formatting rules (maps, server badges, cm/360, release notes,
   scrims). Unit-tested.
-- `Network.swift`, `Model.swift`, `MapArtwork.swift`: discovery, lifecycle, and the
-  player's own loading screens decoded into a private cache.
+- `Network.swift`, `MapArtwork.swift`: discovery, and the player's own loading screens
+  decoded into a private cache.
+- `Model.swift`: the one `LauncherModel`. It keeps the stored state (in a region per
+  owner), start-up, navigation, the two windows, sheets and confirmations, the menu
+  commands and the game's lifecycle. Each area's methods live in an extension file:
+  `ModelSetup.swift`, `ModelServers.swift`, `ModelLibrary.swift`, `ModelSettings.swift`
+  and `ConfigLauncherModel.swift`, each with its review-harness states.
 - `Theme.swift`: colour tokens for dark and light, the bundled typefaces, and the
   glass surfaces and buttons with their accessibility material fallback.
+- `Components.swift`: the shared building blocks from the design's Foundations board:
+  page header and panels, form section, group and row, sheet scaffold and confirmation
+  alert, empty state, banner, toast, status label, badge, chip, key caps, ping bars,
+  progress bar, toolbar pill, scope switch, search pill, symbol button, pop-up button,
+  text fields, checkbox, switch and the map-art frame every loading screen goes through.
 - `Artwork.swift`: original fallback art drawn from the design's vector data, icon G
   at sidebar scale and the dog tags.
-- `RootView.swift` and the screen files: Home, Servers, Library, Configs, Settings,
-  Setup and About. Config Studio's document, profile, history, import, rules,
-  binding, directory and match-summary models supply Configs through the shared
-  session and store.
+- `RootView.swift` and the page files: Home, Servers, Library and Configs in the main
+  window, with Setup in its place until setup is done. Config Studio's document,
+  profile, history, import, rules, binding, directory and match-summary models supply
+  Configs through the shared session and store.
+- `SettingsWindow.swift` and `SettingsPanes.swift`: the Settings window, a second
+  window (scene `settings`) with General, Display, Game Data, Privacy, Updates,
+  Advanced and About panes. `model.openSettings(_:)` opens it at a pane.
+- `AppSheets.swift` and `ServerSheets.swift`, `SettingsSheets.swift`, `ShellSheets.swift`:
+  the app's sheets, one enum presented over whichever window is in front.
 
 First-run setup walks through game data, a CD key, shaders and a completion summary.
 Game folders can be dropped onto the data well or chosen in a window-attached sheet;
@@ -34,8 +49,10 @@ server link or `--play` gets an explicitly labelled Join Server or Open Game Men
 The native menus own navigation (⌘1–4), Launch (⌘Return), Open Game Menu
 (⇧⌘Return), Settings (⌘,), config import (⌘O / ⇧⌘V), and Servers refresh (⌘R).
 Commands follow setup, game and update availability. Page commands and the Dock reopen
-the single launcher window after it closes. Help links to the project manual, game
-data instructions, releases and issues. Status messages reserve space below the page,
+the launcher window after it closes. Settings, About (the app menu's About opens the
+About pane) and Check for Updates open the Settings window. Help links to the project
+manual, game data instructions and releases, and opens the Keyboard Shortcuts and
+Report a Problem sheets. Status messages reserve space below the page,
 wrap without truncation, and are announced to assistive technology. A Quit request
 during play brings back the launcher with an explanation and Return to Game.
 
@@ -50,7 +67,12 @@ Public wire fixtures were captured from both masters on 2026-10-04;
 `tests/launcher/fixtures/capture.json` records their provenance.
 `fixtures/releases.json` is a synthetic GitHub Releases response.
 
-Review images come from a test-only harness that is never shipped:
+Review images come from a test-only harness that is never shipped. Its core is
+`tests/launcher/Snapshots.swift`; each area lists its screens, expected VoiceOver labels and
+window-driving suites in its own `Snapshots*.swift` file, and `SnapshotsFoundations.swift`
+draws the building-block gallery. A screen named `settings…` or `about…` renders the Settings
+window; `--list` prints every screen with its window, `--list-suites` the suites, and
+`--suite NAME` runs one.
 
 ```sh
 scripts/build-launcher.sh output/ws28/harness --snapshots
@@ -79,11 +101,11 @@ play, then restores its Dock/window after the tracked child exits. If the launch
 reopening it reconnects to the exact running helper (bundle ID and executable path) rather
 than spawning another engine. Normal Quit waits until the game closes. A game crash
 leaves the launcher running and exposes any native crash report in the app home.
-Only a single launcher window exists; Launch is guarded against duplicate children.
+There is one launcher window and one Settings window; Launch is guarded against duplicate children.
 
 The game app carries two engines built from the same sources: `cod2_macos` with CoD2x and
 `cod2_macos_stock`, the original 1.3 (CoD2x is compiled in, so it can't be switched at run
-time). Settings › Game › Version chooses which one starts; CoD2x is the default and the choice
+time). Settings › General › Version chooses which one starts; CoD2x is the default and the choice
 is saved in `launcher-settings.json`. Config Studio's dialect and settings, Check-up's rules and
 the server ready check follow it. Both engines carry the app layer (link handler, bundle
 arguments, freeze watcher, crash and freeze reports in the app home), so links, passworded ones
@@ -99,7 +121,7 @@ replaced (one History entry per loadout) and remembers what this engine can't ho
 `main/players/.studio-engine-handoff.json`.
 
 CoD2x's own menus and icons live in `iw_CoD2x_01.iwd`, which CoD2x carries inside its Windows
-`mss32.dll`. CoD2x has no licence, so neither ships with the app. Settings › Game › CoD2x files
+`mss32.dll`. CoD2x has no licence, so neither ships with the app. Settings › General › CoD2x files
 gets the archive only when the player asks: Download fetches the pinned 1.4.6.8 release from
 GitHub (refused unless its size and SHA-256 match `CoD2xFiles` in `Core.swift`), and Choose Folder
 reads, without changing it, the `mss32.dll` of a Windows game folder with CoD2x. The archive is

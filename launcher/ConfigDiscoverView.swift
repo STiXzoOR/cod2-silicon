@@ -288,7 +288,7 @@ private struct PlayerCard: View {
         Button(action: open) {
             VStack(alignment: .leading, spacing: 0) {
                 ZStack(alignment: .bottomLeading) {
-                    MapArt(map: entry.favoriteMap ?? "", image: image).frame(height: 104).clipped()
+                    MapArtFrame(map: entry.favoriteMap ?? "", image: image, size: .fill).frame(height: 104)
                     Text(PlayerInitials.of(entry.player)).font(.stencil(18)).foregroundStyle(palette.accent)
                         .frame(width: 40, height: 40)
                         .background(palette.dark ? Palette.hex(0x1b1f17) : palette.crate, in: Circle())
@@ -497,7 +497,7 @@ private struct PlayerHero: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            MapArt(map: entry.favoriteMap ?? "", image: image, hero: true)
+            MapArtFrame(map: entry.favoriteMap ?? "", image: image, size: .fill, hero: true)
             // A scrim strong enough for the light inks over the pale and the dark scenes alike.
             LinearGradient(stops: [.init(color: .clear, location: 0), .init(color: .black.opacity(0.5), location: 0.35), .init(color: .black.opacity(0.85), location: 1)],
                            startPoint: .top, endPoint: .bottom)

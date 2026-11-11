@@ -166,7 +166,7 @@ struct ConfigsShell: View {
                     }
                 } else {
                     switch studio.tab {
-                    case .settings: ConfigSettingsView(studio: studio, session: session, openSettings: { model.page = .settings },
+                    case .settings: ConfigSettingsView(studio: studio, session: session, openSettings: { model.openSettings(.general) },
                                                        toggleText: { leaveText { studio.toggleText() } })
                     case .binds: ConfigBindsView(studio: studio, session: session)
                     case .checkup: ConfigCheckupView(studio: studio, session: session)

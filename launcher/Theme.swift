@@ -369,6 +369,8 @@ struct ProminentFallbackStyle: ButtonStyle {
 struct GlassFallbackStyle: ButtonStyle {
     var palette: Palette
     var circle = false
+    /// Label colour; the destructive action uses the negative token.
+    var ink: Color? = nil
     @Environment(\.isEnabled) private var isEnabled
     @Environment(\.controlSize) private var controlSize
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
@@ -376,7 +378,7 @@ struct GlassFallbackStyle: ButtonStyle {
         let padding = ControlMetrics.padding(controlSize)
         configuration.label
             .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(palette.text)
+            .foregroundStyle(ink ?? palette.text)
             .padding(.vertical, padding.vertical).padding(.horizontal, circle ? padding.vertical : padding.horizontal)
             .frame(minHeight: ControlMetrics.height(controlSize))
             .background {
@@ -390,5 +392,70 @@ struct GlassFallbackStyle: ButtonStyle {
             .overlay(Capsule().stroke(palette.glassStroke, lineWidth: 1))
             .opacity(isEnabled ? 1 : 0.35)
             .contentShape(Capsule())
+    }
+}
+
+// MARK: - ship-foundation
+
+/// Tokens from launcher.css that Palette doesn't store: derived from the appearance, so both
+/// palettes (and Increase Contrast, which keeps fills) get them without new stored values.
+extension Palette {
+    /// Standard button fill, its hover and its edge (--btn, --btn-hover, --btn-stroke).
+    var button: Color { dark ? .white.opacity(0.10) : .white.opacity(0.55) }
+    var buttonHover: Color { dark ? .white.opacity(0.16) : .white.opacity(0.75) }
+    var buttonStroke: Color { dark ? .white.opacity(0.16) : Self.hex(0x504628).opacity(0.14) }
+    /// Text field fill (--field) and a switch knob (--knob).
+    var field: Color { dark ? .white.opacity(0.07) : .white.opacity(0.6) }
+    var knob: Color { dark ? Self.hex(0xf4eedf) : .white }
+    /// Row hover and press fills (--hover, --press).
+    var hover: Color { dark ? .white.opacity(0.05) : Self.hex(0x3c3214).opacity(0.05) }
+    var press: Color { dark ? .white.opacity(0.09) : Self.hex(0x3c3214).opacity(0.09) }
+    /// The inner top highlight on glass and selected pills (--glass-hi).
+    var glassHighlight: Color { dark ? .white.opacity(0.17) : .white.opacity(0.6) }
+    /// Text drawn straight on map art or the setup scene (--ink-on-art).
+    var inkOnArt: Color { dark ? Self.hex(0xf3ecdc) : Self.hex(0x1f2214) }
+}
+
+extension View {
+    /// A secondary action that removes or discards something: the glass capsule with its label in the
+    /// negative colour. The button that confirms it in an alert names the action instead.
+    func destructiveAction() -> some View { modifier(DestructiveAction()) }
+    /// A text-only action that reads as a link (“Show Log”, “Full release notes”): no capsule, link colour.
+    func quietAction() -> some View { modifier(QuietAction()) }
+}
+
+private struct DestructiveAction: ViewModifier {
+    @Environment(\.usesGlass) private var usesGlass
+    @Environment(\.palette) private var palette
+    func body(content: Content) -> some View {
+        styled(content).shapeAudit(.control, .capsule, "glass button")
+    }
+    @ViewBuilder private func styled(_ content: Content) -> some View {
+        #if COD2_LIQUID_GLASS
+        if usesGlass, #available(macOS 26.0, *) { content.buttonStyle(.glass).capsuleBorder().fontWeight(.semibold).foregroundStyle(palette.negative) }
+        else { content.buttonStyle(GlassFallbackStyle(palette: palette, ink: palette.negative)) }
+        #else
+        content.buttonStyle(GlassFallbackStyle(palette: palette, ink: palette.negative))
+        #endif
+    }
+}
+
+private struct QuietAction: ViewModifier {
+    @Environment(\.palette) private var palette
+    func body(content: Content) -> some View {
+        content.buttonStyle(.plain).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.link)
+            .padding(.horizontal, 6).contentShape(Rectangle())
+    }
+}
+
+/// Hover and press feedback for content rows (moved here from Home so every unit shares it).
+struct RowButtonStyle: ButtonStyle {
+    var radius: CGFloat
+    @State private var hovering = false
+    @Environment(\.palette) private var palette
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background((palette.dark ? Color.white : Color.black).opacity(configuration.isPressed ? 0.07 : hovering ? 0.04 : 0), in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .onHover { hovering = $0 }
     }
 }

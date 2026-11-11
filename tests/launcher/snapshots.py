@@ -41,6 +41,14 @@ identity = hashlib.sha256(str(build.resolve()).encode()).hexdigest()[:12]
 info.update(CFBundleIdentifier=f"io.github.stixzoor.cod2silicon.snapshots.{identity}", CFBundleExecutable="LauncherSnapshots", CFBundleName="CoD2 Launcher Review", CFBundlePackageType="APPL", CFBundleShortVersionString="0.3.0", LSMinimumSystemVersion="26.0")
 (app / "Contents/Info.plist").write_bytes(plistlib.dumps(info))
 harness = macos / "LauncherSnapshots"
+# The screens, the window each renders in and its groups, and the window-driving suites: each unit
+# lists its own in its harness file (tests/launcher/Snapshots*.swift), so nothing is listed twice here.
+listing = [line.split() for line in subprocess.run([str(harness), "--list"], check=True, capture_output=True, text=True).stdout.splitlines()]
+surfaces = {name: surface for name, surface, _, _ in listing}
+screens = [name for name, _, _, _ in listing]
+configs = [name for name, _, group, _ in listing if group == "configs"]
+pages = [name for name, _, _, group in listing if group == "pages"]
+suites = subprocess.run([str(harness), "--list-suites"], check=True, capture_output=True, text=True).stdout.split()
 atexit.register(lambda: subprocess.run(["/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister", "-u", str(app)], check=False))
 
 
@@ -117,6 +125,15 @@ def run(target, *extra, env=None):
 WINDOW = {(1440, 900), (2880, 1800)}
 # The launcher's minimum window, 1100x760 points.
 MINIMUM = {(1100, 760), (2200, 1520)}
+# The Settings window: 900x700 points, 900x560 at its minimum.
+SETTINGS = {(900, 700), (1800, 1400)}
+SETTINGS_MINIMUM = {(900, 560), (1800, 1120)}
+
+
+def sizes(screen, minimum=False):
+    if surfaces.get(screen) == "settings":
+        return SETTINGS_MINIMUM if minimum else SETTINGS
+    return MINIMUM if minimum else WINDOW
 
 
 def size(png):
@@ -126,35 +143,12 @@ def size(png):
 
 
 run(out)
-configs = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-text", "configs-history", "configs-running",
-           "discover-unavailable", "discover-players", "discover-saved", "discover-player", "configs-import",
-           "configs-import-everything", "servers-ready", "servers-ready-fixed",
-           "configs-binds-list", "configs-binds-advanced", "configs-binds-visual", "configs-checkup",
-           "configs-guided-rules", "configs-expert-rules", "configs-binds-verify", "configs-binds-learn", "configs-expert-player",
-           # Check-up with summaries measured, turned off and unreadable (the plain screen above has none yet).
-           "configs-checkup-measured", "configs-checkup-off", "configs-checkup-error",
-           # Import from a link or a Windows profile, the review while it reads, a Saved bookmark the
-           # signed index dropped, and a save that failed. Synthetic data in a private home only.
-           "configs-import-link", "configs-import-windows", "configs-import-loading", "discover-saved-removed", "configs-save-failure",
-           # The Windows profile picker over synthetic candidates (no drive is scanned), and the
-           # Settings page held while its catalog loads.
-           "configs-import-windows-profiles", "configs-catalog-loading"]
-screens = ["home", "home-first", "servers", "servers-empty", "settings", "library-demos", "library-screenshots", "about",
-           "home-notice", "home-game-running", "setup-data", "setup-data-missing", "setup-folder-error", "setup-key", "setup-key-invalid", "setup-key-stored", "setup-key-replace", "setup-shaders-ready",
-           "setup-shaders", "setup-ready", "setup-summary-ready", "setup-summary-approximate", "setup-summary-link", "setup-cancelable",
-           "settings-original", "settings-original-missing", "settings-cod2x-installed", "settings-cod2x-downloading",
-           "settings-cod2x-error", "settings-reports", "home-crash-sent", "home-crash-not-sent", "settings-update",
-           "settings-update-installing", "settings-update-error", "about-update",
-           "servers-no-cache", "servers-inspector-empty", "servers-direct-error", "servers-refreshing",
-           "home-update", "home-checking", "home-current", "settings-invalid", "library-empty",
-           "library-empty-screenshots", "library-reloaded", "library-error", "library-renaming", "library-rename-error", "library-trash",
-           "library-running", "library-missing", "library-trashed", "settings-save-error", "home-update-error", "home-loadout", "home-loadout-unreadable", "servers-refreshing-empty", "settings-legacy", "settings-legacy-custom"] + configs
 for screen in screens:
     shots = {}
     for appearance in ["dark", "light"]:
         png = out / f"{screen}-{appearance}.png"
         (width, height), length = size(png)
-        assert (width, height) in WINDOW, (png, width, height)
+        assert (width, height) in sizes(screen), (png, width, height)
         assert length > 60_000, f"{png} looks blank ({length} bytes)"
         shots[appearance] = png.read_bytes()
     assert shots["dark"] != shots["light"], screen
@@ -199,7 +193,7 @@ for screen in screens:
     for appearance in ["dark", "light"]:
         png = minimum / f"{screen}-{appearance}.png"
         (width, height), length = size(png)
-        assert (width, height) in MINIMUM, (png, width, height)
+        assert (width, height) in sizes(screen, minimum=True), (png, width, height)
         assert length > 40_000, f"{png} looks blank ({length} bytes)"
         shots[appearance] = png.read_bytes()
     assert shots["dark"] != shots["light"], f"minimum {screen}"
@@ -213,9 +207,14 @@ for screen in configs:
         (width, height), length = size(motion / f"{screen}-{appearance}.png")
         assert (width, height) in WINDOW and length > 60_000, (screen, appearance, width, height, length)
 
-# Setup keyboard, stored keys, cancellation, inline validation and completion.
-run(out / "shell-actions", "--shell-actions")
-run(out / "shell-accessibility", "--shell-accessibility")
+# Window-driving suites from every unit (setup keyboard and validation, page actions with real saved
+# settings and media, …), each isolated from the player's home in a private one below the output.
+for suite in suites:
+    private_home = out / f"{suite}-home"
+    if private_home.exists():
+        shutil.rmtree(private_home)
+    private_home.mkdir(parents=True, exist_ok=True)
+    run(out / suite, "--suite", suite, env={"HOME": str(private_home), "CFFIXED_USER_HOME": str(private_home)})
 for variant in ["increase-contrast", "reduce-transparency", "reduce-motion"]:
     run(out / variant, "--only", "setup-summary-approximate", f"--{variant}")
 
@@ -250,29 +249,20 @@ for step in ["active", "inactive", "sidebar-hidden", "sidebar-shown", "minimum",
         (width, height), length = size(navigation / f"navigation-{step}-{appearance}.png")
         assert (width, height) in (MINIMUM if step.startswith("minimum") else WINDOW) and length > 40_000, (step, appearance, width, height, length)
 
-# Page actions use actual saved settings and media, isolated from the player's home.
-private_home = out / "page-actions-home"
-if private_home.exists():
-    shutil.rmtree(private_home)
-private_home.mkdir(parents=True, exist_ok=True)
-run(out / "page-actions", "--page-actions", env={"HOME": str(private_home), "CFFIXED_USER_HOME": str(private_home)})
-
 for variant in ["increase-contrast", "reduce-transparency", "reduce-motion"]:
     folder = out / f"pages-{variant}"
     run(folder, "--group", "pages", f"--{variant}")
-    for screen in screens:
-        if not (screen.startswith(("home", "servers", "settings", "about", "library")) and screen != "servers-ready-fixed"):
-            continue
+    for screen in pages:
         for appearance in ["dark", "light"]:
             png = folder / f"{screen}-{appearance}.png"
             (width, height), length = size(png)
-            assert (width, height) in WINDOW and length > 60_000, png
+            assert (width, height) in sizes(screen) and length > 60_000, png
 
 # The harness exits non-zero on any shape-audit finding, so reaching here means none.
-print(f"PASS: {len(screens) * 2} launcher screens at 1440x900 points in dark and light, plus the material fallback, with bundled fonts"
+print(f"PASS: {len(screens) * 2} launcher screens (main window 1440x900, Settings 900x700 points) in dark and light, plus the material fallback, with bundled fonts"
       " and a clean shape audit (capsule buttons, concentric nesting, equal insets); Config Studio under Increase Contrast,"
       f" Reduce Transparency and Reduce Motion, and {len(screens) * 2} captures at the 1100x760 minimum; Config Studio clicks"
       " write exact bytes; every launcher page control is named for VoiceOver;"
       f" {len(overlays) * 2} sheet, popover and alert captures")
 
-print("PASS: page actions persist settings and reload media; page captures under all three accessibility appearance preferences")
+print(f"PASS: suites {', '.join(suites)}; page captures under all three accessibility appearance preferences")

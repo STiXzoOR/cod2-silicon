@@ -12,12 +12,8 @@ done
 taskpolicy -b nice -n 19 /usr/bin/xcrun clang -target arm64-apple-macos26 -isysroot "$sdk" -DCOD2_X64=1 -DCOD2_CODX=1 \
     -c "$root/src/PC/qcommon/cod2x_url.c" -o "$scratch/URL.o"
 sources=""
-for file in Core Presentation MatchSummaries ConfigDocument ConfigProfiles ConfigHistory ConfigStudioSession ConfigCatalog ConfigRules ConfigReadyCheck \
-    ConfigCheckup ConfigBindings InputDevices ConfigChains ConfigImport ConfigImportSafety WindowsProfiles ConfigImportSession \
-    ConfigImportCatalogAdapter ConfigDirectory Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView \
-    LibraryView ConfigStudioModel ConfigStudioBinds ConfigStudioCheckup ConfigStudioStyle ConfigsView ConfigSettingsView ConfigHistoryView \
-    ConfigBindsView ConfigCheckupView ConfigDiscoverModel ConfigDiscoverView ConfigImportView ServerReadyCheck ServerReadyCheckView; do
-    sources="$sources $root/launcher/$file.swift"
+for file in "$root"/launcher/*.swift; do
+    [ "${file##*/}" = Main.swift ] || sources="$sources $file"
 done
 # shellcheck disable=SC2086
 taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 -swift-version 6 -strict-concurrency=complete -warnings-as-errors \

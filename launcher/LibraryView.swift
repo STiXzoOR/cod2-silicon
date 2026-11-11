@@ -21,9 +21,7 @@ struct LibraryView: View {
                             : "Your screenshots, newest first. Double-click to open; press Space for Quick Look.")
                             .padding(.leading, 16)
                         if let message = model.mediaMessage, !model.media.isEmpty || !model.mediaError {
-                            HStack {
-                                Label(message, systemImage: model.mediaError ? "exclamationmark.triangle" : "checkmark.circle").font(.system(size: 13)).foregroundStyle(model.mediaError ? palette.negative : palette.secondary)
-                                Spacer()
+                            Banner(model.mediaError ? .error : .neutral, symbol: model.mediaError ? "exclamationmark.triangle" : "checkmark.circle", message: message) {
                                 Button("Refresh", action: model.loadMedia).glassAction()
                             }
                         }
@@ -76,14 +74,9 @@ struct LibraryView: View {
         .onChange(of: model.libraryTab) { _, _ in model.selectedMedia = nil; model.loadMedia() }
         .quickLookPreview($quickLookURL, in: model.media.map(\.url))
         .sheet(item: $model.renamingMedia) { MediaRenameSheet(model: model, entry: $0) }
-        .confirmationDialog("Move “\(model.trashingMedia?.url.lastPathComponent ?? "")” to Trash?", isPresented: Binding(get: { model.trashingMedia != nil }, set: { if !$0 { model.trashingMedia = nil } }), titleVisibility: .visible) {
-            Button("Move to Trash", role: .destructive) { if let entry = model.trashingMedia { model.trashMedia(entry) }; model.trashingMedia = nil }
-            Button("Cancel", role: .cancel) { model.trashingMedia = nil }
-        } message: { Text("You can restore this file from the Trash in Finder.") }
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Picker("Library section", selection: $model.libraryTab) { ForEach(LibraryTab.allCases) { Text($0.rawValue).tag($0) } }
-                    .pickerStyle(.segmented).labelsHidden().fixedSize()
+                ScopeSwitch("Library section", selection: $model.libraryTab, options: LibraryTab.allCases.map { ($0, $0.rawValue) })
             }
         }
         .trailingToolbar {
@@ -116,7 +109,7 @@ struct LibraryView: View {
                 Button("Show in Finder") { model.revealMedia(entry) }
                 if model.libraryTab == .demos { Button("Rename…") { model.renamingMedia = entry } }
                 Divider()
-                Button("Move to Trash…", role: .destructive) { model.trashingMedia = entry }
+                Button("Move to Trash…", role: .destructive) { model.requestTrash(entry) }
             }
             .id(entry.id)
             .accessibilityAddTraits(selected ? .isSelected : [])
@@ -132,28 +125,25 @@ private struct MediaRenameSheet: View {
     @Environment(\.palette) private var palette
     @State private var name: String
     @State private var error: String?
-    @FocusState private var nameFocused: Bool
     init(model: LauncherModel, entry: MediaEntry) {
         self.model = model; self.entry = entry
         _name = State(initialValue: entry.url.deletingPathExtension().lastPathComponent)
     }
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Label("Rename recording", systemImage: "pencil").font(.system(size: 22, weight: .bold))
-            Text("Choose a name you’ll recognize in your library.").font(.system(size: 13)).foregroundStyle(palette.secondary)
-            SettingsGroup {
-                SettingsRow("Name") { TextField("Recording name", text: $name).focused($nameFocused).accessibilityLabel("Recording name") }
+        SheetScaffold(icon: .symbol("pencil"), title: "Rename recording", message: "Choose a name you’ll recognize in your library.",
+                      actions: [.cancel { dismiss() },
+                                .primary("Rename", enabled: !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) {
+                                    error = model.renameMedia(entry, to: name)
+                                    if error == nil { dismiss() }
+                                }]) {
+            VStack(alignment: .leading, spacing: 8) {
+                LauncherTextField("Recording name", text: $name, shape: .capsule, monospaced: true, invalid: error != nil, autofocus: true)
+                if let error {
+                    Label(error, systemImage: "exclamationmark.triangle").font(.system(size: 12)).foregroundStyle(palette.negative)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
-            if let error { Label(error, systemImage: "exclamationmark.triangle").font(.system(size: 13)).foregroundStyle(palette.negative) }
-            HStack {
-                Spacer()
-                Button("Cancel") { dismiss() }.glassAction().keyboardShortcut(.cancelAction)
-                Button("Rename") {
-                    error = model.renameMedia(entry, to: name)
-                    if error == nil { dismiss() }
-                }.prominentAction().keyboardShortcut(.defaultAction).disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
-        }.padding(24).frame(width: 480).onAppear { nameFocused = true }
+        }
     }
 }
 
@@ -166,8 +156,7 @@ struct DemoRow: View {
     var body: some View {
         let map = entry.facts.map.map { "mp_" + $0 } ?? entry.url.lastPathComponent
         HStack(spacing: 16) {
-            MapArt(map: map, image: image).frame(width: 96, height: 60)
-                .clipShape(RoundedRectangle(cornerRadius: RowMetrics.artRadius, style: .continuous)).shapeAudit(.inset, .rounded(RowMetrics.artRadius), "row art")
+            MapArtFrame(map: map, image: image, size: .row, radius: RowMetrics.artRadius)
             VStack(alignment: .leading, spacing: 5) {
                 Text(entry.url.lastPathComponent).font(.typewriter(14, bold: true)).foregroundStyle(palette.dark ? Palette.hex(0xefe7d3) : palette.text).lineLimit(1).truncationMode(.middle)
                 Text([entry.facts.map.map(MapCatalog.displayName), "Multiplayer demo"].compactMap { $0 }.joined(separator: " · "))
@@ -231,103 +220,10 @@ struct EmptyLibrary: View {
     var tab: LibraryTab
     var error: String?
     var showFolder: () -> Void
-    @Environment(\.palette) private var palette
     var body: some View {
-        VStack(spacing: 8) {
-            Text(error != nil ? "LIBRARY UNAVAILABLE" : tab == .demos ? "NO RECORDINGS" : "NO SCREENSHOTS").font(.stencil(26)).tracking(3.1).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.text)
-            Text(error ?? (tab == .demos ? "In the game, enable the console in Options → Game Options, press ~, enter /record, then /stoprecord to finish." : "Take a screenshot using the key set in the game’s Controls. It appears here when you return."))
-                .font(.system(size: 13)).foregroundStyle(palette.secondary).multilineTextAlignment(.center).frame(maxWidth: 520)
-            Button("Show Folder in Finder", action: showFolder).glassAction().padding(.top, 8)
-        }
-        .frame(maxWidth: .infinity).padding(.vertical, 100)
-        .accessibilityElement(children: .contain)
-    }
-}
-
-struct AboutView: View {
-    @ObservedObject var model: LauncherModel
-    @Environment(\.palette) private var palette
-    @State private var origin = CGPoint.zero
-    var body: some View {
-        GeometryReader { proxy in
-        ScrollViewReader { reader in
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                PageHeader(eyebrow: "Service record", title: "About").padding(.leading, 16)
-                HStack(alignment: .center, spacing: 30) {
-                    BrandMark().frame(width: 148, height: 148).shadow(color: .black.opacity(palette.dark ? 0.45 : 0.18), radius: 22, y: 12)
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("COD2 SILICON").font(.stencil(96)).tracking(1.9).lineLimit(1).minimumScaleFactor(0.6).foregroundStyle(palette.dark ? palette.heading : Palette.hex(0x1f2214))
-                            .shadow(color: .black.opacity(palette.dark ? 0.4 : 0), radius: 18, y: 6)
-                        Text("VERSION \(model.version) · MACOS 26 OR LATER").font(.typewriter(14)).foregroundStyle(palette.dark ? Palette.hex(0xd9c79a) : palette.address)
-                        Text("Call of Duty 2 multiplayer, native on Apple silicon. Plays on stock 1.3 and CoD2x 1.4.6.8 servers.")
-                            .font(.system(size: 16)).foregroundStyle(palette.dark ? Palette.hex(0xddd5c3) : Palette.hex(0x3a382e))
-                            .frame(maxWidth: 520, alignment: .leading).fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                .padding(.leading, 16).padding(.top, 74)
-                Spacer(minLength: 40)
-                HStack(alignment: .top, spacing: 20) {
-                    ContentPanel {
-                        PanelHeading(title: "Updates", action: nil, perform: nil)
-                        UpdateStatusView(model: model).padding(.top, 12)
-                        Text("Nothing is downloaded or installed until you choose Install Update.").font(.system(size: 12)).foregroundStyle(palette.tertiary).padding(.top, 12)
-                        Spacer(minLength: 0)
-                    }
-                    .id("updates")
-                    ContentPanel {
-                        PanelHeading(title: "Credits", action: "Full credits") {
-                            NSWorkspace.shared.open(URL(string: "https://github.com/STiXzoOR/cod2-silicon/blob/main/CREDITS.md")!)
-                        }
-                        VStack(alignment: .leading, spacing: 10) {
-                            credit("opencod2", "The reconstructed engine this port builds on")
-                            credit("CoD2x", "Protocol and client behaviour reference, 1.4.6.8")
-                            credit("SDL3 · sdl2-compat", "Window, input and audio · zlib licence")
-                            credit("vkd3d-shader", "Builds your original shaders · LGPL 2.1 or later")
-                            credit("Big Shoulders · Courier Prime", "Typefaces · SIL Open Font License 1.1")
-                        }
-                        .padding(.top, 14)
-                        Spacer(minLength: 0)
-                    }
-                    ContentPanel {
-                        PanelHeading(title: "Licence", action: "Notice") {
-                            NSWorkspace.shared.open(URL(string: "https://github.com/STiXzoOR/cod2-silicon/blob/main/NOTICE.md")!)
-                        }
-                        Text("MIT covers this project's own changes. Upstream opencod2 keeps its authors' rights, and third-party licences apply.")
-                            .font(.system(size: 13)).foregroundStyle(palette.body).lineSpacing(3).padding(.top, 12).fixedSize(horizontal: false, vertical: true)
-                        Text("Call of Duty is a trademark of Activision. This independent project isn't affiliated with Activision, Infinity Ward, Aspyr or CoD2x. Bring your own licensed game.")
-                            .font(.system(size: 13)).foregroundStyle(palette.body).lineSpacing(3).padding(.top, 10).fixedSize(horizontal: false, vertical: true)
-                        Spacer(minLength: 0)
-                    }
-                }
-                .frame(minHeight: max(290, proxy.size.height - 632))
-            }
-            .padding(.leading, max(24, 264 - origin.x)).padding(.trailing, 32).padding(.top, 30).padding(.bottom, 28)
-            .frame(minHeight: max(proxy.size.height, 760), alignment: .top)
-        }
-        .scrollIndicators(.automatic)
-        .task(id: model.checkingUpdates) {
-            guard model.checkingUpdates else { return }
-            await Task.yield()
-            reader.scrollTo("updates", anchor: .center)
-        }
-        .background(alignment: .topLeading) {
-            // Composition shifted right so the village sits beside the wordmark and copy, never behind them. The copy column
-            // ends at window x 978; at this height the steeple's left edge lands at (window + shift - 1300) / 2 + 809, so
-            // narrower windows shift further to keep it 24 pt clear.
-            HeroBackdrop(map: "mp_carentan", image: nil, leading: origin.x - max(220, 1686 - (proxy.size.width + origin.x)))
-                .frame(width: proxy.size.width, height: 560).heroExtension()
-        }
-        }
-        }
-        .ignoresSafeArea(.container, edges: .top)
-        .background(WindowOriginReader(origin: $origin))
-    }
-    private func credit(_ name: String, _ detail: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(name).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text)
-            Text(detail).font(.system(size: 12)).foregroundStyle(palette.secondary)
-        }
-        .accessibilityElement(children: .combine)
+        EmptyState(error != nil ? "Library unavailable" : tab == .demos ? "No recordings" : "No screenshots",
+                   message: error ?? (tab == .demos ? "In the game, enable the console in Options → Game Options, press ~, enter /record, then /stoprecord to finish." : "Take a screenshot using the key set in the game’s Controls. It appears here when you return."),
+                   actionTitle: "Show Folder in Finder", prominent: false, action: showFolder)
+            .padding(.vertical, 100)
     }
 }
