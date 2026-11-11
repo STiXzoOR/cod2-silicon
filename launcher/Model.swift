@@ -179,6 +179,8 @@ struct MediaEntry: Identifiable {
     /// The player chose Quit Launcher Only or Quit Both, so quitting no longer asks.
     var quitConfirmed = false
     var quitGameTask: Task<Void, Never>?
+    /// The game was already running when the launcher started: its window hides when it first appears.
+    var hideLauncherWindowOnAppear = false
     /// Why the last Launch failed, for the Game Couldn't Start sheet's fix.
     @Published var launchProblem: LaunchProblem?
 

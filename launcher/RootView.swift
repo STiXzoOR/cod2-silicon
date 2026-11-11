@@ -54,7 +54,15 @@ private struct LauncherWindowReader: NSViewRepresentable {
         var model: LauncherModel
         init(model: LauncherModel) { self.model = model; super.init(frame: .zero) }
         required init?(coder: NSCoder) { nil }
-        override func viewDidMoveToWindow() { super.viewDidMoveToWindow(); if let window { model.launcherWindow = window } }
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            guard let window else { return }
+            model.launcherWindow = window
+            if model.hideLauncherWindowOnAppear {
+                model.hideLauncherWindowOnAppear = false
+                if model.gameRunning { Task { @MainActor in window.orderOut(nil) } }
+            }
+        }
     }
 }
 

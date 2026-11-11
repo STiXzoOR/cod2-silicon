@@ -48,7 +48,10 @@ enum PlayerNameRules {
     func gameTookOver() {
         jumpPresented = false; playerCardPresented = false
         page = .home
-        if hidesLauncherWhilePlaying { NSApp.windows.forEach { $0.orderOut(nil) } }
+        guard hidesLauncherWhilePlaying else { return }
+        NSApp.windows.forEach { $0.orderOut(nil) }
+        // Reconnecting at launch: the window doesn't exist yet, so it hides when it appears.
+        if launcherWindow == nil { hideLauncherWindowOnAppear = true }
     }
     /// Home's Return to Game and the notice's button: the game in front, the launcher out of its way.
     func returnToGame() {
