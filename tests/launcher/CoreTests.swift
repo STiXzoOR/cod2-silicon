@@ -70,6 +70,8 @@ import Foundation
         try engines(server: server, scratch: scratch)
         try cod2xFiles(scratch: scratch)
         try crashReporting(scratch: scratch)
+        try appUpdate(scratch: scratch)
+        print("PASS: install update: the release's archive and SHA256SUMS from this project only, one checksum line, any size or SHA-256 mismatch refused, refusals while a game runs or where the app can't replace itself, synthetic bundles checked for identifier, version, signature and Team ID, and the swap on a copy with the old app kept until the new one is in place")
         try presentation(fixtures)
         print("PASS: crash reports: CoD2x's own (log with its pending report) never opened or sent, ours shortened, command lines dropped, a CD key refuses, one envelope to a stand-in Sentry on 127.0.0.1, nothing when off or without a receiver, never twice; CoD2x's switch reaches only a CoD2x game")
         print("PASS: CoD2x files: the archive taken from a CoD2x mss32.dll by the engine's rule (none or two refused, a stock DLL named), the release refused at any other size or hash with only the archive kept, present for CoD2x and absent for Original 1.3, the game data folder never written")
@@ -246,6 +248,114 @@ import Foundation
         try Data("crash : x\nname 0000-0000-0000-0000-86D3\n".utf8).write(to: keyed)
         precondition(run(true, false, local, [keyed]) == .notSent(.key) && standIn.requests.count == 2)
         precondition(CrashReporting.Status.sent.message == "Report sent." && CrashReporting.Status.notSent(.key).message == "Report not sent: it might contain your CD key, so it stayed on this Mac.")
+    }
+
+    /// Install Update, without the network: what is offered, the checksum and size checks, the refusals,
+    /// synthetic app bundles signed here ad hoc, and the swap on copies in a scratch folder.
+    static func appUpdate(scratch: URL) throws {
+        let fm = FileManager.default, root = scratch.appendingPathComponent("update")
+        try fm.createDirectory(at: root, withIntermediateDirectories: true)
+        func expect(_ failure: AppUpdate.Failure, _ why: String, _ work: () throws -> Void) {
+            do { try work(); preconditionFailure(why) } catch { precondition(error as? AppUpdate.Failure == failure, "\(why): \(error)") }
+        }
+        // What the update check offers: the newest non-prerelease release's archive for this Mac and its SHA256SUMS.
+        let base = "https://github.com/STiXzoOR/cod2-silicon/releases/download/v0.4.0/"
+        let feed = try ReleaseNotes.parse(Data(#"""
+            [{"tag_name":"v0.5.0-beta.1","prerelease":true,"assets":[{"name":"CoD2-Silicon-0.5.0-macos-arm64.zip","size":9,"browser_download_url":"https://github.com/x"}]},
+             {"tag_name":"v0.4.0","prerelease":false,"assets":[{"name":"CoD2-Silicon-0.4.0-macos-arm64.zip","size":123456,"browser_download_url":"\#(base)CoD2-Silicon-0.4.0-macos-arm64.zip"},
+              {"name":"SHA256SUMS","size":100,"browser_download_url":"\#(base)SHA256SUMS"}]}]
+            """#.utf8))
+        precondition(feed.latestVersion == "0.4.0" && feed.latestAssets.count == 2)
+        let offer = try requireValue(AppUpdate.offer(version: "0.4.0", assets: feed.latestAssets))
+        precondition(offer.archiveSize == 123456 && offer.archive.lastPathComponent == "CoD2-Silicon-0.4.0-macos-arm64.zip" && offer.sums.lastPathComponent == "SHA256SUMS")
+        let zipAsset = feed.latestAssets[0], sumsAsset = feed.latestAssets[1]
+        var foreign = zipAsset; foreign.url = URL(string: "https://example.com/STiXzoOR/cod2-silicon/releases/download/v0.4.0/CoD2-Silicon-0.4.0-macos-arm64.zip")!
+        var other = zipAsset; other.url = URL(string: "https://github.com/someone/else/releases/download/v0.4.0/CoD2-Silicon-0.4.0-macos-arm64.zip")!
+        var huge = zipAsset; huge.size = AppUpdate.archiveLimit + 1
+        for (assets, why) in [([zipAsset], "no SHA256SUMS"), ([sumsAsset], "no archive"), ([foreign, sumsAsset], "another host"), ([other, sumsAsset], "another project"),
+                              ([zipAsset, zipAsset, sumsAsset], "two archives"), ([huge, sumsAsset], "too large")] as [([ReleaseAsset], String)] {
+            precondition(AppUpdate.offer(version: "0.4.0", assets: assets) == nil, why)
+        }
+        precondition(AppUpdate.offer(version: "0.4", assets: feed.latestAssets) == nil && AppUpdate.offer(version: "0.4.1", assets: feed.latestAssets) == nil)
+
+        // SHA256SUMS: exactly one line for the archive, as shasum writes it.
+        let name = offer.archiveName, hex = String(repeating: "ab", count: 32)
+        let plain = try AppUpdate.checksum(Data("\(hex)  \(name)\n".utf8), name: name)
+        let binary = try AppUpdate.checksum(Data("\(String(repeating: "0", count: 64))  other.zip\r\n\(hex.uppercased()) *\(name)\r\n".utf8), name: name)
+        precondition(plain == hex && binary == hex)
+        for (text, why) in [("", "empty"), ("\(hex)  other.zip\n", "missing"), ("\(hex)  \(name)\n\(hex)  \(name)\n", "twice"), ("\(hex.dropLast())  \(name)\n", "short"),
+                            ("\(hex.dropLast())g  \(name)\n", "not hex"), ("\(hex) \(name)\n", "one space"), ("\(hex)  \(name).sig\n", "another name")] {
+            expect(.mismatch, why) { _ = try AppUpdate.checksum(Data(text.utf8), name: name) }
+        }
+        expect(.mismatch, "too large") { _ = try AppUpdate.checksum(Data(repeating: 0x20, count: AppUpdate.sumsLimit + 1), name: name) }
+
+        // The archive: the listed size and the listed SHA-256, both.
+        let archive = root.appendingPathComponent(name), bytes = Data("synthetic archive".utf8)
+        try bytes.write(to: archive)
+        let digest = CoD2xFiles.sha256(bytes)
+        try AppUpdate.verify(archive, size: bytes.count, sha256: digest.uppercased())
+        expect(.mismatch, "size") { try AppUpdate.verify(archive, size: bytes.count + 1, sha256: digest) }
+        expect(.mismatch, "hash") { try AppUpdate.verify(archive, size: bytes.count, sha256: String(digest.reversed())) }
+        expect(.mismatch, "missing") { try AppUpdate.verify(root.appendingPathComponent("none.zip"), size: 0, sha256: digest) }
+
+        // Refusals: a running game, a translocated app, a folder that can't be written.
+        let folder = root.appendingPathComponent("Applications"), app = folder.appendingPathComponent("CoD2 Silicon.app")
+        func makeApp(_ url: URL, id: String = "io.github.stixzoor.cod2silicon.test", version: String = "0.4.0", marker: String = "new") throws {
+            let macos = url.appendingPathComponent("Contents/MacOS")
+            try fm.createDirectory(at: macos, withIntermediateDirectories: true)
+            try fm.copyItem(at: URL(fileURLWithPath: "/usr/bin/true"), to: macos.appendingPathComponent("CoD2Launcher"))
+            let info: [String: Any] = ["CFBundleExecutable": "CoD2Launcher", "CFBundleIdentifier": id, "CFBundleShortVersionString": version, "CFBundlePackageType": "APPL"]
+            try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0).write(to: url.appendingPathComponent("Contents/Info.plist"))
+            try fm.createDirectory(at: url.appendingPathComponent("Contents/Resources"), withIntermediateDirectories: true)
+            try Data(marker.utf8).write(to: url.appendingPathComponent("Contents/Resources/marker"))
+            precondition(AppUpdate.run("/usr/bin/codesign", ["--force", "--sign", "-", url.path]) == 0, "ad hoc signing")
+        }
+        try makeApp(app, version: "0.3.0", marker: "old")
+        precondition(AppUpdate.refusal(app: app, gameRunning: false) == nil)
+        precondition(AppUpdate.refusal(app: app, gameRunning: true) == .gameRunning)
+        precondition(AppUpdate.refusal(app: URL(fileURLWithPath: "/private/var/folders/xy/T/AppTranslocation/1234-5678/d/CoD2 Silicon.app"), gameRunning: false) == .readOnly)
+        try fm.setAttributes([.posixPermissions: 0o555], ofItemAtPath: folder.path)
+        precondition(AppUpdate.refusal(app: app, gameRunning: false) == .notWritable)
+        try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: folder.path)
+        precondition(AppUpdate.Failure.readOnly.opensReleases && AppUpdate.Failure.notWritable.opensReleases && !AppUpdate.Failure.mismatch.opensReleases)
+
+        // The unpacked app: one app inside, this app's identifier, the offered version, a valid signature, the same Team ID.
+        let staging = root.appendingPathComponent("staging"), built = root.appendingPathComponent("built")
+        try fm.createDirectory(at: staging, withIntermediateDirectories: true)
+        try makeApp(built.appendingPathComponent("CoD2 Silicon.app"))
+        let release = staging.appendingPathComponent(name)
+        precondition(AppUpdate.run("/usr/bin/ditto", ["-c", "-k", "--keepParent", built.appendingPathComponent("CoD2 Silicon.app").path, release.path]) == 0)
+        let candidate = try AppUpdate.unpack(release, in: staging)
+        precondition(candidate.lastPathComponent == "CoD2 Silicon.app")
+        try AppUpdate.check(candidate, bundleID: "io.github.stixzoor.cod2silicon.test", version: "0.4.0", team: nil)
+        expect(.notThisApp, "another app") { try AppUpdate.check(candidate, bundleID: "io.github.someone.else", version: "0.4.0", team: nil) }
+        expect(.notThisApp, "another version") { try AppUpdate.check(candidate, bundleID: "io.github.stixzoor.cod2silicon.test", version: "0.4.1", team: nil) }
+        expect(.developer, "ad hoc, where this app has a Team ID") { try AppUpdate.check(candidate, bundleID: "io.github.stixzoor.cod2silicon.test", version: "0.4.0", team: "ABCDE12345") }
+        precondition(AppUpdate.teamIdentifier(of: candidate) == nil)
+        let tampered = root.appendingPathComponent("tampered/CoD2 Silicon.app")
+        try makeApp(tampered)
+        try Data("changed".utf8).write(to: tampered.appendingPathComponent("Contents/Resources/marker"))
+        expect(.signature, "changed after signing") { try AppUpdate.check(tampered, bundleID: "io.github.stixzoor.cod2silicon.test", version: "0.4.0", team: nil) }
+        let two = root.appendingPathComponent("two"), twoZip = root.appendingPathComponent("two.zip"), twoStaging = root.appendingPathComponent("two-staging")
+        try makeApp(two.appendingPathComponent("A.app")); try makeApp(two.appendingPathComponent("B.app"))
+        try fm.createDirectory(at: twoStaging, withIntermediateDirectories: true)
+        precondition(AppUpdate.run("/usr/bin/ditto", ["-c", "-k", two.path, twoZip.path]) == 0)
+        expect(.notThisApp, "two apps") { _ = try AppUpdate.unpack(twoZip, in: twoStaging) }
+        try Data("not a zip".utf8).write(to: twoZip)
+        expect(.mismatch, "not an archive") { _ = try AppUpdate.unpack(twoZip, in: root.appendingPathComponent("bad-staging")) }
+
+        // The swap, on copies: the new app takes the old one's place and the old one is kept whole until then.
+        var discarded: [URL] = []
+        try AppUpdate.swap(app, with: candidate) { old in
+            precondition((try? String(contentsOf: app.appendingPathComponent("Contents/Resources/marker"), encoding: .utf8)) == "new", "the new app is in place first")
+            precondition((try? String(contentsOf: old.appendingPathComponent("Contents/Resources/marker"), encoding: .utf8)) == "old")
+            discarded.append(old)
+        }
+        precondition(discarded.count == 1 && AppUpdate.run("/usr/bin/codesign", ["--verify", "--deep", "--strict", app.path]) == 0)
+        try AppUpdate.check(app, bundleID: "io.github.stixzoor.cod2silicon.test", version: "0.4.0", team: nil)
+        expect(.install, "nothing to put in place") { try AppUpdate.swap(app, with: staging.appendingPathComponent("missing.app")) { _ in preconditionFailure("discarded") } }
+        precondition((try? String(contentsOf: app.appendingPathComponent("Contents/Resources/marker"), encoding: .utf8)) == "new", "a failed swap leaves the app as it was")
+        precondition(AppUpdate.message(AppUpdate.Failure.mismatch) == "The download didn’t match the release, so it wasn’t installed.")
     }
 
     /// Settings › Game › CoD2x files, on synthetic DLLs and releases (no network): CoD2x's archive found by the

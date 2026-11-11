@@ -130,7 +130,14 @@ use Network.framework with a maximum of six concurrent endpoints, 40 ms between
 starts, status/info timeouts, cancellation, bounded parsers and a persistent
 last-successful cache. Refresh is explicit; opening the app doesn't scan the
 internet. Checking for updates is an explicit HTTPS request to GitHub Releases;
-it refreshes Home's Dispatches and only notifies.
+it refreshes Home's Dispatches. When a newer release carries
+`CoD2-Silicon-<version>-macos-arm64.zip` and `SHA256SUMS`, Install Update (only on the player's
+click) downloads both into a folder on the app's volume, refuses any size or SHA-256 mismatch,
+unpacks with `ditto` and checks the app inside (bundle identifier, offered version,
+`codesign --verify --deep --strict`, and the running app's Team ID when it has one), swaps it into
+the app's place, moves the old app to the Trash and restarts (`AppUpdate` in `Core.swift`). It
+refuses while a game runs, and where the app can't replace itself (a read-only or translocated
+location, or a folder it can't write) it opens the Releases page as before.
 
 Crash reports leave the Mac only with Settings › Privacy switches the player turned on. A fault in
 CoD2x's own code leaves `<log>.pending.json` beside CoD2x's log; with "Send CoD2x crash reports to

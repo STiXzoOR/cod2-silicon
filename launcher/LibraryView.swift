@@ -153,11 +153,16 @@ struct AboutView: View {
                         PanelHeading(title: "Updates", action: nil, perform: nil)
                         Text(model.updateMessage).font(.system(size: 13)).foregroundStyle(palette.body).padding(.top, 12).fixedSize(horizontal: false, vertical: true)
                         HStack(spacing: 10) {
-                            Button(model.checkingUpdates ? "Checking…" : "Check for Updates", action: model.checkUpdates).glassAction().disabled(model.checkingUpdates)
+                            if model.updateOffer != nil {
+                                Button("Install Update", action: model.installUpdate).glassAction().disabled(model.installingUpdate)
+                            } else {
+                                Button(model.checkingUpdates ? "Checking…" : "Check for Updates", action: model.checkUpdates).glassAction().disabled(model.checkingUpdates)
+                            }
+                            if model.installingUpdate { ProgressView().controlSize(.small).accessibilityLabel(model.updateMessage) }
                             if let url = model.releaseURL { Link("View release", destination: url).foregroundStyle(palette.link).font(.system(size: 13)) }
                         }
                         .padding(.top, 14)
-                        Text("Notification only. Nothing is downloaded or installed for you.").font(.system(size: 12)).foregroundStyle(palette.tertiary).padding(.top, 12)
+                        Text("Nothing is downloaded or installed until you choose Install Update.").font(.system(size: 12)).foregroundStyle(palette.tertiary).padding(.top, 12)
                         Spacer(minLength: 0)
                     }
                     ContentPanel {
@@ -201,7 +206,7 @@ struct AboutView: View {
         .ignoresSafeArea(.container, edges: .top)
         .background(WindowOriginReader(origin: $origin))
         .trailingToolbar {
-            Button(action: model.checkUpdates) { Label("Check for updates", systemImage: "arrow.down.to.line") }.disabled(model.checkingUpdates)
+            Button(action: model.checkUpdates) { Label("Check for updates", systemImage: "arrow.down.to.line") }.disabled(model.checkingUpdates || model.installingUpdate)
         }
     }
     private func credit(_ name: String, _ detail: String) -> some View {

@@ -1,6 +1,7 @@
 import Foundation
 import Darwin
 import CryptoKit
+import Security
 
 struct LauncherError: LocalizedError, Sendable {
     var message: String
@@ -310,6 +311,184 @@ enum CrashReports {
                     || (["cod2x_crash.", "cod2x_freeze."].contains(where: name.hasPrefix) && url.pathExtension == "log")) && modified(url) >= since
             }
         return all.sorted { (modified($0), $0.lastPathComponent) < (modified($1), $1.lastPathComponent) }
+    }
+}
+
+/// Install Update: the release the update check offered, installed only when the player clicks. The
+/// archive and SHA256SUMS come from this project's GitHub release; the archive must match both its listed
+/// size and its line in SHA256SUMS. It is unpacked beside the app (same volume), and the app inside must
+/// be this app (bundle identifier), the offered version, pass `codesign --verify --deep --strict`, and,
+/// when this app is signed with a Team ID, carry the same one. Then it takes the app's place in one
+/// swap, the old app goes to the Trash, and the launcher starts again.
+enum AppUpdate {
+    static let releases = URL(string: "https://github.com/STiXzoOR/cod2-silicon/releases")!
+    static let downloads = "https://github.com/STiXzoOR/cod2-silicon/releases/download/"
+    static let archiveLimit = 1 << 30
+    static let sumsLimit = 64 * 1024
+
+    struct Offer: Equatable, Sendable {
+        let version: String
+        let archive: URL
+        let archiveSize: Int
+        let sums: URL
+        var archiveName: String { AppUpdate.archiveName(version) }
+    }
+    static func archiveName(_ version: String) -> String { "CoD2-Silicon-\(version)-macos-arm64.zip" }
+    /// The release's archive for this Mac and its SHA256SUMS, each listed once and served from this project's releases.
+    static func offer(version: String, assets: [ReleaseAsset]) -> Offer? {
+        guard version.range(of: "\\A[0-9]+\\.[0-9]+\\.[0-9]+\\z", options: .regularExpression) != nil else { return nil }
+        func asset(_ name: String) -> ReleaseAsset? {
+            let found = assets.filter { $0.name == name }
+            guard found.count == 1, let one = found.first, one.url.scheme == "https", one.url.host == "github.com",
+                  one.url.absoluteString.hasPrefix(downloads) else { return nil }
+            return one
+        }
+        guard let archive = asset(archiveName(version)), (1...archiveLimit).contains(archive.size), let sums = asset("SHA256SUMS") else { return nil }
+        return Offer(version: version, archive: archive.url, archiveSize: archive.size, sums: sums.url)
+    }
+
+    enum Failure: LocalizedError, Equatable {
+        case gameRunning, notWritable, readOnly, download, mismatch, notThisApp, signature, developer, install
+        var errorDescription: String? {
+            switch self {
+            case .gameRunning: "Quit the game before installing the update."
+            case .notWritable: "CoD2 Silicon can’t replace itself in this folder, so the Releases page opened instead."
+            case .readOnly: "CoD2 Silicon can’t replace itself where it’s running from, so the Releases page opened instead. Move the app to your Applications folder to update it here next time."
+            case .download: "Couldn’t download the update. Check your connection and try again."
+            case .mismatch: "The download didn’t match the release, so it wasn’t installed."
+            case .notThisApp: "The download isn’t this app’s update, so it wasn’t installed."
+            case .signature: "The update’s signature isn’t valid, so it wasn’t installed."
+            case .developer: "The update isn’t signed by this app’s developer, so it wasn’t installed."
+            case .install: "Couldn’t install the update. This version is unchanged."
+            }
+        }
+        /// Where the app can't replace itself, the Releases page is the way to update, as before.
+        var opensReleases: Bool { self == .notWritable || self == .readOnly }
+    }
+    static func message(_ error: Error) -> String { ((error as? Failure) ?? .install).errorDescription ?? "" }
+    enum Message {
+        static func downloading(_ version: String) -> String { "Downloading version \(version)…" }
+        static let checking = "Checking the update…"
+        static func installing(_ version: String) -> String { "Installing version \(version)…" }
+        static let restarting = "Restarting CoD2 Silicon…"
+    }
+
+    /// Why the app at `app` can't replace itself now, if it can't: a game is running, it runs from a
+    /// read-only volume or where macOS moved it (App Translocation), or its folder isn't writable.
+    static func refusal(app: URL, gameRunning: Bool) -> Failure? {
+        if gameRunning { return .gameRunning }
+        if app.resolvingSymlinksInPath().path.contains("/AppTranslocation/") { return .readOnly }
+        if (try? app.resourceValues(forKeys: [.volumeIsReadOnlyKey]).volumeIsReadOnly) == true { return .readOnly }
+        if access(app.deletingLastPathComponent().path, W_OK) != 0 || access(app.path, W_OK) != 0 { return .notWritable }
+        return nil
+    }
+
+    /// The archive's line in SHA256SUMS as `shasum -a 256` writes it (`<hex>  <name>`, or ` *<name>`): exactly one.
+    static func checksum(_ sums: Data, name: String) throws -> String {
+        guard sums.count <= sumsLimit, let text = String(data: sums, encoding: .utf8) else { throw Failure.mismatch }
+        var found: [String] = []
+        for raw in text.components(separatedBy: "\n") {
+            let line = Array(raw.hasSuffix("\r") ? String(raw.dropLast()) : raw)
+            guard line.count > 66, line[64] == " ", line[65] == " " || line[65] == "*" else { continue }
+            let hex = String(line[0..<64])
+            guard hex.unicodeScalars.allSatisfy({ CharacterSet(charactersIn: "0123456789abcdefABCDEF").contains($0) }) else { continue }
+            if String(line[66...]) == name { found.append(hex.lowercased()) }
+        }
+        guard found.count == 1 else { throw Failure.mismatch }
+        return found[0]
+    }
+    /// The archive matches the release: the size GitHub lists and its SHA-256 in SHA256SUMS.
+    static func verify(_ file: URL, size: Int, sha256: String) throws {
+        guard let values = try? file.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]), values.isRegularFile == true, values.fileSize == size,
+              let handle = try? FileHandle(forReadingFrom: file) else { throw Failure.mismatch }
+        defer { try? handle.close() }
+        var hasher = SHA256()
+        while let chunk = try? handle.read(upToCount: 1 << 20), !chunk.isEmpty { hasher.update(data: chunk) }
+        guard hasher.finalize().map({ String(format: "%02x", $0) }).joined() == sha256.lowercased() else { throw Failure.mismatch }
+    }
+
+    /// Downloads SHA256SUMS and the archive into a new folder on the same volume as `app`, in a private
+    /// session with a generic User-Agent. Returns the folder (the caller removes it), the archive and its expected SHA-256.
+    static func download(_ offer: Offer, beside app: URL) async throws -> (folder: URL, archive: URL, sha256: String) {
+        let folder: URL
+        do { folder = try FileManager.default.url(for: .itemReplacementDirectory, in: .userDomainMask, appropriateFor: app, create: true) }
+        catch { throw Failure.install }
+        let session = URLSession(configuration: .ephemeral)
+        defer { session.finishTasksAndInvalidate() }
+        func get(_ url: URL, limit: Int) async throws -> URL {
+            var request = URLRequest(url: url)
+            request.timeoutInterval = 60
+            request.setValue("CoD2-Silicon-Launcher", forHTTPHeaderField: "User-Agent")
+            let result: (URL, URLResponse)
+            do { result = try await session.download(for: request) } catch { throw Failure.download }
+            let target = folder.appendingPathComponent(UUID().uuidString)
+            do { try FileManager.default.moveItem(at: result.0, to: target) } catch { throw Failure.download }
+            guard (result.1 as? HTTPURLResponse)?.statusCode == 200 else { throw Failure.download }
+            guard let size = try? target.resourceValues(forKeys: [.fileSizeKey]).fileSize, size <= limit else { throw Failure.mismatch }
+            return target
+        }
+        do {
+            let sums = try await get(offer.sums, limit: sumsLimit)
+            let expected = try checksum(try Data(contentsOf: sums), name: offer.archiveName)
+            let archive = folder.appendingPathComponent(offer.archiveName)
+            try FileManager.default.moveItem(at: try await get(offer.archive, limit: offer.archiveSize), to: archive)
+            return (folder, archive, expected)
+        } catch {
+            try? FileManager.default.removeItem(at: folder)
+            throw error as? Failure ?? Failure.download
+        }
+    }
+    /// Unpacks the archive with ditto, which keeps the signature, into `folder`; it must hold one app.
+    static func unpack(_ archive: URL, in folder: URL) throws -> URL {
+        let target = folder.appendingPathComponent("unpacked")
+        guard run("/usr/bin/ditto", ["-x", "-k", archive.path, target.path]) == 0 else { throw Failure.mismatch }
+        let items = ((try? FileManager.default.contentsOfDirectory(at: target, includingPropertiesForKeys: nil)) ?? []).filter { $0.lastPathComponent != "__MACOSX" }
+        guard items.count == 1, let app = items.first, app.pathExtension == "app",
+              let values = try? app.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey]), values.isDirectory == true, values.isSymbolicLink != true
+        else { throw Failure.notThisApp }
+        return app
+    }
+    /// The unpacked app is this app's update: same bundle identifier, the offered version, a valid signature,
+    /// and this app's Team ID when it has one.
+    static func check(_ candidate: URL, bundleID: String, version: String, team: String?) throws {
+        guard let data = try? Data(contentsOf: candidate.appendingPathComponent("Contents/Info.plist")),
+              let info = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
+              !bundleID.isEmpty, info["CFBundleIdentifier"] as? String == bundleID, info["CFBundleShortVersionString"] as? String == version
+        else { throw Failure.notThisApp }
+        guard run("/usr/bin/codesign", ["--verify", "--deep", "--strict", candidate.path]) == 0 else { throw Failure.signature }
+        if let team, teamIdentifier(of: candidate) != team { throw Failure.developer }
+    }
+    /// The Team ID an app is signed with; nil when ad hoc or unsigned.
+    static func teamIdentifier(of app: URL) -> String? {
+        var code: SecStaticCode?
+        guard SecStaticCodeCreateWithPath(app as CFURL, [], &code) == errSecSuccess, let code else { return nil }
+        var information: CFDictionary?
+        guard SecCodeCopySigningInformation(code, SecCSFlags(rawValue: kSecCSSigningInformation), &information) == errSecSuccess,
+              let values = information as? [String: Any] else { return nil }
+        return values[kSecCodeInfoTeamIdentifier as String] as? String
+    }
+    /// Puts `candidate` where `app` is in one atomic swap (two renames where the volume can't swap). The old
+    /// app stays whole until the new one is in place, then goes to the Trash (`discard`). On failure the old
+    /// app is where it was.
+    static func swap(_ app: URL, with candidate: URL,
+                     discard: (URL) throws -> Void = { try FileManager.default.trashItem(at: $0, resultingItemURL: nil) }) throws {
+        guard FileManager.default.fileExists(atPath: app.path), FileManager.default.fileExists(atPath: candidate.path) else { throw Failure.install }
+        if renamex_np(candidate.path, app.path, UInt32(RENAME_SWAP)) == 0 {
+            try? discard(candidate)  // where the old app now is
+            return
+        }
+        let aside = candidate.deletingLastPathComponent().appendingPathComponent("previous-" + app.lastPathComponent)
+        guard rename(app.path, aside.path) == 0 else { throw Failure.install }
+        guard rename(candidate.path, app.path) == 0 else { _ = rename(aside.path, app.path); throw Failure.install }
+        try? discard(aside)
+    }
+    @discardableResult static func run(_ tool: String, _ arguments: [String]) -> Int32 {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: tool); process.arguments = arguments
+        process.standardOutput = FileHandle.nullDevice; process.standardError = FileHandle.nullDevice
+        do { try process.run() } catch { return -1 }
+        process.waitUntilExit()
+        return process.terminationStatus
     }
 }
 

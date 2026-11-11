@@ -207,12 +207,23 @@ struct SettingsView: View {
         SettingsGroup {
             SettingsRow("CoD2 Silicon \(model.version)", detail: model.updateMessage,
                         minHeight: ControlMetrics.height(.regular) + 2 * SettingsMetrics.radius + 1) {
-                HStack(spacing: 10) {
-                    if let url = model.releaseURL { Link("View Release", destination: url).font(.system(size: 13)).foregroundStyle(palette.link) }
-                    Button(model.checkingUpdates ? "Checking…" : "Check Now", action: model.checkUpdates).glassAction().disabled(model.checkingUpdates)
-                }
+                // A narrow window keeps the button whole and drops the link; the Releases page also opens when installing here can't.
+                ViewThatFits(in: .horizontal) { updateControls(link: true); updateControls(link: false) }
             }
         }
+    }
+    private func updateControls(link: Bool) -> some View {
+        HStack(spacing: 10) {
+            if model.installingUpdate { ProgressView().controlSize(.small).accessibilityLabel(model.updateMessage) }
+            if link, let url = model.releaseURL { Link("View Release", destination: url).font(.system(size: 13)).foregroundStyle(palette.link) }
+            if model.updateOffer != nil {
+                Button("Install Update", action: model.installUpdate).glassAction().disabled(model.installingUpdate)
+                    .help("Download this version, check it and replace the app. CoD2 Silicon restarts.")
+            } else {
+                Button(model.checkingUpdates ? "Checking…" : "Check Now", action: model.checkUpdates).glassAction().disabled(model.checkingUpdates)
+            }
+        }
+        .fixedSize()
     }
 
     private var advancedGroup: some View {

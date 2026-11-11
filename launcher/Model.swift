@@ -86,6 +86,9 @@ struct MediaEntry: Identifiable {
     @Published var updateMessage = "Check for the latest release when you're ready."
     @Published var checkingUpdates = false
     @Published var releaseURL: URL?
+    /// The newer release Install Update installs, when it carries this Mac's archive and SHA256SUMS.
+    @Published var updateOffer: AppUpdate.Offer?
+    @Published var installingUpdate = false
     @Published var media: [MediaEntry] = []
     @Published var libraryTab: LibraryTab = .demos
     @Published var playerName = PlayerProfile.unnamed
@@ -836,9 +839,9 @@ struct MediaEntry: Identifiable {
     }
     func openMediaFolder() { NSWorkspace.shared.open(home.appendingPathComponent(libraryTab == .demos ? "main/demos" : "main/screenshots")) }
     func openHomeFolder() { NSWorkspace.shared.open(home) }
-    /// Explicit HTTPS request to GitHub Releases. Notify only: nothing is downloaded or installed.
+    /// Explicit HTTPS request to GitHub Releases. Nothing is downloaded or installed until Install Update.
     func checkUpdates() {
-        guard !snapshot, !checkingUpdates else { return }
+        guard !snapshot, !checkingUpdates, !installingUpdate else { return }
         checkingUpdates = true; updateMessage = "Checking GitHub Releases…"
         Task {
             defer { checkingUpdates = false }
@@ -854,9 +857,58 @@ struct MediaEntry: Identifiable {
                 if let latest = feed.latestVersion, ReleaseNotes.isNewer(latest, than: version) {
                     updateMessage = "Version \(latest) is available. Download it when you're ready."
                     releaseURL = URL(string: "https://github.com/STiXzoOR/cod2-silicon/releases")
-                } else { updateMessage = "You're up to date · \(version)"; releaseURL = nil }
+                    updateOffer = AppUpdate.offer(version: latest, assets: feed.latestAssets)
+                } else { updateMessage = "You're up to date · \(version)"; releaseURL = nil; updateOffer = nil }
             } catch { updateMessage = error.localizedDescription }
         }
+    }
+
+    /// Install Update: only on the player's click; refused while a game runs or where the app can't replace
+    /// itself (then the Releases page opens, as before). Progress and errors replace the update message.
+    func installUpdate() {
+        guard !snapshot, !installingUpdate, !checkingUpdates, let offer = updateOffer else { return }
+        let app = Bundle.main.bundleURL, bundleID = Bundle.main.bundleIdentifier ?? ""
+        if let refusal = AppUpdate.refusal(app: app, gameRunning: gameRunning) { updateFailed(refusal); return }
+        installingUpdate = true; updateMessage = AppUpdate.Message.downloading(offer.version)
+        Task {
+            var folder: URL?
+            do {
+                let staged = try await AppUpdate.download(offer, beside: app)
+                folder = staged.folder
+                updateMessage = AppUpdate.Message.checking
+                let candidate = try await Task.detached {
+                    try AppUpdate.verify(staged.archive, size: offer.archiveSize, sha256: staged.sha256)
+                    let unpacked = try AppUpdate.unpack(staged.archive, in: staged.folder)
+                    try AppUpdate.check(unpacked, bundleID: bundleID, version: offer.version, team: AppUpdate.teamIdentifier(of: app))
+                    return unpacked
+                }.value
+                if let refusal = AppUpdate.refusal(app: app, gameRunning: gameRunning) { throw refusal }
+                updateMessage = AppUpdate.Message.installing(offer.version)
+                try AppUpdate.swap(app, with: candidate)
+                try? FileManager.default.removeItem(at: staged.folder)
+                updateMessage = AppUpdate.Message.restarting
+                relaunch(app)
+            } catch {
+                if let folder { try? FileManager.default.removeItem(at: folder) }
+                installingUpdate = false
+                updateFailed(error)
+            }
+        }
+    }
+    private func updateFailed(_ error: Error) {
+        updateMessage = AppUpdate.message(error)
+        if (error as? AppUpdate.Failure)?.opensReleases == true { NSWorkspace.shared.open(AppUpdate.releases) }
+    }
+    /// Starts the new app once this one has quit.
+    private func relaunch(_ app: URL) {
+        let helper = Process()
+        helper.executableURL = URL(fileURLWithPath: "/bin/sh")
+        helper.arguments = ["-c", "while /bin/kill -0 \"$1\" 2>/dev/null; do /bin/sleep 0.2; done; /usr/bin/open \"$2\"",
+                            "cod2-silicon-update", String(getpid()), app.path]
+        do { try helper.run() } catch {
+            installingUpdate = false; updateMessage = "Version \(updateOffer?.version ?? "") is installed. Quit and open CoD2 Silicon to use it."; return
+        }
+        NSApp.terminate(nil)
     }
 
     // MARK: Preview data for the review harness (documentation-range addresses, invented names)
@@ -909,6 +961,13 @@ struct MediaEntry: Identifiable {
         case "settings-cod2x-installed": page = .settings; cod2xFilesInstalled = true; cod2xFilesMessage = CoD2xFiles.Message.installed
         case "settings-cod2x-downloading": page = .settings; cod2xFilesBusy = true; cod2xFilesMessage = CoD2xFiles.Message.downloading
         case "settings-cod2x-error": page = .settings; cod2xFilesMessage = CoD2xFiles.message(CoD2xFiles.Failure.noCoD2x)
+        case "settings-update", "about-update", "settings-update-installing", "settings-update-error":
+            page = screen.hasPrefix("about") ? .about : .settings
+            releaseURL = AppUpdate.releases
+            updateOffer = AppUpdate.Offer(version: "0.4.0", archive: AppUpdate.releases, archiveSize: 1, sums: AppUpdate.releases)
+            updateMessage = "Version 0.4.0 is available. Download it when you're ready."
+            if screen == "settings-update-installing" { installingUpdate = true; updateMessage = AppUpdate.Message.downloading("0.4.0") }
+            if screen == "settings-update-error" { updateMessage = AppUpdate.message(AppUpdate.Failure.mismatch) }
         case "settings-reports": page = .settings; settings.sendCrashReports = true; settings.sendCoD2xReports = true; savedSettings = settings
         case "home-crash-sent":
             crashReport = home.appendingPathComponent("cod2_crash_4242.txt")
