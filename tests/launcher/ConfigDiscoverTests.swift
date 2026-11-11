@@ -428,7 +428,7 @@ import Darwin
     }
 
     /// A real loopback UDP peer holds Check Again pending, answers, then times out.
-    /// This checks the same selected server that the list and Deploy read.
+    /// This checks the same selected server that the list and Launch read.
     @MainActor static func serverRefresh(_ homes: inout [URL]) async throws {
         let socketFD = socket(AF_INET, SOCK_DGRAM, 0)
         require(socketFD >= 0, "create loopback peer")
@@ -463,7 +463,7 @@ import Darwin
         require(!overrides.isEmpty, "the selected server has a staged fix")
         func preserved() {
             require(model.selectedServer == address && model.selected?.address == address,
-                    "Check Again changed the effective selected server and Deploy target")
+                    "Check Again changed the effective selected server and Launch target")
             require(model.servers.map(\.address) == [other.address, address], "Check Again reordered or removed a server")
             require(model.serverConnection.address == address && model.serverConnection.overrides == overrides,
                     "Check Again changed the staged connection fix")
@@ -540,7 +540,7 @@ import Darwin
         require(model.serverConnection.profileID == "Scrim" && model.serverConnection.overrides.isEmpty && check.report?.profileID == "Scrim",
                 "another loadout for this connection, reviewed in place")
         let afterChoice = try snapshot()
-        require(afterChoice == before && ReadyCheckCard.deployTitle(model, competitive) == "Deploy with Scrim", "choosing it changes nothing on disk")
+        require(afterChoice == before && ReadyCheckCard.launchTitle(model, competitive) == "Launch with Scrim", "choosing it changes nothing on disk")
         check.undo(model, address: competitive.address)
         require(model.serverConnection.profileID == nil && model.serverConnection.overrides.isEmpty, "Undo returns to the active loadout")
 

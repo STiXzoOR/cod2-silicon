@@ -93,8 +93,8 @@ struct LauncherCommands: Commands {
             Button("Settings…") { show(.settings) }.keyboardShortcut(",", modifiers: .command).disabled(!model.canNavigate)
         }
         CommandGroup(replacing: .newItem) {
-            Button("Deploy") { show(.deploy); model.deploy() }.keyboardShortcut(.return, modifiers: .command).disabled(!model.canNavigate)
-            Button("Open Game Menu") { show(.deploy); model.play() }.keyboardShortcut(.return, modifiers: [.command, .shift]).disabled(!model.canNavigate)
+            Button("Launch") { show(.home); model.launch() }.keyboardShortcut(.return, modifiers: .command).disabled(!model.canNavigate)
+            Button("Open Game Menu") { show(.home); model.play() }.keyboardShortcut(.return, modifiers: [.command, .shift]).disabled(!model.canNavigate)
             Divider()
             Button("Import a Config…") { show(.configs); discover.chooseFile() }
                 .keyboardShortcut("o", modifiers: .command).disabled(!model.canImport)
@@ -114,7 +114,7 @@ struct LauncherCommands: Commands {
             .disabled(!model.canNavigate || model.launcherWindow?.isVisible != true)
         }
         CommandGroup(before: .sidebar) {
-            Toggle("Deploy", isOn: selection(.deploy)).keyboardShortcut("1", modifiers: .command).disabled(!model.canNavigate)
+            Toggle("Home", isOn: selection(.home)).keyboardShortcut("1", modifiers: .command).disabled(!model.canNavigate)
             Toggle("Servers", isOn: selection(.servers)).keyboardShortcut("2", modifiers: .command).disabled(!model.canNavigate)
             Toggle("Library", isOn: selection(.library)).keyboardShortcut("3", modifiers: .command).disabled(!model.canNavigate)
             Toggle("Configs", isOn: selection(.configs)).keyboardShortcut("4", modifiers: .command).disabled(!model.canNavigate)

@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// The ready check above Deploy in the server inspector: does the loadout this game would use
+/// The ready check above Launch in the server inspector: does the loadout this game would use
 /// suit this server, which loadout to use for this connection, and a fix that lasts for this
 /// connection only. Unknown rules get general advice, never an all-clear.
 struct ReadyCheckCard: View {
@@ -55,11 +55,11 @@ struct ReadyCheckCard: View {
         .accessibilityLabel("Ready check")
     }
 
-    /// “Deploy with Scrim” when this connection uses another loadout.
-    @MainActor static func deployTitle(_ model: LauncherModel, _ server: GameServer) -> String {
+    /// “Launch with Scrim” when this connection uses another loadout.
+    @MainActor static func launchTitle(_ model: LauncherModel, _ server: GameServer) -> String {
         guard owns(model.serverConnection, server.address), let id = model.serverConnection.profileID,
-              let profile = model.studio.profiles.first(where: { $0.id == id }) else { return "Deploy" }
-        return "Deploy with \(profile.displayName)"
+              let profile = model.studio.profiles.first(where: { $0.id == id }) else { return "Launch" }
+        return "Launch with \(profile.displayName)"
     }
     @MainActor private static func owns(_ connection: ConfigServerConnection, _ address: String) -> Bool {
         guard let mine = connection.address else { return false }

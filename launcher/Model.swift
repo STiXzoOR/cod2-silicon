@@ -2,18 +2,18 @@ import AppKit
 import SwiftUI
 
 enum LauncherPage: String, CaseIterable, Identifiable, Hashable {
-    case deploy, servers, library, configs, settings, about
+    case home, servers, library, configs, settings, about
     var id: String { rawValue }
     var title: String {
-        switch self { case .deploy: "Deploy"; case .servers: "Servers"; case .library: "Library"; case .configs: "Configs"; case .settings: "Settings"; case .about: "About" }
+        switch self { case .home: "Home"; case .servers: "Servers"; case .library: "Library"; case .configs: "Configs"; case .settings: "Settings"; case .about: "About" }
     }
     var symbol: String {
         switch self {
-        case .deploy: "play.fill"; case .servers: "dot.radiowaves.left.and.right"; case .library: "film"
+        case .home: "house"; case .servers: "dot.radiowaves.left.and.right"; case .library: "film"
         case .configs: "square.stack"; case .settings: "slider.horizontal.3"; case .about: "info.circle"
         }
     }
-    static let navigation: [LauncherPage] = [.deploy, .servers, .library, .configs, .settings]
+    static let navigation: [LauncherPage] = [.home, .servers, .library, .configs, .settings]
 }
 
 enum ServerFilter: String, CaseIterable, Identifiable { case all = "All", stock = "Stock 1.3", codx = "CoD2x 1.4"; var id: String { rawValue } }
@@ -32,7 +32,7 @@ struct MediaEntry: Identifiable {
 }
 
 @MainActor final class LauncherModel: ObservableObject {
-    @Published var page: LauncherPage = .deploy
+    @Published var page: LauncherPage = .home
     @Published var sidebarVisibility = NavigationSplitViewVisibility.all
     @Published var onboard = true
     static let shaderTotal = 834
@@ -459,7 +459,7 @@ struct MediaEntry: Identifiable {
         do {
             if !snapshot { try PrivateFile.write(Data("prepared\n".utf8), to: home.appendingPathComponent(".launcher-setup-complete")) }
             onboard = false; setupReturnPage = nil
-            navigate(to: findServer ? .servers : .deploy)
+            navigate(to: findServer ? .servers : .home)
             loadArtwork()
             if !findServer && hasPendingLaunch { play() }
         } catch { setupError = "Couldn’t save setup. Try again. " + error.localizedDescription }
@@ -776,8 +776,8 @@ struct MediaEntry: Identifiable {
             else { notice = error.localizedDescription }
         }
     }
-    /// Home's Deploy: rejoin the last server, or open the game's menu when there is none.
-    func deploy() {
+    /// Home's Launch: rejoin the last server, or open the game's menu when there is none.
+    func launch() {
         guard !onboard else { return }
         if let address = library.recent.first, !snapshot {
             do { try serverConnection.select(address: address); pendingLink = try LaunchLink.direct(address); play() } catch { notice = error.localizedDescription }
@@ -1122,7 +1122,7 @@ struct MediaEntry: Identifiable {
     /// Explicit HTTPS request to GitHub Releases. Nothing is downloaded or installed until Install Update.
     func checkUpdates() {
         guard !snapshot, !checkingUpdates, !installingUpdate else { return }
-        if ![.deploy, .settings, .about].contains(page) { page = .about }
+        if ![.home, .settings, .about].contains(page) { page = .about }
         updateWasChecked = true; updateError = false
         checkingUpdates = true; updateMessage = "Checking GitHub Releases…"
         studio.announce(updateMessage)
@@ -1245,8 +1245,8 @@ struct MediaEntry: Identifiable {
         case "setup-summary-link": onboard = true; step = 3; pendingLink = try? LaunchLink.direct("192.0.2.10:28960")
         case "setup-cancelable": navigate(to: .settings); restartSetup()
         case "setup-folder-error": onboard = true; step = 0; dataPath = ""; attemptedDataPath = "/Users/Player/Downloads/Call of Duty 2"; dataError = "This folder is incomplete. Choose the Call of Duty 2 folder with all 16 game archives in its main folder, from iw_00.iwd through iw_15.iwd."
-        case "home-notice": page = .deploy; notice = "Couldn’t open the game. Your files are safe. Choose your Call of Duty 2 folder again in Settings, then try Deploy. If the folder is on an external drive, connect the drive first. You can select and copy this message, or dismiss it when you’re ready."
-        case "home-game-running": page = .deploy; gameRunning = true; notice = "Call of Duty 2 is still running. Quit the game first, then quit CoD2 Silicon."
+        case "home-notice": page = .home; notice = "Couldn’t open the game. Your files are safe. Choose your Call of Duty 2 folder again in Settings, then try Launch. If the folder is on an external drive, connect the drive first. You can select and copy this message, or dismiss it when you’re ready."
+        case "home-game-running": page = .home; gameRunning = true; notice = "Call of Duty 2 is still running. Quit the game first, then quit CoD2 Silicon."
         case "servers": page = .servers
         case "servers-empty": page = .servers; search = "zzz"
         case "servers-no-cache": page = .servers; servers = []; library.cache = []; library.cachedAt = nil; selectedServer = nil
@@ -1281,7 +1281,7 @@ struct MediaEntry: Identifiable {
         case "settings-cod2x-downloading": page = .settings; cod2xFilesBusy = true; cod2xFilesMessage = CoD2xFiles.Message.downloading
         case "settings-cod2x-error": page = .settings; cod2xFilesMessage = CoD2xFiles.message(CoD2xFiles.Failure.noCoD2x)
         case "home-update", "settings-update", "about-update", "settings-update-installing", "settings-update-error":
-            page = screen.hasPrefix("home") ? .deploy : screen.hasPrefix("about") ? .about : .settings
+            page = screen.hasPrefix("home") ? .home : screen.hasPrefix("about") ? .about : .settings
             releaseURL = AppUpdate.releases
             updateOffer = AppUpdate.Offer(version: "0.4.0", archive: AppUpdate.releases, archiveSize: 1, sums: AppUpdate.releases)
             updateMessage = "Version 0.4.0 is available. Download it when you're ready."
@@ -1317,7 +1317,7 @@ struct MediaEntry: Identifiable {
         case "servers-ready", "servers-ready-fixed": page = .servers
         case "configs-binds-list", "configs-binds-visual", "configs-binds-advanced": page = .configs; studio.tab = .binds
         case "configs-checkup": page = .configs; studio.tab = .checkup
-        default: page = .deploy
+        default: page = .home
         }
     }
 }

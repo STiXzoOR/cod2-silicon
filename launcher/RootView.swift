@@ -64,7 +64,7 @@ struct LauncherSplitView: View {
         } detail: {
             Group {
                 switch model.page {
-                case .deploy: HomeView(model: model)
+                case .home: HomeView(model: model)
                 case .servers: ServersView(model: model)
                 case .library: LibraryView(model: model)
                 case .configs: ConfigsView(model: model)
@@ -111,7 +111,7 @@ struct Sidebar: View {
                         .buttonStyle(.plain)
                         .accessibilityLabel("Favorite server \(QuakeColors.plain(server.name))")
                         .contextMenu {
-                            Button("Deploy") { model.connect(server) }.disabled(!model.canNavigate)
+                            Button("Launch") { model.connect(server) }.disabled(!model.canNavigate)
                             Button("Show in Server List") { model.showServer(server.address) }
                             Divider()
                             Button("Remove from Favorites") { model.favorite(server.address) }

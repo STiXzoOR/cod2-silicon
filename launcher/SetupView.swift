@@ -206,7 +206,7 @@ struct SetupView: View {
     }
     private var summaryStep: some View {
         VStack(alignment: .leading, spacing: 16) {
-            heading("Ready for deployment", detail: model.approximate ? "You can play now with simpler lighting, or add the original shaders below." : "Your game is ready. Choose what you’d like to do next.", symbol: model.approximate ? "exclamationmark.triangle" : "checkmark.circle")
+            heading("Ready to play", detail: model.approximate ? "You can play now with simpler lighting, or add the original shaders below." : "Your game is ready. Choose what you’d like to do next.", symbol: model.approximate ? "exclamationmark.triangle" : "checkmark.circle")
             VStack(spacing: 0) {
                 summaryRow("Game data found", detail: model.dataPathDisplay, symbol: "folder", caution: false)
                 Divider().overlay(palette.separator)

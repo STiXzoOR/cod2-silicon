@@ -2004,8 +2004,8 @@ final class PreviewCatalogGate: Sendable {
         let window = await Snapshots.show(model: model, dark: true, glass: true, audit: audit)
         defer { window.orderOut(nil); window.close() }
         func cardButton() -> CGRect? {
-            guard let deploy = audit.items.values.first(where: { $0.name == "prominent" && $0.frame.minX > 1000 })?.frame else { return nil }
-            return audit.items.values.filter { $0.name == "glass button" && $0.form == .capsule && $0.frame.minX > 1000 && $0.frame.maxY < deploy.minY }
+            guard let launch = audit.items.values.first(where: { $0.name == "prominent" && $0.frame.minX > 1000 })?.frame else { return nil }
+            return audit.items.values.filter { $0.name == "glass button" && $0.form == .capsule && $0.frame.minX > 1000 && $0.frame.maxY < launch.minY }
                 .map(\.frame).min { $0.minY < $1.minY }
         }
         guard let fix = cardButton() else { print("FAIL: Fix for This Server Only is not on screen"); return false }
@@ -2562,23 +2562,23 @@ final class PreviewCatalogGate: Sendable {
             try require(AccessibilityTree.elements(of: window).contains { $0.label.contains("Clouds and much") || $0.value.contains("Clouds and much") }, "Approximate summary states the visual compromise")
             ConfigsPreview.press(window, keyCode: 36, characters: "\r")
             await settle()
-            try require(!model.onboard && model.page == .deploy, "Return on summary opens the launcher without starting a game")
+            try require(!model.onboard && model.page == .home, "Return on summary opens the launcher without starting a game")
             model.preview("setup-summary-ready")
             await settle()
             try await click("Find a Server", in: window)
             try require(!model.onboard && model.page == .servers, "Find a Server completes setup into Servers")
-            print("PASS: summary Return opens Deploy; Find a Server completes into Servers")
+            print("PASS: summary Return opens Home; Find a Server completes into Servers")
 
             model.preview("home-notice")
             await settle()
             let elements = AccessibilityTree.elements(of: window)
             let dismiss = elements.first { $0.label == "Dismiss message" && $0.role == "AXButton" }
-            let deploy = elements.first { $0.label.hasPrefix("Deploy to ") && $0.role == "AXButton" }
+            let launch = elements.first { $0.label.hasPrefix("Launch on ") && $0.role == "AXButton" }
             try require(dismiss != nil, "The status must have a Dismiss message button")
-            try require(deploy != nil, "Deploy must remain in the accessibility tree: \(elements.filter { $0.role == "AXButton" }.map(\.label))")
-            try require(!dismiss!.frame.intersects(deploy!.frame), "Status must not cover Deploy")
+            try require(launch != nil, "Launch must remain in the accessibility tree: \(elements.filter { $0.role == "AXButton" }.map(\.label))")
+            try require(!dismiss!.frame.intersects(launch!.frame), "Status must not cover Launch")
             let oldNotice = model.notice
-            model.notice = "The game closed. You can deploy again."
+            model.notice = "The game closed. You can launch again."
             await settle()
             let updatedStatus = AccessibilityTree.elements(of: window)
             try require(updatedStatus.contains { $0.label == model.notice || $0.value == model.notice }, "Updated status is available to VoiceOver")
@@ -2593,7 +2593,7 @@ final class PreviewCatalogGate: Sendable {
             try require(runningButtons.contains("Return to Game") && !runningButtons.contains("Dismiss message"), "The running-game explanation must keep its way back to the game")
             model.gameRunning = false; model.onboard = true
             try require(!model.canNavigate && !model.canImport, "Setup command guards")
-            print("PASS: status leaves Deploy accessible; setup and game-running command guards hold")
+            print("PASS: status leaves Launch accessible; setup and game-running command guards hold")
             return true
         } catch {
             print("FAIL: shell actions: \((error as? Failure)?.message ?? error.localizedDescription)")

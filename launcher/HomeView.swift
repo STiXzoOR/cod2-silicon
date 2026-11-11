@@ -57,14 +57,14 @@ struct HomeView: View {
     @ViewBuilder private func heroText(_ last: GameServer?) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             if let last {
-                Eyebrow(text: ["Last deployment", MapCatalog.region(last.map)].compactMap { $0 }.joined(separator: " · "), size: 15, tracking: 0.34)
+                Eyebrow(text: ["Last played", MapCatalog.region(last.map)].compactMap { $0 }.joined(separator: " · "), size: 15, tracking: 0.34)
                 StencilTitle(text: MapCatalog.displayName(last.map).uppercased())
                 MetaLine(items: [AnyView(QuakeName(name: last.name).font(.system(size: 16, weight: .semibold))),
                                  AnyView(Text(GameModes.long(last.gametype))),
                                  AnyView(Text("\(last.playerCount) / \(last.maxPlayers) players")),
                                  AnyView(Text("\(last.ping) ms"))])
             } else {
-                Eyebrow(text: "Ready for deployment", size: 15, tracking: 0.34)
+                Eyebrow(text: "Ready to play", size: 15, tracking: 0.34)
                 StencilTitle(text: "COD2 SILICON")
                 MetaLine(items: [AnyView(Text("No recent servers yet")), AnyView(Text("Find a server to join your first match"))])
             }
@@ -73,17 +73,17 @@ struct HomeView: View {
                     Button { model.page = .servers } label: {
                         Label("Find a server", systemImage: "dot.radiowaves.left.and.right").labelStyle(HeroLabelStyle())
                     }.prominentAction().actionControlSize()
-                    Button(action: model.deploy) { Label("Open game menu", systemImage: "play.fill").labelStyle(HeroLabelStyle()) }
+                    Button(action: model.launch) { Label("Open game menu", systemImage: "play.fill").labelStyle(HeroLabelStyle()) }
                         .glassAction().actionControlSize()
                 } else {
-                    Button(action: model.deploy) { Label("Deploy", systemImage: "play.fill").labelStyle(HeroLabelStyle()) }
+                    Button(action: model.launch) { Label("Launch", systemImage: "play.fill").labelStyle(HeroLabelStyle()) }
                         .prominentAction().actionControlSize()
-                        .accessibilityLabel("Deploy to \(last.map { QuakeColors.plain($0.name) } ?? "the main menu")")
+                        .accessibilityLabel("Launch on \(last.map { QuakeColors.plain($0.name) } ?? "the main menu")")
                     Button { withAnimation(reduceMotion ? nil : .launcherSpring) { model.page = .servers } } label: {
                         Label("Find a server", systemImage: "dot.radiowaves.left.and.right").labelStyle(HeroLabelStyle())
                     }.glassAction().actionControlSize()
-                    Text("⌘↩ to deploy").font(.system(size: 12)).foregroundStyle(palette.dark ? HeroInk.hint.dark : HeroInk.hint.light).padding(.leading, 6)
-                        .accessibilityLabel("Command Return to deploy")
+                    Text("⌘↩ launches and rejoins this server").font(.system(size: 12)).foregroundStyle(palette.dark ? HeroInk.hint.dark : HeroInk.hint.light).padding(.leading, 6)
+                        .accessibilityLabel("Command Return launches and rejoins this server")
                 }
             }
             .padding(.top, 14)
@@ -342,7 +342,7 @@ struct RecentServersPanel: View {
                     }
                     .buttonStyle(RowButtonStyle(radius: 16))
                     .contextMenu {
-                        Button("Deploy") { model.connect(server) }
+                        Button("Launch") { model.connect(server) }
                         Button("Show in Server List") { model.showServer(server.address) }
                         Button(model.library.favorites.contains(server.address) ? "Remove from Favorites" : "Add to Favorites") { model.favorite(server.address) }
                         Button("Copy Address") { model.copyServer(server) }

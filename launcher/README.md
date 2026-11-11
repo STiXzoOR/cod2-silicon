@@ -28,10 +28,10 @@ Continue saves the folder/key choice. Repeating setup offers Cancel (Escape), wh
 restores an unconfirmed folder choice and returns to the originating page; first-run
 setup offers Quit. Shader preparation may finish in the background after leaving.
 The summary states whether original or approximate shaders are available and offers
-repairs. Open CoD2 Silicon opens Deploy, Find a Server opens Servers, and a pending
+repairs. Open CoD2 Silicon opens Home, Find a Server opens Servers, and a pending
 server link or `--play` gets an explicitly labelled Join Server or Open Game Menu action.
 
-The native menus own navigation (⌘1–4), Deploy (⌘Return), Open Game Menu
+The native menus own navigation (⌘1–4), Launch (⌘Return), Open Game Menu
 (⇧⌘Return), Settings (⌘,), config import (⌘O / ⇧⌘V), and Servers refresh (⌘R).
 Commands follow setup, game and update availability. Page commands and the Dock reopen
 the single launcher window after it closes. Help links to the project manual, game
@@ -79,7 +79,7 @@ play, then restores its Dock/window after the tracked child exits. If the launch
 reopening it reconnects to the exact running helper (bundle ID and executable path) rather
 than spawning another engine. Normal Quit waits until the game closes. A game crash
 leaves the launcher running and exposes any native crash report in the app home.
-Only a single launcher window exists; Deploy is guarded against duplicate children.
+Only a single launcher window exists; Launch is guarded against duplicate children.
 
 The game app carries two engines built from the same sources: `cod2_macos` with CoD2x and
 `cod2_macos_stock`, the original 1.3 (CoD2x is compiled in, so it can't be switched at run

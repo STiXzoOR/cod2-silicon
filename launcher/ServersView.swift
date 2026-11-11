@@ -40,9 +40,9 @@ struct ServersView: View {
                                     ServerRow(server: server, image: artwork.image(for: server.map), selected: server.address == model.selected?.address,
                                     favorite: model.library.favorites.contains(server.address), compact: compact, focused: listFocused) {
                                         withAnimation(reduceMotion ? nil : .launcherSpring) { model.selectedServer = server.address; listFocused = true }
-                                    } toggleFavorite: { model.favorite(server.address) } deploy: { model.connect(server) }
+                                    } toggleFavorite: { model.favorite(server.address) } launch: { model.connect(server) }
                                     .contextMenu {
-                                        Button("Deploy") { model.connect(server) }
+                                        Button("Launch") { model.connect(server) }
                                         Button(model.library.favorites.contains(server.address) ? "Remove from Favorites" : "Add to Favorites") { model.favorite(server.address) }
                                         Divider()
                                         Button("Copy Address") { model.copyServer(server) }
@@ -68,7 +68,7 @@ struct ServersView: View {
                             reader.scrollTo(rows[next].address)
                             return .handled
                         }
-                        // Return deploys only while the list has focus; a default button would also
+                        // Return launches only while the list has focus; a default button would also
                         // swallow Return in the search and direct-connect fields.
                         .onReturnKey { if let server = model.selected { model.connect(server) } }
                         .accessibilityLabel("Servers")
@@ -171,7 +171,7 @@ struct ServerRow: View {
     var focused = false
     var select: () -> Void
     var toggleFavorite: () -> Void
-    var deploy: () -> Void
+    var launch: () -> Void
     @Environment(\.palette) private var palette
     @State private var hovering = false
     var body: some View {
@@ -231,14 +231,14 @@ struct ServerRow: View {
         .overlay(RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous).stroke(selected ? (focused ? palette.accent : palette.selectionStroke) : .clear, lineWidth: focused && selected ? 3 : 1))
         .contentShape(RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous))
         .shapeAudit(.container, .rounded(RowMetrics.radius), "server row")
-        .onTapGesture(count: 2, perform: deploy)
+        .onTapGesture(count: 2, perform: launch)
         .onTapGesture(perform: select)
         .onHover { hovering = $0 }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(QuakeColors.plain(server.name)), \(MapCatalog.displayName(server.map)), \(GameModes.long(server.gametype)), \(facts.versionLabel), \(server.playerCount) of \(server.maxPlayers) players, \(server.ping) milliseconds\(server.password ? ", password protected" : "")")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction { select() }
-        .accessibilityAction(named: "Deploy", deploy)
+        .accessibilityAction(named: "Launch", launch)
     }
 
     private func mapAndMode(lines: Int) -> some View {
@@ -395,11 +395,11 @@ struct ServerDetails: View {
                 GlassContainer(spacing: 8) {
                     HStack(spacing: 8) {
                         Button { model.connect(server) } label: {
-                            Label(ReadyCheckCard.deployTitle(model, server), systemImage: "play.fill").frame(maxWidth: .infinity)
+                            Label(ReadyCheckCard.launchTitle(model, server), systemImage: "play.fill").frame(maxWidth: .infinity)
                         }
                         .prominentAction().actionControlSize()
-                        .accessibilityLabel("Deploy to \(QuakeColors.plain(server.name))")
-                        .help("Deploy to this server (Return in the server list, or double-click a row)")
+                        .accessibilityLabel("Launch on \(QuakeColors.plain(server.name))")
+                        .help("Launch on this server (Return in the server list, or double-click a row)")
                         let favorite = model.library.favorites.contains(server.address)
                         Button { model.favorite(server.address) } label: {
                             Image(systemName: favorite ? "star.fill" : "star").font(.system(size: 15)).foregroundStyle(palette.dark ? palette.accent : palette.link).frame(width: 16, height: 16)
@@ -513,7 +513,7 @@ private extension View {
             LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 36)
         })
     }
-    /// Return while this view has focus (macOS 14+); on macOS 13 double-click and the Deploy button remain.
+    /// Return while this view has focus (macOS 14+); on macOS 13 double-click and the Launch button remain.
     @ViewBuilder func onReturnKey(_ action: @escaping () -> Void) -> some View {
         if #available(macOS 14.0, *) { self.onKeyPress(.return) { action(); return .handled } } else { self }
     }

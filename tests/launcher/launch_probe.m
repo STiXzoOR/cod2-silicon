@@ -1,4 +1,4 @@
-// Test-only invocation of the launcher's actual Deploy menu action, without
+// Test-only invocation of the launcher's actual Launch menu action, without
 // synthesizing OS input or requiring Accessibility.
 #import <AppKit/AppKit.h>
 #include <dlfcn.h>
@@ -22,16 +22,16 @@ static void traceCursor(void)
     [[NSRunLoop mainRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];
 }
 
-static BOOL deploy(NSMenu *menu)
+static BOOL launch(NSMenu *menu)
 {
     for (NSInteger i = 0; i < menu.numberOfItems; ++i) {
         NSMenuItem *item = [menu itemAtIndex:i];
-        if ([item.title isEqualToString:@"Deploy"]) {
+        if ([item.title isEqualToString:@"Launch"]) {
             [menu performActionForItemAtIndex:i];
-            fprintf(stderr, "[deploy-probe] invoked Deploy menu action\n");
+            fprintf(stderr, "[launch-probe] invoked Launch menu action\n");
             return YES;
         }
-        if (item.submenu && deploy(item.submenu)) return YES;
+        if (item.submenu && launch(item.submenu)) return YES;
     }
     return NO;
 }
@@ -64,7 +64,7 @@ __attribute__((constructor)) static void install(void)
         return;
     }
     dispatch_async(dispatch_get_main_queue(), ^{ traceLauncher(); });
-    if (!getenv("COD2_QA_DEPLOY")) return;
+    if (!getenv("COD2_QA_LAUNCH")) return;
     NSDate *installed = [NSDate date];
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *ready = [NSHomeDirectory() stringByAppendingPathComponent:
@@ -75,10 +75,10 @@ __attribute__((constructor)) static void install(void)
             NSDate *modified = attributes[NSFileModificationDate];
             // Ignore a marker from an earlier launch. Setup writes a fresh one
             // on the main actor immediately before leaving onboarding.
-            if (modified && [modified compare:installed] != NSOrderedAscending && deploy(NSApp.mainMenu)) {
+            if (modified && [modified compare:installed] != NSOrderedAscending && launch(NSApp.mainMenu)) {
                 [timer invalidate];
             } else if (++attempts == 400) {
-                fprintf(stderr, "[deploy-probe] setup timed out\n");
+                fprintf(stderr, "[launch-probe] setup timed out\n");
                 [timer invalidate];
             }
         }];
