@@ -531,23 +531,38 @@ struct Toast<Actions: View>: View {
         self.symbol = symbol; self.tone = tone; self.message = message; self.actions = actions()
     }
     var body: some View {
-        // 48 tall on one line: a capsule around 36-point buttons set 6 points in.
         GlassContainer {
-            HStack(alignment: .bottom, spacing: 12) {
-                HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Image(systemName: symbol).foregroundStyle(tone == .error ? palette.negative : palette.accent).accessibilityHidden(true)
-                    Text(message).font(.system(size: 13)).foregroundStyle(palette.text).textSelection(.enabled)
-                        .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
-                        .id(message)
+            ViewThatFits(in: .horizontal) {
+                // One line: 48 tall, a capsule around 36-point buttons set 6 points in.
+                HStack(spacing: 12) {
+                    line(wraps: false)
+                    HStack(spacing: 8) { actions }
                 }
-                .padding(.vertical, 9)
-                HStack(spacing: 8) { actions }
+                .padding(.leading, 18).padding(.trailing, 6).padding(.vertical, 6)
+                .frame(minHeight: 48)
+                .glassSurface(Capsule())
+                // Longer messages wrap above the buttons, which sit 12 in from the bottom-trailing
+                // corner of a radius-30 surface (concentric with the 36-point capsules).
+                VStack(alignment: .leading, spacing: 10) {
+                    line(wraps: true).padding(.horizontal, 6).padding(.top, 6)
+                    HStack(spacing: 8) { Spacer(minLength: 0); actions }
+                }
+                .padding(12)
+                .glassSurface(RoundedRectangle(cornerRadius: 30, style: .continuous))
             }
-            .padding(.leading, 18).padding(.trailing, 6).padding(.vertical, 6)
-            .frame(minHeight: 48)
             .frame(maxWidth: 720)
-            .glassSurface(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
+    }
+    private func line(wraps: Bool) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Image(systemName: symbol).foregroundStyle(tone == .error ? palette.negative : palette.accent).accessibilityHidden(true)
+            Text(message).font(.system(size: 13)).foregroundStyle(palette.text).textSelection(.enabled)
+                .lineLimit(wraps ? nil : 1)
+                .fixedSize(horizontal: !wraps, vertical: wraps)
+                .frame(maxWidth: wraps ? .infinity : nil, alignment: .leading)
+                .id(message)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
