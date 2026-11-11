@@ -588,6 +588,7 @@ import Foundation
         precondition(PlayerProfile.activeProfile("\"My Squad\"\n") == "My Squad" && PlayerProfile.activeProfile("alpha bravo") == "alpha")
         for unsafe in ["", "..", ".", "../etc", "a/b", "a\\b", "c:d", "\"\""] { precondition(PlayerProfile.activeProfile(unsafe) == nil, unsafe) }
         precondition(PlayerProfile.activeProfile(String(repeating: "x", count: 65)) == nil && PlayerProfile.unnamed == "Player")
+        try settingsChecks()  // ship-settings
     }
 
     static func requireValue<T>(_ value: T?) throws -> T {
@@ -645,5 +646,72 @@ final class StandIn: @unchecked Sendable {
                 close(client)
             }
         }
+    }
+}
+
+// MARK: - ship-settings
+extension CoreTests {
+    /// Settings wording, What's New, Report a Problem and the extra launch options' +set lines.
+    static func settingsChecks() throws {
+        var utc = Calendar(identifier: .gregorian); utc.timeZone = TimeZone(identifier: "UTC")!
+        let english = Locale(identifier: "en_GB")
+        let now = try requireValue(utc.date(from: DateComponents(year: 2026, month: 11, day: 11, hour: 15)))
+        func at(_ day: Int, _ hour: Int, _ minute: Int, year: Int = 2026) throws -> Date { try requireValue(utc.date(from: DateComponents(year: year, month: 11, day: day, hour: hour, minute: minute))) }
+        let today = try at(11, 14, 2), yesterday = try at(10, 21, 30), earlier = try at(8, 21, 30), lastYear = try at(8, 21, 30, year: 2025)
+        precondition(SettingsText.when(today, now: now, calendar: utc, locale: english) == "today at 14:02")
+        precondition(SettingsText.when(yesterday, now: now, calendar: utc, locale: english) == "yesterday at 21:30")
+        precondition(SettingsText.when(earlier, now: now, calendar: utc, locale: english) == "on 8 Nov at 21:30")
+        precondition(SettingsText.when(lastYear, now: now, calendar: utc, locale: english) == "on 8 Nov 2025 at 21:30")
+        precondition(SettingsText.resolution("2560x1440") == "2560 × 1440" && SettingsText.size("2560x1440")! == (2560, 1440) && SettingsText.size("wide") == nil)
+        precondition(SettingsText.aspect(width: 2560, height: 1440) == "16:9" && SettingsText.aspect(width: 3456, height: 2234) == "1.55:1")
+        precondition(SettingsText.aspect(width: 1680, height: 1050) == "16:10" && SettingsText.aspect(width: 1024, height: 768) == "4:3")
+        precondition(SettingsText.maskedKey(lastFour: "7k2d") == "•••• •••• •••• •••• 7K2D")
+
+        let notes = """
+        ## CoD2 Silicon 0.3.1
+
+        ### Added
+        - **Connect to an address.** Join a server by address or `cod2x://` link,
+          with ⌘L.
+
+        ### Fixed
+        - Map art is no longer stretched. See [the issue](https://example.invalid/1).
+        - Setup remembers your CD key
+
+        ### Removed
+        - Old thing.
+        """
+        let items = ReleaseNotes.items(notes)
+        precondition(items == [ReleaseNoteItem(tag: "New", title: "Connect to an address", detail: "Join a server by address or cod2x:// link, with ⌘L."),
+                               ReleaseNoteItem(tag: "Fixed", title: "Map art is no longer stretched", detail: "See the issue."),
+                               ReleaseNoteItem(tag: "Fixed", title: "Setup remembers your CD key", detail: "")], "\(items)")
+        precondition(ReleaseNotes.items(notes, limit: 1).count == 1 && ReleaseNotes.items("Plain text, no sections.").isEmpty)
+        let long = ReleaseNotes.items("### Fixed\n- Title. " + String(repeating: "word ", count: 80), length: 40)
+        precondition(long.first.map { $0.detail.count <= 41 && $0.detail.hasSuffix("…") } == true)
+
+        let report = ReportDetails(version: "0.3.0", build: "412", engines: ["CoD2x 1.4.6.8", "Original 1.3"], macOS: "27.0",
+                                   model: "MacBook Pro, Apple M4 Pro", shaders: "original", display: "2560 × 1440 borderless")
+        precondition(report.lines == ["CoD2 Silicon 0.3.0 (412)", "CoD2x 1.4.6.8 · Original 1.3", "macOS 27.0 · MacBook Pro, Apple M4 Pro",
+                                      "Shaders: original · Display: 2560 × 1440 borderless"])
+        let issue = try requireValue(report.issueURL().flatMap { URLComponents(url: $0, resolvingAgainstBaseURL: false) })
+        precondition(issue.host == "github.com" && issue.path == "/STiXzoOR/cod2-silicon/issues/new")
+        let fields = Dictionary(uniqueKeysWithValues: (issue.queryItems ?? []).map { ($0.name, $0.value ?? "") })
+        precondition(fields["template"] == "bug_report.yml" && fields["version"] == "0.3.0 (412)" && fields["macos"] == "27.0")
+        precondition(!report.text.lowercased().contains("key") && ReportDetails(version: "0.3.0", build: "", engines: [], macOS: "", model: "", shaders: "", display: "").lines[0] == "CoD2 Silicon 0.3.0")
+
+        for line in ["+set com_hunkMegs 512", "+seta com_hunkMegs 512", "seta com_hunkMegs 512", "set com_hunkMegs=512", "com_hunkMegs 512"] {
+            precondition(GameSettings.advancedPair(line).map { $0.0 == "com_hunkMegs" && $0.1 == "512" } == true, line)
+        }
+        var typed = GameSettings(); typed.advanced = "+set net_port 29980"
+        let typedConfig = try typed.launchConfig(migrated: true)
+        precondition(typedConfig.contains("seta net_port \"29980\""))
+        typed.advanced = "+set cl_cdkey ABCD"
+        precondition((try? typed.launchConfig(migrated: false)) == nil, "a +set prefix must not get past the refused names")
+        var legacy = Data(#"{"resolution":"1920x1080"}"#.utf8)
+        var decoded = try JSONDecoder().decode(GameSettings.self, from: legacy)
+        precondition(decoded.hideWhilePlaying && decoded.appearance == .system && !decoded.refreshServersOnOpen && decoded.checkUpdatesAutomatically && decoded.dismissedWarnings.isEmpty)
+        legacy = Data(#"{"appearance":"sepia","dismissedWarnings":["switch-version"]}"#.utf8)
+        decoded = try JSONDecoder().decode(GameSettings.self, from: legacy)
+        precondition(decoded.appearance == .system && decoded.dismissedWarnings == [DismissibleWarning.switchVersion])
     }
 }

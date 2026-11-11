@@ -971,7 +971,12 @@ struct GameSettings: Codable, Sendable, Equatable {
     }
     /// One advanced line as (name, value): `dvar value` as typed in the console, or `dvar=value`.
     static func advancedPair(_ line: String) -> (String, String)? {
-        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        var trimmed = line.trimmingCharacters(in: .whitespaces)
+        // ship-settings: a line copied from a game shortcut or the console may begin with +set, +seta, set or seta.
+        for prefix in ["+seta ", "+set ", "seta ", "set "] where trimmed.lowercased().hasPrefix(prefix) {
+            trimmed = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+            break
+        }
         let equals = trimmed.firstIndex(of: "="), space = trimmed.firstIndex(where: { $0 == " " || $0 == "\t" })
         guard let split = [equals, space].compactMap({ $0 }).min() else { return nil }
         let name = String(trimmed[..<split]).trimmingCharacters(in: .whitespaces)
