@@ -123,7 +123,10 @@ caps.
 - **With the original 1.3 chosen** in **Settings → Game → Version**, the game
   sends nothing to the CoD2x project.
 - **The launcher** contacts GitHub when you check for updates, install one, or
-  download the CoD2x files, and asks both master servers for its server list.
+  download the CoD2x files. It asks both master servers for the server list
+  only when you refresh it, and asks a single server for its status when you
+  type its address in **Connect to Address**. Server passwords you choose to
+  remember stay in your keychain on this Mac and are sent only to that server.
 - **Crash reports** are sent only if you turn a switch on in **Settings →
   Privacy**. Your CD key is never part of one.
 
