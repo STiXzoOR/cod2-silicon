@@ -11,7 +11,7 @@ extension Snapshots {
                                          "library-trashed", "home-update-error", "home-loadout", "home-loadout-unreadable"]
     static let homeLibraryAccessibilityScreens = ["home", "home-first", "library-demos", "library-screenshots"]
     static let homeLibraryLabels: [String: [String]] = [
-        "home-first": ["Find a server", "Open game menu"],
+        "home-first": ["Find a server", "Open game menu", "NOTHING PLAYED YET"],
         "home-update": ["Install Update", "View Release"],
         "home-checking": ["Checking GitHub Releases"],
         "home-current": ["You’re up to date"],

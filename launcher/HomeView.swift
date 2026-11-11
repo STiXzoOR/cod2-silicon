@@ -296,9 +296,9 @@ struct RecentServersPanel: View {
             VStack(spacing: 6) {
                 if model.recentServers.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("NO RECENT SERVERS").font(.stencil(22)).foregroundStyle(palette.heading)
-                        Text("Servers you join appear here.").font(.system(size: 13)).foregroundStyle(palette.secondary)
-                        Button("Find a server") { model.page = .servers }.glassAction()
+                        Text("NOTHING PLAYED YET").font(.stencil(22)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+                        Text("Servers you join appear here, ready to rejoin.").font(.system(size: 13)).foregroundStyle(palette.secondary)
+                        Button("Find a Server") { model.navigate(to: .servers) }.glassAction()
                     }.frame(maxWidth: .infinity, alignment: .leading).padding(.top, 8)
                 }
                 ForEach(model.recentServers.prefix(3)) { server in
