@@ -520,7 +520,8 @@ private struct ExpertTools: View {
             if studio.textMode { Label("Show Controls", systemImage: "slider.horizontal.3") }
             else { Label("Edit as Text", systemImage: "text.alignleft") }
         }
-        .glassAction().fixedSize()
+        // As tall as the search pill beside it.
+        .glassAction().actionControlSize().fixedSize()
         .help(studio.textMode ? "Back to the controls" : "Edit this loadout’s config as text")
     }
 }
