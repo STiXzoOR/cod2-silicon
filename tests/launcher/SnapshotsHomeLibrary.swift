@@ -143,12 +143,20 @@ extension Snapshots {
             .write(to: stats.appendingPathComponent("matches.jsonl"))
         model.libraryTab = .matches
         try await Task.sleep(for: .milliseconds(500))
-        // A row is one static-text element: VoiceOver reads its words from the value.
-        let rows = AccessibilityTree.elements(of: window).map { $0.label.isEmpty ? $0.value : $0.label }
+        // A row is one static-text element: VoiceOver reads its words from the value, which the tree
+        // shortens to 80 characters, so the connection word is read from the element itself.
+        let elements = AccessibilityTree.elements(of: window)
+        func words(_ element: AccessibilityTree.Element) -> String {
+            let selector = NSSelectorFromString("accessibilityValue")
+            let full = element.node.responds(to: selector) ? element.node.perform(selector)?.takeUnretainedValue() as? String : nil
+            return element.label.isEmpty ? (full ?? element.value) : element.label
+        }
+        let rows = elements.map(words)
         guard model.storedMatches.count == 2,
               let toujane = rows.firstIndex(where: { $0.hasPrefix("Toujane, Search & Destroy") && $0.hasSuffix("connection Steady") }),
               let carentan = rows.firstIndex(where: { $0.hasPrefix("Carentan, Team Deathmatch") && $0.hasSuffix("connection Some dips") }), toujane < carentan else {
-            print("FAIL: Matches did not list the stored summaries newest first with their connection (\(model.storedMatches.count) read)"); return false
+            print("FAIL: Matches did not list the stored summaries newest first with their connection (\(model.storedMatches.count) read): "
+                  + rows.filter { $0.contains("Toujane") || $0.contains("Carentan") }.joined(separator: " | ")); return false
         }
         print("PASS: Matches lists the stored summaries newest first: frame rate, ping and the connection in a word")
 
