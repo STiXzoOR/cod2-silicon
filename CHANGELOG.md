@@ -13,8 +13,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Added
 
-- Play with CoD2x or with the original 1.3. **Settings → Game → Version**
-  chooses which game starts; CoD2x is the default. The original 1.3 can only
+- Play with CoD2x or with the original 1.3. **Settings → General → Game
+  version** chooses which game starts; CoD2x is the default. The original 1.3 can only
   join stock 1.3 servers, and the launcher offers to turn CoD2x on when you
   pick a CoD2x server. Config Studio, Check-up and the ready check follow the
   version you chose, and the few settings one version cannot hold are kept
@@ -37,15 +37,25 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   CoD2x marks an update as required, the game stops joining servers until
   this app has a release for it. The original 1.3 sends none of this.
   [What the app sends](README.md#what-the-app-sends) lists everything.
-- CoD2x's own menus and icons. **Settings → Game → CoD2x files** downloads
+- CoD2x's own menus and icons. **Settings → Game Data → CoD2x menus and
+  icons** downloads
   the official CoD2x 1.4.6.8 release from the CoD2x project's GitHub page,
   checks it, and keeps only those files on this Mac; or copies them from a
   Windows game folder that has CoD2x installed. They are used for CoD2x games
   only, and your game folder is never changed.
 - Install updates from the launcher. When a newer release is found, **Install
-  Update** downloads it, checks it against the release's checksum and
+  and Relaunch** downloads it, checks it against the release's checksum and
   signature, replaces the app and restarts it. Nothing installs without that
-  click.
+  click, and Cancel stops it until the new app takes the old one's place.
+- A Settings window with seven panes: General, Display, Game Data, Privacy,
+  Updates, Advanced and About. It can hide the launcher while you play, follow
+  or override the system's appearance, check for updates once a day while the
+  launcher is open (on unless you turn it off), name the display and the
+  resolutions the game can use, rebuild your shaders, replace your CD key,
+  delete match summaries, reset launcher settings, copy the last game log,
+  list everything the app contacts, and show every bundled component's
+  licence in full. **Report a Problem** opens a prefilled GitHub issue in your
+  browser; the app sends nothing itself.
 - Crash reports you can choose to send. Two switches in **Settings →
   Privacy**, both off unless you turn them on: one sends CoD2x's reports for
   faults in CoD2x's own code to the CoD2x project, as CoD2x itself does; the
@@ -62,7 +72,9 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 ### Changed
 
 - Launcher settings save automatically. Invalid advanced options stay editable
-  with an explanation, while your last valid options remain in use.
+  with an explanation, while your last valid options remain in use. Extra
+  launch options are kept as you typed them and accept lines copied from a
+  shortcut or the console, such as `+set com_hunkMegs 512`.
 - The server browser shows how old its results are, explains empty lists, and
   offers native search, reversible sorting and server context menus. Direct
   connect reports invalid addresses beside the field.
@@ -224,7 +236,7 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 - CoD2x's services (the update check, zPAM updates, the match service, script
   web requests, vMix, and crash and error reports) were tested against
   stand-ins on a Mac, not against the CoD2x project's own servers.
-- The new Settings rows (CoD2x files, the report switches, Install Update)
+- The new Settings rows (CoD2x files, the report switches, Install and Relaunch)
   were tested through the launcher's tests, and nobody has installed an update
   from a real release yet: 0.3.0 is the first version that can.
 - Third-person player models sit about half a pixel off the original in

@@ -32,7 +32,10 @@ Source layout:
   Configs through the shared session and store.
 - `SettingsWindow.swift` and `SettingsPanes.swift`: the Settings window, a second
   window (scene `settings`) with General, Display, Game Data, Privacy, Updates,
-  Advanced and About panes. `model.openSettings(_:)` opens it at a pane.
+  Advanced and About panes. `model.openSettings(_:)` opens it at a pane; it reopens on
+  the pane it was left on, ⌃Tab and ⌃⇧Tab step through the panes, and the window takes
+  each pane's height. `SettingsAcknowledgements.swift` holds every shipped component's
+  licence in full, checked by hand against the build scripts (its header says how).
 - `AppSheets.swift` and `ServerSheets.swift`, `SettingsSheets.swift`, `ShellSheets.swift`:
   the app's sheets, one enum presented over whichever window is in front.
 
@@ -105,7 +108,7 @@ There is one launcher window and one Settings window; Launch is guarded against 
 
 The game app carries two engines built from the same sources: `cod2_macos` with CoD2x and
 `cod2_macos_stock`, the original 1.3 (CoD2x is compiled in, so it can't be switched at run
-time). Settings › General › Version chooses which one starts; CoD2x is the default and the choice
+time). Settings › General › Game version chooses which one starts; CoD2x is the default and the choice
 is saved in `launcher-settings.json`. Config Studio's dialect and settings, Check-up's rules and
 the server ready check follow it. Both engines carry the app layer (link handler, bundle
 arguments, freeze watcher, crash and freeze reports in the app home), so links, passworded ones
@@ -121,10 +124,10 @@ replaced (one History entry per loadout) and remembers what this engine can't ho
 `main/players/.studio-engine-handoff.json`.
 
 CoD2x's own menus and icons live in `iw_CoD2x_01.iwd`, which CoD2x carries inside its Windows
-`mss32.dll`. CoD2x has no licence, so neither ships with the app. Settings › General › CoD2x files
-gets the archive only when the player asks: Download fetches the pinned 1.4.6.8 release from
-GitHub (refused unless its size and SHA-256 match `CoD2xFiles` in `Core.swift`), and Choose Folder
-reads, without changing it, the `mss32.dll` of a Windows game folder with CoD2x. The archive is
+`mss32.dll`. CoD2x has no licence, so neither ships with the app. Settings › Game Data › CoD2x menus and
+icons gets the archive only when the player asks: Download fetches the pinned 1.4.6.8 release from
+GitHub (refused unless its size and SHA-256 match `CoD2xFiles` in `Core.swift`), and Copy From
+Folder reads, without changing it, the `mss32.dll` of a Windows game folder with CoD2x. The archive is
 found by the engine's rule (`Cod2x_IwdFromDll` in `cod2x_features.c`, reimplemented in Swift) and
 only it is kept, in `<app home>/cod2x`. Before a CoD2x game the launcher puts it in
 `<app home>/main` (the engines' `fs_homepath`, searched after `fs_basepath`), and before an
@@ -161,7 +164,8 @@ values come from the active profile. A failed migration keeps the previous
 working launch behavior. Advanced chains use the validated launcher-owned
 companion file after profile initialization. Startup dvars apply before renderer
 initialization, with migrated launch settings excluding loadout-owned values.
-Advanced values accept `dvar value` or `dvar=value`, reject command separators,
+Advanced values accept `dvar value` or `dvar=value`, optionally after `+set`, `+seta`, `set`
+or `seta` as copied from a shortcut or the console, are kept as typed, reject command separators,
 and the complete startup is limited to the engine's 31 commands/3900 bytes;
 startup paths/credentials and upcoming renderer options are reserved. Native
 Spaces sets `SDL_VIDEO_MAC_FULLSCREEN_SPACES=1`. Anisotropic filtering maps to
@@ -173,15 +177,27 @@ packets, deduplicates addresses and limits discovery to 2048 endpoints. Queries
 use Network.framework with a maximum of six concurrent endpoints, 40 ms between
 starts, status/info timeouts, cancellation, bounded parsers and a persistent
 last-successful cache. Refresh is explicit; opening the app doesn't scan the
-internet. Checking for updates is an explicit HTTPS request to GitHub Releases;
-it refreshes Home's Dispatches. When a newer release carries
+internet. Checking for updates is an HTTPS request to GitHub Releases, on Check Now or, with
+Settings › Updates › Check for updates automatically on (the default), at most once a day while
+the launcher is open; an automatic check that fails says nothing, and the review harness and the
+lifecycle tests (`COD2_SETUP_NONINTERACTIVE=1`) never make one. It refreshes Home's Dispatches
+and What's New, which lists the newest release's Added, Changed and Fixed notes. When a newer release carries
 `CoD2-Silicon-<version>-macos-arm64.zip` and `SHA256SUMS`, Install Update (only on the player's
 click) downloads both into a folder on the app's volume, refuses any size or SHA-256 mismatch,
 unpacks with `ditto` and checks the app inside (bundle identifier, offered version,
 `codesign --verify --deep --strict`, and the running app's Team ID when it has one), swaps it into
 the app's place, moves the old app to the Trash and restarts (`AppUpdate` in `Core.swift`). It
 refuses while a game runs, and where the app can't replace itself (a read-only or translocated
-location, or a folder it can't write) it opens the Releases page as before.
+location, or a folder it can't write) it opens the Releases page as before. Cancel stops the
+download or check until the new app is about to take the old one's place.
+
+Report a Problem opens GitHub's bug form in the browser, filled in by field id with the lines
+Copy Version Info copies (app version, game versions, macOS, Mac model, shaders, display; never the
+CD key or player name). With its switch on, the last game log (the console log, or the newest crash
+or freeze report, shortened like a crash report) goes to the clipboard for the player to paste; the
+app itself sends nothing. Reset Settings returns `launcher-settings.json` to its defaults and leaves
+loadouts, demos, screenshots and the CD key alone. Delete Summaries removes
+`main/stats/matches.jsonl`.
 
 Crash reports leave the Mac only with Settings › Privacy switches the player turned on. A fault in
 CoD2x's own code leaves `<log>.pending.json` beside CoD2x's log; with "Send CoD2x crash reports to
