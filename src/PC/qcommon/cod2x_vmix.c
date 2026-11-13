@@ -155,7 +155,8 @@ void Cod2x_VmixFrame(int clientState)
 {
     if (vmixEnabled && vmixEnabled->current.enabled && clientState == CA_ACTIVE) {
         const char *spectatedHwid, *found = NULL;
-        char page[4096], name[256], encoded[1024], *p;
+        /* The name must fit whenever the complete encoded page fits. */
+        char page[4096], name[sizeof(page)], encoded[1024], *p;
         int activated = 0, i;
         vmixRunning = 1;
         Cod2x_VmixPoll();
