@@ -553,7 +553,13 @@ void IN_Frame(void)
      * CoD2x has its own windowed desktop-pointer policy. */
     int wantRelative = focused && in_mouse && in_mouse->current.enabled &&
         MacInput_CaptureMouse(MacDisplay_IsFullscreen(), client && client->active,
-            client ? client->keyCatchers : 0, COD2_CODX);
+            client ? client->keyCatchers : 0,
+#if defined(COD2_CODX) && COD2_CODX
+            1
+#else
+            0
+#endif
+        );
     mac_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
     if (wantRelative != mac_relative) {
         SDL_SetWindowGrab(sdl_gl_window, wantRelative ? SDL_TRUE : SDL_FALSE);
