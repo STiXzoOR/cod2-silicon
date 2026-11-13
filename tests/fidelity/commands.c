@@ -15,7 +15,7 @@ int main(void)
     CG_InitConsoleCommands();
     CHECK(quickMessageRegistered == 1 && CG_IsConsoleCommandName("MP_QUICKMESSAGE"));
     command = "mp_QuickMessage";
-    CHECK(CG_ConsoleCommand() && popupCount == 0);
+    CHECK(!CG_ConsoleCommand() && popupCount == 0);
     cg->nextSnap = &snap;
     CHECK(CG_ConsoleCommand() && popupCount == 0);
     snap.ps.pm_flags = 0x800000;
