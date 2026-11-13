@@ -40,8 +40,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   spectator and demo x-ray, occluded outlines and glow, health fills, head names
   and weapon icons, with the upstream controls. Revision checks accept this
   client on both current revision-7 and released revision-6 servers. The native
-  client has joined our revision-6 server; final revision-7 health and demo
-  captures remain pending verification.
+  client has joined our servers at both revisions; revision-7 spectator health
+  and recorded-demo playback have been captured.
 - Automatic demo recording follows name changes, playback and disconnects at
   the right time. Upload markers, retry and quit behavior, filenames and the
   displayed transfer speed now follow upstream. vMix keeps long camera/API
@@ -62,11 +62,13 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Known CoD2x limitations
 
-- Running-game checks for the revision-7 spectator/demo display and the other
-  parity changes above are still pending, including unchanged Original 1.3
-  replay views and revision-7 client play. The
-  [compatibility matrix](docs/macos-port/cod2x-compat.md) distinguishes completed
-  source, fixture and GPU checks from these remaining checks.
+- Revision-7 spectator/demo, automatic recording/upload, film controls and
+  Original isolation have running-game evidence. Main-menu/update-button
+  readbacks remain black and need physical inspection; this is not a claim
+  that the on-screen menu is black. Original baseline and film-control replays
+  are unchanged across all five views. The
+  [compatibility matrix](docs/macos-port/cod2x-compat.md) records exact proof
+  and remaining platform/service limits.
 - The experimental native Metal renderer lacks the CoD2x film and x-ray passes;
   the shipped OpenGL renderer implements them. The CoD2x filesystem still caps
   directory lists at 1024 archives before filtering. Input, focus and audio
