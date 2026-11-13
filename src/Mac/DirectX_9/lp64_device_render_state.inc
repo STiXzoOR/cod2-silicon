@@ -9,6 +9,7 @@ static void DeviceRenderState_Init(DeviceImpl *dev)
     dev->ccwStencilFail = dev->ccwStencilZFail = dev->ccwStencilPass = 1;
     dev->ccwStencilFunc = 8;
     dev->alphaBlendValue = dev->ditherValue = 0;
+    dev->alphaAAFormat = 0;
     dev->ambientMaterialSource = 0;
     dev->diffuseMaterialSource = 1;
     dev->blendStateChanged = 1;
@@ -150,6 +151,9 @@ static void DeviceRenderState_BlendOp(DeviceImpl *dev)
 static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, DWORD value)
 {
     switch (state) {
+    case 181: /* NVIDIA transparency AA, selected by Windows 1.3 rb_state. */
+        dev->alphaAAFormat = value;
+        break;
     case D3DRS_ZENABLE:
         if (dev->zEnable != value) {
             dev->zEnable = value;

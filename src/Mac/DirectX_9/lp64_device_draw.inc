@@ -28,7 +28,8 @@ static void CDirect3DDevice_SubmitIndexedNative(DeviceImpl *dev, const byte *ind
     while (count) {
         UINT32 batch = count > 65534 ? 65535 : count;
 #if defined(COD2_X64)
-        glDrawRangeElements(0x4, start, end, batch, 0x1403, indices);
+        if (!DeviceAlphaAA_Draw(dev, start, end, batch, indices))
+            glDrawRangeElements(0x4, start, end, batch, 0x1403, indices);
 #else
         glDrawRangeElements(0x4, state->low, state->high, batch, 0x1403, indices);
 #endif

@@ -314,6 +314,12 @@ HRESULT CDirect3D_CheckDeviceFormat(const void *t, UINT a, int dt, D3DFORMAT af,
     (void)t; (void)dt; (void)af;
     if (a)
         return (HRESULT)(int32_t)0x8876086cu;
+#if COD2_APPLE_SDK
+    if (!u && rt==1 && (cf==0x41415353 || cf==0x434f5441)) {
+        extern int CDirect3DDevice_SupportsTransparencyAA(void);
+        return CDirect3DDevice_SupportsTransparencyAA() ? 0 : (HRESULT)(int32_t)0x8876086au;
+    }
+#endif
     depth = MacDisplay_GetCurrentDepth();
     if (u == 0 && (cf == 0x31545844 || cf == 0x32545844 || cf == 0x33545844 || cf == 0x35545844))
         return 0;

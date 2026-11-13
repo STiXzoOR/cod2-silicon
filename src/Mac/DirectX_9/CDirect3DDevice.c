@@ -6,6 +6,7 @@
 #include "imports.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #if COD2_APPLE_SDK
 #include "platform/macos_display.h"
 #endif
@@ -475,11 +476,13 @@ typedef struct {
     GLenum glStencilFunc;
     DWORD twoSidedStencil, ccwStencilFail, ccwStencilZFail, ccwStencilPass, ccwStencilFunc;
     DWORD alphaBlendValue, ditherValue;
+    DWORD alphaAAFormat;
     DWORD ambientMaterialSource, diffuseMaterialSource;
     unsigned char blendStateChanged;
     GLfloat lightModelAmbient[4];
     GLfloat slopeScaleDepthBias, scaledDepthBias;
 #if COD2_APPLE_SDK
+    struct DeviceAlphaAA *alphaAA;
     unsigned char floatTargetActive;
     GLint savedDrawFramebuffer, savedReadFramebuffer;
     GLint savedDrawBuffer, savedReadBuffer;
@@ -679,6 +682,7 @@ static COpenGLNative *CDirect3DDevice_GL(void)
  * Their matching restoration reads the persistent COpenGL state. */
 #include "lp64_device_targets.inc"
 #include "lp64_device_draw_scope.inc"
+#include "lp64_alpha_aa.inc"
 
 static void CDirect3DDevice_ActiveTexture(GLenum texture)
 {
@@ -3470,6 +3474,9 @@ HRESULT CDirect3DDevice_GetRenderState(const CDirect3DDevice *_this, D3DRENDERST
     DeviceImpl *dev = (DeviceImpl *)_this;
     if (!pValue)
         return 0;
+#if defined(COD2_X64)
+    if ((unsigned)State == 181) { *pValue = dev->alphaAAFormat; return 0; }
+#endif
     switch (State) {
     case D3DRS_ZENABLE:
         *pValue = dev->zEnable;
@@ -6192,6 +6199,7 @@ static void CDirect3DDevice_ReleaseNativeObject(void *object)
 static void CDirect3DDevice_ReleaseNativeContents(DeviceImpl *dev)
 {
 #if COD2_APPLE_SDK
+    DeviceAlphaAA_Destroy(dev);
     if (dev->floatTargetActive) {
         glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, dev->savedDrawFramebuffer);
         glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, dev->savedReadFramebuffer);

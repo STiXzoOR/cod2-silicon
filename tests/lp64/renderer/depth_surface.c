@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <dirent.h>
 /* The existing fallback uses a core-profile VAO entrypoint in a legacy context.
  * Record its known GL_INVALID_OPERATION separately; every later GL error is fatal.
  * The call itself still reaches the driver, and all pixel assertions stay active. */
@@ -148,6 +149,233 @@ static void Pixels(int red, float depth, int stencil)
     assert(value == stencil);
 }
 
+#if defined(COD2_X64) && COD2_APPLE_SDK
+static void AlphaAARead(GLuint source, GLuint resolved, byte pixels[16*16*4])
+{
+    glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, source);
+    glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+    glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, resolved);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+    glBlitFramebufferEXT(0,0,16,16,0,0,16,16,GL_COLOR_BUFFER_BIT,GL_NEAREST);
+    glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, resolved);
+    glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+    glReadPixels(0,0,16,16,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, source);
+}
+
+static void AlphaAAFixture(DeviceImpl *dev, int samples)
+{
+    GLuint fbo[2], storage[3], fp;
+    glGenFramebuffersEXT(2,fbo); glGenRenderbuffersEXT(3,storage);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,fbo[0]);
+    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,storage[0]);
+    glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT,samples,GL_RGBA8,16,16);
+    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0_EXT,GL_RENDERBUFFER_EXT,storage[0]);
+    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,storage[1]);
+    glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT,samples,GL_DEPTH24_STENCIL8_EXT,16,16);
+    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT_EXT,GL_RENDERBUFFER_EXT,storage[1]);
+    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_STENCIL_ATTACHMENT_EXT,GL_RENDERBUFFER_EXT,storage[1]);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT); glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+    assert(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT)==GL_FRAMEBUFFER_COMPLETE_EXT);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,fbo[1]);
+    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,storage[2]); glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT,GL_RGBA8,16,16);
+    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0_EXT,GL_RENDERBUFFER_EXT,storage[2]);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT); glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+    assert(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT)==GL_FRAMEBUFFER_COMPLETE_EXT);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,fbo[0]); glViewport(0,0,16,16);
+    glDisable(GL_VERTEX_PROGRAM_ARB); glDisable(GL_FRAGMENT_PROGRAM_ARB);
+    glDisable(GL_DEPTH_TEST); glDisable(GL_ALPHA_TEST); glDisable(GL_BLEND); glDisable(GL_CULL_FACE);
+    glDisable(GL_FOG); glDisable(GL_LIGHTING); glDisable(GL_SCISSOR_TEST);
+    glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE); glEnable(GL_MULTISAMPLE);
+    glMatrixMode(GL_PROJECTION); glLoadIdentity(); glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+    /* Original stencil differs between samples in every pixel. Preserve its
+     * full eight bits, including bits outside the sunpartition read mask. */
+    glEnable(GL_STENCIL_TEST); glStencilMask(255); glClearStencil(0xa0); glClear(GL_STENCIL_BUFFER_BIT);
+    glColorMask(0,0,0,0); glStencilFunc(GL_ALWAYS,0xa7,255); glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+    glEnable(GL_SAMPLE_COVERAGE); glSampleCoverage(.5f,GL_FALSE); AlphaAA_Quad(1,1); glDisable(GL_SAMPLE_COVERAGE);
+    glColorMask(1,1,1,1); glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP); glStencilMask(0); glDisable(GL_STENCIL_TEST);
+    const char source[] = "!!ARBfp1.0\nPARAM freq = {47,31,0,0};\nATTRIB tc = fragment.texcoord[ 0 ];\n"
+        "TEMP phase;\nMUL phase.xy,tc,freq;\nFRC phase.xy,phase;\n"
+        "MOV result.color.xy,tc;\nMOV result.color.z,phase.x;\nMOV result.color.w,phase.y;\nEND\n";
+    glGenProgramsARB(1,&fp); glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,fp);
+    glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB,GL_PROGRAM_FORMAT_ASCII_ARB,sizeof(source)-1,source);
+    glEnable(GL_FRAGMENT_PROGRAM_ARB);
+    float vertex[3][6]={{-3,-3,0,1,0,0},{10,-6,0,2,1,0},{-12,20,0,4,0,1}};
+    const unsigned short index[3]={0,1,2};
+    glBindBufferARB(GL_ARRAY_BUFFER_ARB,0); glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB,0);
+    glEnableClientState(GL_VERTEX_ARRAY); glVertexPointer(4,GL_FLOAT,sizeof(vertex[0]),vertex);
+    glClientActiveTextureARB(GL_TEXTURE0_ARB); glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glTexCoordPointer(2,GL_FLOAT,sizeof(vertex[0]),vertex[0]+4);
+    Set(dev,D3DRS_ALPHABLENDENABLE,0); Set(dev,D3DRS_ALPHATESTENABLE,1);
+    Set(dev,D3DRS_ALPHAFUNC,5); Set(dev,D3DRS_ALPHAREF,128);
+    Set(dev,D3DRS_ZENABLE,0); Set(dev,D3DRS_ZENABLE,1); Set(dev,D3DRS_ZWRITEENABLE,0); Set(dev,D3DRS_ZWRITEENABLE,1);
+    Set(dev,D3DRS_ZFUNC,2); glClearDepth(1);
+    Set(dev,D3DRS_STENCILFAIL,1); Set(dev,D3DRS_STENCILZFAIL,1); Set(dev,D3DRS_STENCILPASS,1);
+    Set(dev,D3DRS_TWOSIDEDSTENCILMODE,0); Set(dev,D3DRS_STENCILWRITEMASK,255);
+    Set(dev,(D3DRENDERSTATETYPE)181,0x41415353);
+    AlphaAASamplePattern *pattern=AlphaAA_Pattern(samples); assert(pattern);
+    for (int k=0;k<samples;++k) fprintf(stderr,"alpha AA %dx tag%d position %.6f %.6f\n",samples,k+1,pattern->position[k][0],pattern->position[k][1]);
+    for (int predicate=0;predicate<3;++predicate) {
+        Set(dev,D3DRS_STENCILENABLE,predicate!=0); Set(dev,D3DRS_STENCILFUNC,3);
+        Set(dev,D3DRS_STENCILMASK,15); Set(dev,D3DRS_STENCILREF,predicate==1 ? 7 : 0);
+        glClearColor(0,0,0,0); glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        assert(DeviceAlphaAA_Draw(dev,0,2,3,(const byte *)index));
+        assert(glIsEnabled(GL_ALPHA_TEST) && !glIsEnabled(GL_SAMPLE_ALPHA_TO_COVERAGE));
+        assert(!!glIsEnabled(GL_STENCIL_TEST)==(predicate!=0));
+        GLint bound; glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING_EXT,&bound); assert((GLuint)bound==fbo[0]);
+        glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB,GL_PROGRAM_BINDING_ARB,&bound); assert((GLuint)bound==fp);
+        byte pixels[16*16*4]; AlphaAARead(fbo[0],fbo[1],pixels);
+        double total=0; int maximum=0;
+        byte depthExpected[16*16*4];
+        for (int y=0;y<16;++y) for (int x=0;x<16;++x) {
+            double expected[4]={0}; int passed=0;
+            for (int sample=0;sample<samples;++sample) {
+                if (predicate && ((sample<samples/2)!=(predicate==1))) continue;
+                double b1=(x+pattern->position[sample][0]+16)/64.0, b2=(y+pattern->position[sample][1]+16)/64.0;
+                double d=1-b1-b2+b1/2+b2/4,u=(b1/2)/d,v=(b2/4)/d;
+                double blue=u*47-floor(u*47),alpha=v*31-floor(v*31);
+                if (alpha<=128.0/255) continue;
+                ++passed;
+                double value[4]={u,v,blue,alpha};
+                for (int c=0;c<4;++c) expected[c]+=round(value[c]*255)/samples;
+            }
+            for (int c=0;c<4;++c) {
+                int error=abs((int)pixels[(y*16+x)*4+c]-(int)lround(expected[c]));
+                total+=error; if (error>maximum) maximum=error;
+                depthExpected[(y*16+x)*4+c]=(byte)lround(expected[c]+(c>=2 ? 255.0*(samples-passed)/samples : 0));
+            }
+        }
+        fprintf(stderr,"alpha AA %dx predicate%d: max=%d mean=%.6f\n",samples,predicate,maximum,total/(16*16*4));
+        assert(maximum<=1); assert(glGetError()==GL_NO_ERROR);
+        /* A farther blue surface reaches only samples that failed the alpha
+         * or stencil test. This checks the written original MSAA depth. */
+        GLuint background; glGenProgramsARB(1,&background); glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,background);
+        const char blue[]="!!ARBfp1.0\nMOV result.color,{0,0,1,1};\nEND\n";
+        glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB,GL_PROGRAM_FORMAT_ASCII_ARB,sizeof(blue)-1,blue);
+        glDisable(GL_ALPHA_TEST); glDisable(GL_STENCIL_TEST);
+        for (int j=0;j<3;++j) vertex[j][2]=vertex[j][3]*.5f;
+        glDrawRangeElements(GL_TRIANGLES,0,2,3,GL_UNSIGNED_SHORT,index);
+        AlphaAARead(fbo[0],fbo[1],pixels);
+        for (int j=0;j<16*16*4;++j) assert(abs((int)pixels[j]-depthExpected[j])<=1);
+        for (int j=0;j<3;++j) vertex[j][2]=0;
+        glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,fp); glDeleteProgramsARB(1,&background);
+        glEnable(GL_ALPHA_TEST);
+        if (predicate) glEnable(GL_STENCIL_TEST);
+    }
+    /* The DX7 texture-combiner path uses the same sample evaluation. */
+    Set(dev,D3DRS_STENCILENABLE,0); glDisable(GL_FRAGMENT_PROGRAM_ARB);
+    glActiveTextureARB(GL_TEXTURE0_ARB); glClientActiveTextureARB(GL_TEXTURE0_ARB);
+    GLint units; glGetIntegerv(GL_MAX_TEXTURE_UNITS,&units);
+    for (int unit=0;unit<units;++unit) {
+        glActiveTextureARB(GL_TEXTURE0_ARB+unit); glDisable(GL_TEXTURE_2D); glDisable(GL_TEXTURE_3D); glDisable(GL_TEXTURE_CUBE_MAP);
+    }
+    glActiveTextureARB(GL_TEXTURE0_ARB); GLuint texture; glGenTextures(1,&texture); glBindTexture(GL_TEXTURE_2D,texture);
+    byte texels[16*16*4];
+    for (int y=0;y<16;++y) for (int x=0;x<16;++x) {
+        byte *p=texels+(y*16+x)*4; p[0]=255; p[1]=128; p[2]=64; p[3]=((x+y)&1) ? 255 : 0;
+    }
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,16,16,0,GL_RGBA,GL_UNSIGNED_BYTE,texels);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    glEnable(GL_TEXTURE_2D); glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE);
+    glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB,GL_MODULATE); glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA,GL_MODULATE);
+    glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB,GL_TEXTURE); glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB,GL_PRIMARY_COLOR);
+    glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA,GL_TEXTURE); glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA,GL_PRIMARY_COLOR);
+    glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_RGB,GL_SRC_COLOR); glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND1_RGB,GL_SRC_COLOR);
+    glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_ALPHA,GL_SRC_ALPHA); glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND1_ALPHA,GL_SRC_ALPHA);
+    glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE,1); glTexEnvi(GL_TEXTURE_ENV,GL_ALPHA_SCALE,1);
+    glDisableClientState(GL_COLOR_ARRAY); glColor4f(.5f,1,.75f,.75f);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    assert(DeviceAlphaAA_Draw(dev,0,2,3,(const byte *)index)); assert(!glIsEnabled(GL_FRAGMENT_PROGRAM_ARB));
+    byte fixedPixels[16*16*4]; AlphaAARead(fbo[0],fbo[1],fixedPixels); int fixedMaximum=0;
+    for (int y=0;y<16;++y) for (int x=0;x<16;++x) {
+        int passed=0;
+        for (int sample=0;sample<samples;++sample) {
+            double b1=(x+pattern->position[sample][0]+16)/64.0,b2=(y+pattern->position[sample][1]+16)/64.0;
+            double d=1-b1-b2+b1/2+b2/4,u=(b1/2)/d,v=(b2/4)/d;
+            passed+=((int)floor(u*16)+(int)floor(v*16))&1;
+        }
+        const int rgba[4]={128,128,48,191};
+        for (int c=0;c<4;++c) {
+            int error=abs((int)fixedPixels[(y*16+x)*4+c]-(int)lround((double)rgba[c]*passed/samples));
+            if (error>fixedMaximum) fixedMaximum=error;
+        }
+    }
+    fprintf(stderr,"alpha AA %dx fixed-function checker: max=%d\n",samples,fixedMaximum); assert(fixedMaximum<=1);
+    glDisable(GL_TEXTURE_2D); glDeleteTextures(1,&texture); glEnable(GL_FRAGMENT_PROGRAM_ARB); glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,fp);
+    /* ATOC replaces the threshold; ordinary alpha and blending are restored. */
+    const char constant[]="!!ARBfp1.0\nMOV result.color,{1,1,1,.5};\nEND\n";
+    glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB,GL_PROGRAM_FORMAT_ASCII_ARB,sizeof(constant)-1,constant);
+    Set(dev,D3DRS_STENCILENABLE,0); Set(dev,(D3DRENDERSTATETYPE)181,0x434f5441);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); assert(DeviceAlphaAA_Draw(dev,0,2,3,(const byte *)index));
+    byte pixels[16*16*4]; AlphaAARead(fbo[0],fbo[1],pixels);
+    assert(abs((int)pixels[0]-128)<=1 && abs((int)pixels[3]-64)<=1);
+    Set(dev,D3DRS_ALPHABLENDENABLE,1);
+    assert(!DeviceAlphaAA_Draw(dev,0,2,3,(const byte *)index)); assert(glIsEnabled(GL_BLEND));
+    Set(dev,D3DRS_ALPHABLENDENABLE,0); Set(dev,D3DRS_ALPHATESTENABLE,0);
+    assert(!DeviceAlphaAA_Draw(dev,0,2,3,(const byte *)index)); assert(!glIsEnabled(GL_ALPHA_TEST));
+    Set(dev,(D3DRENDERSTATETYPE)181,0); DWORD state=1;
+    assert(!CDirect3DDevice_GetRenderState((const void *)dev,(D3DRENDERSTATETYPE)181,&state) && state==0);
+    glDisable(GL_FRAGMENT_PROGRAM_ARB); glDisable(GL_VERTEX_PROGRAM_ARB); glDisable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST); glStencilMask(0); glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
+    glStencilFunc(GL_EQUAL,0xa7,255); glClear(GL_COLOR_BUFFER_BIT); glColor4f(1,1,1,1); AlphaAA_Quad(1,1);
+    AlphaAARead(fbo[0],fbo[1],pixels); assert(abs((int)pixels[0]-128)<=1);
+    glStencilFunc(GL_EQUAL,0xa0,255); glClear(GL_COLOR_BUFFER_BIT); AlphaAA_Quad(1,1);
+    AlphaAARead(fbo[0],fbo[1],pixels); assert(abs((int)pixels[0]-128)<=1);
+    /* A mod's stencil-writing material keeps ordinary alpha/stencil behavior.
+     * Its sample predicate cannot be replaced by private immutable tags. */
+    Set(dev,D3DRS_STENCILENABLE,1); Set(dev,D3DRS_STENCILFUNC,8);
+    Set(dev,D3DRS_STENCILPASS,3); Set(dev,D3DRS_STENCILREF,0x33);
+    Set(dev,D3DRS_STENCILMASK,255); Set(dev,D3DRS_STENCILWRITEMASK,255);
+    Set(dev,D3DRS_ALPHATESTENABLE,1); Set(dev,(D3DRENDERSTATETYPE)181,0x41415353);
+    glEnable(GL_FRAGMENT_PROGRAM_ARB); glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,fp);
+    assert(!DeviceAlphaAA_Draw(dev,0,2,3,(const byte *)index));
+    assert(glIsEnabled(GL_ALPHA_TEST) && glIsEnabled(GL_STENCIL_TEST));
+    glDrawRangeElements(GL_TRIANGLES,0,2,3,GL_UNSIGNED_SHORT,index);
+    glDisable(GL_FRAGMENT_PROGRAM_ARB); glDisable(GL_ALPHA_TEST);
+    glStencilMask(0); glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP); glStencilFunc(GL_EQUAL,0x33,255);
+    glClear(GL_COLOR_BUFFER_BIT); AlphaAA_Quad(1,1); AlphaAARead(fbo[0],fbo[1],pixels); assert(!pixels[0]);
+    Set(dev,D3DRS_ALPHAREF,0); glEnable(GL_ALPHA_TEST); glEnable(GL_FRAGMENT_PROGRAM_ARB);
+    glStencilMask(255); glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE); glStencilFunc(GL_ALWAYS,0x33,255);
+    assert(!DeviceAlphaAA_Draw(dev,0,2,3,(const byte *)index));
+    glDrawRangeElements(GL_TRIANGLES,0,2,3,GL_UNSIGNED_SHORT,index);
+    glDisable(GL_FRAGMENT_PROGRAM_ARB); glDisable(GL_ALPHA_TEST);
+    glStencilMask(0); glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP); glStencilFunc(GL_EQUAL,0x33,255);
+    glClear(GL_COLOR_BUFFER_BIT); AlphaAA_Quad(1,1); AlphaAARead(fbo[0],fbo[1],pixels); assert(pixels[0]==255);
+    assert(glGetError()==GL_NO_ERROR);
+    GLuint privateFramebuffer=dev->alphaAA->framebuffer,privateStorage=dev->alphaAA->stencil;
+    GLuint privatePrograms[16]; unsigned privateCount=0;
+    for (DeviceAlphaAAProgram *entry=dev->alphaAA->programs;entry;entry=entry->next) {
+        assert(privateCount<16); privatePrograms[privateCount++]=entry->program;
+    }
+    DeviceAlphaAA_Destroy(dev); assert(!dev->alphaAA);
+    assert(!glIsFramebufferEXT(privateFramebuffer) && !glIsRenderbufferEXT(privateStorage));
+    for (unsigned j=0;j<privateCount;++j) assert(!glIsProgramARB(privatePrograms[j]));
+    glDeleteProgramsARB(1,&fp); glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
+    glDeleteFramebuffersEXT(2,fbo); glDeleteRenderbuffersEXT(3,storage);
+    fprintf(stderr,"alpha AA %dx: original stencil, alpha, blend, program and FBO restored; private resources deleted\n",samples);
+}
+
+static void AlphaAACache(const char *path)
+{
+    DIR *directory=opendir(path); assert(directory);
+    struct dirent *entry; int count=0,failed=0;
+    while ((entry=readdir(directory))) {
+        size_t n=strlen(entry->d_name); if (n<4 || strcmp(entry->d_name+n-4,".pse")) continue;
+        char filename[4096]; snprintf(filename,sizeof(filename),"%s/%s",path,entry->d_name);
+        FILE *file=fopen(filename,"rb"); assert(file); fseek(file,0,SEEK_END); long length=ftell(file); rewind(file);
+        char *source=calloc(1,(size_t)length+1); assert(source); assert(fread(source,1,length,file)==(size_t)length); fclose(file);
+        char *variant=AlphaAA_SampleProgram(source); assert(variant); GLuint program;
+        glGenProgramsARB(1,&program); glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,program);
+        glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB,GL_PROGRAM_FORMAT_ASCII_ARB,(GLsizei)strlen(variant),variant);
+        GLint error; glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB,&error);
+        if (error!=-1) { ++failed; fprintf(stderr,"%s sample variant error %d: %s\n",entry->d_name,error,(const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)); glGetError(); }
+        glDeleteProgramsARB(1,&program); free(variant); free(source); ++count;
+    }
+    closedir(directory); fprintf(stderr,"alpha AA shader variants: %d compiled, %d failed\n",count,failed);
+    assert(count && !failed && glGetError()==GL_NO_ERROR);
+}
+#endif
+
 #if defined(COD2_X64)
 static void FloatTarget(DeviceImpl *dev)
 {
@@ -167,6 +395,22 @@ static void FloatTarget(DeviceImpl *dev)
     assert(!CDirect3DDevice_SetRenderTarget((const void *)dev, 0, surface));
     assert(!CDirect3DDevice_SetDepthStencilSurface((const void *)dev, depth));
     assert(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE_EXT);
+    /* The feather-depth R32F target is single-sample. Transparency AA must
+     * decline it before touching its framebuffer, even after a mode request. */
+    Set(dev,D3DRS_ALPHABLENDENABLE,0); Set(dev,D3DRS_ALPHATESTENABLE,1);
+    GLint floatDraw,floatRead,samples;
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING_EXT,&floatDraw);
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING_EXT,&floatRead);
+    glGetIntegerv(GL_SAMPLES,&samples); assert(samples<2);
+    const DWORD alphaModes[]={0x434f5441,0x41415353};
+    for (unsigned j=0;j<2;++j) {
+        Set(dev,(D3DRENDERSTATETYPE)181,alphaModes[j]);
+        assert(!DeviceAlphaAA_Draw(dev,0,0,0,NULL));
+        GLint binding; glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING_EXT,&binding); assert(binding==floatDraw);
+        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING_EXT,&binding); assert(binding==floatRead);
+        assert(!dev->alphaAA && glIsEnabled(GL_ALPHA_TEST));
+    }
+    Set(dev,(D3DRENDERSTATETYPE)181,0); Set(dev,D3DRS_ALPHATESTENABLE,0);
     const char program[] = "!!ARBfp1.0\nMOV result.color, {908066.8125,0,0,1};\nEND";
     GLuint fp;
     glGenProgramsARB(1, &fp);
@@ -239,7 +483,7 @@ static void DepthIdentity(DeviceImpl *dev)
 
 int main(int argc, char **argv)
 {
-    assert(argc == 3);
+    assert(argc == 3 || argc == 4);
     int arb = !strcmp(argv[1], "arb");
     const char *test = argv[2];
     CGLPixelFormatAttribute attrs[] = { kCGLPFAAccelerated, kCGLPFAColorSize, 24, 0 };
@@ -354,7 +598,11 @@ int main(int argc, char **argv)
     /* Existing stencil operations isolate the surface enable/mask contract. */
     glStencilFunc(GL_ALWAYS, 0xa6, 255);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-    if (!strcmp(test, "float")) {
+    if (!strcmp(test, "alpha-cache")) {
+        assert(argc==4); AlphaAACache(argv[3]);
+    } else if (!strcmp(test, "alpha2") || !strcmp(test, "alpha4")) {
+        AlphaAAFixture(&dev, test[5]-'0');
+    } else if (!strcmp(test, "float")) {
         FloatTarget(&dev);
     } else if (!strcmp(test, "identity")) {
 #if defined(COD2_X64)
