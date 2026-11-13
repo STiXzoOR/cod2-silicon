@@ -171,6 +171,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 - Original 1.3 restores the saved window position after restarting video.
 - HTTP downloads fail after 30 seconds without receiving data, instead of
   waiting indefinitely for a stalled server.
+- After an abnormal exit, the next launch offers the original safe-mode
+  recovery choice. A normal exit clears the recovery marker.
 - Wheel messages change weapons once each, including high-resolution scrolling,
   as in Windows 1.3.
 - Opening chat in a window keeps mouse-look active. Original 1.3 windowed

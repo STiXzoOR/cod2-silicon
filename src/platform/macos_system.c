@@ -12,6 +12,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/sysctl.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <IOKit/IOKitLib.h>
 
 static pthread_once_t clockOnce = PTHREAD_ONCE_INIT;
@@ -86,6 +90,48 @@ char *MacSystem_HomePath(void)
 {
     pthread_once(&homeOnce, MacSystem_InitHome);
     return homePath[0] ? homePath : NULL;
+}
+
+static int sessionFile = -1;
+static char sessionPath[PATH_MAX];
+
+int MacSystem_BeginSession(void)
+{
+    char *home = MacSystem_HomePath();
+    if (!home || snprintf(sessionPath, sizeof(sessionPath), "%s/.running", home) >= sizeof(sessionPath)) return -1;
+    /* The engine may be launched directly before its writable home exists. */
+    for (char *p = sessionPath + 1; *p; ++p) {
+        if (*p != '/') continue;
+        *p = 0;
+        int result = mkdir(sessionPath, 0700);
+        *p = '/';
+        if (result && errno != EEXIST) return -1;
+    }
+    sessionFile = open(sessionPath, O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
+    if (sessionFile < 0) return -1;
+    if (flock(sessionFile, LOCK_EX | LOCK_NB)) {
+        int busy = errno == EWOULDBLOCK;
+        close(sessionFile); sessionFile = -1;
+        return busy ? -2 : -1;
+    }
+    struct stat status;
+    if (fstat(sessionFile, &status)) { close(sessionFile); sessionFile = -1; return -1; }
+    return status.st_size != 0;
+}
+
+int MacSystem_MarkSession(void)
+{
+    if (sessionFile < 0) return 0;
+    pid_t pid = getpid();
+    return ftruncate(sessionFile, 0) == 0 && pwrite(sessionFile, &pid, sizeof(pid), 0) == sizeof(pid) && fsync(sessionFile) == 0;
+}
+
+void MacSystem_EndSession(void)
+{
+    if (sessionFile < 0) return;
+    unlink(sessionPath);
+    close(sessionFile);
+    sessionFile = -1;
 }
 
 uint64_t MacSystem_MemoryBytes(void)

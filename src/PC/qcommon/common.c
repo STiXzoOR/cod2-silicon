@@ -456,6 +456,11 @@ void Com_Error(errorParm_t code, const char *fmt, ...)
     longjmp(*(jmp_buf *)Sys_GetValue(2), -1);
 }
 
+void Com_SetSafeMode(void)
+{
+    com_safemode = 1;
+}
+
 qboolean Com_SafeMode(void)
 {
     extern void Cmd_TokenizeString(const char *text);

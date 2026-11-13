@@ -9,6 +9,9 @@ void MacSystem_WaitUntil(uint64_t deadline);
 void MacSystem_ObserveFrame(int engineTime);
 #endif
 char *MacSystem_HomePath(void);
+int MacSystem_BeginSession(void);
+int MacSystem_MarkSession(void);
+void MacSystem_EndSession(void);
 uint64_t MacSystem_MemoryBytes(void);
 float MacSystem_CPUFrequencyGHz(void);
 uintptr_t MacSystem_ImageOffset(const void *address);

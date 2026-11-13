@@ -15,6 +15,7 @@ extern void MacServer_CheckQuit(void);
 #endif
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
 #include "platform/cod2x_native.h"
+#include "platform/macos_system.h"
 #include <strings.h>
 #endif
 #ifdef __EMSCRIPTEN__
@@ -243,7 +244,9 @@ void Sys_Error(const char *error, ...)
 
 void Sys_NormalExit(void)
 {
-
+#if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED)
+    MacSystem_EndSession();
+#endif
 }
 
 void Sys_Print(const char *msg)
@@ -516,6 +519,20 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Dvar_Init();
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2xNativeURL_SetupPaths();
+    int previousExit = MacSystem_BeginSession();
+    if (previousExit == -2) return 0; /* The previous process is still alive. */
+    if (previousExit < 0) Sys_Error("Could not create the game session marker");
+    if (previousExit) {
+        const char *title = Win_LocalizeRef("WIN_IMPROPER_QUIT_TITLE");
+        const char *body = Win_LocalizeRef("WIN_IMPROPER_QUIT_BODY");
+        if (!strcmp(title, "WIN_IMPROPER_QUIT_TITLE")) title = "Run In Safe Mode?";
+        if (!strcmp(body, "WIN_IMPROPER_QUIT_BODY"))
+            body = "It appears that Call of Duty(R) 2 did not quit properly the last time it ran.\nDo you want to run the game in safe mode?\n\nThis is recommended for most people.\nIt will change your system settings but not your controls.";
+        int answer = MessageBoxA(NULL, body, title, 0x33);
+        if (answer == 2) return 0; /* Preserve the abnormal-exit marker. */
+        if (answer == 6) { extern void Com_SetSafeMode(void); Com_SetSafeMode(); }
+    }
+    if (!MacSystem_MarkSession()) Sys_Error("Could not write the game session marker");
 #endif
 
     {
@@ -605,6 +622,9 @@ void Sys_Quit(void)
 {
     int i;
     sysEvent_t *ev;
+#if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED)
+    if (!sys_exitCode) Sys_NormalExit();
+#endif
 
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2xNative_Shutdown();
