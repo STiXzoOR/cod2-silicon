@@ -156,14 +156,18 @@ static int Ws_SendFrame(Cod2xSocket *connection, int opcode, const void *data, s
 }
 
 /* "ws://host:port/path" as http(s) for curl, plus the Host and path CoD2x sends. */
-static void Ws_SplitUrl(const char *url, char *http, size_t httpSize, char *host, size_t hostSize, const char **path)
+static int Ws_SplitUrl(const char *url, char **http, char **host, const char **path)
 {
     const char *rest = strstr(url, "://"), *start, *end;
     size_t schemeLength = rest ? (size_t)(rest - url) : 0;
     const char *scheme = "http";
     if ((schemeLength == 3 && !strncmp(url, "wss", 3)) || (schemeLength == 5 && !strncmp(url, "https", 5)))
         scheme = "https";
-    snprintf(http, httpSize, "%s%s", scheme, rest ? rest : "");
+    size_t httpSize = strlen(scheme) + (rest ? strlen(rest) : 0) + 1;
+    *http = malloc(httpSize);
+    if (!*http)
+        return 0;
+    snprintf(*http, httpSize, "%s%s", scheme, rest ? rest : "");
     start = rest ? rest + 3 : url;
     *path = strchr(start, '/');
     end = *path ? *path : start + strlen(start);
@@ -181,9 +185,10 @@ static void Ws_SplitUrl(const char *url, char *http, size_t httpSize, char *host
         if (colon)
             end = colon;
     }
-    snprintf(host, hostSize, "%.*s", (int)(end - start), start);
+    *host = Ws_Copy(start, (size_t)(end - start));
     if (!*path)
         *path = "/";
+    return *host != NULL;
 }
 
 static void Ws_Base64(const unsigned char *data, size_t length, char *out)
@@ -236,7 +241,8 @@ static void Ws_Consume(WsBuffer *buffer, size_t length)
 /* Connects and shakes hands before the deadline. NULL after an error event. */
 static Cod2xSocket *Ws_Open(Cod2xWebSocket *ws, unsigned long long deadline, WsBuffer *received)
 {
-    char http[1024], host[512], error[256], request[8192];
+    char *http = NULL, *host = NULL, *request;
+    char error[256];
     unsigned char nonce[16];
     char key[32];
     const char *path;
@@ -248,22 +254,44 @@ static Cod2xSocket *Ws_Open(Cod2xWebSocket *ws, unsigned long long deadline, WsB
         Ws_PushError(ws, "Connect timeout");
         return NULL;
     }
-    Ws_SplitUrl(ws->url, http, sizeof(http), host, sizeof(host), &path);
+    if (!Ws_SplitUrl(ws->url, &http, &host, &path)) {
+        free(http);
+        free(host);
+        Ws_PushError(ws, "OOM");
+        return NULL;
+    }
     connection = Cod2x_SocketOpen(http, (int)(deadline - now), error, sizeof(error));
+    free(http);
     if (!connection) {
+        free(host);
         Ws_PushError(ws, !strcmp(error, "Connection timeout") || !strcmp(error, "Timeout") ? "Connect timeout" : error);
         return NULL;
     }
     Cod2x_Random(nonce, sizeof(nonce));
     Ws_Base64(nonce, sizeof(nonce), key);
-    length = snprintf(request, sizeof(request),
+    length = snprintf(NULL, 0,
                       "GET %s HTTP/1.1\r\nUpgrade: websocket\r\nHost: %s\r\nConnection: Upgrade\r\n"
                       "Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: %s\r\n%s\r\n",
                       path, host, key, ws->headers ? ws->headers : "");
-    if (length <= 0 || (size_t)length >= sizeof(request) ||
-        !Cod2x_SocketSend(connection, request, (size_t)length, WS_SEND_MSEC)) {
+    request = length > 0 ? malloc((size_t)length + 1) : NULL;
+    if (!request) {
+        free(host);
+        Ws_PushError(ws, "OOM");
         Cod2x_SocketClose(connection);
         return NULL;
+    }
+    snprintf(request, (size_t)length + 1,
+             "GET %s HTTP/1.1\r\nUpgrade: websocket\r\nHost: %s\r\nConnection: Upgrade\r\n"
+             "Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: %s\r\n%s\r\n",
+             path, host, key, ws->headers ? ws->headers : "");
+    free(host);
+    {
+        int sent = Cod2x_SocketSend(connection, request, (size_t)length, WS_SEND_MSEC);
+        free(request);
+        if (!sent) {
+            Cod2x_SocketClose(connection);
+            return NULL;
+        }
     }
     for (;;) {
         unsigned char chunk[4096];
