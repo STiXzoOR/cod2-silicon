@@ -3698,7 +3698,7 @@ HRESULT CDirect3DDevice_SetSamplerState(const CDirect3DDevice *_this, DWORD Samp
     if (field)
         previous = *field;
     else if (Type == 8)
-        previous = CDirect3DDevice_TruncateSampler(stage->lodBias * 4.0f);
+        memcpy(&previous, &stage->lodBias, sizeof(previous));
     else if (Type == 10)
         previous = CDirect3DDevice_TruncateSampler(stage->anisotropy);
     else
@@ -3711,7 +3711,7 @@ HRESULT CDirect3DDevice_SetSamplerState(const CDirect3DDevice *_this, DWORD Samp
     else if (Type == 8) {
         float value;
         memcpy(&value, &Value, sizeof(value));
-        stage->lodBias = 0.25f * value;
+        stage->lodBias = value;
     } else {
         if (MacDisplay_GetSupportsAnisotropicFiltering())
 #if defined(COD2_X64)
@@ -3755,7 +3755,7 @@ HRESULT CDirect3DDevice_GetSamplerState(const CDirect3DDevice *_this, DWORD Samp
         if (field)
             *pValue = *field;
         else if (Type == 8)
-            *pValue = CDirect3DDevice_TruncateSampler(4.0f * stage->lodBias);
+            memcpy(pValue, &stage->lodBias, sizeof(*pValue));
         else if (Type == 10)
             *pValue = CDirect3DDevice_TruncateSampler(stage->anisotropy);
     }
