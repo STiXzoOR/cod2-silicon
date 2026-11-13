@@ -2389,7 +2389,7 @@ static void CL_WriteDeathMessageText(const char *text, int color)
     if (!text)
         return;
     /* CoD2x text.cpp: names in the team colour lose every code, doubles and CoD2x codes too. */
-    if (color >= 0) {
+    if (color >= 0 && Cod2x_TextEnabled()) {
         SV_Cod2xStripTextCodes(text, clean, sizeof(clean));
         text = clean;
     }
@@ -2533,7 +2533,7 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
            then the extra ones while there is room for the victim behind them. The victim
            wraps by its length without codes, or when the line would pass cg_gameMessageWidth. */
         extern const dvar_t *cg_gameMessageWidth;
-        int limit = initialLinewidth > 78 ? 78 : initialLinewidth, i;
+        int limit = initialLinewidth > 78 && Cod2x_TextEnabled() ? 78 : initialLinewidth, i;
         char cleanVictim[256];
         CL_Cod2xKillfeedIcon(iconShader, iconWidth, iconHeight, iconColor, (unsigned char)horzFlipIcon);
         for (i = 0; cod2xKillfeedExtended && i < 4; ++i) {
@@ -2546,7 +2546,10 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
         }
         CL_WriteDeathMessageText(" ", defaultColor);
         CL_AddConsoleInfoColor(0x0a, victimColor);
-        SV_Cod2xStripTextCodes(victimName ? victimName : "", cleanVictim, sizeof(cleanVictim));
+        if (Cod2x_TextEnabled())
+            SV_Cod2xStripTextCodes(victimName ? victimName : "", cleanVictim, sizeof(cleanVictim));
+        else
+            I_strncpyz(cleanVictim, victimName ? victimName : "", sizeof(cleanVictim));
         if ((int)strlen(cleanVictim) + con.lineOffset + 3 >= limit ||
             (cg_gameMessageWidth &&
              CL_Cod2xKillfeedLineWidth() + (int)strlen(cleanVictim) > cg_gameMessageWidth->current.integer)) {

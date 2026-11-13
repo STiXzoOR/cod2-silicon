@@ -332,7 +332,8 @@ static void CG_Obituary(centity_t *cent)
         I_strncat(targetName, 0x22, (const char *)"^7");
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
         /* CoD2x text.cpp: player names are coloured only on the scoreboard. */
-        SV_Cod2xStripTextCodes(targetName, targetName, 0x22);
+        if (Cod2x_TextEnabled())
+            SV_Cod2xStripTextCodes(targetName, targetName, 0x22);
 #endif
 
 #if defined(COD2_X64)
@@ -372,7 +373,8 @@ static void CG_Obituary(centity_t *cent)
 
         I_strncat(attackerName, 0x22, (const char *)"^7");
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-        SV_Cod2xStripTextCodes(attackerName, attackerName, 0x22);
+        if (Cod2x_TextEnabled())
+            SV_Cod2xStripTextCodes(attackerName, attackerName, 0x22);
 #endif
 
 #if defined(COD2_X64)
@@ -477,7 +479,7 @@ static void CG_Obituary(centity_t *cent)
         extern int BG_GetNumWeapons(void);
         const char *icons[4] = {NULL, NULL, NULL, NULL};
         int i;
-        if (es->dmgFlags) {
+        if (Cod2x_GameVersion() >= 7 && es->dmgFlags) {
             if (es->weapon > 0 && es->weapon <= BG_GetNumWeapons()) {
                 WeaponDef *weaponDef = BG_GetWeaponDef(es->weapon);
                 if (weaponDef && weaponDef->killIcon && weaponDef->killIcon[0]) {
@@ -491,7 +493,7 @@ static void CG_Obituary(centity_t *cent)
                 icons[i] = shader ? CL_GetConfigString(0x61e + shader) : NULL;
             }
         }
-        CL_DeathMessageExtendedIcons(es->dmgFlags != 0, icons);
+        CL_DeathMessageExtendedIcons(Cod2x_GameVersion() >= 7 && es->dmgFlags != 0, icons);
         CL_DeathMessagePrint(attackerName, attackerColor, targetName,
                              victimColor, iconShader, iconWidth, 1.4f, iconColor, iconHorzFlip);
         CL_DeathMessageExtendedIcons(0, NULL);

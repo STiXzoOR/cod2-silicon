@@ -380,6 +380,11 @@ int Cod2x_IsStyleCode(char code)
     return code && strchr("*!+=-_.", code) != NULL;
 }
 
+int Cod2x_TextEnabled(void)
+{
+    return lastClientState < CA_CONNECTING || Cod2x_GameVersion() >= 7;
+}
+
 int Cod2x_TextCode(const char *p, char *code)
 {
     int shade;
@@ -391,6 +396,8 @@ int Cod2x_TextCode(const char *p, char *code)
         *code = p[1];
         return 2;
     }
+    if (!Cod2x_TextEnabled())
+        return 0;
     shade = p[0] == '$' ? 0 : p[0] == '#' ? 1 : p[0] == '@' ? 2 : -1;
     if (shade < 0)
         return 0;
@@ -421,7 +428,7 @@ void Cod2x_StripChatName(char *line)
 {
     char *end = strstr(line, "^7: "), *out = line, code;
     const char *p = line;
-    if (!end)
+    if (!Cod2x_TextEnabled() || !end)
         return;
     if (p[0] == '^' && Cod2x_TextCode(p, &code) == 2) {
         out += 2;
@@ -505,7 +512,7 @@ const char *Cod2x_ResolveDoubleColors(const char *text, char *buffer, size_t siz
     const char *p;
     size_t length = 0;
     int changed = 0;
-    if (!text || !strstr(text, "^^"))
+    if (!Cod2x_TextEnabled() || !text || !strstr(text, "^^"))
         return text;
     for (p = text; *p;) {
         if (length + 2 >= size)

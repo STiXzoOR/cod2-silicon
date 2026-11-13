@@ -462,9 +462,13 @@ void CG_SetNextSnap(snapshot_t *snap_param)
                             /* CoD2x text.cpp: both names without codes. */
                             char oldName[64], newName[64];
                             const char *msg;
-                            SV_Cod2xStripTextCodes(ciName, oldName, sizeof(oldName));
-                            SV_Cod2xStripTextCodes(clName, newName, sizeof(newName));
-                            msg = va((const char *)"%s^7 %s %s", oldName, translated, newName);
+                            if (Cod2x_TextEnabled()) {
+                                SV_Cod2xStripTextCodes(ciName, oldName, sizeof(oldName));
+                                SV_Cod2xStripTextCodes(clName, newName, sizeof(newName));
+                                msg = va((const char *)"%s^7 %s %s", oldName, translated, newName);
+                            } else {
+                                msg = va((const char *)"%s^7 %s %s", ciName, translated, clName);
+                            }
 #else
                             const char *msg = va((const char *)"%s^7 %s %s", ciName, translated, clName);
 #endif

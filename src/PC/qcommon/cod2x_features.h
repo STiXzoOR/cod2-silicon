@@ -11,7 +11,8 @@ void Cod2x_FeaturesClientState(int state);
 /* cod2x_vmix.c */
 void Cod2x_VmixInit(void);
 void Cod2x_VmixFrame(int clientState);
-/* CoD2x text codes: player names are coloured only on the scoreboard. */
+/* Extended codes and name rules apply in menus and on revision-7 servers. */
+int Cod2x_TextEnabled(void);
 int Cod2x_TextCode(const char *p, char *code);
 int Cod2x_IsStyleCode(char code);
 int Cod2x_ConsoleCode(const char *text, int *color);

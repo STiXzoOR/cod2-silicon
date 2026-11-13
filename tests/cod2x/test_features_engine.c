@@ -103,7 +103,8 @@ char *Cmd_Argv(int i) { return i < argc ? argv[i] : ""; }
 void Com_Printf(const char *format, ...) { (void)format; }
 void Com_Error(int code, const char *format, ...) { (void)code; (void)format; }
 char *Info_ValueForKey(const char *s, const char *key) { (void)s; (void)key; return (char *)""; }
-int Cod2x_GameVersion(void) { return 6; }
+static int serverRevision = 6;
+int Cod2x_GameVersion(void) { return serverRevision; }
 void Cod2x_PoseInit(void) {}
 const char *Cod2x_IwdRequiredName(void) { return ""; }
 /* vMix and the update check's links to the client, the platform and the network: none here. */
@@ -179,6 +180,26 @@ int main(void)
         Cod2x_FeaturesClientState(CA_ACTIVE);
         Cod2x_FeaturesClientState(CA_DISCONNECTED);
         assert(game->current.integer == 0 && !game->modified);
+    }
+    {
+        char code, line[80], buffer[80];
+        int revision;
+        const char *doubleName = "^^11Alice";
+        for (revision = 0; revision <= 7; revision += revision ? 1 : 6) {
+            Cod2x_FeaturesClientState(CA_ACTIVE);
+            serverRevision = revision;
+            assert(Cod2x_TextCode("#1", &code) == (revision >= 7 ? 2 : 0));
+            assert(Cod2x_TextCode("$5", &code) == (revision >= 7 ? 2 : 0));
+            assert(Cod2x_TextCode("^1", &code) == 2);
+            strcpy(line, "^2^1Alice^7: Rank #1");
+            Cod2x_StripChatName(line);
+            assert(!strcmp(line, revision >= 7 ? "^2Alice^7: Rank #1" : "^2^1Alice^7: Rank #1"));
+            assert(!strcmp(Cod2x_ResolveDoubleColors(doubleName, buffer, sizeof(buffer)),
+                           revision >= 7 ? "^1Alice" : doubleName));
+        }
+        serverRevision = 0;
+        Cod2x_FeaturesClientState(CA_DISCONNECTED);
+        assert(Cod2x_TextCode("#1", &code) == 2);
     }
     puts("cod2x client feature command integration: passed");
     return 0;
