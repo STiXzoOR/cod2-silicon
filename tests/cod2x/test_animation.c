@@ -79,7 +79,7 @@ int main(void)
     state = BG_Cod2xState(&ci);
     assert(ci.legs.animationTime == 200 && state->stance == 1 && state->stanceDuration == 200);
     BG_Cod2xBlendTime(&ci, &ci.legs, &crouch, &prone);
-    assert(ci.legs.animationTime == 232 && state->stance == 2 && state->stanceDuration == 400);
+    assert(ci.legs.animationTime == 231 && state->stance == 2 && state->stanceDuration == 400);
     BG_Cod2xBlendTime(&ci, &ci.legs, &prone, &crouch);
     assert(ci.legs.animationTime == 400 && state->stance == 3);
     BG_Cod2xBlendTime(&ci, &ci.legs, &crouch, &stand);

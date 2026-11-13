@@ -102,7 +102,8 @@ static void BG_Cod2xBlendTime(clientInfo_t *ci, lerpFrame_t *lf,
     lf->animationTime = next ? next->initialLerp : 200;
     if (transition) {
         int duration = (transition == 1 || transition == 4) ? 200 : 400;
-        lf->animationTime = transition == 2 ? 232 : duration;
+        /* Upstream truncates its binary64 400 * 0.58 result to 231 ms. */
+        lf->animationTime = transition == 2 ? 231 : duration;
         if (state) {
             state->stance = transition;
             state->stanceStart = bgs->time;
