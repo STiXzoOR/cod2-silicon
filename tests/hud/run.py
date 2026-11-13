@@ -41,6 +41,22 @@ def compile_entry(relative):
     return flags
 
 
+def function(source, name):
+    match = re.search(r'^[^\n]*\b' + name + r'\([^;{]*\)\s*\{', source, re.M)
+    if not match:
+        raise ValueError('Missing production function ' + name)
+    depth = 0
+    for token in re.finditer(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|/\*.*?\*/|//[^\n]*|[{}]',
+                             source[match.start():], re.S):
+        if token[0] == '{':
+            depth += 1
+        elif token[0] == '}':
+            depth -= 1
+            if not depth:
+                return source[match.start():match.start() + token.end()] + '\n'
+    raise ValueError('Unterminated production function ' + name)
+
+
 path = 'src/PC/cgame_mp/cg_draw_mp.c'
 source = (subprocess.check_output(['git', 'show', args.baseline + ':' + path], cwd=ROOT)
           if args.baseline else (ROOT / path).read_bytes())
@@ -56,35 +72,33 @@ if not args.baseline:
 adapter_path = 'src/PC/client_mp/cl_cgame_mp.c'
 active = subprocess.run([*compile_entry(adapter_path), '-E', '-P', str(ROOT / adapter_path)],
                         cwd=ROOT, check=True, capture_output=True, text=True).stdout
-match = re.search(r'^void CL_DrawStretchPic\([^;{]*\)\s*\{', active, re.M)
-if not match:
-    raise ValueError('Missing production CL_DrawStretchPic')
-depth = 0
-for token in re.finditer(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|[{}]', active[match.start():]):
-    if token[0] == '{':
-        depth += 1
-    elif token[0] == '}':
-        depth -= 1
-        if not depth:
-            (output / 'draw_adapter.h').write_text(active[match.start():match.start() + token.end()] + '\n')
-            break
-else:
-    raise ValueError('Unterminated production CL_DrawStretchPic')
+(output / 'draw_adapter.h').write_text(function(active, 'CL_DrawStretchPic'))
+
+# CG_DrawFollow uses the production CoD2x name sanitizer. Keep its real
+# implementation in the fixture instead of replacing it with a test stub.
+text_codes = (ROOT / 'src/PC/server_mp/cod2x_server.c').read_text()
+text_codes_path = output / 'text_codes.c'
+text_codes_path.write_text('#include <stddef.h>\n' + ''.join(
+    function(text_codes, name) for name in ('SV_Cod2xIsStyleCode', 'SV_Cod2xStripTextCodes')))
 
 sanitize = ['-UNDEBUG', '-fsanitize=address,undefined', '-fno-sanitize-recover=all',
             '-fno-omit-frame-pointer', '-ffunction-sections', '-fdata-sections']
 flags = [flag for flag in flags if flag != '-DNDEBUG']
 fixture = output / 'hud.o'
 placement = output / 'placement.o'
+text_codes_object = output / 'text_codes.o'
 subprocess.run([*flags, *sanitize, '-I' + str(output), '-c', str(ROOT / 'tests/hud/hud.c'),
                 '-o', str(fixture)], cwd=ROOT, check=True)
 placement_path = 'src/PC/client_mp/screen_placement_mp.c'
 placement_flags = [flag for flag in compile_entry(placement_path) if flag != '-DNDEBUG']
 subprocess.run([*placement_flags, *sanitize, '-c', str(ROOT / placement_path), '-o', str(placement)],
                cwd=ROOT, check=True)
+subprocess.run([*flags, *sanitize, '-c', str(text_codes_path), '-o', str(text_codes_object)],
+               cwd=ROOT, check=True)
 executable = output / 'hud'
 subprocess.run([flags[0], '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip',
-                str(fixture), str(placement), '-o', str(executable)], cwd=ROOT, check=True)
+                str(fixture), str(placement), str(text_codes_object), '-o', str(executable)],
+               cwd=ROOT, check=True)
 environment = {**os.environ, 'UBSAN_OPTIONS': 'halt_on_error=1'}
 results = []
 logs = []
