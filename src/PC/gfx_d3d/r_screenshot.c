@@ -24,10 +24,13 @@ static byte *cubeShotGlob[6];
 static vec3_t cubemapShotAxis[7][3];
 static int cubeShotGlob;
 #endif
-static int pendingScreenshotType = -1;
-static char pendingScreenshotFilename[256];
-static int pendingScreenshotSilent;
-static int pendingScreenshotDelayFrames;
+typedef struct PendingScreenshot {
+    struct PendingScreenshot *next;
+    GfxScreenshotType type;
+    int silent, delayFrames;
+    char filename[256];
+} PendingScreenshot;
+static PendingScreenshot *pendingScreenshotHead, *pendingScreenshotTail;
 
 #if defined(COD2_X64)
 #define dx ((DxGlobals *)imp_dx)
@@ -1045,40 +1048,22 @@ static void R_CaptureScreenshotNow(GfxScreenshotType type, const char *filename,
 
 void R_CapturePendingScreenshotBeforePresent(void)
 {
-    char filename[256];
-    int type;
-    int silent;
-
-    if (pendingScreenshotType < 0)
-        return;
-
-    if (pendingScreenshotDelayFrames > 0) {
-#if defined(COD2_X64)
-        COD2_NATIVE_TRACE_ONLY(
-#endif
-        ri.Printf(0, "[screenshot-trace] pending delay before present frames=%d file='%s'\n",
-                  pendingScreenshotDelayFrames, pendingScreenshotFilename);
-#if defined(COD2_X64)
-        )
-#endif
-        --pendingScreenshotDelayFrames;
-        return;
+    /* Age every request independently. cl_avidemo submits on every frame, so
+     * later requests must never reset the capture deadline of earlier ones. */
+    for (PendingScreenshot *request = pendingScreenshotHead; request; request = request->next)
+        --request->delayFrames;
+    while (pendingScreenshotHead && pendingScreenshotHead->delayFrames < 0) {
+        PendingScreenshot *request = pendingScreenshotHead;
+        pendingScreenshotHead = request->next;
+        if (!pendingScreenshotHead) pendingScreenshotTail = NULL;
+        R_CaptureScreenshotNow(request->type, request->filename, request->silent);
+        ri.Z_FreeInternal(request);
     }
-
-    type = pendingScreenshotType;
-    silent = pendingScreenshotSilent;
-    I_strncpyz(filename, pendingScreenshotFilename, sizeof(filename));
-    pendingScreenshotType = -1;
-    pendingScreenshotFilename[0] = '\0';
-    pendingScreenshotSilent = 0;
-    pendingScreenshotDelayFrames = 0;
-
-    R_CaptureScreenshotNow( (GfxScreenshotType)(type), filename, silent);
 }
 
 int R_HasPendingScreenshot(void)
 {
-    return pendingScreenshotType >= 0;
+    return pendingScreenshotHead != NULL;
 }
 
 void R_ScreenshotCommand(GfxScreenshotType type)
@@ -1164,10 +1149,16 @@ void R_ScreenshotCommand(GfxScreenshotType type)
         lastNumber++;
     }
 
-    pendingScreenshotType = type;
-    pendingScreenshotSilent = silent;
-    pendingScreenshotDelayFrames = 2;
-    I_strncpyz(pendingScreenshotFilename, filename, sizeof(pendingScreenshotFilename));
+    PendingScreenshot *request = ri.Z_MallocInternal(sizeof(*request));
+    if (!request) return;
+    request->next = NULL;
+    request->type = type;
+    request->silent = silent;
+    request->delayFrames = 2;
+    I_strncpyz(request->filename, filename, sizeof(request->filename));
+    if (pendingScreenshotTail) pendingScreenshotTail->next = request;
+    else pendingScreenshotHead = request;
+    pendingScreenshotTail = request;
 #if defined(COD2_X64)
     COD2_NATIVE_TRACE_ONLY(
 #endif
