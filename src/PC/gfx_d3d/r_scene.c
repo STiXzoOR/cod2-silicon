@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #endif
 #include "common_types.h"
+#include "r_cod2x_xray.h"
 #if defined(COD2_X64)
 #include <stdlib.h>
 #endif
@@ -757,6 +758,9 @@ extern void R_DrawShadowCookies(int viewIndex, const GfxViewParms *view, ShadowC
 #endif
 void R_RenderScene(const refdef_t *refdef)
 {
+#if COD2X_XRAY_RENDER
+    R_AddCmdCod2xXray();
+#endif
     r_globals_t *rg_p = &rg;
     r_global_permanent_t *rgp_p = &rgp;
     void *viewParms;

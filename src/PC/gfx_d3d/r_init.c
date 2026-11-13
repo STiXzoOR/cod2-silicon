@@ -1,5 +1,6 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
+#include "r_cod2x_xray.h"
 #include "imports.h"
 #include "bytematch.h"
 #include "r_cod2x_film.h"
@@ -195,6 +196,9 @@ static void R_ReleaseForShutdownOrReset(void)
 {
 #if COD2X_FILM
     R_Cod2xFilm_Release();
+#if COD2X_XRAY_RENDER
+    R_Cod2xXrayRelease();
+#endif
 #endif
 #if defined(COD2_X64)
     int i, j;

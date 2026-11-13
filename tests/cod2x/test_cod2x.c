@@ -60,7 +60,7 @@ int main(void)
 #endif
     assert(!Cod2x_HwidValid("0123456789abcdef"));
     assert(!Cod2x_HwidValid("g123456789abcdef0123456789abcdef"));
-    snprintf(info, sizeof(info), "\\protocol\\118\\protocol_cod2x\\6\\cl_hwid2\\%s\\challenge\\-2147483647\\qport\\65535", id);
+    snprintf(info, sizeof(info), "\\protocol\\118\\protocol_cod2x\\%d\\cl_hwid2\\%s\\challenge\\-2147483647\\qport\\65535", COD2X_REVISION, id);
     encoded = Cod2x_EncodeConnect(packet, sizeof(packet), info);
     assert(encoded == strlen(info) + 10);
     assert(!strncmp(packet, "connect \"", 9));

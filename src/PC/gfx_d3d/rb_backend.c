@@ -1,5 +1,6 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
+#include "r_cod2x_xray.h"
 #include "imports.h"
 #include "r_cod2x_film.h"
 #if defined(COD2_X64) && defined(__APPLE__)
@@ -577,6 +578,23 @@ static void RB_Cod2xFilmCmd(GfxRenderCommandExecState *execState)
 }
 #endif
 
+#if COD2X_XRAY_RENDER
+static void RB_Cod2xXrayCmd(GfxRenderCommandExecState *state)
+{
+    const GfxCmdCod2xXray *cmd = state->cmd;
+    if (tess.indexCount || tess.optimizedIndexCount) RB_EndSurface();
+    R_Cod2xXraySettings(&cmd->settings);
+    state->cmd = (const byte *)cmd + cmd->header.byteCount;
+}
+static void RB_Cod2xHeadCmd(GfxRenderCommandExecState *state)
+{
+    const GfxCmdCod2xHead *cmd = state->cmd;
+    if (tess.indexCount || tess.optimizedIndexCount) RB_EndSurface();
+    R_Cod2xHeadCommand(cmd->operation, cmd->point);
+    state->cmd = (const byte *)cmd + cmd->header.byteCount;
+}
+#endif
+
 /* Mac table 0x36ace0: only slot 0 is the command-list terminator. */
 void (*const RB_RenderCommandTable[])(GfxRenderCommandExecState *execState) = {
     NULL,
@@ -647,6 +665,10 @@ void (*const RB_RenderCommandTable[])(GfxRenderCommandExecState *execState) = {
     RB_TouchAllImagesCmd,
 #if COD2X_FILM
     RB_Cod2xFilmCmd,
+#endif
+#if COD2X_XRAY_RENDER
+    RB_Cod2xXrayCmd,
+    RB_Cod2xHeadCmd,
 #endif
 };
 
@@ -1753,6 +1775,9 @@ static void RB_RenderDrawSurfList(GfxDrawSurf *drawSurfs, int drawSurfCount,
     float materialTime, materialTimePrev;
     GfxEntity *entities;
 
+#if COD2X_XRAY_RENDER
+    R_Cod2xXrayBegin(drawSurfs, drawSurfCount, techType, order);
+#endif
     COD2_DEBUG_ONLY(rb_rdsl_call_count++;)
 
     backEnd.currentEntity = &backEnd.worldEntity;
@@ -1956,6 +1981,12 @@ have_tech:
     }
 
 check_material:
+#if COD2X_XRAY_RENDER
+    if (entityIndex != entityIndexPrev &&
+        ((entityIndex < 0x7fe && (entities[entityIndex].renderFxFlags & COD2X_XRAY_TAG)) ||
+         (entityIndexPrev < 0x7fe && (entities[entityIndexPrev].renderFxFlags & COD2X_XRAY_TAG))))
+        entityMergable = 0;
+#endif
 
     if (materialPrev == material) {
         if (lightmapPrev == lightmap &&
@@ -2097,6 +2128,9 @@ cleanup:
 
     if (tess.indexCount || tess.optimizedIndexCount)
         RB_EndSurface();
+#if COD2X_XRAY_RENDER
+    R_Cod2xXrayEnd();
+#endif
 
     if (depthRange) {
         RB_SetDepthRange(0.0f, 1.0f);

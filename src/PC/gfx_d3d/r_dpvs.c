@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include "r_cod2x_xray.h"
 extern GfxBackEndData *frontEndDataOut;
 extern refimport_t ri;
 extern GfxScene scene;
@@ -2244,7 +2245,12 @@ static void R_AddWorldSurfacesDpvs_impl(const GfxViewParms *viewParms, int camer
             entity_filter_cells: {
                 GfxWorld *world = rgp.world;
                 mnode_t *bspNodes = world->nodes;
-                int cell = R_FilterEntityIntoCells_r_impl(bspNodes, i, bounds, bounds + 3);
+                int cell;
+#if COD2X_XRAY_RENDER
+                if (ent->renderFxFlags & COD2X_XRAY_TAG) cell = -1;
+                else
+#endif
+                    cell = R_FilterEntityIntoCells_r_impl(bspNodes, i, bounds, bounds + 3);
                 if (cell != -1)
                     continue;
             }

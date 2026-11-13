@@ -48,7 +48,7 @@ extern char *Info_ValueForKey(const char *, const char *);
 static const dvar_t *thirdPersonMode, *debugBullets;
 static const dvar_t *drawSpectatedName, *drawCompass, *compassOffsetX, *compassOffsetY;
 /* The CoD2x release whose client behaviour this implements. */
-#define COD2X_APP_VERSION "1.4.6.8"
+#define COD2X_APP_VERSION COD2X_RELEASE
 
 static const dvar_t *hideServerIp, *messageOffsetX, *messageOffsetY, *messageScale;
 static int ipHidden;
@@ -235,6 +235,10 @@ static void Cod2x_ProcessedList_f(void)
 
 void Cod2x_FeaturesInit(void)
 {
+#ifndef DEDICATED
+    extern void CG_Cod2xSpectatorInit(void);
+    CG_Cod2xSpectatorInit();
+#endif
     CG_Cod2xRadarInit();
     Cod2x_PoseInit();
     Cod2x_VmixInit();
@@ -270,6 +274,12 @@ void Cod2x_FeaturesFrame(int active, int demo)
     (void)active;
     playingDemo = demo;
     CG_Cod2xRadarFrame();
+#ifndef DEDICATED
+    if (!active) {
+        extern void CG_Cod2xSpectatorReset(void);
+        CG_Cod2xSpectatorReset();
+    }
+#endif
 }
 
 static void Cod2x_UpdateFrame(int state);

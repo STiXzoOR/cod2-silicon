@@ -1,5 +1,6 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
+#include "cg_cod2x_spectator.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "PC/qcommon/cod2x_features.h"
 #include <stdlib.h>
@@ -531,6 +532,9 @@ unsigned int CG_DrawCrosshairNames(void)
     int x;
     int y;
 
+#if COD2X_SPECTATOR
+    CG_Cod2xHeadDraw();
+#endif
     if (!cg_drawCrosshairNames->current.enabled) {
         return 0;
     }
@@ -556,6 +560,9 @@ unsigned int CG_DrawCrosshairNames(void)
         cg->crosshairClientTime = cg->time;
     }
 
+#if COD2X_SPECTATOR
+    if (CG_Cod2xHeadHidesName(cg->crosshairClientNum)) return 0;
+#endif
     baseColor = CG_FadeColor(cg->crosshairClientTime, 150, 100);
     if (!baseColor) {
         return 0;

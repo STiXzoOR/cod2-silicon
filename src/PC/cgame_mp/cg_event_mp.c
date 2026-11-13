@@ -506,6 +506,10 @@ static void CG_Obituary(centity_t *cent)
 
 void CG_EntityEvent(centity_t *cent, int event)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    extern void CG_Cod2xHeadEvent(const centity_t *, int);
+    CG_Cod2xHeadEvent(cent, event);
+#endif
 #if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
     if (COD2_NATIVE_TRACE_ENABLED()) Com_Printf("[combat-event] time=%i entity=%i event=%i weapon=%i parm=%i origin=%.3f,%.3f,%.3f\n",
         cg->time, cent->nextState.number, event, cent->nextState.weapon, cent->nextState.eventParm,

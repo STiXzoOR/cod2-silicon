@@ -1,5 +1,6 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
+#include "r_cod2x_xray.h"
 #include "imports.h"
 #include "r_cod2x_film.h"
 #include <stdio.h>
@@ -375,6 +376,23 @@ void R_AddCmdCod2xFilm(const refdef_t *refdef)
     cmd->pass.targetWidth = ((const vidConfig_t *)imp_vidConfig)->width;
     cmd->pass.targetHeight = ((const vidConfig_t *)imp_vidConfig)->height;
     cmd->pass.settings = settings;
+}
+#endif
+
+#if COD2X_XRAY_RENDER
+void R_AddCmdCod2xXray(void)
+{
+    GfxCmdCod2xXray *cmd = R_AllocCmd(sizeof(*cmd), 0, GFX_CMD_COD2X_XRAY);
+    if (cmd) CG_Cod2xSpectatorSettings(&cmd->settings);
+}
+int R_AddCmdCod2xHead(int operation, const float *point)
+{
+    if (operation && (!s_cmdList || (int)sizeof(s_cmdList->cmds) - s_cmdList->usedTotal + s_cmdList->usedCritical - 0x2000 < 0x1000)) return 0;
+    GfxCmdCod2xHead *cmd = R_AllocCmd(sizeof(*cmd), 0, GFX_CMD_COD2X_HEAD);
+    if (!cmd) return 0;
+    cmd->operation = operation;
+    for (int i = 0; i < 3; ++i) cmd->point[i] = point ? point[i] : 0;
+    return 1;
 }
 #endif
 

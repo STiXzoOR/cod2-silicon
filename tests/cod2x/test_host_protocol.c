@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include "PC/qcommon/cod2x.h"
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -153,7 +154,7 @@ static void connect_case(int host, int protocol, int extension, const char *id, 
 
 static void reject_case(int protocol, int extension, const char *id, const char *expected)
 {
-    prepare_connect(6, protocol, extension, id, remote);
+    prepare_connect(COD2X_REVISION, protocol, extension, id, remote);
     SV_DirectConnect(remote);
     Verify(!connects && !strcmp(packet, expected), "CoD2x connect rejection text");
 }
@@ -169,7 +170,7 @@ static void authorization_replies(void)
         {"unexpected", "", "error\nEXE_ERR_BAD_CDKEY", 0},
         {"accept", "KEY_IS_GOOD", "challengeResponse 19", 1}
     };
-    for (int host = 0; host <= 6; host += 6) {
+    for (int host = 0; host <= COD2X_REVISION; host += COD2X_REVISION) {
         for (unsigned i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
             reset(); revision = host;
             svs.authorizeAddress = master;
@@ -183,12 +184,12 @@ static void authorization_replies(void)
             Verify(svs.challenges[5].challenge == (cases[i].retained ? 19 : 0), "denied authorization clears challenge");
             if (!cases[i].retained) {
                 char info[256];
-                snprintf(info, sizeof(info), "\\protocol\\118\\protocol_cod2x\\6\\cl_hwid2\\%s\\challenge\\19", hwid);
+                snprintf(info, sizeof(info), "\\protocol\\118\\protocol_cod2x\\%d\\cl_hwid2\\%s\\challenge\\19", COD2X_REVISION, hwid);
                 argc = 2; argv[0] = "connect"; argv[1] = info;
                 packet[0] = 0;
                 SV_DirectConnect(remote);
 #if defined(COD2_CODX) && COD2_CODX
-                if (host == 6)
+                if (host == COD2X_REVISION)
                     Verify(!connects && !packet[0], "authorization denial cannot progress to ClientConnect");
                 else
 #endif
@@ -196,7 +197,7 @@ static void authorization_replies(void)
             }
             if (cases[i].retained) {
 #if defined(COD2_CODX) && COD2_CODX
-                Verify(svs.challenges[5].guid == (host == 6 ? -2033168971 : 123), "late authorization cannot overwrite host HWID");
+                Verify(svs.challenges[5].guid == (host == COD2X_REVISION ? -2033168971 : 123), "late authorization cannot overwrite host HWID");
 #else
                 Verify(svs.challenges[5].guid == 123, "stock authorized GUID remains original");
 #endif
@@ -205,18 +206,18 @@ static void authorization_replies(void)
     }
 #if defined(COD2_CODX) && COD2_CODX
     /* An unknown denial gets no answer; sv_cracked turns every reply into an accept. */
-    reset(); revision = 6; svs.authorizeAddress = master;
+    reset(); revision = COD2X_REVISION; svs.authorizeAddress = master;
     svs.challenges[5].adr = remote; svs.challenges[5].challenge = 19;
     argc = 5; argv[0] = "ipAuthorize"; argv[1] = "19"; argv[2] = "deny"; argv[3] = "SOMETHING_ELSE"; argv[4] = "123";
     SV_AuthorizeIpPacket(master);
     Verify(!packet[0] && svs.challenges[5].challenge == 0, "unknown denial clears silently");
-    reset(); revision = 6; svs.authorizeAddress = master; cracked = 1;
+    reset(); revision = COD2X_REVISION; svs.authorizeAddress = master; cracked = 1;
     svs.challenges[5].adr = remote; svs.challenges[5].challenge = 19;
     argc = 5; argv[0] = "ipAuthorize"; argv[1] = "19"; argv[2] = "deny"; argv[3] = "BAD_CDKEY"; argv[4] = "123";
     SV_AuthorizeIpPacket(master);
     Verify(!strcmp(packet, "challengeResponse 19"), "sv_cracked accepts a denied key");
 #endif
-    reset(); revision = 6; svs.authorizeAddress = master;
+    reset(); revision = COD2X_REVISION; svs.authorizeAddress = master;
     svs.challenges[5].adr = remote; svs.challenges[5].challenge = 19;
     argc = 5; argv[0] = "ipAuthorize"; argv[1] = "19"; argv[2] = "accept"; argv[3] = "KEY_IS_GOOD"; argv[4] = "123";
     SV_AuthorizeIpPacket(remote);
@@ -228,14 +229,14 @@ static void authorization_replies(void)
 
 static void discovery(void)
 {
-    for (int host = 0; host <= 6; host += 6) {
+    for (int host = 0; host <= COD2X_REVISION; host += COD2X_REVISION) {
         reset(); revision=host; argc=2; argv[0]="getinfo"; argv[1]="nonce";
         void (*responses[])(netadr_t) = {SVC_Info, SVC_Status, SVC_GameCompleteStatus};
         for (unsigned i = 0; i < sizeof(responses) / sizeof(responses[0]); ++i) {
             /* getinfo keeps the stock 118, as in CoD2x; the others carry the protocol dvar. */
             const char *expected = "118";
 #if defined(COD2_CODX) && COD2_CODX
-            if (host == 6 && responses[i] != SVC_Info) expected = "120";
+            if (host == COD2X_REVISION && responses[i] != SVC_Info) expected = "120";
 #endif
             responses[i](remote);
             const char *info = strchr(packet, '\n');
@@ -259,7 +260,7 @@ static void admission_bans(void)
         netadr_t from = remote;
         if (local) from.type = NA_LOOPBACK;
         for (int kind = 1; kind <= 2; ++kind) {
-            prepare_connect(6,118,6,hwid,from);
+            prepare_connect(COD2X_REVISION,118,COD2X_REVISION,hwid,from);
             if (kind == 1) banned = 1;
             else { svs.tempBans[0].guid = -2033168971; svs.tempBans[0].banTime = 500; }
             SV_DirectConnect(from);
@@ -268,11 +269,11 @@ static void admission_bans(void)
             if (!local) Verify(svs.challenges[5].challenge == 0, "banned remote challenge cleared");
         }
     }
-    prepare_connect(6,118,6,hwid,remote);
+    prepare_connect(COD2X_REVISION,118,COD2X_REVISION,hwid,remote);
     svs.tempBans[0].guid = -2033168971; svs.tempBans[0].banTime = -20000;
     SV_DirectConnect(remote);
     Verify(connects == 1, "expired HWID temp ban permits connection");
-    prepare_connect(6,118,6,hwid,remote);
+    prepare_connect(COD2X_REVISION,118,COD2X_REVISION,hwid,remote);
     svs.challenges[5].challenge = 20;
     SV_DirectConnect(remote);
     Verify(!connects && svs.challenges[5].guid == 123 && !packet[0], "invalid challenge is ignored without a reply");
@@ -286,31 +287,32 @@ int main(void)
     admission_bans();
     connect_case(0,118,0,"",remote,1,123);
 #if defined(COD2_CODX) && COD2_CODX
-    connect_case(6,118,0,"",remote,0,0);
-    connect_case(6,118,5,hwid,remote,0,0);
-    connect_case(6,118,6,"short",remote,0,0);
-    connect_case(6,118,6,"0123456789abcdef0123456789abcde",remote,0,0);
-    connect_case(6,118,6,"0123456789abcdef0123456789abcdef0",remote,0,0);
-    connect_case(6,120,6,hwid,remote,0,0);
-    connect_case(6,118,6,hwid,remote,1,-2033168971);
-    connect_case(6,118,7,hwid,remote,1,-2033168971);
-    connect_case(6,118,6,"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",remote,1,1032264773);
-    connect_case(6,118,6,"00000000000000000000000000000000",remote,1,-255302587);
+    connect_case(COD2X_REVISION,118,0,"",remote,0,0);
+    connect_case(COD2X_REVISION,118,5,hwid,remote,0,0);
+    connect_case(COD2X_REVISION,118,COD2X_REVISION,"short",remote,0,0);
+    connect_case(COD2X_REVISION,118,COD2X_REVISION,"0123456789abcdef0123456789abcde",remote,0,0);
+    connect_case(COD2X_REVISION,118,COD2X_REVISION,"0123456789abcdef0123456789abcdef0",remote,0,0);
+    connect_case(COD2X_REVISION,120,COD2X_REVISION,hwid,remote,0,0);
+    connect_case(COD2X_REVISION,118,COD2X_REVISION,hwid,remote,1,-2033168971);
+    connect_case(COD2X_REVISION,118,COD2X_REVISION+1,hwid,remote,1,-2033168971);
+    connect_case(COD2X_REVISION,118,6,hwid,remote,0,0);
+    connect_case(COD2X_REVISION,118,COD2X_REVISION,"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",remote,1,1032264773);
+    connect_case(COD2X_REVISION,118,COD2X_REVISION,"00000000000000000000000000000000",remote,1,-255302587);
     /* Independent FNV-1a zero vector: 28 'a' bytes, then 7c a6 75 82. */
-    connect_case(6,118,6,"aaaaaaaaaaaaaaaaaaaaaaaaaaaa\x7c\xa6\x75\x82",remote,1,1);
+    connect_case(COD2X_REVISION,118,COD2X_REVISION,"aaaaaaaaaaaaaaaaaaaaaaaaaaaa\x7c\xa6\x75\x82",remote,1,1);
     netadr_t local = remote;
     local.type = NA_LOOPBACK;
-    connect_case(6,118,6,hwid,local,1,0);
+    connect_case(COD2X_REVISION,118,COD2X_REVISION,hwid,local,1,0);
     local.type = NA_BOT;
-    connect_case(6,118,0,"",local,1,0);
-    reject_case(115,6,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" "1.4.6.8\n\nYour version is 1.0\nYou need version 1.3 and CoD2x\n");
-    reject_case(117,6,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" "1.4.6.8\n\nYour version is 1.2\nYou need version 1.3 and CoD2x\n");
-    reject_case(120,6,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" "1.4.6.8\n\nYour CoD2 version is unknown\n");
-    reject_case(118,0,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" "1.4.6.8\n\nDownload CoD2x at:\nhttp://cod2x.me/\n");
-    reject_case(118,5,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" "1.4.6.8\n\nUpdate CoD2x to version 1.4.6.8 or above\n");
-    reject_case(118,6,"short","error\n\x15You have invalid HWID2");
+    connect_case(COD2X_REVISION,118,0,"",local,1,0);
+    reject_case(115,COD2X_REVISION,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" COD2X_RELEASE "\n\nYour version is 1.0\nYou need version 1.3 and CoD2x\n");
+    reject_case(117,COD2X_REVISION,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" COD2X_RELEASE "\n\nYour version is 1.2\nYou need version 1.3 and CoD2x\n");
+    reject_case(120,COD2X_REVISION,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" COD2X_RELEASE "\n\nYour CoD2 version is unknown\n");
+    reject_case(118,0,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" COD2X_RELEASE "\n\nDownload CoD2x at:\nhttp://cod2x.me/\n");
+    reject_case(118,6,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" COD2X_RELEASE "\n\nUpdate CoD2x to version " COD2X_RELEASE " or above\n");
+    reject_case(118,COD2X_REVISION,"short","error\n\x15You have invalid HWID2");
 #else
-    connect_case(6,118,0,"",remote,1,123);
+    connect_case(COD2X_REVISION,118,0,"",remote,1,123);
 #endif
     discovery();
     printf("host admission/auth/discovery: %d failures\n",failures);
