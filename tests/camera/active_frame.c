@@ -110,6 +110,7 @@ int rand(void)
 }
 #if defined(COD2_CODX) && COD2_CODX
 int Cod2x_ThirdPersonMode(void) { return third_person_mode; }
+int Cod2x_GameVersion(void) { return 0; }
 #endif
 
 static void Near(float actual, float expected)
