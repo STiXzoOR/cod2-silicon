@@ -473,6 +473,7 @@ typedef struct {
     struct DeviceStreamsNative *streamState;
     GLenum glSrcBlend, glDestBlend, glSrcBlendAlpha, glDestBlendAlpha;
     GLenum glStencilFunc;
+    DWORD twoSidedStencil, ccwStencilFail, ccwStencilZFail, ccwStencilPass, ccwStencilFunc;
     DWORD alphaBlendValue, ditherValue;
     DWORD ambientMaterialSource, diffuseMaterialSource;
     unsigned char blendStateChanged;
@@ -3478,6 +3479,11 @@ HRESULT CDirect3DDevice_GetRenderState(const CDirect3DDevice *_this, D3DRENDERST
     case D3DRS_STENCILENABLE:
         *pValue = dev->stencilEnable;
         break;
+    case D3DRS_TWOSIDEDSTENCILMODE: *pValue = dev->twoSidedStencil; break;
+    case D3DRS_CCW_STENCILFAIL: *pValue = dev->ccwStencilFail; break;
+    case D3DRS_CCW_STENCILZFAIL: *pValue = dev->ccwStencilZFail; break;
+    case D3DRS_CCW_STENCILPASS: *pValue = dev->ccwStencilPass; break;
+    case D3DRS_CCW_STENCILFUNC: *pValue = dev->ccwStencilFunc; break;
     case D3DRS_STENCILWRITEMASK:
         *pValue = dev->stencilWriteMask;
         break;

@@ -342,6 +342,34 @@ int main(int argc, char **argv)
         Set(&dev, D3DRS_SEPARATEALPHABLENDENABLE, 0);
         GLint equation; glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &equation);
         assert(equation == GL_FUNC_ADD);
+    } else if (!strcmp(test, "two-sided")) {
+        glDisable(GL_VERTEX_PROGRAM_ARB); glDisable(GL_FRAGMENT_PROGRAM_ARB);
+        glDisable(GL_DEPTH_TEST);
+        glMatrixMode(GL_PROJECTION); glLoadIdentity();
+        glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+        Set(&dev, D3DRS_STENCILENABLE, 1);
+        Set(&dev, D3DRS_STENCILFUNC, 8);
+        Set(&dev, D3DRS_STENCILPASS, 3); /* replace */
+        Set(&dev, D3DRS_STENCILREF, 1);
+        Set(&dev, D3DRS_STENCILWRITEMASK, 255);
+        Set(&dev, D3DRS_CCW_STENCILFUNC, 8);
+        Set(&dev, D3DRS_CCW_STENCILPASS, 2); /* zero */
+        Set(&dev, D3DRS_TWOSIDEDSTENCILMODE, 1);
+        for (int cull = 2; cull <= 3; ++cull) {
+            Set(&dev, D3DRS_CULLMODE, cull); glDisable(GL_CULL_FACE);
+            glClearStencil(2); glClear(GL_STENCIL_BUFFER_BIT);
+            glBegin(GL_TRIANGLES);
+            glVertex2f(-.9f,-.8f); glVertex2f(-.1f,-.8f); glVertex2f(-.5f,.8f);
+            glVertex2f(.1f,-.8f); glVertex2f(.5f,.8f); glVertex2f(.9f,-.8f);
+            glEnd();
+            byte ccw, cw;
+            glReadPixels(8,12,1,1,GL_STENCIL_INDEX,GL_UNSIGNED_BYTE,&ccw);
+            glReadPixels(24,12,1,1,GL_STENCIL_INDEX,GL_UNSIGNED_BYTE,&cw);
+            fprintf(stderr,"stencil cull=%d CCW=%u CW=%u expected=0,1\n",cull,ccw,cw);
+            assert(ccw == 0 && cw == 1);
+        }
+        Set(&dev, D3DRS_TWOSIDEDSTENCILMODE, 0);
+        GLint op; glGetIntegerv(GL_STENCIL_BACK_PASS_DEPTH_PASS,&op); assert(op == GL_REPLACE);
     } else if (!strcmp(test, "initial")) {
         assert(dev.stencilWriteMask == 0xffffffffu);
         Draw(&dev);

@@ -5,6 +5,9 @@ static void DeviceRenderState_Init(DeviceImpl *dev)
     dev->glSrcBlend = dev->glSrcBlendAlpha = 1;
     dev->glDestBlend = dev->glDestBlendAlpha = 0;
     dev->glStencilFunc = 0x207;
+    dev->twoSidedStencil = 0;
+    dev->ccwStencilFail = dev->ccwStencilZFail = dev->ccwStencilPass = 1;
+    dev->ccwStencilFunc = 8;
     dev->alphaBlendValue = dev->ditherValue = 0;
     dev->ambientMaterialSource = 0;
     dev->diffuseMaterialSource = 1;
@@ -87,16 +90,37 @@ static GLenum DeviceRenderState_StencilOp(DWORD value)
     return value <= 8 ? operations[value] : 0;
 }
 
+static GLenum DeviceRenderState_CCWFace(void)
+{
+    /* D3D names geometric winding; GL names faces relative to glFrontFace,
+     * which this shim changes with CULLMODE. */
+    GLint winding;
+    glGetIntegerv(GL_FRONT_FACE, &winding);
+    return winding == GL_CCW ? GL_FRONT : GL_BACK;
+}
+
 static void DeviceRenderState_Stencil(DeviceImpl *dev)
 {
-    glStencilOp(DeviceRenderState_StencilOp(dev->stencilFail),
-                DeviceRenderState_StencilOp(dev->stencilZFail),
-                DeviceRenderState_StencilOp(dev->stencilPass));
+    GLenum normalFace = GL_FRONT_AND_BACK;
+    if (dev->twoSidedStencil) {
+        GLenum ccwFace = DeviceRenderState_CCWFace();
+        glStencilOpSeparate(ccwFace, DeviceRenderState_StencilOp(dev->ccwStencilFail),
+            DeviceRenderState_StencilOp(dev->ccwStencilZFail), DeviceRenderState_StencilOp(dev->ccwStencilPass));
+        normalFace = ccwFace == GL_FRONT ? GL_BACK : GL_FRONT;
+    }
+    glStencilOpSeparate(normalFace, DeviceRenderState_StencilOp(dev->stencilFail),
+        DeviceRenderState_StencilOp(dev->stencilZFail), DeviceRenderState_StencilOp(dev->stencilPass));
 }
 
 static void DeviceRenderState_StencilFunc(DeviceImpl *dev)
 {
-    glStencilFunc(dev->glStencilFunc, dev->stencilRef, dev->stencilMask);
+    GLenum normalFace = GL_FRONT_AND_BACK;
+    if (dev->twoSidedStencil) {
+        GLenum ccwFace = DeviceRenderState_CCWFace();
+        glStencilFuncSeparate(ccwFace, 0x1ff + dev->ccwStencilFunc, dev->stencilRef, dev->stencilMask);
+        normalFace = ccwFace == GL_FRONT ? GL_BACK : GL_FRONT;
+    }
+    glStencilFuncSeparate(normalFace, dev->glStencilFunc, dev->stencilRef, dev->stencilMask);
 }
 
 static void DeviceRenderState_MaterialSource(DWORD value, DWORD other, GLenum mode)
@@ -175,6 +199,10 @@ static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, 
             else if (value == 2 || value == 3) {
                 glEnable(0xb44);
                 glFrontFace(value == 2 ? 0x901 : 0x900);
+                if (dev->twoSidedStencil) {
+                    DeviceRenderState_Stencil(dev);
+                    DeviceRenderState_StencilFunc(dev);
+                }
             }
         }
         break;
@@ -273,6 +301,23 @@ static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, 
             dev->stencilWriteMask = value & 255;
             if (!dev->depthStencilDetached) glStencilMask(dev->stencilWriteMask);
         }
+        break;
+    case D3DRS_TWOSIDEDSTENCILMODE:
+        dev->twoSidedStencil = value;
+        DeviceRenderState_Stencil(dev);
+        DeviceRenderState_StencilFunc(dev);
+        break;
+    case D3DRS_CCW_STENCILFAIL:
+    case D3DRS_CCW_STENCILZFAIL:
+    case D3DRS_CCW_STENCILPASS:
+        if (state == D3DRS_CCW_STENCILFAIL) dev->ccwStencilFail = value;
+        else if (state == D3DRS_CCW_STENCILZFAIL) dev->ccwStencilZFail = value;
+        else dev->ccwStencilPass = value;
+        DeviceRenderState_Stencil(dev);
+        break;
+    case D3DRS_CCW_STENCILFUNC:
+        dev->ccwStencilFunc = value;
+        DeviceRenderState_StencilFunc(dev);
         break;
     case D3DRS_TEXTUREFACTOR: {
         GLfloat color[4];
