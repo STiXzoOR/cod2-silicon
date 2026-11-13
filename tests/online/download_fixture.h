@@ -102,6 +102,17 @@ int CL_ClearStaticDownload(void) { return 0; }
 #endif
 void CL_NextDownload(void) { ++nextDownloads; event("next"); }
 #if defined(COD2_CODX) && COD2_CODX
+/* CL_BeginDownload asks the service boundary for a direct zPAM address first. These fixtures
+ * cover ordinary server redirects, so the boundary declines and the lookup is counted. */
+static dvar_t wwwDownload = { .current.enabled = 1 };
+static const dvar_t *cl_wwwDownload = &wwwDownload;
+static int directLookups;
+int Cod2x_ZpamDirectURL(const char *name, int enabled, char *url, size_t size)
+{
+    assert(!strcmp(name, "main/map.iwd") && enabled);
+    (void)url; (void)size; ++directLookups;
+    return 0;
+}
 int Cod2x_ZpamDirectActive(void) { return directActive; }
 const char *Cod2x_ZpamDirectRemote(void) { return "main/remote.iwd"; }
 void Cod2x_ZpamDirectEnd(int cancelled)
