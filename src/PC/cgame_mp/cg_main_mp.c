@@ -686,7 +686,11 @@ static inline __attribute__((always_inline)) void CG_PrintAliasSubtitle(const sn
         subtitleWidth = cg_subtitleWidthStandard->current.integer;
     }
 
+#if defined(COD2_APPLE_SDK)
+    minMsec = (int)__builtin_rintf(cg_subtitleMinTime->current.value * 1000.0f);
+#else
     minMsec = (int)(cg_subtitleMinTime->current.value * 1000.0f + 0.5f);
+#endif
     if (minMsec < msec) {
         minMsec = msec;
     }

@@ -208,7 +208,11 @@ static void CG_ShellShock_f(void)
     CG_SetShellShockParmsFromDvars( (shellshock_parms_t *)((byte *)cgs->shellshockParms));
 
     cg->testShock.time = cg->time;
+#if defined(COD2_APPLE_SDK)
+    cg->testShock.duration = (int)__builtin_rintf((float)duration * 1000.0f);
+#else
     cg->testShock.duration = (int)floorf((float)duration * 1000.0f + 0.5f);
+#endif
 }
 
 static void CG_ShellShock_Load_f(void)

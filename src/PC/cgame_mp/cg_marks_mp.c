@@ -35,7 +35,11 @@ static inline __attribute__((always_inline)) unsigned char ColorFloatToByte(floa
 #if defined(COD2_X64)
     /* Mac 0x17c1aa: CVTTSS2SI gives INT_MIN for NaN and out-of-range input,
      * and the wrapping subtraction at 0x17c1b4 then selects 255. */
+#if defined(COD2_APPLE_SDK)
+    float rounded = __builtin_rintf(f * 255.0f);
+#else
     float rounded = floorf(f * 255.0f + 0.5f);
+#endif
     int val = rounded >= -2147483648.0f && rounded < 2147483648.0f
         ? (int)rounded : (-2147483647 - 1);
     if (!(((unsigned int)val - 255u) & 0x80000000u))
