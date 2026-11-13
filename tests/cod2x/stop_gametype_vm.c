@@ -75,6 +75,9 @@ void Com_DPrintf(const char *fmt, ...) { (void)fmt; }
 void Com_Error(errorParm_t code, const char *fmt, ...);
 static errorParm_t errorcode;
 static char com_errorMessage[4096];
+#if defined(COD2_CODX)
+const void *com_errorCaller;
+#endif
 qboolean com_errorEntered, com_fixedConsolePosition;
 static jmp_buf recoverableDrop;
 static clientStatic_t fixtureCls;
