@@ -167,6 +167,22 @@ static int Com_GetConfigureDvarNames(const char **text, char *dvarNames);
 static void Com_GetConfigureDvarValues(int dvarCount, const char **text, char *dvarValues);
 static void Com_SetConfigureDvars(int dvarCount, const char *dvarNames, const char *dvarValues);
 static void Com_WriteConfigToFile(const char *filename);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static void Com_WriteConfigOnChange(const char *filename)
+{
+    extern const dvar_t *Dvar_FindVar(const char *);
+    const dvar_t *writeConfig = Dvar_FindVar("com_writeConfig");
+    static int wasEnabled;
+    if (writeConfig && !writeConfig->current.enabled) {
+        if (!wasEnabled) return;
+        wasEnabled = 0; /* Persist the switch itself once. */
+    } else {
+        wasEnabled = 1;
+    }
+    Com_WriteConfigToFile(filename);
+}
+#endif
+
 void Com_WriteConfig_f(void);
 float Com_GetTimescaleForSnd(void);
 void Com_Close(void);
@@ -833,17 +849,6 @@ const char *Com_Cod2xErrorMessage(void)
 static void Com_WriteConfigToFile(const char *filename)
 {
     int f;
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    extern const dvar_t *Dvar_FindVar(const char *);
-    const dvar_t *writeConfig = Dvar_FindVar("com_writeConfig");
-    static int wasEnabled;
-    if (writeConfig && !writeConfig->current.enabled) {
-        if (!wasEnabled) return;
-        wasEnabled = 0; /* Persist the switch itself once. */
-    } else {
-        wasEnabled = 1;
-    }
-#endif
 
     f = FS_FOpenFileWrite(filename);
     if (!f) {
@@ -2099,12 +2104,20 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
         dvar_modifiedFlags &= ~1;
 #if COD2_APPLE_SDK && defined(DEDICATED)
         /* Linux 1.3 Com_WriteConfiguration: one fixed file, no profile. */
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        Com_WriteConfigOnChange("config_mp_server.cfg");
+#else
         Com_WriteConfigToFile("config_mp_server.cfg");
+#endif
 #else
         if (Com_HasPlayerProfile()) {
             char path[64];
             Com_BuildPlayerProfilePath(path, 64, "config_mp.cfg");
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            Com_WriteConfigOnChange(path);
+#else
             Com_WriteConfigToFile(path);
+#endif
         }
 #endif
     }
