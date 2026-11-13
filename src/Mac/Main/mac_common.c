@@ -199,7 +199,11 @@ char **Sys_ListFiles(const char *directory, const char *extension, const char *f
     }
 
     while ((d = readdir(fdir)) != NULL) {
+#if defined(COD2_X64)
+        if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
+#else
         if (d->d_name[0] == '.')
+#endif
             continue;
 
         Com_sprintf(search, 256, "%s/%s", directory, d->d_name);
@@ -226,6 +230,12 @@ char **Sys_ListFiles(const char *directory, const char *extension, const char *f
         if (extension[0]) {
             nameLen = strlen(d->d_name);
             extLen = strlen(extension);
+#if defined(COD2_X64)
+            /* Windows Sys_ListFiles searches *.<extension>. A suffix alone
+             * is not an extension, and dot-prefixed archives are ordinary files. */
+            if (extension[0] != '.' && (nameLen <= extLen || d->d_name[nameLen - extLen - 1] != '.'))
+                continue;
+#endif
             if (nameLen < extLen)
                 continue;
             if (I_stricmp(d->d_name + nameLen - extLen, extension) != 0)

@@ -175,6 +175,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   recovery choice. A normal exit clears the recovery marker.
 - File loading follows Windows archive/search-path priority. Pure servers
   reject loose string tables and RoQ files outside localized search paths.
+- Archive discovery accepts dot-prefixed `.iwd` files and rejects filenames
+  that only end in `iwd` without the extension separator.
 - Wheel messages change weapons once each, including high-resolution scrolling,
   as in Windows 1.3.
 - Opening chat in a window keeps mouse-look active. Original 1.3 windowed
