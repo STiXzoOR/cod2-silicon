@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include "PC/gfx_d3d/r_log.h"
 #include "Mac/DirectX_9/lp64_buffers.h"
 #include <assert.h>
 #include <math.h>
@@ -10,6 +11,9 @@ DxGlobals dx;
 static DxGlobals *const dx_g = &dx;
 DxState dxState;
 int alwaysfails;
+int R_LogEnabled(void) { return 0; }
+void R_LogPrintf(const char *format, ...) { (void)format; abort(); }
+extern int R_RendererRandom(void);
 volatile int g_lastdraw[6];
 static materialCommands_t tess;
 static r_backEndGlobals_t backEnd;

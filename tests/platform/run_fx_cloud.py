@@ -40,7 +40,8 @@ with tempfile.TemporaryDirectory(prefix='ws15-fx-cloud-') as tmp:
         '-DCOD2_X64=1', '-fsanitize=address,undefined',
         '-Wno-typedef-redefinition', '-Wno-duplicate-decl-specifier',
         '-Isrc', '-Isrc/headers', '-I' + tmp, 'tests/platform/macos_fx_cloud.c',
-        'src/PC/universal/com_math.c', '-Wl,-dead_strip', '-o', str(out / 'fx_cloud')
+        'src/PC/universal/com_math.c', 'src/PC/gfx_d3d/r_water_load_obj.c',
+        '-Wl,-dead_strip', '-o', str(out / 'fx_cloud')
     ], cwd=root, check=True)
     subprocess.run([str(out / 'fx_cloud')], check=True, env={
         **os.environ, 'ASAN_OPTIONS': 'symbolize=0', 'UBSAN_OPTIONS': 'halt_on_error=1'
