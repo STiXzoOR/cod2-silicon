@@ -1020,7 +1020,11 @@ void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
         time -= (rand() % tracerDelay) / 2;
 
     speed = cg_tracerSpeed->current.value;
+#if defined(COD2_APPLE_SDK)
+    le->endTime = time - (int)((dist / speed) * -1000.0f);
+#else
     le->endTime = time + (int)((dist * 1000.0f) / speed);
+#endif
     le->pos.trType = TR_LINEAR;
     le->pos.trTime = time;
 
