@@ -82,6 +82,8 @@ The original shaders are built from your own game files.
 - DirectX 7 water keeps its blue-gray color instead of turning purple or yellow
   with the viewing angle.
 - Water wave patterns follow the original renderer's random sequence.
+- Snow cloud positions follow the original renderer and remain consistent
+  across repeated demos and both game versions.
 - Unsupported 3× antialiasing falls back to 2×, as in the original game.
 - Custom models accept Windows path separators.
 - Menus with a blurred game background avoid an unnecessary full-screen
