@@ -16,7 +16,7 @@ extension Snapshots {
                                 "discover-saved-removed", "configs-save-failure", "configs-import-windows-profiles", "configs-catalog-loading",
                                 // ship-configs: Discover hidden, loadout management and a chosen match.
                                 "configs-discover-hidden", "configs-other-loadout", "configs-delete-confirm", "configs-new-loadout-sheet",
-                                "configs-rename-sheet", "configs-checkup-match"]
+                                "configs-rename-sheet", "configs-checkup-match", "configs-checkup-freezes", "configs-checkup-freeze-legacy"]
 }
 
 /// Synthetic loadouts for the Config Studio screens, written through the real store into a
@@ -126,7 +126,7 @@ extension Snapshots {
             // The Delete Loadout alert for a loadout that isn't in use, as the menu asks it.
             model.studio.select("Scrim")
             if let scrim = model.studio.current?.profile { model.confirmation = model.deleteConfirmation(scrim) }
-        case "configs-checkup", "configs-checkup-measured", "configs-checkup-off", "configs-checkup-error", "configs-checkup-match":
+        case "configs-checkup", "configs-checkup-measured", "configs-checkup-off", "configs-checkup-error", "configs-checkup-match", "configs-checkup-freezes", "configs-checkup-freeze-legacy":
             // Check-up reads the isolated home's own summaries, as the app reads its home after a game.
             model.page = .configs; model.studio.tab = .checkup
             let checkup = model.studio.checkup
@@ -134,6 +134,11 @@ extension Snapshots {
             if screen == "configs-checkup-measured" || screen == "configs-checkup-match" { try writeMatches(home) }
             if screen == "configs-checkup-off" { checkup.matchSummariesEnabled = false }
             if screen == "configs-checkup-error" { checkup.readMatches = { _ in throw CocoaError(.fileReadNoPermission) } }
+            if screen == "configs-checkup-freezes" || screen == "configs-checkup-freeze-legacy" {
+                let fixture = screen == "configs-checkup-freezes" ? "match-freezes" : "match-freeze-legacy"
+                let file = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("fixtures/" + fixture + ".json")
+                try PrivateFile.write(Data(contentsOf: file), to: home.appendingPathComponent("main/stats/matches.jsonl"))
+            }
             checkup.refreshMatches(home: home)
             // Opened from Library › Matches for the older match (Carentan), not the latest.
             if screen == "configs-checkup-match", case .read(let all) = checkup.matchState, let older = all.first(where: { $0.map == "mp_carentan" }) {
@@ -1321,6 +1326,8 @@ extension Snapshots {
         "configs-delete-confirm": ["Delete the loadout “Scrim”?", "Delete Loadout", "Cancel"],
         "configs-new-loadout-sheet": ["New loadout", "Name", "Start from", "Create Loadout", "Cancel"],
         "configs-rename-sheet": ["Rename “Main”", "Name", "Rename", "Cancel"],
+        "configs-checkup-freezes": ["Your last match: Toujane, Search & Destroy"],
+        "configs-checkup-freeze-legacy": ["Your last match: Toujane, Search & Destroy"],
         "configs-checkup-match": ["Your match on Carentan, Search & Destroy", "Show Last Match", "Movement: 333 FPS"],
     ]
 
@@ -1340,7 +1347,14 @@ extension Snapshots {
             let controls = elements.filter { AccessibilityTree.controls.contains($0.role) }
             let unnamed = AccessibilityTree.unnamed(elements)
             // Static text reads its words as its value.
+            // MARK: - ship-play: match prose is one combined VoiceOver element. Check the new
+            // sentences inside it while keeping every existing control/name prefix check unchanged.
+            let freezeWords: [String: [String]] = [
+                "configs-checkup-freezes": ["3 freezes over 0.1 s, the longest 0.37 s at 0:12.", "3:02 (0.12 s)"],
+                "configs-checkup-freeze-legacy": ["A frame froze for 0.37 s.", "This older summary didn’t record when it happened."]
+            ]
             let missing = (Snapshots.expectedLabels[screen] ?? []).filter { expected in !elements.contains { $0.label.hasPrefix(expected) || $0.value.hasPrefix(expected) } }
+                + (freezeWords[screen] ?? []).filter { expected in !elements.contains { $0.label.contains(expected) || $0.value.contains(expected) } }
             let roleless = AccessibilityTree.roleless(elements)
             window.orderOut(nil); window.close()
             try? FileManager.default.removeItem(at: home)

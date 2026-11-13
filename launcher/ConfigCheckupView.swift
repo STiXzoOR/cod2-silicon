@@ -193,6 +193,13 @@ private struct MatchPanel: View {
                 StudioStatusLabel(title: match.title, tone: match.tone)
             }
             Text(match.detail).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+            // MARK: - ship-play
+            if let summary = checkup.shownMatch?.freezeSummary {
+                Text(summary).font(StudioTypography.help).foregroundStyle(palette.caution).fixedSize(horizontal: false, vertical: true)
+                if let times = checkup.shownMatch?.freezeTimes {
+                    Text(times).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+            }
             ForEach(match.lines, id: \.self) { line in
                 Text(line).font(.typewriter(12)).foregroundStyle(palette.address).fixedSize(horizontal: false, vertical: true)
             }
