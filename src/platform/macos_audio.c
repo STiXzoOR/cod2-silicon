@@ -460,8 +460,8 @@ static int DownsampleFrame(MacAudioSample *sample, double step, float *left, flo
     double sum[2] = {0, 0};
     int index = sample->active_buffer;
     size_t length = sample->frames[index];
-    double limit = sample->stream ? (double)sample->stream->length * sample->loops : length;
-    int finite = sample->stream ? sample->loops != 0 : !sample->buffered && sample->remaining_loops == 1;
+    double limit = sample->stream ? (double)sample->stream->length * sample->loops : (double)length * sample->remaining_loops;
+    int finite = sample->loops && !sample->buffered;
     if (finite && end - 1 >= limit) {
         sample->status = AUDIO_DONE;
         return 0;
@@ -580,8 +580,14 @@ static void MixLocked(float *stereo, size_t frame_count, int output_channels)
                             break;
                         }
                     } else if (length && (sample->loops == 0 || sample->remaining_loops > 1)) {
-                        if (sample->remaining_loops > 1)
-                            --sample->remaining_loops;
+                        double wraps = floor(sample->cursor / length);
+                        if (sample->loops) {
+                            if (wraps >= sample->remaining_loops) {
+                                sample->status = AUDIO_DONE;
+                                break;
+                            }
+                            sample->remaining_loops -= (int)wraps;
+                        }
                         sample->cursor = fmod(sample->cursor, (double)length);
                     } else {
                         sample->status = AUDIO_DONE;

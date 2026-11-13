@@ -186,6 +186,19 @@ int main(void)
     CHECK(AIL_sample_status(sample) == 2);
     AIL_release_sample_handle(sample);
 
+    /* A reduction interval cannot read past the last finite repeat. */
+    sample = AIL_allocate_sample_handle((void *)(uintptr_t)1);
+    int16_t short_loop[2] = {10000, 10000};
+    AIL_set_sample_type(sample, 1, 0);
+    AIL_set_sample_address(sample, short_loop, sizeof(short_loop));
+    AIL_set_sample_loop_count(sample, 2);
+    AIL_set_sample_playback_rate(sample, 352800);
+    AIL_resume_sample(sample);
+    MacAudio_Mix(mixed, 16);
+    CHECK(AIL_sample_status(sample) == 2);
+    for (int i = 0; i < 32; ++i) CHECK(mixed[i] == 0);
+    AIL_release_sample_handle(sample);
+
     AIL_set_file_callbacks(Open, Close, Seek, Read);
     void *stream = AIL_open_stream((void *)(uintptr_t)1, "memory.wav", 0);
     CHECK(stream && opens == 1 && closes == 0);
