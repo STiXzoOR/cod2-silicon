@@ -695,6 +695,13 @@ static void TextureCaps(DeviceImpl *dev)
             assert(!CDirect3DDevice_SetTexture((const void *)dev, i, NULL));
     assert(CDirect3DTexture_Release((const void *)old) == 1);
     assert(g_boundTextures[9] == (void *)old && glIsTexture(oldName));
+    IDirect3DBaseTexture9 *queried = NULL;
+    assert(CDirect3DDevice_GetTexture((const void *)dev, 9, NULL) == (HRESULT)0x8876086cu);
+    assert(!CDirect3DDevice_GetTexture((const void *)dev, 9, &queried));
+    assert(queried == (void *)old);
+    assert(CDirect3DTexture_Release((const void *)queried) == 1);
+    assert(!CDirect3DDevice_GetTexture((const void *)dev, 16, &queried));
+    assert(queried == NULL);
     IDirect3DTexture9 *replacement = LuminanceTexture(dev, 191);
     assert(!CDirect3DDevice_SetTexture((const void *)dev, 4, (void *)replacement));
     CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState((const void *)dev, g_boundTextures[4], 4);
@@ -720,6 +727,9 @@ static void TextureCaps(DeviceImpl *dev)
     assert(pixel[0] == 63 && pixel[1] == 191 && pixel[2] == 0 && pixel[3] == 255);
     assert(!CDirect3DDevice_SetTexture((const void *)dev, 9, NULL));
     assert(!glIsTexture(oldName));
+    queried = (void *)replacement;
+    assert(!CDirect3DDevice_GetTexture((const void *)dev, 9, &queried));
+    assert(queried == NULL);
     assert(!CDirect3DDevice_SetTexture((const void *)dev, 4, NULL));
     assert(CDirect3DTexture_Release((const void *)replacement) == 0);
     glDeleteProgramsARB(1, &fp);

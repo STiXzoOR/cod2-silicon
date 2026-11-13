@@ -3617,12 +3617,14 @@ HRESULT CDirect3DDevice_GetTexture(const CDirect3DDevice *_this, DWORD Stage, ID
 #if defined(COD2_X64)
     DeviceImpl *dev = (DeviceImpl *)_this;
     IDirect3DBaseTexture9 *texture = NULL;
-    if (Stage < dev->maxTextureUnits && Stage < sizeof(g_boundTextures) / sizeof(g_boundTextures[0]))
+    if (!ppTexture)
+        return (HRESULT)0x8876086cu;
+    UINT limit = dev->maxTextureUnits > dev->maxTextureImageUnits ? dev->maxTextureUnits : dev->maxTextureImageUnits;
+    if (Stage < limit && Stage < sizeof(g_boundTextures) / sizeof(g_boundTextures[0]))
         texture = g_boundTextures[Stage];
     if (CDirect3DDevice_IsRealTexture(texture))
         ((ULONG (*)(const void *))(*(void ***)texture)[1])(texture);
-    if (ppTexture)
-        *ppTexture = texture;
+    *ppTexture = texture;
     return 0;
 #else
     (void)_this;
