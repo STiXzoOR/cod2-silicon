@@ -13,6 +13,8 @@ void *imp_rgp = &rgp;
 void *imp_backEnd = &backend;
 void *imp_tess = &tess;
 static dvar_t shadowDvar, lightmapDvar;
+static int cookiesValid;
+int RB_ShadowCookiesValid(void) { return cookiesValid; }
 const dvar_t *sc_enable = &shadowDvar;
 const dvar_t *r_lightMap = &lightmapDvar;
 void *imp_sc_enable = &sc_enable;
@@ -39,8 +41,7 @@ int main(void)
     dx.renderTargets[3].image = &shadow;
     backend.currentEntity = &entity;
     shadowDvar.current.enabled = 1;
-    /* The native cookie producer is absent: even an enabled toggle must not
-     * sample the aliased post-sun target as a shadow mask. */
+    /* An enabled toggle cannot authorize an unfilled/overwritten target. */
     Check(19, &white, 0x32);
     shadowDvar.flags = 1;
     shadowDvar.current.enabled = 0;
@@ -49,6 +50,15 @@ int main(void)
     entity.reType = 0;
     Check(19, &white, 0x32);
     entity.renderFxFlags = 0x100;
+    Check(19, &white, 0x32);
+
+    cookiesValid = 1;
+    Check(19, &shadow, 0x32);
+    entity.renderFxFlags = 0;
+    Check(19, &white, 0x32);
+    entity.reType = 3;
+    Check(19, &shadow, 0x32);
+    cookiesValid = 0;
     Check(19, &white, 0x32);
 
     GfxImage *lightmaps[1][4] = { { &images[0], &images[1], &images[2], &images[3] } };

@@ -420,8 +420,14 @@ static HRESULT DeviceTargets_Stretch(DeviceImpl *dev, void *source, const RECT *
             (!dst.pixelsBottomUp || CDirect3DSurface_IsDirty(destination)))
             return (HRESULT)0x8876086c;
     }
-    GLint active, binding;
-    if (fromBack && !toCurrentAux && !sourceRect && !destinationRect &&
+    GLint active, binding, currentDrawBuffer;
+    glGetIntegerv(0x0c01, &currentDrawBuffer);
+    /* Cookie blur copies the current AUX0 into a texture while AUX1 still
+     * holds unresolved receivers. An equal-size copy must not stage in AUX1. */
+    int currentAuxReadable = fromCurrentAux &&
+        (currentDrawBuffer == 0x0409 || currentDrawBuffer == 0x8ce1 ||
+         currentDrawBuffer == 0x040a || currentDrawBuffer == 0x8ce2);
+    if ((fromBack || currentAuxReadable) && !toBack && !toCurrentAux && !sourceRect && !destinationRect &&
         sourceDesc.Width == destDesc.Width && sourceDesc.Height == destDesc.Height) {
         GLint readBuffer;
         glGetIntegerv(0x0c02, &readBuffer);
@@ -429,7 +435,7 @@ static HRESULT DeviceTargets_Stretch(DeviceImpl *dev, void *source, const RECT *
         glActiveTextureARB(0x84c0);
         glGetIntegerv(0x8069, &binding);
         glBindTexture(0x0de1, dst.name);
-        DeviceTargets_ReadBuffer(0x0405);
+        DeviceTargets_ReadBuffer(fromBack ? 0x0405 : currentDrawBuffer);
         glPixelStorei(0x0cf2, sourceDesc.Width); glPixelStorei(0x0d02, sourceDesc.Width);
 #if defined(COD2_X64) && !defined(DEDICATED)
         {
@@ -449,8 +455,6 @@ static HRESULT DeviceTargets_Stretch(DeviceImpl *dev, void *source, const RECT *
     if (!CDirect3DSurface_GetNativeInfo(source, &src) || src.target != 0x0de1 || src.level)
         return (HRESULT)0x8876086c;
     int sourceBottomUp = src.pixelsBottomUp;
-    GLint currentDrawBuffer;
-    glGetIntegerv(0x0c01, &currentDrawBuffer);
     GLenum staging = 0;
     if (currentDrawBuffer == 0x0409 || currentDrawBuffer == 0x8ce1)
         staging = 0x040a;

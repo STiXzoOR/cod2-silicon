@@ -68,8 +68,10 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 - Graphics resolutions are listed once, in ascending order, up to the selected
   display’s native pixel size. An old oversized setting falls back to a size
   the display supports; a 5K panel is no longer offered a scaled 6K backing.
-- Turning Shadows on no longer darkens sunlit walls and ground. Character
-  shadows are still unavailable; the control remains visible as on Windows.
+- Turning Shadows on draws soft character shadows in both game versions,
+  as in Windows 1.3. Sunlit walls and ground keep their lighting. In the original
+  multiplayer game, your own body casts a shadow in third person, not in
+  the normal first-person view.
 - With CoD2x on, voice chat is off, as in CoD2x. It works with the original
   1.3.
 - With CoD2x on, the game no longer writes its recommended graphics settings

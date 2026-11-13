@@ -612,11 +612,8 @@ static void RB_GetTextureFromCode_impl(int codeTexture, void **image, byte *samp
 
     case 19: {
 #if defined(COD2_X64)
-        /* No cookie pass populates DYNAMICSHADOWS in the native renderer yet.
-         * It aliases RESOLVED_POST_SUN, so sampling it removes sunlight rather
-         * than casting shadows. Only enable this after a cookie pass has filled
-         * the target for the current view; an enabled dvar is not sufficient. */
-        int sc_on = 0;
+        extern int RB_ShadowCookiesValid(void);
+        int sc_on = RB_ShadowCookiesValid();
 #else
         int sc_on = *(byte *)((char *)*(void **)imp_sc_enable + 8);
 #endif
@@ -1105,6 +1102,12 @@ static const float *RB_GetCodeMatrix_impl(int source, int firstRow)
         RB_GetViewport(&viewport);
         MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(OGLProjection,
                                                           (float)viewport.width, (float)viewport.height);
+#if defined(COD2_X64)
+        /* Cookie view Y already follows texture rows. Its D3D integer center
+         * maps to GL +0.5 in both axes, unlike the onscreen/2D Y direction. */
+        if (tess.techType == 31 && !((r_backEndGlobals_t *)imp_backEnd)->projection2D)
+            OGLProjection[13] += 2.0f / (float)viewport.height;
+#endif
         MatrixMultiply44((vec4_t *)(OGLWorldView), (vec4_t *)(OGLProjection), (vec4_t *)(codeMatrix));
         ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0] = 1;
         ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 1] = 0;

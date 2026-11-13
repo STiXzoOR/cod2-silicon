@@ -749,6 +749,11 @@ extern void R_AddCmdDrawFullScreenColoredQuad(float x, float y, float w, float h
 #endif
 extern void R_AddCmdSetViewport(int x, int y, int w, int h);
 extern void Com_Printf(const char *fmt, ...);
+#if defined(COD2_X64)
+extern const dvar_t *sc_enable;
+extern void R_GenerateShadowCookies(const GfxViewParms *view, const GfxViewParms *camera, ShadowCookieList *list);
+extern void R_DrawShadowCookies(int viewIndex, const GfxViewParms *view, ShadowCookieList *list);
+#endif
 void R_RenderScene(const refdef_t *refdef)
 {
     r_globals_t *rg_p = &rg;
@@ -763,6 +768,10 @@ void R_RenderScene(const refdef_t *refdef)
     PointLightPartition pointLightPartitions[256];
     int pointLightCount;
     int debugEntIndices[2048];
+#if defined(COD2_X64)
+    ShadowCookieList shadowCookies;
+    int dynamicShadowType;
+#endif
 
 #if defined(COD2_X64)
     R_RenderScene_diag(rg_p->registered, (r_norefresh)->current.enabled, rgp_p->world != NULL);
@@ -908,6 +917,12 @@ void R_RenderScene(const refdef_t *refdef)
     drawSurfStart = scene.drawSurfs;
     drawSurfCount = scene.drawSurfCount;
     qsortDrawSurfs(drawSurfStart, drawSurfCount);
+#if defined(COD2_X64)
+    dynamicShadowType = r_rendererInUse->current.integer != 2 && sc_enable->current.enabled;
+    if (dynamicShadowType)
+        R_GenerateShadowCookies(viewParmsDraw, viewParms, &shadowCookies);
+#endif
+
 
     {
         int isDx7 = (r_rendererInUse->current.integer == 2);
@@ -966,13 +981,31 @@ void R_RenderScene(const refdef_t *refdef)
             R_AddClearCommandsForFrameBuffer(0);
             R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)0x21);
         } else {
-
+#if defined(COD2_X64)
+            /* Mac 1.3 R_RenderScene 0xaea20; receivers precede cookie/sun groups. */
+            if (dynamicShadowType) {
+                if (!R_BeginDrawGroupSection(0)) {
+                    R_AddCmdSetRenderTarget(R_RENDERTARGET_DYNAMICSHADOWS);
+                    R_AddCmdClearScreen(7, (const vec_t *)imp_colorWhite, 1.0f, 0);
+                }
+                R_BeginDrawGroupLoop((GfxDrawGroupType)0, viewIndex);
+                R_AddCmdBeginView(scene.viewCount, &scene.def, viewParms, lodParms);
+                R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)0);
+                R_EndDrawGroupLoop(0, viewIndex);
+                R_EndDrawGroupSection(0);
+                R_DrawShadowCookies(viewIndex, viewParms, &shadowCookies);
+            }
+#endif
             if (!R_BeginDrawGroupSection(2)) {
                 R_AddCmdSetRenderTarget((GfxRenderTargetId)0);
                 {
                     R_AddCmdSetViewport(0, 0, ((const vidConfig_t *)imp_vidConfig)->width, ((const vidConfig_t *)imp_vidConfig)->height);
                 }
+#if defined(COD2_X64)
+                R_AddClearCommandsForFrameBuffer(dynamicShadowType);
+#else
                 R_AddClearCommandsForFrameBuffer(0);
+#endif
                 {
                     GfxWorld *world = rgp_p->world;
                     R_AddCmdLightProperties(0, (const GfxLight *)((char *)&world->sunLight));

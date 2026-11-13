@@ -303,6 +303,26 @@ static void diag_rb_frame_end(void)
 extern struct materialCommands_t tess;
 extern struct r_backEndGlobals_t backEnd;
 extern const GfxBackEndData *backEndData;
+
+#if defined(COD2_X64)
+/* This target aliases the later post-sun and saved-screen copies. */
+static struct {
+    const GfxViewParms *view[4];
+    int viewCount[4];
+    int count;
+    int copied;
+} shadowCookieViews;
+
+int RB_ShadowCookiesValid(void)
+{
+    if (!shadowCookieViews.copied) return 0;
+    for (int i = 0; i < shadowCookieViews.count; ++i)
+        if (shadowCookieViews.view[i] == backEnd.viewParms &&
+            shadowCookieViews.viewCount[i] == backEnd.viewCount)
+            return 1;
+    return 0;
+}
+#endif
 extern GLuint g_FenceID;
 extern const byte color_table[8][4];
 extern const Bool refEntIsInWorldSpace[10];
@@ -1187,6 +1207,10 @@ static void RB_ClearScreenCmd(GfxRenderCommandExecState *execState)
 {
     byte *cmd = (byte *)execState->cmd;
     unsigned int byteCount;
+#if defined(COD2_X64)
+    if (dxState.renderTargetId == R_RENDERTARGET_DYNAMICSHADOWS)
+        memset(&shadowCookieViews, 0, sizeof(shadowCookieViews));
+#endif
     RB_ClearScreen(((GfxCmdClearScreen *)cmd)->whichToClear,
                    ((GfxCmdClearScreen *)cmd)->color,
                    ((GfxCmdClearScreen *)cmd)->depth,
@@ -1684,7 +1708,14 @@ static void RB_SetRenderTargetCmd(GfxRenderCommandExecState *execState)
     if (tess.indexCount || tess.optimizedIndexCount)
         RB_EndSurface();
 
+#if defined(COD2_X64)
+    int copiedShadows = dxState.renderTargetId == R_RENDERTARGET_DYNAMICSHADOWS &&
+        ((GfxCmdSetRenderTarget *)cmd)->renderTargetId == R_RENDERTARGET_FRAME_BUFFER;
+#endif
     RB_SetRenderTarget(((GfxCmdSetRenderTarget *)cmd)->renderTargetId);
+#if defined(COD2_X64)
+    if (copiedShadows) shadowCookieViews.copied = 1;
+#endif
 
     cmd = (byte *)execState->cmd;
     execState->cmd = (const void *)(cmd + ((const GfxCmdHeader *)cmd)->byteCount);
@@ -2094,6 +2125,14 @@ static void RB_DrawSurfsCmd(GfxRenderCommandExecState *execState)
         ((GfxCmdDrawSurfs *)cmd)->drawSurfCount,
         ((GfxCmdDrawSurfs *)cmd)->techType,
         ((GfxCmdDrawSurfs *)cmd)->order);
+#if defined(COD2_X64)
+    if (dxs->renderTargetId == R_RENDERTARGET_DYNAMICSHADOWS &&
+        ((GfxCmdDrawSurfs *)cmd)->techType == 0 && shadowCookieViews.count < 4) {
+        int index = shadowCookieViews.count++;
+        shadowCookieViews.view[index] = backEnd.viewParms;
+        shadowCookieViews.viewCount[index] = backEnd.viewCount;
+    }
+#endif
 }
 
 static void RB_DrawSunPostEffectsCmd(GfxRenderCommandExecState *execState)
@@ -2427,6 +2466,9 @@ static void RB_SaveScreenCmd(GfxRenderCommandExecState *execState)
         RB_EndSurface();
 
     dx = (char *)dx_g;
+#if defined(COD2_X64)
+    memset(&shadowCookieViews, 0, sizeof(shadowCookieViews));
+#endif
     imageSurface = Image_GetSurface(((DxGlobals *)dx)->renderTargets[7].image);
 
     do {
@@ -2457,6 +2499,9 @@ static void RB_ApplyEarlyPostEffectsCmd(GfxRenderCommandExecState *execState)
     if (tess.indexCount || tess.optimizedIndexCount)
         RB_EndSurface();
 
+#if defined(COD2_X64)
+    memset(&shadowCookieViews, 0, sizeof(shadowCookieViews));
+#endif
     backEnd.resolvedPostSunTarget = (GfxRenderTargetId)(0xe);
 
     needCopy = r_distortion->current.enabled;
@@ -3313,6 +3358,9 @@ void RB_ExecuteRenderCommands(const void *data)
     GfxRenderCommandExecState execState;
 
     backEndData = 0;
+#if defined(COD2_X64)
+    memset(&shadowCookieViews, 0, sizeof(shadowCookieViews));
+#endif
 
 #if defined(COD2_X64) && defined(__APPLE__)
     /* Retire a completed fence after switching sync off, including disabled or
@@ -3888,7 +3936,11 @@ static void RB_BlurShadowCookieCmd(GfxRenderCommandExecState *execState)
 
         RB_DrawStretchPic(blurMaterial,
                           1.0f, 1.0f, screenWidth - 2.0f, screenHeight - 2.0f,
+#if defined(COD2_X64)
+                          0.01171875f, 0.98828125f, 0.99609375f, 0.00390625f,
+#else
                           0.01171875f, 0.01171875f, 0.99609375f, 0.99609375f,
+#endif
                           0xffffffff, (GfxPrimStatsTarget)10);
         RB_EndSurface();
 
@@ -3901,7 +3953,11 @@ static void RB_BlurShadowCookieCmd(GfxRenderCommandExecState *execState)
 
         RB_DrawStretchPic(blurMaterial,
                           1.0f, 1.0f, screenWidth - 2.0f, screenHeight - 2.0f,
+#if defined(COD2_X64)
+                          0.00390625f, 0.99609375f, 0.98828125f, 0.01171875f,
+#else
                           0.00390625f, 0.00390625f, 0.98828125f, 0.98828125f,
+#endif
                           0xffffffff, (GfxPrimStatsTarget)10);
         RB_EndSurface();
     }

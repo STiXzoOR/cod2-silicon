@@ -1020,6 +1020,22 @@ void R_AddCmdLightProperties(int lightIndex, const GfxLight *light)
     cmd->lightDef = light->def;
 }
 
+#if defined(COD2_X64)
+/* Mac 1.3 0xb0fb0: command 9 carries the lookup matrix and fade. */
+void R_AddCmdShadowCookie(const D3DMATRIX *lookup, float fade)
+{
+    GfxCmdSetShadowCookie *cmd = (GfxCmdSetShadowCookie *)R_AllocCriticalCmd(sizeof(*cmd), 9);
+    if (!cmd) return;
+    cmd->lookupMatrix = *lookup;
+    cmd->fade = fade;
+}
+
+void R_AddCmdBlurShadowCookie(void)
+{
+    R_AllocCmd(sizeof(GfxCmdHeader), 0, 28);
+}
+#endif
+
 void R_AddCmdSetRenderTarget(GfxRenderTargetId renderTargetId)
 {
     GfxCmdSetRenderTarget *cmd;
