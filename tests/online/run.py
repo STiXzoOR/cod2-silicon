@@ -63,6 +63,11 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
         if name == 'mantle':
             source = source[:source.index('extern const dvar_t *Dvar_RegisterBool')]
         functions = [] if names else [source]
+        if name == 'www_download':
+            client_source = (root / 'src/PC/client_mp/cl_main_mp.c').read_text()
+            clear_start = client_source.index('int CL_ClearStaticDownload(void)\n{')
+            clear_end = client_source.index('\n}\n', clear_start) + 3
+            functions.append(client_source[clear_start:clear_end])
         if name == 'ui_text_color':
             functions.append(source[source.index('#if defined(COD2_X64)'):
                                     source.index('extern commandDef_t')])
