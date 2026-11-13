@@ -4551,12 +4551,12 @@ void UI_RunMenuScript(const char **args)
         if ((ui_netSource)->current.integer != 2)
             return;
 
+        UI_UpdateServerCount();
+
         {
             int selectedServer = sharedUiInfo.serverStatus.currentServer;
             if (selectedServer < 0 || selectedServer >= sharedUiInfo.serverStatus.numDisplayServers)
                 return;
-
-            UI_UpdateServerCount();
 
             LAN_GetServerInfo((ui_netSource)->current.integer,
                               sharedUiInfo.serverStatus.displayServers[selectedServer],
