@@ -178,6 +178,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   room presets, reflections, decay, damping and stereo spread.
 - Consecutive screenshot commands retain every image, and `cl_avidemo` saves
   frames continuously instead of continually postponing the capture.
+- `viewlog` opens a native scrolling console with a command field; it can be
+  hidden, restored and minimized as in the original game.
 - Fatal engine errors show their explanation before the game exits and return
   a failure status.
 - Minimized games pause for five milliseconds between frames, as in Windows 1.3.
