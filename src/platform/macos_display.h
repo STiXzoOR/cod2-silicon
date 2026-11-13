@@ -31,6 +31,9 @@ void MacPlatform_TransformPoint(int x, int y, int logicalWidth, int logicalHeigh
 void MacPlatform_MapWindowPoint(int x, int y, int *renderX, int *renderY);
 void MacGL_DrawBuffer(unsigned int buffer);
 void MacGL_ReadBuffer(unsigned int buffer);
+#if defined(COD2_X64)
+void MacGL_SelectReadBuffer(unsigned int buffer);
+#endif
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
 void MacPlatform_ConfigurePresentation(int metal, int edr);
 #endif

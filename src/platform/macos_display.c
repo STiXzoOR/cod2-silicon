@@ -891,6 +891,18 @@ void MacGL_ReadBuffer(unsigned int buffer) {
     glReadBuffer(RenderBuffer(buffer));
 }
 
+#if defined(COD2_X64)
+/* Target selection does not consume pixels. Actual reads still resolve in
+ * MacGL_ReadBuffer; resolving here would copy the previous scene needlessly. */
+void MacGL_SelectReadBuffer(unsigned int buffer)
+{
+#if defined(__APPLE__) && defined(__aarch64__)
+    if (MacShim_Metal()) return;
+#endif
+    glReadBuffer(RenderBuffer(buffer));
+}
+#endif
+
 static void PresentationRect(int renderW, int renderH, int drawableW, int drawableH,
                              int *x, int *y, int *w, int *h)
 {

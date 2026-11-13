@@ -4,6 +4,9 @@ extern dvar_t *r_rendererInUse;
 extern Bool g_RenderToShadowCookie;
 extern Bool g_InhibitCopy;
 #include "imports.h"
+#if COD2_APPLE_SDK
+#include "platform/macos_display.h"
+#endif
 /* dvar globals */
 extern const dvar_t *r_aaAlpha;
 extern const dvar_t *r_anisotropy;
@@ -1065,7 +1068,11 @@ void RB_SetRenderTarget(GfxRenderTargetId newTargetId)
     switch (newTargetId) {
     case R_RENDERTARGET_FRAME_BUFFER:
         glDrawBuffer(0x405);
+#if COD2_APPLE_SDK
+        MacGL_SelectReadBuffer(0x405);
+#else
         glReadBuffer(0x405);
+#endif
         break;
     case R_RENDERTARGET_DYNAMICSHADOWS:
         glDrawBuffer(0x40A);
