@@ -162,6 +162,24 @@ static void firing_flashes(void)
     assert(draws[map].x==0 && draws[map].y==0 && draws[map].w==400 &&
            draws[map].h==400 && draws[map].angle==0);
 
+    /* Each calibration draw consumes the recorded mouse deltas, even at the same time. */
+    cls.realtime=7000;
+    for (int point=0; point<2; ++point) {
+        calibration=2*(point+1);
+        clients.mouseIndex=point;
+        clients.mouseDx[point^1]=30;
+        clients.mouseDy[point^1]=-20;
+        imagePoints[point][0]=100;
+        imagePoints[point][1]=200;
+        draw_at(302,&materials[4]);
+        assert(imagePoints[point][0]==103 && imagePoints[point][1]==198);
+        draw_at(302,&materials[4]);
+        printf("calibration point%d after two draws at realtime%d: %.3f %.3f\n",
+               point+1,cls.realtime,imagePoints[point][0],imagePoints[point][1]); fflush(stdout);
+        assert(imagePoints[point][0]==106 && imagePoints[point][1]==196);
+        assert(draws[drawCount-1].x==105 && draws[drawCount-1].y==195);
+    }
+
     /* The upstream event list and observed sound times outlive map changes. */
     snprintf(uiMap,sizeof(uiMap),"another"); result=-1;
     calibration=3;

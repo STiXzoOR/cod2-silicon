@@ -34,13 +34,12 @@ extern void UI_DrawText(const char *, int, FontHandle, float, float, int, int, f
 extern int UI_TextWidth(const char *, int, FontHandle, float);
 extern int UI_TextHeight(FontHandle, float);
 extern clientActive_t clients;
-extern clientStatic_t cls;
 extern sharedUiInfo_t sharedUiInfo;
 
 static const dvar_t *drawRadar, *radarScale, *mapImage, *imageX, *imageY, *rotation;
 static const dvar_t *entityScale, *entityX, *entityY, *radarX, *radarY, *numberSwitch, *radarColor;
 static char radarMap[64];
-static int calibration, calibrationFrame = -1, commandRegistered;
+static int calibration, commandRegistered;
 static float worldPoints[2][2], imagePoints[2][2];
 static const char *radarFields[6] = {"scale", "offsetX", "offsetY", "rotation", "imageOffsetX", "imageOffsetY"};
 static struct {
@@ -219,12 +218,11 @@ static void CG_Cod2xRadarDrawCalibration(float x, float y)
     if (calibration == 1 || calibration == 3) {
         worldPoints[calibration > 2][0] = cg->refdef.vieworg[0];
         worldPoints[calibration > 2][1] = cg->refdef.vieworg[1];
-    } else if (calibrationFrame != cls.realtime) {
+    } else {
         int index = clients.mouseIndex ^ 1;
         imagePoints[calibration > 2][0] += clients.mouseDx[index] / 10.0f;
         imagePoints[calibration > 2][1] += clients.mouseDy[index] / 10.0f;
     }
-    calibrationFrame = cls.realtime;
     for (i = 0; i < calibration; ++i)
         UI_DrawText(steps[i], INT_MAX, font, 0, 120 + 10 * i, 2, 1, .2f, textColor, 3);
     for (i = 0; i < 2 && calibration >= 2 * (i + 1); ++i) {
