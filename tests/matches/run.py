@@ -94,7 +94,7 @@ if selected('startup-privacy'):
     common = (ROOT / 'src/PC/qcommon/common.c').read_text()
     bridge = (ROOT / 'src/stubs/link_stubs.c').read_text()
     compat = (ROOT / 'src/stubs/macos_compat.c').read_text()
-    split = re.search(r'    com_consoleLines\[0\] = commandLine;[\s\S]*?(?=\n    Swap_Init\(\);)', common)
+    split = re.search(r'#if[^\n]*COD2_CODX[^\n]*\n    \(void\)p;[\s\S]*?(?=\n    Swap_Init\(\);)', common)
     assert split, 'production +set command-line split'
     startup = re.search(r'^#define DVAR_COMBINED_STRING_SIZE[^\n]+', dvars, re.M)[0] + '\n'
     startup += ''.join(function(name, cmd) for name in
@@ -106,6 +106,10 @@ if selected('startup-privacy'):
     startup += re.search(r'^void \*__DefaultRuneLocale;', compat, re.M)[0] + '\n'
     native_constructor = compat.replace('init_rune_locale(void)\n#endif', 'init_rune_locale(void)')
     startup += function('___maskrune', compat) + function('init_rune_locale', native_constructor)
+    startup += '#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX\n'
+    startup += re.search(r'^static const char \*com_cod2xCommandLine;', common, re.M)[0] + '\n'
+    startup += re.search(r'^static char com_cod2xCommandLineCopy\[[^\n]+', common, re.M)[0] + '\n'
+    startup += function('Com_Cod2xParseCommandLine', common) + '#endif\n'
     startup += 'static void StartupCommandLine(char *commandLine) { char *p;\n' + split[0] + '\n}\n'
     (output / 'startup_source.h').write_text(startup)
     startup_exe = output / 'startup-privacy'

@@ -16,6 +16,7 @@ static clientConnection_t connection, *connectionPtr = &connection;
 static clientActive_t activeClient, *activePtr = &activeClient;
 static void *imp_clc = &connectionPtr, *imp_cl = &activePtr;
 int Cod2x_FPSLimited(void) { return limited; }
+int Cod2x_Competitive(void) { return limited; }
 int Com_HasPlayerProfile(void) { return 0; }
 void Com_BuildPlayerProfilePath(char *p, int size, const char *file) { (void)p; (void)size; (void)file; }
 void Com_WriteConfigToFile(const char *p) { (void)p; }
