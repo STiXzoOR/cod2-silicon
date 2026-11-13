@@ -1,6 +1,7 @@
 #include "macos_display.h"
 #if defined(COD2_X64)
 #include "macos_display_modes.h"
+#include "PC/qcommon/frame_activity.h"
 #endif
 #include "macos_system.h"
 #include <SDL2/SDL.h>
@@ -428,6 +429,9 @@ static GLenum DepthStencilStorageFormat(int depthBits, int stencil)
 
 static int CreateRenderBuffer(MacContext *ctx, int depthBits, int stencil)
 {
+#if defined(COD2_X64)
+    FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
     glGenFramebuffersEXT(1, &ctx->framebuffer);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, ctx->framebuffer);
     glGenRenderbuffersEXT(3, ctx->color);
@@ -449,7 +453,13 @@ static int CreateRenderBuffer(MacContext *ctx, int depthBits, int stencil)
         glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, ctx->depth);
     glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
     glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#if defined(COD2_X64)
+    int result = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE_EXT ? 0 : -1;
+    FRAME_ACTIVITY_END(FRAME_TARGET_CREATE, activityStart);
+    return result;
+#else
     return glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE_EXT ? 0 : -1;
+#endif
 }
 #if defined(COD2_X64)
 
@@ -470,6 +480,7 @@ static void DestroyMultisampleBuffer(MacContext *ctx)
 static void CreateMultisampleBuffer(MacContext *ctx)
 {
     if (ctx->samples > 1) {
+        FRAME_ACTIVITY_BEGIN(activityStart);
         glGenFramebuffersEXT(1, &ctx->msFramebuffer);
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, ctx->msFramebuffer);
         glGenRenderbuffersEXT(1, &ctx->msColor);
@@ -490,6 +501,7 @@ static void CreateMultisampleBuffer(MacContext *ctx)
             DestroyMultisampleBuffer(ctx);
             ctx->samples = 0;
         }
+        FRAME_ACTIVITY_END(FRAME_TARGET_CREATE, activityStart);
     }
     glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, ctx->msFramebuffer ? ctx->msFramebuffer : ctx->framebuffer);
     glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, ctx->framebuffer);
@@ -502,6 +514,7 @@ static void ResolveFrameBuffer(MacContext *ctx)
 {
     if (!ctx || !ctx->msFramebuffer)
         return;
+    FRAME_ACTIVITY_BEGIN(activityStart);
     GLint drawFramebuffer, readFramebuffer, drawBuffer;
     GLboolean mask[4], scissor = glIsEnabled(GL_SCISSOR_TEST);
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING_EXT, &drawFramebuffer);
@@ -519,6 +532,7 @@ static void ResolveFrameBuffer(MacContext *ctx)
     glDrawBuffer(drawBuffer);
     glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, drawFramebuffer);
     glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, readFramebuffer);
+    FRAME_ACTIVITY_END(FRAME_RESOLVE, activityStart);
 }
 #endif
 
@@ -996,7 +1010,13 @@ void SDL_GL_SwapWindowDirect(void)
     if (presentMode)
         presentFence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 #endif
+#if defined(COD2_X64)
+    FRAME_ACTIVITY_BEGIN(presentStart);
+#endif
     SDL_GL_SwapWindow(sdl_gl_window);
+#if defined(COD2_X64)
+    FRAME_ACTIVITY_END(FRAME_PRESENT, presentStart);
+#endif
 #if defined(COD2_X64)
     glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, readFramebuffer);
     glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, drawFramebuffer);

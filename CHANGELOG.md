@@ -61,6 +61,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Changed
 
+- Local match summaries retain slow-frame timings and renderer activity to
+  help diagnose freezes during play.
 - Graphics resolutions are listed once, in ascending order, up to the selected
   display’s native pixel size. An old oversized setting falls back to a size
   the display supports; a 5K panel is no longer offered a scaled 6K backing.

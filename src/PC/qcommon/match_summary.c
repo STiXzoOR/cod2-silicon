@@ -1,5 +1,6 @@
 #if defined(COD2_X64) && !defined(DEDICATED)
 #include "match_summary.h"
+#include "frame_activity.h"
 #include "common_types.h"
 #if defined(COD2_CODX) && COD2_CODX
 #include "cod2x.h"
@@ -23,6 +24,18 @@ extern const char *CL_GetConfigString(int index);
 extern char *Info_ValueForKey(const char *info, const char *key);
 extern char *NET_AdrToString(netadr_t address);
 
+static FrameActivity frameActivity;
+static const char *const activityNames[FRAME_ACTIVITY_COUNT] = {
+    "programUpload", "textureUpload", "textureCreate", "targetCreate",
+    "resolve", "screenCopy", "present", "videoRestart", "draw"
+};
+enum { MATCH_HITCH_LIMIT = 8 };
+typedef struct {
+    uint64_t at, frame;
+    int msec;
+    FrameActivity renderer;
+} MatchHitch;
+
 enum { MATCH_HISTOGRAM_LIMIT = 10000, MATCH_RECORD_LIMIT = 200, MATCH_LINE_LIMIT = 8192 };
 static int matchEnabled;
 static struct {
@@ -30,6 +43,9 @@ static struct {
     uint64_t started, frames, underCap, capFrames, pingSum, pingSamples, packets, lost, snapshots;
     uint64_t histogram[MATCH_HISTOGRAM_LIMIT + 1];
     int frameMax, cap, pingMax;
+    uint64_t hitchCount;
+    MatchHitch hitches[MATCH_HITCH_LIMIT];
+    FrameActivity renderer;
     char map[64], mode[32], address[256], serverInfo[8192], systemInfo[8192];
 } match;
 
@@ -48,6 +64,8 @@ void MatchSummary_Init(void)
     matchEnabled = privacy->current.enabled;
     Dvar_AddFlags(privacy, 0x40);
     memset(&match, 0, sizeof(match));
+    memset(&frameActivity, 0, sizeof(frameActivity));
+    cod2_frame_activity = matchEnabled ? &frameActivity : NULL;
 }
 
 static void MatchSummary_Begin(void)
@@ -68,9 +86,36 @@ static void MatchSummary_Begin(void)
 
 void MatchSummary_Frame(int rawMsec, int frameBudgetMsec, int capFPS)
 {
+    /* rawMsec measures the preceding engine frame. Consume its renderer work
+     * here, before Cbuf_Execute/rendering begins the next frame. Reset even
+     * outside a match so loading and demo work cannot leak into live samples. */
+    FrameActivity activity;
+    for (int i = 0; i < FRAME_ACTIVITY_COUNT; ++i) {
+        activity.count[i] = __atomic_exchange_n(&frameActivity.count[i], 0, __ATOMIC_RELAXED);
+        activity.usec[i] = __atomic_exchange_n(&frameActivity.usec[i], 0, __ATOMIC_RELAXED);
+    }
     if (!match.active || clc->state != CA_ACTIVE || clc->demoplaying || rawMsec < 0)
         return;
     ++match.frames;
+    for (int i = 0; i < FRAME_ACTIVITY_COUNT; ++i) {
+        match.renderer.count[i] += activity.count[i];
+        match.renderer.usec[i] += activity.usec[i];
+    }
+    if (rawMsec > 100) {
+        uint64_t at = MatchSummary_Milliseconds() - match.started;
+        /* Every hitch goes to the existing engine log. Keep the first eight
+         * in the bounded match record too, with an explicit omitted count. */
+        fprintf(stderr, "CoD2 slow frame: matchMS=%llu frame=%llu msec=%d",
+                (unsigned long long)at, (unsigned long long)match.frames, rawMsec);
+        for (int i = 0; i < FRAME_ACTIVITY_COUNT; ++i) {
+            if (activity.count[i])
+                fprintf(stderr, " %s=%u/%.3fms", activityNames[i], activity.count[i], activity.usec[i] / 1000.0);
+        }
+        fputc('\n', stderr);
+        if (match.hitchCount < MATCH_HITCH_LIMIT)
+            match.hitches[match.hitchCount] = (MatchHitch){at, match.frames, rawMsec, activity};
+        ++match.hitchCount;
+    }
     ++match.histogram[rawMsec < MATCH_HISTOGRAM_LIMIT ? rawMsec : MATCH_HISTOGRAM_LIMIT];
     if (rawMsec > match.frameMax)
         match.frameMax = rawMsec;
@@ -139,8 +184,22 @@ static void MatchSummary_String(FILE *file, const char *value)
     fputc('"', file);
 }
 
+static void MatchSummary_Renderer(FILE *file, const FrameActivity *activity)
+{
+    int count = 0;
+    fputc('{', file);
+    for (int i = 0; i < FRAME_ACTIVITY_COUNT; ++i) {
+        if (!activity->count[i])
+            continue;
+        if (count++) fputc(',', file);
+        fprintf(file, "\"%s\":[%u,%.3f]", activityNames[i], activity->count[i], activity->usec[i] / 1000.0);
+    }
+    fputc('}', file);
+}
+
 static void MatchSummary_Record(FILE *file, const char *reason)
 {
+    long recordStart = ftell(file);
     static const char *hints[] = { "g_competitive", "sv_maxfps", "g_maxfps", "sv_pure", "gamename", "shortversion", "protocol", "mod", "fs_game", "zpam_version" };
     struct timespec now;
     struct tm utc;
@@ -189,7 +248,28 @@ static void MatchSummary_Record(FILE *file, const char *reason)
             (unsigned long long)match.pingSamples, (unsigned long long)match.packets, (unsigned long long)match.lost);
     if (match.packets) fprintf(file, "%.3f", 100.0 * (double)match.lost / (double)(match.packets + match.lost));
     else fputs("null", file);
-    fprintf(file, ",\"packetLossSource\":\"netchan sequence gaps\",\"snapshotsReceived\":%llu}\n", (unsigned long long)match.snapshots);
+    fprintf(file, ",\"packetLossSource\":\"netchan sequence gaps\",\"snapshotsReceived\":%llu", (unsigned long long)match.snapshots);
+    fputs(",\"rendererActivity\":", file);
+    MatchSummary_Renderer(file, &match.renderer);
+    /* Leave room for escaped server metadata in the existing 8192-byte record
+     * limit. A hitch is at most 640 bytes even at maximum counter widths. */
+    long used = ftell(file) - recordStart;
+    unsigned kept = used >= 0 && used < MATCH_LINE_LIMIT - 256 ?
+        (unsigned)(MATCH_LINE_LIMIT - 256 - used) / 640 : 0;
+    if (kept > MATCH_HITCH_LIMIT) kept = MATCH_HITCH_LIMIT;
+    if (kept > match.hitchCount) kept = (unsigned)match.hitchCount;
+    fprintf(file, ",\"hitchCount\":%llu,\"hitchesOmitted\":%llu,\"hitches\":[",
+            (unsigned long long)match.hitchCount,
+            (unsigned long long)(match.hitchCount - kept));
+    for (unsigned i = 0; i < kept; ++i) {
+        const MatchHitch *hitch = &match.hitches[i];
+        if (i) fputc(',', file);
+        fprintf(file, "{\"atMS\":%llu,\"frame\":%llu,\"msec\":%d,\"renderer\":",
+                (unsigned long long)hitch->at, (unsigned long long)hitch->frame, hitch->msec);
+        MatchSummary_Renderer(file, &hitch->renderer);
+        fputc('}', file);
+    }
+    fputs("]}\n", file);
 }
 
 void MatchSummary_Finish(const char *reason)

@@ -1,3 +1,6 @@
+#if defined(COD2_X64) && !defined(DEDICATED)
+#include "PC/qcommon/frame_activity.h"
+#endif
 #include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
@@ -389,15 +392,31 @@ void CDirect3DSurface_CreateOpenGLSurfaceObject(const CDirect3DSurface *_this)
     if (surface->format == D3DFMT_DXT1 || surface->format == D3DFMT_DXT2 ||
         surface->format == D3DFMT_DXT3 || surface->format == D3DFMT_DXT5) {
         UINT32 size = MacOpenGLUtils_GetLevelSizeInBytes(surface->width, surface->height, 1, &surface->format);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
         glCompressedTexImage2DARB(target, surface->level, surface->openGLInternalFormat,
                                   surface->width, surface->height, 0, size, surface->surfaceMemory);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
+        }
+#endif
         surface->pixelsBottomUp = 0;
     } else {
         /* Synchronous native uploads use proven logical extents. Mac's client
          * storage path rounds these up and requires a different backing contract. */
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
         glTexImage2D(target, surface->level, surface->openGLInternalFormat, width, height, 0,
                      surface->openGLFormat, surface->openGLElementType,
                      surface->openGLInternalFormat == 0x1902 ? NULL : surface->surfaceMemory);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
+        }
+#endif
         surface->pixelsBottomUp = 0;
     }
 #else
@@ -419,12 +438,28 @@ void CDirect3DSurface_CreateOpenGLSurfaceObject(const CDirect3DSurface *_this)
 
     if (MacOpenGLUtils_IsCompressed(&surface->format)) {
         UINT32 dataSize = MacOpenGLUtils_GetLevelSizeInBytes(w, h, 1, &surface->format);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
         glCompressedTexImage2DARB(target, surface->level,
                                   surface->openGLInternalFormat, w, h, 0, dataSize, surface->surfaceMemory);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
+        }
+#endif
     } else {
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
         glTexImage2D(target, surface->level,
                      surface->openGLInternalFormat, w, h, 0,
                      surface->openGLFormat, surface->openGLElementType, surface->surfaceMemory);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
+        }
+#endif
     }
 #endif
 }
@@ -448,13 +483,17 @@ void CDirect3DSurface_UpdateOpenGLSurfaceObject(const CDirect3DSurface *_this, i
         surface->format == D3DFMT_DXT3 || surface->format == D3DFMT_DXT5) {
         UINT32 size = MacOpenGLUtils_GetLevelSizeInBytes(surface->width, surface->height, 1, &surface->format);
         if (surface->width > 3 && surface->height > 3) {
+            FRAME_ACTIVITY_BEGIN(activityStart);
             glCompressedTexSubImage2D(target, surface->level, 0, 0, surface->width, surface->height,
                                       surface->openGLInternalFormat, size, surface->surfaceMemory);
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
             surface->pixelsBottomUp = 0;
         }
     } else {
+        FRAME_ACTIVITY_BEGIN(activityStart);
         glTexSubImage2D(target, surface->level, 0, 0, surface->width, surface->height,
                         surface->openGLFormat, surface->openGLElementType, surface->surfaceMemory);
+        FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
         surface->pixelsBottomUp = 0;
     }
 #else

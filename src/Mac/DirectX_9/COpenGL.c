@@ -1,3 +1,6 @@
+#if defined(COD2_X64) && !defined(DEDICATED)
+#include "PC/qcommon/frame_activity.h"
+#endif
 #include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
@@ -1490,7 +1493,15 @@ unsigned int COpenGLVertexProgram_COpenGLVertexProgram(const COpenGLVertexProgra
     glGetProgramivARB(0x8620, 0x8677, &previousProgram);
     glGenProgramsARB(1, program);
     glBindProgramARB(0x8620, *program);
+#if defined(COD2_X64) && !defined(DEDICATED)
+    {
+        FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
     glProgramStringARB(0x8620, 0x8875, (GLsizei)strlen(pSrcData), pSrcData);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        FRAME_ACTIVITY_END(FRAME_PROGRAM_UPLOAD, activityStart);
+    }
+#endif
     glBindProgramARB(0x8620, (GLuint)previousProgram);
     return 0;
 }
@@ -1568,8 +1579,16 @@ unsigned int COpenGLVertexProgram_COpenGLVertexProgram(const COpenGLVertexProgra
 
         glGenProgramsARB(1, progIdPtr);
         glBindProgramARB(0x8620 , *progIdPtr);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
         glProgramStringARB(0x8620, 0x8875 ,
                            len, pSrcData);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_PROGRAM_UPLOAD, activityStart);
+        }
+#endif
 
         glGetIntegerv(0x864B , &errorPos);
         if (errorPos != -1) {

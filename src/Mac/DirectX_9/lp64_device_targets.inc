@@ -194,7 +194,15 @@ static void DeviceTargets_CopyColor(DeviceImpl *dev)
     /* Native uploads allocate logical extents, unlike Mac client-storage POT
      * backing. No original padded extent is safe to copy into these textures. */
     glPixelStorei(0x0d02, info.owner->width);
-    glCopyTexSubImage2D(0x0de1, 0, 0, 0, 0, 0, info.owner->width, info.owner->height);
+#if defined(COD2_X64) && !defined(DEDICATED)
+    {
+        FRAME_ACTIVITY_BEGIN(copyStart);
+#endif
+        glCopyTexSubImage2D(0x0de1, 0, 0, 0, 0, 0, info.owner->width, info.owner->height);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        FRAME_ACTIVITY_END(FRAME_SCREEN_COPY, copyStart);
+    }
+#endif
     if (g_RenderToShadowCookie) {
         COpenGLNative *gl = CDirect3DDevice_GL();
         GLfloat textureMatrix[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
@@ -252,7 +260,15 @@ static void DeviceTargets_CopyColor(DeviceImpl *dev)
                 glTexCoord2f(0,0); glVertex3f(x,1.0f+y,0);
             }
             glEnd();
-            glCopyTexSubImage2D(0x0de1, 0, 0, 0, 0, 0, info.owner->width, info.owner->height);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            {
+                FRAME_ACTIVITY_BEGIN(copyStart);
+#endif
+                glCopyTexSubImage2D(0x0de1, 0, 0, 0, 0, 0, info.owner->width, info.owner->height);
+#if defined(COD2_X64) && !defined(DEDICATED)
+                FRAME_ACTIVITY_END(FRAME_SCREEN_COPY, copyStart);
+            }
+#endif
         }
         glLoadMatrixf(textureMatrix);
         glMatrixMode(0x1701); glPopMatrix();
@@ -415,7 +431,15 @@ static HRESULT DeviceTargets_Stretch(DeviceImpl *dev, void *source, const RECT *
         glBindTexture(0x0de1, dst.name);
         DeviceTargets_ReadBuffer(0x0405);
         glPixelStorei(0x0cf2, sourceDesc.Width); glPixelStorei(0x0d02, sourceDesc.Width);
-        glCopyTexSubImage2D(0x0de1, 0, 0, 0, 0, 0, destDesc.Width, destDesc.Height);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(copyStart);
+#endif
+            glCopyTexSubImage2D(0x0de1, 0, 0, 0, 0, 0, destDesc.Width, destDesc.Height);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_SCREEN_COPY, copyStart);
+        }
+#endif
         DeviceTargets_ReadBuffer(readBuffer);
         glPixelStorei(0x0cf2, 0); glPixelStorei(0x0d02, 0);
         glBindTexture(0x0de1, binding); glActiveTextureARB(active);
@@ -472,7 +496,15 @@ static HRESULT DeviceTargets_Stretch(DeviceImpl *dev, void *source, const RECT *
          * buffer; native CPU backing is not Mac's coherent client storage. */
         DeviceTargets_ReadBuffer(fromBack ? 0x0405 : currentDrawBuffer);
         glPixelStorei(0x0cf2, sourceDesc.Width); glPixelStorei(0x0d02, sourceDesc.Width);
-        glCopyTexSubImage2D(0x0de1, 0, 0, 0, 0, 0, sourceDesc.Width, sourceDesc.Height);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(copyStart);
+#endif
+            glCopyTexSubImage2D(0x0de1, 0, 0, 0, 0, 0, sourceDesc.Width, sourceDesc.Height);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_SCREEN_COPY, copyStart);
+        }
+#endif
         CDirect3DSurface_MarkGPUWritten(source);
         sourceBottomUp = 1;
     }
@@ -535,11 +567,27 @@ static HRESULT DeviceTargets_Stretch(DeviceImpl *dev, void *source, const RECT *
         if (toCurrentAux) {
             /* The current framebuffer remains authoritative after this call.
              * Resolve all its pixels so the next target switch agrees too. */
-            glCopyTexSubImage2D(0x0de1, 0, 0, 0, 0, 0, destDesc.Width, destDesc.Height);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            {
+                FRAME_ACTIVITY_BEGIN(copyStart);
+#endif
+                glCopyTexSubImage2D(0x0de1, 0, 0, 0, 0, 0, destDesc.Width, destDesc.Height);
+#if defined(COD2_X64) && !defined(DEDICATED)
+                FRAME_ACTIVITY_END(FRAME_SCREEN_COPY, copyStart);
+            }
+#endif
         } else {
             GLint bottom = destDesc.Height - destRegion.bottom;
-            glCopyTexSubImage2D(0x0de1, 0, destRegion.left, bottom, destRegion.left, bottom,
+#if defined(COD2_X64) && !defined(DEDICATED)
+            {
+                FRAME_ACTIVITY_BEGIN(copyStart);
+#endif
+                glCopyTexSubImage2D(0x0de1, 0, destRegion.left, bottom, destRegion.left, bottom,
                                 destRegion.right - destRegion.left, destRegion.bottom - destRegion.top);
+#if defined(COD2_X64) && !defined(DEDICATED)
+                FRAME_ACTIVITY_END(FRAME_SCREEN_COPY, copyStart);
+            }
+#endif
         }
         CDirect3DSurface_MarkGPUWritten(destination);
         DeviceTargets_RestoreSampler(destinationSampler);

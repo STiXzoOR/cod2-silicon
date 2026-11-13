@@ -1,3 +1,6 @@
+#if defined(COD2_X64) && !defined(DEDICATED)
+#include "PC/qcommon/frame_activity.h"
+#endif
 #if defined(COD2_X64)
 #include "PC/qcommon/port_debug.h"
 #include "../qcommon/match_summary.h"
@@ -2878,6 +2881,10 @@ void CL_Vid_Restart_f(void)
         return;
     }
 
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_BEGIN(restartStart);
+#endif
+
     if (active->cgameInitialized) {
         tempBuf = Z_VirtualAllocInternal(0xa00000);
         MemFile_InitForWriting(&memFile, 0xa00000, tempBuf, 1);
@@ -2927,6 +2934,9 @@ void CL_Vid_Restart_f(void)
         }
         Z_FreeInternal(clientStateBuf);
     }
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_END(FRAME_VIDEO_RESTART, restartStart);
+#endif
 }
 
 void CL_Snd_Restart_f(void)

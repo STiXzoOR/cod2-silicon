@@ -1,3 +1,6 @@
+#if defined(COD2_X64) && !defined(DEDICATED)
+#include "PC/qcommon/frame_activity.h"
+#endif
 #include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
@@ -1773,6 +1776,10 @@ HRESULT CDirect3DDevice_CreateTexture(const CDirect3DDevice *_this, UINT Width, 
         return macResult;
 #endif
 
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
+
     void *tex;
     (void)_this;
     (void)Pool;
@@ -1780,6 +1787,9 @@ HRESULT CDirect3DDevice_CreateTexture(const CDirect3DDevice *_this, UINT Width, 
     tex = malloc(((0x68) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DTexture_CDirect3DTexture((const CDirect3DTexture *)tex, Width, Height, Levels, Usage, Format);
     *ppTexture = (IDirect3DTexture9 *)tex;
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_END(FRAME_TEXTURE_CREATE, activityStart);
+#endif
     return 0;
 }
 
@@ -1794,6 +1804,10 @@ HRESULT CDirect3DDevice_CreateVolumeTexture(const CDirect3DDevice *_this, UINT W
         return macResult;
 #endif
 
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
+
     void *tex;
     (void)_this;
     (void)Pool;
@@ -1801,6 +1815,9 @@ HRESULT CDirect3DDevice_CreateVolumeTexture(const CDirect3DDevice *_this, UINT W
     tex = malloc(((0x6c) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DVolumeTexture_CDirect3DVolumeTexture((const CDirect3DVolumeTexture *)tex, Width, Height, Depth, Levels, Usage, Format);
     *ppVolumeTexture = (IDirect3DVolumeTexture9 *)tex;
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_END(FRAME_TEXTURE_CREATE, activityStart);
+#endif
     return 0;
 }
 
@@ -1815,6 +1832,10 @@ HRESULT CDirect3DDevice_CreateCubeTexture(const CDirect3DDevice *_this, UINT Edg
         return macResult;
 #endif
 
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
+
     void *tex;
     (void)_this;
     (void)Pool;
@@ -1822,6 +1843,9 @@ HRESULT CDirect3DDevice_CreateCubeTexture(const CDirect3DDevice *_this, UINT Edg
     tex = malloc(((0x7c) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DCubeTexture_CDirect3DCubeTexture((const CDirect3DCubeTexture *)tex, EdgeLength, Levels, Usage, Format);
     *ppCubeTexture = (IDirect3DCubeTexture9 *)tex;
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_END(FRAME_TEXTURE_CREATE, activityStart);
+#endif
     return 0;
 }
 
@@ -2159,6 +2183,10 @@ HRESULT CDirect3DDevice_CreateRenderTarget(const CDirect3DDevice *_this,
         return macResult;
 #endif
 
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
+
     void *surfMem = NULL;
     void *surf;
     int currentTexture = 0;
@@ -2192,6 +2220,9 @@ HRESULT CDirect3DDevice_CreateRenderTarget(const CDirect3DDevice *_this,
     CDirect3DSurface_CDirect3DSurface((const CDirect3DSurface *)surf, 0, 0, 0, Width, Height, Format, surfMem, 0);
     *ppSurface = (IDirect3DSurface9 *)surf;
     glBindTexture(0xde1, currentTexture);
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_END(FRAME_TARGET_CREATE, activityStart);
+#endif
     return 0;
 }
 
@@ -2674,8 +2705,11 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
 #endif
 
 #if defined(COD2_X64)
-    return CDirect3DDevice_DrawIndexedNative(_this, PrimitiveType, BaseVertexIndex,
-                                           MinVertexIndex, NumVertices, startIndex, primCount);
+    FRAME_ACTIVITY_BEGIN(drawStart);
+    HRESULT result = CDirect3DDevice_DrawIndexedNative(_this, PrimitiveType, BaseVertexIndex,
+                                                     MinVertexIndex, NumVertices, startIndex, primCount);
+    FRAME_ACTIVITY_END(FRAME_DRAW, drawStart);
+    return result;
 #else
     DeviceImpl *dev = (DeviceImpl *)_this;
 #if defined(COD2_X64)
