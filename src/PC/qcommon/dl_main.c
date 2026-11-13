@@ -13,6 +13,7 @@ int Com_sprintf(char *dest, int size, const char *fmt, ...);
 
 void Com_Printf(const char *fmt, ...);
 void Com_DPrintf(const char *fmt, ...);
+FILE *FS_FileOpen(const char *filename, const char *mode);
 #if defined(COD2_X64)
 int FS_CreatePath(char *path);
 #else
@@ -150,7 +151,7 @@ void DL_Cod2xExpectZip(void)
 static int DL_Cod2xZipStart(const char *path)
 {
     unsigned char start[2];
-    FILE *file = fopen(path, "rb");
+    FILE *file = FS_FileOpen(path, "rb");
     size_t read = file ? fread(start, 1, sizeof(start), file) : 0;
     if (file)
         fclose(file);
@@ -270,7 +271,7 @@ int DL_BeginDownload(const char *localName, const char *remoteName, int debug)
         dl_localName[n] = '\0';
     }
 
-    dl_fp = fopen(localName, "wb");
+    dl_fp = FS_FileOpen(localName, "wb");
     if (!dl_fp) {
         Com_DPrintf("DL_BeginDownload: could not open '%s' for writing\n", localName);
         return 0;

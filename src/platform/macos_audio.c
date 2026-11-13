@@ -1049,6 +1049,8 @@ static int StreamFrame(MacAudioSample *sample, float *left, float *right)
     return 1;
 }
 
+extern FILE *FS_FileOpen(const char *filename, const char *mode);
+
 void *AIL_open_stream(void *driver, const char *name, int memory)
 {
     (void)memory;
@@ -1062,7 +1064,7 @@ void *AIL_open_stream(void *driver, const char *name, int memory)
         long length = stream->seek(stream->handle, 0, 2);
         if (length > 0) stream->bytes = (size_t)length;
     } else {
-        stream->disk = fopen(name, "rb");
+        stream->disk = FS_FileOpen(name, "rb");
         if (stream->disk && !fseeko(stream->disk, 0, SEEK_END)) {
             off_t length = ftello(stream->disk);
             if (length > 0) stream->bytes = (size_t)length;

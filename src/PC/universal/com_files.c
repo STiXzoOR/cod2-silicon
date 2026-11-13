@@ -1,5 +1,6 @@
 #include "common_types.h"
 #include "imports.h"
+#include "PC/qcommon/com_fileaccess.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
 #include "../qcommon/cod2x_policy.h"
@@ -326,7 +327,11 @@ qboolean FS_CreatePath(char *OSPath)
 
 void FS_Remove(const char *osPath)
 {
+#if COD2_APPLE_SDK && defined(COD2_X64)
+    FS_RemoveOSPath(osPath);
+#else
     remove(osPath);
+#endif
 }
 
 extern Bool I_islower(int c);
@@ -1013,6 +1018,12 @@ int FS_GetFileOsPath(const char *filename, char *ospath)
         file = FS_FileOpen(ospath, "rb");
         if (file) {
             FS_FileClose(file);
+#if COD2_APPLE_SDK && defined(COD2_X64)
+            /* Callers can pass the returned OS path to APIs other than fopen. */
+            char resolved[256];
+            if (FS_ResolveOSPath(ospath, resolved, sizeof(resolved))) return -1;
+            strcpy(ospath, resolved);
+#endif
             return 0;
         }
     }
@@ -2348,7 +2359,7 @@ qboolean FS_WriteFile(const char *qpath, const void *buffer, int size)
             char ospath[280];
 
             FS_BuildOSPath_Internal(fs_homepath->current.string, fs_gamedir, qpath, ospath, 0);
-            remove(ospath);
+            FS_Remove(ospath);
         }
         return 0;
     }

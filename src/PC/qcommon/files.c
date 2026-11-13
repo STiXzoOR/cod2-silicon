@@ -1,5 +1,6 @@
 #include "common_types.h"
 #include "imports.h"
+#include "PC/qcommon/com_fileaccess.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "cod2x.h"
 #include "cod2x_policy.h"
@@ -281,7 +282,11 @@ void FS_SV_Rename(const char *from, const char *to)
         }
     }
 
+#if COD2_APPLE_SDK && defined(COD2_X64)
+    if (FS_RenameOSPath(from_ospath, to_ospath) != 0) {
+#else
     if (rename(from_ospath, to_ospath) != 0) {
+#endif
 
         FS_CopyFile(from_ospath, to_ospath);
         FS_Remove(from_ospath);
