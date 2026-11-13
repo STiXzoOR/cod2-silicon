@@ -260,6 +260,7 @@ void R_GenerateShadowCookies(const GfxViewParms *viewParms, const GfxViewParms *
 
 void R_DrawShadowCookies(int viewIndex, const GfxViewParms *viewParms, ShadowCookieList *list)
 {
+    extern int R_UseZFeather(void);
     int needsTarget = R_BeginDrawGroupSection((GfxDrawGroupType)1) == 0;
     const vec4_t clear = { 0.5f, 0.5f, 0.5f, 0.0f };
     R_BeginDrawGroupLoop((GfxDrawGroupType)1, viewIndex);
@@ -281,6 +282,10 @@ void R_DrawShadowCookies(int viewIndex, const GfxViewParms *viewParms, ShadowCoo
         R_AddCmdSetViewport(0, 0, 128, 128);
         if (sc_blur->current.integer) R_AddCmdBlurShadowCookie();
         R_AddCmdSetRenderTarget(R_RENDERTARGET_DYNAMICSHADOWS);
+        if (needsTarget && R_UseZFeather()) {
+            const vec4_t white = { 1, 1, 1, 1 };
+            R_AddCmdClearScreen(1, white, 0, 0);
+        }
         R_AddCmdBeginView(scene.viewCount, &scene.def, viewParms, &rg.lodParms);
         if (i < sc_debugReceiverCount->current.integer) {
             surfs = &scene.drawSurfs[cookie->firstReceiverDrawSurf];
@@ -289,7 +294,13 @@ void R_DrawShadowCookies(int viewIndex, const GfxViewParms *viewParms, ShadowCoo
         }
         needsTarget = 0;
     }
-    if (needsTarget) R_AddCmdSetRenderTarget(R_RENDERTARGET_DYNAMICSHADOWS);
+    if (needsTarget) {
+        R_AddCmdSetRenderTarget(R_RENDERTARGET_DYNAMICSHADOWS);
+        if (R_UseZFeather()) {
+            const vec4_t white = { 1, 1, 1, 1 };
+            R_AddCmdClearScreen(1, white, 0, 0);
+        }
+    }
     R_EndDrawGroupLoop((GfxDrawGroupType)1, viewIndex);
     R_EndDrawGroupSection((GfxDrawGroupType)1);
 }

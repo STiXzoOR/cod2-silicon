@@ -644,7 +644,11 @@ static void RB_GetTextureFromCode_impl(int codeTexture, void **image, byte *samp
     }
 
     case 21:
+#if defined(COD2_X64)
+        *image = ((DxGlobals *)dx)->renderTargets[R_RENDERTARGET_FLOAT_Z].image;
+#else
         *image = NULL;
+#endif
         *samplerState = 0x31;
         return;
 

@@ -90,6 +90,9 @@ extern const dvar_t *r_drawPrimCap;
 extern const dvar_t *r_drawPrimFloor;
 extern const dvar_t *r_drawWater;
 extern const dvar_t *r_depthPrepassModels;
+#if defined(COD2_X64)
+const dvar_t *r_zFeather;
+#endif
 extern const dvar_t *r_lockPvs;
 extern const dvar_t *r_skipPvs;
 extern const dvar_t *r_pvsStats;
@@ -425,6 +428,9 @@ void R_RegisterDvars(void)
     r_drawWater = ri.Dvar_RegisterBool("r_drawWater", 1, 0x2080);
 
     r_depthPrepassModels = ri.Dvar_RegisterBool("r_depthPrepassModels", 0, 0x2000);
+#if defined(COD2_X64)
+    r_zFeather = ri.Dvar_RegisterBool("r_zFeather", 1, 0x2000);
+#endif
 
     r_lockPvs = ri.Dvar_RegisterBool("r_lockPvs", 0, 0x2080);
 

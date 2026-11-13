@@ -318,7 +318,7 @@ HRESULT CDirect3D_CheckDeviceFormat(const void *t, UINT a, int dt, D3DFORMAT af,
     if (u == 0 && (cf == 0x31545844 || cf == 0x32545844 || cf == 0x33545844 || cf == 0x35545844))
         return 0;
     if (u == 0 || u == 1)
-        return cf == 21 || cf == 22 ? 0 : (HRESULT)(int32_t)0x8876086au;
+        return cf == 21 || cf == 22 || (cf == D3DFMT_R32F && rt == 3) ? 0 : (HRESULT)(int32_t)0x8876086au;
     if (u == 2) {
         if (rt == 1 && (depth == 16 || depth == 32) &&
             (cf == 80 || cf == 73 || (depth == 32 && (cf == 71 || cf == 75))))

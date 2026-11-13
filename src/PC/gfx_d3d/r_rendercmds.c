@@ -20,6 +20,10 @@ extern const dvar_t *r_multiGpu;
 extern const dvar_t *r_skinCache;
 extern const dvar_t *r_specularColorScale;
 extern const dvar_t *r_sun_from_dvars;
+#if defined(COD2_X64)
+extern const dvar_t *r_zFeather;
+extern const dvar_t *r_rendererInUse;
+#endif
 
 extern char *getenv(const char *name);
 
@@ -539,6 +543,14 @@ static void R_BeginFrame_impl(void)
     if (gpuSyncChanged) {
         R_UpdateGpuSyncType();
     }
+
+#if defined(COD2_X64)
+    if (R_ClearModifiedDvar(r_zFeather) && r_rendererInUse->current.integer != 2 &&
+        r_zFeather->current.enabled && !dx.renderTargets[R_RENDERTARGET_FLOAT_Z].colorSurface) {
+        ri.Printf(0, "Because r_zFeather was 0 during renderer initialization,\n"
+                     "you must do a vid_restart with r_zFeather set to 1 to see it.\n\n");
+    }
+#endif
 
     forceLod = r_forceLod;
     if (forceLod->current.integer != forceLod->reset.integer) {

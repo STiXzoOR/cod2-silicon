@@ -10,11 +10,13 @@ DxGlobals dx;
 vidConfig_t vidConfig;
 refimport_t ri;
 Bool g_NoTextureID;
+static dvar_t feather, renderer;
+const dvar_t *r_zFeather = &feather, *r_rendererInUse = &renderer;
 int alwaysfails;
 void *imp_g_NoTextureID = &g_NoTextureID;
-static GfxImage images[12];
+static GfxImage images[13];
 static void *deviceMethods[30], *surfaceMethods[13];
-static struct { void **vtable; } device, surfaces[14];
+static struct { void **vtable; } device, surfaces[15];
 static int releases, imageReleases;
 
 const char *va(const char *format, ...)
@@ -40,7 +42,7 @@ static HRESULT GetSwapChain(void *object, UINT index, byte *chain)
 static HRESULT GetBackBuffer(void *object, DWORD chain, DWORD buffer, DWORD type, byte *surface)
 {
     assert(object == &device && chain == 0 && buffer == 0 && type == 0);
-    *(void **)surface = &surfaces[12];
+    *(void **)surface = &surfaces[13];
     return 0;
 }
 static HRESULT CreateDepth(void *object, UINT width, UINT height, D3DFORMAT format,
@@ -49,14 +51,14 @@ static HRESULT CreateDepth(void *object, UINT width, UINT height, D3DFORMAT form
 {
     assert(object == &device && format == D3DFMT_D24S8 && !multisample && !quality && !discard && !shared);
     assert((width == 1280 && height == 720) || (width == 128 && height == 128));
-    *surface = (IDirect3DSurface9 *)&surfaces[width == 128 ? 13 : 12];
+    *surface = (IDirect3DSurface9 *)&surfaces[width == 128 ? 14 : 13];
     return 0;
 }
 GfxImage *Image_AllocProg(int id, int category)
-{ assert(id >= 0 && id < 12 && category == 6); return &images[id]; }
+{ assert(id >= 0 && id < 13 && category == 6); return &images[id]; }
 void Image_SetupRenderTarget(GfxImage *image, int width, int height, D3DFORMAT format)
 {
-    assert(format == D3DFMT_A8R8G8B8);
+    assert(format == (image == &images[12] ? D3DFMT_R32F : D3DFMT_A8R8G8B8));
     image->width = width;
     image->height = height;
 }
@@ -65,7 +67,7 @@ void Image_SetupSystem(GfxImage *image, int width, int height, D3DFORMAT format)
 IDirect3DSurface9 *Image_GetSurface(GfxImage *image)
 { return (IDirect3DSurface9 *)&surfaces[image - images]; }
 void Image_Release(GfxImage *image)
-{ assert(image >= images && image < images + 12); ++imageReleases; }
+{ assert(image >= images && image < images + 13); ++imageReleases; }
 void Image_TrackFullscreenTexture(GfxImage *image, int picmip, D3DFORMAT format)
 { (void)image; (void)picmip; (void)format; }
 void Image_TrackTexture(GfxImage *image, int flags, D3DFORMAT format, int width, int height, int depth)
@@ -91,7 +93,7 @@ int main(int argc, char **argv)
     surfaceMethods[1] = AddRef;
     surfaceMethods[2] = Release;
     surfaceMethods[0x30 / 4] = GetDesc;
-    for (int i = 0; i < 14; ++i) surfaces[i].vtable = surfaceMethods;
+    for (int i = 0; i < 15; ++i) surfaces[i].vtable = surfaceMethods;
     dx.device = (IDirect3DDevice9 *)&device;
     vidConfig.width = 1280;
     vidConfig.height = 720;
@@ -99,6 +101,7 @@ int main(int argc, char **argv)
     /* Real native pointers have nonzero high halves; aliases must retain them. */
     assert((uintptr_t)&surfaces[12] > UINT32_MAX);
     R_InitRenderTargets();
+    assert(!dx.renderTargets[R_RENDERTARGET_FLOAT_Z].image);
     assert(argc == 1 || (argc == 2 && !strcmp(argv[1], "--shutdown-only")));
     if (argc == 1) {
         CheckIndependent(R_RENDERTARGET_RESOLVED_POST_SUN, R_RENDERTARGET_DYNAMICSHADOWS);
@@ -116,5 +119,13 @@ int main(int argc, char **argv)
     }
     assert((void *)dx.device == &device && !dx.singleSampleDepthStencilSurface);
     assert(imageReleases == 11 && releases == 21);
+    feather.current.enabled = 1;
+    R_InitRenderTargets();
+    assert(dx.renderTargets[R_RENDERTARGET_FLOAT_Z].image == &images[12]);
+    assert(dx.renderTargets[R_RENDERTARGET_FLOAT_Z].depthStencilSurface ==
+           dx.renderTargets[R_RENDERTARGET_DYNAMICSHADOWS].depthStencilSurface);
+    assert(dx.renderTargets[R_RENDERTARGET_FLOAT_Z].width == 1280);
+    R_ShutdownRenderTargets();
+    assert(imageReleases == 23 && releases == 44);
     puts("native render targets: independent saved/post-sun storage, dimensions and shutdown clearing passed");
 }

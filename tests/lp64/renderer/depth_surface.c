@@ -40,6 +40,8 @@ void *imp_tess = &commands;
 void *imp_backEnd;
 GfxWorld s_world;
 Bool g_NoTextureID, g_WarmOff;
+Bool g_InhibitCopy, g_RenderToShadowCookie;
+UINT32 g_NumBlurShadowPasses;
 /* Isolate generated ABI import data; exercise real vertex-array initialization. */
 #if defined(COD2_X64)
 static void FixtureArrayDtor(const void *array) { (void)array; }
@@ -147,6 +149,63 @@ static void Pixels(int red, float depth, int stencil)
 }
 
 #if defined(COD2_X64)
+static void FloatTarget(DeviceImpl *dev)
+{
+    IDirect3DTexture9 *texture;
+    IDirect3DSurface9 *surface, *depth;
+    IDirect3DSurface9 *back = dev->renderTarget;
+    dev->backBuffer = back;
+    DeviceTargets_AddRef(back);
+    GLint previousDraw, previousRead;
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING_EXT, &previousDraw);
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING_EXT, &previousRead);
+    assert(!CDirect3DDevice_CreateTexture((const void *)dev, 32, 32, 1, 1,
+        D3DFMT_R32F, 0, &texture, NULL));
+    assert(!CDirect3DTexture_GetSurfaceLevel((const void *)texture, 0, &surface));
+    assert(!CDirect3DDevice_CreateDepthStencilSurface((const void *)dev,
+        32, 32, D3DFMT_D24S8, 0, 0, 0, &depth, NULL));
+    assert(!CDirect3DDevice_SetRenderTarget((const void *)dev, 0, surface));
+    assert(!CDirect3DDevice_SetDepthStencilSurface((const void *)dev, depth));
+    assert(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE_EXT);
+    const char program[] = "!!ARBfp1.0\nMOV result.color, {908066.8125,0,0,1};\nEND";
+    GLuint fp;
+    glGenProgramsARB(1, &fp);
+    glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, fp);
+    glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, sizeof(program)-1, program);
+    glEnable(GL_FRAGMENT_PROGRAM_ARB);
+    glDisable(GL_VERTEX_PROGRAM_ARB);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glDisable(GL_ALPHA_TEST);
+    glColorMask(1,1,1,1);
+    glMatrixMode(GL_PROJECTION); glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+    glBegin(GL_QUADS);
+    glVertex2f(-1,-1); glVertex2f(1,-1); glVertex2f(1,1); glVertex2f(-1,1);
+    glEnd();
+    float value = 0;
+    glReadPixels(16,16,1,1,GL_RED,GL_FLOAT,&value);
+    fprintf(stderr,"float target shader depth: %.4f expected 908066.8125\n",value);
+    assert(value == 908066.8125f);
+    assert(!CDirect3DDevice_SetRenderTarget((const void *)dev,0,back));
+    GLint draw,read;
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING_EXT,&draw);
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING_EXT,&read);
+    assert(draw==previousDraw && read==previousRead);
+    CDirect3DSurfaceNativeInfo info;
+    assert(CDirect3DSurface_GetNativeInfo(surface,&info));
+    glBindTexture(GL_TEXTURE_2D,info.name);
+    float pixels[32*32];
+    glGetTexImage(GL_TEXTURE_2D,0,GL_RED,GL_FLOAT,pixels);
+    assert(pixels[16*32+16]==value);
+    assert(glGetError()==GL_NO_ERROR);
+    glDeleteProgramsARB(1,&fp);
+    DeviceTargets_Release(surface);
+    DeviceTargets_Release(texture);
+    DeviceTargets_Release(depth);
+    DeviceTargets_Release(back);
+}
+
 static void DepthIdentity(DeviceImpl *dev)
 {
     IDirect3DSurface9 *receiver, *cookie;
@@ -295,7 +354,9 @@ int main(int argc, char **argv)
     /* Existing stencil operations isolate the surface enable/mask contract. */
     glStencilFunc(GL_ALWAYS, 0xa6, 255);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-    if (!strcmp(test, "identity")) {
+    if (!strcmp(test, "float")) {
+        FloatTarget(&dev);
+    } else if (!strcmp(test, "identity")) {
 #if defined(COD2_X64)
         DepthIdentity(&dev);
 #endif

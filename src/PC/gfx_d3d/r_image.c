@@ -34,7 +34,11 @@ static int imageGlobals[2064];
 #define IG_SCALAR(i)   (imageGlobals[i])
 #define IG_CLEARHASH() memset(imageGlobals, 0, 0x2000)
 #endif
+#if defined(COD2_X64)
+static GfxImage g_imageProgs[13];
+#else
 static GfxImage g_imageProgs[12];
+#endif
 
 __attribute__((used, packed, aligned(4)))
 const char *imageTypeName[] = {
@@ -69,7 +73,11 @@ const char *g_imageProgNames[] = {
     "$resolved_scene",
     "$savedscreen",
     "$raw",
+#if defined(COD2_X64)
+    "$floatz",
+#else
     NULL,
+#endif
     NULL,
     NULL,
     NULL,
@@ -777,7 +785,7 @@ void R_ImageList_f(void)
 
     R_GetImageList(&list);
     if (listAllImages) {
-        for (int i = 0; i < 12 && (unsigned int)list.count <= 0x7ff; ++i) {
+        for (int i = 0; i < sizeof(g_imageProgs) / sizeof(g_imageProgs[0]) && (unsigned int)list.count <= 0x7ff; ++i) {
             if (g_imageProgs[i].mapType)
                 list.image[list.count++] = &g_imageProgs[i];
         }

@@ -7,6 +7,10 @@ extern Bool g_NoTextureID;
 #include "imports.h"
 extern vidConfig_t vidConfig;
 extern DxGlobals dx;
+#if defined(COD2_X64)
+extern const dvar_t *r_zFeather;
+extern const dvar_t *r_rendererInUse;
+#endif
 
 extern void *imp_dx;
 extern void *imp_vidConfig;
@@ -406,6 +410,12 @@ void R_InitRenderTargets(void)
 
     dxPtr = DX();
     backBufferFormat = ((DxGlobals *)(dxPtr))->backBufferFormat;
+#if defined(COD2_X64)
+    /* Windows 1.3 10023163: full-size R32F, sharing single-sample depth. */
+    if (r_rendererInUse->current.integer != 2 && r_zFeather->current.enabled)
+        R_InitFullscreenRenderTargetImage(12, 0, D3DFMT_R32F, RENDERTARGET_USAGE_RENDER,
+                                          &((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_FLOAT_Z]);
+#endif
     R_InitFullscreenRenderTargetImage(3, 2, backBufferFormat, RENDERTARGET_USAGE_RENDER,
                                       (GfxRenderTarget *)&((DxGlobals *)dxPtr)->renderTargets[8].image);
 

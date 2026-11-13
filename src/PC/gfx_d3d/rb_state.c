@@ -1043,6 +1043,9 @@ void RB_SetRenderTarget(GfxRenderTargetId newTargetId)
     const vidConfig_t *vidConfig;
     GfxRenderTarget *renderTarget;
     int samplerIndex;
+#if defined(COD2_X64)
+    GfxRenderTargetId oldTargetId = dxState.renderTargetId;
+#endif
 
     if (dxState.renderTargetId == newTargetId) {
         return;
@@ -1101,7 +1104,12 @@ void RB_SetRenderTarget(GfxRenderTargetId newTargetId)
     dxState.viewport.MinZ = 0.0f;
     dxState.viewport.MaxZ = 1.0f;
 
-    if (dxState.depthStencilSurface != renderTarget->depthStencilSurface) {
+    if (dxState.depthStencilSurface != renderTarget->depthStencilSurface
+#if defined(COD2_X64)
+        /* The same shared depth can move between AUX and the float FBO. */
+        || newTargetId == R_RENDERTARGET_FLOAT_Z || oldTargetId == R_RENDERTARGET_FLOAT_Z
+#endif
+    ) {
         RB_SetDepthStencilSurfaceDx7(renderTarget->depthStencilSurface);
         dxState.depthStencilSurface = renderTarget->depthStencilSurface;
     }
@@ -1458,7 +1466,7 @@ void RB_SetWorldMatrixForEntity(const GfxEntity *re)
    storage instead of indexing beyond the twelve-entry native array. */
 const GfxViewportBehavior s_viewportBehaviorForRenderTarget[13] = {
     (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)0,
-    (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1,
+    (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)0, (GfxViewportBehavior)1,
     (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1,
     (GfxViewportBehavior)0 };
 #else

@@ -139,6 +139,9 @@ UINT32 MacOpenGLUtils_GetFormatSizeInBits(const D3DFORMAT *f)
     case D3DFMT_D24X8:
     case D3DFMT_D24X4S4:
     case D3DFMT_INDEX32:
+#if defined(COD2_X64)
+    case D3DFMT_R32F:
+#endif
         return 32;
 
     case D3DFMT_R5G6B5:
@@ -328,6 +331,13 @@ int MacOpenGLUtils_GetOpenGLTextureType(bool *CreateOpenGLResources, GLenum *Ope
         OpenGLElementType = &tmpElement;
 
     switch (mFormat) {
+#if defined(COD2_X64)
+    case D3DFMT_R32F:
+        *OpenGLInternalFormat = 0x822E; /* GL_R32F */
+        *OpenGLFormat = 0x1903; /* GL_RED */
+        *OpenGLElementType = 0x1406; /* GL_FLOAT */
+        break;
+#endif
     case D3DFMT_A1R5G5B5:
         *OpenGLInternalFormat = 0x8057;
         *OpenGLFormat = 0x80E1;

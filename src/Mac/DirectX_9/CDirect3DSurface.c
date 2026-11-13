@@ -66,10 +66,27 @@ typedef struct {
     GLenum openGLElementType;
 #if COD2_APPLE_SDK
     GLuint depthRenderbuffer;
+    GLuint colorFramebuffer;
 #endif
 } CDirect3DSurfaceImpl;
 
 #if COD2_APPLE_SDK
+HRESULT CDirect3DSurface_BindFloatTarget(void *object)
+{
+    CDirect3DSurfaceImpl *surface = object;
+    if (!surface || surface->format != D3DFMT_R32F || !surface->owner)
+        return (HRESULT)0x8876086c;
+    if (!surface->colorFramebuffer)
+        glGenFramebuffersEXT(1, &surface->colorFramebuffer);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, surface->colorFramebuffer);
+    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
+        GL_TEXTURE_2D, COpenGLTexture_GetGLNameNative(surface->owner), surface->level);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+    glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+    return glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE_EXT ?
+        0 : (HRESULT)0x8876086c;
+}
+
 HRESULT CDirect3DSurface_CreateDepthStorage(void *object, UINT32 width, UINT32 height, UINT32 samples)
 {
     CDirect3DSurfaceImpl *surface = object;
@@ -220,6 +237,8 @@ static void CDirect3DSurface_Destroy(CDirect3DSurfaceImpl *surface)
 {
 
 #if COD2_APPLE_SDK
+    if (surface->colorFramebuffer)
+        glDeleteFramebuffersEXT(1, &surface->colorFramebuffer);
     if (surface->depthRenderbuffer)
         glDeleteRenderbuffersEXT(1, &surface->depthRenderbuffer);
 #endif

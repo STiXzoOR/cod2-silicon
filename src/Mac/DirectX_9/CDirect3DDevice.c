@@ -479,6 +479,11 @@ typedef struct {
     unsigned char blendStateChanged;
     GLfloat lightModelAmbient[4];
     GLfloat slopeScaleDepthBias, scaledDepthBias;
+#if COD2_APPLE_SDK
+    unsigned char floatTargetActive;
+    GLint savedDrawFramebuffer, savedReadFramebuffer;
+    GLint savedDrawBuffer, savedReadBuffer;
+#endif
 #endif
 } DeviceImpl;
 #if defined(COD2_X64)
@@ -6186,6 +6191,15 @@ static void CDirect3DDevice_ReleaseNativeObject(void *object)
 
 static void CDirect3DDevice_ReleaseNativeContents(DeviceImpl *dev)
 {
+#if COD2_APPLE_SDK
+    if (dev->floatTargetActive) {
+        glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, dev->savedDrawFramebuffer);
+        glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, dev->savedReadFramebuffer);
+        glDrawBuffer(dev->savedDrawBuffer);
+        glReadBuffer(dev->savedReadBuffer);
+        dev->floatTargetActive = 0;
+    }
+#endif
     CDirect3DDevice_ReleaseNativeObject(dev->swapChain); dev->swapChain = NULL;
     CDirect3DDevice_ReleaseNativeObject(dev->backBuffer); dev->backBuffer = NULL;
     CDirect3DDevice_ReleaseNativeObject(dev->renderTarget); dev->renderTarget = NULL;

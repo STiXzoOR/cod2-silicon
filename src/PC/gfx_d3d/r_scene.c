@@ -751,8 +751,15 @@ extern void R_AddCmdSetViewport(int x, int y, int w, int h);
 extern void Com_Printf(const char *fmt, ...);
 #if defined(COD2_X64)
 extern const dvar_t *sc_enable;
+extern const dvar_t *r_zFeather;
 extern void R_GenerateShadowCookies(const GfxViewParms *view, const GfxViewParms *camera, ShadowCookieList *list);
 extern void R_DrawShadowCookies(int viewIndex, const GfxViewParms *view, ShadowCookieList *list);
+
+int R_UseZFeather(void)
+{
+    return r_rendererInUse->current.integer != 2 && r_zFeather->current.enabled &&
+        dx.renderTargets[R_RENDERTARGET_FLOAT_Z].colorSurface != NULL;
+}
 #endif
 void R_RenderScene(const refdef_t *refdef)
 {
@@ -982,17 +989,25 @@ void R_RenderScene(const refdef_t *refdef)
             R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)0x21);
         } else {
 #if defined(COD2_X64)
-            /* Mac 1.3 R_RenderScene 0xaea20; receivers precede cookie/sun groups. */
-            if (dynamicShadowType) {
+            /* Windows 10024e80: float depth replaces the receiver-only prepass.
+             * Both targets share its single-sample depth/stencil surface. */
+            int feather = R_UseZFeather();
+            if (feather || dynamicShadowType) {
                 if (!R_BeginDrawGroupSection(0)) {
-                    R_AddCmdSetRenderTarget(R_RENDERTARGET_DYNAMICSHADOWS);
-                    R_AddCmdClearScreen(7, (const vec_t *)imp_colorWhite, 1.0f, 0);
+                    R_AddCmdSetRenderTarget(feather ? R_RENDERTARGET_FLOAT_Z : R_RENDERTARGET_DYNAMICSHADOWS);
+                    R_AddCmdClearScreen(feather ? 6 : 7, (const vec_t *)imp_colorWhite, 1.0f, 0);
+                    if (feather)
+                        R_AddCmdDrawFullScreenColoredQuad(0, 0, 1, 1,
+                            (const vec_t *)imp_colorWhite, rgp_p->shadowClearMaterial);
                 }
                 R_BeginDrawGroupLoop((GfxDrawGroupType)0, viewIndex);
                 R_AddCmdBeginView(scene.viewCount, &scene.def, viewParms, lodParms);
-                R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)0);
+                R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount,
+                    feather ? TECHNIQUE_BUILD_FLOAT_Z : TECHNIQUE_DEPTH_PREPASS);
                 R_EndDrawGroupLoop(0, viewIndex);
                 R_EndDrawGroupSection(0);
+            }
+            if (dynamicShadowType) {
                 R_DrawShadowCookies(viewIndex, viewParms, &shadowCookies);
             }
 #endif
@@ -1048,7 +1063,12 @@ void R_RenderScene(const refdef_t *refdef)
                 }
             }
 
+#if defined(COD2_X64)
+            R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount,
+                feather ? TECHNIQUE_EMISSIVE_FEATHERED : TECHNIQUE_EMISSIVE);
+#else
             R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)0x15);
+#endif
             R_EndDrawGroupLoop(3, viewIndex);
             R_EndDrawGroupSection(3);
 
