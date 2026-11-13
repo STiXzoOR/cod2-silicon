@@ -29,8 +29,8 @@ typedef struct {
    handshake lines, each ending in "\r\n", sent as given. */
 Cod2xWebSocket *Cod2x_WebSocketConnect(const char *url, const char *headers, unsigned int reconnectMs,
                                        unsigned int pingMs);
-/* Queued for the connection; the caller checks it is open. */
-void Cod2x_WebSocketSendText(Cod2xWebSocket *ws, const char *text);
+/* Queues for the current open connection; false after transport loss or close. */
+int Cod2x_WebSocketSendText(Cod2xWebSocket *ws, const char *text);
 /* Closes it for good. */
 void Cod2x_WebSocketClose(Cod2xWebSocket *ws);
 /* Main thread: the next event, 1 when there was one. */

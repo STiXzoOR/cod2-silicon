@@ -38,7 +38,7 @@ struct Cod2xWebSocket {
     char *url, *headers;
     unsigned int reconnectMs, pingMs, pongMs;
     /* Shared, under Cod2x_Lock. */
-    int disconnect, abandoned, finished;
+    int disconnect, abandoned, finished, connected;
     WsEvent *events, **eventsTail;
     WsOutgoing *outgoing, **outgoingTail;
 };
@@ -306,7 +306,13 @@ static Cod2xSocket *Ws_Open(Cod2xWebSocket *ws, unsigned long long deadline, WsB
             Cod2x_SocketClose(connection);
             return NULL;
         }
-        n = Cod2x_SocketRecv(connection, chunk, sizeof(chunk), WS_POLL_MSEC);
+        if (received->length >= WS_MAX_RECEIVE) {
+            Ws_PushError(ws, "MG_MAX_RECV_SIZE");
+            Cod2x_SocketClose(connection);
+            return NULL;
+        }
+        size_t room = WS_MAX_RECEIVE - received->length;
+        n = Cod2x_SocketRecv(connection, chunk, room < sizeof(chunk) ? room : sizeof(chunk), WS_POLL_MSEC);
         if (n < 0) {
             Cod2x_SocketClose(connection);
             return NULL;
@@ -375,11 +381,9 @@ static WsState Ws_Frames(Cod2xWebSocket *ws, Cod2xSocket *connection, WsBuffer *
             memcpy(mask, p + header, 4);
             header += 4;
         }
-        if (length > WS_MAX_RECEIVE || message->length + length > WS_MAX_RECEIVE) {
-            Ws_PushError(ws, "MG_MAX_RECV_SIZE");
-            return WS_FAILED;
-        }
-        if (received->length < header + length)
+        /* The receive limit applies to bytes actually buffered, not a
+           declared payload that has not arrived yet. */
+        if (length > received->length - header)
             return WS_GOING;
         payload = received->data + header;
         if (masked)
@@ -439,6 +443,9 @@ static void Ws_Session(Cod2xWebSocket *ws, Cod2xSocket *connection, WsBuffer *re
     unsigned long long nextPing = Ws_Now() + ws->pingMs, pongDeadline = 0;
     WsState state = WS_GOING;
 
+    Cod2x_Lock();
+    ws->connected = 1;
+    Cod2x_Unlock();
     Ws_Push(ws, COD2X_WS_OPEN, NULL, 0, 0, 0);
     /* The upgrade reply can carry frames in the same read. Deliver them
        after OPEN without waiting for another packet from the peer. */
@@ -482,11 +489,20 @@ static void Ws_Session(Cod2xWebSocket *ws, Cod2xSocket *connection, WsBuffer *re
             closing = 1;
             break;
         }
-        n = Cod2x_SocketRecv(connection, chunk, sizeof(chunk), WS_POLL_MSEC);
+        /* Mongoose retains the first fragment opcode with its accumulated
+           payload. Frame headers and incomplete frames share that buffer. */
+        size_t resident = received->length + message.length + (messageOp != 0);
+        if (resident >= WS_MAX_RECEIVE) {
+            Ws_PushError(ws, "MG_MAX_RECV_SIZE");
+            state = WS_FAILED;
+            break;
+        }
+        size_t room = WS_MAX_RECEIVE - resident;
+        n = Cod2x_SocketRecv(connection, chunk, room < sizeof(chunk) ? room : sizeof(chunk), WS_POLL_MSEC);
         if (n < 0) {
             state = WS_EOF;
         } else if (n > 0) {
-            if (!Ws_Append(received, chunk, (size_t)n) || received->length > WS_MAX_RECEIVE + 14) {
+            if (!Ws_Append(received, chunk, (size_t)n)) {
                 Ws_PushError(ws, "MG_MAX_RECV_SIZE");
                 state = WS_FAILED;
             } else {
@@ -494,6 +510,17 @@ static void Ws_Session(Cod2xWebSocket *ws, Cod2xSocket *connection, WsBuffer *re
             }
         }
     }
+    Cod2x_Lock();
+    ws->connected = 0;
+    /* Frames queued for a lost connection must not reach its replacement. */
+    while (ws->outgoing) {
+        WsOutgoing *next = ws->outgoing->next;
+        free(ws->outgoing->text);
+        free(ws->outgoing);
+        ws->outgoing = next;
+    }
+    ws->outgoingTail = &ws->outgoing;
+    Cod2x_Unlock();
     Cod2x_SocketClose(connection);
     free(message.data);
     Ws_Push(ws, COD2X_WS_CLOSE, NULL, 0, !closing, Ws_Disconnecting(ws));
@@ -548,20 +575,27 @@ Cod2xWebSocket *Cod2x_WebSocketConnect(const char *url, const char *headers, uns
     return ws;
 }
 
-void Cod2x_WebSocketSendText(Cod2xWebSocket *ws, const char *text)
+int Cod2x_WebSocketSendText(Cod2xWebSocket *ws, const char *text)
 {
     WsOutgoing *item = calloc(1, sizeof(*item));
     if (!item)
-        return;
+        return 0;
     item->text = Ws_Copy(text, strlen(text));
     if (!item->text) {
         free(item);
-        return;
+        return 0;
     }
     Cod2x_Lock();
+    if (!ws->connected || ws->disconnect) {
+        Cod2x_Unlock();
+        free(item->text);
+        free(item);
+        return 0;
+    }
     *ws->outgoingTail = item;
     ws->outgoingTail = &item->next;
     Cod2x_Unlock();
+    return 1;
 }
 
 void Cod2x_WebSocketClose(Cod2xWebSocket *ws)

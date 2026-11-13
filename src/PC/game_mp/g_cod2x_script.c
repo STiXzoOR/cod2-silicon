@@ -242,7 +242,7 @@ static void GScr_Cod2xHttpFetch(void)
     request.bodyLength = strlen(data);
     request.timeoutMs = timeout > 0 ? timeout : 0;
     request.connectTimeoutMs = timeout > 0 ? 5000 : 0;
-    request.maxBody = FETCH_MAX_RECEIVE;
+    request.maxReceive = FETCH_MAX_RECEIVE;
 
     /* CoD2x answers these at once, from inside the call. */
     if (!fetch->url || !Cod2x_HttpValidUrl(url) || !Cod2x_HttpStart(&request, Fetch_Done, fetch)) {
@@ -391,12 +391,11 @@ static void GScr_Cod2xWebSocketSendText(void)
     }
     index = Scr_GetInt(0);
     message = Scr_GetString(1);
-    if (!WebSocket_Index(index) || !webSockets[index].connected) {
+    if (!WebSocket_Index(index)) {
         Scr_AddBool(0);
         return;
     }
-    Cod2x_WebSocketSendText(webSockets[index].ws, message);
-    Scr_AddBool(1);
+    Scr_AddBool(Cod2x_WebSocketSendText(webSockets[index].ws, message));
 }
 
 /* websocket_close(id): closes it for good. */
@@ -432,26 +431,32 @@ void GScr_Cod2xNetBeforeMapChange(int shutdown)
         if (fetchPending > 0)
             Cod2x_Sleep(10);
     }
-    if (shutdown)
+    if (shutdown) {
+        Cod2x_HttpFrameFor(Fetch_Done);
         Cod2x_HttpCancelFor(Fetch_Done);
+    }
     if (!complete && !shutdown)
         return;
-    for (int i = 0; i < WEBSOCKET_MAX_CLIENTS; ++i)
-        if (webSockets[i].ws)
-            Cod2x_WebSocketClose(webSockets[i].ws);
-    /* CoD2x lets each close go out right away, and waits on shutdown. */
-    for (int waited = 0; waited < (shutdown ? 1000 : 100); waited += 10) {
+    for (int i = 0; i < WEBSOCKET_MAX_CLIENTS; ++i) {
+        if (!webSockets[i].ws)
+            continue;
+        Cod2x_WebSocketClose(webSockets[i].ws);
+        Cod2x_Sleep(10);
+        WebSocket_Deliver(i);
+    }
+    /* Upstream polls each active slot, rather than sharing one aggregate
+       shutdown deadline between all connections. */
+    for (int round = 0; shutdown && round < 10; ++round) {
         any = 0;
         for (int i = 0; i < WEBSOCKET_MAX_CLIENTS; ++i) {
-            if (!webSockets[i].ws)
+            if (!webSockets[i].ws || Cod2x_WebSocketFinished(webSockets[i].ws))
                 continue;
+            any = 1;
+            Cod2x_Sleep(100);
             WebSocket_Deliver(i);
-            if (!Cod2x_WebSocketFinished(webSockets[i].ws))
-                any = 1;
         }
         if (!any)
             break;
-        Cod2x_Sleep(10);
     }
     for (int i = 0; i < WEBSOCKET_MAX_CLIENTS; ++i)
         if (webSockets[i].ws)

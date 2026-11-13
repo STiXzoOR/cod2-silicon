@@ -19,6 +19,7 @@ typedef struct {
     int timeoutMs;               /* the whole request; 0 waits for ever */
     int connectTimeoutMs;        /* until connected; 0 waits for ever */
     size_t maxBody;              /* longer responses fail with "Response too large"; 0 = any */
+    size_t maxReceive;           /* combined response headers and body; 0 = any */
 } Cod2xHttpRequest;
 
 typedef struct {

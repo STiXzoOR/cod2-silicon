@@ -311,15 +311,19 @@ void Cod2x_HttpInit(void)
     }
 }
 
-typedef struct {
+typedef struct HttpBuffer {
     char *data;
-    size_t length, capacity, limit;
+    size_t length, capacity, limit, receiveLimit;
+    struct HttpBuffer *other;
     int tooLarge;
 } HttpBuffer;
 
 static int Http_Append(HttpBuffer *buffer, const char *data, size_t length)
 {
-    if (buffer->limit && buffer->length + length > buffer->limit) {
+    size_t resident = buffer->length + (buffer->other ? buffer->other->length : 0);
+    if (length > SIZE_MAX - buffer->length - 1 ||
+        (buffer->limit && length > buffer->limit - buffer->length) ||
+        (buffer->receiveLimit && (resident > buffer->receiveLimit || length > buffer->receiveLimit - resident))) {
         buffer->tooLarge = 1;
         return 0;
     }
@@ -351,8 +355,7 @@ static size_t Http_Headers(char *data, size_t size, size_t count, void *user)
     /* A new status line (after an informational response) starts over. */
     if (size * count >= 5 && !memcmp(data, "HTTP/", 5))
         headers->length = 0;
-    Http_Append(headers, data, size * count);
-    return size * count;
+    return Http_Append(headers, data, size * count) ? size * count : 0;
 }
 
 static int Http_HasHeader(const char *headers, const char *name)
@@ -527,6 +530,9 @@ static int Http_Perform(const Cod2xHttpRequest *request, Cod2xHttpResponse *resp
         return 0;
     }
     body.limit = request->maxBody;
+    body.receiveLimit = headers.receiveLimit = request->maxReceive;
+    body.other = &headers;
+    headers.other = &body;
     list = Http_HeaderList(request->headers, hasBody);
     /* CoD2x states the body length on every request, also an empty one. */
     if (!hasBody) {
@@ -558,7 +564,7 @@ static int Http_Perform(const Cod2xHttpRequest *request, Cod2xHttpResponse *resp
 
     code = Http_Transfer(curl, cancel);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
-    if (code == CURLE_WRITE_ERROR && body.tooLarge)
+    if (code == CURLE_WRITE_ERROR && (body.tooLarge || headers.tooLarge))
         snprintf(response->error, sizeof(response->error), "Response too large");
     else if (code == CURLE_ABORTED_BY_CALLBACK)
         snprintf(response->error, sizeof(response->error), "Connection closed unexpectedly");
@@ -894,8 +900,28 @@ typedef struct {
     FILE *file;
     CURL *curl;
     Cod2xHttpProgress *progress;
-    int badStatus, writeFailed;
+    int badStatus, writeFailed, chunked;
 } HttpDownloadState;
+
+static size_t Http_DownloadHeaders(char *data, size_t size, size_t count, void *user)
+{
+    HttpDownloadState *state = user;
+    size_t length = size * count;
+    long status = 0;
+    curl_easy_getinfo(state->curl, CURLINFO_RESPONSE_CODE, &status);
+    if (status == 200 && length > 18 && !strncasecmp(data, "Transfer-Encoding:", 18)) {
+        const char *value = data + 18, *end = data + length;
+        while (value < end && isspace((unsigned char)*value))
+            ++value;
+        while (end > value && isspace((unsigned char)end[-1]))
+            --end;
+        if (end - value == 7 && !strncasecmp(value, "chunked", 7)) {
+            state->chunked = 1;
+            return 0;
+        }
+    }
+    return length;
+}
 
 static size_t Http_DownloadBody(char *data, size_t size, size_t count, void *user)
 {
@@ -984,6 +1010,8 @@ int Cod2x_HttpDownload(const char *url, const char *path, const char *magic, Cod
     /* No overall limit: a big file takes long; 30 s without data stops it. */
     curl_easy_setopt(state.curl, CURLOPT_LOW_SPEED_LIMIT, 1L);
     curl_easy_setopt(state.curl, CURLOPT_LOW_SPEED_TIME, 30L);
+    curl_easy_setopt(state.curl, CURLOPT_HEADERFUNCTION, Http_DownloadHeaders);
+    curl_easy_setopt(state.curl, CURLOPT_HEADERDATA, &state);
     curl_easy_setopt(state.curl, CURLOPT_WRITEFUNCTION, Http_DownloadBody);
     curl_easy_setopt(state.curl, CURLOPT_WRITEDATA, &state);
     curl_easy_setopt(state.curl, CURLOPT_NOPROGRESS, 0L);
@@ -1000,6 +1028,8 @@ int Cod2x_HttpDownload(const char *url, const char *path, const char *magic, Cod
         /* already set */
     } else if (state.badStatus || (code == CURLE_OK && status != 200)) {
         snprintf(error, errorSize, "HTTP error %ld", status);
+    } else if (state.chunked) {
+        snprintf(error, errorSize, "Chunked download is not supported");
     } else if (state.writeFailed) {
         snprintf(error, errorSize, "Failed to write the file");
     } else if (code == CURLE_TOO_MANY_REDIRECTS) {

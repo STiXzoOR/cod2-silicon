@@ -4,6 +4,7 @@
 #if COD2_FEATURE_WWW_DOWNLOAD
 
 #    include <string.h>
+#    include <ctype.h>
 #    include <stdio.h>
 #if defined(COD2_X64)
 #    include "common_types.h"
@@ -44,6 +45,8 @@ typedef int CURLMcode;
 /* CoD2x's https download options (curl.h is not included here: its windows.h
    clashes with the engine's own Windows types). */
 #        define CURLOPT_HTTPHEADER (CURLOPTTYPE_OBJECTPOINT + 23)
+#        define CURLOPT_HEADERFUNCTION (CURLOPTTYPE_FUNCTIONPOINT + 79)
+#        define CURLOPT_HEADERDATA (CURLOPTTYPE_OBJECTPOINT + 29)
 #        define CURLOPT_LOW_SPEED_LIMIT (CURLOPTTYPE_LONG + 19)
 #        define CURLOPT_LOW_SPEED_TIME (CURLOPTTYPE_LONG + 20)
 #        define CURLOPT_MAXREDIRS (CURLOPTTYPE_LONG + 68)
@@ -119,7 +122,7 @@ static void DL_SetDisplayName(const char *remoteName)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 /* CoD2x downloading.cpp: a file from an https server must start with "PK", so a host
    that answers with a web page and status 200 fails the download. */
-static int dl_needsZip, dl_expectZip;
+static int dl_needsZip, dl_expectZip, dl_chunked;
 static struct curl_slist *dl_headers;
 extern int I_strnicmp(const char *s0, const char *s1, size_t n);
 
@@ -140,11 +143,41 @@ static int DL_Cod2xZipStart(const char *path)
     return read == 2 && start[0] == 'P' && start[1] == 'K';
 }
 
+static size_t DL_Cod2xHeader(char *data, size_t size, size_t count, void *context)
+{
+    size_t length = size * count;
+    const char *value;
+    long status = 0;
+    (void)context;
+    if (length >= 5 && !memcmp(data, "HTTP/", 5))
+        dl_chunked = 0;
+    curl_easy_getinfo(dl_easy, CURLINFO_RESPONSE_CODE, &status);
+    if (status == 200 && length > 18 && !I_strnicmp(data, "Transfer-Encoding:", 18)) {
+        value = data + 18;
+        while (value < data + length && isspace((unsigned char)*value))
+            ++value;
+        const char *end = data + length;
+        while (end > value && isspace((unsigned char)end[-1]))
+            --end;
+        if (end - value == 7 && !I_strnicmp(value, "chunked", 7)) {
+            dl_chunked = 1;
+            return 0;
+        }
+    }
+    return length;
+}
+
 /* CoD2x's https downloader decides how a finished request ends, printing as it does. */
-static void DL_Cod2xFinish(CURLcode result)
+static void DL_Cod2xFinish(CURLcode result, long status)
 {
     LegacyHacks *ui = *(LegacyHacks **)imp_legacyHacks;
-    if (result != CURLE_OK) {
+    if (dl_chunked) {
+        Com_Printf("DL_DownloadLoop: request terminated with failure: Chunked download is not supported\n");
+        dl_status = DL_STATUS_FAILED;
+    } else if (result == CURLE_OK && status != 200) {
+        Com_Printf("DL_DownloadLoop: request terminated with failure: HTTP error %ld\n", status);
+        dl_status = DL_STATUS_FAILED;
+    } else if (result != CURLE_OK) {
         Com_Printf("DL_DownloadLoop: request terminated with failure: %s\n", curl_easy_strerror(result));
         dl_status = DL_STATUS_FAILED;
     } else if (!dl_bytesRead) {
@@ -153,7 +186,7 @@ static void DL_Cod2xFinish(CURLcode result)
     } else if (!DL_Cod2xZipStart(dl_localName)) {
         Com_Printf("DL_DownloadLoop: request terminated with failure: %s\n", "Unexpected file content");
         dl_status = DL_STATUS_FAILED;
-    } else if (ui->cl_downloadSize > 0 && dl_bytesRead != (unsigned int)ui->cl_downloadSize) {
+    } else if (dl_bytesRead != (unsigned int)ui->cl_downloadSize) {
         /* Without a size from the server or the reply, a cut connection would look complete. */
         Com_Printf("DL_DownloadLoop: size does not match, expected %d bytes\n", ui->cl_downloadSize);
         dl_status = DL_STATUS_FAILED;
@@ -224,6 +257,7 @@ int DL_BeginDownload(const char *localName, const char *remoteName, int debug)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     dl_needsZip = dl_expectZip || (remoteName && !I_strnicmp(remoteName, "https://", 8));
     dl_expectZip = 0;
+    dl_chunked = 0;
 #endif
 
     if (!localName || !remoteName) {
@@ -284,6 +318,7 @@ int DL_BeginDownload(const char *localName, const char *remoteName, int debug)
         curl_easy_setopt(dl_easy, CURLOPT_MAXREDIRS, (long)5);
         curl_easy_setopt(dl_easy, CURLOPT_LOW_SPEED_LIMIT, (long)1);
         curl_easy_setopt(dl_easy, CURLOPT_LOW_SPEED_TIME, (long)30);
+        curl_easy_setopt(dl_easy, CURLOPT_HEADERFUNCTION, DL_Cod2xHeader);
     }
 #endif
 
@@ -327,8 +362,8 @@ void DL_DownloadLoop(void)
     if (dl_needsZip && dl_easy) {
         /* A download the client started learns its size from the reply. */
         curl_off_t length = -1;
-        if (curl_easy_getinfo(dl_easy, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &length) == CURLE_OK && length > 0)
-            (*(LegacyHacks **)imp_legacyHacks)->cl_downloadSize = (int)length;
+        curl_easy_getinfo(dl_easy, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &length);
+        (*(LegacyHacks **)imp_legacyHacks)->cl_downloadSize = length > 0 ? (int)length : 0;
     }
 #endif
 
@@ -344,7 +379,7 @@ void DL_DownloadLoop(void)
                 dl_status = DL_STATUS_DONE;
                 DL_Teardown();
                 if (dl_status == DL_STATUS_DONE)
-                    DL_Cod2xFinish(res);
+                    DL_Cod2xFinish(res, http_code);
                 return;
             }
 #endif
@@ -361,12 +396,16 @@ void DL_DownloadLoop(void)
     }
 
     if (!still_running) {
-
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        long status = 0;
+        if (dl_easy)
+            curl_easy_getinfo(dl_easy, CURLINFO_RESPONSE_CODE, &status);
+#endif
         dl_status = DL_STATUS_DONE;
         DL_Teardown();
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
         if (dl_status == DL_STATUS_DONE && dl_needsZip)
-            DL_Cod2xFinish(CURLE_OK);
+            DL_Cod2xFinish(CURLE_OK, status);
 #endif
     }
 }
