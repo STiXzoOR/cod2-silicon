@@ -666,9 +666,14 @@ private struct LaunchOptionsEditor: View {
                 Label(error, systemImage: "exclamationmark.triangle").font(.system(size: 12)).foregroundStyle(palette.negative)
                     .fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isStaticText)
                 Text("Your last valid options still apply.").font(.system(size: 12)).foregroundStyle(palette.secondary)
-            } else if !model.advancedIgnoredNames.isEmpty {
-                let names = model.advancedIgnoredNames.joined(separator: ", ")
-                Label("The game takes \(names) from your loadout, so \(model.advancedIgnoredNames.count == 1 ? "it’s" : "they’re") ignored here. Change \(model.advancedIgnoredNames.count == 1 ? "it" : "them") in Configs.",
+            } else if !model.advancedIgnoredLines.isEmpty {
+                // MARK: - ship-integrate
+                let lines = model.advancedIgnoredLines.map(String.init).joined(separator: ", ")
+                let subject = model.advancedIgnoredLines.count == 1 ? "The option on line" : "The options on lines"
+                let explanation = model.advancedIgnoredLines.count == 1
+                    ? "comes from your loadout and is ignored here. Change it in Configs."
+                    : "come from your loadout and are ignored here. Change them in Configs."
+                Label("\(subject) \(lines) \(explanation)",
                       systemImage: "info.circle").font(.system(size: 12)).foregroundStyle(palette.caution).fixedSize(horizontal: false, vertical: true)
                     .accessibilityAddTraits(.isStaticText)
             }

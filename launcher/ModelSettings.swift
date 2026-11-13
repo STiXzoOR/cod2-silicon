@@ -110,7 +110,7 @@ extension KeyStore {
         for (index, line) in text.components(separatedBy: "\n").enumerated() where !line.trimmingCharacters(in: .whitespaces).isEmpty {
             candidate.advanced = line
             guard (try? candidate.launchConfig(migrated: configStudio?.migrationCompleted == true)) != nil else {
-                advancedError = "Line \(index + 1) can’t be used. Enter one setting and its value, such as com_hunkMegs 512, without quotes or semicolons. Paths, passwords and your CD key are set by the app."
+                advancedError = "Line \(index + 1) can’t be used. Enter one setting and its value, without quotes or semicolons. Paths, passwords and your CD key are set by the app."
                 return
             }
         }
@@ -123,10 +123,14 @@ extension KeyStore {
         settings = candidate
     }
     /// Lines that are valid but that the game takes from the loadout instead, once loadouts are in use.
-    var advancedIgnoredNames: [String] {
+    // MARK: - ship-integrate
+    var advancedIgnoredLines: [Int] {
         guard usesLoadouts else { return [] }
-        return settings.advanced.components(separatedBy: "\n").compactMap { GameSettings.advancedPair($0)?.0 }
-            .filter { !GameSettings.machineDvarNames.contains($0.lowercased()) }
+        return settings.advanced.components(separatedBy: "\n").enumerated().compactMap { index, line in
+            guard let name = GameSettings.advancedPair(line)?.0,
+                  !GameSettings.machineDvarNames.contains(name.lowercased()) else { return nil }
+            return index + 1
+        }
     }
     func saveSettings() {
         do {
