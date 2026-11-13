@@ -656,7 +656,11 @@ void BG_EvaluateTrajectoryDelta(const trajectory_t *tr, int atTime, vec_t *resul
 
     case TR_SINE:
         elapsed = (float)(atTime - tr->trTime) / (float)tr->trDuration;
+#if defined(COD2_APPLE_SDK)
+        scale = cosf(elapsed * 6.2831854820251465f) * 0.5f;
+#else
         scale = (float)cos((double)elapsed * 3.141592653589793 * 2.0) * 0.5f;
+#endif
         BG_Vec3Scale(tr->trDelta, scale, result);
         return;
 
@@ -1115,15 +1119,29 @@ void BG_EvaluateTrajectory(const trajectory_t *tr, int atTime, vec_t *result)
 
     case TR_SINE:
         elapsed = (float)(atTime - tr->trTime) / (float)tr->trDuration;
+#if defined(COD2_APPLE_SDK)
+        {
+            /* FSIN retains extra precision until the first x87 multiply. */
+            double phase = sin((double)(elapsed * 6.2831854820251465f));
+            result[0] = tr->trBase[0] + (float)((double)tr->trDelta[0] * phase);
+            result[1] = tr->trBase[1] + (float)((double)tr->trDelta[1] * phase);
+            result[2] = tr->trBase[2] + (float)((double)tr->trDelta[2] * phase);
+        }
+#else
         scale = (float)sin((double)elapsed * 3.141592653589793 * 2.0);
         BG_Vec3Mad(tr->trBase, scale, tr->trDelta, result);
+#endif
         return;
 
     case TR_GRAVITY:
         elapsed = (float)(atTime - tr->trTime) * 0.001f;
         result[0] = tr->trBase[0] + tr->trDelta[0] * elapsed;
         result[1] = tr->trBase[1] + tr->trDelta[1] * elapsed;
+#if defined(COD2_APPLE_SDK)
+        result[2] = (tr->trBase[2] + tr->trDelta[2] * elapsed) - (elapsed * elapsed) * 400.0f;
+#else
         result[2] = tr->trBase[2] + tr->trDelta[2] * elapsed + -400.0f * elapsed * elapsed;
+#endif
         return;
 
     case TR_ACCELERATE:
