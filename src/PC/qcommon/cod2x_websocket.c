@@ -412,6 +412,9 @@ static void Ws_Session(Cod2xWebSocket *ws, Cod2xSocket *connection, WsBuffer *re
     WsState state = WS_GOING;
 
     Ws_Push(ws, COD2X_WS_OPEN, NULL, 0, 0, 0);
+    /* The upgrade reply can carry frames in the same read. Deliver them
+       after OPEN without waiting for another packet from the peer. */
+    state = Ws_Frames(ws, connection, received, &message, &messageOp, &closing, &waitingPong);
     while (state == WS_GOING) {
         WsOutgoing *outgoing;
         unsigned long long now;
