@@ -79,6 +79,8 @@ captures, accessibility checks and actions. The shape audit checks attached app 
 `capture-geometry.json` records the exact parent, child popover and captured union
 frames. The image-size check requires the parent’s fixed size and checks composite
 captures against that union; states without child windows keep their exact checks.
+Shared desktop runs wait 60 seconds after a busy window lease, then watch for its
+release so brief gaps between other agents’ runs cannot starve the review harness.
 Every page is captured in both
 appearances and at the minimum window size; Config Studio also covers accessibility
 display variants, inactive windows and sidebar resizing. The

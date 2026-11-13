@@ -6,7 +6,9 @@ can return transparent captures while locked). Uses only the original fallback a
 and fake documentation-range servers; no game data is read.
 """
 import atexit
+import contextlib
 import os
+import select
 import time
 import json
 import hashlib
@@ -66,6 +68,33 @@ def release_lease():
 atexit.register(release_lease)
 
 
+# MARK: - ship-play: catch a brief release after the required retry delay.
+def wait_for_lease_release():
+    try:
+        descriptor = os.open(lease, os.O_RDONLY)
+    except FileNotFoundError:
+        return
+    try:
+        with contextlib.closing(select.kqueue()) as queue:
+            event = select.kevent(descriptor, filter=select.KQ_FILTER_VNODE,
+                                 flags=select.KQ_EV_ADD | select.KQ_EV_CLEAR,
+                                 fflags=select.KQ_NOTE_DELETE | select.KQ_NOTE_RENAME)
+            queue.control([event], 0, 0)
+            while lease.exists():
+                if queue.control(None, 1, 30):
+                    return
+                try:
+                    if lease.stat().st_ino != os.fstat(descriptor).st_ino:
+                        return
+                    owner = lease.read_text().split()
+                    if len(owner) > 1:
+                        os.kill(int(owner[1]), 0)
+                except (FileNotFoundError, ProcessLookupError):
+                    return
+    finally:
+        os.close(descriptor)
+
+
 def take_lease():
     global lease_owned
     # Parallel worktrees share one desktop. Standalone checkouts have no agent bench.
@@ -78,7 +107,14 @@ def take_lease():
             lease_owned = True
             return
         except FileExistsError:
-            owner = lease.read_text()
+            try:
+                owner = lease.read_text()
+            except FileNotFoundError:
+                continue
+            if len(owner.split()) < 2:
+                time.sleep(60)
+                wait_for_lease_release()
+                continue
             try:
                 os.kill(int(owner.split()[1]), 0)
             except ProcessLookupError:
@@ -88,6 +124,7 @@ def take_lease():
                 continue
             print(f"Waiting for window lease: {owner.strip()}", flush=True)
             time.sleep(60)
+            wait_for_lease_release()
 
 
 def run(target, *extra, env=None):
