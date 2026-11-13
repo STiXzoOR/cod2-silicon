@@ -129,34 +129,38 @@ static const char *Json_Skip(const char *p)
 }
 
 /* The member key of the object at p, or NULL. */
-static const char *Json_Member(const char *p, const char *key, size_t keyLength)
+static const char *Json_Member(const char *p, const char *path, size_t *matched)
 {
     p = Json_Space(p);
     if (*p != '{')
         return NULL;
     p = Json_Space(p + 1);
-    if (*p == '}')
-        return NULL;
-    for (;;) {
-        char name[256];
-        size_t nameLength;
-        p = Json_String(Json_Space(p), name, sizeof(name), &nameLength);
-        if (!p)
+    while (*p != '}') {
+        const char *name = Json_Space(p), *after = Json_String(name, NULL, 0, NULL);
+        size_t length;
+        if (!after)
             return NULL;
-        p = Json_Space(p);
+        length = (size_t)(after - name - 2);
+        p = Json_Space(after);
         if (*p++ != ':')
             return NULL;
         p = Json_Space(p);
-        if (nameLength == keyLength && nameLength < sizeof(name) && !memcmp(name, key, keyLength))
+        /* Mongoose compares the key's JSON spelling without unescaping it.
+           A literal dot in a key is compared before interpreting path steps. */
+        if (!strncmp(name + 1, path, length) &&
+            (!path[length] || path[length] == '.' || path[length] == '[')) {
+            *matched = length;
             return p;
+        }
         p = Json_Skip(p);
         if (!p)
             return NULL;
         p = Json_Space(p);
         if (*p != ',')
             return NULL;
-        ++p;
+        p = Json_Space(p + 1);
     }
+    return NULL;
 }
 
 static const char *Json_Element(const char *p, long index)
@@ -190,8 +194,8 @@ const char *Cod2x_JsonFind(const char *json, const char *path, size_t *length)
     ++path;
     while (*path && p) {
         if (*path == '.') {
-            size_t keyLength = strcspn(path + 1, ".[");
-            p = Json_Member(p, path + 1, keyLength);
+            size_t keyLength = 0;
+            p = Json_Member(p, path + 1, &keyLength);
             path += 1 + keyLength;
         } else if (*path == '[') {
             char *close;
@@ -268,32 +272,61 @@ int Cod2x_JsonEach(const char *json, const char *path, Cod2xJsonItem item, void 
         return 1;
     for (;; ++index) {
         const char *value, *end;
-        char key[256];
+        char *key = NULL;
         if (object) {
-            p = Json_String(Json_Space(p), key, sizeof(key), NULL);
+            const char *start = Json_Space(p);
+            p = Json_String(start, NULL, 0, NULL);
             if (!p)
                 return 0;
-            p = Json_Space(p);
-            if (*p++ != ':')
+            size_t length = (size_t)(p - start);
+            if (length > 2) {
+                ++start;
+                length -= 2;
+            }
+            key = malloc(length + 1);
+            if (!key)
                 return 0;
+            memcpy(key, start, length);
+            key[length] = '\0';
+            p = Json_Space(p);
+            if (*p++ != ':') {
+                free(key);
+                return 0;
+            }
         }
         value = Json_Space(p);
         end = Json_Skip(value);
-        if (!end)
+        if (!end) {
+            free(key);
             return 0;
+        }
         if (object) {
-            size_t length = (size_t)(end - value);
-            char *text = malloc(length + 1);
+            size_t length = (size_t)(end - value), pathLength = strlen(path) + strlen(key) + 2;
+            char converted[512], *memberPath = malloc(pathLength), *raw = NULL;
+            const char *text;
             int keep;
-            if (!text)
+            if (!memberPath) {
+                free(key);
                 return 0;
-            /* A string CoD2x can't decode comes as its JSON text, quotes and all. */
-            if (*value != '"' || !Json_String(value, text, length + 1, NULL)) {
-                memcpy(text, value, length);
-                text[length] = '\0';
+            }
+            snprintf(memberPath, pathLength, "%s.%s", path, key);
+            if (Cod2x_JsonString(json, memberPath, converted, sizeof(converted))) {
+                text = converted;
+            } else {
+                raw = malloc(length + 1);
+                if (!raw) {
+                    free(memberPath);
+                    free(key);
+                    return 0;
+                }
+                memcpy(raw, value, length);
+                raw[length] = '\0';
+                text = raw;
             }
             keep = item(context, index, key, text, strlen(text));
-            free(text);
+            free(raw);
+            free(memberPath);
+            free(key);
             if (!keep)
                 return 1;
         } else if (!item(context, index, NULL, value, (size_t)(end - value))) {

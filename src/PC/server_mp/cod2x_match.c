@@ -257,14 +257,6 @@ int SV_Cod2xMatchRunning(void)
 
 /* ---- reading a match ------------------------------------------------------- */
 
-/* A plain value as CoD2x keeps it: a string (at most 511 bytes), a number with
-   no decimals, true or false, and anything else as its JSON text. */
-static void Match_SetValue(MatchMap *map, const char *json, const char *base, const char *key, const char *text)
-{
-    char path[512], value[512];
-    snprintf(path, sizeof(path), "%s.%s", base, key);
-    Map_Set(map, key, Cod2x_JsonString(json, path, value, sizeof(value)) ? value : text);
-}
 
 typedef struct {
     MatchData *data;
@@ -324,7 +316,7 @@ static int Match_ParseOther(void *context, int index, const char *key, const cha
     for (int i = 0; i < 4; ++i)
         if (other->skip[i] && !strcmp(key, other->skip[i]))
             return 1;
-    Match_SetValue(other->map, other->json, other->base, key, value);
+    Map_Set(other->map, key, value);
     return 1;
 }
 
@@ -848,6 +840,8 @@ void SV_Cod2xMatchBeforeMapChange(int shutdown)
         if (match.uploading || match.uploadingError)
             Cod2x_Sleep(10);
     }
+    if (shutdown)
+        Cod2x_HttpFrameFor(Match_Done);
     if (match.canceling)
         Com_Printf("Match ended.\n");
     match.canceling = 0;
