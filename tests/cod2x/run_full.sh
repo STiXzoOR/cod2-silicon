@@ -67,7 +67,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 tests/cod2x/test_demo_https.py
 if [ "${COD2X_SANITIZERS:-0}" != 1 ]; then
     clang $flags -Wl,-dead_strip tests/cod2x/test_native_freeze.c src/platform/cod2x_native.c \
         src/PC/qcommon/crash_handler.c src/PC/qcommon/cod2x_layer_start.c src/PC/qcommon/cod2x_protocol.c \
-        src/PC/qcommon/cod2x_report.c src/PC/qcommon/cod2x_layer_stop.c -lcurl -o "$work/freeze"
+        src/PC/qcommon/cod2x_report.c src/PC/qcommon/cod2x_layer_stop.c src/PC/qcommon/cod2x_json.c -lcurl -o "$work/freeze"
     "$work/freeze" "$work" > "$work/freeze.log" 2>&1
     python3 - "$work" <<'PY'
 from pathlib import Path

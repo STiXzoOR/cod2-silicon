@@ -6,6 +6,7 @@
    is never sent to CoD2x. */
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "cod2x.h"
+#include "cod2x_json.h"
 #include <dirent.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -236,28 +237,9 @@ void Cod2x_ReportTextLines(Cod2xReportText *text, const char *field, const char 
 /* A top-level string value of a JSON reply ("error" or "message"). */
 static int Cod2x_ReplyString(const char *body, const char *key, char *out, size_t size)
 {
-    char pattern[32];
-    const char *p;
-    size_t used = 0;
-    snprintf(pattern, sizeof(pattern), "\"%s\"", key);
-    if (!(p = strstr(body, pattern)))
-        return 0;
-    p += strlen(pattern);
-    while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r')
-        ++p;
-    if (*p++ != ':')
-        return 0;
-    while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r')
-        ++p;
-    if (*p++ != '"')
-        return 0;
-    while (*p && *p != '"' && used + 1 < size) {
-        if (*p == '\\' && p[1])
-            ++p;
-        out[used++] = *p++;
-    }
-    out[used] = '\0';
-    return used > 0;
+    char path[32];
+    snprintf(path, sizeof(path), "$.%s", key);
+    return Cod2x_JsonString(body, path, out, size);
 }
 
 /* ---- Sending ---- */

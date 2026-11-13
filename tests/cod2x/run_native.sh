@@ -38,7 +38,7 @@ codesign --verify --deep --strict "$test_work/URLProbe.app"
 compile -Wno-unused-function -Wno-typedef-redefinition -Wno-duplicate-decl-specifier -Isrc -Isrc/headers \
     tests/cod2x/test_native_freeze.c src/platform/cod2x_native.c src/PC/qcommon/crash_handler.c \
     src/PC/qcommon/cod2x_layer_start.c src/PC/qcommon/cod2x_protocol.c src/PC/qcommon/cod2x_report.c \
-    src/PC/qcommon/cod2x_layer_stop.c -lcurl -o "$test_work/freeze"
+    src/PC/qcommon/cod2x_layer_stop.c src/PC/qcommon/cod2x_json.c -lcurl -o "$test_work/freeze"
 "$test_work/freeze" "$test_work/reports" > "$test_work/freeze.log" 2>&1
 python3 - "$test_work/freeze" "$test_work/reports" "$test_work/freeze.log" <<'PY'
 import pathlib, resource, signal, subprocess, sys
@@ -68,7 +68,7 @@ compile -Wno-unused-function -Wno-typedef-redefinition -Wno-duplicate-decl-speci
     '-DCOD2X_REPORT_CONSENT_ENV="COD2X_TEST_REPORT_CONSENT"' \
     tests/cod2x/test_native_freeze.c src/platform/cod2x_native.c src/PC/qcommon/crash_handler.c \
     src/PC/qcommon/cod2x_layer_start.c src/PC/qcommon/cod2x_protocol.c src/PC/qcommon/cod2x_report.c \
-    src/PC/qcommon/cod2x_layer_stop.c -lcurl -o "$test_work/consent-probe"
+    src/PC/qcommon/cod2x_layer_stop.c src/PC/qcommon/cod2x_json.c -lcurl -o "$test_work/consent-probe"
 python3 - "$test_work/consent-probe" "$test_work/consent" <<'PY'
 import http.server, os, pathlib, resource, subprocess, sys, threading
 resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
