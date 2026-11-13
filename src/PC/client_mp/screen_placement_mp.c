@@ -40,7 +40,11 @@ void CalcScreenX(float *x, int horzAlign)
 {
     switch (horzAlign) {
     default:
+#if COD2_APPLE_SDK
+        *x = *x * SP->scaleVirtualToReal[0] + SP->virtualScreenOffsetX + SP->subScreenLeft;
+#else
         *x = *x * SP->scaleVirtualToReal[0] + SP->subScreenLeft + SP->virtualScreenOffsetX;
+#endif
         break;
     case 1:
         *x = *x * SP->scaleVirtualToReal[0] + SP->realViewableMin[0];
@@ -111,9 +115,20 @@ void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical
     SP->realViewportSize[1] = fViewportHeight;
 
     byte *cls = cls_ptr_195ecac;
+#if COD2_APPLE_SDK
+    /* Windows 1.3 (0x44bb70): every intermediate uses single precision.
+     * Reordering these operations can move text across a pixel boundary. */
+    float adjustedRealWidth = (fViewportHeight / ((clientStatic_t *)cls)->vidConfig.aspectRatioPixel) * (4.0f / 3.0f);
+    float inverseAdjustedRealWidth = 1.0f / adjustedRealWidth;
+#else
     float adjustedRealWidth = fViewportHeight * (4.0f / 3.0f) / (((clientStatic_t *)(cls))->vidConfig.aspectRatioPixel);
+#endif
     float horzAspectPixelDiff = fViewportWidth - adjustedRealWidth;
+#if COD2_APPLE_SDK
+    float horzAspectScale = inverseAdjustedRealWidth * fViewportWidth;
+#else
     float horzAspectScale = fViewportWidth / adjustedRealWidth;
+#endif
 
     float displayWidth = (float)(((clientStatic_t *)(cls))->vidConfig.width);
     float displayHeight = (float)(((clientStatic_t *)(cls))->vidConfig.height);
@@ -141,20 +156,44 @@ void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical
     SP->realViewableMax[0] = clampedRight - fViewportX;
     SP->realViewableMax[1] = clampedBottom - fViewportY;
 
+#if COD2_APPLE_SDK
+    SP->virtualViewableMin[0] = (640.0f / fViewportWidth) * SP->realViewableMin[0] * horzAspectScale;
+#else
     SP->virtualViewableMin[0] = horzAspectScale * SP->realViewableMin[0] * (640.0f / fViewportWidth);
+#endif
     SP->virtualViewableMin[1] = SP->realViewableMin[1] * (480.0f / fViewportHeight);
+#if COD2_APPLE_SDK
+    SP->virtualViewableMax[0] = (640.0f / fViewportWidth) * SP->realViewableMax[0] * horzAspectScale;
+#else
     SP->virtualViewableMax[0] = horzAspectScale * SP->realViewableMax[0] * (640.0f / fViewportWidth);
+#endif
     SP->virtualViewableMax[1] = SP->realViewableMax[1] * (480.0f / fViewportHeight);
 
+#if COD2_APPLE_SDK
+    float scaleY = fViewportHeight * (1.0f / 480.0f);
+#else
     float scaleY = fViewportHeight / 480.0f;
+#endif
 
+#if COD2_APPLE_SDK
+    SP->scaleVirtualToReal[0] = adjustedRealWidth * (1.0f / 640.0f);
+#else
     SP->scaleVirtualToReal[0] = adjustedRealWidth / 640.0f;
+#endif
     SP->scaleVirtualToReal[1] = scaleY;
 
+#if COD2_APPLE_SDK
+    SP->scaleVirtualToFull[0] = fViewportWidth * (1.0f / 640.0f);
+#else
     SP->scaleVirtualToFull[0] = fViewportWidth / 640.0f;
+#endif
     SP->scaleVirtualToFull[1] = scaleY;
 
+#if COD2_APPLE_SDK
+    SP->scaleRealToVirtual[0] = inverseAdjustedRealWidth * 640.0f;
+#else
     SP->scaleRealToVirtual[0] = 640.0f / adjustedRealWidth;
+#endif
     SP->scaleRealToVirtual[1] = 480.0f / fViewportHeight;
 
     SP->subScreenLeft = 0.5f * horzAspectPixelDiff;
@@ -165,7 +204,11 @@ void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, 
 {
     switch (horzAlign) {
     default:
+#if COD2_APPLE_SDK
+        *x = *x * SP->scaleVirtualToReal[0] + SP->virtualScreenOffsetX + SP->subScreenLeft;
+#else
         *x = *x * SP->scaleVirtualToReal[0] + SP->subScreenLeft + SP->virtualScreenOffsetX;
+#endif
         *w *= SP->scaleVirtualToReal[0];
         break;
     case 1:
