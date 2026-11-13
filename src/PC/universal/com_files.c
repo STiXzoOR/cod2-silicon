@@ -43,7 +43,17 @@ extern int fs_loadStack;
 extern int fs_packFiles;
 extern int fs_fakeChkSum;
 extern int fs_checksumFeed;
+/* The shared data snapshot reserves 74 entries (Mac ABI). Native allocation
+ * and every traversal use Windows' 50 ordinary + 13 stream slots; the final
+ * ten storage entries are deliberately unreachable. */
 extern fileHandleData_t fsh[74];
+#if defined(COD2_X64)
+#define FS_NORMAL_HANDLES 50
+#else
+#define FS_NORMAL_HANDLES 60
+#endif
+#define FS_FIRST_STREAM_HANDLE (FS_NORMAL_HANDLES + 1)
+#define FS_TOTAL_HANDLES (FS_FIRST_STREAM_HANDLE + 13)
 extern int fs_numServerIwds;
 extern int fs_serverIwds[1024];
 extern char *fs_serverIwdNames[1024];
@@ -249,11 +259,11 @@ fileHandle_t FS_HandleForFile(qboolean streamThread)
     int first, count, i;
 
     if (streamThread) {
-        first = 61;
+        first = FS_FIRST_STREAM_HANDLE;
         count = 13;
     } else {
         first = 1;
-        count = 60;
+        count = FS_NORMAL_HANDLES;
     }
 
     if (!fsh[first].handleFiles.file.o) {
@@ -266,7 +276,7 @@ fileHandle_t FS_HandleForFile(qboolean streamThread)
         }
     }
 
-    for (i = 1; i < 74; i++) {
+    for (i = 1; i < FS_TOTAL_HANDLES; i++) {
         Com_Printf((const char *)"FILE %2i: '%s'\n", i, fsh[i].name);
     }
     Com_Error(1, (const char *)"\x15"
@@ -575,7 +585,7 @@ void FS_Shutdown(qboolean closemfp)
 #endif
     SEH_Shutdown_StringEd();
 
-    for (i = 1; i < 74; ++i) {
+    for (i = 1; i < FS_TOTAL_HANDLES; ++i) {
         if (fsh[i].fileSize)
             FS_FCloseFile(i);
     }
@@ -640,7 +650,7 @@ int FS_Read(void *buffer, int len, fileHandle_t h)
         }
 
         if (read == -1) {
-            if ((unsigned int)(h - 61) <= 12) {
+            if ((unsigned int)(h - FS_FIRST_STREAM_HANDLE) <= 12) {
                 return -1;
             }
             Com_Error(0, "\x15"
@@ -1056,7 +1066,7 @@ void FS_DisplayPath(qboolean bLanguageCull)
     }
 
     Com_Printf("\nFile Handles:\n");
-    for (i = 1; i < 74; i++) {
+    for (i = 1; i < FS_TOTAL_HANDLES; i++) {
 #if defined(COD2_X64)
         if (fsh[i].handleFiles.file.o) {
 #else
@@ -1516,9 +1526,9 @@ fileHandle_t FS_OpenFileOverwrite(const char *qpath)
     }
 
     for (f = 1; fsh[f].handleFiles.file.o; f++) {
-        if (f == 60) {
+        if (f == FS_NORMAL_HANDLES) {
             int i;
-            for (i = 1; i < 74; i++) {
+            for (i = 1; i < FS_TOTAL_HANDLES; i++) {
                 Com_Printf((const char *)"FILE %2i: '%s'\n", i, fsh[i].name);
             }
             Com_Error(1, (const char *)"\x15"
@@ -2354,9 +2364,9 @@ fileHandle_t FS_FOpenTextFileWrite(const char *filename)
     fileHandleData_t *entry;
 
     for (f = 1; fsh[f].handleFiles.file.o; f++) {
-        if (f == 60) {
+        if (f == FS_NORMAL_HANDLES) {
             int i;
-            for (i = 1; i < 74; i++) {
+            for (i = 1; i < FS_TOTAL_HANDLES; i++) {
                 Com_Printf((const char *)"FILE %2i: '%s'\n", i, fsh[i].name);
             }
             Com_Error(1, (const char *)"\x15"
@@ -2398,9 +2408,9 @@ fileHandle_t FS_FOpenFileAppend(const char *filename)
     fileHandleData_t *entry;
 
     for (f = 1; fsh[f].handleFiles.file.o; f++) {
-        if (f == 60) {
+        if (f == FS_NORMAL_HANDLES) {
             int i;
-            for (i = 1; i < 74; i++) {
+            for (i = 1; i < FS_TOTAL_HANDLES; i++) {
                 Com_Printf((const char *)"FILE %2i: '%s'\n", i, fsh[i].name);
             }
             Com_Error(1, (const char *)"\x15"
@@ -3106,7 +3116,7 @@ static const webIwdFile_t *FS_WebFindIwdFile(const char *qpath)
 
 static fileHandleData_t *FS_WebHandle(fileHandle_t h)
 {
-    if (h <= 0 || h >= 74) {
+    if (h <= 0 || h >= FS_TOTAL_HANDLES) {
         return NULL;
     }
     return &fsh[h];
@@ -3901,7 +3911,7 @@ void FS_Shutdown(qboolean closemfp)
     int i;
 
     if (closemfp) {
-        for (i = 1; i < 74; ++i) {
+        for (i = 1; i < FS_TOTAL_HANDLES; ++i) {
             if (fsh[i].handleFiles.file.o) {
                 FS_FCloseFile(i);
             }
