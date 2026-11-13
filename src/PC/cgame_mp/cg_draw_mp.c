@@ -1,5 +1,6 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
+#include "cg_cod2x_spectator.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "PC/qcommon/cod2x_features.h"
 #include <stdlib.h>
@@ -531,6 +532,9 @@ unsigned int CG_DrawCrosshairNames(void)
     int x;
     int y;
 
+#if COD2X_SPECTATOR
+    CG_Cod2xHeadDraw();
+#endif
     if (!cg_drawCrosshairNames->current.enabled) {
         return 0;
     }
@@ -556,6 +560,9 @@ unsigned int CG_DrawCrosshairNames(void)
         cg->crosshairClientTime = cg->time;
     }
 
+#if COD2X_SPECTATOR
+    if (CG_Cod2xHeadHidesName(cg->crosshairClientNum)) return 0;
+#endif
     baseColor = CG_FadeColor(cg->crosshairClientTime, 150, 100);
     if (!baseColor) {
         return 0;
@@ -590,7 +597,8 @@ unsigned int CG_DrawCrosshairNames(void)
     }
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     /* CoD2x text.cpp: every code goes, so a double "^^11" no longer colours the name. */
-    SV_Cod2xStripTextCodes(name, name, strlen(name) + 1);
+    if (Cod2x_TextEnabled())
+        SV_Cod2xStripTextCodes(name, name, strlen(name) + 1);
 #endif
     I_CleanStr(name);
 
@@ -1074,7 +1082,7 @@ qboolean CG_DrawFollow(void)
         clientName = "?";
     }
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    {
+    if (Cod2x_TextEnabled()) {
         /* CoD2x text.cpp: the followed player's name without codes. */
         static char cleanName[64];
         SV_Cod2xStripTextCodes(clientName, cleanName, sizeof(cleanName));
@@ -1336,7 +1344,11 @@ unsigned int CG_DrawChatMessages(void)
             alphaPercent = 1.0f;
             backgroundAlpha = 0.60000002f;
         } else {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            alphaPercent = timeRemaining * 0.005f;
+#else
             alphaPercent = timeRemaining / 200.0f;
+#endif
             if (alphaPercent <= 0.0f) {
                 continue;
             }
@@ -1373,7 +1385,11 @@ unsigned int CG_DrawChatMessages(void)
 
         y = (float)(hudChatY - (cgs->teamChatPos - i) * 10);
         textWidth = UI_TextWidth(msg, 0, font, 5.0f / 24.0f);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        UI_DrawHandlePic(0.0f, y, (float)(textWidth + 24), 10.0f, 1, 1, color, cgs->media.teamStatusBar);
+#else
         UI_DrawHandlePic(0.0f, y, (float)(textWidth + 24), 10.0f, 1, 1, color, cgs->media.whiteMaterial);
+#endif
 
         color[0] = 1.0f;
         color[1] = 1.0f;
@@ -2135,9 +2151,6 @@ unsigned int CG_Draw2D(void)
 
     if (!cg_draw2D->current.enabled)
         return 0;
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    CG_Cod2xRadarDraw();
-#endif
 
     if (cg->fadeRate != 0.0f) {
         int remaining = cg->fadeTime - cg->time;

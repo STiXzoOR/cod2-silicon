@@ -167,6 +167,22 @@ static int Com_GetConfigureDvarNames(const char **text, char *dvarNames);
 static void Com_GetConfigureDvarValues(int dvarCount, const char **text, char *dvarValues);
 static void Com_SetConfigureDvars(int dvarCount, const char *dvarNames, const char *dvarValues);
 static void Com_WriteConfigToFile(const char *filename);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static void Com_WriteConfigOnChange(const char *filename)
+{
+    extern const dvar_t *Dvar_FindVar(const char *);
+    const dvar_t *writeConfig = Dvar_FindVar("com_writeConfig");
+    static int wasEnabled;
+    if (writeConfig && !writeConfig->current.enabled) {
+        if (!wasEnabled) return;
+        wasEnabled = 0; /* Persist the switch itself once. */
+    } else {
+        wasEnabled = 1;
+    }
+    Com_WriteConfigToFile(filename);
+}
+#endif
+
 void Com_WriteConfig_f(void);
 float Com_GetTimescaleForSnd(void);
 void Com_Close(void);
@@ -189,6 +205,40 @@ qboolean Debug_EventLoop(void);
 BM_NOINLINE void Com_Frame_Try_Block_Function(void);
 void Com_Shutdown(char *finalmsg);
 static BM_NOINLINE void Com_StartHunkUsers(void);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static void Com_Cod2xFrame(void)
+{
+    extern void GScr_Cod2xHttpFrame(void);
+    extern void GScr_Cod2xWebSocketFrame(void);
+    extern void SV_Cod2xMatchFrame(void);
+    extern void SV_Cod2xZpamFrame(void);
+    extern void SV_Cod2xUpdaterFrame(void);
+#ifndef DEDICATED
+    extern void CL_Cod2xClientFrame(void);
+    extern void CL_Cod2xWindowFrame(void);
+    extern void CL_Cod2xMediaFrame(void);
+    extern void Cod2x_FeaturesUpdateFrame(void);
+    if (!com_dedicated->current.integer) {
+        CL_Cod2xClientFrame();
+        Cod2x_FeaturesUpdateFrame();
+    }
+#endif
+    SV_Cod2xUpdaterFrame();
+#ifndef DEDICATED
+    if (!com_dedicated->current.integer)
+        CL_Cod2xWindowFrame();
+#endif
+    GScr_Cod2xHttpFrame();
+    GScr_Cod2xWebSocketFrame();
+    SV_Cod2xMatchFrame();
+    SV_Cod2xZpamFrame();
+#ifndef DEDICATED
+    if (!com_dedicated->current.integer)
+        CL_Cod2xMediaFrame();
+#endif
+}
+#endif
+
 void Com_Frame(void);
 void Com_WriteDefaults_f(void);
 int Com_Milliseconds(void);
@@ -838,17 +888,6 @@ const char *Com_Cod2xErrorMessage(void)
 static void Com_WriteConfigToFile(const char *filename)
 {
     int f;
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    extern const dvar_t *Dvar_FindVar(const char *);
-    const dvar_t *writeConfig = Dvar_FindVar("com_writeConfig");
-    static int wasEnabled;
-    if (writeConfig && !writeConfig->current.enabled) {
-        if (!wasEnabled) return;
-        wasEnabled = 0; /* Persist the switch itself once. */
-    } else {
-        wasEnabled = 1;
-    }
-#endif
 
     f = FS_FOpenFileWrite(filename);
     if (!f) {
@@ -2104,12 +2143,20 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
         dvar_modifiedFlags &= ~1;
 #if COD2_APPLE_SDK && defined(DEDICATED)
         /* Linux 1.3 Com_WriteConfiguration: one fixed file, no profile. */
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        Com_WriteConfigOnChange("config_mp_server.cfg");
+#else
         Com_WriteConfigToFile("config_mp_server.cfg");
+#endif
 #else
         if (Com_HasPlayerProfile()) {
             char path[64];
             Com_BuildPlayerProfilePath(path, 64, "config_mp.cfg");
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            Com_WriteConfigOnChange(path);
+#else
             Com_WriteConfigToFile(path);
+#endif
         }
 #endif
     }
@@ -2403,6 +2450,9 @@ void Com_Frame(void)
     jmp_buf *abortframe = (jmp_buf *)Sys_GetValue(2);
 
     if (!setjmp(*abortframe)) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        Com_Cod2xFrame();
+#endif
         Com_Frame_Try_Block_Function();
         com_frameNumber++;
     }
@@ -2411,21 +2461,7 @@ void Com_Frame(void)
         Com_ErrorCleanup();
         Com_StartHunkUsers();
     }
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    {
-        extern void Cod2x_HttpFrame(void);
-        extern void GScr_Cod2xWebSocketFrame(void);
-        extern void SV_Cod2xMatchFrame(void);
-        extern void SV_Cod2xZpamFrame(void);
-        extern void SV_Cod2xUpdaterFrame(void);
-        /* Finished requests first, then the match, zPAM and the update check, as CoD2x orders them. */
-        Cod2x_HttpFrame();
-        GScr_Cod2xWebSocketFrame();
-        SV_Cod2xMatchFrame();
-        SV_Cod2xZpamFrame();
-        SV_Cod2xUpdaterFrame();
-    }
-#endif
+
 
     {
         /* per-frame state-hash hook; a no-op unless SYSDIFF_STATEHASH is set in the
@@ -2865,7 +2901,7 @@ void Com_Init_Try_Block_Function(char *commandLine)
         Dvar_SetString(version, s);
     }
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    shortversion = Dvar_RegisterString("shortversion", "1.4.6.8", 0x1044);
+    shortversion = Dvar_RegisterString("shortversion", COD2X_RELEASE, 0x1044);
 #else
     shortversion = Dvar_RegisterString("shortversion", COD2_VERSION_SHORT, 0x1044);
 #endif

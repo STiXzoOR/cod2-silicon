@@ -2281,6 +2281,7 @@ void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         break;
     case CG_PLAYER_COMPASS:
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        CG_Cod2xRadarDraw();
         if (!Cod2x_DrawCompass())
             break;
         Cod2x_CompassOffset(&rect.x, &rect.y);

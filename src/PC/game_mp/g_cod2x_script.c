@@ -117,15 +117,15 @@ static void Fetch_AddHeaders(const char *raw)
 {
     FetchHeader headers[FETCH_MAX_HEADERS];
     int count = 0;
-    const char *line = raw;
+    const char *line = raw ? strchr(raw, '\n') : NULL;
+    if (line) ++line; /* The transport returns the first complete response. */
 
     while (line && *line) {
-        const char *end = strstr(line, "\r\n");
+        const char *end = strchr(line, '\n');
         size_t length = end ? (size_t)(end - line) : strlen(line);
+        if (length && line[length - 1] == '\r') --length;
         const char *colon = memchr(line, ':', length);
-        if (length >= 5 && !memcmp(line, "HTTP/", 5)) {
-            count = 0; /* a new answer after an interim one: only the last counts */
-        } else if (colon && colon != line && count < FETCH_MAX_HEADERS) {
+        if (colon && colon != line && count < FETCH_MAX_HEADERS) {
             const char *value = colon + 1, *valueEnd = line + length;
             while (value < valueEnd && (*value == ' ' || *value == '\t'))
                 ++value;
@@ -137,7 +137,7 @@ static void Fetch_AddHeaders(const char *raw)
             headers[count].valueLength = (size_t)(valueEnd - value);
             ++count;
         }
-        line = end ? end + 2 : NULL;
+        line = end ? end + 1 : NULL;
     }
     /* Stable for equal names, so the later one is last and wins below. */
     for (int i = 1; i < count; ++i) {
@@ -204,6 +204,11 @@ static void Fetch_Done(void *context, const Cod2xHttpResponse *response)
 /* http_fetch(url, method, data, headers, timeout, onDone, onError): headers are
    lines joined by "\r\n"; timeout is in milliseconds for the whole request
    (0 or less: none). Nothing is returned; the answer comes later. */
+void GScr_Cod2xHttpFrame(void)
+{
+    Cod2x_HttpFrameFor(Fetch_Done);
+}
+
 static void GScr_Cod2xHttpFetch(void)
 {
     const char *url, *method, *data, *headers;
@@ -242,7 +247,7 @@ static void GScr_Cod2xHttpFetch(void)
     request.bodyLength = strlen(data);
     request.timeoutMs = timeout > 0 ? timeout : 0;
     request.connectTimeoutMs = timeout > 0 ? 5000 : 0;
-    request.maxBody = FETCH_MAX_RECEIVE;
+    request.maxReceive = FETCH_MAX_RECEIVE;
 
     /* CoD2x answers these at once, from inside the call. */
     if (!fetch->url || !Cod2x_HttpValidUrl(url) || !Cod2x_HttpStart(&request, Fetch_Done, fetch)) {
@@ -391,12 +396,11 @@ static void GScr_Cod2xWebSocketSendText(void)
     }
     index = Scr_GetInt(0);
     message = Scr_GetString(1);
-    if (!WebSocket_Index(index) || !webSockets[index].connected) {
+    if (!WebSocket_Index(index)) {
         Scr_AddBool(0);
         return;
     }
-    Cod2x_WebSocketSendText(webSockets[index].ws, message);
-    Scr_AddBool(1);
+    Scr_AddBool(Cod2x_WebSocketSendText(webSockets[index].ws, message));
 }
 
 /* websocket_close(id): closes it for good. */
@@ -432,24 +436,32 @@ void GScr_Cod2xNetBeforeMapChange(int shutdown)
         if (fetchPending > 0)
             Cod2x_Sleep(10);
     }
+    if (shutdown) {
+        Cod2x_HttpFrameFor(Fetch_Done);
+        Cod2x_HttpCancelFor(Fetch_Done);
+    }
     if (!complete && !shutdown)
         return;
-    for (int i = 0; i < WEBSOCKET_MAX_CLIENTS; ++i)
-        if (webSockets[i].ws)
-            Cod2x_WebSocketClose(webSockets[i].ws);
-    /* CoD2x lets each close go out right away, and waits on shutdown. */
-    for (int waited = 0; waited < (shutdown ? 1000 : 100); waited += 10) {
+    for (int i = 0; i < WEBSOCKET_MAX_CLIENTS; ++i) {
+        if (!webSockets[i].ws)
+            continue;
+        Cod2x_WebSocketClose(webSockets[i].ws);
+        Cod2x_Sleep(10);
+        WebSocket_Deliver(i);
+    }
+    /* Upstream polls each active slot, rather than sharing one aggregate
+       shutdown deadline between all connections. */
+    for (int round = 0; shutdown && round < 10; ++round) {
         any = 0;
         for (int i = 0; i < WEBSOCKET_MAX_CLIENTS; ++i) {
-            if (!webSockets[i].ws)
+            if (!webSockets[i].ws || Cod2x_WebSocketFinished(webSockets[i].ws))
                 continue;
+            any = 1;
+            Cod2x_Sleep(100);
             WebSocket_Deliver(i);
-            if (!Cod2x_WebSocketFinished(webSockets[i].ws))
-                any = 1;
         }
         if (!any)
             break;
-        Cod2x_Sleep(10);
     }
     for (int i = 0; i < WEBSOCKET_MAX_CLIENTS; ++i)
         if (webSockets[i].ws)
@@ -462,6 +474,109 @@ void GScr_Cod2xDropCallbacks(void)
     ++scriptGeneration;
 }
 
+#if defined(DEBUG) && DEBUG
+extern int Cmd_Argc(void);
+extern const char *Cmd_Argv(int index);
+extern void Cmd_AddCommand(const char *name, void (*function)(void));
+
+/* Upstream leaves its diagnostic socket's poll call disabled. Reconnect can
+   prepare it, but no handshake or send completes. Keep this separate from the
+   functioning script websocket clients above. */
+static void GScr_Cod2xDebugWebSocketCommand(void)
+{
+    if (Cmd_Argc() < 2)
+        return;
+    const char *command = Cmd_Argv(1);
+    if (!I_stricmp(command, "send")) {
+        if (!Cmd_Argv(2)[0])
+            Com_Printf("Please provide a message to send.\n");
+        else
+            Com_Printf("Failed to send message, websocket not connected.\n");
+    } else if (!I_stricmp(command, "close")) {
+        Com_Printf("WebSocket connection closed.\n");
+    } else if (!I_stricmp(command, "reconnect")) {
+        Com_Printf("WebSocket connection reconnecting...\n");
+    } else {
+        Com_Printf("Unknown match command: %s\n", command);
+    }
+}
+
+void GScr_Cod2xDebugInit(void)
+{
+    Cmd_AddCommand("ws", GScr_Cod2xDebugWebSocketCommand);
+}
+
+/* Developer script probes use the same value conversion and callback API as
+   game scripts. They are deliberately absent from release builtin tables. */
+extern void Com_Error(errorParm_t code, const char *fmt, ...);
+extern float Scr_GetFloat(unsigned int index);
+extern void Scr_GetVector(unsigned int index, float *value);
+extern const char *Scr_GetIString(unsigned int index);
+extern void Scr_AddFloat(float value);
+extern void Scr_AddVector(const float *value);
+extern serverStatic_t svs;
+
+void GScr_Cod2xTestPlayerGetName(scr_entref_t ref)
+{
+    if (ref.entnum >= 64) {
+        Scr_Error(va("entity %d is not a player", ref.entnum));
+        Scr_AddUndefined();
+        return;
+    }
+    Scr_AddString(svs.clients[ref.entnum].name);
+}
+
+static void GScr_Cod2xTestUndefined(void) { Scr_AddUndefined(); }
+static void GScr_Cod2xTestBool(void) { Scr_AddBool(Scr_GetInt(0)); }
+static void GScr_Cod2xTestInt(void) { Scr_AddInt(Scr_GetInt(0)); }
+static void GScr_Cod2xTestFloat(void) { Scr_AddFloat(Scr_GetFloat(0)); }
+static void GScr_Cod2xTestString(void) { Scr_AddString(Scr_GetString(0)); }
+static void GScr_Cod2xTestVector(void)
+{
+    vec3_t value;
+    Scr_GetVector(0, value);
+    Scr_AddVector(value);
+}
+static void GScr_Cod2xTestArray(void)
+{
+    Scr_MakeArray();
+    for (int value = 10; value <= 30; value += 10) {
+        Scr_AddInt(value);
+        Scr_AddArray();
+    }
+}
+static void GScr_Cod2xTestAllOk(void)
+{
+    const char *value = Scr_GetString(0);
+    if (strcmp(value, "all ok"))
+        Com_Error(ERR_DROP, "gsc_test_allOk: expected 'all ok', got '%s'", value);
+    Com_Printf("============================\nCoD2x: GSC test OK\n============================\n");
+}
+static void GScr_Cod2xTestGetAll(void)
+{
+    unsigned int count = Scr_GetNumParam();
+    if (count < 7)
+        Com_Error(ERR_DROP, "gsc_test_getAll: not enough parameters, expected 7, got %u", count);
+    int boolean = Scr_GetInt(0), integer = Scr_GetInt(1);
+    float number = Scr_GetFloat(2);
+    const char *string = Scr_GetString(3), *localized = Scr_GetIString(4);
+    vec3_t vector;
+    Scr_GetVector(5, vector);
+    int callback = Scr_GetFunc(6);
+    if (!boolean) Com_Error(ERR_DROP, "gsc_test_getAll: boolValue is false");
+    if (integer != 1) Com_Error(ERR_DROP, "gsc_test_getAll: intValue is not 1");
+    if (number != 2.222f) Com_Error(ERR_DROP, "gsc_test_getAll: floatValue is not 2.222");
+    if (strcmp(string, "variable test string"))
+        Com_Error(ERR_DROP, "gsc_test_getAll: stringValue is not 'variable test string'");
+    if (strcmp(localized, "Localized text string"))
+        Com_Error(ERR_DROP, "gsc_test_getAll: localizedStringValue is not 'Localized text string'");
+    if (vector[0] != 1 || vector[1] != 2 || vector[2] != 3)
+        Com_Error(ERR_DROP, "gsc_test_getAll: vectorValue is not (1.0, 2.0, 3.0)");
+    if (!callback) Com_Error(ERR_DROP, "gsc_test_getAll: paramFunction is NULL");
+    GScr_Cod2xRunCallback(callback, 0);
+}
+#endif
+
 /* ---- the table -------------------------------------------------------------- */
 
 typedef struct {
@@ -471,6 +586,17 @@ typedef struct {
 } ScriptFunction;
 
 static const ScriptFunction scriptFunctions[] = {
+#if defined(DEBUG) && DEBUG
+    {"test_returnUndefined", GScr_Cod2xTestUndefined, 0},
+    {"test_returnBool", GScr_Cod2xTestBool, 0},
+    {"test_returnInt", GScr_Cod2xTestInt, 0},
+    {"test_returnFloat", GScr_Cod2xTestFloat, 0},
+    {"test_returnString", GScr_Cod2xTestString, 0},
+    {"test_returnVector", GScr_Cod2xTestVector, 0},
+    {"test_returnArray", GScr_Cod2xTestArray, 0},
+    {"test_getAll", GScr_Cod2xTestGetAll, 0},
+    {"test_allOk", GScr_Cod2xTestAllOk, 0},
+#endif
     {"http_fetch", GScr_Cod2xHttpFetch, 0},
     {"websocket_connect", GScr_Cod2xWebSocketConnect, 0},
     {"websocket_sendText", GScr_Cod2xWebSocketSendText, 0},

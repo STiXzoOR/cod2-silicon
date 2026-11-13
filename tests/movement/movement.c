@@ -282,6 +282,26 @@ static void test_direction(void)
             assert(ps.movementDir == (fixed ? cases[i].codx : cases[i].stock));
         }
         init(&ps, &pm, &pml, 60); pm.handler = handler;
+        pm.cmd.forwardmove = -127;
+        ps.origin[0] = -1; ps.origin[1] = .5f;
+        PM_SetMovementDir(&pm, &pml);
+        printf("fractional backward yaw: %d\n", ps.movementDir);
+        fflush(stdout);
+#if defined(COD2_CODX) && COD2_CODX
+        assert(ps.movementDir == -26);
+#else
+        assert(ps.movementDir == -27);
+#endif
+        init(&ps, &pm, &pml, 60); pm.handler = handler;
+        pm.cmd.forwardmove = 127; ps.pm_flags = PMF_LADDER;
+        ps.origin[0] = 1; ps.origin[1] = 1; ps.vLadderVec[0] = 1;
+        PM_SetMovementDir(&pm, &pml);
+#if defined(COD2_CODX) && COD2_CODX
+        assert(ps.movementDir == 45);
+#else
+        assert(ps.movementDir == 90);
+#endif
+        init(&ps, &pm, &pml, 60); pm.handler = handler;
         ps.origin[0] = 0.015f; PM_SetMovementDir(&pm, &pml); assert(ps.movementDir == 0);
         ps.origin[0] = -1; ps.groundEntityNum = 1023;
         PM_SetMovementDir(&pm, &pml); assert(ps.movementDir == 0);

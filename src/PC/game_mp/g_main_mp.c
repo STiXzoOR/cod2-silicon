@@ -1,6 +1,7 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
+#include "g_cod2x_playerinfo.h"
 #if COD2_APPLE_SDK
 #include "platform/macos_system.h"
 #include <sys/mman.h>
@@ -1945,6 +1946,11 @@ int G_RunFrame(int levelTime)
 
     *(void **)imp_bgs = NULL;
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    extern void SV_Cod2xMapChangeFrameDone(void);
+    extern void SV_Cod2xUdpStats(void);
+    SV_Cod2xMapChangeFrameDone();
+    G_Cod2xPlayerInfoFrame(g_entities);
+    SV_Cod2xUdpStats();
     G_RefreshPlayerBroadcast();
 #endif
     return (int)imp_bgs;

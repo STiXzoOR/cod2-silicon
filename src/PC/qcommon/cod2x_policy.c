@@ -58,7 +58,8 @@ int Cod2x_IwdStock(const char *name, const char *base, int version)
             return 1;
     }
     snprintf(expected, sizeof(expected), "%s/localized_", base);
-    if (!equaln(name, expected, strlen(expected)))
+    /* The original first finds the literal lowercase localized_ marker. */
+    if (!strstr(name, "localized_") || !equaln(name, expected, strlen(expected)))
         return 0;
     local = name + strlen(expected);
     for (i = 0; i < 25; ++i) {
@@ -90,12 +91,29 @@ const char *Cod2x_IwdRequiredName(void)
     return cod2x_iwdRequired;
 }
 
+static int gameFolder(const char *folder, const char *game)
+{
+    size_t folderLength = strlen(folder), gameLength = game ? strlen(game) : 0;
+    if (!gameLength || folderLength < gameLength)
+        return 0;
+    const char *suffix = folder + folderLength - gameLength;
+    if (suffix > folder && suffix[-1] != '/' && suffix[-1] != '\\')
+        return 0;
+    for (size_t i = 0; i < gameLength; ++i) {
+        unsigned char a = (unsigned char)suffix[i], b = (unsigned char)game[i];
+        if (a == '\\') a = '/';
+        if (b == '\\') b = '/';
+        if (tolower(a) != tolower(b))
+            return 0;
+    }
+    return 1;
+}
+
 int Cod2x_IwdAllowed(const char *folder, const char *file, const char *const *files,
                     size_t count, const Cod2xIwdSelection *s)
 {
     char name[256];
     size_t n = strlen(file);
-    const char *p;
     if (s->dedicated)
         return COD2X_IWD_ALLOWED;
     if (n >= sizeof(name) - 1)
@@ -108,18 +126,13 @@ int Cod2x_IwdAllowed(const char *folder, const char *file, const char *const *fi
     if (s->connecting && !s->listen) {
         if (s->demo && equal(folder, "movie"))
             return COD2X_IWD_MOVIE;
-        p = s->names ? s->names : "";
-        while (*p) {
-            const char *start;
-            size_t len;
-            while (*p && isspace((unsigned char)*p)) ++p;
-            start = p;
-            while (*p && !isspace((unsigned char)*p)) ++p;
-            len = (size_t)(p - start);
-            /* The name must end where the file's extension or hash starts: "z" is not "zpam408.iwd". */
-            if (len && equaln(file, start, len) && file[len] == '.') {
-                snprintf(cod2x_iwdRequired, sizeof(cod2x_iwdRequired), "%.*s",
-                         (int)(len < sizeof(cod2x_iwdRequired) ? len : sizeof(cod2x_iwdRequired) - 1), start);
+        char tokens[8192], *required[512];
+        int requiredCount = Cod2x_Tokenize(s->names ? s->names : "", 0, required, tokens, sizeof(tokens));
+        for (int i = 0; i < requiredCount; ++i) {
+            size_t len = strlen(required[i]);
+            /* A required basename must end where the extension or checksum starts. */
+            if (len && len < n && equaln(file, required[i], len) && file[len] == '.') {
+                snprintf(cod2x_iwdRequired, sizeof(cod2x_iwdRequired), "%s", required[i]);
                 return COD2X_IWD_REQUIRED;
             }
         }
@@ -128,14 +141,18 @@ int Cod2x_IwdAllowed(const char *folder, const char *file, const char *const *fi
         return COD2X_IWD_LATEST_ZPAM;
     if (s->listen && latest(file, "zpam_maps_v", files, count))
         return COD2X_IWD_LATEST_ZPAM_MAPS;
-    return s->game && *s->game && equal(folder, s->game) ? COD2X_IWD_GAME : COD2X_IWD_FILTERED;
+    return gameFolder(folder, s->game) ? COD2X_IWD_GAME : COD2X_IWD_FILTERED;
 }
 
 const char *Cod2x_ConfigGame(const char *game, const char *qpath)
 {
     size_t n = strlen(qpath);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    if (equaln(qpath, "players/", 8) && n >= 14 && equal(qpath + n - 14, "/config_mp.cfg"))
+    extern const char *Dvar_GetString(const char *name);
+    const char *profile = Dvar_GetString("com_playerProfile");
+    char activeConfig[256];
+    snprintf(activeConfig, sizeof(activeConfig), "players/%s/config_mp.cfg", profile ? profile : "");
+    if (profile && profile[0] && equal(qpath, activeConfig))
 #else
     if (equal(qpath, "config_mp.cfg") ||
         (equaln(qpath, "players/", 8) && n >= 14 && equal(qpath + n - 14, "/config_mp.cfg")))

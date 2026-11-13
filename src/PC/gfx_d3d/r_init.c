@@ -1,7 +1,9 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
+#include "r_cod2x_xray.h"
 #include "imports.h"
 #include "bytematch.h"
+#include "r_cod2x_film.h"
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -192,6 +194,12 @@ static inline void R_SafeRelease(void **objPtr)
 
 static void R_ReleaseForShutdownOrReset(void)
 {
+#if COD2X_FILM
+    R_Cod2xFilm_Release();
+#if COD2X_XRAY_RENDER
+    R_Cod2xXrayRelease();
+#endif
+#endif
 #if defined(COD2_X64)
     int i, j;
     SunFlareDynamic *flares = (SunFlareDynamic *)imp_sunFlareArray;
@@ -1228,8 +1236,15 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     if (!ri_printf)
         return;
     ri_printf(0, "----- R_Init -----\n");
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    extern void Cod2x_FeaturesRenderer(void);
+    Cod2x_FeaturesRenderer();
+#endif
     Swap_Init();
     R_RegisterDvars();
+#if COD2X_FILM
+    R_Cod2xFilm_Init();
+#endif
     R_RegisterCmds();
     memset(&rg, 0, sizeof(r_globals_t));
     memset(&rgp, 0, sizeof(r_global_permanent_t));

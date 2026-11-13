@@ -28,26 +28,25 @@ extern void FS_FreeFile(void *);
 extern void Com_Error(errorParm_t, const char *, ...);
 extern MaterialHandle CL_RegisterMaterial(const char *, int);
 extern const char *CL_GetConfigString(int);
+extern const char *UI_Cod2xRadarMapName(void);
 extern void CG_DrawRotatedPic(float, float, float, float, int, int, float, const vec_t *, MaterialHandle);
 extern void UI_DrawText(const char *, int, FontHandle, float, float, int, int, float, const vec_t *, int);
 extern int UI_TextWidth(const char *, int, FontHandle, float);
 extern int UI_TextHeight(FontHandle, float);
 extern clientActive_t clients;
-extern clientStatic_t cls;
 extern sharedUiInfo_t sharedUiInfo;
 
 static const dvar_t *drawRadar, *radarScale, *mapImage, *imageX, *imageY, *rotation;
 static const dvar_t *entityScale, *entityX, *entityY, *radarX, *radarY, *numberSwitch, *radarColor;
 static char radarMap[64];
-static int calibration, calibrationFrame = -1, lastDrawTime, commandRegistered;
+static int calibration, commandRegistered;
 static float worldPoints[2][2], imagePoints[2][2];
 static const char *radarFields[6] = {"scale", "offsetX", "offsetY", "rotation", "imageOffsetX", "imageOffsetY"};
 static struct {
     int time;
-    vec3_t origin;
-    float yaw;
+    float x, y, size, angle;
 } fireEvents[128];
-static unsigned int fireIndex;
+static int lastFireEndTimes[64];
 
 static int CG_Cod2xRadarCheats(void)
 {
@@ -55,35 +54,21 @@ static int CG_Cod2xRadarCheats(void)
     return Cod2x_FeaturesDemo() || (cheats && cheats->current.enabled);
 }
 
-static void CG_Cod2xRadarMapName(char name[64])
-{
-    const char *path = cgs->mapname, *slash = strrchr(path, '/');
-    size_t length;
-    if (slash)
-        path = slash + 1;
-    length = strcspn(path, ".");
-    if (length >= 64)
-        length = 63;
-    memcpy(name, path, length);
-    name[length] = '\0';
-}
-
 static void CG_Cod2xRadarLoad(void)
 {
-    char name[64], filename[128], image[128];
+    const char *name = UI_Cod2xRadarMapName();
+    char filename[128], image[128];
     char *buffer = NULL;
     const char *cursor, *token;
     float values[6];
     int i, length;
-    CG_Cod2xRadarMapName(name);
     if (!strcmp(name, radarMap))
         return;
     snprintf(radarMap, sizeof(radarMap), "%s", name);
-    calibration = 0;
-    memset(fireEvents, 0, sizeof(fireEvents));
-    Dvar_SetString(mapImage, "");
-    if (!*name)
+    if (!*name) {
+        Dvar_SetString(mapImage, "");
         return;
+    }
     snprintf(filename, sizeof(filename), "maps/mp/%s.radar", name);
     length = FS_ReadFile(filename, (void **)&buffer);
     if (length <= 0 || !buffer) {
@@ -91,6 +76,7 @@ static void CG_Cod2xRadarLoad(void)
             FS_FreeFile(buffer);
         /* CoD2x names the file without its mp/ folder here. */
         Com_Printf("^1Radar file not found: maps/%s.radar\n", name);
+        Dvar_SetString(mapImage, "");
         return;
     }
     /* Each value follows its label; an empty value drops the client, as in CoD2x. */
@@ -177,6 +163,8 @@ static void CG_Cod2xRadarCalibrate_f(void)
 
 void CG_Cod2xRadarInit(void)
 {
+    if (drawRadar)
+        return;
     /* CoD2x radar.cpp:646 defines the user controls and .radar file order. */
     drawRadar = Dvar_RegisterBool("cg_drawRadar", 0, 0x1000);
     radarScale = Dvar_RegisterFloat("cg_hudRadarScale", 1, -FLT_MAX, FLT_MAX, 0x1000);
@@ -195,22 +183,13 @@ void CG_Cod2xRadarInit(void)
         Cmd_AddCommand("cg_hudRadarCalibrate", CG_Cod2xRadarCalibrate_f);
         commandRegistered = 1;
     }
-    radarMap[0] = '\0';
-    calibration = 0;
-    memset(fireEvents, 0, sizeof(fireEvents));
 }
 
-void CG_Cod2xRadarFire(int entityNum)
+void CG_Cod2xRadarFrame(void)
 {
-    int i;
-    if (!drawRadar || entityNum < 0 || entityNum >= 64 || !cg_entities)
-        return;
-    fireIndex = (fireIndex + 1) % 128;
-    fireEvents[fireIndex].time = cg->time;
-    /* CoD2x places players at their snapshot position and heading. */
-    for (i = 0; i < 3; ++i)
-        fireEvents[fireIndex].origin[i] = cg_entities[entityNum].currentState.pos.trBase[i];
-    fireEvents[fireIndex].yaw = cg_entities[entityNum].nextState.apos.trBase[1];
+    /* The upstream frame hook watches the UI's loading map, even without a snapshot. */
+    if (mapImage)
+        CG_Cod2xRadarLoad();
 }
 
 static void CG_Cod2xRadarCoordinates(const vec_t *origin, float *x, float *y)
@@ -239,12 +218,11 @@ static void CG_Cod2xRadarDrawCalibration(float x, float y)
     if (calibration == 1 || calibration == 3) {
         worldPoints[calibration > 2][0] = cg->refdef.vieworg[0];
         worldPoints[calibration > 2][1] = cg->refdef.vieworg[1];
-    } else if (calibrationFrame != cls.realtime) {
+    } else {
         int index = clients.mouseIndex ^ 1;
         imagePoints[calibration > 2][0] += clients.mouseDx[index] / 10.0f;
         imagePoints[calibration > 2][1] += clients.mouseDy[index] / 10.0f;
     }
-    calibrationFrame = cls.realtime;
     for (i = 0; i < calibration; ++i)
         UI_DrawText(steps[i], INT_MAX, font, 0, 120 + 10 * i, 2, 1, .2f, textColor, 3);
     for (i = 0; i < 2 && calibration >= 2 * (i + 1); ++i) {
@@ -265,19 +243,15 @@ void CG_Cod2xRadarDraw(void)
     int i, teamCounts[3] = {0, 0, 0}, teamNumbers[64], clientNum;
     if (!drawRadar || !cg->snap || !cg_entities)
         return;
-    CG_Cod2xRadarLoad();
     clientNum = cg->clientNum;
     if (!drawRadar->current.enabled || clientNum < 0 || clientNum >= 64 ||
         (cg->bgs.clientinfo[clientNum].team != TEAM_SPECTATOR && !CG_Cod2xRadarCheats()) ||
         !*mapImage->current.string)
         return;
-    if (cg->time < lastDrawTime)
-        memset(fireEvents, 0, sizeof(fireEvents));
-    lastDrawTime = cg->time;
     factor = calibration ? 4 : 2 * radarScale->current.value;
     size = factor * 100;
-    x = radarX->current.value + imageX->current.value;
-    y = radarY->current.value + imageY->current.value;
+    x = calibration ? 0 : radarX->current.value + imageX->current.value;
+    y = calibration ? 0 : radarY->current.value + imageY->current.value;
     /* The map points are picked on a darkened screen. */
     if (calibration == 2 || calibration == 4)
         CG_DrawRotatedPic(0, 0, 640, 480, 4, 4, 0, background, cgs->media.whiteMaterial);
@@ -289,17 +263,6 @@ void CG_Cod2xRadarDraw(void)
     if (calibration) {
         CG_Cod2xRadarDrawCalibration(x, y);
         return;
-    }
-    size = 10 * factor;
-    material = CL_RegisterMaterial("radar_player_fire", 7);
-    for (i = 0; i < 128; ++i) {
-        int age = cg->time - fireEvents[i].time;
-        if (!fireEvents[i].time || age <= 0 || age >= 1000)
-            continue;
-        CG_Cod2xRadarCoordinates(fireEvents[i].origin, &x, &y);
-        color[0] = 1; color[1] = color[2] = .5f; color[3] = 1 - age / 1000.0f;
-        CG_DrawRotatedPic(x - size * 2, y - size * 2, size * 4, size * 4, 1, 1,
-                          90 + rotation->current.integer - fireEvents[i].yaw, color, material);
     }
     for (i = 0; i < 16; ++i) {
         const objective_t *obj = &cg->snap->ps.objective[i];
@@ -322,6 +285,16 @@ void CG_Cod2xRadarDraw(void)
         CG_DrawRotatedPic(x - factor * 4, y - factor * 4, factor * 8, factor * 8, 1, 1, 0,
                           white, icon);
     }
+    material = CL_RegisterMaterial("radar_player_fire", 7);
+    for (i = 0; i < 128; ++i) {
+        int age = cg->time - fireEvents[i].time;
+        if (!fireEvents[i].time || age <= 0 || age >= 1000)
+            continue;
+        color[0] = 1; color[1] = color[2] = .5f; color[3] = 1 - age / 1000.0f;
+        size = fireEvents[i].size;
+        CG_DrawRotatedPic(fireEvents[i].x - size * 2, fireEvents[i].y - size * 2,
+                          size * 4, size * 4, 1, 1, fireEvents[i].angle, color, material);
+    }
     arrow = CL_RegisterMaterial("radar_player_arrow", 7);
     circle = CL_RegisterMaterial("radar_player_circle", 7);
     /* Team colours come from g_TeamColor_*; without them the circles stay white. */
@@ -338,7 +311,7 @@ void CG_Cod2xRadarDraw(void)
         teamNumbers[i] = i;
         if (cent->currentState.eType == 1 && cent->currentState.clientNum >= 0 && cent->currentState.clientNum < 64) {
             const clientInfo_t *ci = &cg->bgs.clientinfo[cent->currentState.clientNum];
-            if (ci->infoValid)
+            if (ci->infoValid == 1)
                 team = ci->team;
         }
         if ((team == TEAM_ALLIES || team == TEAM_AXIS) && teamCounts[team] < 5) {
@@ -357,22 +330,39 @@ void CG_Cod2xRadarDraw(void)
         char number[16];
         int team;
         float arrowScale = 1, circleScale = 1, heading, textScale;
-        if (cent->currentState.eType != 1 || !cent->nextValid ||
+        if (cent->currentState.eType != 1 || !(cent->nextValid & 1) ||
             (cent->currentState.eFlags & 0x20001) || cent->currentState.clientNum < 0 ||
             cent->currentState.clientNum >= 64)
             continue;
         ci = &cg->bgs.clientinfo[cent->currentState.clientNum];
         team = ci->team;
-        if (!ci->infoValid || team >= TEAM_SPECTATOR || team < TEAM_FREE)
+        if (ci->infoValid != 1 || team >= TEAM_SPECTATOR || team < TEAM_FREE)
             continue;
         CG_Cod2xRadarCoordinates(cent->currentState.pos.trBase, &x, &y);
         heading = 90 + rotation->current.integer - cent->nextState.apos.trBase[1];
+        size = 10 * factor;
+        /* The compass records the end of each weapon sound. Observe changes
+           only for drawn players and keep the projected flash rectangle. */
+        if (lastFireEndTimes[i] != cg->compassActors[i].beginFadeTime) {
+            int slot = 0;
+            lastFireEndTimes[i] = cg->compassActors[i].beginFadeTime;
+            for (int event = 0; event < 128; ++event) {
+                if (!fireEvents[event].time || cg->time - fireEvents[event].time > 1000) {
+                    slot = event;
+                    break;
+                }
+            }
+            fireEvents[slot].time = cg->time;
+            fireEvents[slot].x = x;
+            fireEvents[slot].y = y;
+            fireEvents[slot].size = size;
+            fireEvents[slot].angle = heading;
+        }
         /* The followed player has a larger yellow arrow and a slightly larger circle. */
         if (cg->snap->ps.clientNum == i) {
             arrowScale = 1.5f;
             circleScale = 1.2f;
         }
-        size = 10 * factor;
         CG_DrawRotatedPic(x - size * arrowScale * .5f, y - size * arrowScale * .5f, size * arrowScale,
                           size * arrowScale, 1, 1, heading, arrowScale > 1 ? yellow : white, arrow);
         CG_DrawRotatedPic(x - size * circleScale * .5f, y - size * circleScale * .5f, size * circleScale,

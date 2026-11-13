@@ -27,7 +27,6 @@ extern const char *Cmd_Argv(int arg);
 extern void Cmd_AddCommand(const char *cmdName, xcommand_t function);
 extern void Cbuf_AddText(const char *text);
 extern int I_stricmp(const char *s1, const char *s2);
-extern int Sys_Milliseconds(void);
 extern int Dvar_GetInt(const char *dvarName);
 extern const dvar_t *Dvar_FindVar(const char *dvarName);
 extern void Dvar_SetBool(const dvar_t *dvar, unsigned char value);
@@ -184,7 +183,7 @@ static struct {
     char *headers; /* from "match create", sent with every request */
     unsigned int generation; /* a new "match create" forgets the old requests */
     long long startTime;
-    unsigned int startTick;
+    uint64_t startTick;
     MatchData *data;
     MatchMap global;
     MatchPlayerProgress *players;
@@ -257,14 +256,6 @@ int SV_Cod2xMatchRunning(void)
 
 /* ---- reading a match ------------------------------------------------------- */
 
-/* A plain value as CoD2x keeps it: a string (at most 511 bytes), a number with
-   no decimals, true or false, and anything else as its JSON text. */
-static void Match_SetValue(MatchMap *map, const char *json, const char *base, const char *key, const char *text)
-{
-    char path[512], value[512];
-    snprintf(path, sizeof(path), "%s.%s", base, key);
-    Map_Set(map, key, Cod2x_JsonString(json, path, value, sizeof(value)) ? value : text);
-}
 
 typedef struct {
     MatchData *data;
@@ -324,7 +315,7 @@ static int Match_ParseOther(void *context, int index, const char *key, const cha
     for (int i = 0; i < 4; ++i)
         if (other->skip[i] && !strcmp(key, other->skip[i]))
             return 1;
-    Match_SetValue(other->map, other->json, other->base, key, value);
+    Map_Set(other->map, key, value);
     return 1;
 }
 
@@ -848,6 +839,8 @@ void SV_Cod2xMatchBeforeMapChange(int shutdown)
         if (match.uploading || match.uploadingError)
             Cod2x_Sleep(10);
     }
+    if (shutdown)
+        Cod2x_HttpFrameFor(Match_Done);
     if (match.canceling)
         Com_Printf("Match ended.\n");
     match.canceling = 0;
@@ -868,7 +861,8 @@ void SV_Cod2xMatchBeforeMapChange(int shutdown)
 
 void SV_Cod2xMatchFrame(void)
 {
-    if ((int)((unsigned int)Sys_Milliseconds() - match.startTick) > MATCH_TIMEOUT_MSEC &&
+    Cod2x_HttpFrameFor(Match_Done);
+    if ((Cod2x_Milliseconds64() - match.startTick) > MATCH_TIMEOUT_MSEC &&
         (match.loading || match.downloading) && !match.activated) {
         match.loading = 0;
         match.downloading = 0;
@@ -934,7 +928,7 @@ static void Match_Create(void)
     match.canceling = 0;
     match.cancelReason[0] = '\0';
     match.startTime = Cod2x_UtcMsec();
-    match.startTick = (unsigned int)Sys_Milliseconds();
+    match.startTick = Cod2x_Milliseconds64();
     Match_ProgressClear();
 
     /* "Name: value|Name2: value2" */

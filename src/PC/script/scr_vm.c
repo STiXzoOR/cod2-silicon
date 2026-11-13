@@ -9582,6 +9582,23 @@ void Scr_AddExecThread(scr_func_t handle, unsigned int paramcount)
     scrVmPub.inparamcount--;
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && defined(DEBUG) && DEBUG
+/* The debug script callback probes inspect the entity thread's return value. */
+void Scr_AddExecEntThreadNum(int entnum, int classnum, scr_func_t handle, unsigned int paramcount)
+{
+    struct scrVarPub_t *pub = (struct scrVarPub_t *)imp_scrVarPub;
+    if (!scrVmPub.function_count)
+        Scr_ResetTimeout_core();
+    unsigned int self = Scr_GetEntityId(entnum, classnum);
+    AddRefToObject(self);
+    unsigned int thread = AllocThread(self);
+    unsigned int result = VM_ExecuteExtCall(thread, pub->programBuffer + handle, paramcount);
+    RemoveRefToObject(result);
+    ++scrVmPub.outparamcount;
+    --scrVmPub.inparamcount;
+}
+#endif
+
 scr_thread_t Scr_ExecEntThreadNum(int entnum, int classnum, scr_func_t handle, unsigned int paramcount)
 {
     extern unsigned int AllocThread(unsigned int self);

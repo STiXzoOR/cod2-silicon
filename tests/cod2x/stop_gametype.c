@@ -89,6 +89,8 @@ void Cod2x_ResetClientAnimation(void) {}
 int Cod2x_ReadMachineHwid(char id[33]) { memset(id, 'a', 32); id[32] = 0; return 1; }
 int Cod2x_LimitedFPS(int fps, int limited) { return limited && (fps < 125 || fps > 250) ? 250 : fps; }
 void Cod2x_FeaturesInit(void) {}
+void Cod2x_ReportInit(void) {}
+void UI_LoadIngameMenus(void) {}
 void Cod2x_FeaturesFrame(int active, int demo) { (void)active; (void)demo; }
 void Cod2x_IwdSystemInfo(const char *names) { (void)names; }
 void GScr_Cod2xNetBeforeMapChange(int shutdown) { (void)shutdown; }

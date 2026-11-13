@@ -3,6 +3,7 @@
 #include "PC/server_mp/cod2x_host_protocol.h"
 #include <limits.h>
 #include <stdint.h>
+#include <time.h>
 
 serverStatic_t svs;
 server_t sv;
@@ -15,7 +16,8 @@ void *imp_fs_numServerIwds = &numIwds;
 static void *bgs;
 void *imp_bgs = &bgs;
 static client_t clients[2];
-static uint32_t now;
+static uint64_t now;
+static char diagnostic[512];
 static int responses, challenges, connects, auths, voices, rcons, redirects, hardeningCalls;
 static int argc, qport;
 static char tokens[1024];
@@ -34,7 +36,7 @@ int Sys_Milliseconds(void) { return (int32_t)now; }
 int Com_Milliseconds(void) { return (int32_t)now; }
 int COD2_NativeTraceEnabled(void) { return 0; }
 int I_strnicmp(const char *a, const char *b, size_t n) { return strncasecmp(a, b, n); }
-void Com_DPrintf(const char *format, ...) { (void)format; }
+void Com_DPrintf(const char *format, ...) { va_list ap; va_start(ap, format); vsnprintf(diagnostic, sizeof(diagnostic), format, ap); va_end(ap); }
 void Cod2x_ServerInit(int dedicated) { (void)dedicated; }
 int Cod2x_ServerGameVersion(void) { return 0; }
 void SV_AddOperatorCommands(void) {}
@@ -69,7 +71,15 @@ void SV_AuthorizeIpPacket(netadr_t from) { (void)from; ++auths; }
 void SV_VoicePacket(netadr_t from, msg_t *msg) { (void)from; (void)msg; ++voices; }
 void PB_HandleServerOobPacket(netadr_t *from, msg_t *msg) { (void)from; (void)msg; }
 void SV_ResetSkeletonCache(void) {}
-int G_RunFrame(int time) { CHECK(time == svs.time); return 0; }
+int G_RunFrame(int time) {
+    CHECK(time == svs.time);
+#if UDP_STATS_IN_GAME
+    /* The game-frame fixture exercises the production tail and its ordering. */
+    extern void SV_Cod2xUdpStats(void);
+    SV_Cod2xUdpStats();
+#endif
+    return 0;
+}
 qboolean NET_CompareBaseAdr(netadr_t a, netadr_t b) { return a.type == b.type && !memcmp(a.ip, b.ip, 4); }
 int Netchan_Process(netchan_t *n, msg_t *msg) { (void)n; (void)msg; return 0; }
 void SV_Netchan_Decode(client_t *cl, byte *data, int size) { (void)cl; (void)data; (void)size; }
@@ -90,7 +100,7 @@ char *Info_ValueForKey(const char *s, const char *key) { (void)s; (void)key; ret
 qboolean FS_iwIwd(char *s, char *base) { (void)s; (void)base; return 1; }
 playerState_t *SV_GameClientNum(int n) { (void)n; return NULL; }
 int G_GetClientScore(int n) { (void)n; return 0; }
-void LargeLocal_LargeLocal(const LargeLocal *l, int n) { (void)l; CHECK(n == MAX_MSGLEN); }
+void LargeLocal_LargeLocal(const LargeLocal *l, int n) { (void)l; CHECK(n == 0x1fff0 || n == MAX_MSGLEN); }
 void *LargeLocal_GetBuf(const LargeLocal *l) { (void)l; static char b[MAX_MSGLEN]; return b; }
 void ZN10LargeLocalD1Ev(LargeLocal *l) { (void)l; }
 void SV_FlushRedirect(char *s) { (void)s; }
@@ -104,7 +114,16 @@ int NetHardening_SVC_RateLimitAddress(netadr_t from, int time) { (void)from; (vo
 int NetHardening_SVC_RateLimit(int time) { (void)time; ++hardeningCalls; return 0; }
 #include "udp_lan.h"
 void SVC_RemoteCommand(netadr_t from, msg_t *msg);
+static int fixture_clock_gettime(clockid_t clock, struct timespec *value)
+{
+    CHECK(clock == CLOCK_MONOTONIC);
+    value->tv_sec = now / 1000;
+    value->tv_nsec = (now % 1000) * 1000000;
+    return 0;
+}
+#define clock_gettime fixture_clock_gettime
 #include "udp_source.h"
+#undef clock_gettime
 
 static const netadr_t remote = {NA_IP, {8,7,6,5}, 100};
 static const netadr_t lan = {NA_IP, {192,168,1,5}, 100};
@@ -112,9 +131,9 @@ static netadr_t address(int n)
 {
     netadr_t from = {NA_IP, {8,0,0,0}, 100}; from.ip[2] = n >> 8; from.ip[3] = n; return from;
 }
-static void reset(uint32_t time)
+static void reset(uint64_t time)
 {
-    now = time; lasttime = 0; SV_Init(); svs.clients = clients;
+    now = time; lasttime = 0; diagnostic[0] = 0; SV_Init(); svs.clients = clients;
     const dvar_t *enabled = Dvar_FindVar("sv_rateLimiter");
     if (enabled) Dvar_SetBool(enabled, 1);
     memset(clients, 0, sizeof(clients)); Dvar_SetInt(sv_maxclients, 2);
@@ -155,6 +174,9 @@ static void queries(void)
         reset(1000);
         for (int i = 0; i < 11; ++i) dispatch(remote, commands[kind]);
         CHECK(responses + challenges == 10);
+        const char *actions[] = {"SV_Status", "SV_Info", "SV_GetChallenge"};
+        char expected[256]; snprintf(expected, sizeof(expected), "%s: rate limit from fixture address exceeded, dropping request\n", actions[kind]);
+        CHECK(!strcmp(diagnostic, expected));
         CHECK(hardeningCalls == 0);
     }
     reset(1000);
@@ -169,6 +191,7 @@ static void queries(void)
     reset(1000);
     for (int i = 0; i < 11; ++i) dispatch(address(i), "getchallenge");
     CHECK(challenges == 10);
+    CHECK(!strcmp(diagnostic, "SV_GetChallenge: overall rate limit exceeded, dropping request\n"));
     now = 1099; dispatch(address(12), "getinfo"); CHECK(responses == 0);
     now = 1100; dispatch(address(13), "getinfo"); CHECK(responses == 1);
     dispatch(address(14), "getstatus"); CHECK(responses == 1);
@@ -264,9 +287,9 @@ static void stats_and_time(void)
     ++now; dispatch(remote, "getchallenge"); CHECK(challenges == 11); /* Unsigned rollover. */
     now = 100; dispatch(remote, "getchallenge"); CHECK(challenges == 12); /* Clock moved backwards. */
     reset(0); dispatch(remote, "getchallenge"); now = 1000; SV_RunFrame();
-    CHECK(requests && requests->current.integer == 1); CHECK(ips && ips->current.integer == 1);
-    const uint32_t boundaries[] = {UINT32_C(0x7ffffc18), UINT32_C(0xfffffc18)};
-    for (int i = 0; i < 2; ++i) {
+    CHECK(requests && requests->current.integer == 0); CHECK(ips && ips->current.integer == 0); /* Upstream skips the zero timestamp. */
+    const uint64_t boundaries[] = {UINT64_C(0x7ffffc18), UINT64_C(0xfffffc18), UINT64_C(0x1fffffc18)};
+    for (int i = 0; i < 3; ++i) {
         reset(boundaries[i]); dispatch(remote, "getchallenge"); SV_RunFrame();
         CHECK(requests && requests->current.integer == 1); CHECK(ips && ips->current.integer == 1);
         now += 999; dispatch(address(1), "getchallenge"); SV_RunFrame();
@@ -276,7 +299,7 @@ static void stats_and_time(void)
         now += 1000; SV_RunFrame();
         CHECK(requests && requests->current.integer == 0); CHECK(ips && ips->current.integer == 0);
     }
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 3; ++i) {
         reset(boundaries[i]); disconnect_reply(remote); disconnect_reply(remote);
         now += 999; disconnect_reply(remote); CHECK(responses == 2);
         ++now; disconnect_reply(remote); CHECK(responses == 3);

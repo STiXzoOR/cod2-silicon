@@ -30,7 +30,6 @@ extern int Dvar_GetInt(const char *dvarName);
 extern Bool Dvar_GetBool(const char *dvarName);
 extern const char *Dvar_GetString(const char *dvarName);
 extern void Cbuf_AddText(const char *text);
-extern int Sys_Milliseconds(void);
 extern int I_stricmp(const char *s1, const char *s2);
 extern int I_strnicmp(const char *s1, const char *s2, size_t count);
 extern const dvar_t *com_dedicated;
@@ -40,8 +39,7 @@ extern serverStatic_t svs;
 
 #define ZPAM_STATE_FILE "zpam.json"
 #define ZPAM_IDLE_MSEC 60000
-#define ZPAM_NAME_SIZE 256
-#define ZPAM_MAX_BLOCKED COD2X_ZPAM_MAX_BLOCKED
+#define ZPAM_NAME_SIZE 1024
 /* Old versions stay this long for other servers sharing the folder. */
 #define ZPAM_CLEANUP_SECONDS (7 * 24 * 60 * 60)
 #ifdef _WIN32
@@ -56,7 +54,7 @@ static const char zpamMapsPrefix[] = "zpam_maps_v";
 typedef struct {
     char zpam[ZPAM_NAME_SIZE];
     char maps[ZPAM_NAME_SIZE];
-    char blocked[ZPAM_MAX_BLOCKED][ZPAM_NAME_SIZE];
+    Cod2xZpamName *blocked;
     int blockedCount;
     long long updated;
 } ZpamState;
@@ -72,7 +70,7 @@ static char zpamLoaded[ZPAM_NAME_SIZE];
 static char zpamLoadedMaps[ZPAM_NAME_SIZE];
 /* A newer version is waiting for the next map load. */
 static int zpamSwitchPending;
-static unsigned int zpamIdleSince;
+static uint64_t zpamIdleSince;
 
 void SV_Cod2xZpamInit(void)
 {
@@ -164,13 +162,23 @@ static int ZPAM_ReadState(const char *folder, ZpamState *state)
     Cod2x_JsonString(text, "$.maps", state->maps, sizeof(state->maps));
     if (Cod2x_JsonNumber(text, "$.updated", &updated))
         state->updated = (long long)updated;
-    while (state->blockedCount < ZPAM_MAX_BLOCKED) {
+    if (!state->zpam[0])
+        return 0;
+    for (;;) {
+        Cod2xZpamName name, *grown;
         snprintf(key, sizeof(key), "$.block[%d]", state->blockedCount);
-        if (!Cod2x_JsonString(text, key, state->blocked[state->blockedCount], ZPAM_NAME_SIZE))
+        if (!Cod2x_JsonString(text, key, name, sizeof(name)))
             break;
-        ++state->blockedCount;
+        grown = realloc(state->blocked, ((size_t)state->blockedCount + 1) * sizeof(*grown));
+        if (!grown) {
+            free(state->blocked);
+            memset(state, 0, sizeof(*state));
+            return 0;
+        }
+        state->blocked = grown;
+        memcpy(state->blocked[state->blockedCount++], name, sizeof(name));
     }
-    return state->zpam[0] != '\0';
+    return 1;
 }
 
 /* Written beside and moved over the old one, so other servers read either. */
@@ -343,8 +351,10 @@ int SV_Cod2xZpamFilterIwds(const char *folder, char **files, int count)
         /* The home main/ of a server whose base main/ holds the file must not
            change the choice. */
         ZPAM_MainFolder(mainFolder, sizeof(mainFolder));
-        if (mainFolder[0] && ZPAM_ReadState(mainFolder, &state))
+        if (mainFolder[0] && ZPAM_ReadState(mainFolder, &state)) {
+            free(state.blocked);
             return count;
+        }
         /* Everything loads; the newest is what runs, so a first install of the
            file later does not look like a switch. */
         ZPAM_Remember(zpamPrefix, zpamLoaded, files, count);
@@ -353,8 +363,10 @@ int SV_Cod2xZpamFilterIwds(const char *folder, char **files, int count)
     }
 
     hidden = calloc((size_t)count, 1);
-    if (!hidden)
+    if (!hidden) {
+        free(state.blocked);
         return count;
+    }
     zpamSwitchPending = 0;
     {
         int canSwitch = ZPAM_CanSwitch();
@@ -375,6 +387,7 @@ int SV_Cod2xZpamFilterIwds(const char *folder, char **files, int count)
         ++kept;
     }
     free(hidden);
+    free(state.blocked);
     return kept;
 }
 
@@ -431,6 +444,7 @@ static void ZPAM_UpdateSwitchPending(const char *folder)
     /* With every version blocked nothing is hidden and there is nothing to switch to. */
     zpamSwitchPending = (newest && I_stricmp(newest, zpamLoaded)) || (newestMaps && I_stricmp(newestMaps, zpamLoadedMaps));
     ZPAM_FreeList(names, count);
+    free(state.blocked);
 }
 
 static int ZPAM_CompareNames(const void *a, const void *b)
@@ -442,29 +456,42 @@ static int ZPAM_CompareNames(const void *a, const void *b)
    same answer could matter. Returns 0 when it could not be written. */
 static int ZPAM_SaveBlock(const char *folder, const Cod2xZpamManifest *manifest, int *changed)
 {
-    char sorted[COD2X_ZPAM_MAX_BLOCKED][ZPAM_NAME_SIZE], current[COD2X_ZPAM_MAX_BLOCKED][ZPAM_NAME_SIZE];
+    Cod2xZpamName *sorted = NULL;
     ZpamState state;
     intptr_t lock;
     int same;
 
     *changed = 0;
     if (!ZPAM_ReadState(folder, &state))
-        return 1; /* not managed yet: the first install writes the list */
-    memcpy(sorted, manifest->blocked, sizeof(sorted[0]) * (size_t)manifest->blockedCount);
-    qsort(sorted, (size_t)manifest->blockedCount, sizeof(sorted[0]), ZPAM_CompareNames);
-    memcpy(current, state.blocked, sizeof(current[0]) * (size_t)state.blockedCount);
-    qsort(current, (size_t)state.blockedCount, sizeof(current[0]), ZPAM_CompareNames);
+        return 1;
+    if (manifest->blockedCount) {
+        sorted = malloc(sizeof(*sorted) * (size_t)manifest->blockedCount);
+        if (!sorted) {
+            free(state.blocked);
+            return 0;
+        }
+        memcpy(sorted, manifest->blocked, sizeof(*sorted) * (size_t)manifest->blockedCount);
+        qsort(sorted, (size_t)manifest->blockedCount, sizeof(*sorted), ZPAM_CompareNames);
+    }
+    if (state.blockedCount)
+        qsort(state.blocked, (size_t)state.blockedCount, sizeof(*state.blocked), ZPAM_CompareNames);
     same = manifest->blockedCount == state.blockedCount;
     for (int i = 0; same && i < state.blockedCount; ++i)
-        same = !strcmp(sorted[i], current[i]);
-    if (same)
+        same = !strcmp(sorted[i], state.blocked[i]);
+    free(state.blocked);
+    if (same) {
+        free(sorted);
         return 1;
+    }
 
     lock = Cod2x_LockFolder(folder, "zpam");
-    if (lock == -1)
-        return 0; /* an install holds it; tried again with the next check */
+    if (lock == -1) {
+        free(sorted);
+        return 0;
+    }
     ZPAM_ReadState(folder, &state);
-    memcpy(state.blocked, sorted, sizeof(sorted[0]) * (size_t)manifest->blockedCount);
+    free(state.blocked);
+    state.blocked = sorted;
     state.blockedCount = manifest->blockedCount;
     state.updated = (long long)time(NULL);
     *changed = ZPAM_WriteState(folder, &state);
@@ -480,6 +507,7 @@ static int ZPAM_SaveBlock(const char *folder, const Cod2xZpamManifest *manifest,
         Com_Printf("zPAM: Blocked versions: %s\n", list.length ? list.data : "none");
         Cod2x_TextFree(&list);
     }
+    free(sorted);
     return *changed;
 }
 
@@ -558,11 +586,18 @@ static int ZPAM_SaveState(const ZpamJob *job, ZpamState *state, char *error, siz
     }
     hasCurrent = ZPAM_ReadState(job->folder, &current);
     if (hasCurrent) {
-        memcpy(state->blocked, current.blocked, sizeof(current.blocked));
+        state->blocked = current.blocked;
         state->blockedCount = current.blockedCount;
     } else {
-        memcpy(state->blocked, job->manifest.blocked, sizeof(state->blocked));
         state->blockedCount = job->manifest.blockedCount;
+        if (state->blockedCount) {
+            state->blocked = malloc((size_t)state->blockedCount * sizeof(*state->blocked));
+            if (!state->blocked) {
+                snprintf(error, size, "Out of memory");
+                return 0;
+            }
+            memcpy(state->blocked, job->manifest.blocked, (size_t)state->blockedCount * sizeof(*state->blocked));
+        }
     }
     if (hasCurrent && !strcmp(current.zpam, state->zpam) && !strcmp(current.maps, state->maps)) {
         state->updated = current.updated;
@@ -616,11 +651,11 @@ static void ZPAM_Cleanup(const ZpamJob *job, const ZpamState *state)
 static void ZPAM_Install(void *argument)
 {
     ZpamJob *job = argument;
-    char fetched[COD2X_ZPAM_MAX_FILES] = {0};
+    char *fetched = calloc((size_t)job->manifest.fileCount, 1);
     char error[512] = "", installed[512] = "";
     intptr_t lock = Cod2x_LockFolder(job->folder, "zpam");
-    if (lock != -1) {
-        ZpamState state;
+    if (lock != -1 && fetched) {
+        ZpamState state = {0};
         int ok = ZPAM_DownloadMissing(job, fetched, error, sizeof(error)) &&
                  ZPAM_MoveDownloaded(job, fetched, installed, sizeof(installed), error, sizeof(error));
         for (int i = 0; i < job->manifest.fileCount; ++i) {
@@ -633,8 +668,15 @@ static void ZPAM_Install(void *argument)
         }
         if (ok && ZPAM_SaveState(job, &state, error, sizeof(error)))
             ZPAM_Cleanup(job, &state);
-        Cod2x_UnlockFolder(lock);
+        free(state.blocked);
     }
+    if (lock != -1)
+        Cod2x_UnlockFolder(lock);
+    if (!fetched)
+        snprintf(error, sizeof(error), "Out of memory");
+    free(fetched);
+    free(job->manifest.files);
+    free(job->manifest.blocked);
     /* Another server is installing; the next check picks up its result. */
     Cod2x_Lock();
     snprintf(zpamWorkerError, sizeof(zpamWorkerError), "%s", error);
@@ -691,9 +733,23 @@ int SV_Cod2xZpamApplyManifest(const Cod2xZpamManifest *manifest)
         snprintf(job->folder, sizeof(job->folder), "%s", folder);
         snprintf(job->loaded, sizeof(job->loaded), "%s", zpamLoaded);
         snprintf(job->loadedMaps, sizeof(job->loadedMaps), "%s", zpamLoadedMaps);
-        job->manifest = *manifest;
+        job->manifest.fileCount = manifest->fileCount;
+        job->manifest.blockedCount = manifest->blockedCount;
+        job->manifest.files = malloc((size_t)manifest->fileCount * sizeof(*manifest->files));
+        if (job->manifest.files)
+            memcpy(job->manifest.files, manifest->files, (size_t)manifest->fileCount * sizeof(*manifest->files));
+        if (manifest->blockedCount) {
+            job->manifest.blocked = malloc((size_t)manifest->blockedCount * sizeof(*manifest->blocked));
+            if (job->manifest.blocked)
+                memcpy(job->manifest.blocked, manifest->blocked, (size_t)manifest->blockedCount * sizeof(*manifest->blocked));
+        }
     }
-    if (!job || !Cod2x_ThreadStart(ZPAM_Install, job)) {
+    if (!job || !job->manifest.files || (manifest->blockedCount && !job->manifest.blocked) ||
+        !Cod2x_ThreadStart(ZPAM_Install, job)) {
+        if (job) {
+            free(job->manifest.files);
+            free(job->manifest.blocked);
+        }
         free(job);
         Cod2x_Lock();
         zpamWorker = 0;
@@ -704,7 +760,7 @@ int SV_Cod2xZpamApplyManifest(const Cod2xZpamManifest *manifest)
 
 void SV_Cod2xZpamFrame(void)
 {
-    unsigned int now;
+    uint64_t now;
     char error[512], installed[512];
     int finished;
     if (!com_dedicated || !com_dedicated->current.integer)
@@ -740,7 +796,7 @@ void SV_Cod2xZpamFrame(void)
         return;
     }
     /* Nothing changes the map of an empty server, so it restarts its own. */
-    now = (unsigned int)Sys_Milliseconds();
+    now = Cod2x_Milliseconds64();
     if (!zpamIdleSince) {
         zpamIdleSince = now;
     } else if (now - zpamIdleSince >= ZPAM_IDLE_MSEC) {

@@ -738,7 +738,11 @@ void SV_UserinfoChanged(client_t *cl)
 #if COD2_IS_PATCH_13
 
     value = Info_ValueForKey(cl->userinfo, "cl_wwwDownload");
+#if defined(COD2_CODX) && COD2_CODX
+    cl->wwwOk = atoi(value) > 0;
+#else
     cl->wwwOk = (*value && atoi(value) != 0);
+#endif
 #endif
 }
 

@@ -14,7 +14,7 @@ extern const dvar_t *sv_rateLimiterRequestCount;
 extern const dvar_t *sv_rateLimiterUniqueIPCount;
 
 void SV_Cod2xUdpInit(void);
-int SV_Cod2xUdpAllow(netadr_t from, cod2xUdpOperation_t operation);
+int SV_Cod2xUdpAllow(netadr_t from, cod2xUdpOperation_t operation, const char *action);
 void SV_Cod2xUdpStats(void);
 
 #endif

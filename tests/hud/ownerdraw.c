@@ -31,6 +31,15 @@ static int catchers, allow_ui_hud, compass_enabled, failures;
 static int register_calls, config_calls, last_config, localization_calls, warning_calls;
 static const char *material_name, *location_name, *localized_location;
 static float offset_x, offset_y;
+static int radar_calls, compass_calls, sequence, radar_sequence, compass_sequence;
+static float compass_x, compass_y;
+
+static void Fixture_CompassFace(const rectDef_t *rect)
+{
+    ++compass_calls;
+    compass_sequence=++sequence;
+    compass_x=rect->x; compass_y=rect->y;
+}
 
 typedef struct {
     float x, y, w, h, color[4];
@@ -96,6 +105,7 @@ void Com_Printf(const char *format, ...) { (void)format; ++warning_calls; }
 void Com_Error(errorParm_t error, const char *format, ...) { (void)error; (void)format; abort(); }
 const char *va(const char *format, ...) { (void)format; abort(); }
 #if defined(COD2_CODX) && COD2_CODX
+void CG_Cod2xRadarDraw(void) { ++radar_calls; radar_sequence=++sequence; }
 int Cod2x_DrawCompass(void) { return compass_enabled; }
 void Cod2x_CompassOffset(float *x, float *y) { *x += offset_x; *y += offset_y; }
 #endif
@@ -116,6 +126,7 @@ static void reset(void)
     picture_count = text_count = register_calls = config_calls = localization_calls = warning_calls = 0;
     catchers = allow_ui_hud = 0;
     compass_enabled = 1;
+    radar_calls=compass_calls=sequence=radar_sequence=compass_sequence=0;
     offset_x = offset_y = 0;
     compass_size.current.value = 1.0f;
     min_range.current.value = 100.0f;
@@ -327,6 +338,29 @@ static void codx_policy(void)
 #endif
 }
 
+static void radar_order(void)
+{
+    offset_x=12.0f; offset_y=-4.0f;
+    draw(CG_PLAYER_COMPASS);
+    CHECK(compass_calls==1);
+#if defined(COD2_CODX) && COD2_CODX
+    CHECK(radar_calls==1 && radar_sequence<compass_sequence);
+    CHECK(near(compass_x,32.0f) && near(compass_y,36.0f));
+#else
+    CHECK(radar_calls==0);
+    CHECK(near(compass_x,20.0f) && near(compass_y,40.0f));
+#endif
+    reset();
+    compass_enabled=0;
+    draw(CG_PLAYER_COMPASS);
+#if defined(COD2_CODX) && COD2_CODX
+    CHECK(radar_calls==1 && compass_calls==0);
+#else
+    CHECK(radar_calls==0 && compass_calls==1);
+#endif
+    printf("compass disabled: radar=%d compass=%d\n",radar_calls,compass_calls);
+}
+
 static void location(void)
 {
     cg->bgs.clientinfo[1].infoValid = cg->bgs.clientinfo[2].infoValid = 1;
@@ -371,6 +405,7 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[1], "client-gates")) client_gates();
     else if (!strcmp(argv[1], "placement")) placement();
     else if (!strcmp(argv[1], "codx-policy")) codx_policy();
+    else if (!strcmp(argv[1], "radar-order")) radar_order();
     else if (!strcmp(argv[1], "location")) location();
     else if (!strcmp(argv[1], "location-fallback")) location_fallback();
     else abort();

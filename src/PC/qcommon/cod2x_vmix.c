@@ -13,11 +13,14 @@
 #include "cod2x.h"
 #include "cod2x_features.h"
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #if defined(_WIN32)
 extern void __stdcall Sleep(unsigned long milliseconds);
+extern unsigned long long __stdcall GetTickCount64(void);
 #else
 #include <unistd.h>
 #endif
@@ -35,7 +38,7 @@ static dvar_t *vmixEnabled, *vmixDebug, *vmixURL, *vmixBrowserPrefix, *vmixBrows
 static dvar_t *vmixSpectatedId, *vmixSpectatedName, *vmixSpectatedTeam, *vmixSpectatedHwid, *vmixData;
 static dvar_t *vmixOverlay, *vmixCameraMode, *vmixPlayerIds;
 static dvar_t *vmixPlayerId[VMIX_PLAYERS], *vmixPlayerSource[VMIX_PLAYERS];
-static char vmixLastCamera[256];
+static char *vmixLastCamera;
 static int vmixRunning;
 
 typedef struct VmixRequest {
@@ -46,7 +49,18 @@ typedef struct VmixRequest {
 
 static VmixRequest *vmixRequests;
 
-/* CoD2x's HttpClient::is_valid_url: a scheme, "://", and something after it. */
+static uint64_t Cod2x_VmixMilliseconds(void)
+{
+#if defined(_WIN32)
+    return GetTickCount64();
+#else
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (uint64_t)now.tv_sec * 1000 + (uint64_t)now.tv_nsec / 1000000;
+#endif
+}
+
+/* CoD2x's URL grammar is shared by the request and demo upload clients. */
 static int Cod2x_VmixValidURL(const char *url)
 {
     const char *p = url;
@@ -54,7 +68,12 @@ static int Cod2x_VmixValidURL(const char *url)
         return 0;
     for (++p; isalnum((unsigned char)*p) || *p == '+' || *p == '-' || *p == '.'; ++p)
         ;
-    return !strncmp(p, "://", 3) && p[3];
+    if (strncmp(p, "://", 3) || !p[3])
+        return 0;
+    for (p += 3; *p; ++p)
+        if ((unsigned char)*p <= 32 || (unsigned char)*p > 126 || strchr("\"`<>\\", *p))
+            return 0;
+    return 1;
 }
 
 static void Cod2x_VmixSend(const char *url)
@@ -89,11 +108,10 @@ static void Cod2x_VmixPoll(void)
     while (*link) {
         VmixRequest *request = *link;
         Cod2xGet *get = &request->get;
-        if (!get->done) {
+        if (!__atomic_load_n(&get->done, __ATOMIC_ACQUIRE)) {
             link = &request->next;
             continue;
         }
-        __sync_synchronize();
         if (!request->dropped) {
             if (get->failed) {
                 Com_Printf("^1VMix %s error: %s\n", get->url ? get->url : "", get->error);
@@ -111,20 +129,35 @@ static void Cod2x_VmixPoll(void)
     }
 }
 
+static void Cod2x_VmixSendFormat(const char *format, ...)
+{
+    va_list args, measure;
+    int length;
+    char *url;
+    va_start(args, format);
+    va_copy(measure, args);
+    length = vsnprintf(NULL, 0, format, measure);
+    va_end(measure);
+    url = length >= 0 ? malloc((size_t)length + 1) : NULL;
+    if (url)
+        vsnprintf(url, (size_t)length + 1, format, args);
+    va_end(args);
+    if (!url)
+        return;
+    Cod2x_VmixSend(url);
+    free(url);
+}
+
 static void Cod2x_VmixOverlay(const char *input, int overlay, const char *state)
 {
-    char url[2048];
-    snprintf(url, sizeof(url), "%s/api/?Function=OverlayInput%d%s&Input=%s", vmixURL->current.string, overlay, state,
-             input);
-    Cod2x_VmixSend(url);
+    Cod2x_VmixSendFormat("%s/api/?Function=OverlayInput%d%s&Input=%s", vmixURL->current.string, overlay, state,
+                         input);
 }
 
 static void Cod2x_VmixBrowser(const char *input, const char *address)
 {
-    char url[2048];
-    snprintf(url, sizeof(url), "%s/api/?Function=BrowserNavigate&Input=%s&Value=%s", vmixURL->current.string, input,
-             address);
-    Cod2x_VmixSend(url);
+    Cod2x_VmixSendFormat("%s/api/?Function=BrowserNavigate&Input=%s&Value=%s", vmixURL->current.string, input,
+                         address);
 }
 
 /* mongoose's mg_url_encode: letters, digits and ".-_~" stay; nothing when it
@@ -155,7 +188,8 @@ void Cod2x_VmixFrame(int clientState)
 {
     if (vmixEnabled && vmixEnabled->current.enabled && clientState == CA_ACTIVE) {
         const char *spectatedHwid, *found = NULL;
-        char page[4096], name[256], encoded[1024], *p;
+        /* The name must fit whenever the complete encoded page fits. */
+        char page[4096], name[sizeof(page)], encoded[1024], *p;
         int activated = 0, i;
         vmixRunning = 1;
         Cod2x_VmixPoll();
@@ -174,16 +208,18 @@ void Cod2x_VmixFrame(int clientState)
                     Com_Printf("  Matched\n");
                 if (vmixCameraMode->current.integer == 1) {
                     Cod2x_VmixOverlay(vmixPlayerSource[i]->current.string, vmixOverlay->current.integer, "In");
-                    snprintf(vmixLastCamera, sizeof(vmixLastCamera), "%s", vmixPlayerSource[i]->current.string);
+                    free(vmixLastCamera);
+                    vmixLastCamera = strdup(vmixPlayerSource[i]->current.string);
                     activated = 1;
                 }
                 found = vmixPlayerSource[i]->current.string;
                 break;
             }
         }
-        if (!activated && vmixLastCamera[0]) {
+        if (!activated && vmixLastCamera) {
             Cod2x_VmixOverlay(vmixLastCamera, vmixOverlay->current.integer, "Off");
-            vmixLastCamera[0] = '\0';
+            free(vmixLastCamera);
+            vmixLastCamera = NULL;
         }
         /* "<prefix><id>|<hwid>|<camera>|<team>|<name>|<data>", the whole of it URL-encoded. */
         snprintf(name, sizeof(name), "%s", vmixSpectatedName->current.string);
@@ -200,7 +236,8 @@ void Cod2x_VmixFrame(int clientState)
     }
     if (vmixRunning) {
         VmixRequest *request;
-        int waited, i;
+        int i;
+        uint64_t deadline;
         for (i = 0; i < VMIX_PLAYERS; ++i) {
             if (vmixPlayerSource[i]->current.string[0])
                 Cod2x_VmixOverlay(vmixPlayerSource[i]->current.string, vmixOverlay->current.integer, "Off");
@@ -208,11 +245,12 @@ void Cod2x_VmixFrame(int clientState)
         if (vmixBrowserSource->current.string[0])
             Cod2x_VmixBrowser(vmixBrowserSource->current.string, vmixBrowserPrefix->current.string);
         /* Up to 200 ms for what is still under way, then the rest is dropped. */
-        for (waited = 0; waited < 200; waited += 10) {
+        deadline = Cod2x_VmixMilliseconds() + 200;
+        while (Cod2x_VmixMilliseconds() < deadline) {
             int pending = 0;
             Cod2x_VmixPoll();
             for (request = vmixRequests; request; request = request->next)
-                pending |= !request->get.done;
+                pending |= !__atomic_load_n(&request->get.done, __ATOMIC_ACQUIRE);
             if (!pending)
                 break;
 #if defined(_WIN32)
@@ -221,8 +259,10 @@ void Cod2x_VmixFrame(int clientState)
             usleep(10000);
 #endif
         }
-        for (request = vmixRequests; request; request = request->next)
+        for (request = vmixRequests; request; request = request->next) {
             request->dropped = 1;
+            __atomic_store_n(&request->get.cancel, 1, __ATOMIC_RELEASE);
+        }
         vmixRunning = 0;
     }
     /* Dropped requests are freed once their threads finish. */

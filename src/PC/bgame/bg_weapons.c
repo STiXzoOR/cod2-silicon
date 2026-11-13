@@ -1975,10 +1975,9 @@ static qboolean PM_TryStartOffhand(pmove_t *pm)
         return 0;
     offhandIndex = BG_GetFirstAvailableOffhand(ps, offhandClass);
     if (!offhandIndex) {
-#if defined(COD2_CODX) && COD2_CODX
-        if (!Cod2x_GameVersion())
-#endif
+#if !(defined(COD2_CODX) && COD2_CODX)
         PM_AddEvent(ps, 0x94);
+#endif
         return 0;
     }
     BG_AddPredictableEventToPlayerstate(0xa7, offhandIndex, ps);
@@ -2016,11 +2015,9 @@ static qboolean PM_TryStartOffhand(pmove_t *pm)
 
     offhandIndex = BG_GetFirstAvailableOffhand(ps, offhandClass);
     if (!offhandIndex) {
-#if defined(COD2_CODX) && COD2_CODX
-        /* CoD2x src/shared/server.cpp:1393: don't flood the four-event ring. */
-        if (!Cod2x_GameVersion())
-#endif
+#if !(defined(COD2_CODX) && COD2_CODX)
         PM_AddEvent(ps, 0x94);
+#endif
         return 0;
     }
 

@@ -15,6 +15,8 @@ int main(void)
     assert(Cod2x_ParseURL("cod2x://%2Bconnect+88.198.58.188:27397/", &parsed));
     assert(!strcmp(parsed.address, "88.198.58.188:27397"));
     assert(!parsed.hasPassword);
+    assert(Cod2x_URLCommands(&parsed, command, sizeof(command)));
+    assert(!strcmp(command, "connect 88.198.58.188:27397\n"));
     assert(Cod2x_ParseURL("cod2x://%20%2Bconnect%20game.example:28960%20%2Bpassword%20%22two%20words%22/", &parsed));
     assert(!strcmp(parsed.password, "two words"));
     assert(Cod2x_URLCommands(&parsed, command, sizeof(command)));

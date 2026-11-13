@@ -9,6 +9,18 @@ GfxCmdArray *s_cmdList;
 static dvar_t specularScale;
 const dvar_t *r_specularColorScale = &specularScale;
 
+#if COD2X_FILM
+static vidConfig_t filmVideo;
+void *imp_vidConfig = &filmVideo;
+static Cod2xFilmSettings filmSettings;
+static int filmEnabled;
+int R_Cod2xFilm_Settings(Cod2xFilmSettings *out)
+{
+    *out = filmSettings;
+    return filmEnabled;
+}
+#endif
+
 void R_ConvertColorToBytes(const vec_t *color, byte *bytes)
 {
     int i;
@@ -51,6 +63,38 @@ int main(void)
     assert(list.cmds[0] == 0x19 && ((GfxCmdHeader *)list.cmds)->byteCount == 8);
     assert(list.usedTotal == 8 + sizeof(*lightCmd) + sizeof(*viewCmd) + sizeof(*call));
     assert(!R_AllocCmd(65529, 0, 3));
+#if COD2X_FILM
+    {
+        refdef_t refdef = {0};
+        int used = list.usedTotal;
+        refdef.x = 10;
+        refdef.y = 20;
+        refdef.width = 640;
+        refdef.height = 360;
+        filmVideo.width = 1280;
+        filmVideo.height = 720;
+        R_AddCmdCod2xFilm(&refdef);
+        assert(list.usedTotal == used); /* Neutral or disabled: no command. */
+        filmEnabled = 1;
+        filmSettings.saturation = .25f;
+        filmSettings.skySaturation = 1.5f;
+        filmSettings.color[2] = .75f;
+        R_AddCmdCod2xFilm(&refdef);
+        GfxCmdCod2xFilm *film = (void *)(list.cmds + used);
+        assert(film->header.id == GFX_CMD_COD2X_FILM);
+        assert(film->header.byteCount == ((sizeof(*film) + 7) & ~7));
+        assert(list.usedTotal == used + film->header.byteCount);
+        assert(film->pass.x == 10 && film->pass.y == 20);
+        assert(film->pass.width == 640 && film->pass.height == 360);
+        assert(film->pass.targetWidth == 1280 && film->pass.targetHeight == 720);
+        filmSettings.saturation = 1;
+        filmSettings.color[2] = 1;
+        assert(film->pass.settings.saturation == .25f);
+        assert(film->pass.settings.skySaturation == 1.5f);
+        assert(film->pass.settings.color[2] == .75f);
+        puts("CoD2x film command: neutral skip, captured settings and viewport, native alignment passed");
+    }
+#endif
     puts("renderer mixed command sizes, traversal and pointer alignment: passed");
     return 0;
 }

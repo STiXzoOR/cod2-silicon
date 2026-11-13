@@ -603,9 +603,6 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
     weapInfo = &cg_weaponsArray[ent->weapon];
     BG_GetWeaponDef(ent->weapon);
     cent->bMuzzleFlash = 1;
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    CG_Cod2xRadarFire(ent->number);
-#endif
 
     if (CG_IsLocalClientEntity_inl(cg, ent))
         BG_WeaponFireRecoil(&cg->predictedPlayerState, cg->vGunSpeed, cg->kickAVel);

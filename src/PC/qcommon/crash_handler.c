@@ -1382,6 +1382,14 @@ static void cr_cod2x_sections(int fd, const char *path, void *ucontext, const ch
     }
 #        endif
     cr_emit(fd, "(written to %s only)\n", path);
+#        if defined(__APPLE__) && !defined(DEDICATED)
+    {
+        static char console[65536];
+        size_t length = Cod2x_ConsoleLogs(console, sizeof(console));
+        cr_emit(fd, "\n=== CONSOLE LOGS ===\n");
+        if (fd >= 0 && length && write(fd, console, length) < 0) {}
+    }
+#        endif
     cr_emit(fd, "\n%s report saved to %s\n", what, path);
 }
 
@@ -1829,7 +1837,15 @@ static void cr_cod2x_json(const char *kind, int sig, siginfo_t *info, void *ucon
     Cod2x_LoggerRecent(logger, sizeof(logger));
     cr_jlines("loggerLines", logger);
     cr_jraw(",");
+#        if defined(__APPLE__) && !defined(DEDICATED)
+    {
+        static char console[65536];
+        Cod2x_ConsoleLogs(console, sizeof(console));
+        cr_jlines("logLines", console);
+    }
+#        else
     cr_jlines("logLines", "");
+#        endif
     cr_jraw("}");
 }
 
@@ -1888,6 +1904,15 @@ static void cr_cod2x_crash(int sig, siginfo_t *info, void *ucontext, const char 
 void Sys_CrashFreezeReport(void *context)
 {
     static const char reason[] = "main thread heartbeat stopped for more than 12 seconds (process still running)";
+    static volatile int reporting;
+    static unsigned reports;
+    if (cr_inHandler || __sync_lock_test_and_set(&reporting, 1))
+        return;
+    if (reports >= 3) {
+        __sync_lock_release(&reporting);
+        return;
+    }
+    ++reports;
     char path[1200];
     int fd;
     cr_cod2x_path(path, sizeof(path), "freeze");
@@ -1899,6 +1924,7 @@ void Sys_CrashFreezeReport(void *context)
     if (fd >= 0)
         close(fd);
     cr_cod2x_route("freeze", 0, NULL, context, path, reason);
+    __sync_lock_release(&reporting);
 }
 #            endif
 
@@ -1962,9 +1988,13 @@ size_t Sys_Cod2xIdentity(char *out, size_t size)
 
 size_t Sys_Cod2xLogLines(char *out, size_t size)
 {
+#        if defined(__APPLE__) && !defined(DEDICATED)
+    return Cod2x_ConsoleLogs(out, size);
+#        else
     if (size)
         out[0] = '\0';
     return 0;
+#        endif
 }
 #    endif
 

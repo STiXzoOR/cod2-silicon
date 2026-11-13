@@ -37,18 +37,17 @@ void SV_Cod2xZpamInit(void);
 int SV_Cod2xZpamFilterIwds(const char *folder, char **files, int count);
 void SV_Cod2xZpamFrame(void);
 /* CoD2x's zPAM manifest from the update check. */
-#define COD2X_ZPAM_MAX_FILES 16
-#define COD2X_ZPAM_MAX_BLOCKED 64
+typedef char Cod2xZpamName[1024];
 typedef struct {
-    char name[256];
+    char name[1024];
     char url[1024];
-    char sha256[72];
+    char sha256[1024];
     size_t size;
 } Cod2xZpamFile;
 typedef struct {
-    Cod2xZpamFile files[COD2X_ZPAM_MAX_FILES];
+    Cod2xZpamFile *files;
     int fileCount;
-    char blocked[COD2X_ZPAM_MAX_BLOCKED][256];
+    Cod2xZpamName *blocked;
     int blockedCount;
 } Cod2xZpamManifest;
 /* The zPAM this server runs ("zpam409.iwd"), empty when it runs none. */

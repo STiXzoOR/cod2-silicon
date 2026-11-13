@@ -19,6 +19,7 @@ typedef struct {
     int timeoutMs;               /* the whole request; 0 waits for ever */
     int connectTimeoutMs;        /* until connected; 0 waits for ever */
     size_t maxBody;              /* longer responses fail with "Response too large"; 0 = any */
+    size_t maxReceive;           /* bounded CoD2x parser: headers + wire body; 0 uses curl HTTP */
 } Cod2xHttpRequest;
 
 typedef struct {
@@ -57,8 +58,14 @@ int Cod2x_HttpStart(const Cod2xHttpRequest *request, Cod2xHttpDone done, void *c
 void Cod2x_HttpFrame(void);
 /* The same for the requests started with done only (e.g. while shutting down). */
 void Cod2x_HttpFrameFor(Cod2xHttpDone done);
+/* Main thread: cancels pending transports owned by done. Workers stop at their
+   next poll; completions still arrive through Frame/FrameFor. This does not
+   wait for OS resolver cleanup. Other services' requests are unaffected. */
+void Cod2x_HttpCancelFor(Cod2xHttpDone done);
 /* Waits msec milliseconds. */
 void Cod2x_Sleep(int msec);
+/* Monotonic milliseconds for service deadlines; independent of engine tick wrap. */
+uint64_t Cod2x_Milliseconds64(void);
 /* Milliseconds since 1970 (UTC), and one as "2026-11-10T19:08:23.512Z". */
 long long Cod2x_UtcMsec(void);
 void Cod2x_Iso8601(long long msec, char *out, size_t size);

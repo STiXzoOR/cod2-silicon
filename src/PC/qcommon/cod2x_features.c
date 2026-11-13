@@ -48,7 +48,7 @@ extern char *Info_ValueForKey(const char *, const char *);
 static const dvar_t *thirdPersonMode, *debugBullets;
 static const dvar_t *drawSpectatedName, *drawCompass, *compassOffsetX, *compassOffsetY;
 /* The CoD2x release whose client behaviour this implements. */
-#define COD2X_APP_VERSION "1.4.6.8"
+#define COD2X_APP_VERSION COD2X_RELEASE
 
 static const dvar_t *hideServerIp, *messageOffsetX, *messageOffsetY, *messageScale;
 static int ipHidden;
@@ -195,34 +195,15 @@ void Cod2x_IwdLogRotate(void)
 void Cod2x_IwdLogDirectory(const char *directory, const char *basepath, const char *game, int version,
                            const char *names)
 {
-    const char *p = names ? names : "";
-    char path[1024];
-    int count = 0;
+    char path[1024], tokens[8192], *required[512];
+    int count = Cod2x_Tokenize(names ? names : "", 0, required, tokens, sizeof(tokens));
     Cod2x_IwdLog("Processing directory ^9%s^7\n", Cod2x_IwdLogPath(directory, path, sizeof(path)));
     Cod2x_IwdLog("  fs_basepath:        ^9%s^7\n", basepath && *basepath ? basepath : "(empty)");
     Cod2x_IwdLog("  fs_game:            ^9%s^7\n", game && *game ? game : "(empty)");
     Cod2x_IwdLog("  CoD2x version:      ^9%d^7\n", version);
-    /* Every name the server requires, quoted: these are what the files are matched against. */
-    for (;;) {
-        while (*p && isspace((unsigned char)*p))
-            ++p;
-        if (!*p)
-            break;
-        ++count;
-        while (*p && !isspace((unsigned char)*p))
-            ++p;
-    }
     Cod2x_IwdLog("  Required by server: ^9%d file(s)^7\n", count);
-    for (p = names ? names : ""; *p;) {
-        const char *start;
-        while (*p && isspace((unsigned char)*p))
-            ++p;
-        start = p;
-        while (*p && !isspace((unsigned char)*p))
-            ++p;
-        if (p > start)
-            Cod2x_IwdLog("    ^9\"%.*s\"^7\n", (int)(p - start), start);
-    }
+    for (int i = 0; i < count; ++i)
+        Cod2x_IwdLog("    ^9\"%s\"^7\n", required[i]);
 }
 
 void Cod2x_IwdLogFile(const char *directory, const char *file, int reason)
@@ -254,6 +235,11 @@ static void Cod2x_ProcessedList_f(void)
 
 void Cod2x_FeaturesInit(void)
 {
+#ifndef DEDICATED
+    extern void CG_Cod2xSpectatorInit(void);
+    CG_Cod2xSpectatorInit();
+#endif
+    CG_Cod2xRadarInit();
     Cod2x_PoseInit();
     Cod2x_VmixInit();
     /* CoD2x cgame.cpp:65 and drawing.cpp:270-279 describe these controls. */
@@ -287,18 +273,43 @@ void Cod2x_FeaturesFrame(int active, int demo)
 {
     (void)active;
     playingDemo = demo;
+#ifndef DEDICATED
+    if (!active) {
+        extern void CG_Cod2xSpectatorReset(void);
+        CG_Cod2xSpectatorReset();
+    }
+#endif
 }
 
 static void Cod2x_UpdateFrame(int state);
 
+/* The IWD phase follows zPAM and precedes radar, demo and vMix each frame. */
+void Cod2x_IwdFrame(int state)
+{
+    static int previous = -1;
+    if (state != previous && state == CA_DISCONNECTED) {
+        const dvar_t *gametype = Dvar_FindVar("ui_joinGametype");
+        if (gametype && gametype->current.integer != 0)
+            Dvar_SetInt(gametype, 0);
+    }
+    previous = state;
+}
+
 void Cod2x_FeaturesClientState(int state)
 {
-    Cod2x_VmixFrame(state);
     /* CoD2x reports the server's revision whenever g_cod2x changes, and again
        when a 1.3 server's map becomes active. */
     dvar_t *game = (dvar_t *)Dvar_FindVar("g_cod2x");
     int changed = state != lastClientState, previous = lastClientState;
-    Cod2x_UpdateFrame(state);
+    if (changed) {
+        static const char *names[] = { "DISCONNECTED", "CINEMATIC", "AUTHORIZING", "CONNECTING",
+                                     "CHALLENGING", "CONNECTED", "LOADING", "PRIMED", "ACTIVE" };
+        const char *before = (unsigned)previous < 9 ? names[previous] : "UNKNOWN";
+        const char *after = (unsigned)state < 9 ? names[state] : "UNKNOWN";
+        extern void Com_DPrintf(const char *, ...);
+        Cod2x_Log("Client state changed from %d:%s to %d:%s", previous, before, state, after);
+        Com_DPrintf("Client state changed from %d:%s to %d:%s\n", previous, before, state, after);
+    }
     lastClientState = state;
     if (changed && state == CA_CONNECTED) {
         /* A server may have turned the mouse off with m_enable; a new connection turns it back on. */
@@ -328,6 +339,11 @@ void Cod2x_FeaturesClientState(int state)
                        game->current.integer, COD2X_APP_VERSION);
     }
     Com_Printf("---------------------------------------------------------------------------------\n");
+}
+
+void Cod2x_FeaturesUpdateFrame(void)
+{
+    Cod2x_UpdateFrame(lastClientState);
 }
 
 /* ---- Text codes (CoD2x src/mss32/text.cpp, src/shared/shared.cpp) ----------
@@ -380,6 +396,11 @@ int Cod2x_IsStyleCode(char code)
     return code && strchr("*!+=-_.", code) != NULL;
 }
 
+int Cod2x_TextEnabled(void)
+{
+    return lastClientState < CA_CONNECTING || Cod2x_GameVersion() >= 7;
+}
+
 int Cod2x_TextCode(const char *p, char *code)
 {
     int shade;
@@ -391,6 +412,8 @@ int Cod2x_TextCode(const char *p, char *code)
         *code = p[1];
         return 2;
     }
+    if (!Cod2x_TextEnabled())
+        return 0;
     shade = p[0] == '$' ? 0 : p[0] == '#' ? 1 : p[0] == '@' ? 2 : -1;
     if (shade < 0)
         return 0;
@@ -421,7 +444,7 @@ void Cod2x_StripChatName(char *line)
 {
     char *end = strstr(line, "^7: "), *out = line, code;
     const char *p = line;
-    if (!end)
+    if (!Cod2x_TextEnabled() || !end)
         return;
     if (p[0] == '^' && Cod2x_TextCode(p, &code) == 2) {
         out += 2;
@@ -505,7 +528,7 @@ const char *Cod2x_ResolveDoubleColors(const char *text, char *buffer, size_t siz
     const char *p;
     size_t length = 0;
     int changed = 0;
-    if (!text || !strstr(text, "^^"))
+    if (!Cod2x_TextEnabled() || !text || !strstr(text, "^^"))
         return text;
     for (p = text; *p;) {
         if (length + 2 >= size)
@@ -710,196 +733,18 @@ void Cod2x_CompassOffset(float *x, float *y)
         *y += compassOffsetY->current.value;
 }
 
-/* ---- iw_CoD2x_01.iwd (CoD2x src/shared/iwd.cpp) ----------------------------
-   CoD2x carries its data IWD inside its mss32.dll and writes it to main/ when the
-   file system starts. This build does not carry it: it is copied from the
-   player's own CoD2x mss32.dll in the game folder, as tools/cod2x/extract_iwd.py
-   does, and nothing is downloaded. */
-#define COD2X_IWD_MAX_DLL (256u * 1024 * 1024)
-#define COD2X_IWD_MAX (64u * 1024 * 1024)
-
-static unsigned int Cod2x_Le16(const unsigned char *p)
-{
-    return (unsigned int)p[0] | (unsigned int)p[1] << 8;
-}
-
-static unsigned int Cod2x_Le32(const unsigned char *p)
-{
-    return Cod2x_Le16(p) | Cod2x_Le16(p + 2) << 16;
-}
-
-/* A ZIP whose central directory names CoD2x's menu and radar arrow. */
-static int Cod2x_IwdArchive(const unsigned char *zip, size_t size, size_t directory, size_t directorySize,
-                            unsigned int count)
-{
-    size_t position = directory, end = directory + directorySize;
-    unsigned long long expanded = 0;
-    int menu = 0, arrow = 0;
-    unsigned int i;
-    for (i = 0; i < count; ++i) {
-        char name[256];
-        unsigned int nameLength, extra, comment, k;
-        if (position + 46 > end || end > size || Cod2x_Le32(zip + position) != 0x02014b50u)
-            return 0;
-        expanded += Cod2x_Le32(zip + position + 24);
-        nameLength = Cod2x_Le16(zip + position + 28);
-        extra = Cod2x_Le16(zip + position + 30);
-        comment = Cod2x_Le16(zip + position + 32);
-        if (position + 46 + nameLength > end)
-            return 0;
-        if (nameLength < sizeof(name)) {
-            for (k = 0; k < nameLength; ++k) {
-                char c = (char)zip[position + 46 + k];
-                name[k] = c == '\\' ? '/' : (char)tolower((unsigned char)c);
-            }
-            name[nameLength] = '\0';
-            menu |= !strcmp(name, "ui_mp/main.menu");
-            arrow |= !strcmp(name, "materials/radar_player_arrow");
-        }
-        position += 46 + nameLength + extra + comment;
-    }
-    return menu && arrow && expanded <= COD2X_IWD_MAX;
-}
-
-/* The one CoD2x IWD embedded in a CoD2x mss32.dll: found by its end-of-directory
-   record, as the extraction tool does. */
-static int Cod2x_IwdFromDll(const unsigned char *data, size_t size, size_t *start, size_t *length)
-{
-    size_t position, found = 0;
-    if (size < 64 || data[0] != 'M' || data[1] != 'Z' || Cod2x_Le32(data + 60) > size - 4 ||
-        memcmp(data + Cod2x_Le32(data + 60), "PE\0\0", 4))
-        return 0;
-    for (position = 0; position + 22 <= size; ++position) {
-        size_t directorySize, directory, begin, end;
-        if (memcmp(data + position, "PK\5\6", 4))
-            continue;
-        directorySize = Cod2x_Le32(data + position + 12);
-        directory = Cod2x_Le32(data + position + 16);
-        end = position + 22 + Cod2x_Le16(data + position + 20);
-        if (Cod2x_Le16(data + position + 4) || Cod2x_Le16(data + position + 6) ||
-            Cod2x_Le16(data + position + 8) != Cod2x_Le16(data + position + 10) ||
-            directorySize + directory > position || end > size)
-            continue;
-        begin = position - directorySize - directory;
-        if (memcmp(data + begin, "PK\3\4", 4) || end - begin > COD2X_IWD_MAX ||
-            !Cod2x_IwdArchive(data + begin, end - begin, directory, directorySize, Cod2x_Le16(data + position + 10)))
-            continue;
-        if (found++)
-            return 0; /* more than one: not a release the tool would accept either */
-        *start = begin;
-        *length = end - begin;
-    }
-    return found != 0;
-}
-
-static unsigned char *Cod2x_ReadFile(const char *path, size_t *size)
-{
-    FILE *file = fopen(path, "rb");
-    unsigned char *data = NULL;
-    long length;
-    if (!file)
-        return NULL;
-    if (!fseek(file, 0, SEEK_END) && (length = ftell(file)) > 0 && (unsigned long)length <= COD2X_IWD_MAX_DLL &&
-        !fseek(file, 0, SEEK_SET) && (data = malloc((size_t)length)) != NULL &&
-        fread(data, 1, (size_t)length, file) == (size_t)length) {
-        *size = (size_t)length;
-    } else {
-        free(data);
-        data = NULL;
-    }
-    fclose(file);
-    return data;
-}
-
-/* Newer and test builds of CoD2x leave iw_CoD2x_NN with NN above 01, or
-   iw_CoD2x_01_<version>.iwd; CoD2x 1.4.6.8 deletes them. */
-static int Cod2x_IwdObsolete(const char *name)
-{
-    size_t length = strlen(name);
-    if (length < 4 || strcasecmp(name + length - 4, ".iwd") || strncasecmp(name, "iw_CoD2x_", 9) ||
-        !isdigit((unsigned char)name[9]) || !isdigit((unsigned char)name[10]))
-        return 0;
-    return (name[9] - '0') * 10 + (name[10] - '0') > 1 || name[11] != '.';
-}
-
-static void Cod2x_IwdCleanup(const char *base)
-{
-    char directory[1024], path[1280];
-    struct dirent *entry;
-    struct stat st;
-    DIR *dir;
-    snprintf(directory, sizeof(directory), "%s" COD2X_IWD_SEPARATOR "main", base);
-    dir = opendir(directory);
-    if (!dir)
-        return;
-    while ((entry = readdir(dir)) != NULL) {
-        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, ".."))
-            continue;
-        snprintf(path, sizeof(path), "%s" COD2X_IWD_SEPARATOR "%s", directory, entry->d_name);
-        if ((!stat(path, &st) && S_ISDIR(st.st_mode)) || !Cod2x_IwdObsolete(entry->d_name))
-            continue;
-        if (remove(path) == 0)
-            Com_Printf("Deleted CoD2x IWD: %s\n", path);
-        else
-            Com_Error(0, "Failed to delete CoD2x IWD: %s (errno=%d)\n", path, errno);
-    }
-    closedir(dir);
-}
-
+/* Archive installation belongs to the launcher. The engine must not modify
+   the licensed game-data directory or extract Windows binaries there. */
 void Cod2x_IwdStartup(const char *base)
 {
-    char dll[1024], target[1024];
-    unsigned char *data;
-    size_t size = 0, start = 0, length = 0, written;
-    struct stat st;
-    FILE *file;
-    if (!base || !*base) {
-        Com_Printf("CoD2x IWD cleanup: fs_basepath not set, skipping.\n");
-        return;
-    }
-    Cod2x_IwdCleanup(base);
-    snprintf(dll, sizeof(dll), "%s" COD2X_IWD_SEPARATOR "mss32.dll", base);
-    data = Cod2x_ReadFile(dll, &size);
-    if (!data)
-        return;
-    if (!Cod2x_IwdFromDll(data, size, &start, &length)) {
-        free(data);
-        return;
-    }
-    snprintf(target, sizeof(target), "%s" COD2X_IWD_SEPARATOR "main" COD2X_IWD_SEPARATOR "iw_CoD2x_01.iwd", base);
-    if (!stat(target, &st)) {
-        if ((size_t)st.st_size == length) {
-            free(data);
-            return;
-        }
-        if (remove(target)) {
-            free(data);
-            Com_Error(0, "Error while extracting IWD file to '%s'. Error while deleting existing file: %s\n", target,
-                      strerror(errno));
-            return;
-        }
-    }
-    file = fopen(target, "wb");
-    if (!file) {
-        free(data);
-        Com_Error(0, "Error while extracting IWD file to '%s'. Error while opening file: %s\n", target,
-                  strerror(errno));
-        return;
-    }
-    written = fwrite(data + start, 1, length, file);
-    fclose(file);
-    free(data);
-    if (written != length)
-        Com_Error(0, "Error while extracting IWD file to '%s'. Error while writing to file: %s\n", target,
-                  strerror(errno));
+    (void)base;
 }
 
 /* ---- CoD2x's update check (CoD2x updater.cpp, updater_https.cpp) --------------
    Each time the client reaches the main menu, and when the menu is opened in a
    game, it asks CoD2x's update service for the current CoD2x version. An update
-   shows the game's own "Auto Update" button and prompt; a required one stops
-   connecting, as in CoD2x. CoD2x then downloads its mss32.dll and restarts the
-   game; this build never downloads or installs CoD2x's files.
+   shows the game's own "Auto Update" button and prompt. The native release
+   page supplies app updates; upstream Windows binaries cannot update this port.
    When the https request fails, the same data goes to the update port of CoD2x's
    master in one UDP packet. No answer to that in five seconds starts the check
    again, five times at most until the menu is reached anew. */
@@ -910,17 +755,24 @@ void Cod2x_IwdStartup(const char *base)
 extern cg_t cgArray[1];
 extern void CL_Cod2xCDKeyHash(char hash[34]);
 extern void Com_DPrintf(const char *, ...);
-extern int Sys_Milliseconds(void);
 extern const char *NET_AdrToString(netadr_t a);
 extern qboolean NET_StringToAdr(const char *s, netadr_t *a);
 extern qboolean NET_CompareBaseAdr(netadr_t a, netadr_t b);
 extern Bool NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *data);
 
-static int updateRunning, updateForced, updateLastState = -1, updateLastRender = -1;
+static int updateRunning, updateLastState = -1, updateLastRender = -1;
 static netadr_t updateAddress;
-static int updateResolved, updateWaiting, updateWaitingSince, updateRepeats;
+static int updateResolved, updateWaiting, updateRepeats;
+static uint32_t updateWaitingSince;
 
 static void Cod2x_UpdateDone(void *context, const Cod2xHttpResponse *response);
+
+static void Cod2x_UpdateStartFailed(const char *message)
+{
+    Cod2xHttpResponse failure = {0};
+    snprintf(failure.error, sizeof(failure.error), "%s", message);
+    Cod2x_UpdateDone(NULL, &failure);
+}
 
 static void Cod2x_JsonField(Cod2xText *body, const char *name, const char *value)
 {
@@ -963,6 +815,7 @@ static void Cod2x_UpdateCheck(void)
     Cod2x_TextAppendString(&body, "}");
     if (body.failed) {
         Cod2x_TextFree(&body);
+        Cod2x_UpdateStartFailed("Out of memory");
         return;
     }
     memset(&request, 0, sizeof(request));
@@ -976,12 +829,8 @@ static void Cod2x_UpdateCheck(void)
     Com_Printf("Auto-Updater: Checking for updates...\n");
     updateRunning = Cod2x_HttpStart(&request, Cod2x_UpdateDone, NULL);
     Cod2x_TextFree(&body);
-}
-
-static void Cod2x_UpdateRequired(void)
-{
-    Com_Error(1, "Update required\n\nA new version of CoD2x must be installed.\nPlease update to version %s.\n",
-              updateVersion->current.string);
+    if (!updateRunning)
+        Cod2x_UpdateStartFailed("Failed to connect");
 }
 
 /* Base64 with padding; 0 when out is too small. */
@@ -1069,7 +918,7 @@ static void Cod2x_UpdateSendUdp(void)
     if (updateAddress.type != NA_BAD)
         NET_OutOfBandPrint(NS_CLIENT1, updateAddress, packet);
     updateWaiting = 1;
-    updateWaitingSince = Sys_Milliseconds();
+    updateWaitingSince = (uint32_t)Cod2x_Milliseconds64();
     Com_Printf("-----------------------------------\n");
 }
 
@@ -1086,9 +935,8 @@ static void Cod2x_UpdateAnswer(int available, const char *url, const char *versi
         Dvar_SetString(updateVersion, version);
         Dvar_SetString(updateOldVersion, COD2X_RELEASE);
         if (available == 2) {
-            updateForced = 1;
-            if (lastClientState > CA_DISCONNECTED && lastClientState < CA_CONNECTED && !playingDemo)
-                Cod2x_UpdateRequired();
+            Com_Printf("CoD2x %s requires a newer CoD2 Silicon release. Check for updates in the launcher.\n"
+                       "Servers compatible with this build can still be joined.\n", version);
         }
     } else {
         Com_Printf("CoD2x: No updates available.\n");
@@ -1101,7 +949,7 @@ static void Cod2x_UpdateAnswer(int available, const char *url, const char *versi
    CoD2x's zpam_applyManifest does nothing when dedicated is 0. */
 static void Cod2x_UpdateDone(void *context, const Cod2xHttpResponse *response)
 {
-    char available[16] = "", url[1024] = "", version[64] = "", error[256];
+    char available[1024] = "", url[1024] = "", version[1024] = "", error[256];
     (void)context;
     updateRunning = 0;
     snprintf(error, sizeof(error), "%s", response->error[0] ? response->error : "No response");
@@ -1150,8 +998,18 @@ void Cod2x_UpdatePacket(netadr_t from)
 /* The update prompt's "getautoupdate". CoD2x downloads its mss32.dll and restarts. */
 void Cod2x_UpdateConfirmed(void)
 {
-    Com_Error(1, "CoD2x %s is available.\n\nThis build does not download or install CoD2x's files.\n",
+    extern void Sys_OpenURL(const char *, int);
+    Sys_OpenURL("https://github.com/STiXzoOR/cod2-silicon/releases", 1);
+    Com_Error(1, "CoD2x %s is available.\n\nCheck for CoD2 Silicon updates in the launcher or on the release page opened in your browser.\n"
+              "Upstream Windows updates cannot be installed in this native Mac build.\n"
+              "You can still join servers compatible with this version.\n",
               updateVersion ? updateVersion->current.string : "");
+}
+
+void Cod2x_FeaturesRenderer(void)
+{
+    /* Upstream updater_renderer: a renderer restart checks again on the next menu frame. */
+    updateLastState = -1;
 }
 
 static void Cod2x_UpdateFrame(int state)
@@ -1159,8 +1017,6 @@ static void Cod2x_UpdateFrame(int state)
     int render = cgArray[0].renderScreen, last = updateLastState, lastRender = updateLastRender;
     updateLastState = state;
     updateLastRender = render;
-    if (updateForced && state > CA_DISCONNECTED && state < CA_CONNECTED && !playingDemo)
-        Cod2x_UpdateRequired();
     if (state != last && state == CA_DISCONNECTED) {
         updateRepeats = 0;
         Cod2x_UpdateCheck();
@@ -1169,12 +1025,13 @@ static void Cod2x_UpdateFrame(int state)
         updateRepeats = 0;
         Cod2x_UpdateCheck();
     }
-    if (updateWaiting && (unsigned int)(Sys_Milliseconds() - updateWaitingSince) > 5000 && updateRepeats < 5) {
+    if (updateWaiting && ((uint32_t)Cod2x_Milliseconds64() - updateWaitingSince) > 5000 && updateRepeats < 5) {
         Com_Printf("Auto-Updater: Request timed out.\n");
         updateWaiting = 0;
         updateRepeats++;
         Cod2x_UpdateCheck();
     }
+    Cod2x_HttpFrameFor(Cod2x_UpdateDone);
 }
 
 /* ---- zPAM from CoD2x's web site (CoD2x downloading.cpp, zpam.cpp) -------------
@@ -1183,8 +1040,10 @@ static void Cod2x_UpdateFrame(int state)
    download asks the game server as usual; a cancelled one may be tried again. */
 #define COD2X_ZPAM_URL "https://cod2x.me/zpam"
 
-static char zpamTried[64][64], zpamRemote[64];
-static int zpamTriedCount, zpamActive;
+static char **zpamTried;
+static const char *zpamRemote = "";
+static size_t zpamTriedCount;
+static int zpamActive;
 
 static int Cod2x_ZpamVersion(const char *name, const char *prefix)
 {
@@ -1199,8 +1058,8 @@ static int Cod2x_ZpamVersion(const char *name, const char *prefix)
 
 int Cod2x_ZpamDirectURL(const char *remoteName, int wwwDownload, char *url, size_t size)
 {
-    char address[256], stand[256];
-    int i;
+    char address[1024], stand[1024];
+    size_t i;
     zpamActive = 0;
     if (!wwwDownload || !remoteName || strncasecmp(remoteName, "main/", 5) ||
         (Cod2x_ZpamVersion(remoteName + 5, "zpam") < 0 && Cod2x_ZpamVersion(remoteName + 5, "zpam_maps_v") < 0))
@@ -1208,10 +1067,12 @@ int Cod2x_ZpamDirectURL(const char *remoteName, int wwwDownload, char *url, size
     for (i = 0; i < zpamTriedCount; ++i)
         if (!strcmp(zpamTried[i], remoteName))
             return 0;
-    if (zpamTriedCount == (int)(sizeof(zpamTried) / sizeof(zpamTried[0])))
-        return 0;
-    snprintf(zpamTried[zpamTriedCount++], sizeof(zpamTried[0]), "%s", remoteName);
-    snprintf(zpamRemote, sizeof(zpamRemote), "%s", remoteName);
+    char *name = strdup(remoteName);
+    char **grown = name ? realloc(zpamTried, (zpamTriedCount + 1) * sizeof(*grown)) : NULL;
+    if (!grown) { free(name); return 0; }
+    zpamTried = grown;
+    zpamTried[zpamTriedCount++] = name;
+    zpamRemote = name;
     snprintf(address, sizeof(address), "%s/%s", COD2X_ZPAM_URL, remoteName);
     snprintf(url, size, "%s", Cod2x_ServiceURL(address, stand, sizeof(stand)));
     zpamActive = 1;
@@ -1231,9 +1092,10 @@ const char *Cod2x_ZpamDirectRemote(void)
 /* The direct download ended; a cancelled one is not counted as tried. */
 void Cod2x_ZpamDirectEnd(int cancelled)
 {
-    if (zpamActive && cancelled && zpamTriedCount > 0)
-        --zpamTriedCount;
+    if (zpamActive && cancelled && zpamTriedCount > 0) {
+        free(zpamTried[--zpamTriedCount]);
+        zpamRemote = "";
+    }
     zpamActive = 0;
 }
 #endif
-

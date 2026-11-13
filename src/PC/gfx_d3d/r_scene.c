@@ -2,12 +2,14 @@
 #include <stdlib.h>
 #endif
 #include "common_types.h"
+#include "r_cod2x_xray.h"
 #if defined(COD2_X64)
 #include <stdlib.h>
 #endif
 extern dvar_t *r_rendererInUse;
 extern DxGlobals dx;
 #include "imports.h"
+#include "r_cod2x_film.h"
 /* dvar globals */
 extern const dvar_t *com_statmon;
 extern const dvar_t *fx_sort;
@@ -756,6 +758,9 @@ extern void R_DrawShadowCookies(int viewIndex, const GfxViewParms *view, ShadowC
 #endif
 void R_RenderScene(const refdef_t *refdef)
 {
+#if COD2X_XRAY_RENDER
+    R_AddCmdCod2xXray();
+#endif
     r_globals_t *rg_p = &rg;
     r_global_permanent_t *rgp_p = &rgp;
     void *viewParms;
@@ -1078,6 +1083,10 @@ void R_RenderScene(const refdef_t *refdef)
 
         R_UnlockSkinnedCache();
     }
+
+#if COD2X_FILM
+    R_AddCmdCod2xFilm(refdef);
+#endif
 
     {
         int debugEntCounts = (r_debugEntCounts)->current.integer;

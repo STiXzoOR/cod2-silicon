@@ -19,6 +19,7 @@
 #include "www_download.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x_demo.h"
+extern void Cmd_ExecuteString(const char *text);
 #include "../qcommon/cod2x_features.h"
 extern void Dvar_ClearModified(const dvar_t *);
 extern const dvar_t *Dvar_FindVar(const char *name);
@@ -27,7 +28,6 @@ extern char fs_gamedir[256];
 extern void FS_BuildOSPath(const char *base, const char *game, const char *qpath, char *ospath);
 extern qboolean FS_WriteFile(const char *qpath, const void *buffer, int size);
 static const dvar_t *cod2x_demoName, *cod2x_demoURL, *cod2x_demoTimeout;
-static const char *cod2x_recordName;
 static int cod2x_stoppingRecord, cod2x_demoPlayback, cod2x_savedDeveloper;
 static int cod2x_quitAfterUpload, cod2x_checkUploads, cod2x_demoClientState = -1;
 static void Cod2x_DemoClientFrame(void);
@@ -389,6 +389,43 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time);
 Bool CL_PacketEvent(netadr_t from, msg_t *msg, int time);
 void CL_Init(void);
 void CL_ShutdownAll(void);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* Upstream's extension modules run before the engine advances this frame. */
+void CL_Cod2xClientFrame(void)
+{
+    clientConnection_t *clc_p = &clientConnections[0];
+    if (!legacyHacks->cl_running)
+        return;
+    Cod2x_Frame(clc_p->state >= CA_PRIMED, clc_p->demoplaying);
+    Cod2x_FeaturesClientState(clc_p->state);
+    Cod2x_HideServerIpFrame(clc_p->state >= CA_CONNECTED ? CL_GetConfigString(0) : NULL);
+    extern void CG_Cod2xSpectatorFrame(void);
+    CG_Cod2xSpectatorFrame();
+}
+
+void CL_Cod2xWindowFrame(void)
+{
+    extern snd_local_t g_snd;
+    static int soundChecked;
+    if (!legacyHacks->cl_running || soundChecked)
+        return;
+    soundChecked = 1;
+    if (!g_snd.channelvol)
+        Com_Error(ERR_DROP, "Sound system failed to initialize.\n\nThe game might crash at any time.\n"
+                            "Please check your sound drivers.");
+}
+
+void CL_Cod2xMediaFrame(void)
+{
+    if (!legacyHacks->cl_running)
+        return;
+    Cod2x_IwdFrame(clientConnections[0].state);
+    CG_Cod2xRadarFrame();
+    Cod2x_DemoClientFrame();
+    Cod2x_VmixFrame(clientConnections[0].state);
+}
+#endif
+
 void CL_Frame(int msec);
 void CL_Vid_Restart_f(void);
 void CL_Snd_Restart_f(void);
@@ -1268,7 +1305,13 @@ void CL_InitOnceForAllClients(void)
     cl_allowDownload = Dvar_RegisterBool_mac("cl_allowDownload", 1, 0x1001);
 #if COD2_IS_PATCH_13
     cl_wwwDownload = Dvar_RegisterBool("cl_wwwDownload", 1, 0x1003);
+#if COD2_APPLE_SDK && defined(COD2_CODX) && COD2_CODX
+    extern void Dvar_SetBoolByName(const char *, unsigned char);
+    cl_punkbuster = Dvar_RegisterBool("cl_punkbuster", 0, 0x1053);
+    Dvar_SetBoolByName("cl_punkbuster", 0); /* No native proprietary provider. */
+#else
     cl_punkbuster = Dvar_RegisterBool("cl_punkbuster", 0, 0x1013);
+#endif
 #endif
 #if defined(COD2_X64) && COD2_X64
     cl_talking = Dvar_RegisterBool_mac("cl_talking", 0, 0x1000);
@@ -1631,9 +1674,6 @@ void CL_Record_f(void)
     int compressedSize;
     int len;
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    if (!cod2x_recordName)
-#endif
     if (Cmd_Argc() > 2) {
         Com_Printf((const char *)"record <demoname>\n");
         return;
@@ -1649,13 +1689,6 @@ void CL_Record_f(void)
         return;
     }
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    if (cod2x_recordName) {
-        /* The whole auto-record name names the file, as the upload marker does. */
-        I_strncpyz(demoName, cod2x_recordName, sizeof(demoName));
-        Com_sprintf(name, sizeof(name), "demos/%s.dm_1", cod2x_recordName);
-    } else
-#endif
     if (Cmd_Argc() == 2) {
         I_strncpyz(demoName, Cmd_Argv(1), sizeof(demoName));
         Com_sprintf(name, sizeof(name), (const char *)"demos/%s.dm_%d", demoName, 1);
@@ -2744,24 +2777,8 @@ void CL_Frame(int msec)
     if (legacyHacks->cl_running == 0)
         return;
 
-#if defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_CODX) && COD2_CODX && !defined(COD2_X64)
     Cod2x_Frame(clc_p->state >= CA_PRIMED, clc_p->demoplaying);
-#endif
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    {
-        /* CoD2x checks on the first frame that sound started (src/mss32/window.cpp). */
-        extern snd_local_t g_snd;
-        static int cod2xSoundChecked;
-        if (!cod2xSoundChecked) {
-            cod2xSoundChecked = 1;
-            if (!g_snd.channelvol)
-                Com_Error(ERR_DROP, "Sound system failed to initialize.\n\nThe game might crash at any time.\n"
-                                    "Please check your sound drivers.");
-        }
-    }
-    Cod2x_FeaturesClientState(clc_p->state);
-    Cod2x_HideServerIpFrame(clc_p->state >= CA_CONNECTED ? CL_GetConfigString(0) : NULL);
-    Cod2x_DemoClientFrame();
 #endif
 #if defined(COD2_X64)
     Voice_GetLocalVoiceData(&clients[0].voicePackets[clients[0].voicePacketCount]);
@@ -3708,11 +3725,9 @@ static void Cod2x_DemoDirectory(char directory[256])
 
 static void Cod2x_DemoClientDisconnect(void)
 {
-    const dvar_t *gametype = Dvar_FindVar("ui_joinGametype");
     Cod2x_DemoPlayback(0);
-    Cod2x_DemoClearAutoDvars();
-    if (gametype)
-        Dvar_SetInt(gametype, 0);
+    if (cod2x_demoName && *cod2x_demoName->current.string)
+        Dvar_SetString(cod2x_demoName, "");
 }
 
 static void Cod2x_DemoStopRecording(void)
@@ -3734,13 +3749,10 @@ int Cod2x_DemoClientQuitRequested(void)
     Cod2x_DemoDirectory(directory);
     if (Cod2x_DemoUploadsPending(directory)) {
         Dvar_SetString(cod2x_demoName, "");
-        /* A recording started by hand would hold the upload back for good. */
-        Cod2x_DemoStopRecording();
         cod2x_quitAfterUpload = 1;
         cod2x_checkUploads = 1;
         return 1;
     }
-    Cod2x_DemoStopRecording();
     Cod2x_DemoUploadShutdown();
     return 0;
 }
@@ -3754,13 +3766,11 @@ static void Cod2x_DemoClientFrame(void)
     if (!cod2x_demoName || !fs_homepath)
         return;
     Cod2x_DemoPlayback(conn->demoplaying != 0);
-    if (conn->demoplaying && (cod2x_demoName->modified || cod2x_demoURL->modified)) {
-        /* A demo's own server commands may not start a recording or an upload. */
+    if (conn->demoplaying && cod2x_demoName->modified) {
         Cod2x_DemoClearAutoDvars();
-    } else if (cod2x_demoName->modified &&
-               (!*cod2x_demoName->current.string || conn->state == CA_ACTIVE)) {
-        /* CoD2x keeps up to 255 characters; ours stop where "demos/<name>.dm_1.upload" still fits. */
-        char requested[256], name[238], qpath[256], marker[256], url[1024];
+    } else if (cod2x_demoName->modified) {
+        char requested[256], name[256], qpath[256], marker[sizeof(name) + sizeof("demos/.dm_1.upload")];
+        char url[1024], command[sizeof(name) + sizeof("record \n")];
         unsigned suffix = 0;
         I_strncpyz(requested, cod2x_demoName->current.string, sizeof(requested));
         Dvar_ClearModified(cod2x_demoName);
@@ -3777,16 +3787,14 @@ static void Cod2x_DemoClientFrame(void)
             Dvar_SetString(cod2x_demoName, name);
             Dvar_ClearModified(cod2x_demoName);
             if (*name) {
-                /* Call the recorder directly; server-supplied names never enter a command buffer. */
-                cod2x_recordName = name;
-                CL_Record_f();
-                cod2x_recordName = NULL;
+                /* Execute one command immediately, preserving the recorder's
+                   argument parsing and filename truncation. */
+                Com_sprintf(command, sizeof(command), "record %s\n", name);
+                Cmd_ExecuteString(command);
                 if (conn->demorecording && *cod2x_demoURL->current.string) {
                     if (Cod2x_DemoUploadURL(url, sizeof(url), cod2x_demoURL->current.string, name)) {
-                        Com_sprintf(marker, sizeof(marker), "%s.upload", qpath);
+                        Com_sprintf(marker, sizeof(marker), "demos/%s.dm_1.upload", name);
                         FS_WriteFile(marker, url, (int)strlen(url));
-                    } else {
-                        Com_Printf("CoD2x: demo upload URL must be HTTPS.\n");
                     }
                 }
             }
@@ -3812,8 +3820,7 @@ static void Cod2x_DemoClientFrame(void)
     if (cod2x_quitAfterUpload && !Cod2x_DemoUploadShown()) {
         /* quit asks again, so a demo still waiting keeps the game open, as in CoD2x. */
         Com_Printf("Demo upload complete, closing the game now.\n");
-        cod2x_quitAfterUpload = 0;
-        Cbuf_ExecuteText(2, "quit\n");
+        Cmd_ExecuteString("quit\n");
     }
 }
 

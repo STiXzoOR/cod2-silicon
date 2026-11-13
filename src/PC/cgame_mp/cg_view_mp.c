@@ -8,6 +8,7 @@
 #endif
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "PC/qcommon/cod2x_features.h"
+#include "PC/qcommon/cod2x.h"
 #endif
 
 vec3_t maxs = { 4.0f, 4.0f, 4.0f };
@@ -258,20 +259,6 @@ void CG_FxSetTestPosition(void)
 
 static void CG_OffsetThirdPersonView(void)
 {
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    if (Cod2x_ThirdPersonMode() == 1) {
-        vec3_t head;
-        int i;
-        for (i = 0; i < 3; ++i)
-            head[i] = cg->refdef.vieworg[i];
-        head[2] += cg->predictedPlayerState.viewHeightCurrent;
-        if (cg->predictedPlayerState.pm_type > 5)
-            cg->refdefViewAngles[1] = (float)cg->predictedPlayerState.stats[1];
-        Cod2x_OrbitView(head, cg->refdefViewAngles, cg_thirdPersonRange->current.value,
-                       cg_thirdPersonAngle->current.value, cg->refdef.vieworg);
-        return;
-    }
-#endif
     byte *origin;
     byte *viewAngles;
     float focusAngles[3];
@@ -344,6 +331,13 @@ static void CG_OffsetThirdPersonView(void)
     view[0] += scale * forward[0];
     view[1] += scale * forward[1];
     view[2] += scale * forward[2];
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (Cod2x_ThirdPersonMode() == 1) {
+        memcpy(cg->refdef.vieworg, view, sizeof(view));
+        cg->refdefViewAngles[0] *= 1.2f;
+        return;
+    }
+#endif
 
     CG_TraceCapsule((trace_t *)trace, (const vec_t *)origin, (const vec_t *)&mins, (const vec_t *)&maxs,
                     (const vec_t *)view, ((cg_t *)cg)->predictedPlayerState.clientNum, 0x811);
@@ -387,6 +381,11 @@ static void CG_OffsetThirdPersonView(void)
         }
 
 #if defined(COD2_X64)
+#if defined(COD2_CODX) && COD2_CODX
+        if (Cod2x_GameVersion() >= 3)
+            angle = atan2((double)dz, (double)dist2d);
+        else
+#endif
         angle = (double)(float)atan2((double)dz, (double)dist2d);
 #else
         angle = atan2((double)dz, (double)dist2d);

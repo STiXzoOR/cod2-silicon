@@ -130,8 +130,10 @@ int Cod2x_URLCommands(const Cod2xURL *parsed, char *commands, size_t capacity)
         !memchr(parsed->password, 0, sizeof(parsed->password)) ||
         !SafeAddress(parsed->address) || !SafePassword(parsed->password))
         return 0;
-    length = snprintf(commands, capacity, "password \"%s\"\nconnect %s\n",
-                      parsed->hasPassword ? parsed->password : "", parsed->address);
+    if (parsed->hasPassword)
+        length = snprintf(commands, capacity, "password \"%s\"\nconnect %s\n", parsed->password, parsed->address);
+    else
+        length = snprintf(commands, capacity, "connect %s\n", parsed->address);
     if (length < 0 || (size_t)length >= capacity) {
         commands[0] = 0;
         return 0;

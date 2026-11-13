@@ -80,7 +80,8 @@ for target in ('cod2_macos', 'cod2_macos_ded'):
     init = active('src/PC/server_mp/sv_init_mp.c')
     globals_ = set(re.findall(r'^extern const dvar_t \*(\w+);', init, re.M))
     globals_ |= {'sv_punkbuster', 'sv_wwwDownload', 'sv_wwwBaseURL', 'sv_wwwDlDisconnected', 'nextmap'}
-    (out / 'udp_globals.h').write_text(''.join('const dvar_t *' + name + ';\n' for name in sorted(globals_)))
+    frame_in_game = 'SV_Cod2xUdpStats();' in function(active('src/PC/game_mp/g_main_mp.c'), 'G_RunFrame')
+    (out / 'udp_globals.h').write_text('#define UDP_STATS_IN_GAME ' + str(int(frame_in_game)) + '\n' + ''.join('const dvar_t *' + name + ';\n' for name in sorted(globals_)))
     main = active(path)
     has_limiter = 'SV_Cod2xUdpAllow' in main
     prefix = ''

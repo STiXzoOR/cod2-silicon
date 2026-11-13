@@ -38,7 +38,7 @@ struct Cod2xWebSocket {
     char *url, *headers;
     unsigned int reconnectMs, pingMs, pongMs;
     /* Shared, under Cod2x_Lock. */
-    int disconnect, abandoned, finished;
+    int disconnect, abandoned, finished, connected;
     WsEvent *events, **eventsTail;
     WsOutgoing *outgoing, **outgoingTail;
 };
@@ -156,14 +156,18 @@ static int Ws_SendFrame(Cod2xSocket *connection, int opcode, const void *data, s
 }
 
 /* "ws://host:port/path" as http(s) for curl, plus the Host and path CoD2x sends. */
-static void Ws_SplitUrl(const char *url, char *http, size_t httpSize, char *host, size_t hostSize, const char **path)
+static int Ws_SplitUrl(const char *url, char **http, char **host, const char **path)
 {
     const char *rest = strstr(url, "://"), *start, *end;
     size_t schemeLength = rest ? (size_t)(rest - url) : 0;
     const char *scheme = "http";
     if ((schemeLength == 3 && !strncmp(url, "wss", 3)) || (schemeLength == 5 && !strncmp(url, "https", 5)))
         scheme = "https";
-    snprintf(http, httpSize, "%s%s", scheme, rest ? rest : "");
+    size_t httpSize = strlen(scheme) + (rest ? strlen(rest) : 0) + 1;
+    *http = malloc(httpSize);
+    if (!*http)
+        return 0;
+    snprintf(*http, httpSize, "%s%s", scheme, rest ? rest : "");
     start = rest ? rest + 3 : url;
     *path = strchr(start, '/');
     end = *path ? *path : start + strlen(start);
@@ -181,9 +185,10 @@ static void Ws_SplitUrl(const char *url, char *http, size_t httpSize, char *host
         if (colon)
             end = colon;
     }
-    snprintf(host, hostSize, "%.*s", (int)(end - start), start);
+    *host = Ws_Copy(start, (size_t)(end - start));
     if (!*path)
         *path = "/";
+    return *host != NULL;
 }
 
 static void Ws_Base64(const unsigned char *data, size_t length, char *out)
@@ -236,7 +241,8 @@ static void Ws_Consume(WsBuffer *buffer, size_t length)
 /* Connects and shakes hands before the deadline. NULL after an error event. */
 static Cod2xSocket *Ws_Open(Cod2xWebSocket *ws, unsigned long long deadline, WsBuffer *received)
 {
-    char http[1024], host[512], error[256], request[8192];
+    char *http = NULL, *host = NULL, *request;
+    char error[256];
     unsigned char nonce[16];
     char key[32];
     const char *path;
@@ -248,22 +254,44 @@ static Cod2xSocket *Ws_Open(Cod2xWebSocket *ws, unsigned long long deadline, WsB
         Ws_PushError(ws, "Connect timeout");
         return NULL;
     }
-    Ws_SplitUrl(ws->url, http, sizeof(http), host, sizeof(host), &path);
+    if (!Ws_SplitUrl(ws->url, &http, &host, &path)) {
+        free(http);
+        free(host);
+        Ws_PushError(ws, "OOM");
+        return NULL;
+    }
     connection = Cod2x_SocketOpen(http, (int)(deadline - now), error, sizeof(error));
+    free(http);
     if (!connection) {
+        free(host);
         Ws_PushError(ws, !strcmp(error, "Connection timeout") || !strcmp(error, "Timeout") ? "Connect timeout" : error);
         return NULL;
     }
     Cod2x_Random(nonce, sizeof(nonce));
     Ws_Base64(nonce, sizeof(nonce), key);
-    length = snprintf(request, sizeof(request),
+    length = snprintf(NULL, 0,
                       "GET %s HTTP/1.1\r\nUpgrade: websocket\r\nHost: %s\r\nConnection: Upgrade\r\n"
                       "Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: %s\r\n%s\r\n",
                       path, host, key, ws->headers ? ws->headers : "");
-    if (length <= 0 || (size_t)length >= sizeof(request) ||
-        !Cod2x_SocketSend(connection, request, (size_t)length, WS_SEND_MSEC)) {
+    request = length > 0 ? malloc((size_t)length + 1) : NULL;
+    if (!request) {
+        free(host);
+        Ws_PushError(ws, "OOM");
         Cod2x_SocketClose(connection);
         return NULL;
+    }
+    snprintf(request, (size_t)length + 1,
+             "GET %s HTTP/1.1\r\nUpgrade: websocket\r\nHost: %s\r\nConnection: Upgrade\r\n"
+             "Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: %s\r\n%s\r\n",
+             path, host, key, ws->headers ? ws->headers : "");
+    free(host);
+    {
+        int sent = Cod2x_SocketSend(connection, request, (size_t)length, WS_SEND_MSEC);
+        free(request);
+        if (!sent) {
+            Cod2x_SocketClose(connection);
+            return NULL;
+        }
     }
     for (;;) {
         unsigned char chunk[4096];
@@ -278,7 +306,13 @@ static Cod2xSocket *Ws_Open(Cod2xWebSocket *ws, unsigned long long deadline, WsB
             Cod2x_SocketClose(connection);
             return NULL;
         }
-        n = Cod2x_SocketRecv(connection, chunk, sizeof(chunk), WS_POLL_MSEC);
+        if (received->length >= WS_MAX_RECEIVE) {
+            Ws_PushError(ws, "MG_MAX_RECV_SIZE");
+            Cod2x_SocketClose(connection);
+            return NULL;
+        }
+        size_t room = WS_MAX_RECEIVE - received->length;
+        n = Cod2x_SocketRecv(connection, chunk, room < sizeof(chunk) ? room : sizeof(chunk), WS_POLL_MSEC);
         if (n < 0) {
             Cod2x_SocketClose(connection);
             return NULL;
@@ -347,11 +381,9 @@ static WsState Ws_Frames(Cod2xWebSocket *ws, Cod2xSocket *connection, WsBuffer *
             memcpy(mask, p + header, 4);
             header += 4;
         }
-        if (length > WS_MAX_RECEIVE || message->length + length > WS_MAX_RECEIVE) {
-            Ws_PushError(ws, "MG_MAX_RECV_SIZE");
-            return WS_FAILED;
-        }
-        if (received->length < header + length)
+        /* The receive limit applies to bytes actually buffered, not a
+           declared payload that has not arrived yet. */
+        if (length > received->length - header)
             return WS_GOING;
         payload = received->data + header;
         if (masked)
@@ -411,7 +443,13 @@ static void Ws_Session(Cod2xWebSocket *ws, Cod2xSocket *connection, WsBuffer *re
     unsigned long long nextPing = Ws_Now() + ws->pingMs, pongDeadline = 0;
     WsState state = WS_GOING;
 
+    Cod2x_Lock();
+    ws->connected = 1;
+    Cod2x_Unlock();
     Ws_Push(ws, COD2X_WS_OPEN, NULL, 0, 0, 0);
+    /* The upgrade reply can carry frames in the same read. Deliver them
+       after OPEN without waiting for another packet from the peer. */
+    state = Ws_Frames(ws, connection, received, &message, &messageOp, &closing, &waitingPong);
     while (state == WS_GOING) {
         WsOutgoing *outgoing;
         unsigned long long now;
@@ -451,11 +489,20 @@ static void Ws_Session(Cod2xWebSocket *ws, Cod2xSocket *connection, WsBuffer *re
             closing = 1;
             break;
         }
-        n = Cod2x_SocketRecv(connection, chunk, sizeof(chunk), WS_POLL_MSEC);
+        /* Mongoose retains the first fragment opcode with its accumulated
+           payload. Frame headers and incomplete frames share that buffer. */
+        size_t resident = received->length + message.length + (messageOp != 0);
+        if (resident >= WS_MAX_RECEIVE) {
+            Ws_PushError(ws, "MG_MAX_RECV_SIZE");
+            state = WS_FAILED;
+            break;
+        }
+        size_t room = WS_MAX_RECEIVE - resident;
+        n = Cod2x_SocketRecv(connection, chunk, room < sizeof(chunk) ? room : sizeof(chunk), WS_POLL_MSEC);
         if (n < 0) {
             state = WS_EOF;
         } else if (n > 0) {
-            if (!Ws_Append(received, chunk, (size_t)n) || received->length > WS_MAX_RECEIVE + 14) {
+            if (!Ws_Append(received, chunk, (size_t)n)) {
                 Ws_PushError(ws, "MG_MAX_RECV_SIZE");
                 state = WS_FAILED;
             } else {
@@ -463,6 +510,17 @@ static void Ws_Session(Cod2xWebSocket *ws, Cod2xSocket *connection, WsBuffer *re
             }
         }
     }
+    Cod2x_Lock();
+    ws->connected = 0;
+    /* Frames queued for a lost connection must not reach its replacement. */
+    while (ws->outgoing) {
+        WsOutgoing *next = ws->outgoing->next;
+        free(ws->outgoing->text);
+        free(ws->outgoing);
+        ws->outgoing = next;
+    }
+    ws->outgoingTail = &ws->outgoing;
+    Cod2x_Unlock();
     Cod2x_SocketClose(connection);
     free(message.data);
     Ws_Push(ws, COD2X_WS_CLOSE, NULL, 0, !closing, Ws_Disconnecting(ws));
@@ -517,20 +575,27 @@ Cod2xWebSocket *Cod2x_WebSocketConnect(const char *url, const char *headers, uns
     return ws;
 }
 
-void Cod2x_WebSocketSendText(Cod2xWebSocket *ws, const char *text)
+int Cod2x_WebSocketSendText(Cod2xWebSocket *ws, const char *text)
 {
     WsOutgoing *item = calloc(1, sizeof(*item));
     if (!item)
-        return;
+        return 0;
     item->text = Ws_Copy(text, strlen(text));
     if (!item->text) {
         free(item);
-        return;
+        return 0;
     }
     Cod2x_Lock();
+    if (!ws->connected || ws->disconnect) {
+        Cod2x_Unlock();
+        free(item->text);
+        free(item);
+        return 0;
+    }
     *ws->outgoingTail = item;
     ws->outgoingTail = &item->next;
     Cod2x_Unlock();
+    return 1;
 }
 
 void Cod2x_WebSocketClose(Cod2xWebSocket *ws)

@@ -1,6 +1,7 @@
 #include "common_types.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "g_cod2x_wallbang.h"
+#include "../qcommon/cod2x_math.h"
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -136,13 +137,7 @@ static void WB_Lerp(const vec_t *from, const vec_t *to, float fraction, vec_t *o
 
 static void WB_Normalize(vec_t *v)
 {
-    float length = WB_Length(v);
-    if (length != 0.0f) {
-        float inverse = 1.0f / length;
-        v[0] *= inverse;
-        v[1] *= inverse;
-        v[2] *= inverse;
-    }
+    Cod2x_VectorNormalizeTo(v, v);
 }
 
 static int WB_SurfaceType(int surfaceFlags)

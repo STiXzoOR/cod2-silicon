@@ -149,15 +149,9 @@ target_sources(cod2_macos PRIVATE src/platform/cod2x_native.c
 set_property(SOURCE src/platform/cod2x_native_macos.m src/platform/cod2x_native_shaders.m
   APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
 target_link_libraries(cod2_macos PRIVATE ${COD2_APPKIT_FRAMEWORK})
-if(NOT COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
-  # The link parser is a CoD2x unit with nothing of CoD2x in it; the original
-  # engine compiles it unchanged for the launcher's links.
-  set_source_files_properties(src/PC/qcommon/cod2x_url.c PROPERTIES
-    HEADER_FILE_ONLY FALSE COMPILE_DEFINITIONS COD2_CODX=1)
-endif()
 if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
-  target_sources(cod2_macos PRIVATE src/platform/cod2x_native_mouse.c)
+  target_sources(cod2_macos PRIVATE src/platform/cod2x_native_mouse.c src/platform/cod2x_film_gl.c src/platform/cod2x_xray_gl.c)
   # The shader generator builds the OpenGL shader cache from the game's HLSL at
   # setup time. It is a separate program so that libvkd3d-shader (LGPL) stays a
   # replaceable library and a compiler fault cannot take the game down.

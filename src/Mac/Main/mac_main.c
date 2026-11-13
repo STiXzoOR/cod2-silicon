@@ -8,6 +8,9 @@
 #include "common_types.h"
 #include "imports.h"
 #include "cod2_feature_config.h"
+#if COD2_CODX
+#include "PC/qcommon/cod2x.h"
+#endif
 #include "PC/qcommon/crash_handler.h"
 #if COD2_APPLE_SDK && defined(DEDICATED)
 extern void MacServer_InstallSignals(void);
@@ -486,18 +489,20 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
 #if defined(COD2_CODX) && COD2_CODX
-    Sys_InstallCrashHandler("opencod2 CoD2x native", "1.4.6.8 compatibility",
+    Sys_InstallCrashHandler("opencod2 CoD2x native", COD2X_RELEASE " compatibility",
                             COD2_VERSION_DATE, "native launch (command line omitted)");
 #else
     Sys_InstallCrashHandler("CoD2 MP " COD2_VERSION_SHORT, COD2_VERSION_SHORT,
                             COD2_VERSION_DATE, "native launch (command line omitted)");
 #endif
+#if defined(COD2_CODX) && COD2_CODX
     Cod2xNativeURL_Install();
     if (lpCmdLine && !strncasecmp(lpCmdLine, "cod2x://", 8)) {
         if (!Cod2xNativeURL_Queue(lpCmdLine))
             fprintf(stderr, "CoD2 Silicon: rejected launch link; only connect and password are accepted.\n");
         lpCmdLine = "";
     }
+#endif
 #else
     Sys_InstallCrashHandler("CoD2 MP " COD2_VERSION_SHORT, COD2_VERSION_SHORT,
                             COD2_VERSION_DATE, lpCmdLine);

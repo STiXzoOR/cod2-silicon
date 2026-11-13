@@ -27,7 +27,6 @@ extern void Com_DPrintf(const char *fmt, ...);
 extern const char *va(const char *fmt, ...);
 extern const dvar_t *Dvar_RegisterBool(const char *, unsigned char, unsigned short);
 extern int Dvar_GetInt(const char *dvarName);
-extern int Sys_Milliseconds(void);
 extern const char *NET_AdrToString(netadr_t a);
 extern qboolean NET_StringToAdr(const char *s, netadr_t *a);
 extern qboolean NET_CompareBaseAdr(netadr_t a, netadr_t b);
@@ -57,7 +56,7 @@ extern const dvar_t *com_sv_running;
 static const dvar_t *sv_update;
 static int updaterRunning;
 static netadr_t updaterAddress;
-static unsigned int updaterNextCheck;
+static uint64_t updaterNextCheck;
 static int updaterNextCheckSet;
 
 void SV_Cod2xUpdaterInit(void)
@@ -112,8 +111,17 @@ static void Updater_SendUdp(void)
     updaterAddress.port = (unsigned short)(((port & 0xff) << 8) | ((port >> 8) & 0xff));
     Com_DPrintf("AutoUpdate resolved to %s\n", NET_AdrToString(updaterAddress));
     Com_Printf(UPDATER_TEXT_CHECKING);
-    NET_OutOfBandPrint(NS_SERVER, updaterAddress, UPDATER_UDP_REQUEST);
+    NET_OutOfBandPrint(NS_CLIENT1, updaterAddress, UPDATER_UDP_REQUEST);
     Com_Printf("-----------------------------------\n");
+}
+
+static void Updater_Failed(const char *error, int periodic)
+{
+    Com_Printf(UPDATER_TEXT_FAILED, error);
+    if (Updater_UpdateEnabled() && !periodic) {
+        Com_Printf(UPDATER_TEXT_UDP);
+        Updater_SendUdp();
+    }
 }
 
 void SV_Cod2xUpdateResponse(netadr_t from)
@@ -135,29 +143,39 @@ static int Updater_ParseZpam(const char *body, Cod2xZpamManifest *manifest)
 {
     char path[64];
     memset(manifest, 0, sizeof(*manifest));
-    for (int i = 0; i < COD2X_ZPAM_MAX_FILES; ++i) {
-        Cod2xZpamFile *file = &manifest->files[i];
+    for (int i = 0; ; ++i) {
+        Cod2xZpamFile file = {0}, *grown;
         double size = 0;
         snprintf(path, sizeof(path), "$.zpam.files[%d].name", i);
-        if (!Cod2x_JsonString(body, path, file->name, sizeof(file->name)))
+        if (!Cod2x_JsonString(body, path, file.name, sizeof(file.name)))
             break;
         snprintf(path, sizeof(path), "$.zpam.files[%d].url", i);
-        if (!Cod2x_JsonString(body, path, file->url, sizeof(file->url)))
+        if (!Cod2x_JsonString(body, path, file.url, sizeof(file.url)))
             return 0;
         snprintf(path, sizeof(path), "$.zpam.files[%d].sha256", i);
-        if (!Cod2x_JsonString(body, path, file->sha256, sizeof(file->sha256)))
+        if (!Cod2x_JsonString(body, path, file.sha256, sizeof(file.sha256)))
             return 0;
         snprintf(path, sizeof(path), "$.zpam.files[%d].size", i);
         if (!Cod2x_JsonNumber(body, path, &size))
             return 0;
-        file->size = (size_t)size;
+        file.size = (size_t)size;
+        grown = realloc(manifest->files, ((size_t)i + 1) * sizeof(*grown));
+        if (!grown)
+            return 0;
+        manifest->files = grown;
+        manifest->files[i] = file;
         manifest->fileCount = i + 1;
     }
-    while (manifest->blockedCount < COD2X_ZPAM_MAX_BLOCKED) {
+    for (;;) {
+        Cod2xZpamName name, *grown;
         snprintf(path, sizeof(path), "$.zpam.block[%d]", manifest->blockedCount);
-        if (!Cod2x_JsonString(body, path, manifest->blocked[manifest->blockedCount], sizeof(manifest->blocked[0])))
+        if (!Cod2x_JsonString(body, path, name, sizeof(name)))
             break;
-        ++manifest->blockedCount;
+        grown = realloc(manifest->blocked, ((size_t)manifest->blockedCount + 1) * sizeof(*grown));
+        if (!grown)
+            return 0;
+        manifest->blocked = grown;
+        memcpy(manifest->blocked[manifest->blockedCount++], name, sizeof(name));
     }
     return 1;
 }
@@ -171,7 +189,7 @@ static void Updater_Done(void *context, const Cod2xHttpResponse *response)
     UpdaterCheck *check = context;
     int periodic = check->periodic;
     int applyUpdate = Updater_UpdateEnabled();
-    char error[256], available[64], url[1024] = "", version[256] = "";
+    char error[256], available[1024], url[1024] = "", version[1024] = "";
     Cod2xZpamManifest *manifest = NULL;
     int parsed = 0, level = 0;
 
@@ -199,10 +217,15 @@ static void Updater_Done(void *context, const Cod2xHttpResponse *response)
         int zpamSafe = 1;
         manifest = calloc(1, sizeof(*manifest));
         if (manifest) {
-            if (!Updater_ParseZpam(response->body, manifest))
+            if (!Updater_ParseZpam(response->body, manifest)) {
+                free(manifest->files);
+                free(manifest->blocked);
                 memset(manifest, 0, sizeof(*manifest));
+            }
             /* A CoD2x downgrade must not go ahead before the zPAM versions it can't run are blocked. */
             zpamSafe = SV_Cod2xZpamApplyManifest(manifest);
+            free(manifest->files);
+            free(manifest->blocked);
             free(manifest);
         }
         if (applyUpdate && zpamSafe)
@@ -210,11 +233,7 @@ static void Updater_Done(void *context, const Cod2xHttpResponse *response)
         return;
     }
 
-    Com_Printf(UPDATER_TEXT_FAILED, error);
-    if (applyUpdate && !periodic) {
-        Com_Printf(UPDATER_TEXT_UDP);
-        Updater_SendUdp();
-    }
+    Updater_Failed(error, periodic);
 }
 
 /* Only what decides the answer and the installed zPAM: a server has no identity to send. */
@@ -241,6 +260,7 @@ static void Updater_SendHttps(int periodic)
     if (body.failed || !check) {
         Cod2x_TextFree(&body);
         free(check);
+        Updater_Failed("Out of memory", periodic);
         return;
     }
     check->periodic = periodic;
@@ -257,6 +277,7 @@ static void Updater_SendHttps(int periodic)
         Com_Printf(UPDATER_TEXT_CHECKING);
     } else {
         free(check);
+        Updater_Failed("Failed to create request", periodic);
     }
     Cod2x_TextFree(&body);
 }
@@ -271,8 +292,8 @@ void SV_Cod2xUpdaterCheck(void)
    don't ask together. */
 static int Updater_PeriodicDue(void)
 {
-    unsigned int now = (unsigned int)Sys_Milliseconds();
-    int due = updaterNextCheckSet && (int)(now - updaterNextCheck) >= 0;
+    uint64_t now = Cod2x_Milliseconds64();
+    int due = updaterNextCheckSet && now >= updaterNextCheck;
     if (!updaterNextCheckSet || due) {
         const char *test = getenv("COD2X_TEST_UPDATER_PERIOD_MS");
         unsigned int random = 0;
@@ -287,6 +308,7 @@ static int Updater_PeriodicDue(void)
 
 void SV_Cod2xUpdaterFrame(void)
 {
+    Cod2x_HttpFrameFor(Updater_Done);
     if (!Updater_Dedicated())
         return;
     if (Updater_PeriodicDue() && Updater_CheckEnabled())

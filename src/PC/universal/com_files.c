@@ -1746,6 +1746,22 @@ static void FS_AddIwdFilesForGameDirectory(const char *path, const char *pszGame
     iwdfile[strlen(iwdfile) - 1] = '\0';
 
     iwdfiles = Sys_ListFiles(iwdfile, "iwd", NULL, &numfiles, 0);
+#if defined(COD2_X64) && COD2_X64 && !(defined(COD2_CODX) && COD2_CODX)
+    /* Both engines can share game data; the stock engine must not load the
+       CoD2x menu and assets supplied by the other engine. Keep excluded names
+       at the end so Sys_FreeFileList still owns every allocation. */
+    {
+        int kept = 0;
+        for (i = 0; i < numfiles; ++i) {
+            if (!I_strnicmp(iwdfiles[i], "iw_CoD2x_", 9))
+                continue;
+            char *excluded = iwdfiles[kept];
+            iwdfiles[kept++] = iwdfiles[i];
+            iwdfiles[i] = excluded;
+        }
+        numfiles = kept;
+    }
+#endif
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     /* A server loads every iwd but only one zPAM version of each kind. */
 #ifdef DEDICATED

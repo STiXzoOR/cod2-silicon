@@ -1,16 +1,17 @@
 #ifndef COD2X_ANIMATION_H
 #define COD2X_ANIMATION_H
 
+#include "../qcommon/cod2x_math.h"
+
 /* Behavioral reference: CoD2x src/shared/animation.cpp:293-541, 749-789.
    These source-level controllers use typed fields, never the hook ABI/layout. */
 typedef struct {
-    const XAnimTree_s *tree;
-    int lastTime;
     int stance;
     int stanceStart;
     int stanceDuration;
     unsigned int movement;
-    int movementStart;
+    int movementEnd;
+    int movementRunning;
     int movementDuration;
     vec3_t start[8];
 } cod2xAnimationState_t;
@@ -36,16 +37,12 @@ static cod2xAnimationState_t *BG_Cod2xState(const clientInfo_t *ci)
     if ((unsigned int)ci->clientNum >= 64 || (unsigned int)bgs->anim_user >= 2)
         return NULL;
     state = &cod2xAnimationState[bgs->anim_user][ci->clientNum];
-    if (state->tree != ci->pXAnimTree || bgs->time < state->lastTime)
-        memset(state, 0, sizeof(*state));
-    state->tree = ci->pXAnimTree;
-    state->lastTime = bgs->time;
     return state;
 }
 
 static float BG_Cod2xClamp(float value, float lo, float hi)
 {
-    return value < lo ? lo : (value > hi ? hi : value);
+    return Cod2x_Clamp(value, lo, hi);
 }
 
 static float *BG_Cod2xController(clientInfo_t *ci, int index)
@@ -57,7 +54,7 @@ static float *BG_Cod2xController(clientInfo_t *ci, int index)
 
 static void BG_Cod2xRotate(float parentYaw, vec3_t child)
 {
-    float radians = (child[1] - parentYaw) * 0.017453292519943295f;
+    float radians = Cod2x_DegreesToRadians(child[1] - parentYaw);
     float pitch = child[0];
     float roll = child[2];
     child[0] = pitch * cosf(radians) - roll * sinf(radians);
@@ -102,7 +99,8 @@ static void BG_Cod2xBlendTime(clientInfo_t *ci, lerpFrame_t *lf,
     lf->animationTime = next ? next->initialLerp : 200;
     if (transition) {
         int duration = (transition == 1 || transition == 4) ? 200 : 400;
-        lf->animationTime = transition == 2 ? 232 : duration;
+        /* Upstream truncates its binary64 400 * 0.58 result to 231 ms. */
+        lf->animationTime = transition == 2 ? 231 : duration;
         if (state) {
             state->stance = transition;
             state->stanceStart = bgs->time;
@@ -118,6 +116,80 @@ static void BG_Cod2xBlendTime(clientInfo_t *ci, lerpFrame_t *lf,
     }
 }
 
+/* The replacement controller computes decimal products in double before
+   storing float goals, matching its C++ source even on older servers. */
+static void BG_Cod2xBaseControllerGoals(const entityState_t *es, const clientInfo_t *ci,
+                                       vec3_t goals[8], float *leanOut)
+{
+    float torso[3] = {0.0f, ci->torso.yawAngle, 0.0f};
+    float head[3];
+    float origin[3] = {0.0f, ci->legs.yawAngle, 0.0f};
+    if (!(ci->clientConditions[3][0] & ((1U << ANIM_MT_CLIMBUP) | (1U << ANIM_MT_CLIMBDOWN)))) {
+        torso[0] = ci->torso.pitchAngle;
+        if (es->eFlags & 8) {
+            torso[0] = Cod2x_AngleNormalize180(torso[0]);
+            torso[0] = (float)((double)torso[0] * (torso[0] <= 0.0f ? 0.25 : 0.5));
+        }
+    }
+    Cod2x_AnglesSubtract(ci->playerAngles, torso, head);
+    Cod2x_AnglesSubtract(torso, origin, torso);
+    memset(goals, 0, sizeof(vec3_t) * 8);
+    goals[7][2] = es->fTorsoHeight;
+    float lean = GetLeanFraction(ci->lerpLean);
+    *leanOut = lean;
+    torso[2] = (float)((double)lean * 50.0 * 0.925);
+    head[2] = torso[2];
+    if (lean != 0.0f) {
+        double lateral = (es->eFlags & 4) ? (lean <= 0.0f ? 12.5 : 2.5) : (lean <= 0.0f ? 5.0 : 2.5);
+        goals[7][1] = (float)(-(double)lean * lateral + (double)goals[7][1]);
+    }
+    if (!(es->eFlags & 0x20000))
+        origin[1] = Cod2x_AngleSubtract(origin[1], ci->playerAngles[1]);
+    if (es->eFlags & 8) {
+        if (lean != 0.0f)
+            head[2] = (float)((double)head[2] * 0.5);
+        float radians = (float)((double)torso[1] * 0.0174532925199433);
+        float sine = sinf(radians), cosine = cosf(radians);
+        origin[0] += es->fTorsoPitch;
+        goals[7][0] = (float)((double)goals[7][0] + (1.0 - (double)cosine) * -24.0);
+        goals[7][1] = (float)((double)goals[7][1] + (double)sine * -12.0);
+        if (lean * sine > 0.0f)
+            goals[7][1] = (float)((double)goals[7][1] + -(double)lean * (1.0 - (double)cosine) * 16.0);
+        goals[0][1] = (float)((double)torso[2] * -1.2);
+        goals[0][2] = (float)((double)torso[2] * 0.3);
+        goals[1][1] = (float)((double)torso[1] * 0.1 - (double)torso[2] * 0.2);
+        goals[1][2] = (float)((double)torso[2] * 0.2);
+        goals[2][0] = torso[0];
+        goals[2][1] = (float)((double)torso[1] * 0.8 + (double)torso[2]);
+        goals[2][2] = (float)((double)torso[2] * -0.2);
+    } else {
+        if (lean != 0.0f && (!(es->eFlags & 4) || lean <= 0.0f)) {
+            torso[2] = (float)((double)torso[2] * 1.25);
+            head[2] = (float)((double)head[2] * 1.25);
+        }
+        origin[2] = (float)((double)origin[2] + (double)lean * 3.75);
+        goals[0][0] = (float)((double)torso[0] * 0.2);
+        goals[0][1] = (float)((double)torso[1] * 0.4);
+        goals[0][2] = (float)((double)torso[2] * 0.5);
+        goals[1][0] = (float)((double)torso[0] * 0.3);
+        goals[1][1] = (float)((double)torso[1] * 0.4);
+        goals[1][2] = (float)((double)torso[2] * 0.5);
+        goals[2][0] = (float)((double)torso[0] * 0.5);
+        goals[2][1] = (float)((double)torso[1] * 0.2);
+        goals[2][2] = (float)((double)torso[2] * -0.6);
+    }
+    if (es->fTorsoPitch != 0.0f || es->fWaistPitch != 0.0f) {
+        goals[0][0] += Cod2x_AngleSubtract(es->fTorsoPitch, es->fWaistPitch);
+        goals[5][0] = Cod2x_AngleSubtract(es->fWaistPitch, es->fTorsoPitch);
+    }
+    goals[3][0] = (float)((double)head[0] * 0.3);
+    goals[3][1] = (float)((double)head[1] * 0.3);
+    goals[4][0] = (float)((double)head[0] * 0.7);
+    goals[4][1] = (float)((double)head[1] * 0.7);
+    goals[4][2] = (float)((double)head[2] * -0.3);
+    memcpy(goals[6], origin, sizeof(vec3_t));
+}
+
 static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
                                      vec3_t goals[8], float lean,
                                      cod2xAnimationState_t *state)
@@ -131,21 +203,21 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
     int left = (flags & 0x10) != 0;
     int right = (flags & 0x20) != 0;
     float yaw = ci->lerpMoveDir;
-    unsigned int movement = 1U | (forward ? 2U : backward ? 4U : 0U) |
+    unsigned int movement = 1U | (forward ? 32U : backward ? 64U : 0U) |
         (left ? 8U : right ? 16U : 0U);
     int duration = (es->eFlags & 8) ? 400 : 250;
     int i;
 
-    if ((forward && yaw > 20.0f) || (backward && yaw < -20.0f)) movement |= 32U;
-    else if ((forward && yaw < -20.0f) || (backward && yaw > 20.0f)) movement |= 64U;
+    if ((forward && yaw > 20.0f) || (backward && yaw < -20.0f)) movement |= 16384U;
+    else if ((forward && yaw < -20.0f) || (backward && yaw > 20.0f)) movement |= 32768U;
 
     if (!(es->eFlags & 8)) {
-        movement |= (es->eFlags & 4) ? 128U : 256U;
+        movement |= (es->eFlags & 4) ? 131072U : 65536U;
         if (lean < 0.0f && (forward || backward) && yaw > 0.0f && yaw < 90.0f) {
             float tilt = -lean * ((es->eFlags & 4) ? 3.8f : 7.2f);
             goals[6][0] += tilt;
             goals[6][2] -= tilt;
-            movement |= 512U;
+            movement |= (es->eFlags & 4) ? 256U : 128U;
         }
         if ((es->eFlags & 4) && lean < 0.0f && (forward || backward)) {
             goals[0][0] -= 40.0f * lean;
@@ -167,7 +239,7 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
 #endif
         const animation_t *torso = ci->torso.animation;
         int reload = torso && strstr(torso->name, "reload") != NULL;
-        movement |= 1024U;
+        movement |= 262144U;
 #if defined(COD2_X64)
         goals[0][0] += -30.0f * scale;
         goals[1][0] += 30.0f * scale;
@@ -192,7 +264,7 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
             goals[5][0] += 7.0f;
             if (torso) {
                 goals[5][0] += reload ? 14.0f : 13.0f;
-                movement |= reload ? 2048U : 4096U;
+                movement |= reload ? 2048U : 1024U;
                 if (!reload) duration = 100;
             }
         } else if ((left || right) && scale != 0.0f) {
@@ -200,22 +272,22 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
             duration = 150;
         } else if (forward && reload) {
             goals[5][0] += 3.0f;
-            movement |= 8192U;
+            movement |= 512U;
         }
     }
 
     if (moves & ((1U << ANIM_MT_CLIMBUP) | (1U << ANIM_MT_CLIMBDOWN))) {
         int up = (moves & (1U << ANIM_MT_CLIMBUP)) != 0;
         goals[3][0] = (up ? 30.0f : -30.0f) + BG_Cod2xClamp(ci->playerAngles[0], -80.0f, 70.0f);
-        goals[3][1] = -12.0f + AngleNormalize180(ci->playerAngles[1] - ci->torso.yawAngle);
+        goals[3][1] = -12.0f + Cod2x_AngleSubtract(ci->playerAngles[1], ci->torso.yawAngle);
         goals[3][2] = -9.0f;
         BG_Cod2xRotate(0.0f, goals[3]);
         if (up) {
-            float pitch = sinf(BG_Cod2xClamp(ci->playerAngles[0], 0.0f, 90.0f) * 0.017453292519943295f);
-            goals[3][0] += pitch * sinf(BG_Cod2xClamp(yaw, -90.0f, 0.0f) * 0.017453292519943295f) * 45.0f;
-            goals[3][1] += pitch * sinf(BG_Cod2xClamp(yaw, 0.0f, 90.0f) * 0.017453292519943295f) * 30.0f;
+            float pitch = sinf(Cod2x_DegreesToRadians(BG_Cod2xClamp(ci->playerAngles[0], 0.0f, 90.0f)));
+            goals[3][0] += pitch * sinf(Cod2x_DegreesToRadians(BG_Cod2xClamp(yaw, -90.0f, 0.0f))) * 45.0f;
+            goals[3][1] += pitch * sinf(Cod2x_DegreesToRadians(BG_Cod2xClamp(yaw, 0.0f, 90.0f))) * 30.0f;
         }
-        movement |= up ? 16384U : 32768U;
+        movement |= up ? 4096U : 8192U;
     }
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
@@ -266,12 +338,17 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
             }
         }
     }
+    /* The goal calculation updates this interval even during an existing blend. */
+    state->movementDuration = duration;
     if (state->movement != movement) {
         state->movement = movement;
-        state->movementStart = bgs->time;
-        state->movementDuration = duration;
+        state->movementEnd = bgs->time + duration;
+        state->movementRunning = 1;
         for (i = 0; i < 8; ++i)
             memcpy(state->start[i], BG_Cod2xController(ci, i), sizeof(vec3_t));
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        Cod2x_PoseMovement(bgs->anim_user != 0, bgs->time, movement, duration, 0);
+#endif
     }
 }
 

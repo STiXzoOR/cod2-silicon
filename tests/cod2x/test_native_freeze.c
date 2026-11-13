@@ -24,7 +24,10 @@ const dvar_t *Dvar_FindVar(const char *name) { return !strcmp(name, "fs_homepath
 void Com_Printf(const char *format, ...) { (void)format; }
 int Cod2x_DvarText(const char *name, char *value, size_t size)
 {
-    (void)name, (void)value, (void)size;
+    if (!strcmp(name, "fs_homepath")) {
+        snprintf(value, size, "%s", home.current.string);
+        return 1;
+    }
     return 0;
 }
 extern int Cod2x_InLayer(const void *address);
@@ -32,10 +35,13 @@ extern int Cod2x_ConnectProtocol(int advertised);
 extern void Cod2x_ReportError(const char *kind, const char *message);
 extern const char *Cod2x_ServiceURL(const char *url, char *buffer, size_t size);
 /* Reports that are not CoD2x's: "<path>|<reason>" lines in receiver.txt. */
+static int freezeReports;
 static void receive(const char *path, const char *reason)
 {
     char name[512], line[1024];
     int fd, length;
+    if (path && strstr(path, "cod2x_freeze."))
+        ++freezeReports;
     snprintf(name, sizeof(name), "%s/receiver.txt", home.current.string);
     fd = open(name, O_WRONLY | O_CREAT | O_APPEND, 0600);
     length = snprintf(line, sizeof(line), "%s|%s\n", path ? path : "", reason);
@@ -76,16 +82,70 @@ static void delay(int seconds)
 int main(int argc, char **argv)
 {
     home.current.string = argc > 1 ? argv[1] : "/tmp";
+#if !defined(COD2_CODX) || !COD2_CODX
+    struct sigaction before, after;
+    sigaction(SIGUSR2, NULL, &before);
+    Cod2xNative_Init();
+    sigaction(SIGUSR2, NULL, &after);
+    int clean = !freeze.flags && before.sa_sigaction == after.sa_sigaction;
+    printf("stock watcher: dvar_flags=%u signal_unchanged=%d\n", freeze.flags,
+           before.sa_sigaction == after.sa_sigaction);
+    Cod2xNative_Shutdown();
+    return !clean;
+#else
     Sys_InstallCrashHandler("CoD2x native freeze probe", "test", "native-arm64", "watchdog probe");
     Sys_SetReportReceiver(receive);
     /* The CoD2x layer is the run of units linked between its two markers. */
     assert(Cod2x_InLayer((const void *)&Cod2x_ConnectProtocol));
     assert(!Cod2x_InLayer((const void *)&main) && !Cod2x_InLayer((const void *)&Sys_InstallCrashHandler));
     Cod2xNative_Init();
+#if defined(EXCEPTION_TEST) && EXCEPTION_TEST
+    if (argc > 2 && !strcmp(argv[2], "--exception-test")) {
+        extern void Cod2x_ReportInit(void);
+        extern void Cod2x_ConsoleMirror(const char *, size_t);
+        Cod2x_ConsoleMirror("exception fixture console\r\n", 27);
+        Cod2x_ReportInit();
+        delay(10);
+        return 1;
+    }
+#endif
+    if (argc > 2 && !strcmp(argv[2], "--freeze-cap")) {
+        for (int i = 0; i < 5; ++i) {
+            Cod2xNative_Heartbeat();
+            raise(SIGUSR2);
+            delay(1);
+        }
+        Cod2xNative_Shutdown();
+        printf("freeze signal attempts=5 reports=%d upstream cap=3\n", freezeReports);
+        assert(freezeReports == 3);
+        return 0;
+    }
     if (argc > 2 && !strcmp(argv[2], "--crash"))
         raise(SIGABRT);
     /* For the consent probe in run_native.sh: an error report, or a fault in CoD2x-layer code
        (a NULL URL, with COD2X_TEST_SERVICE_URL set). */
+    if (argc > 2 && !strcmp(argv[2], "--error-lifecycle")) {
+        extern void Cod2x_ReportFatal(const char *, const void *);
+        unsigned long long start, elapsed;
+        Cod2x_ReportError("fixture", "ok"); delay(1);
+        Cod2x_ReportError("fixture", "ok"); delay(1);
+        Cod2x_ReportError("fixture", "reject"); delay(1);
+        Cod2x_ReportError("fixture", "reject"); delay(1);
+        Cod2xNative_Heartbeat();
+        start = MacSystem_Nanoseconds();
+        Cod2x_ReportFatal("fatal-delay", (const void *)&Cod2x_ReportError);
+        elapsed = (MacSystem_Nanoseconds() - start) / 1000000;
+        printf("fatal report returned after %llu ms\n", elapsed);
+        fflush(stdout);
+        delay(3);
+        Cod2xNative_Shutdown();
+#if defined(DEBUG) && DEBUG && !(defined(ERROR_TEST) && ERROR_TEST)
+        assert(elapsed < 100);
+#else
+        assert(elapsed >= 2900 && elapsed < 3600);
+#endif
+        return 0;
+    }
     if (argc > 2 && !strcmp(argv[2], "--error")) {
         Cod2x_ReportError("zpam-update", "consent probe");
         delay(3);
@@ -112,4 +172,5 @@ int main(int argc, char **argv)
     Cod2xNative_Shutdown();
     puts("cod2x watchdog: heartbeat, disable, 12s stall and shutdown passed");
     return 0;
+#endif
 }

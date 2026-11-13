@@ -847,7 +847,7 @@ void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
 
     if (I_stricmp(c, "getstatus") == 0) {
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-        if (!SV_Cod2xUdpAllow(from, COD2X_UDP_QUERY))
+        if (!SV_Cod2xUdpAllow(from, COD2X_UDP_QUERY, "SV_Status"))
             return;
 #endif
 #if defined(COD2_X64) && COD2_IS_PATCH_13
@@ -859,7 +859,7 @@ void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
 
     if (I_stricmp(c, "getinfo") == 0) {
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-        if (!SV_Cod2xUdpAllow(from, COD2X_UDP_QUERY))
+        if (!SV_Cod2xUdpAllow(from, COD2X_UDP_QUERY, "SV_Info"))
             return;
 #endif
 #if defined(COD2_X64) && COD2_IS_PATCH_13
@@ -871,7 +871,7 @@ void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
 
     if (I_stricmp(c, "getchallenge") == 0) {
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-        if (!SV_Cod2xUdpAllow(from, COD2X_UDP_QUERY))
+        if (!SV_Cod2xUdpAllow(from, COD2X_UDP_QUERY, "SV_GetChallenge"))
             return;
 #endif
 #if defined(COD2_X64) && COD2_IS_PATCH_13
@@ -943,7 +943,7 @@ void SV_PacketEvent(netadr_t from, msg_t *msg)
 
     if (i >= sv_maxclients->current.integer) {
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-        if (!SV_Cod2xUdpAllow(from, COD2X_UDP_DISCONNECT))
+        if (!SV_Cod2xUdpAllow(from, COD2X_UDP_DISCONNECT, "SV_PacketEvent::disconnect"))
             return;
 #endif
         NET_OutOfBandPrint( (netsrc_t)(1), from, "disconnect");
@@ -1004,10 +1004,6 @@ void SV_RunFrame(void)
 {
     SV_ResetSkeletonCache();
     G_RunFrame(*(int *)((char *)&svs + 4));
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    SV_Cod2xMapChangeFrameDone();
-    SV_Cod2xUdpStats();
-#endif
 }
 
 void SV_BotUserMove(client_t *cl)
@@ -1326,10 +1322,6 @@ void SV_Frame(int msec)
         }
 #endif
         G_RunFrame(svs.time);
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-        SV_Cod2xMapChangeFrameDone();
-        SV_Cod2xUdpStats();
-#endif
         Scr_SetLoading(0);
 #if defined(COD2_X64) && COD2_X64
         /* Catch-up can run several simulation ticks in one Com_Frame. Record

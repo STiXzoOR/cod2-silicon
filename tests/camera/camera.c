@@ -33,6 +33,8 @@ static DObjAnimMat bones[2];
 static WeaponDef weapon_defs[128];
 static int view_weapon, camera_bone, available_bones, available_turret, available_player_tag;
 static int random_index, shake, perturb, third_person_mode, drop_code;
+static int camera_revision, trace_calls, blocked_trace;
+static vec3_t trace_starts[2], trace_ends[2];
 static char drop_text[128];
 static jmp_buf drop_return;
 
@@ -95,9 +97,14 @@ qboolean CG_DObjGetWorldTagPos(const centity_t *cent, struct DObj_s *obj, unsign
 void CG_TraceCapsule(trace_t *trace, const vec_t *start, const vec_t *minimum,
                      const vec_t *maximum, const vec_t *end, int skip, int mask)
 {
-    (void)start; (void)minimum; (void)maximum; (void)end; (void)skip; (void)mask;
+    assert(mask == 0x811 && skip == cg->predictedPlayerState.clientNum);
+    assert(minimum[0] == -4 && maximum[0] == 4);
+    assert(trace_calls < 2);
+    memcpy(trace_starts[trace_calls], start, sizeof(vec3_t));
+    memcpy(trace_ends[trace_calls], end, sizeof(vec3_t));
     memset(trace, 0, sizeof(*trace));
-    trace->fraction = 1.0f;
+    trace->fraction = blocked_trace ? (trace_calls ? .25f : .5f) : 1.0f;
+    ++trace_calls;
 }
 int rand(void)
 {
@@ -106,6 +113,7 @@ int rand(void)
 }
 #if defined(COD2_CODX) && COD2_CODX
 int Cod2x_ThirdPersonMode(void) { return third_person_mode; }
+int Cod2x_GameVersion(void) { return camera_revision; }
 #endif
 
 static void Near(float actual, float expected)
@@ -151,6 +159,7 @@ static void Reset(void)
     available_bones = available_turret = available_player_tag = 1;
     random_index = shake = perturb = third_person_mode = drop_code = 0;
     drop_text[0] = '\0';
+    trace_calls = blocked_trace = camera_revision = 0;
     cg_weaponsArray[1].viewModelDObj = &weapon_object;
     bones[0].trans[0] = 900.0f;
     bones[1].quat[2] = bones[1].quat[3] = bones[1].transWeight = 1.0f;
@@ -339,6 +348,52 @@ static void Orbit(void)
 #endif
 }
 
+static void ThirdPersonTrace(void)
+{
+    const int revisions[] = {0, 2, 3, 7};
+    for (int r = 0; r < 4; ++r) {
+        for (int mode = 0; mode < 2; ++mode) {
+            for (int blocked = 0; blocked < 2; ++blocked) {
+                Reset();
+                camera_revision = revisions[r]; third_person_mode = mode;
+                blocked_trace = blocked;
+                cg->refdef.vieworg[0] = 10; cg->refdef.vieworg[1] = 20; cg->refdef.vieworg[2] = 30;
+                cg->refdefViewAngles[0] = 60;
+                CG_OffsetThirdPersonView();
+#if defined(COD2_CODX) && COD2_CODX
+                if (mode) {
+                    assert(trace_calls == 0);
+                    Vector(cg->refdef.vieworg, -24.641016f, 20, 118);
+                    Near(cg->refdefViewAngles[0], 36);
+                    continue;
+                }
+#endif
+                assert(trace_calls == (blocked ? 2 : 1));
+                Vector(trace_starts[0], 10, 20, 90);
+                Vector(trace_ends[0], -24.641016f, 20, 118);
+                if (blocked) {
+                    Vector(trace_starts[1], 10, 20, 90);
+                    Vector(trace_ends[1], -7.320508f, 20, 120);
+                    Vector(cg->refdef.vieworg, 5.669873f, 20, 97.5f);
+                    Near(cg->refdefViewAngles[0], 45.246796f);
+                } else {
+                    Vector(cg->refdef.vieworg, -24.641016f, 20, 118);
+                    Near(cg->refdefViewAngles[0], 44.51636f);
+                }
+            }
+        }
+    }
+#if defined(COD2_CODX) && COD2_CODX
+    Reset(); camera_revision = 3;
+    cg->refdef.vieworg[2] = 30; cg->refdefViewAngles[0] = 5;
+    CG_OffsetThirdPersonView();
+    printf("revision3 third-person pitch: %.9g (upstream5.64531326)\n", cg->refdefViewAngles[0]);
+    fflush(stdout);
+    assert(cg->refdefViewAngles[0] == 5.645313262939453125f);
+#endif
+    puts("PASS focus45/orbit60 and collision trace geometry at revisions0/2/3/7, both modes");
+}
+
 int main(int argc, char **argv)
 {
     assert(argc == 2);
@@ -349,6 +404,7 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[1], "pipeline")) Pipeline();
     else if (!strcmp(argv[1], "normal")) Normal();
     else if (!strcmp(argv[1], "orbit")) Orbit();
+    else if (!strcmp(argv[1], "third-person-trace")) ThirdPersonTrace();
     else abort();
     printf("PASS camera %s\n", argv[1]);
     return 0;

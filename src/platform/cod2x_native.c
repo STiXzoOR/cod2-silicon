@@ -57,6 +57,7 @@ static void *WatchMain(void *argument)
 
 void Cod2xNative_Init(void)
 {
+#if defined(COD2_CODX) && COD2_CODX
     const dvar_t *home;
     struct sigaction action = {0};
     if (watchStarted) return;
@@ -81,6 +82,7 @@ void Cod2xNative_Init(void)
         return;
     }
     watchStarted = 1;
+#endif
 }
 
 void Cod2xNative_Heartbeat(void)

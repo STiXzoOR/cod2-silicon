@@ -3,6 +3,7 @@
 #endif
 #include "common_types.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/qcommon/cod2x.h"
 #include "PC/qcommon/cod2x_features.h"
 #define COD2X_CON_NAME_CHARS 40
 #define COD2X_CON_VALUE_OFFSET 340.0f
@@ -699,7 +700,7 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
 
 #if defined(COD2_X64) && COD2_X64 && defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
 #if defined(COD2_CODX) && COD2_CODX
-    version = va("CoD2 Silicon %s · CoD2x 1.4.6.8 · macOS arm64", COD2_RELEASE_VERSION);
+    version = va("CoD2 Silicon %s · CoD2x " COD2X_RELEASE " · macOS arm64", COD2_RELEASE_VERSION);
 #else
     version = va("Build %s %s", getBuildNumber(), "macOS arm64");
 #endif
@@ -782,7 +783,7 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
 
 #if defined(COD2_X64) && COD2_X64 && defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
 #if defined(COD2_CODX) && COD2_CODX
-    version = va("CoD2 Silicon %s · CoD2x 1.4.6.8 · macOS arm64", COD2_RELEASE_VERSION);
+    version = va("CoD2 Silicon %s · CoD2x " COD2X_RELEASE " · macOS arm64", COD2_RELEASE_VERSION);
 #else
     version = va("Build %s %s", getBuildNumber(), "macOS arm64");
 #endif
@@ -1550,7 +1551,11 @@ static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int d
                         break;
                     wordChars++;
                     wordWidth += width;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+                    if (wordChars > con.linewidth || (double)wordWidth * normalizedScale > (double)maxWidth) {
+#else
                     if (wordChars > con.linewidth || (float)wordWidth * normalizedScale > maxWidth) {
+#endif
                         Con_Linefeed(type, duration);
                         lineBroken = 1;
                         pixelWidth = 0;
@@ -2159,7 +2164,7 @@ static BM_NOINLINE void Con_DrawInput(void)
         return;
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    prompt = va("%s: %s> ", "CoD2x MP", "1.4.6.8");
+    prompt = va("%s: %s> ", "CoD2x MP", COD2X_RELEASE);
 #else
     prompt = va("%s: %s> ", "CoD2 MP", COD2_VERSION_SHORT);
 #endif
@@ -2239,7 +2244,7 @@ static BM_NOINLINE void Con_DrawInput(void)
         return;
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    prompt = va("%s: %s> ", "CoD2x MP", "1.4.6.8");
+    prompt = va("%s: %s> ", "CoD2x MP", COD2X_RELEASE);
 #else
     prompt = va("%s: %s> ", "CoD2 MP", COD2_VERSION_SHORT);
 #endif
@@ -2413,7 +2418,7 @@ static void CL_WriteDeathMessageText(const char *text, int color)
     if (!text)
         return;
     /* CoD2x text.cpp: names in the team colour lose every code, doubles and CoD2x codes too. */
-    if (color >= 0) {
+    if (color >= 0 && Cod2x_TextEnabled()) {
         SV_Cod2xStripTextCodes(text, clean, sizeof(clean));
         text = clean;
     }
@@ -2561,7 +2566,7 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
            then the extra ones while there is room for the victim behind them. The victim
            wraps by its length without codes, or when the line would pass cg_gameMessageWidth. */
         extern const dvar_t *cg_gameMessageWidth;
-        int limit = initialLinewidth > 78 ? 78 : initialLinewidth, i;
+        int limit = initialLinewidth > 78 && Cod2x_TextEnabled() ? 78 : initialLinewidth, i;
         char cleanVictim[256];
         CL_Cod2xKillfeedIcon(iconShader, iconWidth, iconHeight, iconColor, (unsigned char)horzFlipIcon);
         for (i = 0; cod2xKillfeedExtended && i < 4; ++i) {
@@ -2574,7 +2579,10 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
         }
         CL_WriteDeathMessageText(" ", defaultColor);
         CL_AddConsoleInfoColor(0x0a, victimColor);
-        SV_Cod2xStripTextCodes(victimName ? victimName : "", cleanVictim, sizeof(cleanVictim));
+        if (Cod2x_TextEnabled())
+            SV_Cod2xStripTextCodes(victimName ? victimName : "", cleanVictim, sizeof(cleanVictim));
+        else
+            I_strncpyz(cleanVictim, victimName ? victimName : "", sizeof(cleanVictim));
         if ((int)strlen(cleanVictim) + con.lineOffset + 3 >= limit ||
             (cg_gameMessageWidth &&
              CL_Cod2xKillfeedLineWidth() + (int)strlen(cleanVictim) > cg_gameMessageWidth->current.integer)) {

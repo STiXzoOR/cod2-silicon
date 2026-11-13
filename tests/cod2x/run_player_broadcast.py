@@ -71,7 +71,16 @@ def main():
         generated += registration + function(game, 'G_RegisterDvars')
         if re.search(r'\bG_RefreshPlayerBroadcast\(void\)\s*\{', game):
             generated += function(game, 'G_RefreshPlayerBroadcast')
-        generated += function(game, 'G_RunFrame')
+        if re.search(r'\bG_Cod2xPlayerInfoFrame\(gentity_t \*entities\)\s*\{', game):
+            generated += function(game, 'G_Cod2xPlayerInfoFrame')
+        frame = function(game, 'G_RunFrame')
+        if 'SV_Cod2xMapChangeFrameDone' in frame:
+            calls = ['SV_Cod2xMapChangeFrameDone();', 'G_Cod2xPlayerInfoFrame(g_entities);',
+                     'SV_Cod2xUdpStats();', 'G_RefreshPlayerBroadcast();']
+            assert [frame.index(call) for call in calls] == sorted(frame.index(call) for call in calls)
+            for call in calls:
+                assert frame.count(call) == 1
+        generated += frame
         generated += function(active(SNAPSHOT), 'SV_BitVectorTestLocal')
         generated += function(active(SNAPSHOT), 'SV_EntityIsVisibleToClientLocal')
         (out / 'player_broadcast_source.h').write_text(generated)
