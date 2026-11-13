@@ -35,13 +35,20 @@ void R_Cod2xXrayBegin(GfxDrawSurf *surfaces, int count, int technique, int order
     }
     Cod2xXray_GLBegin(&xray);
 }
-void R_Cod2xXrayDraw(unsigned first, unsigned last, unsigned count, const void *indices)
+void R_Cod2xXrayDraw(unsigned first, unsigned last, unsigned count, const void *indices,
+                    const void *renderTarget)
 {
     const GfxEntity *entity = backEnd.currentEntity;
-    if (!drawing || !entity || !(entity->renderFxFlags & COD2X_XRAY_TAG) || !backEnd.viewParms) return;
+    if (!drawing || !entity || !(entity->renderFxFlags & COD2X_XRAY_TAG) || !backEnd.viewParms || !renderTarget) return;
+    /* An inset viewport still uses the whole render target for the mask,
+       half-size glow textures and screen-centered fade. */
+    D3DSURFACE_DESC target;
+    void **methods = *(void ***)renderTarget;
+    if (((HRESULT (*)(const void *, D3DSURFACE_DESC *))methods[12])(renderTarget, &target) < 0) return;
     Cod2xXray_GLPlayer((unsigned)entity->renderFxFlags, entity->origin,
                       (const float *)&backEnd.viewParms->viewMatrix,
-                      (const float *)&backEnd.viewParms->projectionMatrix, first, last, count, indices);
+                      (const float *)&backEnd.viewParms->projectionMatrix,
+                      target.Width, target.Height, first, last, count, indices);
 }
 void R_Cod2xXrayEnd(void)
 {

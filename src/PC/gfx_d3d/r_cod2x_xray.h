@@ -11,7 +11,8 @@ int R_AddCmdCod2xHead(int operation, const float *point);
 void R_Cod2xXraySettings(const Cod2xXraySettings *settings);
 void R_Cod2xXrayBegin(GfxDrawSurf *surfaces, int count, int technique, int order);
 void R_Cod2xXrayEnd(void);
-void R_Cod2xXrayDraw(unsigned int first, unsigned int last, unsigned int count, const void *indices);
+void R_Cod2xXrayDraw(unsigned int first, unsigned int last, unsigned int count, const void *indices,
+                    const void *renderTarget);
 int R_Cod2xHeadAvailable(void);
 void R_Cod2xHeadCommand(int operation, const float *point);
 void R_Cod2xXrayRelease(void);

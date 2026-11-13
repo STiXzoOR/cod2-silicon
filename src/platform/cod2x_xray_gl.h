@@ -11,7 +11,8 @@ typedef struct {
 
 void Cod2xXray_GLBegin(const Cod2xXraySettings *settings);
 void Cod2xXray_GLPlayer(unsigned int flags, const float *origin, const float *view,
-                       const float *projection, unsigned int first, unsigned int last,
+                       const float *projection, int targetWidth, int targetHeight,
+                       unsigned int first, unsigned int last,
                        unsigned int count, const void *indices);
 void Cod2xXray_GLEnd(void);
 int Cod2xXray_GLHeadAvailable(void);

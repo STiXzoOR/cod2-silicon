@@ -35,7 +35,7 @@ static void CDirect3DDevice_SubmitIndexedNative(DeviceImpl *dev, const byte *ind
         glDrawRangeElements(0x4, start, end, batch, 0x1403, indices);
 #if COD2X_XRAY_RENDER
         Cod2xXray_GLHeadDraw(0);
-        R_Cod2xXrayDraw(start, end, batch, indices);
+        R_Cod2xXrayDraw(start, end, batch, indices, dev->renderTarget);
 #endif
 #else
         glDrawRangeElements(0x4, state->low, state->high, batch, 0x1403, indices);

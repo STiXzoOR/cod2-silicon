@@ -180,16 +180,16 @@ void Cod2xXray_GLBegin(const Cod2xXraySettings *settings)
     xr.settings=*settings;xr.marked=0;xr.active=1;
 }
 void Cod2xXray_GLPlayer(unsigned flags,const float *origin,const float *view,const float *projection,
-                       unsigned first,unsigned last,unsigned count,const void *indices)
+                       int targetWidth,int targetHeight,unsigned first,unsigned last,unsigned count,const void *indices)
 {
-    if(!xr.active)return;
+    if(!xr.active||targetWidth<2||targetHeight<2)return;
     Saved saved;Save(&saved);
     GLint viewport[4],samples,stencil;glGetIntegerv(GL_VIEWPORT,viewport);glGetIntegerv(GL_SAMPLES,&samples);glGetIntegerv(GL_STENCIL_BITS,&stencil);
     if(stencil<8)goto restore;
     CGLContextObj context=CGLGetCurrentContext();
     if(xr.context!=context){Cod2xXraySettings settings=xr.settings;Cod2xXray_GLRelease();xr.context=context;xr.settings=settings;xr.active=1;}
     glActiveTexture(GL_TEXTURE0);glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);
-    if(!Programs()||!Targets(viewport[0]+viewport[2],viewport[1]+viewport[3],samples))goto restore;
+    if(!Programs()||!Targets(targetWidth,targetHeight,samples))goto restore;
     glDisable(GL_SCISSOR_TEST);
     glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT,saved.draw);glReadBuffer(saved.drawBuffer);
     glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT,xr.mark);glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
