@@ -62,6 +62,12 @@ final class SnapshotWindow: NSWindow {
         return create(bounds, 1 << 3, UInt32(window.windowNumber), 1 << 3)?.takeRetainedValue()
     }
 
+    // MARK: - ship-play: one geometry definition for capture and its receipt
+    static func bounds(of windows: [NSWindow], in window: NSWindow) -> CGRect {
+        let union = windows.reduce(window.frame) { $0.union($1.frame) }
+        return NSScreen.screens.first.map { union.intersection($0.frame) } ?? union
+    }
+    static func frameJSON(_ frame: CGRect) -> [CGFloat] { [frame.minX, frame.minY, frame.width, frame.height] }
     private typealias CreateFromArray = @convention(c) (CGRect, CFArray, UInt32) -> Unmanaged<CGImage>?
     /// Our own windows composited front to back (a sheet, popover or alert over the window),
     /// cropped to the window: other apps' windows never enter the image.
@@ -70,7 +76,7 @@ final class SnapshotWindow: NSWindow {
               let handle = dlopen(nil, RTLD_NOW), let symbol = dlsym(handle, "CGWindowListCreateImageFromArray") else { return nil }
         let create = unsafeBitCast(symbol, to: CreateFromArray.self)
         // The window plus anything that hangs past its edge, such as a popover.
-        let frame = windows.reduce(window.frame) { $0.union($1.frame) }.intersection(primary.frame)
+        let frame = bounds(of: windows, in: window)
         let bounds = CGRect(x: frame.minX, y: primary.frame.maxY - frame.maxY, width: frame.width, height: frame.height)
         var ids: [UnsafeRawPointer?] = windows.map { UnsafeRawPointer(bitPattern: UInt($0.windowNumber)) }
         guard let array = CFArrayCreate(nil, &ids, ids.count, nil) else { return nil }
@@ -450,13 +456,15 @@ final class Watchdog: @unchecked Sendable {
         }
         Task { @MainActor in
             var written = 0, checked = 0
-            var findings: [String] = [], report: [[String: Any]] = []
+            var findings: [String] = [], report: [[String: Any]] = [], geometries: [[String: Any]] = []
             for dark in [true, false] {
                 for screen in screens where (only == nil || only == screen) && (!configsOnly || configScreens.contains(screen)) && (!pagesOnly || inPagesGroup(screen)) {
                     let gate = screen == "configs-catalog-loading" ? PreviewCatalogGate() : nil
                     defer { gate?.release() }
                     let model = LauncherModel(snapshot: true, catalog: { try gate?.load() ?? ConfigStudioModel.bundledCatalog() })
                     model.preview(screen)
+                    // MARK: - ship-play: the restored preview must use today's display-derived defaults.
+                    if screen == "settings-display-restored" { model.restoreDisplayDefaults(); model.savedSettings = model.settings }
                     var home: URL?
                     if configScreens.contains(screen) || screen.hasPrefix("home-loadout") || screen.hasPrefix("settings") {
                         do { home = try ConfigsPreview.seed(model, screen: screen); try await ConfigsPreview.prepare(model, screen: screen, home: home!) }
@@ -470,6 +478,7 @@ final class Watchdog: @unchecked Sendable {
                     let name = "\(screen)-\(dark ? "dark" : "light")"
                     let audit = ShapeAudit()
                     let captured = await capture(model: model, dark: dark, fallback: fallback, audit: audit, accessibility: accessibility, screen: screen)
+                    geometries.append(["screen": name, "geometry": captured.geometry])
                     // MARK: - ship-integrate
                     // Check each window against its own geometry and pixels. Sheet-local buttons
                     // must not appear beside unrelated controls in the parent window.
@@ -497,6 +506,9 @@ final class Watchdog: @unchecked Sendable {
             print("Rendered \(written) launcher review images to \(output.path)\(fallback ? " (material fallback)" : "")\(data == nil ? "" : " with private game artwork")")
             if let json = try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys]) {
                 try? json.write(to: output.appendingPathComponent("shape-audit.json"))
+            }
+            if let json = try? JSONSerialization.data(withJSONObject: geometries, options: [.prettyPrinted, .sortedKeys]) {
+                try? json.write(to: output.appendingPathComponent("capture-geometry.json"))
             }
             findings.forEach { print("SHAPE: \($0)") }
             print("Shape audit: \(checked) shapes checked, \(findings.count) findings")
@@ -549,23 +561,35 @@ final class Watchdog: @unchecked Sendable {
 
     /// The window, and an attached sheet (the import review) as its own image. A popover the screen
     /// opens is composited over the window.
-    @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit, accessibility: Accessibility = .init(), screen: String? = nil) async -> (window: CGImage?, sheet: CGImage?, sheetSize: CGSize?) {
+    @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit, accessibility: Accessibility = .init(), screen: String? = nil) async -> (window: CGImage?, sheet: CGImage?, sheetSize: CGSize?, geometry: [String: Any]) {
         let window = await show(model: model, dark: dark, glass: !fallback, audit: audit, accessibility: accessibility, screen: screen)
         await preparePageWindow(window, screen: screen)
-        let popovers = NSApp.windows.filter { $0 !== window && $0.isVisible && String(describing: type(of: $0)).contains("Popover") }
+        // Attached sheets have their own image/audit. Every other visible child joins the composite.
+        var popovers = (window.childWindows ?? []).filter { $0.isVisible && $0 !== window.attachedSheet }
+        for child in NSApp.windows where child !== window && child.isVisible && String(describing: type(of: child)).contains("Popover") {
+            if !popovers.contains(where: { $0 === child }) { popovers.append(child) }
+        }
         let image = popovers.isEmpty ? WindowCapture.image(of: window) : WindowCapture.image(of: popovers + [window], in: window)
         let sheet = window.attachedSheet.flatMap { WindowCapture.image(of: $0) }
         let sheetSize = window.attachedSheet?.frame.size
+        let parent = WindowCapture.image(of: window)
+        let receipt: [String: Any] = [
+            "parent": WindowCapture.frameJSON(window.frame),
+            "parentPixels": [parent?.width ?? 0, parent?.height ?? 0],
+            "children": popovers.map { WindowCapture.frameJSON($0.frame) },
+            "display": WindowCapture.frameJSON(NSScreen.screens.first?.frame ?? .zero),
+            "capture": WindowCapture.frameJSON(popovers.isEmpty ? window.frame : WindowCapture.bounds(of: popovers, in: window))
+        ]
         geometry(window, "capture", image: image)
         window.attachedSheet.map { window.endSheet($0) }
         popovers.forEach { $0.orderOut(nil) }
         window.orderOut(nil); window.close()
-        return (image, sheet, sheetSize)
+        return (image, sheet, sheetSize, receipt)
     }
 
     /// Reach validation through the actual sheet controls, without a production preview override.
     @MainActor static func preparePageWindow(_ window: NSWindow, screen: String?) async {
-        if screen?.hasPrefix("settings-legacy") == true, let content = window.contentView,
+        if (screen?.hasPrefix("settings-legacy") == true || screen == "about-footer"), let content = window.contentView,
            let scroll = ConfigsPreview.views(NSScrollView.self, in: content).max(by: {
                ($0.documentView?.bounds.height ?? 0) - $0.contentSize.height < ($1.documentView?.bounds.height ?? 0) - $1.contentSize.height
            }), let document = scroll.documentView {

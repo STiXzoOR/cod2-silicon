@@ -159,13 +159,45 @@ def content_floor(width, height):
     return min(60_000, 60_000 * width * height / (1440 * 900))
 
 
+# MARK: - ship-play
+# Child windows can extend outside the parent. Verify the exact parent first, then independently
+# recompute the captured union (clipped to the display) from the harness's window frames.
+def check_capture(png, screen, minimum=False):
+    (width, height), length = size(png)
+    records = json.loads((png.parent / "capture-geometry.json").read_text())
+    geometry = next(row["geometry"] for row in records if row["screen"] == png.stem)
+    parent = geometry["parent"]
+    expected = (900, 560 if minimum else 700) if surfaces.get(screen) == "settings" else ((1100, 760) if minimum else (1440, 900))
+    assert tuple(parent[2:]) == expected, (png, "parent points", parent, expected)
+    assert tuple(geometry["parentPixels"]) in sizes(screen, minimum), (png, "parent pixels", geometry)
+    scale = geometry["parentPixels"][0] / parent[2]
+    assert geometry["parentPixels"][1] / parent[3] == scale
+    children = geometry["children"]
+    if not children:
+        assert (width, height) in sizes(screen, minimum), (png, width, height)
+        assert geometry["capture"] == parent
+    else:
+        frames = [parent, *children]
+        left, bottom = min(f[0] for f in frames), min(f[1] for f in frames)
+        right, top = max(f[0] + f[2] for f in frames), max(f[1] + f[3] for f in frames)
+        dx, dy, dw, dh = geometry["display"]
+        left, bottom, right, top = max(left, dx), max(bottom, dy), min(right, dx + dw), min(top, dy + dh)
+        union = [left, bottom, right - left, top - bottom]
+        assert geometry["capture"] == union, (png, "union", geometry, union)
+        # Quartz rounds the requested rectangle out to whole pixels.
+        import math
+        expected_pixels = (math.ceil(right * scale) - math.floor(left * scale), math.ceil(top * scale) - math.floor(bottom * scale))
+        assert (width, height) == expected_pixels, (png, "composite pixels", (width, height), expected_pixels)
+    assert length > content_floor(width, height), f"{png} looks blank ({length} bytes)"
+
+
 run(out)
 for screen in screens:
     shots = {}
     for appearance in ["dark", "light"]:
         png = out / f"{screen}-{appearance}.png"
         (width, height), length = size(png)
-        assert (width, height) in sizes(screen), (png, width, height)
+        check_capture(png, screen)
         assert length > content_floor(width, height), f"{png} looks blank ({length} bytes)"
         shots[appearance] = png.read_bytes()
     assert shots["dark"] != shots["light"], screen
@@ -210,7 +242,7 @@ for screen in screens:
     for appearance in ["dark", "light"]:
         png = minimum / f"{screen}-{appearance}.png"
         (width, height), length = size(png)
-        assert (width, height) in sizes(screen, minimum=True), (png, width, height)
+        check_capture(png, screen, minimum=True)
         assert length > content_floor(width, height), f"{png} looks blank ({length} bytes)"
         shots[appearance] = png.read_bytes()
     assert shots["dark"] != shots["light"], f"minimum {screen}"
