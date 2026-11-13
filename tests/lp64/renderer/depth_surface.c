@@ -38,6 +38,9 @@ extern ULONG CDirect3DVertexBuffer_Release(const CDirect3DVertexBuffer *);
 CXX_BOOL CDirect3DDevice_mNeedsVertexShaderValidation;
 CXX_BOOL CDirect3DDevice_mNeedsTransformationValidation;
 CXX_BOOL CDirect3DDevice_mNeedsRasterizationValidation;
+unsigned char *imp___ZN15CDirect3DDevice28mNeedsVertexShaderValidationE = (void *)&CDirect3DDevice_mNeedsVertexShaderValidation;
+unsigned char *imp___ZN15CDirect3DDevice30mNeedsTransformationValidationE = (void *)&CDirect3DDevice_mNeedsTransformationValidation;
+unsigned char *imp___ZN15CDirect3DDevice29mNeedsRasterizationValidationE = (void *)&CDirect3DDevice_mNeedsRasterizationValidation;
 #endif
 void TraceBindVertexArray(unsigned int array)
 {
@@ -1021,6 +1024,41 @@ int main(int argc, char **argv)
             fprintf(stderr, "query covered=%d/2 samples=%u expected=%u\n", covered, samples, (2 - covered) * 512);
             assert(samples == (2 - covered) * 512);
         }
+#if defined(COD2_X64)
+        /* Asset reload deletes a bound vertex program. Reusing that GL name
+         * must bind the new program, as the next sun calibration requires. */
+        const char *reloadSource = "!!ARBvp1.0\nMOV result.position, vertex.position;\nMOV result.color, vertex.color;\nEND";
+        GLuint reloadedProgram;
+        COpenGLVertexProgram_COpenGLVertexProgram((const void *)&reloadedProgram, reloadSource);
+        COpenGL_SetVertexProgram((const void *)CDirect3DDevice_GL(), (const void *)&reloadedProgram);
+        glEnable(GL_VERTEX_PROGRAM_ARB);
+        glDepthFunc(GL_ALWAYS);
+        for (int reload = 0; reload < 2; ++reload) {
+            if (reload) {
+                ZN20COpenGLVertexProgramD2Ev(&reloadedProgram);
+                /* ARB permits binding an unused name to create a new object.
+                 * Explicit reuse makes the lifecycle witness deterministic. */
+                glBindProgramARB(GL_VERTEX_PROGRAM_ARB, reloadedProgram);
+                glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+                    (GLsizei)strlen(reloadSource), reloadSource);
+                glBindProgramARB(GL_VERTEX_PROGRAM_ARB, 0);
+                COpenGL_SetVertexProgram((const void *)CDirect3DDevice_GL(), (const void *)&reloadedProgram);
+                glEnable(GL_VERTEX_PROGRAM_ARB);
+            }
+            assert(!Q_Issue(query, 2));
+            glRectf(-1, -1, 1, 1);
+            assert(!Q_Issue(query, 1));
+            glFinish();
+            DWORD samples = 0xdeadbeef;
+            assert(!Q_GetData(query, &samples, sizeof(samples), 1));
+            GLenum reloadError = glGetError();
+            fprintf(stderr, "query shader reload=%d samples=%u expected=1024 error=%x\n",
+                reload, samples, reloadError);
+            assert(samples == 1024);
+            assert(reloadError == GL_NO_ERROR);
+        }
+        ZN20COpenGLVertexProgramD2Ev(&reloadedProgram);
+#endif
         assert(!Q_Release(query));
     } else if (!strcmp(test, "blend")) {
         glDisable(GL_VERTEX_PROGRAM_ARB); glDisable(GL_FRAGMENT_PROGRAM_ARB);

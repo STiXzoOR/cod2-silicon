@@ -1517,6 +1517,10 @@ static void COpenGLVertexProgram_Destroy(void *_this)
     if ((GLuint)currentProgram == program)
         glDisable(0x8620);
     glDeleteProgramsARB(1, &program);
+    /* Mac 0x1d7f6 invalidates the cached name on deletion. GL unbinds a
+     * deleted program, and asset reload may immediately reuse its name. */
+    if (s_nativeOpenGL.vertexProgram == program)
+        s_nativeOpenGL.vertexProgram = 0;
     if (imp___ZN15CDirect3DDevice28mNeedsVertexShaderValidationE)
         *imp___ZN15CDirect3DDevice28mNeedsVertexShaderValidationE = 1;
     if (imp___ZN15CDirect3DDevice30mNeedsTransformationValidationE)
