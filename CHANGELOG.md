@@ -7,9 +7,10 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [0.3.0] - 2026-11-11
 
-The picture now follows the original Windows 1.3 game, checked frame by frame
-in replayed demos, and the original shaders are built from your own game
-files. [What was tested and what was not](docs/macos-port/release-0.3.0-verification.md).
+Renderer fixes are compared with the original Windows 1.3 behavior using
+replayed demos and targeted checks. Full rendering parity is still incomplete.
+The original shaders are built from your own game files.
+[What was tested and what was not](docs/macos-port/release-0.3.0-verification.md).
 
 ### Added
 
