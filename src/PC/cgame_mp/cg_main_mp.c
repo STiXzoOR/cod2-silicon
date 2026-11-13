@@ -763,7 +763,7 @@ void CG_GetDObjOrientation(int dobjHandle, orientation_t *orient)
     }
 
 #if defined(COD2_X64)
-    memcpy(orient->origin, cg->refdef.vieworg, sizeof(orient->origin));
+    memcpy(orient->origin, cg->viewModelOrigin, sizeof(orient->origin));
 #else
     orient->origin[0] = *(const float *)((const byte *)&cgArray + 180412);
     orient->origin[1] = *(const float *)((const byte *)&cgArray + 180416);
