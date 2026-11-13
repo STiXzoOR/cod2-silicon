@@ -4443,7 +4443,12 @@ void UI_RunMenuScript(const char **args)
             if (LAN_GetServerPunkBuster(ui_netSource->current.integer,
                                        sharedUiInfo.serverStatus.displayServers[selectedServer]) == 1 &&
                 !Dvar_GetBool("cl_punkbuster")) {
+#if COD2_APPLE_SDK && defined(COD2_CODX) && COD2_CODX
+                Dvar_SetStringByName("com_errorMessage", "PunkBuster is unavailable in the native Mac engine. Choose a server that does not require it.");
+                Menus_OpenByName(&uiInfo->uiDC, "error_popmenu");
+#else
                 Menus_OpenByName(&uiInfo->uiDC, "joinpb_popmenu");
+#endif
                 return;
             }
 #endif
@@ -4623,8 +4628,17 @@ void UI_RunMenuScript(const char **args)
 #if defined(COD2_X64) && COD2_IS_PATCH_13
     if (I_stricmp(name, "setPbClStatus") == 0) {
         int status;
-        if (Int_Parse(args, &status))
+        if (Int_Parse(args, &status)) {
+#if COD2_APPLE_SDK && defined(COD2_CODX) && COD2_CODX
+            Dvar_SetBoolByName("cl_punkbuster", 0);
+            if (status) {
+                Dvar_SetStringByName("com_errorMessage", "PunkBuster is unavailable in the native Mac engine. Choose a server that does not require it.");
+                Menus_OpenByName(&uiInfo->uiDC, "error_popmenu");
+            }
+#else
             CLUI_SetPbClStatus(status);
+#endif
+        }
         return;
     }
 #endif

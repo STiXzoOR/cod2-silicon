@@ -1268,7 +1268,13 @@ void CL_InitOnceForAllClients(void)
     cl_allowDownload = Dvar_RegisterBool_mac("cl_allowDownload", 1, 0x1001);
 #if COD2_IS_PATCH_13
     cl_wwwDownload = Dvar_RegisterBool("cl_wwwDownload", 1, 0x1003);
+#if COD2_APPLE_SDK && defined(COD2_CODX) && COD2_CODX
+    extern void Dvar_SetBoolByName(const char *, unsigned char);
+    cl_punkbuster = Dvar_RegisterBool("cl_punkbuster", 0, 0x1053);
+    Dvar_SetBoolByName("cl_punkbuster", 0); /* No native proprietary provider. */
+#else
     cl_punkbuster = Dvar_RegisterBool("cl_punkbuster", 0, 0x1013);
+#endif
 #endif
 #if defined(COD2_X64) && COD2_X64
     cl_talking = Dvar_RegisterBool_mac("cl_talking", 0, 0x1000);
