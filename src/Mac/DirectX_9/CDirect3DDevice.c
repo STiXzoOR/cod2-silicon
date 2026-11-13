@@ -2135,6 +2135,34 @@ HRESULT CDirect3DDevice_CreateDepthStencilSurface(const CDirect3DDevice *_this,
         return macResult;
 #endif
 
+#if COD2_APPLE_SDK
+    if (!ppSurface || !Width || !Height)
+        return (HRESULT)0x8876086c;
+    *ppSurface = NULL;
+    void *surface = calloc(1, 0x13c);
+    if (!surface)
+        return (HRESULT)0x8007000e;
+    CXX_BOOL previousNoTextureID = g_NoTextureID;
+    g_NoTextureID = 1;
+    CDirect3DSurface_CDirect3DSurface(surface, 0, 0, 0, Width, Height, Format, NULL, NULL);
+    g_NoTextureID = previousNoTextureID;
+    /* AUX color attachments use the display extent. EXT FBOs require matching
+     * storage extents even for a logical 128x128 cookie. Each D3D surface still
+     * owns distinct depth/stencil storage; its viewport limits every clear. */
+    D3DSURFACE_DESC back = {0};
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    if (dev->backBuffer)
+        DeviceTargets_GetDesc(dev->backBuffer, &back);
+    HRESULT result = CDirect3DSurface_CreateDepthStorage(surface,
+        Width > back.Width ? Width : back.Width,
+        Height > back.Height ? Height : back.Height, MultiSample);
+    if (result < 0) {
+        DeviceTargets_Release(surface);
+        return result;
+    }
+    *ppSurface = surface;
+    return 0;
+#else
     void *surfMem = NULL;
     void *surf;
     int currentTexture = 0;
@@ -2169,6 +2197,7 @@ HRESULT CDirect3DDevice_CreateDepthStencilSurface(const CDirect3DDevice *_this,
     *ppSurface = (IDirect3DSurface9 *)surf;
     glBindTexture(0xde1, currentTexture);
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_CreateRenderTarget(const CDirect3DDevice *_this,

@@ -57,7 +57,7 @@ with (output / 'compile.log').open('w') as log:
     subprocess.run(command, cwd=ROOT, stdout=log, stderr=log, check=True)
 failed = []
 for mode in ['arb', 'fallback']:
-    for case in ['initial', 'detach', 'detached-draw', 'reattach', 'disabled', 'changed-detached', 'stencil-detached', 'clear-detached', 'clear-attached']:
+    for case in ['identity', 'initial', 'detach', 'detached-draw', 'reattach', 'disabled', 'changed-detached', 'stencil-detached', 'clear-detached', 'clear-attached']:
         env = {**os.environ, 'ASAN_OPTIONS': 'symbolize=0', 'UBSAN_OPTIONS': 'halt_on_error=1',
                'COD2_MAC_SHADER_CACHE': 'synthetic', 'D3D_PROG': '1' if mode == 'arb' else '0'}
         env.pop('COD2_MAC_SHADER_DIAGNOSTICS', None)

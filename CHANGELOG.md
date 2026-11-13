@@ -61,6 +61,7 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Changed
 
+- Shadow-cookie clears preserve scene depth near the bottom-left corner.
 - Menus with a blurred game background avoid an unnecessary full-screen
   copy when anti-aliasing is enabled.
 - Local match summaries retain slow-frame timings and renderer activity to

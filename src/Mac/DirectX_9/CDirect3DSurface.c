@@ -64,9 +64,48 @@ typedef struct {
     GLenum openGLInternalFormat;
     GLenum openGLFormat;
     GLenum openGLElementType;
+#if COD2_APPLE_SDK
+    GLuint depthRenderbuffer;
+#endif
 } CDirect3DSurfaceImpl;
 
 #if COD2_APPLE_SDK
+HRESULT CDirect3DSurface_CreateDepthStorage(void *object, UINT32 width, UINT32 height, UINT32 samples)
+{
+    CDirect3DSurfaceImpl *surface = object;
+    GLenum format;
+    switch (surface->format) {
+    case D3DFMT_D24S8: format = GL_DEPTH24_STENCIL8_EXT; break;
+    case D3DFMT_D16: format = GL_DEPTH_COMPONENT16; break;
+    case D3DFMT_D24X8: format = GL_DEPTH_COMPONENT24; break;
+    case D3DFMT_D32: format = GL_DEPTH_COMPONENT32; break;
+    default: return (HRESULT)0x8876086c;
+    }
+    GLint previous;
+    glGetIntegerv(GL_RENDERBUFFER_BINDING_EXT, &previous);
+    glGenRenderbuffersEXT(1, &surface->depthRenderbuffer);
+    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, surface->depthRenderbuffer);
+    if (samples > 1)
+        glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT, samples, format, width, height);
+    else
+        glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, format, width, height);
+    GLint allocatedWidth = 0;
+    glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT, GL_RENDERBUFFER_WIDTH_EXT, &allocatedWidth);
+    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, previous);
+    return allocatedWidth == (GLint)width ? 0 : (HRESULT)0x8876017c;
+}
+
+void CDirect3DSurface_BindDepthStorage(const void *object)
+{
+    const CDirect3DSurfaceImpl *surface = object;
+    if (!surface || !surface->depthRenderbuffer)
+        return;
+    glFramebufferRenderbufferEXT(GL_DRAW_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
+        GL_RENDERBUFFER_EXT, surface->depthRenderbuffer);
+    glFramebufferRenderbufferEXT(GL_DRAW_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT,
+        GL_RENDERBUFFER_EXT, surface->format == D3DFMT_D24S8 ? surface->depthRenderbuffer : 0);
+}
+
 void CDirect3DSurface_SetNativeDimensions(void *surface, UINT32 width, UINT32 height)
 {
 #if MAC_METAL_NATIVE
@@ -180,6 +219,10 @@ static IUnknownLikeVTable *CDirect3DSurface_GetIUnknownVTable(void *object)
 static void CDirect3DSurface_Destroy(CDirect3DSurfaceImpl *surface)
 {
 
+#if COD2_APPLE_SDK
+    if (surface->depthRenderbuffer)
+        glDeleteRenderbuffersEXT(1, &surface->depthRenderbuffer);
+#endif
 #if defined(COD2_X64)
     surface->vtable = (void **)vtbl_CDirect3DSurface;
     if (surface->releaseOwnerOnDestroy && surface->owner)

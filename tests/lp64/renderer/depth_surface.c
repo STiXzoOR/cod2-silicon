@@ -144,6 +144,38 @@ static void Pixels(int red, float depth, int stencil)
     assert(value == stencil);
 }
 
+#if defined(COD2_X64)
+static void DepthIdentity(DeviceImpl *dev)
+{
+    IDirect3DSurface9 *receiver, *cookie;
+    dev->backBuffer = dev->renderTarget;
+    assert(!CDirect3DDevice_CreateDepthStencilSurface((const void *)dev,
+        32, 32, D3DFMT_D24S8, 0, 0, 0, &receiver, NULL));
+    assert(!CDirect3DDevice_CreateDepthStencilSurface((const void *)dev,
+        16, 16, D3DFMT_D24S8, 0, 0, 0, &cookie, NULL));
+    assert(!CDirect3DDevice_SetDepthStencilSurface((const void *)dev, receiver));
+    assert(!CDirect3DDevice_Clear((const void *)dev, 0, NULL, 7, 0xff000000, .25f, 3));
+    assert(!CDirect3DDevice_SetDepthStencilSurface((const void *)dev, cookie));
+    D3DVIEWPORT9 small = {0, 16, 16, 16, 0, 1};
+    assert(!CDirect3DDevice_SetViewport((const void *)dev, &small));
+    assert(!CDirect3DDevice_Clear((const void *)dev, 0, NULL, 7, 0xff000000, 1, 0));
+    assert(!CDirect3DDevice_SetDepthStencilSurface((const void *)dev, receiver));
+    float depths[32 * 32];
+    byte stencils[32 * 32];
+    glReadPixels(0, 0, 32, 32, GL_DEPTH_COMPONENT, GL_FLOAT, depths);
+    glReadPixels(0, 0, 32, 32, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, stencils);
+    unsigned changed = 0;
+    for (unsigned i = 0; i < 32 * 32; ++i)
+        changed += fabsf(depths[i] - .25f) > .00001f || stencils[i] != 3;
+    fprintf(stderr, "receiver depth/stencil pixels changed by cookie clear: %u\n", changed);
+    assert(changed == 0);
+    assert(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE_EXT);
+    assert(!CDirect3DDevice_SetDepthStencilSurface((const void *)dev, NULL));
+    CDirect3DSurface_Release((const void *)receiver);
+    CDirect3DSurface_Release((const void *)cookie);
+}
+#endif
+
 int main(int argc, char **argv)
 {
     assert(argc == 3);
@@ -260,7 +292,11 @@ int main(int argc, char **argv)
     /* Existing stencil operations isolate the surface enable/mask contract. */
     glStencilFunc(GL_ALWAYS, 0xa6, 255);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-    if (!strcmp(test, "initial")) {
+    if (!strcmp(test, "identity")) {
+#if defined(COD2_X64)
+        DepthIdentity(&dev);
+#endif
+    } else if (!strcmp(test, "initial")) {
         assert(dev.stencilWriteMask == 0xffffffffu);
         Draw(&dev);
         Pixels(0, .25f, 0x35); /* Near default depth rejects the farther red triangle. */

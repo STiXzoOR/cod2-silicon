@@ -150,6 +150,9 @@ static void DeviceTargets_EndPixel(DeviceImpl *dev)
 
 static HRESULT DeviceTargets_SetDepth(DeviceImpl *dev, IDirect3DSurface9 *surface)
 {
+#if COD2_APPLE_SDK
+    CDirect3DSurface_BindDepthStorage(surface);
+#endif
     int detached = surface == NULL;
     if (dev->depthStencilDetached != detached) {
         if (dev->zWriteEnable) glDepthMask(!detached);
@@ -160,9 +163,9 @@ static HRESULT DeviceTargets_SetDepth(DeviceImpl *dev, IDirect3DSurface9 *surfac
             DeviceTargets_Capability(0x0b90, !detached);
         }
     }
+    DeviceTargets_AddRef(surface);
     DeviceTargets_Release(dev->depthStencil);
     dev->depthStencil = surface;
-    DeviceTargets_AddRef(surface);
     dev->depthStencilDetached = detached;
     return 0;
 }
