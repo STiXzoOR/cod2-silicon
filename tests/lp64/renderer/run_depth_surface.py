@@ -13,10 +13,13 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--compile-db', type=Path, required=True)
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--baseline', help='read production source from a local commit')
+parser.add_argument('--alpha-helper', type=Path, help='compare an explicitly saved alpha-AA helper')
+parser.add_argument('--alpha-benchmark', action='store_true', help='also run the bounded windowless 5K workload')
 args = parser.parse_args()
 output = args.output.resolve()
 output.mkdir(parents=True, exist_ok=True)
 source_dir = ROOT / 'src/Mac/DirectX_9'
+(output / 'lp64_alpha_aa.inc').write_bytes((args.alpha_helper or (source_dir / 'lp64_alpha_aa.inc')).read_bytes())
 for name in ['CDirect3DDevice.c', 'lp64_shader_draw.h']:
     path = 'src/Mac/DirectX_9/' + name
     source = subprocess.check_output(['git', 'show', f'{args.baseline}:{path}'], cwd=ROOT) if args.baseline else (ROOT / path).read_bytes()
@@ -57,11 +60,11 @@ with (output / 'compile.log').open('w') as log:
     subprocess.run(command, cwd=ROOT, stdout=log, stderr=log, check=True)
 failed = []
 for mode in ['arb', 'fallback']:
-    for case in ['alpha2', 'alpha4', 'float', 'wire-bias', 'identity', 'query', 'blend', 'two-sided', 'initial', 'detach', 'detached-draw', 'reattach', 'disabled', 'changed-detached', 'stencil-detached', 'clear-detached', 'clear-attached']:
+    for case in ['alpha2', 'alpha4', 'alpha-bounds2', 'alpha-bounds4', 'float', 'wire-bias', 'identity', 'query', 'blend', 'two-sided', 'initial', 'detach', 'detached-draw', 'reattach', 'disabled', 'changed-detached', 'stencil-detached', 'clear-detached', 'clear-attached'] + (['alpha-benchmark'] if args.alpha_benchmark and mode == 'arb' else []):
         env = {**os.environ, 'ASAN_OPTIONS': 'symbolize=0', 'UBSAN_OPTIONS': 'halt_on_error=1',
                'COD2_MAC_SHADER_CACHE': 'synthetic', 'D3D_PROG': '1' if mode == 'arb' else '0'}
         env.pop('COD2_MAC_SHADER_DIAGNOSTICS', None)
-        run = subprocess.run([str(exe), mode, case], capture_output=True, text=True, env=env)
+        run = subprocess.run([str(exe), mode, case], capture_output=True, text=True, env=env, timeout=60)
         name = mode + '-' + case
         (output / (name + '.log')).write_text(run.stdout + run.stderr)
         print(f'{name}: {run.returncode}', flush=True)

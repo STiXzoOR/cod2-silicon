@@ -5,6 +5,7 @@
  * there. Scene color, depth, coverage, and stencil storage stay independent.
  * This scope deliberately bypasses COpenGL's persistent state caches. */
 #if COD2_APPLE_SDK
+#define COD2_ALPHA_AA_BOUNDED_COPIES 1
 typedef struct DeviceAlphaAAProgram {
     struct DeviceAlphaAAProgram *next;
     char *source;
@@ -18,6 +19,8 @@ typedef struct DeviceAlphaAA {
     GLenum colorType, depthType;
     int tagsValid;
     DeviceAlphaAAProgram *programs;
+    char *boundsSource;
+    size_t boundsCapacity;
     unsigned warned;
 } DeviceAlphaAA;
 
@@ -291,6 +294,7 @@ static void DeviceAlphaAA_Destroy(DeviceImpl *dev)
         DeviceAlphaAAProgram *program=aa->programs; aa->programs=program->next;
         glDeleteProgramsARB(1,&program->program); free(program->source); free(program);
     }
+    free(aa->boundsSource);
     free(aa); dev->alphaAA=NULL;
 }
 
@@ -474,6 +478,284 @@ static int AlphaAA_Target(DeviceAlphaAA *aa, GLint samples, GLint drawBuffer)
     return 1;
 }
 
+/* Bound only the copies, never the rasterization. Unknown vertex programs and
+ * formats retain the original full-target path. Position evaluation uses
+ * outward intervals: cancellation, a near-plane crossing or a very loose
+ * object box can cost an optimization, but must not omit a covered sample. */
+typedef struct { double low, high; unsigned valid, varying; } AlphaAARange;
+typedef struct { char name[64]; AlphaAARange value[4]; int alias; } AlphaAABoundValue;
+typedef struct { AlphaAABoundValue values[192]; unsigned count; } AlphaAABoundState;
+
+static AlphaAARange AlphaAA_Number(double value)
+{
+    AlphaAARange result={value,value,isfinite(value) && fabs(value)<=4294967296.0,0};
+    if (value && result.valid) {
+        double error=fabs(value)/32768.0+1.0/4294967296.0;
+        result.low=nextafter(value-error,-INFINITY); result.high=nextafter(value+error,INFINITY);
+    }
+    return result;
+}
+
+static AlphaAARange AlphaAA_Arithmetic(AlphaAARange a, AlphaAARange b, int multiply)
+{
+    AlphaAARange result={0};
+    if (!a.valid || !b.valid || (multiply && a.varying && b.varying)) return result;
+    if (multiply) {
+        double p[4]={a.low*b.low,a.low*b.high,a.high*b.low,a.high*b.high};
+        result.low=result.high=p[0];
+        for (int i=1;i<4;++i) { result.low=fmin(result.low,p[i]); result.high=fmax(result.high,p[i]); }
+    } else { result.low=a.low+b.low; result.high=a.high+b.high; }
+    /* ARB vertex arithmetic has at least 1-in-10^5 precision. Allow more
+     * than three times that error at every scalar operation, including each
+     * multiply/add of a dot product, rather than assuming IEEE/FMA ordering.
+     * The absolute floor avoids depending on subnormal preservation. Input
+     * conversion receives the same allowance in AlphaAA_Number. */
+    double magnitude=fmax(fabs(result.low),fabs(result.high));
+    if (!multiply) magnitude+=fmax(fabs(a.low),fabs(a.high))+fmax(fabs(b.low),fabs(b.high));
+    double error=magnitude/32768.0+1.0/4294967296.0;
+    result.low=nextafter(result.low-error,-INFINITY);
+    result.high=nextafter(result.high+error,INFINITY);
+    result.valid=isfinite(result.low) && isfinite(result.high) &&
+        fmax(fabs(result.low),fabs(result.high))<=4294967296.0;
+    result.varying=a.varying|b.varying;
+    return result;
+}
+
+static int AlphaAA_BoundName(AlphaAABoundState *state, const char *name)
+{
+    for (unsigned i=0;i<state->count;++i) if (!strcmp(state->values[i].name,name)) {
+        int index=(int)i;
+        while (state->values[index].alias>=0) index=state->values[index].alias;
+        return index;
+    }
+    if (state->count==192 || strlen(name)>=sizeof(state->values[0].name)) return -1;
+    unsigned index=state->count++;
+    strcpy(state->values[index].name,name); state->values[index].alias=-1;
+    return (int)index;
+}
+
+static void AlphaAA_BoundToken(char *token)
+{
+    char *write=token;
+    for (char *read=token;*read;++read)
+        if (*read!=' ' && *read!='\t' && *read!='\r' && *read!='\n') *write++=*read;
+    *write=0;
+}
+
+static int AlphaAA_BoundMask(char *token, unsigned mask[4])
+{
+    char *dot=strrchr(token,'.');
+    for (unsigned i=0;i<4;++i) mask[i]=i;
+    if (!dot || !dot[1] || strspn(dot+1,"xyzw")!=strlen(dot+1)) return 4;
+    size_t n=strlen(dot+1); if (n>4) return 0;
+    for (unsigned i=0;i<4;++i) mask[i]=(unsigned)(strchr("xyzw",dot[1+(i<n ? i : n-1)])-"xyzw");
+    *dot=0; return (int)n;
+}
+
+static void AlphaAA_BoundOperand(AlphaAABoundState *state, char *token, AlphaAARange value[4])
+{
+    memset(value,0,4*sizeof(*value)); AlphaAA_BoundToken(token);
+    int negative=*token=='-'; if (negative) ++token;
+    unsigned mask[4]; if (!AlphaAA_BoundMask(token,mask)) return;
+    char *end; double literal=strtod(token,&end);
+    if (end!=token && !*end) {
+        for (unsigned i=0;i<4;++i) value[i]=AlphaAA_Number(literal);
+    } else if (*token=='{') {
+        char *p=token+1; AlphaAARange components[4]; unsigned count=0;
+        while (count<4) {
+            double number=strtod(p,&end); if (end==p) return;
+            components[count++]=AlphaAA_Number(number); p=end;
+            if (*p=='}' && !p[1]) break;
+            if (*p++!=',') return;
+        }
+        if (*p!='}' || p[1]) return;
+        for (unsigned i=0;i<4;++i) value[i]=components[mask[i]<count ? mask[i] : count-1];
+    } else {
+        int index=AlphaAA_BoundName(state,token); if (index<0) return;
+        for (unsigned i=0;i<4;++i) value[i]=state->values[index].value[mask[i]];
+    }
+    if (negative) for (unsigned i=0;i<4;++i) {
+        double low=value[i].low; value[i].low=-value[i].high; value[i].high=-low;
+    }
+}
+
+/* Evaluate only affine operations. Unsupported operations poison their
+ * destination; they do not reject unrelated normal/lighting calculations.
+ * Thus a flag deformation is rejected even when its shader uses the same
+ * final WVP register as an ordinary fence. No shader-name whitelist is used. */
+static int AlphaAA_PositionProgram(DeviceAlphaAA *aa, const AlphaAARange input[4], AlphaAARange output[4])
+{
+    GLint length; glGetProgramivARB(GL_VERTEX_PROGRAM_ARB,GL_PROGRAM_LENGTH_ARB,&length);
+    if (length<=0 || length>1024*1024) return 0;
+    if ((size_t)length+1>aa->boundsCapacity) {
+        char *source=realloc(aa->boundsSource,(size_t)length+1); if (!source) return 0;
+        aa->boundsSource=source; aa->boundsCapacity=(size_t)length+1;
+    }
+    glGetProgramStringARB(GL_VERTEX_PROGRAM_ARB,GL_PROGRAM_STRING_ARB,aa->boundsSource);
+    aa->boundsSource[length]=0;
+    if (strncmp(aa->boundsSource,"!!ARBvp1.0",10)) return 0;
+    AlphaAABoundState state={0};
+    int result=AlphaAA_BoundName(&state,"result.position");
+    int position=AlphaAA_BoundName(&state,"vertex.position");
+    int attribute=AlphaAA_BoundName(&state,"vertex.attrib[0]");
+    memcpy(state.values[position].value,input,4*sizeof(*input));
+    memcpy(state.values[attribute].value,input,4*sizeof(*input));
+    const char *cursor=aa->boundsSource+10;
+    while (*(cursor=AlphaAA_Space(cursor))) {
+        if (!strncmp(cursor,"END",3)) break;
+        const char *end=strchr(cursor,';'); if (!end || end-cursor>=1024) return 0;
+        char statement[1024]; memcpy(statement,cursor,(size_t)(end-cursor)); statement[end-cursor]=0; cursor=end+1;
+        char operation[32]; int used=0;
+        if (sscanf(statement,"%31s%n",operation,&used)!=1) return 0;
+        char *body=statement+used;
+        if (!strcmp(operation,"OPTION") || !strcmp(operation,"TEMP") || !strcmp(operation,"ADDRESS")) continue;
+        if (!strcmp(operation,"ATTRIB") || !strcmp(operation,"OUTPUT") || !strcmp(operation,"ALIAS") || !strcmp(operation,"PARAM")) {
+            char *equals=strchr(body,'='); if (!equals) return 0; *equals++=0;
+            AlphaAA_BoundToken(body); AlphaAA_BoundToken(equals);
+            if (!strcmp(operation,"OUTPUT") || !strcmp(operation,"ALIAS")) {
+                int source=AlphaAA_BoundName(&state,equals),destination=AlphaAA_BoundName(&state,body);
+                if (source<0 || destination<0 || source==destination) return 0;
+                state.values[destination].alias=source;
+            } else if (!strcmp(operation,"PARAM") && strstr(equals,"program.env[")) {
+                unsigned first,count=1,last; char name[64]; int consumed=0;
+                char *bracket=strchr(body,'[');
+                if (bracket) { if (sscanf(bracket,"[%u]",&count)!=1 || count>256) return 0; *bracket=0; }
+                if (bracket) {
+                    if (sscanf(equals,"{program.env[%u..%u]}%n",&first,&last,&consumed)!=2 ||
+                        !consumed || equals[consumed] || last<first || last-first+1!=count) return 0;
+                } else if (sscanf(equals,"program.env[%u]%n",&first,&consumed)!=1 ||
+                           !consumed || equals[consumed]) return 0;
+                if (first+count>256) return 0;
+                for (unsigned j=0;j<count;++j) {
+                    if (bracket) snprintf(name,sizeof(name),"%s[%u]",body,j); else snprintf(name,sizeof(name),"%s",body);
+                    int index=AlphaAA_BoundName(&state,name); if (index<0) return 0;
+                    GLfloat constant[4]; glGetProgramEnvParameterfvARB(GL_VERTEX_PROGRAM_ARB,first+j,constant);
+                    for (unsigned k=0;k<4;++k) state.values[index].value[k]=AlphaAA_Number(constant[k]);
+                }
+            } else {
+                int index=AlphaAA_BoundName(&state,body); if (index<0) return 0;
+                AlphaAA_BoundOperand(&state,equals,state.values[index].value);
+            }
+            continue;
+        }
+        char *arguments[4]={body}; unsigned count=1,braces=0;
+        for (char *p=body;*p;++p) {
+            if (*p=='{') ++braces; else if (*p=='}' && braces) --braces;
+            else if (*p==',' && !braces) { if (count==4) return 0; *p=0; arguments[count++]=p+1; }
+        }
+        AlphaAA_BoundToken(arguments[0]); unsigned mask[4]; int components=AlphaAA_BoundMask(arguments[0],mask);
+        int destination=AlphaAA_BoundName(&state,arguments[0]); if (!components || destination<0) return 0;
+        AlphaAARange operands[3][4]={0},value[4]={0};
+        for (unsigned j=1;j<count;++j) AlphaAA_BoundOperand(&state,arguments[j],operands[j-1]);
+        for (unsigned k=0;k<4;++k) {
+            if (!strcmp(operation,"MOV") && count==2) value[k]=operands[0][k];
+            else if ((!strcmp(operation,"ADD") || !strcmp(operation,"SUB")) && count==3) {
+                AlphaAARange b=operands[1][k];
+                if (!strcmp(operation,"SUB")) { double low=b.low; b.low=-b.high; b.high=-low; }
+                value[k]=AlphaAA_Arithmetic(operands[0][k],b,0);
+            } else if ((!strcmp(operation,"MUL") || !strcmp(operation,"MAD")) && count==(!strcmp(operation,"MAD") ? 4u : 3u)) {
+                value[k]=AlphaAA_Arithmetic(operands[0][k],operands[1][k],1);
+                if (count==4) value[k]=AlphaAA_Arithmetic(value[k],operands[2][k],0);
+            } else if ((!strcmp(operation,"DP3") || !strcmp(operation,"DP4")) && count==3) {
+                value[k]=AlphaAA_Number(0);
+                for (unsigned j=0;j<(operation[2]=='3' ? 3u : 4u);++j)
+                    value[k]=AlphaAA_Arithmetic(value[k],AlphaAA_Arithmetic(operands[0][j],operands[1][j],1),0);
+            }
+        }
+        for (int k=0;k<components;++k) state.values[destination].value[mask[k]]=value[mask[k]];
+    }
+    memcpy(output,state.values[result].value,4*sizeof(*output));
+    for (unsigned k=0;k<4;++k) if (!output[k].valid) return 0;
+    return 1;
+}
+
+static void AlphaAA_MatrixBounds(const GLfloat matrix[16], AlphaAARange value[4])
+{
+    AlphaAARange result[4];
+    for (unsigned row=0;row<4;++row) {
+        result[row]=AlphaAA_Number(0);
+        for (unsigned col=0;col<4;++col)
+            result[row]=AlphaAA_Arithmetic(result[row],AlphaAA_Arithmetic(value[col],AlphaAA_Number(matrix[col*4+row]),1),0);
+    }
+    memcpy(value,result,sizeof(result));
+}
+
+static void AlphaAA_CopyRect(DeviceAlphaAA *aa, UINT32 first, UINT32 last, UINT32 count,
+                             const byte *indices, GLint rect[4])
+{
+    rect[0]=rect[1]=0; rect[2]=aa->width; rect[3]=aa->height;
+    GLint polygon[2],buffer,size,type,stride,enabled,viewport[4]; const void *pointer=NULL;
+    glGetIntegerv(GL_POLYGON_MODE,polygon);
+    glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB,&buffer);
+    if (polygon[0]!=GL_FILL || polygon[1]!=GL_FILL || buffer || !indices || !count) return;
+    int programmable=glIsEnabled(GL_VERTEX_PROGRAM_ARB);
+    if (programmable) {
+        glGetVertexAttribivARB(0,GL_VERTEX_ATTRIB_ARRAY_ENABLED_ARB,&enabled);
+        if (enabled) {
+            glGetVertexAttribivARB(0,GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB,&buffer);
+            glGetVertexAttribivARB(0,GL_VERTEX_ATTRIB_ARRAY_SIZE_ARB,&size);
+            glGetVertexAttribivARB(0,GL_VERTEX_ATTRIB_ARRAY_TYPE_ARB,&type);
+            glGetVertexAttribivARB(0,GL_VERTEX_ATTRIB_ARRAY_STRIDE_ARB,&stride);
+            glGetVertexAttribPointervARB(0,GL_VERTEX_ATTRIB_ARRAY_POINTER_ARB,(void **)&pointer);
+        }
+    } else enabled=0;
+    if (!enabled) {
+        if (!glIsEnabled(GL_VERTEX_ARRAY)) return;
+        glGetIntegerv(GL_VERTEX_ARRAY_BUFFER_BINDING_ARB,&buffer);
+        glGetIntegerv(GL_VERTEX_ARRAY_SIZE,&size); glGetIntegerv(GL_VERTEX_ARRAY_TYPE,&type);
+        glGetIntegerv(GL_VERTEX_ARRAY_STRIDE,&stride); glGetPointerv(GL_VERTEX_ARRAY_POINTER,(void **)&pointer);
+    }
+    if (buffer || !pointer || type!=GL_FLOAT || (size!=3 && size!=4) || stride<0) return;
+    if (!stride) stride=size*(GLint)sizeof(float);
+    AlphaAARange position[4];
+    for (unsigned j=0;j<4;++j) { position[j]=AlphaAA_Number(j==3 ? 1 : 0); position[j].varying=1; }
+    for (UINT32 i=0;i<count;++i) {
+        UINT16 index; memcpy(&index,indices+(size_t)i*2,2);
+        if (index<first || index>last || (size_t)index>SIZE_MAX/(size_t)stride) return;
+        float vertex[4]={0,0,0,1}; memcpy(vertex,(const byte *)pointer+(size_t)index*stride,(size_t)size*sizeof(float));
+        for (unsigned j=0;j<4;++j) {
+            if (!isfinite(vertex[j]) || fabs((double)vertex[j])>4294967296.0) return;
+            AlphaAARange input=AlphaAA_Number(vertex[j]);
+            if (!i) { position[j].low=input.low; position[j].high=input.high; }
+            else { position[j].low=fmin(position[j].low,input.low); position[j].high=fmax(position[j].high,input.high); }
+        }
+    }
+    AlphaAARange clip[4]; memcpy(clip,position,sizeof(clip));
+    if (programmable) { if (!AlphaAA_PositionProgram(aa,position,clip)) return; }
+    else {
+        GLfloat matrix[16]; glGetFloatv(GL_MODELVIEW_MATRIX,matrix); AlphaAA_MatrixBounds(matrix,clip);
+        glGetFloatv(GL_PROJECTION_MATRIX,matrix); AlphaAA_MatrixBounds(matrix,clip);
+    }
+    /* Positive W throughout the box is enough: projection extrema of every
+     * unclipped triangle remain within these quotient intervals. Clipping
+     * only removes coverage. Do not invent a bound across W=0. */
+    for (unsigned j=0;j<4;++j) if (!clip[j].valid) return;
+    if (clip[3].low<=0) return;
+    glGetIntegerv(GL_VIEWPORT,viewport);
+    /* The pixel guard also covers the minimum-precision perspective divide
+     * and viewport conversion. Larger future viewports keep full copies. */
+    if (viewport[2]>32768 || viewport[3]>32768) return;
+    for (unsigned axis=0;axis<2;++axis) {
+        double ratios[4]={clip[axis].low/clip[3].low,clip[axis].low/clip[3].high,
+                          clip[axis].high/clip[3].low,clip[axis].high/clip[3].high};
+        double low=ratios[0],high=ratios[0];
+        for (unsigned j=1;j<4;++j) { low=fmin(low,ratios[j]); high=fmax(high,ratios[j]); }
+        low=viewport[axis]+(fmax(-1.0,low)+1)*viewport[axis+2]*.5;
+        high=viewport[axis]+(fmin(1.0,high)+1)*viewport[axis+2]*.5;
+        int limit=axis ? aa->height : aa->width;
+        rect[axis]=(GLint)fmax(0,fmin(limit,floor(low)-1));
+        rect[axis+2]=(GLint)fmax(rect[axis],fmin(limit,ceil(high)+1));
+    }
+    if (glIsEnabled(GL_SCISSOR_TEST)) {
+        GLint box[4]; glGetIntegerv(GL_SCISSOR_BOX,box);
+        for (unsigned axis=0;axis<2;++axis) {
+            double end=(double)box[axis]+box[axis+2];
+            rect[axis]=(GLint)fmax(rect[axis],fmin(rect[axis+2],box[axis]));
+            rect[axis+2]=(GLint)fmax(rect[axis],fmin(rect[axis+2],end));
+        }
+    }
+}
+
 static int DeviceAlphaAA_Draw(DeviceImpl *dev, UINT32 first, UINT32 last, UINT32 count, const byte *indices)
 {
     if (!dev->alphaAAFormat || !g_alphaTestEnable || dev->alphaBlendEnable) return 0;
@@ -515,9 +797,11 @@ static int DeviceAlphaAA_Draw(DeviceImpl *dev, UINT32 first, UINT32 last, UINT32
     if (!draw || drawBuffer<GL_COLOR_ATTACHMENT0_EXT || drawBuffer>GL_COLOR_ATTACHMENT15_EXT) return 0;
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     if (!AlphaAA_Target(aa,samples,drawBuffer)) { glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT,draw); glPopAttrib(); return 0; }
+    GLint copyRect[4]; AlphaAA_CopyRect(aa,first,last,count,indices,copyRect);
     if (!dev->depthStencilDetached && aa->depth) {
         glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT,draw);
-        glBlitFramebufferEXT(0,0,aa->width,aa->height,0,0,aa->width,aa->height,GL_DEPTH_BUFFER_BIT,GL_NEAREST);
+        glBlitFramebufferEXT(copyRect[0],copyRect[1],copyRect[2],copyRect[3],
+            copyRect[0],copyRect[1],copyRect[2],copyRect[3],GL_DEPTH_BUFFER_BIT,GL_NEAREST);
     }
     glDisable(GL_SCISSOR_TEST); glViewport(0,0,aa->width,aa->height);
     glDisable(GL_VERTEX_PROGRAM_ARB); glDisable(GL_FRAGMENT_PROGRAM_ARB);
@@ -561,7 +845,8 @@ static int DeviceAlphaAA_Draw(DeviceImpl *dev, UINT32 first, UINT32 last, UINT32
     glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,fp); glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT,draw);
     if (!dev->depthStencilDetached && dev->zEnable && dev->zWriteEnable && aa->depth) {
         glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT,aa->framebuffer);
-        glBlitFramebufferEXT(0,0,aa->width,aa->height,0,0,aa->width,aa->height,GL_DEPTH_BUFFER_BIT,GL_NEAREST);
+        glBlitFramebufferEXT(copyRect[0],copyRect[1],copyRect[2],copyRect[3],
+            copyRect[0],copyRect[1],copyRect[2],copyRect[3],GL_DEPTH_BUFFER_BIT,GL_NEAREST);
         glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT,read);
     }
     glPopAttrib();

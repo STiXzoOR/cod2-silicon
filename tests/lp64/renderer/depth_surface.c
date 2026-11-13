@@ -6,12 +6,27 @@
 #include <stdio.h>
 #include <string.h>
 #include <dirent.h>
+#include <time.h>
+static unsigned alphaDepthCopies;
+static int alphaCaptureCopies;
+static GLint alphaCopyRect[2][8];
+void AlphaAATraceBlit(GLint,GLint,GLint,GLint,GLint,GLint,GLint,GLint,GLbitfield,GLenum);
 /* The existing fallback uses a core-profile VAO entrypoint in a legacy context.
  * Record its known GL_INVALID_OPERATION separately; every later GL error is fatal.
  * The call itself still reaches the driver, and all pixel assertions stay active. */
 #define glBindVertexArray TraceBindVertexArray
+#define glBlitFramebufferEXT AlphaAATraceBlit
 #include "CDirect3DDevice.c"
+#undef glBlitFramebufferEXT
 #undef glBindVertexArray
+void AlphaAATraceBlit(GLint x0,GLint y0,GLint x1,GLint y1,GLint a0,GLint b0,GLint a1,GLint b1,GLbitfield mask,GLenum filter)
+{
+    if (alphaCaptureCopies && (mask&GL_DEPTH_BUFFER_BIT)) {
+        const GLint rectangle[8]={x0,y0,x1,y1,a0,b0,a1,b1};
+        assert(alphaDepthCopies<2); memcpy(alphaCopyRect[alphaDepthCopies++],rectangle,sizeof(rectangle));
+    }
+    glBlitFramebufferEXT(x0,y0,x1,y1,a0,b0,a1,b1,mask,filter);
+}
 #if defined(COD2_X64)
 #include "Mac/DirectX_9/CDirect3DVertexShader.c"
 intptr_t g_Low, g_High;
@@ -161,6 +176,223 @@ static void AlphaAARead(GLuint source, GLuint resolved, byte pixels[16*16*4])
     glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
     glReadPixels(0,0,16,16,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, source);
+}
+
+/* Compare bounded copies with the same geometry through an intentionally
+ * unrecognized, mathematically identical vertex program (the full-copy
+ * fallback). The farther draw exposes stale depth outside the copy region. */
+static void AlphaAABoundsFixture(DeviceImpl *dev, int samples)
+{
+    GLuint fbo[2],storage[3],programs[3];
+    glGenFramebuffersEXT(2,fbo); glGenRenderbuffersEXT(3,storage); glGenProgramsARB(3,programs);
+    for (int target=0;target<2;++target) {
+        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,fbo[target]); glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,storage[target]);
+        if (!target) glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT,samples,GL_RGBA8,64,64);
+        else glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT,GL_RGBA8,64,64);
+        glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0_EXT,GL_RENDERBUFFER_EXT,storage[target]);
+        if (!target) {
+            glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,storage[2]);
+            glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT,samples,GL_DEPTH24_STENCIL8_EXT,64,64);
+            glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT_EXT,GL_RENDERBUFFER_EXT,storage[2]);
+            glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_STENCIL_ATTACHMENT_EXT,GL_RENDERBUFFER_EXT,storage[2]);
+        }
+        glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT); glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+        assert(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT)==GL_FRAMEBUFFER_COMPLETE_EXT);
+    }
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,fbo[0]); glViewport(0,0,64,64);
+    glDisable(GL_VERTEX_PROGRAM_ARB); glDisable(GL_FRAGMENT_PROGRAM_ARB); glDisable(GL_DEPTH_TEST);
+    glDisable(GL_ALPHA_TEST); glDisable(GL_BLEND); glDisable(GL_CULL_FACE); glDisable(GL_FOG); glDisable(GL_LIGHTING);
+    glDisable(GL_SCISSOR_TEST); glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE); glDisable(GL_SAMPLE_COVERAGE);
+    glEnable(GL_MULTISAMPLE); glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    GLint units; glGetIntegerv(GL_MAX_TEXTURE_UNITS,&units);
+    for (int unit=0;unit<units;++unit) { glActiveTextureARB(GL_TEXTURE0_ARB+unit); glDisable(GL_TEXTURE_2D); glDisable(GL_TEXTURE_3D); glDisable(GL_TEXTURE_CUBE_MAP); }
+    glActiveTextureARB(GL_TEXTURE0_ARB);
+    glMatrixMode(GL_PROJECTION); glLoadIdentity(); glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+    glEnable(GL_STENCIL_TEST); glStencilMask(255); glClearStencil(0xa0); glClear(GL_STENCIL_BUFFER_BIT);
+    glStencilFunc(GL_ALWAYS,0xa7,255); glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE); glColorMask(0,0,0,0);
+    glEnable(GL_SAMPLE_COVERAGE); glSampleCoverage(.5f,GL_FALSE); AlphaAA_Quad(1,1); glDisable(GL_SAMPLE_COVERAGE);
+    glStencilMask(0); glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP); glColorMask(1,1,1,1);
+    const char *affine="!!ARBvp1.0\nATTRIB p = vertex.attrib[0];\nOUTPUT clip = result.position;\n"
+        "PARAM rows[4] = {program.env[40..43]};\nDP4 clip.x,p,rows[0];\nDP4 clip.y,p,rows[1];\nDP4 clip.z,p,rows[2];\nDP4 clip.w,p,rows[3];\nEND\n";
+    const char *fallback="!!ARBvp1.0\nTEMP unit,clip;\nPARAM rows[4]={program.env[40..43]};\n"
+        "DP4 clip.x,vertex.attrib[0],rows[0];\nDP4 clip.y,vertex.attrib[0],rows[1];\n"
+        "DP4 clip.z,vertex.attrib[0],rows[2];\nDP4 clip.w,vertex.attrib[0],rows[3];\n"
+        "RCP unit,{1,1,1,1}.x;\nMUL result.position,clip,unit;\nEND\n";
+    const char *fragment="!!ARBfp1.0\nTEMP phase;\nMUL phase,fragment.position,{.17,.13,0,0};\nFRC phase,phase;\n"
+        "MOV result.color,{1,.2,.1,1};\nMOV result.color.w,phase.y;\nEND\n";
+    for (int j=0;j<3;++j) {
+        GLenum target=j==2 ? GL_FRAGMENT_PROGRAM_ARB : GL_VERTEX_PROGRAM_ARB;
+        const char *source=j==0 ? affine : j==1 ? fallback : fragment;
+        glBindProgramARB(target,programs[j]); glProgramStringARB(target,GL_PROGRAM_FORMAT_ASCII_ARB,(GLsizei)strlen(source),source);
+        GLint error; glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB,&error);
+        if (error!=-1) fprintf(stderr,"bounds program %d error %d: %s\n",j,error,glGetString(GL_PROGRAM_ERROR_STRING_ARB));
+        assert(error==-1 && glGetError()==GL_NO_ERROR);
+    }
+    const float identity[16]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+    const float perspective[16]={.9f,.2f,0,.15f,-.1f,.8f,0,-.05f,0,0,1,0,.12f,.08f,0,1};
+    float vertices[6][4]={{99,99,99,99},{-.75f,-.5f,0,1},{99,99,99,99},{-.25f,-.5f,0,1},{99,99,99,99},{-.75f,0,0,1}};
+    const unsigned short indices[3]={1,3,5};
+    glBindBufferARB(GL_ARRAY_BUFFER_ARB,0); glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB,0);
+    glEnableClientState(GL_VERTEX_ARRAY); glVertexPointer(4,GL_FLOAT,sizeof(vertices[0]),vertices);
+    glVertexAttribPointerARB(0,4,GL_FLOAT,GL_FALSE,sizeof(vertices[0]),vertices); glEnableVertexAttribArrayARB(0);
+    Set(dev,D3DRS_ALPHABLENDENABLE,0); Set(dev,D3DRS_ALPHATESTENABLE,1); Set(dev,D3DRS_ALPHAFUNC,5); Set(dev,D3DRS_ALPHAREF,128);
+    Set(dev,D3DRS_ZENABLE,0); Set(dev,D3DRS_ZENABLE,1); Set(dev,D3DRS_ZWRITEENABLE,0); Set(dev,D3DRS_ZWRITEENABLE,1); Set(dev,D3DRS_ZFUNC,2);
+    Set(dev,D3DRS_STENCILFAIL,1); Set(dev,D3DRS_STENCILZFAIL,1); Set(dev,D3DRS_STENCILPASS,1); Set(dev,D3DRS_TWOSIDEDSTENCILMODE,0);
+    Set(dev,(D3DRENDERSTATETYPE)181,0x41415353);
+    byte reference[64*64*4],pixels[64*64*4];
+    for (int scenario=0;scenario<9;++scenario) for (int path=0;path<2;++path) {
+        int predicate=scenario%3,scissor=scenario>=3;
+        CDirect3DDevice_SetVertexShaderConstantF((const void *)dev,40,scenario>=6 ? perspective : identity,4);
+        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,fbo[0]); glDisable(GL_SCISSOR_TEST); glViewport(0,0,64,64);
+        glClearColor(0,0,0,0); glClearDepth(.8); glDepthMask(1); glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        if (dev->alphaAA) {
+            glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT,dev->alphaAA->framebuffer);
+            glClearDepth(.1); glClear(GL_DEPTH_BUFFER_BIT); glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT,fbo[0]);
+        }
+        if (scissor) { glViewport(7,9,48,44); glScissor(12,20,15,13); glEnable(GL_SCISSOR_TEST); }
+        Set(dev,D3DRS_STENCILENABLE,predicate!=0); Set(dev,D3DRS_STENCILFUNC,3); Set(dev,D3DRS_STENCILMASK,15);
+        Set(dev,D3DRS_STENCILREF,predicate==1 ? 7 : 0);
+        /* The following direct GL background draw deliberately bypasses the
+         * device cache, so restore its actual stencil enable before replay. */
+        if (predicate) glEnable(GL_STENCIL_TEST); else glDisable(GL_STENCIL_TEST);
+        glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,programs[2]); glEnable(GL_FRAGMENT_PROGRAM_ARB); glEnable(GL_ALPHA_TEST); glEnable(GL_DEPTH_TEST);
+        glEnable(GL_VERTEX_PROGRAM_ARB); glBindProgramARB(GL_VERTEX_PROGRAM_ARB,programs[path==0 ? 1 : 0]);
+        if (scenario==0 && path==1) glDisable(GL_VERTEX_PROGRAM_ARB);
+        alphaDepthCopies=0; alphaCaptureCopies=1;
+        assert(DeviceAlphaAA_Draw(dev,1,5,3,(const byte *)indices)); alphaCaptureCopies=0;
+        assert(alphaDepthCopies==2); assert(!memcmp(alphaCopyRect[0],alphaCopyRect[1],sizeof(alphaCopyRect[0])));
+        assert(!memcmp(alphaCopyRect[0],alphaCopyRect[0]+4,4*sizeof(GLint)));
+#if defined(COD2_ALPHA_AA_BOUNDED_COPIES)
+        if (path) assert(alphaCopyRect[0][2]-alphaCopyRect[0][0]<32 && alphaCopyRect[0][3]-alphaCopyRect[0][1]<32);
+#endif
+        if (!path) assert(alphaCopyRect[0][0]==0 && alphaCopyRect[0][1]==0 && alphaCopyRect[0][2]==64 && alphaCopyRect[0][3]==64);
+        assert(glIsEnabled(GL_ALPHA_TEST) && !!glIsEnabled(GL_STENCIL_TEST)==(predicate!=0));
+        assert(!!glIsEnabled(GL_SCISSOR_TEST)==scissor);
+        /* Expose every original depth sample, including those outside the
+         * tight rectangle and samples rejected by alpha or sunpartition. */
+        glDisable(GL_SCISSOR_TEST); glViewport(0,0,64,64); glDisable(GL_VERTEX_PROGRAM_ARB); glDisable(GL_FRAGMENT_PROGRAM_ARB);
+        glDisable(GL_ALPHA_TEST); glDisable(GL_STENCIL_TEST); glColor4f(0,0,1,1);
+        glBegin(GL_QUADS); glVertex3f(-1,-1,.3f); glVertex3f(1,-1,.3f); glVertex3f(1,1,.3f); glVertex3f(-1,1,.3f); glEnd();
+        glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT,fbo[0]); glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT,fbo[1]);
+        glBlitFramebufferEXT(0,0,64,64,0,0,64,64,GL_COLOR_BUFFER_BIT,GL_NEAREST);
+        glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT,fbo[1]); glReadPixels(0,0,64,64,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+        if (!path) memcpy(reference,pixels,sizeof(pixels)); else assert(!memcmp(reference,pixels,sizeof(pixels)));
+        assert(glGetError()==GL_NO_ERROR);
+        fprintf(stderr,"alpha bounds %dx scenario%d path%d rect=%d,%d..%d,%d depth/color exact\n",samples,scenario,path,
+            alphaCopyRect[0][0],alphaCopyRect[0][1],alphaCopyRect[0][2],alphaCopyRect[0][3]);
+    }
+#if defined(COD2_ALPHA_AA_BOUNDED_COPIES)
+    CDirect3DDevice_SetVertexShaderConstantF((const void *)dev,40,identity,4);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,fbo[0]); glEnable(GL_VERTEX_PROGRAM_ARB); glBindProgramARB(GL_VERTEX_PROGRAM_ARB,programs[0]);
+    GLint bounds[4]; vertices[1][3]=-1;
+    AlphaAA_CopyRect(dev->alphaAA,1,5,3,(const byte *)indices,bounds);
+    assert(bounds[0]==0 && bounds[1]==0 && bounds[2]==64 && bounds[3]==64); vertices[1][3]=1;
+    AlphaAA_CopyRect(dev->alphaAA,1,1,3,(const byte *)indices,bounds);
+    assert(bounds[0]==0 && bounds[1]==0 && bounds[2]==64 && bounds[3]==64);
+    glPolygonMode(GL_FRONT_AND_BACK,GL_LINE); AlphaAA_CopyRect(dev->alphaAA,1,5,3,(const byte *)indices,bounds);
+    assert(bounds[0]==0 && bounds[1]==0 && bounds[2]==64 && bounds[3]==64); glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+#endif
+    glDisable(GL_VERTEX_PROGRAM_ARB); glDisable(GL_FRAGMENT_PROGRAM_ARB); glDisable(GL_DEPTH_TEST); glDisable(GL_ALPHA_TEST);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,fbo[0]); glEnable(GL_STENCIL_TEST); glStencilMask(0); glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
+    for (int ref=0;ref<2;++ref) {
+        glStencilFunc(GL_EQUAL,ref ? 0xa7 : 0xa0,255); glClear(GL_COLOR_BUFFER_BIT); glColor4f(1,1,1,1); AlphaAA_Quad(1,1);
+        glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT,fbo[0]); glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT,fbo[1]);
+        glBlitFramebufferEXT(0,0,64,64,0,0,64,64,GL_COLOR_BUFFER_BIT,GL_NEAREST);
+        glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT,fbo[1]); glReadPixels(0,0,64,64,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+        for (unsigned j=0;j<sizeof(pixels);++j) assert(abs((int)pixels[j]-128)<=1);
+        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,fbo[0]);
+    }
+    DeviceAlphaAA_Destroy(dev); glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
+    glDeleteProgramsARB(3,programs); glDeleteFramebuffersEXT(2,fbo); glDeleteRenderbuffersEXT(3,storage);
+    assert(glGetError()==GL_NO_ERROR);
+}
+
+static double AlphaAAClock(void)
+{
+    struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t);
+    return t.tv_sec+t.tv_nsec*1e-9;
+}
+static void AlphaAABenchmark(DeviceImpl *dev, int samples, const char *shaderPath)
+{
+    const int width=5120,height=2880;
+    GLuint fbo,storage[2],fp,vp;
+    glGenFramebuffersEXT(1,&fbo); glGenRenderbuffersEXT(2,storage);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,fbo);
+    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,storage[0]);
+    glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT,samples,GL_RGBA8,width,height);
+    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0_EXT,GL_RENDERBUFFER_EXT,storage[0]);
+    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,storage[1]);
+    glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT,samples,GL_DEPTH24_STENCIL8_EXT,width,height);
+    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT_EXT,GL_RENDERBUFFER_EXT,storage[1]);
+    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_STENCIL_ATTACHMENT_EXT,GL_RENDERBUFFER_EXT,storage[1]);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT); glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+    assert(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT)==GL_FRAMEBUFFER_COMPLETE_EXT);
+    glViewport(0,0,width,height);
+    glDisable(GL_VERTEX_PROGRAM_ARB); glDisable(GL_CULL_FACE); glDisable(GL_FOG); glDisable(GL_LIGHTING); glDisable(GL_SCISSOR_TEST);
+    glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE); glDisable(GL_SAMPLE_COVERAGE); glEnable(GL_MULTISAMPLE);
+    glMatrixMode(GL_PROJECTION); glLoadIdentity(); glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+    GLint units; glGetIntegerv(GL_MAX_TEXTURE_UNITS,&units);
+    for(int unit=0;unit<units;++unit){glActiveTextureARB(GL_TEXTURE0_ARB+unit);glDisable(GL_TEXTURE_2D);glDisable(GL_TEXTURE_3D);glDisable(GL_TEXTURE_CUBE_MAP);}
+    glActiveTextureARB(GL_TEXTURE0_ARB);
+    const char source[]="!!ARBfp1.0\nTEMP phase;\nMUL phase,fragment.texcoord[0],{47,31,0,0};\nFRC phase,phase;\nMOV result.color,{1,.5,.25,1};\nMOV result.color.w,phase.y;\nEND\n";
+    glGenProgramsARB(1,&fp);glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,fp);
+    glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB,GL_PROGRAM_FORMAT_ASCII_ARB,sizeof(source)-1,source);glEnable(GL_FRAGMENT_PROGRAM_ARB);
+    const char vertexSource[]="!!ARBvp1.0\nPARAM rows[4]={program.env[40..43]};\n"
+        "DP4 result.position.x,vertex.position,rows[0];\nDP4 result.position.y,vertex.position,rows[1];\n"
+        "DP4 result.position.z,vertex.position,rows[2];\nDP4 result.position.w,vertex.position,rows[3];\n"
+        "MOV result.texcoord[0],vertex.texcoord[0];\nEND\n";
+    glGenProgramsARB(1,&vp); glBindProgramARB(GL_VERTEX_PROGRAM_ARB,vp);
+    if (shaderPath) {
+        FILE *file=fopen(shaderPath,"rb"); assert(file); fseek(file,0,SEEK_END); long length=ftell(file); rewind(file);
+        char *text=calloc(1,(size_t)length+1); assert(text); assert(fread(text,1,length,file)==(size_t)length); fclose(file);
+        glProgramStringARB(GL_VERTEX_PROGRAM_ARB,GL_PROGRAM_FORMAT_ASCII_ARB,(GLsizei)length,text); free(text);
+        fprintf(stderr,"5K4x vertex program source=%s\n",shaderPath);
+        for (unsigned row=0;row<4;++row) { float values[4]={0}; values[row]=1; glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB,23+row,values); }
+    } else glProgramStringARB(GL_VERTEX_PROGRAM_ARB,GL_PROGRAM_FORMAT_ASCII_ARB,sizeof(vertexSource)-1,vertexSource);
+    GLint programError; glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB,&programError); assert(programError==-1);
+    for (unsigned row=0;row<4;++row) { float values[4]={0}; values[row]=1; glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB,40+row,values); }
+    float vertex[3][6]={{-1,-1,0,1,0,0},{3,-1,0,1,2,0},{-1,3,0,1,0,2}};
+    const unsigned short indices[3]={0,1,2};
+    glBindBufferARB(GL_ARRAY_BUFFER_ARB,0);glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB,0);
+    glEnableClientState(GL_VERTEX_ARRAY);glVertexPointer(4,GL_FLOAT,sizeof(vertex[0]),vertex);
+    glClientActiveTextureARB(GL_TEXTURE0_ARB);glEnableClientState(GL_TEXTURE_COORD_ARRAY);glTexCoordPointer(2,GL_FLOAT,sizeof(vertex[0]),vertex[0]+4);
+    Set(dev,D3DRS_ALPHABLENDENABLE,0);Set(dev,D3DRS_ALPHATESTENABLE,1);Set(dev,D3DRS_ALPHAFUNC,5);Set(dev,D3DRS_ALPHAREF,128);
+    Set(dev,D3DRS_ZENABLE,0);Set(dev,D3DRS_ZENABLE,1);Set(dev,D3DRS_ZWRITEENABLE,0);Set(dev,D3DRS_ZWRITEENABLE,1);Set(dev,D3DRS_ZFUNC,4);
+    Set(dev,D3DRS_STENCILENABLE,0);Set(dev,D3DRS_TWOSIDEDSTENCILMODE,0);
+    glColorMask(1,1,1,1);glClearDepth(1);glClearColor(0,0,0,0);
+    assert(CDirect3DDevice_SupportsTransparencyAA()); assert(glGetError()==GL_NO_ERROR);
+    fprintf(stderr,"5K4x workload renderer=%s version=%s dimensions=%dx%d samples=%d depthWrite=1 repetitions=3 drawsPerBatch=4\n",glGetString(GL_RENDERER),glGetString(GL_VERSION),width,height,samples);
+    DWORD modes[]={0,0x434f5441u,0x41415353u};
+    for(int programmable=0;programmable<2;++programmable) for(int small=0;small<2;++small){
+        if(programmable)glEnable(GL_VERTEX_PROGRAM_ARB);else glDisable(GL_VERTEX_PROGRAM_ARB);
+        vertex[1][0]=small ? -1+256.0f/width : 3; vertex[2][1]=small ? -1+256.0f/height : 3;
+        for(int mode=0;mode<3;++mode){
+            Set(dev,(D3DRENDERSTATETYPE)181,modes[mode]);glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+            alphaDepthCopies=0; alphaCaptureCopies=mode==2;
+            if(!DeviceAlphaAA_Draw(dev,0,2,3,(const byte*)indices))glDrawRangeElements(GL_TRIANGLES,0,2,3,GL_UNSIGNED_SHORT,indices);
+            alphaCaptureCopies=0;
+            if(mode==2){
+                assert(alphaDepthCopies==2 && !memcmp(alphaCopyRect[0],alphaCopyRect[1],sizeof(alphaCopyRect[0])));
+#if defined(COD2_ALPHA_AA_BOUNDED_COPIES)
+                if(small)assert(alphaCopyRect[0][2]-alphaCopyRect[0][0]<256 && alphaCopyRect[0][3]-alphaCopyRect[0][1]<256);
+#endif
+                fprintf(stderr,"5K4x vertex=%s coverage=%s depth-copy rect=%d,%d..%d,%d\n",programmable?"affine-program":"fixed",small?"128x128-triangle":"fullscreen",alphaCopyRect[0][0],alphaCopyRect[0][1],alphaCopyRect[0][2],alphaCopyRect[0][3]);
+            }
+            glFinish();assert(glGetError()==GL_NO_ERROR);
+            for(int rep=0;rep<3;++rep){
+                double begin=AlphaAAClock();
+                for(int draw=0;draw<4;++draw)
+                    if(!DeviceAlphaAA_Draw(dev,0,2,3,(const byte*)indices))glDrawRangeElements(GL_TRIANGLES,0,2,3,GL_UNSIGNED_SHORT,indices);
+                glFinish();double end=AlphaAAClock();
+                GLint bound;glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING_EXT,&bound);assert(bound==(GLint)fbo);
+                glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING_EXT,&bound);assert(bound==(GLint)fbo);
+                assert(glGetError()==GL_NO_ERROR);assert(glIsEnabled(GL_ALPHA_TEST));assert(!glIsEnabled(GL_SAMPLE_ALPHA_TO_COVERAGE));
+                fprintf(stderr,"5K4x vertex=%s coverage=%s mode=%d repeat=%d millisecondsPerDraw=%.6f glError=0\n",programmable?"affine-program":"fixed",small?"128x128-triangle":"fullscreen",mode,rep,1000*(end-begin)/4);
+            }
+        }
+    }
+    DeviceAlphaAA_Destroy(dev);glDeleteProgramsARB(1,&vp);glDeleteProgramsARB(1,&fp);glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);glDeleteFramebuffersEXT(1,&fbo);glDeleteRenderbuffersEXT(2,storage);
+    assert(glGetError()==GL_NO_ERROR);
 }
 
 static void AlphaAAFixture(DeviceImpl *dev, int samples)
@@ -373,6 +605,35 @@ static void AlphaAACache(const char *path)
     }
     closedir(directory); fprintf(stderr,"alpha AA shader variants: %d compiled, %d failed\n",count,failed);
     assert(count && !failed && glGetError()==GL_NO_ERROR);
+#if defined(COD2_ALPHA_AA_BOUNDED_COPIES)
+    /* Exercise the position recognizer on the shipped translation output;
+     * shader names are assertions here, never production eligibility rules. */
+    directory=opendir(path); assert(directory); int bounded=0,full=0;
+    DeviceAlphaAA aa={0}; AlphaAARange input[4],clip[4];
+    for (unsigned j=0;j<4;++j) { input[j]=AlphaAA_Number(j==3 ? 1 : .25); input[j].varying=1; }
+    for (unsigned base=0;base<3;++base) for (unsigned row=0;row<4;++row) {
+        float values[4]={0}; values[row]=1;
+        glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB,(unsigned[]){0,23,27}[base]+row,values);
+    }
+    while ((entry=readdir(directory))) {
+        size_t n=strlen(entry->d_name); if (n<4 || strcmp(entry->d_name+n-4,".vsa")) continue;
+        char filename[4096]; snprintf(filename,sizeof(filename),"%s/%s",path,entry->d_name);
+        FILE *file=fopen(filename,"rb"); assert(file); fseek(file,0,SEEK_END); long length=ftell(file); rewind(file);
+        char *source=calloc(1,(size_t)length+1); assert(source); assert(fread(source,1,length,file)==(size_t)length); fclose(file);
+        GLuint program; glGenProgramsARB(1,&program); glBindProgramARB(GL_VERTEX_PROGRAM_ARB,program);
+        glProgramStringARB(GL_VERTEX_PROGRAM_ARB,GL_PROGRAM_FORMAT_ASCII_ARB,(GLsizei)length,source);
+        GLint error; glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB,&error); assert(error==-1);
+        int recognized=AlphaAA_PositionProgram(&aa,input,clip);
+        if (recognized) ++bounded; else ++full;
+        if (!strcmp(entry->d_name,"lmap_s_dtl.vsa") || !strcmp(entry->d_name,"lprobe_sm_s_dtl.vsa")) assert(recognized);
+        if (strstr(entry->d_name,"flag")) assert(!recognized);
+        fprintf(stderr,"alpha AA position %s: %s\n",entry->d_name,recognized ? "proved affine" : "full-copy fallback");
+        glDeleteProgramsARB(1,&program); free(source);
+    }
+    closedir(directory); free(aa.boundsSource);
+    fprintf(stderr,"alpha AA position programs: %d affine, %d full-copy fallback\n",bounded,full);
+    assert(bounded && full && glGetError()==GL_NO_ERROR);
+#endif
 }
 #endif
 
@@ -600,6 +861,10 @@ int main(int argc, char **argv)
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     if (!strcmp(test, "alpha-cache")) {
         assert(argc==4); AlphaAACache(argv[3]);
+    } else if (!strcmp(test, "alpha-benchmark")) {
+        AlphaAABenchmark(&dev,4,argc==4 ? argv[3] : NULL);
+    } else if (!strcmp(test, "alpha-bounds2") || !strcmp(test, "alpha-bounds4")) {
+        AlphaAABoundsFixture(&dev,test[12]-'0');
     } else if (!strcmp(test, "alpha2") || !strcmp(test, "alpha4")) {
         AlphaAAFixture(&dev, test[5]-'0');
     } else if (!strcmp(test, "wire-bias")) {
