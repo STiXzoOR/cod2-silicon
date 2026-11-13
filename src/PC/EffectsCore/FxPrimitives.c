@@ -992,7 +992,9 @@ static inline __attribute__((always_inline)) int FloatToByte(float f)
 
 static inline __attribute__((always_inline)) int FlashColorByte(float f)
 {
-#if defined(COD2_X64)
+#if defined(COD2_APPLE_SDK)
+    return FxNative_FlashColorByte(FxNative_FloatToInt(__builtin_rintf(f * 255.0f)));
+#elif defined(COD2_X64)
     return FxNative_FlashColorByte(FxNative_FloatToInt(floorf(f * 255.0f + 0.5f)));
 #else
     int v = (int)floorf(f * 255.0f + 0.5f);
@@ -1944,7 +1946,11 @@ void Emitter_UpdateEmitFx(const Emitter *_this, vec_t *bindVelocity, const orien
         float denominator = (speedSq + speedSq) * seconds;
         if (denominator != 0.0f) {
             float correction = (speedSq * secondsSq - stepSq) / denominator;
+#if defined(COD2_APPLE_SDK)
+            float rounded = __builtin_rintf(correction * 1000.0f);
+#else
             float rounded = floorf(correction * 1000.0f + 0.5f);
+#endif
             /* Mac cvttss2si returns INT_MIN on overflow/NaN; its integer math wraps. */
             int correctionTime = rounded >= -2147483648.0f && rounded < 2147483648.0f
                 ? (int)rounded : (int)0x80000000u;
