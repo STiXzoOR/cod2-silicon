@@ -2,6 +2,14 @@
 #include "cod2x.h"
 #include <assert.h>
 
+#if defined(COD2_CODX) && COD2_CODX
+#define EXPECTED_HOST_REVISION COD2X_HOST_REVISION
+#define EXPECTED_PROTOCOL COD2X_PROTOCOL
+#else
+#define EXPECTED_HOST_REVISION 0
+#define EXPECTED_PROTOCOL 118
+#endif
+
 #include "host_globals.h"
 const dvar_t *sv_punkbuster, *sv_wwwDownload, *sv_wwwBaseURL, *sv_wwwDlDisconnected;
 const dvar_t *net_lanauthorize;
@@ -11,6 +19,8 @@ void *imp_sv = &sv, *imp_svs = &svs;
 static LegacyHacks legacy;
 static LegacyHacks *legacyPointer = &legacy;
 void *imp_legacyHacks = &legacyPointer;
+static void *bgsPointer;
+void *imp_bgs = &bgsPointer;
 int sv_serverId_value, com_frameTime = 1000, com_errorEntered;
 void *imp_com_frameTime = &com_frameTime, *imp_com_errorEntered = &com_errorEntered;
 void *imp_dvar_modifiedFlags = &dvar_modifiedFlags;
@@ -51,6 +61,19 @@ int Cod2x_LimitedFPS(int fps, int limited) { return limited && (fps < 125 || fps
 void Cod2x_FeaturesInit(void) {}
 void Cod2x_FeaturesFrame(int active, int demo) { (void)active; (void)demo; }
 void Cod2x_IwdSystemInfo(const char *names) { (void)names; }
+void Cod2x_ReportInit(void) {}
+void Cod2x_PoseInit(void) {}
+int Cod2x_ShortHwid(void) { return 1; }
+const char *Cod2x_HwidError(unsigned int *code) { *code = 0; CHECK(0); return "unexpected identity failure"; }
+int Sys_Cod2xHwidRetry(unsigned int code, const char *error) { (void)code; (void)error; CHECK(0); return 0; }
+/* Server service setup is outside this fixture; revision ownership uses the
+   production Cod2x_ServerInit/Spawn/Shutdown bodies linked below. */
+void SV_Cod2xServerInit(void) {}
+void SV_Cod2xServerSpawned(void) {}
+void GScr_Cod2xNetBeforeMapChange(int shutdown) { (void)shutdown; }
+void GScr_Cod2xDropCallbacks(void) {}
+void SV_Cod2xMatchBeforeMapChange(int shutdown) { (void)shutdown; }
+void UI_LoadIngameMenus(void) {}
 #if !defined(COD2_CODX) || !COD2_CODX
 int Cod2x_GameVersion(void) { return 0; }
 void Cod2x_Disconnect(void) {}
@@ -80,7 +103,7 @@ void SV_SendServerCommand(client_t *client_, svscmd_type type, const char *forma
 }
 void ClientBegin(int num) { CHECK(num == 0); ++begins; }
 gentity_t *SV_GentityNum(int num) { assert(num >= 0 && num < 2); return &entities[num]; }
-void SV_RunFrame(void) { CHECK(Cod2x_GameVersion() == 0); }
+void SV_RunFrame(void) { CHECK(Cod2x_GameVersion() == EXPECTED_HOST_REVISION); }
 void SV_Heartbeat_f(void) {}
 void SV_SetConfig(int start, int max, int count) { (void)start; (void)max; (void)count; }
 void SV_SetGametype(void) {}
@@ -88,7 +111,7 @@ void SV_InitGameProgs(int savepersist)
 {
     (void)savepersist;
     ++gameplayStarts;
-    CHECK(Cod2x_GameVersion() == 0);
+    CHECK(Cod2x_GameVersion() == EXPECTED_HOST_REVISION);
 }
 void SV_RestartGameProgs(qboolean savepersist) { SV_InitGameProgs(savepersist); }
 void SV_AddServerCommand(client_t *client_, svscmd_type type, const char *cmd)
@@ -151,7 +174,7 @@ char *Dvar_InfoString(int flags) { (void)flags; return ""; }
 void SV_SetConfigstring(int index, const char *text)
 {
     if (index == 1)
-        CHECK(strstr(text, "\\g_cod2x\\0") != NULL);
+        CHECK(strstr(text, va("\\g_cod2x\\%d", EXPECTED_HOST_REVISION)) != NULL);
 }
 void LargeLocal_LargeLocal(const LargeLocal *local, int size) { (void)local; CHECK(size == 0x2000); }
 void *LargeLocal_GetBuf(const LargeLocal *local)
@@ -192,11 +215,11 @@ static void systemInfo(const char *text, int demo)
 
 static void checkHost(void)
 {
-    CHECK(Cod2x_GameVersion() == 0);
-    CHECK(Dvar_FindVar("g_cod2x")->current.integer == 0);
+    CHECK(Cod2x_GameVersion() == EXPECTED_HOST_REVISION);
+    CHECK(Dvar_FindVar("g_cod2x")->current.integer == EXPECTED_HOST_REVISION);
 #ifdef COD2X_HOST_REVISION
     CHECK(Cod2x_ServerActive());
-    CHECK(Cod2x_ServerGameVersion() == 0);
+    CHECK(Cod2x_ServerGameVersion() == EXPECTED_HOST_REVISION);
 #endif
 }
 
@@ -211,9 +234,9 @@ int main(void)
     com_sv_running = Dvar_RegisterBool("sv_running", 0, 0);
     cl_paused = Dvar_RegisterInt("cl_paused", 0, 0, 1, 0);
     SV_Init();
-    CHECK(Dvar_FindVar("protocol")->current.integer == 118);
-    CHECK(Dvar_FindVar("protocol")->domain.integer.min == 118);
-    CHECK(Dvar_FindVar("protocol")->domain.integer.max == 118);
+    CHECK(Dvar_FindVar("protocol")->current.integer == EXPECTED_PROTOCOL);
+    CHECK(Dvar_FindVar("protocol")->domain.integer.min == EXPECTED_PROTOCOL);
+    CHECK(Dvar_FindVar("protocol")->domain.integer.max == EXPECTED_PROTOCOL);
 #if !defined(COD2_CODX) || !COD2_CODX
     CHECK(Dvar_FindVar("g_cod2x") == NULL);
     SV_SpawnServer("stock_fixture");
@@ -238,21 +261,21 @@ int main(void)
 #ifdef DEDICATED
     CHECK(Dvar_FindVar("g_competitive")->flags == 0x1008);
 #else
-    CHECK(Dvar_FindVar("g_competitive")->flags == 0x18);
+    CHECK(Dvar_FindVar("g_competitive")->flags == 0x1018);
 #endif
     SV_SpawnServer("fixture");
     checkHost();
     CHECK(gameplayStarts == 1);
     CHECK(identityReads == 0);
-    CHECK(shared->domain.integer.min == 0 && shared->domain.integer.max == 0);
-    Dvar_SetInt(shared, 6);
+    CHECK(shared->domain.integer.min == EXPECTED_HOST_REVISION && shared->domain.integer.max == EXPECTED_HOST_REVISION);
+    Dvar_SetInt(shared, 0);
     checkHost();
 
 #ifndef DEDICATED
     Dvar_SetInt(com_dedicated, 0);
     Cod2x_Init();
     CHECK(Dvar_FindVar("g_cod2x") == shared && identityReads == 1);
-    CHECK(Cod2x_GameVersion() == 0);
+    CHECK(Cod2x_GameVersion() == EXPECTED_HOST_REVISION);
 
     /* Explicit defaults and the generic systeminfo loop must respect ownership. */
     systemInfo("\\g_cod2x\\6\\g_competitive\\1\\sv_serverid\\17", 0);
@@ -273,7 +296,7 @@ int main(void)
 #endif
 
     /* Soft restart reasserts before gameplay; full spawn republishes systeminfo. */
-    ((dvar_t *)shared)->current.integer = 6;
+    ((dvar_t *)shared)->current.integer = 0;
     SV_InitDvar();
     checkHost();
     SV_SpawnServer("fixture_restart");
@@ -286,14 +309,14 @@ int main(void)
     usercmd_t cmd = {0};
     SV_ClientEnterWorld(&hostClient, (const dvar_t *(*)[4])&cmd);
     CHECK(begins == 1 && publications == 1);
-    CHECK(!strcmp(published, "v g_cod2x \"0\""));
+    CHECK(!strcmp(published, va("v g_cod2x \"%d\"", EXPECTED_HOST_REVISION)));
     Dvar_ClearModified(sv_maxclients);
     ++com_frameTime;
-    ((dvar_t *)shared)->current.integer = 6;
+    ((dvar_t *)shared)->current.integer = 0;
     SV_MapRestart(1);
     checkHost();
     CHECK(begins == 2 && publications == 2);
-    CHECK(!strcmp(published, "v g_cod2x \"0\""));
+    CHECK(!strcmp(published, va("v g_cod2x \"%d\"", EXPECTED_HOST_REVISION)));
     CHECK(gameplayStarts == 3);
     SV_MapRestart(0);
     checkHost();
