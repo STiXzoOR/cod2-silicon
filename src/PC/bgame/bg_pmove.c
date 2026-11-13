@@ -987,7 +987,12 @@ static void PM_ACCELERATE_ABI PM_Accelerate(playerState_t *ps, pml_t *pml, const
 #if defined(COD2_X64)
     /* Original MAXSS selects wishspeed on equal operands, including signed zero. */
     float speed = stopspeed->current.value > wishspeed ? stopspeed->current.value : wishspeed;
+#if defined(COD2_APPLE_SDK)
+    /* Windows 1.3 PM_Accelerate multiplies speed by frame time before acceleration. */
+    accelspeed = fminf(addspeed, (speed * pml->frametime) * accel);
+#else
     accelspeed = fminf(addspeed, speed * (accel * pml->frametime));
+#endif
 #else
     accelspeed = fminf(addspeed, fmaxf(stopspeed->current.value, wishspeed) * (accel * pml->frametime));
 #endif
