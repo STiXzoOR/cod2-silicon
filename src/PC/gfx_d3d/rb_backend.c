@@ -5130,6 +5130,7 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
             cz = xyz[0] * row0[2] + xyz[1] * row1[2] + xyz[2] * row2[2] + row3[2];
             cw = xyz[0] * row0[3] + xyz[1] * row1[3] + xyz[2] * row2[3] + row3[3];
             ox = cw * invWidth;
+            cz -= 0.001f * cw;
             oy = cw * invHeight;
 
             vc = RB_CheckTessOverflow4(t);
