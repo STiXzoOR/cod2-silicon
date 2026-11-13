@@ -71,6 +71,10 @@ static void Cod2x_SharedInit(int dedicated)
     cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, dedicated ? 0x1008 : 0x1018);
     Dvar_RegisterInt("sv_playerBroadcastLimit", 15, 0, 64, 0x1000);
     Dvar_RegisterBool("g_shotgun_spread_fix", 1, 0x1080);
+#if defined(DEBUG) && DEBUG
+    extern void GScr_Cod2xDebugInit(void);
+    GScr_Cod2xDebugInit();
+#endif
 }
 
 void Cod2x_ServerInit(int dedicated)

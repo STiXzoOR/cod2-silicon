@@ -14,6 +14,7 @@ p.add_argument('--output', type=Path, required=True)
 p.add_argument('--baseline', help='Read game callback/entry bodies from a local Git commit')
 p.add_argument('--ubsan', action='store_true', help='Also expose retained full compiler/parser/VM UBSan limitations')
 p.add_argument('--dedicated', action='store_true')
+p.add_argument('--debug', action='store_true', help='Exercise upstream DEBUG-only GSC probes and callbacks')
 p.add_argument('--vm-source', type=Path, help='Use an explicitly supplied private VM TU')
 p.add_argument('--compiler-source', type=Path, help='Use an explicitly supplied private compiler TU; other script sources remain local')
 args = p.parse_args()
@@ -30,6 +31,8 @@ flags += ['-UNDEBUG', '-I' + str(out), '-fsanitize=' + sanitizers, '-fno-omit-fr
           '-ffunction-sections', '-fdata-sections', '-iquote', str(ROOT / 'src/PC/script')]
 if args.ubsan:
     flags += ['-fno-sanitize-recover=all']
+if args.debug:
+    flags += ['-DDEBUG=1']
 game_path = 'src/PC/game_mp/g_scr_main_mp.c'
 game_source = (subprocess.check_output(['git', 'show', args.baseline + ':' + game_path], cwd=ROOT, text=True)
                if args.baseline else (ROOT / game_path).read_text())
@@ -57,9 +60,33 @@ implemented = 'GScr_Cod2xBeforeMapChange' in game
 prefix = '#define STOP_VM_CALLBACK_IMPLEMENTED ' + str(int(implemented)) + '\n'
 (out / 'stop_vm_features.h').write_text(prefix)
 if implemented:
-    prefix += '\n'.join(re.findall(r'^static .*\bcod2x(?:Stop|AllowOne)\w*[^\n]*;', game, re.M)) + '\n'
+    prefix += '\n'.join(re.findall(r'^static .*\bcod2x(?:Stop|AllowOne|Test)\w*[^\n]*;', game, re.M)) + '\n'
     names = ['GScr_Cod2xAllowOneMapChange', 'GScr_Cod2xBeforeMapChange', *names]
+if args.debug:
+    names += ['GScr_Cod2xTestReturn', 'GScr_Cod2xTestStartGameType', 'GScr_Cod2xTestPlayerConnect',
+              'Scr_StartupGameType', 'Scr_PlayerConnect']
 (out / 'stop_vm_game.h').write_text(prefix + ''.join(function(game, n) for n in names))
+debug_header = ''
+if args.debug:
+    source = (ROOT / 'src/PC/game_mp/g_cod2x_script.c').read_text()
+    script = subprocess.run([*flags, '-iquote', str(ROOT / 'src/PC/game_mp'), '-E', '-P', '-x', 'c', '-'],
+                            input=source, capture_output=True, text=True, check=True).stdout
+    debug_names = ['GScr_Cod2xRunCallback', 'GScr_Cod2xDebugWebSocketCommand', 'GScr_Cod2xDebugInit',
+                   'GScr_Cod2xTestPlayerGetName', 'GScr_Cod2xTestUndefined', 'GScr_Cod2xTestBool',
+                   'GScr_Cod2xTestInt', 'GScr_Cod2xTestFloat', 'GScr_Cod2xTestString',
+                   'GScr_Cod2xTestVector', 'GScr_Cod2xTestArray', 'GScr_Cod2xTestAllOk', 'GScr_Cod2xTestGetAll']
+    debug_header = ''.join(function(script, name) for name in debug_names)
+    debug_header += 'typedef struct { const char *name; void (*call)(void); int developer; } ScriptFunction;\n'
+    table = re.search(r'static const ScriptFunction scriptFunctions\[\] = \{([\s\S]*?)\n};', script)[1]
+    entries = [line for line in table.splitlines() if '"test_' in line]
+    assert len(entries) == 9
+    debug_header += 'static const ScriptFunction scriptFunctions[] = {\n' + '\n'.join(entries) + '\n};\n'
+    debug_header += function(script, 'GScr_Cod2xGetFunction')
+    player = (ROOT / 'src/PC/game_mp/g_client_script_cmd_mp.c').read_text()
+    assert '{ "test_playerGetName", (BuiltinMethod)GScr_Cod2xTestPlayerGetName, 0 }' in player
+else:
+    assert 'cod2xTestStart' not in game
+(out / 'stop_vm_debug.h').write_text(debug_header)
 errors = ''
 for path, name in [('src/PC/qcommon/common.c', 'Com_Error'),
                    ('src/PC/script/scr_parser.c', 'RuntimeError')]:

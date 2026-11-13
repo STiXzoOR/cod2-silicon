@@ -19,6 +19,9 @@ void GScr_Cod2xRunCallback(int handle, unsigned int paramcount);
 void GScr_Cod2xDropCallbacks(void);
 void GScr_Cod2xNetBeforeMapChange(int shutdown);
 void GScr_Cod2xHttpFrame(void);
+#if defined(DEBUG) && DEBUG
+void GScr_Cod2xDebugInit(void);
+#endif
 
 /* Match calls (cod2x_match.c). */
 void GScr_Cod2xMatchUploadData(void);
