@@ -210,29 +210,32 @@ struct MediaEntry: Identifiable {
     // MARK: - ship-servers state (list, filters, connection)
     @Published var servers: [GameServer] = []
     @Published var selectedServer: String? {
-        didSet { if selectedServer != oldValue { serverPassword = "" }; do { try serverConnection.select(address: selectedServer) } catch { serverConnection.clear(); notice = error.localizedDescription } }
+        didSet { do { try serverConnection.select(address: selectedServer) } catch { serverConnection.clear(); notice = error.localizedDescription } }
     }
     @Published var refreshing = false
-    @Published var queryProgress = ""
     @Published var search = ""
-    @Published var filter: ServerFilter = .all
     @Published var sort: ServerSort = .ping
     @Published var sortAscending = true
     @Published var serverSearchRequested = false
-    @Published var hideEmpty = false
-    @Published var hideFull = false
-    @Published var directAddress = "" {
-        didSet {
-            guard directAddress != oldValue else { return }
-            directConnectError = nil
-            do { try serverConnection.select(address: directAddress.isEmpty ? nil : directAddress) }
-            catch { try? serverConnection.select(address: nil) }
-        }
-    }
-    @Published var serverPassword = ""
-    @Published var directPassword = ""
-    @Published var directConnectError: String?
-    @Published var refreshResult = ""
+    /// All · Favorites · Recent, the switch at the left of the Servers toolbar.
+    @Published var serverScope: ServerScope = .all
+    /// The Filters popover's choices; saved in launcher-servers.json whenever they change.
+    @Published var serverFilters = ServerFilters() { didSet { if serverFilters != oldValue { saveServerPrefs() } } }
+    @Published var serverFiltersPresented = false
+    /// While refreshing: servers asked, finished (answered or timed out) and answered.
+    @Published var refreshAsked = 0
+    @Published var refreshFinished = 0
+    @Published var refreshAnswered = 0
+    /// The last refresh got no list from either master server; the cached list is what's shown.
+    @Published var mastersDidNotAnswer = false
+    /// Servers › Launch on a server that runs the other game version: the engine for that one match.
+    @Published var matchEngine: (address: String, engine: GameEngine)?
+    /// The AnyCancellable (ModelServers.swift) that ends a one-match switch when the game closes.
+    var matchEngineReset: AnyObject?
+    var serverPrefs = ServerBrowserPrefs()
+    var serverPrefsLoaded = false
+    /// The review harness keeps remembered passwords in memory instead of the Keychain.
+    var previewPasswords: [String: String] = [:]
     var browserTask: Task<Void, Never>?
     /// Servers asked for their version before Original 1.3 joins them: answered (or not), and in flight.
     var checkedAddresses: Set<String> = []
@@ -258,7 +261,7 @@ struct MediaEntry: Identifiable {
     /// Either engine of this app, as running processes report their executables.
     var gameExecutables: Set<URL> { Set(GameEngine.allCases.map { $0.executable(in: gameBundle).resolvingSymlinksInPath() }) }
     /// The engine the next game starts with: the one chosen in Settings, when this app carries it.
-    var chosenEngine: GameEngine { installedEngines.contains(settings.engine) ? settings.engine : .cod2x }
+    var chosenEngine: GameEngine { matchEngineOverride ?? (installedEngines.contains(settings.engine) ? settings.engine : .cod2x) }
     var originalAvailable: Bool { installedEngines.contains(.original) }
     var activeGamePID: pid_t? {
         if let engine, engine.isRunning { return engine.processIdentifier }

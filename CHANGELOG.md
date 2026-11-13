@@ -14,10 +14,11 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 ### Added
 
 - Play with CoD2x or with the original 1.3. **Settings → General → Game
-  version** chooses which game starts; CoD2x is the default. The original 1.3 can only
-  join stock 1.3 servers, and the launcher offers to turn CoD2x on when you
-  pick a CoD2x server. Config Studio, Check-up and the ready check follow the
-  version you chose, and the few settings one version cannot hold are kept
+  version** chooses which game starts; CoD2x is the default. Launching on a
+  server that runs the other version starts that version for the match, after
+  asking (“Don’t ask again” always uses the server’s version), and goes back
+  to your choice afterwards. Config Studio, Check-up and the ready check follow
+  the version you play, and the few settings one version cannot hold are kept
   for the other.
 - CoD2x 1.4.6.8 in full, where 0.2.1 covered part of it. As a player: demo
   upload, CoD2x's text colours and killfeed icons, hidden server addresses on
@@ -76,8 +77,17 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   launch options are kept as you typed them and accept lines copied from a
   shortcut or the console, such as `+set com_hunkMegs 512`.
 - The server browser shows how old its results are, explains empty lists, and
-  offers native search, reversible sorting and server context menus. Direct
-  connect reports invalid addresses beside the field.
+  offers search (⌘F), reversible sorting and server context menus. All,
+  Favorites and Recent switch between every server, your starred ones and the
+  ones you played; Filters (game version, mode, ping, empty, full, locked) are
+  kept between launches. Refresh shows how many servers have answered and can
+  be stopped, keeping what arrived; when the master servers don’t answer, the
+  last list stays with its time. **Connect to Address…** (⌘L) replaces the
+  direct-connect bar: it takes an address, a host name or a `cod2x://` link,
+  asks that server and shows what answered. A locked server asks for its
+  password, which can be remembered in your keychain on this Mac. The ready
+  check offers another loadout that already suits the server. Copy Join Link
+  copies a `cod2x://` link CoD2x on Windows also opens.
 - Library refreshes when you return to the launcher and lists the newest files
   first. Recordings can be renamed or moved to Trash; screenshots support native
   Quick Look, copying and file actions.

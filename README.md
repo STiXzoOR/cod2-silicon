@@ -120,12 +120,16 @@ caps.
   or, when that fails, plain UDP. CoD2x servers you join receive your hardware
   ID hash. zPAM files a server needs are downloaded from the CoD2x project's
   site.
-- **With the original 1.3 chosen** in **Settings → General → Game version**, the
-  game sends nothing to the CoD2x project.
+- **With the original 1.3 running**, the game sends nothing to the CoD2x
+  project. **Settings → General → Game version** sets your default; joining
+  a server can use the other version for that match.
 - **The launcher** contacts GitHub when you check for updates (once a day while
   it is open, unless you turn off **Settings → Updates → Check for updates
-  automatically**), install one, or download the CoD2x files, and asks both
-  master servers for its server list. **Settings → Privacy** lists all of this.
+  automatically**), install one, or download the CoD2x files. It asks both
+  master servers when you refresh the server list or enable refresh on opening
+  Servers, and asks a single server when you type its address in **Connect to
+  Address**. Passwords you choose to remember stay in your keychain on this Mac
+  and are sent only to that server. **Settings → Privacy** lists these contacts.
 - **Report a Problem** opens a prefilled issue in your browser; the app sends
   nothing itself.
 - **Crash reports** are sent only if you turn a switch on in **Settings →
