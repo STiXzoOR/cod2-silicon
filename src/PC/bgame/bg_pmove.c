@@ -1390,12 +1390,12 @@ static void PM_REGPARM2_ABI PM_SetMovementDir(pmove_t *pm, pml_t *pml)
 
 #if defined(COD2_CODX) && COD2_CODX
     /* CoD2x src/shared/animation.cpp:1308-1355. movementDir holds degrees. */
-    if (Cod2x_GameVersion() >= 3) {
+    {
         float yaw = 0.0f;
         if ((ps->pm_flags & 1) && !(ps->eFlags & 0x300)) {
             yaw = AngleDelta(ps->proneDirection, ps->viewangles[1]);
         } else if ((fmove || smove) && ps->groundEntityNum != 1023 && pml->frametime > 0.0f) {
-            vec3_t displacement;
+            vec3_t displacement, direction;
             float speedSquared = 0.0f;
             int axis;
             for (axis = 0; axis < 3; ++axis) {
@@ -1403,8 +1403,10 @@ static void PM_REGPARM2_ABI PM_SetMovementDir(pmove_t *pm, pml_t *pml)
                 speedSquared += displacement[axis] * displacement[axis];
             }
             if (sqrtf(speedSquared) / pml->frametime > 5.0f) {
-                yaw = AngleDelta(vectoyaw(displacement), ps->viewangles[1]);
-                if (fmove < 0 && (yaw > 90.0f || yaw < -90.0f))
+                Vec3NormalizeTo(displacement, direction);
+                vectoangles(direction, direction);
+                yaw = AngleDelta(direction[1], ps->viewangles[1]);
+                if (fmove < 0 && (Cod2x_GameVersion() < 3 || yaw > 90.0f || yaw < -90.0f))
                     yaw = AngleNormalize180(yaw + 180.0f);
             }
         }
