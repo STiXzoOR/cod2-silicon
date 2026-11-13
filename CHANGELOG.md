@@ -161,6 +161,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   accented letters and punctuation no longer turn into unrelated characters.
 - Ambient tracks and music decode in the background with bounded buffers,
   avoiding the full-track decode pause and the decoded-size limit on long music.
+- The first room-effect transition restores the original preset's wet level
+  instead of leaving reverb muted. Reverb synthesis itself still needs parity work.
 - Wheel messages change weapons once each, including high-resolution scrolling,
   as in Windows 1.3.
 - Opening chat in a window keeps mouse-look active. Original 1.3 windowed

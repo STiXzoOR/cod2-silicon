@@ -786,6 +786,13 @@ void AIL_set_digital_master_room_type(void *driver, int room)
 {
     (void)driver;
     pthread_mutex_lock(&audio_mutex);
+    /* Miles 6 Windows room table at 0x21155838, first float of each
+     * 16-byte entry. Both digital and Fast 2D provider room setters restore
+     * these master levels after SND_SetRoomtype's pre-fade wet assignment. */
+    static const float wet[26] = { 0.000f, 0.250f, 0.417f, 0.750f, 0.208f, 0.300f, 0.403f, 0.500f, 0.500f, 0.361f, 0.500f, 0.153f, 0.361f, 0.444f, 0.250f, 0.111f, 0.111f, 0.200f, 0.550f, 0.120f, 0.208f, 0.652f, 1.000f, 0.875f, 0.139f, 0.486f };
+    if ((unsigned int)room >= 26) room = 0;
+    master_dry = 1.0f;
+    master_wet = wet[room];
     reverb_delay = REVERB_DELAY(2401 + (int)((unsigned int)room % 16) * 337);
     pthread_mutex_unlock(&audio_mutex);
 }
