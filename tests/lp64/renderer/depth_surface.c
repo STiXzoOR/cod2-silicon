@@ -296,6 +296,31 @@ int main(int argc, char **argv)
 #if defined(COD2_X64)
         DepthIdentity(&dev);
 #endif
+    } else if (!strcmp(test, "query")) {
+        QueryStub *query = NULL;
+        assert(!CDirect3DDevice_CreateQuery((const void *)&dev, (D3DQUERYTYPE)9, (bool (*)())&query));
+        glDisable(GL_VERTEX_PROGRAM_ARB); glDisable(GL_FRAGMENT_PROGRAM_ARB);
+        glDisable(GL_STENCIL_TEST); glDisable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST); glDepthFunc(GL_LESS);
+        glMatrixMode(GL_PROJECTION); glLoadIdentity();
+        glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+        for (int covered = 0; covered <= 2; ++covered) {
+            glDepthMask(GL_TRUE); glClearDepth(1); glClear(GL_DEPTH_BUFFER_BIT);
+            if (covered) {
+                glEnable(GL_SCISSOR_TEST); glScissor(0, 0, covered * 16, 32);
+                glClearDepth(0); glClear(GL_DEPTH_BUFFER_BIT); glDisable(GL_SCISSOR_TEST);
+            }
+            glDepthMask(GL_FALSE);
+            assert(!Q_Issue(query, 2));
+            glRectf(-1, -1, 1, 1);
+            assert(!Q_Issue(query, 1));
+            glFinish();
+            DWORD samples = 0xdeadbeef;
+            assert(!Q_GetData(query, &samples, sizeof(samples), 1));
+            fprintf(stderr, "query covered=%d/2 samples=%u expected=%u\n", covered, samples, (2 - covered) * 512);
+            assert(samples == (2 - covered) * 512);
+        }
+        assert(!Q_Release(query));
     } else if (!strcmp(test, "initial")) {
         assert(dev.stencilWriteMask == 0xffffffffu);
         Draw(&dev);

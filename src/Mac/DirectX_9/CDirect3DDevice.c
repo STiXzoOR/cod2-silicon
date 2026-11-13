@@ -253,6 +253,10 @@ static IDirect3DVertexDeclaration9 *g_activeVertexDeclaration = NULL;
 typedef struct {
     void **vtable;
     ULONG refCount;
+#if COD2_APPLE_SDK
+    GLuint name;
+    Bool active, issued;
+#endif
 } QueryStub;
 
 static HRESULT Q_QueryInterface(const void *t, const IID *i, void **p)
@@ -271,8 +275,12 @@ static ULONG Q_Release(const void *t)
 {
     QueryStub *q = (QueryStub *)t;
     ULONG rc = --q->refCount;
-    if (!rc)
+    if (!rc) {
+#if COD2_APPLE_SDK
+        if (q->name) glDeleteQueriesARB(1, &q->name);
+#endif
         free(q);
+    }
     return rc;
 }
 static HRESULT Q_GetDevice(const void *t, void **d)
@@ -284,25 +292,54 @@ static HRESULT Q_GetDevice(const void *t, void **d)
 static int Q_GetType(const void *t)
 {
     (void)t;
-    return 0;
+    return 9; /* D3DQUERYTYPE_OCCLUSION */
 }
 static UINT Q_GetDataSize(const void *t)
 {
     (void)t;
-    return 0;
+    return sizeof(DWORD);
 }
 static HRESULT Q_Issue(const void *t, DWORD f)
 {
-    (void)t;
-    (void)f;
+#if COD2_APPLE_SDK
+    QueryStub *q = (QueryStub *)t;
+    if (f == 2 && !q->active) {
+        glBeginQueryARB(GL_SAMPLES_PASSED_ARB, q->name);
+        q->active = 1;
+        q->issued = 0;
+    } else if (f == 1 && q->active) {
+        glEndQueryARB(GL_SAMPLES_PASSED_ARB);
+        q->active = 0;
+        q->issued = 1;
+    } else {
+        return (HRESULT)0x8876086c;
+    }
+#else
+    (void)t; (void)f;
+#endif
     return 0;
 }
 static HRESULT Q_GetData(const void *t, void *d, DWORD s, DWORD f)
 {
-    (void)t;
-    (void)d;
-    (void)s;
-    (void)f;
+#if COD2_APPLE_SDK
+    QueryStub *q = (QueryStub *)t;
+    if ((d && s != sizeof(DWORD)) || (!d && s) || (f & ~1u))
+        return (HRESULT)0x8876086c;
+    if (!q->issued)
+        return 1;
+    if (f & 1) glFlush();
+    GLuint ready = 0;
+    glGetQueryObjectuivARB(q->name, GL_QUERY_RESULT_AVAILABLE_ARB, &ready);
+    if (!ready)
+        return 1;
+    if (d) {
+        GLuint samples;
+        glGetQueryObjectuivARB(q->name, GL_QUERY_RESULT_ARB, &samples);
+        memcpy(d, &samples, sizeof(samples));
+    }
+#else
+    (void)t; (void)d; (void)s; (void)f;
+#endif
     return 0;
 }
 static void Q_D1(void *t)
@@ -2266,11 +2303,20 @@ HRESULT CDirect3DDevice_CreateQuery(const CDirect3DDevice *_this, D3DQUERYTYPE T
 
     QueryStub *q;
     (void)_this;
-    (void)Type;
+#if COD2_APPLE_SDK
+    if (Type != 9) {
+        if (ppQuery) *(void **)ppQuery = NULL;
+        return (HRESULT)0x8876086a;
+    }
+#endif
     if (ppQuery) {
         q = (QueryStub *)calloc(1, sizeof(QueryStub));
+        if (!q) return (HRESULT)0x8007000e;
         q->vtable = query_stub_vtbl;
         q->refCount = 1;
+#if COD2_APPLE_SDK
+        glGenQueriesARB(1, &q->name);
+#endif
         *(void **)ppQuery = (void *)q;
     }
     return 0;

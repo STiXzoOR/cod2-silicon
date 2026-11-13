@@ -820,8 +820,16 @@ static Bool R_CreateForInitOrReset(void)
 #if defined(COD2_X64)
     SunFlareDynamic *sunFlares = (SunFlareDynamic *)imp_sunFlareArray;
     for (i = 0; i < 4; i++) {
-        sunFlares[i].sunQueryIssued[0] = 0;
-        sunFlares[i].sunQueryIssued[1] = 0;
+        for (int slot = 0; slot < 2; ++slot) {
+            typedef HRESULT(D3DVTCC *CreateQueryFn)(void *, int, void **);
+            void **table = *(void ***)dx.device;
+            sunFlares[i].sunQuery[slot] = NULL;
+            HRESULT result = ((CreateQueryFn)table[118])(dx.device, 9,
+                (void **)&sunFlares[i].sunQuery[slot]);
+            if (result < 0)
+                ri.Printf(0, "Couldn't create a sun occlusion query: %s\n", R_ErrorDescription(result));
+            sunFlares[i].sunQueryIssued[slot] = 0;
+        }
     }
 #else
     byte *sunFlares = (byte *)imp_sunFlareArray;
