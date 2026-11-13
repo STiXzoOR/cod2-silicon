@@ -36,6 +36,7 @@ Uint32 MacTest_GetWindowFlags(SDL_Window *window)
 int MacDisplay_IsFullscreen(void) { return fullscreen; }
 void MacDisplay_FocusChanged(int focus) { displayFocus = focus; }
 void MacDisplay_PumpVisibility(void) {}
+void MacDisplay_WindowMoved(int x, int y) { (void)x; (void)y; }
 int MacDisplay_WindowVisible(void) { return visible; }
 #endif
 extern int SDL_PumpInputEvents(void);

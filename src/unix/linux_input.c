@@ -383,7 +383,7 @@ int SDL_PumpInputEvents(void)
                 extern void MacDisplay_FocusChanged(int focused);
                 MacDisplay_FocusChanged(1);
             }
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64) && COD2_X64
             else if (ev.window.event == SDL_WINDOWEVENT_MOVED)
                 MacDisplay_WindowMoved(ev.window.data1, ev.window.data2);
 #endif

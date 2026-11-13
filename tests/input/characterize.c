@@ -13,6 +13,7 @@ void *imp_cl;
 const dvar_t *loc_language;
 int Sys_Milliseconds(void) { return (int)SDL_GetTicks(); }
 void MacDisplay_PumpVisibility(void) {}
+void MacDisplay_WindowMoved(int x, int y) { (void)x; (void)y; }
 void MacDisplay_FocusChanged(int focused) { (void)focused; }
 int MacDisplay_WindowVisible(void) { return 0; }
 int MacDisplay_IsFullscreen(void) { return 0; }
