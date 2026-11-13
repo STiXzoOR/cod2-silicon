@@ -2012,7 +2012,12 @@ restart_lerp: {
 
     ps->viewHeightLerpTime =
         pm->cmd.serverTime -
+#if defined(COD2_APPLE_SDK)
+        /* Windows 1.3 0x517821: multiply duration before percent conversion. */
+        (int)(((float)newDuration * (float)iLerpFrac) * 0.01f);
+#else
         (int)((float)iLerpFrac * 0.01f * (float)newDuration);
+#endif
 
     if (lerpTarget == 11) {
         table = viewLerp_CrouchProne;
