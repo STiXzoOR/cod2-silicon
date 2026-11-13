@@ -226,3 +226,10 @@ add_test(NAME metal_dispatch_entrypoints COMMAND "${CMAKE_COMMAND}" -E env
   "COD2_METAL_TEST_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}/metal-dispatch"
   sh "${PORT_ROOT}/tests/metal/run_dispatch_entrypoints.sh" "${PORT_ROOT}")
 set_tests_properties(metal_dispatch_entrypoints PROPERTIES TIMEOUT 60)
+
+# Standalone display probes use a tiny dvar registry for archived window origins.
+# Gamma and Metal presentation include the display implementation directly.
+foreach(platform_probe macos_platform_smoke macos_hardware_test
+    macos_fullscreen_test macos_gamma_test macos_metal_present_test)
+  target_sources(${platform_probe} PRIVATE display_dvars.c)
+endforeach()
