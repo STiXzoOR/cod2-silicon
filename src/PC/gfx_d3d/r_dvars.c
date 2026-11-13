@@ -575,7 +575,9 @@ void R_RegisterDvars(void)
             previous->latched.integer < previous->domain.enumeration.stringCount)
             value = previous->domain.enumeration.strings[previous->latched.integer];
         snprintf(requested, sizeof(requested), "%s", value);
-        MacPlatform_SelectMonitor(r_monitor->current.integer);
+        /* Windows applies r_monitor to fullscreen; a window follows its own
+         * monitor (and CoD2x's saved vid_xpos/vid_ypos). */
+        MacPlatform_SelectMonitor(r_fullscreen->current.enabled ? r_monitor->current.integer : 0);
         const char **names = MacPlatform_ModeNames();
         int selected = MacPlatform_ChooseMode(names, requested);
         r_mode = ri.Dvar_RegisterEnum("r_mode", names, 0, 0x2021);

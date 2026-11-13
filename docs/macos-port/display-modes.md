@@ -45,7 +45,8 @@ keeps the valid fallback saved instead of latching the generic enum reset.
 
 Windows uses `r_monitor 0` for the default/window monitor, `1` for the first
 monitor, `2` for the second, and so on (`0x100127d0`). Native enumeration and
-fullscreen placement now honor that selection. An unavailable index falls back
+fullscreen placement now honor that selection. As on Windows, windowed mode
+follows the window/default monitor instead of `r_monitor`. An unavailable index falls back
 to the first display. A display change requires `vid_restart` or relaunch to
 refresh the enum and backing; there is no automatic hot-plug resize in the middle
 of a frame. As before, a listen server rejects `vid_restart`; disconnect first.
