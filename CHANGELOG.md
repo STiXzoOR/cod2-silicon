@@ -171,6 +171,9 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   avoiding the full-track decode pause and the decoded-size limit on long music.
   A bounded read cache also prevents repeated archive decompression while
   opening tracks stored in IWD files.
+- Game files load consistently on case-sensitive disks, including paths whose
+  directory or filename casing differs. Listings, writes, renames and deletes
+  follow the same rule; the default case-insensitive disk keeps its OS behavior.
 - Room and shellshock reverberation now reproduce the original software mixer’s
   room presets, reflections, decay, damping and stereo spread.
 - Consecutive screenshot commands retain every image, and `cl_avidemo` saves
