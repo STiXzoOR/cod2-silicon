@@ -96,11 +96,9 @@ enum PlayerNameRules {
     }
 
     // MARK: Launch and its failures
-    /// File › Launch (⌘↩): the server highlighted in Jump to…, else the one selected in Servers, else the last one.
+    /// File › Launch (⌘↩): the selection shown in Servers, otherwise the last server.
     func launchFromMenu() {
-        if jumpPresented, let address = jumpServer, let server = servers.first(where: { $0.address == address }) {
-            jumpPresented = false; connect(server); return
-        }
+        jumpPresented = false
         if page == .servers, let selected { connect(selected); return }
         launch()
     }
@@ -174,9 +172,10 @@ enum PlayerNameRules {
         }
         print("CoD2 Silicon: join link opened Connect to Address (\(address)).")
         fflush(stdout)
-        if onboard { pendingJoinAddress = address; return }
+        let input = ServerAddressInput.parse(text)?.password == nil ? address : text
+        if onboard { pendingJoinAddress = input; return }
         dismissSheet()
-        connectToAddress(address)
+        connectToAddress(input)
     }
     /// The server address in a join link, or nil.
     nonisolated static func joinAddress(_ text: String) -> String? {

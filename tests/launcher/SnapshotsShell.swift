@@ -182,6 +182,12 @@ extension Snapshots {
             else { throw Failure(message: "A join link must open Connect to Address") }
             model.dismissSheet()
             await settle()
+            let passwordLink = "cod2x://connect%20localhost%3A28960%20password%20%22fixture%22"
+            model.receiveLink(passwordLink)
+            if case .connect(let input) = model.sheet {
+                try require(input.flatMap(ServerAddressInput.parse)?.password == "fixture", "A join link keeps its password for Connect to Address")
+            } else { throw Failure(message: "A passworded link must open Connect to Address") }
+            model.dismissSheet()
             print("PASS: cod2x and cod2 links open Connect to Address with the address filled in and never start the game")
 
             // Sidebar: labelled pages, starred servers with player counts, the Settings row, the plate.
@@ -236,7 +242,7 @@ extension Snapshots {
             try require(!model.playerCardPresented, "Done closes the player card")
             print("PASS: the player card saves the name as you type, refuses quotes, and Done closes it")
 
-            // Jump to…: finds servers in memory, moves with ↓, ⌘↩ launches, Escape closes.
+            // Jump to…: finds servers in memory, moves with ↓, Return opens, Escape closes.
             model.showJump()
             await settle(900)
             try require(model.jumpPresented, "⌘K's action opens Jump to…")
@@ -246,11 +252,10 @@ extension Snapshots {
             try await type("north", into: jump, in: window)
             let found = JumpIndex.items(model, query: "north")
             try require(found.first?.title == "Northern Lights | Public" && found.first?.section == .servers, "“north” finds Northern Lights first: \(found.map(\.title))")
-            try require(model.jumpServer == "203.0.113.24:28960", "The first server is highlighted for ⌘↩")
             let settingsRows = JumpIndex.items(model, query: "vertical")
             try require(settingsRows.contains { $0.title == "Vertical sync" && $0.detail == "Settings › Display" }, "Settings rows are found by their visible names")
             await post(window, keyCode: 53, characters: "\u{1b}")
-            try require(!model.jumpPresented && model.jumpServer == nil, "Escape closes Jump to…")
+            try require(!model.jumpPresented, "Escape closes Jump to…")
             model.showJump()
             await settle(900)
             guard let again = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXTextField" && $0.label == "Jump to" }) else {
@@ -261,7 +266,7 @@ extension Snapshots {
             try require(!model.jumpPresented && model.page == .servers && model.selectedServer == "192.0.2.10:28960", "Return on a server shows it in Servers")
             print("PASS: Jump to… finds servers, settings and actions; Return opens; Escape closes")
 
-            // File › Launch's target: the Jump selection, then the Servers selection, then the last server.
+            // File › Launch targets the Servers selection, otherwise the last server.
             model.page = .servers; model.selectedServer = "198.51.100.7:28960"
             try require(model.selected?.address == "198.51.100.7:28960", "Servers shows a selection")
 

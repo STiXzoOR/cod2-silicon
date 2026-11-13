@@ -57,8 +57,10 @@ lease_owned = False
 
 
 def release_lease():
+    global lease_owned
     if lease_owned and lease.exists() and lease.read_text().startswith(f"{root.name} {os.getpid()} "):
         lease.unlink()
+    lease_owned = False
 
 
 atexit.register(release_lease)
@@ -93,13 +95,18 @@ def run(target, *extra, env=None):
     target.mkdir(parents=True, exist_ok=True)
     # LaunchServices activates the real app; a shell-launched process may have no key window.
     # `open -W` masks app exit codes, so require the harness's own success result as well.
-    for attempt in range(3):
+    private_home = build / "home"
+    private_tmp = build / "tmp"
+    private_home.mkdir(exist_ok=True)
+    private_tmp.mkdir(exist_ok=True)
+    run_env = {"HOME": str(private_home), "CFFIXED_USER_HOME": str(private_home), "TMPDIR": str(private_tmp), **(env or {})}
+    for attempt in range(2):
         with tempfile.TemporaryDirectory(prefix="run-", dir=build) as temporary:
             folder = pathlib.Path(temporary)
             result, stdout, stderr = [folder / name for name in ["result", "stdout", "stderr"]]
             try:
                 command = ["open", "-n", "-W", "--stdout", str(stdout), "--stderr", str(stderr)]
-                for key, value in (env or {}).items():
+                for key, value in run_env.items():
                     command.extend(["--env", f"{key}={value}"])
                 subprocess.run(command + [str(app), "--args", str(target), *extra, "--result-file", str(result)], check=True, timeout=600)
             except subprocess.TimeoutExpired:
@@ -113,10 +120,11 @@ def run(target, *extra, env=None):
                 logs = "".join(log.read_text() for log in [stdout, stderr] if log.exists())
                 print(logs, end="", flush=True)
             if result.exists() and result.read_text().splitlines()[1] == "0":
+                release_lease()
                 return
             # macOS can refuse activation even through LaunchServices. Retry only this
             # environmental failure; shape, accessibility and action failures still fail.
-            if "did not become active and key" not in logs or attempt == 2:
+            if "did not become active and key" not in logs or attempt == 1:
                 raise AssertionError(f"Review harness failed: {target} {extra}")
             print("Retrying the review app after macOS refused key-window activation", flush=True)
 

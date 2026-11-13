@@ -15,7 +15,9 @@ struct ConnectSheet: View {
     enum Lookup { case idle, asking(String), answered(GameServer), silent(String) }
     init(model: LauncherModel, address: String?) {
         self.model = model
-        _address = State(initialValue: address ?? "")
+        let input = ServerAddressInput.parse(address ?? "")
+        _address = State(initialValue: input?.address ?? address ?? "")
+        _password = State(initialValue: input?.password ?? "")
     }
     private var parsed: (address: String, password: String?)? { ServerAddressInput.parse(address) }
     private var invalid: Bool { !address.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && parsed == nil }

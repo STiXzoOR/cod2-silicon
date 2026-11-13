@@ -156,8 +156,7 @@ struct MediaEntry: Identifiable {
     var shaderRefresh: Task<Void, Never>?
     /// Jump to… (⌘K) is open over the main window.
     @Published var jumpPresented = false
-    /// The server row Jump to… has highlighted, so File › Launch (⌘↩) launches on it.
-    @Published var jumpServer: String?
+    /// The query in the launcher-wide Jump to… palette.
     @Published var jumpQuery = ""
     /// The player card popover over the sidebar's plate.
     @Published var playerCardPresented = false

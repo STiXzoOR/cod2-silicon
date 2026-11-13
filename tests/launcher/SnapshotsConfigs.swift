@@ -1477,6 +1477,9 @@ extension Snapshots {
         private var deadline = 0.0
         private var deadlineWork: DispatchWorkItem?
         private weak var ownedPanel: NSSavePanel?
+        // MARK: - ship-integrate: the export panel is an attached sheet.
+        var completed: Bool { seen && ownedPanel?.isVisible != true }
+        private(set) var attached = false
         init(target: URL, saving: Bool = true) {
             let original = target.standardizedFileURL
             // Only this already-created, owned synthetic directory is resolved. Panel URLs
@@ -1545,10 +1548,10 @@ extension Snapshots {
                 Snapshots.finish(1)
             }
             ticks += 1
-            guard let panel = NSApp.modalWindow as? NSSavePanel else { return }
+            guard let panel = ownedPanel, panel.isVisible else { return }
             if !seen {
                 guard panel === ownedPanel else { return }
-                seen = true; seenAt = ticks
+                seen = true; seenAt = ticks; attached = panel.sheetParent != nil
             } else if panel === ownedPanel, !finished, ticks >= seenAt + 6,
                       NSApp.isActive, NSApp.keyWindow === panel, panel.isKeyWindow,
                       panel.delegate === self, acceptsDirectory(panel.directoryURL), accepts(panel.url) {
@@ -1565,7 +1568,9 @@ extension Snapshots {
                 // the panel with OK as Save does; a refused destination still fails the check.
                 savedByAction = true
                 fputs("NOTE: the save panel ignored Return; validating its destination and ending it with OK.\n", stderr)
-                if (try? self.panel(panel, validate: url)) != nil { NSApp.stopModal(withCode: .OK) }
+                if (try? self.panel(panel, validate: url)) != nil, let parent = panel.sheetParent {
+                    parent.endSheet(panel, returnCode: .OK)
+                }
             }
         }
     }
@@ -1620,15 +1625,14 @@ extension Snapshots {
             MainActor.assumeIsolated {
                 panel?.start()
                 driver.menu?.performActionForItem(at: index)
-                panel?.stop()
                 driver.actionCompleted = true
             }
         }
         RunLoop.main.add(actionTimer, forMode: .common)
-        defer { actionTimer.invalidate() }
-        for _ in 0..<1300 where !driver.actionCompleted { try? await Task.sleep(for: .milliseconds(100)) }
+        defer { actionTimer.invalidate(); panel?.stop() }
+        for _ in 0..<1300 where !driver.actionCompleted || panel?.completed == false { try? await Task.sleep(for: .milliseconds(100)) }
         guard driver.actionCompleted else { print("FAIL: the native menu action did not complete"); return false }
-        if let panel, !panel.seen || panel.timedOut || !panel.destinationVerified || (panel.saving && !panel.destinationValidated) {
+        if let panel, !panel.seen || !panel.attached || panel.timedOut || !panel.destinationVerified || (panel.saving && !panel.destinationValidated) {
             print("FAIL: “\(prefix)…” \(panel.seen ? "left its save panel open" : "did not open a save panel")"); return false
         }
         return true

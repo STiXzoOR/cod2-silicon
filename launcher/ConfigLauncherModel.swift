@@ -71,8 +71,15 @@ import UniformTypeIdentifiers
         panel.allowedContentTypes = [UTType(filenameExtension: "cfg") ?? .plainText]
         panel.message = "Save \(current.profile.displayName) for Call of Duty 2 on Windows. Copy it into that player profile’s folder."
         panel.prompt = "Export"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        studio.binds.exportWindows(to: url)
+        // MARK: - ship-integrate: keep Export attached to the loadout's window.
+        guard let window = launcherWindow ?? NSApp.keyWindow else {
+            notice = "Open the launcher window, then choose Export Loadout again."
+            return
+        }
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let url = panel.url else { return }
+            self?.studio.binds.exportWindows(to: url)
+        }
     }
     /// Loadout › Delete Loadout… and the row's context menu: the Delete Loadout alert. Never the
     /// loadout in use; the folder goes to the Trash, so it can be put back (Undo, or Finder).

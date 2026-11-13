@@ -3,9 +3,9 @@ import AppKit
 
 // Owner: ship-shell. Jump to… (⌘K, HomeJump board): one field that finds servers in the list already
 // in memory (never a network request), loadouts, every Settings pane and row by its visible name,
-// and the menu bar's actions. ↑ ↓ move, ↩ opens, ⌘↩ launches on a server, Escape closes.
+// and the menu bar's actions. ↑ ↓ move, ↩ opens, Escape closes; ⌘↩ stays with File › Launch.
 
-/// One result. `open` is ↩ (and a click); `launch` is ⌘↩, for servers only.
+/// One result. `open` is Return or a click.
 struct JumpItem: Identifiable {
     enum Section: String, CaseIterable { case servers = "Servers", loadouts = "Loadouts", settings = "Settings", actions = "Actions" }
     var id: String
@@ -16,7 +16,6 @@ struct JumpItem: Identifiable {
     var keys: String = ""
     var serverAddress: String? = nil
     var open: @MainActor () -> Void
-    var launch: (@MainActor () -> Void)? = nil
 }
 
 @MainActor enum JumpIndex {
@@ -47,7 +46,7 @@ struct JumpItem: Identifiable {
             let detail = [MapCatalog.displayName(server.map), players, server.ping > 0 ? "\(server.ping) ms" : nil].compactMap { $0 }.joined(separator: " · ")
             result.append(JumpItem(id: "server-" + server.address, section: .servers, title: QuakeColors.plain(server.name), detail: detail,
                                    symbol: "dot.radiowaves.left.and.right", serverAddress: server.address,
-                                   open: { model.showServer(server.address) }, launch: { model.connect(server) }))
+                                   open: { model.showServer(server.address) }))
         }
         // Loadouts.
         for profile in model.studio.profiles where matches(profile.displayName, "loadout") && !query.isEmpty {
@@ -136,9 +135,8 @@ struct JumpToPalette: View {
         }
         .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
         .onAppear { focused = true; selection = 0; install() }
-        .onDisappear { remove(); model.jumpServer = nil }
-        .onChange(of: model.jumpQuery) { _, _ in selection = 0; publish(JumpIndex.items(model, query: query)) }
-        .onChange(of: selection, initial: true) { _, _ in publish(items) }
+        .onDisappear { remove() }
+        .onChange(of: model.jumpQuery) { _, _ in selection = 0 }
     }
     private var field: some View {
         HStack(spacing: 12) {
@@ -180,14 +178,14 @@ struct JumpToPalette: View {
         }
     }
     private func row(_ item: JumpItem, selected: Bool) -> some View {
-        Button { run(item, launch: false) } label: {
+        Button { run(item) } label: {
             HStack(spacing: 12) {
                 Image(systemName: item.symbol).font(.system(size: 15, weight: .medium)).foregroundStyle(palette.chipIcon).frame(width: 20)
                 Text(item.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1)
                 if !item.detail.isEmpty { Text(item.detail).font(.system(size: 13)).foregroundStyle(palette.secondary).lineLimit(1) }
                 Spacer(minLength: 8)
-                if selected && item.launch != nil {
-                    Text("Launch ⌘↩").font(.system(size: 12)).foregroundStyle(palette.secondary)
+                if selected && item.serverAddress != nil {
+                    Text("Show in Servers ↩").font(.system(size: 12)).foregroundStyle(palette.secondary)
                 } else if !item.keys.isEmpty {
                     Text(item.keys).font(.system(size: 12)).foregroundStyle(palette.tertiary)
                 }
@@ -200,13 +198,12 @@ struct JumpToPalette: View {
         .buttonStyle(.plain)
         .accessibilityLabel(item.detail.isEmpty ? item.title : "\(item.title), \(item.detail)")
         .accessibilityAddTraits(selected ? .isSelected : [])
-        .accessibilityHint(item.launch != nil ? "Return shows it in Servers. Command Return launches on it." : "")
+        .accessibilityHint(item.serverAddress != nil ? "Return shows it in Servers." : "")
     }
     private var footer: some View {
         HStack(spacing: 14) {
             HStack(spacing: 5) { KeyCap("↑"); KeyCap("↓"); Text("to move") }
             HStack(spacing: 5) { KeyCap("↩"); Text("to open") }
-            HStack(spacing: 5) { ShortcutKeys(["⌘", "↩"]); Text("to launch on a server") }
             Spacer(minLength: 0)
         }
         .font(.system(size: 12)).foregroundStyle(palette.secondary)
@@ -215,16 +212,12 @@ struct JumpToPalette: View {
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isStaticText)
     }
-    private func publish(_ items: [JumpItem]) {
-        let address = items.indices.contains(selection) ? items[selection].serverAddress : nil
-        if model.jumpServer != address { model.jumpServer = address }
-    }
-    private func run(_ item: JumpItem, launch: Bool) {
+    private func run(_ item: JumpItem) {
         close()
-        if launch, let go = item.launch { go() } else { item.open() }
+        item.open()
     }
     private func close() { model.jumpPresented = false }
-    /// ↑ ↓ ↩ ⌘↩ and Escape go to the palette while it is open, before the field or the menus see them.
+    /// Arrow keys, Return and Escape belong to the palette; command shortcuts reach the menu bar.
     private func install() {
         guard monitor == nil else { return }
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
@@ -236,6 +229,7 @@ struct JumpToPalette: View {
     /// True when the key was the palette's.
     private func handle(_ code: UInt16, command: Bool, window: Int) -> Bool {
         guard model.jumpPresented, model.launcherWindow.map({ $0.windowNumber == window }) ?? true else { return false }
+        guard !command else { return false }
         let items = JumpIndex.items(model, query: query)
         switch code {
         case 125: if !items.isEmpty { selection = min(items.count - 1, selection + 1) }
@@ -244,7 +238,7 @@ struct JumpToPalette: View {
         case 36, 76:
             guard items.indices.contains(selection) else { return true }
             let item = items[selection]
-            run(item, launch: command && item.launch != nil)
+            run(item)
         default: return false
         }
         return true

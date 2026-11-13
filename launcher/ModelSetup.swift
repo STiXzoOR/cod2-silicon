@@ -332,7 +332,7 @@ enum GameArchives {
         case "home-game-running": page = .home; gameRunning = true; notice = "Call of Duty 2 is running. Settings you change apply next time."
         case "home-loadout-player-card": page = .home; playerCardPresented = true; playerCardStatus = "Saved to your Main loadout."
         case "home-loadout-player-card-no-key": page = .home; keyVerified = false; playerCardPresented = true
-        case "home-jump": page = .home; jumpPresented = true; jumpQuery = "north"; jumpServer = servers.first?.address
+        case "home-jump": page = .home; jumpPresented = true; jumpQuery = "north"
         case "home-no-favorites": page = .home; library.favorites = []
         case "home-quit-running": page = .home; gameRunning = true; confirmQuitWithGame()
         case "sheet-game-could-not-start": page = .home; launchProblem = .dataMissing("/Volumes/Games/CoD2"); sheet = .gameCouldNotStart(reason: launchProblem!.message)
