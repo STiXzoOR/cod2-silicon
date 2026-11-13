@@ -602,6 +602,30 @@ int main(int argc, char **argv)
         assert(argc==4); AlphaAACache(argv[3]);
     } else if (!strcmp(test, "alpha2") || !strcmp(test, "alpha4")) {
         AlphaAAFixture(&dev, test[5]-'0');
+    } else if (!strcmp(test, "wire-bias")) {
+        Surface(&dev, 1);
+        Set(&dev, D3DRS_STENCILENABLE, 0);
+        Set(&dev, D3DRS_ZENABLE, 1);
+        Set(&dev, D3DRS_ZWRITEENABLE, 1);
+        Set(&dev, D3DRS_ZFUNC, 2); /* Strict less rejects the coplanar overlay. */
+        Set(&dev, D3DRS_FILLMODE, 2);
+        glClearDepth(.75);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        Draw(&dev);
+        byte pixels[32*32*4];
+        glReadPixels(0, 0, 32, 32, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+        int before = 0, after = 0;
+        for (int i=0;i<32*32;i++) before += pixels[i*4] != 0;
+        float bias = -1.0f / 65536.0f;
+        DWORD bits; memcpy(&bits, &bias, sizeof(bits));
+        Set(&dev, D3DRS_DEPTHBIAS, bits);
+        Draw(&dev);
+        glReadPixels(0, 0, 32, 32, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+        for (int i=0;i<32*32;i++) after += pixels[i*4] != 0;
+        fprintf(stderr, "wireframe depth bias: coplanar pixels %d -> %d\n", before, after);
+        assert(before == 0 && after > 50);
+        Set(&dev, D3DRS_DEPTHBIAS, 0);
+        assert(!glIsEnabled(GL_POLYGON_OFFSET_LINE));
     } else if (!strcmp(test, "float")) {
         FloatTarget(&dev);
     } else if (!strcmp(test, "identity")) {

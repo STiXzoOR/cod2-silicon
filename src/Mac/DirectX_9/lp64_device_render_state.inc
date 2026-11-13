@@ -15,6 +15,10 @@ static void DeviceRenderState_Init(DeviceImpl *dev)
     dev->blendStateChanged = 1;
     memset(dev->lightModelAmbient, 0, sizeof(dev->lightModelAmbient));
     dev->slopeScaleDepthBias = dev->scaledDepthBias = 0.0f;
+    glPolygonOffset(0.0f, 0.0f);
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    glDisable(GL_POLYGON_OFFSET_LINE);
+    glDisable(GL_POLYGON_OFFSET_POINT);
 
     /* Mac Reset 0x19d85/0x19e50 recreates the context before default caches.
      * SDL retains it, so restore the fresh-context state not set by COpenGL_Init. */
@@ -408,6 +412,10 @@ static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, 
         }
         glPolygonOffset(dev->slopeScaleDepthBias, dev->scaledDepthBias);
         DeviceRenderState_Enable(0x8037, dev->scaledDepthBias != 0.0f || dev->slopeScaleDepthBias != 0.0f);
+        /* D3D depth bias also applies to triangles rasterized as wireframe
+         * or points. OpenGL has a separate enable for each polygon mode. */
+        DeviceRenderState_Enable(GL_POLYGON_OFFSET_LINE, dev->scaledDepthBias != 0.0f || dev->slopeScaleDepthBias != 0.0f);
+        DeviceRenderState_Enable(GL_POLYGON_OFFSET_POINT, dev->scaledDepthBias != 0.0f || dev->slopeScaleDepthBias != 0.0f);
         break;
     case D3DRS_SEPARATEALPHABLENDENABLE:
         if (dev->separateAlphaBlendEnable != value) {
