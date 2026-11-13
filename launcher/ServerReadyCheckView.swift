@@ -105,7 +105,8 @@ struct ReadyCheckCard: View {
                 if showDetails { detailsList(p) }
                 HStack(spacing: 6) {
                     if p.canFix {
-                        Button("Fix for This Server Only") { confirmingFix = true }.glassAction().actionControlSize().disabled(locked)
+                        Button("Fix") { confirmingFix = true }.glassAction().actionControlSize().disabled(locked)
+                            .accessibilityLabel("Fix for This Server Only")
                             .help(locked ? "Quit the game first" : "Use the server’s values while you play here only. Your loadout doesn’t change.")
                     }
                     if let fitting {

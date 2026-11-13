@@ -108,7 +108,9 @@ def run(target, *extra, env=None):
                 command = ["open", "-n", "-W", "--stdout", str(stdout), "--stderr", str(stderr)]
                 for key, value in run_env.items():
                     command.extend(["--env", f"{key}={value}"])
-                subprocess.run(command + [str(app), "--args", str(target), *extra, "--result-file", str(result)], check=True, timeout=600)
+                # Both appearances of the merged 155-state matrix exceed the old ten-minute budget.
+                timeout = max(600, len(screens) * 6)
+                subprocess.run(command + [str(app), "--args", str(target), *extra, "--result-file", str(result)], check=True, timeout=timeout)
             except subprocess.TimeoutExpired:
                 if result.exists():
                     try:

@@ -114,8 +114,9 @@ executable. The app icon is `tools/cod2x/icon-source/CoD2 Silicon.icon`.
 
 The outer app registers `cod2x` and `cod2` links and the demo and config document types.
 A nested `CoD2 Game.app` owns the engine and its fullscreen/Game Mode eligibility. The
-launcher keeps its Dock tile (and Dock menu) during play and hides its windows, then
-brings them back when the tracked child exits. If the launcher is force-quit,
+launcher keeps its Dock tile (and Dock menu) during play. When Hide CoD2 Silicon while
+the game is running is on, it hides its windows and brings them back when the tracked
+child exits. If the launcher is force-quit,
 reopening it reconnects to the exact running helper (bundle ID and executable path) rather
 than spawning another engine. Quitting while the game runs asks first: Quit Launcher
 Only, Quit Both or Cancel; a game that doesn't start gets a sheet that says why and
