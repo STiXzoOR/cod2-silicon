@@ -3,6 +3,12 @@
 #include <stdio.h>
 #include <string.h>
 
+const char *Dvar_GetString(const char *name)
+{
+    assert(!strcmp(name, "com_playerProfile"));
+    return "default";
+}
+
 int main(void)
 {
     const char *list[] = {"iw_00.iwd", "iw_CoD2x_01.iwd", "zpam334.iwd", "zpam335.iwd",
@@ -17,11 +23,18 @@ int main(void)
     assert(!Cod2x_IwdStock("main/iw_CoD2x_01", "main", 4));
     assert(!Cod2x_IwdStock("main/iw_25", "main", 6));
     assert(Cod2x_IwdStock("main/localized_english_iw11", "main", 0));
+    assert(!Cod2x_IwdStock("main/LOCALIZED_english_iw11", "main", 0));
+    assert(Cod2x_IwdStock("MAIN/localized_ENGLISH_IW11", "main", 0));
     s.connecting = 1; s.version = 0; s.names = "zpam_maps_v4 zpam334";
     assert(!Cod2x_IwdAllowed("main", list[1], list, 7, &s));
     assert(Cod2x_IwdAllowed("main", list[2], list, 7, &s));
     assert(!Cod2x_IwdAllowed("main", list[3], list, 7, &s));
     assert(Cod2x_IwdAllowed("main", list[4], list, 7, &s));
+    s.names = "/* zpam335 */ \"zpam334\" // zpam335";
+    assert(Cod2x_IwdAllowed("main", list[2], list, 7, &s));
+    assert(!Cod2x_IwdAllowed("main", list[3], list, 7, &s));
+    s.names = "z";
+    assert(!Cod2x_IwdAllowed("main", list[2], list, 7, &s));
     s.demo = 1;
     assert(Cod2x_IwdAllowed("movie", list[6], list, 7, &s));
     s.demo = 0; s.listen = 1;
@@ -35,6 +48,7 @@ int main(void)
     s.dedicated = 1;
     assert(Cod2x_IwdAllowed("main", list[6], list, 7, &s));
     assert(!strcmp(Cod2x_ConfigGame("pam", "players/default/config_mp.cfg"), "main"));
+    assert(!strcmp(Cod2x_ConfigGame("pam", "players/inactive/config_mp.cfg"), "pam"));
     assert(!strcmp(Cod2x_ConfigGame("movie", "demos/a.dm_1"), "main"));
     assert(!strcmp(Cod2x_ConfigGame("movie", "movie.iwd"), "movie"));
     n = Cod2x_Tokenize("upload https://host/demo // comment", 16, argv, output, sizeof(output));
