@@ -311,7 +311,7 @@ void CG_Cod2xRadarDraw(void)
         teamNumbers[i] = i;
         if (cent->currentState.eType == 1 && cent->currentState.clientNum >= 0 && cent->currentState.clientNum < 64) {
             const clientInfo_t *ci = &cg->bgs.clientinfo[cent->currentState.clientNum];
-            if (ci->infoValid)
+            if (ci->infoValid == 1)
                 team = ci->team;
         }
         if ((team == TEAM_ALLIES || team == TEAM_AXIS) && teamCounts[team] < 5) {
@@ -336,7 +336,7 @@ void CG_Cod2xRadarDraw(void)
             continue;
         ci = &cg->bgs.clientinfo[cent->currentState.clientNum];
         team = ci->team;
-        if (!ci->infoValid || team >= TEAM_SPECTATOR || team < TEAM_FREE)
+        if (ci->infoValid != 1 || team >= TEAM_SPECTATOR || team < TEAM_FREE)
             continue;
         CG_Cod2xRadarCoordinates(cent->currentState.pos.trBase, &x, &y);
         heading = 90 + rotation->current.integer - cent->nextState.apos.trBase[1];
