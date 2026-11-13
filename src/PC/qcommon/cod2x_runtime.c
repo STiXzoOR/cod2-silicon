@@ -43,7 +43,7 @@ int Cod2x_GameVersion(void)
 
 int Cod2x_Competitive(void)
 {
-    return cod2x_playing && !cod2x_demo && Cod2x_GameVersion() > 0 &&
+    return cod2x_playing && !cod2x_demo &&
            cod2x_competitive && cod2x_competitive->current.enabled;
 }
 
@@ -63,7 +63,7 @@ static void Cod2x_SharedInit(int dedicated)
     if (cod2x_game)
         return;
     cod2x_game = Dvar_RegisterInt("g_cod2x", 0, 0, COD2X_REVISION, 0x18);
-    cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, dedicated ? 0x1008 : 0x18);
+    cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, dedicated ? 0x1008 : 0x1018);
 }
 
 void Cod2x_ServerInit(int dedicated)
@@ -136,7 +136,7 @@ void Cod2x_Init(void)
     Cod2x_SharedInit(0);
 #else
     cod2x_game = Dvar_RegisterInt("g_cod2x", 0, 0, COD2X_REVISION, 0x18);
-    cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, 0x18);
+    cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, 0x1018);
 #endif
     cod2x_revision = Dvar_RegisterInt("protocol_cod2x", COD2X_REVISION, COD2X_REVISION, COD2X_REVISION, 0x42);
     Dvar_RegisterString("cl_cod2x_version", COD2X_VERSION, 0x40);

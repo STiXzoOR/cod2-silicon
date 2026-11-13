@@ -11,6 +11,11 @@ The picture now follows the original Windows 1.3 game, checked frame by frame
 in replayed demos, and the original shaders are built from your own game
 files. [What was tested and what was not](docs/macos-port/release-0.3.0-verification.md).
 
+### Fixed
+
+- CoD2x now honors competitive settings requested by stock 1.3 servers, including
+  frame-rate and network limits, shadows, and the restriction on `wait`.
+
 ### Added
 
 - Play with CoD2x or with the original 1.3. **Settings → Game → Version**

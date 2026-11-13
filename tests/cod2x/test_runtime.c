@@ -107,11 +107,14 @@ int main(void)
     Cod2x_PrepareConnect();
     assert(!strcmp(Dvar_FindVar("cl_hwid2")->current.string, Cod2x_Hwid()));
 
-    /* Stock servers keep original settings, even if they send unrelated policy. */
+    /* A stock server can request the same competitive rules as a CoD2x server. */
     Dvar_SetBool(Dvar_FindVar("g_competitive"), 1);
     Cod2x_Frame(1, 0);
-    assert(!Cod2x_Competitive() && integer("com_maxfps") == 333);
-    assert(Cod2x_FrameFPS(0) == 0);
+    assert(Cod2x_Competitive() && integer("com_maxfps") == 250);
+    assert(integer("rate") == 25000 && integer("snaps") == 40);
+    assert(integer("cl_maxpackets") == 125);
+    assert(integer("sc_enable") == 0 && integer("fx_sort") == 1 && integer("mss_q3fs") == 1);
+    assert(Cod2x_FrameFPS(0) == 250);
 
     /* Connecting is exempt; active CoD2x play enforces all seven settings. */
     Dvar_SetInt(Dvar_FindVar("g_cod2x"), 6);
