@@ -20,7 +20,7 @@ output = args.output.resolve()
 output.mkdir(parents=True, exist_ok=True)
 source_dir = ROOT / 'src/Mac/DirectX_9'
 (output / 'lp64_alpha_aa.inc').write_bytes((args.alpha_helper or (source_dir / 'lp64_alpha_aa.inc')).read_bytes())
-for name in ['CDirect3DDevice.c', 'lp64_shader_draw.h']:
+for name in ['CDirect3D.c', 'CDirect3DDevice.c', 'lp64_shader_draw.h']:
     path = 'src/Mac/DirectX_9/' + name
     source = subprocess.check_output(['git', 'show', f'{args.baseline}:{path}'], cwd=ROOT) if args.baseline else (ROOT / path).read_bytes()
     if name == 'CDirect3DDevice.c':
@@ -47,6 +47,7 @@ command = [*flags, '-UNDEBUG', '-DGL_SILENCE_DEPRECATION', '-I' + str(output),
            '-I' + str(source_dir), '-ffunction-sections', '-fdata-sections',
            '-fsanitize=address,undefined', '-fno-omit-frame-pointer', '-Wl,-dead_strip',
            '-framework', 'OpenGL', str(ROOT / 'tests/lp64/renderer/depth_surface.c'),
+           str(output / 'CDirect3D.c'),
            *[str(source_dir / (name + '.c')) for name in
              ['CDirect3DTexture', 'CDirect3DCubeTexture', 'CDirect3DVolumeTexture',
               'CDirect3DSurface', 'MacOpenGLUtils', 'CVertexArrays',
@@ -60,7 +61,7 @@ with (output / 'compile.log').open('w') as log:
     subprocess.run(command, cwd=ROOT, stdout=log, stderr=log, check=True)
 failed = []
 for mode in ['arb', 'fallback']:
-    for case in ['alpha2', 'alpha4', 'alpha-bounds2', 'alpha-bounds4', 'float', 'wire-bias', 'identity', 'query', 'blend', 'two-sided', 'initial', 'detach', 'detached-draw', 'reattach', 'disabled', 'changed-detached', 'stencil-detached', 'clear-detached', 'clear-attached'] + (['alpha-benchmark'] if args.alpha_benchmark and mode == 'arb' else []):
+    for case in ['texture-caps', 'alpha2', 'alpha4', 'alpha-bounds2', 'alpha-bounds4', 'float', 'wire-bias', 'identity', 'query', 'blend', 'two-sided', 'initial', 'detach', 'detached-draw', 'reattach', 'disabled', 'changed-detached', 'stencil-detached', 'clear-detached', 'clear-attached'] + (['alpha-benchmark'] if args.alpha_benchmark and mode == 'arb' else []):
         env = {**os.environ, 'ASAN_OPTIONS': 'symbolize=0', 'UBSAN_OPTIONS': 'halt_on_error=1',
                'COD2_MAC_SHADER_CACHE': 'synthetic', 'D3D_PROG': '1' if mode == 'arb' else '0'}
         env.pop('COD2_MAC_SHADER_DIAGNOSTICS', None)

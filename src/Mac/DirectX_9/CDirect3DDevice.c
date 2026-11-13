@@ -2448,7 +2448,7 @@ HRESULT CDirect3DDevice_GetDeviceCaps(const CDirect3DDevice *_this, D3DCAPS9 *pC
 #endif
 
     DeviceImpl *dev = (DeviceImpl *)_this;
-    int maxTexUnits, maxTexImageUnits, maxStages;
+    int maxStages;
     (void)dev;
 
     memset(pCaps, 0, sizeof(D3DCAPS9));
@@ -2527,9 +2527,10 @@ HRESULT CDirect3DDevice_GetDeviceCaps(const CDirect3DDevice *_this, D3DCAPS9 *pC
     pCaps->MaxVertexShaderConst = 0x100;
     pCaps->PixelShader1xMaxValue = 8.0f;
 
-    maxTexImageUnits = MacDisplay_GetMaxTextureImageUnits();
-    maxTexUnits = MacDisplay_GetMaxTextureUnits();
-    maxStages = (maxTexUnits < maxTexImageUnits) ? maxTexImageUnits : maxTexUnits;
+    /* These D3D9 caps describe fixed-function stages, not shader samplers. */
+    maxStages = MacDisplay_GetMaxTextureUnits();
+    if (maxStages > 8)
+        maxStages = 8;
     pCaps->MaxSimultaneousTextures = maxStages;
     pCaps->MaxTextureBlendStages = maxStages;
 

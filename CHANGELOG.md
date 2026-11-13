@@ -66,6 +66,8 @@ The original shaders are built from your own game files.
 - Glow samples the correct sky direction on widescreen displays; glow and menu
   blur align to pixel centers and cover the right edge.
 - Heat distortion samples the correct scene pixels, including consecutive batches.
+- Changing specular power preserves the original lighting response instead of
+  making world surfaces excessively shiny.
 - Shellshock retains its previous frame while shadows and post effects draw.
 - Colored impact marks preserve red and blue; cylinder effects retain their tint
   and transparency.

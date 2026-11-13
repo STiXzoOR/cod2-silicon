@@ -91,6 +91,17 @@ void MacDisplay_GetVideoMemoryInfo(int *video, int *texture) { *video = *texture
 int MacPlatform_GetRenderSize(int *w, int *h) { *w = *h = 32; return 1; }
 int MacDisplay_GetSupportsAnisotropicFiltering(void) { return 0; }
 float MacDisplay_GetMaxSupportedAnisotropy(void) { return 1; }
+static int fixtureFixedTextureUnits;
+int MacDisplay_GetMaxTextureUnits(void) {
+    GLint count; glGetIntegerv(GL_MAX_TEXTURE_UNITS, &count);
+    return fixtureFixedTextureUnits ? fixtureFixedTextureUnits : count;
+}
+int MacDisplay_GetMaxTextureImageUnits(void) {
+    GLint count; glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &count); return count;
+}
+int MacDisplay_GetSupportsSeparateBlendFunc(void) { return 1; }
+unsigned int MacDisplay_GetPCPixelShaderVersion(void) { return 0xffff0200u; }
+extern HRESULT CDirect3D_GetDeviceCaps(const void *, UINT, int, void *);
 D3DMATRIX *RB_GetActiveWorldMatrix(void) { assert(!"unexpected view matrix"); return NULL; }
 #if defined(COD2_X64)
 int MacDisplay_GetCardType(void) { return 0; }
@@ -638,6 +649,83 @@ static void AlphaAACache(const char *path)
 #endif
 
 #if defined(COD2_X64)
+static IDirect3DTexture9 *LuminanceTexture(DeviceImpl *dev, byte value)
+{
+    IDirect3DTexture9 *texture;
+    D3DLOCKED_RECT locked;
+    assert(!CDirect3DDevice_CreateTexture((const void *)dev, 32, 256, 1, 0,
+        D3DFMT_L8, 1, &texture, NULL));
+    assert(!CDirect3DTexture_LockRect((const void *)texture, 0, &locked, NULL, 0));
+    for (int y = 0; y < 256; ++y)
+        memset((byte *)locked.pBits + y * locked.Pitch, value, 32);
+    assert(!CDirect3DTexture_UnlockRect((const void *)texture, 0));
+    return texture;
+}
+
+static void TextureCaps(DeviceImpl *dev)
+{
+    D3DCAPS9 caps, factoryCaps;
+    const int fixedLimits[] = {4, 8, 16};
+    for (unsigned i = 0; i < sizeof(fixedLimits)/sizeof(fixedLimits[0]); ++i) {
+        fixtureFixedTextureUnits = fixedLimits[i];
+        assert(!CDirect3D_GetDeviceCaps(NULL, 0, 1, &factoryCaps));
+        assert(!CDirect3DDevice_GetDeviceCaps((const void *)dev, &caps));
+        unsigned expected = fixedLimits[i] > 8 ? 8 : fixedLimits[i];
+        fprintf(stderr, "fixed-function units %d: factory %u/%u device %u/%u expected %u\n",
+            fixedLimits[i], factoryCaps.MaxSimultaneousTextures, factoryCaps.MaxTextureBlendStages,
+            caps.MaxSimultaneousTextures, caps.MaxTextureBlendStages, expected);
+        assert(factoryCaps.MaxSimultaneousTextures == expected && factoryCaps.MaxTextureBlendStages == expected);
+        assert(caps.MaxSimultaneousTextures == expected && caps.MaxTextureBlendStages == expected);
+    }
+    fixtureFixedTextureUnits = 0;
+    assert(!CDirect3DDevice_GetDeviceCaps((const void *)dev, &caps));
+    assert(caps.MaxSimultaneousTextures <= 8 && dev->maxTextureImageUnits > 9);
+
+    /* Image_RebuildCosinePowerMap releases its old managed L8 texture and
+     * creates a replacement. Its original unbind loop visits only the fixed
+     * function cap: sampler 4 is cleared, but shader sampler 9 retains the old
+     * resource independently of the image owner's reference. */
+    IDirect3DTexture9 *old = LuminanceTexture(dev, 63);
+    assert(!CDirect3DDevice_SetTexture((const void *)dev, 4, (void *)old));
+    assert(!CDirect3DDevice_SetTexture((const void *)dev, 9, (void *)old));
+    CDirect3DDevice_UpdateTextureIfNeeded((void *)old);
+    GLuint oldName = CDirect3DDevice_GetTextureGLId((void *)old);
+    for (unsigned i = 0; i < caps.MaxSimultaneousTextures; ++i)
+        if (g_boundTextures[i] == (void *)old)
+            assert(!CDirect3DDevice_SetTexture((const void *)dev, i, NULL));
+    assert(CDirect3DTexture_Release((const void *)old) == 1);
+    assert(g_boundTextures[9] == (void *)old && glIsTexture(oldName));
+    IDirect3DTexture9 *replacement = LuminanceTexture(dev, 191);
+    assert(!CDirect3DDevice_SetTexture((const void *)dev, 4, (void *)replacement));
+    CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState((const void *)dev, g_boundTextures[4], 4);
+    CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState((const void *)dev, g_boundTextures[9], 9);
+    const char program[] = "!!ARBfp1.0\nTEMP old, replacement;\n"
+        "TEX old, {0.5,0.5,0,0}, texture[9], 2D;\n"
+        "TEX replacement, {0.5,0.5,0,0}, texture[4], 2D;\n"
+        "MOV result.color, {0,0,0,1};\nMOV result.color.r, old.r;\n"
+        "MOV result.color.g, replacement.r;\nEND";
+    GLuint fp; glGenProgramsARB(1, &fp);
+    glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, fp);
+    glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, sizeof(program)-1, program);
+    glEnable(GL_FRAGMENT_PROGRAM_ARB); glDisable(GL_VERTEX_PROGRAM_ARB);
+    glDisable(GL_DEPTH_TEST); glDisable(GL_STENCIL_TEST); glDisable(GL_BLEND); glDisable(GL_ALPHA_TEST);
+    glColorMask(1,1,1,1);
+    glMatrixMode(GL_PROJECTION); glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+    glBegin(GL_QUADS);
+    glVertex2f(-1,-1); glVertex2f(1,-1); glVertex2f(1,1); glVertex2f(-1,1);
+    glEnd();
+    byte pixel[4]; glReadPixels(16,16,1,1,GL_RGBA,GL_UNSIGNED_BYTE,pixel);
+    fprintf(stderr, "retained sampler 9 / replacement sampler 4 GPU values: %u / %u\n", pixel[0], pixel[1]);
+    assert(pixel[0] == 63 && pixel[1] == 191 && pixel[2] == 0 && pixel[3] == 255);
+    assert(!CDirect3DDevice_SetTexture((const void *)dev, 9, NULL));
+    assert(!glIsTexture(oldName));
+    assert(!CDirect3DDevice_SetTexture((const void *)dev, 4, NULL));
+    assert(CDirect3DTexture_Release((const void *)replacement) == 0);
+    glDeleteProgramsARB(1, &fp);
+    assert(glGetError() == GL_NO_ERROR);
+}
+
 static void FloatTarget(DeviceImpl *dev)
 {
     IDirect3DTexture9 *texture;
@@ -891,6 +979,8 @@ int main(int argc, char **argv)
         assert(before == 0 && after > 50);
         Set(&dev, D3DRS_DEPTHBIAS, 0);
         assert(!glIsEnabled(GL_POLYGON_OFFSET_LINE));
+    } else if (!strcmp(test, "texture-caps")) {
+        TextureCaps(&dev);
     } else if (!strcmp(test, "float")) {
         FloatTarget(&dev);
     } else if (!strcmp(test, "identity")) {
