@@ -387,6 +387,10 @@ static void MixLocked(float *stereo, size_t frame_count, int output_channels)
                 left *= (1 - pan) * 0.5f * rear * attenuation;
                 right *= (1 + pan) * 0.5f * rear * attenuation;
             }
+            /* Miles rounds the composed dry channel gain to 1/2048 before
+             * applying it to source PCM. Keep this after spatial attenuation. */
+            float dry_left = (float)lrintf(left * sample->dry * master_dry * 2048.0f) / 2048.0f;
+            float dry_right = (float)lrintf(right * sample->dry * master_dry * 2048.0f) / 2048.0f;
             for (size_t i = 0; i < count; ++i) {
                 float l, r;
                 if (sample->stream) {
@@ -428,8 +432,8 @@ static void MixLocked(float *stereo, size_t frame_count, int output_channels)
                 size_t output = (chunk + i) * output_channels;
                 /* The original mono mixer takes a mono source's left gain;
                  * stereo sources add both independently weighted channels. */
-                float dry_l = l * left * sample->dry;
-                float dry_r = r * right * sample->dry;
+                float dry_l = l * dry_left;
+                float dry_r = r * dry_right;
                 if (driver_channels == 1) {
                     if (sample->channels == 2) dry_l += dry_r;
                     dry_r = dry_l;
@@ -448,9 +452,9 @@ static void MixLocked(float *stereo, size_t frame_count, int output_channels)
             size_t output = (chunk + i) * output_channels;
             reverb[reverb_cursor * 2] = wet_buffer[i * 2] + l * 0.45f;
             reverb[reverb_cursor * 2 + 1] = wet_buffer[i * 2 + 1] + r * 0.45f;
-            stereo[output] = Clamp(stereo[output] * master_dry + l * master_wet, -1, 1);
+            stereo[output] = Clamp(stereo[output] + l * master_wet, -1, 1);
             if (output_channels == 2)
-                stereo[output + 1] = Clamp(stereo[output + 1] * master_dry + (driver_channels == 1 ? l : r) * master_wet, -1, 1);
+                stereo[output + 1] = Clamp(stereo[output + 1] + (driver_channels == 1 ? l : r) * master_wet, -1, 1);
             reverb_cursor = (reverb_cursor + 1) % REVERB_FRAMES;
         }
     }
