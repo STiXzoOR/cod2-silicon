@@ -14,7 +14,38 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 ### Fixed
 
 - CoD2x now honors competitive settings requested by stock 1.3 servers, including
-  frame-rate and network limits, shadows, and the restriction on `wait`.
+  frame-rate and network limits, shadows, and the restriction on `wait`. Turning
+  the rules off restores the same setting limits as upstream.
+- CoD2x's nine film-color controls now adjust the 3D scene, including separate
+  sky saturation, while leaving the HUD and the default picture unchanged.
+- Older servers retain their literal text and player names; CoD2x's extended
+  formatting is enabled only where upstream enables it.
+- Radar firing flashes keep their captured position when the radar moves or
+  zooms. Radar calibration starts at the correct origin and handles each mouse
+  update. Long vMix overlay names no longer lose characters prematurely.
+- CoD2x update notices explain how to update this native app and open its release
+  page. They no longer prevent joining servers that still accept this version.
+- Explicit `writeconfig` works with automatic saving disabled. Passwordless
+  connect links preserve the existing password, and engine archive setup no
+  longer deletes CoD2x files from the game-data folder.
+- Mod WebSockets deliver messages received with the connection reply and accept
+  long upgrade requests. Server shutdown cancels pending mod HTTP work without
+  waiting for a stalled DNS resolver.
+- CoD2x diagnostic reports preserve complete log lines and legacy text, distinguish
+  long messages, retry failed delivery and send the oldest queued reports first.
+- Original 1.3 no longer starts CoD2x's freeze watcher or handles CoD2x links.
+  Native CoD2x keeps PunkBuster off and explains that its provider is unavailable.
+
+### Known CoD2x limitations
+
+- Complete upstream revision 7 support remains unfinished. The client still
+  announces revision 6 and cannot join servers requiring 7. Spectator x-ray,
+  head labels and health display are not implemented; server player information
+  has been added in preparation. The [compatibility matrix](docs/macos-port/cod2x-compat.md)
+  records the remaining animation, file-selection and service differences.
+- An imported CoD2x menu archive already in a shared game-data folder can still
+  appear in Original 1.3. Stock asset filtering needs a separate filesystem fix.
+  PunkBuster protection is unavailable in both engines.
 
 ### Added
 
@@ -24,29 +55,31 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   pick a CoD2x server. Config Studio, Check-up and the ready check follow the
   version you chose, and the few settings one version cannot hold are kept
   for the other.
-- CoD2x 1.4.6.8 in full, where 0.2.1 covered part of it. As a player: demo
+- Additional CoD2x compatibility features. As a player: demo
   upload, CoD2x's text colours and killfeed icons, hidden server addresses on
   streamed matches, the 32-port LAN search, zPAM downloads from CoD2x's site,
   the update notice, and vMix control for broadcasts. As a host: your server
   is a real CoD2x server, with its bans and hardware IDs, wallbang settings,
   zPAM selection and updates, the match service, and web requests and
   WebSocket connections for mods. Certificates are checked on every request,
-  which CoD2x itself does not do, and nothing from the CoD2x project is
-  installed or run: updates are only announced.
+  which CoD2x itself does not do. Upstream executable updates are announced;
+  their Windows/Linux binaries are not installed by this native engine.
 - CoD2x's update check, done the way CoD2x does it. With CoD2x on, the game
   asks the CoD2x project's update server for the current CoD2x version each
   time the main menu opens, and shows the game's Auto-Update notice. As in
   CoD2x on Windows, the request carries your CoD2x version, an MD5 hash of
   your CD key, an install ID, your CoD2x hardware IDs and a short description
   of your Mac. It goes over HTTPS, and over plain UDP when that fails. If
-  CoD2x marks an update as required, the game stops joining servers until
-  this app has a release for it. The original 1.3 sends none of this.
+  CoD2x marks an update as required, the notice directs you to this app’s
+  releases; servers still enforce their own version requirements. The original
+  1.3 sends none of this.
   [What the app sends](README.md#what-the-app-sends) lists everything.
 - CoD2x's own menus and icons. **Settings → Game → CoD2x files** downloads
   the official CoD2x 1.4.6.8 release from the CoD2x project's GitHub page,
   checks it, and keeps only those files on this Mac; or copies them from a
-  Windows game folder that has CoD2x installed. They are used for CoD2x games
-  only, and your game folder is never changed.
+  Windows game folder that has CoD2x installed. The launcher manages them for
+  CoD2x games; pre-existing shared-folder archives have the isolation limitation
+  noted above. Your game folder is never changed by engine archive setup.
 - Install updates from the launcher. When a newer release is found, **Install
   Update** downloads it, checks it against the release's checksum and
   signature, replaces the app and restarts it. Nothing installs without that
