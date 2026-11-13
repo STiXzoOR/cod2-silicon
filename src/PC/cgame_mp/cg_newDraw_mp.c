@@ -828,7 +828,11 @@ void CG_DrawHoldBreathHint(const rectDef_t *rect, struct Font_s *font, float fon
 
     text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_HOLD_BREATH"), binding);
     textWidth = UI_TextWidth(text, 0, font, fontscale);
+#if defined(COD2_APPLE_SDK)
+    textOffset = (int)__builtin_rintf(textWidth * 0.5f);
+#else
     textOffset = (int)(textWidth * 0.5f + 0.5f);
+#endif
 
     UI_DrawText(
         text,
@@ -958,7 +962,11 @@ void CG_DrawPlayerCompassBack(const rectDef_t *rect, MaterialHandle material, ve
     float sizeScale;
     float height;
 
+#if defined(COD2_APPLE_SDK)
+    duration = (int)__builtin_rintf(1000.0f * hud_fade_compass->current.value);
+#else
     duration = (int)floorf(1000.0f * hud_fade_compass->current.value + 0.5f);
+#endif
     displayStartTime = cg->compassFadeTime;
     alpha = CG_FadeHudMenu_inl(hud_fade_compass, displayStartTime, duration);
     color[3] = alpha;
@@ -1004,7 +1012,11 @@ static inline __attribute__((always_inline)) int CG_FadeDurationMsec(const dvar_
     if (!fadeDvar) {
         return 0;
     }
+#if defined(COD2_APPLE_SDK)
+    return (int)__builtin_rintf(fadeDvar->current.value * 1000.0f);
+#else
     return (int)floorf(fadeDvar->current.value * 1000.0f + 0.5f);
+#endif
 }
 
 static inline __attribute__((always_inline)) float CG_HudFadeAlpha(const dvar_t *fadeDvar, int displayStartTime)
@@ -1096,6 +1108,8 @@ static inline __attribute__((always_inline)) int CG_RoundStanceFadeDuration(floa
     __asm fistp result
 
     return result;
+#elif defined(COD2_APPLE_SDK)
+    return (int)__builtin_rintf(value);
 #else
     return (int)floorf(value + 0.5f);
 #endif
@@ -1881,7 +1895,11 @@ static void CG_DrawPlayerHealthBack(const rectDef_t *rect, MaterialHandle materi
         pulseRate = hud_health_pulserate_injured;
     else
         return;
+#if defined(COD2_APPLE_SDK)
+    duration = (int)__builtin_rintf(1000.0f * pulseRate->current.value);
+#else
     duration = (int)floorf(1000.0f * pulseRate->current.value + 0.5f);
+#endif
     if (!duration)
         return;
     if (cg->lastHealthPulseTime > cg->time || cg->lastHealthPulseTime + duration < cg->time)

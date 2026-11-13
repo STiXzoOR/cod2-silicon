@@ -944,7 +944,11 @@ static int Con_MessageLineScrollOffset(MessageWindow *msgwnd, MessageLine *line,
     if (remaining <= 0)
         return 0;
 
+#if defined(COD2_APPLE_SDK)
+    return (int)__builtin_rintf(((float)remaining / (float)msgwnd->scrolltime) * (float)charHeight);
+#else
     return (int)floorf(((float)remaining / (float)msgwnd->scrolltime) * (float)charHeight + 0.5f);
+#endif
 }
 
 static qboolean Con_MessageLineAlpha(MessageWindow *msgwnd, MessageLine *line, int serverTime, float baseAlpha, float *drawAlpha)
@@ -1092,7 +1096,11 @@ static void Con_DrawMessageWindow(MessageWindow *msgwnd, int x, int y, int charH
             elapsed = cl->serverTime - line->startTime;
             if (elapsed < msgwnd->scrolltime) {
                 float fraction = 1.0f - (float)elapsed / (float)msgwnd->scrolltime;
+#if defined(COD2_APPLE_SDK)
+                y += (int)__builtin_rintf(fraction * (float)charHeight);
+#else
                 y += (int)floorf(fraction * (float)charHeight + 0.5f);
+#endif
             }
         }
         for (lineIndex = msgwnd->current_line + msgwnd->count - 1;
@@ -1143,7 +1151,11 @@ static void Con_DrawMessageWindow(MessageWindow *msgwnd, int x, int y, int charH
         if (serverTime > line->endTime) {
             remaining = msgwnd->scrolltime - (serverTime - line->endTime);
             if (remaining > 0) {
+#if defined(COD2_APPLE_SDK)
+                int offset = (int)__builtin_rintf(((float)remaining / (float)msgwnd->scrolltime) * (float)charHeight);
+#else
                 int offset = (int)floorf(((float)remaining / (float)msgwnd->scrolltime) * (float)charHeight + 0.5f);
+#endif
                 v += mode == MWM_TOPDOWN_REVERSED ? -offset : offset;
             }
             lineIndex++;
@@ -1767,13 +1779,25 @@ void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int l
     if (!duration) {
         switch (type) {
         case PMSG_CONSOLE:
+#if defined(COD2_APPLE_SDK)
+            duration = (int)__builtin_rintf(con_minicontime->current.value * 1000.0f);
+#else
             duration = (int)floorf(con_minicontime->current.value * 1000.0f + 0.5f);
+#endif
             break;
         case PMSG_GAME:
+#if defined(COD2_APPLE_SDK)
+            duration = (int)__builtin_rintf(con_gamemessagetime->current.value * 1000.0f);
+#else
             duration = (int)floorf(con_gamemessagetime->current.value * 1000.0f + 0.5f);
+#endif
             break;
         case PMSG_BOLDGAME:
+#if defined(COD2_APPLE_SDK)
+            duration = (int)__builtin_rintf(con_boldgamemessagetime->current.value * 1000.0f);
+#else
             duration = (int)floorf(con_boldgamemessagetime->current.value * 1000.0f + 0.5f);
+#endif
             break;
         case PMSG_SUBTITLE:
             duration = 5000;
@@ -2512,7 +2536,11 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
     if (!con.initialized)
         Con_OneTimeInit();
 
+#if defined(COD2_APPLE_SDK)
+    duration = (int)__builtin_rintf(con_gamemessagetime->current.value * 1000.0f);
+#else
     duration = (int)floorf(con_gamemessagetime->current.value * 1000.0f + 0.5f);
+#endif
     if (duration < 0)
         duration = 0;
 

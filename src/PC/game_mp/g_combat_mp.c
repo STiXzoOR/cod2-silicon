@@ -555,7 +555,12 @@ qboolean G_RadiusDamage(const vec_t *origin, gentity_t *inflictor, gentity_t *at
             }
         }
 
+#if defined(COD2_APPLE_SDK)
+        /* Windows 1.3 0x5232f6: preserve the sum before the radius gate. */
+        dist = sqrtf((v[1] * v[1] + v[2] * v[2]) + v[0] * v[0]);
+#else
         dist = sqrtf(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+#endif
 
         if (dist >= radius) {
             continue;
@@ -604,7 +609,12 @@ qboolean G_RadiusDamage(const vec_t *origin, gentity_t *inflictor, gentity_t *at
             dest[0] -= origin[0];
             dest[1] -= origin[1];
             dest[2] -= origin[2];
+#if defined(COD2_APPLE_SDK)
+            /* The near-wall route uses z, y, x order at 0x5234eb. */
+            float traceDist = sqrtf((dest[2] * dest[2] + dest[1] * dest[1]) + dest[0] * dest[0]);
+#else
             float traceDist = sqrtf(dest[0] * dest[0] + dest[1] * dest[1] + dest[2] * dest[2]);
+#endif
             if (radiusTweak <= traceDist) {
                 continue;
             }

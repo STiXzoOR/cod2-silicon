@@ -1507,7 +1507,7 @@ static inline int CG_RoundFPS(float value)
 {
 #if defined(_MSC_VER) && defined(_M_IX86)
     int result;
-    /* Break exact half-way ties upward before x87's round-to-nearest. */
+    /* The Windows single-precision FPU retains nearest-even ties here. */
     const double roundEpsilon = 1.0 / 1073741824.0;
 
     __asm fld value
@@ -1515,6 +1515,8 @@ static inline int CG_RoundFPS(float value)
     __asm fistp result
 
     return result;
+#elif defined(COD2_APPLE_SDK)
+    return (int)__builtin_rintf(value);
 #else
     return (int)floorf(value + 0.5f);
 #endif
@@ -2608,8 +2610,13 @@ unsigned int CG_Draw2D(void)
         CG_Draw2D_DrawBottomOverlays(cg);
         return 0;
     } else {
+#if defined(COD2_APPLE_SDK)
+        float notifyY = __builtin_rintf(cgs->compassY -
+                               (cg_hudCompassSize->current.value - 1.0f) * cgs->compassHeight + 12.0f);
+#else
         float notifyY = floorf(cgs->compassY -
                                (cg_hudCompassSize->current.value - 1.0f) * cgs->compassHeight + 12.0f + 0.5f);
+#endif
         float alpha;
         if (!CG_ScoreboardDisplayed()) {
             alpha = 1.0f;

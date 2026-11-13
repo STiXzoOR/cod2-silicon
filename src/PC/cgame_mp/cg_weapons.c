@@ -827,9 +827,17 @@ void CG_RegisterWeapon(int weaponNum)
 
     if (weapDef->szHudIcon[0]) {
         weapInfo->hHudIcon = (MaterialHandle)CL_RegisterMaterial(weapDef->szHudIcon, 7);
+#if defined(COD2_APPLE_SDK)
+        cgs->media.hintMaterials[weaponNum + 4] = weapInfo->hHudIcon;
+#else
         cgs->media.hintMaterials[weaponNum + 2] = weapInfo->hHudIcon;
+#endif
     } else {
+#if defined(COD2_APPLE_SDK)
+        cgs->media.hintMaterials[weaponNum + 4] = cgs->media.hintMaterials[2];
+#else
         cgs->media.hintMaterials[weaponNum + 2] = cgs->media.hintMaterials[0];
+#endif
     }
 
     if (weapDef->killIcon[0]) {
@@ -1012,7 +1020,11 @@ void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
         time -= (rand() % tracerDelay) / 2;
 
     speed = cg_tracerSpeed->current.value;
+#if defined(COD2_APPLE_SDK)
+    le->endTime = time - (int)((dist / speed) * -1000.0f);
+#else
     le->endTime = time + (int)((dist * 1000.0f) / speed);
+#endif
     le->pos.trType = TR_LINEAR;
     le->pos.trTime = time;
 

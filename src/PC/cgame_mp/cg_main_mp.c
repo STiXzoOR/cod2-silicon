@@ -686,7 +686,11 @@ static inline __attribute__((always_inline)) void CG_PrintAliasSubtitle(const sn
         subtitleWidth = cg_subtitleWidthStandard->current.integer;
     }
 
+#if defined(COD2_APPLE_SDK)
+    minMsec = (int)__builtin_rintf(cg_subtitleMinTime->current.value * 1000.0f);
+#else
     minMsec = (int)(cg_subtitleMinTime->current.value * 1000.0f + 0.5f);
+#endif
     if (minMsec < msec) {
         minMsec = msec;
     }
@@ -763,7 +767,7 @@ void CG_GetDObjOrientation(int dobjHandle, orientation_t *orient)
     }
 
 #if defined(COD2_X64)
-    memcpy(orient->origin, cg->refdef.vieworg, sizeof(orient->origin));
+    memcpy(orient->origin, cg->viewModelOrigin, sizeof(orient->origin));
 #else
     orient->origin[0] = *(const float *)((const byte *)&cgArray + 180412);
     orient->origin[1] = *(const float *)((const byte *)&cgArray + 180416);

@@ -10,6 +10,10 @@ extern float acosf(float);
 extern float asinf(float);
 extern float atanf(float);
 extern double atan2(double, double);
+#if defined(COD2_APPLE_SDK)
+extern double sin(double);
+extern double cos(double);
+#endif
 extern double tan(double);
 extern double log(double);
 extern double sqrt(double);
@@ -198,6 +202,18 @@ void Vec3RotateTranspose(const vec_t *in, vec3_t *matrix, vec_t *out)
 
 void MatrixMultiply(const float (*in1)[3], const float (*in2)[3], float (*out)[3])
 {
+#if defined(COD2_APPLE_SDK)
+    /* Windows 1.3 keeps a distinct sum order for each matrix element. */
+    out[0][0] = (in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0]) + in1[0][2] * in2[2][0];
+    out[0][1] = (in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1]) + in1[0][0] * in2[0][1];
+    out[0][2] = (in1[0][1] * in2[1][2] + in1[0][2] * in2[2][2]) + in1[0][0] * in2[0][2];
+    out[1][0] = (in1[1][1] * in2[1][0] + in1[1][0] * in2[0][0]) + in1[1][2] * in2[2][0];
+    out[1][1] = (in1[1][2] * in2[2][1] + in1[1][1] * in2[1][1]) + in1[1][0] * in2[0][1];
+    out[1][2] = (in1[1][2] * in2[2][2] + in1[1][1] * in2[1][2]) + in1[1][0] * in2[0][2];
+    out[2][0] = (in1[2][0] * in2[0][0] + in1[2][2] * in2[2][0]) + in1[2][1] * in2[1][0];
+    out[2][1] = (in1[2][2] * in2[2][1] + in1[2][1] * in2[1][1]) + in1[2][0] * in2[0][1];
+    out[2][2] = (in1[2][2] * in2[2][2] + in1[2][1] * in2[1][2]) + in1[2][0] * in2[0][2];
+#else
     out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
     out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1];
     out[0][2] = in1[0][0] * in2[0][2] + in1[0][1] * in2[1][2] + in1[0][2] * in2[2][2];
@@ -207,13 +223,18 @@ void MatrixMultiply(const float (*in1)[3], const float (*in2)[3], float (*out)[3
     out[2][0] = in1[2][0] * in2[0][0] + in1[2][1] * in2[1][0] + in1[2][2] * in2[2][0];
     out[2][1] = in1[2][0] * in2[0][1] + in1[2][1] * in2[1][1] + in1[2][2] * in2[2][1];
     out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] + in1[2][2] * in2[2][2];
+#endif
 }
 
 const float vectoyaw(const vec_t *vec)
 {
     if (vec[1] == 0.0f && vec[0] == 0.0f)
         return 0.0f;
+#if defined(COD2_APPLE_SDK)
+    float yaw = ((float)atan2((double)vec[1], (double)vec[0]) * 180.0f) / 3.1415927410125732f;
+#else
     float yaw = (float)(atan2((double)vec[1], (double)vec[0]) * 180.0 / 3.141592653589793);
+#endif
     if (yaw < 0.0f)
         yaw += 360.0f;
     return yaw;
@@ -223,7 +244,11 @@ const float vectosignedyaw(const vec_t *vec)
 {
     if (vec[1] == 0.0f && vec[0] == 0.0f)
         return 0.0f;
+#if defined(COD2_APPLE_SDK)
+    return ((float)atan2((double)vec[1], (double)vec[0]) * 180.0f) / 3.1415927410125732f;
+#else
     return (float)(atan2((double)vec[1], (double)vec[0]) * 180.0 / 3.141592653589793);
+#endif
 }
 
 float PointToBoxDistSq(const vec_t *pt, const vec_t *mins, const vec_t *maxs)
@@ -275,6 +300,21 @@ void MatrixSet44(float (*out)[4], const vec_t *origin, vec3_t *axis, vec_t scale
 #if defined(COD2_X64)
 void MatrixMultiply43(const float (*in1)[3], const float (*in2)[3], float (*out)[3])
 {
+#if defined(COD2_APPLE_SDK)
+    /* Windows 1.3 keeps a distinct sum order for each matrix element. */
+    out[0][0] = (in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0]) + in1[0][2] * in2[2][0];
+    out[1][0] = (in1[1][1] * in2[1][0] + in1[1][0] * in2[0][0]) + in1[1][2] * in2[2][0];
+    out[2][0] = (in1[2][1] * in2[1][0] + in1[2][0] * in2[0][0]) + in1[2][2] * in2[2][0];
+    out[0][1] = (in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1]) + in1[0][0] * in2[0][1];
+    out[1][1] = (in1[1][2] * in2[2][1] + in1[1][1] * in2[1][1]) + in1[1][0] * in2[0][1];
+    out[2][1] = (in1[2][2] * in2[2][1] + in1[2][1] * in2[1][1]) + in1[2][0] * in2[0][1];
+    out[0][2] = (in1[0][0] * in2[0][2] + in1[0][1] * in2[1][2]) + in1[0][2] * in2[2][2];
+    out[1][2] = (in1[1][2] * in2[2][2] + in1[1][1] * in2[1][2]) + in1[1][0] * in2[0][2];
+    out[2][2] = (in1[2][2] * in2[2][2] + in1[2][1] * in2[1][2]) + in1[2][0] * in2[0][2];
+    out[3][0] = (in1[3][1] * in2[1][0] + in1[3][0] * in2[0][0]) + in1[3][2] * in2[2][0] + in2[3][0];
+    out[3][1] = (in1[3][2] * in2[2][1] + in1[3][1] * in2[1][1]) + in1[3][0] * in2[0][1] + in2[3][1];
+    out[3][2] = (in1[3][2] * in2[2][2] + in1[3][1] * in2[1][2]) + in1[3][0] * in2[0][2] + in2[3][2];
+#else
     out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
     out[1][0] = in1[1][0] * in2[0][0] + in1[1][1] * in2[1][0] + in1[1][2] * in2[2][0];
     out[2][0] = in1[2][0] * in2[0][0] + in1[2][1] * in2[1][0] + in1[2][2] * in2[2][0];
@@ -287,6 +327,7 @@ void MatrixMultiply43(const float (*in1)[3], const float (*in2)[3], float (*out)
     out[3][0] = in1[3][0] * in2[0][0] + in1[3][1] * in2[1][0] + in1[3][2] * in2[2][0] + in2[3][0];
     out[3][1] = in1[3][0] * in2[0][1] + in1[3][1] * in2[1][1] + in1[3][2] * in2[2][1] + in2[3][1];
     out[3][2] = in1[3][0] * in2[0][2] + in1[3][1] * in2[1][2] + in1[3][2] * in2[2][2] + in2[3][2];
+#endif
 }
 #else
 void MatrixMultiply43(const float (*in1)[3], const float (*in2)[3], float (*out)[3])
@@ -370,7 +411,14 @@ static inline __attribute__((always_inline)) void MatrixTransformVector_core(con
 
 void MatrixTransformVector(const float *in1, const float (*in2)[3], float *out)
 {
+#if defined(COD2_APPLE_SDK)
+    /* Windows 1.3 0x428f30 orders the first row as y + z + x. */
+    out[0] = (in1[1] * in2[1][0] + in1[2] * in2[2][0]) + in1[0] * in2[0][0];
+    out[1] = (in1[0] * in2[0][1] + in1[1] * in2[1][1]) + in1[2] * in2[2][1];
+    out[2] = (in1[0] * in2[0][2] + in1[1] * in2[1][2]) + in1[2] * in2[2][2];
+#else
     MatrixTransformVector_core(in1, in2, out);
+#endif
 }
 
 void MatrixInverse44(const float *mat, float *dst)
@@ -477,28 +525,46 @@ void MatrixTransposeTransformVector(const float *in1, const float (*in2)[3], flo
 
 void MatrixTransformVector43(const float *in1, const float (*in2)[3], float *out)
 {
+#if defined(COD2_APPLE_SDK)
+    out[0] = (in1[1] * in2[1][0] + in1[2] * in2[2][0]) + in1[0] * in2[0][0] + in2[3][0];
+#else
     out[0] = in1[0] * in2[0][0] + in1[1] * in2[1][0] + in1[2] * in2[2][0] + in2[3][0];
+#endif
     out[1] = in1[0] * in2[0][1] + in1[1] * in2[1][1] + in1[2] * in2[2][1] + in2[3][1];
     out[2] = in1[0] * in2[0][2] + in1[1] * in2[1][2] + in1[2] * in2[2][2] + in2[3][2];
 }
 
 void QuatMultiply(const float *in1, const float *in2, float *out)
 {
+#if defined(COD2_APPLE_SDK)
+    out[0] = (in1[0] * in2[3] + in1[2] * in2[1]) + in1[3] * in2[0] - in1[1] * in2[2];
+    out[1] = (in1[1] * in2[3] - in1[2] * in2[0]) + in1[0] * in2[2] + in1[3] * in2[1];
+    out[2] = (in1[1] * in2[0] + in1[2] * in2[3]) - in1[0] * in2[1] + in1[3] * in2[2];
+#else
     out[0] = in1[0] * in2[3] + in1[3] * in2[0] + in1[2] * in2[1] - in1[1] * in2[2];
     out[1] = in1[1] * in2[3] - in1[2] * in2[0] + in1[3] * in2[1] + in1[0] * in2[2];
     out[2] = in1[2] * in2[3] + in1[1] * in2[0] - in1[0] * in2[1] + in1[3] * in2[2];
+#endif
     out[3] = in1[3] * in2[3] - in1[0] * in2[0] - in1[1] * in2[1] - in1[2] * in2[2];
 }
 
 void QuatToAxis(const vec_t *quat, vec3_t *axis)
 {
     float x = quat[0], y = quat[1], z = quat[2], w = quat[3];
+#if defined(COD2_APPLE_SDK)
+    float s = 2.0f / (((w * w + z * z) + y * y) + x * x);
+#else
     float s = 2.0f / (w * w + (x * x + y * y + z * z));
+#endif
     float xx = x * x * s, yy = y * y * s, zz = z * z * s;
     float sx = x * s, sy = y * s, sz = z * s;
     float xy = y * sx, xz = z * sx, xw = w * sx;
     float yz = z * sy, yw = w * sy;
+#if defined(COD2_APPLE_SDK)
+    float zw = (w * z) * s;
+#else
     float zw = w * sz;
+#endif
     axis[0][0] = 1.0f - (yy + zz);
     axis[0][1] = xy + zw;
     axis[0][2] = xz - yw;
@@ -808,9 +874,15 @@ void MatrixTransformVectorQuatTrans(const vec_t *in, const DObjAnimMat *mat, vec
     float zz = qz * mat->quat[2];
     float zw = qz * mat->quat[3];
 
+#if defined(COD2_APPLE_SDK)
+    out[0] = ((1.0f - (yy + zz)) * in[0] + (yw + xz) * in[2]) + (xy - zw) * in[1] + mat->trans[0];
+    out[1] = ((xy + zw) * in[0] + (yz - xw) * in[2]) + (1.0f - (xx + zz)) * in[1] + mat->trans[1];
+    out[2] = ((xz - yw) * in[0] + (1.0f - (xx + yy)) * in[2]) + (xw + yz) * in[1] + mat->trans[2];
+#else
     out[0] = (1.0f - (yy + zz)) * in[0] + (xy - zw) * in[1] + (yw + xz) * in[2] + mat->trans[0];
     out[1] = (xy + zw) * in[0] + (1.0f - (xx + zz)) * in[1] + (yz - xw) * in[2] + mat->trans[1];
     out[2] = (xz - yw) * in[0] + (xw + yz) * in[1] + (1.0f - (xx + yy)) * in[2] + mat->trans[2];
+#endif
 }
 
 float DiffTrack(float tgt, float cur, float rate, float deltaTime)
@@ -872,7 +944,11 @@ const vec_t Vec3DistanceSq(const vec_t *p1, const vec_t *p2)
     float dx = p2[0] - p1[0];
     float dy = p2[1] - p1[1];
     float dz = p2[2] - p1[2];
+#if defined(COD2_APPLE_SDK)
+    return (dz * dz + dy * dy) + dx * dx;
+#else
     return dx * dx + dy * dy + dz * dz;
+#endif
 }
 
 void MatrixTransposeTransformVector43(const float *in1, const float (*in2)[3], float *out)
@@ -880,9 +956,15 @@ void MatrixTransposeTransformVector43(const float *in1, const float (*in2)[3], f
     float d0 = in1[0] - in2[3][0];
     float d1 = in1[1] - in2[3][1];
     float d2 = in1[2] - in2[3][2];
+#if defined(COD2_APPLE_SDK)
+    out[0] = (d2 * in2[0][2] + d1 * in2[0][1]) + d0 * in2[0][0];
+    out[1] = (d2 * in2[1][2] + d1 * in2[1][1]) + d0 * in2[1][0];
+    out[2] = (d2 * in2[2][2] + d1 * in2[2][1]) + d0 * in2[2][0];
+#else
     out[0] = d0 * in2[0][0] + d1 * in2[0][1] + d2 * in2[0][2];
     out[1] = d0 * in2[1][0] + d1 * in2[1][1] + d2 * in2[1][2];
     out[2] = d0 * in2[2][0] + d1 * in2[2][1] + d2 * in2[2][2];
+#endif
 }
 
 void ExpandBoundsToWidth(vec_t *mins, vec_t *maxs)
@@ -1050,7 +1132,11 @@ const float vectopitch(const vec_t *vec)
         return (vec[2] > 0.0f) ? 270.0f : 90.0f;
     }
     float forward = __builtin_sqrtf(vec[0] * vec[0] + vec[1] * vec[1]);
+#if defined(COD2_APPLE_SDK)
+    float pitch = ((float)atan2((double)vec[2], (double)forward) * -180.0f) / 3.1415927410125732f;
+#else
     float pitch = (float)(atan2((double)vec[2], (double)forward) * -180.0 / 3.141592653589793);
+#endif
     if (pitch < 0.0f)
         pitch += 360.0f;
     return pitch;
@@ -1068,13 +1154,21 @@ void vectoangles(const vec_t *vec, vec_t *angles)
         return;
     }
 
+#if defined(COD2_APPLE_SDK)
+    yaw = ((float)atan2((double)vec[1], (double)vec[0]) * 180.0f) / 3.1415927410125732f;
+#else
     yaw = (float)(atan2((double)vec[1], (double)vec[0]) * 180.0 / 3.141592653589793);
+#endif
     if (yaw < 0.0f)
         yaw += 360.0f;
 
     {
         float forward = __builtin_sqrtf(vec[0] * vec[0] + vec[1] * vec[1]);
+#if defined(COD2_APPLE_SDK)
+        pitch = ((float)atan2((double)vec[2], (double)forward) * -180.0f) / 3.1415927410125732f;
+#else
         pitch = (float)(atan2((double)vec[2], (double)forward) * -180.0 / 3.141592653589793);
+#endif
         if (pitch < 0.0f)
             pitch += 360.0f;
     }
@@ -1154,7 +1248,11 @@ const vec_t Vec3Distance(const vec_t *v1, const vec_t *v2)
     float dx = v2[0] - v1[0];
     float dy = v2[1] - v1[1];
     float dz = v2[2] - v1[2];
+#if defined(COD2_APPLE_SDK)
+    return __builtin_sqrtf((dz * dz + dx * dx) + dy * dy);
+#else
     return __builtin_sqrtf(dx * dx + dy * dy + dz * dz);
+#endif
 }
 
 float DiffTrackAngle(float tgt, float cur, float rate, float deltaTime, float f, float granularity, float epsilon)
@@ -1269,7 +1367,11 @@ void MakeNormalVectors(const vec_t *forward, vec_t *right, vec_t *up)
     right[1] = -forward[0];
     right[2] = forward[1];
     right[0] = forward[2];
+#if defined(COD2_APPLE_SDK)
+    d = -((forward[0] * right[0] + forward[2] * right[2]) + right[1] * forward[1]);
+#else
     d = -(forward[0] * right[0] + right[1] * forward[1] + right[2] * forward[2]);
+#endif
     right[0] = d * forward[0] + right[0];
     right[1] = d * forward[1] + right[1];
     right[2] = d * forward[2] + right[2];
@@ -1401,9 +1503,15 @@ void RotatePointAroundVector(vec_t *dst, const vec_t *dir, const vec_t *point, c
     __builtin_memset(zrot, 0, sizeof(zrot));
     zrot[2][2] = 1.0f;
 
+#if defined(COD2_APPLE_SDK)
+    rad = degrees * 0.01745329238474369f;
+    s = (float)sin((double)rad);
+    c = (float)cos((double)rad);
+#else
     rad = (float)((double)degrees * 0.017453292519943295);
     s = sinf(rad);
     c = cosf(rad);
+#endif
     zrot[0][0] = c;
     zrot[0][1] = s;
     zrot[1][0] = -s;
@@ -1413,7 +1521,11 @@ void RotatePointAroundVector(vec_t *dst, const vec_t *dir, const vec_t *point, c
     MatrixMultiply(tmpmat, im, rot);
 
     for (i = 0; i < 3; i++)
+#if defined(COD2_APPLE_SDK)
+        dst[i] = (rot[i][0] * point[0] + rot[i][2] * point[2]) + rot[i][1] * point[1];
+#else
         dst[i] = rot[i][0] * point[0] + rot[i][1] * point[1] + rot[i][2] * point[2];
+#endif
 }
 
 void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up)
@@ -1421,12 +1533,24 @@ void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up)
     float angle;
     float sr, sp, sy, cr, cp, cy;
 
+#if defined(COD2_APPLE_SDK)
+    angle = angles[1] * 0.01745329238474369f;
+    sy = (float)sin((double)angle);
+    cy = (float)cos((double)angle);
+#else
     angle = (float)((double)angles[1] * 0.017453292519943295);
     sy = sinf(angle);
     cy = cosf(angle);
+#endif
+#if defined(COD2_APPLE_SDK)
+    angle = angles[0] * 0.01745329238474369f;
+    sp = (float)sin((double)angle);
+    cp = (float)cos((double)angle);
+#else
     angle = (float)((double)angles[0] * 0.017453292519943295);
     sp = sinf(angle);
     cp = cosf(angle);
+#endif
 
     if (forward) {
         forward[0] = cp * cy;
@@ -1435,9 +1559,15 @@ void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up)
     }
 
     if (right || up) {
+#if defined(COD2_APPLE_SDK)
+        angle = angles[2] * 0.01745329238474369f;
+        sr = (float)sin((double)angle);
+        cr = (float)cos((double)angle);
+#else
         angle = (float)((double)angles[2] * 0.017453292519943295);
         sr = sinf(angle);
         cr = cosf(angle);
+#endif
 
         if (right) {
             right[0] = -sr * sp * cy + cr * sy;
@@ -1465,9 +1595,15 @@ void AnglesToAxis(const vec_t *angles, vec3_t *axis)
 
 void YawVectors(const vec_t yaw, vec_t *forward, vec_t *right)
 {
+#if defined(COD2_APPLE_SDK)
+    float angle = yaw * 0.01745329238474369f;
+    float sy = (float)sin((double)angle);
+    float cy = (float)cos((double)angle);
+#else
     float angle = (float)((double)yaw * 0.017453292519943295);
     float sy = sinf(angle);
     float cy = cosf(angle);
+#endif
     if (forward) {
         forward[0] = cy;
         forward[1] = sy;
@@ -1482,9 +1618,15 @@ void YawVectors(const vec_t yaw, vec_t *forward, vec_t *right)
 
 void VectorAngleMultiply(vec_t *vec, float angle)
 {
+#if defined(COD2_APPLE_SDK)
+    float radians = angle * 0.01745329238474369f;
+    float s = (float)sin((double)radians);
+    float c = (float)cos((double)radians);
+#else
     float radians = (float)((double)angle * 0.017453292519943295);
     float s = sinf(radians);
     float c = cosf(radians);
+#endif
     float x = vec[0];
     float y = vec[1];
     vec[1] = c * y + s * x;

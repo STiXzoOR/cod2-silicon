@@ -25,7 +25,7 @@ int main(void)
     const dvar_t *packets = Dvar_FindVar("cl_maxpackets");
     CHECK(packets && packets->domain.integer.min == 10);
 #if defined(COD2_CODX) && COD2_CODX
-    CHECK(packets && packets->reset.integer == 125 && packets->domain.integer.max == 125);
+    CHECK(packets && packets->reset.integer == 30 && packets->domain.integer.max == 125);
     CHECK(Dvar_FindVar("r_lodScale")->flags == 0x2001 && Dvar_FindVar("r_lodScale")->domain.value.min == 0);
 #else
     CHECK(packets && packets->reset.integer == 30 && packets->domain.integer.max == 100);

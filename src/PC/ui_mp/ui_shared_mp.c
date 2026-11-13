@@ -2473,7 +2473,6 @@ qboolean Display_MouseMove(displayContextDef_t *dc, void *p, int x, int y)
                 Menu_HandleMouseMove(dc, (menuDef_t *)menu, (float)x, (float)y);
                 return 1;
             }
-            startIdx = i;
             break;
         }
     }
@@ -3208,15 +3207,6 @@ void Item_Bind_Paint(displayContextDef_t *dc, itemDef_t *item)
         return;
 #endif
 
-    if (g_waitingForKey && g_bindItem == item) {
-        drawText = UI_SafeTranslateString("EXE_KEYWAIT");
-        newColor[0] = 0.8f;
-        newColor[1] = 0.0f;
-        newColor[2] = 0.0f;
-        newColor[3] = 0.8f;
-        goto draw;
-    }
-
 #if COD2_APPLE_SDK
     if (bindName)
         BindingFromName(bindName, bindText);
@@ -3230,12 +3220,21 @@ void Item_Bind_Paint(displayContextDef_t *dc, itemDef_t *item)
     int flags = ((itemDef_t *)it)->window.dynamicFlags[0];
     if ((flags & 4) && (flags & 2)) {
         float lowLight[4];
-        for (i = 0; i < 4; i++)
-            lowLight[i] = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4) * 0.8f;
+        /* Windows 1.3 (0x540a12): keep the key name while the selected
+         * binding pulses between the focus color and red. */
+        if (g_bindItem == item) {
+            lowLight[0] = 0.8f;
+            lowLight[1] = 0.0f;
+            lowLight[2] = 0.0f;
+            lowLight[3] = 0.8f;
+        } else {
+            for (i = 0; i < 4; i++)
+                lowLight[i] = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4) * 0.8f;
+        }
 
         int curTime = dc->realTime;
         float t = sinf((float)(curTime / UI_PULSE_DIVISOR));
-        t = t * 0.5f + 0.5f;
+        t = (t + 1.0f) * 0.5f;
 
         for (i = 0; i < 4; i++) {
             float hi = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4);
@@ -3250,8 +3249,6 @@ void Item_Bind_Paint(displayContextDef_t *dc, itemDef_t *item)
         for (i = 0; i < 4; i++)
             newColor[i] = ((itemDef_t *)it)->window.foreColor[i];
     }
-
-draw:;
 
     byte *textRect = (byte *)((itemDef_t *)it)->textRect;
     if (((itemDef_t *)it)->text) {

@@ -36,6 +36,8 @@ int main(void)
         /* A later map script must still be able to override the defaults. */
         G_setfog("0 200 1 0.5 0.5 0.5 0");
         assert(level.fFogOpaqueDist == 200 && level.fFogOpaqueDistSqrd == 40000);
+        G_setfog("0 100 1 0.3 0.3 0.3 .5");
+        assert(level.fFogOpaqueDist == 100 && level.fFogOpaqueDistSqrd == 10000);
     }
     puts("PASS fresh/reused level fog reset and all 16 objective sentinels");
 }

@@ -61,6 +61,9 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Changed
 
+- The Original 1.3 engine reports its platform as `macOS-arm64` in the
+  `version` text that servers and status queries see, instead of the Intel
+  Mac release's `MacOSXS-i386`.
 - Menus with a blurred game background avoid an unnecessary full-screen
   copy when anti-aliasing is enabled.
 - Local match summaries retain slow-frame timings and renderer activity to
@@ -152,6 +155,19 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Fixed
 
+- Remove the spurious fall-damage camera kick and restore Windows 1.3 landing
+  slowdown and view dips, small-step footsteps, acceleration rounding, aiming
+  sway and stance-transition timing.
+  Moving objects, collision contacts and explosion damage also follow the
+  original arithmetic at threshold boundaries.
+- Attach weapon effects to the gun and restore the original cylinder-smoke
+  random draw order, tracer lifetime, equal-distance effect ordering and HUD
+  layer ordering. Turret prompts show the matching weapon icon, telefrags use
+  the generic death icon, and locally hosted item pickups retain their sounds.
+- Match Windows screen scaling, HUD rounding, script waits, slow-motion timing
+  and color conversion. Control rebinding keeps the pulsing key name; visible
+  menus receive hover updates, loading images retry correctly, and deleting a
+  favorite no longer uses a selection made stale by a server-list refresh.
 - Sounds in the world are placed as in Windows 1.3. A sound straight ahead
   was 3 dB louder than in the original and one behind you 5.5 dB louder,
   because sounds were panned on a different curve and front and back were

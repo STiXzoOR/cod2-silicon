@@ -612,7 +612,7 @@ static void CG_CalcViewValues(void)
 
         viewState.ps = ps;
 #if defined(COD2_X64)
-        viewState.damageTime = cg->v_dmg_time ? cg->v_dmg_time - ps->deltaTime : 0;
+        viewState.damageTime = cg->damageTime ? cg->damageTime - ps->deltaTime : 0;
         viewState.time = cg->time - ps->deltaTime;
 #else
         viewState.damageTime = cg->v_dmg_time;

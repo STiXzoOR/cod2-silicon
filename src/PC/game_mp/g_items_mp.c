@@ -911,8 +911,16 @@ gentity_t *Drop_Weapon(gentity_t *pEnt, int iWeaponIndex, unsigned int tag)
             int clipSize = BG_GetAmmoClipSize(iClipIndex);
             int total;
 
+#if defined(COD2_APPLE_SDK)
+            total = (int)__builtin_rintf(((randomf() + 1.0f) * 0.5f) * (float)(clipSize - 1)) + 1;
+#else
             total = (int)floorf(((randomf() + 1.0f) * 0.5f) * (float)(clipSize - 1) + 0.5f) + 1;
+#endif
+#if defined(COD2_APPLE_SDK)
+            iMax = (int)__builtin_rintf((randomf() * 0.5f + 0.25f) * (float)total);
+#else
             iMax = (int)floorf((randomf() * 0.5f + 0.25f) * (float)total + 0.5f);
+#endif
             iMin = total - iMax;
         } else if (iMax < 0) {
             iMin = 0;
@@ -1178,7 +1186,11 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
 
             if (high == 0 && low == 0) {
                 int clipSize = BG_GetAmmoClipSize(BG_ClipForWeapon(weapon));
+#if defined(COD2_APPLE_SDK)
+                quantity = (int)__builtin_rintf(((randomf() + 1.0f) * 0.5f) * (float)(clipSize - 1)) + 1;
+#else
                 quantity = (int)floorf(((randomf() + 1.0f) * 0.5f) * (float)(clipSize - 1) + 0.5f) + 1;
+#endif
             } else if (high < 0) {
                 quantity = 0;
             } else if (high != low) {
@@ -1414,9 +1426,17 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
     }
 
     if (other->client->sess.predictItemPickup)
+#if defined(COD2_APPLE_SDK)
+        G_AddPredictableEvent(other, eventParm, ent->s.index.item);
+#else
         G_AddPredictableEvent(other, eventParm, ent->s.eventParm);
+#endif
     else
+#if defined(COD2_APPLE_SDK)
+        G_AddEvent(other, eventParm, ent->s.index.item);
+#else
         G_AddEvent(other, eventParm, ent->s.eventParm);
+#endif
 
     G_FreeEntity(ent);
 }

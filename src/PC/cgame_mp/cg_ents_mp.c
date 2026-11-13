@@ -891,7 +891,11 @@ static void CG_PlayLoopedFx(centity_t *cent)
 
     cullDist = s1->angles2[0];
     if (cullDist != 0.0f) {
+#if defined(COD2_APPLE_SDK)
+        float distSq = Vec3DistanceSq(cg->predictedPlayerState.origin, cent->lerpOrigin);
+#else
         float distSq = Vec3DistanceSq(cg->refdef.vieworg, cent->lerpOrigin);
+#endif
         if (distSq >= cullDist * cullDist)
             return;
     }

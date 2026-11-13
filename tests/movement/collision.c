@@ -128,7 +128,12 @@ static void landing(void)
         ps.gravity = 800; ps.groundEntityNum = 1023; ps.velocity[0] = 190;
         pml.previous_origin[2] = (float)height; pml.previous_velocity[2] = 0;
         ladderSurface = noSteps ? 0x2000 : 0; traceNumber = 0;
+#if defined(COD2_APPLE_SDK)
+        /* Windows PM_CrashLand keeps sqrt/divide at x87 single precision. */
+        float t = -sqrtf(1600.0f * (float)height) / -800.0f;
+#else
         float t = (float)(-sqrt((double)(1600.0f * (float)height)) / -800.0);
+#endif
         float fallHeight = t * 800.0f; fallHeight = fallHeight * fallHeight / 1600.0f;
         int damage = fallHeight > 128 ? (fallHeight >= 300 ? 100 : (int)((fallHeight - 128) / 172 * 100)) : 0;
         float factor = 1; int event = 0;
