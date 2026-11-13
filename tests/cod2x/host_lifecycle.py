@@ -68,6 +68,20 @@ if has_map_change_guard:
     map_change_source += ''.join(function(commands, name) for name in
                                ('SV_Cod2xBeforeMapChange', 'SV_Cod2xMapChangeFrameDone'))
 (out / 'host_map_change_source.h').write_text(map_change_source)
+common = active('src/PC/qcommon/common.c')
+client_main = active('src/PC/client_mp/cl_main_mp.c') if not args.dedicated else ''
+has_frame_dispatch = 'static void Com_Cod2xFrame(void)' in common
+frame_source = '#define HOST_HAS_FRAME_DISPATCH ' + str(int(has_frame_dispatch)) + '\n'
+if has_frame_dispatch:
+    frame_body = function(common, 'Com_Frame')
+    assert frame_body.index('Com_Cod2xFrame();') < frame_body.index('Com_Frame_Try_Block_Function();')
+    assert frame_body.count('Com_Cod2xFrame();') == 1
+    if not args.dedicated:
+        frame_source += ''.join(function(client_main, name) for name in
+                                ('CL_Cod2xClientFrame', 'CL_Cod2xWindowFrame', 'CL_Cod2xMediaFrame'))
+        assert 'Cod2x_Frame(' not in function(client_main, 'CL_Frame')
+    frame_source += function(common, 'Com_Cod2xFrame')
+(out / 'host_frame_source.h').write_text(frame_source)
 globals_ = sorted(set(re.findall(r'^extern const dvar_t \*(\w+);', init, re.M)))
 (out / 'host_globals.h').write_text(
     '#define HOST_HAS_MAP_CHANGE_GUARD ' + str(int(has_map_change_guard)) + '\n' +

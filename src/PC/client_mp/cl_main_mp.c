@@ -389,6 +389,42 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time);
 Bool CL_PacketEvent(netadr_t from, msg_t *msg, int time);
 void CL_Init(void);
 void CL_ShutdownAll(void);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* Upstream's extension modules run before the engine advances this frame. */
+void CL_Cod2xClientFrame(void)
+{
+    clientConnection_t *clc_p = &clientConnections[0];
+    if (!legacyHacks->cl_running)
+        return;
+    Cod2x_Frame(clc_p->state >= CA_PRIMED, clc_p->demoplaying);
+    Cod2x_FeaturesClientState(clc_p->state);
+    Cod2x_HideServerIpFrame(clc_p->state >= CA_CONNECTED ? CL_GetConfigString(0) : NULL);
+    extern void CG_Cod2xSpectatorFrame(void);
+    CG_Cod2xSpectatorFrame();
+}
+
+void CL_Cod2xWindowFrame(void)
+{
+    extern snd_local_t g_snd;
+    static int soundChecked;
+    if (!legacyHacks->cl_running || soundChecked)
+        return;
+    soundChecked = 1;
+    if (!g_snd.channelvol)
+        Com_Error(ERR_DROP, "Sound system failed to initialize.\n\nThe game might crash at any time.\n"
+                            "Please check your sound drivers.");
+}
+
+void CL_Cod2xMediaFrame(void)
+{
+    if (!legacyHacks->cl_running)
+        return;
+    CG_Cod2xRadarFrame();
+    Cod2x_DemoClientFrame();
+    Cod2x_VmixFrame(clientConnections[0].state);
+}
+#endif
+
 void CL_Frame(int msec);
 void CL_Vid_Restart_f(void);
 void CL_Snd_Restart_f(void);
@@ -2734,24 +2770,8 @@ void CL_Frame(int msec)
     if (legacyHacks->cl_running == 0)
         return;
 
-#if defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_CODX) && COD2_CODX && !defined(COD2_X64)
     Cod2x_Frame(clc_p->state >= CA_PRIMED, clc_p->demoplaying);
-#endif
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    {
-        /* CoD2x checks on the first frame that sound started (src/mss32/window.cpp). */
-        extern snd_local_t g_snd;
-        static int cod2xSoundChecked;
-        if (!cod2xSoundChecked) {
-            cod2xSoundChecked = 1;
-            if (!g_snd.channelvol)
-                Com_Error(ERR_DROP, "Sound system failed to initialize.\n\nThe game might crash at any time.\n"
-                                    "Please check your sound drivers.");
-        }
-    }
-    Cod2x_FeaturesClientState(clc_p->state);
-    Cod2x_HideServerIpFrame(clc_p->state >= CA_CONNECTED ? CL_GetConfigString(0) : NULL);
-    Cod2x_DemoClientFrame();
 #endif
 #if defined(COD2_X64)
     Voice_GetLocalVoiceData(&clients[0].voicePackets[clients[0].voicePacketCount]);

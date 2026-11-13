@@ -205,6 +205,40 @@ qboolean Debug_EventLoop(void);
 BM_NOINLINE void Com_Frame_Try_Block_Function(void);
 void Com_Shutdown(char *finalmsg);
 static BM_NOINLINE void Com_StartHunkUsers(void);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static void Com_Cod2xFrame(void)
+{
+    extern void GScr_Cod2xHttpFrame(void);
+    extern void GScr_Cod2xWebSocketFrame(void);
+    extern void SV_Cod2xMatchFrame(void);
+    extern void SV_Cod2xZpamFrame(void);
+    extern void SV_Cod2xUpdaterFrame(void);
+#ifndef DEDICATED
+    extern void CL_Cod2xClientFrame(void);
+    extern void CL_Cod2xWindowFrame(void);
+    extern void CL_Cod2xMediaFrame(void);
+    extern void Cod2x_FeaturesUpdateFrame(void);
+    if (!com_dedicated->current.integer) {
+        CL_Cod2xClientFrame();
+        Cod2x_FeaturesUpdateFrame();
+    }
+#endif
+    SV_Cod2xUpdaterFrame();
+#ifndef DEDICATED
+    if (!com_dedicated->current.integer)
+        CL_Cod2xWindowFrame();
+#endif
+    GScr_Cod2xHttpFrame();
+    GScr_Cod2xWebSocketFrame();
+    SV_Cod2xMatchFrame();
+    SV_Cod2xZpamFrame();
+#ifndef DEDICATED
+    if (!com_dedicated->current.integer)
+        CL_Cod2xMediaFrame();
+#endif
+}
+#endif
+
 void Com_Frame(void);
 void Com_WriteDefaults_f(void);
 int Com_Milliseconds(void);
@@ -2406,6 +2440,9 @@ void Com_Frame(void)
     jmp_buf *abortframe = (jmp_buf *)Sys_GetValue(2);
 
     if (!setjmp(*abortframe)) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        Com_Cod2xFrame();
+#endif
         Com_Frame_Try_Block_Function();
         com_frameNumber++;
     }
@@ -2414,21 +2451,7 @@ void Com_Frame(void)
         Com_ErrorCleanup();
         Com_StartHunkUsers();
     }
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    {
-        extern void Cod2x_HttpFrame(void);
-        extern void GScr_Cod2xWebSocketFrame(void);
-        extern void SV_Cod2xMatchFrame(void);
-        extern void SV_Cod2xZpamFrame(void);
-        extern void SV_Cod2xUpdaterFrame(void);
-        /* Finished requests first, then the match, zPAM and the update check, as CoD2x orders them. */
-        Cod2x_HttpFrame();
-        GScr_Cod2xWebSocketFrame();
-        SV_Cod2xMatchFrame();
-        SV_Cod2xZpamFrame();
-        SV_Cod2xUpdaterFrame();
-    }
-#endif
+
 
     {
         /* per-frame state-hash hook; a no-op unless SYSDIFF_STATEHASH is set in the

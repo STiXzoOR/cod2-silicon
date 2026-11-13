@@ -861,6 +861,7 @@ void SV_Cod2xMatchBeforeMapChange(int shutdown)
 
 void SV_Cod2xMatchFrame(void)
 {
+    Cod2x_HttpFrameFor(Match_Done);
     if ((Cod2x_Milliseconds64() - match.startTick) > MATCH_TIMEOUT_MSEC &&
         (match.loading || match.downloading) && !match.activated) {
         match.loading = 0;

@@ -71,7 +71,15 @@ void SV_AuthorizeIpPacket(netadr_t from) { (void)from; ++auths; }
 void SV_VoicePacket(netadr_t from, msg_t *msg) { (void)from; (void)msg; ++voices; }
 void PB_HandleServerOobPacket(netadr_t *from, msg_t *msg) { (void)from; (void)msg; }
 void SV_ResetSkeletonCache(void) {}
-int G_RunFrame(int time) { CHECK(time == svs.time); return 0; }
+int G_RunFrame(int time) {
+    CHECK(time == svs.time);
+#if UDP_STATS_IN_GAME
+    /* The game-frame fixture exercises the production tail and its ordering. */
+    extern void SV_Cod2xUdpStats(void);
+    SV_Cod2xUdpStats();
+#endif
+    return 0;
+}
 qboolean NET_CompareBaseAdr(netadr_t a, netadr_t b) { return a.type == b.type && !memcmp(a.ip, b.ip, 4); }
 int Netchan_Process(netchan_t *n, msg_t *msg) { (void)n; (void)msg; return 0; }
 void SV_Netchan_Decode(client_t *cl, byte *data, int size) { (void)cl; (void)data; (void)size; }

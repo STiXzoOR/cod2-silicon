@@ -204,6 +204,11 @@ static void Fetch_Done(void *context, const Cod2xHttpResponse *response)
 /* http_fetch(url, method, data, headers, timeout, onDone, onError): headers are
    lines joined by "\r\n"; timeout is in milliseconds for the whole request
    (0 or less: none). Nothing is returned; the answer comes later. */
+void GScr_Cod2xHttpFrame(void)
+{
+    Cod2x_HttpFrameFor(Fetch_Done);
+}
+
 static void GScr_Cod2xHttpFetch(void)
 {
     const char *url, *method, *data, *headers;

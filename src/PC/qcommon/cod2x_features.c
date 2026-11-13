@@ -273,7 +273,6 @@ void Cod2x_FeaturesFrame(int active, int demo)
 {
     (void)active;
     playingDemo = demo;
-    CG_Cod2xRadarFrame();
 #ifndef DEDICATED
     if (!active) {
         extern void CG_Cod2xSpectatorReset(void);
@@ -286,12 +285,19 @@ static void Cod2x_UpdateFrame(int state);
 
 void Cod2x_FeaturesClientState(int state)
 {
-    Cod2x_VmixFrame(state);
     /* CoD2x reports the server's revision whenever g_cod2x changes, and again
        when a 1.3 server's map becomes active. */
     dvar_t *game = (dvar_t *)Dvar_FindVar("g_cod2x");
     int changed = state != lastClientState, previous = lastClientState;
-    Cod2x_UpdateFrame(state);
+    if (changed) {
+        static const char *names[] = { "DISCONNECTED", "CINEMATIC", "AUTHORIZING", "CONNECTING",
+                                     "CHALLENGING", "CONNECTED", "LOADING", "PRIMED", "ACTIVE" };
+        const char *before = (unsigned)previous < 9 ? names[previous] : "UNKNOWN";
+        const char *after = (unsigned)state < 9 ? names[state] : "UNKNOWN";
+        extern void Com_DPrintf(const char *, ...);
+        Cod2x_Log("Client state changed from %d:%s to %d:%s", previous, before, state, after);
+        Com_DPrintf("Client state changed from %d:%s to %d:%s\n", previous, before, state, after);
+    }
     lastClientState = state;
     if (changed && state == CA_CONNECTED) {
         /* A server may have turned the mouse off with m_enable; a new connection turns it back on. */
@@ -321,6 +327,11 @@ void Cod2x_FeaturesClientState(int state)
                        game->current.integer, COD2X_APP_VERSION);
     }
     Com_Printf("---------------------------------------------------------------------------------\n");
+}
+
+void Cod2x_FeaturesUpdateFrame(void)
+{
+    Cod2x_UpdateFrame(lastClientState);
 }
 
 /* ---- Text codes (CoD2x src/mss32/text.cpp, src/shared/shared.cpp) ----------
@@ -1008,6 +1019,7 @@ static void Cod2x_UpdateFrame(int state)
         updateRepeats++;
         Cod2x_UpdateCheck();
     }
+    Cod2x_HttpFrameFor(Cod2x_UpdateDone);
 }
 
 /* ---- zPAM from CoD2x's web site (CoD2x downloading.cpp, zpam.cpp) -------------

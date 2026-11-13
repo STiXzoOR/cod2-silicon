@@ -1946,8 +1946,12 @@ int G_RunFrame(int levelTime)
 
     *(void **)imp_bgs = NULL;
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    G_RefreshPlayerBroadcast();
+    extern void SV_Cod2xMapChangeFrameDone(void);
+    extern void SV_Cod2xUdpStats(void);
+    SV_Cod2xMapChangeFrameDone();
     G_Cod2xPlayerInfoFrame(g_entities);
+    SV_Cod2xUdpStats();
+    G_RefreshPlayerBroadcast();
 #endif
     return (int)imp_bgs;
 }

@@ -43,6 +43,16 @@ static int identityClears;
 static char published[128], serialized[128];
 static int valueindex;
 static char value1[2][8192];
+static int tracingFrame;
+static char frameTrace[64];
+static void frame_event(char event)
+{
+    if (tracingFrame) {
+        size_t length = strlen(frameTrace);
+        assert(length < sizeof(frameTrace) - 1);
+        frameTrace[length] = event; frameTrace[length + 1] = 0;
+    }
+}
 
 extern void Dvar_SetInt(const dvar_t *, int);
 extern void Dvar_SetString(const dvar_t *, const char *);
@@ -59,7 +69,7 @@ void Cod2x_ResetClientAnimation(void) { ++clientResets; }
 int Cod2x_ReadMachineHwid(char id[33]) { ++identityReads; memset(id, 'a', 32); id[32] = 0; return 1; }
 int Cod2x_LimitedFPS(int fps, int limited) { return limited && (fps < 125 || fps > 250) ? 250 : fps; }
 void Cod2x_FeaturesInit(void) {}
-void Cod2x_FeaturesFrame(int active, int demo) { (void)active; (void)demo; }
+void Cod2x_FeaturesFrame(int active, int demo) { (void)active; (void)demo; frame_event('F'); }
 void Cod2x_IwdSystemInfo(const char *names) { (void)names; }
 void Cod2x_ReportInit(void) {}
 void Cod2x_PoseInit(void) {}
@@ -205,6 +215,24 @@ char *SV_Cmd_Argv(int arg) { (void)arg; return ""; }
 #include "host_systeminfo_source.h"
 #include "host_reliable_source.h"
 
+clientConnection_t *clientConnections = &connection;
+LegacyHacks *legacyHacks = &legacy;
+snd_local_t g_snd;
+void Cod2x_FeaturesClientState(int state) { (void)state; frame_event('C'); }
+void Cod2x_HideServerIpFrame(const char *info) { (void)info; frame_event('I'); }
+const char *CL_GetConfigString(int index) { (void)index; return ""; }
+void CG_Cod2xSpectatorFrame(void) { frame_event('X'); }
+void Cod2x_FeaturesUpdateFrame(void) { frame_event('U'); }
+void SV_Cod2xUpdaterFrame(void) { frame_event('S'); }
+void GScr_Cod2xHttpFrame(void) { frame_event('H'); }
+void GScr_Cod2xWebSocketFrame(void) { frame_event('W'); }
+void SV_Cod2xMatchFrame(void) { frame_event('M'); }
+void SV_Cod2xZpamFrame(void) { frame_event('Z'); }
+void CG_Cod2xRadarFrame(void) { frame_event('R'); }
+static void Cod2x_DemoClientFrame(void) { frame_event('D'); }
+void Cod2x_VmixFrame(int state) { (void)state; frame_event('V'); }
+#include "host_frame_source.h"
+
 static void systemInfo(const char *text, int demo)
 {
     client.gameState.stringOffsets[1] = 0;
@@ -269,6 +297,20 @@ int main(void)
 #endif
     CHECK(Dvar_FindVar("sv_playerBroadcastLimit")->current.integer == 15);
     CHECK(Dvar_FindVar("g_shotgun_spread_fix")->current.enabled);
+#if HOST_HAS_FRAME_DISPATCH
+    static snd_channelvolgroup channelVolume;
+    g_snd.channelvol = &channelVolume;
+    legacy.cl_running = 1;
+    tracingFrame = 1;
+    Com_Cod2xFrame();
+    tracingFrame = 0;
+#ifdef DEDICATED
+    CHECK(!strcmp(frameTrace, "SHWMZ"));
+#else
+    CHECK(!strcmp(frameTrace, "FCIXUSHWMZRDV"));
+#endif
+    printf("extension frame trace before engine: %s\n", frameTrace);
+#endif
     SV_SpawnServer("fixture");
     checkHost();
     CHECK(gameplayStarts == 1);

@@ -19,6 +19,9 @@ static int dvar_count, host_kind, broadcast_registrations;
 static int frame_end_calls, make_dead_at_end, remove_client_at_end;
 static WeaponDef weapon_defs[128];
 static int weapon_count;
+static int guard_frames, stats_frames;
+void SV_Cod2xMapChangeFrameDone(void) { assert(guard_frames == stats_frames); ++guard_frames; }
+void SV_Cod2xUdpStats(void) { assert(guard_frames == stats_frames + 1); ++stats_frames; }
 static svEntity_t visibility;
 #define SCR_CONST() (&scr_const)
 
@@ -153,7 +156,9 @@ static void set_limit(int value)
 
 static void frame(void)
 {
+    int previous = guard_frames;
     (void)G_RunFrame(svs.time);
+    CHECK(guard_frames == previous + ACTIVE_BROADCAST && stats_frames == guard_frames);
     CHECK(level.time == svs.time && bgs == NULL);
 }
 

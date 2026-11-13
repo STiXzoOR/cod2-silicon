@@ -308,6 +308,7 @@ static int Updater_PeriodicDue(void)
 
 void SV_Cod2xUpdaterFrame(void)
 {
+    Cod2x_HttpFrameFor(Updater_Done);
     if (!Updater_Dedicated())
         return;
     if (Updater_PeriodicDue() && Updater_CheckEnabled())
