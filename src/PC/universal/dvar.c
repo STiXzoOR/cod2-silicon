@@ -1,4 +1,7 @@
 #include "common_types.h"
+#if COD2_APPLE_SDK
+#include "platform/macos_display_modes.h"
+#endif
 #include "imports.h"
 #include "bytematch.h"
 #include <math.h>
@@ -1676,6 +1679,18 @@ static void __attribute_regparm__(3) Dvar_SetFromStringFromSource(
     value = Dvar_StringToValue_impl(dvar->type, dvar->domain, buf);
 
     if (dvar->type == DVAR_TYPE_ENUM && value.integer == DVAR_INVALID_ENUM_INDEX) {
+#if COD2_APPLE_SDK
+        /* Startup +set commands are replayed after renderer registration.
+         * Normalize old display sizes there too, rather than latching the
+         * generic enum reset (640x480) over the renderer's native fallback. */
+        if (!strcmp(dvar->name, "r_mode")) {
+            value.integer = MacPlatform_ChooseMode(dvar->domain.enumeration.strings, buf);
+            Com_Printf("Display no longer offers r_mode %s; using %s\n", buf,
+                       dvar->domain.enumeration.strings[value.integer]);
+            Dvar_SetVariantReg(dvar, value, source);
+            return;
+        }
+#endif
         Com_Printf("'%s' is not a valid value for dvar '%s'\n", buf, dvar->name);
         Com_Printf(
             "  %s\n",

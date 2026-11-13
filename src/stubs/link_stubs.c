@@ -182,10 +182,12 @@ int CGDisplayBitsPerPixel(void *display)
     (void)display;
     return 0;
 }
+#if !(defined(__APPLE__) && defined(COD2_X64))
 int CGDisplayBounds()
 {
     return 0;
 }
+#endif
 int CGDisplayCurrentMode()
 {
     return 0;
@@ -210,10 +212,12 @@ int CGDisplayPixelsWide()
 {
     return 0;
 }
+#if !(defined(__APPLE__) && defined(COD2_X64))
 int CGGetActiveDisplayList()
 {
     return 0;
 }
+#endif
 int CGGetDisplayTransferByTable()
 {
     return 0;

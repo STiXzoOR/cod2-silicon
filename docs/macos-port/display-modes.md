@@ -8,6 +8,9 @@ backing when the desktop is scaled. If no native mode is advertised (including
 some virtual displays), use SDL's desktop dimensions conservatively and log the
 fallback.
 
+The native link must use CoreGraphics' `CGGetActiveDisplayList` and
+`CGDisplayBounds`, not the legacy placeholders in `link_stubs.c`.
+
 `MacPlatform_BuildModeNames` is a pure function in `macos_display_modes.h`.
 It combines the native size, SDL's modes, and these standard render sizes:
 640×480, 800×600, 1024×768, 1280×720, 1920×1080, 2560×1440, 3008×1692,
@@ -36,6 +39,9 @@ largest offered size that fits inside the requested width and height; malformed
 values use the first mode. Valid numeric enum indices still work. Thus a saved
 6016×3384 request becomes 5120×2880 on a 5K panel, or 1920×1080 on today's virtual
 1080p display. It cannot silently retain a 6K render target.
+`Dvar_SetFromStringFromSource` applies the same rule when a startup `+set` is
+replayed after registration or an old configuration is imported later. This
+keeps the valid fallback saved instead of latching the generic enum reset.
 
 Windows uses `r_monitor 0` for the default/window monitor, `1` for the first
 monitor, `2` for the second, and so on (`0x100127d0`). Native enumeration and
