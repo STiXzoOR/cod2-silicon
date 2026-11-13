@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include "PC/gfx_d3d/r_log.h"
 #include "imports.h"
 extern int alwaysfails;
 extern DxGlobals dx;
@@ -287,6 +288,7 @@ void Image_UploadData(GfxImage *image, D3DFORMAT format, int face, int mipLevel,
         vtable = *(void ***)texture;
         if (!vtable[VTABLE_LOCKRECT] || !vtable[VTABLE_UNLOCKRECT])
             return;
+        R_LOG("image->texture.volmap->LockBox( mipLevel, &lockedBox, 0, 0 )\n");
         if (((LockBoxFn)vtable[VTABLE_LOCKRECT])(texture, mipLevel, &lockedBox, NULL, 0))
             return;
         srcStride = srcRowPitch * (((srcHeight - 1) / dy) + 1);
@@ -296,6 +298,7 @@ void Image_UploadData(GfxImage *image, D3DFORMAT format, int face, int mipLevel,
                                       lockedBox.RowPitch, src + sliceIndex * srcStride,
                                       srcRowPitch, dy, srcHeight);
         }
+        R_LOG("image->texture.volmap->UnlockBox( mipLevel )\n");
         ((UnlockBoxFn)vtable[VTABLE_UNLOCKRECT])(texture, mipLevel);
 #endif
         return;
@@ -323,6 +326,7 @@ void Image_UploadData(GfxImage *image, D3DFORMAT format, int face, int mipLevel,
             vtable = *(void ***)texture;
             if (!vtable[VTABLE_LOCKRECT])
                 return;
+            R_LOG("image->texture.map->LockRect( mipLevel, &lockedRect, 0, 0 )\n");
             ((LockRectFn)vtable[VTABLE_LOCKRECT])(texture, mipLevel, &lockedRect, 0, 0);
         } while (*(volatile int *)&alwaysfails);
     } else {
@@ -334,6 +338,7 @@ void Image_UploadData(GfxImage *image, D3DFORMAT format, int face, int mipLevel,
             vtable = *(void ***)texture;
             if (!vtable[VTABLE_LOCKRECT])
                 return;
+            R_LOG("image->texture.cubemap->LockRect( cubemapFace, mipLevel, &lockedRect, 0, 0 )\n");
             ((LockRectCubeFn)vtable[VTABLE_LOCKRECT])(texture, face, mipLevel, &lockedRect, 0, 0);
         } while (*(volatile int *)&alwaysfails);
     }
@@ -381,6 +386,7 @@ unlock_2d:
         do {
             texture = (void *)image->texture.map;
             vtable = *(void ***)texture;
+            R_LOG("image->texture.map->UnlockRect( mipLevel )\n");
             ((UnlockRectFn)vtable[VTABLE_UNLOCKRECT])(texture, mipLevel);
         } while (*(volatile int *)&alwaysfails);
     } else {
@@ -388,6 +394,7 @@ unlock_2d:
         do {
             texture = (void *)image->texture.cubemap;
             vtable = *(void ***)texture;
+            R_LOG("image->texture.cubemap->UnlockRect( cubemapFace, mipLevel )\n");
             ((UnlockRectCubeFn)vtable[VTABLE_UNLOCKRECT])(texture, face, mipLevel);
         } while (*(volatile int *)&alwaysfails);
     }

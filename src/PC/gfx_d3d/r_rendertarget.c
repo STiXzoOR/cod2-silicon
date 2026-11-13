@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include "PC/gfx_d3d/r_log.h"
 extern struct DxGlobals dx;
 /* File-scope alias: bound where no local can shadow `dx`, so uses below
    always reach the global even inside functions that declare their own `dx`. */
@@ -279,6 +280,7 @@ void R_InitRenderTargets(void)
         dxPtr = DX();
         device = ((DxGlobals *)(dxPtr))->device;
         vtable = VTABLE(device);
+        R_LOG("dx.device->GetBackBuffer( 0, 0, D3DBACKBUFFER_TYPE_MONO, &renderTarget->colorSurface )\n");
         hr = ((HRESULT(D3DVTCC *)(void *, DWORD, DWORD, DWORD, byte *))vtable[0x48 / 4])(
             device, 0, 0, 0, (byte *)&DX_PTR()->renderTargets[0].colorSurface);
 

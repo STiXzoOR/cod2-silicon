@@ -1,3 +1,12 @@
+#include "PC/gfx_d3d/r_log.h"
+/* This isolated renderer fixture does not start the diagnostic log. */
+int R_LogEnabled(void) { return 0; }
+void R_LogPrintf(const char *format, ...) { (void)format; }
+void R_LogFrameEnd(void) {}
+void R_LogState(unsigned int state, unsigned int changed, int word)
+{ (void)state; (void)changed; (void)word; }
+const char *R_LogTechniqueName(int technique) { (void)technique; return ""; }
+
 #include "common_types.h"
 #include "imports.h"
 #include <assert.h>

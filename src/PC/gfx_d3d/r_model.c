@@ -1,5 +1,6 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
+#include "PC/gfx_d3d/r_log.h"
 extern struct DxGlobals dx;
 /* File-scope alias: bound where no local can shadow `dx`, so uses below
    always reach the global even inside functions that declare their own `dx`. */
@@ -213,6 +214,7 @@ void R_UnlockSkinnedCache(void)
     vb = (IDirect3DVertexBuffer9 *)frontEndData->skinnedCacheVb->buffer;
 
     do {
+        R_LOG("vb->Unlock()\n");
         ((BufferUnlockFn)VTABLE(vb)[0x30 / 4])((void *)vb);
     } while (*(volatile int *)&alwaysfails != 0);
 }

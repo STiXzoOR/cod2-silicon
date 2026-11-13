@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #endif
 #include "common_types.h"
+#include "PC/gfx_d3d/r_log.h"
 #if defined(COD2_X64)
 #include <stdlib.h>
 #endif
@@ -789,6 +790,7 @@ void R_RenderScene(const refdef_t *refdef)
 
     if (!rg_p->registered)
         return;
+    R_LOG("====== R_RenderScene ======\n");
     if ((r_norefresh)->current.enabled)
         return;
 

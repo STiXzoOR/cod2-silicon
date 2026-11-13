@@ -1,5 +1,10 @@
 #include "common_types.h"
 #include "imports.h"
+#include "PC/gfx_d3d/r_log.h"
+#include <stdarg.h>
+#include <time.h>
+
+static void R_LogClose(void);
 #if COD2_APPLE_SDK
 #include "platform/macos_display.h"
 #include "platform/macos_display_modes.h"
@@ -607,5 +612,173 @@ void R_RegisterDvars(void)
 
 void R_UnregisterDvars(void)
 {
+    R_LogClose();
     ri.Dvar_UnregisterSystem(0x2000);
+}
+
+/* Windows 1.3 10037c50--10038642. The first presentation opens dx.log;
+ * subsequent presentations consume the requested number of logged frames. */
+static FILE *r_logStream;
+
+int R_LogEnabled(void)
+{
+    return r_logFile && r_logFile->current.integer && r_logStream;
+}
+
+static void R_LogClose(void)
+{
+    if (r_logStream) {
+        fclose(r_logStream);
+        r_logStream = NULL;
+    }
+}
+
+void R_LogFrameEnd(void)
+{
+    time_t now;
+    struct tm *local;
+    if (!r_logFile)
+        return;
+    if (R_LogEnabled())
+        ri.Dvar_SetInt(r_logFile, r_logFile->current.integer - 1);
+    if (!r_logFile->current.integer) {
+        R_LogClose();
+        return;
+    }
+    if (r_logStream)
+        return;
+    r_logStream = fopen("dx.log", "wt");
+    if (!r_logStream)
+        return;
+    time(&now);
+    local = localtime(&now);
+    if (local)
+        fprintf(r_logStream, "%s\n", asctime(local));
+    fflush(r_logStream);
+}
+
+void R_LogPrintf(const char *format, ...)
+{
+    va_list args;
+    if (!R_LogEnabled())
+        return;
+    va_start(args, format);
+    vfprintf(r_logStream, format, args);
+    va_end(args);
+    fflush(r_logStream);
+}
+
+const char *R_LogTechniqueName(int technique)
+{
+    static const char *const names[] = {
+        "TECHNIQUE_DEPTH_PREPASS",
+        "TECHNIQUE_SKY",
+        "TECHNIQUE_BUILD_FLOAT_Z",
+        "TECHNIQUE_FOGABLE_FIRST",
+        "TECHNIQUE_UNLIT_FOG_LINEAR",
+        "TECHNIQUE_UNLIT_FOG_EXP",
+        "TECHNIQUE_LIGHTMAP",
+        "TECHNIQUE_LIGHTMAP_FOG_LINEAR",
+        "TECHNIQUE_LIGHTMAP_FOG_EXP",
+        "TECHNIQUE_LIGHTPROBE",
+        "TECHNIQUE_LIGHTPROBE_FOG_LINEAR",
+        "TECHNIQUE_LIGHTPROBE_FOG_EXP",
+        "TECHNIQUE_LIGHTPROBE_SMODEL",
+        "TECHNIQUE_LIGHTPROBE_SMODEL_FOG_LINEAR",
+        "TECHNIQUE_LIGHTPROBE_SMODEL_FOG_EXP",
+        "TECHNIQUE_LIGHTPROBE_SMODEL_CACHED",
+        "TECHNIQUE_LIGHTPROBE_SMODEL_CACHED_FOG_LINEAR",
+        "TECHNIQUE_LIGHTPROBE_SMODEL_CACHED_FOG_EXP",
+        "TECHNIQUE_POINTLIGHT",
+        "TECHNIQUE_POINTLIGHT_FOG_LINEAR",
+        "TECHNIQUE_POINTLIGHT_FOG_EXP",
+        "TECHNIQUE_EMISSIVE",
+        "TECHNIQUE_EMISSIVE_FOG_LINEAR",
+        "TECHNIQUE_EMISSIVE_FOG_EXP",
+        "TECHNIQUE_EMISSIVE_FEATHERED",
+        "TECHNIQUE_EMISSIVE_FEATHERED_FOG_LINEAR",
+        "TECHNIQUE_EMISSIVE_FEATHERED_FOG_EXP",
+        "TECHNIQUE_FAKELIGHT_NORMAL",
+        "TECHNIQUE_FAKELIGHT_VIEW",
+        "TECHNIQUE_WIREFRAME_SOLID",
+        "TECHNIQUE_WIREFRAME_SHADED",
+        "TECHNIQUE_SHADOWCOOKIE_CASTER",
+        "TECHNIQUE_SHADOWCOOKIE_RECEIVER",
+        "TECHNIQUE_DEBUG_BUMPMAP",
+        "TECHNIQUE_COUNT",
+    };
+    return (unsigned int)technique < sizeof(names) / sizeof(names[0]) ? names[technique] : "TECHNIQUE_COUNT";
+}
+
+typedef struct R_LogStateName {
+    unsigned int value;
+    const char *name;
+} R_LogStateName;
+
+static void R_LogStateEnum(unsigned int state, unsigned int changed, unsigned int mask,
+                           const char *label, const R_LogStateName *names, int count)
+{
+    int i;
+    for (i = 0; i < count; ++i) {
+        if ((state & mask) == names[i].value) {
+            R_LogPrintf("---------- (%c)%-14s: %s\n", (changed & mask) ? '*' : ' ', label, names[i].name);
+            return;
+        }
+    }
+    R_LogPrintf("---------- (%c)%-14s: unknown - %08x\n", (changed & mask) ? '*' : ' ', label, state & mask);
+}
+
+static void R_LogStateBool(unsigned int state, unsigned int changed, unsigned int mask, const char *label)
+{
+    R_LogPrintf("---------- (%c)%-14s: %s\n", (changed & mask) ? '*' : ' ', label,
+                (state & mask) ? "Enabled" : "Disabled");
+}
+
+static void R_LogBlend(unsigned int state)
+{
+    static const char *const factors[] = {
+        "Disabled", "Zero", "One", "SrcColor", "InvSrcColor", "SrcAlpha", "InvSrcAlpha",
+        "DestAlpha", "InvDestAlpha", "DestColor", "InvDestColor", "SrcAlphaSat", "BlendFactor", "InvBlendFactor"
+    };
+    static const char *const operations[] = {"Disabled", "Add", "Subtract", "RevSubtract", "Min", "Max"};
+    unsigned int op = (state >> 8) & 7;
+    unsigned int src = state & 15, dst = (state >> 4) & 15;
+    if (!op) {
+        R_LogPrintf("Disabled\n");
+        return;
+    }
+    /* Material state enumerants occupy the original table domains. */
+    R_LogPrintf("%s( ", op < 6 ? operations[op] : "unknown");
+    R_LogPrintf("%s, ", src < 14 ? factors[src] : "unknown");
+    R_LogPrintf("%s )\n", dst < 14 ? factors[dst] : "unknown");
+}
+
+void R_LogState(unsigned int state, unsigned int changed, int word)
+{
+    static const R_LogStateName alpha[] = {{0x800,"Disabled"},{0x1000,"GT0"},{0x2000,"LT128"},{0x3000,"GE128"}};
+    static const R_LogStateName cull[] = {{0x4000,"None"},{0x8000,"Back"},{0xc000,"Front"}};
+    static const R_LogStateName depth[] = {{2,"Disabled"},{4,"LessEqual"},{8,"Equal"},{12,"Always"}};
+    static const R_LogStateName offset[] = {{0,"0"},{16,"1"},{32,"2"}};
+    const char *rgb;
+    if (!R_LogEnabled())
+        return;
+    if (word) {
+        R_LogStateBool(state, changed, 1, "Depth Write");
+        R_LogStateEnum(state, changed, 0xe, "Depth Test", depth, 4);
+        R_LogStateEnum(state, changed, 0x30, "Polygon Offset", offset, 3);
+        return;
+    }
+    R_LogPrintf("---------- (%c)Blend         : ", (changed & 0x7ff) ? '*' : ' ');
+    R_LogBlend(state);
+    R_LogPrintf("---------- (%c)SeparateAlpha : ", (changed & 0x7ff0000) ? '*' : ' ');
+    R_LogBlend(state >> 16);
+    R_LogStateEnum(state, changed, 0x3800, "AlphaTest", alpha, 4);
+    R_LogPrintf("---------- (%c)Color Write   : ", (changed & 0x18000000) ? '*' : ' ');
+    rgb = (state & 0x8000000) ? "true" : "false";
+    R_LogPrintf("%s, ", rgb);
+    R_LogPrintf("%s, ", rgb);
+    R_LogPrintf("%s, ", rgb);
+    R_LogPrintf("%s\n", (state & 0x10000000) ? "true" : "false");
+    R_LogStateBool(state, changed, 0x20000000, "Fog");
+    R_LogStateEnum(state, changed, 0xc000, "Cull Face", cull, 3);
 }
