@@ -120,8 +120,10 @@ size_t Cod2x_LoggerRecent(char *out, size_t size)
     for (n = 0; n < cod2xLog.count; ++n) {
         int written = snprintf(out + used, size - used, "%lds: %s\n", (long)(newest - cod2xLog.times[index]),
                                cod2xLog.lines[index]);
-        if (written < 0 || (size_t)written >= size - used)
+        if (written < 0 || (size_t)written >= size - used) {
+            out[used] = '\0';
             break;
+        }
         used += (size_t)written;
         index = (index + COD2X_LOG_CAPACITY - 1) % COD2X_LOG_CAPACITY;
     }
@@ -209,18 +211,20 @@ void Cod2x_ReportTextLines(Cod2xReportText *text, const char *field, const char 
     Cod2x_ReportTextAdd(text, "\"%s\":[", field);
     while (*p) {
         const char *start = p;
-        char line[1024];
+        char *line;
         size_t length;
         while (*p && *p != '\n' && *p != '\r')
             ++p;
         length = (size_t)(p - start);
         if (length) {
-            if (length >= sizeof(line))
-                length = sizeof(line) - 1;
+            line = malloc(length + 1);
+            if (!line)
+                break;
             memcpy(line, start, length);
             line[length] = '\0';
             Cod2x_ReportTextAdd(text, first ? "" : ",");
             Cod2x_ReportTextString(text, line);
+            free(line);
             first = 0;
         }
         while (*p == '\n' || *p == '\r')
@@ -692,9 +696,9 @@ static void Cod2x_CallerStack(char *out, size_t size, int skip)
 
 static char *Cod2x_ErrorJson(const char *kind, const char *message, const char *stack)
 {
-    static char logger[COD2X_LOG_CAPACITY * (COD2X_LOG_LENGTH + 32)];
+    char logger[8192];
     char system[4096], identity[512];
-    static char logs[64 * 1024];
+    char logs[64 * 1024];
     Cod2xReportText text = {NULL, 0, 0};
     Cod2x_LoggerRecent(logger, sizeof(logger));
     Sys_Cod2xSystemInfo(system, sizeof(system));
