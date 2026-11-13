@@ -12,10 +12,10 @@ r_backEndGlobals_t backEnd;
 materialCommands_t tess;
 r_global_permanent_t rgp;
 int alwaysfails;
-static dvar_t renderer, blur, disabled;
+static dvar_t renderer, blur, disabled, fbDebug, shadowDebug;
 dvar_t *r_rendererInUse = &renderer;
 const dvar_t *r_blur = &blur, *r_glow = &disabled, *r_fullbright = &disabled;
-const dvar_t *r_showFbColorDebug = &disabled, *sc_showDebug = &disabled;
+const dvar_t *r_showFbColorDebug = &fbDebug, *sc_showDebug = &shadowDebug;
 const dvar_t *r_glowBloomCutoff = &disabled, *r_glowBloomDesaturation = &disabled;
 void *imp_dx = &dx, *imp_rgp = &rgp;
 static int passes;
@@ -29,7 +29,8 @@ static Material feedback;
 static GfxImage image;
 static float filteredRadius, uv[4];
 static D3DCOLOR drawnColor;
-static int draws, copies;
+static int draws, copies, diagnostic;
+static D3DCOLOR colors[4];
 
 static HRESULT Copy(void *dev, void *source, void *sourceRect, void *dest, void *destRect, int filter)
 {
@@ -59,7 +60,9 @@ float GetVirtualWidthFromRealWidth(float width) { assert(width == 3); return 3; 
 void RB_DrawStretchPic(const Material *material, float x, float y, float w, float h,
                       float s0, float t0, float s1, float t1, D3DCOLOR color, GfxPrimStatsTarget stats)
 {
-    assert(material == &feedback && x == 0 && y == 0 && w == 1280 && h == 720 && stats == 10);
+    assert(material == &feedback && stats == 10);
+    if (!diagnostic) assert(x == 0 && y == 0 && w == 1280 && h == 720);
+    if (diagnostic) colors[draws] = color;
     uv[0] = s0; uv[1] = t0; uv[2] = s1; uv[3] = t1;
     drawnColor = color;
     ++draws;
@@ -78,6 +81,21 @@ int main(int argc, char **argv)
     surfaceMethods[2] = Release;
     dx.renderTargets[R_RENDERTARGET_BLURRED_SCREEN].image = &image;
     rgp.feedbackBlendMaterial = &feedback;
+    if (!strcmp(argv[1], "channels") || !strcmp(argv[1], "shadow-restore")) {
+        diagnostic = 1;
+        rgp.frameColorDebugMaterial = rgp.frameAlphaDebugMaterial = rgp.colorChannelMixerMaterial = &feedback;
+        const float initial[4] = {1, .2f, .7f, .9f};
+        memcpy(backEnd.codeConsts[27], initial, sizeof(initial));
+        fbDebug.current.integer = !strcmp(argv[1], "channels");
+        shadowDebug.current.enabled = !fbDebug.current.integer;
+        RB_ApplyLatePostEffectsCmd(&exec);
+        if (fbDebug.current.integer) {
+            assert(draws == 4 && colors[0] == 0x0000ffff && colors[1] == 0x00ff00ff && colors[2] == 0xff0000ff);
+        } else {
+            assert(draws == 1 && !memcmp(backEnd.codeConsts[27], initial, sizeof(initial)));
+        }
+        return 0;
+    }
     blur.current.value = !strcmp(argv[1], "below-threshold") ? 1.5f : 4;
     RB_ApplyLatePostEffectsCmd(&exec);
     assert(copies == 1 && draws == 1 && backEnd.currentFeedbackImage == &image);

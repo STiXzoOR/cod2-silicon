@@ -4553,7 +4553,8 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
         int halfH = (int)((float)dxState.renderTargetHeight * 0.5f);
         int halfW = (int)((float)dxState.renderTargetWidth * 0.5f);
         const Material *mixMtl = rgp.colorChannelMixerMaterial;
-        float save3 = backEnd.codeConsts[27][3];
+        float savedColor[4];
+        memcpy(savedColor, backEnd.codeConsts[27], sizeof(savedColor));
 
         RB_SetRenderTarget(0);
         backEnd.currentFeedbackImage = dxg->renderTargets[3].image;
@@ -4566,7 +4567,7 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
                           0.25f, 0.25f, 0.75f, 0.75f, 0xffffffff, (GfxPrimStatsTarget)10);
         RB_EndSurface();
 
-        backEnd.codeConsts[27][3] = save3;
+        memcpy(backEnd.codeConsts[27], savedColor, sizeof(savedColor));
 
         {
             const byte *c = (const byte *)execState->cmd;
@@ -5129,8 +5130,8 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
             cy = xyz[0] * row0[1] + xyz[1] * row1[1] + xyz[2] * row2[1] + row3[1];
             cz = xyz[0] * row0[2] + xyz[1] * row1[2] + xyz[2] * row2[2] + row3[2];
             cw = xyz[0] * row0[3] + xyz[1] * row1[3] + xyz[2] * row2[3] + row3[3];
-            ox = cw * invWidth;
             cz -= 0.001f * cw;
+            ox = cw * invWidth;
             oy = cw * invHeight;
 
             vc = RB_CheckTessOverflow4(t);
