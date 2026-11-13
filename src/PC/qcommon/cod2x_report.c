@@ -787,19 +787,32 @@ static int Cod2x_NameOrder(const void *a, const void *b)
 /* Sends the reports a crash left behind, the oldest first, at most ten a start. */
 static void Cod2x_ResendPending(const char *directory, const char *prefix, int markResent)
 {
-    char *names[256];
-    int count = 0, sent = 0, i;
+    char **names = NULL;
+    size_t count = 0, capacity = 0, i;
+    int sent = 0;
     size_t prefixLength = strlen(prefix), suffixLength = strlen(COD2X_PENDING_SUFFIX);
     time_t now = time(NULL);
     struct dirent *entry;
     DIR *folder = opendir(directory);
     if (!folder)
         return;
-    while ((entry = readdir(folder)) != NULL && count < 256) {
+    while ((entry = readdir(folder)) != NULL) {
         size_t length = strlen(entry->d_name);
         if (length >= prefixLength + suffixLength && !strncmp(entry->d_name, prefix, prefixLength) &&
-            !strcmp(entry->d_name + length - suffixLength, COD2X_PENDING_SUFFIX))
-            names[count++] = strdup(entry->d_name);
+            !strcmp(entry->d_name + length - suffixLength, COD2X_PENDING_SUFFIX)) {
+            if (count == capacity) {
+                size_t next = capacity ? capacity * 2 : 64;
+                char **grown = realloc(names, next * sizeof(*names));
+                if (!grown)
+                    goto list_failed;
+                names = grown;
+                capacity = next;
+            }
+            names[count] = strdup(entry->d_name);
+            if (!names[count])
+                goto list_failed;
+            ++count;
+        }
     }
     closedir(folder);
     qsort(names, (size_t)count, sizeof(names[0]), Cod2x_NameOrder);
@@ -826,6 +839,11 @@ static void Cod2x_ResendPending(const char *directory, const char *prefix, int m
         json = info.st_size > 0 && info.st_size <= COD2X_PENDING_MAX_SIZE
                    ? (char *)malloc((size_t)info.st_size + extra + 1)
                    : NULL;
+        if (!json && info.st_size > 0 && info.st_size <= COD2X_PENDING_MAX_SIZE) {
+            /* Memory pressure is not evidence that the pending report is bad. */
+            free(names[i]);
+            continue;
+        }
         file = json ? fopen(path, "rb") : NULL;
         if (!file || fread(json + extra, 1, (size_t)info.st_size, file) != (size_t)info.st_size ||
             json[extra] != '{') {
@@ -856,6 +874,16 @@ static void Cod2x_ResendPending(const char *directory, const char *prefix, int m
         free(names[i]);
         ++sent;
     }
+    free(names);
+    return;
+
+list_failed:
+    /* Do not send a subset in the wrong chronological order on allocation
+       failure. All reports remain available for the next start. */
+    closedir(folder);
+    for (i = 0; i < count; ++i)
+        free(names[i]);
+    free(names);
 }
 
 #if defined(_WIN32)
