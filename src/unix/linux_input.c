@@ -262,8 +262,30 @@ static int sdl_to_keynum(SDL_Keycode sym)
 
         if (sym >= 0x20 && sym < 0x7f)
             return (int)sym;
+#if defined(__APPLE__) && defined(COD2_X64)
+        /* Windows 1.3 MapKey's extended-byte table at 0x5d4684. SDL
+         * supplies these Latin-1 key labels as the same Unicode values. */
+        {
+            static const unsigned char labels[] = {
+                181, 191, 223, 224, 225, 228, 229, 230, 231, 232,
+                233, 236, 241, 242, 243, 246, 248, 249, 250, 252
+            };
+            for (unsigned int i = 0; i < sizeof(labels); ++i)
+                if (sym == labels[i]) return 128 + i;
+            if (sym >= 128 && sym <= 255) return (int)sym;
+        }
+#endif
         return 0;
     }
+}
+
+static int sdl_event_keynum(const SDL_Keysym *key)
+{
+#if defined(__APPLE__) && defined(COD2_X64)
+    /* The physical key above Tab is the console key on every layout. */
+    if (key->scancode == SDL_SCANCODE_GRAVE) return '~';
+#endif
+    return sdl_to_keynum(key->sym);
 }
 
 static int sdl_button_to_keynum(Uint8 button)
@@ -425,7 +447,7 @@ int SDL_PumpInputEvents(void)
             break;
         }
         case SDL_KEYDOWN: {
-            int k = sdl_to_keynum(ev.key.keysym.sym);
+            int k = sdl_event_keynum(&ev.key.keysym);
             if (k) {
                 Sys_QueEvent(eventTime, SE_KEY, k, 1, 0, 0);
                 ++inputEventCount;
@@ -442,7 +464,7 @@ int SDL_PumpInputEvents(void)
             break;
         }
         case SDL_KEYUP: {
-            int k = sdl_to_keynum(ev.key.keysym.sym);
+            int k = sdl_event_keynum(&ev.key.keysym);
             if (k) {
                 Sys_QueEvent(eventTime, SE_KEY, k, 0, 0, 0);
                 ++inputEventCount;
