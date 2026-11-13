@@ -27,7 +27,7 @@ if build.returncode:
     print(build.stderr[-4000:])
     raise SystemExit(build.returncode)
 failed = False
-for case in a.cases or ['match-short', 'archive-packed', 'append-packed', 'wait-overflow', 'vector-packed', 'unknown-object', 'field-object']:
+for case in a.cases or ['match-short', 'archive-packed', 'append-packed', 'wait-overflow', 'wait-rounding', 'vector-packed', 'unknown-object', 'field-object']:
     run = subprocess.run([str(exe), case], capture_output=True, text=True)
     (a.output / (case + '.log')).write_text(run.stdout + run.stderr)
     print(case, 'PASS' if run.returncode == 0 else 'FAIL')

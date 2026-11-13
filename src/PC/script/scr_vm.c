@@ -7155,7 +7155,12 @@ static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value)
         }
 
 #if defined(COD2_X64)
+#if COD2_APPLE_SDK
+        /* Windows VM_Execute 0x47e86d rounds wait ticks to nearest-even. */
+        float rounded = __builtin_rintf(seconds * 20.0f);
+#else
         float rounded = floorf(seconds * 20.0f + 0.5f);
+#endif
         /* cvttss2si in the Mac VM produces INT_MIN for NaN/overflow. */
         ticks = rounded >= -2147483648.0f && rounded < 2147483648.0f
                     ? (int)rounded : (int)0x80000000u;

@@ -97,6 +97,18 @@ int main(int argc, char **argv)
         VM_NotifyAppendStackParams(&ref, &saved, scrVmPub.stack + 1);
         int n; memcpy(&n, saved->buf + 6, 4);
         assert(saved->size == 2 && n == 34 && refAdds == 1);
+    } else if (!strcmp(argv[1], "wait-rounding")) {
+        /* Windows VM_Execute 0x47e862..0x47e89a, x87 24-bit/nearest-even. */
+        const float seconds[] = {0.0f, 0.001f, 0.025f, 0.075f, 0.125f, 0.225f, 0.625f, 1.025f};
+        const unsigned int expected[] = {0, 1, 1, 2, 2, 4, 12, 20};
+        for (unsigned int i = 0; i < sizeof(seconds) / sizeof(seconds[0]); ++i) {
+            VariableValue v = {.type = VAR_FLOAT, .u.floatValue = seconds[i]};
+            Bool negative = 1;
+            unsigned int ticks = VM_CandidateWaitTimeFromValue(&v, 0, -1, &negative);
+            if (ticks != expected[i])
+                fprintf(stderr, "wait %.9g: got %u, Windows %u\n", seconds[i], ticks, expected[i]);
+            assert(ticks == expected[i] && !negative);
+        }
     } else if (!strcmp(argv[1], "wait-overflow")) {
         VariableValue v = {.type = 6, .u.intValue = 0x40000000};
         Bool negative = 1;
