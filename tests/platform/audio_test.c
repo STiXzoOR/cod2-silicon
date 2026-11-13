@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #if defined(__APPLE__) && defined(COD2_X64)
 #define CHECK(condition) do { if (!(condition)) { fprintf(stderr, "audio check failed at line %d: %s (%s)\n", __LINE__, #condition, AIL_last_error()); return 1; } } while (0)
@@ -170,16 +171,21 @@ int main(void)
 
     AIL_set_file_callbacks(Open, Close, Seek, Read);
     void *stream = AIL_open_stream((void *)(uintptr_t)1, "memory.wav", 0);
-    CHECK(stream && opens == 1 && closes == 1 && seeks == 2 && reads > 1);
+    CHECK(stream && opens == 1 && closes == 0);
     int stream_info[6] = { 111, 0, 0, 0, 0, 222 };
     AIL_stream_info(stream, &stream_info[1], &stream_info[2], &stream_info[3], &stream_info[4]);
     CHECK(stream_info[0] == 111 && stream_info[5] == 222);
-    CHECK(stream_info[1] == 192000 && stream_info[2] == 3 && stream_info[3] == sizeof(wave) && stream_info[4] == 32);
+    CHECK(stream_info[1] == 192000 && stream_info[2] == 3 && stream_info[3] == sizeof(wave) && stream_info[4] == 32768 * 2 * sizeof(float));
     AIL_pause_stream(stream, 0);
-    MacAudio_Mix(mixed, 16);
+    for (int attempt = 0; attempt < 1000; ++attempt) {
+        MacAudio_Mix(mixed, 16);
+        if (AIL_stream_status(stream) == 2) break;
+        usleep(1000);
+    }
     CHECK(fabsf(mixed[0] - 0.25f) < 0.00001f && fabsf(mixed[1] + 0.5f) < 0.00001f);
     CHECK(AIL_stream_status(stream) == 2);
     AIL_close_stream(stream);
+    CHECK(closes == 1 && seeks >= 2 && reads > 1);
     AIL_set_file_callbacks(NULL, NULL, NULL, NULL);
 
     unsigned char adpcm[256] = { 0 };

@@ -28,6 +28,9 @@
 #define AUDIO_PLAYING 4
 #define AUDIO_STOPPED 8
 #define REVERB_FRAMES 8192
+#define STREAM_FRAMES 32768
+
+typedef struct MacAudioStream MacAudioStream;
 
 typedef struct {
     int allocated, status, format, rate, channels, block_size;
@@ -40,7 +43,28 @@ typedef struct {
     size_t frames[2];
     double cursor;
     float left, right, dry, wet, position[3], min_distance, max_distance;
+    MacAudioStream *stream;
 } MacAudioSample;
+
+struct MacAudioStream {
+    MacAudioSample *sample;
+    AudioFileID file;
+    ExtAudioFileRef decoder;
+    FILE *disk;
+    unsigned long handle;
+    MacAudioCloseCallback close;
+    MacAudioSeekCallback seek;
+    MacAudioReadCallback read;
+    size_t bytes, length;
+    int channels, stop, failed, started;
+    uint64_t serial, first, end;
+    float *ring;
+    pthread_t thread;
+    pthread_cond_t wake;
+};
+
+static int StreamFrame(MacAudioSample *sample, float *left, float *right);
+static void CloseStream(void *handle);
 
 typedef struct {
     const unsigned char *data;
@@ -366,6 +390,10 @@ static void MixLocked(float *stereo, size_t frame_count)
                 right *= (1 + pan) * 0.5f * rear * attenuation;
             }
             for (size_t i = 0; i < count; ++i) {
+                float l, r;
+                if (sample->stream) {
+                    if (!StreamFrame(sample, &l, &r)) break;
+                } else {
                 int index = sample->active_buffer;
                 size_t length = sample->frames[index];
                 if (sample->cursor >= length) {
@@ -391,12 +419,13 @@ static void MixLocked(float *stereo, size_t frame_count)
                 size_t current = (size_t)sample->cursor;
                 size_t next = current + 1 < length ? current + 1 : current;
                 float fraction = (float)(sample->cursor - current);
-                float l = sample->pcm[index][current * sample->channels];
+                l = sample->pcm[index][current * sample->channels];
                 l += (sample->pcm[index][next * sample->channels] - l) * fraction;
-                float r = l;
+                r = l;
                 if (sample->channels == 2) {
                     r = sample->pcm[index][current * 2 + 1];
                     r += (sample->pcm[index][next * 2 + 1] - r) * fraction;
+                }
                 }
                 size_t output = (chunk + i) * 2;
                 stereo[output] += l * left * sample->dry;
@@ -405,6 +434,7 @@ static void MixLocked(float *stereo, size_t frame_count)
                 wet_buffer[i * 2 + 1] += r * right * sample->wet;
                 sample->cursor += (double)sample->rate / AUDIO_RATE;
             }
+            if (sample->stream) pthread_cond_signal(&sample->stream->wake);
         }
         for (size_t i = 0; i < count; ++i) {
             size_t delayed = (reverb_cursor + REVERB_FRAMES - (size_t)reverb_delay) % REVERB_FRAMES;
@@ -528,6 +558,7 @@ void AIL_shutdown(void)
         AudioComponentInstanceDispose(output_unit);
         output_unit = NULL;
     }
+    for (int i = 0; i < AUDIO_SAMPLES; ++i) CloseStream(&samples[i]);
     pthread_mutex_lock(&audio_mutex);
     for (int i = 0; i < AUDIO_SAMPLES; ++i) {
         free(samples[i].pcm[0]);
@@ -584,6 +615,7 @@ void *AIL_allocate_sample_handle(void *driver)
 
 void AIL_release_sample_handle(void *handle)
 {
+    CloseStream(handle);
     pthread_mutex_lock(&audio_mutex);
     MacAudioSample *sample = FindSample(handle);
     if (sample) {
@@ -595,6 +627,7 @@ void AIL_release_sample_handle(void *handle)
 
 void AIL_init_sample(void *handle)
 {
+    CloseStream(handle);
     pthread_mutex_lock(&audio_mutex);
     MacAudioSample *sample = FindSample(handle);
     if (sample)
@@ -877,78 +910,195 @@ void AIL_set_file_callbacks(MacAudioOpenCallback open_cb, MacAudioCloseCallback 
     file_open = open_cb; file_close = close_cb; file_seek = seek_cb; file_read = read_cb;
 }
 
-static unsigned char *ReadStreamFile(const char *name, size_t *size)
+/* Miles opens a seekable stream and services bounded buffers on a worker.
+ * CoreAudio supplies the decoder here; neither file reads nor decoding run in
+ * the render callback, and the game thread only reads the header at open. */
+static OSStatus StreamRead(void *client, SInt64 position, UInt32 count, void *buffer, UInt32 *actual)
 {
-    unsigned char *data = NULL;
-    if (file_open && file_close && file_seek && file_read) {
-        unsigned long handle;
-        if (!file_open(name, &handle))
-            return NULL;
-        long length = file_seek(handle, 0, 2);
-        if (length > 0 && length <= AUDIO_MAX_BYTES && file_seek(handle, 0, 0) >= 0) {
-            data = malloc((size_t)length);
-            size_t used = 0;
-            while (data && used < (size_t)length) {
-                unsigned long got = file_read(handle, data + used, (unsigned long)((size_t)length - used));
-                if (!got || got > (size_t)length - used)
-                    break;
-                used += got;
-            }
-            if (used != (size_t)length) { free(data); data = NULL; }
-            *size = used;
-        }
-        file_close(handle);
-    } else {
-        FILE *file = fopen(name, "rb");
-        if (!file)
-            return NULL;
-        if (!fseek(file, 0, SEEK_END)) {
-            long length = ftell(file);
-            if (length > 0 && length <= AUDIO_MAX_BYTES && !fseek(file, 0, SEEK_SET)) {
-                data = malloc((size_t)length);
-                if (data && fread(data, 1, (size_t)length, file) != (size_t)length) { free(data); data = NULL; }
-                *size = (size_t)length;
-            }
-        }
-        fclose(file);
+    MacAudioStream *stream = client;
+    *actual = 0;
+    if (position < 0 || (uint64_t)position > stream->bytes) return kAudioFilePositionError;
+    if (count > stream->bytes - (size_t)position) count = (UInt32)(stream->bytes - (size_t)position);
+    if (stream->disk) {
+        if (fseeko(stream->disk, position, SEEK_SET)) return kAudioFilePositionError;
+        *actual = (UInt32)fread(buffer, 1, count, stream->disk);
+        return ferror(stream->disk) ? kAudioFileUnspecifiedError : noErr;
     }
-    return data;
+    if (position > LONG_MAX || stream->seek(stream->handle, (long)position, 0) < 0)
+        return kAudioFilePositionError;
+    while (*actual < count) {
+        unsigned long got = stream->read(stream->handle, (char *)buffer + *actual, count - *actual);
+        if (!got) break;
+        if (got > count - *actual) return kAudioFileUnspecifiedError;
+        *actual += (UInt32)got;
+    }
+    return noErr;
+}
+
+static SInt64 StreamSize(void *client) { return (SInt64)((MacAudioStream *)client)->bytes; }
+
+static void DisposeStream(MacAudioStream *stream)
+{
+    if (stream->decoder) ExtAudioFileDispose(stream->decoder);
+    if (stream->file) AudioFileClose(stream->file);
+    if (stream->disk) fclose(stream->disk);
+    else if (stream->close) stream->close(stream->handle);
+    pthread_cond_destroy(&stream->wake);
+    free(stream->ring);
+    free(stream);
+}
+
+static void CloseStream(void *handle)
+{
+    pthread_mutex_lock(&audio_mutex);
+    MacAudioSample *sample = FindSample(handle);
+    MacAudioStream *stream = sample ? sample->stream : NULL;
+    if (stream) {
+        sample->status = AUDIO_STOPPED;
+        stream->stop = 1;
+        pthread_cond_signal(&stream->wake);
+    }
+    pthread_mutex_unlock(&audio_mutex);
+    if (!stream) return;
+    if (stream->started) pthread_join(stream->thread, NULL);
+    pthread_mutex_lock(&audio_mutex);
+    sample->stream = NULL;
+    pthread_mutex_unlock(&audio_mutex);
+    DisposeStream(stream);
+}
+
+static void *StreamWorker(void *context)
+{
+    MacAudioStream *stream = context;
+    uint64_t serial = 0;
+    float pcm[4096 * 2];
+    pthread_mutex_lock(&audio_mutex);
+    while (!stream->stop) {
+        uint64_t cursor = (uint64_t)stream->sample->cursor;
+        int reposition = serial != stream->serial;
+        if (reposition) {
+            serial = stream->serial;
+            stream->first = stream->end = cursor;
+        }
+        size_t available = stream->end > cursor ? (size_t)(stream->end - cursor) : 0;
+        if (available >= STREAM_FRAMES - 1) {
+            pthread_cond_wait(&stream->wake, &audio_mutex);
+            continue;
+        }
+        uint64_t start = stream->end;
+        uint64_t limit = stream->sample->loops ? (uint64_t)stream->length * stream->sample->loops : UINT64_MAX;
+        if (start >= limit) {
+            pthread_cond_wait(&stream->wake, &audio_mutex);
+            continue;
+        }
+        size_t position = start % stream->length;
+        UInt32 frames = (UInt32)(STREAM_FRAMES - 1 - available);
+        if (frames > 4096) frames = 4096;
+        if (frames > stream->length - position) frames = (UInt32)(stream->length - position);
+        if (frames > limit - start) frames = (UInt32)(limit - start);
+        pthread_mutex_unlock(&audio_mutex);
+        OSStatus error = noErr;
+        if (reposition || position == 0) error = ExtAudioFileSeek(stream->decoder, (SInt64)position);
+        AudioBufferList buffers = { .mNumberBuffers = 1,
+            .mBuffers = {{ (UInt32)stream->channels, frames * stream->channels * sizeof(float), pcm }} };
+        if (!error) error = ExtAudioFileRead(stream->decoder, &frames, &buffers);
+        pthread_mutex_lock(&audio_mutex);
+        if (stream->stop) break;
+        if (serial != stream->serial) continue; /* A seek invalidated this decode. */
+        if (error || !frames) {
+            stream->failed = 1;
+            break;
+        }
+        for (UInt32 i = 0; i < frames; ++i)
+            memcpy(stream->ring + ((start + i) % STREAM_FRAMES) * stream->channels,
+                pcm + i * stream->channels, stream->channels * sizeof(float));
+        stream->end += frames;
+        if (stream->end - stream->first > STREAM_FRAMES)
+            stream->first = stream->end - STREAM_FRAMES;
+    }
+    pthread_mutex_unlock(&audio_mutex);
+    return NULL;
+}
+
+/* Called under audio_mutex; an empty buffer pauses consumption until the worker
+ * catches up. A finite stream stops at its media length; loop prefetch wraps
+ * the decoder without inserting silence at the loop boundary. */
+static int StreamFrame(MacAudioSample *sample, float *left, float *right)
+{
+    MacAudioStream *stream = sample->stream;
+    if (stream->failed || (sample->loops && sample->cursor >= (double)stream->length * sample->loops)) {
+        sample->status = AUDIO_DONE;
+        return 0;
+    }
+    uint64_t current = (uint64_t)sample->cursor, next = current + 1;
+    if (current % stream->length == stream->length - 1) next = current;
+    if (sample->loops && next >= (uint64_t)stream->length * sample->loops) next = current;
+    if (current < stream->first || next >= stream->end) return 0;
+    float fraction = (float)(sample->cursor - current);
+    size_t a = (current % STREAM_FRAMES) * stream->channels;
+    size_t b = (next % STREAM_FRAMES) * stream->channels;
+    *left = stream->ring[a] + (stream->ring[b] - stream->ring[a]) * fraction;
+    *right = stream->channels == 2 ? stream->ring[a + 1] + (stream->ring[b + 1] - stream->ring[a + 1]) * fraction : *left;
+    return 1;
 }
 
 void *AIL_open_stream(void *driver, const char *name, int memory)
 {
     (void)memory;
-    size_t size = 0;
-    if (!name || !name[0])
-        return NULL;
-    unsigned char *data = ReadStreamFile(name, &size);
-    if (!data) {
-        AudioError("Stream read failed", kAudioFileFileNotFoundError);
-        return NULL;
+    if (!name || !*name) return NULL;
+    MacAudioStream *stream = calloc(1, sizeof(*stream));
+    if (!stream) return NULL;
+    pthread_cond_init(&stream->wake, NULL);
+    if (file_open && file_close && file_seek && file_read) {
+        if (!file_open(name, &stream->handle)) { DisposeStream(stream); return NULL; }
+        stream->close = file_close; stream->seek = file_seek; stream->read = file_read;
+        long length = stream->seek(stream->handle, 0, 2);
+        if (length > 0) stream->bytes = (size_t)length;
+    } else {
+        stream->disk = fopen(name, "rb");
+        if (stream->disk && !fseeko(stream->disk, 0, SEEK_END)) {
+            off_t length = ftello(stream->disk);
+            if (length > 0) stream->bytes = (size_t)length;
+        }
     }
-    float *pcm = NULL;
-    size_t frames;
-    int channels, rate;
-    int decoded = DecodeFile(data, size, &pcm, &frames, &channels, &rate);
-    free(data);
-    if (!decoded)
-        return NULL;
+    OSStatus error = stream->bytes ? AudioFileOpenWithCallbacks(stream, StreamRead, NULL, StreamSize, NULL, 0, &stream->file) : kAudioFileFileNotFoundError;
+    if (!error) error = ExtAudioFileWrapAudioFileID(stream->file, false, &stream->decoder);
+    AudioStreamBasicDescription input = {0};
+    UInt32 size = sizeof(input);
+    if (!error) error = ExtAudioFileGetProperty(stream->decoder, kExtAudioFileProperty_FileDataFormat, &size, &input);
+    if (!error && (input.mChannelsPerFrame < 1 || input.mChannelsPerFrame > 2 || input.mSampleRate < 1000 || input.mSampleRate > 384000)) error = kAudio_ParamError;
+    AudioStreamBasicDescription output = { .mSampleRate = input.mSampleRate, .mFormatID = kAudioFormatLinearPCM,
+        .mFormatFlags = kAudioFormatFlagsNativeFloatPacked, .mBytesPerPacket = input.mChannelsPerFrame * sizeof(float),
+        .mFramesPerPacket = 1, .mBytesPerFrame = input.mChannelsPerFrame * sizeof(float),
+        .mChannelsPerFrame = input.mChannelsPerFrame, .mBitsPerChannel = 32 };
+    if (!error) error = ExtAudioFileSetProperty(stream->decoder, kExtAudioFileProperty_ClientDataFormat, sizeof(output), &output);
+    SInt64 length = 0; size = sizeof(length);
+    if (!error) error = ExtAudioFileGetProperty(stream->decoder, kExtAudioFileProperty_FileLengthFrames, &size, &length);
+    if (!error && length <= 0) error = kAudio_ParamError;
+    if (!error) {
+        stream->length = (size_t)length;
+        stream->channels = (int)input.mChannelsPerFrame;
+        stream->ring = malloc(STREAM_FRAMES * stream->channels * sizeof(float));
+        if (!stream->ring) error = -ENOMEM;
+    }
+    if (error) { AudioError("Stream open", error); DisposeStream(stream); return NULL; }
     void *handle = AIL_allocate_sample_handle(driver);
+    if (!handle) { DisposeStream(stream); return NULL; }
     pthread_mutex_lock(&audio_mutex);
     MacAudioSample *sample = FindSample(handle);
-    if (sample) {
-        sample->pcm[0] = pcm;
-        sample->frames[0] = frames;
-        sample->rate = rate;
-        sample->stream_rate = rate;
-        sample->channels = channels;
-        sample->source_bytes = size;
-        sample->format = channels == 2 ? 3 : 1;
-        sample->prepared = 1;
-    } else {
-        free(pcm);
-    }
+    sample->stream = stream;
+    stream->sample = sample;
+    stream->serial = 1;
+    sample->frames[0] = stream->length;
+    sample->rate = sample->stream_rate = (int)input.mSampleRate;
+    sample->channels = stream->channels;
+    sample->source_bytes = stream->bytes;
+    sample->format = stream->channels == 2 ? 3 : 1;
+    sample->prepared = 1;
     pthread_mutex_unlock(&audio_mutex);
+    int result = pthread_create(&stream->thread, NULL, StreamWorker, stream);
+    if (result) { AudioError("Stream worker", result); AIL_release_sample_handle(handle); return NULL; }
+    stream->started = 1;
     return handle;
 }
 
@@ -960,7 +1110,16 @@ void AIL_stream_volume_pan(void *stream, float *v, float *p) { AIL_sample_volume
 void AIL_set_stream_reverb_levels(void *stream, float d, float w) { AIL_set_sample_reverb_levels(stream, d, w); }
 void AIL_set_stream_playback_rate(void *stream, int rate) { AIL_set_sample_playback_rate(stream, rate); }
 int AIL_stream_playback_rate(void *stream) { return AIL_sample_playback_rate(stream); }
-void AIL_set_stream_loop_count(void *stream, int loops) { AIL_set_sample_loop_count(stream, loops); }
+void AIL_set_stream_loop_count(void *handle, int loops)
+{
+    pthread_mutex_lock(&audio_mutex);
+    MacAudioSample *sample = FindSample(handle);
+    if (sample) {
+        sample->loops = sample->remaining_loops = loops > 0 ? loops : 0;
+        if (sample->stream) pthread_cond_signal(&sample->stream->wake);
+    }
+    pthread_mutex_unlock(&audio_mutex);
+}
 long AIL_stream_status(void *stream) { return (long)AIL_sample_status(stream); }
 /* Miles stream time uses file metadata independently of playback pitch.
    Keep the decoded media rate for streams; ordinary samples retain their rate. */
@@ -971,6 +1130,11 @@ void AIL_set_stream_ms_position(void *stream, int ms)
     if (sample) {
         int rate = sample->stream_rate ? sample->stream_rate : sample->rate;
         sample->cursor = fmax(0, (double)ms * rate / 1000.0);
+        if (sample->stream) {
+            sample->stream->first = sample->stream->end = (uint64_t)sample->cursor;
+            ++sample->stream->serial;
+            pthread_cond_signal(&sample->stream->wake);
+        }
     }
     pthread_mutex_unlock(&audio_mutex);
 }
@@ -983,7 +1147,10 @@ void AIL_stream_ms_position(void *stream, long *total, long *current)
         PrepareSample(sample);
     int rate = sample ? (sample->stream_rate ? sample->stream_rate : sample->rate) : 0;
     if (total) *total = rate ? (long)(sample->frames[sample->active_buffer] * 1000.0 / rate) : 0;
-    if (current) *current = rate ? (long)(sample->cursor * 1000.0 / rate) : 0;
+    double position = sample ? sample->cursor : 0;
+    if (sample && sample->stream && sample->status != AUDIO_DONE)
+        position = fmod(position, (double)sample->stream->length);
+    if (current) *current = rate ? (long)(position * 1000.0 / rate) : 0;
     pthread_mutex_unlock(&audio_mutex);
 }
 SAMPLE_GETTER(int, AIL_is_3D_stream, 0, sample->spatial)
@@ -995,7 +1162,7 @@ void AIL_stream_info(void *handle, int *datarate, int *format, int *length, int 
     if (format) *format = sample ? sample->format : 0;
     if (datarate) *datarate = sample ? sample->rate * sample->channels * 2 : 0;
     if (length) *length = sample ? (int)sample->source_bytes : 0;
-    if (memory) *memory = sample ? (int)(sample->frames[0] * sample->channels * sizeof(float)) : 0;
+    if (memory) *memory = sample ? (int)((sample->stream ? STREAM_FRAMES : sample->frames[0]) * sample->channels * sizeof(float)) : 0;
     pthread_mutex_unlock(&audio_mutex);
 }
 
