@@ -91,6 +91,24 @@ const char *Cod2x_IwdRequiredName(void)
     return cod2x_iwdRequired;
 }
 
+static int gameFolder(const char *folder, const char *game)
+{
+    size_t folderLength = strlen(folder), gameLength = game ? strlen(game) : 0;
+    if (!gameLength || folderLength < gameLength)
+        return 0;
+    const char *suffix = folder + folderLength - gameLength;
+    if (suffix > folder && suffix[-1] != '/' && suffix[-1] != '\\')
+        return 0;
+    for (size_t i = 0; i < gameLength; ++i) {
+        unsigned char a = (unsigned char)suffix[i], b = (unsigned char)game[i];
+        if (a == '\\') a = '/';
+        if (b == '\\') b = '/';
+        if (tolower(a) != tolower(b))
+            return 0;
+    }
+    return 1;
+}
+
 int Cod2x_IwdAllowed(const char *folder, const char *file, const char *const *files,
                     size_t count, const Cod2xIwdSelection *s)
 {
@@ -123,7 +141,7 @@ int Cod2x_IwdAllowed(const char *folder, const char *file, const char *const *fi
         return COD2X_IWD_LATEST_ZPAM;
     if (s->listen && latest(file, "zpam_maps_v", files, count))
         return COD2X_IWD_LATEST_ZPAM_MAPS;
-    return s->game && *s->game && equal(folder, s->game) ? COD2X_IWD_GAME : COD2X_IWD_FILTERED;
+    return gameFolder(folder, s->game) ? COD2X_IWD_GAME : COD2X_IWD_FILTERED;
 }
 
 const char *Cod2x_ConfigGame(const char *game, const char *qpath)

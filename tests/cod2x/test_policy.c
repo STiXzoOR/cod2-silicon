@@ -45,6 +45,9 @@ int main(void)
     s.listen = 0; s.connecting = 0; s.game = "mods/pam";
     assert(Cod2x_IwdAllowed("mods/pam", list[6], list, 7, &s));
     assert(!Cod2x_IwdAllowed("pam", list[6], list, 7, &s));
+    assert(Cod2x_IwdAllowed("MODS\\PAM", list[6], list, 7, &s));
+    assert(Cod2x_IwdAllowed("base/mods/pam", list[6], list, 7, &s));
+    assert(!Cod2x_IwdAllowed("othermods/pam", list[6], list, 7, &s));
     s.dedicated = 1;
     assert(Cod2x_IwdAllowed("main", list[6], list, 7, &s));
     assert(!strcmp(Cod2x_ConfigGame("pam", "players/default/config_mp.cfg"), "main"));
