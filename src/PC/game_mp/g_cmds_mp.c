@@ -636,14 +636,18 @@ void Cmd_SetViewpos_f(gentity_t *ent)
         return;
     }
 
-#if defined(COD2_X64)
+#if defined(COD2_X64) && !defined(COD2_APPLE_SDK)
     if (SV_Cmd_Argc() != 5 && SV_Cmd_Argc() != 6)
 #else
     if (SV_Cmd_Argc() != 5)
 #endif
     {
 #if defined(COD2_X64)
+#if defined(COD2_APPLE_SDK)
+        SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_USAGE\x15: setviewpos x y z yaw\"", 101));
+#else
         SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_USAGE\x15: setviewpos x y z yaw [pitch]\"", 101));
+#endif
 #else
         SV_GameSendServerCommand(ent - g_entities, SV_CMD_RELIABLE, va("%c \"GAME_USAGE\x15: setviewpos x y z yaw\"", 101));
 #endif
@@ -657,7 +661,7 @@ void Cmd_SetViewpos_f(gentity_t *ent)
 
     SV_Cmd_ArgvBuffer(4, buffer, sizeof(buffer));
     angles[1] = (float)atof(buffer);
-#if defined(COD2_X64)
+#if defined(COD2_X64) && !defined(COD2_APPLE_SDK)
     if (SV_Cmd_Argc() == 6) {
         SV_Cmd_ArgvBuffer(5, buffer, sizeof(buffer));
         angles[0] = (float)atof(buffer);
