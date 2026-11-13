@@ -63,6 +63,7 @@ The original shaders are built from your own game files.
 ### Changed
 
 - Shadow-cookie clears preserve scene depth near the bottom-left corner.
+  Character shadows also remain visible when soft smoke edges are enabled.
 - Glow samples the correct sky direction on widescreen displays; glow and menu
   blur align to pixel centers and cover the right edge.
 - Heat distortion samples the correct scene pixels, including consecutive batches.

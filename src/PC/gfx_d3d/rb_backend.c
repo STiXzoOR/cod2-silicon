@@ -306,7 +306,7 @@ extern struct r_backEndGlobals_t backEnd;
 extern const GfxBackEndData *backEndData;
 
 #if defined(COD2_X64)
-/* This target aliases the later post-sun and saved-screen copies. */
+/* Track the receiver depth views represented by the copied shadow texture. */
 static struct {
     const GfxViewParms *view[4];
     int viewCount[4];
@@ -1215,8 +1215,14 @@ static void RB_ClearScreenCmd(GfxRenderCommandExecState *execState)
     byte *cmd = (byte *)execState->cmd;
     unsigned int byteCount;
 #if defined(COD2_X64)
-    if (dxState.renderTargetId == R_RENDERTARGET_DYNAMICSHADOWS)
+    /* Float depth is also the shadow receiver prepass. Its later color-only
+     * shadow-target clear must preserve these view tags. */
+    if ((dxState.renderTargetId == R_RENDERTARGET_DYNAMICSHADOWS ||
+         dxState.renderTargetId == R_RENDERTARGET_FLOAT_Z) &&
+        (((GfxCmdClearScreen *)cmd)->whichToClear & 2))
         memset(&shadowCookieViews, 0, sizeof(shadowCookieViews));
+    if (dxState.renderTargetId == R_RENDERTARGET_DYNAMICSHADOWS)
+        shadowCookieViews.copied = 0;
 #endif
     RB_ClearScreen(((GfxCmdClearScreen *)cmd)->whichToClear,
                    ((GfxCmdClearScreen *)cmd)->color,
@@ -2147,8 +2153,11 @@ static void RB_DrawSurfsCmd(GfxRenderCommandExecState *execState)
         ((GfxCmdDrawSurfs *)cmd)->techType,
         ((GfxCmdDrawSurfs *)cmd)->order);
 #if defined(COD2_X64)
-    if (dxs->renderTargetId == R_RENDERTARGET_DYNAMICSHADOWS &&
-        ((GfxCmdDrawSurfs *)cmd)->techType == 0 && shadowCookieViews.count < 4) {
+    MaterialTechniqueType prepass = ((GfxCmdDrawSurfs *)cmd)->techType;
+    if (((dxs->renderTargetId == R_RENDERTARGET_DYNAMICSHADOWS &&
+          prepass == TECHNIQUE_DEPTH_PREPASS) ||
+         (dxs->renderTargetId == R_RENDERTARGET_FLOAT_Z &&
+          prepass == TECHNIQUE_BUILD_FLOAT_Z)) && shadowCookieViews.count < 4) {
         int index = shadowCookieViews.count++;
         shadowCookieViews.view[index] = backEnd.viewParms;
         shadowCookieViews.viewCount[index] = backEnd.viewCount;
