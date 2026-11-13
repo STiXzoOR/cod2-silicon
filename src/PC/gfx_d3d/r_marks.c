@@ -539,13 +539,13 @@ int R_MarkFragments(vec3_t *points, const vec_t *origin, vec3_t *axis, float rad
                     dy = outV->xyz[1] - origin[1];
                     dz = outV->xyz[2] - origin[2];
 
-                    u = (dx * (*axis)[3] + dy * (*axis)[4] + dz * (*axis)[5]) * texCoordScale + 0.5f;
+                    u = (dx * axis[1][0] + dy * axis[1][1] + dz * axis[1][2]) * texCoordScale + 0.5f;
                     outV->texCoord[0] = u;
 
-                    t = (dx * (*axis)[6] + dy * (*axis)[7] + dz * (*axis)[8]) * texCoordScale + 0.5f;
+                    t = (dx * axis[2][0] + dy * axis[2][1] + dz * axis[2][2]) * texCoordScale + 0.5f;
                     outV->texCoord[1] = t;
 
-                    Vec3Cross(outV->normal, &(*axis)[3], outV->binormal);
+                    Vec3Cross(outV->normal, axis[1], outV->binormal);
 
                     Vec3Cross(outV->binormal, outV->normal, outV->tangent);
                 }
