@@ -519,6 +519,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Dvar_Init();
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2xNativeURL_SetupPaths();
+#if !COD2_CODX
+    // Upstream CoD2x deliberately disables the improper-quit recovery prompt.
     int previousExit = MacSystem_BeginSession();
     if (previousExit == -2) return 0; /* The previous process is still alive. */
     if (previousExit < 0) Sys_Error("Could not create the game session marker");
@@ -533,6 +535,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         if (answer == 6) { extern void Com_SetSafeMode(void); Com_SetSafeMode(); }
     }
     if (!MacSystem_MarkSession()) Sys_Error("Could not write the game session marker");
+#endif
 #endif
 
     {
