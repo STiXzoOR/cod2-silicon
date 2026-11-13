@@ -152,6 +152,7 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Fixed
 
+- Original 1.3’s startup banner correctly identifies macOS on Apple silicon.
 - Brief movement-key presses queued during a slow frame retain their held
   duration, as in Windows 1.3.
 - The physical console key works across keyboard layouts, and the original
