@@ -1489,13 +1489,13 @@ void RB_SetWorldMatrixForEntity(const GfxEntity *re)
 }
 
 #if defined(COD2_X64)
-/* Mac target 12 reads the adjacent zero at 0x32ab50. Give that value owned
-   storage instead of indexing beyond the twelve-entry native array. */
+/* Windows 1.3 table at 0x1019087c: depth uses the scene viewport;
+ * all three ping-pong targets use their full extent. */
 const GfxViewportBehavior s_viewportBehaviorForRenderTarget[13] = {
     (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)0,
     (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)0, (GfxViewportBehavior)1,
     (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1,
-    (GfxViewportBehavior)0 };
+    (GfxViewportBehavior)1 };
 #else
 const GfxViewportBehavior s_viewportBehaviorForRenderTarget[12] = {
     (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)0,

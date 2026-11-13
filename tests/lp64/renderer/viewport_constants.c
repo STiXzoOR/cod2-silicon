@@ -63,6 +63,7 @@ int main(void)
 {
     /* Windows target6 uses the scene viewport for the depth prepass. */
     assert(s_viewportBehaviorForRenderTarget[R_RENDERTARGET_FLOAT_Z] == GFX_USE_VIEWPORT_FOR_VIEW);
+    assert(s_viewportBehaviorForRenderTarget[R_RENDERTARGET_PINGPONG_1] == GFX_USE_VIEWPORT_FULL);
     GfxViewport ignored = { .x = 13, .y = 17, .width = 641, .height = 359 };
     Check(1280, 720, ignored, GFX_USE_VIEWPORT_FULL);
     Check(1280, 720, (GfxViewport){ .x = 160, .y = 90, .width = 640, .height = 360 }, GFX_USE_VIEWPORT_FOR_VIEW);
