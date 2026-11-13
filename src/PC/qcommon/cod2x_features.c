@@ -195,34 +195,15 @@ void Cod2x_IwdLogRotate(void)
 void Cod2x_IwdLogDirectory(const char *directory, const char *basepath, const char *game, int version,
                            const char *names)
 {
-    const char *p = names ? names : "";
-    char path[1024];
-    int count = 0;
+    char path[1024], tokens[8192], *required[512];
+    int count = Cod2x_Tokenize(names ? names : "", 0, required, tokens, sizeof(tokens));
     Cod2x_IwdLog("Processing directory ^9%s^7\n", Cod2x_IwdLogPath(directory, path, sizeof(path)));
     Cod2x_IwdLog("  fs_basepath:        ^9%s^7\n", basepath && *basepath ? basepath : "(empty)");
     Cod2x_IwdLog("  fs_game:            ^9%s^7\n", game && *game ? game : "(empty)");
     Cod2x_IwdLog("  CoD2x version:      ^9%d^7\n", version);
-    /* Every name the server requires, quoted: these are what the files are matched against. */
-    for (;;) {
-        while (*p && isspace((unsigned char)*p))
-            ++p;
-        if (!*p)
-            break;
-        ++count;
-        while (*p && !isspace((unsigned char)*p))
-            ++p;
-    }
     Cod2x_IwdLog("  Required by server: ^9%d file(s)^7\n", count);
-    for (p = names ? names : ""; *p;) {
-        const char *start;
-        while (*p && isspace((unsigned char)*p))
-            ++p;
-        start = p;
-        while (*p && !isspace((unsigned char)*p))
-            ++p;
-        if (p > start)
-            Cod2x_IwdLog("    ^9\"%.*s\"^7\n", (int)(p - start), start);
-    }
+    for (int i = 0; i < count; ++i)
+        Cod2x_IwdLog("    ^9\"%s\"^7\n", required[i]);
 }
 
 void Cod2x_IwdLogFile(const char *directory, const char *file, int reason)
@@ -1025,8 +1006,10 @@ static void Cod2x_UpdateFrame(int state)
    download asks the game server as usual; a cancelled one may be tried again. */
 #define COD2X_ZPAM_URL "https://cod2x.me/zpam"
 
-static char zpamTried[64][64], zpamRemote[64];
-static int zpamTriedCount, zpamActive;
+static char **zpamTried;
+static const char *zpamRemote = "";
+static size_t zpamTriedCount;
+static int zpamActive;
 
 static int Cod2x_ZpamVersion(const char *name, const char *prefix)
 {
@@ -1041,8 +1024,8 @@ static int Cod2x_ZpamVersion(const char *name, const char *prefix)
 
 int Cod2x_ZpamDirectURL(const char *remoteName, int wwwDownload, char *url, size_t size)
 {
-    char address[256], stand[256];
-    int i;
+    char address[1024], stand[1024];
+    size_t i;
     zpamActive = 0;
     if (!wwwDownload || !remoteName || strncasecmp(remoteName, "main/", 5) ||
         (Cod2x_ZpamVersion(remoteName + 5, "zpam") < 0 && Cod2x_ZpamVersion(remoteName + 5, "zpam_maps_v") < 0))
@@ -1050,10 +1033,12 @@ int Cod2x_ZpamDirectURL(const char *remoteName, int wwwDownload, char *url, size
     for (i = 0; i < zpamTriedCount; ++i)
         if (!strcmp(zpamTried[i], remoteName))
             return 0;
-    if (zpamTriedCount == (int)(sizeof(zpamTried) / sizeof(zpamTried[0])))
-        return 0;
-    snprintf(zpamTried[zpamTriedCount++], sizeof(zpamTried[0]), "%s", remoteName);
-    snprintf(zpamRemote, sizeof(zpamRemote), "%s", remoteName);
+    char *name = strdup(remoteName);
+    char **grown = name ? realloc(zpamTried, (zpamTriedCount + 1) * sizeof(*grown)) : NULL;
+    if (!grown) { free(name); return 0; }
+    zpamTried = grown;
+    zpamTried[zpamTriedCount++] = name;
+    zpamRemote = name;
     snprintf(address, sizeof(address), "%s/%s", COD2X_ZPAM_URL, remoteName);
     snprintf(url, size, "%s", Cod2x_ServiceURL(address, stand, sizeof(stand)));
     zpamActive = 1;
@@ -1073,9 +1058,10 @@ const char *Cod2x_ZpamDirectRemote(void)
 /* The direct download ended; a cancelled one is not counted as tried. */
 void Cod2x_ZpamDirectEnd(int cancelled)
 {
-    if (zpamActive && cancelled && zpamTriedCount > 0)
-        --zpamTriedCount;
+    if (zpamActive && cancelled && zpamTriedCount > 0) {
+        free(zpamTried[--zpamTriedCount]);
+        zpamRemote = "";
+    }
     zpamActive = 0;
 }
 #endif
-
