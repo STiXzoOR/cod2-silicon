@@ -257,15 +257,19 @@ static void R_DumpCommandListForMenu(const GfxCmdArray *cl)
     }
 }
 
+static void R_ResetCmdArray(GfxCmdArray *cl)
+{
+    if (!cl) return;
+    cl->usedTotal = cl->usedCritical = 0;
+    cl->lastCmd = NULL;
+#if defined(COD2_X64)
+    cl->logicalUsedTotal = cl->logicalUsedCritical = 0;
+#endif
+}
+
 static void R_ResetCmdListState(void)
 {
-    if (s_cmdList == NULL) {
-        return;
-    }
-
-    s_cmdList->usedTotal = 0;
-    s_cmdList->usedCritical = 0;
-    s_cmdList->lastCmd = NULL;
+    R_ResetCmdArray(s_cmdList);
 }
 
 static inline __attribute__((always_inline)) Bool R_ClearModifiedDvar(const dvar_t *dvar)
@@ -285,6 +289,9 @@ static inline __attribute__((always_inline)) void R_ResetFrameBackendData(void)
     R_ResetCmdListState();
     frontEndDataOut->drawSurfCount = 0;
     frontEndDataOut->surfPos = 0;
+#if defined(COD2_X64)
+    frontEndDataOut->logicalSurfPos = 0;
+#endif
     frontEndDataOut->entityCount = 0;
     frontEndDataOut->polyCount = 0;
     frontEndDataOut->polyVertCount = 0;
@@ -306,8 +313,51 @@ static inline __attribute__((always_inline)) void R_SelectSkinnedCacheForFrame(D
     frontEndDataOut->skinnedCacheVb->used = 0;
 }
 
+#if defined(COD2_X64)
+static int R_OriginalCmdSize(int bytes, unsigned short id)
+{
+    static const unsigned char fixed[] = {
+        4, 8, 8, 4, 20, 76, 0, 0, 0, 72, 4, 28, 48, 20, 8, 44,
+        48, 40, 44, 36, 28, 0, 0, 20, 8, 4, 8, 8, 4, 12, 0, 0, 0, 4
+    };
+    /* Text requests arrive aligned to 4, before native allocation rounds to8. */
+    if (id == 0x15) return bytes - 8;
+    if (id == 0x16) return bytes - 4;
+    return id < sizeof(fixed) && fixed[id] ? fixed[id] : bytes;
+}
+
+static void *R_AllocNativeCmd(int bytes, unsigned short id, int critical)
+{
+    GfxCmdArray *cl = s_cmdList;
+    if (bytes <= 0 || bytes > 65528) return NULL;
+    int logical = R_OriginalCmdSize(bytes, id);
+    bytes = (bytes + 7) & ~7;
+    int available = 196608 - cl->logicalUsedTotal;
+    if (!critical) available += cl->logicalUsedCritical - 8192;
+    if (logical > available || bytes > (int)sizeof(cl->cmds) - cl->usedTotal) {
+        cl->lastCmd = NULL;
+        return NULL;
+    }
+    GfxCmdHeader *cmd = (void *)(cl->cmds + cl->usedTotal);
+    cl->usedTotal += bytes;
+    cl->logicalUsedTotal += logical;
+    if (critical) {
+        cl->usedCritical += bytes;
+        cl->logicalUsedCritical += logical;
+    }
+    cl->lastCmd = cmd;
+    cmd->id = id;
+    cmd->byteCount = bytes;
+    return cmd;
+}
+#endif
+
 static inline __attribute__((always_inline)) GfxCmdCall *R_AllocDelayedCall(short id, int *marker)
 {
+#if defined(COD2_X64)
+    if (marker) *marker = s_cmdList->usedTotal;
+    return R_AllocNativeCmd(sizeof(GfxCmdCall), id, 1);
+#else
     GfxCmdArray *cl = s_cmdList;
     int used;
     GfxCmdCall *cmd;
@@ -329,16 +379,15 @@ static inline __attribute__((always_inline)) GfxCmdCall *R_AllocDelayedCall(shor
     cmd->header.id = id;
     cmd->header.byteCount = (unsigned short)sizeof(GfxCmdCall);
     return cmd;
+#endif
 }
 
 static inline __attribute__((always_inline)) void *R_AllocCmd(int byteCount, int criticalByteCount, unsigned short id)
 {
 #if defined(COD2_X64)
-    if (byteCount <= 0 || byteCount > 65528)
-        return NULL;
-    byteCount = (byteCount + 7) & ~7;
-#endif
-
+    (void)criticalByteCount;
+    return R_AllocNativeCmd(byteCount, id, 0);
+#else
     GfxCmdArray *cl = s_cmdList;
     int usedBytes;
     int availBytes;
@@ -360,16 +409,14 @@ static inline __attribute__((always_inline)) void *R_AllocCmd(int byteCount, int
     cmd->id = id;
     cmd->byteCount = byteCount;
     return cmd;
+#endif
 }
 
 static inline __attribute__((always_inline)) void *R_AllocCriticalCmd(int byteCount, unsigned short id)
 {
 #if defined(COD2_X64)
-    if (byteCount <= 0 || byteCount > 65528)
-        return NULL;
-    byteCount = (byteCount + 7) & ~7;
-#endif
-
+    return R_AllocNativeCmd(byteCount, id, 1);
+#else
     GfxCmdArray *cl = s_cmdList;
     int usedBytes;
     GfxCmdHeader *cmd;
@@ -387,6 +434,7 @@ static inline __attribute__((always_inline)) void *R_AllocCriticalCmd(int byteCo
     cmd->id = id;
     cmd->byteCount = byteCount;
     return cmd;
+#endif
 }
 
 void R_ShutdownBackendData(void)
@@ -488,9 +536,7 @@ void R_AbortRenderCommands(void)
 
     R_UnlockSkinnedCache();
     cl = &frontEndDataOut->commands;
-    cl->usedTotal = 0;
-    cl->usedCritical = 0;
-    cl->lastCmd = NULL;
+    R_ResetCmdArray(cl);
 
 #if !defined(COD2_X64)
     dx = (DxGlobals *)imp_dx;
@@ -605,9 +651,7 @@ void R_InitBackendData(void)
 
     if (frontEndDataOut != NULL) {
         GfxCmdArray *cl = &frontEndDataOut->commands;
-        cl->usedTotal = 0;
-        cl->usedCritical = 0;
-        cl->lastCmd = NULL;
+        R_ResetCmdArray(cl);
         return;
     }
 
@@ -652,9 +696,7 @@ static void R_EndFrame_impl(void)
 
     cl = &frontEndDataOut->commands;
     R_DumpCommandListForMenu(cl);
-    cl->usedTotal = 0;
-    cl->usedCritical = 0;
-    cl->lastCmd = NULL;
+    R_ResetCmdArray(cl);
 
     RB_ExecuteRenderCommands(frontEndDataOut);
     RB_EndFrame();
@@ -1102,9 +1144,7 @@ void R_EndDebugFrame(void)
     R_AllocCriticalCmd(4, 0);
 
     cl = &frontEndDataOut->commands;
-    cl->usedTotal = 0;
-    cl->usedCritical = 0;
-    cl->lastCmd = NULL;
+    R_ResetCmdArray(cl);
 
     RB_ExecuteRenderCommands(frontEndDataOut);
     RB_EndFrame();

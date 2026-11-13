@@ -4308,7 +4308,13 @@ struct GfxCellWritable {
 };
 
 struct GfxCmdArray {
+#if defined(COD2_X64)
+    byte cmds[393216];
+    int logicalUsedTotal;
+    int logicalUsedCritical;
+#else
     byte cmds[196608];
+#endif
     int usedTotal;
     int usedCritical;
     GfxCmdHeader *lastCmd;
@@ -9738,7 +9744,12 @@ struct GfxBackEndData {
     int drawSurfCount;
     GfxDrawSurf drawSurfs[65536];
     int surfPos;
+#if defined(COD2_X64)
+    int logicalSurfPos;
+    byte surfsBuffer[262144];
+#else
     byte surfsBuffer[131072];
+#endif
     int entityCount;
     GfxEntity entities[8184];
     int polyCount;
