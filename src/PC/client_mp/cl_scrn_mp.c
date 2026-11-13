@@ -584,6 +584,10 @@ void SCR_UpdateScreenInternal(void)
 extern int g_cginit_loading;
 void SCR_UpdateScreen(void)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (g_cginit_loading)
+        Sys_LoadingKeepAlive();
+#endif
     if (g_cginit_loading || updateScreenCalled)
         return;
 

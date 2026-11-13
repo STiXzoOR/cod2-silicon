@@ -26,6 +26,7 @@
 #include <execinfo.h>
 #include <pthread.h>
 #include <sched.h>
+#include <signal.h>
 #include <unistd.h>
 #endif
 
@@ -380,11 +381,22 @@ static void Cod2x_Sleep(int milliseconds)
 #endif
 }
 
+static unsigned long long Cod2x_ReportTicks(void)
+{
+#if defined(_WIN32)
+    return GetTickCount64();
+#else
+    struct timespec ticks;
+    clock_gettime(CLOCK_MONOTONIC, &ticks);
+    return (unsigned long long)ticks.tv_sec * 1000 + (unsigned long long)ticks.tv_nsec / 1000000;
+#endif
+}
+
 /* Sends on its own thread and waits at most wait ms (0: does not wait). */
 static void Cod2x_PostStart(char *json, int timeout, int wait, Cod2xDelivery *delivered)
 {
     Cod2xPost *post = (Cod2xPost *)calloc(1, sizeof(*post));
-    int waited = 0;
+    unsigned long long deadline;
 #if !defined(_WIN32)
     pthread_t thread;
     pthread_attr_t attributes;
@@ -422,10 +434,9 @@ static void Cod2x_PostStart(char *json, int timeout, int wait, Cod2xDelivery *de
     }
     pthread_attr_destroy(&attributes);
 #endif
-    while (waited < wait && !post->finished) {
+    deadline = Cod2x_ReportTicks() + (wait > 0 ? (unsigned)wait : 0);
+    while (Cod2x_ReportTicks() < deadline && !__atomic_load_n(&post->finished, __ATOMIC_ACQUIRE))
         Cod2x_Sleep(10);
-        waited += 10;
-    }
     if (__sync_lock_test_and_set(&post->finished, 1))
         free(post);
 }
@@ -441,7 +452,7 @@ static void Cod2x_ReportPost(char *json, int timeout, int wait, Cod2xDelivery *d
 void Cod2x_ReportCrash(const char *json, const char *pending, int timeout, int wait, Cod2xCrashSent sent)
 {
     Cod2xPost *post;
-    int waited = 0;
+    unsigned long long deadline;
     if (!Cod2x_ReportConsent())
         return;
     post = (Cod2xPost *)calloc(1, sizeof(*post));
@@ -477,10 +488,9 @@ void Cod2x_ReportCrash(const char *json, const char *pending, int timeout, int w
         pthread_detach(thread);
     }
 #endif
-    while (waited < wait && !post->finished) {
+    deadline = Cod2x_ReportTicks() + (wait > 0 ? (unsigned)wait : 0);
+    while (Cod2x_ReportTicks() < deadline && !__atomic_load_n(&post->finished, __ATOMIC_ACQUIRE))
         Cod2x_Sleep(10);
-        waited += 10;
-    }
     if (__sync_lock_test_and_set(&post->finished, 1))
         free(post);
 }
@@ -639,6 +649,7 @@ int Cod2x_GetStart(Cod2xGet *get, int timeout)
 static char consoleMirror[COD2X_CONSOLE_MIRROR];
 static size_t consoleMirrorLength;
 static volatile long consoleMirrorSequence;
+static volatile int consoleMirrorWriter;
 
 /* Keeps the newest 64 KB; a reader sees an even sequence when no write is under way. */
 void Cod2x_ConsoleMirror(const char *text, size_t length)
@@ -646,6 +657,13 @@ void Cod2x_ConsoleMirror(const char *text, size_t length)
     size_t room;
     if (!text || !length)
         return;
+    while (__sync_lock_test_and_set(&consoleMirrorWriter, 1)) {
+#if defined(_WIN32)
+        YieldProcessor();
+#else
+        sched_yield();
+#endif
+    }
     __sync_fetch_and_add(&consoleMirrorSequence, 1);
     if (length >= COD2X_CONSOLE_MIRROR - 1) {
         text += length - (COD2X_CONSOLE_MIRROR - 1);
@@ -666,6 +684,31 @@ void Cod2x_ConsoleMirror(const char *text, size_t length)
     consoleMirrorLength += length;
     consoleMirror[consoleMirrorLength] = '\0';
     __sync_fetch_and_add(&consoleMirrorSequence, 1);
+    __sync_lock_release(&consoleMirrorWriter);
+}
+
+/* Non-main-thread prints must not wait on the console window. */
+void Cod2x_ConsoleMirrorText(const char *message)
+{
+    char chunk[512];
+    size_t used = 0;
+    for (; message && *message; ++message) {
+        if (used + 2 >= sizeof(chunk)) {
+            Cod2x_ConsoleMirror(chunk, used);
+            used = 0;
+        }
+        if (*message == '\n' && message[1] == '\r') {
+            chunk[used++] = '\r'; chunk[used++] = '\n';
+            ++message;
+        } else if (*message == '\n' || *message == '\r') {
+            chunk[used++] = '\r'; chunk[used++] = '\n';
+        } else if (message[0] == '^' && message[1] && message[1] != '^') {
+            ++message;
+        } else {
+            chunk[used++] = *message;
+        }
+    }
+    Cod2x_ConsoleMirror(chunk, used);
 }
 
 /* The kept console text, or "(no logs)" when there is none or it could not be read. */
@@ -675,17 +718,31 @@ size_t Cod2x_ConsoleLogs(char *out, size_t size)
     if (!out || size < 2)
         return 0;
     for (tries = 0; tries < 8; ++tries) {
-        long before = consoleMirrorSequence;
-        size_t length;
+        long before = __atomic_load_n(&consoleMirrorSequence, __ATOMIC_ACQUIRE);
+        size_t length, kept, offset;
         if (before & 1)
             continue;
         __sync_synchronize();
-        length = consoleMirrorLength < size - 1 ? consoleMirrorLength : size - 1;
-        memcpy(out, consoleMirror + consoleMirrorLength - length, length);
+        kept = consoleMirrorLength;
+        length = kept < size - 1 ? kept : size - 1;
+        offset = kept - length;
+        memcpy(out, consoleMirror + offset, length);
         out[length] = '\0';
         __sync_synchronize();
-        if (consoleMirrorSequence == before && length)
-            return length;
+        if (__atomic_load_n(&consoleMirrorSequence, __ATOMIC_ACQUIRE) == before) {
+            if (offset) {
+                char *newline = memchr(out, '\n', length);
+                if (newline) {
+                    size_t skip = (size_t)(newline - out) + 1;
+                    length -= skip;
+                    memmove(out, out + skip, length);
+                    out[length] = '\0';
+                }
+            }
+            if (length)
+                return length;
+            break;
+        }
     }
     return (size_t)snprintf(out, size, "(no logs)\r\n");
 }
@@ -762,8 +819,16 @@ static char *Cod2x_ErrorJson(const char *kind, const char *message, const char *
     return text.text;
 }
 
+#if defined(EXCEPTION_TEST) && EXCEPTION_TEST && !defined(_WIN32)
+static int exceptionTestMode;
+#endif
+
 int Cod2x_ReportConsent(void)
 {
+#if defined(EXCEPTION_TEST) && EXCEPTION_TEST && !defined(_WIN32)
+    if (exceptionTestMode > 0)
+        return 0;
+#endif
 #if defined(COD2X_REPORT_CONSENT_ENV)
     static int consent = -1;
     if (consent < 0) {
@@ -785,6 +850,9 @@ void Cod2x_ReportFatal(const char *message, const void *site)
         Sys_CrashReceive(NULL, message);
         return;
     }
+#if defined(DEBUG) && DEBUG && !(defined(ERROR_TEST) && ERROR_TEST)
+    return;
+#endif
     if (!Cod2x_ReportConsent())
         return;
     Cod2x_CallerStack(stack, sizeof(stack), 2);
@@ -796,6 +864,9 @@ void Cod2x_ReportFatal(const char *message, const void *site)
    one was not delivered. */
 void Cod2x_ReportError(const char *kind, const char *message)
 {
+#if defined(DEBUG) && DEBUG && !(defined(ERROR_TEST) && ERROR_TEST)
+    return;
+#endif
     typedef struct ReportHistory {
         char *message;
         unsigned long long sent;
@@ -862,6 +933,10 @@ static void Cod2x_ResendPending(const char *directory, const char *prefix, int m
         return;
     while ((entry = readdir(folder)) != NULL) {
         size_t length = strlen(entry->d_name);
+        /* The native client stores the two Windows report kinds under separate prefixes. */
+        if (!strcmp(prefix, "cod2x_") && strncmp(entry->d_name, "cod2x_crash.", 12) &&
+            strncmp(entry->d_name, "cod2x_freeze.", 13))
+            continue;
         if (length >= prefixLength + suffixLength && !strncmp(entry->d_name, prefix, prefixLength) &&
             !strcmp(entry->d_name + length - suffixLength, COD2X_PENDING_SUFFIX)) {
             if (count == capacity) {
@@ -950,6 +1025,48 @@ list_failed:
     free(names);
 }
 
+#if defined(__APPLE__) && !defined(DEDICATED)
+static void Cod2x_CleanupReports(const char *prefix)
+{
+    const char *directory = Sys_CrashDirectory();
+    DIR *folder = opendir(directory);
+    struct dirent *entry;
+    char **names = NULL;
+    size_t count = 0, prefixLength = strlen(prefix);
+    int complete = 1;
+    if (!folder)
+        return;
+    while ((entry = readdir(folder)) != NULL) {
+        size_t length = strlen(entry->d_name);
+        char path[1100];
+        struct stat info;
+        if (length < prefixLength + 4 || strncmp(entry->d_name, prefix, prefixLength) ||
+            strcmp(entry->d_name + length - 4, ".log"))
+            continue;
+        snprintf(path, sizeof(path), "%s/%s", directory, entry->d_name);
+        if (stat(path, &info) || !S_ISREG(info.st_mode))
+            continue;
+        char *name = strdup(entry->d_name);
+        char **grown = name ? realloc(names, (count + 1) * sizeof(*grown)) : NULL;
+        if (!grown) { free(name); complete = 0; break; }
+        names = grown;
+        names[count++] = name;
+    }
+    closedir(folder);
+    if (count > 1)
+        qsort(names, count, sizeof(*names), Cod2x_NameOrder);
+    for (size_t i = 0; i < count; ++i) {
+        if (complete && i + 20 < count) {
+            char path[1100];
+            snprintf(path, sizeof(path), "%s/%s", directory, names[i]);
+            remove(path);
+        }
+        free(names[i]);
+    }
+    free(names);
+}
+#endif
+
 #if defined(_WIN32)
 static DWORD WINAPI Cod2x_ResendThread(LPVOID unused)
 #else
@@ -977,11 +1094,85 @@ static void *Cod2x_ResendThread(void *unused)
     }
     return 0;
 #else
+#if defined(__APPLE__) && !defined(DEDICATED)
+    Cod2x_ResendPending(Sys_CrashDirectory(), "cod2x_", 1);
+#else
     Cod2x_ResendPending(Sys_CrashDirectory(), "cod2x_crash.", 0);
-    Cod2x_ResendPending(Sys_CrashDirectory(), "cod2x_freeze.", 0);
+#endif
     return NULL;
 #endif
 }
+
+#if defined(EXCEPTION_TEST) && EXCEPTION_TEST && !defined(_WIN32)
+static void Cod2x_ExceptionAlternateStack(void *memory, size_t size)
+{
+    stack_t stack = {0};
+    stack.ss_sp = memory;
+    stack.ss_size = size;
+    sigaltstack(&stack, NULL);
+}
+
+static void *Cod2x_ExceptionNullThread(void *unused)
+{
+    static char alternate[65536];
+    (void)unused;
+    Cod2x_ExceptionAlternateStack(alternate, sizeof(alternate));
+    *(volatile int *)(uintptr_t)0 = 0xdead;
+    return NULL;
+}
+
+static __attribute__((noinline)) void Cod2x_ExceptionRecurse(unsigned depth)
+{
+    volatile char frame[8192];
+    frame[0] = (char)depth;
+    frame[sizeof(frame) - 1] = (char)depth;
+    Cod2x_ExceptionRecurse(depth + 1);
+    (void)frame[0];
+}
+
+static void *Cod2x_ExceptionTestThread(void *unused)
+{
+    static char alternate[65536];
+    (void)unused;
+    Cod2x_ExceptionAlternateStack(alternate, sizeof(alternate));
+    Cod2x_Sleep(3000);
+    switch (exceptionTestMode) {
+    case 1: *(volatile int *)(uintptr_t)0 = 0xdead; break;
+    case 2: abort(); break;
+    /* ARM integer division does not trap. Deliver the diagnostic signal explicitly. */
+    case 3: raise(SIGFPE); break;
+    case 4: raise(SIGILL); break;
+    case 5: Cod2x_ExceptionRecurse(0); break;
+    case 6: {
+        pthread_t second;
+        if (pthread_create(&second, NULL, Cod2x_ExceptionNullThread, NULL) == 0)
+            pthread_join(second, NULL);
+        break;
+    }
+    default: Cod2x_Log("[EXCEPTION_TEST] unknown mode %d", exceptionTestMode); break;
+    }
+    return NULL;
+}
+
+static int Cod2x_ExceptionTestStart(void)
+{
+    const char *mode = getenv("COD2X_EXCEPTION_TEST");
+    char path[1100];
+    exceptionTestMode = mode ? atoi(mode) : 0;
+    snprintf(path, sizeof(path), "%s/cod2x_crash_test_init.log", Sys_CrashDirectory());
+    FILE *marker = fopen(path, "wb");
+    if (marker) {
+        fprintf(marker, "exception_init ran; mode=%d\n", exceptionTestMode);
+        fclose(marker);
+    }
+    if (exceptionTestMode <= 0)
+        return 0;
+    pthread_t worker;
+    if (pthread_create(&worker, NULL, Cod2x_ExceptionTestThread, NULL) == 0)
+        pthread_detach(worker);
+    return 1;
+}
+#endif
 
 void Cod2x_ReportInit(void)
 {
@@ -992,6 +1183,22 @@ void Cod2x_ReportInit(void)
     if (started)
         return;
     started = 1;
+#if defined(__APPLE__) && !defined(DEDICATED)
+    {
+        extern void Sys_CrashSetDirectory(const char *path);
+        char home[1024];
+        if (Cod2x_DvarText("fs_homepath", home, sizeof(home)) && home[0])
+            Sys_CrashSetDirectory(home);
+    }
+#endif
+#if defined(EXCEPTION_TEST) && EXCEPTION_TEST && !defined(_WIN32)
+    if (Cod2x_ExceptionTestStart())
+        return;
+#endif
+#if defined(__APPLE__) && !defined(DEDICATED)
+    Cod2x_CleanupReports("cod2x_crash.");
+    Cod2x_CleanupReports("cod2x_freeze.");
+#endif
     /* Read now, not from a signal handler. */
     Cod2x_ReportConsent();
     curl_global_init(CURL_GLOBAL_DEFAULT);

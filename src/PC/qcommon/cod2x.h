@@ -106,6 +106,7 @@ typedef struct {
 } Cod2xGet;
 int Cod2x_GetStart(Cod2xGet *get, int timeout);
 void Cod2x_ConsoleMirror(const char *text, size_t length);
+void Cod2x_ConsoleMirrorText(const char *message);
 size_t Cod2x_ConsoleLogs(char *out, size_t size);
 /* JSON text that grows as it is written. */
 typedef struct {

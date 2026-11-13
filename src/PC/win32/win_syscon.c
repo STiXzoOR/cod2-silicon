@@ -282,7 +282,11 @@ char *Sys_ConsoleInput(void)
 
 void Conbuf_AppendText(const char *pMsg)
 {
+#    if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    static char buffer[CONSOLE_BUFFER_SIZE * 2];
+#    else
     char buffer[CONSOLE_BUFFER_SIZE * 2];
+#    endif
     char *b = buffer;
     const char *msg;
     int bufLen;
@@ -292,6 +296,14 @@ void Conbuf_AppendText(const char *pMsg)
         return;
 
 #    if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        extern int Sys_IsMainThread(void);
+        extern void Cod2x_ConsoleMirrorText(const char *message);
+        if (!Sys_IsMainThread()) {
+            Cod2x_ConsoleMirrorText(pMsg);
+            return;
+        }
+    }
     /* A very long message keeps its end. */
     if (strlen(pMsg) > CONSOLE_BUFFER_SIZE - 1)
         pMsg += strlen(pMsg) - CONSOLE_BUFFER_SIZE + 1;
