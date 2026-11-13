@@ -728,22 +728,15 @@ void Cod2x_HttpFrameFor(Cod2xHttpDone done)
 
 void Cod2x_HttpCancelFor(Cod2xHttpDone done)
 {
-    int pending;
-    /* Keep callbacks on this thread, after all selected transports are closed.
-       Jobs owned by another service continue normally. */
-    do {
-        pending = 0;
-        Cod2x_Lock();
-        for (HttpJob *job = http_active; job; job = job->next) {
-            if (job->done == done) {
-                job->cancel = 1;
-                pending = 1;
-            }
-        }
-        Cod2x_Unlock();
-        if (pending)
-            Cod2x_Sleep(1);
-    } while (pending);
+    /* The worker observes this before its next transfer poll (at most 20 ms).
+       Do not join here: curl cleanup may wait for an OS resolver thread even
+       after cancelling its transfer. Its response remains owned until the
+       worker finishes, and normal main-thread delivery frees the context. */
+    Cod2x_Lock();
+    for (HttpJob *job = http_active; job; job = job->next)
+        if (job->done == done)
+            job->cancel = 1;
+    Cod2x_Unlock();
     Http_Deliver(done);
 }
 

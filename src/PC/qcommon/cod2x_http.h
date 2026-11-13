@@ -57,8 +57,9 @@ int Cod2x_HttpStart(const Cod2xHttpRequest *request, Cod2xHttpDone done, void *c
 void Cod2x_HttpFrame(void);
 /* The same for the requests started with done only (e.g. while shutting down). */
 void Cod2x_HttpFrameFor(Cod2xHttpDone done);
-/* Main thread: closes pending transports owned by done, then delivers their
-   completion/error callbacks. Other services' requests are unaffected. */
+/* Main thread: cancels pending transports owned by done. Workers stop at their
+   next poll; completions still arrive through Frame/FrameFor. This does not
+   wait for OS resolver cleanup. Other services' requests are unaffected. */
 void Cod2x_HttpCancelFor(Cod2xHttpDone done);
 /* Waits msec milliseconds. */
 void Cod2x_Sleep(int msec);
