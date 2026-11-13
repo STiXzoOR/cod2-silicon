@@ -36,16 +36,42 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 - Original 1.3 no longer starts CoD2x's freeze watcher or handles CoD2x links.
   Native CoD2x keeps PunkBuster off and explains that its provider is unavailable.
 
+- CoD2x now announces revision 7 and implements its extra player information,
+  spectator and demo x-ray, occluded outlines and glow, health fills, head names
+  and weapon icons, with the upstream controls. Revision checks accept this
+  client on both current revision-7 and released revision-6 servers. The native
+  client has joined our revision-6 server; final revision-7 health and demo
+  captures remain pending verification.
+- Automatic demo recording follows name changes, playback and disconnects at
+  the right time. Upload markers, retry and quit behavior, filenames and the
+  displayed transfer speed now follow upstream. vMix keeps long camera/API
+  names and cancels pending requests when disconnecting.
+- CoD2x stance transitions retain their state and use the correct changing
+  blend duration. Movement on older servers and third-person camera arithmetic
+  follow upstream; competitive requests apply at the correct lifecycle points.
+- Asian console text wraps at the same boundary as upstream. Chat uses its
+  intended fading background, and hidden-IP text uses the upstream length limit.
+- CoD2x file selection handles quoted required files and active-profile configs.
+  Original 1.3 ignores shared CoD2x menu archives without deleting them.
+- Mod HTTP and WebSocket receive limits, response parsing and shutdown callbacks
+  follow upstream more closely. zPAM manifests and download history retain long
+  lists, and downloads enforce the expected status, length and transfer format.
+- CoD2x reports retain console text, apply the upstream retry and retention rules,
+  and limit freeze reports to three per run. Loading refreshes the freeze
+  heartbeat, and fatal reporting uses a real three-second wait deadline.
+
 ### Known CoD2x limitations
 
-- Complete upstream revision 7 support remains unfinished. The client still
-  announces revision 6 and cannot join servers requiring 7. Spectator x-ray,
-  head labels and health display are not implemented; server player information
-  has been added in preparation. The [compatibility matrix](docs/macos-port/cod2x-compat.md)
-  records the remaining animation, file-selection and service differences.
-- An imported CoD2x menu archive already in a shared game-data folder can still
-  appear in Original 1.3. Stock asset filtering needs a separate filesystem fix.
-  PunkBuster protection is unavailable in both engines.
+- Running-game checks for the revision-7 spectator/demo display and the other
+  parity changes above are still pending, including unchanged Original 1.3
+  replay views and revision-7 client play. The
+  [compatibility matrix](docs/macos-port/cod2x-compat.md) distinguishes completed
+  source, fixture and GPU checks from these remaining checks.
+- The experimental native Metal renderer lacks the CoD2x film and x-ray passes;
+  the shipped OpenGL renderer implements them. The CoD2x filesystem still caps
+  directory lists at 1024 archives before filtering. Input, focus and audio
+  hardware checks remain with their platform owners. PunkBuster protection is
+  unavailable in both engines.
 
 ### Added
 
@@ -78,8 +104,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   the official CoD2x 1.4.6.8 release from the CoD2x project's GitHub page,
   checks it, and keeps only those files on this Mac; or copies them from a
   Windows game folder that has CoD2x installed. The launcher manages them for
-  CoD2x games; pre-existing shared-folder archives have the isolation limitation
-  noted above. Your game folder is never changed by engine archive setup.
+  CoD2x games; Original 1.3 ignores matching archives in a shared game folder.
+  Your game folder is never changed by engine archive setup.
 - Install updates from the launcher. When a newer release is found, **Install
   Update** downloads it, checks it against the release's checksum and
   signature, replaces the app and restarts it. Nothing installs without that
