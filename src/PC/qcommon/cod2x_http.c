@@ -1,6 +1,8 @@
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "cod2x_http.h"
+#include "cod2x_http_parse.h"
 #include <ctype.h>
+#include <limits.h>
 #include <time.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -18,6 +20,7 @@
 #include <pthread.h>
 #include <sys/file.h>
 #include <sys/select.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #endif
 
@@ -313,17 +316,14 @@ void Cod2x_HttpInit(void)
 
 typedef struct HttpBuffer {
     char *data;
-    size_t length, capacity, limit, receiveLimit;
-    struct HttpBuffer *other;
+    size_t length, capacity, limit;
     int tooLarge;
 } HttpBuffer;
 
 static int Http_Append(HttpBuffer *buffer, const char *data, size_t length)
 {
-    size_t resident = buffer->length + (buffer->other ? buffer->other->length : 0);
     if (length > SIZE_MAX - buffer->length - 1 ||
-        (buffer->limit && length > buffer->limit - buffer->length) ||
-        (buffer->receiveLimit && (resident > buffer->receiveLimit || length > buffer->receiveLimit - resident))) {
+        (buffer->limit && length > buffer->limit - buffer->length)) {
         buffer->tooLarge = 1;
         return 0;
     }
@@ -508,8 +508,12 @@ static CURLcode Http_Transfer(CURL *curl, const int *cancel)
     return result;
 }
 
+static int Http_PerformBounded(const Cod2xHttpRequest *request, Cod2xHttpResponse *response, const int *cancel);
+
 static int Http_Perform(const Cod2xHttpRequest *request, Cod2xHttpResponse *response, const int *cancel)
 {
+    if (request->maxReceive)
+        return Http_PerformBounded(request, response, cancel);
     HttpBuffer body = {0}, headers = {0};
     struct curl_slist *list;
     const char *method = request->method ? request->method : "GET";
@@ -530,9 +534,6 @@ static int Http_Perform(const Cod2xHttpRequest *request, Cod2xHttpResponse *resp
         return 0;
     }
     body.limit = request->maxBody;
-    body.receiveLimit = headers.receiveLimit = request->maxReceive;
-    body.other = &headers;
-    headers.other = &body;
     list = Http_HeaderList(request->headers, hasBody);
     /* CoD2x states the body length on every request, also an empty one. */
     if (!hasBody) {
@@ -788,6 +789,7 @@ void Cod2x_Sleep(int msec)
 
 struct Cod2xSocket {
     CURL *curl;
+    CURLM *multi;
     curl_socket_t socket;
 };
 
@@ -890,8 +892,267 @@ void Cod2x_SocketClose(Cod2xSocket *connection)
 {
     if (!connection)
         return;
+    if (connection->multi && connection->curl)
+        curl_multi_remove_handle(connection->multi, connection->curl);
     curl_easy_cleanup(connection->curl);
+    if (connection->multi)
+        curl_multi_cleanup(connection->multi);
     free(connection);
+}
+
+/* ---- bounded script responses -------------------------------------------- */
+
+static long long Http_MonotonicMsec(void)
+{
+#ifdef _WIN32
+    return (long long)GetTickCount64();
+#else
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (long long)now.tv_sec * 1000 + now.tv_nsec / 1000000;
+#endif
+}
+
+static int Http_Cancelled(const int *cancel)
+{
+    int stop = 0;
+    if (cancel) {
+        Cod2x_Lock();
+        stop = *cancel;
+        Cod2x_Unlock();
+    }
+    return stop;
+}
+
+static int Http_ConnectSocket(void *context, curl_socket_t socket, curlsocktype purpose)
+{
+    Cod2xSocket *connection = context;
+    if (purpose == CURLSOCKTYPE_IPCXN) connection->socket = socket;
+    return CURL_SOCKOPT_OK;
+}
+
+static int Http_TcpConnected(Cod2xSocket *connection)
+{
+    unsigned char peer[128];
+#ifdef _WIN32
+    int length = sizeof(peer);
+#else
+    socklen_t length = sizeof(peer);
+#endif
+    return connection->socket != CURL_SOCKET_BAD &&
+           getpeername(connection->socket, (struct sockaddr *)peer, &length) == 0;
+}
+
+/* Retain the multi handle for the life of a CONNECT_ONLY connection. Removing
+   its easy handle before send/recv would discard the connection on some curl
+   versions. Polling also lets a map shutdown cancel DNS/connect/TLS work. */
+static Cod2xSocket *Http_OpenBounded(const Cod2xHttpRequest *request, const int *cancel,
+                                      char *error, size_t errorSize)
+{
+    Cod2xSocket *connection = calloc(1, sizeof(*connection));
+    CURLcode result = CURLE_FAILED_INIT;
+    int running, connected = 0;
+    long long started = Http_MonotonicMsec();
+    if (!connection) goto failed;
+    connection->socket = CURL_SOCKET_BAD;
+    connection->curl = curl_easy_init();
+    connection->multi = curl_multi_init();
+    if (!connection->curl || !connection->multi) goto failed;
+    Http_Common(connection->curl);
+    curl_easy_setopt(connection->curl, CURLOPT_URL, request->url);
+    curl_easy_setopt(connection->curl, CURLOPT_PROXY, "");
+    curl_easy_setopt(connection->curl, CURLOPT_CONNECT_ONLY, 1L);
+    curl_easy_setopt(connection->curl, CURLOPT_SOCKOPTFUNCTION, Http_ConnectSocket);
+    curl_easy_setopt(connection->curl, CURLOPT_SOCKOPTDATA, connection);
+    curl_easy_setopt(connection->curl, CURLOPT_TIMEOUT_MS,
+                     (long)(request->timeoutMs > 0 ? request->timeoutMs : 0));
+    /* curl includes TLS in its connect timer and interprets zero as 300s.
+       CoD2x stops this timer at TCP connect and zero disables it entirely. */
+    curl_easy_setopt(connection->curl, CURLOPT_CONNECTTIMEOUT_MS, LONG_MAX);
+    if (curl_multi_add_handle(connection->multi, connection->curl) != CURLM_OK) goto failed;
+    for (;;) {
+        CURLMsg *message;
+        int remaining;
+        if (Http_Cancelled(cancel)) {
+            result = CURLE_ABORTED_BY_CALLBACK;
+            break;
+        }
+        if (!connected) connected = Http_TcpConnected(connection);
+        if (!connected && request->connectTimeoutMs > 0 &&
+            Http_MonotonicMsec() - started >= request->connectTimeoutMs) {
+            result = CURLE_OPERATION_TIMEDOUT;
+            break;
+        }
+        if (curl_multi_perform(connection->multi, &running) != CURLM_OK) break;
+        if (!running) {
+            while ((message = curl_multi_info_read(connection->multi, &remaining)) != NULL)
+                if (message->msg == CURLMSG_DONE) result = message->data.result;
+            break;
+        }
+        if (curl_multi_poll(connection->multi, NULL, 0, 20, NULL) != CURLM_OK) break;
+    }
+    if (result == CURLE_OK &&
+        curl_easy_getinfo(connection->curl, CURLINFO_ACTIVESOCKET, &connection->socket) == CURLE_OK &&
+        connection->socket != CURL_SOCKET_BAD)
+        return connection;
+    if (result == CURLE_OK) result = CURLE_COULDNT_CONNECT;
+failed:
+    if (connection && connection->curl) {
+        if (result == CURLE_ABORTED_BY_CALLBACK)
+            snprintf(error, errorSize, "Connection closed unexpectedly");
+        else if (result == CURLE_OPERATION_TIMEDOUT)
+            snprintf(error, errorSize, "%s",
+                     !connected && request->connectTimeoutMs > 0 &&
+                     (request->timeoutMs <= 0 || request->connectTimeoutMs <= request->timeoutMs)
+                         ? "Connection timeout" : "Timeout");
+        else
+            Http_Error(connection->curl, request, result, error, errorSize);
+    } else {
+        snprintf(error, errorSize, "Out of memory");
+    }
+    Cod2x_SocketClose(connection);
+    return NULL;
+}
+
+/* Host excludes credentials and port; the request target keeps the URL's
+   literal slash suffix, including a fragment, as the CoD2x client sends it. */
+static char *Http_RequestBytes(const Cod2xHttpRequest *request, size_t *length)
+{
+    const char *host = strstr(request->url, "://") + 3;
+    const char *uri = strchr(host, '/'), *end = uri ? uri : host + strlen(host);
+    const char *method = request->method ? request->method : "GET";
+    const char *headers = request->headers ? request->headers : "";
+    char *wire;
+    size_t capacity;
+    int count;
+    for (const char *p = host; p < end; ++p)
+        if (*p == '@') host = p + 1;
+    for (const char *p = host; p < end; ++p) {
+        if (*p == '[') {
+            while (p < end && *p != ']') ++p;
+            if (p == end) break;
+        } else if (*p == ':') {
+            end = p;
+            break;
+        }
+    }
+    if (!uri) uri = "/";
+    capacity = strlen(method) + strlen(uri) + (size_t)(end - host) + strlen(headers) + 128;
+    if (request->bodyLength > SIZE_MAX - capacity) return NULL;
+    capacity += request->bodyLength;
+    wire = malloc(capacity);
+    if (!wire) return NULL;
+    count = snprintf(wire, capacity, "%s %s HTTP/1.1\r\nHost: %.*s\r\n%s%sContent-Length: %zu\r\n\r\n",
+                     method, uri, (int)(end - host), host, headers, *headers ? "\r\n" : "",
+                     request->bodyLength);
+    if (count < 0 || (size_t)count >= capacity) {
+        free(wire);
+        return NULL;
+    }
+    if (request->bodyLength) memcpy(wire + count, request->body, request->bodyLength);
+    *length = (size_t)count + request->bodyLength;
+    return wire;
+}
+
+static int Http_PerformBounded(const Cod2xHttpRequest *request, Cod2xHttpResponse *response, const int *cancel)
+{
+    Cod2xSocket *connection = NULL;
+    HttpBuffer received = {0};
+    Cod2xHttpParsed parsed;
+    char *wire = NULL;
+    const char *error = NULL;
+    size_t wireLength = 0, sent = 0;
+    long long started = Http_MonotonicMsec();
+    int closed = 0, success = 0;
+    memset(response, 0, sizeof(*response));
+    if (!Cod2x_HttpValidUrl(request->url)) {
+        error = "Invalid URL";
+        goto finish;
+    }
+    wire = Http_RequestBytes(request, &wireLength);
+    if (!wire) {
+        error = "Out of memory";
+        goto finish;
+    }
+    connection = Http_OpenBounded(request, cancel, response->error, sizeof(response->error));
+    if (!connection) goto finish;
+    received.limit = request->maxReceive;
+    while (!success) {
+        int parsedResult;
+        if (Http_Cancelled(cancel)) {
+            error = "Connection closed unexpectedly";
+            break;
+        }
+        if (request->timeoutMs > 0 && Http_MonotonicMsec() - started >= request->timeoutMs) {
+            error = "Timeout";
+            break;
+        }
+        if (sent < wireLength) {
+            size_t count = 0;
+            CURLcode code = curl_easy_send(connection->curl, wire + sent, wireLength - sent, &count);
+            if (code != CURLE_OK && code != CURLE_AGAIN) {
+                error = "Connection closed unexpectedly";
+                break;
+            }
+            sent += count;
+            if (code == CURLE_AGAIN) Http_Wait(connection->socket, 1, 10);
+        }
+        parsedResult = Cod2x_HttpParse(received.data, received.length, closed, &parsed, &error);
+        if (parsedResult < 0) break;
+        if (parsedResult > 0) {
+            if (request->maxBody && parsed.bodyLength > request->maxBody) {
+                error = "Response too large";
+                break;
+            }
+            response->headers = malloc(parsed.headerLength + 1);
+            response->body = malloc(parsed.bodyLength + 1);
+            if (!response->headers || !response->body) {
+                error = "Out of memory";
+                break;
+            }
+            memcpy(response->headers, received.data, parsed.headerLength);
+            response->headers[parsed.headerLength] = '\0';
+            memcpy(response->body, received.data + parsed.headerLength, parsed.bodyLength);
+            response->body[parsed.bodyLength] = '\0';
+            response->length = parsed.bodyLength;
+            response->status = parsed.status;
+            success = 1;
+        } else {
+            char buffer[16384];
+            size_t room = request->maxReceive - received.length;
+            int count;
+            if (closed) break;
+            if (!room) {
+                error = "Response too large";
+                break;
+            }
+            if (room > sizeof(buffer)) room = sizeof(buffer);
+            count = Cod2x_SocketRecv(connection, buffer, room, 10);
+            if (count > 0) {
+                if (!Http_Append(&received, buffer, (size_t)count)) {
+                    error = received.tooLarge ? "Response too large" : "Out of memory";
+                    break;
+                }
+            } else if (count < 0) {
+                closed = 1;
+            }
+        }
+    }
+finish:
+    Cod2x_SocketClose(connection);
+    free(wire);
+    free(received.data);
+    if (!success) {
+        if (error) snprintf(response->error, sizeof(response->error), "%s", error);
+        free(response->body);
+        free(response->headers);
+        response->body = response->headers = NULL;
+        response->status = 0;
+        response->length = 0;
+    }
+    if (!response->body) response->body = calloc(1, 1);
+    if (!response->headers) response->headers = calloc(1, 1);
+    return success;
 }
 
 /* ---- file downloads ------------------------------------------------------- */

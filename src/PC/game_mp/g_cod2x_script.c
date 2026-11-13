@@ -117,15 +117,15 @@ static void Fetch_AddHeaders(const char *raw)
 {
     FetchHeader headers[FETCH_MAX_HEADERS];
     int count = 0;
-    const char *line = raw;
+    const char *line = raw ? strchr(raw, '\n') : NULL;
+    if (line) ++line; /* The transport returns the first complete response. */
 
     while (line && *line) {
-        const char *end = strstr(line, "\r\n");
+        const char *end = strchr(line, '\n');
         size_t length = end ? (size_t)(end - line) : strlen(line);
+        if (length && line[length - 1] == '\r') --length;
         const char *colon = memchr(line, ':', length);
-        if (length >= 5 && !memcmp(line, "HTTP/", 5)) {
-            count = 0; /* a new answer after an interim one: only the last counts */
-        } else if (colon && colon != line && count < FETCH_MAX_HEADERS) {
+        if (colon && colon != line && count < FETCH_MAX_HEADERS) {
             const char *value = colon + 1, *valueEnd = line + length;
             while (value < valueEnd && (*value == ' ' || *value == '\t'))
                 ++value;
@@ -137,7 +137,7 @@ static void Fetch_AddHeaders(const char *raw)
             headers[count].valueLength = (size_t)(valueEnd - value);
             ++count;
         }
-        line = end ? end + 2 : NULL;
+        line = end ? end + 1 : NULL;
     }
     /* Stable for equal names, so the later one is last and wins below. */
     for (int i = 1; i < count; ++i) {
