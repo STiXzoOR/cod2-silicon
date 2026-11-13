@@ -139,6 +139,8 @@ static void Pixels(int red, float depth, int stencil)
     glReadPixels(16, 16, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, color);
     glReadPixels(16, 16, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
     glReadPixels(16, 16, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, &value);
+    if (color[0] != red || color[1] || color[2])
+        fprintf(stderr, "actual RGB=%u,%u,%u expected=%d,0,0 depth=%g stencil=%u\n",color[0],color[1],color[2],red,z,value);
     assert(color[0] == red && color[1] == 0 && color[2] == 0);
     assert(fabsf(z - depth) < 0.00001f);
     assert(value == stencil);
@@ -207,10 +209,11 @@ int main(int argc, char **argv)
     glClearStencil(0x35);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+    /* The 24-byte stream consumes BGRA; use red in that byte order. */
     struct Vertex { float xyz[3]; byte color[4]; float uv[2]; } vertices[3] = {
-        {{-.9f, -.9f, .5f}, {255, 0, 0, 255}, {0, 0}},
-        {{ .9f, -.9f, .5f}, {255, 0, 0, 255}, {0, 0}},
-        {{  0,  .9f, .5f}, {255, 0, 0, 255}, {0, 0}}
+        {{-.9f, -.9f, .5f}, {0, 0, 255, 255}, {0, 0}},
+        {{ .9f, -.9f, .5f}, {0, 0, 255, 255}, {0, 0}},
+        {{  0,  .9f, .5f}, {0, 0, 255, 255}, {0, 0}}
     };
     if (!arb)
         for (int i = 0; i < 3; ++i)
@@ -252,7 +255,7 @@ int main(int argc, char **argv)
     for (UINT i = 0; i < fixtureGL->texUnitCount; ++i)
         fixtureGL->texUnits[i].mIsProgramableOnly = i >= dev.maxTextureUnits;
     GLuint defaultTextureName;
-    UINT32 defaultPixel = 0x000000ff;
+    UINT32 defaultPixel = 0xffffffff;
     glGenTextures(1, &defaultTextureName);
     glBindTexture(GL_TEXTURE_2D, defaultTextureName);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_BGRA, GL_UNSIGNED_BYTE, &defaultPixel);
@@ -321,6 +324,24 @@ int main(int argc, char **argv)
             assert(samples == (2 - covered) * 512);
         }
         assert(!Q_Release(query));
+    } else if (!strcmp(test, "blend")) {
+        glDisable(GL_VERTEX_PROGRAM_ARB); glDisable(GL_FRAGMENT_PROGRAM_ARB);
+        glDisable(GL_STENCIL_TEST); glDisable(GL_CULL_FACE); glDisable(GL_DEPTH_TEST);
+        glMatrixMode(GL_PROJECTION); glLoadIdentity();
+        glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+        glClearColor(.2f, .3f, .4f, .5f); glClear(GL_COLOR_BUFFER_BIT);
+        Set(&dev, D3DRS_BLENDOP, 1);
+        Set(&dev, D3DRS_SEPARATEALPHABLENDENABLE, 0);
+        Set(&dev, D3DRS_BLENDOPALPHA, 2);
+        Set(&dev, D3DRS_SEPARATEALPHABLENDENABLE, 1);
+        glEnable(GL_BLEND); glBlendFunc(GL_ONE, GL_ONE);
+        glColor4f(.6f, .2f, .1f, .8f); glRectf(-1, -1, 1, 1);
+        byte pixel[4]; glReadPixels(16, 16, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
+        fprintf(stderr, "separate blend pixel=%u,%u,%u,%u expected=204,128,128,77\n", pixel[0],pixel[1],pixel[2],pixel[3]);
+        assert(abs(pixel[0]-204)<=1 && abs(pixel[1]-128)<=1 && abs(pixel[2]-128)<=1 && abs(pixel[3]-77)<=1);
+        Set(&dev, D3DRS_SEPARATEALPHABLENDENABLE, 0);
+        GLint equation; glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &equation);
+        assert(equation == GL_FUNC_ADD);
     } else if (!strcmp(test, "initial")) {
         assert(dev.stencilWriteMask == 0xffffffffu);
         Draw(&dev);

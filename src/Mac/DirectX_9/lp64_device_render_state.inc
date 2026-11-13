@@ -17,6 +17,7 @@ static void DeviceRenderState_Init(DeviceImpl *dev)
     glStencilFunc(dev->glStencilFunc, 0, 0xffffffffu);
     glStencilOp(0x1e00, 0x1e00, 0x1e00);
     glStencilMask(0xffffffffu);
+    glBlendEquationSeparate(0x8006, 0x8006);
     const GLfloat fogColor[4] = {0, 0, 0, 0};
     glFogfv(0xb66, fogColor);
     glFogf(0xb63, 0.0f);
@@ -110,22 +111,16 @@ static void DeviceRenderState_MaterialSource(DWORD value, DWORD other, GLenum mo
     }
 }
 
-static void DeviceRenderState_BlendOp(DeviceImpl *dev, DWORD value)
+static GLenum DeviceRenderState_BlendEquation(DWORD value)
 {
-    if (dev->blendOp == value)
-        return;
-    dev->blendOp = value;
-    COpenGLNative *gl = CDirect3DDevice_GL();
-    if (value == 1) {
-        if (gl->supportsBlendSubtract || gl->supportsBlendMinMax)
-            glBlendEquationEXT(0x8006);
-    } else if (value == 2 || value == 3) {
-        if (gl->supportsBlendSubtract)
-            glBlendEquationEXT(value == 2 ? 0x800a : 0x800b);
-    } else if (value == 4 || value == 5) {
-        if (gl->supportsBlendMinMax)
-            glBlendEquationEXT(value == 4 ? 0x8007 : 0x8008);
-    }
+    static const GLenum equations[] = { 0x8006, 0x8006, 0x800a, 0x800b, 0x8007, 0x8008 };
+    return value <= 5 ? equations[value] : 0x8006;
+}
+
+static void DeviceRenderState_BlendOp(DeviceImpl *dev)
+{
+    glBlendEquationSeparate(DeviceRenderState_BlendEquation(dev->blendOp),
+        DeviceRenderState_BlendEquation(dev->separateAlphaBlendEnable ? dev->alphaSrcBlend : dev->blendOp));
 }
 
 static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, DWORD value)
@@ -348,7 +343,10 @@ static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, 
         }
         break;
     case D3DRS_BLENDOP:
-        DeviceRenderState_BlendOp(dev, value);
+        if (dev->blendOp != value) {
+            dev->blendOp = value;
+            DeviceRenderState_BlendOp(dev);
+        }
         break;
     case D3DRS_SLOPESCALEDEPTHBIAS:
     case D3DRS_DEPTHBIAS:
@@ -366,6 +364,7 @@ static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, 
         if (dev->separateAlphaBlendEnable != value) {
             dev->separateAlphaBlendEnable = value;
             dev->blendStateChanged = 1;
+            DeviceRenderState_BlendOp(dev);
         }
         break;
     case D3DRS_SRCBLENDALPHA:
@@ -377,11 +376,9 @@ static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, 
         dev->glDestBlendAlpha = DeviceRenderState_Blend(value, dev->glDestBlendAlpha, 1, 1);
         break;
     case D3DRS_BLENDOPALPHA:
-        if (dev->separateAlphaBlendEnable) {
+        if (dev->alphaSrcBlend != value) {
             dev->alphaSrcBlend = value;
-            /* Mac 0x16596 jumps into the RGB blend-operation cache/driver
-             * branch; no separate RGB/alpha equation call is made. */
-            DeviceRenderState_BlendOp(dev, value);
+            DeviceRenderState_BlendOp(dev);
         }
         break;
     default:
