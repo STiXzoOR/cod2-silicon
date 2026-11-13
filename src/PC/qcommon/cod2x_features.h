@@ -52,7 +52,6 @@ void Cod2x_CompassOffset(float *x, float *y);
 int Cod2x_FeaturesDemo(void);
 void CG_Cod2xRadarInit(void);
 void CG_Cod2xRadarDraw(void);
-void CG_Cod2xRadarFire(int entityNum);
 
 static inline int Cod2x_StepInt(int value, int direction)
 {

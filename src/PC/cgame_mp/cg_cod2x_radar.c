@@ -39,15 +39,14 @@ extern sharedUiInfo_t sharedUiInfo;
 static const dvar_t *drawRadar, *radarScale, *mapImage, *imageX, *imageY, *rotation;
 static const dvar_t *entityScale, *entityX, *entityY, *radarX, *radarY, *numberSwitch, *radarColor;
 static char radarMap[64];
-static int calibration, calibrationFrame = -1, lastDrawTime, commandRegistered;
+static int calibration, calibrationFrame = -1, commandRegistered;
 static float worldPoints[2][2], imagePoints[2][2];
 static const char *radarFields[6] = {"scale", "offsetX", "offsetY", "rotation", "imageOffsetX", "imageOffsetY"};
 static struct {
     int time;
-    vec3_t origin;
-    float yaw;
+    float x, y, size, angle;
 } fireEvents[128];
-static unsigned int fireIndex;
+static int lastFireEndTimes[64];
 
 static int CG_Cod2xRadarCheats(void)
 {
@@ -80,7 +79,6 @@ static void CG_Cod2xRadarLoad(void)
         return;
     snprintf(radarMap, sizeof(radarMap), "%s", name);
     calibration = 0;
-    memset(fireEvents, 0, sizeof(fireEvents));
     Dvar_SetString(mapImage, "");
     if (!*name)
         return;
@@ -197,20 +195,6 @@ void CG_Cod2xRadarInit(void)
     }
     radarMap[0] = '\0';
     calibration = 0;
-    memset(fireEvents, 0, sizeof(fireEvents));
-}
-
-void CG_Cod2xRadarFire(int entityNum)
-{
-    int i;
-    if (!drawRadar || entityNum < 0 || entityNum >= 64 || !cg_entities)
-        return;
-    fireIndex = (fireIndex + 1) % 128;
-    fireEvents[fireIndex].time = cg->time;
-    /* CoD2x places players at their snapshot position and heading. */
-    for (i = 0; i < 3; ++i)
-        fireEvents[fireIndex].origin[i] = cg_entities[entityNum].currentState.pos.trBase[i];
-    fireEvents[fireIndex].yaw = cg_entities[entityNum].nextState.apos.trBase[1];
 }
 
 static void CG_Cod2xRadarCoordinates(const vec_t *origin, float *x, float *y)
@@ -271,9 +255,6 @@ void CG_Cod2xRadarDraw(void)
         (cg->bgs.clientinfo[clientNum].team != TEAM_SPECTATOR && !CG_Cod2xRadarCheats()) ||
         !*mapImage->current.string)
         return;
-    if (cg->time < lastDrawTime)
-        memset(fireEvents, 0, sizeof(fireEvents));
-    lastDrawTime = cg->time;
     factor = calibration ? 4 : 2 * radarScale->current.value;
     size = factor * 100;
     x = radarX->current.value + imageX->current.value;
@@ -289,17 +270,6 @@ void CG_Cod2xRadarDraw(void)
     if (calibration) {
         CG_Cod2xRadarDrawCalibration(x, y);
         return;
-    }
-    size = 10 * factor;
-    material = CL_RegisterMaterial("radar_player_fire", 7);
-    for (i = 0; i < 128; ++i) {
-        int age = cg->time - fireEvents[i].time;
-        if (!fireEvents[i].time || age <= 0 || age >= 1000)
-            continue;
-        CG_Cod2xRadarCoordinates(fireEvents[i].origin, &x, &y);
-        color[0] = 1; color[1] = color[2] = .5f; color[3] = 1 - age / 1000.0f;
-        CG_DrawRotatedPic(x - size * 2, y - size * 2, size * 4, size * 4, 1, 1,
-                          90 + rotation->current.integer - fireEvents[i].yaw, color, material);
     }
     for (i = 0; i < 16; ++i) {
         const objective_t *obj = &cg->snap->ps.objective[i];
@@ -321,6 +291,16 @@ void CG_Cod2xRadarDraw(void)
         }
         CG_DrawRotatedPic(x - factor * 4, y - factor * 4, factor * 8, factor * 8, 1, 1, 0,
                           white, icon);
+    }
+    material = CL_RegisterMaterial("radar_player_fire", 7);
+    for (i = 0; i < 128; ++i) {
+        int age = cg->time - fireEvents[i].time;
+        if (!fireEvents[i].time || age <= 0 || age >= 1000)
+            continue;
+        color[0] = 1; color[1] = color[2] = .5f; color[3] = 1 - age / 1000.0f;
+        size = fireEvents[i].size;
+        CG_DrawRotatedPic(fireEvents[i].x - size * 2, fireEvents[i].y - size * 2,
+                          size * 4, size * 4, 1, 1, fireEvents[i].angle, color, material);
     }
     arrow = CL_RegisterMaterial("radar_player_arrow", 7);
     circle = CL_RegisterMaterial("radar_player_circle", 7);
@@ -357,7 +337,7 @@ void CG_Cod2xRadarDraw(void)
         char number[16];
         int team;
         float arrowScale = 1, circleScale = 1, heading, textScale;
-        if (cent->currentState.eType != 1 || !cent->nextValid ||
+        if (cent->currentState.eType != 1 || !(cent->nextValid & 1) ||
             (cent->currentState.eFlags & 0x20001) || cent->currentState.clientNum < 0 ||
             cent->currentState.clientNum >= 64)
             continue;
@@ -367,12 +347,29 @@ void CG_Cod2xRadarDraw(void)
             continue;
         CG_Cod2xRadarCoordinates(cent->currentState.pos.trBase, &x, &y);
         heading = 90 + rotation->current.integer - cent->nextState.apos.trBase[1];
+        size = 10 * factor;
+        /* The compass records the end of each weapon sound. Observe changes
+           only for drawn players and keep the projected flash rectangle. */
+        if (lastFireEndTimes[i] != cg->compassActors[i].beginFadeTime) {
+            int slot = 0;
+            lastFireEndTimes[i] = cg->compassActors[i].beginFadeTime;
+            for (int event = 0; event < 128; ++event) {
+                if (!fireEvents[event].time || cg->time - fireEvents[event].time > 1000) {
+                    slot = event;
+                    break;
+                }
+            }
+            fireEvents[slot].time = cg->time;
+            fireEvents[slot].x = x;
+            fireEvents[slot].y = y;
+            fireEvents[slot].size = size;
+            fireEvents[slot].angle = heading;
+        }
         /* The followed player has a larger yellow arrow and a slightly larger circle. */
         if (cg->snap->ps.clientNum == i) {
             arrowScale = 1.5f;
             circleScale = 1.2f;
         }
-        size = 10 * factor;
         CG_DrawRotatedPic(x - size * arrowScale * .5f, y - size * arrowScale * .5f, size * arrowScale,
                           size * arrowScale, 1, 1, heading, arrowScale > 1 ? yellow : white, arrow);
         CG_DrawRotatedPic(x - size * circleScale * .5f, y - size * circleScale * .5f, size * circleScale,
