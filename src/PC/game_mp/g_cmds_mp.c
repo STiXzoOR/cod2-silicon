@@ -259,7 +259,7 @@ void G_setfog(const char *fogstring)
 {
 #if defined(COD2_X64)
     level_locals_t *lvl = &level;
-    int time;
+    float time;
     float r;
     float g;
     float b;
@@ -272,7 +272,7 @@ void G_setfog(const char *fogstring)
     lvl->fFogOpaqueDist = 3.402823466e+38f;
     lvl->fFogOpaqueDistSqrd = 3.402823466e+38f;
 
-    if (sscanf(fogstring, "%f %f %f %f %f %f %d", &fNear, &fFar, &fDensity, &r, &g, &b, &time) != 7) {
+    if (sscanf(fogstring, "%f %f %f %f %f %f %f", &fNear, &fFar, &fDensity, &r, &g, &b, &time) != 7) {
         return;
     }
 
