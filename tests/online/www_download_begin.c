@@ -6,6 +6,9 @@ int main(void)
     assert(!strcmp(cls.downloadName, "main/map.iwd"));
     assert(!strcmp(cls.downloadTempName, "main/map.iwd.tmp"));
     assert(!strcmp(connection.reliableCommands[1], "download main/map.iwd"));
+#if defined(COD2_CODX) && COD2_CODX && COD2_FEATURE_WWW_DOWNLOAD
+    assert(directLookups == 1);
+#endif
     puts("online: HTTP redirect state receives the requested local IWD path");
     return 0;
 }

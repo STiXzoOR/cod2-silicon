@@ -21,6 +21,23 @@ static const dvar_t *com_developer = &developer;
 static int reads, nextDownloads;
 static dlStatus_t downloadStatus;
 static char local[512], remote[512], renamed[512], commands[512];
+#if defined(COD2_CODX) && COD2_CODX
+/* These fixtures cover ordinary server redirects. The service boundary
+ * declines zPAM handling; the real client-side selection helper is extracted. */
+static dvar_t wwwDownload = { .current.enabled = 1 };
+static const dvar_t *cl_wwwDownload = &wwwDownload;
+static int directLookups, directEnds;
+int Cod2x_ZpamDirectURL(const char *name, int enabled, char *url, size_t size)
+{
+    assert(!strcmp(name, "main/map.iwd") && enabled);
+    (void)url; (void)size; ++directLookups;
+    return 0;
+}
+int Cod2x_ZpamDirectActive(void) { return 0; }
+const char *Cod2x_ZpamDirectRemote(void) { abort(); }
+void Cod2x_ZpamDirectEnd(int cancelled) { assert(!cancelled); ++directEnds; }
+void DL_Cod2xExpectZip(void) { abort(); }
+#endif
 void Com_Printf(const char *format, ...) { (void)format; }
 void Com_DPrintf(const char *format, ...) { (void)format; }
 void Com_Error(int code, const char *format, ...) { (void)code; (void)format; abort(); }
