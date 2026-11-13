@@ -1337,7 +1337,11 @@ unsigned int CG_DrawChatMessages(void)
             alphaPercent = 1.0f;
             backgroundAlpha = 0.60000002f;
         } else {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            alphaPercent = timeRemaining * 0.005f;
+#else
             alphaPercent = timeRemaining / 200.0f;
+#endif
             if (alphaPercent <= 0.0f) {
                 continue;
             }
@@ -1374,7 +1378,11 @@ unsigned int CG_DrawChatMessages(void)
 
         y = (float)(hudChatY - (cgs->teamChatPos - i) * 10);
         textWidth = UI_TextWidth(msg, 0, font, 5.0f / 24.0f);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        UI_DrawHandlePic(0.0f, y, (float)(textWidth + 24), 10.0f, 1, 1, color, cgs->media.teamStatusBar);
+#else
         UI_DrawHandlePic(0.0f, y, (float)(textWidth + 24), 10.0f, 1, 1, color, cgs->media.whiteMaterial);
+#endif
 
         color[0] = 1.0f;
         color[1] = 1.0f;
@@ -1429,7 +1437,11 @@ unsigned int CG_DrawChatMessages(void)
             alphaPercent = 1.0f;
             backgroundAlpha = 0.60000002f;
         } else {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            alphaPercent = timeRemaining * 0.005f;
+#else
             alphaPercent = timeRemaining / 200.0f;
+#endif
             if (alphaPercent <= 0.0f) {
                 continue;
             }
@@ -1453,7 +1465,11 @@ unsigned int CG_DrawChatMessages(void)
 
         y = (float)(hudChatY - (cgs->teamChatPos - i) * 10);
         textWidth = UI_TextWidth(msg, 0, font, 1.0f / 3.0f);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        UI_DrawHandlePic(0.0f, y, (float)(textWidth + 24), 10.0f, 1, 1, color, cgs->media.teamStatusBar);
+#else
         UI_DrawHandlePic(0.0f, y, (float)(textWidth + 24), 10.0f, 1, 1, color, cgs->media.whiteMaterial);
+#endif
 
         color[0] = 1.0f;
         color[1] = 1.0f;
