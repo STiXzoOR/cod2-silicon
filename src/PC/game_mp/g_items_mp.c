@@ -1414,9 +1414,17 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
     }
 
     if (other->client->sess.predictItemPickup)
+#if defined(COD2_APPLE_SDK)
+        G_AddPredictableEvent(other, eventParm, ent->s.index.item);
+#else
         G_AddPredictableEvent(other, eventParm, ent->s.eventParm);
+#endif
     else
+#if defined(COD2_APPLE_SDK)
+        G_AddEvent(other, eventParm, ent->s.index.item);
+#else
         G_AddEvent(other, eventParm, ent->s.eventParm);
+#endif
 
     G_FreeEntity(ent);
 }
