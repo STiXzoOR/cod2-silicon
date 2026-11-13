@@ -103,7 +103,7 @@ void SVC_RemoteCommand(struct netadr_t from, msg_t *msg)
     const dvar_t *rcon_dvar;
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    if (!SV_Cod2xUdpAllow(from, COD2X_UDP_RCON))
+    if (!SV_Cod2xUdpAllow(from, COD2X_UDP_RCON, "SVC_RemoteCommand"))
         return;
 #endif
 #if defined(COD2_X64)
