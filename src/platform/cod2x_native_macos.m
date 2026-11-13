@@ -8,6 +8,7 @@
 
 extern void Cbuf_AddText(const char *text);
 extern void Dvar_SetStringByName(const char *name, const char *value);
+#if defined(COD2_CODX) && COD2_CODX
 static char pendingURL[512];
 
 @interface Cod2xURLHandler : NSObject
@@ -24,6 +25,7 @@ static char pendingURL[512];
 @end
 
 static Cod2xURLHandler *urlHandler;
+#endif
 
 int Cod2xNativeApp_Arguments(char *buffer, int capacity)
 {
@@ -40,19 +42,26 @@ int Cod2xNativeApp_Arguments(char *buffer, int capacity)
 
 int Cod2xNativeURL_Queue(const char *url)
 {
+#if defined(COD2_CODX) && COD2_CODX
     Cod2xURL parsed;
     char commands[sizeof(pendingURL)];
     if (!Cod2x_ParseURL(url, &parsed) || !Cod2x_URLCommands(&parsed, commands, sizeof(commands)))
         return 0;
     memcpy(pendingURL, commands, strlen(commands) + 1);
     return 1;
+#else
+    (void)url;
+    return 0;
+#endif
 }
 
 void Cod2xNativeURL_Install(void)
 {
+#if defined(COD2_CODX) && COD2_CODX
     if (!urlHandler) urlHandler = [[Cod2xURLHandler alloc] init];
     [NSAppleEventManager.sharedAppleEventManager setEventHandler:urlHandler andSelector:@selector(openURL:reply:)
         forEventClass:kInternetEventClass andEventID:kAEGetURL];
+#endif
 }
 
 void Cod2xNativeURL_SetupPaths(void)
@@ -66,16 +75,20 @@ void Cod2xNativeURL_SetupPaths(void)
 
 void Cod2xNativeURL_Shutdown(void)
 {
+#if defined(COD2_CODX) && COD2_CODX
     [NSAppleEventManager.sharedAppleEventManager removeEventHandlerForEventClass:kInternetEventClass andEventID:kAEGetURL];
     urlHandler = nil;
     memset(pendingURL, 0, sizeof(pendingURL));
+#endif
 }
 
 void Cod2xNativeURL_Frame(void)
 {
+#if defined(COD2_CODX) && COD2_CODX
     if (pendingURL[0]) {
         Cbuf_AddText(pendingURL);
         memset(pendingURL, 0, sizeof(pendingURL));
     }
+#endif
 }
 #endif

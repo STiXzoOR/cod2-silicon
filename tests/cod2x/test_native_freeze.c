@@ -76,6 +76,17 @@ static void delay(int seconds)
 int main(int argc, char **argv)
 {
     home.current.string = argc > 1 ? argv[1] : "/tmp";
+#if !defined(COD2_CODX) || !COD2_CODX
+    struct sigaction before, after;
+    sigaction(SIGUSR2, NULL, &before);
+    Cod2xNative_Init();
+    sigaction(SIGUSR2, NULL, &after);
+    int clean = !freeze.flags && before.sa_sigaction == after.sa_sigaction;
+    printf("stock watcher: dvar_flags=%u signal_unchanged=%d\n", freeze.flags,
+           before.sa_sigaction == after.sa_sigaction);
+    Cod2xNative_Shutdown();
+    return !clean;
+#else
     Sys_InstallCrashHandler("CoD2x native freeze probe", "test", "native-arm64", "watchdog probe");
     Sys_SetReportReceiver(receive);
     /* The CoD2x layer is the run of units linked between its two markers. */
@@ -112,4 +123,5 @@ int main(int argc, char **argv)
     Cod2xNative_Shutdown();
     puts("cod2x watchdog: heartbeat, disable, 12s stall and shutdown passed");
     return 0;
+#endif
 }

@@ -479,12 +479,14 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Sys_InstallCrashHandler("CoD2 MP " COD2_VERSION_SHORT, COD2_VERSION_SHORT,
                             COD2_VERSION_DATE, "native launch (command line omitted)");
 #endif
+#if defined(COD2_CODX) && COD2_CODX
     Cod2xNativeURL_Install();
     if (lpCmdLine && !strncasecmp(lpCmdLine, "cod2x://", 8)) {
         if (!Cod2xNativeURL_Queue(lpCmdLine))
             fprintf(stderr, "CoD2 Silicon: rejected launch link; only connect and password are accepted.\n");
         lpCmdLine = "";
     }
+#endif
 #else
     Sys_InstallCrashHandler("CoD2 MP " COD2_VERSION_SHORT, COD2_VERSION_SHORT,
                             COD2_VERSION_DATE, lpCmdLine);
