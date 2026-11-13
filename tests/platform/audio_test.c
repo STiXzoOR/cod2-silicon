@@ -185,7 +185,9 @@ int main(void)
     CHECK(fabsf(mixed[0] - 0.25f) < 0.00001f && fabsf(mixed[1] + 0.5f) < 0.00001f);
     CHECK(AIL_stream_status(stream) == 2);
     AIL_close_stream(stream);
-    CHECK(closes == 1 && seeks >= 2 && reads > 1);
+    /* All repeated decoder reads reuse the small encoded stream; the callback
+     * deliberately returns seven bytes at a time to exercise short reads. */
+    CHECK(closes == 1 && seeks == 2 && reads == (sizeof(wave) + 6) / 7);
     AIL_set_file_callbacks(NULL, NULL, NULL, NULL);
 
     unsigned char adpcm[256] = { 0 };

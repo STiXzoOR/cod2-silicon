@@ -27,6 +27,7 @@
 #define AUDIO_STOPPED 8
 #define REVERB_FRAMES 8192
 #define STREAM_FRAMES 32768
+#define STREAM_READ_BYTES (64u * 1024u)
 
 typedef struct MacAudioStream MacAudioStream;
 
@@ -54,6 +55,8 @@ struct MacAudioStream {
     MacAudioSeekCallback seek;
     MacAudioReadCallback read;
     size_t bytes, length;
+    unsigned char *encoded;
+    size_t encoded_capacity, encoded_first, encoded_count;
     int channels, stop, failed, started;
     uint64_t serial, first, end;
     float *ring;
@@ -933,7 +936,8 @@ void AIL_set_file_callbacks(MacAudioOpenCallback open_cb, MacAudioCloseCallback 
 
 /* Miles opens a seekable stream and services bounded buffers on a worker.
  * CoreAudio supplies the decoder here; neither file reads nor decoding run in
- * the render callback, and the game thread only reads the header at open. */
+ * the render callback. CoreAudio may scan the encoded stream for its duration
+ * at open; retain overlapping reads so compressed IWD callbacks stay forward. */
 static OSStatus StreamRead(void *client, SInt64 position, UInt32 count, void *buffer, UInt32 *actual)
 {
     MacAudioStream *stream = client;
@@ -945,13 +949,46 @@ static OSStatus StreamRead(void *client, SInt64 position, UInt32 count, void *bu
         *actual = (UInt32)fread(buffer, 1, count, stream->disk);
         return ferror(stream->disk) ? kAudioFileUnspecifiedError : noErr;
     }
-    if (position > LONG_MAX || stream->seek(stream->handle, (long)position, 0) < 0)
-        return kAudioFilePositionError;
     while (*actual < count) {
-        unsigned long got = stream->read(stream->handle, (char *)buffer + *actual, count - *actual);
-        if (!got) break;
-        if (got > count - *actual) return kAudioFileUnspecifiedError;
-        *actual += (UInt32)got;
+        size_t offset = (size_t)position + *actual;
+        size_t end = stream->encoded_first + stream->encoded_count;
+        if (offset < stream->encoded_first || offset > end) {
+            stream->encoded_first = offset;
+            stream->encoded_count = 0;
+            end = offset;
+        }
+        if (offset < end) {
+            size_t available = end - offset;
+            if (available > count - *actual) available = count - *actual;
+            memcpy((char *)buffer + *actual,
+                stream->encoded + offset - stream->encoded_first, available);
+            *actual += (UInt32)available;
+            continue;
+        }
+        /* Keep the previous half when advancing the window. MP3 metadata
+         * scans reread packet headers behind their preceding read's end;
+         * discarding the whole window would still rewind an IWD at each edge. */
+        if (stream->encoded_count == stream->encoded_capacity) {
+            size_t retain = stream->encoded_count / 2;
+            size_t discard = stream->encoded_count - retain;
+            memmove(stream->encoded, stream->encoded + discard, retain);
+            stream->encoded_first += discard;
+            stream->encoded_count = retain;
+        }
+        if (end > LONG_MAX || stream->seek(stream->handle, (long)end, 0) < 0)
+            return kAudioFilePositionError;
+        size_t fill = stream->encoded_capacity - stream->encoded_count;
+        if (fill > stream->bytes - end) fill = stream->bytes - end;
+        size_t added = 0;
+        while (added < fill) {
+            unsigned long got = stream->read(stream->handle,
+                stream->encoded + stream->encoded_count, fill - added);
+            if (!got) break;
+            if (got > fill - added) return kAudioFileUnspecifiedError;
+            stream->encoded_count += got;
+            added += got;
+        }
+        if (!added) break;
     }
     return noErr;
 }
@@ -966,6 +1003,7 @@ static void DisposeStream(MacAudioStream *stream)
     else if (stream->close) stream->close(stream->handle);
     pthread_cond_destroy(&stream->wake);
     free(stream->ring);
+    free(stream->encoded);
     free(stream);
 }
 
@@ -1083,6 +1121,11 @@ void *AIL_open_stream(void *driver, const char *name, int memory)
             off_t length = ftello(stream->disk);
             if (length > 0) stream->bytes = (size_t)length;
         }
+    }
+    if (stream->bytes && !stream->disk) {
+        stream->encoded_capacity = stream->bytes < STREAM_READ_BYTES ? stream->bytes : STREAM_READ_BYTES;
+        stream->encoded = malloc(stream->encoded_capacity);
+        if (!stream->encoded) { DisposeStream(stream); return NULL; }
     }
     OSStatus error = stream->bytes ? AudioFileOpenWithCallbacks(stream, StreamRead, NULL, StreamSize, NULL, 0, &stream->file) : kAudioFileFileNotFoundError;
     if (!error) error = ExtAudioFileWrapAudioFileID(stream->file, false, &stream->decoder);
