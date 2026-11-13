@@ -160,6 +160,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 - Console and chat support Ctrl+V paste, Ctrl+C clear and Ctrl+H backspace.
   Typed and pasted text is converted to the game's language encoding so
   accented letters and punctuation no longer turn into unrelated characters.
+- Keypad navigation now works in menu lists, edit fields, focus movement and
+  console history, matching the original keyboard alternatives.
 - Ambient tracks and music decode in the background with bounded buffers,
   avoiding the full-track decode pause and the decoded-size limit on long music.
 - Room and shellshock reverberation now reproduce the original software mixer’s

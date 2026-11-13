@@ -59,6 +59,25 @@ static int check_feeder(float feeder)
     printf("1x K_MWHEELUP:   cursor=%d\n", item.cursorPos[0]);
     assert(item.cursorPos[0] == 4);
 
+    /* Windows keypad aliases have exactly the same list state transitions. */
+    listBoxDef_t savedList = lb;
+    const int ordinary[] = {0x9a,0x9b,0x9c,0x9d,0xa5,0xa6,0xa4,0xa3};
+    const int keypad[] = {0xb7,0xbd,0xb9,0xbb,0xb6,0xbc,0xb8,0xbe};
+    for (int horizontal = 0; horizontal < 2; ++horizontal) {
+        item.window.staticFlags = horizontal ? 0x200000 : 0;
+        for (int k = 0; k < 8; ++k) {
+            listBoxDef_t initial = lb;
+            item.cursorPos[0] = 10;
+            int expected = Item_ListBox_HandleKey(&dc, &item, ordinary[k], 1, 0);
+            int position = item.cursorPos[0]; listBoxDef_t after = lb;
+            lb = initial; item.cursorPos[0] = 10;
+            assert(Item_ListBox_HandleKey(&dc, &item, keypad[k], 1, 0) == expected);
+            assert(item.cursorPos[0] == position && !memcmp(&lb, &after, sizeof(lb)));
+        }
+    }
+    item.window.staticFlags = 0;
+    lb = savedList;
+    item.cursorPos[0] = 4;
     lb.cursorPos[0] = 7; /* Item_ListBox_MouseEnter: pointer over row 7 */
     dc.realTime = 20000;
     Item_ListBox_HandleKey(&dc, &item, K_MOUSE1, 1, 0);
