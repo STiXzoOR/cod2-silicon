@@ -36,7 +36,7 @@ extension GameServer {
     var knownMode: String? { fields["g_gametype"] ?? fields["gametype"] }
 }
 
-/// Home’s Dispatches: this build’s headline, then what comes next. The unreleased build has no release date.
+/// Home’s What’s New card: this build’s headline, then what comes next. The unreleased build has no release date.
 enum HomeDispatches {
     static let releaseVersion = "0.3.0"
     static let release = Dispatch(stamp: "PREVIEW", title: "CoD2 Silicon 0.3.0",

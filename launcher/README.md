@@ -224,8 +224,8 @@ when Servers opens is on (off by default); opening the app itself never scans th
 Settings › Updates › Check for updates automatically on (the default), at most once a day while
 the launcher is open; an automatic check that fails says nothing, and the review harness and the
 lifecycle tests (`COD2_SETUP_NONINTERACTIVE=1`) never make one. It refreshes the release notes
-and What's New, which lists the newest release's Added, Changed and Fixed notes. Home's Dispatches
-mark 0.3.0 as a preview without a made-up release date, and use fetched notes for versions without a bundled headline. When a newer release carries
+and What's New, which lists the newest release's Added, Changed and Fixed notes. Home's What's New card
+marks 0.3.0 as a preview without a made-up release date, and uses fetched notes for versions without a bundled headline. When a newer release carries
 `CoD2-Silicon-<version>-macos-arm64.zip` and `SHA256SUMS`, Install Update (only on the player's
 click) downloads both into a folder on the app's volume, refuses any size or SHA-256 mismatch,
 unpacks with `ditto` and checks the app inside (bundle identifier, offered version,

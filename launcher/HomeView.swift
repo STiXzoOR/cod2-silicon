@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 // Owner: ship-home-library. Home: the last map's art behind the hero, the next game's loadout and display,
-// anything that needs fixing, and three cards (Jump back in, Last match, Dispatches).
+// anything that needs fixing, and three cards (Jump back in, Last match, What's New).
 
 struct HomeView: View {
     @ObservedObject var model: LauncherModel
@@ -663,7 +663,7 @@ private struct DispatchesCard: View {
     @Environment(\.palette) private var palette
     var body: some View {
         ContentPanel(radius: 20, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
-            PanelHeading(title: "Dispatches", action: "Release Notes", perform: model.openReleaseNotes)
+            PanelHeading(title: "What's New", action: "Release Notes", perform: model.openReleaseNotes)
             VStack(alignment: .leading, spacing: 14) {
                 ForEach(Array(model.dispatches.enumerated()), id: \.offset) { _, dispatch in
                     HStack(alignment: .firstTextBaseline, spacing: 14) {
