@@ -152,6 +152,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Fixed
 
+- Brief movement-key presses queued during a slow frame retain their held
+  duration, as in Windows 1.3.
 - Sounds in the world are placed as in Windows 1.3. A sound straight ahead
   was 3 dB louder than in the original and one behind you 5.5 dB louder,
   because sounds were panned on a different curve and front and back were

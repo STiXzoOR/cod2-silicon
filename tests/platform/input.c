@@ -11,7 +11,7 @@ static dvar_t mouse, raw;
 dvar_t *in_mouse = &mouse, *in_rawmouse = &raw;
 static clientActive_t *client;
 void *imp_cl = &client;
-static struct { int type, value, value2; } events[64];
+static struct { int time, type, value, value2; } events[64];
 static int count, absoluteX, absoluteY, relativeX, relativeY, cleared, quit;
 static int pumps;
 #if defined(COD2_X64) && COD2_X64
@@ -20,6 +20,7 @@ static int fullscreen, focused = 1, visible = 1, displayFocus = -1;
 static Uint32 ticks = 1;
 void MacTest_PumpEvents(void) { ++pumps; }
 Uint32 MacTest_GetTicks(void) { return ticks; }
+int Sys_Milliseconds(void) { return (int)ticks + 500; }
 /* Drive focus states explicitly: desktop focus belongs to the user/test runner. */
 Uint32 MacTest_GetWindowFlags(SDL_Window *window)
 {
@@ -40,8 +41,9 @@ extern int SDL_PumpInputEvents(void);
 extern void IN_Frame(void);
 void Sys_QueEvent(int time, sysEventType_t type, int value, int value2, int length, void *pointer)
 {
-    (void)time; (void)length; (void)pointer;
+    (void)length; (void)pointer;
     assert(count < 64);
+    events[count].time = time;
     events[count].type = type; events[count].value = value; events[count++].value2 = value2;
 }
 void CL_MouseEvent(int dx, int dy) { relativeX += dx; relativeY += dy; }
@@ -90,6 +92,14 @@ int main(void)
     SDL_Delay(100);
     SDL_PumpEvents();
     SDL_PumpInputEvents();
+    count = 0;
+    SDL_Event timed = {0};
+    timed.type = SDL_KEYDOWN; timed.key.keysym.sym = SDLK_w; timed.key.timestamp = 100;
+    push(&timed);
+    timed.type = SDL_KEYUP; timed.key.timestamp = 120; push(&timed);
+    ticks = 1000;
+    SDL_PumpInputEvents();
+    assert(count == 2 && events[0].time == 600 && events[1].time == 620);
     count = 0;
     key(SDL_KEYDOWN, SDLK_a); key(SDL_KEYUP, SDLK_a);
     key(SDL_KEYDOWN, SDLK_F1); key(SDL_KEYDOWN, SDLK_KP_ENTER); key(SDL_KEYDOWN, SDLK_BACKSPACE);

@@ -292,6 +292,18 @@ int SDL_PumpInputEvents(void)
     int eventCount;
     int inputEventCount = 0;
     static int textInputStarted;
+#if defined(__APPLE__) && defined(COD2_X64)
+    /* SDL timestamps and Sys_Milliseconds have different epochs. Keep one
+     * offset so queued edges retain their spacing even across a stalled frame
+     * or the 32-bit SDL clock wrapping (Windows uses MSG.time here). */
+    static Uint32 eventTimeOffset;
+    static int eventClockReady;
+    if (!eventClockReady) {
+        extern int Sys_Milliseconds(void);
+        eventTimeOffset = (Uint32)Sys_Milliseconds() - SDL_GetTicks();
+        eventClockReady = 1;
+    }
+#endif
 
 #if defined(__APPLE__) && defined(COD2_X64)
     if (!SDL_IsTextInputActive()) {
@@ -318,6 +330,12 @@ int SDL_PumpInputEvents(void)
          SDL_PeepEvents(&ev, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) > 0; ++eventCount) {
 #else
     for (eventCount = 0; eventCount < 256 && SDL_PollEvent(&ev); ++eventCount) {
+#endif
+        int eventTime = 0;
+#if defined(__APPLE__) && defined(COD2_X64)
+        eventTime = (int)(ev.common.timestamp + eventTimeOffset);
+        /* Zero means "now" to Sys_QueEvent, rather than the clock's origin. */
+        if (!eventTime) eventTime = 1;
 #endif
         switch (ev.type) {
 #if defined(__APPLE__) && defined(COD2_X64)
@@ -372,7 +390,7 @@ int SDL_PumpInputEvents(void)
         case SDL_MOUSEBUTTONDOWN: {
             int k = sdl_button_to_keynum(ev.button.button);
             if (k) {
-                Sys_QueEvent(0, SE_KEY, k, 1, 0, 0);
+                Sys_QueEvent(eventTime, SE_KEY, k, 1, 0, 0);
                 ++inputEventCount;
             }
             break;
@@ -380,7 +398,7 @@ int SDL_PumpInputEvents(void)
         case SDL_MOUSEBUTTONUP: {
             int k = sdl_button_to_keynum(ev.button.button);
             if (k) {
-                Sys_QueEvent(0, SE_KEY, k, 0, 0, 0);
+                Sys_QueEvent(eventTime, SE_KEY, k, 0, 0, 0);
                 ++inputEventCount;
             }
             break;
@@ -395,8 +413,8 @@ int SDL_PumpInputEvents(void)
             int clicks = abs(delta);
             /* Preserve individual wheel clicks in the engine key-event path. */
             for (int i = 0; i < clicks; ++i) {
-                Sys_QueEvent(0, SE_KEY, key, 1, 0, NULL);
-                Sys_QueEvent(0, SE_KEY, key, 0, 0, NULL);
+                Sys_QueEvent(eventTime, SE_KEY, key, 1, 0, NULL);
+                Sys_QueEvent(eventTime, SE_KEY, key, 0, 0, NULL);
                 ++inputEventCount;
             }
 #else
@@ -409,13 +427,13 @@ int SDL_PumpInputEvents(void)
         case SDL_KEYDOWN: {
             int k = sdl_to_keynum(ev.key.keysym.sym);
             if (k) {
-                Sys_QueEvent(0, SE_KEY, k, 1, 0, 0);
+                Sys_QueEvent(eventTime, SE_KEY, k, 1, 0, 0);
                 ++inputEventCount;
             }
 
             if (ev.key.keysym.sym == SDLK_BACKSPACE) {
 #if defined(__APPLE__) && defined(COD2_X64)
-                Sys_QueEvent(0, SE_CHAR, 8, 0, 0, NULL);
+                Sys_QueEvent(eventTime, SE_CHAR, 8, 0, 0, NULL);
 #else
                 CCallOfDutyEngine_DoTextInput(get_engine(), 8);
 #endif
@@ -426,7 +444,7 @@ int SDL_PumpInputEvents(void)
         case SDL_KEYUP: {
             int k = sdl_to_keynum(ev.key.keysym.sym);
             if (k) {
-                Sys_QueEvent(0, SE_KEY, k, 0, 0, 0);
+                Sys_QueEvent(eventTime, SE_KEY, k, 0, 0, 0);
                 ++inputEventCount;
             }
             break;
@@ -437,7 +455,7 @@ int SDL_PumpInputEvents(void)
             for (const unsigned char *p = (const unsigned char *)ev.text.text; *p;) {
                 unsigned int character = MacInput_DecodeUTF8(&p);
                 if (character >= 0x20 && character != 0x7f) {
-                    Sys_QueEvent(0, SE_CHAR, (int)character, 0, 0, NULL);
+                    Sys_QueEvent(eventTime, SE_CHAR, (int)character, 0, 0, NULL);
                     ++inputEventCount;
                 }
             }

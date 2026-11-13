@@ -9,6 +9,7 @@ static dvar_t mouse, raw;
 dvar_t *in_mouse = &mouse, *in_rawmouse = &raw;
 SDL_Window *sdl_gl_window;
 void *imp_cl;
+int Sys_Milliseconds(void) { return (int)SDL_GetTicks(); }
 void MacDisplay_PumpVisibility(void) {}
 void MacDisplay_FocusChanged(int focused) { (void)focused; }
 int MacDisplay_WindowVisible(void) { return 0; }
