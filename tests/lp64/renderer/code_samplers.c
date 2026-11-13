@@ -39,8 +39,9 @@ int main(void)
     dx.renderTargets[3].image = &shadow;
     backend.currentEntity = &entity;
     shadowDvar.current.enabled = 1;
-    /* Mac 1.3 0xf6930 tests current.enabled, not native dvar flags at +8. */
-    Check(19, &shadow, 0x32);
+    /* The native cookie producer is absent: even an enabled toggle must not
+     * sample the aliased post-sun target as a shadow mask. */
+    Check(19, &white, 0x32);
     shadowDvar.flags = 1;
     shadowDvar.current.enabled = 0;
     Check(19, &white, 0x32);
@@ -48,7 +49,7 @@ int main(void)
     entity.reType = 0;
     Check(19, &white, 0x32);
     entity.renderFxFlags = 0x100;
-    Check(19, &shadow, 0x32);
+    Check(19, &white, 0x32);
 
     GfxImage *lightmaps[1][4] = { { &images[0], &images[1], &images[2], &images[3] } };
     GfxWorld world = { .lightmaps = lightmaps };
@@ -64,5 +65,5 @@ int main(void)
         lightmapDvar.current.integer = 2;
         Check(8 + i, &black, 1);
     }
-    puts("native code samplers: typed shadow toggle and lightmap debug modes passed");
+    puts("native code samplers: unfilled shadow target and lightmap debug modes passed");
 }

@@ -612,7 +612,11 @@ static void RB_GetTextureFromCode_impl(int codeTexture, void **image, byte *samp
 
     case 19: {
 #if defined(COD2_X64)
-        int sc_on = sc_enable->current.enabled;
+        /* No cookie pass populates DYNAMICSHADOWS in the native renderer yet.
+         * It aliases RESOLVED_POST_SUN, so sampling it removes sunlight rather
+         * than casting shadows. Only enable this after a cookie pass has filled
+         * the target for the current view; an enabled dvar is not sufficient. */
+        int sc_on = 0;
 #else
         int sc_on = *(byte *)((char *)*(void **)imp_sc_enable + 8);
 #endif

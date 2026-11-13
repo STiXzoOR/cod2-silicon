@@ -61,6 +61,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Changed
 
+- Turning Shadows on no longer darkens sunlit walls and ground. Character
+  shadows are still unavailable; the control remains visible as on Windows.
 - With CoD2x on, voice chat is off, as in CoD2x. It works with the original
   1.3.
 - With CoD2x on, the game no longer writes its recommended graphics settings
