@@ -66,22 +66,24 @@ The original shaders are built from your own game files.
   Character shadows also remain visible when soft smoke edges are enabled.
 - Glow samples the correct sky direction on widescreen displays; glow and menu
   blur align to pixel centers and cover the right edge.
-- Heat distortion samples the correct scene pixels, including consecutive batches.
+- Heat distortion samples the correct scene pixels.
+- Smoke fades where it meets walls, ground and characters when Soften Smoke
+  Edges is enabled.
+- Crowded custom menus retain the original drawing limit instead of dropping
+  elements early.
+- The renderer logging option writes its requested graphics-call trace.
 - Changing specular power preserves the original lighting response instead of
   making world surfaces excessively shiny.
-- Shellshock retains its previous frame while shadows and post effects draw.
 - Colored impact marks preserve red and blue; cylinder effects retain their tint
   and transparency.
 - Impact marks use the original clipping arithmetic at surface edges.
 - Sun glare fades with the visible area of the sun, using GPU occlusion queries.
 - Sun glare stays visible after loading or changing maps.
-- DirectX 7 water lighting uses the original normal and sunlight channels.
 - DirectX 7 water keeps its blue-gray color instead of turning purple or yellow
   with the viewing angle.
 - Water wave patterns follow the original renderer's random sequence.
 - Unsupported 3× antialiasing falls back to 2×, as in the original game.
-- Custom models accept Windows path separators, and cubemap exports crop
-  their rendering border.
+- Custom models accept Windows path separators.
 - Menus with a blurred game background avoid an unnecessary full-screen
   copy when anti-aliasing is enabled.
 - Local match summaries retain slow-frame timings and renderer activity to
