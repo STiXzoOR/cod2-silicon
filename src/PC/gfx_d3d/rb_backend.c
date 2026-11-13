@@ -4470,9 +4470,9 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
         const Material *colorMtl = rgp.frameColorDebugMaterial;
 
         RB_DrawStretchPic(colorMtl, halfW * 0.5f, 0.5f * halfH, halfW * 0.5f, 0.5f * halfH,
-                          0, 0, 1.0f, 1.0f, 0xff000000, (GfxPrimStatsTarget)10);
+                          0, 0, 1.0f, 1.0f, 0x0000ffff, (GfxPrimStatsTarget)10);
         RB_DrawStretchPic(colorMtl, halfW, 0.5f * halfH, halfW * 0.5f, 0.5f * halfH,
-                          0, 0, 1.0f, 1.0f, 0xff000000, (GfxPrimStatsTarget)10);
+                          0, 0, 1.0f, 1.0f, 0x00ff00ff, (GfxPrimStatsTarget)10);
         RB_DrawStretchPic(colorMtl, halfW * 0.5f, halfH, halfW * 0.5f, 0.5f * halfH,
                           0, 0, 1.0f, 1.0f, 0xff0000ff, (GfxPrimStatsTarget)10);
         RB_DrawStretchPic(rgp.frameAlphaDebugMaterial,
