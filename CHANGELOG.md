@@ -13,6 +13,12 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Added
 
+- Private logs for each game session, available from Settings → Advanced → Logs
+  and failed-start or crash details. The last ten sessions stay on this Mac within
+  a 20 MiB total limit, with passwords and CD keys filtered before writing.
+- Check-up reports freezes longer than 0.1 s, their longest duration and recorded
+  match times. Older match summaries still show the longest frozen frame.
+
 - Play with CoD2x or with the original 1.3. **Settings → General → Game
   version** chooses which game starts; CoD2x is the default. Launching on a
   server that runs the other version starts that version for the match, after
@@ -71,6 +77,15 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   place of a microphone between two clients, not yet with a real one.
 
 ### Changed
+
+- Resolution choices follow the selected display’s native pixels, including notebook
+  sizes, in ascending order without duplicates. Unsupported saved sizes move down
+  to a fitting size and Settings explains the change. New installs start at native
+  size through 4K or half the panel’s dimensions above it. Display explains the cost
+  of larger sizes, anti-aliasing and fullscreen modes.
+- Home’s recent-server rows keep the map, game mode and version readable, including
+  at the minimum window size. About indicates when its credits and footer continue
+  below the window.
 
 - Setup has six steps: welcome, game data, CD key, shaders, your name and
   display, and a summary. A wrong folder says which archives are missing, the

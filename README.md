@@ -91,8 +91,15 @@ Dock icon and can hide its windows. Home offers Return to Game and Quit Game.
 **Settings** is a separate window, reached from the sidebar, app menu or ⌘,.
 Its seven panes cover the launcher, display, game data, privacy, updates,
 advanced launch options and About. Changes save automatically. The renderer
-is OpenGL; Metal controls are not shown in this release. The default is
-1080p fullscreen, a 250 fps cap, vertical sync off and raw mouse input.
+is OpenGL; Metal controls are not shown in this release. New installs start borderless at the display’s native size up to 3840 × 2160,
+or half its width and height above that (2560 × 1440 on a 5K panel).
+A saved supported size stays as chosen. Display lists unique sizes in ascending
+order, limited to the selected panel’s native pixels; an unavailable saved size
+moves down to the largest fitting size, with an explanation in Settings.
+Larger sizes are sharper and slower, and anti-aliasing adds to the work.
+Borderless stretches the picture to the desktop; Full Screen shows the selected
+size pixel for pixel. The other defaults are a 250 fps cap, vertical sync off
+and raw mouse input.
 
 **Configs** holds loadouts: frame cap, mouse, audio, graphics and binds, plus
 Check-up and History. Create, duplicate, rename, export or delete an unused
@@ -102,7 +109,12 @@ signed directory is available. Import from a file, link or clipboard still
 works, with review before anything is applied. Configs is read-only during a game.
 
 **Library** keeps Matches, Demos and Screenshots. Match summaries stay on this
-Mac and open Check-up for that match. Demos can be played, renamed, copied
+Mac and open Check-up for that match. Check-up shows freezes over 0.1 s,
+the longest and the recorded times; older summaries still show the worst frame.
+Each game session also keeps a private, filtered output log under `logs` beside
+`main`: the last 10 sessions, at most 4 MiB each and 20 MiB total. Passwords and
+CD keys are filtered before writing. **Settings → Advanced → Logs → Show in
+Finder** selects the latest session. These logs are never sent automatically. Demos can be played, renamed, copied
 or moved to the Trash with Undo. Screenshots support Quick Look, Copy Image
 and Share. **Jump to…** (⌘K) finds servers, loadouts, Settings and actions;
 in Configs it finds game settings.

@@ -58,7 +58,7 @@ struct HomeView: View {
         .background(WindowOriginReader(origin: $origin))
         .modifier(UpdatePillToolbar(model: model))
         .onAppear { model.refreshAttention() }
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in model.refreshAttention() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in model.refreshAttention(); model.refreshDisplay() }
     }
 }
 
@@ -542,6 +542,8 @@ private struct RecentRow: View {
         let detail: [String] = [server.knownMap.map(MapCatalog.displayName), server.knownMode.map(GameModes.long),
                                 listed ? (ServerFacts(server).isCoD2x ? "CoD2x" : "Original 1.3") : nil].compactMap { $0 }
         let subtitle = listed || !detail.isEmpty ? detail.joined(separator: " · ") : "Joined by address"
+        let compactDetail = [server.knownMap.map(MapCatalog.displayName), server.knownMode.map(GameModes.short),
+                             listed ? (ServerFacts(server).isCoD2x ? "CoD2x" : "Original 1.3") : nil].compactMap { $0 }.joined(separator: " · ")
         let played = model.lastPlayed(server.address)
         // Clicking the row shows the server in Servers; a server no list has shown, or a page change
         // while the game runs, leaves the row as plain text rather than a button that does nothing.
@@ -551,7 +553,7 @@ private struct RecentRow: View {
             MapArtFrame(map: server.knownMap ?? "mp_toujane", image: server.knownMap == nil ? nil : image, size: .card, radius: Concentric.radius(in: 16, inset: 7))
             VStack(alignment: .leading, spacing: 3) {
                 Text(name).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1)
-                Text(subtitle).font(.system(size: 12)).foregroundStyle(palette.secondary).lineLimit(1)
+                Text(compactDetail.isEmpty ? subtitle : compactDetail).font(.system(size: 12)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if let played {

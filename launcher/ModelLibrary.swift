@@ -395,14 +395,14 @@ enum PlayedDate {
         guard screen.hasPrefix("home") || screen.hasPrefix("library") else { return false }
         previewPlayed()
         switch screen {
-        case "home", "home-attention", "home-update", "home-crash", "home-crash-sent", "home-crash-not-sent", "home-running", "home-matches-off":
+        case "home", "home-attention", "home-update", "home-crash", "home-crash-log", "home-crash-sent", "home-crash-not-sent", "home-running", "home-matches-off":
             page = .home; previewMatches()
             if screen == "home-attention" { approximate = true }
             if screen == "home-update" { previewUpdateOffer() }
             if screen == "home-running" { gameRunning = true; gameStartedAt = Date().addingTimeInterval(-12 * 60); library.played[library.recent[0]] = gameStartedAt.addingTimeInterval(20) }
             if screen == "home-matches-off" { settings.matchSummariesEnabled = false; studio.checkup.matchSummariesEnabled = false }
             if screen.hasPrefix("home-crash") {
-                crashReport = home.appendingPathComponent("cod2_crash_4242.txt")
+                crashReport = home.appendingPathComponent(screen == "home-crash-log" ? "logs/game-2026-11-13T12-00-00Z-preview.log" : "cod2_crash_4242.txt")
                 notice = "The game closed unexpectedly. Your settings and loadouts are safe."
                 if screen == "home-crash-sent" { notice += " " + CrashReporting.Status.sent.message }
                 if screen == "home-crash-not-sent" { notice += " " + CrashReporting.Status.notSent(.offline).message }

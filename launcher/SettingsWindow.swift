@@ -159,6 +159,10 @@ struct SettingsPaneView: View {
 /// A pane's scrolling body with the board's padding (20 top, 28 sides, 26 bottom). It reports its content's
 /// height so the window can fit it.
 struct SettingsPaneScroll<Content: View>: View {
+    // MARK: - ship-play: an overflow cue for About's real, longer acknowledgement list.
+    var showOverflow = false
+    @State private var moreBelow = false
+    @Environment(\.palette) private var palette
     @ViewBuilder var content: Content
     @Environment(\.settingsPaneHeight) private var height
     var body: some View {
@@ -169,6 +173,13 @@ struct SettingsPaneScroll<Content: View>: View {
                 .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { height?.wrappedValue = $0 }
         }
         .scrollIndicators(.automatic)
+        .onScrollGeometryChange(for: Bool.self) { $0.contentSize.height > $0.visibleRect.maxY + 1 } action: { _, value in moreBelow = value }
+        .overlay(alignment: .bottom) {
+            if showOverflow && moreBelow {
+                LinearGradient(colors: [palette.ground.opacity(0), palette.ground], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 24).allowsHitTesting(false).accessibilityHidden(true)
+            }
+        }
     }
 }
 

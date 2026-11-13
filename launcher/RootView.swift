@@ -314,7 +314,7 @@ struct NoticeBanner: View {
         HStack(spacing: 8) {
             if model.gameRunning { Button("Return to Game", action: model.returnToGame).glassAction().controlSize(.large) }
             if let report = model.crashReport {
-                Button("Show Crash Report") { NSWorkspace.shared.activateFileViewerSelecting([report]) }.glassAction().controlSize(.large)
+                Button(report.lastPathComponent.hasPrefix("game-") ? "Show Game Log" : "Show Crash Report") { NSWorkspace.shared.activateFileViewerSelecting([report]) }.glassAction().controlSize(.large)
             }
             if !model.gameRunning {
                 SymbolButton("xmark", label: "Dismiss message", help: "Dismiss") {

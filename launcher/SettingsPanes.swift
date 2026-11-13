@@ -98,14 +98,18 @@ struct DisplayPane: View {
             HStack(alignment: .top, spacing: 20) {
                 DisplayPreview(model: model).frame(width: 300)
                 FormGroup {
-                    FormRow("Display", detail: "The one with the menu bar") {
+                    FormRow("Display", detail: model.gameMonitor > 0 ? "Chosen by the loadout for the next game" : "The main display") {
                         Text(model.mainDisplay?.name ?? "Main display").font(.system(size: 13)).foregroundStyle(palette.secondary).lineLimit(1)
                     }
                     FormRow("Mode", detail: LauncherModel.displayModeDetail(model.settings.fullscreen)) {
                         PopUpButton("Mode", selection: $model.settings.fullscreen, options: LauncherModel.displayModes)
                     }
-                    FormRow("Resolution") {
-                        PopUpButton("Resolution", selection: $model.settings.resolution, options: model.resolutionOptions)
+                    VStack(alignment: .leading, spacing: 6) {
+                        FormRow("Resolution") {
+                            PopUpButton("Resolution", selection: Binding(get: { model.settings.resolution }, set: { model.resolutionAdjustment = nil; model.settings.resolution = $0 }), options: model.resolutionOptions)
+                        }
+                        Text(model.resolutionHelp).font(.system(size: 12)).foregroundStyle(palette.tertiary)
+                            .fixedSize(horizontal: false, vertical: true).padding(.horizontal, 20).padding(.bottom, 12)
                     }
                 }
             }
@@ -131,7 +135,9 @@ struct DisplayPane: View {
                 FormSection("Mouse and sound") { LegacyMouseGroup(model: model) }
             }
             HStack(alignment: .center, spacing: 12) {
-                if model.settingsFeedback?.pane == .display {
+                if let adjustment = model.resolutionAdjustment {
+                    Text(adjustment).font(.system(size: 12)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                } else if model.settingsFeedback?.pane == .display {
                     SettingsFeedbackLine(model: model, pane: .display) { undoRestore() }
                 } else {
                     Label(model.settings == model.savedSettings ? "Saved. Applies the next time the game starts." : "Saving…", systemImage: "checkmark")
@@ -414,6 +420,7 @@ struct PrivacyPane: View {
                 }
             } footer: {
                 VStack(alignment: .leading, spacing: 6) {
+                    Text("Game logs stay on this Mac: up to 10 sessions and 20 MiB. Passwords and CD keys are removed. Find them in Advanced › Logs.")
                     Text(summaryCount)
                     SettingsFeedbackLine(model: model, pane: .privacy).padding(.horizontal, -6)
                 }
@@ -615,7 +622,7 @@ struct AdvancedPane: View {
             FormSection("Extra launch options") { LaunchOptionsEditor(model: model) }
             FormSection("Troubleshooting") {
                 FormGroup {
-                    FormRow("Logs", detail: "Crash and freeze reports, plus the last game log when one is available.") {
+                    FormRow("Logs", detail: "The last 10 game sessions, up to 20 MiB on this Mac. Show in Finder selects the latest.") {
                         Button("Show in Finder", action: model.showLogsInFinder).glassAction()
                         Button("Copy Last Game Log") { copied = model.copyLastGameLog() }.glassAction()
                     }
@@ -702,7 +709,7 @@ struct AboutPane: View {
     @Environment(\.palette) private var palette
     @State private var copied = false
     var body: some View {
-        SettingsPaneScroll {
+        SettingsPaneScroll(showOverflow: true) {
             HStack(alignment: .center, spacing: 22) {
                 BrandMark().frame(width: 112, height: 112).shadow(color: .black.opacity(palette.dark ? 0.45 : 0.18), radius: 16, y: 8).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 8) {

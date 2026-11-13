@@ -104,6 +104,8 @@ struct MediaEntry: Identifiable {
                 studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
             }
             if settings.engine != oldValue.engine { followEngine() }
+            if settingsReady && settings.resolution != oldValue.resolution { normalizeResolution() }
+            if settingsReady && (settings.fullscreen != oldValue.fullscreen || settings.advanced != oldValue.advanced) { refreshDisplay() }
         }
     }
     let artwork: MapArtworkStore
@@ -290,6 +292,11 @@ struct MediaEntry: Identifiable {
 
     // MARK: - ship-configs state (Configs lives in `studio` and `discover`)
 
+    // MARK: - ship-play
+    @Published var resolutionAdjustment: String?
+    var sessionLog: GameSessionLog?
+    var displaySubscription: Any?
+
     // MARK: - Core
     var gameBundle: URL { Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app") }
     /// Either engine of this app, as running processes report their executables.
@@ -328,14 +335,27 @@ struct MediaEntry: Identifiable {
         discover.notify = { [weak self] in self?.notice = $0 }
         if let sessionError { notice = sessionError }
         if snapshot { seedPreview(); return }
-        if let resolution = Bundle.main.object(forInfoDictionaryKey: "CoD2DefaultResolution") as? String { settings.resolution = resolution }
+        mainDisplay = MainDisplay.current()
+        if let display = mainDisplay { settings.resolution = DisplayResolutions.initial(native: display.native) }
         if let mode = Bundle.main.object(forInfoDictionaryKey: "CoD2DefaultFullscreen") as? String { settings.fullscreen = mode }
         LauncherMigrate()
         if let data = try? Data(contentsOf: home.appendingPathComponent("launcher-settings.json")), let value = try? JSONDecoder().decode(GameSettings.self, from: data) { settings = value }
+        else if let value = ConfigDocument.launchLoadout(home: home, profileID: nil)?.effectiveSetting(named: "r_mode"), DisplayResolution(value) != nil {
+            settings.resolution = value // An existing player's game choice predates launcher settings.
+        }
         savedSettings = settings
+        // Old extra options could override the picker. Move that choice into the one visible control.
+        let advancedResolution = settings.advanced.components(separatedBy: "\n").compactMap(GameSettings.advancedPair).last { $0.0.lowercased() == "r_mode" }?.1
+        if let value = advancedResolution, DisplayResolution(value) != nil { settings.resolution = value }
+        settings.advanced = settings.advanced.components(separatedBy: "\n").filter { GameSettings.advancedPair($0)?.0.lowercased() != "r_mode" }.joined(separator: "\n")
+        refreshDisplay()
         settingsReady = true
+        if settings != savedSettings { scheduleSettingsSave() }
         settingsTerminationObserver = NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.flushSettings() }
+        }
+        displaySubscription = studio.objectWillChange.sink { [weak self] _ in
+            Task { @MainActor [weak self] in self?.refreshDisplay() }
         }
         followEngine()
         studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
@@ -477,9 +497,9 @@ struct MediaEntry: Identifiable {
     }
     /// File › Show My Files in Finder: the app home (configs, demos, screenshots, reports).
     func showMyFilesInFinder() { openHomeFolder() }
-    /// Help › Show Logs in Finder: the app home, with the newest crash or freeze report selected when there is one.
+    /// Help › Show Logs in Finder: latest session output, then an older crash/freeze report or the app folder.
     func showLogsInFinder() {
-        if let report = CrashReports.latest(in: home, since: .distantPast) { NSWorkspace.shared.activateFileViewerSelecting([report]) }
+        if let report = GameSessionLog.latest(home: home) ?? CrashReports.latest(in: home, since: .distantPast) { NSWorkspace.shared.activateFileViewerSelecting([report]) }
         else { openHomeFolder() }
     }
     /// Help › CoD2 Silicon Help: the project's documentation page.
@@ -548,6 +568,7 @@ struct MediaEntry: Identifiable {
         } catch { notice = error.localizedDescription }
     }
     private func scheduleLink(_ link: LaunchLink, pid: pid_t) {
+        sessionLog?.protect(password: link.password)
         connectionTask?.cancel()
         connectionTask = Task {
             for _ in 0..<150 {
@@ -619,6 +640,7 @@ struct MediaEntry: Identifiable {
             pendingLink = nil
         }
         guard !snapshot, !gameRunning else { return }
+        refreshDisplay()
         flushSettings()
         if let refresh = shaderRefresh { Task { await refresh.value; play(demo: demo) }; return }
         if attachExistingGame() {
@@ -678,8 +700,11 @@ struct MediaEntry: Identifiable {
             CrashReporting.applyConsent(to: &environment, engine: gameEngine, cod2xReports: settings.sendCoD2xReports)
             process.environment = environment
             process.standardInput = FileHandle.standardInput
-            process.standardOutput = FileHandle.standardOutput; process.standardError = FileHandle.standardError
+            let log = try GameSessionLog(home: home, password: plan.link?.password)
+            sessionLog = log
+            process.standardOutput = log.pipe; process.standardError = log.pipe
             process.terminationHandler = { [weak self] process in
+                log.finish()
                 let code = process.terminationStatus
                 let pid = process.processIdentifier
                 Task { @MainActor in
@@ -688,7 +713,7 @@ struct MediaEntry: Identifiable {
                 }
             }
             try PrivateFile.write(Data(try settings.launchConfig(migrated: configLaunch != nil).utf8), to: home.appendingPathComponent("main/launcher.cfg"))
-            try process.run(); engine = process; gameRunning = true; gameStartedAt = Date(); crashReport = nil; notice = ""
+            try process.run(); log.closeParentWriter(); engine = process; gameRunning = true; gameStartedAt = Date(); crashReport = nil; notice = ""
             configStudio?.gameLaunched(pid: process.processIdentifier)
             if let error = configStudio?.migrationError ?? configStudio?.error { notice = error }
             startGameMonitor()
@@ -700,6 +725,7 @@ struct MediaEntry: Identifiable {
             print("CoD2 Silicon: game started (pid \(process.processIdentifier)).")
             fflush(stdout)
         } catch {
+            sessionLog?.finish(); sessionLog = nil
             // ship-shell: the Game Couldn't Start sheet says why and offers the fix (ModelShell.swift).
             do { try configStudio?.cancelLaunch() } catch { notice = error.localizedDescription }
             launchFailed(error)
@@ -757,9 +783,9 @@ struct MediaEntry: Identifiable {
             notice = "The game closed unexpectedly. Your settings and loadouts are safe."
         }
         if !closed {
-            crashReport = CrashReports.latest(in: home, since: gameStartedAt)
+            crashReport = GameSessionLog.latest(home: home) ?? CrashReports.latest(in: home, since: gameStartedAt)
         }
-        if code == nil && crashReport != nil { notice = "The game closed and left a crash report. Your settings and loadouts are safe." }
+        if code == nil && crashReport != nil { notice = "The game closed unexpectedly. Your settings and loadouts are safe." }
         if !closed { sendCrashReports(CrashReports.all(in: home, since: gameStartedAt)) }
         print("CoD2 Silicon: returned to launcher (game exit \(code.map(String.init) ?? "unavailable")).")
         fflush(stdout)
@@ -863,8 +889,13 @@ extension ConfigDocument {
         let players = home.appendingPathComponent("main/players")
         let active = (try? String(contentsOf: players.appendingPathComponent("active.txt"), encoding: .utf8))?
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let id = profileID ?? active, (try? ConfigStudioLaunch.validateProfileID(id)) != nil,
-              let data = try? Data(contentsOf: players.appendingPathComponent(id).appendingPathComponent("config_mp.cfg")) else { return nil }
+        // MARK: - ship-play: an older install can have chosen its display before named loadouts existed.
+        let path: URL
+        if let id = profileID ?? active {
+            guard (try? ConfigStudioLaunch.validateProfileID(id)) != nil else { return nil }
+            path = players.appendingPathComponent(id).appendingPathComponent("config_mp.cfg")
+        } else { path = home.appendingPathComponent("main/config_mp.cfg") }
+        guard let data = try? Data(contentsOf: path) else { return nil }
         return ConfigDocument(data: data, dialect: .cod2x)
     }
 }

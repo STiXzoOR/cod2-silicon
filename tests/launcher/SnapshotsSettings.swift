@@ -9,18 +9,18 @@ extension Snapshots {
     /// SetAbout), their states, this unit's sheets (captured as -sheet.png) and alerts. Light variants come with every run.
     static let settingsScreens = [
         "settings", "settings-running", "settings-original", "settings-original-missing",
-        "settings-display", "settings-display-windowed", "settings-display-restored",
+        "settings-display", "settings-display-adjusted", "settings-display-windowed", "settings-display-restored",
         "settings-game-data", "settings-game-data-missing", "settings-game-data-building", "settings-set-up-again",
         "settings-cod2x-installed", "settings-cod2x-downloading", "settings-cod2x-error", "settings-sheet-replace-key",
         "settings-privacy", "settings-privacy-sent", "settings-reports", "settings-delete-summaries",
         "settings-updates", "settings-updates-never", "settings-updates-checking", "settings-updates-offline",
         "settings-update", "settings-update-installing", "settings-update-error", "settings-sheet-whats-new",
         "settings-advanced", "settings-reset",
-        "about", "about-update", "settings-sheet-report", "settings-sheet-acknowledgement",
+        "about", "about-footer", "about-update", "settings-sheet-report", "settings-sheet-acknowledgement",
     ]
     /// Also rendered in the `--group pages` runs and read by `--accessibility`.
     static let settingsPageScreens = ["settings-invalid", "settings-save-error", "settings-legacy", "settings-legacy-custom"]
-    static let settingsAccessibilityScreens = ["settings", "settings-display", "settings-game-data", "settings-privacy", "settings-updates", "settings-advanced", "about"]
+    static let settingsAccessibilityScreens = ["settings", "settings-display", "settings-display-adjusted", "about-footer", "settings-game-data", "settings-privacy", "settings-updates", "settings-advanced", "about"]
     static let settingsLabels: [String: [String]] = [
         "settings-invalid": ["Extra launch options", "Your last valid options still apply"],
         "settings-legacy": ["125 frames per second", "Custom frame cap", "Game volume"],
@@ -28,12 +28,14 @@ extension Snapshots {
         "settings-save-error": ["Problem: Your changes couldn’t be saved", "Try Again"],
         "settings": ["General", "Display", "Game Data", "Privacy", "Updates", "Advanced", "About", "Game version",
                      "Hide CoD2 Silicon while the game is running", "Appearance", "Refresh the server list when Servers opens", "Open Configs"],
+        "settings-display-adjusted": ["Resolution changed from 6016 × 3384 to 5120 × 2880", "Larger sizes are sharper and slower"],
         "settings-display": ["Preview: the game fills the display", "Mode", "Resolution", "Vertical sync", "Restore Defaults"],
         "settings-game-data": ["Show in Finder", "Change…", "Replace…", "Rebuild", "Set Up Again…", "Game versions installed"],
         "settings-privacy": ["Send crash reports to CoD2 Silicon", "See What’s Sent…", "Send CoD2x crash reports to the CoD2x project",
                              "Match summaries", "Delete Summaries…", "Master servers"],
         "settings-updates": ["CoD2 Silicon 0.3.0 is up to date", "Check Now", "Check for updates automatically", "Release notes for every version"],
         "settings-advanced": ["Extra launch options, one per line", "Show in Finder", "Copy Last Game Log", "Reset Warnings", "Reset Settings…"],
+        "about-footer": ["Call of Duty is a registered trademark"],
         "about": ["CoD2 Silicon", "Copy Version Info", "Release Notes", "Website", "Report a Problem…", "Acknowledgements", "Check for Updates…"],
     ]
 }
@@ -42,6 +44,20 @@ extension Snapshots {
 /// quit, Reset Settings, Delete Summaries, the last game log, and the Settings window taking each pane's height.
 @MainActor enum SettingsChecks {
     static func pageActions(_ model: LauncherModel) async throws -> Bool {
+        // MARK: - ship-play: preserve pre-launcher choices until a named loadout takes ownership.
+        let legacyHome = model.home.appendingPathComponent("legacy-display-fixture")
+        defer { try? FileManager.default.removeItem(at: legacyHome) }
+        let legacyMain = legacyHome.appendingPathComponent("main")
+        try FileManager.default.createDirectory(at: legacyMain, withIntermediateDirectories: true)
+        try "seta r_mode \"1280x720\"\nseta r_monitor \"2\"\n".write(to: legacyMain.appendingPathComponent("config_mp.cfg"), atomically: true, encoding: .utf8)
+        let legacy = ConfigDocument.launchLoadout(home: legacyHome, profileID: nil)
+        guard legacy?.effectiveSetting(named: "r_mode") == "1280x720", legacy?.effectiveSetting(named: "r_monitor") == "2" else { return false }
+        let active = legacyMain.appendingPathComponent("players/Main")
+        try FileManager.default.createDirectory(at: active, withIntermediateDirectories: true)
+        try "Main".write(to: active.deletingLastPathComponent().appendingPathComponent("active.txt"), atomically: true, encoding: .utf8)
+        try "seta r_mode \"2560x1440\"\n".write(to: active.appendingPathComponent("config_mp.cfg"), atomically: true, encoding: .utf8)
+        guard ConfigDocument.launchLoadout(home: legacyHome, profileID: nil)?.effectiveSetting(named: "r_mode") == "2560x1440" else { return false }
+        print("PASS: legacy resolution and monitor survive import; the selected named loadout takes precedence")
         let saved = model.home.appendingPathComponent("launcher-settings.json")
         let cfg = model.home.appendingPathComponent("main/launcher.cfg")
         model.settings.vsync = true
@@ -69,6 +85,21 @@ extension Snapshots {
         NotificationCenter.default.post(name: NSApplication.willTerminateNotification, object: NSApp)
         guard try !JSONDecoder().decode(GameSettings.self, from: Data(contentsOf: saved)).vsync else { return false }
         print("PASS: debounced settings save to JSON and game config; invalid text keeps both last-valid files; +set lines saved as typed; termination flushes pending changes")
+
+        // MARK: - ship-play: hot-plug/monitor change normalizes the same saved and visible choice.
+        let oldDisplay = model.mainDisplay
+        model.mainDisplay = MainDisplay(name: "5K fixture", nativeWidth: 5120, nativeHeight: 2880, modes: [.init(3008,1692), .init(6016,3384)])
+        model.settings.resolution = "6016x3384"; model.normalizeResolution(); model.flushSettings()
+        guard model.settings.resolution == "5120x2880", model.resolutionAdjustment?.contains("5120 × 2880") == true,
+              !model.resolutionOptions.contains(where: { $0.value == "6016x3384" }),
+              try JSONDecoder().decode(GameSettings.self, from: Data(contentsOf: saved)).resolution == "5120x2880" else {
+            print("FAIL: changed display did not normalize the saved, shown and launch resolution together"); return false
+        }
+        model.mainDisplay = MainDisplay(name: "1080p fixture", nativeWidth: 1920, nativeHeight: 1080)
+        model.normalizeResolution(); model.flushSettings()
+        guard model.settings.resolution == "1920x1080" else { return false }
+        model.mainDisplay = oldDisplay; model.refreshDisplay(); model.resolutionAdjustment = nil
+        print("PASS: display change clamps and persists the effective resolution, removes oversized choices and explains the change")
 
         // Reset Settings: everything in the window goes back; the player's files stay.
         let demo = model.home.appendingPathComponent("main/demos/kept.dm_1")
@@ -115,6 +146,10 @@ extension Snapshots {
         try Data("----- Console log -----\n".utf8).write(to: log)
         guard model.lastGameLog()?.standardizedFileURL == log.standardizedFileURL else { print("FAIL: the last game log was not found"); return false }
         try FileManager.default.removeItem(at: log)
+        let session = try GameSessionLog(home: model.home)
+        try session.pipe.fileHandleForWriting.write(contentsOf: Data("Game started\n".utf8)); session.finish()
+        guard model.lastGameLog()?.standardizedFileURL == session.url.standardizedFileURL else { print("FAIL: retained session not used by Logs"); return false }
+        try FileManager.default.removeItem(at: session.url)
         print("PASS: the last game log is the game's newest log")
 
         // In the app, the Settings window takes each pane's height.

@@ -76,6 +76,9 @@ Launcher checks: `sh tests/launcher/run.sh`. This runs core, network, artwork,
 Config Studio, directory and match-summary tests, the font checksum check, a
 strict typecheck of the material branch under the current SDK, and real-window
 captures, accessibility checks and actions. The shape audit checks attached app sheets separately against their own window pixels.
+`capture-geometry.json` records the exact parent, child popover and captured union
+frames. The image-size check requires the parent’s fixed size and checks composite
+captures against that union; states without child windows keep their exact checks.
 Every page is captured in both
 appearances and at the minimum window size; Config Studio also covers accessibility
 display variants, inactive windows and sidebar resizing. The
@@ -121,7 +124,7 @@ reopening it reconnects to the exact running helper (bundle ID and executable pa
 than spawning another engine. Quitting while the game runs asks first: Quit Launcher
 Only, Quit Both or Cancel; a game that doesn't start gets a sheet that says why and
 offers the fix. A game crash
-leaves the launcher running and exposes any native crash report in the app home.
+leaves the launcher running and offers its game session log, falling back to a native crash report.
 There is one launcher window and one Settings window; Launch is guarded against duplicate children.
 
 The game app carries two engines built from the same sources: `cod2_macos` with CoD2x and
@@ -232,7 +235,7 @@ download or check until the new app is about to take the old one's place.
 
 Report a Problem opens GitHub's bug form in the browser, filled in by field id with the lines
 Copy Version Info copies (app version, game versions, macOS, Mac model, shaders, display; never the
-CD key or player name). With its switch on, the last game log (the console log, or the newest crash
+CD key or player name). With its switch on, the last game log (the retained session output, or an older console, crash
 or freeze report, shortened like a crash report) goes to the clipboard for the player to paste; the
 app itself sends nothing. Reset Settings returns `launcher-settings.json` to its defaults and leaves
 loadouts, demos, screenshots and the CD key alone. Delete Summaries removes
@@ -258,3 +261,35 @@ Lifecycle checks: `python3 tests/launcher/lifecycle.py` then
 and fake game archives/key in scratch homes, exercise real activation policies
 and Apple events, and unregister both test bundles. Media playback lists only
 the engine-supported `.dm_1` format.
+
+<!-- MARK: - ship-play -->
+Display sizes use `DisplayResolutions.offered(native:modes:)` in Core.swift: native
+pixels plus the engine’s standard sizes and fitting display modes, at least 640 × 480,
+deduplicated and sorted by width then height. MainDisplay uses the CoreGraphics
+native-mode flag, with rotation applied. If no native mode is advertised it uses
+desktop coordinates conservatively, never the scaled backing or the largest mode.
+Fullscreen follows the active loadout’s monitor choice; windowed uses the main display.
+Screen changes, loadout changes and launch refresh the list. Unsupported saved sizes
+are normalized and explained in Display; Home and Ready read that same setting.
+New installs use native dimensions through 3840 × 2160, half the dimensions above it.
+Old extra resolution options move to the Resolution control, which owns that choice.
+Trusted command-line options after `--` remain developer overrides.
+
+`GameSessionLog` drains stdout and stderr on a serial utility queue, filtering complete
+lines before any disk write. Credential labels, key checksum matches, join URLs,
+command lines and supplied passwords are removed; split writes and long lines cannot
+bypass filtering. The `logs` directory is mode 700 and time-named session files mode
+600. Retention is ten files and 20 MiB in total, reserving a new session’s 4 MiB limit
+when deleting oldest logs. After that session limit the reader continues draining;
+it does not stall the game. These session files are excluded from automatic crash
+report delivery. Advanced, failed-start details and the crash notice use them.
+If the launcher quits while the game keeps running, the retained log ends there.
+
+Check-up decodes optional schema-1 `hitchCount`, `hitchesOmitted`, `hitches` and
+`rendererActivity`. The bounded event list provides match times and durations;
+the maximum remains authoritative when a later worst event was omitted. Older
+summaries use `frameTimeMaxMS` without inventing counts or times. Renderer activity
+is decoded but not displayed. Shared JSON fixtures cover new and old summaries.
+About keeps the canvas spacing and all five real credit rows; a bottom fade indicates
+more content when scrolling is required.
+<!-- /ship-play -->

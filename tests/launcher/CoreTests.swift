@@ -2,6 +2,7 @@ import Foundation
 
 @main struct CoreTests {
     static func main() throws {
+        try displayResolutions()
         let fixtures = URL(fileURLWithPath: CommandLine.arguments[1])
         precondition(Dispatch.bundled.first?.title == "CoD2 Silicon 0.3.0", "bundled news must describe the shipping release")
         precondition(!Dispatch.bundled.contains { $0.summary.contains("Planned for 0.3") }, "future work has no promised version")
@@ -69,6 +70,7 @@ import Foundation
         precondition(plan.arguments.contains("\"/Game Data\""))
         precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 32))) == nil)
         precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 31))) != nil)
+        try sessionLogs(scratch: scratch)
         try engines(server: server, scratch: scratch)
         try cod2xFiles(scratch: scratch)
         try crashReporting(scratch: scratch)
@@ -710,5 +712,94 @@ extension CoreTests {
         legacy = Data(#"{"appearance":"sepia","dismissedWarnings":["switch-version"]}"#.utf8)
         decoded = try JSONDecoder().decode(GameSettings.self, from: legacy)
         precondition(decoded.appearance == .system && decoded.dismissedWarnings == [DismissibleWarning.switchVersion])
+    }
+}
+
+// MARK: - ship-play
+extension CoreTests {
+    static func displayResolutions() throws {
+        let expected = [
+            (DisplayResolution(5120, 2880), "640x480 800x600 1024x768 1280x720 1920x1080 2560x1440 3008x1692 3840x2160 5120x2880", "2560x1440"),
+            (DisplayResolution(6016, 3384), "640x480 800x600 1024x768 1280x720 1920x1080 2560x1440 3008x1692 3840x2160 5120x2880 6016x3384", "3008x1692"),
+            (DisplayResolution(1920, 1080), "640x480 800x600 1024x768 1280x720 1920x1080", "1920x1080"),
+            (DisplayResolution(3024, 1964), "640x480 800x600 1024x768 1280x720 1920x1080 2560x1440 3008x1692 3024x1964", "3024x1964")
+        ]
+        for (native, values, initial) in expected {
+            let list = DisplayResolutions.offered(native: native, modes: [])
+            precondition(list.map(\.value).joined(separator: " ") == values)
+            precondition(DisplayResolutions.initial(native: native) == initial)
+            let modes = [native, native, DisplayResolution(6016,3384), DisplayResolution(320,240),
+                         DisplayResolution(640,480), DisplayResolution(1600,1200), DisplayResolution(1600,900)]
+            let union = DisplayResolutions.offered(native: native, modes: modes)
+            precondition(union == Array(Set(union)).sorted() && union.allSatisfy { $0.fits(native) })
+            precondition(union.contains(DisplayResolution(1600,900)))
+            precondition(union.contains(DisplayResolution(1600,1200)) == (native.height >= 1200))
+            precondition(DisplayResolutions.fitting("6016x3384", in: list) == native.value)
+            precondition(DisplayResolutions.fitting("1280x720", in: list) == "1280x720", "A player's supported choice stays")
+            print("PASS: display \(native.value): \(values); first run \(initial)")
+        }
+        let scaled = DisplayResolutions.offered(native: .init(5120,2880), modes: [.init(3008,1692), .init(6016,3384)])
+        precondition(!scaled.contains(.init(6016,3384)) && scaled.last?.value == "5120x2880", "Scaled backing cannot raise the native limit")
+        let narrow = DisplayResolutions.offered(native: .init(1920,1080), modes: [.init(1600,1200)])
+        precondition(!narrow.contains(.init(1600,1200)), "Both dimensions must fit")
+        var older = try JSONDecoder().decode(GameSettings.self, from: Data(#"{"resolution":"3024x1964"}"#.utf8))
+        let notebookConfig = try older.config()
+        precondition(notebookConfig.contains("3024x1964"), "Native notebook sizes are valid settings")
+        older.resolution = "1920x1080;quit"
+        precondition((try? older.config()) == nil, "Resolution validation still blocks commands")
+    }
+}
+
+// MARK: - ship-play
+extension CoreTests {
+    static func sessionLogs(scratch: URL) throws {
+        let home = scratch.appendingPathComponent("session-logs")
+        let log = try GameSessionLog(home: home, password: "fixture-secret")
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", "printf 'Starting game\\n'; printf 'CoD2 slow frame: 373 ms\\n' >&2; printf 'pass'; printf 'word fixture-secret\\n'; printf '0000-0000-0000-0000-86D3\\n' >&2; printf 'unlabelled fixture-secret\\n'; printf 'final line' >&2; exit 7"]
+        process.standardOutput = log.pipe; process.standardError = log.pipe
+        try process.run(); log.closeParentWriter(); process.waitUntilExit(); log.finish()
+        let text = try String(contentsOf: log.url, encoding: .utf8)
+        precondition(process.terminationStatus == 7 && text.contains("Starting game") && text.contains("373 ms") && text.contains("final line"))
+        precondition(!text.contains("fixture-secret") && !text.contains("86D3") && !text.contains("0000"), "Filter before disk, across writes and streams")
+        for file in [log.url, home.appendingPathComponent("logs")] {
+            let attrs = try FileManager.default.attributesOfItem(atPath: file.path)
+            precondition((attrs[.posixPermissions] as? NSNumber)?.intValue == (file == log.url ? 0o600 : 0o700))
+        }
+        precondition(GameSessionLog.filtered("\\password\\secret").contains("omitted"))
+        precondition(GameSessionLog.filtered("OOB Print: getKeyAuthorize 0 ABCDEFGHIJKLMNOP PB digest").contains("omitted"))
+        precondition(GameSessionLog.filtered("OOB Print: getchallenge 0 key-digest").contains("omitted"))
+        precondition(!GameSessionLog.filtered("+set password secret").contains("secret"))
+        for index in 1...12 {
+            let session = try GameSessionLog(home: home, now: Date().addingTimeInterval(Double(index)))
+            try session.pipe.fileHandleForWriting.write(contentsOf: Data("session \(index)\n".utf8))
+            session.finish()
+        }
+        precondition(GameSessionLog.files(home: home).count == 10 && !FileManager.default.fileExists(atPath: log.url.path))
+        let bounded = try GameSessionLog(home: home, now: Date().addingTimeInterval(20))
+        let chunk = Data((String(repeating: "x", count: 1023) + "\n").utf8)
+        for _ in 0..<5000 { try bounded.pipe.fileHandleForWriting.write(contentsOf: chunk) }
+        bounded.finish()
+        let size = try bounded.url.resourceValues(forKeys: [.fileSizeKey]).fileSize!
+        precondition(size <= GameSessionLog.fileLimit)
+        let contents = try String(contentsOf: bounded.url, encoding: .utf8)
+        precondition(contents.contains("limit; later output omitted"))
+        // Old sessions exceeding the total allowance are removed, even if there are fewer than ten.
+        for url in GameSessionLog.files(home: home).prefix(6) { try Data(repeating: 65, count: 4 * 1024 * 1024).write(to: url) }
+        let rotated = try GameSessionLog(home: home, now: Date().addingTimeInterval(30)); rotated.finish()
+        let bytes = try GameSessionLog.files(home: home).reduce(0) { try $0 + $1.resourceValues(forKeys: [.fileSizeKey]).fileSize! }
+        precondition(bytes <= GameSessionLog.totalLimit - GameSessionLog.fileLimit)
+        let unsafeHome = scratch.appendingPathComponent("unsafe-logs")
+        try FileManager.default.createDirectory(at: unsafeHome, withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: unsafeHome.appendingPathComponent("logs"), withDestinationURL: home)
+        precondition((try? GameSessionLog(home: unsafeHome)) == nil, "Never follow a logs-folder symlink")
+        let disconnected = try GameSessionLog(home: scratch.appendingPathComponent("disconnected-log"))
+        let child = Process(); child.executableURL = URL(fileURLWithPath: "/bin/sh")
+        child.arguments = ["-c", "sleep 0.2; printf after; exit 7"]
+        child.standardOutput = disconnected.pipe; child.standardError = disconnected.pipe
+        try child.run(); disconnected.closeParentWriter(); disconnected.finish(); child.waitUntilExit()
+        precondition(child.terminationReason == .exit && child.terminationStatus == 7, "Closing the log reader must not kill the game with SIGPIPE")
+        print("PASS: session stdout/stderr and failed exit retained; split credentials filtered before disk; owner-only files; ten-session and byte limits; symlinks refused")
     }
 }

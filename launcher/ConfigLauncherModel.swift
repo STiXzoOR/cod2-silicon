@@ -36,6 +36,7 @@ import UniformTypeIdentifiers
     func useLoadoutForNextGame(_ id: String) {
         guard studio.session != nil, !studio.isReadOnly else { return }
         studio.select(id); studio.useForNextGame()
+        refreshDisplay()
     }
     /// Loadout › New Loadout… (⌘N): the New Loadout sheet over Configs.
     func newLoadout() {

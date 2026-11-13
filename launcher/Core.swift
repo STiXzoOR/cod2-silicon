@@ -935,7 +935,6 @@ struct GameSettings: Codable, Sendable, Equatable {
     /// “Don’t ask again” choices by key (`DismissibleWarning`); Advanced › Reset Warnings clears them.
     var dismissedWarnings: Set<String> = []
     // MARK: - end ship-settings
-    static let resolutions = ["1280x720", "1920x1080", "2560x1440", "3008x1692", "3840x2160", "5120x2880", "6016x3384"]
     static let anisotropyLevels = [2, 4, 8, 16]
     var cm360: Double? { MouseMath.centimetresPer360(dpi: dpi, sensitivity: sensitivity) }
     init() {}
@@ -984,7 +983,7 @@ struct GameSettings: Codable, Sendable, Equatable {
         value.utf8.count <= 512 && !value.unicodeScalars.contains { $0.value < 32 || $0.value == 127 || "\";\\+".unicodeScalars.contains($0) }
     }
     func dvars() throws -> [(String, String)] {
-        guard Self.resolutions.contains(resolution), ["exclusive", "borderless", "spaces", "windowed"].contains(fullscreen),
+        guard DisplayResolution(resolution) != nil, ["exclusive", "borderless", "spaces", "windowed"].contains(fullscreen),
               (0...1000).contains(fps), sensitivity.isFinite, (0.01...100).contains(sensitivity), volume.isFinite, (0...1).contains(volume),
               Self.anisotropyLevels.contains(anisotropy) else {
             throw LauncherError(message: "Choose a valid resolution, frame cap (0–1000, where 0 is no cap), sensitivity, volume and filtering level.")
@@ -998,7 +997,7 @@ struct GameSettings: Codable, Sendable, Equatable {
             let pair = Self.advancedPair(line)
             let name = pair?.0 ?? ""
             guard let pair, name.range(of: "^[A-Za-z_][A-Za-z0-9_]{0,63}$", options: .regularExpression) != nil,
-                  !["fs_basepath", "fs_homepath", "password", "cl_cdkey", "cdkey", "dpi", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "cl_matchsummaries"].contains(name.lowercased()),
+                  !["r_mode", "fs_basepath", "fs_homepath", "password", "cl_cdkey", "cdkey", "dpi", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "cl_matchsummaries"].contains(name.lowercased()),
                   !name.lowercased().contains("password"), !name.lowercased().contains("codkey") else {
                 throw LauncherError(message: "Advanced options use one “dvar value” per line. Paths, credentials and upcoming renderer options are managed separately.")
             }
@@ -1063,5 +1062,166 @@ struct LauncherLibrary: Codable {
     mutating func joined(_ address: String) {
         recent.removeAll { $0 == address }; recent.insert(address, at: 0); recent = Array(recent.prefix(30))
         played[address] = Date(); played = played.filter { recent.contains($0.key) }
+    }
+}
+
+// MARK: - ship-play: display-derived render sizes
+/// Pixel dimensions, independent of AppKit points and the desktop's scaled backing.
+struct DisplayResolution: Hashable, Comparable, Sendable {
+    let width: Int
+    let height: Int
+    init(_ width: Int, _ height: Int) { self.width = width; self.height = height }
+    init?(_ value: String) {
+        let parts = value.split(separator: "x", omittingEmptySubsequences: false)
+        guard parts.count == 2, let width = Int(parts[0]), let height = Int(parts[1]),
+              (640...32768).contains(width), (480...32768).contains(height), value == "\(width)x\(height)" else { return nil }
+        self.init(width, height)
+    }
+    var value: String { "\(width)x\(height)" }
+    func fits(_ size: Self) -> Bool { width <= size.width && height <= size.height }
+    static func < (lhs: Self, rhs: Self) -> Bool { lhs.width == rhs.width ? lhs.height < rhs.height : lhs.width < rhs.width }
+}
+
+enum DisplayResolutions {
+    /// Matches MacPlatform_BuildModeNames. Mode sizes are display coordinates (as SDL reports them),
+    /// while native is the native-flagged CoreGraphics mode's pixel size, never its scaled backing.
+    static func offered(native: DisplayResolution, modes: [DisplayResolution]) -> [DisplayResolution] {
+        let standard = [(640,480), (800,600), (1024,768), (1280,720), (1920,1080), (2560,1440),
+                        (3008,1692), (3840,2160), (5120,2880), (6016,3384)].map(DisplayResolution.init)
+        return Set(standard + modes + [native]).filter {
+            $0.width >= 640 && $0.height >= 480 && $0.fits(native)
+        }.sorted()
+    }
+    static func fitting(_ saved: String, in sizes: [DisplayResolution]) -> String {
+        guard let requested = DisplayResolution(saved) else { return sizes.first?.value ?? "640x480" }
+        return sizes.last(where: { $0.fits(requested) })?.value ?? sizes.first?.value ?? "640x480"
+    }
+    static func initial(native: DisplayResolution) -> String {
+        native.fits(DisplayResolution(3840, 2160)) ? native.value : DisplayResolution(native.width / 2, native.height / 2).value
+    }
+}
+
+// MARK: - ship-play: private, bounded game output
+/// A serial reader drains both game streams without blocking the UI. Only complete, filtered lines reach disk.
+/// Mutable state and the file handle belong to `queue`; the pipe is configured before Process.run().
+final class GameSessionLog: @unchecked Sendable {
+    static let sessionLimit = 10
+    static let fileLimit = 4 * 1024 * 1024
+    static let totalLimit = 20 * 1024 * 1024
+    let url: URL
+    let pipe = Pipe()
+    private let queue = DispatchQueue(label: "CoD2Silicon.game-log", qos: .utility)
+    private let handle: FileHandle
+    private var source: DispatchSourceRead?
+    private var pending = Data()
+    private var droppingLine = false
+    private var written = 0
+    private var finished = false
+    private var secrets: Set<String>
+
+    init(home: URL, password: String? = nil, now: Date = Date()) throws {
+        secrets = Set([password].compactMap { $0 }.filter { !$0.isEmpty })
+        let folder = home.appendingPathComponent("logs", isDirectory: true)
+        try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
+        if mkdir(folder.path, 0o700) != 0 && errno != EEXIST { throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno)) }
+        let directory = open(folder.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW)
+        guard directory >= 0 else { throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno)) }
+        defer { close(directory) }
+        guard fchmod(directory, 0o700) == 0 else { throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno)) }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let timestamp = formatter.string(from: now).replacingOccurrences(of: ":", with: "-")
+        let name = "game-\(timestamp)-\(UUID().uuidString.prefix(8)).log"
+        url = folder.appendingPathComponent(name)
+        let fd = openat(directory, name, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600)
+        guard fd >= 0 else { throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno)) }
+        handle = FileHandle(fileDescriptor: fd, closeOnDealloc: true)
+        Self.prune(home: home, keeping: url)
+        // Foundation resets signal dispositions on spawn. This descriptor flag survives dup/exec:
+        // quitting or force-quitting the launcher must not kill the game with SIGPIPE.
+        guard fcntl(pipe.fileHandleForWriting.fileDescriptor, F_SETNOSIGPIPE, 1) == 0 else {
+            throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno))
+        }
+        let input = pipe.fileHandleForReading.fileDescriptor
+        _ = fcntl(input, F_SETFL, fcntl(input, F_GETFL) | O_NONBLOCK)
+        let reader = DispatchSource.makeReadSource(fileDescriptor: input, queue: queue)
+        source = reader
+        reader.setEventHandler { [weak self] in self?.drain() }
+        reader.resume()
+    }
+    /// Call immediately after Process.run(), also on its failure path, so EOF isn't held open by the launcher.
+    func closeParentWriter() { try? pipe.fileHandleForWriting.close() }
+    func protect(password: String?) {
+        guard let password, !password.isEmpty else { return }
+        queue.sync { _ = secrets.insert(password) }
+    }
+    func finish() {
+        closeParentWriter()
+        queue.sync {
+            guard !finished else { return }
+            drain()
+            if !pending.isEmpty && !droppingLine { writeLine(pending) }
+            pending.removeAll(); finished = true
+            source?.cancel(); source = nil
+            try? pipe.fileHandleForReading.close()
+            try? handle.close()
+        }
+    }
+    deinit { finish() }
+    private func drain() {
+        guard !finished else { return }
+        var bytes = [UInt8](repeating: 0, count: 8192)
+        while true {
+            let count = read(pipe.fileHandleForReading.fileDescriptor, &bytes, bytes.count)
+            if count <= 0 { return }
+            for byte in bytes.prefix(count) {
+                if byte == 10 {
+                    if droppingLine { writeLine(Data("[Long output line omitted]".utf8)) }
+                    else { writeLine(pending) }
+                    pending.removeAll(keepingCapacity: true); droppingLine = false
+                } else if !droppingLine {
+                    if pending.count < 16_384 { pending.append(byte) }
+                    else { pending.removeAll(keepingCapacity: true); droppingLine = true }
+                }
+            }
+        }
+    }
+    private func writeLine(_ bytes: Data) {
+        guard written < Self.fileLimit else { return }
+        let line = Self.filtered(String(decoding: bytes, as: UTF8.self), secrets: secrets) + "\n"
+        let data = Data(line.utf8)
+        if written + data.count > Self.fileLimit - 64 {
+            try? handle.write(contentsOf: Data("[Session log reached its 4 MiB limit; later output omitted.]\n".utf8))
+            written = Self.fileLimit
+        } else {
+            try? handle.write(contentsOf: data); written += data.count
+        }
+    }
+    static func filtered(_ line: String, secrets: Set<String> = []) -> String {
+        let plain = QuakeColors.plain(line).lowercased()
+        // showpackets can echo an authorization packet containing a key without its checksum.
+        let sensitive = ["password", "passwd", "cdkey", "codkey", "cd key", "cd-key", "rcon", "authorization", "getkeyauthorize", "getchallenge", "userinfo", "cod2x://", "cod2://"]
+        if sensitive.contains(where: plain.contains) || secrets.contains(where: line.contains) || CrashReporting.containsKey(line) {
+            return "[Private connection or key details omitted]"
+        }
+        return (try? CrashReporting.redact(line)) ?? "[Private details omitted]"
+    }
+    static func files(home: URL) -> [URL] {
+        let folder = home.appendingPathComponent("logs")
+        guard let facts = try? folder.resourceValues(forKeys: [.isSymbolicLinkKey]), facts.isSymbolicLink != true else { return [] }
+        return ((try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])) ?? []).filter {
+            guard $0.lastPathComponent.hasPrefix("game-"), $0.pathExtension == "log",
+                  let facts = try? $0.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey]) else { return false }
+            return facts.isRegularFile == true && facts.isSymbolicLink != true
+        }.sorted { $0.lastPathComponent > $1.lastPathComponent }
+    }
+    static func latest(home: URL) -> URL? { files(home: home).first }
+    private static func prune(home: URL, keeping current: URL) {
+        var count = 1, bytes = fileLimit // Reserve the new session's full allowance while it is running.
+        for file in files(home: home) where file.lastPathComponent != current.lastPathComponent {
+            let size = (try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+            if count >= sessionLimit || size > totalLimit - bytes { try? FileManager.default.removeItem(at: file) }
+            else { count += 1; bytes += size }
+        }
     }
 }

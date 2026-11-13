@@ -11,6 +11,12 @@ apphome.mkdir(parents=True,exist_ok=True)
 (apphome/'launcher-settings.json').write_text('{"advanced":"net_port 29973"}')
 exitfile=apphome/'exit-fixture';exitfile.unlink(missing_ok=True)
 log=out/'cold-console.log';log.write_text('')
+# MARK: - ship-play: the fixture receipt survives loss of the launcher log reader.
+fixture_events = apphome / 'fixture-events.log'
+fixture_events.unlink(missing_ok=True)
+def output_text():
+    return (log.read_text(errors='replace') if log.exists() else '') + (fixture_events.read_text(errors='replace') if fixture_events.exists() else '')
+
 environment={'CFFIXED_USER_HOME':str(home),'HOME':str(home),'COD2_SETUP_NONINTERACTIVE':'1','COD2_SETUP_CD_KEY':'000000000000000086D3','WS25_FIXTURE_HOME':str(apphome)}
 command=['open','-n','-a',str(app),'--stdout',str(log),'--stderr',str(log)]
 for key,value in environment.items():command += ['--env',key+'='+value]
@@ -21,10 +27,10 @@ try:
     def wait(predicate):
         deadline=time.monotonic()+30
         while not predicate():
-            assert time.monotonic()<deadline,log.read_text(errors='replace')
+            assert time.monotonic()<deadline,output_text()
             time.sleep(.05)
-    wait(lambda:'fixture link localhost:28966' in log.read_text(errors='replace'))
-    child=int(re.search(r'fixture ready (\d+)',log.read_text()).group(1))
+    wait(lambda:'fixture link localhost:28966' in output_text())
+    child=int(re.search(r'fixture ready (\d+)',output_text()).group(1))
     launcher=int(subprocess.check_output([str(fixture),'find','io.github.stixzoor.cod2silicon.ws25fixture'],text=True).strip())
     # Another process sees activation-policy changes asynchronously, so wait for each state.
     policy=lambda:subprocess.check_output([str(fixture),'policy',str(launcher)],text=True).strip()
@@ -34,10 +40,10 @@ try:
     arguments=subprocess.check_output(['ps','-p',str(child),'-o','args='],text=True)
     assert 'p+quit' not in arguments and ' password ' not in arguments
     exitfile.touch()
-    wait(lambda:'returned to launcher (game exit 37)' in log.read_text(errors='replace'))
+    wait(lambda:'returned to launcher (game exit 37)' in output_text())
     wait(lambda:visible()>0 and policy()=='0')
     # A reused scratch home exercises a cold link once setup is complete: it starts one game only.
-    assert log.read_text(errors='replace').count('game started')==1
+    assert output_text().count('game started')==1
     print('PASS: actual cold LaunchServices cod2x delivery, scratch onboarding, native-valid plus password deferred without argv exposure, game→launcher')
 finally:
     for pid in [launcher,child]:

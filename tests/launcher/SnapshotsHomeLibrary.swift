@@ -4,7 +4,7 @@ import SwiftUI
 // Review harness, owner ship-home-library. Home and Library screens and the Library part of the page actions.
 
 extension Snapshots {
-    static let homeLibraryScreens = ["home", "home-first", "home-address", "home-attention", "home-running", "home-crash", "home-matches-off",
+    static let homeLibraryScreens = ["home", "home-first", "home-address", "home-attention", "home-running", "home-crash", "home-crash-log", "home-matches-off",
                                      "library-matches", "library-demos", "library-screenshots"]
     /// Also rendered in the `--group pages` runs and read by `--accessibility`.
     static let homeLibraryPageScreens = ["home-update", "home-update-installing", "home-crash-sent", "home-crash-not-sent",
@@ -12,7 +12,7 @@ extension Snapshots {
                                          "library-screenshots-selected", "library-empty", "library-empty-screenshots", "library-reloaded",
                                          "library-error", "library-renaming", "library-rename-error", "library-trash", "library-running", "library-missing",
                                          "library-trashed", "home-loadout", "home-loadout-unreadable"]
-    static let homeLibraryAccessibilityScreens = ["home", "home-first", "home-address", "home-attention", "home-running", "home-matches-off",
+    static let homeLibraryAccessibilityScreens = ["home", "home-crash-log", "home-first", "home-address", "home-attention", "home-running", "home-matches-off",
                                                   "library-matches", "library-demos", "library-screenshots"]
     static let homeLibraryLabels: [String: [String]] = [
         "home": ["Launch on Northern Lights | Public", "Find a Server", "Jump back in", "All Recent", "Launch on Sunday Rifles · EU",
@@ -20,6 +20,7 @@ extension Snapshots {
         "home-first": ["Find a Server", "Open Game Menu", "NOTHING PLAYED YET", "NOT MEASURED YET"],
         "home-address": ["Launch on 203.0.113.77:28960", "203.0.113.77:28960, Joined by address"],
         "home-attention": ["Approximate shaders. Build the original shaders"],
+        "home-crash-log": ["Show Game Log"],
         "home-running": ["Return to Game", "Quit Game"],
         "home-matches-off": ["MATCH SUMMARIES ARE OFF", "Turn On in Settings…"],
         "home-update": ["What’s New", "Install Update"],

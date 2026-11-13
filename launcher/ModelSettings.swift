@@ -9,28 +9,33 @@ import IOKit
 /// Which step of an update failed, so Updates says which and Try Again repeats it.
 enum UpdateStage: Equatable, Sendable { case check, install }
 
-/// The Mac's main display (the one with the menu bar). The game always opens full screen there: the engine
-/// takes its modes from SDL's first display, so Display names it rather than offering a choice.
+// MARK: - ship-play
+/// The display the game uses. CoreGraphics display order follows SDL's macOS enumeration.
 struct MainDisplay: Equatable, Sendable {
     var name: String
-    /// The panel's own resolution in pixels (0 when macOS doesn't say).
     var nativeWidth: Int
     var nativeHeight: Int
-    @MainActor static func current() -> MainDisplay? {
-        guard let screen = NSScreen.screens.first,
-              let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else { return nil }
-        let id = CGDirectDisplayID(number.uint32Value)
-        var width = 0, height = 0
+    var modes: [DisplayResolution] = []
+    var nativeKnown = true
+    var native: DisplayResolution { .init(nativeWidth, nativeHeight) }
+    var resolutions: [DisplayResolution] { DisplayResolutions.offered(native: native, modes: modes) }
+    @MainActor static func current(monitor: Int = 0) -> MainDisplay? {
+        var ids = [CGDirectDisplayID](repeating: 0, count: 32), count: UInt32 = 0
+        guard CGGetActiveDisplayList(32, &ids, &count) == .success, count > 0 else { return nil }
+        let index = monitor > 0 && monitor <= Int(count) ? monitor - 1 : 0
+        let id = ids[index]
+        let screen = NSScreen.screens.first { ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value == id }
         let options = [kCGDisplayShowDuplicateLowResolutionModes as String: true] as CFDictionary
-        if let modes = CGDisplayCopyAllDisplayModes(id, options) as? [CGDisplayMode] {
-            // IOKit's kDisplayModeNativeFlag (0x02000000) marks the panel's own resolution.
-            if let native = modes.first(where: { $0.ioFlags & 0x0200_0000 != 0 }) { width = native.pixelWidth; height = native.pixelHeight }
-            else if let largest = modes.max(by: { $0.pixelWidth * $0.pixelHeight < $1.pixelWidth * $1.pixelHeight }) {
-                width = largest.pixelWidth; height = largest.pixelHeight
-            }
-        }
-        if width == 0, let mode = CGDisplayCopyDisplayMode(id) { width = mode.pixelWidth; height = mode.pixelHeight }
-        return MainDisplay(name: screen.localizedName, nativeWidth: width, nativeHeight: height)
+        let modes = CGDisplayCopyAllDisplayModes(id, options) as? [CGDisplayMode] ?? []
+        let rotated = [90, 270].contains(Int(CGDisplayRotation(id)))
+        func size(_ width: Int, _ height: Int) -> DisplayResolution { rotated ? .init(height, width) : .init(width, height) }
+        // No native flag: use desktop coordinates conservatively, never a scaled backing or largest mode.
+        let native = modes.filter { $0.ioFlags & 0x0200_0000 != 0 }
+            .map { size($0.pixelWidth, $0.pixelHeight) }.max()
+        let desktop = CGDisplayBounds(id).size
+        let limit = native ?? .init(Int(desktop.width), Int(desktop.height))
+        return MainDisplay(name: screen?.localizedName ?? "Display \(index + 1)", nativeWidth: limit.width, nativeHeight: limit.height,
+                           modes: modes.filter { $0.isUsableForDesktopGUI() }.map { size($0.width, $0.height) }, nativeKnown: native != nil)
     }
 }
 
@@ -110,6 +115,7 @@ extension KeyStore {
         for (index, line) in text.components(separatedBy: "\n").enumerated() where !line.trimmingCharacters(in: .whitespaces).isEmpty {
             candidate.advanced = line
             guard (try? candidate.launchConfig(migrated: configStudio?.migrationCompleted == true)) != nil else {
+                if GameSettings.advancedPair(line)?.0.lowercased() == "r_mode" { advancedError = "Choose the resolution in Settings › Display."; return }
                 advancedError = "Line \(index + 1) can’t be used. Enter one setting and its value, without quotes or semicolons. Paths, passwords and your CD key are set by the app."
                 return
             }
@@ -178,52 +184,64 @@ extension KeyStore {
     func openConfigs() { showMainWindow(); navigate(to: .configs) }
 
     // MARK: Display
+    // MARK: - ship-play
+    /// r_monitor is a loadout setting; an explicit fullscreen monitor follows that loadout.
+    var gameMonitor: Int {
+        guard (try? settings.dvars())?.last(where: { $0.0.lowercased() == "r_fullscreen" })?.1 != "0" else { return 0 }
+        let loadout = ConfigDocument.launchLoadout(home: home, profileID: serverConnection.profileID)
+        let advanced = settings.advanced.components(separatedBy: "\n").compactMap(GameSettings.advancedPair)
+            .last { $0.0.lowercased() == "r_monitor" }?.1
+        let value = usesLoadouts ? loadout?.effectiveSetting(named: "r_monitor") : advanced ?? loadout?.effectiveSetting(named: "r_monitor")
+        return Int(value ?? "0") ?? 0
+    }
     func refreshDisplay() {
-        guard !snapshot else { if mainDisplay == nil { mainDisplay = MainDisplay(name: "Built-in Liquid Retina XDR Display", nativeWidth: 3456, nativeHeight: 2234) }; return }
-        mainDisplay = MainDisplay.current()
-        if displayObserver == nil {
-            displayObserver = NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.mainDisplay = MainDisplay.current() }
-            }
+        if snapshot {
+            if mainDisplay == nil { mainDisplay = MainDisplay(name: "Built-in Liquid Retina XDR Display", nativeWidth: 3456, nativeHeight: 2234, modes: [.init(1728, 1117)]) }
+        } else { mainDisplay = MainDisplay.current(monitor: gameMonitor) }
+        normalizeResolution()
+        guard !snapshot, displayObserver == nil else { return }
+        displayObserver = NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.refreshDisplay() }
         }
     }
-    /// The sizes the game always accepts (its own list) that fit the main display, plus the one chosen now.
+    func normalizeResolution() {
+        guard let display = mainDisplay else { return }
+        let previous = settings.resolution
+        let actual = DisplayResolutions.fitting(previous, in: display.resolutions)
+        guard previous != actual else { return }
+        settings.resolution = actual
+        resolutionAdjustment = "Resolution changed from \(SettingsText.resolution(previous)) to \(SettingsText.resolution(actual)) to fit this display."
+    }
     var resolutionOptions: [(value: String, title: String)] {
-        var values = GameSettings.resolutions.filter { value in
-            guard let display = mainDisplay, display.nativeWidth > 0, let size = SettingsText.size(value) else { return true }
-            return size.width <= display.nativeWidth && size.height <= display.nativeHeight
-        }
-        if !values.contains(settings.resolution) { values.append(settings.resolution) }
-        let area = { (value: String) -> Int in SettingsText.size(value).map { $0.width * $0.height } ?? 0 }
-        return values.sorted { area($0) < area($1) }.map { ($0, resolutionTitle($0)) }
+        (mainDisplay?.resolutions ?? [.init(640, 480)]).map { ($0.value, resolutionTitle($0.value)) }
     }
     func resolutionTitle(_ value: String) -> String {
-        var text = SettingsText.resolution(value)
-        if let display = mainDisplay, display.nativeWidth > 0, let size = SettingsText.size(value) {
-            if size.width == display.nativeWidth && size.height == display.nativeHeight { text += " · Native" }
-            else if size.width > display.nativeWidth || size.height > display.nativeHeight { text += " · Larger than this display" }
-        }
-        return text
+        SettingsText.resolution(value) + (mainDisplay?.nativeKnown == true && value == mainDisplay?.native.value ? " · Native" : "")
+    }
+    var resolutionHelp: String {
+        let own = mainDisplay.map { $0.nativeKnown ? " This display’s own size is \(SettingsText.resolution($0.native.value)) pixels." : " macOS hasn’t reported this display’s native size." } ?? ""
+        return "Larger sizes are sharper and slower; anti-aliasing multiplies the work." + own
     }
     static let displayModes: [(value: String, title: String)] = [("borderless", "Borderless"), ("exclusive", "Full Screen"), ("spaces", "macOS Full Screen"), ("windowed", "Window")]
     static func displayModeDetail(_ mode: String) -> String {
         switch mode {
-        case "borderless": "Borderless fills the screen and switches apps instantly."
+        case "borderless": "Borderless stretches the picture to the desktop and switches apps instantly; Full Screen shows it pixel for pixel."
         case "spaces": "macOS full screen gives the game its own Space, which Game Mode needs."
         case "windowed": "A window at the chosen size, beside your other apps."
-        default: "Full screen switches the display to the chosen resolution. Switching apps takes a moment."
+        default: "Full Screen shows the chosen size pixel for pixel; switching apps takes a moment. Borderless stretches it to the desktop."
         }
     }
     /// What a new install starts with (this app's own defaults, then the built-in ones).
     var defaultSettings: GameSettings {
         var defaults = GameSettings()
-        if let resolution = Bundle.main.object(forInfoDictionaryKey: "CoD2DefaultResolution") as? String { defaults.resolution = resolution }
+        if let display = mainDisplay { defaults.resolution = DisplayResolutions.initial(native: display.native) }
         if let mode = Bundle.main.object(forInfoDictionaryKey: "CoD2DefaultFullscreen") as? String { defaults.fullscreen = mode }
         return defaults
     }
     /// Display › Restore Defaults: everything the Display pane shows. Returns what it replaced, for Undo.
     @discardableResult func restoreDisplayDefaults() -> GameSettings {
         let previous = settings, defaults = defaultSettings
+        resolutionAdjustment = nil
         var restored = settings
         restored.resolution = defaults.resolution; restored.fullscreen = defaults.fullscreen
         restored.vsync = defaults.vsync; restored.anisotropy = defaults.anisotropy
@@ -428,9 +446,9 @@ extension KeyStore {
     }
 
     // MARK: Advanced
-    /// The newest file the game wrote about a run: its console log (when `logfile` is on in Advanced) or a
-    /// crash or freeze report. The game writes nothing else; the launcher keeps no log of its own.
+    /// The newest retained session, falling back to reports from older builds.
     func lastGameLog() -> URL? {
+        if let session = GameSessionLog.latest(home: home) { return session }
         let files = [home.appendingPathComponent("main/console_mp.log")] + CrashReports.all(in: home, since: .distantPast)
         func modified(_ url: URL) -> Date? {
             guard let values = try? url.resourceValues(forKeys: [.isRegularFileKey, .contentModificationDateKey]), values.isRegularFile == true else { return nil }
@@ -443,7 +461,7 @@ extension KeyStore {
     @discardableResult func copyLastGameLog() -> (text: String, copied: Bool) {
         guard !snapshot else { return ("Copied the crash report from today at 14:02.", true) }
         guard let log = lastGameLog(), let handle = try? FileHandle(forReadingFrom: log) else {
-            return ("There’s no game log yet. The game writes one when it crashes or freezes, or every time when logfile 1 is in your extra launch options.", false)
+            return ("There’s no game log yet. Launch the game once, then try again.", false)
         }
         defer { try? handle.close() }
         let size = (try? handle.seekToEnd()) ?? 0
@@ -456,7 +474,7 @@ extension KeyStore {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
         let modified = (try? log.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date()
-        let kind = log.lastPathComponent.hasPrefix("console") ? "the game’s console log" : log.lastPathComponent.contains("freeze") ? "the freeze report" : "the crash report"
+        let kind = log.lastPathComponent.hasPrefix("game-") ? "the game log" : log.lastPathComponent.hasPrefix("console") ? "the game’s console log" : log.lastPathComponent.contains("freeze") ? "the freeze report" : "the crash report"
         return ("Copied \(kind) from \(SettingsText.when(modified)).", true)
     }
     /// Settings › Advanced › Reset Settings…, behind its alert.
@@ -674,6 +692,10 @@ extension KeyStore {
         refreshDisplay(); refreshGameData()
         switch screen {
         case "settings": settingsPane = .general
+        case "settings-display-adjusted":
+            settingsPane = .display
+            mainDisplay = MainDisplay(name: "5K display", nativeWidth: 5120, nativeHeight: 2880, modes: [.init(3008, 1692), .init(6016, 3384)])
+            settings.resolution = "6016x3384"; normalizeResolution(); savedSettings = settings
         case "settings-display": settingsPane = .display; settings.resolution = "2560x1440"; savedSettings = settings
         case "settings-display-restored": settingsPane = .display; settingsFeedback = .init(pane: .display, text: "Defaults restored.", undo: true)
         case "settings-display-windowed": settingsPane = .display; settings.fullscreen = "windowed"; settings.resolution = "1920x1080"; savedSettings = settings
@@ -702,7 +724,7 @@ extension KeyStore {
             settings.dismissedWarnings = [DismissibleWarning.switchVersion]; savedSettings = settings
         case "settings-reset": settingsPane = .advanced; settingsConfirmation = ConfirmationRequest(title: "Reset launcher settings?",
             message: "Everything in the Settings window goes back to how it started. Loadouts, demos, screenshots and your CD key stay.", actionTitle: "Reset Settings") {}
-        case "about": settingsPane = .about
+        case "about", "about-footer": settingsPane = .about
         case "settings-sheet-replace-key": settingsPane = .gameData; settingsSheet = .replaceKey
         case "settings-sheet-report": settingsPane = .about; settingsSheet = .reportProblem
         case "settings-sheet-acknowledgement": settingsPane = .about; settingsSheet = .acknowledgements; selectedAcknowledgement = "vkd3d 2.1"
