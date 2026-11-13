@@ -236,7 +236,7 @@ void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
         expectedProt = 0x76;
 
 #if defined(COD2_CODX) && COD2_CODX
-    if (*protoStr ? prot != expectedProt : !Cod2x_ConnectProtocol(prot)) {
+    if (!Cod2x_ConnectProtocol(prot)) {
 #else
     if (prot != expectedProt) {
 #endif

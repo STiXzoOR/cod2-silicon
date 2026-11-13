@@ -123,8 +123,15 @@ int main(int argc, char **argv)
         CHECK(cls.numlocalservers == 0);
 #endif
         reset(); protocolOverride = "117";
+#if defined(COD2_CODX) && COD2_CODX
+        announce(117, ""); CHECK(cls.numlocalservers == 0);
+        announce(118, ""); CHECK(cls.numlocalservers == 1);
+        reset(); protocolOverride = "117";
+        announce(120, ""); CHECK(cls.numlocalservers == 1);
+#else
         announce(118, ""); CHECK(cls.numlocalservers == 0);
         announce(117, ""); CHECK(cls.numlocalservers == 1);
+#endif
     } else if (!strcmp(test, "status")) {
         receive_status("\\hostname\\fixture\\mapname\\mp_toujane", "10 50 \"one\"\n-2 0 \"two\"", 1);
         CHECK(!strcmp(cl_serverStatusList[4].string, "\\hostname\\fixture\\mapname\\mp_toujane\\\\10 50 \"one\"\\-2 0 \"two\"\\"));
