@@ -92,7 +92,7 @@ struct ReadyCheckPresentation {
         if !report.rulesetIDs.isEmpty { exact.append("Rules: " + zip(titles, report.rulesetIDs).map { "\($0) (\($1))" }.joined(separator: ", ")) }
         for detail in report.details {
             var line = "\(detail.setting) \"\(detail.value ?? "not set")\" · \(detail.status.rawValue)\(detail.serverOwned ? " · set by the server" : ""): \(detail.reason)"
-            if let source = detail.sources.first { line += " Source: \(source.sourceURL) (\(source.sourceDate))." }
+            if let source = detail.sources.first { line += " Source: \(source.sourceURL), \(ConfigCheckupModel.sourceDate(source.sourceDate))." }
             exact.append(line)
         }
         exact += report.limitations

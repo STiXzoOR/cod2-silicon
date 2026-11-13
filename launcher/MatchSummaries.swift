@@ -134,3 +134,9 @@ enum MatchSummaries {
         }
     }
 }
+
+/// One match, for Library › Matches, Home's Last match and Check-up (`model.openCheckup(match:)`):
+/// when it ended, where, on which map. Stable across reads of the same file.
+extension MatchSummary: Identifiable {
+    var id: String { "\(endedAt) \(serverAddress) \(map)" }
+}

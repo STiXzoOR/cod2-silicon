@@ -197,7 +197,7 @@
       "group": "net",
       "title": "Updates you receive",
       "summary": "How many game updates per second you ask the server to send you.",
-      "details": "Your request is a ceiling: the server's own update rate also limits how often you get one. Stock servers cap it at 30 and CoD2x servers at 40. Servers using CoD2x competitive rules enforce 40, and zPAM 3 servers on stock CoD2 expect 30.",
+      "details": "Your request is a ceiling: the server's own update rate also limits how often you get one. Original 1.3 servers cap it at 30 and CoD2x servers at 40. Servers using CoD2x competitive rules enforce 40, and zPAM 3 servers on Original 1.3 expect 30.",
       "guided": true,
       "control": {
         "kind": "number",
@@ -216,7 +216,7 @@
       "group": "net",
       "title": "Updates you send",
       "summary": "The most movement updates your game sends the server each second.",
-      "details": "This is an upper limit, not a promise of that many packets per second. The game's connection-speed step sets it to 30 whenever the connection speed is 5,000 or more, and the in-game Connection menu is expected to run that step. Servers using CoD2x competitive rules enforce 125; zPAM 3 servers on stock CoD2 expect 100.",
+      "details": "This is an upper limit, not a promise of that many packets per second. The game's connection-speed step sets it to 30 whenever the connection speed is 5,000 or more, and the in-game Connection menu is expected to run that step. Servers using CoD2x competitive rules enforce 125; zPAM 3 servers on Original 1.3 expect 100.",
       "guided": true,
       "control": {
         "kind": "number",
@@ -357,7 +357,7 @@
       "group": "vis",
       "title": "Distant model detail",
       "summary": "How soon models in the distance switch to simpler versions.",
-      "details": "Stock CoD2 protects this setting and allows 1 to 4. CoD2x unlocks it and allows 0 to 1, saved with your config, and 1 is the default. ESL's old PunkBuster list and ePAM both required 1, and ClanBase's old enforcer blocked changing it."
+      "details": "Original 1.3 protects this setting and allows 1 to 4. CoD2x unlocks it and allows 0 to 1, saved with your config, and 1 is the default. ESL's old PunkBuster list and ePAM both required 1, and ClanBase's old enforcer blocked changing it."
     },
     "r_anisotropy": {
       "group": "gfx",
@@ -738,7 +738,7 @@
       "group": "net",
       "title": "Server CoD2x level",
       "summary": "Which level of CoD2x features the server you are on supports.",
-      "details": "The server sets this and the game protects it from changes here. 0 means stock CoD2 1.3 behaviour, and CoD2x servers report 6, the current level. Some CoD2x fixes only switch on at certain levels."
+      "details": "The server sets this and the game protects it from changes here. 0 means Original 1.3 behaviour, and CoD2x servers report 6, the current level. Some CoD2x fixes only switch on at certain levels."
     },
     "com_writeconfig": {
       "group": "other",
@@ -774,7 +774,7 @@
       "group": "other",
       "title": "Game version",
       "summary": "The version number this build reports to servers.",
-      "details": "The game fills this in itself and treats it as read-only. The CoD2x build reports 1.4.6.8 where stock reports 1.3.",
+      "details": "The game fills this in itself and treats it as read-only. The CoD2x build reports 1.4.6.8 where Original 1.3 reports 1.3.",
       "menuExposed": true
     },
     "version": {
@@ -1491,7 +1491,7 @@
       "group": "net",
       "title": "Network protocol version",
       "summary": "The network protocol version the game uses.",
-      "details": "Read-only. Stock CoD2 1.3 uses 118 and CoD2x servers use 120."
+      "details": "Read-only. Original 1.3 uses 118 and CoD2x servers use 120."
     },
     "protocol_cod2x": {
       "group": "net",
@@ -4157,7 +4157,7 @@
       "group": "net",
       "title": "Game type",
       "summary": "Which game type a server you host runs.",
-      "details": "Stock choices are ctf, dm, hq, sd and tdm, and zPAM adds htf, re and strat. A change applies from the next map because it is latched. It only matters on a server you host."
+      "details": "Original 1.3's choices are ctf, dm, hq, sd and tdm, and zPAM adds htf, re and strat. A change applies from the next map because it is latched. It only matters on a server you host."
     },
     "g_gravity": {
       "group": "net",
@@ -4431,7 +4431,7 @@
       "group": "other",
       "title": "Game memory",
       "summary": "How many megabytes the game reserves for its main memory.",
-      "details": "Stock allows 1 to 512 with 160 by default. CoD2x pins it to 512. It is latched, so a change applies after the game restarts.",
+      "details": "Original 1.3 allows 1 to 512 with 160 by default. CoD2x pins it to 512. It is latched, so a change applies after the game restarts.",
       "control": {
         "kind": "number",
         "unit": "MB"
@@ -6017,7 +6017,7 @@
     "globalservers": {
       "title": "Query master server lists",
       "summary": "Request Internet server addresses from the master server.",
-      "details": "The native CoD2x path queries both protocols 118 and 120 from the configured masters. The stock path uses the supplied protocol and optional query keywords.",
+      "details": "The native CoD2x path queries both protocols 118 and 120 from the configured masters. The Original 1.3 path uses the supplied protocol and optional query keywords.",
       "effectSources": [
         "src/PC/client_mp/cl_main_pc_mp.c: CL_GlobalServers_f"
       ]

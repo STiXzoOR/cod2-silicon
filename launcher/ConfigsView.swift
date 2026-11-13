@@ -42,17 +42,15 @@ struct ConfigsShell: View {
     @Environment(\.palette) private var palette
     @Environment(\.undoManager) private var undoManager
     @State private var origin = CGPoint.zero
-    @State private var newLoadout: NewLoadoutRequest?
-    @State private var renaming = false
-    @State private var jumping = false
     @State private var pendingLeave: (@MainActor () -> Void)?
     /// The traffic lights and the sidebar button span the titlebar's first 140 points.
     private static let windowControls: CGFloat = 140
 
     var body: some View {
         HStack(spacing: 0) {
-            LoadoutColumn(studio: studio, session: session, discover: discover, select: { id in leaveText { discover.page = nil; studio.select(id) } },
-                          create: { newLoadout = NewLoadoutRequest(copy: false) }, open: { page in leaveText { discover.open(page) } })
+            LoadoutColumn(model: model, studio: studio, session: session, discover: discover,
+                          select: { id in leaveText { discover.page = nil; studio.select(id) } },
+                          act: { action in leaveText(action) }, open: { page in leaveText { discover.open(page) } })
                 .frame(width: StudioMetrics.loadoutColumn)
                 // The column's title shares the titlebar row with the app sidebar beside it; with that
                 // sidebar hidden, the row holds the window controls, so the column starts below the toolbar.
@@ -87,19 +85,15 @@ struct ConfigsShell: View {
             if studio.tab == .history {
                 Button(action: studio.saveSnapshot) { Label("Save a Snapshot Now", systemImage: "clock.badge.checkmark") }
                     .disabled(studio.isReadOnly || session.current == nil)
-                    .help("Save how this loadout is set up now as a snapshot")
+                    .help(studio.isReadOnly ? "Configs are read-only while Call of Duty 2 is running" : "Save how this loadout is set up now as a snapshot")
             }
-            Button { jumping = true } label: { Label("Jump to Any Setting", systemImage: "magnifyingglass").labelStyle(.titleAndIcon) }
+            Button { studio.jumpPresented = true } label: { Label("Jump to Any Setting", systemImage: "magnifyingglass").labelStyle(.titleAndIcon) }
                 .keyboardShortcut("k", modifiers: .command)
                 .disabled(studio.catalog == nil || session.current == nil)
                 .help("Jump to any setting (⌘K)")
             moreMenu
         } }
-        .sheet(item: $newLoadout) { request in
-            NewLoadoutSheet(studio: studio, copy: request.copy)
-        }
-        .sheet(isPresented: $renaming) { RenameSheet(studio: studio) }
-        .sheet(isPresented: $jumping) { JumpPalette(studio: studio) }
+        .sheet(isPresented: $studio.jumpPresented) { JumpPalette(studio: studio) }
         .confirmationDialog("Apply your text edits?", isPresented: Binding(get: { pendingLeave != nil }, set: { if !$0 { pendingLeave = nil } })) {
             Button("Apply Edits") { studio.applyText(undo: undoManager); if !studio.textEdited { let action = pendingLeave; pendingLeave = nil; action?() } }
                 .disabled(studio.textBlocked || studio.isReadOnly)
@@ -115,30 +109,22 @@ struct ConfigsShell: View {
         if studio.textMode && studio.textEdited { pendingLeave = action } else { action() }
     }
 
-    /// B2 writes an independent config that stock Windows CoD2 can load.
-    private func exportWindows(_ name: String) {
-        let panel = model.makeExportPanel()
-        panel.nameFieldStringValue = "config_mp.cfg"
-        panel.allowedContentTypes = [UTType(filenameExtension: "cfg") ?? .plainText]
-        panel.message = "Save \(name) for Call of Duty 2 on Windows. Copy it into that player profile’s folder."
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        studio.binds.exportWindows(to: url)
-    }
-
     private static let moreIcon = NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: "More Actions for This Loadout") ?? NSImage()
+    /// The loadout's actions, the same as its row's context menu and the Loadout menu. A command that
+    /// can't run now is dimmed, never hidden.
     private var moreMenu: some View {
         Menu {
-            Button("New Loadout…") { newLoadout = NewLoadoutRequest(copy: false) }
+            Button("New Loadout…") { leaveText(model.newLoadout) }.disabled(!model.canNewLoadout)
             if let current = session.current {
-                Button("Duplicate “\(current.profile.displayName)”…") { newLoadout = NewLoadoutRequest(copy: true) }
-                Button("Rename “\(current.profile.displayName)”…") { renaming = true }
+                let name = current.profile.displayName
+                Button("Use for Next Game") { studio.useForNextGame() }.disabled(current.profile.isActive || studio.isReadOnly)
                 Divider()
-                Button("Use for Next Game", action: studio.useForNextGame).disabled(current.profile.isActive || studio.isReadOnly)
-                Button("Show in Finder") {
-                    let file = session.home.appendingPathComponent("main/players/\(current.profile.id)/config_mp.cfg")
-                    NSWorkspace.shared.activateFileViewerSelecting([file])
-                }
-                Button("Export for Windows…") { exportWindows(current.profile.displayName) }.disabled(studio.catalog == nil)
+                Button("Duplicate “\(name)”") { leaveText { model.duplicateLoadout() } }.disabled(!model.canDuplicateLoadout)
+                Button("Rename “\(name)”…") { model.renameLoadout() }.disabled(!model.canRenameLoadout)
+                Button("Export for Windows…") { model.exportLoadout() }.disabled(!model.canExportLoadout)
+                Button("Show in Finder") { model.showLoadoutInFinder(current.profile.id) }
+                Divider()
+                Button("Delete “\(name)”…") { leaveText { model.requestDeleteLoadout() } }.disabled(!model.canDeleteLoadout)
             }
         } label: {
             Label { Text("More Actions for This Loadout") } icon: { Image(nsImage: Self.moreIcon) }.labelStyle(.iconOnly)
@@ -157,7 +143,7 @@ struct ConfigsShell: View {
                 ConfigBanners(studio: studio, session: session)
                 if studio.catalog == nil {
                     if let error = studio.catalogError {
-                        StudioBanner(title: "Settings aren’t available", detail: error, tone: .negative)
+                        Banner(.error, title: "Settings aren’t available", message: error)
                         Spacer(minLength: 0)
                     } else {
                         HStack(spacing: 10) { ProgressView().controlSize(.small); Text("Loading settings…").font(.system(size: 13)).foregroundStyle(palette.secondary) }
@@ -178,7 +164,7 @@ struct ConfigsShell: View {
                 StudioEmptyState(title: "NO LOADOUTS",
                                  message: session.migrationError.map { "Your current settings couldn’t be brought into a loadout yet: \($0)" }
                                     ?? "Your current game settings become your first loadout, Main, the first time CoD2 Silicon prepares a game. You can also start a new one.",
-                                 action: ("New Loadout…", { newLoadout = NewLoadoutRequest(copy: false) }))
+                                 action: model.canNewLoadout ? ("New Loadout…", { model.newLoadout() }) : nil)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
@@ -189,21 +175,20 @@ struct ConfigsShell: View {
     }
 }
 
-private struct NewLoadoutRequest: Identifiable {
-    let id = UUID()
-    var copy: Bool
-}
-
 // MARK: - Loadout column
 
 private struct LoadoutColumn: View {
+    @ObservedObject var model: LauncherModel
     @ObservedObject var studio: ConfigStudioModel
     @ObservedObject var session: ConfigStudioSession
     @ObservedObject var discover: ConfigDiscoverModel
     var select: (String) -> Void
-    var create: () -> Void
+    /// Runs a loadout command once any unapplied text edits are dealt with.
+    var act: (@escaping @MainActor () -> Void) -> Void
     var open: (ConfigDiscoverPage) -> Void
     @Environment(\.palette) private var palette
+    /// Focus is shown the way a native list shows it: the selected row's edge, not a ring around the column.
+    @FocusState private var focused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -213,29 +198,21 @@ private struct LoadoutColumn: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(session.profiles) { profile in
-                        LoadoutRow(profile: profile, subtitle: subtitle(profile), selected: discover.page == nil && profile.id == session.current?.profile.id) { select(profile.id) }
+                        LoadoutRow(profile: profile, subtitle: subtitle(profile),
+                                   selected: discover.page == nil && profile.id == session.current?.profile.id, focused: focused) { select(profile.id) }
+                            .contextMenu { contextMenu(profile) }
                     }
-                    Button(action: create) {
-                        HStack(spacing: 10) {
-                            Image(systemName: "plus").font(.system(size: 13, weight: .semibold))
-                                .frame(width: 30, height: 30)
-                                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(palette.accent.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
-                            Text("New Loadout").font(.system(size: 14, weight: .semibold))
-                            Spacer(minLength: 0)
-                        }
-                        .foregroundStyle(palette.accent)
-                        .padding(.vertical, 6).padding(.horizontal, 10).frame(minHeight: 48)
-                        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    ColumnAction(title: "New Loadout", symbol: "plus", help: studio.isReadOnly ? "Configs are read-only while Call of Duty 2 is running"
+                                                                                           : "Make a new loadout from the game’s defaults or a copy") {
+                        act(model.newLoadout)
                     }
-                    .buttonStyle(RowButtonStyle(radius: 12))
-                    .disabled(studio.isReadOnly)
-                    .opacity(studio.isReadOnly ? 0.45 : 1)
-                    .help("Make a new loadout from the game’s defaults or a copy")
-                    DiscoverColumnSection(discover: discover, open: open)
+                    .disabled(!model.canNewLoadout)
+                    AddConfigRow(discover: discover)
+                    if showsDiscover { DiscoverColumnSection(discover: discover, open: open) }
                 }
             }
             .scrollIndicators(.never)
-            .focusable()
+            .focusable(interactions: .edit).focused($focused).focusEffectDisabled()
             .onMoveCommand { direction in
                 let profiles = session.profiles
                 guard let index = profiles.firstIndex(where: { $0.id == session.current?.profile.id }) else { return }
@@ -250,6 +227,28 @@ private struct LoadoutColumn: View {
         .frame(maxHeight: .infinity, alignment: .top)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Loadouts")
+        .task { await discover.loadIfNeeded() }
+    }
+
+    /// Discover appears once the player directory lists someone or something is saved; until the
+    /// directory is published its rows would lead nowhere. Add a Config stays above it either way.
+    private var showsDiscover: Bool {
+        if discover.page != nil || !discover.saved.isEmpty { return true }
+        if case .loaded(let snapshot, _) = discover.state { return !snapshot.index.entries.isEmpty }
+        return false
+    }
+
+    /// The loadout's actions: the Loadout menu's, for this row (Menus board › Loadout).
+    @ViewBuilder private func contextMenu(_ profile: ConfigProfile) -> some View {
+        let readOnly = studio.isReadOnly || !model.canNavigate
+        Button("Use for Next Game") { act { model.useLoadoutForNextGame(profile.id) } }.disabled(profile.isActive || readOnly)
+        Divider()
+        Button("Duplicate") { act { model.duplicateLoadout(profile.id) } }.disabled(readOnly)
+        Button("Rename…") { act { model.renameLoadout(profile.id) } }.disabled(readOnly)
+        Button("Export…") { act { model.exportLoadout(profile.id) } }.disabled(studio.catalog == nil || !model.canNavigate)
+        Button("Show in Finder") { model.showLoadoutInFinder(profile.id) }
+        Divider()
+        Button("Delete Loadout…") { act { model.requestDeleteLoadout(profile.id) } }.disabled(studio.deleteBlock(profile.id) != nil || !model.canNavigate)
     }
 
     private func subtitle(_ profile: ConfigProfile) -> String {
@@ -267,10 +266,57 @@ private struct ColumnLabel: View {
     }
 }
 
+/// A command row under the loadouts (New Loadout, Add a Config): a dashed tile and accent words.
+private struct ColumnAction: View {
+    var title: String
+    var symbol: String
+    var help: String
+    var menu = false
+    var action: () -> Void
+    @Environment(\.palette) private var palette
+    @Environment(\.isEnabled) private var enabled
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: symbol).font(.system(size: 13, weight: .semibold))
+                    .frame(width: 30, height: 30)
+                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(palette.accent.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
+                    .accessibilityHidden(true)
+                Text(title).font(.system(size: 14, weight: .semibold))
+                if menu { Image(systemName: "chevron.down").font(.system(size: 10, weight: .bold)).accessibilityHidden(true) }
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(palette.accent)
+            .padding(.vertical, 6).padding(.horizontal, 10).frame(minHeight: 48)
+            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(RowButtonStyle(radius: 12))
+        .opacity(enabled ? 1 : 0.45)
+        .help(help)
+        .accessibilityLabel(title)
+    }
+}
+
+/// Add a Config: every place a config can come from (File › Import Config… ⌘O, Paste Config ⇧⌘V, a
+/// link, a Windows install), whether or not Discover is showing.
+private struct AddConfigRow: View {
+    @ObservedObject var discover: ConfigDiscoverModel
+    @State private var anchor = MenuAnchorBox()
+    var body: some View {
+        ColumnAction(title: "Add a Config", symbol: "square.and.arrow.down", help: "Add a config from a file, a link, your Windows install or the clipboard", menu: true) {
+            if let view = anchor.view { NativeMenu.popUp(AddConfigButton.items(discover, window: view.window), below: view) }
+        }
+        .background(MenuAnchor(box: anchor))
+        .disabled(discover.studio.session == nil || discover.step != nil)
+        .accessibilityHint("Shows the places you can add a config from")
+    }
+}
+
 private struct LoadoutRow: View {
     var profile: ConfigProfile
     var subtitle: String
     var selected: Bool
+    var focused: Bool
     var action: () -> Void
     @Environment(\.palette) private var palette
     var body: some View {
@@ -288,11 +334,14 @@ private struct LoadoutRow: View {
             }
             .padding(.vertical, 6).padding(.horizontal, 10).frame(minHeight: 48)
             .background(selected ? palette.selection : .clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(selected ? palette.selectionStroke : .clear, lineWidth: 1))
+            // While the column has the keyboard focus, the selected row's edge is the accent itself.
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(selected ? (focused ? palette.accent : palette.selectionStroke) : .clear, lineWidth: selected && focused ? 2 : 1))
             .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .buttonStyle(RowButtonStyle(radius: 12))
         .accessibilityLabel("\(profile.displayName), \(profile.isActive ? "in use for your next game" : subtitle)")
+        .accessibilityHint("Shows this loadout. Control-click for its actions.")
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
@@ -363,10 +412,9 @@ struct LoadoutHeader: View {
             }
             if !current.profile.isActive {
                 Button("Use for Next Game", action: studio.useForNextGame).glassAction().disabled(studio.isReadOnly)
-                    .help("The game starts with this loadout next time")
+                    .help(studio.isReadOnly ? "Configs are read-only while Call of Duty 2 is running" : "The game starts with this loadout next time")
             } else if studio.tab == .settings && studio.level == .guided {
-                Label("In use for your next game", systemImage: "checkmark.circle")
-                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.positive)
+                StatusLabel(.ready, "In use for your next game")
                     .padding(.horizontal, 12).frame(height: 28)
                     .overlay(Capsule().strokeBorder(palette.positive.opacity(0.45), lineWidth: 1))
                     .fixedSize()
@@ -413,22 +461,31 @@ struct ConfigBanners: View {
     @ObservedObject var studio: ConfigStudioModel
     @ObservedObject var session: ConfigStudioSession
     @Environment(\.palette) private var palette
-    @State private var confirmRecovery = false
+    @State private var recovery: ConfirmationRequest?
+    private var keepDiskVersion: ConfirmationRequest {
+        ConfirmationRequest(title: "Keep the version on disk?",
+                            message: "A change to this loadout was interrupted, and the file changed on disk since. Keeping the disk version saves the interrupted change in the loadout’s recovery folder instead of applying it.",
+                            actionTitle: "Keep Version on Disk", destructive: false) { [studio, session] in
+            do { try session.keepDiskVersion() } catch { studio.failure = ConfigStudioFailure(title: "Couldn’t keep the version on disk", message: error.localizedDescription, retry: nil) }
+        }
+    }
 
     var body: some View {
         if let notice = studio.notice {
-            HStack(spacing: 12) {
-                StudioBanner(title: notice, tone: .positive)
-                Button("Dismiss") { studio.notice = nil }.glassAction().fixedSize()
+            Banner(.neutral, symbol: "checkmark.circle", message: notice) {
+                HStack(spacing: 8) {
+                    if let action = studio.noticeAction { Button(action.title) { action.run() }.glassAction() }
+                    Button("Dismiss") { studio.notice = nil }.glassAction()
+                }
+                .fixedSize()
             }
         }
         if studio.gameRunning {
-            StudioBanner(title: "Configs are read-only while Call of Duty 2 is running. Changes you make in game appear here as the game saves them.",
-                         tone: .information)
+            // Every control that can't change the loadout now is dimmed; this is the one place that says why.
+            Banner(.neutral, symbol: "lock", message: "Configs are read-only while Call of Duty 2 is running. Changes you make in game appear here as the game saves them.")
         }
         if let failure = studio.failure {
-            HStack(alignment: .center, spacing: 12) {
-                StudioBanner(title: failure.title, detail: failure.message, tone: .negative)
+            Banner(.error, title: failure.title, message: failure.message) {
                 VStack(spacing: 8) {
                     if failure.retry != nil { Button("Try Again", action: studio.retryFailure).glassAction().disabled(studio.isReadOnly) }
                     Button(session.draft != nil ? "Discard Change" : "Dismiss", action: studio.discardFailedChange).glassAction()
@@ -436,13 +493,12 @@ struct ConfigBanners: View {
                 .fixedSize()
             }
         } else if let error = session.error {
-            HStack(alignment: .center, spacing: 12) {
-                StudioBanner(title: "Couldn’t read this loadout", detail: error, tone: .negative)
+            Banner(.error, title: "Couldn’t read this loadout", message: error) {
                 VStack(spacing: 8) {
                     Button("Try Again", action: studio.refresh).glassAction()
                     if let id = session.focusedProfileID ?? session.profiles.first(where: \.isActive)?.id {
                         Button("Review…") {
-                            do { try session.inspectRecovery(profileID: id); confirmRecovery = true }
+                            do { try session.inspectRecovery(profileID: id); recovery = keepDiskVersion }
                             catch { studio.failure = ConfigStudioFailure(title: "Nothing to recover", message: error.localizedDescription, retry: nil) }
                         }
                         .glassAction().disabled(studio.isReadOnly)
@@ -450,35 +506,21 @@ struct ConfigBanners: View {
                 }
                 .fixedSize()
             }
-            .alert("Keep the version on disk?", isPresented: $confirmRecovery) {
-                Button("Keep Version on Disk") {
-                    do { try session.keepDiskVersion() } catch { studio.failure = ConfigStudioFailure(title: "Couldn’t keep the version on disk", message: error.localizedDescription, retry: nil) }
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("A change to this loadout was interrupted, and the file changed on disk since. Keeping the disk version saves the interrupted change in the loadout’s recovery folder instead of applying it.")
-            }
+            .confirmationAlert($recovery)
         }
     }
 }
 
 // MARK: - Shared pieces
 
-/// Design Rules empty state: stencil headline, one line, at most one action.
+/// Design Rules empty state on the shared EmptyState: stencil headline, one line, at most one action.
 struct StudioEmptyState: View {
     var title: String
     var message: String
     var action: (title: String, run: () -> Void)? = nil
-    @Environment(\.palette) private var palette
     var body: some View {
-        VStack(spacing: 10) {
-            Text(title).font(.stencil(26)).tracking(3.1).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.secondary).accessibilityAddTraits(.isHeader)
-            Text(message).font(.system(size: 13)).foregroundStyle(palette.secondary).multilineTextAlignment(.center).frame(maxWidth: 420)
-                .fixedSize(horizontal: false, vertical: true)
-            if let action { Button(action.title, action: action.run).glassAction().padding(.top, 4) }
-        }
-        .padding(.vertical, 60).padding(.horizontal, 20)
-        .accessibilityElement(children: .contain)
+        EmptyState(title, message: message, actionTitle: action?.title, action: action?.run)
+            .padding(.vertical, 60).padding(.horizontal, 20)
     }
 }
 
@@ -502,63 +544,5 @@ struct StudioRailRow: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(count.map { "\(title), \($0) settings" } ?? title)
         .accessibilityAddTraits(.isStaticText)
-    }
-}
-
-// MARK: - Sheets
-
-private struct NewLoadoutSheet: View {
-    @ObservedObject var studio: ConfigStudioModel
-    @State var copy: Bool
-    @State private var name = ""
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        let source = studio.current?.profile.displayName
-        VStack(alignment: .leading, spacing: 16) {
-            Text("New loadout").font(.system(size: 22, weight: .bold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
-            TextField("Name", text: $name, prompt: Text("For example, Scrim")).textFieldStyle(.roundedBorder).font(.system(size: 14))
-            Picker("Start from", selection: $copy) {
-                Text("The game’s defaults").tag(false)
-                if let source { Text("A copy of \(source)").tag(true) }
-            }
-            .pickerStyle(.radioGroup)
-            Text("It won’t be used for your next game until you choose it.").font(StudioTypography.help).foregroundStyle(palette.secondary)
-            HStack {
-                Spacer()
-                Button("Cancel", role: .cancel) { dismiss() }.glassAction().keyboardShortcut(.cancelAction)
-                Button("Create Loadout") { if studio.createLoadout(named: name, copyingCurrent: copy && source != nil) { dismiss() } }
-                    .prominentAction().keyboardShortcut(.defaultAction)
-                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || studio.isReadOnly)
-            }
-        }
-        .padding(26).frame(width: 420)
-    }
-}
-
-private struct RenameSheet: View {
-    @ObservedObject var studio: ConfigStudioModel
-    @State private var name = ""
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.undoManager) private var undoManager
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Rename loadout").font(.system(size: 22, weight: .bold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
-            TextField("Name", text: $name).textFieldStyle(.roundedBorder).font(.system(size: 14))
-            Text("The game’s own profile menu keeps showing the folder name, \(studio.current?.profile.id ?? "").")
-                .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
-            HStack {
-                Spacer()
-                Button("Cancel", role: .cancel) { dismiss() }.glassAction().keyboardShortcut(.cancelAction)
-                Button("Rename") { studio.rename(name, undo: undoManager); dismiss() }
-                    .prominentAction().keyboardShortcut(.defaultAction)
-                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || studio.isReadOnly)
-            }
-        }
-        .padding(26).frame(width: 420)
-        .onAppear { name = studio.current?.profile.displayName ?? "" }
     }
 }

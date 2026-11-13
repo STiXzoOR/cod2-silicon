@@ -16,7 +16,7 @@ struct ConfigCheckupView: View {
     var body: some View {
         Group {
             if let error = checkup.loadError {
-                StudioBanner(title: "Check-up isn’t available", detail: error, tone: .negative)
+                Banner(.error, title: "Check-up isn’t available", message: error)
             } else if let report = checkup.report {
                 content(report)
             } else {
@@ -36,14 +36,13 @@ struct ConfigCheckupView: View {
                     ForEach(checkup.gauges(report)) { DialCard(gauge: $0) }
                 }
                 if let reason = checkup.holdBack {
-                    StudioBanner(title: "Check-up can’t suggest changes for this loadout",
-                                 detail: reason + " Settings that clearly break the chosen rules are still shown.", tone: .caution)
+                    Banner(.tip, symbol: "exclamationmark.triangle", title: "Check-up can’t suggest changes for this loadout",
+                           message: reason + " Settings that clearly break the chosen rules are still shown.")
                 } else {
-                    StudioBanner(title: "Advice from your settings and the rules you choose",
-                                 detail: checkup.latestMatch == nil
-                                     ? "No match measurements are in use, so nothing here claims a frame time, ping or missing updates you didn’t record."
-                                     : "The measurements above are from your last recorded match. Suggestions come from your settings and the rules, not from those measurements.",
-                                 tone: .information)
+                    Banner(.neutral, title: "Advice from your settings and the rules you choose",
+                           message: checkup.shownMatch == nil
+                               ? "No match has been measured yet, so nothing here claims how smooth your game ran or how steady your connection was."
+                               : "The cards above are measured from one match. Suggestions come from your settings and the rules, not from that match.")
                 }
                 ForEach(checkup.appliedHere()) { item in AppliedCard(studio: studio, checkup: checkup, item: item) }
                 let suggestions = report.suggestions
@@ -123,7 +122,7 @@ struct RulesBar: View {
 extension RulesBar {
     @ViewBuilder func summary(_ standing: ConfigCheckupStanding) -> some View {
         if let status = standing.status {
-            StudioStatusLabel(title: status.title, tone: status.tone).fixedSize()
+            StudioStatusLabel(title: status.title, tone: status.tone).fixedSize(horizontal: false, vertical: true)
             Button(showingRules ? "Hide Rules" : "Show Rules") { showingRules.toggle() }.glassAction().controlSize(.small).fixedSize()
         }
     }
@@ -164,8 +163,9 @@ struct RulesMenu: View {
     }
 }
 
-/// The latest match the game recorded on this Mac, said as a match (it may have used another
-/// loadout), with Refresh. Reading happens only here and after a game, never on a timer.
+/// The match the dials measure from (the latest, or one opened from Library or Home), said as a
+/// match (it may have used another loadout), with Refresh. Reading happens only here and after a
+/// game, never on a timer.
 private struct MatchPanel: View {
     @ObservedObject var checkup: ConfigCheckupModel
     @Environment(\.palette) private var palette
@@ -173,8 +173,8 @@ private struct MatchPanel: View {
         if let match = checkup.matchPresentation {
             ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 16, leading: 20, bottom: 16, trailing: 20)) {
                 ViewThatFits(in: .horizontal) {
-                    HStack(alignment: .top, spacing: 16) { words(match); Spacer(minLength: 8); refresh }
-                    VStack(alignment: .leading, spacing: 10) { words(match); refresh }
+                    HStack(alignment: .top, spacing: 16) { words(match); Spacer(minLength: 8); buttons }
+                    VStack(alignment: .leading, spacing: 10) { words(match); buttons }
                 }
             }
         } else {
@@ -187,17 +187,32 @@ private struct MatchPanel: View {
     }
     private func words(_ match: ConfigMatchPresentation) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            StudioStatusLabel(title: match.title, tone: match.tone).fixedSize(horizontal: false, vertical: true)
-                .accessibilityAddTraits(.isHeader)
+            if match.tone == .information {
+                Text(match.title).font(.system(size: 15, weight: .semibold)).foregroundStyle(palette.heading).fixedSize(horizontal: false, vertical: true)
+            } else {
+                StudioStatusLabel(title: match.title, tone: match.tone)
+            }
             Text(match.detail).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
             ForEach(match.lines, id: \.self) { line in
                 Text(line).font(.typewriter(12)).foregroundStyle(palette.address).fixedSize(horizontal: false, vertical: true)
             }
         }
         .accessibilityElement(children: .combine)
+        .accessibilityAddTraits([.isHeader, .isStaticText])
+    }
+    private var buttons: some View {
+        HStack(spacing: 8) {
+            if checkup.focusedMatchID != nil, checkup.shownMatch?.id != checkup.latestMatch?.id {
+                // Both labels are one height, so the two capsules line up whatever their symbols.
+                Button { checkup.focusedMatchID = nil } label: { Label("Show Last Match", systemImage: "clock.arrow.circlepath").frame(height: 16) }
+                    .glassAction().controlSize(.small).fixedSize()
+                    .help("Measure from your most recent match instead")
+            }
+            refresh
+        }
     }
     private var refresh: some View {
-        Button { checkup.refreshMatches() } label: { Label("Refresh", systemImage: "arrow.clockwise") }
+        Button { checkup.refreshMatches() } label: { Label("Refresh", systemImage: "arrow.clockwise").frame(height: 16) }
             .glassAction().controlSize(.small).fixedSize()
             .help("Read the match summaries the game saved on this Mac again")
             .accessibilityLabel("Refresh match summaries")
@@ -241,24 +256,46 @@ private struct SourceLine: View {
     }
 }
 
+/// One of the four cards: the outcome in a word, the value, what the player would notice, and the
+/// raw figures behind Show details.
 private struct DialCard: View {
     var gauge: ConfigCheckupGauge
     @Environment(\.palette) private var palette
+    @State private var details = false
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            let title = Text(gauge.area.title).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.secondary)
-            VStack(alignment: .leading, spacing: 4) { title; StudioStatusLabel(title: gauge.status, tone: gauge.tone).fixedSize() }
-            Text(gauge.value).font(.stencil(30)).tracking(0.6).foregroundStyle(palette.heading).lineLimit(1).minimumScaleFactor(0.7)
-            Text(gauge.detail).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 8) {
+                // The status moves under the title when a narrow card can't hold both on one line.
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) { title; Spacer(minLength: 4); StatusLabel(gauge.tone.kind, gauge.status) }
+                    VStack(alignment: .leading, spacing: 4) { title; StatusLabel(gauge.tone.kind, gauge.status) }
+                }
+                Text(gauge.value).font(.stencil(30)).tracking(0.6).foregroundStyle(palette.heading).lineLimit(1).minimumScaleFactor(0.7)
+                Text(gauge.detail).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(gauge.area.title): \(gauge.value == "—" ? "no value" : gauge.value), \(gauge.status). \(gauge.detail)")
+            .accessibilityAddTraits(.isStaticText)
+            if !gauge.figures.isEmpty {
+                if details {
+                    Text(gauge.figures).font(.system(size: 11)).monospacedDigit().foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
+                        .textSelection(.enabled)
+                }
+                Button(details ? "Hide Details" : "Show Details") { details.toggle() }.quietAction().controlSize(.small)
+                    .padding(.horizontal, -6)
+                    .accessibilityLabel(details ? "Hide the \(gauge.area.title.lowercased()) figures" : "Show the \(gauge.area.title.lowercased()) figures")
+            }
             Spacer(minLength: 0)
         }
         .padding(.vertical, 16).padding(.horizontal, 18)
         .frame(maxWidth: .infinity, minHeight: 132, alignment: .topLeading)
         .background(palette.panel, in: RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous).stroke(palette.panelStroke, lineWidth: 1))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(gauge.area.title): \(gauge.value == "—" ? "no value" : gauge.value), \(gauge.status). \(gauge.detail)")
-        .accessibilityAddTraits(.isStaticText)
+        .accessibilityElement(children: .contain)
+    }
+    private var title: some View {
+        Text(gauge.area.title).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.secondary)
+            .lineLimit(1).fixedSize()
     }
 }
 

@@ -492,7 +492,8 @@ struct MediaEntry: Identifiable {
     func findInPage() {
         switch page {
         case .servers: serverSearchRequested.toggle()
-        case .home, .library, .configs: break
+        case .home, .library: break
+        case .configs: findInConfigs()  // ship-configs
         }
     }
     /// View › Jump to… (⌘K). ship-shell builds the palette that `jumpPresented` shows.
