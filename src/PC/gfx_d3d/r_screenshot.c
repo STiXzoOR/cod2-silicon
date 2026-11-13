@@ -315,10 +315,19 @@ void R_EndCubemapShot(const CubemapShot shotIndex)
     buffer = (byte *)ri.Z_MallocInternal(bufferSizeInBytes);
 
 #if defined(COD2_X64)
-    if (!R_GetFrontBufferData(res, res, 4, buffer)) {
+    int border = dx->cubemapShotPixelBorder;
+    int paddedRes = res + 2 * border;
+    byte *padded = border ? (byte *)malloc((size_t)paddedRes * paddedRes * 4) : buffer;
+    if (!padded || !R_GetFrontBufferData(paddedRes, paddedRes, 4, padded)) {
+        if (border) free(padded);
         ri.Z_FreeInternal(buffer);
         RB_SetRenderTarget(0);
         return;
+    }
+    if (border) {
+        for (int row = 0; row < res; ++row)
+            memcpy(buffer + row * res * 4, padded + ((row + border) * paddedRes + border) * 4, res * 4);
+        free(padded);
     }
     cubeShotGlob[shotIndex - 1] = buffer;
     for (int i = 0; i < bufferSizeInBytes; i += 4) {
