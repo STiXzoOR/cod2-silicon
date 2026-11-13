@@ -165,6 +165,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   instead of leaving reverb muted. Reverb synthesis itself still needs parity work.
 - Consecutive screenshot commands retain every image, and `cl_avidemo` saves
   frames continuously instead of continually postponing the capture.
+- Fatal engine errors show their explanation before the game exits and return
+  a failure status.
 - Wheel messages change weapons once each, including high-resolution scrolling,
   as in Windows 1.3.
 - Opening chat in a window keeps mouse-look active. Original 1.3 windowed

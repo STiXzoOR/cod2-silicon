@@ -35,6 +35,7 @@ static const dvar_t *sys_configSum;
 static sysEvent_t eventQue[256];
 static int eventHead;
 static int eventTail;
+static int sys_exitCode;
 
 extern void Sys_InitMainThread(void);
 extern language_t Win_InitLocalization(void);
@@ -203,6 +204,7 @@ void Sys_Error(const char *error, ...)
     va_start(argptr, error);
     vsnprintf(text, sizeof(text), error, argptr);
     va_end(argptr);
+    sys_exitCode = 1;
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     if (!reported) {
         reported = 1;
@@ -227,6 +229,12 @@ void Sys_Error(const char *error, ...)
     Conbuf_AppendText("\n");
     Sys_SetErrorText(text);
     Sys_ShowConsole(1, 1);
+#if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED)
+    /* Windows Sys_Error displays the actual engine error before exiting. The
+     * terminal-only native system console cannot provide that explanation. */
+    const char *title = Win_LocalizeRef("WIN_ERROR");
+    MessageBoxA(NULL, text, !strcmp(title, "WIN_ERROR") ? "Error" : title, 0x10);
+#endif
 
     for (;;) {
         Com_Quit_f();
@@ -627,7 +635,7 @@ void Sys_Quit(void)
     }
 
     MacPreferences_Synchronize();
-    exit(0);
+    exit(sys_exitCode);
 }
 
 sysEvent_t Sys_GetEvent(void)
