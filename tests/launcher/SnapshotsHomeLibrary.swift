@@ -4,29 +4,46 @@ import SwiftUI
 // Review harness, owner ship-home-library. Home and Library screens and the Library part of the page actions.
 
 extension Snapshots {
-    static let homeLibraryScreens = ["home", "home-first", "home-crash-sent", "home-crash-not-sent", "library-demos", "library-screenshots"]
+    static let homeLibraryScreens = ["home", "home-first", "home-address", "home-attention", "home-running", "home-crash", "home-matches-off",
+                                     "library-matches", "library-demos", "library-screenshots"]
     /// Also rendered in the `--group pages` runs and read by `--accessibility`.
-    static let homeLibraryPageScreens = ["home-update", "home-checking", "home-current", "library-empty", "library-empty-screenshots", "library-reloaded",
+    static let homeLibraryPageScreens = ["home-update", "home-update-installing", "home-crash-sent", "home-crash-not-sent",
+                                         "library-matches-empty", "library-matches-off", "library-matches-off-kept", "library-matches-error", "library-demos-selected",
+                                         "library-screenshots-selected", "library-empty", "library-empty-screenshots", "library-reloaded",
                                          "library-error", "library-renaming", "library-rename-error", "library-trash", "library-running", "library-missing",
-                                         "library-trashed", "home-update-error", "home-loadout", "home-loadout-unreadable"]
-    static let homeLibraryAccessibilityScreens = ["home", "home-first", "library-demos", "library-screenshots"]
+                                         "library-trashed", "home-loadout", "home-loadout-unreadable"]
+    static let homeLibraryAccessibilityScreens = ["home", "home-first", "home-address", "home-attention", "home-running", "home-matches-off",
+                                                  "library-matches", "library-demos", "library-screenshots"]
     static let homeLibraryLabels: [String: [String]] = [
-        "home-first": ["Find a server", "Open game menu", "NOTHING PLAYED YET"],
-        "home-update": ["Install Update", "View Release"],
-        "home-checking": ["Checking GitHub Releases"],
-        "home-current": ["You’re up to date"],
-        "home-loadout": ["Frame cap 333 frames per second · Main loadout"],
+        "home": ["Launch on Northern Lights | Public", "Find a Server", "Jump back in", "All Recent", "Launch on Sunday Rifles · EU",
+                 "Last match", "All Matches", "Connection Steady", "Open Check-up", "Dispatches", "Release Notes"],
+        "home-first": ["Find a Server", "Open Game Menu", "NOTHING PLAYED YET", "NOT MEASURED YET"],
+        "home-address": ["Launch on 203.0.113.77:28960", "203.0.113.77:28960, Joined by address"],
+        "home-attention": ["Approximate shaders. Build the original shaders"],
+        "home-running": ["Return to Game", "Quit Game"],
+        "home-matches-off": ["MATCH SUMMARIES ARE OFF", "Turn On in Settings…"],
+        "home-update": ["What’s New", "Install Update"],
+        "home-update-installing": ["Downloading version 0.4.0"],
+        "home-loadout": ["Main loadout, 333 frames per second cap"],
         "home-loadout-unreadable": ["Frame cap unavailable"],
-        "library-empty": ["Show Folder in Finder"],
-        "library-empty-screenshots": ["Show Folder in Finder"],
+        "library-matches": ["Toujane, Search & Destroy", "Check-up for Toujane · Search & Destroy", "Kept on this Mac", "Delete Summaries…"],
+        "library-matches-empty": ["NO MATCHES YET", "Find a Server"],
+        "library-matches-off": ["MATCH SUMMARIES ARE OFF", "Turn On in Settings…"],
+        "library-matches-off-kept": ["Match summaries are off, so new matches aren’t added", "Turn On in Settings…", "Toujane, Search & Destroy", "Delete Summaries…"],
+        "library-matches-error": ["MATCHES UNAVAILABLE", "Try Again"],
+        "library-demos": ["Demo toujane_tdm_1110_2114.dm_1", "Play toujane_tdm_1110_2114.dm_1", "More actions for toujane_tdm_1110_2114.dm_1", "Show in Finder"],
+        "library-screenshots": ["Screenshot, Toujane", "Show in Finder"],
+        "library-empty": ["NO RECORDINGS", "Step 1", "Show Demos Folder"],
+        "library-empty-screenshots": ["NO SCREENSHOTS", "Show Screenshots Folder"],
         "library-renaming": ["Rename recording", "Recording name", "Cancel", "Rename"],
         "library-rename-error": ["Enter a name without slashes or colons", "Cancel", "Rename"],
         "library-trash": ["Move to Trash", "Cancel"],
-        "library-trashed": ["Moved to Trash", "NO RECORDINGS", "Show Folder in Finder"],
+        "library-trashed": ["Moved “toujane_tdm_1110_2114.dm_1” to the Trash", "Undo"],
     ]
 }
 
-/// Page actions, Library part: real media files, activation refresh, rename, playback failures, Quick Look.
+/// Page actions, Library part: real media files, activation refresh, rename, playback failures, Command-Delete,
+/// Move to Trash and Undo, stored match summaries, Quick Look.
 @MainActor enum HomeLibraryChecks {
     static func pageActions(_ model: LauncherModel, window: NSWindow) async throws -> Bool {
         let demos = model.home.appendingPathComponent("main/demos")
@@ -57,6 +74,92 @@ extension Snapshots {
         guard model.mediaMessage?.contains("no longer") == true else { return false }
         print("PASS: real media files sort by date, appear on app activation, rename safely, and missing/running-game playback failures stay in Library")
 
+        // Command-Delete asks about the selected demo only; with nothing selected it does nothing.
+        model.loadMedia()
+        try await Task.sleep(for: .milliseconds(300))
+        guard let target = model.media.first,
+              let row = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label.hasPrefix("Demo " + target.url.lastPathComponent) }),
+              AccessibilityTree.press(row) else { print("FAIL: a demo row has no accessibility action to select it"); return false }
+        try await Task.sleep(for: .milliseconds(200))
+        guard model.selectedMedia == target.url else { print("FAIL: pressing a demo row did not select it"); return false }
+        ConfigsPreview.press(window, keyCode: 51, characters: "\u{7f}", modifiers: .command)
+        try await Task.sleep(for: .milliseconds(300))
+        guard model.confirmation?.title == "Move “\(target.url.lastPathComponent)” to the Trash?" else {
+            print("FAIL: Command-Delete did not ask to move the selected demo to the Trash (asked: \(model.confirmation?.title ?? "nothing"))"); return false
+        }
+        model.confirmation = nil
+        try await Task.sleep(for: .milliseconds(300))
+        model.selectedMedia = nil
+        ConfigsPreview.press(window, keyCode: 51, characters: "\u{7f}", modifiers: .command)
+        try await Task.sleep(for: .milliseconds(300))
+        guard model.confirmation == nil else { print("FAIL: Command-Delete with nothing selected asked: \(model.confirmation?.title ?? "")"); model.confirmation = nil; return false }
+        print("PASS: Command-Delete asks to move the selected demo to the Trash, and does nothing without a selection")
+
+        // Move to Trash, then Undo puts the file back where it was.
+        let trashed = model.media[model.media.count - 1]
+        model.trashMedia(trashed)
+        let inTrash = model.trashedMedia?.trashed
+        defer { if let inTrash, FileManager.default.fileExists(atPath: inTrash.path) { try? FileManager.default.removeItem(at: inTrash) } }
+        guard inTrash != nil, !FileManager.default.fileExists(atPath: trashed.url.path), !model.media.contains(where: { $0.url == trashed.url }),
+              model.mediaMessage == "Moved “\(trashed.url.lastPathComponent)” to the Trash." else { print("FAIL: Move to Trash did not move the file and say so"); return false }
+        model.undoTrash()
+        guard FileManager.default.fileExists(atPath: trashed.url.path), model.media.contains(where: { $0.url == trashed.url }), model.selectedMedia == trashed.url,
+              model.trashedMedia == nil else { print("FAIL: Undo did not put the demo back"); return false }
+        print("PASS: Move to Trash moves the demo and says so; Undo puts it back and selects it")
+
+        // Each tab keeps its scroll position: scroll Demos down, visit Screenshots, come back.
+        let extra = (0..<30).map { demos.appendingPathComponent(String(format: "scroll-%02d.dm_1", $0)) }
+        for url in extra { try Data("demo".utf8).write(to: url) }
+        defer { for url in extra { try? FileManager.default.removeItem(at: url) } }
+        model.loadMedia()
+        try await Task.sleep(for: .milliseconds(500))
+        func listScroll() -> NSScrollView? {
+            func scrollViews(_ view: NSView) -> [NSScrollView] {
+                var found = view.subviews.flatMap(scrollViews)
+                if let scroll = view as? NSScrollView { found.append(scroll) }
+                return found
+            }
+            return window.contentView.map(scrollViews)?.max { ($0.documentView?.frame.height ?? 0) < ($1.documentView?.frame.height ?? 0) }
+        }
+        guard let scroll = listScroll() else { print("FAIL: Demos has no scroll view"); return false }
+        scroll.contentView.scroll(to: NSPoint(x: 0, y: 500)); scroll.reflectScrolledClipView(scroll.contentView)
+        try await Task.sleep(for: .milliseconds(300))
+        model.libraryTab = .screenshots
+        try await Task.sleep(for: .milliseconds(500))
+        model.libraryTab = .demos
+        try await Task.sleep(for: .milliseconds(700))
+        guard let back = listScroll()?.contentView.bounds.origin.y, abs(back - 500) < 40 else {
+            print("FAIL: Demos did not come back where it was left (kept \(model.libraryOffsets[.demos] ?? -1), now \(listScroll()?.contentView.bounds.origin.y ?? -1))"); return false
+        }
+        print("PASS: each Library tab comes back at the scroll position it was left at")
+
+        // Stored match summaries: Matches lists them newest first.
+        let stats = model.home.appendingPathComponent("main/stats")
+        try FileManager.default.createDirectory(at: stats, withIntermediateDirectories: true)
+        func line(_ ended: String, _ map: String, _ mode: String, _ lost: Int) -> String {
+            #"{"schemaVersion":1,"endedAt":"\#(ended)","endReason":"disconnect","map":"\#(map)","mode":"\#(mode)","durationSeconds":600,"serverAddress":"198.51.100.7:28960","ruleHints":{},"frameCount":1000,"frameTimeP50MS":4,"frameTimeP99MS":8,"frameTimeMaxMS":20,"frameTimeHistogramLimitMS":250,"capSampleFrames":0,"capFPS":250,"pingAverageMS":30,"pingMaximumMS":50,"pingSamples":10,"packetsReceived":\#(1000 - lost),"packetsLost":\#(lost),"packetLossPercent":\#(Double(lost) / 10),"packetLossSource":"snapshot-sequence","snapshotsReceived":\#(1000 - lost)}"#
+        }
+        try Data((line("2026-11-09T20:00:00Z", "mp_carentan", "tdm", 20) + "\n" + line("2026-11-10T21:00:00Z", "mp_toujane", "sd", 0) + "\n").utf8)
+            .write(to: stats.appendingPathComponent("matches.jsonl"))
+        model.libraryTab = .matches
+        try await Task.sleep(for: .milliseconds(500))
+        // A row is one static-text element: VoiceOver reads its words from the value, which the tree
+        // shortens to 80 characters, so the connection word is read from the element itself.
+        let elements = AccessibilityTree.elements(of: window)
+        func words(_ element: AccessibilityTree.Element) -> String {
+            let selector = NSSelectorFromString("accessibilityValue")
+            let full = element.node.responds(to: selector) ? element.node.perform(selector)?.takeUnretainedValue() as? String : nil
+            return element.label.isEmpty ? (full ?? element.value) : element.label
+        }
+        let rows = elements.map(words)
+        guard model.storedMatches.count == 2,
+              let toujane = rows.firstIndex(where: { $0.hasPrefix("Toujane, Search & Destroy") && $0.hasSuffix("connection Steady") }),
+              let carentan = rows.firstIndex(where: { $0.hasPrefix("Carentan, Team Deathmatch") && $0.hasSuffix("connection Some dips") }), toujane < carentan else {
+            print("FAIL: Matches did not list the stored summaries newest first with their connection (\(model.storedMatches.count) read): "
+                  + rows.filter { $0.contains("Toujane") || $0.contains("Carentan") }.joined(separator: " | ")); return false
+        }
+        print("PASS: Matches lists the stored summaries newest first: frame rate, ping and the connection in a word")
+
         let screenshots = model.home.appendingPathComponent("main/screenshots")
         try FileManager.default.createDirectory(at: screenshots, withIntermediateDirectories: true)
         let picture = NSImage(size: NSSize(width: 64, height: 64))
@@ -65,9 +168,10 @@ extension Snapshots {
               let png = bitmap.representation(using: .png, properties: [:]) else { return false }
         try png.write(to: screenshots.appendingPathComponent("review-one.png"))
         try png.write(to: screenshots.appendingPathComponent("review-two.png"))
-        model.libraryTab = .screenshots; model.loadMedia()
+        model.libraryTab = .screenshots
         try await Task.sleep(for: .milliseconds(500))
-        guard let tile = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label.hasPrefix(model.media[0].url.lastPathComponent) }),
+        let first = "Screenshot, " + model.media[0].url.deletingPathExtension().lastPathComponent
+        guard let tile = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label.hasPrefix(first) }),
               AccessibilityTree.press(tile) else { print("FAIL: screenshot selection has no accessibility action"); return false }
         try await Task.sleep(for: .milliseconds(200))
         ConfigsPreview.pressArrow(window, keyCode: 124)

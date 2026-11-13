@@ -88,11 +88,19 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   password, which can be remembered in your keychain on this Mac. The ready
   check offers another loadout that already suits the server. Copy Join Link
   copies a `cod2x://` link CoD2x on Windows also opens.
-- Library refreshes when you return to the launcher and lists the newest files
-  first. Recordings can be renamed or moved to Trash; screenshots support native
-  Quick Look, copying and file actions.
-- Home shows the frame cap of the loadout your next game uses. Update checks
-  share the same visible progress and results across Home, Settings and About.
+- Library has three tabs. Matches lists how each recent match ran (typical
+  frame rate, ping and the connection in a word) from the summaries kept on
+  this Mac, with Check-up one click away. Demos and Screenshots list the newest
+  first and refresh when you come back to the launcher. Recordings play, can be
+  renamed, copied or moved to the Trash (with Undo); screenshots open with a
+  double-click and offer Quick Look, Copy Image and Share.
+- Home shows the server you last played with Launch to rejoin it, the three
+  servers you joined most recently, how your last match ran, this release's
+  notes, and the loadout and frame cap your next game uses, with a menu to
+  switch. Game data not found, a missing CD key or approximate shaders each get
+  a chip that goes straight to the fix. While the game runs, Home offers
+  Return to Game and Quit Game; when an update is ready it offers What's New
+  and Install Update.
 - With CoD2x on, voice chat is off, as in CoD2x. It works with the original
   1.3.
 - With CoD2x on, the game no longer writes its recommended graphics settings

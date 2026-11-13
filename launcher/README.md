@@ -156,9 +156,13 @@ and removed from the child environment. The raw key is never printed.
 
 App settings and library state live in the app home. Settings save automatically
 after a short debounce and flush before quitting; invalid advanced text stays in
-the editor while the last valid options remain in force. Library refreshes on
-appearance, app activation and game exit, and orders files by modification date,
-newest first. Config Studio edits the
+the editor while the last valid options remain in force. Library (Matches, Demos,
+Screenshots) refreshes on appearance, app activation, the window coming forward and game
+exit; demos and screenshots are ordered by modification date and match summaries by when
+they ended, newest first, and each tab keeps its scroll position while the launcher runs.
+The library file also records when each recent server was joined, for Home's Jump back in;
+a server joined by address that no list has shown is kept with the map of its match
+summary. Config Studio edits the
 selected loadout's `main/players/<profile>/config_mp.cfg` through the shared
 profile store, with history and disk-conflict checks. The selected loadout and
 the one used for the next game are separate. After migration succeeds,
@@ -183,8 +187,9 @@ last-successful cache. Refresh is explicit; opening the app doesn't scan the
 internet. Checking for updates is an HTTPS request to GitHub Releases, on Check Now or, with
 Settings › Updates › Check for updates automatically on (the default), at most once a day while
 the launcher is open; an automatic check that fails says nothing, and the review harness and the
-lifecycle tests (`COD2_SETUP_NONINTERACTIVE=1`) never make one. It refreshes Home's Dispatches
-and What's New, which lists the newest release's Added, Changed and Fixed notes. When a newer release carries
+lifecycle tests (`COD2_SETUP_NONINTERACTIVE=1`) never make one. It refreshes the release notes
+and What's New, which lists the newest release's Added, Changed and Fixed notes. Home's Dispatches
+carry this release's own headline and use fetched notes only for a version without one. When a newer release carries
 `CoD2-Silicon-<version>-macos-arm64.zip` and `SHA256SUMS`, Install Update (only on the player's
 click) downloads both into a folder on the app's volume, refuses any size or SHA-256 mismatch,
 unpacks with `ditto` and checks the app inside (bundle identifier, offered version,
