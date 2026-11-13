@@ -355,7 +355,9 @@ HRESULT CDirect3D_CheckDeviceMultiSampleType(const void *t, UINT a, int dt, D3DF
     /* Mac 1.3 (0xd9ca) refuses windowed multisampling, an AGL limit; the
      * offscreen frame buffer has none, and Windows 1.3 multisamples windows. */
     (void)w;
-    if (!ms || !super || (UINT)ms > (UINT)samples)
+    /* This backend exposes power-of-two sample counts. GL rounds a request
+     * such as 3 up to 4; D3D must reject it so the renderer retries at 2. */
+    if (!ms || (ms & (ms - 1)) || !super || (UINT)ms > (UINT)samples)
         return (HRESULT)(int32_t)0x8876086au;
     if (q)
         *q = 1;
