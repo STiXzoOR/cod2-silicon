@@ -832,7 +832,7 @@ void R_AddCmdDrawTextCmd(const char *text, int maxChars, FontHandle font, float 
 
 void R_AddCmdDrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor)
 {
-    static char hidden[4096];
+    char hidden[1024];
     text = Cod2x_HideIpText(text, hidden, sizeof(hidden));
     if (R_Cod2xDrawText(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, cursor))
         return;
