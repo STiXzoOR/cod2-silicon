@@ -9,7 +9,7 @@
 
 struct DxState dxState;
 r_backEndGlobals_t backEnd;
-static float subpixelX, subpixelY;
+static float subpixelX = 0.5f, subpixelY = -0.5f;
 static int constantCalls, offsetCalls;
 
 int MacOpenGLUtils_GetSubPixelOffset(float *x, float *y)
@@ -55,12 +55,15 @@ static void Check(int width, int height, GfxViewport viewport, GfxViewportBehavi
     /* Clip corners map to the viewport rectangle inside the actual NPOT image. */
     Close(offset[0] - scale[0], (viewport.x + (double)subpixelX) / width);
     Close(offset[0] + scale[0], (viewport.x + viewport.width + (double)subpixelX) / width);
-    Close(offset[1] - scale[1], (viewport.y + (double)subpixelY) / height);
-    Close(offset[1] + scale[1], (viewport.y + viewport.height + (double)subpixelY) / height);
+    Close(offset[1] - scale[1], 1.0 - (viewport.y + viewport.height - (double)subpixelY) / height);
+    Close(offset[1] + scale[1], 1.0 - (viewport.y - (double)subpixelY) / height);
 }
 
 int main(void)
 {
+    /* Windows target6 uses the scene viewport for the depth prepass. */
+    assert(s_viewportBehaviorForRenderTarget[R_RENDERTARGET_FLOAT_Z] == GFX_USE_VIEWPORT_FOR_VIEW);
+    assert(s_viewportBehaviorForRenderTarget[R_RENDERTARGET_PINGPONG_1] == GFX_USE_VIEWPORT_FULL);
     GfxViewport ignored = { .x = 13, .y = 17, .width = 641, .height = 359 };
     Check(1280, 720, ignored, GFX_USE_VIEWPORT_FULL);
     Check(1280, 720, (GfxViewport){ .x = 160, .y = 90, .width = 640, .height = 360 }, GFX_USE_VIEWPORT_FOR_VIEW);

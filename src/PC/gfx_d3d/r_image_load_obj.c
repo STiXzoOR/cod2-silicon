@@ -433,10 +433,17 @@ static void Image_GetSunHalfAngleForVector(const vec_t *facePos, int ignored, by
     halfAngle[2] = sunDir[2] - dirFromEye[2];
     Vec3Normalize(halfAngle);
 
+#if defined(COD2_X64)
+    pixel[0] = (byte)(int)floorf((halfAngle[2] * 0.5f + 0.5f) * 255.0f + 0.5f);
+    pixel[1] = (byte)(int)floorf((halfAngle[1] * 0.5f + 0.5f) * 255.0f + 0.5f);
+    pixel[2] = (byte)(int)floorf((halfAngle[0] * 0.5f + 0.5f) * 255.0f + 0.5f);
+    pixel[3] = 0x80;
+#else
     pixel[3] = (byte)(int)floorf((halfAngle[2] * 0.5f + 0.5f) * 255.0f + 0.5f);
     pixel[2] = (byte)(int)floorf((halfAngle[1] * 0.5f + 0.5f) * 255.0f + 0.5f);
     pixel[1] = (byte)(int)floorf((halfAngle[0] * 0.5f + 0.5f) * 255.0f + 0.5f);
     pixel[0] = 0x80;
+#endif
 }
 
 static void Image_GetWaterColorForVector(const vec_t *facePos, int packedColor, byte *pixel)
@@ -455,7 +462,12 @@ static void Image_GetWaterColorForVector(const vec_t *facePos, int packedColor, 
 
     color = packedColor;
 
+#if defined(COD2_X64)
+    /* Windows 1.3 0x1001085a stores Fresnel in A8R8G8B8 alpha. */
+    ((byte *)&color)[3] = (byte)(int)floorf(fresnel * 255.0f + 0.5f);
+#else
     ((byte *)&color)[0] = (byte)(int)floorf(fresnel * 255.0f + 0.5f);
+#endif
     *(int *)pixel = color;
 }
 
@@ -959,11 +971,16 @@ GfxImage *Image_Load(const char *name, int semantic, int imageTrack)
         int waterColor;
         image = Image_Alloc(name, 1, (byte)semantic, imageTrack);
 
+#if defined(COD2_X64)
+        /* Windows 1.3 0x10010870: B=77, G=64, R=51, A=255. */
+        waterColor = (int)0xFF33404Du;
+#else
         waterColor = 0;
         ((byte *)&waterColor)[0] = 0xFF;
         ((byte *)&waterColor)[1] = 0x33;
         ((byte *)&waterColor)[2] = 0x40;
         waterColor = (waterColor & 0x00FFFFFF) | 0x4D000000;
+#endif
         Image_GenerateCubemapFunction(image, pic, 0x10, waterColor,
                                       (CubemapPixelCallback)Image_GetWaterColorForVector);
         return image;

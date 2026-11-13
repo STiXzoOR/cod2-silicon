@@ -5,18 +5,27 @@ static void DeviceRenderState_Init(DeviceImpl *dev)
     dev->glSrcBlend = dev->glSrcBlendAlpha = 1;
     dev->glDestBlend = dev->glDestBlendAlpha = 0;
     dev->glStencilFunc = 0x207;
+    dev->twoSidedStencil = 0;
+    dev->ccwStencilFail = dev->ccwStencilZFail = dev->ccwStencilPass = 1;
+    dev->ccwStencilFunc = 8;
     dev->alphaBlendValue = dev->ditherValue = 0;
+    dev->alphaAAFormat = 0;
     dev->ambientMaterialSource = 0;
     dev->diffuseMaterialSource = 1;
     dev->blendStateChanged = 1;
     memset(dev->lightModelAmbient, 0, sizeof(dev->lightModelAmbient));
     dev->slopeScaleDepthBias = dev->scaledDepthBias = 0.0f;
+    glPolygonOffset(0.0f, 0.0f);
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    glDisable(GL_POLYGON_OFFSET_LINE);
+    glDisable(GL_POLYGON_OFFSET_POINT);
 
     /* Mac Reset 0x19d85/0x19e50 recreates the context before default caches.
      * SDL retains it, so restore the fresh-context state not set by COpenGL_Init. */
     glStencilFunc(dev->glStencilFunc, 0, 0xffffffffu);
     glStencilOp(0x1e00, 0x1e00, 0x1e00);
     glStencilMask(0xffffffffu);
+    glBlendEquationSeparate(0x8006, 0x8006);
     const GLfloat fogColor[4] = {0, 0, 0, 0};
     glFogfv(0xb66, fogColor);
     glFogf(0xb63, 0.0f);
@@ -86,16 +95,37 @@ static GLenum DeviceRenderState_StencilOp(DWORD value)
     return value <= 8 ? operations[value] : 0;
 }
 
+static GLenum DeviceRenderState_CCWFace(void)
+{
+    /* D3D names geometric winding; GL names faces relative to glFrontFace,
+     * which this shim changes with CULLMODE. */
+    GLint winding;
+    glGetIntegerv(GL_FRONT_FACE, &winding);
+    return winding == GL_CCW ? GL_FRONT : GL_BACK;
+}
+
 static void DeviceRenderState_Stencil(DeviceImpl *dev)
 {
-    glStencilOp(DeviceRenderState_StencilOp(dev->stencilFail),
-                DeviceRenderState_StencilOp(dev->stencilZFail),
-                DeviceRenderState_StencilOp(dev->stencilPass));
+    GLenum normalFace = GL_FRONT_AND_BACK;
+    if (dev->twoSidedStencil) {
+        GLenum ccwFace = DeviceRenderState_CCWFace();
+        glStencilOpSeparate(ccwFace, DeviceRenderState_StencilOp(dev->ccwStencilFail),
+            DeviceRenderState_StencilOp(dev->ccwStencilZFail), DeviceRenderState_StencilOp(dev->ccwStencilPass));
+        normalFace = ccwFace == GL_FRONT ? GL_BACK : GL_FRONT;
+    }
+    glStencilOpSeparate(normalFace, DeviceRenderState_StencilOp(dev->stencilFail),
+        DeviceRenderState_StencilOp(dev->stencilZFail), DeviceRenderState_StencilOp(dev->stencilPass));
 }
 
 static void DeviceRenderState_StencilFunc(DeviceImpl *dev)
 {
-    glStencilFunc(dev->glStencilFunc, dev->stencilRef, dev->stencilMask);
+    GLenum normalFace = GL_FRONT_AND_BACK;
+    if (dev->twoSidedStencil) {
+        GLenum ccwFace = DeviceRenderState_CCWFace();
+        glStencilFuncSeparate(ccwFace, 0x1ff + dev->ccwStencilFunc, dev->stencilRef, dev->stencilMask);
+        normalFace = ccwFace == GL_FRONT ? GL_BACK : GL_FRONT;
+    }
+    glStencilFuncSeparate(normalFace, dev->glStencilFunc, dev->stencilRef, dev->stencilMask);
 }
 
 static void DeviceRenderState_MaterialSource(DWORD value, DWORD other, GLenum mode)
@@ -110,27 +140,24 @@ static void DeviceRenderState_MaterialSource(DWORD value, DWORD other, GLenum mo
     }
 }
 
-static void DeviceRenderState_BlendOp(DeviceImpl *dev, DWORD value)
+static GLenum DeviceRenderState_BlendEquation(DWORD value)
 {
-    if (dev->blendOp == value)
-        return;
-    dev->blendOp = value;
-    COpenGLNative *gl = CDirect3DDevice_GL();
-    if (value == 1) {
-        if (gl->supportsBlendSubtract || gl->supportsBlendMinMax)
-            glBlendEquationEXT(0x8006);
-    } else if (value == 2 || value == 3) {
-        if (gl->supportsBlendSubtract)
-            glBlendEquationEXT(value == 2 ? 0x800a : 0x800b);
-    } else if (value == 4 || value == 5) {
-        if (gl->supportsBlendMinMax)
-            glBlendEquationEXT(value == 4 ? 0x8007 : 0x8008);
-    }
+    static const GLenum equations[] = { 0x8006, 0x8006, 0x800a, 0x800b, 0x8007, 0x8008 };
+    return value <= 5 ? equations[value] : 0x8006;
+}
+
+static void DeviceRenderState_BlendOp(DeviceImpl *dev)
+{
+    glBlendEquationSeparate(DeviceRenderState_BlendEquation(dev->blendOp),
+        DeviceRenderState_BlendEquation(dev->separateAlphaBlendEnable ? dev->alphaSrcBlend : dev->blendOp));
 }
 
 static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, DWORD value)
 {
     switch (state) {
+    case 181: /* NVIDIA transparency AA, selected by Windows 1.3 rb_state. */
+        dev->alphaAAFormat = value;
+        break;
     case D3DRS_ZENABLE:
         if (dev->zEnable != value) {
             dev->zEnable = value;
@@ -180,6 +207,10 @@ static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, 
             else if (value == 2 || value == 3) {
                 glEnable(0xb44);
                 glFrontFace(value == 2 ? 0x901 : 0x900);
+                if (dev->twoSidedStencil) {
+                    DeviceRenderState_Stencil(dev);
+                    DeviceRenderState_StencilFunc(dev);
+                }
             }
         }
         break;
@@ -279,6 +310,23 @@ static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, 
             if (!dev->depthStencilDetached) glStencilMask(dev->stencilWriteMask);
         }
         break;
+    case D3DRS_TWOSIDEDSTENCILMODE:
+        dev->twoSidedStencil = value;
+        DeviceRenderState_Stencil(dev);
+        DeviceRenderState_StencilFunc(dev);
+        break;
+    case D3DRS_CCW_STENCILFAIL:
+    case D3DRS_CCW_STENCILZFAIL:
+    case D3DRS_CCW_STENCILPASS:
+        if (state == D3DRS_CCW_STENCILFAIL) dev->ccwStencilFail = value;
+        else if (state == D3DRS_CCW_STENCILZFAIL) dev->ccwStencilZFail = value;
+        else dev->ccwStencilPass = value;
+        DeviceRenderState_Stencil(dev);
+        break;
+    case D3DRS_CCW_STENCILFUNC:
+        dev->ccwStencilFunc = value;
+        DeviceRenderState_StencilFunc(dev);
+        break;
     case D3DRS_TEXTUREFACTOR: {
         GLfloat color[4];
         g_textureFactor = value;
@@ -348,7 +396,10 @@ static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, 
         }
         break;
     case D3DRS_BLENDOP:
-        DeviceRenderState_BlendOp(dev, value);
+        if (dev->blendOp != value) {
+            dev->blendOp = value;
+            DeviceRenderState_BlendOp(dev);
+        }
         break;
     case D3DRS_SLOPESCALEDEPTHBIAS:
     case D3DRS_DEPTHBIAS:
@@ -361,11 +412,16 @@ static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, 
         }
         glPolygonOffset(dev->slopeScaleDepthBias, dev->scaledDepthBias);
         DeviceRenderState_Enable(0x8037, dev->scaledDepthBias != 0.0f || dev->slopeScaleDepthBias != 0.0f);
+        /* D3D depth bias also applies to triangles rasterized as wireframe
+         * or points. OpenGL has a separate enable for each polygon mode. */
+        DeviceRenderState_Enable(GL_POLYGON_OFFSET_LINE, dev->scaledDepthBias != 0.0f || dev->slopeScaleDepthBias != 0.0f);
+        DeviceRenderState_Enable(GL_POLYGON_OFFSET_POINT, dev->scaledDepthBias != 0.0f || dev->slopeScaleDepthBias != 0.0f);
         break;
     case D3DRS_SEPARATEALPHABLENDENABLE:
         if (dev->separateAlphaBlendEnable != value) {
             dev->separateAlphaBlendEnable = value;
             dev->blendStateChanged = 1;
+            DeviceRenderState_BlendOp(dev);
         }
         break;
     case D3DRS_SRCBLENDALPHA:
@@ -377,11 +433,9 @@ static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, 
         dev->glDestBlendAlpha = DeviceRenderState_Blend(value, dev->glDestBlendAlpha, 1, 1);
         break;
     case D3DRS_BLENDOPALPHA:
-        if (dev->separateAlphaBlendEnable) {
+        if (dev->alphaSrcBlend != value) {
             dev->alphaSrcBlend = value;
-            /* Mac 0x16596 jumps into the RGB blend-operation cache/driver
-             * branch; no separate RGB/alpha equation call is made. */
-            DeviceRenderState_BlendOp(dev, value);
+            DeviceRenderState_BlendOp(dev);
         }
         break;
     default:

@@ -31,8 +31,8 @@ static void CheckCoverage(int width, int height, int glow)
         matrix[0] = 2.0f / w;
         matrix[5] = -2.0f / h;
         matrix[10] = matrix[15] = 1;
-        matrix[12] = -1;
-        matrix[13] = 1;
+        matrix[12] = -1.0f - 1.0f / w;
+        matrix[13] = 1.0f + 1.0f / h;
         MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(matrix, w, h);
         glMatrixMode(GL_PROJECTION);
         glLoadMatrixf(matrix);

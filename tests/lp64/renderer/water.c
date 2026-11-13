@@ -1,3 +1,12 @@
+#include "PC/gfx_d3d/r_log.h"
+/* This isolated renderer fixture does not start the diagnostic log. */
+int R_LogEnabled(void) { return 0; }
+void R_LogPrintf(const char *format, ...) { (void)format; }
+void R_LogFrameEnd(void) {}
+void R_LogState(unsigned int state, unsigned int changed, int word)
+{ (void)state; (void)changed; (void)word; }
+const char *R_LogTechniqueName(int technique) { (void)technique; return ""; }
+
 #include "common_types.h"
 #include "imports.h"
 #include <assert.h>
@@ -5,6 +14,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
+#include <stdint.h>
+
+static float cloudVertices[0x14000 / sizeof(float)];
+static unsigned short cloudIndices[0x3000 / sizeof(unsigned short)];
+extern DxGlobals dx;
+void *R_AllocStaticVertexBuffer(IDirect3DVertexBuffer9 **buffer, int bytes)
+{ assert(bytes == sizeof(cloudVertices)); *buffer = (void *)cloudVertices; return cloudVertices; }
+void *R_AllocStaticIndexBuffer(IDirect3DIndexBuffer9 **buffer, int bytes)
+{ assert(bytes == sizeof(cloudIndices)); *buffer = (void *)cloudIndices; return cloudIndices; }
+void R_FinishStaticVertexBuffer(IDirect3DVertexBuffer9 *buffer)
+{ assert((void *)buffer == cloudVertices); }
+void R_FinishStaticIndexBuffer(IDirect3DIndexBuffer9 *buffer)
+{ assert((void *)buffer == cloudIndices); }
+#include "water_random_source.h"
 
 #include "shade_source.h"
 #include "water_source.h"
@@ -53,6 +77,7 @@ r_globals_t rg;
 r_backEndGlobals_t backEnd;
 refimport_t ri;
 GfxBackEndData *backEndData;
+int RB_ShadowCookiesValid(void) { return 0; }
 void *imp_tess = &tess, *imp_rgp = &rgp, *imp_backEnd = &backEnd, *imp_dx = &dx;
 static byte special, uploading;
 void *imp_g_special = &special, *imp_g_WarmOff = &uploading;
@@ -261,15 +286,15 @@ static void CheckPayload(int normal)
                 float b = heights[i] - heights[((y + 3) & 3) * 4 + x];
                 float scale = 127.5f / sqrtf(a * a + b * b + 256.0f);
                 const byte *pixel = uploads[0].bytes + i * 4;
-                assert(pixel[0] == 255);
+                assert(pixel[3] == 255);
                 int expected[] = { (int)floorf(a * scale + 128.0f),
                                    (int)floorf(b * scale + 128.0f),
                                    (int)floorf(16 * scale + 128.0f) };
                 for (int c = 0; c < 3; ++c) {
-                    if (abs((int)pixel[c + 1] - expected[c]) > 1)
+                    if (abs((int)pixel[2 - c] - expected[c]) > 1)
                         fprintf(stderr, "normal pixel %d channel %d: got %u expected %d\n",
-                                i, c, pixel[c + 1], expected[c]);
-                    assert(abs((int)pixel[c + 1] - expected[c]) <= 1);
+                                i, c, pixel[2 - c], expected[c]);
+                    assert(abs((int)pixel[2 - c] - expected[c]) <= 1);
                 }
             }
         }
@@ -453,7 +478,8 @@ static void CheckVertices(void)
         if (colors[s] >= 0)
             for (int v = 0; v < 2; ++v)
                 for (int c = 0; c < 4; ++c)
-                    expected[v * stride + colors[s] + c] = input[v * stride + colors[s] + 3 - c];
+                    expected[v * stride + colors[s] + c] = input[v * stride + colors[s] +
+                        ((stride == 32 || stride == 68) ? (c + 1) % 4 : 3 - c)];
         RB_SetVertexData(0, input, 2, stride);
         assert(slot.used == offset + size && dxState.streams[0].offset == offset);
         /* Mac 0xf6e4d: DISCARD at offset zero, NOOVERWRITE after. */
@@ -483,11 +509,112 @@ static void CheckVertices(void)
     assert(!memcmp(storage + offset, prior, 28));
 }
 
+static uint32_t FloatBits(float value)
+{ uint32_t bits; memcpy(&bits, &value, sizeof(bits)); return bits; }
+
+#if defined(WATER_HAS_RENDERER_RANDOM)
+void *Material_Alloc(int bytes)
+{ void *p = calloc(1, bytes); assert(p); return p; }
+const char *va(const char *format, ...)
+{ assert(!strcmp(format, "watersetup%i")); return "watersetup0"; }
+GfxImage *R_CreateWaterMap(char *name, int width, int height)
+{ assert(!strcmp(name, "watersetup0") && width == 4 && height == 4); return &image; }
+
+static void *CheckRandomThread(void *unused)
+{
+    (void)unused;
+    assert(R_RendererRandom() == 41);
+    assert(R_RendererRandom() == 18467);
+    return NULL;
+}
+
+static void CheckRandom(void)
+{
+    /* Unmodified Windows renderer DLL rand/GaussianRandom, seed1, CW007f,
+     * after the real cloud producer's 3072 draws. Raw oracle SHA256:
+     * 2cab796679b66c6ee03f0f8b24d3592d81ae950db64b1dc2ffc7503c0b1fbb9a. */
+    static const int initial[] = {41,18467,6334,26500,19169,15724,11478,29358,
+        26962,24464,5705,28145,23281,16827,9961,491};
+    static const uint32_t expected[] = {
+        0xbe2cb881,0x3d728c3f,0x3f775e30,0x3f140295,0xbebaeeb3,0xbf06b333,0xbf01687a,0xbd6da0e4,
+        0xbe0bea90,0x3f9bbc74,0x3e27acd1,0xbe9e6756,0xbff3aa0b,0xbec87d7a,0x3eb847b9,0xbe96b19e,
+        0x3e8bf077,0xbf35cb71,0xc0064b3a,0x3c911cff,0xbf87b585,0x3efc9dfe,0xbf7b2408,0xbd6e060e,
+        0x3dcae735,0xbf5deac5,0xbdabe202,0xc00fc0d0,0x3f918b88,0xbee52234,0xbf3e5bbb,0x3e8f9455,
+        0x3eff8f8d,0x3f934330,0xbe15cd9a,0x3eb845b1,0xbf4c372d,0x3f912a41,0xbf3faa09,0xbf70a4fb,
+        0xbfe0b8eb,0xbee0d18b,0xbf169f2b,0xbfcc785a,0x3e9fa032,0xbfca6033,0x3f80acc3,0xbe309c30,
+        0xbf6f21bb,0xbfca579e,0xbf3eac84,0x3f352f21,0x3e2bc2f1,0x3db60b9f,0xbe148390,0x3f64f57f,
+        0x3ec59941,0xbf8eaaa9,0x3f1772ee,0xbefeca38,0xbf1cdf6c,0x3fc3c614,0x3fd46cd8,0x3f22a6c2
+    };
+    R_ResetRendererRandom();
+    for (unsigned i = 0; i < sizeof(initial)/sizeof(initial[0]); ++i)
+        assert(R_RendererRandom() == initial[i]);
+    pthread_t thread;
+    assert(!pthread_create(&thread, NULL, CheckRandomThread, NULL));
+    assert(!pthread_join(thread, NULL));
+    for (int pass = 0; pass < 2; ++pass) {
+        R_ResetRendererRandom();
+        srand(pass ? 9999 : 1);
+        for (int i = 0; i < pass * 1000; ++i) (void)rand();
+        R_CreateParticleCloudBuffer();
+        for (int axis = 0; axis < 3; ++axis) {
+            float scale = axis == 2 ? .125f : .25f;
+            assert(cloudVertices[axis] == (initial[axis] * 0x1.0002p-15f) * scale - 1.0f);
+            for (int corner = 1; corner < 4; ++corner)
+                assert(cloudVertices[corner * 5 + axis] == cloudVertices[axis]);
+        }
+        for (int i = 0; i < 32; ++i) {
+            float real, imag;
+            R_WaterGaussianRandom(&real, &imag);
+            assert(FloatBits(real) == expected[i * 2]);
+            assert(FloatBits(imag) == expected[i * 2 + 1]);
+        }
+        assert(R_RendererRandom() == 32331);
+        /* A device reset recreates clouds without reloading the renderer DLL. */
+        R_CreateParticleCloudBuffer();
+        assert(R_RendererRandom() != initial[0]);
+    }
+    water_t source = { .M = 4, .N = 4, .Lx = 16, .Lz = 16,
+        .amplitude = 1, .gravity = 9.8f, .windvel = 8, .winddir = {-1, 0} };
+    water_t setups[3];
+    for (int pass = 0; pass < 3; ++pass) {
+        if (pass != 1) {
+            R_ResetRendererRandom();
+            R_CreateParticleCloudBuffer();
+        }
+        srand(pass + 4567);
+        for (int i = 0; i < 1000; ++i) (void)rand();
+        R_CreateWaterSetup(&source, 0, &setups[pass]);
+        assert(setups[pass].image == &image);
+        assert(setups[pass].H0[0].real != 0 && setups[pass].H0[0].imag != 0);
+        for (int i = 8; i < 16; ++i) {
+            assert(setups[pass].H0[i].real == 0 && setups[pass].H0[i].imag == 0);
+            assert(setups[pass].wTerm[i] == 0);
+        }
+    }
+    /* A second water setup continues the stream, while a renderer reload
+     * reproduces it regardless of gameplay's srand/rand consumption. */
+    assert(memcmp(setups[0].H0, setups[1].H0, 16 * sizeof(complex_t)));
+    assert(!memcmp(setups[0].H0, setups[2].H0, 16 * sizeof(complex_t)));
+    assert(!memcmp(setups[0].wTerm, setups[2].wTerm, 16 * sizeof(float)));
+    for (int i = 0; i < 3; ++i) {
+        free(setups[i].H0);
+        free(setups[i].wTerm);
+    }
+}
+#endif
+
 int main(int argc, char **argv)
 {
     assert(argc == 2);
     Init();
-    if (!strcmp(argv[1], "draw")) {
+    if (!strcmp(argv[1], "random")) {
+#if defined(WATER_HAS_RENDERER_RANDOM)
+        CheckRandom();
+#else
+        fprintf(stderr, "renderer still shares the process RNG\n");
+        return 1;
+#endif
+    } else if (!strcmp(argv[1], "draw")) {
         CheckDraw();
     } else if (!strcmp(argv[1], "vertices")) {
         CheckVertices();

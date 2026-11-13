@@ -56,7 +56,7 @@ def main():
                         str(ROOT / 'tests/lp64/renderer/post_effects.c'), '-o', str(binary)],
                        cwd=ROOT, stdout=log, stderr=log, check=True)
     failures = []
-    for case in ['native-extent', 'below-threshold', 'above-threshold']:
+    for case in ['native-extent', 'below-threshold', 'above-threshold', 'channels', 'shadow-restore']:
         result = subprocess.run([str(binary), case], capture_output=True, text=True,
                                 env={**os.environ, 'ASAN_OPTIONS': 'symbolize=0',
                                      'UBSAN_OPTIONS': 'halt_on_error=1'})

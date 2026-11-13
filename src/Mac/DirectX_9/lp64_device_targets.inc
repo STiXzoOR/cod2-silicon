@@ -150,6 +150,9 @@ static void DeviceTargets_EndPixel(DeviceImpl *dev)
 
 static HRESULT DeviceTargets_SetDepth(DeviceImpl *dev, IDirect3DSurface9 *surface)
 {
+#if COD2_APPLE_SDK
+    CDirect3DSurface_BindDepthStorage(surface);
+#endif
     int detached = surface == NULL;
     if (dev->depthStencilDetached != detached) {
         if (dev->zWriteEnable) glDepthMask(!detached);
@@ -160,9 +163,9 @@ static HRESULT DeviceTargets_SetDepth(DeviceImpl *dev, IDirect3DSurface9 *surfac
             DeviceTargets_Capability(0x0b90, !detached);
         }
     }
+    DeviceTargets_AddRef(surface);
     DeviceTargets_Release(dev->depthStencil);
     dev->depthStencil = surface;
-    DeviceTargets_AddRef(surface);
     dev->depthStencilDetached = detached;
     return 0;
 }
@@ -181,6 +184,14 @@ static void DeviceTargets_SetCombiner(const CTexUnitNative *unit)
 
 static void DeviceTargets_CopyColor(DeviceImpl *dev)
 {
+#if COD2_APPLE_SDK
+    /* Float depth is rendered directly into its texture, never through the
+     * normalized AUX attachments. Copying AUX here would destroy that depth. */
+    if (dev->floatTargetActive) {
+        CDirect3DSurface_MarkGPUWritten(dev->renderTarget);
+        return;
+    }
+#endif
     CDirect3DSurfaceNativeInfo info;
     if (!CDirect3DSurface_GetNativeInfo(dev->renderTarget, &info)) return;
     GLint active, binding;
@@ -320,6 +331,30 @@ static HRESULT DeviceTargets_SetTarget(DeviceImpl *dev, IDirect3DSurface9 *targe
     if (target) {
         if (dev->renderTarget && dev->renderTarget != dev->backBuffer && !g_InhibitCopy)
             DeviceTargets_CopyColor(dev);
+#if COD2_APPLE_SDK
+        if (dev->floatTargetActive) {
+            glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, dev->savedDrawFramebuffer);
+            glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, dev->savedReadFramebuffer);
+            glDrawBuffer(dev->savedDrawBuffer);
+            glReadBuffer(dev->savedReadBuffer);
+            dev->floatTargetActive = 0;
+        }
+        D3DSURFACE_DESC targetDesc;
+        DeviceTargets_GetDesc(target, &targetDesc);
+        if (targetDesc.Format == D3DFMT_R32F) {
+            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING_EXT, &dev->savedDrawFramebuffer);
+            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING_EXT, &dev->savedReadFramebuffer);
+            glGetIntegerv(GL_DRAW_BUFFER, &dev->savedDrawBuffer);
+            glGetIntegerv(GL_READ_BUFFER, &dev->savedReadBuffer);
+            HRESULT result = CDirect3DSurface_BindFloatTarget(target);
+            if (result) {
+                glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, dev->savedDrawFramebuffer);
+                glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, dev->savedReadFramebuffer);
+                return result;
+            }
+            dev->floatTargetActive = 1;
+        }
+#endif
         DeviceTargets_Release(dev->renderTarget);
         dev->renderTarget = target;
         DeviceTargets_AddRef(target);

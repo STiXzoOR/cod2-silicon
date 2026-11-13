@@ -1,5 +1,6 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
+#include "PC/gfx_d3d/r_log.h"
 #include "imports.h"
 #include "bytematch.h"
 extern struct DxGlobals dx;
@@ -1969,6 +1970,7 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
                     void **devVtable = *(void ***)device;
                     typedef HRESULT(D3DVTCC * CreateShaderFn)(void *, const void *, void **);
                     int vtableOffset = (shaderType == 0) ? (0x16C / 4) : (0x1A8 / 4);
+                    R_LOG("%s", shaderType == 0 ? "dx.device->CreateVertexShader( mtlShader->program, &shader->vs )\n" : "dx.device->CreatePixelShader( mtlShader->program, &shader->ps )\n");
                     hr = ((CreateShaderFn)devVtable[vtableOffset])(device, mtl + hdr, (void **)&mtlShader->u);
                 }
             }

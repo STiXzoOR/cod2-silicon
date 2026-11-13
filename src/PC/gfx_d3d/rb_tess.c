@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include "PC/gfx_d3d/r_log.h"
 extern struct DxGlobals dx;
 /* File-scope alias: bound where no local can shadow `dx`, so uses below
    always reach the global even inside functions that declare their own `dx`. */
@@ -103,6 +104,8 @@ void RB_TessParticleCloud(const GfxEntity *re)
     if (((materialCommands_t *)tess)->indexCount != 0 || ((materialCommands_t *)tess)->optimizedIndexCount != 0) {
         RB_EndSurface();
     }
+
+    R_LOG("--- RB_TessParticleCloud( %s ) ---\n", ((materialCommands_t *)RB_TessBase())->material->info.name);
 
 #if defined(COD2_X64)
     args.vertexCount = 0x1000;
@@ -228,6 +231,8 @@ void RB_TessXModelRigid(const surfaceType_t *surfType)
     if (((materialCommands_t *)tess)->indexCount != 0 || ((materialCommands_t *)tess)->optimizedIndexCount != 0) {
         RB_EndSurface();
     }
+
+    R_LOG("--- RB_TessXModelRigid( %s ) ---\n", ((materialCommands_t *)RB_TessBase())->material->info.name);
 
     xsurf = ((const GfxModelSurface *)surfType)->xsurf;   /* was surfType+4 (x86 xsurf @4; x64 @8) */
 
@@ -1177,6 +1182,8 @@ void RB_TessStaticModelCached(const surfaceType_t *surfType)
     ((materialCommands_t *)tess)->firstOptimizedVertex = 0;
     ((materialCommands_t *)tess)->optimizedVertexCount = 0x10000;
 
+    R_LOG("--- RB_TessStaticModelCached( %s ) ---\n", ((materialCommands_t *)RB_TessBase())->material->info.name);
+
     baseVertIndex = ((materialCommands_t *)tess)->optimizedIndexCount;
     dest = (*(char **)&((materialCommands_t *)tess)->optimizedIndices) + baseVertIndex * 2;
     ((materialCommands_t *)tess)->optimizedIndexCount = baseVertIndex + triIndexCount;
@@ -1216,6 +1223,8 @@ void RB_TessXModelSkinned(const surfaceType_t *surfType)
             RB_EndSurface();
         }
 
+        R_LOG("--- RB_TessXModelSkinnedCached( %s ) ---\n", ((materialCommands_t *)tess)->material->info.name);
+
         isDx7 = (r_rendererInUse->current.integer == 2);
         vertexStride = isDx7 ? 0x24 : 0x40;
 
@@ -1241,6 +1250,7 @@ void RB_TessXModelSkinned(const surfaceType_t *surfType)
 
         RB_DrawTechnique( (MaterialVertexDeclType)(0), &args);
     } else {
+        R_LOG("--- RB_TessXModelSkinnedUncached( %s ) ---\n", ((materialCommands_t *)RB_TessBase())->material->info.name);
 
         vertexCount = XSurfaceGetNumVerts(xsurf);
         triIndexCount = XSurfaceGetNumTris(xsurf) * 3;
@@ -1403,10 +1413,10 @@ static void RB_TessCylinderNative(const GfxEntity *re, int isDx7)
         forward[k] = re->origin[k] - re->endpos[k];
     Vec3Normalize(forward);
     MakeNormalVectors(forward, right, up);
-    unsigned int color = (unsigned int)re->materialRGBA[2] |
-                         ((unsigned int)re->materialRGBA[1] << 8) |
-                         ((unsigned int)re->materialRGBA[0] << 16) |
-                         ((unsigned int)re->materialRGBA[3] << 24);
+    unsigned int color = (unsigned int)re->materialRGBA[3] |
+                         ((unsigned int)re->materialRGBA[0] << 8) |
+                         ((unsigned int)re->materialRGBA[1] << 16) |
+                         ((unsigned int)re->materialRGBA[2] << 24);
     float step = 1.0f / (float)segments;
     float angle = (float)((double)step * 6.283185307179586);
     float sinStep = sinf(angle);

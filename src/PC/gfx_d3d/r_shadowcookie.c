@@ -48,6 +48,20 @@ extern void R_AddCmdBeginView(int viewCount, const GfxSceneDef *sceneDef, const 
 extern void R_AddCmdSetViewport(int x, int y, int width, int height);
 extern void R_AddCmdDrawSurfs(GfxDrawSurf *surfs, int count, MaterialTechniqueType technique);
 
+void R_DrawShadowCookieOverlay(void)
+{
+    extern vidConfig_t vidConfig;
+    extern void MatrixIdentity44(float (*matrix)[4]);
+    extern void R_AddCmdDrawStretchPic(float x, float y, float w, float h,
+        float s0, float t0, float s1, float t1, const vec_t *color, MaterialHandle material);
+    D3DMATRIX identity;
+    MatrixIdentity44(identity.m);
+    R_AddCmdShadowCookie(&identity, 1.0f);
+    float size = (float)vidConfig.width * 0.25f;
+    R_AddCmdDrawStretchPic(4, 4, size, size, 0, 0, 1, 1,
+        (const vec_t *)imp_colorWhite, rgp.shadowCookieOverlayMaterial);
+}
+
 /* Windows 1.3 0x101904a8; also Mac 1.3 i386 0x302740. */
 static vec4_t shadowFrustumSidePlanes[5] = {
     { -1, 0, 0, 1 }, { 1, 0, 0, 1 },
@@ -246,6 +260,7 @@ void R_GenerateShadowCookies(const GfxViewParms *viewParms, const GfxViewParms *
 
 void R_DrawShadowCookies(int viewIndex, const GfxViewParms *viewParms, ShadowCookieList *list)
 {
+    extern int R_UseZFeather(void);
     int needsTarget = R_BeginDrawGroupSection((GfxDrawGroupType)1) == 0;
     const vec4_t clear = { 0.5f, 0.5f, 0.5f, 0.0f };
     R_BeginDrawGroupLoop((GfxDrawGroupType)1, viewIndex);
@@ -267,6 +282,10 @@ void R_DrawShadowCookies(int viewIndex, const GfxViewParms *viewParms, ShadowCoo
         R_AddCmdSetViewport(0, 0, 128, 128);
         if (sc_blur->current.integer) R_AddCmdBlurShadowCookie();
         R_AddCmdSetRenderTarget(R_RENDERTARGET_DYNAMICSHADOWS);
+        if (needsTarget && R_UseZFeather()) {
+            const vec4_t white = { 1, 1, 1, 1 };
+            R_AddCmdClearScreen(1, white, 0, 0);
+        }
         R_AddCmdBeginView(scene.viewCount, &scene.def, viewParms, &rg.lodParms);
         if (i < sc_debugReceiverCount->current.integer) {
             surfs = &scene.drawSurfs[cookie->firstReceiverDrawSurf];
@@ -275,7 +294,13 @@ void R_DrawShadowCookies(int viewIndex, const GfxViewParms *viewParms, ShadowCoo
         }
         needsTarget = 0;
     }
-    if (needsTarget) R_AddCmdSetRenderTarget(R_RENDERTARGET_DYNAMICSHADOWS);
+    if (needsTarget) {
+        R_AddCmdSetRenderTarget(R_RENDERTARGET_DYNAMICSHADOWS);
+        if (R_UseZFeather()) {
+            const vec4_t white = { 1, 1, 1, 1 };
+            R_AddCmdClearScreen(1, white, 0, 0);
+        }
+    }
     R_EndDrawGroupLoop((GfxDrawGroupType)1, viewIndex);
     R_EndDrawGroupSection((GfxDrawGroupType)1);
 }

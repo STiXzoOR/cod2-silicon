@@ -34,11 +34,13 @@ static void Check(int source, GfxImage *expected, byte expectedState)
 
 int main(void)
 {
-    GfxImage white = { 0 }, black = { 0 }, shadow = { 0 }, images[4] = { 0 };
+    GfxImage white = { 0 }, black = { 0 }, shadow = { 0 }, floatZ = { 0 }, images[4] = { 0 };
     GfxEntity entity = { .reType = (refEntityType_t)3 };
     rgp.whiteImage = &white;
     rgp.blackImage = &black;
     dx.renderTargets[3].image = &shadow;
+    dx.renderTargets[R_RENDERTARGET_FLOAT_Z].image = &floatZ;
+    Check(21, &floatZ, 0x31);
     backend.currentEntity = &entity;
     shadowDvar.current.enabled = 1;
     /* An enabled toggle cannot authorize an unfilled/overwritten target. */
@@ -75,5 +77,5 @@ int main(void)
         lightmapDvar.current.integer = 2;
         Check(8 + i, &black, 1);
     }
-    puts("native code samplers: unfilled shadow target and lightmap debug modes passed");
+    puts("native code samplers: float depth, unfilled shadow target and lightmap debug modes passed");
 }

@@ -1,3 +1,26 @@
+#include "PC/gfx_d3d/r_log.h"
+#include <assert.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+static int logEnabled;
+static char logText[2048];
+static size_t logLength;
+int R_LogEnabled(void) { return logEnabled; }
+void R_LogPrintf(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int count = vsnprintf(logText + logLength, sizeof(logText) - logLength, format, args);
+    va_end(args);
+    assert(count >= 0 && (size_t)count < sizeof(logText) - logLength);
+    logLength += (size_t)count;
+}
+void R_LogFrameEnd(void) {}
+void R_LogState(unsigned int state, unsigned int changed, int word)
+{ (void)state; (void)changed; (void)word; }
+const char *R_LogTechniqueName(int technique) { (void)technique; return ""; }
+
 #include "common_types.h"
 #include "imports.h"
 #include <assert.h>
@@ -31,12 +54,22 @@ int main(void)
     /* Mac 1.3 .data holds {ALPHAOP 4, ALPHAARG1 5, ALPHAARG2 6, ALPHAARG0 27}
        and {COLOROP 1, COLORARG1 2, COLORARG2 3, COLORARG0 26}. */
     /* Op 21 (D3DTOP_LERP, three arguments) with argument codes 1, 2 and 5. */
+    logEnabled = 1;
     RB_ChangeAlphaStageState(0, 21 | (1 << 10) | (2 << 15) | (5 << 20));
     assert(calls == 4);
     assert(states[0] == 4 && values[0] == 25);
     assert(states[1] == 5 && values[1] == s_textureArgTable[1]);
     assert(states[2] == 6 && values[2] == s_textureArgTable[2]);
     assert(states[3] == 27 && values[3] == s_textureArgTable[5]);
+    assert(!strcmp(logText,
+        "dx.device->SetTextureStageState( stageIndex, texStageEnums->op, texOp->enumerant )\n"
+        "dx.device->SetTextureStageState( stageIndex, texStageEnums->arg[argIndex], texArg )\n"
+        "dx.device->SetTextureStageState( stageIndex, texStageEnums->arg[argIndex], texArg )\n"
+        "dx.device->SetTextureStageState( stageIndex, texStageEnums->arg[argIndex], texArg )\n"));
+    logText[0] = 0;
+    logLength = 0;
+    RB_ChangeAlphaStageState(0, 21 | (1 << 10) | (2 << 15) | (5 << 20));
+    assert(calls == 4 && logLength == 0); /* Cache hits have no original call trace. */
 
     /* Op 1 (D3DTOP_SELECTARG1) uses only its first argument. */
     calls = 0;
@@ -44,5 +77,8 @@ int main(void)
     assert(calls == 2);
     assert(states[0] == 1 && values[0] == 2);
     assert(states[1] == 2 && values[1] == s_textureArgTable[5]);
+    assert(!strcmp(logText,
+        "dx.device->SetTextureStageState( stageIndex, texStageEnums->op, texOp->enumerant )\n"
+        "dx.device->SetTextureStageState( stageIndex, texStageEnums->arg[argIndex], texArg )\n"));
     puts("native texture stages: Mac alpha/color stage enums reach SetTextureStageState");
 }
