@@ -122,6 +122,9 @@ char *Info_ValueForKey(const char *s, const char *key) { (void)s; (void)key; ret
 static int serverRevision = 6;
 int Cod2x_GameVersion(void) { return serverRevision; }
 void Cod2x_PoseInit(void) {}
+static int radarInitializations, radarFrames;
+void CG_Cod2xRadarInit(void) { ++radarInitializations; }
+void CG_Cod2xRadarFrame(void) { ++radarFrames; }
 const char *Cod2x_IwdRequiredName(void) { return ""; }
 /* vMix and the update check's links to the client, the platform and the network: none here. */
 void Cod2x_VmixInit(void) {}
@@ -167,6 +170,7 @@ int main(void)
     dvar_t *cheats = (dvar_t *)Dvar_RegisterBool("sv_cheats", 0, 0);
     dvar_t *debug;
     Cod2x_FeaturesInit();
+    assert(radarInitializations == 1);
     execute("increase", "test_int", NULL);
     assert(integer->current.integer == 8);
     execute("decrease", "test_float", NULL);
@@ -194,6 +198,7 @@ int main(void)
     assert(Cod2x_FeaturesDemo());
     Cod2x_FeaturesFrame(0, 0);
     assert(!Cod2x_FeaturesDemo());
+    assert(radarFrames == 3);
     {
         /* The connect report: a disconnect clears the server revision. */
         dvar_t *game = (dvar_t *)Dvar_RegisterInt("g_cod2x", 6, 0, 6, 0x18);
