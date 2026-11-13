@@ -67,7 +67,7 @@ int main(void)
     assert(packet[encoded - 1] == '"' && packet[encoded] == '\0');
     assert(sscanf(packet, "connect \"\\protocol\\%d\\protocol_cod2x\\%d\\cl_hwid2\\%32[0-9a-f]\\challenge\\%d\\qport\\%d\"",
                   &protocol, &revision, decoded, &challenge, &qport) == 5);
-    assert(protocol == 118 && revision == 6 && !strcmp(decoded, id));
+    assert(protocol == 118 && revision == COD2X_REVISION && !strcmp(decoded, id));
     assert(challenge == -2147483647 && qport == 65535);
     assert(Cod2x_EncodeConnect(packet, encoded, info) == 0);
     assert(Cod2x_CDKeyHash("abcd-1234", hash));
