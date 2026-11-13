@@ -30,7 +30,7 @@ def build(output, compile_db, binary=None):
         n += 1
     flags += ['-O2', '-g', '-ffp-contract=off', '-Wno-typedef-redefinition',
               '-Wno-duplicate-decl-specifier', '-Werror=implicit-function-declaration']
-    sdl_flags = shlex.split(subprocess.check_output(['sdl2-config', '--cflags', '--libs'], text=True))
+    sdl_flags = shlex.split(subprocess.check_output(['sdl2-config', '--cflags', '--libs'], text=True)) + ['-framework', 'CoreFoundation']
     probe = output / 'input-probe.dylib'
     subprocess.run(['clang', *flags, *sdl_flags, '-dynamiclib',
                     str(ROOT / 'tests/input/probe.c'), str(ROOT / 'tests/input/native_events.c'),
@@ -40,7 +40,7 @@ def build(output, compile_db, binary=None):
     fixture_flags = [flag for flag in flags if not flag.startswith('-DCOD2_CODX=')]
     subprocess.run(['clang', *fixture_flags, '-DCOD2_CODX=0', *sdl_flags,
                     '-Wl,-dead_strip', str(ROOT / 'tests/input/characterize.c'),
-                    str(ROOT / 'src/unix/linux_input.c'), '-o', str(fixture)], check=True)
+                    str(ROOT / 'src/unix/linux_input.c'), str(ROOT / 'src/platform/macos_system.c'), '-o', str(fixture)], check=True)
     def sdl_name(path):
         links = subprocess.check_output(['otool', '-L', str(path)], text=True)
         return next(line.strip().split(' (')[0] for line in links.splitlines() if '/libSDL2' in line)
@@ -299,10 +299,10 @@ def self_test(output, probe, fixture, sdl3):
                     rows = [json.loads(line) for line in (case / 'characterize.jsonl').read_text().splitlines() if line.startswith('{')]
                     events = [row for row in rows if row.get('engine') == 'event']
                     assert any(row.get('engine') == 'absolute' and row['x'] == 23 and row['y'] == 41 for row in rows), 'Production pump did not dispatch absolute motion'
-                    assert any(row.get('value') == ord('€') for row in events), 'Production pump did not decode UTF-8'
+                    assert any(row.get('value') == 0x80 for row in events), 'Production pump did not decode UTF-8'
                     assert [row['down'] for row in events if row['value'] == 0xc8] == [1, 0, 1, 0], 'Production pump lost button edges'
                     assert any(row['value'] == 0xae and row['down'] for row in events), 'Production pump did not translate F8'
-                    assert [row['value'] for row in events if row['value'] in (0xcd, 0xce)] == [0xce, 0xce, 0xcd, 0xcd], 'Production pump did not accumulate fractional wheel events'
+                    assert [row['value'] for row in events if row['value'] in (0xcd, 0xce)] == [0xce] * 8 + [0xcd] * 8, 'Production pump did not emit one pair per wheel message'
                 driver.queue('key Invalid_Key_Name 1')
                 driver.ack(driver.sequence, -1)
                 print(f'PASS {mode}: motion, buttons, key, native text, precise wheel, direction', flush=True)

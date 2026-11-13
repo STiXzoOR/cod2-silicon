@@ -20,6 +20,7 @@ add_executable(macos_platform_smoke smoke.c
   "${PORT_ROOT}/src/platform/macos_display.c"
   "${PORT_ROOT}/src/platform/macos_rawmouse.m"
   "${PORT_ROOT}/src/platform/macos_audio.c"
+  "${PORT_ROOT}/src/PC/qcommon/com_fileaccess.c"
   "${PORT_ROOT}/src/platform/macos_system.c")
 set_source_files_properties("${PORT_ROOT}/src/platform/macos_rawmouse.m" PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 target_link_libraries(macos_platform_smoke PRIVATE SDL2::SDL2 ${OPENGL_FRAMEWORK} ${AUDIO_FRAMEWORK} ${COREAUDIO_FRAMEWORK} ${GC_FRAMEWORK} ${FOUNDATION_FRAMEWORK})
@@ -90,6 +91,7 @@ add_executable(macos_frame_wait_test frame_wait.c "${PORT_ROOT}/src/platform/mac
 add_test(NAME frame_wait COMMAND macos_frame_wait_test)
 add_executable(macos_voice_test voice_test.c "${PORT_ROOT}/src/platform/macos_audio.c" "${PORT_ROOT}/src/platform/macos_voice.c")
 foreach(target macos_audio_test macos_voice_test)
+  target_sources(${target} PRIVATE "${PORT_ROOT}/src/PC/qcommon/com_fileaccess.c")
   target_link_libraries(${target} PRIVATE ${AUDIO_FRAMEWORK} ${COREAUDIO_FRAMEWORK})
 endforeach()
 add_executable(macos_cpp_abi_test cpp_abi.cpp "${PORT_ROOT}/src/platform/macos_cpp_abi.cpp" "${PORT_ROOT}/src/PC/stringed/stringed_interface.c")
@@ -101,12 +103,13 @@ set_property(SOURCE "${PORT_ROOT}/src/platform/macos_threads.c"
   APPEND PROPERTY COMPILE_OPTIONS -fexceptions)
 target_link_options(macos_threads_ring_test PRIVATE -Wl,-dead_strip)
 target_link_libraries(macos_threads_ring_test PRIVATE SDL2::SDL2)
-add_executable(macos_input_test input.c "${PORT_ROOT}/src/unix/linux_input.c" "${PORT_ROOT}/src/platform/macos_rawmouse.m")
+add_executable(macos_input_test input.c "${PORT_ROOT}/src/platform/macos_system.c" "${PORT_ROOT}/src/unix/linux_input.c" "${PORT_ROOT}/src/platform/macos_rawmouse.m")
 set_source_files_properties("${PORT_ROOT}/src/unix/linux_input.c" PROPERTIES COMPILE_DEFINITIONS "SDL_PollEvent=MacTest_PollEvent;SDL_PeepEvents=MacTest_PeepEvents;SDL_PumpEvents=MacTest_PumpEvents;SDL_GetTicks=MacTest_GetTicks;SDL_GetWindowFlags=MacTest_GetWindowFlags")
 target_link_libraries(macos_input_test PRIVATE SDL2::SDL2 ${GC_FRAMEWORK} ${FOUNDATION_FRAMEWORK})
 add_executable(macos_system_network_test macos_system_network.c
   "${PORT_ROOT}/src/Mac/Main/mac_main.c" "${PORT_ROOT}/src/Mac/Main/mac_common.c"
   "${PORT_ROOT}/src/Mac/Tools/MacWin32.c" "${PORT_ROOT}/src/PC/win32/win_shared.c"
+  "${PORT_ROOT}/src/PC/qcommon/com_fileaccess.c"
   "${PORT_ROOT}/src/unix/linux_net.c" "${PORT_ROOT}/src/platform/macos_system.c")
 target_compile_definitions(macos_system_network_test PRIVATE DEDICATED=1)
 target_link_options(macos_system_network_test PRIVATE -Wl,-dead_strip)
@@ -226,3 +229,10 @@ add_test(NAME metal_dispatch_entrypoints COMMAND "${CMAKE_COMMAND}" -E env
   "COD2_METAL_TEST_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}/metal-dispatch"
   sh "${PORT_ROOT}/tests/metal/run_dispatch_entrypoints.sh" "${PORT_ROOT}")
 set_tests_properties(metal_dispatch_entrypoints PROPERTIES TIMEOUT 60)
+
+# Standalone display probes use a tiny dvar registry for archived window origins.
+# Gamma and Metal presentation include the display implementation directly.
+foreach(platform_probe macos_platform_smoke macos_hardware_test
+    macos_fullscreen_test macos_gamma_test macos_metal_present_test)
+  target_sources(${platform_probe} PRIVATE display_dvars.c)
+endforeach()

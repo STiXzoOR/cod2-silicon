@@ -456,6 +456,11 @@ void Com_Error(errorParm_t code, const char *fmt, ...)
     longjmp(*(jmp_buf *)Sys_GetValue(2), -1);
 }
 
+void Com_SetSafeMode(void)
+{
+    com_safemode = 1;
+}
+
 qboolean Com_SafeMode(void)
 {
     extern void Cmd_TokenizeString(const char *text);
@@ -2708,7 +2713,9 @@ void Com_Init_Try_Block_Function(char *commandLine)
     Com_Printf("Command line: '%s'\n", commandLine);
     Com_Printf("%s %s build %s %s\n", "CoD2 MP", COD2X_RELEASE, "macOS-arm64", __DATE__ " " __TIME__);
 #else
-#if COD2_APPLE_SDK && COD2_IS_PATCH_13
+#if defined(__APPLE__) && defined(COD2_X64)
+    Com_Printf("%s %s build %s %s\n", "CoD2 MP", COD2_VERSION_SHORT, "macOS-arm64", COD2_BANNER_DATE);
+#elif COD2_APPLE_SDK && COD2_IS_PATCH_13
     Com_Printf("%s %s build %s %s\n", "CoD2 MP", COD2_VERSION_SHORT, "MacOSXS-i386", COD2_BANNER_DATE);
 #else
     Com_Printf("%s %s build %s %s\n", "CoD2 MP", COD2_VERSION_SHORT, "MacOSXS-i386", COD2_VERSION_DATE);

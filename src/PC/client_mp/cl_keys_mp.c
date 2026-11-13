@@ -125,6 +125,8 @@ enum {
     K_PGUP = 0xa4,
     K_HOME = 0xa5,
     K_END = 0xa6,
+    K_KP_UPARROW = 0xb7,
+    K_KP_DOWNARROW = 0xbd,
     K_KP_ENTER = 0xbf,
     K_KP_INS = 0xc0,
     K_MWHEELDOWN = 0xcd,
@@ -672,7 +674,7 @@ static inline __attribute__((always_inline)) void Field_PasteClipboard(field_t *
 
     len = (int)strlen(cbd);
     for (i = 0; i < len; ++i) {
-        Field_CharEvent(edit, cbd[i]);
+        Field_CharEvent(edit, (unsigned char)cbd[i]);
     }
 
     Z_FreeInternal(cbd);
@@ -1156,13 +1158,13 @@ void Console_Key(int key)
         return;
     }
 
-    if (key == K_UPARROW || (tolower(key) == 0x70 && Key_IsDown(K_CTRL)) ||
+    if (key == K_UPARROW || key == K_KP_UPARROW || (tolower(key) == 0x70 && Key_IsDown(K_CTRL)) ||
         (key == K_MWHEELUP && Key_IsDown(K_SHIFT))) {
         Console_HistoryUp();
         return;
     }
 
-    if (key == K_DOWNARROW || (tolower(key) == 0x6e && Key_IsDown(K_CTRL)) ||
+    if (key == K_DOWNARROW || key == K_KP_DOWNARROW || (tolower(key) == 0x6e && Key_IsDown(K_CTRL)) ||
         (key == K_MWHEELDOWN && Key_IsDown(K_SHIFT))) {
         Console_HistoryDown();
         return;

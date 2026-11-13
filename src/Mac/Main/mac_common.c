@@ -3,6 +3,8 @@
 #endif
 #include "common_types.h"
 #include "imports.h"
+#include "PC/qcommon/com_fileaccess.h"
+#include <limits.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -31,6 +33,11 @@ extern OSStatus MacFiles_RemoveDirectoryA(const char *inPath);
 
 void Sys_Mkdir(const char *path)
 {
+#if COD2_APPLE_SDK && defined(COD2_X64)
+    char resolved[PATH_MAX];
+    if (FS_ResolveOSPath(path, resolved, sizeof(resolved))) return;
+    path = resolved;
+#endif
     /* mode 7 (R|W|X_OK) is invalid for Windows _access (X_OK unsupported) -> CRT
        invalid-parameter -> __fastfail/abrupt process exit. We only need an existence check. */
 #if defined(COD2_X64) && !defined(_WIN32)
@@ -44,6 +51,11 @@ void Sys_Mkdir(const char *path)
 
 qboolean Sys_RemoveDirTree(const char *path)
 {
+#if COD2_APPLE_SDK && defined(COD2_X64)
+    char resolved[PATH_MAX];
+    if (FS_ResolveOSPath(path, resolved, sizeof(resolved))) return 0;
+    path = resolved;
+#endif
     return MacFiles_RemoveDirectoryA(path) == 0;
 }
 
@@ -68,8 +80,52 @@ char *Sys_DefaultInstallPath(void)
     return cwd;
 }
 
+#if COD2_APPLE_SDK && defined(COD2_X64)
+typedef struct sysDirectoryAncestor_s {
+    dev_t device;
+    ino_t inode;
+    const struct sysDirectoryAncestor_s *parent;
+} sysDirectoryAncestor_t;
+
+static void Sys_ListFilteredFilesNative(const char *basedir, const char *subdirs,
+                                       const char *filter, char **list, int *numfiles,
+                                       const sysDirectoryAncestor_t *parent)
+{
+    char search[PATH_MAX], requested[256], filename[256], child[256];
+    struct stat st;
+    char **names;
+    int count;
+    if (*numfiles >= 4095) return;
+    if (snprintf(requested, sizeof(requested), "%s%s%s", basedir,
+                 subdirs[0] ? "/" : "", subdirs) >= sizeof(requested)) return;
+    if (FS_ResolveOSPath(requested, search, sizeof(search)) || stat(search, &st)) return;
+    /* Directory symlinks are usable, but a link to an ancestor must not recurse
+     * forever or fill the result with aliases of the same subtree. */
+    for (const sysDirectoryAncestor_t *p = parent; p; p = p->parent)
+        if (p->device == st.st_dev && p->inode == st.st_ino) return;
+    sysDirectoryAncestor_t current = { st.st_dev, st.st_ino, parent };
+    names = FS_ListOSDirectory(search, &count);
+    for (int i = 0; i < count && *numfiles < 4095; ++i) {
+        if (snprintf(filename, sizeof(filename), "%s/%s", search, names[i]) >= sizeof(filename)) continue;
+        if (stat(filename, &st)) continue;
+        if (S_ISDIR(st.st_mode)) {
+            if (snprintf(child, sizeof(child), "%s%s%s", subdirs,
+                         subdirs[0] ? "/" : "", names[i]) >= sizeof(child)) continue;
+            Sys_ListFilteredFilesNative(basedir, child, filter, list, numfiles, &current);
+        }
+        if (*numfiles >= 4095) break;
+        if (snprintf(filename, sizeof(filename), "%s/%s", subdirs, names[i]) >= sizeof(filename)) continue;
+        if (Com_FilterPath(filter, filename, 0)) list[(*numfiles)++] = CopyStringInternal(filename);
+    }
+    FS_FreeOSDirectory(names, count);
+}
+#endif
+
 void Sys_ListFilteredFiles(const char *basedir, const char *subdirs, const char *filter, char **list, int *numfiles)
 {
+#if COD2_APPLE_SDK && defined(COD2_X64)
+    Sys_ListFilteredFilesNative(basedir, subdirs, filter, list, numfiles, NULL);
+#else
     char search[256];
     char filename[256];
     char newsubdirs[256];
@@ -134,6 +190,7 @@ void Sys_ListFilteredFiles(const char *basedir, const char *subdirs, const char 
     }
 
     closedir(fdir);
+#endif
 }
 
 char **Sys_ListFiles(const char *directory, const char *extension, const char *filter, int *numfiles, qboolean wantsubs)
@@ -142,7 +199,13 @@ char **Sys_ListFiles(const char *directory, const char *extension, const char *f
     char search[256];
     struct stat st;
     DIR *fdir;
+#if COD2_APPLE_SDK && defined(COD2_X64)
+    char resolved[PATH_MAX];
+    char **names;
+    int count;
+#else
     struct dirent *d;
+#endif
     int nfiles;
     int dironly;
     char **listCopy;
@@ -182,6 +245,16 @@ char **Sys_ListFiles(const char *directory, const char *extension, const char *f
 
     nfiles = 0;
 
+#if COD2_APPLE_SDK && defined(COD2_X64)
+    if (FS_ResolveOSPath(directory, resolved, sizeof(resolved))) {
+        *numfiles = 0;
+        return NULL;
+    }
+    directory = resolved;
+    names = FS_ListOSDirectory(directory, &count);
+    for (int entry = 0; entry < count; ++entry) {
+        const char *name = names[entry];
+#else
     fdir = opendir(directory);
 #ifdef W32_FSTRACE
 #if defined(COD2_X64)
@@ -199,10 +272,20 @@ char **Sys_ListFiles(const char *directory, const char *extension, const char *f
     }
 
     while ((d = readdir(fdir)) != NULL) {
+        const char *name = d->d_name;
+#if defined(COD2_X64)
+        if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
+#else
         if (d->d_name[0] == '.')
+#endif
             continue;
 
-        Com_sprintf(search, 256, "%s/%s", directory, d->d_name);
+#endif
+#if COD2_APPLE_SDK && defined(COD2_X64)
+        if (snprintf(search, sizeof(search), "%s/%s", directory, name) >= sizeof(search)) continue;
+#else
+        Com_sprintf(search, 256, "%s/%s", directory, name);
+#endif
 
         if (stat(search, &st) == -1)
             continue;
@@ -224,22 +307,32 @@ char **Sys_ListFiles(const char *directory, const char *extension, const char *f
         }
 
         if (extension[0]) {
-            nameLen = strlen(d->d_name);
+            nameLen = strlen(name);
             extLen = strlen(extension);
+#if defined(COD2_X64)
+            /* Windows Sys_ListFiles searches *.<extension>. A suffix alone
+             * is not an extension, and dot-prefixed archives are ordinary files. */
+            if (extension[0] != '.' && (nameLen <= extLen || name[nameLen - extLen - 1] != '.'))
+                continue;
+#endif
             if (nameLen < extLen)
                 continue;
-            if (I_stricmp(d->d_name + nameLen - extLen, extension) != 0)
+            if (I_stricmp(name + nameLen - extLen, extension) != 0)
                 continue;
         }
 
         if (nfiles == 0xFFF)
             break;
 
-        list[nfiles] = CopyStringInternal(d->d_name);
+        list[nfiles] = CopyStringInternal(name);
         nfiles++;
     }
 
+#if COD2_APPLE_SDK && defined(COD2_X64)
+    FS_FreeOSDirectory(names, count);
+#else
     closedir(fdir);
+#endif
 
     *numfiles = nfiles;
 
@@ -273,6 +366,21 @@ void Sys_FreeFileList(char **list)
 
 qboolean Sys_DirectoryHasContents(const char *directory)
 {
+#if COD2_APPLE_SDK && defined(COD2_X64)
+    char resolved[PATH_MAX], filename[PATH_MAX];
+    char **names;
+    int count, found = 0;
+    struct stat st;
+    if (FS_ResolveOSPath(directory, resolved, sizeof(resolved))) return 0;
+    names = FS_ListOSDirectory(resolved, &count);
+    for (int i = 0; i < count; ++i) {
+        if (names[i][0] == '.') continue;
+        if (snprintf(filename, sizeof(filename), "%s/%s", resolved, names[i]) >= sizeof(filename)) continue;
+        if (!stat(filename, &st) && S_ISREG(st.st_mode)) { found = 1; break; }
+    }
+    FS_FreeOSDirectory(names, count);
+    return found;
+#else
     DIR *dir;
     struct dirent *d;
 
@@ -293,6 +401,7 @@ qboolean Sys_DirectoryHasContents(const char *directory)
 
     closedir(dir);
     return 0;
+#endif
 }
 
 void Sys_InitStreamThread(void)

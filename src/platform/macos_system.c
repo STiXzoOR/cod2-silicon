@@ -12,6 +12,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/sysctl.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <IOKit/IOKitLib.h>
 
 static pthread_once_t clockOnce = PTHREAD_ONCE_INIT;
@@ -88,6 +92,48 @@ char *MacSystem_HomePath(void)
     return homePath[0] ? homePath : NULL;
 }
 
+static int sessionFile = -1;
+static char sessionPath[PATH_MAX];
+
+int MacSystem_BeginSession(void)
+{
+    char *home = MacSystem_HomePath();
+    if (!home || snprintf(sessionPath, sizeof(sessionPath), "%s/.running", home) >= sizeof(sessionPath)) return -1;
+    /* The engine may be launched directly before its writable home exists. */
+    for (char *p = sessionPath + 1; *p; ++p) {
+        if (*p != '/') continue;
+        *p = 0;
+        int result = mkdir(sessionPath, 0700);
+        *p = '/';
+        if (result && errno != EEXIST) return -1;
+    }
+    sessionFile = open(sessionPath, O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
+    if (sessionFile < 0) return -1;
+    if (flock(sessionFile, LOCK_EX | LOCK_NB)) {
+        int busy = errno == EWOULDBLOCK;
+        close(sessionFile); sessionFile = -1;
+        return busy ? -2 : -1;
+    }
+    struct stat status;
+    if (fstat(sessionFile, &status)) { close(sessionFile); sessionFile = -1; return -1; }
+    return status.st_size != 0;
+}
+
+int MacSystem_MarkSession(void)
+{
+    if (sessionFile < 0) return 0;
+    pid_t pid = getpid();
+    return ftruncate(sessionFile, 0) == 0 && pwrite(sessionFile, &pid, sizeof(pid), 0) == sizeof(pid) && fsync(sessionFile) == 0;
+}
+
+void MacSystem_EndSession(void)
+{
+    if (sessionFile < 0) return;
+    unlink(sessionPath);
+    close(sessionFile);
+    sessionFile = -1;
+}
+
 uint64_t MacSystem_MemoryBytes(void)
 {
     uint64_t bytes = 0;
@@ -154,4 +200,39 @@ int MacSystem_CaptureStack(void **frames, int count, int skip)
     memcpy(frames, stack + skip, (size_t)available * sizeof(*frames));
     return available;
 }
+#endif
+
+#if defined(__APPLE__) && defined(COD2_X64)
+#include "macos_text.h"
+/* The engine stores ANSI bytes, including DBCS for Asian languages. SDL text
+ * and the macOS clipboard are UTF-8. Use the Windows encoding of the selected
+ * game language at this boundary, never truncate Unicode scalar values. */
+char *MacText_EncodeUTF8(const char *text, int language)
+{
+    unsigned int codepage = 1252;
+    switch (language) {
+    case 6: codepage = 1251; break;
+    case 7: case 14: codepage = 1250; break;
+    case 8: codepage = 949; break;
+    case 9: codepage = 950; break;
+    case 10: codepage = 932; break;
+    case 11: codepage = 936; break;
+    case 12: codepage = 874; break;
+    }
+    CFStringRef string = CFStringCreateWithCString(NULL, text, kCFStringEncodingUTF8);
+    if (!string) return NULL;
+    CFStringEncoding encoding = CFStringConvertWindowsCodepageToEncoding(codepage);
+    CFIndex length = CFStringGetLength(string), used = 0;
+    CFIndex capacity = CFStringGetMaximumSizeForEncoding(length, encoding);
+    char *bytes = capacity >= 0 ? malloc((size_t)capacity + 1) : NULL;
+    if (bytes) {
+        CFStringGetBytes(string, CFRangeMake(0, length), encoding, '?', false,
+            (UInt8 *)bytes, capacity, &used);
+        bytes[used] = 0;
+    }
+    CFRelease(string);
+    return bytes;
+}
+
+
 #endif

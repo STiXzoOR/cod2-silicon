@@ -13,6 +13,7 @@ int Com_sprintf(char *dest, int size, const char *fmt, ...);
 
 void Com_Printf(const char *fmt, ...);
 void Com_DPrintf(const char *fmt, ...);
+FILE *FS_FileOpen(const char *filename, const char *mode);
 #if defined(COD2_X64)
 int FS_CreatePath(char *path);
 #else
@@ -22,6 +23,7 @@ void FS_CreatePath(const char *path);
 #if defined(__APPLE__) && defined(COD2_X64)
 /* Native macOS links the SDK libcurl; its prototypes take enum option types. */
 #    include <curl/curl.h>
+#    include <time.h>
 #else
 typedef void CURL;
 typedef void CURLM;
@@ -89,6 +91,22 @@ static int dl_isMotd = 0;
 static dlStatus_t dl_status = DL_STATUS_IDLE;
 static int dl_debug = 0;
 static char dl_localName[1024];
+#if defined(__APPLE__) && defined(COD2_X64)
+static uint64_t dl_lastActivity;
+static int dl_eventTimeout;
+static uint64_t DL_Milliseconds(void)
+{
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (uint64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000;
+}
+static size_t DL_HeaderCb(char *ptr, size_t size, size_t count, void *context)
+{
+    (void)ptr; (void)context;
+    dl_lastActivity = DL_Milliseconds();
+    return size * count;
+}
+#endif
 
 #if defined(COD2_X64)
 static unsigned int dl_bytesRead;
@@ -133,7 +151,7 @@ void DL_Cod2xExpectZip(void)
 static int DL_Cod2xZipStart(const char *path)
 {
     unsigned char start[2];
-    FILE *file = fopen(path, "rb");
+    FILE *file = FS_FileOpen(path, "rb");
     size_t read = file ? fread(start, 1, sizeof(start), file) : 0;
     if (file)
         fclose(file);
@@ -164,6 +182,9 @@ static void DL_Cod2xFinish(CURLcode result)
 
 static size_t DL_WriteCb(void *ptr, size_t size, size_t nmemb, void *stream)
 {
+#if defined(__APPLE__) && defined(COD2_X64)
+    if (size && nmemb) dl_lastActivity = DL_Milliseconds();
+#endif
 #if defined(COD2_X64)
     size_t written = fwrite(ptr, size, nmemb, (FILE *)stream) * size;
     dl_bytesRead += (unsigned int)written;
@@ -250,7 +271,7 @@ int DL_BeginDownload(const char *localName, const char *remoteName, int debug)
         dl_localName[n] = '\0';
     }
 
-    dl_fp = fopen(localName, "wb");
+    dl_fp = FS_FileOpen(localName, "wb");
     if (!dl_fp) {
         Com_DPrintf("DL_BeginDownload: could not open '%s' for writing\n", localName);
         return 0;
@@ -271,6 +292,13 @@ int DL_BeginDownload(const char *localName, const char *remoteName, int debug)
     curl_easy_setopt(dl_easy, CURLOPT_FAILONERROR, (long)1);
     curl_easy_setopt(dl_easy, CURLOPT_NOPROGRESS, (long)1);
     curl_easy_setopt(dl_easy, CURLOPT_CONNECTTIMEOUT, (long)30);
+#if defined(__APPLE__) && defined(COD2_X64)
+    /* Original libwww: 30 seconds without an HTTP event, not 30 seconds for
+     * the whole transfer, and not an average minimum transfer speed. */
+    dl_eventTimeout = strncasecmp(remoteName, "ftp:", 4) != 0;
+    dl_lastActivity = DL_Milliseconds();
+    curl_easy_setopt(dl_easy, CURLOPT_HEADERFUNCTION, DL_HeaderCb);
+#endif
     curl_easy_setopt(dl_easy, CURLOPT_USERAGENT, "CoD2 wwwdl");
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     if (dl_needsZip) {
@@ -360,6 +388,14 @@ void DL_DownloadLoop(void)
         }
     }
 
+#if defined(__APPLE__) && defined(COD2_X64)
+    if (still_running && dl_eventTimeout && DL_Milliseconds() - dl_lastActivity >= 30000) {
+        Com_Printf("DL_DownloadLoop: transfer failed: no data for 30 seconds\n");
+        dl_status = DL_STATUS_FAILED;
+        DL_Teardown();
+        return;
+    }
+#endif
     if (!still_running) {
 
         dl_status = DL_STATUS_DONE;

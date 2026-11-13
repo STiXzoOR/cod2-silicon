@@ -168,6 +168,50 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   and color conversion. Control rebinding keeps the pulsing key name; visible
   menus receive hover updates, loading images retry correctly, and deleting a
   favorite no longer uses a selection made stale by a server-list refresh.
+- Original 1.3’s startup banner correctly identifies macOS on Apple silicon.
+- Brief movement-key presses queued during a slow frame retain their held
+  duration, as in Windows 1.3.
+- The physical console key works across keyboard layouts, and the original
+  extended Latin key bindings are available.
+- Console and chat support Ctrl+V paste, Ctrl+C clear and Ctrl+H backspace.
+  Typed and pasted text is converted to the game's language encoding so
+  accented letters and punctuation no longer turn into unrelated characters.
+- Scrolling outside a focused menu list moves focus to the next or previous
+  control, as in Windows 1.3.
+- Keypad navigation now works in menu lists, edit fields, focus movement and
+  console history, matching the original keyboard alternatives.
+- Mono output and the 11 kHz and 22 kHz sound settings now use the original
+  channel routing, mixing rate and downsampling behavior. Positional sound
+  uses the original gain steps.
+- Ambient tracks and music decode in the background with bounded buffers,
+  avoiding the full-track decode pause and the decoded-size limit on long music.
+  A bounded read cache also prevents repeated archive decompression while
+  opening tracks stored in IWD files.
+- Game files load consistently on case-sensitive disks, including paths whose
+  directory or filename casing differs. Listings, writes, renames and deletes
+  follow the same rule; the default case-insensitive disk keeps its OS behavior.
+- Room and shellshock reverberation now reproduce the original software mixer’s
+  room presets, reflections, decay, damping and stereo spread.
+- Consecutive screenshot commands retain every image, and `cl_avidemo` saves
+  frames continuously instead of continually postponing the capture.
+- `viewlog` opens a native scrolling console with a command field; it can be
+  hidden, restored and minimized as in the original game.
+- Fatal engine errors show their explanation before the game exits and return
+  a failure status.
+- Minimized games pause for five milliseconds between frames, as in Windows 1.3.
+- Original 1.3 restores the saved window position after restarting video.
+- HTTP downloads fail after 30 seconds without receiving data, instead of
+  waiting indefinitely for a stalled server.
+- After an abnormal exit, Original 1.3 offers its safe-mode recovery choice
+  on the next launch. A normal exit clears the recovery marker.
+- File loading follows Windows archive/search-path priority. Pure servers
+  reject loose string tables and RoQ files outside localized search paths.
+- Archive discovery accepts dot-prefixed `.iwd` files and rejects filenames
+  that only end in `iwd` without the extension separator.
+- Wheel messages change weapons once each, including high-resolution scrolling,
+  as in Windows 1.3.
+- Opening chat in a window keeps mouse-look active. Original 1.3 windowed
+  menus use the original cursor speed and can reach every edge.
 - Sounds in the world are placed as in Windows 1.3. A sound straight ahead
   was 3 dB louder than in the original and one behind you 5.5 dB louder,
   because sounds were panned on a different curve and front and back were

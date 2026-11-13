@@ -1,5 +1,6 @@
 #include "common_types.h"
 #include "imports.h"
+#include "PC/qcommon/com_fileaccess.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
 #include "../qcommon/cod2x_policy.h"
@@ -43,7 +44,17 @@ extern int fs_loadStack;
 extern int fs_packFiles;
 extern int fs_fakeChkSum;
 extern int fs_checksumFeed;
+/* The shared data snapshot reserves 74 entries (Mac ABI). Native allocation
+ * and every traversal use Windows' 50 ordinary + 13 stream slots; the final
+ * ten storage entries are deliberately unreachable. */
 extern fileHandleData_t fsh[74];
+#if defined(COD2_X64)
+#define FS_NORMAL_HANDLES 50
+#else
+#define FS_NORMAL_HANDLES 60
+#endif
+#define FS_FIRST_STREAM_HANDLE (FS_NORMAL_HANDLES + 1)
+#define FS_TOTAL_HANDLES (FS_FIRST_STREAM_HANDLE + 13)
 extern int fs_numServerIwds;
 extern int fs_serverIwds[1024];
 extern char *fs_serverIwdNames[1024];
@@ -249,11 +260,11 @@ fileHandle_t FS_HandleForFile(qboolean streamThread)
     int first, count, i;
 
     if (streamThread) {
-        first = 61;
+        first = FS_FIRST_STREAM_HANDLE;
         count = 13;
     } else {
         first = 1;
-        count = 60;
+        count = FS_NORMAL_HANDLES;
     }
 
     if (!fsh[first].handleFiles.file.o) {
@@ -266,7 +277,7 @@ fileHandle_t FS_HandleForFile(qboolean streamThread)
         }
     }
 
-    for (i = 1; i < 74; i++) {
+    for (i = 1; i < FS_TOTAL_HANDLES; i++) {
         Com_Printf((const char *)"FILE %2i: '%s'\n", i, fsh[i].name);
     }
     Com_Error(1, (const char *)"\x15"
@@ -316,7 +327,11 @@ qboolean FS_CreatePath(char *OSPath)
 
 void FS_Remove(const char *osPath)
 {
+#if COD2_APPLE_SDK && defined(COD2_X64)
+    FS_RemoveOSPath(osPath);
+#else
     remove(osPath);
+#endif
 }
 
 extern Bool I_islower(int c);
@@ -364,10 +379,12 @@ qboolean FS_PureIgnoresExtension(const char *extension)
         return 1;
     if (!I_stricmp(extension, "menu"))
         return 1;
+#if !defined(COD2_X64)
     if (!I_stricmp(extension, "str"))
         return 1;
     if (!I_stricmp(extension, "roq"))
         return 1;
+#endif
     if (!I_stricmp(extension, ".dm_NETWORK_PROTOCOL_VERSION"))
         return 1;
     return 0;
@@ -573,7 +590,7 @@ void FS_Shutdown(qboolean closemfp)
 #endif
     SEH_Shutdown_StringEd();
 
-    for (i = 1; i < 74; ++i) {
+    for (i = 1; i < FS_TOTAL_HANDLES; ++i) {
         if (fsh[i].fileSize)
             FS_FCloseFile(i);
     }
@@ -638,7 +655,7 @@ int FS_Read(void *buffer, int len, fileHandle_t h)
         }
 
         if (read == -1) {
-            if ((unsigned int)(h - 61) <= 12) {
+            if ((unsigned int)(h - FS_FIRST_STREAM_HANDLE) <= 12) {
                 return -1;
             }
             Com_Error(0, "\x15"
@@ -1001,6 +1018,12 @@ int FS_GetFileOsPath(const char *filename, char *ospath)
         file = FS_FileOpen(ospath, "rb");
         if (file) {
             FS_FileClose(file);
+#if COD2_APPLE_SDK && defined(COD2_X64)
+            /* Callers can pass the returned OS path to APIs other than fopen. */
+            char resolved[256];
+            if (FS_ResolveOSPath(ospath, resolved, sizeof(resolved))) return -1;
+            strcpy(ospath, resolved);
+#endif
             return 0;
         }
     }
@@ -1054,7 +1077,7 @@ void FS_DisplayPath(qboolean bLanguageCull)
     }
 
     Com_Printf("\nFile Handles:\n");
-    for (i = 1; i < 74; i++) {
+    for (i = 1; i < FS_TOTAL_HANDLES; i++) {
 #if defined(COD2_X64)
         if (fsh[i].handleFiles.file.o) {
 #else
@@ -1514,9 +1537,9 @@ fileHandle_t FS_OpenFileOverwrite(const char *qpath)
     }
 
     for (f = 1; fsh[f].handleFiles.file.o; f++) {
-        if (f == 60) {
+        if (f == FS_NORMAL_HANDLES) {
             int i;
-            for (i = 1; i < 74; i++) {
+            for (i = 1; i < FS_TOTAL_HANDLES; i++) {
                 Com_Printf((const char *)"FILE %2i: '%s'\n", i, fsh[i].name);
             }
             Com_Error(1, (const char *)"\x15"
@@ -2155,6 +2178,7 @@ int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFI
 {
     com_fileAccessed = 1;
 
+#if !defined(COD2_X64)
     if (__builtin_expect(FS_PureIgnoresExtension(Com_GetExtensionSubString(filename)) != 0, 0)) {
         int len = FS_FOpenFileRead_Internal(filename, file, uniqueFILE, 0, 1);
         if ((unsigned int)(len + 2) > 1) {
@@ -2162,6 +2186,7 @@ int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFI
         }
     }
 
+#endif
     if (filename && filename[0] == '$') {
         char fontPath[256];
         const char *base = (I_stricmp(filename, "$font") == 0) ? "normalFont" : filename + 1;
@@ -2183,6 +2208,7 @@ qboolean FS_TouchFile(const char *name)
 
     com_fileAccessed = 1;
 
+#if !defined(COD2_X64)
     if (FS_PureIgnoresExtension(Com_GetExtensionSubString(name)) != 0) {
         int len = FS_FOpenFileRead_Internal(name, &f, 0, 0, 1);
         if ((unsigned int)(len + 2) > 1) {
@@ -2190,9 +2216,12 @@ qboolean FS_TouchFile(const char *name)
         }
     }
 
+#endif
     FS_FOpenFileRead_Internal(name, &f, 0, 0, 0);
 
+#if !defined(COD2_X64)
 opened:
+#endif
     if (f) {
         FS_FCloseFile(f);
         return 1;
@@ -2212,12 +2241,15 @@ int FS_ReadFile(const char *qpath, void **buffer)
     }
 
     com_fileAccessed = 1;
+#if !defined(COD2_X64)
     if (FS_PureIgnoresExtension(Com_GetExtensionSubString(qpath))) {
         len = FS_FOpenFileRead_Internal(qpath, &h, 0, 0, 1);
         if ((unsigned int)(len + 2) <= 1) {
             len = FS_FOpenFileRead_Internal(qpath, &h, 0, 0, 0);
         }
-    } else {
+    } else
+#endif
+    {
         len = FS_FOpenFileRead_Internal(qpath, &h, 0, 0, 0);
     }
 
@@ -2327,7 +2359,7 @@ qboolean FS_WriteFile(const char *qpath, const void *buffer, int size)
             char ospath[280];
 
             FS_BuildOSPath_Internal(fs_homepath->current.string, fs_gamedir, qpath, ospath, 0);
-            remove(ospath);
+            FS_Remove(ospath);
         }
         return 0;
     }
@@ -2343,9 +2375,9 @@ fileHandle_t FS_FOpenTextFileWrite(const char *filename)
     fileHandleData_t *entry;
 
     for (f = 1; fsh[f].handleFiles.file.o; f++) {
-        if (f == 60) {
+        if (f == FS_NORMAL_HANDLES) {
             int i;
-            for (i = 1; i < 74; i++) {
+            for (i = 1; i < FS_TOTAL_HANDLES; i++) {
                 Com_Printf((const char *)"FILE %2i: '%s'\n", i, fsh[i].name);
             }
             Com_Error(1, (const char *)"\x15"
@@ -2387,9 +2419,9 @@ fileHandle_t FS_FOpenFileAppend(const char *filename)
     fileHandleData_t *entry;
 
     for (f = 1; fsh[f].handleFiles.file.o; f++) {
-        if (f == 60) {
+        if (f == FS_NORMAL_HANDLES) {
             int i;
-            for (i = 1; i < 74; i++) {
+            for (i = 1; i < FS_TOTAL_HANDLES; i++) {
                 Com_Printf((const char *)"FILE %2i: '%s'\n", i, fsh[i].name);
             }
             Com_Error(1, (const char *)"\x15"
@@ -2431,6 +2463,7 @@ int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode)
     switch (mode) {
     case FS_READ:
         com_fileAccessed = 1;
+#if !defined(COD2_X64)
         if (FS_PureIgnoresExtension(Com_GetExtensionSubString(qpath))) {
             len = FS_FOpenFileRead_Internal(qpath, f, 1, 0, 1);
             if ((unsigned int)(len + 2) > 1) {
@@ -2438,6 +2471,7 @@ int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode)
                 break;
             }
         }
+#endif
         len = FS_FOpenFileRead_Internal(qpath, f, 1, 0, 0);
         sync = 0;
         break;
@@ -3093,7 +3127,7 @@ static const webIwdFile_t *FS_WebFindIwdFile(const char *qpath)
 
 static fileHandleData_t *FS_WebHandle(fileHandle_t h)
 {
-    if (h <= 0 || h >= 74) {
+    if (h <= 0 || h >= FS_TOTAL_HANDLES) {
         return NULL;
     }
     return &fsh[h];
@@ -3888,7 +3922,7 @@ void FS_Shutdown(qboolean closemfp)
     int i;
 
     if (closemfp) {
-        for (i = 1; i < 74; ++i) {
+        for (i = 1; i < FS_TOTAL_HANDLES; ++i) {
             if (fsh[i].handleFiles.file.o) {
                 FS_FCloseFile(i);
             }

@@ -88,6 +88,8 @@ extern int Linux_PollInputEvent(LinuxInputEvent *event);
 #if defined(__APPLE__) && defined(COD2_X64)
 #include "platform/macos_rawmouse.h"
 #include "platform/macos_input_policy.h"
+#include "platform/macos_text.h"
+extern const dvar_t *loc_language;
 #include "platform/macos_display.h"
 extern dvar_t *in_rawmouse;
 extern dvar_t *in_mouse;
@@ -180,19 +182,24 @@ static void MacInput_MeasureRaw(void)
 }
 #endif
 
-static unsigned int MacInput_DecodeUTF8(const unsigned char **cursor)
+char *Sys_GetClipboardData(void)
 {
-    const unsigned char *p = *cursor;
-    unsigned int value = *p++;
-    int trailing = value < 0x80 ? 0 : ((value & 0xe0) == 0xc0 ? 1 : ((value & 0xf0) == 0xe0 ? 2 : ((value & 0xf8) == 0xf0 ? 3 : -1)));
-    if (trailing < 0) { *cursor = p; return 0; }
-    value &= trailing == 0 ? 0x7f : ((1u << (6 - trailing)) - 1);
-    for (int i = 0; i < trailing; ++i) {
-        if ((*p & 0xc0) != 0x80) { *cursor = p; return 0; }
-        value = (value << 6) | (*p++ & 0x3f);
+    extern void *Z_MallocInternal(int size);
+    char *utf8 = SDL_GetClipboardText();
+    if (!utf8) return NULL;
+    char *bytes = MacText_EncodeUTF8(utf8, loc_language ? loc_language->current.integer : 0);
+    SDL_free(utf8);
+    if (!bytes) return NULL;
+    /* Windows Sys_GetClipboardData stops at the first line/control boundary.
+     * The field owns the result and releases it through Z_FreeInternal. */
+    size_t length = strcspn(bytes, "\n\r\b");
+    char *result = Z_MallocInternal((int)length + 1);
+    if (result) {
+        memcpy(result, bytes, length);
+        result[length] = 0;
     }
-    *cursor = p;
-    return value;
+    free(bytes);
+    return result;
 }
 #endif
 
@@ -262,8 +269,30 @@ static int sdl_to_keynum(SDL_Keycode sym)
 
         if (sym >= 0x20 && sym < 0x7f)
             return (int)sym;
+#if defined(__APPLE__) && defined(COD2_X64)
+        /* Windows 1.3 MapKey's extended-byte table at 0x5d4684. SDL
+         * supplies these Latin-1 key labels as the same Unicode values. */
+        {
+            static const unsigned char labels[] = {
+                181, 191, 223, 224, 225, 228, 229, 230, 231, 232,
+                233, 236, 241, 242, 243, 246, 248, 249, 250, 252
+            };
+            for (unsigned int i = 0; i < sizeof(labels); ++i)
+                if (sym == labels[i]) return 128 + i;
+            if (sym >= 128 && sym <= 255) return (int)sym;
+        }
+#endif
         return 0;
     }
+}
+
+static int sdl_event_keynum(const SDL_Keysym *key)
+{
+#if defined(__APPLE__) && defined(COD2_X64)
+    /* The physical key above Tab is the console key on every layout. */
+    if (key->scancode == SDL_SCANCODE_GRAVE) return '~';
+#endif
+    return sdl_to_keynum(key->sym);
 }
 
 static int sdl_button_to_keynum(Uint8 button)
@@ -292,6 +321,18 @@ int SDL_PumpInputEvents(void)
     int eventCount;
     int inputEventCount = 0;
     static int textInputStarted;
+#if defined(__APPLE__) && defined(COD2_X64)
+    /* SDL timestamps and Sys_Milliseconds have different epochs. Keep one
+     * offset so queued edges retain their spacing even across a stalled frame
+     * or the 32-bit SDL clock wrapping (Windows uses MSG.time here). */
+    static Uint32 eventTimeOffset;
+    static int eventClockReady;
+    if (!eventClockReady) {
+        extern int Sys_Milliseconds(void);
+        eventTimeOffset = (Uint32)Sys_Milliseconds() - SDL_GetTicks();
+        eventClockReady = 1;
+    }
+#endif
 
 #if defined(__APPLE__) && defined(COD2_X64)
     if (!SDL_IsTextInputActive()) {
@@ -319,6 +360,12 @@ int SDL_PumpInputEvents(void)
 #else
     for (eventCount = 0; eventCount < 256 && SDL_PollEvent(&ev); ++eventCount) {
 #endif
+        int eventTime = 0;
+#if defined(__APPLE__) && defined(COD2_X64)
+        eventTime = (int)(ev.common.timestamp + eventTimeOffset);
+        /* Zero means "now" to Sys_QueEvent, rather than the clock's origin. */
+        if (!eventTime) eventTime = 1;
+#endif
         switch (ev.type) {
 #if defined(__APPLE__) && defined(COD2_X64)
         case SDL_QUIT:
@@ -336,7 +383,7 @@ int SDL_PumpInputEvents(void)
                 extern void MacDisplay_FocusChanged(int focused);
                 MacDisplay_FocusChanged(1);
             }
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64) && COD2_X64
             else if (ev.window.event == SDL_WINDOWEVENT_MOVED)
                 MacDisplay_WindowMoved(ev.window.data1, ev.window.data2);
 #endif
@@ -372,7 +419,7 @@ int SDL_PumpInputEvents(void)
         case SDL_MOUSEBUTTONDOWN: {
             int k = sdl_button_to_keynum(ev.button.button);
             if (k) {
-                Sys_QueEvent(0, SE_KEY, k, 1, 0, 0);
+                Sys_QueEvent(eventTime, SE_KEY, k, 1, 0, 0);
                 ++inputEventCount;
             }
             break;
@@ -380,7 +427,7 @@ int SDL_PumpInputEvents(void)
         case SDL_MOUSEBUTTONUP: {
             int k = sdl_button_to_keynum(ev.button.button);
             if (k) {
-                Sys_QueEvent(0, SE_KEY, k, 0, 0, 0);
+                Sys_QueEvent(eventTime, SE_KEY, k, 0, 0, 0);
                 ++inputEventCount;
             }
             break;
@@ -395,8 +442,8 @@ int SDL_PumpInputEvents(void)
             int clicks = abs(delta);
             /* Preserve individual wheel clicks in the engine key-event path. */
             for (int i = 0; i < clicks; ++i) {
-                Sys_QueEvent(0, SE_KEY, key, 1, 0, NULL);
-                Sys_QueEvent(0, SE_KEY, key, 0, 0, NULL);
+                Sys_QueEvent(eventTime, SE_KEY, key, 1, 0, NULL);
+                Sys_QueEvent(eventTime, SE_KEY, key, 0, 0, NULL);
                 ++inputEventCount;
             }
 #else
@@ -407,15 +454,21 @@ int SDL_PumpInputEvents(void)
             break;
         }
         case SDL_KEYDOWN: {
-            int k = sdl_to_keynum(ev.key.keysym.sym);
+            int k = sdl_event_keynum(&ev.key.keysym);
             if (k) {
-                Sys_QueEvent(0, SE_KEY, k, 1, 0, 0);
+                Sys_QueEvent(eventTime, SE_KEY, k, 1, 0, 0);
                 ++inputEventCount;
             }
 
-            if (ev.key.keysym.sym == SDLK_BACKSPACE) {
+            int control = ev.key.keysym.sym == SDLK_BACKSPACE ? 8 : 0;
 #if defined(__APPLE__) && defined(COD2_X64)
-                Sys_QueEvent(0, SE_CHAR, 8, 0, 0, NULL);
+            if ((ev.key.keysym.mod & KMOD_CTRL) && !(ev.key.keysym.mod & KMOD_ALT) &&
+                ev.key.keysym.sym >= SDLK_a && ev.key.keysym.sym <= SDLK_z)
+                control = ev.key.keysym.sym - SDLK_a + 1;
+#endif
+            if (control) {
+#if defined(__APPLE__) && defined(COD2_X64)
+                Sys_QueEvent(eventTime, SE_CHAR, control, 0, 0, NULL);
 #else
                 CCallOfDutyEngine_DoTextInput(get_engine(), 8);
 #endif
@@ -424,9 +477,9 @@ int SDL_PumpInputEvents(void)
             break;
         }
         case SDL_KEYUP: {
-            int k = sdl_to_keynum(ev.key.keysym.sym);
+            int k = sdl_event_keynum(&ev.key.keysym);
             if (k) {
-                Sys_QueEvent(0, SE_KEY, k, 0, 0, 0);
+                Sys_QueEvent(eventTime, SE_KEY, k, 0, 0, 0);
                 ++inputEventCount;
             }
             break;
@@ -434,11 +487,16 @@ int SDL_PumpInputEvents(void)
         case SDL_TEXTINPUT:
 
 #if defined(__APPLE__) && defined(COD2_X64)
-            for (const unsigned char *p = (const unsigned char *)ev.text.text; *p;) {
-                unsigned int character = MacInput_DecodeUTF8(&p);
-                if (character >= 0x20 && character != 0x7f) {
-                    Sys_QueEvent(0, SE_CHAR, (int)character, 0, 0, NULL);
-                    ++inputEventCount;
+            {
+                char *bytes = MacText_EncodeUTF8(ev.text.text, loc_language ? loc_language->current.integer : 0);
+                if (bytes) {
+                    for (const unsigned char *p = (const unsigned char *)bytes; *p; ++p) {
+                        if (*p >= 0x20 && *p != 0x7f) {
+                            Sys_QueEvent(eventTime, SE_CHAR, *p, 0, 0, NULL);
+                            ++inputEventCount;
+                        }
+                    }
+                    free(bytes);
                 }
             }
 #else
@@ -465,6 +523,17 @@ int SDL_PumpInputEvents(void)
     return inputEventCount;
 }
 
+#if defined(__APPLE__) && defined(COD2_X64)
+void MacInput_WaitIfMinimized(void)
+{
+    extern SDL_Window *sdl_gl_window;
+    /* WinMain 0x466460 sleeps five milliseconds for WM_ACTIVATE's minimized
+     * flag. Losing focus or being hidden by another window is not sufficient. */
+    if (sdl_gl_window && (SDL_GetWindowFlags(sdl_gl_window) & SDL_WINDOW_MINIMIZED))
+        SDL_Delay(5);
+}
+#endif
+
 void IN_Frame(void)
 {
 #if defined(__APPLE__) && defined(COD2_X64)
@@ -480,12 +549,17 @@ void IN_Frame(void)
     }
     hadFocus = focused;
     extern int MacDisplay_IsFullscreen(void);
-    /* Fullscreen keeps the mouse captured in menus too, as the original does:
-     * menus move the game's own cursor from relative motion (CL_MouseEvent
-     * routes it to UI_MouseEvent), so the system pointer never appears or
-     * reaches hot corners. Windowed menus keep the free system pointer. */
+    /* Original menus consume relative counts in 640x480 virtual coordinates.
+     * CoD2x has its own windowed desktop-pointer policy. */
     int wantRelative = focused && in_mouse && in_mouse->current.enabled &&
-        (MacDisplay_IsFullscreen() || (client && client->active && client->keyCatchers == 0));
+        MacInput_CaptureMouse(MacDisplay_IsFullscreen(), client && client->active,
+            client ? client->keyCatchers : 0,
+#if defined(COD2_CODX) && COD2_CODX
+            1
+#else
+            0
+#endif
+        );
     mac_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
     if (wantRelative != mac_relative) {
         SDL_SetWindowGrab(sdl_gl_window, wantRelative ? SDL_TRUE : SDL_FALSE);

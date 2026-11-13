@@ -95,14 +95,17 @@ int MessageBoxA(void *hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
 #if defined(COD2_X64) && COD2_APPLE_SDK
     (void)hWnd;
     int messageType = uType & 0xf;
-    int fallback = messageType == 1 ? 2 : (messageType == 4 ? 7 : 1);
+    int fallback = (messageType == 1 || messageType == 3) ? 2 : (messageType == 4 ? 7 : 1);
 #if !defined(DEDICATED)
-    SDL_MessageBoxButtonData buttons[2];
-    int count = (messageType == 1 || messageType == 4) ? 2 : 1;
+    SDL_MessageBoxButtonData buttons[3];
+    int count = messageType == 3 ? 3 : ((messageType == 1 || messageType == 4) ? 2 : 1);
     buttons[0].flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
-    buttons[0].buttonid = messageType == 4 ? 6 : 1;
-    buttons[0].text = messageType == 4 ? "Yes" : "OK";
-    if (count == 2) {
+    buttons[0].buttonid = (messageType == 3 || messageType == 4) ? 6 : 1;
+    buttons[0].text = (messageType == 3 || messageType == 4) ? "Yes" : "OK";
+    if (count == 3) {
+        buttons[1] = (SDL_MessageBoxButtonData){0, 7, "No"};
+        buttons[2] = (SDL_MessageBoxButtonData){SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 2, "Cancel"};
+    } else if (count == 2) {
         buttons[1].flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
         buttons[1].buttonid = fallback;
         buttons[1].text = messageType == 4 ? "No" : "Cancel";

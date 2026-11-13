@@ -15,6 +15,7 @@ extern void MacServer_CheckQuit(void);
 #endif
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
 #include "platform/cod2x_native.h"
+#include "platform/macos_system.h"
 #include <strings.h>
 #endif
 #ifdef __EMSCRIPTEN__
@@ -35,6 +36,7 @@ static const dvar_t *sys_configSum;
 static sysEvent_t eventQue[256];
 static int eventHead;
 static int eventTail;
+static int sys_exitCode;
 
 extern void Sys_InitMainThread(void);
 extern language_t Win_InitLocalization(void);
@@ -203,6 +205,7 @@ void Sys_Error(const char *error, ...)
     va_start(argptr, error);
     vsnprintf(text, sizeof(text), error, argptr);
     va_end(argptr);
+    sys_exitCode = 1;
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     if (!reported) {
         reported = 1;
@@ -227,6 +230,12 @@ void Sys_Error(const char *error, ...)
     Conbuf_AppendText("\n");
     Sys_SetErrorText(text);
     Sys_ShowConsole(1, 1);
+#if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED)
+    /* Windows Sys_Error displays the actual engine error before exiting. The
+     * terminal-only native system console cannot provide that explanation. */
+    const char *title = Win_LocalizeRef("WIN_ERROR");
+    MessageBoxA(NULL, text, !strcmp(title, "WIN_ERROR") ? "Error" : title, 0x10);
+#endif
 
     for (;;) {
         Com_Quit_f();
@@ -235,7 +244,9 @@ void Sys_Error(const char *error, ...)
 
 void Sys_NormalExit(void)
 {
-
+#if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED)
+    MacSystem_EndSession();
+#endif
 }
 
 void Sys_Print(const char *msg)
@@ -243,6 +254,7 @@ void Sys_Print(const char *msg)
     Conbuf_AppendText(msg);
 }
 
+#if !defined(__APPLE__) || !defined(COD2_X64) || defined(DEDICATED)
 char *Sys_GetClipboardData(void)
 {
 #if defined(COD2_X64)
@@ -255,6 +267,7 @@ char *Sys_GetClipboardData(void)
     return (char *)"";
 #endif
 }
+#endif
 
 static void Sys_QueEventInternal(int time, sysEventType_t type, int value, int value2, int ptrLength, void *ptr)
 {
@@ -506,6 +519,23 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Dvar_Init();
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2xNativeURL_SetupPaths();
+#if !COD2_CODX
+    // Upstream CoD2x deliberately disables the improper-quit recovery prompt.
+    int previousExit = MacSystem_BeginSession();
+    if (previousExit == -2) return 0; /* The previous process is still alive. */
+    if (previousExit < 0) Sys_Error("Could not create the game session marker");
+    if (previousExit) {
+        const char *title = Win_LocalizeRef("WIN_IMPROPER_QUIT_TITLE");
+        const char *body = Win_LocalizeRef("WIN_IMPROPER_QUIT_BODY");
+        if (!strcmp(title, "WIN_IMPROPER_QUIT_TITLE")) title = "Run In Safe Mode?";
+        if (!strcmp(body, "WIN_IMPROPER_QUIT_BODY"))
+            body = "It appears that Call of Duty(R) 2 did not quit properly the last time it ran.\nDo you want to run the game in safe mode?\n\nThis is recommended for most people.\nIt will change your system settings but not your controls.";
+        int answer = MessageBoxA(NULL, body, title, 0x33);
+        if (answer == 2) return 0; /* Preserve the abnormal-exit marker. */
+        if (answer == 6) { extern void Com_SetSafeMode(void); Com_SetSafeMode(); }
+    }
+    if (!MacSystem_MarkSession()) Sys_Error("Could not write the game session marker");
+#endif
 #endif
 
     {
@@ -577,6 +607,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #endif
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
         Cod2xNative_Frame();
+        { extern void MacInput_WaitIfMinimized(void); MacInput_WaitIfMinimized(); }
 #endif
         Com_Frame();
 #if (defined(__APPLE__) || (defined(COD2_WINDOWS_NATIVE) && COD2_WINDOWS_NATIVE)) && defined(COD2_X64) && COD2_X64 && \
@@ -594,6 +625,9 @@ void Sys_Quit(void)
 {
     int i;
     sysEvent_t *ev;
+#if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED)
+    if (!sys_exitCode) Sys_NormalExit();
+#endif
 
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2xNative_Shutdown();
@@ -625,7 +659,7 @@ void Sys_Quit(void)
     }
 
     MacPreferences_Synchronize();
-    exit(0);
+    exit(sys_exitCode);
 }
 
 sysEvent_t Sys_GetEvent(void)

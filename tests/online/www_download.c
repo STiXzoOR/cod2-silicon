@@ -19,6 +19,9 @@ int main(void)
     assert(!cls.downloadName[0] && !cls.downloadTempName[0]);
     assert(!connection.downloadName[0] && !connection.downloadTempName[0]);
     assert(!strcmp(commands, "wwwdl ack\nwwwdl done\n"));
+#if defined(COD2_CODX) && COD2_CODX
+    assert(directEnds == 1);
+#endif
     puts("online: HTTP redirect completion installs the IWD under its original local name");
     return 0;
 }

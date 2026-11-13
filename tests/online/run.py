@@ -60,6 +60,8 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
                     '-o', str(trace_obj)], check=True, cwd=root)
     for name, path, names in suites:
         source = (root / path).read_text()
+        if '-DCOD2_CODX=1' in flags and name == 'www_download_begin':
+            names = ['CL_Cod2xDirectDownload', *names]
         if name == 'mantle':
             source = source[:source.index('extern const dvar_t *Dvar_RegisterBool')]
         functions = [] if names else [source]

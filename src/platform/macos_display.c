@@ -46,7 +46,7 @@ typedef struct {
 #endif
 } MacContext;
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64) && COD2_X64
 extern const void *Dvar_FindVar(const char *);
 extern int Dvar_GetInt(const char *);
 extern void Dvar_SetInt(const void *, int);
@@ -382,7 +382,7 @@ static int SetWindowMode(void)
         double scaleX = logicalW > 0 ? (double)pixelW / logicalW : 1;
         double scaleY = logicalH > 0 ? (double)pixelH / logicalH : 1;
         SDL_SetWindowSize(sdl_gl_window, (int)(sdl_gl_width / scaleX), (int)(sdl_gl_height / scaleY));
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64) && COD2_X64
         {
             /* vid_xpos/vid_ypos hold the window's outer corner, as on Windows. */
             int top = 0, left = 0;
@@ -1286,10 +1286,10 @@ uint16_t MacDisplay_SetMode(int w, int h, int d, int r)
 }
 int MacDisplay_SetupDisplay(int w, int h) { sdl_gl_width = w; sdl_gl_height = h; return MacDisplay_Initialize(); }
 int MacDisplay_IsFullscreen(void) { return screenContext && windowMode != MAC_WINDOWED; }
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64) && COD2_X64
 void MacDisplay_WindowMoved(int x, int y)
 {
-    /* CoD2x keeps the windowed position in vid_xpos/vid_ypos, so it is saved. */
+    /* Both engines archive the outer window corner, as Windows WM_MOVE does. */
     const void *xpos = Dvar_FindVar("vid_xpos"), *ypos = Dvar_FindVar("vid_ypos");
     int top = 0, left = 0;
     if (!sdl_gl_window || windowMode != MAC_WINDOWED || !xpos || !ypos)
