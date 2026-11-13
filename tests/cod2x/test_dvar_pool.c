@@ -15,6 +15,18 @@ dvar_t *sortedDvars;
 const char str_00219524[] = "off", str_00219528[] = "on";
 static jmp_buf exhausted;
 static char error[512];
+static void (*testLimit)(void);
+static char *testArgument;
+void Dvar_AddCommands(void) {}
+void Cmd_AddCommand(const char *name, void (*function)(void))
+{
+    assert(!strcmp(name, "dvarTestLimit"));
+    testLimit = function;
+}
+int Cmd_Argc(void) { return testArgument ? 2 : 1; }
+char *Cmd_Argv(int index) { return index == 1 ? testArgument : (char *)"dvarTestLimit"; }
+extern void Dvar_Init(void);
+
 
 void Com_Error(int code, const char *format, ...)
 {
@@ -54,6 +66,23 @@ int main(void)
 {
     static char names[4097][20];
     int i;
+    Dvar_Init();
+#if defined(DEBUG) && DEBUG
+    assert(testLimit);
+    testArgument = "0"; testLimit(); assert(dvarCount == 1);
+    testArgument = "4097"; testLimit(); assert(dvarCount == 1);
+    testArgument = "3"; testLimit(); assert(dvarCount == 4);
+    for (i = 0; i < 3; ++i) {
+        char name[32]; snprintf(name, sizeof(name), "ui_testDvar%i", i);
+        const dvar_t *var = Dvar_FindVar(name);
+        assert(var && var->current.integer == 0 && var->domain.integer.min == 0 &&
+               var->domain.integer.max == 1 && var->flags == 0x1000);
+    }
+    puts("DEBUG dvarTestLimit: bounds and named registrations passed");
+#else
+    assert(!testLimit);
+#endif
+    Dvar_Shutdown();
     if (!setjmp(exhausted)) {
         for (i = 0; i < 4096; ++i) {
             const dvar_t *var;

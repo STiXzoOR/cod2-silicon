@@ -2074,6 +2074,31 @@ const dvar_t *Dvar_RegisterBool(const char *dvarName, unsigned char value, unsig
     return Dvar_RegisterVariantReg(dvarName, DVAR_TYPE_BOOL, flags, valueUnion, domain);
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && defined(DEBUG) && DEBUG
+static void Dvar_Cod2xTestLimit_f(void)
+{
+    extern int Cmd_Argc(void);
+    extern char *Cmd_Argv(int index);
+    static char names[4096][32];
+    int limit = 4096;
+    if (Cmd_Argc() == 2) {
+        limit = atoi(Cmd_Argv(1));
+        if (limit < 1 || limit > 4096) {
+            Com_Printf("Invalid argument, must be between 1 and %i\n", 4096);
+            return;
+        }
+    }
+    for (int i = 0; i < limit; ++i) {
+        snprintf(names[i], sizeof(names[i]), "ui_testDvar%i", i);
+        Dvar_RegisterInt(names[i], 0, 0, 1, 0x1000);
+        if (!Dvar_FindVar(names[i])) {
+            Com_Error(1, "Failed to register dvar '%s' at index %i\n", names[i], i);
+            break;
+        }
+    }
+}
+#endif
+
 void Dvar_Init(void)
 {
     DvarValue valueUnion;
@@ -2084,6 +2109,12 @@ void Dvar_Init(void)
     memset(&domain, 0, sizeof(domain));
     dvar_cheats = Dvar_RegisterVariantReg("sv_cheats", DVAR_TYPE_BOOL, 0x1018, valueUnion, domain);
     Dvar_AddCommands();
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && defined(DEBUG) && DEBUG
+    {
+        extern void Cmd_AddCommand(const char *name, void (*function)(void));
+        Cmd_AddCommand("dvarTestLimit", Dvar_Cod2xTestLimit_f);
+    }
+#endif
 }
 
 void Dvar_ResetDvars(unsigned int filter, DvarSetSource setSource)
