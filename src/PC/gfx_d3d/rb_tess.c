@@ -1403,10 +1403,10 @@ static void RB_TessCylinderNative(const GfxEntity *re, int isDx7)
         forward[k] = re->origin[k] - re->endpos[k];
     Vec3Normalize(forward);
     MakeNormalVectors(forward, right, up);
-    unsigned int color = (unsigned int)re->materialRGBA[2] |
-                         ((unsigned int)re->materialRGBA[1] << 8) |
-                         ((unsigned int)re->materialRGBA[0] << 16) |
-                         ((unsigned int)re->materialRGBA[3] << 24);
+    unsigned int color = (unsigned int)re->materialRGBA[3] |
+                         ((unsigned int)re->materialRGBA[0] << 8) |
+                         ((unsigned int)re->materialRGBA[1] << 16) |
+                         ((unsigned int)re->materialRGBA[2] << 24);
     float step = 1.0f / (float)segments;
     float angle = (float)((double)step * 6.283185307179586);
     float sinStep = sinf(angle);

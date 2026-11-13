@@ -53,6 +53,7 @@ r_globals_t rg;
 r_backEndGlobals_t backEnd;
 refimport_t ri;
 GfxBackEndData *backEndData;
+int RB_ShadowCookiesValid(void) { return 0; }
 void *imp_tess = &tess, *imp_rgp = &rgp, *imp_backEnd = &backEnd, *imp_dx = &dx;
 static byte special, uploading;
 void *imp_g_special = &special, *imp_g_WarmOff = &uploading;
@@ -453,7 +454,8 @@ static void CheckVertices(void)
         if (colors[s] >= 0)
             for (int v = 0; v < 2; ++v)
                 for (int c = 0; c < 4; ++c)
-                    expected[v * stride + colors[s] + c] = input[v * stride + colors[s] + 3 - c];
+                    expected[v * stride + colors[s] + c] = input[v * stride + colors[s] +
+                        ((stride == 32 || stride == 68) ? (c + 1) % 4 : 3 - c)];
         RB_SetVertexData(0, input, 2, stride);
         assert(slot.used == offset + size && dxState.streams[0].offset == offset);
         /* Mac 0xf6e4d: DISCARD at offset zero, NOOVERWRITE after. */

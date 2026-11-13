@@ -851,7 +851,18 @@ static void RB_CopyVerticesWithColorConvert(const byte *src, byte *dst,
         for (j = 0; j < colorOfs; j += 4)
             *(int *)(dst + j) = *(const int *)(src + j);
 
-        convert(converter, &convertedColor, src + colorOfs);
+#if COD2_APPLE_SDK
+        if (stride == 0x20 || stride == 0x44) {
+            /* These dynamic declarations consume RGBA, unlike the legacy
+             * BGRA declarations. Mac 1.3 rotates ARGB to RGBA here. */
+            unsigned int argb;
+            memcpy(&argb, src + colorOfs, sizeof(argb));
+            convertedColor = (int)((argb >> 8) | (argb << 24));
+        } else
+#endif
+        {
+            convert(converter, &convertedColor, src + colorOfs);
+        }
         *(int *)(dst + colorOfs) = convertedColor;
 
         for (j = colorOfs + 4; j < stride; j += 4)
