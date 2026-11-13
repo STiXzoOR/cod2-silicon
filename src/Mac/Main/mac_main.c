@@ -587,6 +587,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #endif
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
         Cod2xNative_Frame();
+        { extern void MacInput_WaitIfMinimized(void); MacInput_WaitIfMinimized(); }
 #endif
         Com_Frame();
 #if (defined(__APPLE__) || (defined(COD2_WINDOWS_NATIVE) && COD2_WINDOWS_NATIVE)) && defined(COD2_X64) && COD2_X64 && \

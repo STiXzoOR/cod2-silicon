@@ -167,6 +167,7 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   frames continuously instead of continually postponing the capture.
 - Fatal engine errors show their explanation before the game exits and return
   a failure status.
+- Minimized games pause for five milliseconds between frames, as in Windows 1.3.
 - Wheel messages change weapons once each, including high-resolution scrolling,
   as in Windows 1.3.
 - Opening chat in a window keeps mouse-look active. Original 1.3 windowed

@@ -523,6 +523,17 @@ int SDL_PumpInputEvents(void)
     return inputEventCount;
 }
 
+#if defined(__APPLE__) && defined(COD2_X64)
+void MacInput_WaitIfMinimized(void)
+{
+    extern SDL_Window *sdl_gl_window;
+    /* WinMain 0x466460 sleeps five milliseconds for WM_ACTIVATE's minimized
+     * flag. Losing focus or being hidden by another window is not sufficient. */
+    if (sdl_gl_window && (SDL_GetWindowFlags(sdl_gl_window) & SDL_WINDOW_MINIMIZED))
+        SDL_Delay(5);
+}
+#endif
+
 void IN_Frame(void)
 {
 #if defined(__APPLE__) && defined(COD2_X64)
