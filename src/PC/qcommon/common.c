@@ -2848,6 +2848,9 @@ void Com_Init_Try_Block_Function(char *commandLine)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
         /* CoD2x's version text, without its author's name in the build field. */
         char *s = va("%s %s build %s %s", "CoD2 MP", COD2X_RELEASE, __DATE__ " " __TIME__, "macOS-arm64");
+#elif defined(__APPLE__) && defined(COD2_X64)
+        /* The Apple-silicon build names its own platform; servers and status queries see this text. */
+        char *s = va("%s %s build %s %s", "CoD2 MP", COD2_VERSION_SHORT, getBuildNumber(), "macOS-arm64");
 #else
         char *s = va("%s %s build %s %s", "CoD2 MP", COD2_VERSION_SHORT, getBuildNumber(), "MacOSXS-i386");
 #endif
