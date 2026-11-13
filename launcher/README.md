@@ -211,8 +211,8 @@ Server discovery sends both protocols to both masters, collects multiple UDP
 packets, deduplicates addresses and limits discovery to 2048 endpoints. Queries
 use Network.framework with a maximum of six concurrent endpoints, 40 ms between
 starts, status/info timeouts, cancellation, bounded parsers and a persistent
-last-successful cache. Refresh is explicit; opening the app doesn't scan the
-internet. Checking for updates is an HTTPS request to GitHub Releases, on Check Now or, with
+last-successful cache. Refresh is explicit unless Settings › General › Refresh the server list
+when Servers opens is on (off by default); opening the app itself never scans the server list. Checking for updates is an HTTPS request to GitHub Releases, on Check Now or, with
 Settings › Updates › Check for updates automatically on (the default), at most once a day while
 the launcher is open; an automatic check that fails says nothing, and the review harness and the
 lifecycle tests (`COD2_SETUP_NONINTERACTIVE=1`) never make one. It refreshes the release notes

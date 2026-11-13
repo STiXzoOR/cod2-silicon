@@ -5,7 +5,7 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-11-11
+## [0.3.0] - Unreleased
 
 The picture now follows the original Windows 1.3 game, checked frame by frame
 in replayed demos, and the original shaders are built from your own game
@@ -76,7 +76,7 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   display, and a summary. A wrong folder says which archives are missing, the
   CD key is checked as you type and can be skipped, a stored key is never asked
   for again, and running setup again from Settings can be cancelled at any step
-  without changing anything.
+  without losing your place in the launcher; only confirmed choices are kept.
 - The sidebar's player card edits your in-game name in place, showing its
   colours, and saves it as you type. Jump to… (⌘K) finds servers, loadouts,
   settings and menu actions. The menu bar has Server and Loadout menus, and the
@@ -84,7 +84,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 - A `cod2x://` or `cod2://` link opens Connect to Address with the address filled
   in instead of starting the game. Opening a demo plays it; opening a config
   shows the import review.
-- While you play, the launcher keeps its Dock icon and hides its window.
+- While you play, the launcher keeps its Dock icon and hides its window when
+  **Settings → General → Hide CoD2 Silicon while the game is running** is on.
   Quitting it with the game open asks whether to quit the game too.
 - Launcher settings save automatically. Invalid advanced options stay editable
   with an explanation, while your last valid options remain in use. Extra
@@ -115,6 +116,11 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   a chip that goes straight to the fix. While the game runs, Home offers
   Return to Game and Quit Game; when an update is ready it offers What's New
   and Install Update.
+- Config Studio can create, duplicate, rename and export loadouts, or move an
+  unused loadout to the Trash with Undo. The Loadout menu and row menus use
+  the same actions. Check-up opens a selected match from Home or Library and
+  explains frame rate and connection quality in words, with figures behind
+  Show Details. Configs stays read-only while the game runs.
 - With CoD2x on, voice chat is off, as in CoD2x. It works with the original
   1.3.
 - With CoD2x on, the game no longer writes its recommended graphics settings

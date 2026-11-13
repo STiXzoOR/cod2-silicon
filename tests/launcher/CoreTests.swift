@@ -110,13 +110,12 @@ import Foundation
         var codx = stock; codx.fields["shortversion"] = "1.4.6.8"
         precondition(GameEngine.original.canJoin(stock) && !GameEngine.original.canJoin(codx))
         precondition(GameEngine.cod2x.canJoin(stock) && GameEngine.cod2x.canJoin(codx))
-        let link = try LaunchLink.direct("203.0.113.24:28960"), secret = try LaunchLink.direct("203.0.113.24:28960", password: "hunter2")
+        let secret = try LaunchLink.direct("203.0.113.24:28960", password: "hunter2")
         precondition(GameEngine.cod2x.check(server: codx, lookedUp: false) == .go)
         precondition(GameEngine.original.check(server: stock, lookedUp: false) == .go)
         precondition(GameEngine.original.check(server: codx, lookedUp: false) == .needsCoD2x)
         precondition(GameEngine.original.check(server: nil, lookedUp: false) == .lookUp)
         precondition(GameEngine.original.check(server: nil, lookedUp: true) == .go, "an unanswered server is the game's to try")
-        let request = EngineRequest(link: link)
 
         // Both engines take their server as an Apple event once running: never +connect or a password in argv.
         let plan = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", link: secret)
