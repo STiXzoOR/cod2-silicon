@@ -148,7 +148,9 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   (publisher and studio logos, then the game's intro film) were switched off
   because they showed a black screen. Started without the launcher, the game
   plays the intro once on its first run, as on Windows; any key skips each
-  part. The launcher still goes straight to the menu.
+  part. The launcher does the same for a new player: the first launch to the
+  game menu plays the films, and later launches, server links and demos go
+  straight in. Players who have launched before are not shown them again.
 - A dedicated server build keeps its settings in `config_mp_server.cfg` and
   its log in `console_mp_server.log`, like the original Linux server, and no
   longer needs a player profile to load a map.
@@ -285,7 +287,6 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 - Voice chat has not been tested with a real microphone, only with a
   recording in its place.
-- The launcher skips the intro videos.
 - CoD2x's services (the update check, zPAM updates, the match service, script
   web requests, vMix, and crash and error reports) were tested against
   stand-ins on a Mac, not against the CoD2x project's own servers.

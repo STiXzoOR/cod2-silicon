@@ -342,6 +342,7 @@ struct MediaEntry: Identifiable {
         if let data = try? Data(contentsOf: home.appendingPathComponent("launcher-settings.json")), let value = try? JSONDecoder().decode(GameSettings.self, from: data) { settings = value }
         else if let value = ConfigDocument.launchLoadout(home: home, profileID: nil)?.effectiveSetting(named: "r_mode"), DisplayResolution(value) != nil {
             settings.resolution = value // An existing player's game choice predates launcher settings.
+            settings.introFilmsPlayed = true // They have played before; the films are for a first run.
         }
         savedSettings = settings
         // Old extra options could override the picker. Move that choice into the one visible control.
@@ -715,6 +716,8 @@ struct MediaEntry: Identifiable {
             try PrivateFile.write(Data(try settings.launchConfig(migrated: configLaunch != nil).utf8), to: home.appendingPathComponent("main/launcher.cfg"))
             try process.run(); log.closeParentWriter(); engine = process; gameRunning = true; gameStartedAt = Date(); crashReport = nil; notice = ""
             configStudio?.gameLaunched(pid: process.processIdentifier)
+            // The engine records the films as played as soon as it starts, even if the player quits during them.
+            if plan.playsIntroFilms { settings.introFilmsPlayed = true; flushSettings() }
             if let error = configStudio?.migrationError ?? configStudio?.error { notice = error }
             startGameMonitor()
             // --play and cold links launch once: a later setup completion must not start a second game.

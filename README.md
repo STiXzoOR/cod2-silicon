@@ -165,8 +165,9 @@ trusted engine arguments after `--`.
   recording in place of a microphone, not yet with a real one, and the level
   meter in the options moves only while you are sending. Device changes while
   talking are not handled.
-- The launcher skips the intro videos. `cinematic cod_intro` in the console
-  plays the intro film.
+- The intro videos play once, the first time a new player launches to the
+  game menu, as in the original; any key skips each part. `cinematic
+  cod_intro` in the console plays the intro film again.
 - The native dedicated server is available from source; see the
   [server guide](docs/server.md).
 - Frame-pacing hitches remain; active Game Mode and quiet-desktop display

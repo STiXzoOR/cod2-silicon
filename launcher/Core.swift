@@ -186,12 +186,21 @@ enum GameEngine: String, Codable, Sendable, CaseIterable {
 struct GameLaunchPlan {
     var arguments: [String]
     var link: LaunchLink?
+    /// This launch shows the intro films; once the game has started the launcher records them as played.
+    let playsIntroFilms: Bool
     /// loadout: the value the game's profile config gives a dvar; with it, what that config leaves
     /// unset is supplied from GameSettings.loadoutDefaults.
     init(settings: GameSettings, dataPath: String, homePath: String, link: LaunchLink? = nil, demo: String? = nil, forwarded: [String] = [], configStudio: ConfigStudioLaunch? = nil, connection: ConfigConnectionLaunch? = nil,
          loadout: ((String) -> String?)? = nil) throws {
         guard GameSettings.safeValue(dataPath), GameSettings.safeValue(homePath) else { throw LauncherError(message: "Game paths contain unsupported characters.") }
-        var args = try settings.launchDvars(migrated: configStudio != nil).flatMap { ["+set", $0.0, "\"\($0.1)\""] }
+        // The engine plays its three intro films when com_introPlayed is false and then records them as
+        // played. Only a plain launch to the game menu shows them: a server link, a demo or forwarded
+        // engine arguments start straight away and leave the films for the next plain launch.
+        playsIntroFilms = !settings.introFilmsPlayed && link == nil && demo == nil && forwarded.isEmpty
+        let introPlayed = playsIntroFilms ? "0" : "1"
+        var args = try settings.launchDvars(migrated: configStudio != nil).flatMap {
+            ["+set", $0.0, "\"\($0.0.lowercased() == "com_introplayed" ? introPlayed : $0.1)\""]
+        }
         if let loadout {
             args += try settings.loadoutDefaults(migrated: configStudio != nil, loadout: loadout).flatMap { ["+seta", $0.0, "\"\($0.1)\""] }
         }
@@ -934,6 +943,9 @@ struct GameSettings: Codable, Sendable, Equatable {
     var checkUpdatesAutomatically = true
     /// “Don’t ask again” choices by key (`DismissibleWarning`); Advanced › Reset Warnings clears them.
     var dismissedWarnings: Set<String> = []
+    /// The publisher, studio and game intro films play once, on the first launch to the game menu, as in
+    /// the original. False only for a new player; settings saved before this key existed count as played.
+    var introFilmsPlayed = false
     // MARK: - end ship-settings
     static let anisotropyLevels = [2, 4, 8, 16]
     var cm360: Double? { MouseMath.centimetresPer360(dpi: dpi, sensitivity: sensitivity) }
@@ -963,6 +975,8 @@ struct GameSettings: Codable, Sendable, Equatable {
         refreshServersOnOpen = (try? c.decodeIfPresent(Bool.self, forKey: .refreshServersOnOpen)) ?? d.refreshServersOnOpen
         checkUpdatesAutomatically = (try? c.decodeIfPresent(Bool.self, forKey: .checkUpdatesAutomatically)) ?? d.checkUpdatesAutomatically
         dismissedWarnings = (try? c.decodeIfPresent(Set<String>.self, forKey: .dismissedWarnings)) ?? d.dismissedWarnings
+        // A file without the key was saved by a launcher that always skipped the films: an existing player.
+        introFilmsPlayed = (try? c.decodeIfPresent(Bool.self, forKey: .introFilmsPlayed)) ?? true
     }
     /// One advanced line as (name, value): `dvar value` as typed in the console, or `dvar=value`.
     static func advancedPair(_ line: String) -> (String, String)? {
