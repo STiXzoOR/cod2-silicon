@@ -143,6 +143,12 @@ extern char xferText[15];
 extern int tleEstimates[80];
 static int tleIndex;
 static char g_mapname[64];
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+const char *UI_Cod2xRadarMapName(void)
+{
+    return g_mapname;
+}
+#endif
 static char g_gametype[64];
 static Bool g_ingameMenusLoaded;
 extern const char *MonthAbbrev[12];

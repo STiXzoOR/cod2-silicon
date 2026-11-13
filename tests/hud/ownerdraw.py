@@ -10,7 +10,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 CASES = ['objectives', 'distance', 'entity-origin', 'materials', 'fade', 'client-gates',
-         'placement', 'codx-policy', 'location', 'location-fallback']
+         'placement', 'codx-policy', 'radar-order', 'location', 'location-fallback']
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--compile-commands', type=Path, required=True)
 parser.add_argument('--output', type=Path, required=True)
@@ -18,8 +18,8 @@ parser.add_argument('--baseline', help='Read ownerdraw source from a Git revisio
 parser.add_argument('--case', action='append', choices=CASES)
 args = parser.parse_args()
 output = args.output.resolve()
-if output == ROOT or ROOT in output.parents:
-    parser.error('--output must be outside the checkout')
+if (output == ROOT or ROOT in output.parents) and ROOT / 'output' not in output.parents:
+    parser.error('--output must be inside output/ or outside the checkout')
 output.mkdir(parents=True, exist_ok=True)
 rows = json.loads(args.compile_commands.read_text())
 
@@ -84,7 +84,10 @@ unrelated = ['CG_DrawPlayerAmmoValue', 'CG_DrawPlayerAmmoBackdrop', 'CG_DrawPlay
     'CG_DrawHudPic', 'CG_DrawPlayerHealthBack', 'CG_DrawLowHealthOverlay']
 for name in unrelated:
     body = function(owner, name)
-    code += body[:body.index('{')] + '{ abort(); }\n'
+    stub = 'Fixture_CompassFace(rect);' if name == 'CG_DrawPlayerCompass' else 'abort();'
+    if name == 'CG_DrawPlayerCompass':
+        code += 'static void Fixture_CompassFace(const rectDef_t *rect);\n'
+    code += body[:body.index('{')] + '{ ' + stub + ' }\n'
 for name in ['CG_DrawOffHandName', 'CG_DrawOffHandIcon', 'CG_DrawOffHandHighlight',
              'CG_DrawOffHandAmmo', 'CG_DrawTeamBackground']:
     declaration = re.search(r'^extern (void ' + name + r'\([^;]*\));', owner, re.M)[1]

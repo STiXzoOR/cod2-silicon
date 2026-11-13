@@ -10,7 +10,8 @@ clientActive_t clients;
 clientStatic_t cls;
 sharedUiInfo_t sharedUiInfo;
 static dvar_t image;
-static int result, allocations, frees, drops;
+static char uiMap[64];
+static int result, allocations, frees, drops, reads;
 static Material materials[5];
 static struct { float x, y, w, h, angle, alpha; MaterialHandle material; } draws[256];
 static int drawCount;
@@ -19,6 +20,7 @@ int Cod2x_FeaturesDemo(void) { return 0; }
 const dvar_t *Dvar_FindVar(const char *name) { (void)name; return NULL; }
 void Dvar_GetUnpackedColor(const dvar_t *var, vec_t *out) { (void)var; (void)out; }
 const char *CL_GetConfigString(int index) { (void)index; return ""; }
+const char *UI_Cod2xRadarMapName(void) { return uiMap; }
 MaterialHandle CL_RegisterMaterial(const char *name, int flags)
 {
     (void)flags;
@@ -46,6 +48,7 @@ int UI_TextHeight(FontHandle font, float scale) { (void)font; (void)scale; retur
 int FS_ReadFile(const char *name, void **buffer)
 {
     assert(strstr(name, "maps/mp/") == name);
+    ++reads;
     if (result < 0) {
         *buffer = NULL;
         return -1;
@@ -100,6 +103,7 @@ static void firing_flashes(void)
     enabled.current.enabled=1; scale.current.value=es.current.value=1;
     image.current.string="map";
     snprintf(radarMap, sizeof(radarMap), "fixture");
+    snprintf(uiMap, sizeof(uiMap), "fixture");
     snprintf(cgs->mapname, sizeof(cgs->mapname), "maps/mp/fixture.d3dbsp");
     cgs->media.objectiveMaterials[0]=&materials[0];
     cg->snap=&snapshot; cg->clientNum=63;
@@ -148,29 +152,37 @@ static void firing_flashes(void)
     assert(fireEvents[0].time==300 && fireEvents[1].time==200 && fireEvents[127].time==200);
 
     /* The upstream event list and observed sound times outlive map changes. */
-    snprintf(cgs->mapname,sizeof(cgs->mapname),"maps/mp/another.d3dbsp"); result=-1;
+    snprintf(uiMap,sizeof(uiMap),"another"); result=-1;
+    calibration=3;
+    CG_Cod2xRadarFrame();
     draw_at(301,&materials[1]);
-    assert(fireEvents[0].time==300);
+    assert(fireEvents[0].time==300 && calibration==3);
     puts("CoD2x radar draw commands: saved geometry, objective ordering, eligibility, reuse and lifecycle pass");
 }
 
 int main(void)
 {
     mapImage = &image;
-    snprintf(cgs->mapname, sizeof(cgs->mapname), "maps/mp/missing.d3dbsp");
+    snprintf(uiMap, sizeof(uiMap), "missing");
     result = -1;
-    CG_Cod2xRadarLoad();
-    assert(allocations == 0 && frees == 0);
-    snprintf(cgs->mapname, sizeof(cgs->mapname), "maps/mp/empty.d3dbsp");
+    calibration=2;
+    CG_Cod2xRadarFrame();
+    printf("radar frame without snapshot: reads=%d calibration=%d\n",reads,calibration); fflush(stdout);
+    assert(reads==1 && calibration==2 && allocations == 0 && frees == 0);
+    snprintf(uiMap, sizeof(uiMap), "empty");
     result = 0;
-    CG_Cod2xRadarLoad();
+    CG_Cod2xRadarFrame();
     assert(allocations == 1 && frees == 1);
-    snprintf(cgs->mapname, sizeof(cgs->mapname), "maps/mp/invalid.d3dbsp");
+    snprintf(uiMap, sizeof(uiMap), "invalid");
     result = 8;
-    CG_Cod2xRadarLoad();
+    CG_Cod2xRadarFrame();
     assert(allocations == 2 && frees == 2 && drops == 1);
-    CG_Cod2xRadarLoad();
-    assert(allocations == 2 && frees == 2 && drops == 1);
+    CG_Cod2xRadarFrame();
+    assert(reads==3 && allocations == 2 && frees == 2 && drops == 1);
+    uiMap[0]='\0'; image.current.string="map";
+    CG_Cod2xRadarFrame();
+    assert(!*image.current.string && calibration==2 && reads==3);
+    calibration=0;
     puts("CoD2x production radar reader buffer ownership: pass");
     firing_flashes();
     return 0;

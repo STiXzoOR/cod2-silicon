@@ -28,6 +28,7 @@ extern void FS_FreeFile(void *);
 extern void Com_Error(errorParm_t, const char *, ...);
 extern MaterialHandle CL_RegisterMaterial(const char *, int);
 extern const char *CL_GetConfigString(int);
+extern const char *UI_Cod2xRadarMapName(void);
 extern void CG_DrawRotatedPic(float, float, float, float, int, int, float, const vec_t *, MaterialHandle);
 extern void UI_DrawText(const char *, int, FontHandle, float, float, int, int, float, const vec_t *, int);
 extern int UI_TextWidth(const char *, int, FontHandle, float);
@@ -54,34 +55,21 @@ static int CG_Cod2xRadarCheats(void)
     return Cod2x_FeaturesDemo() || (cheats && cheats->current.enabled);
 }
 
-static void CG_Cod2xRadarMapName(char name[64])
-{
-    const char *path = cgs->mapname, *slash = strrchr(path, '/');
-    size_t length;
-    if (slash)
-        path = slash + 1;
-    length = strcspn(path, ".");
-    if (length >= 64)
-        length = 63;
-    memcpy(name, path, length);
-    name[length] = '\0';
-}
-
 static void CG_Cod2xRadarLoad(void)
 {
-    char name[64], filename[128], image[128];
+    const char *name = UI_Cod2xRadarMapName();
+    char filename[128], image[128];
     char *buffer = NULL;
     const char *cursor, *token;
     float values[6];
     int i, length;
-    CG_Cod2xRadarMapName(name);
     if (!strcmp(name, radarMap))
         return;
     snprintf(radarMap, sizeof(radarMap), "%s", name);
-    calibration = 0;
-    Dvar_SetString(mapImage, "");
-    if (!*name)
+    if (!*name) {
+        Dvar_SetString(mapImage, "");
         return;
+    }
     snprintf(filename, sizeof(filename), "maps/mp/%s.radar", name);
     length = FS_ReadFile(filename, (void **)&buffer);
     if (length <= 0 || !buffer) {
@@ -89,6 +77,7 @@ static void CG_Cod2xRadarLoad(void)
             FS_FreeFile(buffer);
         /* CoD2x names the file without its mp/ folder here. */
         Com_Printf("^1Radar file not found: maps/%s.radar\n", name);
+        Dvar_SetString(mapImage, "");
         return;
     }
     /* Each value follows its label; an empty value drops the client, as in CoD2x. */
@@ -175,6 +164,8 @@ static void CG_Cod2xRadarCalibrate_f(void)
 
 void CG_Cod2xRadarInit(void)
 {
+    if (drawRadar)
+        return;
     /* CoD2x radar.cpp:646 defines the user controls and .radar file order. */
     drawRadar = Dvar_RegisterBool("cg_drawRadar", 0, 0x1000);
     radarScale = Dvar_RegisterFloat("cg_hudRadarScale", 1, -FLT_MAX, FLT_MAX, 0x1000);
@@ -193,8 +184,13 @@ void CG_Cod2xRadarInit(void)
         Cmd_AddCommand("cg_hudRadarCalibrate", CG_Cod2xRadarCalibrate_f);
         commandRegistered = 1;
     }
-    radarMap[0] = '\0';
-    calibration = 0;
+}
+
+void CG_Cod2xRadarFrame(void)
+{
+    /* The upstream frame hook watches the UI's loading map, even without a snapshot. */
+    if (mapImage)
+        CG_Cod2xRadarLoad();
 }
 
 static void CG_Cod2xRadarCoordinates(const vec_t *origin, float *x, float *y)
@@ -249,7 +245,6 @@ void CG_Cod2xRadarDraw(void)
     int i, teamCounts[3] = {0, 0, 0}, teamNumbers[64], clientNum;
     if (!drawRadar || !cg->snap || !cg_entities)
         return;
-    CG_Cod2xRadarLoad();
     clientNum = cg->clientNum;
     if (!drawRadar->current.enabled || clientNum < 0 || clientNum >= 64 ||
         (cg->bgs.clientinfo[clientNum].team != TEAM_SPECTATOR && !CG_Cod2xRadarCheats()) ||

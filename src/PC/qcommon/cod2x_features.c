@@ -254,6 +254,7 @@ static void Cod2x_ProcessedList_f(void)
 
 void Cod2x_FeaturesInit(void)
 {
+    CG_Cod2xRadarInit();
     Cod2x_PoseInit();
     Cod2x_VmixInit();
     /* CoD2x cgame.cpp:65 and drawing.cpp:270-279 describe these controls. */
@@ -287,6 +288,7 @@ void Cod2x_FeaturesFrame(int active, int demo)
 {
     (void)active;
     playingDemo = demo;
+    CG_Cod2xRadarFrame();
 }
 
 static void Cod2x_UpdateFrame(int state);

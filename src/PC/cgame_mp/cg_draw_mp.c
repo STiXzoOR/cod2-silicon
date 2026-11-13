@@ -2134,9 +2134,6 @@ unsigned int CG_Draw2D(void)
 
     if (!cg_draw2D->current.enabled)
         return 0;
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    CG_Cod2xRadarDraw();
-#endif
 
     if (cg->fadeRate != 0.0f) {
         int remaining = cg->fadeTime - cg->time;
