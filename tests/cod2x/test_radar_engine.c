@@ -40,7 +40,7 @@ const dvar_t *Dvar_FindVar(const char *name)
     if (radarTeamColors && !strcmp(name, "g_TeamColor_Allies")) return &radarAllies;
     if (radarTeamColors && !strcmp(name, "g_TeamColor_Axis")) return &radarAxis;
     for (int i = 0; i < spectatorDvarCount; ++i)
-        if (!strcmp(name, spectatorNames[i])) return &spectatorDvars[i];
+        if (!strcmp(name, spectatorDvars[i].name)) return &spectatorDvars[i];
     return NULL;
 }
 static dvar_t *register_head_dvar(const char *name, int type, int flags)
@@ -48,6 +48,8 @@ static dvar_t *register_head_dvar(const char *name, int type, int flags)
     assert(spectatorDvarCount < 40);
     int index = spectatorDvarCount++;
     snprintf(spectatorNames[index], sizeof(spectatorNames[index]), "%s", name);
+    /* Internal engine dvars retain the supplied name pointer. */
+    spectatorDvars[index].name = name;
     spectatorDvars[index].type = type;
     spectatorDvars[index].flags = flags;
     return &spectatorDvars[index];
@@ -316,6 +318,7 @@ static void spectator_controls(void)
     assert(spectatorDvarCount == 33);
     for (int i = 0; i < spectatorDvarCount; ++i) {
         const dvar_t *d = &spectatorDvars[i];
+        assert(Dvar_FindVar(spectatorNames[i]) == d);
         assert(d->flags == (!strcmp(spectatorNames[i], "cg_xray") ?
 #if DEBUG
                            0x1000 :

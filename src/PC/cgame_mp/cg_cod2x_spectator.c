@@ -82,12 +82,15 @@ void CG_Cod2xSpectatorInit(void)
     health = Dvar_RegisterBool("cg_xrayHealth", 1, 0x1000);
     healthColor = Dvar_RegisterString("cg_xrayHealthColor", "", 0x1000);
     healthAlpha = Dvar_RegisterFloat("cg_xrayHealthAlpha", .8f, 0, 1, 0x1000);
-    const char *states[] = {"Spectator", "Dead", "Alive"};
-    const char *elements[] = {"NationIcon", "Name", "WeaponIcon", "WeaponName"};
+    /* Internal dvars keep their name pointer for the life of the pool. */
+    static const char *const names[3][4] = {
+        {"cg_headNationIconSpectator", "cg_headNameSpectator", "cg_headWeaponIconSpectator", "cg_headWeaponNameSpectator"},
+        {"cg_headNationIconDead", "cg_headNameDead", "cg_headWeaponIconDead", "cg_headWeaponNameDead"},
+        {"cg_headNationIconAlive", "cg_headNameAlive", "cg_headWeaponIconAlive", "cg_headWeaponNameAlive"}
+    };
     const int defaults[3][4] = {{0,2,2,0}, {1,2,2,0}, {1,0,0,0}};
     for (int s = 0; s < 3; ++s) for (int e = 0; e < 4; ++e) {
-        char name[64]; snprintf(name, sizeof(name), "cg_head%s%s", elements[e], states[s]);
-        head[s][e] = Dvar_RegisterInt(name, defaults[s][e], 0, 2, 0x1000);
+        head[s][e] = Dvar_RegisterInt(names[s][e], defaults[s][e], 0, 2, 0x1000);
     }
     nameScale = Dvar_RegisterFloat("cg_headNameScale", 1, .3f, 3, 0x1000);
     weaponScale = Dvar_RegisterFloat("cg_headWeaponIconScale", 1, 0, 3, 0x1000);
