@@ -8,6 +8,7 @@
 void Cod2x_FeaturesInit(void);
 void Cod2x_FeaturesFrame(int active, int demo);
 void Cod2x_FeaturesClientState(int state);
+void Cod2x_FeaturesRenderer(void);
 /* cod2x_vmix.c */
 void Cod2x_VmixInit(void);
 void Cod2x_VmixFrame(int clientState);

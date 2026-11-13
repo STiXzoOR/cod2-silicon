@@ -753,6 +753,13 @@ static uint32_t updateWaitingSince;
 
 static void Cod2x_UpdateDone(void *context, const Cod2xHttpResponse *response);
 
+static void Cod2x_UpdateStartFailed(const char *message)
+{
+    Cod2xHttpResponse failure = {0};
+    snprintf(failure.error, sizeof(failure.error), "%s", message);
+    Cod2x_UpdateDone(NULL, &failure);
+}
+
 static void Cod2x_JsonField(Cod2xText *body, const char *name, const char *value)
 {
     Cod2x_TextPrintf(body, ",\"%s\":\"", name);
@@ -794,6 +801,7 @@ static void Cod2x_UpdateCheck(void)
     Cod2x_TextAppendString(&body, "}");
     if (body.failed) {
         Cod2x_TextFree(&body);
+        Cod2x_UpdateStartFailed("Out of memory");
         return;
     }
     memset(&request, 0, sizeof(request));
@@ -807,6 +815,8 @@ static void Cod2x_UpdateCheck(void)
     Com_Printf("Auto-Updater: Checking for updates...\n");
     updateRunning = Cod2x_HttpStart(&request, Cod2x_UpdateDone, NULL);
     Cod2x_TextFree(&body);
+    if (!updateRunning)
+        Cod2x_UpdateStartFailed("Failed to connect");
 }
 
 /* Base64 with padding; 0 when out is too small. */
@@ -925,7 +935,7 @@ static void Cod2x_UpdateAnswer(int available, const char *url, const char *versi
    CoD2x's zpam_applyManifest does nothing when dedicated is 0. */
 static void Cod2x_UpdateDone(void *context, const Cod2xHttpResponse *response)
 {
-    char available[16] = "", url[1024] = "", version[64] = "", error[256];
+    char available[1024] = "", url[1024] = "", version[1024] = "", error[256];
     (void)context;
     updateRunning = 0;
     snprintf(error, sizeof(error), "%s", response->error[0] ? response->error : "No response");
@@ -980,6 +990,12 @@ void Cod2x_UpdateConfirmed(void)
               "Upstream Windows updates cannot be installed in this native Mac build.\n"
               "You can still join servers compatible with this version.\n",
               updateVersion ? updateVersion->current.string : "");
+}
+
+void Cod2x_FeaturesRenderer(void)
+{
+    /* Upstream updater_renderer: a renderer restart checks again on the next menu frame. */
+    updateLastState = -1;
 }
 
 static void Cod2x_UpdateFrame(int state)

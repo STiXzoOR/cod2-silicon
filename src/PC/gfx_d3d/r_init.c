@@ -1232,6 +1232,10 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     if (!ri_printf)
         return;
     ri_printf(0, "----- R_Init -----\n");
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    extern void Cod2x_FeaturesRenderer(void);
+    Cod2x_FeaturesRenderer();
+#endif
     Swap_Init();
     R_RegisterDvars();
 #if COD2X_FILM
