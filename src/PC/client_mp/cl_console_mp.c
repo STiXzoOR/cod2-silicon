@@ -3,6 +3,7 @@
 #endif
 #include "common_types.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/qcommon/cod2x.h"
 #include "PC/qcommon/cod2x_features.h"
 #define COD2X_CON_NAME_CHARS 40
 #define COD2X_CON_VALUE_OFFSET 340.0f
@@ -699,7 +700,7 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
 
 #if defined(COD2_X64) && COD2_X64 && defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
 #if defined(COD2_CODX) && COD2_CODX
-    version = va("CoD2 Silicon %s · CoD2x 1.4.6.8 · macOS arm64", COD2_RELEASE_VERSION);
+    version = va("CoD2 Silicon %s · CoD2x " COD2X_RELEASE " · macOS arm64", COD2_RELEASE_VERSION);
 #else
     version = va("Build %s %s", getBuildNumber(), "macOS arm64");
 #endif
@@ -782,7 +783,7 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
 
 #if defined(COD2_X64) && COD2_X64 && defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
 #if defined(COD2_CODX) && COD2_CODX
-    version = va("CoD2 Silicon %s · CoD2x 1.4.6.8 · macOS arm64", COD2_RELEASE_VERSION);
+    version = va("CoD2 Silicon %s · CoD2x " COD2X_RELEASE " · macOS arm64", COD2_RELEASE_VERSION);
 #else
     version = va("Build %s %s", getBuildNumber(), "macOS arm64");
 #endif
@@ -2139,7 +2140,7 @@ static BM_NOINLINE void Con_DrawInput(void)
         return;
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    prompt = va("%s: %s> ", "CoD2x MP", "1.4.6.8");
+    prompt = va("%s: %s> ", "CoD2x MP", COD2X_RELEASE);
 #else
     prompt = va("%s: %s> ", "CoD2 MP", COD2_VERSION_SHORT);
 #endif
@@ -2219,7 +2220,7 @@ static BM_NOINLINE void Con_DrawInput(void)
         return;
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    prompt = va("%s: %s> ", "CoD2x MP", "1.4.6.8");
+    prompt = va("%s: %s> ", "CoD2x MP", COD2X_RELEASE);
 #else
     prompt = va("%s: %s> ", "CoD2 MP", COD2_VERSION_SHORT);
 #endif

@@ -2886,7 +2886,7 @@ void Com_Init_Try_Block_Function(char *commandLine)
         Dvar_SetString(version, s);
     }
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    shortversion = Dvar_RegisterString("shortversion", "1.4.6.8", 0x1044);
+    shortversion = Dvar_RegisterString("shortversion", COD2X_RELEASE, 0x1044);
 #else
     shortversion = Dvar_RegisterString("shortversion", COD2_VERSION_SHORT, 0x1044);
 #endif
