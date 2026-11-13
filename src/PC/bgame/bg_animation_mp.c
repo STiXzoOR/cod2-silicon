@@ -6,6 +6,7 @@
 #include <string.h>
 #if defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
+#include "../qcommon/cod2x_math.h"
 #endif
 extern scr_const_t scr_const;
 #if defined(COD2_X64) && COD2_X64
@@ -408,12 +409,16 @@ extern playerState_t *SV_GameClientNum(int clientNum);
 void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es, int *partBits, clientInfo_t *ci, int frametime)
 {
     vec3_t goals[8];
+#if !(defined(COD2_CODX) && COD2_CODX)
     vec3_t tagOriginAngles;
     vec3_t torsoAngles;
     vec3_t headAngles;
+#endif
     float leanFrac;
+#if !(defined(COD2_CODX) && COD2_CODX)
     float leanDegrees;
     float waistDelta;
+#endif
     float maxAngleChange;
     int i;
 
@@ -438,6 +443,9 @@ void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es
 #endif
         memset(goals, 0, sizeof(goals));
     } else {
+#if defined(COD2_CODX) && COD2_CODX
+        BG_Cod2xBaseControllerGoals(es, ci, goals, &leanFrac);
+#else
         tagOriginAngles[0] = 0.0f;
         tagOriginAngles[1] = ci->legs.yawAngle;
         tagOriginAngles[2] = 0.0f;
@@ -588,6 +596,7 @@ void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es
         goals[6][0] = tagOriginAngles[0];
         goals[6][1] = tagOriginAngles[1];
         goals[6][2] = tagOriginAngles[2];
+#endif
     }
 
 #if defined(COD2_CODX) && COD2_CODX
@@ -1064,7 +1073,11 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
 
     moveDir = ci->lerpMoveDir;
     playerPitch = ci->playerAngles[0];
+#if defined(COD2_CODX) && COD2_CODX
+    playerYaw = Cod2x_AngleNormalize360(ci->playerAngles[1]);
+#else
     playerYaw = AngleMod(ci->playerAngles[1]);
+#endif
     eFlags = es->eFlags;
 
 #if defined(COD2_CODX) && COD2_CODX
@@ -1231,11 +1244,15 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
 #endif
         torsoPitchDest = 0.0f;
     } else {
+#if defined(COD2_CODX) && COD2_CODX
+        torsoPitchDest = (float)((double)Cod2x_AngleNormalize180(playerPitch) * 0.6);
+#else
         torsoPitchDest = playerPitch;
         if (torsoPitchDest > 180.0f) {
             torsoPitchDest -= 360.0f;
         }
         torsoPitchDest *= 0.6000000238418579f;
+#endif
     }
 
 #if defined(COD2_CODX) && COD2_CODX

@@ -15,7 +15,7 @@ typedef struct {
     int flags;
     int64_t movetype;
 } animation_t;
-typedef struct { animation_t *animation; int animationTime; float yawAngle; } lerpFrame_t;
+typedef struct { animation_t *animation; int animationTime; float yawAngle, pitchAngle; } lerpFrame_t;
 typedef struct {
     XAnimTree_s *pXAnimTree;
     int clientNum;
@@ -24,7 +24,7 @@ typedef struct {
     float lerpMoveDir, lerpLean;
     int clientConditions[9][2];
 } clientInfo_t;
-typedef struct { int eFlags, legsAnim; } entityState_t;
+typedef struct { int eFlags, legsAnim; float fTorsoHeight, fTorsoPitch, fWaistPitch; } entityState_t;
 typedef struct {
     int time, anim_user;
     struct { animation_t animations[2]; } animScriptData;
@@ -43,13 +43,8 @@ enum {
     ANIM_MT_STUMBLE_CROUCH_FORWARD = 39, ANIM_MT_STUMBLE_CROUCH_BACKWARD = 40
 };
 
-static float AngleNormalize180(float angle)
-{
-    angle = fmodf(angle + 180.0f, 360.0f);
-    if (angle < 0.0f)
-        angle += 360.0f;
-    return angle - 180.0f;
-}
+
+static float GetLeanFraction(float value) { return value; }
 
 #include "../../src/PC/bgame/cod2x_animation.h"
 
@@ -148,6 +143,12 @@ int main(void)
     assert(state->movementDuration == 400);
     assert(state->movementEnd == 250);
 
-    puts("cod2x: stance timing, posture, diagonal alignment, persistent state and live interval tests passed");
+    memset(&ci, 0, sizeof(ci));
+    memset(&es, 0, sizeof(es));
+    es.fTorsoPitch = 10.001f;
+    float lean;
+    BG_Cod2xBaseControllerGoals(&es, &ci, goals, &lean);
+    assert(goals[0][0] == 9.99755859375f && goals[5][0] == -9.99755859375f);
+    puts("cod2x: stance timing, posture, diagonal alignment, persistent state, live interval and quantized controller tests passed");
     return 0;
 }

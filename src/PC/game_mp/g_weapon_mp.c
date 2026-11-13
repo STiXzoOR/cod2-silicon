@@ -3,6 +3,7 @@
 #include "bytematch.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "g_cod2x_wallbang.h"
+#include "../qcommon/cod2x_math.h"
 #endif
 /* dvar globals */
 extern const dvar_t *g_antilag;
@@ -414,7 +415,11 @@ static void Bullet_Fire_Extended(const gentity_t *source, gentity_s (*attacker)[
     reflect[0] = end[0] - start[0];
     reflect[1] = end[1] - start[1];
     reflect[2] = end[2] - start[2];
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Cod2x_VectorNormalizeTo(reflect, reflect);
+#else
     Vec3Normalize(reflect);
+#endif
     {
         float dot;
 
@@ -442,7 +447,11 @@ static void Bullet_Fire_Extended(const gentity_t *source, gentity_s (*attacker)[
         dir[0] = end[0] - start[0];
         dir[1] = end[1] - start[1];
         dir[2] = end[2] - start[2];
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        Cod2x_VectorNormalizeTo(dir, dir);
+#else
         Vec3Normalize(dir);
+#endif
 
         dot = -(dir[0] * tr.normal[0] + dir[1] * tr.normal[1] + dir[2] * tr.normal[2]);
         offset = 0.0f;

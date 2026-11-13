@@ -164,7 +164,12 @@ static void check_mounted_flags(int version, int user, int flags)
         }
     } else {
         animation_close(emittedTags[2][0], 8.997802734375f);
+#if defined(COD2_CODX) && COD2_CODX
+        /* CoD2x quantizes the head-minus-torso difference to21.000366deg. */
+        assert(emittedTags[3][0] == 6.30010986328125f);
+#else
         animation_close(emittedTags[3][0], 6.3006591796875f);
+#endif
     }
 }
 
@@ -242,6 +247,28 @@ static void check_controller_lifecycle(int user)
 #endif
 }
 
+static void check_quantized_controllers(int user)
+{
+    Fixture_SetRevision(0);
+    clientInfo_t *ci = animation_init(user);
+    entityState_t es = {.clientNum = 5, .eType = 1, .fTorsoPitch = 10.001f};
+    ci->playerAngles[0] = 10.001f;
+    ci->legs.yawAngle = 10.001f;
+    int bits[4] = {0};
+    BG_Player_DoControllers(&object, &es, bits, ci, 1000);
+#if defined(COD2_CODX) && COD2_CODX
+    const float expected = 9.99755859375f;
+#else
+    const float expected = 10.001f;
+#endif
+    printf("controller angle user%d: %.9g; expected %.9g\n", user, ci->angles[0][0], expected);
+    assert(ci->angles[0][0] == expected);
+    assert(ci->angles[5][0] == -expected);
+    assert(ci->tag_origin_angles[1] == expected);
+    assert(emittedTags[0][0] == expected && emittedTags[5][0] == -expected);
+    assert(emittedOriginAngles[1] == expected);
+}
+
 static void animation_matrix(void)
 {
     const int versions[] = {0, 3, 4, 6, -1};
@@ -262,6 +289,8 @@ static void animation_matrix(void)
             check_blend(versions[version], user, 2, 1, 200);
         }
     }
+    check_quantized_controllers(0);
+    check_quantized_controllers(1);
     check_controller_lifecycle(0);
     check_controller_lifecycle(1);
     puts("PASS production angle/controller/tag/prone-yaw and stance lerp/rate contracts at remote 0/3/4/6 and the hosted build revision for both animation users");

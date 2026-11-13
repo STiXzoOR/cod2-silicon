@@ -3,6 +3,7 @@
 /* A dedicated server registers the controls and applies them to its own
    controllers, as CoD2x servers do; only the debug drawing is client side. */
 #include "cod2x_pose.h"
+#include "cod2x_math.h"
 #if !defined(DEDICATED)
 #include "cod2x_features.h"
 #endif
@@ -85,7 +86,7 @@ void Cod2x_PoseMovement(int fromServer, int time, unsigned int movement, int dur
 
 #if !defined(DEDICATED)
 extern void AngleVectors(const vec_t *, vec_t *, vec_t *, vec_t *);
-extern const float AngleSubtract(const float, const float);
+
 extern float GetLeanFraction(const float);
 extern animStringItem_t animMoveTypesStr[44];
 extern bgs_t *bgs;
@@ -199,7 +200,7 @@ void Cod2x_PoseDiagnostics(const entityState_t *entity, const clientInfo_t *info
     Cod2x_PoseString(column, 5, white, .25f, fromServer, "ci->movementYaw: %.2f", info->lerpMoveDir);
     Cod2x_PoseString(column, 5, white, .25f, fromServer, "torso yaw: %.2f", info->torso.yawAngle);
     Cod2x_PoseString(column, 5, white, .25f, fromServer, "legs yaw:  %.2f", info->legs.yawAngle);
-    Cod2x_PoseString(column, 5, white, .25f, fromServer, "torso-legs dif: %.2f", AngleSubtract(info->legs.yawAngle, info->torso.yawAngle));
+    Cod2x_PoseString(column, 5, white, .25f, fromServer, "torso-legs dif: %.2f", Cod2x_AngleSubtract(info->legs.yawAngle, info->torso.yawAngle));
     Cod2x_PoseString(column, 5, white, .25f, fromServer, "movementYawAngle: %.2f", info->lerpMoveDir);
     Cod2x_PoseString(column, 5, white, .25f, fromServer, "frameTime: %i", frametime);
     Cod2x_PoseString(column, 5, white, .25f, fromServer, "leanf: %.3f %.3f", entity->leanf, GetLeanFraction(info->lerpLean));
@@ -213,7 +214,7 @@ void Cod2x_PoseDiagnostics(const entityState_t *entity, const clientInfo_t *info
         float squared = 0;
         vec4_t color = {0, 1, 0, 1};
         for (axis = 0; axis < 3; ++axis) {
-            float delta = AngleSubtract(goals[i][axis], current[axis]);
+            float delta = Cod2x_AngleSubtract(goals[i][axis], current[axis]);
             squared += delta * delta;
         }
         float distance = sqrtf(squared);
