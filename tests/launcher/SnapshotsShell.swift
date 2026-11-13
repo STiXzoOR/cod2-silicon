@@ -269,6 +269,11 @@ extension Snapshots {
             // File › Launch targets the Servers selection, otherwise the last server.
             model.page = .servers; model.selectedServer = "198.51.100.7:28960"
             try require(model.selected?.address == "198.51.100.7:28960", "Servers shows a selection")
+            let selectedLaunch = JumpIndex.items(model, query: "Launch").first { $0.keys == "⌘↩" }
+            try require(selectedLaunch?.title == model.selected.map { "Launch on \(QuakeColors.plain($0.name))" }, "Jump’s Launch action names the visible Servers selection")
+            model.page = .home
+            let recentLaunch = JumpIndex.items(model, query: "Launch").first { $0.keys == "⌘↩" }
+            try require(recentLaunch?.title == model.lastServer.map { "Launch on \(QuakeColors.plain($0.name))" }, "Away from Servers, Jump’s Launch action names the last server")
 
             // Sheets and the quit alert.
             model.preview("sheet-game-could-not-start")

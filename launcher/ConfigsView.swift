@@ -93,7 +93,7 @@ struct ConfigsShell: View {
                 .help("Jump to any setting (⌘K)")
             moreMenu
         } }
-        .sheet(isPresented: $studio.jumpPresented) { JumpPalette(studio: studio) }
+        .sheet(isPresented: $studio.jumpPresented) { JumpPalette(studio: studio).sheetShapeAudit() }
         .confirmationDialog("Apply your text edits?", isPresented: Binding(get: { pendingLeave != nil }, set: { if !$0 { pendingLeave = nil } })) {
             Button("Apply Edits") { studio.applyText(undo: undoManager); if !studio.textEdited { let action = pendingLeave; pendingLeave = nil; action?() } }
                 .disabled(studio.textBlocked || studio.isReadOnly)

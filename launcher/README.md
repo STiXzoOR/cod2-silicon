@@ -63,7 +63,8 @@ closes. Settings, About and Check for Updates open the Settings window. Help ope
 project manual, the Keyboard Shortcuts sheet, release notes, Report a Problem and the
 logs folder. Jump to… (`JumpPalette.swift`) finds servers already in memory, loadouts,
 every Settings pane and row by its visible name, and menu actions: ↑ ↓ move, Return
-opens, ⌘Return launches on a server, Escape closes. The sidebar's player plate opens
+opens (a server result opens in Servers), and Escape closes. ⌘Return always runs File › Launch,
+using the Servers selection when that page is showing one, otherwise the last server. The sidebar's player plate opens
 the player card (`PlayerCard.swift`): the name, edited in place with its colours shown
 and saved to the next game's loadout as you type, the CD key's state and that loadout.
 The Dock menu lists recent servers, Launch on Last Server, Open Game Menu and Connect
@@ -74,7 +75,8 @@ announced to assistive technology.
 Launcher checks: `sh tests/launcher/run.sh`. This runs core, network, artwork,
 Config Studio, directory and match-summary tests, the font checksum check, a
 strict typecheck of the material branch under the current SDK, and real-window
-captures, accessibility checks and actions. Every page is captured in both
+captures, accessibility checks and actions. The shape audit checks attached app sheets separately against their own window pixels.
+Every page is captured in both
 appearances and at the minimum window size; Config Studio also covers accessibility
 display variants, inactive windows and sidebar resizing. The
 material-branch typecheck is compile evidence, not runtime testing on older macOS.
@@ -217,7 +219,7 @@ Settings › Updates › Check for updates automatically on (the default), at mo
 the launcher is open; an automatic check that fails says nothing, and the review harness and the
 lifecycle tests (`COD2_SETUP_NONINTERACTIVE=1`) never make one. It refreshes the release notes
 and What's New, which lists the newest release's Added, Changed and Fixed notes. Home's Dispatches
-carry this release's own headline and use fetched notes only for a version without one. When a newer release carries
+mark 0.3.0 as a preview without a made-up release date, and use fetched notes for versions without a bundled headline. When a newer release carries
 `CoD2-Silicon-<version>-macos-arm64.zip` and `SHA256SUMS`, Install Update (only on the player's
 click) downloads both into a folder on the app's volume, refuses any size or SHA-256 mismatch,
 unpacks with `ditto` and checks the app inside (bundle identifier, offered version,

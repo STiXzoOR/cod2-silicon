@@ -82,7 +82,7 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   settings and menu actions. The menu bar has Server and Loadout menus, and the
   Dock menu lists recent servers.
 - A `cod2x://` or `cod2://` link opens Connect to Address with the address filled
-  in instead of starting the game. Opening a demo plays it; opening a config
+  in, preserving a supplied password in memory, instead of starting the game. Opening a demo plays it; opening a config
   shows the import review.
 - While you play, the launcher keeps its Dock icon and hides its window when
   **Settings → General → Hide CoD2 Silicon while the game is running** is on.
@@ -453,8 +453,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 Evidence and historical qualifications are preserved in the
 [workstream reports](docs/macos-port/README.md).
 
-[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.3.0
+[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.1...HEAD
+[0.3.0]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.1...HEAD
 [0.2.1]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.1
 [0.2.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0
 [0.1.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.1.0

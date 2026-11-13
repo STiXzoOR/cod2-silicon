@@ -121,7 +121,7 @@ struct Dispatch: Codable, Equatable, Sendable {
     var summary: String
     var link: String?
     static let bundled = [
-        Dispatch(stamp: "11 NOV", title: "CoD2 Silicon 0.3.0", summary: "The original’s picture, CoD2x or Original 1.3, and updates you can install from the launcher.",
+        Dispatch(stamp: "PREVIEW", title: "CoD2 Silicon 0.3.0", summary: "The original’s picture, CoD2x or Original 1.3, and updates you can install from the launcher.",
                  link: "https://github.com/STiXzoOR/cod2-silicon/releases"),
         Dispatch(stamp: "AHEAD", title: "What’s next", summary: "Longer match testing and launcher improvements come next. Metal is planned, but isn’t in this release.",
                  link: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/ROADMAP.md"),

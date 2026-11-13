@@ -84,7 +84,8 @@ struct JumpItem: Identifiable {
         }
         add("Connect to Address…", "plus", "⌘L") { model.connectToAddress() }
         add("Refresh Server List", "arrow.clockwise", "⌘R", !model.refreshing) { model.navigate(to: .servers); model.refresh() }
-        add(model.lastServer.map { "Launch on \(QuakeColors.plain($0.name))" } ?? "Launch", "play.fill", "⌘↩") { model.launch() }
+        let launchServer = model.page == .servers ? model.selected ?? model.lastServer : model.lastServer
+        add(launchServer.map { "Launch on \(QuakeColors.plain($0.name))" } ?? "Launch", "play.fill", "⌘↩") { model.launchFromMenu() }
         add("Open Game Menu", "gamecontroller", "⇧⌘↩") { model.openGameMenu() }
         add("Import Config…", "square.and.arrow.down", "⌘O", model.canImport) { model.importConfig() }
         add("Paste Config", "doc.on.clipboard", "⇧⌘V", model.canImport) { model.pasteConfig() }

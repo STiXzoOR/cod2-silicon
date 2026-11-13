@@ -470,7 +470,16 @@ final class Watchdog: @unchecked Sendable {
                     let name = "\(screen)-\(dark ? "dark" : "light")"
                     let audit = ShapeAudit()
                     let captured = await capture(model: model, dark: dark, fallback: fallback, audit: audit, accessibility: accessibility, screen: screen)
-                    if let sheet = captured.sheet { try? write(sheet, to: output.appendingPathComponent(name + "-sheet.png")); written += 1 }
+                    // MARK: - ship-integrate
+                    // Check each window against its own geometry and pixels. Sheet-local buttons
+                    // must not appear beside unrelated controls in the parent window.
+                    if let sheet = captured.sheet, let size = captured.sheetSize {
+                        try? write(sheet, to: output.appendingPathComponent(name + "-sheet.png")); written += 1
+                        let items = Array(audit.sheet.items.values)
+                        let found = ShapeCheck.findings(items, image: sheet, size: size).map { "\(name)-sheet: \($0)" }
+                        checked += items.count; findings += found
+                        report.append(["screen": name + "-sheet", "items": items.map(ShapeCheck.json), "findings": found])
+                    }
                     if let image = captured.window {
                         try? write(image, to: output.appendingPathComponent(name + ".png")); written += 1
                         let items = Array(audit.items.values)
@@ -540,17 +549,18 @@ final class Watchdog: @unchecked Sendable {
 
     /// The window, and an attached sheet (the import review) as its own image. A popover the screen
     /// opens is composited over the window.
-    @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit, accessibility: Accessibility = .init(), screen: String? = nil) async -> (window: CGImage?, sheet: CGImage?) {
+    @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit, accessibility: Accessibility = .init(), screen: String? = nil) async -> (window: CGImage?, sheet: CGImage?, sheetSize: CGSize?) {
         let window = await show(model: model, dark: dark, glass: !fallback, audit: audit, accessibility: accessibility, screen: screen)
         await preparePageWindow(window, screen: screen)
         let popovers = NSApp.windows.filter { $0 !== window && $0.isVisible && String(describing: type(of: $0)).contains("Popover") }
         let image = popovers.isEmpty ? WindowCapture.image(of: window) : WindowCapture.image(of: popovers + [window], in: window)
         let sheet = window.attachedSheet.flatMap { WindowCapture.image(of: $0) }
+        let sheetSize = window.attachedSheet?.frame.size
         geometry(window, "capture", image: image)
         window.attachedSheet.map { window.endSheet($0) }
         popovers.forEach { $0.orderOut(nil) }
         window.orderOut(nil); window.close()
-        return (image, sheet)
+        return (image, sheet, sheetSize)
     }
 
     /// Reach validation through the actual sheet controls, without a production preview override.
@@ -730,15 +740,15 @@ final class Watchdog: @unchecked Sendable {
     typealias Item = ShapeAudit.Item
     static let tolerance: CGFloat = 0.75
 
-    static func findings(_ items: [Item], image: CGImage) -> [String] {
+    static func findings(_ items: [Item], image: CGImage, size: CGSize = Snapshots.captureSize) -> [String] {
         var out: [String] = []
-        let pixels = Pixels(image)
+        let pixels = Pixels(image, size: size)
         let byID = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
         func parent(of item: Item) -> Item? {
             item.parentID.flatMap { byID[$0] }
         }
         func visible(_ item: Item) -> Bool {
-            guard CGRect(origin: .zero, size: Snapshots.captureSize).contains(item.frame) else { return false }
+            guard CGRect(origin: .zero, size: size).contains(item.frame) else { return false }
             // A scrolled-out child must not be measured against a different panel that happens
             // to occupy its layout coordinates. Only its actual containing surface counts.
             guard let container = parent(of: item) else { return true }
@@ -811,8 +821,8 @@ final class Watchdog: @unchecked Sendable {
     /// The captured window's pixels, addressed in window points.
     struct Pixels {
         var data: [UInt8], width: Int, height: Int, scale: CGFloat
-        @MainActor init?(_ image: CGImage) {
-            width = image.width; height = image.height; scale = CGFloat(image.width) / Snapshots.captureSize.width
+        @MainActor init?(_ image: CGImage, size: CGSize) {
+            width = image.width; height = image.height; scale = CGFloat(image.width) / size.width
             data = [UInt8](repeating: 0, count: width * height * 4)
             let (w, h) = (width, height)
             let drawn = data.withUnsafeMutableBytes { raw -> Bool in

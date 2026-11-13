@@ -70,7 +70,7 @@ struct AppSheetView: View {
 extension View {
     /// Hosts the app's sheets and single-decision alerts on a window's root view.
     func appSheets(_ model: LauncherModel, sheet: Binding<AppSheet?>, confirmation: Binding<ConfirmationRequest?>) -> some View {
-        self.sheet(item: sheet) { AppSheetView(model: model, sheet: $0) }
+        self.sheet(item: sheet) { AppSheetView(model: model, sheet: $0).sheetShapeAudit() }
             .confirmationAlert(confirmation)
     }
 }

@@ -27,7 +27,7 @@ struct LibraryView: View {
                 model.reloadLibrary()
             }
             .quickLookPreview($quickLookURL, in: model.media.map(\.url))
-            .sheet(item: $model.renamingMedia) { MediaRenameSheet(model: model, entry: $0) }
+            .sheet(item: $model.renamingMedia) { MediaRenameSheet(model: model, entry: $0).sheetShapeAudit() }
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     ScopeSwitch("Library section", selection: $model.libraryTab, options: LibraryTab.allCases.map { ($0, $0.rawValue) })

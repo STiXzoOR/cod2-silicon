@@ -122,6 +122,20 @@ enum ControlMetrics {
         var frame: CGRect
     }
     var items: [UUID: Item] = [:]
+    // MARK: - ship-integrate
+    // An attached sheet has its own window coordinates and pixels.
+    lazy var sheet: ShapeAudit = ShapeAudit()
+}
+
+// MARK: - ship-integrate
+private struct SheetShapeAuditScope: ViewModifier {
+    @Environment(\.shapeAudit) private var audit
+    func body(content: Content) -> some View {
+        content.environment(\.shapeAudit, audit?.sheet).environment(\.shapeAuditContainer, nil)
+    }
+}
+extension View {
+    func sheetShapeAudit() -> some View { modifier(SheetShapeAuditScope()) }
 }
 
 private struct ShapeAuditReporter: ViewModifier {

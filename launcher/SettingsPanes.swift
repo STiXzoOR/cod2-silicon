@@ -615,7 +615,7 @@ struct AdvancedPane: View {
             FormSection("Extra launch options") { LaunchOptionsEditor(model: model) }
             FormSection("Troubleshooting") {
                 FormGroup {
-                    FormRow("Logs", detail: "Crash and freeze reports, and the console log when logfile 1 is set above.") {
+                    FormRow("Logs", detail: "Crash and freeze reports, plus the last game log when one is available.") {
                         Button("Show in Finder", action: model.showLogsInFinder).glassAction()
                         Button("Copy Last Game Log") { copied = model.copyLastGameLog() }.glassAction()
                     }

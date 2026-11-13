@@ -71,7 +71,7 @@ struct SetupView: View {
                 shaderPanel
             case .yours: head("Make it yours", "Two things most players set first. Skip this and you start with the game’s defaults.")
                 yoursPanel
-            case .ready: head("You’re ready to play", "Everything the game needs is in place.")
+            case .ready: head("You’re ready to play", "Your setup is saved. Review your choices below.")
                 readyPanel
             }
             if !model.setupError.isEmpty {
