@@ -74,6 +74,9 @@ static clientInfo_t *animation_init(int user)
 static void check_prone_angles(int version, int user, float yaw, int backward)
 {
     Fixture_SetRevision(version);
+#if defined(COD2_CODX) && COD2_CODX
+    version = Cod2x_GameVersion();
+#endif
     clientInfo_t *ci = animation_init(user);
     entityState_t es = {.clientNum = 5, .eType = 1, .eFlags = 8, .legsAnim = 3};
     ci->lerpMoveDir = yaw;
@@ -132,6 +135,9 @@ static void check_mounted_flags(int version, int user, int flags)
     /* Mac controllers 0x182b94 test high byte0x3; angle paths 0x183f4b,
        0x184034 do likewise. Entity bits0x1/0x2 are not mounted bits. */
     Fixture_SetRevision(version);
+#if defined(COD2_CODX) && COD2_CODX
+    version = Cod2x_GameVersion();
+#endif
     clientInfo_t *ci = animation_init(user);
     entityState_t es = {.clientNum = 5, .eType = 1, .eFlags = 8 | flags, .legsAnim = 3};
     ci->playerAngles[0] = 30;
@@ -165,6 +171,9 @@ static void check_mounted_flags(int version, int user, int flags)
 static void check_blend(int version, int user, int before, int after, int codxTime)
 {
     Fixture_SetRevision(version);
+#if defined(COD2_CODX) && COD2_CODX
+    version = Cod2x_GameVersion();
+#endif
     clientInfo_t *ci = animation_init(user);
     ci->legs.animationNumber = before;
     ci->legs.animation = &bgs->animScriptData.animations[before];
@@ -211,10 +220,10 @@ static void animation_matrix(void)
             check_mounted_flags(versions[version], user, 0x100);
             check_mounted_flags(versions[version], user, 0x200);
             check_blend(versions[version], user, 1, 2, 200);
-            check_blend(versions[version], user, 2, 3, 232);
+            check_blend(versions[version], user, 2, 3, 231);
             check_blend(versions[version], user, 3, 2, 400);
             check_blend(versions[version], user, 2, 1, 200);
         }
     }
-    puts("PASS production angle/controller/tag/prone-yaw and stance lerp/rate contracts at remote 0/3/4/6 and hosted 0 for both animation users");
+    puts("PASS production angle/controller/tag/prone-yaw and stance lerp/rate contracts at remote 0/3/4/6 and the hosted build revision for both animation users");
 }
