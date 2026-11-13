@@ -902,14 +902,14 @@ void Cod2x_SocketClose(Cod2xSocket *connection)
 
 /* ---- bounded script responses -------------------------------------------- */
 
-static long long Http_MonotonicMsec(void)
+uint64_t Cod2x_Milliseconds64(void)
 {
 #ifdef _WIN32
-    return (long long)GetTickCount64();
+    return (uint64_t)GetTickCount64();
 #else
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
-    return (long long)now.tv_sec * 1000 + now.tv_nsec / 1000000;
+    return (uint64_t)now.tv_sec * 1000 + (uint64_t)now.tv_nsec / 1000000;
 #endif
 }
 
@@ -952,7 +952,7 @@ static Cod2xSocket *Http_OpenBounded(const Cod2xHttpRequest *request, const int 
     Cod2xSocket *connection = calloc(1, sizeof(*connection));
     CURLcode result = CURLE_FAILED_INIT;
     int running, connected = 0;
-    long long started = Http_MonotonicMsec();
+    uint64_t started = Cod2x_Milliseconds64();
     if (!connection) goto failed;
     connection->socket = CURL_SOCKET_BAD;
     connection->curl = curl_easy_init();
@@ -979,7 +979,7 @@ static Cod2xSocket *Http_OpenBounded(const Cod2xHttpRequest *request, const int 
         }
         if (!connected) connected = Http_TcpConnected(connection);
         if (!connected && request->connectTimeoutMs > 0 &&
-            Http_MonotonicMsec() - started >= request->connectTimeoutMs) {
+            Cod2x_Milliseconds64() - started >= (uint64_t)request->connectTimeoutMs) {
             result = CURLE_OPERATION_TIMEDOUT;
             break;
         }
@@ -1062,7 +1062,7 @@ static int Http_PerformBounded(const Cod2xHttpRequest *request, Cod2xHttpRespons
     char *wire = NULL;
     const char *error = NULL;
     size_t wireLength = 0, sent = 0;
-    long long started = Http_MonotonicMsec();
+    uint64_t started = Cod2x_Milliseconds64();
     int closed = 0, success = 0;
     memset(response, 0, sizeof(*response));
     if (!Cod2x_HttpValidUrl(request->url)) {
@@ -1083,7 +1083,7 @@ static int Http_PerformBounded(const Cod2xHttpRequest *request, Cod2xHttpRespons
             error = "Connection closed unexpectedly";
             break;
         }
-        if (request->timeoutMs > 0 && Http_MonotonicMsec() - started >= request->timeoutMs) {
+        if (request->timeoutMs > 0 && Cod2x_Milliseconds64() - started >= (uint64_t)request->timeoutMs) {
             error = "Timeout";
             break;
         }

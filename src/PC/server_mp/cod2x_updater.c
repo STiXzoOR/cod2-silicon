@@ -27,7 +27,6 @@ extern void Com_DPrintf(const char *fmt, ...);
 extern const char *va(const char *fmt, ...);
 extern const dvar_t *Dvar_RegisterBool(const char *, unsigned char, unsigned short);
 extern int Dvar_GetInt(const char *dvarName);
-extern int Sys_Milliseconds(void);
 extern const char *NET_AdrToString(netadr_t a);
 extern qboolean NET_StringToAdr(const char *s, netadr_t *a);
 extern qboolean NET_CompareBaseAdr(netadr_t a, netadr_t b);
@@ -57,7 +56,7 @@ extern const dvar_t *com_sv_running;
 static const dvar_t *sv_update;
 static int updaterRunning;
 static netadr_t updaterAddress;
-static unsigned int updaterNextCheck;
+static uint64_t updaterNextCheck;
 static int updaterNextCheckSet;
 
 void SV_Cod2xUpdaterInit(void)
@@ -293,8 +292,8 @@ void SV_Cod2xUpdaterCheck(void)
    don't ask together. */
 static int Updater_PeriodicDue(void)
 {
-    unsigned int now = (unsigned int)Sys_Milliseconds();
-    int due = updaterNextCheckSet && (int)(now - updaterNextCheck) >= 0;
+    uint64_t now = Cod2x_Milliseconds64();
+    int due = updaterNextCheckSet && now >= updaterNextCheck;
     if (!updaterNextCheckSet || due) {
         const char *test = getenv("COD2X_TEST_UPDATER_PERIOD_MS");
         unsigned int random = 0;

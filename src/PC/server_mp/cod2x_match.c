@@ -27,7 +27,6 @@ extern const char *Cmd_Argv(int arg);
 extern void Cmd_AddCommand(const char *cmdName, xcommand_t function);
 extern void Cbuf_AddText(const char *text);
 extern int I_stricmp(const char *s1, const char *s2);
-extern int Sys_Milliseconds(void);
 extern int Dvar_GetInt(const char *dvarName);
 extern const dvar_t *Dvar_FindVar(const char *dvarName);
 extern void Dvar_SetBool(const dvar_t *dvar, unsigned char value);
@@ -184,7 +183,7 @@ static struct {
     char *headers; /* from "match create", sent with every request */
     unsigned int generation; /* a new "match create" forgets the old requests */
     long long startTime;
-    unsigned int startTick;
+    uint64_t startTick;
     MatchData *data;
     MatchMap global;
     MatchPlayerProgress *players;
@@ -862,7 +861,7 @@ void SV_Cod2xMatchBeforeMapChange(int shutdown)
 
 void SV_Cod2xMatchFrame(void)
 {
-    if ((int)((unsigned int)Sys_Milliseconds() - match.startTick) > MATCH_TIMEOUT_MSEC &&
+    if ((Cod2x_Milliseconds64() - match.startTick) > MATCH_TIMEOUT_MSEC &&
         (match.loading || match.downloading) && !match.activated) {
         match.loading = 0;
         match.downloading = 0;
@@ -928,7 +927,7 @@ static void Match_Create(void)
     match.canceling = 0;
     match.cancelReason[0] = '\0';
     match.startTime = Cod2x_UtcMsec();
-    match.startTick = (unsigned int)Sys_Milliseconds();
+    match.startTick = Cod2x_Milliseconds64();
     Match_ProgressClear();
 
     /* "Name: value|Name2: value2" */

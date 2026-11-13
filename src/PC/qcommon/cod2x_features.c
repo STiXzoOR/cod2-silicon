@@ -741,7 +741,6 @@ void Cod2x_IwdStartup(const char *base)
 extern cg_t cgArray[1];
 extern void CL_Cod2xCDKeyHash(char hash[34]);
 extern void Com_DPrintf(const char *, ...);
-extern int Sys_Milliseconds(void);
 extern const char *NET_AdrToString(netadr_t a);
 extern qboolean NET_StringToAdr(const char *s, netadr_t *a);
 extern qboolean NET_CompareBaseAdr(netadr_t a, netadr_t b);
@@ -749,7 +748,8 @@ extern Bool NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *data);
 
 static int updateRunning, updateLastState = -1, updateLastRender = -1;
 static netadr_t updateAddress;
-static int updateResolved, updateWaiting, updateWaitingSince, updateRepeats;
+static int updateResolved, updateWaiting, updateRepeats;
+static uint32_t updateWaitingSince;
 
 static void Cod2x_UpdateDone(void *context, const Cod2xHttpResponse *response);
 
@@ -894,7 +894,7 @@ static void Cod2x_UpdateSendUdp(void)
     if (updateAddress.type != NA_BAD)
         NET_OutOfBandPrint(NS_CLIENT1, updateAddress, packet);
     updateWaiting = 1;
-    updateWaitingSince = Sys_Milliseconds();
+    updateWaitingSince = (uint32_t)Cod2x_Milliseconds64();
     Com_Printf("-----------------------------------\n");
 }
 
@@ -995,7 +995,7 @@ static void Cod2x_UpdateFrame(int state)
         updateRepeats = 0;
         Cod2x_UpdateCheck();
     }
-    if (updateWaiting && (unsigned int)(Sys_Milliseconds() - updateWaitingSince) > 5000 && updateRepeats < 5) {
+    if (updateWaiting && ((uint32_t)Cod2x_Milliseconds64() - updateWaitingSince) > 5000 && updateRepeats < 5) {
         Com_Printf("Auto-Updater: Request timed out.\n");
         updateWaiting = 0;
         updateRepeats++;

@@ -64,6 +64,8 @@ void Cod2x_HttpFrameFor(Cod2xHttpDone done);
 void Cod2x_HttpCancelFor(Cod2xHttpDone done);
 /* Waits msec milliseconds. */
 void Cod2x_Sleep(int msec);
+/* Monotonic milliseconds for service deadlines; independent of engine tick wrap. */
+uint64_t Cod2x_Milliseconds64(void);
 /* Milliseconds since 1970 (UTC), and one as "2026-11-10T19:08:23.512Z". */
 long long Cod2x_UtcMsec(void);
 void Cod2x_Iso8601(long long msec, char *out, size_t size);

@@ -30,7 +30,6 @@ extern int Dvar_GetInt(const char *dvarName);
 extern Bool Dvar_GetBool(const char *dvarName);
 extern const char *Dvar_GetString(const char *dvarName);
 extern void Cbuf_AddText(const char *text);
-extern int Sys_Milliseconds(void);
 extern int I_stricmp(const char *s1, const char *s2);
 extern int I_strnicmp(const char *s1, const char *s2, size_t count);
 extern const dvar_t *com_dedicated;
@@ -71,7 +70,7 @@ static char zpamLoaded[ZPAM_NAME_SIZE];
 static char zpamLoadedMaps[ZPAM_NAME_SIZE];
 /* A newer version is waiting for the next map load. */
 static int zpamSwitchPending;
-static unsigned int zpamIdleSince;
+static uint64_t zpamIdleSince;
 
 void SV_Cod2xZpamInit(void)
 {
@@ -761,7 +760,7 @@ int SV_Cod2xZpamApplyManifest(const Cod2xZpamManifest *manifest)
 
 void SV_Cod2xZpamFrame(void)
 {
-    unsigned int now;
+    uint64_t now;
     char error[512], installed[512];
     int finished;
     if (!com_dedicated || !com_dedicated->current.integer)
@@ -797,7 +796,7 @@ void SV_Cod2xZpamFrame(void)
         return;
     }
     /* Nothing changes the map of an empty server, so it restarts its own. */
-    now = (unsigned int)Sys_Milliseconds();
+    now = Cod2x_Milliseconds64();
     if (!zpamIdleSince) {
         zpamIdleSince = now;
     } else if (now - zpamIdleSince >= ZPAM_IDLE_MSEC) {
