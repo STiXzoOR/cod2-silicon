@@ -23,6 +23,8 @@ flags = [x for x in flags if x != '-DNDEBUG' and not x.startswith(('-DCOD2_X64='
 flags += ['-UNDEBUG', '-w', '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
 path = 'src/PC/client_mp/cl_console_mp.c'
 source = subprocess.check_output(['git', 'show', a.baseline + ':' + path], cwd=ROOT) if a.baseline else (ROOT / path).read_bytes()
+cod2x_release = re.search(r'^#define COD2X_RELEASE "([^"]+)"',
+                         (ROOT / 'src/PC/qcommon/cod2x.h').read_text(), re.M)[1]
 
 
 def function(source, name):
@@ -122,11 +124,11 @@ for x64, codx, release in [(1, 0, '9.8.7'), (1, 1, '9.8.7'), (1, 1, '10.20.30'),
                                             function(active_source, 'Con_DrawOuputWindow'))
     exe = out / 'version'
     subprocess.run([*config, '-I' + str(out), str(out / 'version.c'), '-o', str(exe)], cwd=ROOT, check=True)
-    prompt = 'CoD2x MP: 1.4.6.8> ' if x64 and codx else 'CoD2 MP: 1.3> '
+    prompt = 'CoD2x MP: ' + cod2x_release + '> ' if x64 and codx else 'CoD2 MP: 1.3> '
     if not x64:
         footer = 'Build reference-build MacOSXS-i386'
     else:
-        footer = 'CoD2 Silicon ' + release + ' · CoD2x 1.4.6.8 · macOS arm64' if codx else 'Build reference-build macOS arm64'
+        footer = 'CoD2 Silicon ' + release + ' · CoD2x ' + cod2x_release + ' · macOS arm64' if codx else 'Build reference-build macOS arm64'
     subprocess.run([str(exe), prompt, footer], cwd=out, check=True)
 print('PASS production stock/CoD2x prompt, footer, dynamic release version, feature gates and input width')
 
