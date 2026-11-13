@@ -498,12 +498,11 @@ void IN_Frame(void)
     }
     hadFocus = focused;
     extern int MacDisplay_IsFullscreen(void);
-    /* Fullscreen keeps the mouse captured in menus too, as the original does:
-     * menus move the game's own cursor from relative motion (CL_MouseEvent
-     * routes it to UI_MouseEvent), so the system pointer never appears or
-     * reaches hot corners. Windowed menus keep the free system pointer. */
+    /* Original menus consume relative counts in 640x480 virtual coordinates.
+     * CoD2x has its own windowed desktop-pointer policy. */
     int wantRelative = focused && in_mouse && in_mouse->current.enabled &&
-        (MacDisplay_IsFullscreen() || (client && client->active && client->keyCatchers == 0));
+        MacInput_CaptureMouse(MacDisplay_IsFullscreen(), client && client->active,
+            client ? client->keyCatchers : 0, COD2_CODX);
     mac_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
     if (wantRelative != mac_relative) {
         SDL_SetWindowGrab(sdl_gl_window, wantRelative ? SDL_TRUE : SDL_FALSE);

@@ -5,6 +5,15 @@ int main(void)
 {
     assert(!MacInput_UseRaw(0, 2, 1, 1, 1, 1));
     assert(MacInput_UseRaw(1, 0, 1, 1, 1, 1));
+    assert(MacInput_UseRaw(1, 16, 1, 1, 1, 1));
+    assert(!MacInput_UseRaw(1, 17, 1, 1, 1, 1));
+    for (int codx = 0; codx < 2; ++codx) {
+        assert(MacInput_CaptureMouse(0, 1, 16, codx));
+        assert(!MacInput_CaptureMouse(0, 1, 1, codx));
+        assert(MacInput_CaptureMouse(1, 1, 1, codx));
+        assert(MacInput_CaptureMouse(0, 1, 8, codx) == !codx);
+        assert(MacInput_CaptureMouse(0, 0, 8, codx) == !codx);
+    }
     assert(!MacInput_UseRaw(1, 1, 1, 1, 1, 1));
     assert(!MacInput_UseRaw(1, 2, 1, 1, 1, 1));
     assert(!MacInput_UseRaw(1, 0, 0, 1, 1, 1));
