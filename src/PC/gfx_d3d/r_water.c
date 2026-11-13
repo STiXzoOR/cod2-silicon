@@ -260,12 +260,13 @@ normalmap_path:
                         float len = sqrtf(lenSq);
                         float invLen = 127.5f / len;
 
-                        pixels[0] = 0xff;
 #if defined(COD2_X64)
-                        pixels[1] = (byte)R_WaterTruncateFloat(floorf(dx * invLen + 127.5f + 0.5f));
-                        pixels[2] = (byte)R_WaterTruncateFloat(floorf(dy * invLen + 127.5f + 0.5f));
-                        pixels[3] = (byte)R_WaterTruncateFloat(floorf(dz_val * invLen + 127.5f + 0.5f));
+                        pixels[0] = (byte)R_WaterTruncateFloat(floorf(dz_val * invLen + 127.5f + 0.5f));
+                        pixels[1] = (byte)R_WaterTruncateFloat(floorf(dy * invLen + 127.5f + 0.5f));
+                        pixels[2] = (byte)R_WaterTruncateFloat(floorf(dx * invLen + 127.5f + 0.5f));
+                        pixels[3] = 0xff;
 #else
+                        pixels[0] = 0xff;
                         pixels[1] = (byte)(int)floorf(dx * invLen + 127.5f + 0.5f);
                         pixels[2] = (byte)(int)floorf(dy * invLen + 127.5f + 0.5f);
                         pixels[3] = (byte)(int)floorf(dz_val * invLen + 127.5f + 0.5f);

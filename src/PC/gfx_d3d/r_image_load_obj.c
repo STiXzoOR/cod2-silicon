@@ -433,10 +433,17 @@ static void Image_GetSunHalfAngleForVector(const vec_t *facePos, int ignored, by
     halfAngle[2] = sunDir[2] - dirFromEye[2];
     Vec3Normalize(halfAngle);
 
+#if defined(COD2_X64)
+    pixel[0] = (byte)(int)floorf((halfAngle[2] * 0.5f + 0.5f) * 255.0f + 0.5f);
+    pixel[1] = (byte)(int)floorf((halfAngle[1] * 0.5f + 0.5f) * 255.0f + 0.5f);
+    pixel[2] = (byte)(int)floorf((halfAngle[0] * 0.5f + 0.5f) * 255.0f + 0.5f);
+    pixel[3] = 0x80;
+#else
     pixel[3] = (byte)(int)floorf((halfAngle[2] * 0.5f + 0.5f) * 255.0f + 0.5f);
     pixel[2] = (byte)(int)floorf((halfAngle[1] * 0.5f + 0.5f) * 255.0f + 0.5f);
     pixel[1] = (byte)(int)floorf((halfAngle[0] * 0.5f + 0.5f) * 255.0f + 0.5f);
     pixel[0] = 0x80;
+#endif
 }
 
 static void Image_GetWaterColorForVector(const vec_t *facePos, int packedColor, byte *pixel)

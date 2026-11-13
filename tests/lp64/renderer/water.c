@@ -262,15 +262,15 @@ static void CheckPayload(int normal)
                 float b = heights[i] - heights[((y + 3) & 3) * 4 + x];
                 float scale = 127.5f / sqrtf(a * a + b * b + 256.0f);
                 const byte *pixel = uploads[0].bytes + i * 4;
-                assert(pixel[0] == 255);
+                assert(pixel[3] == 255);
                 int expected[] = { (int)floorf(a * scale + 128.0f),
                                    (int)floorf(b * scale + 128.0f),
                                    (int)floorf(16 * scale + 128.0f) };
                 for (int c = 0; c < 3; ++c) {
-                    if (abs((int)pixel[c + 1] - expected[c]) > 1)
+                    if (abs((int)pixel[2 - c] - expected[c]) > 1)
                         fprintf(stderr, "normal pixel %d channel %d: got %u expected %d\n",
-                                i, c, pixel[c + 1], expected[c]);
-                    assert(abs((int)pixel[c + 1] - expected[c]) <= 1);
+                                i, c, pixel[2 - c], expected[c]);
+                    assert(abs((int)pixel[2 - c] - expected[c]) <= 1);
                 }
             }
         }

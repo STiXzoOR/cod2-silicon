@@ -69,6 +69,7 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 - Colored HUD quads preserve red and blue; cylinder effects retain their tint
   and transparency.
 - Sun glare fades with the visible area of the sun, using GPU occlusion queries.
+- DirectX 7 water lighting uses the original normal and sunlight channels.
 - Menus with a blurred game background avoid an unnecessary full-screen
   copy when anti-aliasing is enabled.
 - Local match summaries retain slow-frame timings and renderer activity to
