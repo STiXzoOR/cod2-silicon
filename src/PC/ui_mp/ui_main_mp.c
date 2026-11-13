@@ -2018,7 +2018,7 @@ MaterialHandle UI_FeederItemImage(const float feederID, int index)
 
     map = &sharedUiInfo.mapList[mapIndex];
     if (!map->levelShot) {
-        map->levelShot = CL_RegisterMaterialNoMip(map->mapLoadName, 3);
+        map->levelShot = CL_RegisterMaterialNoMip(map->imageName, 3);
     }
 
     return map->levelShot;
