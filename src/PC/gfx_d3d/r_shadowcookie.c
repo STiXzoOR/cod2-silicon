@@ -48,6 +48,20 @@ extern void R_AddCmdBeginView(int viewCount, const GfxSceneDef *sceneDef, const 
 extern void R_AddCmdSetViewport(int x, int y, int width, int height);
 extern void R_AddCmdDrawSurfs(GfxDrawSurf *surfs, int count, MaterialTechniqueType technique);
 
+void R_DrawShadowCookieOverlay(void)
+{
+    extern vidConfig_t vidConfig;
+    extern void MatrixIdentity44(float (*matrix)[4]);
+    extern void R_AddCmdDrawStretchPic(float x, float y, float w, float h,
+        float s0, float t0, float s1, float t1, const vec_t *color, MaterialHandle material);
+    D3DMATRIX identity;
+    MatrixIdentity44(identity.m);
+    R_AddCmdShadowCookie(&identity, 1.0f);
+    float size = (float)vidConfig.width * 0.25f;
+    R_AddCmdDrawStretchPic(4, 4, size, size, 0, 0, 1, 1,
+        (const vec_t *)imp_colorWhite, rgp.shadowCookieOverlayMaterial);
+}
+
 /* Windows 1.3 0x101904a8; also Mac 1.3 i386 0x302740. */
 static vec4_t shadowFrustumSidePlanes[5] = {
     { -1, 0, 0, 1 }, { 1, 0, 0, 1 },

@@ -1077,6 +1077,12 @@ void R_RenderScene(const refdef_t *refdef)
         }
 
         R_UnlockSkinnedCache();
+#if defined(COD2_X64)
+        extern const dvar_t *sc_showOverlay;
+        extern void R_DrawShadowCookieOverlay(void);
+        if (dynamicShadowType && sc_showOverlay->current.enabled)
+            R_DrawShadowCookieOverlay();
+#endif
     }
 
     {
