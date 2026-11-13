@@ -110,17 +110,17 @@ int main(void)
     e = (SDL_Event){0}; e.type = SDL_MOUSEWHEEL; e.wheel.y = 2; e.wheel.direction = SDL_MOUSEWHEEL_FLIPPED; push(&e);
     e = (SDL_Event){0}; e.type = SDL_MOUSEMOTION; e.motion.x = 10; e.motion.y = 20; push(&e);
     SDL_PumpInputEvents();
-    assert(count == 14);
+    assert(count == 12);
     assert(events[0].value == 'a' && events[0].value2 == 1 && events[1].value2 == 0);
     assert(events[2].value == 0xa7 && events[3].value == 0xbf);
     assert(events[4].value == 0x7f && events[5].type == SE_CHAR && events[5].value == 8);
     assert(events[6].value == 'A' && events[7].value == 0x20ac);
     assert(events[8].value == 0xc9 && events[8].value2 == 1 && events[9].value2 == 0);
 #if defined(COD2_X64)
-    for (int i = 10; i < 14; ++i)
+    for (int i = 10; i < 12; ++i)
         assert(events[i].value == 0xce && events[i].value2 == !(i & 1));
 #else
-    for (int i = 10; i < 14; ++i)
+    for (int i = 10; i < 12; ++i)
         assert(events[i].value == 0xcd && events[i].value2 == !(i & 1));
 #endif
 #if defined(COD2_X64)
@@ -135,12 +135,12 @@ int main(void)
         e.wheel.direction = SDL_MOUSEWHEEL_FLIPPED; push(&e);
     }
     SDL_PumpInputEvents();
-    assert(count == wheelCount + 2 && events[wheelCount].value == 0xce);
+    assert(count == wheelCount + 8 && events[wheelCount].value == 0xce);
     for (int i = 0; i < 4; ++i) {
         e = (SDL_Event){0}; e.type = SDL_MOUSEWHEEL; e.wheel.preciseY = -.25f; push(&e);
     }
     SDL_PumpInputEvents();
-    assert(count == wheelCount + 4 && events[wheelCount + 2].value == 0xcd);
+    assert(count == wheelCount + 16 && events[wheelCount + 8].value == 0xcd);
 #endif
     client = calloc(1, sizeof(*client));
     assert(client);
@@ -191,6 +191,6 @@ int main(void)
 #endif
     SDL_SetRelativeMouseMode(SDL_FALSE);
     free(client); SDL_DestroyWindow(sdl_gl_window); SDL_Quit();
-    puts("input: keys, UTF-8 events, buttons, flipped multi-click wheel, scaled UI, relative fallback, focus and quit passed");
+    puts("input: keys, UTF-8 events, buttons, sign-only wheel, scaled UI, relative fallback, focus and quit passed");
     return 0;
 }
