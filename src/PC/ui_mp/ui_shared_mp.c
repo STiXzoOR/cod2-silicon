@@ -2473,7 +2473,6 @@ qboolean Display_MouseMove(displayContextDef_t *dc, void *p, int x, int y)
                 Menu_HandleMouseMove(dc, (menuDef_t *)menu, (float)x, (float)y);
                 return 1;
             }
-            startIdx = i;
             break;
         }
     }
