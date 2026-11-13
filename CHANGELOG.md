@@ -78,6 +78,7 @@ The original shaders are built from your own game files.
 - DirectX 7 water lighting uses the original normal and sunlight channels.
 - DirectX 7 water keeps its blue-gray color instead of turning purple or yellow
   with the viewing angle.
+- Water wave patterns follow the original renderer's random sequence.
 - Unsupported 3× antialiasing falls back to 2×, as in the original game.
 - Custom models accept Windows path separators, and cubemap exports crop
   their rendering border.
