@@ -681,8 +681,13 @@ static void FX_CalcOriginAndAxis_impl(byte *prim, vec_t *orgOut, vec3_t *ax)
         }
     } else if (flags & 4) {
 
+#if defined(COD2_APPLE_SDK)
+        float height = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mHeight))));
+        float rndHeight = flrand(-0.5f, 0.5f);
+#else
         float rndHeight = flrand(-0.5f, 0.5f);
         float height = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mHeight))));
+#endif
         float width = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mRadius))));
 
         vec3_t pt;
