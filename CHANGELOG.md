@@ -67,7 +67,7 @@ The original shaders are built from your own game files.
   blur align to pixel centers and cover the right edge.
 - Consecutive heat-distortion batches keep sampling the scene image.
 - Shellshock retains its previous frame while shadows and post effects draw.
-- Colored HUD quads preserve red and blue; cylinder effects retain their tint
+- Colored impact marks preserve red and blue; cylinder effects retain their tint
   and transparency.
 - Sun glare fades with the visible area of the sun, using GPU occlusion queries.
 - DirectX 7 water lighting uses the original normal and sunlight channels.
