@@ -2,6 +2,8 @@
 #include "imports.h"
 #if COD2_APPLE_SDK
 #include "platform/macos_display.h"
+#include "platform/macos_display_modes.h"
+extern const dvar_t *Dvar_FindVar(const char *name);
 #endif
 /* dvar globals */
 extern const dvar_t *com_statmon;
@@ -563,7 +565,25 @@ void R_RegisterDvars(void)
     r_monitor = ri.Dvar_RegisterInt("r_monitor", 0, 0, 8, 0x2021);
 
 #if COD2_APPLE_SDK
-    r_mode = ri.Dvar_RegisterEnum("r_mode", MacPlatform_ModeNames(), 0, 0x2021);
+    {
+        /* Copy before refreshing the static names: r_mode retains their
+         * addresses between renderer restarts, and its pending value wins. */
+        char requested[MAC_MODE_NAME_SIZE];
+        const dvar_t *previous = Dvar_FindVar("r_mode");
+        const char *value = ri.Dvar_GetVariantString("r_mode");
+        if (previous && previous->type == 6 /* enum */ && previous->latched.integer >= 0 &&
+            previous->latched.integer < previous->domain.enumeration.stringCount)
+            value = previous->domain.enumeration.strings[previous->latched.integer];
+        snprintf(requested, sizeof(requested), "%s", value);
+        MacPlatform_SelectMonitor(r_monitor->current.integer);
+        const char **names = MacPlatform_ModeNames();
+        int selected = MacPlatform_ChooseMode(names, requested);
+        r_mode = ri.Dvar_RegisterEnum("r_mode", names, 0, 0x2021);
+        ri.Dvar_UpdateEnumDomain(r_mode, names);
+        ri.Dvar_SetInt(r_mode, selected);
+        if (*requested && strcmp(requested, names[selected]))
+            ri.Printf(0, "Display no longer offers r_mode %s; using %s\n", requested, names[selected]);
+    }
 #else
     r_mode = ri.Dvar_RegisterEnum("r_mode", s_displayModeNames, 0, 0x2021);
 #endif

@@ -1019,10 +1019,10 @@ static Bool R_InitNativeDisplayModes(void)
             defaultRefresh = i;
     }
     dx.refreshRateNameTable[refreshCount] = NULL;
-    /* Native registration already supplies the SDL render-size domain, which
-     * also permits sizes absent from the physical display modes. Keep it.
-     * Re-registering an enum does not replace its domain, so refresh needs an
-     * explicit update after the native early registration. */
+    /* Native registration supplies the sorted render sizes bounded by the
+     * selected panel's native pixels, including Retina sizes absent from SDL's
+     * point-size modes. Keep that domain. Refresh rates need an explicit update
+     * because re-registering an enum does not replace its domain. */
     sscanf(ri.Dvar_EnumToString((dvar_t *)r_displayRefresh), "%i", &requestedRefresh);
     r_displayRefresh = ri.Dvar_RegisterEnum("r_displayRefresh", dx.refreshRateNameTable, defaultRefresh, 0x2021);
     ri.Dvar_UpdateEnumDomain(r_displayRefresh, dx.refreshRateNameTable);

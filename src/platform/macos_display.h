@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 const char **MacPlatform_ModeNames(void);
+#if defined(COD2_X64)
+void MacPlatform_SelectMonitor(int monitor);
+#endif
 
 enum { MAC_WINDOWED, MAC_FULLSCREEN, MAC_BORDERLESS };
 void MacPlatform_ConfigureWindow(int width, int height, int mode, int refresh);

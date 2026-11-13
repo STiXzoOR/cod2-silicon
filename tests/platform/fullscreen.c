@@ -51,14 +51,15 @@ static void CheckBacking(int width, int height)
 
 int main(int argc, char **argv)
 {
-    const char *required[] = { "1920x1080", "2560x1440", "3008x1692",
-        "3840x2160", "5120x2880", "6016x3384" };
     const char **names = MacPlatform_ModeNames();
-    for (size_t i = 0; i < sizeof(required) / sizeof(*required); ++i) {
-        int found = 0;
-        for (int j = 0; names[j]; ++j)
-            found |= strcmp(required[i], names[j]) == 0;
-        assert(found);
+    int previousW = 0, previousH = 0;
+    assert(names[0]);
+    for (int i = 0; names[i]; ++i) {
+        int w, h;
+        assert(sscanf(names[i], "%dx%d", &w, &h) == 2);
+        assert(w > previousW || (w == previousW && h > previousH));
+        previousW = w;
+        previousH = h;
     }
     if (argc > 1 && !strcmp(argv[1], "--modes"))
         return 0;
