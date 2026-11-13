@@ -465,7 +465,8 @@ struct MediaEntry: Identifiable {
     /// File › Open Game Menu (⇧⌘↩): the game's own menu, without joining a server.
     // MARK: - ship-integrate
     func openGameMenu() {
-        pendingLink = nil; fastPlay = false; serverConnection.clear()
+        pendingLink = nil; fastPlay = false
+        try? serverConnection.select(address: nil)
         matchEngine = nil; followEngine()
         play()
     }
