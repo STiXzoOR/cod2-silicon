@@ -159,10 +159,15 @@ void Cod2x_ReportTextAdd(Cod2xReportText *text, const char *format, ...)
 void Cod2x_ReportTextString(Cod2xReportText *text, const char *value)
 {
     const unsigned char *p = (const unsigned char *)(value ? value : "");
+    const unsigned char *end = p + strlen((const char *)p);
     Cod2x_ReportTextAdd(text, "\"");
     for (; *p; ++p) {
         if (*p == '"' || *p == '\\')
             Cod2x_ReportTextAdd(text, "\\%c", *p);
+        else if (*p == '\b')
+            Cod2x_ReportTextAdd(text, "\\b");
+        else if (*p == '\f')
+            Cod2x_ReportTextAdd(text, "\\f");
         else if (*p == '\n')
             Cod2x_ReportTextAdd(text, "\\n");
         else if (*p == '\r')
@@ -171,8 +176,27 @@ void Cod2x_ReportTextString(Cod2xReportText *text, const char *value)
             Cod2x_ReportTextAdd(text, "\\t");
         else if (*p < 0x20)
             Cod2x_ReportTextAdd(text, "\\u%04x", *p);
-        else
+        else if (*p < 0x80)
             Cod2x_ReportTextAdd(text, "%c", *p);
+        else {
+            size_t bytes = *p >= 0xc2 && *p <= 0xdf ? 2 :
+                           *p >= 0xe0 && *p <= 0xef ? 3 :
+                           *p >= 0xf0 && *p <= 0xf4 ? 4 : 0;
+            int valid = bytes && (size_t)(end - p) >= bytes;
+            for (size_t i = 1; valid && i < bytes; ++i)
+                valid = p[i] >= 0x80 && p[i] <= 0xbf;
+            if (valid && ((*p == 0xe0 && p[1] < 0xa0) || (*p == 0xed && p[1] >= 0xa0) ||
+                          (*p == 0xf0 && p[1] < 0x90) || (*p == 0xf4 && p[1] >= 0x90)))
+                valid = 0;
+            if (valid) {
+                Cod2x_ReportTextAdd(text, "%.*s", (int)bytes, (const char *)p);
+                p += bytes - 1;
+            } else {
+                /* Legacy game strings can contain single-byte characters.
+                   Preserve their byte values as Unicode escapes. */
+                Cod2x_ReportTextAdd(text, "\\u%04x", *p);
+            }
+        }
     }
     Cod2x_ReportTextAdd(text, "\"");
 }
