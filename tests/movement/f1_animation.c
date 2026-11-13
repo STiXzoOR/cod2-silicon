@@ -92,8 +92,8 @@ playerState_t *SV_GameClientNum(int client) { (void)client; assert(0); return NU
 int Cod2x_PoseNeutral(void) { return 0; }
 void Cod2x_PoseOffsets(vec3_t goals[8]) { (void)goals; }
 void Cod2x_PoseReset(entityState_t *es) { (void)es; }
-void Cod2x_PoseDiagnostics(const entityState_t *es, const clientInfo_t *ci, int server, int frametime)
-{ (void)es; (void)ci; (void)server; (void)frametime; }
+void Cod2x_PoseDiagnostics(const entityState_t *es, const clientInfo_t *ci, const vec3_t goals[8], int server, int frametime)
+{ (void)goals; (void)es; (void)ci; (void)server; (void)frametime; }
 #endif
 
 void XAnimClearTree(XAnimTree *t) { (void)t; ++clearTreeCount; }
@@ -341,7 +341,7 @@ static void check_codx(void)
 
     ci = reset();
     state = BG_Cod2xState(ci);
-    state->movement = 257; state->movementStart = 1000; state->movementDuration = 250;
+    state->movement = 65537; state->movementEnd = 1250; state->movementDuration = 250;
     ci->torso.pitchAngle = ci->playerAngles[0] = 50;
     bgs->time = 1001; revision = 3;
     int bits[4] = {0};
@@ -369,3 +369,6 @@ int main(int argc, char **argv)
     }
     return 0;
 }
+
+void Cod2x_PoseMovement(int server, int time, unsigned int movement, int duration, int finished)
+{ (void)server; (void)time; (void)movement; (void)duration; (void)finished; }

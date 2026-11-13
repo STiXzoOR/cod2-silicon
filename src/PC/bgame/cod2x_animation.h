@@ -4,13 +4,12 @@
 /* Behavioral reference: CoD2x src/shared/animation.cpp:293-541, 749-789.
    These source-level controllers use typed fields, never the hook ABI/layout. */
 typedef struct {
-    const XAnimTree_s *tree;
-    int lastTime;
     int stance;
     int stanceStart;
     int stanceDuration;
     unsigned int movement;
-    int movementStart;
+    int movementEnd;
+    int movementRunning;
     int movementDuration;
     vec3_t start[8];
 } cod2xAnimationState_t;
@@ -36,10 +35,6 @@ static cod2xAnimationState_t *BG_Cod2xState(const clientInfo_t *ci)
     if ((unsigned int)ci->clientNum >= 64 || (unsigned int)bgs->anim_user >= 2)
         return NULL;
     state = &cod2xAnimationState[bgs->anim_user][ci->clientNum];
-    if (state->tree != ci->pXAnimTree || bgs->time < state->lastTime)
-        memset(state, 0, sizeof(*state));
-    state->tree = ci->pXAnimTree;
-    state->lastTime = bgs->time;
     return state;
 }
 
@@ -132,21 +127,21 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
     int left = (flags & 0x10) != 0;
     int right = (flags & 0x20) != 0;
     float yaw = ci->lerpMoveDir;
-    unsigned int movement = 1U | (forward ? 2U : backward ? 4U : 0U) |
+    unsigned int movement = 1U | (forward ? 32U : backward ? 64U : 0U) |
         (left ? 8U : right ? 16U : 0U);
     int duration = (es->eFlags & 8) ? 400 : 250;
     int i;
 
-    if ((forward && yaw > 20.0f) || (backward && yaw < -20.0f)) movement |= 32U;
-    else if ((forward && yaw < -20.0f) || (backward && yaw > 20.0f)) movement |= 64U;
+    if ((forward && yaw > 20.0f) || (backward && yaw < -20.0f)) movement |= 16384U;
+    else if ((forward && yaw < -20.0f) || (backward && yaw > 20.0f)) movement |= 32768U;
 
     if (!(es->eFlags & 8)) {
-        movement |= (es->eFlags & 4) ? 128U : 256U;
+        movement |= (es->eFlags & 4) ? 131072U : 65536U;
         if (lean < 0.0f && (forward || backward) && yaw > 0.0f && yaw < 90.0f) {
             float tilt = -lean * ((es->eFlags & 4) ? 3.8f : 7.2f);
             goals[6][0] += tilt;
             goals[6][2] -= tilt;
-            movement |= 512U;
+            movement |= (es->eFlags & 4) ? 256U : 128U;
         }
         if ((es->eFlags & 4) && lean < 0.0f && (forward || backward)) {
             goals[0][0] -= 40.0f * lean;
@@ -168,7 +163,7 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
 #endif
         const animation_t *torso = ci->torso.animation;
         int reload = torso && strstr(torso->name, "reload") != NULL;
-        movement |= 1024U;
+        movement |= 262144U;
 #if defined(COD2_X64)
         goals[0][0] += -30.0f * scale;
         goals[1][0] += 30.0f * scale;
@@ -193,7 +188,7 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
             goals[5][0] += 7.0f;
             if (torso) {
                 goals[5][0] += reload ? 14.0f : 13.0f;
-                movement |= reload ? 2048U : 4096U;
+                movement |= reload ? 2048U : 1024U;
                 if (!reload) duration = 100;
             }
         } else if ((left || right) && scale != 0.0f) {
@@ -201,7 +196,7 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
             duration = 150;
         } else if (forward && reload) {
             goals[5][0] += 3.0f;
-            movement |= 8192U;
+            movement |= 512U;
         }
     }
 
@@ -216,7 +211,7 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
             goals[3][0] += pitch * sinf(BG_Cod2xClamp(yaw, -90.0f, 0.0f) * 0.017453292519943295f) * 45.0f;
             goals[3][1] += pitch * sinf(BG_Cod2xClamp(yaw, 0.0f, 90.0f) * 0.017453292519943295f) * 30.0f;
         }
-        movement |= up ? 16384U : 32768U;
+        movement |= up ? 4096U : 8192U;
     }
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
@@ -267,12 +262,17 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
             }
         }
     }
+    /* The goal calculation updates this interval even during an existing blend. */
+    state->movementDuration = duration;
     if (state->movement != movement) {
         state->movement = movement;
-        state->movementStart = bgs->time;
-        state->movementDuration = duration;
+        state->movementEnd = bgs->time + duration;
+        state->movementRunning = 1;
         for (i = 0; i < 8; ++i)
             memcpy(state->start[i], BG_Cod2xController(ci, i), sizeof(vec3_t));
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        Cod2x_PoseMovement(bgs->anim_user != 0, bgs->time, movement, duration, 0);
+#endif
     }
 }
 

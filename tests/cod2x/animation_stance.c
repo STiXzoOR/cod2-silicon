@@ -52,12 +52,13 @@ float GetLeanFraction(float value) { return value; }
 #ifndef GAMEPLAY_MATRIX
 int Cod2x_GameVersion(void) { return revision; }
 #endif
-int Cod2x_PoseNeutral(void) { return 0; }
+static int poseNeutral, poseResets;
+int Cod2x_PoseNeutral(void) { return poseNeutral; }
 void Cod2x_PoseOffsets(vec3_t goals[8]) { (void)goals; }
-void Cod2x_PoseReset(entityState_t *es) { (void)es; }
-void Cod2x_PoseDiagnostics(const entityState_t *es, const clientInfo_t *ci, int fromServer, int frametime)
+void Cod2x_PoseReset(entityState_t *es) { (void)es; ++poseResets; }
+void Cod2x_PoseDiagnostics(const entityState_t *es, const clientInfo_t *ci, const vec3_t goals[8], int fromServer, int frametime)
 {
-    (void)es; (void)ci; (void)fromServer; (void)frametime;
+    (void)goals; (void)es; (void)ci; (void)fromServer; (void)frametime;
 }
 
 qboolean DObjSetControlTagAngles(const struct DObj_s *obj, int *partBits, unsigned int tag, vec_t *angles)
@@ -197,3 +198,6 @@ int main(void)
 #endif
     return 0;
 }
+
+void Cod2x_PoseMovement(int server, int time, unsigned int movement, int duration, int finished)
+{ (void)server; (void)time; (void)movement; (void)duration; (void)finished; }

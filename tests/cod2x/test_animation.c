@@ -129,7 +129,25 @@ int main(void)
     assert(server != state && server->stance == 0);
     world.anim_user = 0;
     world.time = 50;
-    assert(BG_Cod2xState(&ci)->stance == 0); /* time rewind/demo reset */
-    puts("cod2x: stance timing, posture, diagonal alignment, state reset tests passed");
+    printf("persistent controller stance across rewind: %d\n", BG_Cod2xState(&ci)->stance);
+    fflush(stdout);
+    assert(BG_Cod2xState(&ci)->stance == 2);
+    ci.pXAnimTree = NULL;
+    assert(BG_Cod2xState(&ci)->stance == 2);
+    /* Full prone lean changes the live transition interval without a new move key. */
+    Cod2x_ResetAnimation();
+    memset(goals, 0, sizeof(goals));
+    es.eFlags = 8; ci.lerpLean = 0;
+    world.animScriptData.animations[0].flags = 0x10;
+    world.time = 100;
+    BG_Cod2xControllerGoals(&es, &ci, goals, 0, state);
+    assert(state->movementDuration == 150);
+    world.time = 175; ci.lerpLean = .25f;
+    BG_Cod2xControllerGoals(&es, &ci, goals, .25f, state);
+    printf("prone side interval at full lean: %d\n", state->movementDuration);
+    assert(state->movementDuration == 400);
+    assert(state->movementEnd == 250);
+
+    puts("cod2x: stance timing, posture, diagonal alignment, persistent state and live interval tests passed");
     return 0;
 }
