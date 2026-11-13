@@ -35,7 +35,7 @@ const char *Cod2x_ZpamDirectRemote(void);
 void Cod2x_ZpamDirectEnd(int cancelled);
 /* The update prompt's "getautoupdate" menu command. */
 void Cod2x_UpdateConfirmed(void);
-/* Once, when the file system first starts: CoD2x's IWD cleanup and iw_CoD2x_01.iwd. */
+/* Startup boundary retained for the filesystem; archive setup belongs to the launcher. */
 void Cod2x_IwdStartup(const char *base);
 /* fs_processedList: the IWD decisions of this file-system start and of the one before. */
 void Cod2x_IwdLogRotate(void);
