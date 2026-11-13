@@ -76,8 +76,6 @@ The original shaders are built from your own game files.
 - Sun glare fades with the visible area of the sun, using GPU occlusion queries.
 - DirectX 7 water lighting uses the original normal and sunlight channels.
 - Unsupported 3× antialiasing falls back to 2×, as in the original game.
-- Alpha anti-aliasing now smooths cutout textures with coverage or per-sample
-  alpha testing. Supersampling costs more GPU time, especially at 5K.
 - Custom models accept Windows path separators, and cubemap exports crop
   their rendering border.
 - Menus with a blurred game background avoid an unnecessary full-screen
