@@ -197,9 +197,11 @@ void R_ShutdownRenderTargets(void)
 
     for (renderTargetId = 0; renderTargetId <= 12; renderTargetId++) {
 
+#if !defined(COD2_X64)
         if (renderTargetId == 1 || renderTargetId == 7) {
             continue;
         }
+#endif
 
         dxPtr = DX();
         byte *rt = ((byte *)&((DxGlobals *)(dxPtr))->renderTargets[renderTargetId]);
@@ -327,8 +329,8 @@ void R_InitRenderTargets(void)
                                       &((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_DYNAMICSHADOWS]);
 
 #if defined(COD2_X64)
-    ((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_RESOLVED_POST_SUN] =
-        ((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_DYNAMICSHADOWS];
+    R_InitFullscreenRenderTargetImage(8, 0, backBufferFormat, RENDERTARGET_USAGE_TEXTURE,
+                                      &((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_RESOLVED_POST_SUN]);
 #else
     {
         byte *rt3 = ((byte *)&((DxGlobals *)(dxPtr))->renderTargets[3]);
@@ -346,8 +348,8 @@ void R_InitRenderTargets(void)
                                       &((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_RESOLVED_SCENE]);
 
 #if defined(COD2_X64)
-    ((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_SAVED_SCREEN] =
-        ((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_RESOLVED_POST_SUN];
+    R_InitFullscreenRenderTargetImage(10, 0, backBufferFormat, RENDERTARGET_USAGE_TEXTURE,
+                                      &((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_SAVED_SCREEN]);
 #else
     {
         byte *rt1 = ((byte *)&((DxGlobals *)(dxPtr))->renderTargets[1]);

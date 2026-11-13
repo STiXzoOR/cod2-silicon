@@ -12,9 +12,9 @@ refimport_t ri;
 Bool g_NoTextureID;
 int alwaysfails;
 void *imp_g_NoTextureID = &g_NoTextureID;
-static GfxImage images[10];
+static GfxImage images[12];
 static void *deviceMethods[30], *surfaceMethods[13];
-static struct { void **vtable; } device, surfaces[12];
+static struct { void **vtable; } device, surfaces[14];
 static int releases, imageReleases;
 
 const char *va(const char *format, ...)
@@ -40,7 +40,7 @@ static HRESULT GetSwapChain(void *object, UINT index, byte *chain)
 static HRESULT GetBackBuffer(void *object, DWORD chain, DWORD buffer, DWORD type, byte *surface)
 {
     assert(object == &device && chain == 0 && buffer == 0 && type == 0);
-    *(void **)surface = &surfaces[10];
+    *(void **)surface = &surfaces[12];
     return 0;
 }
 static HRESULT CreateDepth(void *object, UINT width, UINT height, D3DFORMAT format,
@@ -49,11 +49,11 @@ static HRESULT CreateDepth(void *object, UINT width, UINT height, D3DFORMAT form
 {
     assert(object == &device && format == D3DFMT_D24S8 && !multisample && !quality && !discard && !shared);
     assert((width == 1280 && height == 720) || (width == 128 && height == 128));
-    *surface = (IDirect3DSurface9 *)&surfaces[width == 128 ? 11 : 10];
+    *surface = (IDirect3DSurface9 *)&surfaces[width == 128 ? 13 : 12];
     return 0;
 }
 GfxImage *Image_AllocProg(int id, int category)
-{ assert(id >= 0 && id < 10 && category == 6); return &images[id]; }
+{ assert(id >= 0 && id < 12 && category == 6); return &images[id]; }
 void Image_SetupRenderTarget(GfxImage *image, int width, int height, D3DFORMAT format)
 {
     assert(format == D3DFMT_A8R8G8B8);
@@ -65,17 +65,17 @@ void Image_SetupSystem(GfxImage *image, int width, int height, D3DFORMAT format)
 IDirect3DSurface9 *Image_GetSurface(GfxImage *image)
 { return (IDirect3DSurface9 *)&surfaces[image - images]; }
 void Image_Release(GfxImage *image)
-{ assert(image >= images && image < images + 10); ++imageReleases; }
+{ assert(image >= images && image < images + 12); ++imageReleases; }
 void Image_TrackFullscreenTexture(GfxImage *image, int picmip, D3DFORMAT format)
 { (void)image; (void)picmip; (void)format; }
 void Image_TrackTexture(GfxImage *image, int flags, D3DFORMAT format, int width, int height, int depth)
 { (void)image; (void)flags; (void)format; (void)width; (void)height; (void)depth; }
 
-static void CheckAlias(int destination, int source)
+static void CheckIndependent(int destination, int source)
 {
     const GfxRenderTarget *a = &dx.renderTargets[destination], *b = &dx.renderTargets[source];
-    assert(a->image == b->image && a->colorSurface == b->colorSurface);
-    assert(a->depthStencilSurface == b->depthStencilSurface);
+    assert(a->image != b->image && a->colorSurface != b->colorSurface);
+    assert(!a->depthStencilSurface);
     assert(a->width == 1280 && a->height == 720 && a->width == b->width && a->height == b->height);
 }
 
@@ -91,18 +91,18 @@ int main(int argc, char **argv)
     surfaceMethods[1] = AddRef;
     surfaceMethods[2] = Release;
     surfaceMethods[0x30 / 4] = GetDesc;
-    for (int i = 0; i < 12; ++i) surfaces[i].vtable = surfaceMethods;
+    for (int i = 0; i < 14; ++i) surfaces[i].vtable = surfaceMethods;
     dx.device = (IDirect3DDevice9 *)&device;
     vidConfig.width = 1280;
     vidConfig.height = 720;
     ri.Printf = Print;
     /* Real native pointers have nonzero high halves; aliases must retain them. */
-    assert((uintptr_t)&surfaces[10] > UINT32_MAX);
+    assert((uintptr_t)&surfaces[12] > UINT32_MAX);
     R_InitRenderTargets();
     assert(argc == 1 || (argc == 2 && !strcmp(argv[1], "--shutdown-only")));
     if (argc == 1) {
-        CheckAlias(R_RENDERTARGET_RESOLVED_POST_SUN, R_RENDERTARGET_DYNAMICSHADOWS);
-        CheckAlias(R_RENDERTARGET_SAVED_SCREEN, R_RENDERTARGET_DYNAMICSHADOWS);
+        CheckIndependent(R_RENDERTARGET_RESOLVED_POST_SUN, R_RENDERTARGET_DYNAMICSHADOWS);
+        CheckIndependent(R_RENDERTARGET_SAVED_SCREEN, R_RENDERTARGET_DYNAMICSHADOWS);
     }
     for (int i = 0; i < R_RENDERTARGET_COUNT; ++i) {
         dx.renderTargets[i].width = 1000 + i;
@@ -115,6 +115,6 @@ int main(int argc, char **argv)
         assert(!target->width && !target->height);
     }
     assert((void *)dx.device == &device && !dx.singleSampleDepthStencilSurface);
-    assert(imageReleases == 9 && releases == 19);
-    puts("native render targets: full pointer aliases, dimensions and shutdown clearing passed");
+    assert(imageReleases == 11 && releases == 21);
+    puts("native render targets: independent saved/post-sun storage, dimensions and shutdown clearing passed");
 }

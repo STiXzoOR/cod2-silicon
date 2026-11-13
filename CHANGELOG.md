@@ -65,6 +65,7 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 - Glow samples the correct sky direction on widescreen displays; glow and menu
   blur align to pixel centers and cover the right edge.
 - Consecutive heat-distortion batches keep sampling the scene image.
+- Shellshock retains its previous frame while shadows and post effects draw.
 - Menus with a blurred game background avoid an unnecessary full-screen
   copy when anti-aliasing is enabled.
 - Local match summaries retain slow-frame timings and renderer activity to
