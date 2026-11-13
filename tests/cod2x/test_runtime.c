@@ -90,9 +90,9 @@ static int integer(const char *name)
 int main(void)
 {
     const dvar_t *fps = Dvar_RegisterInt("com_maxfps", 333, 0, 1000, 1);
-    Dvar_RegisterInt("rate", 5000, 1000, 25000, 3);
-    Dvar_RegisterInt("snaps", 20, 1, 40, 3);
-    Dvar_RegisterInt("cl_maxpackets", 30, 15, 125, 1);
+    Dvar_RegisterInt("rate", 5000, 4000, 50000, 3);
+    Dvar_RegisterInt("snaps", 20, 2, 60, 3);
+    Dvar_RegisterInt("cl_maxpackets", 30, 15, 200, 1);
     Dvar_RegisterBool("sc_enable", 1, 1);
     Dvar_RegisterBool("fx_sort", 0, 1);
     Dvar_RegisterBool("mss_q3fs", 0, 1);
@@ -113,6 +113,14 @@ int main(void)
     assert(Cod2x_Competitive() && integer("com_maxfps") == 250);
     assert(integer("rate") == 25000 && integer("snaps") == 40);
     assert(integer("cl_maxpackets") == 125);
+    /* Upstream changes only these lower limits, even with a custom upper limit. */
+    printf("competitive upper limits: rate=%d snaps=%d packets=%d\n",
+           Dvar_FindVar("rate")->domain.integer.max, Dvar_FindVar("snaps")->domain.integer.max,
+           Dvar_FindVar("cl_maxpackets")->domain.integer.max);
+    fflush(stdout);
+    assert(Dvar_FindVar("rate")->domain.integer.max == 50000);
+    assert(Dvar_FindVar("snaps")->domain.integer.max == 60);
+    assert(Dvar_FindVar("cl_maxpackets")->domain.integer.max == 200);
     assert(integer("sc_enable") == 0 && integer("fx_sort") == 1 && integer("mss_q3fs") == 1);
     assert(Cod2x_FrameFPS(0) == 250);
 
@@ -131,12 +139,17 @@ int main(void)
     Cod2x_Frame(1, 0);
     assert(integer("com_maxfps") == 125);
 
-    /* Demo and disable restore original domains/types. */
+    /* Demo and disable restore upstream's fixed lower limits and boolean types. */
     Cod2x_Frame(1, 1);
     assert(!Cod2x_Competitive());
     assert(fps->domain.integer.min == 0 && fps->domain.integer.max == 1000);
     assert(Dvar_FindVar("sc_enable")->type == 0);
     assert(Dvar_FindVar("snaps")->domain.integer.min == 1);
+    assert(Dvar_FindVar("rate")->domain.integer.min == 1000);
+    assert(Dvar_FindVar("cl_maxpackets")->domain.integer.min == 10);
+    assert(Dvar_FindVar("rate")->domain.integer.max == 50000);
+    assert(Dvar_FindVar("snaps")->domain.integer.max == 60);
+    assert(Dvar_FindVar("cl_maxpackets")->domain.integer.max == 200);
     assert(Cod2x_FrameFPS(0) == 0);
     Dvar_SetBool(Dvar_FindVar("g_competitive"), 0);
     Cod2x_Frame(1, 0);

@@ -223,22 +223,22 @@ void Cod2x_PrepareConnect(void)
     Dvar_SetString(cod2x_identity, cod2x_hwid);
 }
 
-/* Only the limits are restored: like CoD2x, the user keeps the applied values.
-   Preserve each original domain/type instead of assuming renderer dvar types. */
+/* competitive.cpp restores fixed lower limits, not the domains present on entry.
+   Network upper limits survive both transitions; only FPS and booleans replace
+   their upper bound. Applied values remain after the restrictions are lifted. */
 static struct {
     const char *name;
-    int min, max, value;
+    int min, max, value, restoredMin;
+    int boolean;
     const dvar_t *var;
-    DvarLimits domain;
-    byte type;
 } cod2x_settings[] = {
     { .name = "com_maxfps", .min = 125, .max = 250, .value = 250 },
-    { .name = "rate", .min = 25000, .max = 25000, .value = 25000 },
-    { .name = "snaps", .min = 40, .max = 40, .value = 40 },
-    { .name = "cl_maxpackets", .min = 125, .max = 125, .value = 125 },
-    { .name = "sc_enable", .min = 0, .max = 0, .value = 0 },
-    { .name = "fx_sort", .min = 1, .max = 1, .value = 1 },
-    { .name = "mss_q3fs", .min = 1, .max = 1, .value = 1 }
+    { .name = "rate", .min = 25000, .value = 25000, .restoredMin = 1000 },
+    { .name = "snaps", .min = 40, .value = 40, .restoredMin = 1 },
+    { .name = "cl_maxpackets", .min = 125, .value = 125, .restoredMin = 10 },
+    { .name = "sc_enable", .value = 0, .boolean = 1 },
+    { .name = "fx_sort", .min = 1, .max = 1, .value = 1, .boolean = 1 },
+    { .name = "mss_q3fs", .min = 1, .max = 1, .value = 1, .boolean = 1 }
 };
 
 void Cod2x_Frame(int active, int demo)
@@ -259,23 +259,25 @@ void Cod2x_Frame(int active, int demo)
                 cod2x_settings[i].var = Dvar_FindVar(cod2x_settings[i].name);
                 if (!cod2x_settings[i].var)
                     continue;
-                cod2x_settings[i].domain = cod2x_settings[i].var->domain;
-                cod2x_settings[i].type = cod2x_settings[i].var->type;
             }
             var = (dvar_t *)cod2x_settings[i].var;
             {
-                int wasBool = var->type == 0;
-                var->type = 5; /* DVAR_TYPE_INT */
+                if (cod2x_settings[i].boolean)
+                    var->type = 5; /* DVAR_TYPE_INT */
                 var->domain.integer.min = cod2x_settings[i].min;
-                var->domain.integer.max = cod2x_settings[i].max;
-                if (wasBool || var->current.integer < cod2x_settings[i].min ||
-                    var->current.integer > cod2x_settings[i].max)
+                if (i == 0 || cod2x_settings[i].boolean)
+                    var->domain.integer.max = cod2x_settings[i].max;
+                if (i == 0 ? (var->current.integer < 125 || var->current.integer > 250)
+                           : var->current.integer != cod2x_settings[i].value)
                     Dvar_SetInt(var, cod2x_settings[i].value);
             }
         } else if (cod2x_settings[i].var) {
             var = (dvar_t *)cod2x_settings[i].var;
-            var->domain = cod2x_settings[i].domain;
-            var->type = cod2x_settings[i].type;
+            var->domain.integer.min = cod2x_settings[i].restoredMin;
+            if (i == 0)
+                var->domain.integer.max = 1000;
+            if (cod2x_settings[i].boolean)
+                var->type = 0; /* DVAR_TYPE_BOOL */
             cod2x_settings[i].var = 0;
         }
     }
