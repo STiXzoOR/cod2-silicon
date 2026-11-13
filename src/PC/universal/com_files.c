@@ -364,10 +364,12 @@ qboolean FS_PureIgnoresExtension(const char *extension)
         return 1;
     if (!I_stricmp(extension, "menu"))
         return 1;
+#if !defined(COD2_X64)
     if (!I_stricmp(extension, "str"))
         return 1;
     if (!I_stricmp(extension, "roq"))
         return 1;
+#endif
     if (!I_stricmp(extension, ".dm_NETWORK_PROTOCOL_VERSION"))
         return 1;
     return 0;
@@ -2155,6 +2157,7 @@ int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFI
 {
     com_fileAccessed = 1;
 
+#if !defined(COD2_X64)
     if (__builtin_expect(FS_PureIgnoresExtension(Com_GetExtensionSubString(filename)) != 0, 0)) {
         int len = FS_FOpenFileRead_Internal(filename, file, uniqueFILE, 0, 1);
         if ((unsigned int)(len + 2) > 1) {
@@ -2162,6 +2165,7 @@ int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFI
         }
     }
 
+#endif
     if (filename && filename[0] == '$') {
         char fontPath[256];
         const char *base = (I_stricmp(filename, "$font") == 0) ? "normalFont" : filename + 1;
@@ -2183,6 +2187,7 @@ qboolean FS_TouchFile(const char *name)
 
     com_fileAccessed = 1;
 
+#if !defined(COD2_X64)
     if (FS_PureIgnoresExtension(Com_GetExtensionSubString(name)) != 0) {
         int len = FS_FOpenFileRead_Internal(name, &f, 0, 0, 1);
         if ((unsigned int)(len + 2) > 1) {
@@ -2190,9 +2195,12 @@ qboolean FS_TouchFile(const char *name)
         }
     }
 
+#endif
     FS_FOpenFileRead_Internal(name, &f, 0, 0, 0);
 
+#if !defined(COD2_X64)
 opened:
+#endif
     if (f) {
         FS_FCloseFile(f);
         return 1;
@@ -2212,12 +2220,15 @@ int FS_ReadFile(const char *qpath, void **buffer)
     }
 
     com_fileAccessed = 1;
+#if !defined(COD2_X64)
     if (FS_PureIgnoresExtension(Com_GetExtensionSubString(qpath))) {
         len = FS_FOpenFileRead_Internal(qpath, &h, 0, 0, 1);
         if ((unsigned int)(len + 2) <= 1) {
             len = FS_FOpenFileRead_Internal(qpath, &h, 0, 0, 0);
         }
-    } else {
+    } else
+#endif
+    {
         len = FS_FOpenFileRead_Internal(qpath, &h, 0, 0, 0);
     }
 
@@ -2431,6 +2442,7 @@ int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode)
     switch (mode) {
     case FS_READ:
         com_fileAccessed = 1;
+#if !defined(COD2_X64)
         if (FS_PureIgnoresExtension(Com_GetExtensionSubString(qpath))) {
             len = FS_FOpenFileRead_Internal(qpath, f, 1, 0, 1);
             if ((unsigned int)(len + 2) > 1) {
@@ -2438,6 +2450,7 @@ int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode)
                 break;
             }
         }
+#endif
         len = FS_FOpenFileRead_Internal(qpath, f, 1, 0, 0);
         sync = 0;
         break;

@@ -173,6 +173,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   waiting indefinitely for a stalled server.
 - After an abnormal exit, the next launch offers the original safe-mode
   recovery choice. A normal exit clears the recovery marker.
+- File loading follows Windows archive/search-path priority. Pure servers
+  reject loose string tables and RoQ files outside localized search paths.
 - Wheel messages change weapons once each, including high-resolution scrolling,
   as in Windows 1.3.
 - Opening chat in a window keeps mouse-look active. Original 1.3 windowed
