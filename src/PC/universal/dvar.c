@@ -339,7 +339,12 @@ static inline __attribute__((always_inline)) byte Dvar_FloatToColorComponent(flo
         value = 0.0f;
     }
 
+#if COD2_APPLE_SDK
+    /* Windows color dvars (0x438419) round packed channels to nearest-even. */
+    return (byte)(int)__builtin_rintf(value * 255.0f);
+#else
     return (byte)(int)floorf(value * 255.0f + 0.5f);
+#endif
 }
 
 static Bool Dvar_StringEqualsRef(const char *value, const char *reference)

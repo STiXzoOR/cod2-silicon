@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the production frame-time conversion at Windows ties."""
+"""Check the production frame-time and dvar-color conversions at Windows ties."""
 import argparse
 from pathlib import Path
 import subprocess
@@ -10,6 +10,17 @@ p.add_argument('--output', type=Path, required=True)
 a = p.parse_args()
 a.output.mkdir(parents=True, exist_ok=True)
 
+def body(path, marker):
+    text = (ROOT / path).read_text()
+    begin = text.index('{', text.index(marker))
+    depth = 1
+    end = begin + 1
+    while depth:
+        depth += (text[end] == '{') - (text[end] == '}')
+        end += 1
+    return text[begin:end]
+
+color = body('src/PC/universal/dvar.c', 'byte Dvar_FloatToColorComponent(float value)')
 common = (ROOT / 'src/PC/qcommon/common.c').read_text()
 start = common.index('        float ts = com_timescale->current.value;')
 end = common.index('    if (msec <= 0)', start)
@@ -18,6 +29,8 @@ frame = common[start:end].replace('float ts = com_timescale->current.value;', ''
 source = '''#include <assert.h>
 #include <math.h>
 #include <stdio.h>
+typedef unsigned char byte;
+static byte color(float value) ''' + color + '''
 static int frame(int rawMsec, float ts, float com_codeTimeScale) {
     int msec, useTimescale;
     {
@@ -26,13 +39,16 @@ static int frame(int rawMsec, float ts, float com_codeTimeScale) {
     return msec;
 }
 int main(void) {
-    /* Owned Windows Com_ModifyMsec 0x434cb0. */
+    /* Owned Windows Com_ModifyMsec 0x434cb0; Dvar_RegisterColor 0x438419. */
     assert(frame(17, .5f, 1.f) == 8);
     assert(frame(16, .5f, 1.f) + frame(17, .5f, 1.f) + frame(17, .5f, 1.f) == 24);
     assert(frame(7, .5f, 1.f) == 4);
     assert(frame(1, 0.f, 1.f) == 1);
     assert(frame(17, 1.f, 1.f) == 17);
-    puts("Windows frame-time tie conversions pass");
+    assert(color(.3f) == 76 && color(.7f) == 178);
+    assert(color(.5f) == 128 && color(.0f) == 0 && color(1.f) == 255);
+    assert(color(-1.f) == 0 && color(2.f) == 255);
+    puts("Windows frame-time/color tie conversions pass");
 }
 '''
 fixture = a.output / 'scalar_rounding.c'
