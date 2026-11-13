@@ -219,7 +219,7 @@ static void CheckNativeExtent(void)
     RB_GaussianFilterImage(2, R_RENDERTARGET_BLURRED_SCREEN);
     assert(drawCount >= 2);
     for (int i = 0; i < drawCount; ++i) {
-        assert(draws[i].x == -0.5f && draws[i].y == -0.5f);
+        assert(draws[i].x == 0.0f && draws[i].y == 0.0f);
         assert(draws[i].uv[0] == 0 && draws[i].uv[2] == 1);
         assert((draws[i].uv[1] == 0 && draws[i].uv[3] == 1) ||
                (draws[i].uv[1] == 1 && draws[i].uv[3] == 0));

@@ -378,7 +378,7 @@ static void RB_ApplyFilterPasses(GfxImageFilter *filter, int swapLastPass)
 #if defined(COD2_X64) && COD2_APPLE_SDK
             /* Cancel the native half-pixel projection shift so every target
              * row is covered before the result is sampled by the next pass. */
-            RB_DrawStretchPic(pass->material, -0.5f, -0.5f, dstW, dstH,
+            RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
 #else
             RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
 #endif
@@ -387,7 +387,7 @@ static void RB_ApplyFilterPasses(GfxImageFilter *filter, int swapLastPass)
         } else {
 
 #if defined(COD2_X64) && COD2_APPLE_SDK
-            RB_DrawStretchPic(pass->material, -0.5f, -0.5f, dstW, dstH,
+            RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
 #else
             RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
 #endif
@@ -662,7 +662,7 @@ void RB_GaussianFilterImage(float radius, GfxRenderTargetId renderTargetId)
         if (!oddPassCount && passIndex == passCount - 1) {
 
 #if defined(COD2_X64) && COD2_APPLE_SDK
-            RB_DrawStretchPic(pass->material, -0.5f, -0.5f, dstW, dstH,
+            RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
 #else
             RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
 #endif
@@ -671,7 +671,7 @@ void RB_GaussianFilterImage(float radius, GfxRenderTargetId renderTargetId)
         } else {
 
 #if defined(COD2_X64) && COD2_APPLE_SDK
-            RB_DrawStretchPic(pass->material, -0.5f, -0.5f, dstW, dstH,
+            RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
 #else
             RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
 #endif

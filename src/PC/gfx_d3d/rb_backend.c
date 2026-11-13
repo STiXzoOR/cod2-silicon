@@ -1664,16 +1664,25 @@ static void RB_BeginViewCmd(GfxRenderCommandExecState *execState)
 
     twoInvProjDist = invProjDist * 2.0f;
 
+#if COD2_APPLE_SDK
+    /* Windows sky rays span the exact-size screen texture's UV range. */
+    pixelScaleW = 1.0f;
+#else
     pow2W = (float)nextPow2((unsigned int)backEnd.width);
     pixelScaleW = 1.0f / ((float)backEnd.width / pow2W);
+#endif
     scale = pixelScaleW * twoInvProjDist;
     backEnd.codeConsts[16][0] = scale * invVPMatrix[0];
     backEnd.codeConsts[16][1] = scale * invVPMatrix[1];
     backEnd.codeConsts[16][2] = scale * invVPMatrix[2];
     backEnd.codeConsts[16][3] = 0.0f;
 
+#if COD2_APPLE_SDK
+    pixelScaleH = 1.0f;
+#else
     pow2H = (float)nextPow2((unsigned int)backEnd.height);
     pixelScaleH = 1.0f / ((float)backEnd.height / pow2H);
+#endif
     scale = -(pixelScaleH * twoInvProjDist);
     backEnd.codeConsts[17][0] = scale * invVPMatrix[4];
     backEnd.codeConsts[17][1] = scale * invVPMatrix[5];
