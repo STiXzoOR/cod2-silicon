@@ -151,6 +151,17 @@ static void firing_flashes(void)
     cg->compassActors[0].beginFadeTime=1002; draw_at(300, &materials[1]);
     assert(fireEvents[0].time==300 && fireEvents[1].time==200 && fireEvents[127].time==200);
 
+    /* Calibration uses the full 400-square map at the screen origin. */
+    calibration=1;
+    rx.current.value=100; ry.current.value=20;
+    ix.current.value=12; iy.current.value=5;
+    int map=draw_at(301,&materials[4]);
+    assert(map>=0);
+    printf("calibration map with offsets: %.3f %.3f %.3f %.3f angle=%.3f\n",
+           draws[map].x,draws[map].y,draws[map].w,draws[map].h,draws[map].angle); fflush(stdout);
+    assert(draws[map].x==0 && draws[map].y==0 && draws[map].w==400 &&
+           draws[map].h==400 && draws[map].angle==0);
+
     /* The upstream event list and observed sound times outlive map changes. */
     snprintf(uiMap,sizeof(uiMap),"another"); result=-1;
     calibration=3;

@@ -252,8 +252,8 @@ void CG_Cod2xRadarDraw(void)
         return;
     factor = calibration ? 4 : 2 * radarScale->current.value;
     size = factor * 100;
-    x = radarX->current.value + imageX->current.value;
-    y = radarY->current.value + imageY->current.value;
+    x = calibration ? 0 : radarX->current.value + imageX->current.value;
+    y = calibration ? 0 : radarY->current.value + imageY->current.value;
     /* The map points are picked on a darkened screen. */
     if (calibration == 2 || calibration == 4)
         CG_DrawRotatedPic(0, 0, 640, 480, 4, 4, 0, background, cgs->media.whiteMaterial);
