@@ -13,10 +13,8 @@
 #include <string.h>
 #include <unistd.h>
 
-/* The game mixes at 44.1 kHz (snd_khz 44), and so does this mixer: a sound
- * played at its own rate then reaches the output sample for sample, as in the
- * original. The output unit converts to the device's rate. Mixing at 48 kHz
- * put every sound through the linear resampler, which dulls the treble. */
+/* The selected Miles rate is the mix rate. CoreAudio converts that rate to
+ * the device format; matching rates leave source samples unchanged. */
 #define AUDIO_RATE 44100
 /* Reverb delays are times; these turn 48 kHz frame counts into frames here. */
 #define REVERB_DELAY(frames48k) ((int)((frames48k) * (AUDIO_RATE / 48000.0) + 0.5))
@@ -76,7 +74,7 @@ static AudioUnit output_unit;
 static MacAudioSample samples[AUDIO_SAMPLES];
 /* Guarded by audio_mutex and retained across shutdown to reject stale decodes. */
 static uint64_t sample_generation;
-static int driver_rate = 44100;
+static int driver_rate = 44100, driver_channels = 2;
 static int preferences[64];
 static float listener[3], rolloff = 1.0f, distance_factor = 1.0f;
 static float master_dry = 1.0f, master_wet = 0.0f;
@@ -354,9 +352,9 @@ static void PrepareSample(MacAudioSample *sample)
     sample->prepared = DecodeInfo(&info, &sample->pcm[0], &sample->frames[0], &sample->channels, &rate);
 }
 
-static void MixLocked(float *stereo, size_t frame_count)
+static void MixLocked(float *stereo, size_t frame_count, int output_channels)
 {
-    memset(stereo, 0, frame_count * 2 * sizeof(float));
+    memset(stereo, 0, frame_count * output_channels * sizeof(float));
     float wet_buffer[1024 * 2];
     for (size_t chunk = 0; chunk < frame_count; chunk += 1024) {
         size_t count = frame_count - chunk;
@@ -427,23 +425,32 @@ static void MixLocked(float *stereo, size_t frame_count)
                     r += (sample->pcm[index][next * 2 + 1] - r) * fraction;
                 }
                 }
-                size_t output = (chunk + i) * 2;
-                stereo[output] += l * left * sample->dry;
-                stereo[output + 1] += r * right * sample->dry;
+                size_t output = (chunk + i) * output_channels;
+                /* The original mono mixer takes a mono source's left gain;
+                 * stereo sources add both independently weighted channels. */
+                float dry_l = l * left * sample->dry;
+                float dry_r = r * right * sample->dry;
+                if (driver_channels == 1) {
+                    if (sample->channels == 2) dry_l += dry_r;
+                    dry_r = dry_l;
+                }
+                stereo[output] += dry_l;
+                if (output_channels == 2) stereo[output + 1] += dry_r;
                 wet_buffer[i * 2] += l * left * sample->wet;
                 wet_buffer[i * 2 + 1] += r * right * sample->wet;
-                sample->cursor += (double)sample->rate / AUDIO_RATE;
+                sample->cursor += (double)sample->rate / driver_rate;
             }
             if (sample->stream) pthread_cond_signal(&sample->stream->wake);
         }
         for (size_t i = 0; i < count; ++i) {
             size_t delayed = (reverb_cursor + REVERB_FRAMES - (size_t)reverb_delay) % REVERB_FRAMES;
             float l = reverb[delayed * 2], r = reverb[delayed * 2 + 1];
-            size_t output = (chunk + i) * 2;
+            size_t output = (chunk + i) * output_channels;
             reverb[reverb_cursor * 2] = wet_buffer[i * 2] + l * 0.45f;
             reverb[reverb_cursor * 2 + 1] = wet_buffer[i * 2 + 1] + r * 0.45f;
             stereo[output] = Clamp(stereo[output] * master_dry + l * master_wet, -1, 1);
-            stereo[output + 1] = Clamp(stereo[output + 1] * master_dry + r * master_wet, -1, 1);
+            if (output_channels == 2)
+                stereo[output + 1] = Clamp(stereo[output + 1] * master_dry + (driver_channels == 1 ? l : r) * master_wet, -1, 1);
             reverb_cursor = (reverb_cursor + 1) % REVERB_FRAMES;
         }
     }
@@ -452,7 +459,7 @@ static void MixLocked(float *stereo, size_t frame_count)
 void MacAudio_Mix(float *stereo, size_t frames)
 {
     pthread_mutex_lock(&audio_mutex);
-    MixLocked(stereo, frames);
+    MixLocked(stereo, frames, 2);
     pthread_mutex_unlock(&audio_mutex);
 }
 
@@ -463,7 +470,7 @@ static OSStatus Render(void *refcon, AudioUnitRenderActionFlags *flags, const Au
     atomic_fetch_add_explicit(&output_frames, frames, memory_order_relaxed);
     for (UInt32 i = 0; i < buffers->mNumberBuffers; ++i)
         memset(buffers->mBuffers[i].mData, 0, buffers->mBuffers[i].mDataByteSize);
-    if (buffers->mNumberBuffers != 1 || buffers->mBuffers[0].mNumberChannels != 2 || buffers->mBuffers[0].mDataByteSize < frames * 2 * sizeof(float))
+    if (buffers->mNumberBuffers != 1 || buffers->mBuffers[0].mNumberChannels != (UInt32)driver_channels || buffers->mBuffers[0].mDataByteSize < frames * driver_channels * sizeof(float))
         return kAudio_ParamError;
     if (pthread_mutex_trylock(&audio_mutex)) {
         atomic_fetch_add_explicit(&lock_misses, 1, memory_order_relaxed);
@@ -471,12 +478,13 @@ static OSStatus Render(void *refcon, AudioUnitRenderActionFlags *flags, const Au
         return noErr;
     }
     float *pcm = buffers->mBuffers[0].mData;
-    MixLocked(pcm, frames);
+    MixLocked(pcm, frames, driver_channels);
     pthread_mutex_unlock(&audio_mutex);
     float peak = 0;
     uint64_t audible = 0;
     for (UInt32 i = 0; i < frames; ++i) {
-        float value = fmaxf(fabsf(pcm[i * 2]), fabsf(pcm[i * 2 + 1]));
+        float value = fabsf(pcm[i * driver_channels]);
+        if (driver_channels == 2) value = fmaxf(value, fabsf(pcm[i * 2 + 1]));
         peak = fmaxf(peak, value);
         audible += value > 0.00001f;
     }
@@ -511,9 +519,10 @@ void *AIL_open_digital_driver(int frequency, int bits, int channels, int flags)
         AudioError("Invalid digital driver format", kAudio_ParamError);
         return NULL;
     }
-    driver_rate = frequency;
     if (output_unit)
         return AUDIO_DRIVER;
+    driver_rate = frequency;
+    driver_channels = channels;
     AudioComponentDescription description = {
         .componentType = kAudioUnitType_Output,
         .componentSubType = kAudioUnitSubType_DefaultOutput,
@@ -526,10 +535,11 @@ void *AIL_open_digital_driver(int frequency, int bits, int channels, int flags)
     }
     OSStatus error = AudioComponentInstanceNew(component, &output_unit);
     AudioStreamBasicDescription format = {
-        .mSampleRate = AUDIO_RATE, .mFormatID = kAudioFormatLinearPCM,
+        .mSampleRate = driver_rate, .mFormatID = kAudioFormatLinearPCM,
         .mFormatFlags = kAudioFormatFlagsNativeFloatPacked,
-        .mBytesPerPacket = 8, .mFramesPerPacket = 1, .mBytesPerFrame = 8,
-        .mChannelsPerFrame = 2, .mBitsPerChannel = 32
+        .mBytesPerPacket = channels * sizeof(float), .mFramesPerPacket = 1,
+        .mBytesPerFrame = channels * sizeof(float),
+        .mChannelsPerFrame = channels, .mBitsPerChannel = 32
     };
     AURenderCallbackStruct callback = { Render, NULL };
     if (!error)
