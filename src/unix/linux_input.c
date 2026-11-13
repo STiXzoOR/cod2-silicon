@@ -88,6 +88,8 @@ extern int Linux_PollInputEvent(LinuxInputEvent *event);
 #if defined(__APPLE__) && defined(COD2_X64)
 #include "platform/macos_rawmouse.h"
 #include "platform/macos_input_policy.h"
+#include "platform/macos_text.h"
+extern const dvar_t *loc_language;
 #include "platform/macos_display.h"
 extern dvar_t *in_rawmouse;
 extern dvar_t *in_mouse;
@@ -180,19 +182,24 @@ static void MacInput_MeasureRaw(void)
 }
 #endif
 
-static unsigned int MacInput_DecodeUTF8(const unsigned char **cursor)
+char *Sys_GetClipboardData(void)
 {
-    const unsigned char *p = *cursor;
-    unsigned int value = *p++;
-    int trailing = value < 0x80 ? 0 : ((value & 0xe0) == 0xc0 ? 1 : ((value & 0xf0) == 0xe0 ? 2 : ((value & 0xf8) == 0xf0 ? 3 : -1)));
-    if (trailing < 0) { *cursor = p; return 0; }
-    value &= trailing == 0 ? 0x7f : ((1u << (6 - trailing)) - 1);
-    for (int i = 0; i < trailing; ++i) {
-        if ((*p & 0xc0) != 0x80) { *cursor = p; return 0; }
-        value = (value << 6) | (*p++ & 0x3f);
+    extern void *Z_MallocInternal(int size);
+    char *utf8 = SDL_GetClipboardText();
+    if (!utf8) return NULL;
+    char *bytes = MacText_EncodeUTF8(utf8, loc_language ? loc_language->current.integer : 0);
+    SDL_free(utf8);
+    if (!bytes) return NULL;
+    /* Windows Sys_GetClipboardData stops at the first line/control boundary.
+     * The field owns the result and releases it through Z_FreeInternal. */
+    size_t length = strcspn(bytes, "\n\r\b");
+    char *result = Z_MallocInternal((int)length + 1);
+    if (result) {
+        memcpy(result, bytes, length);
+        result[length] = 0;
     }
-    *cursor = p;
-    return value;
+    free(bytes);
+    return result;
 }
 #endif
 
@@ -453,9 +460,15 @@ int SDL_PumpInputEvents(void)
                 ++inputEventCount;
             }
 
-            if (ev.key.keysym.sym == SDLK_BACKSPACE) {
+            int control = ev.key.keysym.sym == SDLK_BACKSPACE ? 8 : 0;
 #if defined(__APPLE__) && defined(COD2_X64)
-                Sys_QueEvent(eventTime, SE_CHAR, 8, 0, 0, NULL);
+            if ((ev.key.keysym.mod & KMOD_CTRL) && !(ev.key.keysym.mod & KMOD_ALT) &&
+                ev.key.keysym.sym >= SDLK_a && ev.key.keysym.sym <= SDLK_z)
+                control = ev.key.keysym.sym - SDLK_a + 1;
+#endif
+            if (control) {
+#if defined(__APPLE__) && defined(COD2_X64)
+                Sys_QueEvent(eventTime, SE_CHAR, control, 0, 0, NULL);
 #else
                 CCallOfDutyEngine_DoTextInput(get_engine(), 8);
 #endif
@@ -474,11 +487,16 @@ int SDL_PumpInputEvents(void)
         case SDL_TEXTINPUT:
 
 #if defined(__APPLE__) && defined(COD2_X64)
-            for (const unsigned char *p = (const unsigned char *)ev.text.text; *p;) {
-                unsigned int character = MacInput_DecodeUTF8(&p);
-                if (character >= 0x20 && character != 0x7f) {
-                    Sys_QueEvent(eventTime, SE_CHAR, (int)character, 0, 0, NULL);
-                    ++inputEventCount;
+            {
+                char *bytes = MacText_EncodeUTF8(ev.text.text, loc_language ? loc_language->current.integer : 0);
+                if (bytes) {
+                    for (const unsigned char *p = (const unsigned char *)bytes; *p; ++p) {
+                        if (*p >= 0x20 && *p != 0x7f) {
+                            Sys_QueEvent(eventTime, SE_CHAR, *p, 0, 0, NULL);
+                            ++inputEventCount;
+                        }
+                    }
+                    free(bytes);
                 }
             }
 #else

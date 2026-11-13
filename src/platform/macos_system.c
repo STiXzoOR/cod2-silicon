@@ -155,3 +155,38 @@ int MacSystem_CaptureStack(void **frames, int count, int skip)
     return available;
 }
 #endif
+
+#if defined(__APPLE__) && defined(COD2_X64)
+#include "macos_text.h"
+/* The engine stores ANSI bytes, including DBCS for Asian languages. SDL text
+ * and the macOS clipboard are UTF-8. Use the Windows encoding of the selected
+ * game language at this boundary, never truncate Unicode scalar values. */
+char *MacText_EncodeUTF8(const char *text, int language)
+{
+    unsigned int codepage = 1252;
+    switch (language) {
+    case 6: codepage = 1251; break;
+    case 7: case 14: codepage = 1250; break;
+    case 8: codepage = 949; break;
+    case 9: codepage = 950; break;
+    case 10: codepage = 932; break;
+    case 11: codepage = 936; break;
+    case 12: codepage = 874; break;
+    }
+    CFStringRef string = CFStringCreateWithCString(NULL, text, kCFStringEncodingUTF8);
+    if (!string) return NULL;
+    CFStringEncoding encoding = CFStringConvertWindowsCodepageToEncoding(codepage);
+    CFIndex length = CFStringGetLength(string), used = 0;
+    CFIndex capacity = CFStringGetMaximumSizeForEncoding(length, encoding);
+    char *bytes = capacity >= 0 ? malloc((size_t)capacity + 1) : NULL;
+    if (bytes) {
+        CFStringGetBytes(string, CFRangeMake(0, length), encoding, '?', false,
+            (UInt8 *)bytes, capacity, &used);
+        bytes[used] = 0;
+    }
+    CFRelease(string);
+    return bytes;
+}
+
+
+#endif

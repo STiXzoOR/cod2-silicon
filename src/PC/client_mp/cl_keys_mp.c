@@ -672,7 +672,7 @@ static inline __attribute__((always_inline)) void Field_PasteClipboard(field_t *
 
     len = (int)strlen(cbd);
     for (i = 0; i < len; ++i) {
-        Field_CharEvent(edit, cbd[i]);
+        Field_CharEvent(edit, (unsigned char)cbd[i]);
     }
 
     Z_FreeInternal(cbd);

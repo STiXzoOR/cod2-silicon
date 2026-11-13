@@ -11,6 +11,7 @@ static dvar_t mouse, raw;
 dvar_t *in_mouse = &mouse, *in_rawmouse = &raw;
 static clientActive_t *client;
 void *imp_cl = &client;
+const dvar_t *loc_language;
 static struct { int time, type, value, value2; } events[64];
 static int count, absoluteX, absoluteY, relativeX, relativeY, cleared, quit;
 static int pumps;
@@ -39,6 +40,7 @@ int MacDisplay_WindowVisible(void) { return visible; }
 #endif
 extern int SDL_PumpInputEvents(void);
 extern void IN_Frame(void);
+void *Z_MallocInternal(int size) { return malloc(size); }
 void Sys_QueEvent(int time, sysEventType_t type, int value, int value2, int length, void *pointer)
 {
     (void)length; (void)pointer;
@@ -114,7 +116,7 @@ int main(void)
     assert(events[0].value == 'a' && events[0].value2 == 1 && events[1].value2 == 0);
     assert(events[2].value == 0xa7 && events[3].value == 0xbf);
     assert(events[4].value == 0x7f && events[5].type == SE_CHAR && events[5].value == 8);
-    assert(events[6].value == 'A' && events[7].value == 0x20ac);
+    assert(events[6].value == 'A' && events[7].value == 0x80);
     assert(events[8].value == 0xc9 && events[8].value2 == 1 && events[9].value2 == 0);
 #if defined(COD2_X64)
     for (int i = 10; i < 12; ++i)

@@ -156,6 +156,9 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   duration, as in Windows 1.3.
 - The physical console key works across keyboard layouts, and the original
   extended Latin key bindings are available.
+- Console and chat support Ctrl+V paste, Ctrl+C clear and Ctrl+H backspace.
+  Typed and pasted text is converted to the game's language encoding so
+  accented letters and punctuation no longer turn into unrelated characters.
 - Wheel messages change weapons once each, including high-resolution scrolling,
   as in Windows 1.3.
 - Opening chat in a window keeps mouse-look active. Original 1.3 windowed

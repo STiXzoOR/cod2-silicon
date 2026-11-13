@@ -243,6 +243,7 @@ void Sys_Print(const char *msg)
     Conbuf_AppendText(msg);
 }
 
+#if !defined(__APPLE__) || !defined(COD2_X64) || defined(DEDICATED)
 char *Sys_GetClipboardData(void)
 {
 #if defined(COD2_X64)
@@ -255,6 +256,7 @@ char *Sys_GetClipboardData(void)
     return (char *)"";
 #endif
 }
+#endif
 
 static void Sys_QueEventInternal(int time, sysEventType_t type, int value, int value2, int ptrLength, void *ptr)
 {

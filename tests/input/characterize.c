@@ -3,12 +3,14 @@
 #include "common_types.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 extern int SDL_PumpInputEvents(void);
 static dvar_t mouse, raw;
 dvar_t *in_mouse = &mouse, *in_rawmouse = &raw;
 SDL_Window *sdl_gl_window;
 void *imp_cl;
+const dvar_t *loc_language;
 int Sys_Milliseconds(void) { return (int)SDL_GetTicks(); }
 void MacDisplay_PumpVisibility(void) {}
 void MacDisplay_FocusChanged(int focused) { (void)focused; }
@@ -30,6 +32,7 @@ void CL_MouseEventAbsolute(int x, int y, int dx, int dy)
     (void)dx; (void)dy;
     printf("{\"engine\":\"absolute\",\"x\":%d,\"y\":%d}\n", x, y);
 }
+void *Z_MallocInternal(int size) { return malloc(size); }
 void Sys_QueEvent(int time, sysEventType_t type, int value, int value2, int length, void *pointer)
 {
     (void)time; (void)length; (void)pointer;
