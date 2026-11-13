@@ -465,7 +465,47 @@ static void Http_Error(CURL *curl, const Cod2xHttpRequest *request, CURLcode cod
     }
 }
 
-int Cod2x_HttpPerform(const Cod2xHttpRequest *request, Cod2xHttpResponse *response)
+/* Async jobs use a multi handle so cancellation also interrupts an idle socket
+   or a request with no timeout. Only its worker touches the curl handles. */
+static CURLcode Http_Transfer(CURL *curl, const int *cancel)
+{
+    CURLM *multi;
+    CURLcode result = CURLE_FAILED_INIT;
+    int running = 0;
+    if (!cancel)
+        return curl_easy_perform(curl);
+    multi = curl_multi_init();
+    if (!multi)
+        return result;
+    if (curl_multi_add_handle(multi, curl) == CURLM_OK) {
+        for (;;) {
+            int stop, remaining;
+            CURLMsg *message;
+            Cod2x_Lock();
+            stop = *cancel;
+            Cod2x_Unlock();
+            if (stop) {
+                result = CURLE_ABORTED_BY_CALLBACK;
+                break;
+            }
+            if (curl_multi_perform(multi, &running) != CURLM_OK)
+                break;
+            if (!running) {
+                while ((message = curl_multi_info_read(multi, &remaining)) != NULL)
+                    if (message->msg == CURLMSG_DONE)
+                        result = message->data.result;
+                break;
+            }
+            if (curl_multi_poll(multi, NULL, 0, 20, NULL) != CURLM_OK)
+                break;
+        }
+        curl_multi_remove_handle(multi, curl);
+    }
+    curl_multi_cleanup(multi);
+    return result;
+}
+
+static int Http_Perform(const Cod2xHttpRequest *request, Cod2xHttpResponse *response, const int *cancel)
 {
     HttpBuffer body = {0}, headers = {0};
     struct curl_slist *list;
@@ -516,10 +556,12 @@ int Cod2x_HttpPerform(const Cod2xHttpRequest *request, Cod2xHttpResponse *respon
     curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, Http_Headers);
     curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headers);
 
-    code = curl_easy_perform(curl);
+    code = Http_Transfer(curl, cancel);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
     if (code == CURLE_WRITE_ERROR && body.tooLarge)
         snprintf(response->error, sizeof(response->error), "Response too large");
+    else if (code == CURLE_ABORTED_BY_CALLBACK)
+        snprintf(response->error, sizeof(response->error), "Connection closed unexpectedly");
     else if (code != CURLE_OK)
         Http_Error(curl, request, code, response->error, sizeof(response->error));
     else
@@ -535,6 +577,11 @@ int Cod2x_HttpPerform(const Cod2xHttpRequest *request, Cod2xHttpResponse *respon
         return 0;
     }
     return 1;
+}
+
+int Cod2x_HttpPerform(const Cod2xHttpRequest *request, Cod2xHttpResponse *response)
+{
+    return Http_Perform(request, response, NULL);
 }
 
 void Cod2x_HttpResponseFree(Cod2xHttpResponse *response)
@@ -553,10 +600,12 @@ typedef struct HttpJob {
     Cod2xHttpDone done;
     void *context;
     Cod2xHttpResponse response;
+    int cancel;
     struct HttpJob *next;
 } HttpJob;
 
 static HttpJob *http_finished;
+static HttpJob *http_active;
 
 static char *Http_Copy(const char *s)
 {
@@ -582,8 +631,13 @@ static void Http_JobFree(HttpJob *job)
 static void Http_JobRun(void *argument)
 {
     HttpJob *job = argument, **tail;
-    Cod2x_HttpPerform(&job->request, &job->response);
+    Http_Perform(&job->request, &job->response, &job->cancel);
     Cod2x_Lock();
+    for (tail = &http_active; *tail && *tail != job; tail = &(*tail)->next)
+        ;
+    if (*tail)
+        *tail = job->next;
+    job->next = NULL;
     for (tail = &http_finished; *tail; tail = &(*tail)->next)
         ;
     *tail = job;
@@ -615,10 +669,16 @@ int Cod2x_HttpStart(const Cod2xHttpRequest *request, Cod2xHttpDone done, void *c
     job->request.body = job->body;
     job->done = done;
     job->context = context;
+    Cod2x_Lock();
+    job->next = http_active;
+    http_active = job;
     if (!Cod2x_ThreadStart(Http_JobRun, job)) {
+        http_active = job->next;
+        Cod2x_Unlock();
         Http_JobFree(job);
         return 0;
     }
+    Cod2x_Unlock();
     return 1;
 }
 
@@ -646,8 +706,6 @@ static HttpJob *Http_TakeFinished(Cod2xHttpDone done)
 static void Http_Deliver(Cod2xHttpDone done)
 {
     HttpJob *jobs;
-    if (!http_finished)
-        return;
     jobs = Http_TakeFinished(done);
     while (jobs) {
         HttpJob *next = jobs->next;
@@ -665,6 +723,27 @@ void Cod2x_HttpFrame(void)
 
 void Cod2x_HttpFrameFor(Cod2xHttpDone done)
 {
+    Http_Deliver(done);
+}
+
+void Cod2x_HttpCancelFor(Cod2xHttpDone done)
+{
+    int pending;
+    /* Keep callbacks on this thread, after all selected transports are closed.
+       Jobs owned by another service continue normally. */
+    do {
+        pending = 0;
+        Cod2x_Lock();
+        for (HttpJob *job = http_active; job; job = job->next) {
+            if (job->done == done) {
+                job->cancel = 1;
+                pending = 1;
+            }
+        }
+        Cod2x_Unlock();
+        if (pending)
+            Cod2x_Sleep(1);
+    } while (pending);
     Http_Deliver(done);
 }
 

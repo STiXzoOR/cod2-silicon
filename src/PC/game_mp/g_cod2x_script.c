@@ -432,6 +432,8 @@ void GScr_Cod2xNetBeforeMapChange(int shutdown)
         if (fetchPending > 0)
             Cod2x_Sleep(10);
     }
+    if (shutdown)
+        Cod2x_HttpCancelFor(Fetch_Done);
     if (!complete && !shutdown)
         return;
     for (int i = 0; i < WEBSOCKET_MAX_CLIENTS; ++i)
