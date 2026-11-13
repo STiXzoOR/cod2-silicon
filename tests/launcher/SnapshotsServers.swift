@@ -115,8 +115,33 @@ extension Snapshots {
         review.join(locked.address)
         guard case .password(let address)? = review.sheet, address == locked.address else { print("FAIL: a locked server did not ask for its password"); return false }
         review.dismissSheet()
+        // MARK: - ship-integrate
+        review.library.recent = [locked.address]
+        review.page = .home
+        review.launch()
+        guard case .password(let address)? = review.sheet, address == locked.address else {
+            print("FAIL: Home Launch bypassed the last server's password prompt"); return false
+        }
+        review.dismissSheet()
+        review.launchFromMenu()
+        guard case .password(let address)? = review.sheet, address == locked.address else {
+            print("FAIL: File Launch bypassed the last server's password prompt"); return false
+        }
+        review.dismissSheet()
         let original = review.servers.first { !ServerFacts($0).isCoD2x && !$0.password }!
         let originalLink = try LaunchLink.direct(original.address)
+        review.page = .servers; review.selectedServer = original.address
+        review.launchFromMenu()
+        guard review.pendingLink?.address == original.address, review.sheet == nil else {
+            print("FAIL: File Launch did not prefer the visible Servers selection"); return false
+        }
+        review.matchEngine = (original.address, .original)
+        review.fastPlay = true
+        review.openGameMenu()
+        guard review.pendingLink == nil, !review.fastPlay, review.serverConnection.address == nil, review.matchEngine == nil else {
+            print("FAIL: Open Game Menu kept a pending server connection or one-match game version"); return false
+        }
+        print("PASS: Home and File Launch ask for the last server's password; the Servers selection wins; Open Game Menu clears a pending join")
         guard !review.admit(originalLink), case .switchVersion? = review.sheet, review.matchEngine == nil else {
             print("FAIL: launching on an Original 1.3 server did not ask to switch versions"); return false
         }

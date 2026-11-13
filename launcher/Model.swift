@@ -463,7 +463,12 @@ struct MediaEntry: Identifiable {
 
     // MARK: Menu commands every unit can call (Menus board; ship-shell builds the menus)
     /// File › Open Game Menu (⇧⌘↩): the game's own menu, without joining a server.
-    func openGameMenu() { play() }
+    // MARK: - ship-integrate
+    func openGameMenu() {
+        pendingLink = nil; fastPlay = false; serverConnection.clear()
+        matchEngine = nil; followEngine()
+        play()
+    }
     /// File › Show Game Data in Finder.
     func showGameDataInFinder() {
         guard !dataPath.isEmpty else { return }
@@ -522,9 +527,8 @@ struct MediaEntry: Identifiable {
     /// Home's Launch: rejoin the last server, or open the game's menu when there is none.
     func launch() {
         guard !onboard else { return }
-        if let address = library.recent.first, !snapshot {
-            do { try serverConnection.select(address: address); pendingLink = try LaunchLink.direct(address); play() } catch { notice = error.localizedDescription }
-        } else { play() }
+        if let address = library.recent.first { join(address) }
+        else { openGameMenu() }
     }
     func openLink(_ url: String) {
         do {
