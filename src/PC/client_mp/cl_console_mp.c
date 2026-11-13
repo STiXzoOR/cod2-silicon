@@ -1538,7 +1538,11 @@ static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int d
                         break;
                     wordChars++;
                     wordWidth += width;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+                    if (wordChars > con.linewidth || (double)wordWidth * normalizedScale > (double)maxWidth) {
+#else
                     if (wordChars > con.linewidth || (float)wordWidth * normalizedScale > maxWidth) {
+#endif
                         Con_Linefeed(type, duration);
                         lineBroken = 1;
                         pixelWidth = 0;
