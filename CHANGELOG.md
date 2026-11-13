@@ -169,6 +169,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   uses the original gain steps.
 - Ambient tracks and music decode in the background with bounded buffers,
   avoiding the full-track decode pause and the decoded-size limit on long music.
+  A bounded read cache also prevents repeated archive decompression while
+  opening tracks stored in IWD files.
 - Room and shellshock reverberation now reproduce the original software mixer’s
   room presets, reflections, decay, damping and stereo spread.
 - Consecutive screenshot commands retain every image, and `cl_avidemo` saves
