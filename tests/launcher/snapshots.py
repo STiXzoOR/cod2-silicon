@@ -340,9 +340,8 @@ for variant in ["increase-contrast", "reduce-transparency", "reduce-motion"]:
     run(folder, "--group", "pages", f"--{variant}")
     for screen in pages:
         for appearance in ["dark", "light"]:
-            png = folder / f"{screen}-{appearance}.png"
-            (width, height), length = size(png)
-            assert (width, height) in sizes(screen) and length > content_floor(width, height), png
+            # A popover extends past its parent window here too: check the capture as the full-size pass does.
+            check_capture(folder / f"{screen}-{appearance}.png", screen)
 
 # The harness exits non-zero on any shape-audit finding, so reaching here means none.
 print(f"PASS: {len(screens) * 2} launcher screens (main window 1440x900, Settings 900x700 points) in dark and light, plus the material fallback, with bundled fonts"
