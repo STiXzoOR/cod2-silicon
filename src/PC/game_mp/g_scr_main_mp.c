@@ -1920,7 +1920,11 @@ static void GScr_GetAnimDeltaTimes(float *startTime, float *endTime)
 
 static inline __attribute__((always_inline)) int GScr_SecondsToMilliseconds(float seconds)
 {
+#if defined(COD2_APPLE_SDK)
+    return (int)__builtin_rintf(seconds * 1000.0f);
+#else
     return (int)floorf(seconds * 1000.0f + 0.5f);
+#endif
 }
 
 static void GScr_CleanDvarValue(const char *dvarValue, char *outString, int outLimit)
@@ -3509,7 +3513,11 @@ void Scr_PlayLoopedFX(void)
         cullDist = 0.0f;
 
     Scr_GetVector(2, pos);
+#if defined(COD2_APPLE_SDK)
+    repeat = (int)__builtin_rintf(Scr_GetFloat(1) * 1000.0f);
+#else
     repeat = (int)floorf(Scr_GetFloat(1) * 1000.0f + 0.5f);
+#endif
     if (repeat <= 0)
         Scr_Error(va("playLoopedFx called with %f s repeat (should be >= 0.0005s)\n", (double)repeat));
 
@@ -4283,7 +4291,11 @@ void ScrCmd_SetNormalHealth(scr_entref_t entref)
         normalHealth = 1.0f;
 
     if (ent->client) {
+#if defined(COD2_APPLE_SDK)
+        newHealth = (int)__builtin_rintf((float)ent->client->sess.maxHealth * normalHealth);
+#else
         newHealth = (int)floorf((float)ent->client->sess.maxHealth * normalHealth + 0.5f);
+#endif
         SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%i\"", 0x49, 0));
     } else if (ent->maxHealth) {
         newHealth = (int)((float)ent->maxHealth * normalHealth);
@@ -4469,7 +4481,11 @@ void GScr_ShellShock(scr_entref_t entref)
         return;
     }
 
+#if defined(COD2_APPLE_SDK)
+    duration = (int)__builtin_rintf(Scr_GetFloat(1) * 1000.0f);
+#else
     duration = (int)floorf(Scr_GetFloat(1) * 1000.0f + 0.5f);
+#endif
     if ((unsigned int)duration > 60000u)
         Scr_ParamError(1, va("duration %g should be >= 0 and <= 60", duration * 0.001f));
 
