@@ -7,17 +7,24 @@ import ssl
 import subprocess
 import tempfile
 import threading
+import time
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class Upload(http.server.BaseHTTPRequestHandler):
     received = []
+    elapsed = []
 
     def do_POST(self):
-        assert self.path == "/upload/round"
+        assert self.path in ("/upload/round", "/upload/round#fragment", "/status200", "/status409", "/redirect", "/timeout", "/rate")
         assert self.headers["Content-Type"] == "application/octet-stream"
         assert self.headers["Transfer-Encoding"] == "chunked"
+        assert self.headers["Host"] == "localhost"
+        assert self.headers.get("Authorization") is None
+        assert self.headers.get("Expect") is None
+        assert self.headers.get("Accept") is None
+        started = time.monotonic()
         body = bytearray()
         while True:
             length = int(self.rfile.readline().strip(), 16)
@@ -26,8 +33,15 @@ class Upload(http.server.BaseHTTPRequestHandler):
                 break
             body.extend(self.rfile.read(length))
             assert self.rfile.read(2) == b"\r\n"
-        self.received.append(bytes(body))
-        self.send_response(201)
+        self.received.append((self.path, bytes(body)))
+        self.elapsed.append((self.path, time.monotonic() - started))
+        if self.path == "/timeout":
+            self.connection.settimeout(4)
+            assert self.connection.recv(1) == b""
+            return
+        self.send_response({"/status200": 200, "/status409": 409, "/redirect": 302}.get(self.path, 201))
+        if self.path == "/redirect":
+            self.send_header("Location", "/must-not-follow")
         self.send_header("Content-Length", "0")
         self.end_headers()
 
@@ -57,17 +71,34 @@ with tempfile.TemporaryDirectory(prefix="cod2x-demo-tls.") as work:
     try:
         body = b"Owned native demo fixture\x00\x01\x02" * 8192
         env = dict(os.environ, COD2X_TEST_CA=str(cert))
-        for hostname, outcome in (("localhost", "success"), ("127.0.0.1", "failure")):
-            directory = work / hostname
+        cases = (("localhost", "success", "/upload/round", 201),
+                 ("127.0.0.1", "failure", "/upload/round", 0),
+                 ("user:password@localhost", "success", "/upload/round#fragment", 201),
+                 ("localhost", "success", "/status200", 200),
+                 ("localhost", "success", "/status409", 409),
+                 ("localhost", "failure", "/redirect", 302),
+                 ("localhost", "timeout", "/timeout", 0),
+                 ("localhost", "success", "/rate", 201))
+        for number, (hostname, outcome, path, status) in enumerate(cases):
+            directory = work / str(number)
             directory.mkdir()
             demo = directory / "round.dm_1"
             marker = directory / "round.dm_1.upload"
-            demo.write_bytes(body)
-            marker.write_text(f"https://{hostname}:{server.server_port}/upload/round")
-            subprocess.run([str(binary), str(directory), outcome], env=env, check=True)
-            assert demo.read_bytes() == body
-            assert marker.exists() == (outcome == "failure")
-        assert Upload.received == [body], "bad hostname must never deliver demo bytes"
+            contents = b"X" * (10 * 1024 * 1024) if path == "/rate" else body
+            demo.write_bytes(contents)
+            marker.write_text(f"https://{hostname}:{server.server_port}{path}")
+            started = time.monotonic()
+            subprocess.run([str(binary), str(directory), outcome, str(status)], env=env, check=True)
+            assert demo.read_bytes() == contents
+            assert marker.exists() == (outcome != "success")
+            if outcome == "timeout":
+                assert time.monotonic() - started >= 3
+        assert sum(path == "/upload/round" for path, _ in Upload.received) == 1, "bad hostname must never deliver demo bytes"
+        assert sum(path == "/redirect" for path, _ in Upload.received) == 3
+        assert all(data == (b"X" * (10 * 1024 * 1024) if path == "/rate" else body) for path, data in Upload.received)
+        rate_time = next(elapsed for path, elapsed in Upload.elapsed if path == "/rate")
+        assert rate_time >= 1.8, f"10 MiB exceeded 5 MiB/s limit: {rate_time:.3f}s"
+        print(f"10 MiB upload in {rate_time:.3f}s; 200/201/409 accepted; 302 not followed; timeout retries: pass")
     finally:
         server.shutdown()
         server.server_close()

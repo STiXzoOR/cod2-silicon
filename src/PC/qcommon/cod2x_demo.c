@@ -46,7 +46,8 @@ static FILE *demo_file;
 static struct curl_slist *demo_headers;
 static char demo_marker[256], demo_path[256], demo_response[1024];
 static size_t demo_responseLength;
-static uint64_t demo_started, demo_hideAt;
+static uint64_t demo_hideAt, demo_speedStarted, demo_speedBytes;
+static double demo_speedAverage;
 static int demo_curlInitialized, demo_errorCount;
 /* Markers that failed three times in a row; skipped until the game restarts. */
 static struct DemoFailed {
@@ -247,7 +248,6 @@ static size_t Cod2x_DemoResponse(char *buffer, size_t size, size_t count, void *
 static int Cod2x_DemoProgress(void *context, curl_off_t downloadTotal, curl_off_t downloaded,
                               curl_off_t uploadTotal, curl_off_t uploaded)
 {
-    uint64_t elapsed = Cod2x_DemoMilliseconds() - demo_started;
     (void)context;
     (void)downloadTotal;
     (void)downloaded;
@@ -255,8 +255,32 @@ static int Cod2x_DemoProgress(void *context, curl_off_t downloadTotal, curl_off_
     demo_progress.uploaded = uploaded > 0 ? (uint64_t)uploaded : 0;
     if (demo_progress.uploaded > demo_progress.total)
         demo_progress.uploaded = demo_progress.total;
-    demo_progress.bytesPerSecond = elapsed ? demo_progress.uploaded * 1000 / elapsed : 0;
     return 0;
+}
+
+/* Upstream samples transmitted bytes every 100 ms, smoothing each sample with
+   20 percent new speed and 80 percent previous speed. Include HTTP framing as
+   its socket-write callback does; libcurl's payload progress omits that. */
+static int Cod2x_DemoWire(CURL *easy, curl_infotype type, char *data, size_t length, void *context)
+{
+    (void)easy;
+    (void)data;
+    (void)context;
+    if (type == CURLINFO_HEADER_OUT || type == CURLINFO_DATA_OUT)
+        demo_speedBytes += length;
+    return 0;
+}
+
+static void Cod2x_DemoSampleSpeed(uint64_t now)
+{
+    uint64_t elapsed = now - demo_speedStarted;
+    if (elapsed >= 100) {
+        double speed = (double)demo_speedBytes * 1000.0 / (double)elapsed;
+        demo_speedAverage = 0.2 * speed + 0.8 * demo_speedAverage;
+        demo_progress.bytesPerSecond = (uint64_t)(demo_speedAverage + 0.5);
+        demo_speedBytes = 0;
+        demo_speedStarted = now;
+    }
 }
 
 static void Cod2x_DemoRelease(void)
@@ -379,7 +403,9 @@ static void Cod2x_DemoStart(const char *directory, int timeoutSeconds)
     demo_progress.attempts = demo_errorCount;
     demo_response[0] = '\0';
     demo_responseLength = 0;
-    demo_started = Cod2x_DemoMilliseconds();
+    demo_speedStarted = Cod2x_DemoMilliseconds();
+    demo_speedBytes = 0;
+    demo_speedAverage = 0;
     Com_Printf("Starting upload of demo '%s' to URL: '%s'\n", demo_progress.name, url);
     if (!demo_curlInitialized) {
         if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
@@ -397,7 +423,28 @@ static void Cod2x_DemoStart(const char *directory, int timeoutSeconds)
     }
     demo_headers = curl_slist_append(NULL, "Content-Type: application/octet-stream");
     demo_headers = curl_slist_append(demo_headers, "Transfer-Encoding: chunked");
+    demo_headers = curl_slist_append(demo_headers, "Accept:");
+    demo_headers = curl_slist_append(demo_headers, "Expect:");
+    {
+        CURLU *parsed = curl_url();
+        char *host = NULL;
+        if (parsed && !curl_url_set(parsed, CURLUPART_URL, url, CURLU_NON_SUPPORT_SCHEME) &&
+            !curl_url_get(parsed, CURLUPART_HOST, &host, 0)) {
+            char header[1024];
+            snprintf(header, sizeof(header), "Host: %s", host);
+            demo_headers = curl_slist_append(demo_headers, header);
+        }
+        curl_free(host);
+        curl_url_cleanup(parsed);
+    }
     curl_easy_setopt(demo_easy, CURLOPT_URL, url);
+    /* The upstream HTTP wrapper uses URL credentials only for parsing the host,
+       and includes fragments in the request target instead of interpreting them. */
+    curl_easy_setopt(demo_easy, CURLOPT_HTTPAUTH, (long)CURLAUTH_NONE);
+    {
+        const char *path = strchr(strstr(url, "://") + 3, '/');
+        curl_easy_setopt(demo_easy, CURLOPT_REQUEST_TARGET, path ? path : "/");
+    }
     curl_easy_setopt(demo_easy, CURLOPT_POST, 1L);
     curl_easy_setopt(demo_easy, CURLOPT_HTTP_VERSION, (long)CURL_HTTP_VERSION_1_1);
     curl_easy_setopt(demo_easy, CURLOPT_READFUNCTION, Cod2x_DemoRead);
@@ -405,6 +452,8 @@ static void Cod2x_DemoStart(const char *directory, int timeoutSeconds)
     curl_easy_setopt(demo_easy, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t)fileSize);
     curl_easy_setopt(demo_easy, CURLOPT_HTTPHEADER, demo_headers);
     curl_easy_setopt(demo_easy, CURLOPT_WRITEFUNCTION, Cod2x_DemoResponse);
+    curl_easy_setopt(demo_easy, CURLOPT_VERBOSE, 1L);
+    curl_easy_setopt(demo_easy, CURLOPT_DEBUGFUNCTION, Cod2x_DemoWire);
     curl_easy_setopt(demo_easy, CURLOPT_XFERINFOFUNCTION, Cod2x_DemoProgress);
     curl_easy_setopt(demo_easy, CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt(demo_easy, CURLOPT_NOSIGNAL, 1L);
@@ -428,6 +477,7 @@ int Cod2x_DemoUploadFrame(const char *directory, int timeoutSeconds, int check)
         Cod2x_DemoStart(directory, timeoutSeconds);
     if (!demo_easy)
         return 0;
+    Cod2x_DemoSampleSpeed(Cod2x_DemoMilliseconds());
     if (curl_multi_perform(demo_multi, &running) != CURLM_OK) {
         Cod2x_DemoFinish(CURLE_RECV_ERROR, 0);
         return 1;
