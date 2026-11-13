@@ -97,6 +97,7 @@ void Cod2x_ReportCrash(const char *json, const char *pending, int timeout, int w
 typedef struct {
     char *url;
     volatile int done;
+    volatile int cancel;
     int failed;
     long status;
     char error[256];

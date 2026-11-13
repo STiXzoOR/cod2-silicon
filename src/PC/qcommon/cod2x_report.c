@@ -514,14 +514,30 @@ static void *Cod2x_GetThread(void *data)
     Cod2xGetJob *job = (Cod2xGetJob *)data;
     Cod2xGet *get = job->get;
     CURL *curl = curl_easy_init();
+    CURLM *multi = curl_multi_init();
     CURLcode result = CURLE_FAILED_INIT;
     struct curl_slist *headers = curl_slist_append(NULL, "Accept:");
-    /* CoD2x's client puts the URL on the request line as it is; libcurl would cut it
-       at a '#' and refuse a space, so these two go escaped, which the server reads
-       back as the same characters. */
+    /* Give libcurl a parseable connection URL, then override its request target
+       below: CoD2x includes the original path and fragment on the wire. */
     char *wire = (char *)malloc(strlen(get->url) * 3 + 1), *w = wire;
     const char *p;
     headers = curl_slist_append(headers, "Content-Length: 0");
+    {
+        CURLU *parsed = curl_url();
+        char *host = NULL;
+        if (parsed && !curl_url_set(parsed, CURLUPART_URL, get->url, CURLU_NON_SUPPORT_SCHEME) &&
+            !curl_url_get(parsed, CURLUPART_HOST, &host, 0)) {
+            size_t length = strlen(host) + sizeof("Host: ");
+            char *header = malloc(length);
+            if (header) {
+                snprintf(header, length, "Host: %s", host);
+                headers = curl_slist_append(headers, header);
+                free(header);
+            }
+        }
+        curl_free(host);
+        curl_url_cleanup(parsed);
+    }
     if (wire) {
         for (p = get->url; *p; ++p) {
             if (*p == '#' || *p == ' ')
@@ -531,8 +547,14 @@ static void *Cod2x_GetThread(void *data)
         }
         *w = '\0';
     }
-    if (curl && wire) {
+    if (curl && multi && wire) {
         curl_easy_setopt(curl, CURLOPT_URL, wire);
+        {
+            const char *scheme = strstr(get->url, "://");
+            const char *path = scheme ? strchr(scheme + 3, '/') : NULL;
+            curl_easy_setopt(curl, CURLOPT_REQUEST_TARGET, path ? path : "/");
+        }
+        curl_easy_setopt(curl, CURLOPT_HTTPAUTH, (long)CURLAUTH_NONE);
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_PROTOCOLS_STR, "http,https");
         curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, (long)CURL_HTTP_VERSION_1_1);
@@ -541,9 +563,32 @@ static void *Cod2x_GetThread(void *data)
         curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Cod2x_GetReply);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, get);
-        result = curl_easy_perform(curl);
+        if (curl_multi_add_handle(multi, curl) == CURLM_OK) {
+            int running = 1;
+            result = CURLE_OK;
+            while (running) {
+                int remaining;
+                CURLMsg *message;
+                if (__atomic_load_n(&get->cancel, __ATOMIC_ACQUIRE)) {
+                    result = CURLE_ABORTED_BY_CALLBACK;
+                    break;
+                }
+                if (curl_multi_perform(multi, &running) != CURLM_OK) {
+                    result = CURLE_RECV_ERROR;
+                    break;
+                }
+                while ((message = curl_multi_info_read(multi, &remaining)) != NULL)
+                    if (message->msg == CURLMSG_DONE)
+                        result = message->data.result;
+                if (running)
+                    curl_multi_poll(multi, NULL, 0, 10, NULL);
+            }
+            curl_multi_remove_handle(multi, curl);
+        }
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &get->status);
     }
+    if (multi)
+        curl_multi_cleanup(multi);
     if (curl)
         curl_easy_cleanup(curl);
     curl_slist_free_all(headers);
@@ -553,8 +598,7 @@ static void *Cod2x_GetThread(void *data)
         get->failed = 1;
         snprintf(get->error, sizeof(get->error), "%s", curl_easy_strerror(result));
     }
-    __sync_synchronize();
-    get->done = 1;
+    __atomic_store_n(&get->done, 1, __ATOMIC_RELEASE);
 #if defined(_WIN32)
     return 0;
 #else
