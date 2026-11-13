@@ -1,4 +1,5 @@
 #include "common_types.h"
+#undef NDEBUG
 #include <assert.h>
 
 extern void MSG_WriteDeltaEntity(msg_t *, entityState_t *, entityState_t *, qboolean);
@@ -6,6 +7,7 @@ extern void MSG_WriteDeltaClient(msg_t *, clientState_t *, clientState_t *, qboo
 extern void MSG_WriteDeltaArchivedEntity(msg_t *, archivedEntity_t *, archivedEntity_t *, qboolean);
 extern int MSG_ReadBits(msg_t *, int);
 extern qboolean MSG_ReadDeltaEntity(msg_t *, entityState_t *, entityState_t *, int);
+extern qboolean MSG_ReadDeltaArchivedEntity(msg_t *, archivedEntity_t *, archivedEntity_t *, int);
 const dvar_t *cl_shownet;
 void Com_Printf(const char *fmt, ...) {}
 
@@ -57,5 +59,42 @@ int main(void)
     assert(number == 37);
     assert(!MSG_ReadDeltaEntity(&msg, &from, &decoded, number));
     assert(!memcmp(&decoded, &to, sizeof(to)));
+    /* Revision 7 reuses the existing unsigned 8-bit and 32-bit netfields. */
+    const int health[] = { 0, 1, 100, 255 };
+    const unsigned int info[] = { 0xC1000000u, 0xC10D648Bu, 0xC13FFFFFu };
+    for (unsigned int h = 0; h < sizeof(health) / sizeof(health[0]); ++h) {
+        for (unsigned int i = 0; i < sizeof(info) / sizeof(info[0]); ++i) {
+            memset(buffer, 0, sizeof(buffer));
+            memset(&from, 0, sizeof(from));
+            memset(&to, 0, sizeof(to));
+            msg.bit = msg.cursize = msg.readcount = 0;
+            to.number = 63;
+            to.eType = 1;
+            to.surfType = health[h];
+            to.dmgFlags = (int)info[i];
+            MSG_WriteDeltaEntity(&msg, &from, &to, 1);
+            assert(!msg.overflowed);
+            msg.bit = msg.readcount = 0;
+            number = MSG_ReadBits(&msg, 10);
+            assert(number == 63);
+            assert(!MSG_ReadDeltaEntity(&msg, &from, &decoded, number));
+            assert(!memcmp(&decoded, &to, sizeof(to)));
+
+            memset(buffer, 0, sizeof(buffer));
+            memset(&oldEntity, 0, sizeof(oldEntity));
+            memset(&newEntity, 0, sizeof(newEntity));
+            msg.bit = msg.cursize = msg.readcount = 0;
+            newEntity.s = to;
+            MSG_WriteDeltaArchivedEntity(&msg, &oldEntity, &newEntity, 1);
+            assert(!msg.overflowed);
+            msg.bit = msg.readcount = 0;
+            number = MSG_ReadBits(&msg, 10);
+            archivedEntity_t archived = {0};
+            assert(number == 63);
+            assert(!MSG_ReadDeltaArchivedEntity(&msg, &oldEntity, &archived, number));
+            assert(!memcmp(&archived, &newEntity, sizeof(archived)));
+        }
+    }
     puts("wire: retail entity/remove/client/archive bit fixtures and changed-field round trip pass");
+    puts("wire: revision-7 health byte and 0xC1 player-info word survive 12 snapshot and 12 archive round trips");
 }

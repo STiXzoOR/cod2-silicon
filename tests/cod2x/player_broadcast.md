@@ -32,11 +32,19 @@ inactive/clientless/non-player entities, prior script broadcast values,
 repeated frame refresh, hidden PVS, visibility masks/flags, self exclusion,
 unlinked entities, exact expiry and the first observation after expiry.
 
-The existing visibility predicate clears an expired broadcast time and still
-returns visible on that first observation. A subsequent observation uses the
-ordinary visibility tests. The fixture characterizes this behavior; it does
-not change the predicate. Disabled or over-limit policy stops refreshing and
-leaves existing broadcast times to that consumer.
+The existing visibility predicate clears an expired broadcast time and resumes
+the ordinary visibility tests on that observation. Its native signature takes
+the entity number separately from the entity state. Disabled or over-limit
+policy stops refreshing and leaves existing broadcast times to that consumer.
+
+The same real frame caller now exercises revision-7 player information. It
+checks all 64 player slots, the independently computed wire word `0xC10D648B`
+(primary 11, secondary 73, five frags, three smokes), health and grenade limits,
+weapon-bitset boundaries, unowned and null weapon definitions, dead/spectator/
+intermission clearing, and an end-frame death. Stock flags must leave both
+netfields unchanged. The extended fixture fails on the pre-player-info source
+at `834a720d`; the original broadcast fixture had stale visibility expectations
+and a five-argument call that no longer matched the native predicate.
 
 These are synthetic source fixtures. They do not send snapshots, traverse a
 real map portal, or render audio. A second live client must separately verify

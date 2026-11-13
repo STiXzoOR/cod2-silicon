@@ -71,6 +71,8 @@ def main():
         generated += registration + function(game, 'G_RegisterDvars')
         if re.search(r'\bG_RefreshPlayerBroadcast\(void\)\s*\{', game):
             generated += function(game, 'G_RefreshPlayerBroadcast')
+        if re.search(r'\bG_Cod2xPlayerInfoFrame\(gentity_t \*entities\)\s*\{', game):
+            generated += function(game, 'G_Cod2xPlayerInfoFrame')
         generated += function(game, 'G_RunFrame')
         generated += function(active(SNAPSHOT), 'SV_BitVectorTestLocal')
         generated += function(active(SNAPSHOT), 'SV_EntityIsVisibleToClientLocal')

@@ -16,7 +16,9 @@ static void *imp_svs = &svs;
 static void *imp_bgs = &bgs;
 static dvar_t dvars[128];
 static int dvar_count, host_kind, broadcast_registrations;
-static int frame_end_calls, make_dead_at_end;
+static int frame_end_calls, make_dead_at_end, remove_client_at_end;
+static WeaponDef weapon_defs[128];
+static int weapon_count;
 static svEntity_t visibility;
 #define SCR_CONST() (&scr_const)
 
@@ -86,6 +88,8 @@ void ClientEndFrame(gentity_t *ent)
         assert(ent->r.broadcastTime == 0);
         ent->health = 0;
     }
+    if (ent == &g_entities[6] && remove_client_at_end)
+        ent->client = NULL;
 }
 void CheckTeamStatus(void) {}
 void CheckVote(void) {}
@@ -96,6 +100,12 @@ void Dvar_SetBool(const dvar_t *dvar, qboolean value) { (void)dvar; (void)value;
 void SaveRegisteredWeapons(void) {}
 void SaveRegisteredItems(void) {}
 void SV_DObjDisplayAnim(gentity_t *ent) { (void)ent; }
+int BG_GetNumWeapons(void) { return weapon_count; }
+WeaponDef *BG_GetWeaponDef(int weapon)
+{
+    assert(weapon >= 0 && weapon < 128);
+    return weapon == 127 ? NULL : &weapon_defs[weapon];
+}
 byte *SV_SvEntityForGentity(byte *ent) { (void)ent; return (byte *)&visibility; }
 int BoxDistSqrdExceeds(const vec_t *mins, const vec_t *maxs, const vec_t *org, float dist)
 {
@@ -131,7 +141,7 @@ static void reset_entities(int count)
         ent->client = &clients[i];
         ent->health = 100;
     }
-    frame_end_calls = make_dead_at_end = 0;
+    frame_end_calls = make_dead_at_end = remove_client_at_end = 0;
     svs.time = 1000;
 }
 
@@ -151,7 +161,85 @@ static int visible(int entity, int observer)
 {
     static const byte pvs[1] = { 0 };
     const vec3_t org = { 0, 0, 0 };
-    return SV_EntityIsVisibleToClientLocal((byte *)&g_entities[entity], org, pvs, 1, observer);
+    return SV_EntityIsVisibleToClientLocal((byte *)&g_entities[entity], org, pvs, 1, observer, entity);
+}
+
+static void player_info(void)
+{
+    reset_entities(64);
+    memset(weapon_defs, 0, sizeof(weapon_defs));
+    weapon_count = 128;
+    weapon_defs[31].offhandClass = OFFHAND_CLASS_FRAG_GRENADE;
+    weapon_defs[31].iAmmoIndex = 3;
+    weapon_defs[31].iClipIndex = 4;
+    weapon_defs[32].offhandClass = OFFHAND_CLASS_SMOKE_GRENADE;
+    weapon_defs[32].iAmmoIndex = 5;
+    weapon_defs[32].iClipIndex = 6;
+    weapon_defs[33].offhandClass = OFFHAND_CLASS_FRAG_GRENADE;
+    weapon_defs[33].iAmmoIndex = 7;
+    weapon_defs[33].iClipIndex = 8;
+    /* An unowned grenade must not contribute its otherwise valid ammo. */
+    weapon_defs[34].offhandClass = OFFHAND_CLASS_FRAG_GRENADE;
+    weapon_defs[34].iAmmoIndex = 9;
+    weapon_defs[34].iClipIndex = 10;
+
+    for (int i = 0; i < 64; ++i) {
+        playerState_t *ps = &clients[i].ps;
+        ps->weaponslots[1] = 11;
+        ps->weaponslots[2] = 73;
+        ps->weapons[0] = (int)(1u << 31);
+        ps->weapons[1] = 3;
+        ps->weapons[3] = (int)(1u << 31); /* owned null definition */
+        ps->ammo[3] = 2;
+        ps->ammoclip[4] = 1;
+        ps->ammo[5] = 1;
+        ps->ammoclip[6] = 2;
+        ps->ammo[7] = 1;
+        ps->ammoclip[8] = 1;
+        ps->ammo[9] = ps->ammoclip[10] = 15;
+    }
+    /* Upstream wire layout: primary 11, secondary 73, frags 5, smokes 3. */
+    frame();
+    for (int i = 0; i < 64; ++i) {
+        CHECK(g_entities[i].s.surfType == (ACTIVE_BROADCAST ? 100 : 0));
+        CHECK((unsigned int)g_entities[i].s.dmgFlags ==
+              (ACTIVE_BROADCAST ? 0xC10D648Bu : 0u));
+    }
+
+    g_entities[0].health = 900;
+    clients[0].ps.weaponslots[1] = (char)255;
+    clients[0].ps.weaponslots[2] = (char)128;
+    clients[0].ps.ammo[3] = 20;
+    clients[0].ps.ammo[5] = -10;
+    frame();
+    CHECK(g_entities[0].s.surfType == (ACTIVE_BROADCAST ? 255 : 0));
+    CHECK((unsigned int)g_entities[0].s.dmgFlags ==
+          (ACTIVE_BROADCAST ? 0xC103C07Fu : 0u));
+
+    /* The frame's final health wins, and every non-playing state clears data. */
+    make_dead_at_end = 1;
+    g_entities[0].r.broadcastTime = 0;
+    clients[1].sess.sessionState = SESS_STATE_DEAD;
+    clients[2].sess.sessionState = SESS_STATE_SPECTATOR;
+    clients[3].sess.sessionState = SESS_STATE_INTERMISSION;
+    g_entities[4].health = -1;
+    g_entities[5].s.eType = 0;
+    remove_client_at_end = 1;
+    g_entities[7].r.inuse = 0;
+    /* Inactive/clientless slots are left untouched, including stale fields. */
+    for (int i = 6; i < 8; ++i) {
+        g_entities[i].s.surfType = 42;
+        g_entities[i].s.dmgFlags = 123;
+    }
+    g_entities[64] = g_entities[7];
+    g_entities[64].r.inuse = 1;
+    frame();
+    for (int i = 0; i < 6; ++i)
+        CHECK(g_entities[i].s.surfType == 0 && g_entities[i].s.dmgFlags == 0);
+    for (int i = 6; i < 8; ++i)
+        CHECK(g_entities[i].s.surfType == 42 && g_entities[i].s.dmgFlags == 123);
+    CHECK(g_entities[64].s.surfType == 42 && g_entities[64].s.dmgFlags == 123);
+    weapon_count = 0;
 }
 
 int main(void)
@@ -268,7 +356,7 @@ int main(void)
         set_limit(0);
         svs.time = 1025;
         frame();
-        CHECK(visible(0, 1) == ACTIVE_BROADCAST);
+        CHECK(visible(0, 1) == 0);
         CHECK(g_entities[0].r.broadcastTime == 0);
         CHECK(visible(0, 1) == 0);
 
@@ -277,7 +365,7 @@ int main(void)
         g_entities[0].r.broadcastTime = 900;
         frame();
         CHECK(g_entities[0].r.broadcastTime == 900);
-        CHECK(visible(0, 1) == 1 && g_entities[0].r.broadcastTime == 0);
+        CHECK(visible(0, 1) == 0 && g_entities[0].r.broadcastTime == 0);
         g_entities[0].r.svFlags = 8;
         CHECK(visible(0, 1) == 1);
         g_entities[0].r.svFlags = 0;
@@ -285,9 +373,13 @@ int main(void)
         visibility.clusternums[0] = 0;
         CHECK(visible(0, 1) == 0);
         visibility.numClusters = 0;
+        player_info();
     }
     if (!failures)
         printf("PASS %s broadcast: real registration/frame/visibility, listen and dedicated contexts\n",
                ACTIVE_BROADCAST ? "CoD2x" : "stock");
+    if (!failures)
+        printf("PASS %s player info: 64 slots, 0xC10D648B loadout, limits, clearing, final-frame health\n",
+               ACTIVE_BROADCAST ? "CoD2x" : "stock isolation");
     return failures != 0;
 }
