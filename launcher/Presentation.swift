@@ -74,7 +74,7 @@ struct ServerFacts: Equatable {
         let version = server.version
         isCoD2x = version.hasPrefix("1.4") || server.fields["protocol"] == "120"
         let shown = version == "1.4.x" ? "1.4" : String(version.prefix(16))
-        versionLabel = isCoD2x ? "CoD2x \(shown)" : "Stock \(shown)"
+        versionLabel = isCoD2x ? "CoD2x \(shown)" : "Original \(shown)"
         pingLevel = Self.pingLevel(server.ping)
         occupancy = server.playerCount == 0 ? .empty : (server.maxPlayers > 0 && server.playerCount >= server.maxPlayers ? .full : .open)
         if let fps = Int(server.fps), fps > 0 { frameCap = "\(fps) fps" } else { frameCap = "Not set" }
@@ -129,7 +129,11 @@ struct Dispatch: Codable, Equatable, Sendable {
 }
 
 enum ReleaseNotes {
-    struct Feed: Equatable { var dispatches: [Dispatch]; var latestVersion: String?; var latestAssets: [ReleaseAsset] = [] }
+    struct Feed: Equatable {
+        var dispatches: [Dispatch]; var latestVersion: String?; var latestAssets: [ReleaseAsset] = []
+        /// What's New for the newest release (ship-settings).
+        var latestNotes: [ReleaseNoteItem] = []
+    }
     private struct Asset: Decodable { var name: String?; var size: Int?; var browser_download_url: String? }
     private struct Release: Decodable {
         var assets: [Asset]?
@@ -161,7 +165,7 @@ enum ReleaseNotes {
             guard let name = asset.name, let size = asset.size, let link = asset.browser_download_url, let url = URL(string: link) else { return nil }
             return ReleaseAsset(name: name, size: size, url: url)
         }
-        return Feed(dispatches: dispatches, latestVersion: newest?.tag_name.map(version), latestAssets: assets)
+        return Feed(dispatches: dispatches, latestVersion: newest?.tag_name.map(version), latestAssets: assets, latestNotes: items(newest?.body ?? ""))
     }
     static func version(_ tag: String) -> String {
         String(tag.trimmingCharacters(in: .whitespaces).drop { $0 == "v" || $0 == "V" }.prefix(32))
@@ -195,6 +199,154 @@ enum ReleaseNotes {
 }
 
 struct ReleaseAsset: Equatable, Sendable { var name: String; var size: Int; var url: URL }
+
+// MARK: - ship-settings
+
+/// Settings › General › Appearance. `system` follows macOS.
+enum LauncherAppearance: String, Codable, Sendable, CaseIterable {
+    case system, light, dark
+    var title: String {
+        switch self { case .system: "Match System"; case .light: "Light"; case .dark: "Dark" }
+    }
+}
+
+/// Keys of the “Don’t ask again” choices kept in `GameSettings.dismissedWarnings`. A unit that adds a
+/// prompt adds its key here; Settings › Advanced › Reset Warnings brings every one back.
+enum DismissibleWarning {
+    /// Servers: launching on a server that runs the other game version (ship-servers).
+    static let switchVersion = "switch-version"
+}
+
+/// Settings wording that the unit tests check: times, sizes, shapes, the masked CD key.
+enum SettingsText {
+    /// “today at 14:02”, “yesterday at 21:30”, “on 8 Nov at 21:30”, in the Mac's own time format.
+    static func when(_ date: Date, now: Date = Date(), calendar: Calendar = .current, locale: Locale = .current) -> String {
+        let time = DateFormatter()
+        time.locale = locale; time.calendar = calendar; time.timeZone = calendar.timeZone
+        time.dateStyle = .none; time.timeStyle = .short
+        let clock = time.string(from: date)
+        if calendar.isDate(date, inSameDayAs: now) { return "today at \(clock)" }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) { return "yesterday at \(clock)" }
+        let day = DateFormatter()
+        day.locale = locale; day.calendar = calendar; day.timeZone = calendar.timeZone
+        day.setLocalizedDateFormatFromTemplate(calendar.isDate(date, equalTo: now, toGranularity: .year) ? "dMMM" : "dMMMyyyy")
+        return "on \(day.string(from: date)) at \(clock)"
+    }
+    /// A file size with its unit, as Finder shows it (“48 MB”).
+    static func bytes(_ count: Int64) -> String {
+        ByteCountFormatter.string(fromByteCount: max(0, count), countStyle: .file)
+    }
+    /// “2560 × 1440” from the game's `2560x1440`.
+    static func resolution(_ value: String) -> String { value.replacingOccurrences(of: "x", with: " × ") }
+    static func size(_ value: String) -> (width: Int, height: Int)? {
+        let parts = value.split(separator: "x").compactMap { Int($0) }
+        return parts.count == 2 && parts[0] > 0 && parts[1] > 0 ? (parts[0], parts[1]) : nil
+    }
+    /// The shape of a picture in the words people use: 16:9, 16:10, 4:3, 21:9, or “1.55:1” when it's none of them.
+    static func aspect(width: Int, height: Int) -> String {
+        guard width > 0, height > 0 else { return "" }
+        let ratio = Double(width) / Double(height)
+        let known: [(String, Double)] = [("16:9", 16.0 / 9), ("16:10", 1.6), ("4:3", 4.0 / 3), ("5:4", 1.25), ("3:2", 1.5), ("21:9", 64.0 / 27), ("32:9", 32.0 / 9)]
+        if let match = known.first(where: { abs($0.1 - ratio) / $0.1 < 0.012 }) { return match.0 }
+        return String(format: "%.2f:1", ratio)
+    }
+    /// The CD key as Settings shows it: only its last four characters.
+    static func maskedKey(lastFour: String) -> String { "•••• •••• •••• •••• " + lastFour.uppercased() }
+}
+
+/// One line of What's New, from a release's notes: its section as a tag, the first sentence, the rest.
+struct ReleaseNoteItem: Equatable, Sendable {
+    var tag: String
+    var title: String
+    var detail: String
+}
+
+extension ReleaseNotes {
+    /// The bullets of a release's notes (CHANGELOG.md's sections under “### Added”, “### Changed” and
+    /// “### Fixed”), each with its section as a tag (New, Changed, Fixed), its first sentence as the title
+    /// and the rest shortened to `length`. Other sections are left out.
+    static func items(_ body: String, limit: Int = 12, length: Int = 180) -> [ReleaseNoteItem] {
+        let tags = ["added": "New", "changed": "Changed", "fixed": "Fixed", "new": "New", "improved": "Changed"]
+        var items: [ReleaseNoteItem] = []
+        var tag: String?
+        var bullet: [String] = []
+        func flush() {
+            guard let tag, !bullet.isEmpty, items.count < limit else { bullet = []; return }
+            var text = bullet.joined(separator: " ")
+            text = text.replacingOccurrences(of: #"!?\[([^\]]*)\]\([^)]*\)"#, with: "$1", options: .regularExpression)
+            text = text.replacingOccurrences(of: #"[*`]+"#, with: "", options: .regularExpression)
+            text = text.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression).trimmingCharacters(in: .whitespaces)
+            bullet = []
+            guard !text.isEmpty else { return }
+            let end = text.range(of: #"[.:!?](\s|$)"#, options: .regularExpression)
+            let title = end.map { String(text[..<$0.lowerBound]) } ?? text
+            var detail = end.map { String(text[$0.upperBound...]).trimmingCharacters(in: .whitespaces) } ?? ""
+            if detail.count > length {
+                let cut = detail.prefix(length)
+                if let stop = cut.lastIndex(of: "."), cut.distance(from: cut.startIndex, to: stop) > length / 2 { detail = String(cut[...stop]) }
+                else { detail = cut.split(separator: " ").dropLast().joined(separator: " ") + "…" }
+            }
+            items.append(ReleaseNoteItem(tag: tag, title: String(title.prefix(120)), detail: detail))
+        }
+        for raw in body.prefix(200_000).replacingOccurrences(of: "\r\n", with: "\n").components(separatedBy: "\n") {
+            let line = raw.trimmingCharacters(in: .whitespaces)
+            if line.hasPrefix("#") {
+                flush()
+                let heading = line.drop { $0 == "#" }.trimmingCharacters(in: .whitespaces).lowercased()
+                tag = line.hasPrefix("###") ? tags[heading] : nil
+                continue
+            }
+            if raw.hasPrefix("- ") || raw.hasPrefix("* ") { flush(); bullet = [String(line.dropFirst(2))] }
+            else if line.isEmpty { flush() }
+            else if !bullet.isEmpty { bullet.append(line) }
+        }
+        flush()
+        return items
+    }
+}
+
+/// What Report a Problem and Copy Version Info show: the same lines, never the CD key or the player's name.
+struct ReportDetails: Equatable, Sendable {
+    var version: String
+    var build: String
+    var engines: [String]
+    var macOS: String
+    var model: String
+    var shaders: String
+    var display: String
+    var lines: [String] {
+        ["CoD2 Silicon \(version)" + (build.isEmpty || build == version ? "" : " (\(build))"),
+         engines.joined(separator: " · "), "macOS \(macOS) · \(model)", "Shaders: \(shaders) · Display: \(display)"]
+    }
+    var text: String { lines.joined(separator: "\n") }
+    /// A new issue on the project's bug form, its fields filled from these lines (GitHub's issue-form
+    /// query parameters, by field id). Nothing is sent until the person posts it in the browser.
+    func issueURL(repository: String = "STiXzoOR/cod2-silicon") -> URL? {
+        var parts = URLComponents(string: "https://github.com/\(repository)/issues/new")
+        parts?.queryItems = [
+            URLQueryItem(name: "template", value: "bug_report.yml"),
+            URLQueryItem(name: "version", value: lines[0].replacingOccurrences(of: "CoD2 Silicon ", with: "")),
+            URLQueryItem(name: "macos", value: macOS),
+            URLQueryItem(name: "model", value: model),
+            URLQueryItem(name: "steps", value: "Game versions: \(lines[1])\nShaders: \(shaders)\nDisplay: \(display)\n\n1. "),
+        ]
+        return parts?.url
+    }
+}
+
+/// Settings › Privacy › What CoD2 Silicon contacts. Each line was checked against the code that does it
+/// (Network.swift, ModelSettings.swift, Core.swift's AppUpdate and CoD2xFiles, ConfigImport, the engine's
+/// cod2x_features.c update check); README.md's “What the app sends” says the same.
+enum PrivacyContacts {
+    static let lines: [(who: String, when: String)] = [
+        ("Master servers", "Activision’s and the CoD2x project’s, when the server list refreshes. The game also asks them and the key server, as the original does."),
+        ("Game servers", "Those in the list when it refreshes, and the one you join. CoD2x servers also get a hash of CoD2x’s ID for this Mac."),
+        ("The CoD2x project", "With CoD2x, its update check each time the game’s menu opens: your CoD2x version, a hash of your CD key, CoD2x’s IDs for this Mac and a short description of it. Mod files a server needs come from its site."),
+        ("GitHub", "When you check for or install updates, or download CoD2x’s menus and icons. Nothing about you."),
+        ("Crash reports", "Only with a switch above on, once for each crash or freeze."),
+        ("Config links", "Only a link you paste into Configs to import from it."),
+    ]
+}
 
 struct MediaFacts: Equatable {
     var modifiedAt: Date?

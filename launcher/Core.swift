@@ -927,6 +927,18 @@ struct GameSettings: Codable, Sendable, Equatable {
     /// Settings › Privacy: crash reports to this project's Sentry, and CoD2x's own to CoD2x. Off until turned on.
     var sendCrashReports = false
     var sendCoD2xReports = false
+    // MARK: - ship-settings (launcher preferences other units read; decoded below)
+    /// General › Hide CoD2 Silicon while the game is running. On by default; the launcher comes back when the game quits.
+    var hideWhilePlaying = true
+    /// General › Appearance: Match System, Light or Dark, applied to every window at once.
+    var appearance = LauncherAppearance.system
+    /// General › Refresh the server list when Servers opens. Off by default: nothing is contacted until Refresh.
+    var refreshServersOnOpen = false
+    /// Updates › Check for updates automatically: once a day while the launcher is open.
+    var checkUpdatesAutomatically = true
+    /// “Don’t ask again” choices by key (`DismissibleWarning`); Advanced › Reset Warnings clears them.
+    var dismissedWarnings: Set<String> = []
+    // MARK: - end ship-settings
     static let resolutions = ["1280x720", "1920x1080", "2560x1440", "3008x1692", "3840x2160", "5120x2880", "6016x3384"]
     static let anisotropyLevels = [2, 4, 8, 16]
     var cm360: Double? { MouseMath.centimetresPer360(dpi: dpi, sensitivity: sensitivity) }
@@ -950,10 +962,21 @@ struct GameSettings: Codable, Sendable, Equatable {
         engine = (try? c.decodeIfPresent(GameEngine.self, forKey: .engine)) ?? d.engine
         sendCrashReports = (try? c.decodeIfPresent(Bool.self, forKey: .sendCrashReports)) ?? d.sendCrashReports
         sendCoD2xReports = (try? c.decodeIfPresent(Bool.self, forKey: .sendCoD2xReports)) ?? d.sendCoD2xReports
+        // ship-settings: launcher preferences; a value this version doesn't know keeps the default.
+        hideWhilePlaying = (try? c.decodeIfPresent(Bool.self, forKey: .hideWhilePlaying)) ?? d.hideWhilePlaying
+        appearance = (try? c.decodeIfPresent(LauncherAppearance.self, forKey: .appearance)) ?? d.appearance
+        refreshServersOnOpen = (try? c.decodeIfPresent(Bool.self, forKey: .refreshServersOnOpen)) ?? d.refreshServersOnOpen
+        checkUpdatesAutomatically = (try? c.decodeIfPresent(Bool.self, forKey: .checkUpdatesAutomatically)) ?? d.checkUpdatesAutomatically
+        dismissedWarnings = (try? c.decodeIfPresent(Set<String>.self, forKey: .dismissedWarnings)) ?? d.dismissedWarnings
     }
     /// One advanced line as (name, value): `dvar value` as typed in the console, or `dvar=value`.
     static func advancedPair(_ line: String) -> (String, String)? {
-        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        var trimmed = line.trimmingCharacters(in: .whitespaces)
+        // ship-settings: a line copied from a game shortcut or the console may begin with +set, +seta, set or seta.
+        for prefix in ["+seta ", "+set ", "seta ", "set "] where trimmed.lowercased().hasPrefix(prefix) {
+            trimmed = String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+            break
+        }
         let equals = trimmed.firstIndex(of: "="), space = trimmed.firstIndex(where: { $0 == " " || $0 == "\t" })
         guard let split = [equals, space].compactMap({ $0 }).min() else { return nil }
         let name = String(trimmed[..<split]).trimmingCharacters(in: .whitespaces)

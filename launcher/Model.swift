@@ -165,7 +165,7 @@ struct MediaEntry: Identifiable {
     var settingsSaveTask: Task<Void, Never>?
     var settingsTerminationObserver: NSObjectProtocol?
     var savedSettings = GameSettings()
-    /// Settings › General › CoD2x files: CoD2x's menus and icons, kept in the app home (CoD2xFiles).
+    /// Settings › Game Data › CoD2x menus and icons, kept in the app home (CoD2xFiles).
     @Published var cod2xFilesInstalled = false
     @Published var cod2xFilesBusy = false
     @Published var cod2xFilesMessage = CoD2xFiles.Message.notInstalled
@@ -175,9 +175,37 @@ struct MediaEntry: Identifiable {
     @Published var updateWasChecked = false
     @Published var updateError = false
     @Published var releaseURL: URL?
-    /// The newer release Install Update installs, when it carries this Mac's archive and SHA256SUMS.
+    /// The newer release Install and Relaunch installs, when it carries this Mac's archive and SHA256SUMS.
     @Published var updateOffer: AppUpdate.Offer?
     @Published var installingUpdate = false
+    /// The check or install in flight (Cancel stops a download), and the daily automatic check.
+    var updateTask: Task<Void, Never>?
+    var automaticUpdateTask: Task<Void, Never>?
+    /// What failed last, the check or the install, so Updates says which and Try Again repeats it.
+    @Published var updateFailedStage: UpdateStage?
+    /// The newer release's notes for What's New, from its release text.
+    @Published var updateNotes: [ReleaseNoteItem] = []
+    /// The version a check found, also when this Mac can't install it (then only the release page opens).
+    @Published var availableVersion: String?
+    /// Settings › Game Data: what was found (read when the pane opens), why a chosen game folder wasn't
+    /// used, and what Rebuild did.
+    @Published var gameData = GameDataFacts()
+    @Published var dataChangeError: String?
+    /// A short confirmation in the pane where the person acted.
+    @Published var settingsFeedback: SettingsFeedback?
+    /// Acknowledgements: the component whose licence is showing.
+    @Published var selectedAcknowledgement: String?
+    /// Integration hook: called with (version, installsOnQuit) when the automatic check finds a newer release.
+    /// ship-shell connects it to `notifyUpdateReady(version:installsOnQuit:)` at merge; nil until then.
+    var onUpdateReady: ((String, Bool) -> Void)?
+    @Published var shaderRebuildMessage: String?
+    /// Settings › Privacy › See What's Sent… is open.
+    @Published var privacyDetailsShown = false
+    /// Settings › Display: the Mac's main display, read when the pane opens and when displays change.
+    @Published var mainDisplay: MainDisplay?
+    var displayObserver: NSObjectProtocol?
+    /// The appearance last given to the app, so saves that don't change it leave the windows alone.
+    var appliedAppearance: LauncherAppearance?
 
     // MARK: - ship-servers state (list, filters, connection)
     @Published var servers: [GameServer] = []
@@ -297,6 +325,7 @@ struct MediaEntry: Identifiable {
     func boot() {
         guard !snapshot else { return }
         booted = true
+        startSettings()  // ship-settings: appearance, the last Settings pane, the daily update check
         _ = attachExistingGame()
         startGameMonitor()
         let args = CommandLine.arguments

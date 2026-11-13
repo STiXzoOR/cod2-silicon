@@ -120,10 +120,14 @@ caps.
   or, when that fails, plain UDP. CoD2x servers you join receive your hardware
   ID hash. zPAM files a server needs are downloaded from the CoD2x project's
   site.
-- **With the original 1.3 chosen** in **Settings → Game → Version**, the game
-  sends nothing to the CoD2x project.
-- **The launcher** contacts GitHub when you check for updates, install one, or
-  download the CoD2x files, and asks both master servers for its server list.
+- **With the original 1.3 chosen** in **Settings → General → Game version**, the
+  game sends nothing to the CoD2x project.
+- **The launcher** contacts GitHub when you check for updates (once a day while
+  it is open, unless you turn off **Settings → Updates → Check for updates
+  automatically**), install one, or download the CoD2x files, and asks both
+  master servers for its server list. **Settings → Privacy** lists all of this.
+- **Report a Problem** opens a prefilled issue in your browser; the app sends
+  nothing itself.
 - **Crash reports** are sent only if you turn a switch on in **Settings →
   Privacy**. Your CD key is never part of one.
 
