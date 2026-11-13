@@ -5,14 +5,19 @@ app = pathlib.Path(sys.argv[1]).resolve()
 info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
 assert info['CFBundleExecutable'] == 'CoD2Launcher'
 assert info['NSHighResolutionCapable'] is True
-assert info['CFBundleURLTypes'][0]['CFBundleURLSchemes'] == ['cod2x']
+assert info['CFBundleURLTypes'][0]['CFBundleURLSchemes'] == ['cod2x', 'cod2']
+documents = {item['CFBundleTypeName']: item for item in info['CFBundleDocumentTypes']}
+assert documents['Call of Duty 2 demo']['LSHandlerRank'] == 'Default'
+assert documents['Call of Duty 2 config']['LSHandlerRank'] == 'Alternate'
+types = {item['UTTypeIdentifier']: item['UTTypeTagSpecification']['public.filename-extension'] for item in info['UTImportedTypeDeclarations']}
+assert types == {'io.github.stixzoor.cod2silicon.demo': ['dm_1'], 'io.github.stixzoor.cod2silicon.config': ['cfg']}, types
 game = app / 'Contents/Helpers/CoD2 Game.app'
 engine = plistlib.loads((game / 'Contents/Info.plist').read_bytes())
 assert engine['CFBundleExecutable'] == 'cod2_macos'
 assert engine['CFBundleIdentifier'] == info['CFBundleIdentifier'] + '.game'
 assert engine['LSSupportsGameMode'] is True
 assert engine['CoD2AutomaticShaderSetup'] is False
-assert 'CFBundleURLTypes' not in engine
+assert not {'CFBundleURLTypes', 'CFBundleDocumentTypes', 'UTImportedTypeDeclarations'} & set(engine)
 assert 'CoD2GameDirectory' not in info
 for contents, plist in [(app / 'Contents', info), (game / 'Contents', engine)]:
     assert plist['LSMinimumSystemVersion'] == '26.0', plist['LSMinimumSystemVersion']

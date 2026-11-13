@@ -216,7 +216,7 @@ for suite in suites:
     private_home.mkdir(parents=True, exist_ok=True)
     run(out / suite, "--suite", suite, env={"HOME": str(private_home), "CFFIXED_USER_HOME": str(private_home)})
 for variant in ["increase-contrast", "reduce-transparency", "reduce-motion"]:
-    run(out / variant, "--only", "setup-summary-approximate", f"--{variant}")
+    run(out / variant, "--only", "setup-ready-approximate", f"--{variant}")
 
 # Real clicks on Config Studio controls (including a Binds key capture and Check-up Apply and
 # Undo) write exact bytes and History rows in a temporary home.

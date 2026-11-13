@@ -28,12 +28,14 @@ try:
     launcher=int(subprocess.check_output([str(fixture),'find','io.github.stixzoor.cod2silicon.ws25fixture'],text=True).strip())
     # Another process sees activation-policy changes asynchronously, so wait for each state.
     policy=lambda:subprocess.check_output([str(fixture),'policy',str(launcher)],text=True).strip()
-    wait(lambda:policy()=='1')
+    visible=lambda:int(subprocess.check_output([str(fixture),'visible-windows',str(launcher)],text=True))
+    # While the game plays the launcher keeps its Dock tile, its windows hidden.
+    wait(lambda:visible()==0 and policy()=='0')
     arguments=subprocess.check_output(['ps','-p',str(child),'-o','args='],text=True)
     assert 'p+quit' not in arguments and ' password ' not in arguments
     exitfile.touch()
     wait(lambda:'returned to launcher (game exit 37)' in log.read_text(errors='replace'))
-    wait(lambda:policy()=='0')
+    wait(lambda:visible()>0 and policy()=='0')
     # A reused scratch home exercises a cold link once setup is complete: it starts one game only.
     assert log.read_text(errors='replace').count('game started')==1
     print('PASS: actual cold LaunchServices cod2x delivery, scratch onboarding, native-valid plus password deferred without argv exposure, game→launcher')

@@ -39,25 +39,37 @@ Source layout:
 - `AppSheets.swift` and `ServerSheets.swift`, `SettingsSheets.swift`, `ShellSheets.swift`:
   the app's sheets, one enum presented over whichever window is in front.
 
-First-run setup walks through game data, a CD key, shaders and a completion summary.
-Game folders can be dropped onto the data well or chosen in a window-attached sheet;
-validation stays beside the input. A verified stored key can be kept or replaced.
-Continue saves the folder/key choice. Repeating setup offers Cancel (Escape), which
-restores an unconfirmed folder choice and returns to the originating page; first-run
-setup offers Quit. Shader preparation may finish in the background after leaving.
-The summary states whether original or approximate shaders are available and offers
-repairs. Open CoD2 Silicon opens Home, Find a Server opens Servers, and a pending
-server link or `--play` gets an explicitly labelled Join Server or Open Game Menu action.
+First-run setup has six steps (`SetupView.swift`, `ModelSetup.swift`): Welcome, Game data,
+CD key, Shaders, Make it yours and Ready, with Back, the progress dots and the step's
+actions in a glass bar. Game folders can be dropped onto the card or chosen in a
+window-attached sheet; a wrong folder is explained beside it with the first missing
+archive and how many others are missing. The CD key's checksum is checked as you type;
+the key can be skipped, and a stored key is shown as stored so Back and Continue never
+ask for it again (Replace… opens the Replace CD Key sheet). Shaders show the real count
+(or an honest indeterminate bar until the first file appears), then ready, or failed with
+Try Again, Choose Mac Copy… and continuing with approximate shaders. Make it yours sets
+the in-game name and how the game fills the screen; nothing is saved until Continue.
+Ready summarises the real values; Open CoD2 Silicon opens Home and Find a Server opens
+Servers. Set Up Again (Settings › Game Data) shows Cancel at every step, and Escape
+presses it: nothing is kept that wasn't confirmed. A notification says the shaders
+are ready only when setup is in the background.
 
-The native menus own navigation (⌘1–4), Launch (⌘Return), Open Game Menu
-(⇧⌘Return), Settings (⌘,), config import (⌘O / ⇧⌘V), and Servers refresh (⌘R).
-Commands follow setup, game and update availability. Page commands and the Dock reopen
-the launcher window after it closes. Settings, About (the app menu's About opens the
-About pane) and Check for Updates open the Settings window. Help links to the project
-manual, game data instructions and releases, and opens the Keyboard Shortcuts and
-Report a Problem sheets. Status messages reserve space below the page,
-wrap without truncation, and are announced to assistive technology. A Quit request
-during play brings back the launcher with an explanation and Return to Game.
+The native menus (File, Edit, View, Server, Loadout, Window, Help; `Main.swift`) own
+navigation (⌘1–4), Launch (⌘Return: the Servers selection when Servers shows one,
+else the last server), Open Game Menu (⇧⌘Return), Jump to… (⌘K), Settings (⌘,),
+config import (⌘O / ⇧⌘V) and Servers refresh (⌘R). Items are dimmed, never hidden,
+when they can't run. Page commands and the Dock reopen the launcher window after it
+closes. Settings, About and Check for Updates open the Settings window. Help opens the
+project manual, the Keyboard Shortcuts sheet, release notes, Report a Problem and the
+logs folder. Jump to… (`JumpPalette.swift`) finds servers already in memory, loadouts,
+every Settings pane and row by its visible name, and menu actions: ↑ ↓ move, Return
+opens, ⌘Return launches on a server, Escape closes. The sidebar's player plate opens
+the player card (`PlayerCard.swift`): the name, edited in place with its colours shown
+and saved to the next game's loadout as you type, the CD key's state and that loadout.
+The Dock menu lists recent servers, Launch on Last Server, Open Game Menu and Connect
+to Address…. Opening a `.dm_1` plays it; opening or dropping a `.cfg` opens the import
+review. Status messages reserve space below the page, wrap without truncation, and are
+announced to assistive technology.
 
 Launcher checks: `sh tests/launcher/run.sh`. This runs core, network, artwork,
 Config Studio, directory and match-summary tests, the font checksum check, a
@@ -98,11 +110,14 @@ verifies the pinned SHA-256 of every file. Bundles register them through
 `ATSApplicationFontsPath`, and development builds load them from beside the
 executable. The app icon is `tools/cod2x/icon-source/CoD2 Silicon.icon`.
 
-The outer app registers `cod2x`. A nested `CoD2 Game.app` owns the engine and its
-fullscreen/Game Mode eligibility. The launcher becomes an accessory app during
-play, then restores its Dock/window after the tracked child exits. If the launcher is force-quit,
+The outer app registers `cod2x` and `cod2` links and the demo and config document types.
+A nested `CoD2 Game.app` owns the engine and its fullscreen/Game Mode eligibility. The
+launcher keeps its Dock tile (and Dock menu) during play and hides its windows, then
+brings them back when the tracked child exits. If the launcher is force-quit,
 reopening it reconnects to the exact running helper (bundle ID and executable path) rather
-than spawning another engine. Normal Quit waits until the game closes. A game crash
+than spawning another engine. Quitting while the game runs asks first: Quit Launcher
+Only, Quit Both or Cancel; a game that doesn't start gets a sheet that says why and
+offers the fix. A game crash
 leaves the launcher running and exposes any native crash report in the app home.
 There is one launcher window and one Settings window; Launch is guarded against duplicate children.
 
@@ -148,8 +163,12 @@ open -a "CoD2 Silicon.app" 'cod2x://connect/127.0.0.1:28960'
 
 Arguments following `--` are forwarded verbatim to the engine's command parser
 for trusted CLI/developer use. GUI settings and links always go through bounded
-validators. Cold links wait for the helper to finish launching, then use the same validated
-Apple-event path as live links. Passwords are held in memory and never put in
+validators. A join link (`cod2x://host:port`, `cod2x://connect/host:port`, or `cod2://`
+read the same way) opens Connect to Address with the address filled in and never starts
+the game by itself; a link that arrives during setup waits until setup ends. Unattended
+runs (`COD2_SETUP_NONINTERACTIVE=1`, the hand-off checks) and command-line link arguments
+keep the direct join: cold links wait for the helper to finish launching, then use the same
+validated Apple-event path as live links. Passwords are held in memory and never put in
 process arguments or cached. CD keys are validated
 by WS21's native CRC routine, written using mode-600 temporary files and rename,
 and removed from the child environment. The raw key is never printed.

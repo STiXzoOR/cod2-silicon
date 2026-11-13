@@ -72,6 +72,20 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Changed
 
+- Setup has six steps: welcome, game data, CD key, shaders, your name and
+  display, and a summary. A wrong folder says which archives are missing, the
+  CD key is checked as you type and can be skipped, a stored key is never asked
+  for again, and running setup again from Settings can be cancelled at any step
+  without changing anything.
+- The sidebar's player card edits your in-game name in place, showing its
+  colours, and saves it as you type. Jump to… (⌘K) finds servers, loadouts,
+  settings and menu actions. The menu bar has Server and Loadout menus, and the
+  Dock menu lists recent servers.
+- A `cod2x://` or `cod2://` link opens Connect to Address with the address filled
+  in instead of starting the game. Opening a demo plays it; opening a config
+  shows the import review.
+- While you play, the launcher keeps its Dock icon and hides its window.
+  Quitting it with the game open asks whether to quit the game too.
 - Launcher settings save automatically. Invalid advanced options stay editable
   with an explanation, while your last valid options remain in use. Extra
   launch options are kept as you typed them and accept lines copied from a

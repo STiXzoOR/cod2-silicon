@@ -156,6 +156,33 @@ struct MediaEntry: Identifiable {
     var shaderRefresh: Task<Void, Never>?
     /// Jump to… (⌘K) is open over the main window.
     @Published var jumpPresented = false
+    /// The server row Jump to… has highlighted, so File › Launch (⌘↩) launches on it.
+    @Published var jumpServer: String?
+    @Published var jumpQuery = ""
+    /// The player card popover over the sidebar's plate.
+    @Published var playerCardPresented = false
+    /// Player card: the last name save, said under the card (“Saved to your Main loadout.”).
+    @Published var playerCardStatus: String?
+    @Published var playerCardError: String?
+    var playerNameSave: Task<Void, Never>?
+    /// Setup › Make it yours: what is typed and chosen there, applied only on Continue.
+    @Published var setupName = ""
+    @Published var setupDisplayMode = ""
+    @Published var setupNameError: String?
+    /// Setup › Game data: how many of the 16 archives the refused folder holds.
+    @Published var dataArchivesFound = 0
+    /// Setup › Shaders: the build failed (approximate shaders), and how long a finished build took.
+    @Published var shaderFailed = false
+    @Published var shaderSeconds: Int?
+    /// A join link that arrived during setup: Connect to Address opens with it when setup ends.
+    var pendingJoinAddress: String?
+    /// The player chose Quit Launcher Only or Quit Both, so quitting no longer asks.
+    var quitConfirmed = false
+    var quitGameTask: Task<Void, Never>?
+    /// The game was already running when the launcher started: its window hides when it first appears.
+    var hideLauncherWindowOnAppear = false
+    /// Why the last Launch failed, for the Game Couldn't Start sheet's fix.
+    @Published var launchProblem: LaunchProblem?
 
     // MARK: - ship-settings state (settings saving, CoD2x files, updates)
     @Published var settingsSaveError: String?
@@ -322,7 +349,8 @@ struct MediaEntry: Identifiable {
         confirmedDataPath = dataPath
         readPlayerName()
         let setupComplete = FileManager.default.fileExists(atPath: home.appendingPathComponent(".launcher-setup-complete").path)
-        onboard = dataPath.isEmpty || !keyVerified || (approximate && !setupComplete)
+        // ship-shell: a finished setup isn't asked again for a skipped CD key or approximate shaders.
+        onboard = dataPath.isEmpty || (!setupComplete && (!keyVerified || approximate))
         // Show the detected folder before asking for a key, so it can be reviewed or changed.
         step = 0
     }
@@ -468,7 +496,7 @@ struct MediaEntry: Identifiable {
         }
     }
     /// View › Jump to… (⌘K). ship-shell builds the palette that `jumpPresented` shows.
-    func showJump() { guard canNavigate else { return }; jumpPresented = true }
+    func showJump() { guard canNavigate else { return }; jumpQuery = ""; jumpPresented = true }
 
     // MARK: Loadouts and engine
     var usesLoadouts: Bool { (studio.session ?? configStudio)?.migrationCompleted == true }
@@ -543,8 +571,8 @@ struct MediaEntry: Identifiable {
         attachedGames = Dictionary(uniqueKeysWithValues: apps.map { ($0.processIdentifier, $0) })
         gameRunning = true; gameStartedAt = Date()
         do { try configStudio?.reconcileGames(Set(attachedGames.keys)) } catch { notice = error.localizedDescription }
-        NSApp.setActivationPolicy(.accessory)
-        NSApp.windows.forEach { $0.orderOut(nil) }
+        // ship-shell: hide the windows if the player wants them hidden while playing (ModelShell.swift).
+        gameTookOver()
         print("CoD2 Silicon: reconnected to existing game (pid \(app.processIdentifier)).")
         fflush(stdout)
         startGameMonitor()
@@ -664,8 +692,9 @@ struct MediaEntry: Identifiable {
             print("CoD2 Silicon: game started (pid \(process.processIdentifier)).")
             fflush(stdout)
         } catch {
-            notice = error.localizedDescription
-            do { try configStudio?.cancelLaunch() } catch { notice += " " + error.localizedDescription }
+            // ship-shell: the Game Couldn't Start sheet says why and offers the fix (ModelShell.swift).
+            do { try configStudio?.cancelLaunch() } catch { notice = error.localizedDescription }
+            launchFailed(error)
         }
     }
     /// Gives the game keyboard and mouse focus. Since macOS 14 an app can only take focus when
@@ -688,13 +717,15 @@ struct MediaEntry: Identifiable {
                 try? await Task.sleep(for: .milliseconds(100))
             }
             guard let self, self.gameRunning else { return }
-            NSApp.windows.forEach { $0.orderOut(nil) }
-            NSApp.setActivationPolicy(.accessory)
+            // ship-shell: the launcher keeps its Dock icon; its windows hide if the player wants that.
+            self.gameTookOver()
         }
     }
     /// Takes the Dock back after the game. The system can refuse the switch (seen right after a
     /// LaunchServices launch); AppKit then already reports .regular, so step through accessory and retry.
     private func restoreRegularPolicy() {
+        // ship-shell: the launcher stays regular while the game runs, so there is nothing to take back.
+        guard NSApp.activationPolicy() != .regular else { return }
         guard !NSApp.setActivationPolicy(.regular) else { return }
         NSApp.setActivationPolicy(.accessory)
         guard !NSApp.setActivationPolicy(.regular) else { return }

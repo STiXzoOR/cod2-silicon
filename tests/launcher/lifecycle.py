@@ -64,13 +64,14 @@ with log.open('w') as stream:
         assert 'seta sensitivity "5.0"' in (apphome/f'main/players/{active}/config_mp.cfg').read_text()
         assert (apphome/'main/players/.studio-game-session.json').is_file()
         def policy(pid):return subprocess.check_output([str(fixture),'policy',str(pid)],text=True).strip()
-        assert policy(launcher.pid)=='1' # accessory: the launcher has no Dock tile
-        assert policy(child)=='0' # regular: the game owns the Dock
+        def visible(pid):return int(subprocess.check_output([str(fixture),'visible-windows',str(pid)],text=True))
+        # The launcher keeps its Dock tile (and Dock menu) while the game plays, with its windows hidden.
+        wait(lambda: visible(launcher.pid) == 0)
+        assert policy(launcher.pid)=='0' and policy(child)=='0'
         subprocess.run([str(fixture), 'quit', str(launcher.pid)], check=True)
-        wait(lambda: policy(launcher.pid) == '0')
-        wait(lambda: int(subprocess.check_output([str(fixture), 'visible-windows', str(launcher.pid)], text=True)) > 0)
-        assert launcher.poll() is None
-        print('PASS: Quit during play is refused and restores a visible regular launcher window for the explanation')
+        wait(lambda: visible(launcher.pid) > 0)
+        assert launcher.poll() is None and policy(launcher.pid) == '0'
+        print('PASS: Quit during play asks first, over a visible launcher window, and quits nothing on its own')
         for address in ['127.0.0.1:28960','localhost:28961']:
             subprocess.run([str(fixture),'event',str(launcher.pid),'cod2x://connect/'+address],check=True)
             wait(lambda: 'fixture link '+address in log.read_text(errors='replace'))
@@ -82,9 +83,10 @@ with log.open('w') as stream:
         subprocess.run([str(fixture), "event", str(launcher.pid), "cod2x://connect/localhost:28962"], check=True)
         wait(lambda: "fixture link localhost:28962" in log.read_text(errors="replace"))
         assert log.read_text().count("fixture ready") == 1
-        assert policy(launcher.pid) == "1"
+        wait(lambda: visible(launcher.pid) == 0)
         exitfile.touch()
         wait(lambda:'returned to launcher (game exit unavailable)' in log.read_text(errors='replace'))
+        wait(lambda: visible(launcher.pid) > 0)
         assert launcher.poll() is None and policy(launcher.pid)=='0'
         assert (apphome/'cod2_crash_fixture.txt').is_file()
         snapshots = [json.loads(path.read_text()) for path in (apphome/f'main/players/{active}/history').glob('*.json')]
