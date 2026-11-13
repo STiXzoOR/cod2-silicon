@@ -260,9 +260,15 @@ int main(void)
     const dvar_t *shared = Dvar_FindVar("g_cod2x");
 #ifdef DEDICATED
     CHECK(Dvar_FindVar("g_competitive")->flags == 0x1008);
+    CHECK(shared->current.integer == EXPECTED_HOST_REVISION);
+    CHECK(shared->domain.integer.min == EXPECTED_HOST_REVISION);
+    CHECK(shared->domain.integer.max == EXPECTED_HOST_REVISION);
+    CHECK(!shared->modified);
 #else
     CHECK(Dvar_FindVar("g_competitive")->flags == 0x1018);
 #endif
+    CHECK(Dvar_FindVar("sv_playerBroadcastLimit")->current.integer == 15);
+    CHECK(Dvar_FindVar("g_shotgun_spread_fix")->current.enabled);
     SV_SpawnServer("fixture");
     checkHost();
     CHECK(gameplayStarts == 1);
@@ -290,9 +296,9 @@ int main(void)
     CHECK(Dvar_FindVar("g_competitive")->current.enabled);
     Cod2x_Disconnect();
     checkHost();
-    CHECK(Dvar_FindVar("g_competitive")->current.enabled);
+    CHECK(!Dvar_FindVar("g_competitive")->current.enabled);
     Dvar_SetBool(Dvar_FindVar("g_competitive"), 0);
-    CHECK(clientResets > 0);
+    CHECK(clientResets == 0 && allResets == 0);
 #endif
 
     /* Soft restart reasserts before gameplay; full spawn republishes systeminfo. */
@@ -327,10 +333,22 @@ int main(void)
     svs.clients = NULL;
     SV_Shutdown("fixture shutdown");
     CHECK(identityClears == HOST_HAS_IDENTITY_CLEANUP);
-    CHECK(Cod2x_GameVersion() == 0);
+    CHECK(Cod2x_GameVersion() ==
+#ifdef DEDICATED
+          EXPECTED_HOST_REVISION
+#else
+          0
+#endif
+    );
 #ifdef COD2X_HOST_REVISION
     CHECK(!Cod2x_ServerActive() && Cod2x_ServerGameVersion() == 0);
-    CHECK(shared->domain.integer.min == 0 && shared->domain.integer.max == 6);
+    CHECK(shared->domain.integer.min ==
+#ifdef DEDICATED
+          EXPECTED_HOST_REVISION
+#else
+          0
+#endif
+          && shared->domain.integer.max == COD2X_REVISION);
 #endif
 
 #ifndef DEDICATED
@@ -342,6 +360,7 @@ int main(void)
     CHECK(Cod2x_GameVersion() == 6);
     Cod2x_Frame(1, 0);
     CHECK(Cod2x_Competitive() && fps->domain.integer.min == 125);
+    ((dvar_t *)Dvar_FindVar("g_competitive"))->modified = 1;
     Cod2x_Frame(1, 1);
     CHECK(!Cod2x_Competitive() && fps->domain.integer.min == 0);
     CG_SetClientDvarFromServer("g_cod2x", "3");

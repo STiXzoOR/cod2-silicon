@@ -16,6 +16,7 @@ typedef struct {
     const char *name;
     unsigned short flags;
     byte type;
+    byte modified;
     DvarValue current;
     DvarLimits domain;
 } dvar_t;
