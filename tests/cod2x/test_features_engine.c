@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 static dvar_t variables[32];
 static int variableCount, argc, setterCalls;
@@ -101,7 +102,22 @@ void Cmd_AddCommand(const char *name, void (*function)(void))
 int Cmd_Argc(void) { return argc; }
 char *Cmd_Argv(int i) { return i < argc ? argv[i] : ""; }
 void Com_Printf(const char *format, ...) { (void)format; }
-void Com_Error(int code, const char *format, ...) { (void)code; (void)format; }
+static int errorCount;
+static char lastError[1024], openedURL[256];
+void Com_Error(int code, const char *format, ...)
+{
+    va_list args;
+    (void)code;
+    ++errorCount;
+    va_start(args, format);
+    vsnprintf(lastError, sizeof(lastError), format, args);
+    va_end(args);
+}
+void Sys_OpenURL(const char *url, int activate)
+{
+    assert(activate);
+    snprintf(openedURL, sizeof(openedURL), "%s", url);
+}
 char *Info_ValueForKey(const char *s, const char *key) { (void)s; (void)key; return (char *)""; }
 static int serverRevision = 6;
 int Cod2x_GameVersion(void) { return serverRevision; }
@@ -121,10 +137,14 @@ const char *NET_AdrToString(netadr_t a) { (void)a; return ""; }
 qboolean NET_StringToAdr(const char *s, netadr_t *a) { (void)s, (void)a; return 0; }
 qboolean NET_CompareBaseAdr(netadr_t a, netadr_t b) { (void)a, (void)b; return 0; }
 Bool NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *data) { (void)sock, (void)adr, (void)data; return 0; }
+static Cod2xHttpDone updateDone;
+static void *updateContext;
 int Cod2x_HttpStart(const Cod2xHttpRequest *request, Cod2xHttpDone done, void *context)
 {
-    (void)request, (void)done, (void)context;
-    return 0;
+    (void)request;
+    updateDone = done;
+    updateContext = context;
+    return 1;
 }
 
 static void execute(const char *cmd, const char *a, const char *b)
@@ -200,6 +220,19 @@ int main(void)
         serverRevision = 0;
         Cod2x_FeaturesClientState(CA_DISCONNECTED);
         assert(Cod2x_TextCode("#1", &code) == 2);
+    }
+    {
+        Cod2xHttpResponse response = {0};
+        response.status = 200;
+        response.body = "{\"update\":{\"available\":2,\"url\":\"https://example.invalid/upstream.dll\",\"version\":\"9.0\"}}";
+        assert(updateDone);
+        updateDone(updateContext, &response);
+        errorCount = 0;
+        Cod2x_FeaturesClientState(CA_CONNECTING);
+        assert(errorCount == 0);
+        Cod2x_UpdateConfirmed();
+        assert(strstr(openedURL, "github.com/STiXzoOR/cod2-silicon/releases"));
+        assert(strstr(lastError, "CoD2 Silicon") && strstr(lastError, "launcher"));
     }
     puts("cod2x client feature command integration: passed");
     return 0;

@@ -923,7 +923,7 @@ extern qboolean NET_StringToAdr(const char *s, netadr_t *a);
 extern qboolean NET_CompareBaseAdr(netadr_t a, netadr_t b);
 extern Bool NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *data);
 
-static int updateRunning, updateForced, updateLastState = -1, updateLastRender = -1;
+static int updateRunning, updateLastState = -1, updateLastRender = -1;
 static netadr_t updateAddress;
 static int updateResolved, updateWaiting, updateWaitingSince, updateRepeats;
 
@@ -983,12 +983,6 @@ static void Cod2x_UpdateCheck(void)
     Com_Printf("Auto-Updater: Checking for updates...\n");
     updateRunning = Cod2x_HttpStart(&request, Cod2x_UpdateDone, NULL);
     Cod2x_TextFree(&body);
-}
-
-static void Cod2x_UpdateRequired(void)
-{
-    Com_Error(1, "Update required\n\nA new version of CoD2x must be installed.\nPlease update to version %s.\n",
-              updateVersion->current.string);
 }
 
 /* Base64 with padding; 0 when out is too small. */
@@ -1093,9 +1087,8 @@ static void Cod2x_UpdateAnswer(int available, const char *url, const char *versi
         Dvar_SetString(updateVersion, version);
         Dvar_SetString(updateOldVersion, COD2X_RELEASE);
         if (available == 2) {
-            updateForced = 1;
-            if (lastClientState > CA_DISCONNECTED && lastClientState < CA_CONNECTED && !playingDemo)
-                Cod2x_UpdateRequired();
+            Com_Printf("CoD2x %s requires a newer CoD2 Silicon release. Check for updates in the launcher.\n"
+                       "Servers compatible with this build can still be joined.\n", version);
         }
     } else {
         Com_Printf("CoD2x: No updates available.\n");
@@ -1157,7 +1150,11 @@ void Cod2x_UpdatePacket(netadr_t from)
 /* The update prompt's "getautoupdate". CoD2x downloads its mss32.dll and restarts. */
 void Cod2x_UpdateConfirmed(void)
 {
-    Com_Error(1, "CoD2x %s is available.\n\nThis build does not download or install CoD2x's files.\n",
+    extern void Sys_OpenURL(const char *, int);
+    Sys_OpenURL("https://github.com/STiXzoOR/cod2-silicon/releases", 1);
+    Com_Error(1, "CoD2x %s is available.\n\nCheck for CoD2 Silicon updates in the launcher or on the release page opened in your browser.\n"
+              "Upstream Windows updates cannot be installed in this native Mac build.\n"
+              "You can still join servers compatible with this version.\n",
               updateVersion ? updateVersion->current.string : "");
 }
 
@@ -1166,8 +1163,6 @@ static void Cod2x_UpdateFrame(int state)
     int render = cgArray[0].renderScreen, last = updateLastState, lastRender = updateLastRender;
     updateLastState = state;
     updateLastRender = render;
-    if (updateForced && state > CA_DISCONNECTED && state < CA_CONNECTED && !playingDemo)
-        Cod2x_UpdateRequired();
     if (state != last && state == CA_DISCONNECTED) {
         updateRepeats = 0;
         Cod2x_UpdateCheck();
