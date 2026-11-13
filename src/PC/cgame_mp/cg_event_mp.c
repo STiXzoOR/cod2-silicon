@@ -278,9 +278,10 @@ static void CG_Obituary(centity_t *cent)
 #endif
                 iconHorzFlip = 0;
                 break;
-            case 3:
 #if defined(COD2_X64)
             case 5:
+#else
+            case 3:
 #endif
                 iconWidth = f_1_4;
                 iconShader = (const char *)"killiconsuicide";
