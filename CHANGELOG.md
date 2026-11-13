@@ -69,6 +69,7 @@ The original shaders are built from your own game files.
 - Shellshock retains its previous frame while shadows and post effects draw.
 - Colored impact marks preserve red and blue; cylinder effects retain their tint
   and transparency.
+- Impact marks use the original clipping arithmetic at surface edges.
 - Sun glare fades with the visible area of the sun, using GPU occlusion queries.
 - DirectX 7 water lighting uses the original normal and sunlight channels.
 - Unsupported 3× antialiasing falls back to 2×, as in the original game.
