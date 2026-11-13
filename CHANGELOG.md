@@ -164,6 +164,9 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   control, as in Windows 1.3.
 - Keypad navigation now works in menu lists, edit fields, focus movement and
   console history, matching the original keyboard alternatives.
+- Mono output and the 11 kHz and 22 kHz sound settings now use the original
+  channel routing, mixing rate and downsampling behavior. Positional sound
+  uses the original gain steps.
 - Ambient tracks and music decode in the background with bounded buffers,
   avoiding the full-track decode pause and the decoded-size limit on long music.
 - Room and shellshock reverberation now reproduce the original software mixer’s

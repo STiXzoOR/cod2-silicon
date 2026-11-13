@@ -38,6 +38,7 @@ typedef struct {
     float *pcm[2];
     size_t frames[2];
     double cursor;
+    float resample_previous[2];
     float left, right, dry, wet, position[3], min_distance, max_distance;
     MacAudioStream *stream;
 } MacAudioSample;
@@ -449,6 +450,65 @@ static void PrepareSample(MacAudioSample *sample)
     sample->prepared = DecodeInfo(&info, &sample->pcm[0], &sample->frames[0], &sample->channels, &rate);
 }
 
+/* Miles integrates the source interval when reducing the rate. The first
+ * interval starts with a zero history sample; subsequent intervals retain the
+ * preceding sample across buffer/loop boundaries. Fractional PCM contributions
+ * are truncated before accumulation, as measured at 3:2 and 5:2 rates. */
+static int DownsampleFrame(MacAudioSample *sample, double step, float *left, float *right)
+{
+    double start = sample->cursor, end = start + step;
+    double sum[2] = {0, 0};
+    int index = sample->active_buffer;
+    size_t length = sample->frames[index];
+    double limit = sample->stream ? (double)sample->stream->length * sample->loops : length;
+    int finite = sample->stream ? sample->loops != 0 : !sample->buffered && sample->remaining_loops == 1;
+    if (finite && end - 1 >= limit) {
+        sample->status = AUDIO_DONE;
+        return 0;
+    }
+    for (double position = floor(start); position < end; position += 1) {
+        double weight = fmin(end, position + 1) - fmax(start, position);
+        float value[2] = {0, 0};
+        int64_t frame = (int64_t)position - 1;
+        if (sample->stream) {
+            MacAudioStream *stream = sample->stream;
+            uint64_t limit = sample->loops ? (uint64_t)stream->length * sample->loops : UINT64_MAX;
+            if (frame >= 0 && (uint64_t)frame >= stream->first && (uint64_t)frame < limit) {
+                if ((uint64_t)frame >= stream->end) return 0;
+                size_t at = ((uint64_t)frame % STREAM_FRAMES) * stream->channels;
+                value[0] = stream->ring[at];
+                value[1] = stream->channels == 2 ? stream->ring[at + 1] : value[0];
+            }
+        } else if (frame < 0) {
+            value[0] = sample->resample_previous[0];
+            value[1] = sample->resample_previous[1];
+        } else {
+            const float *pcm = sample->pcm[index];
+            size_t at = (size_t)frame;
+            if (at >= length) {
+                if (sample->buffered) {
+                    at -= length;
+                    pcm = sample->pcm[1 - index];
+                    if (at >= sample->frames[1 - index]) pcm = NULL;
+                } else if (!sample->loops || sample->remaining_loops > 1) {
+                    at %= length;
+                } else {
+                    pcm = NULL;
+                }
+            }
+            if (pcm) {
+                value[0] = pcm[at * sample->channels];
+                value[1] = sample->channels == 2 ? pcm[at * 2 + 1] : value[0];
+            }
+        }
+        sum[0] += floor((double)value[0] * 32768 * weight);
+        sum[1] += floor((double)value[1] * 32768 * weight);
+    }
+    *left = sum[0] / 32768;
+    *right = sum[1] / 32768;
+    return 1;
+}
+
 static void MixLocked(float *stereo, size_t frame_count, int output_channels)
 {
     memset(stereo, 0, frame_count * output_channels * sizeof(float));
@@ -490,7 +550,13 @@ static void MixLocked(float *stereo, size_t frame_count, int output_channels)
              * applying it to source PCM. Keep this after spatial attenuation. */
             float dry_left = (float)lrintf(left * sample->dry * master_dry * 2048.0f) / 2048.0f;
             float dry_right = (float)lrintf(right * sample->dry * master_dry * 2048.0f) / 2048.0f;
+            double step = (double)sample->rate / driver_rate;
             int wet_gain = (int)lrintf(Clamp(ReverbVolume(left, right) * sample->wet * master_wet, 0, 1) * 2048.0f);
+            if (step > 1) {
+                dry_left = (int)(dry_left * 2048 / step) / 2048.0f;
+                dry_right = (int)(dry_right * 2048 / step) / 2048.0f;
+                wet_gain = (int)(wet_gain / step);
+            }
             for (size_t i = 0; i < count; ++i) {
                 float l, r;
                 if (sample->stream) {
@@ -499,6 +565,10 @@ static void MixLocked(float *stereo, size_t frame_count, int output_channels)
                 int index = sample->active_buffer;
                 size_t length = sample->frames[index];
                 if (sample->cursor >= length) {
+                    if (length) {
+                        sample->resample_previous[0] = sample->pcm[index][(length - 1) * sample->channels];
+                        sample->resample_previous[1] = sample->pcm[index][length * sample->channels - 1];
+                    }
                     if (sample->buffered) {
                         sample->frames[index] = 0;
                         sample->cursor -= length;
@@ -529,6 +599,7 @@ static void MixLocked(float *stereo, size_t frame_count, int output_channels)
                     r += (sample->pcm[index][next * 2 + 1] - r) * fraction;
                 }
                 }
+                if (step > 1 && !DownsampleFrame(sample, step, &l, &r)) break;
                 size_t output = (chunk + i) * output_channels;
                 /* The original mono mixer takes a mono source's left gain;
                  * stereo sources add both independently weighted channels. */
@@ -543,7 +614,7 @@ static void MixLocked(float *stereo, size_t frame_count, int output_channels)
                 int32_t send = ReverbInteger((double)(sample->channels == 2 ? l + r : l) * 32768.0 * wet_gain);
                 wet_buffer[i] = (int32_t)((uint32_t)wet_buffer[i] + (uint32_t)send);
                 if (wet_gain) wet_active[i] = 1;
-                sample->cursor += (double)sample->rate / driver_rate;
+                sample->cursor += step;
             }
             if (sample->stream) pthread_cond_signal(&sample->stream->wake);
         }
@@ -773,7 +844,7 @@ SAMPLE_SETTER(AIL_set_sample_adpcm_block_size, (void *handle, int size), sample-
 SAMPLE_SETTER(AIL_set_sample_playback_rate, (void *handle, int rate), sample->rate = rate > 0 ? rate : driver_rate)
 SAMPLE_GETTER(int, AIL_sample_playback_rate, 0, sample->rate)
 SAMPLE_SETTER(AIL_stop_sample, (void *handle), sample->status = AUDIO_STOPPED)
-SAMPLE_SETTER(AIL_end_sample, (void *handle), sample->status = AUDIO_DONE; sample->cursor = 0)
+SAMPLE_SETTER(AIL_end_sample, (void *handle), sample->status = AUDIO_DONE; sample->cursor = 0; memset(sample->resample_previous, 0, sizeof(sample->resample_previous)))
 SAMPLE_GETTER(unsigned long, AIL_sample_status, 1, (unsigned long)sample->status)
 SAMPLE_SETTER(AIL_set_sample_volume_levels, (void *handle, float left, float right), sample->left = Clamp(left, 0, 4); sample->right = Clamp(right, 0, 4))
 SAMPLE_SETTER(AIL_set_sample_reverb_levels, (void *handle, float dry, float wet), sample->dry = Clamp(dry, 0, 1); sample->wet = Clamp(wet, 0, 1))
@@ -792,6 +863,7 @@ void AIL_set_sample_address(void *handle, const void *data, int size)
         sample->source = data;
         sample->source_bytes = size > 0 ? (size_t)size : 0;
         sample->prepared = sample->buffered = 0;
+        memset(sample->resample_previous, 0, sizeof(sample->resample_previous));
         sample->cursor = 0;
     }
     pthread_mutex_unlock(&audio_mutex);

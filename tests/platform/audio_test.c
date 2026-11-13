@@ -33,8 +33,8 @@ static void MakeWave(void)
     Put32(wave + 16, 16);
     Put16(wave + 20, 1);
     Put16(wave + 22, 2);
-    Put32(wave + 24, 48000);
-    Put32(wave + 28, 192000);
+    Put32(wave + 24, 44100);
+    Put32(wave + 28, 176400);
     Put16(wave + 32, 4);
     Put16(wave + 34, 16);
     memcpy(wave + 36, "data", 4);
@@ -87,7 +87,7 @@ int main(void)
     struct { MacAudioSoundInfo info; uint64_t guard; } metadata = { .guard = UINT64_C(0x123456789abcdef0) };
     CHECK(AIL_WAV_info(wave, &metadata.info));
     CHECK(metadata.guard == UINT64_C(0x123456789abcdef0));
-    CHECK(metadata.info.format == 1 && metadata.info.rate == 48000 && metadata.info.channels == 2 && metadata.info.bits == 16);
+    CHECK(metadata.info.format == 1 && metadata.info.rate == 44100 && metadata.info.channels == 2 && metadata.info.bits == 16);
     CHECK(metadata.info.samples == 4 && metadata.info.data_len == 16 && metadata.info.data_ptr == wave + 44);
     /* WAVE_FORMAT_EXTENSIBLE PCM with JUNK/bext chunks, as shipped in mod IWDs. */
     static unsigned char extensible[12 + 8 + 4 + 8 + 40 + 8 + 2 + 8 + 16];
@@ -100,8 +100,8 @@ int main(void)
     Put32(p + 28, 40);
     Put16(p + 32, 0xfffe);
     Put16(p + 34, 2);
-    Put32(p + 36, 48000);
-    Put32(p + 40, 192000);
+    Put32(p + 36, 44100);
+    Put32(p + 40, 176400);
     Put16(p + 44, 4);
     Put16(p + 46, 16);
     Put16(p + 48, 22);
@@ -116,16 +116,16 @@ int main(void)
     CHECK(AIL_WAV_info(extensible, &extended));
     CHECK(extended.format == 1 && extended.channels == 2 && extended.bits == 16 && extended.samples == 4);
     CHECK(extended.data_ptr == extensible + 90 && extended.data_len == 16);
-    CHECK(AIL_size_processed_digital_audio(24000, 1, 1, &metadata.info) == 4);
+    CHECK(AIL_size_processed_digital_audio(22050, 1, 1, &metadata.info) == 4);
     int16_t converted[4] = { 0, 0, 12345, 23456 };
-    CHECK(AIL_process_digital_audio(converted, 4, 24000, 1, 1, &metadata.info) == 4);
+    CHECK(AIL_process_digital_audio(converted, 4, 22050, 1, 1, &metadata.info) == 4);
     CHECK(abs(converted[0] + 4096) <= 1 && abs(converted[1] + 4096) <= 1);
     CHECK(converted[2] == 12345 && converted[3] == 23456);
 
     void *sample = AIL_allocate_sample_handle((void *)(uintptr_t)1);
     CHECK(sample);
     AIL_set_sample_type(sample, 3, 0);
-    AIL_set_sample_playback_rate(sample, 48000);
+    AIL_set_sample_playback_rate(sample, 44100);
     AIL_set_sample_address(sample, metadata.info.data_ptr, 16);
     AIL_set_sample_volume_levels(sample, 0.25f, 0.75f);
     AIL_set_sample_loop_count(sample, 0);
@@ -152,7 +152,7 @@ int main(void)
     sample = AIL_allocate_sample_handle((void *)(uintptr_t)1);
     CHECK(sample);
     AIL_set_sample_type(sample, 1, 0);
-    AIL_set_sample_playback_rate(sample, 48000);
+    AIL_set_sample_playback_rate(sample, 44100);
     int16_t first_buffer[4] = { 8192, 8192, 8192, 8192 };
     int16_t second_buffer[4] = { -4096, -4096, -4096, -4096 };
     CHECK(AIL_sample_buffer_ready(sample) == 0);
@@ -169,13 +169,30 @@ int main(void)
     CHECK(AIL_sample_status(sample) == 2 && AIL_sample_buffer_ready(sample) == 0);
     AIL_release_sample_handle(sample);
 
+    /* Original Miles public-API capture: 2:1 integration retains a zero
+     * history sample and truncates the gain after dividing by the rate ratio. */
+    sample = AIL_allocate_sample_handle((void *)(uintptr_t)1);
+    CHECK(sample);
+    int16_t reduction[] = {-7000, 919, 8838, -7243, 676, 8595, -7486, 433};
+    AIL_set_sample_type(sample, 1, 0);
+    AIL_set_sample_address(sample, reduction, sizeof(reduction));
+    AIL_set_sample_playback_rate(sample, 88200);
+    AIL_set_sample_volume_levels(sample, .25125f, 0);
+    AIL_resume_sample(sample);
+    MacAudio_Mix(mixed, 16);
+    const int reduced[] = {-879, 1224, -825, 139};
+    for (int i = 0; i < 4; ++i)
+        CHECK((int)floorf(mixed[i * 2] * 32768) == reduced[i]);
+    CHECK(AIL_sample_status(sample) == 2);
+    AIL_release_sample_handle(sample);
+
     AIL_set_file_callbacks(Open, Close, Seek, Read);
     void *stream = AIL_open_stream((void *)(uintptr_t)1, "memory.wav", 0);
     CHECK(stream && opens == 1 && closes == 0);
     int stream_info[6] = { 111, 0, 0, 0, 0, 222 };
     AIL_stream_info(stream, &stream_info[1], &stream_info[2], &stream_info[3], &stream_info[4]);
     CHECK(stream_info[0] == 111 && stream_info[5] == 222);
-    CHECK(stream_info[1] == 192000 && stream_info[2] == 3 && stream_info[3] == sizeof(wave) && stream_info[4] == 32768 * 2 * sizeof(float));
+    CHECK(stream_info[1] == 176400 && stream_info[2] == 3 && stream_info[3] == sizeof(wave) && stream_info[4] == 32768 * 2 * sizeof(float));
     AIL_pause_stream(stream, 0);
     for (int attempt = 0; attempt < 1000; ++attempt) {
         MacAudio_Mix(mixed, 16);
