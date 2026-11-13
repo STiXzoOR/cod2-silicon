@@ -76,6 +76,8 @@ The original shaders are built from your own game files.
 - Sun glare fades with the visible area of the sun, using GPU occlusion queries.
 - Sun glare stays visible after loading or changing maps.
 - DirectX 7 water lighting uses the original normal and sunlight channels.
+- DirectX 7 water keeps its blue-gray color instead of turning purple or yellow
+  with the viewing angle.
 - Unsupported 3× antialiasing falls back to 2×, as in the original game.
 - Custom models accept Windows path separators, and cubemap exports crop
   their rendering border.
