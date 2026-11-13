@@ -259,6 +259,22 @@ int main(void)
             Cod2x_FeaturesClientState(state);
             assert(game->current.integer == 0 && !game->modified);
         }
+        dvar_t *join = (dvar_t *)Dvar_RegisterInt("ui_joinGametype", 3, 0, 10, 0);
+        int priorSets = setterCalls;
+        Cod2x_IwdFrame(CA_DISCONNECTED); /* First observed disconnected frame counts. */
+        assert(join->current.integer == 0 && setterCalls == priorSets + 1);
+        join->current.integer = 3;
+        Cod2x_IwdFrame(CA_DISCONNECTED);
+        assert(join->current.integer == 3 && setterCalls == priorSets + 1);
+        for (int state = CA_CONNECTING; state <= CA_ACTIVE; ++state)
+            Cod2x_IwdFrame(state);
+        assert(join->current.integer == 3 && setterCalls == priorSets + 1);
+        Cod2x_IwdFrame(CA_DISCONNECTED);
+        assert(join->current.integer == 0 && setterCalls == priorSets + 2);
+        Cod2x_IwdFrame(CA_ACTIVE);
+        Cod2x_IwdFrame(CA_DISCONNECTED); /* Already zero must not call the setter. */
+        assert(setterCalls == priorSets + 2);
+        puts("CoD2x IWD phase: initial/changed disconnected reset, stable and zero-valued frames untouched");
         puts("CoD2x client states: transition logs, revision clears, stock-active notice and stable frames pass");
     }
     {

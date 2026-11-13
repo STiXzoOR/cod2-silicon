@@ -228,6 +228,7 @@ void GScr_Cod2xHttpFrame(void) { frame_event('H'); }
 void GScr_Cod2xWebSocketFrame(void) { frame_event('W'); }
 void SV_Cod2xMatchFrame(void) { frame_event('M'); }
 void SV_Cod2xZpamFrame(void) { frame_event('Z'); }
+void Cod2x_IwdFrame(int state) { (void)state; frame_event('J'); }
 void CG_Cod2xRadarFrame(void) { frame_event('R'); }
 static void Cod2x_DemoClientFrame(void) { frame_event('D'); }
 void Cod2x_VmixFrame(int state) { (void)state; frame_event('V'); }
@@ -307,7 +308,7 @@ int main(void)
 #ifdef DEDICATED
     CHECK(!strcmp(frameTrace, "SHWMZ"));
 #else
-    CHECK(!strcmp(frameTrace, "FCIXUSHWMZRDV"));
+    CHECK(!strcmp(frameTrace, "FCIXUSHWMZJRDV"));
 #endif
     printf("extension frame trace before engine: %s\n", frameTrace);
 #endif

@@ -419,6 +419,7 @@ void CL_Cod2xMediaFrame(void)
 {
     if (!legacyHacks->cl_running)
         return;
+    Cod2x_IwdFrame(clientConnections[0].state);
     CG_Cod2xRadarFrame();
     Cod2x_DemoClientFrame();
     Cod2x_VmixFrame(clientConnections[0].state);
@@ -3718,12 +3719,9 @@ static void Cod2x_DemoDirectory(char directory[256])
 
 static void Cod2x_DemoClientDisconnect(void)
 {
-    const dvar_t *gametype = Dvar_FindVar("ui_joinGametype");
     Cod2x_DemoPlayback(0);
     if (cod2x_demoName && *cod2x_demoName->current.string)
         Dvar_SetString(cod2x_demoName, "");
-    if (gametype)
-        Dvar_SetInt(gametype, 0);
 }
 
 static void Cod2x_DemoStopRecording(void)

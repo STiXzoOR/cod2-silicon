@@ -283,6 +283,18 @@ void Cod2x_FeaturesFrame(int active, int demo)
 
 static void Cod2x_UpdateFrame(int state);
 
+/* The IWD phase follows zPAM and precedes radar, demo and vMix each frame. */
+void Cod2x_IwdFrame(int state)
+{
+    static int previous = -1;
+    if (state != previous && state == CA_DISCONNECTED) {
+        const dvar_t *gametype = Dvar_FindVar("ui_joinGametype");
+        if (gametype && gametype->current.integer != 0)
+            Dvar_SetInt(gametype, 0);
+    }
+    previous = state;
+}
+
 void Cod2x_FeaturesClientState(int state)
 {
     /* CoD2x reports the server's revision whenever g_cod2x changes, and again

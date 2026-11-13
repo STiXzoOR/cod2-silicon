@@ -39,6 +39,7 @@ void Cod2x_ZpamDirectEnd(int cancelled);
 void Cod2x_UpdateConfirmed(void);
 /* Startup boundary retained for the filesystem; archive setup belongs to the launcher. */
 void Cod2x_IwdStartup(const char *base);
+void Cod2x_IwdFrame(int state);
 /* fs_processedList: the IWD decisions of this file-system start and of the one before. */
 void Cod2x_IwdLogRotate(void);
 void Cod2x_IwdLogDirectory(const char *directory, const char *basepath, const char *game, int version,

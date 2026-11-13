@@ -151,7 +151,10 @@ int main(void)
     assert(test_cheats.current.enabled == 1); /* sv_cheats is never put back */
     assert(!*test_name.current.string && test_name.modified);
     assert(!strcmp(test_url.current.string, "https://example.test/"));
-    assert(test_gametype.current.integer == 0);
+    /* Archive state changes at the later pre-engine IWD phase, not here. */
+    printf("internal disconnect retains ui_joinGametype=%d (expected 3)\n", test_gametype.current.integer);
+    fflush(stdout);
+    assert(test_gametype.current.integer == 3);
     {
         int previous = setters;
         test_name.modified = test_url.modified = 1;
