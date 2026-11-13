@@ -16,8 +16,6 @@
 /* The selected Miles rate is the mix rate. CoreAudio converts that rate to
  * the device format; matching rates leave source samples unchanged. */
 #define AUDIO_RATE 44100
-/* Reverb delays are times; these turn 48 kHz frame counts into frames here. */
-#define REVERB_DELAY(frames48k) ((int)((frames48k) * (AUDIO_RATE / 48000.0) + 0.5))
 #define AUDIO_SAMPLES 256
 #define AUDIO_MAX_BYTES (256u * 1024u * 1024u)
 #define AUDIO_DRIVER ((void *)(uintptr_t)1)
@@ -25,7 +23,6 @@
 #define AUDIO_DONE 2
 #define AUDIO_PLAYING 4
 #define AUDIO_STOPPED 8
-#define REVERB_FRAMES 8192
 #define STREAM_FRAMES 32768
 #define STREAM_READ_BYTES (64u * 1024u)
 
@@ -81,9 +78,6 @@ static int driver_rate = 44100, driver_channels = 2;
 static int preferences[64];
 static float listener[3], rolloff = 1.0f, distance_factor = 1.0f;
 static float master_dry = 1.0f, master_wet = 0.0f;
-static float reverb[REVERB_FRAMES * 2];
-static size_t reverb_cursor;
-static int reverb_delay = REVERB_DELAY(4093);
 static char last_error[256];
 static MacAudioOpenCallback file_open;
 static MacAudioCloseCallback file_close;
@@ -91,6 +85,106 @@ static MacAudioSeekCallback file_seek;
 static MacAudioReadCallback file_read;
 static atomic_uint_fast64_t output_callbacks, output_frames, audible_frames, lock_misses;
 static _Atomic(float) output_peak;
+
+/* Measured software-reverb network: four damped combs followed by two
+ * allpass stages. Coefficients and single-precision state reproduce the
+ * original impulse responses; accumulation uses double precision. */
+#define REVERB_LINE_FRAMES 16782 /* longest delay at 384 kHz */
+#define REVERB_PRE_FRAMES 115202 /* largest preset predelay at 384 kHz */
+typedef struct {
+    float line[6][REVERB_LINE_FRAMES], gain[6];
+    int length[6], position[6];
+    float a, b, c, x1, x2, y1, y2;
+    int32_t predelay[REVERB_PRE_FRAMES];
+    int pre_position, pre_length;
+    uint64_t tail, tail_length;
+} MacReverb;
+static MacReverb room_reverb;
+static const float room_parameters[26][4] = {
+    {0,1.493f,.5f,.011f}, {.250f,.1f,0,.002f}, {.417f,.4f,.666f,.003f},
+    {.750f,1.499f,.166f,.011f}, {.208f,.478f,0,.004f}, {.300f,2.309f,.680f,.017f},
+    {.403f,4.279f,.5f,.030f}, {.500f,3.961f,.5f,.029f}, {.500f,2.886f,1.304f,.022f},
+    {.361f,7.284f,.332f,.030f}, {.500f,10,.300f,.030f}, {.153f,.259f,.550f,.030f},
+    {.361f,1.493f,.5f,.011f}, {.444f,2.697f,.638f,.020f}, {.250f,1.752f,.776f,.011f},
+    {.111f,3.145f,.472f,.088f}, {.111f,2.767f,.224f,.011f}, {.200f,.8f,.2f,.300f},
+    {.550f,3,.550f,.043f}, {.120f,.8f,.180f,.100f}, {.208f,1.652f,1.5f,.012f},
+    {.652f,2.886f,.250f,.021f}, {1,1.499f,.1f,.011f}, {.875f,8.392f,1.388f,.011f},
+    {.139f,10,1.5f,.011f}, {.486f,7.563f,4,.011f}
+};
+
+static void ConfigureReverb(int room)
+{
+    static const float delay[] = {.0297f,.0371f,.0411f,.0437f,.005f,.0017f};
+    MacReverb *r = &room_reverb;
+    const float *p = room_parameters[room];
+    float reciprocal_time = 1.0f / p[1];
+    for (int i = 0; i < 6; ++i) {
+        r->length[i] = (int)lrint((double)delay[i] * driver_rate);
+        if (r->position[i] >= r->length[i]) r->position[i] = 0;
+    }
+    for (int i = 0; i < 4; ++i)
+        r->gain[i] = pow((double).001f, (double)delay[i] * reciprocal_time);
+    r->gain[4] = pow((double).001f, (double).005f / .09685350209474564f);
+    r->gain[5] = pow((double).001f, (double).0017f / .032924000173807144f);
+    double cotangent = 1.0 / tan((double)p[2] * .39269909262657166f);
+    double a = 1.0 / (1.0 + sqrt(2.0) * cotangent + cotangent * cotangent);
+    r->a = a;
+    r->b = 2.0 * (1.0 - cotangent * cotangent) * a;
+    r->c = (1.0 - sqrt(2.0) * cotangent + cotangent * cotangent) * a;
+    r->pre_length = (int)lrint((double)p[3] * driver_rate);
+    r->tail_length = (uint64_t)ceil(((double)p[1] + p[3] + .1) * driver_rate);
+}
+
+/* The original conversion rounds to a 64-bit integer and retains its low
+ * 32 bits. Its indefinite value has zero low bits, including NaN/overflow
+ * from the zero-damping and maximum-damping presets. Avoid undefined casts. */
+static int32_t ReverbInteger(double value)
+{
+    if (!isfinite(value) || value >= 0x1p63 || value < -0x1p63) return 0;
+    uint32_t low = (uint32_t)(uint64_t)llrint(value);
+    int32_t result;
+    memcpy(&result, &low, sizeof(result));
+    return result;
+}
+
+static void ReverbFrame(int32_t input, int32_t output[2])
+{
+    MacReverb *r = &room_reverb;
+    int write = (r->pre_position + r->pre_length) % REVERB_PRE_FRAMES;
+    r->predelay[write] = (int32_t)((uint32_t)r->predelay[write] + (uint32_t)input);
+    int32_t delayed = r->predelay[r->pre_position];
+    r->predelay[r->pre_position] = 0;
+    r->pre_position = (r->pre_position + 1) % REVERB_PRE_FRAMES;
+    double x = (double)delayed * r->a;
+    double y = x + 2.0 * r->x1 + r->x2 - (double)r->b * r->y1 - (double)r->c * r->y2;
+    r->x2 = r->x1; r->x1 = x;
+    r->y2 = r->y1; r->y1 = y + (double)1.0e-10f;
+    float sum = (double)r->line[1][r->position[1]] + r->line[0][r->position[0]]
+        + r->line[3][r->position[3]] + r->line[2][r->position[2]];
+    for (int i = 0; i < 4; ++i)
+        r->line[i][r->position[i]] = (double)r->gain[i] * r->line[i][r->position[i]] + y;
+    double old_first = r->line[4][r->position[4]];
+    double new_first = sum + (double)r->gain[4] * old_first;
+    r->line[4][r->position[4]] = new_first;
+    float first = old_first - (double)r->gain[4] * new_first;
+    double old_second = r->line[5][r->position[5]];
+    float feedback = (double)r->gain[5] * old_second;
+    double new_second = (double)first * .25f + feedback;
+    r->line[5][r->position[5]] = new_second;
+    output[0] = ReverbInteger(old_second - (double)r->gain[5] * new_second);
+    output[1] = ReverbInteger(old_second - (double)r->gain[5] * ((double)first * .15f + feedback));
+    for (int i = 0; i < 6; ++i)
+        if (++r->position[i] == r->length[i]) r->position[i] = 0;
+}
+
+static float ReverbVolume(float left, float right)
+{
+    if (left <= 0) return right;
+    if (right <= 0) return left;
+    double ratio = pow((double)right / left, 10.0 / 3.0);
+    double pan = ratio / (1.0 + ratio);
+    return right / pow(pan, .3);
+}
 
 static int AudioError(const char *operation, OSStatus error)
 {
@@ -358,12 +452,14 @@ static void PrepareSample(MacAudioSample *sample)
 static void MixLocked(float *stereo, size_t frame_count, int output_channels)
 {
     memset(stereo, 0, frame_count * output_channels * sizeof(float));
-    float wet_buffer[1024 * 2];
+    int32_t wet_buffer[1024];
+    unsigned char wet_active[1024];
     for (size_t chunk = 0; chunk < frame_count; chunk += 1024) {
         size_t count = frame_count - chunk;
         if (count > 1024)
             count = 1024;
-        memset(wet_buffer, 0, count * 2 * sizeof(float));
+        memset(wet_buffer, 0, count * sizeof(*wet_buffer));
+        memset(wet_active, 0, count);
         for (int n = 0; n < AUDIO_SAMPLES; ++n) {
             MacAudioSample *sample = &samples[n];
             if (!sample->allocated || sample->status != AUDIO_PLAYING)
@@ -394,6 +490,7 @@ static void MixLocked(float *stereo, size_t frame_count, int output_channels)
              * applying it to source PCM. Keep this after spatial attenuation. */
             float dry_left = (float)lrintf(left * sample->dry * master_dry * 2048.0f) / 2048.0f;
             float dry_right = (float)lrintf(right * sample->dry * master_dry * 2048.0f) / 2048.0f;
+            int wet_gain = (int)lrintf(Clamp(ReverbVolume(left, right) * sample->wet * master_wet, 0, 1) * 2048.0f);
             for (size_t i = 0; i < count; ++i) {
                 float l, r;
                 if (sample->stream) {
@@ -443,22 +540,24 @@ static void MixLocked(float *stereo, size_t frame_count, int output_channels)
                 }
                 stereo[output] += dry_l;
                 if (output_channels == 2) stereo[output + 1] += dry_r;
-                wet_buffer[i * 2] += l * left * sample->wet;
-                wet_buffer[i * 2 + 1] += r * right * sample->wet;
+                int32_t send = ReverbInteger((double)(sample->channels == 2 ? l + r : l) * 32768.0 * wet_gain);
+                wet_buffer[i] = (int32_t)((uint32_t)wet_buffer[i] + (uint32_t)send);
+                if (wet_gain) wet_active[i] = 1;
                 sample->cursor += (double)sample->rate / driver_rate;
             }
             if (sample->stream) pthread_cond_signal(&sample->stream->wake);
         }
         for (size_t i = 0; i < count; ++i) {
-            size_t delayed = (reverb_cursor + REVERB_FRAMES - (size_t)reverb_delay) % REVERB_FRAMES;
-            float l = reverb[delayed * 2], r = reverb[delayed * 2 + 1];
+            int32_t wet[2] = {0, 0};
+            if (wet_active[i]) room_reverb.tail = room_reverb.tail_length;
+            if (room_reverb.length[0] && room_reverb.tail) {
+                ReverbFrame(wet_buffer[i], wet);
+                --room_reverb.tail;
+            }
             size_t output = (chunk + i) * output_channels;
-            reverb[reverb_cursor * 2] = wet_buffer[i * 2] + l * 0.45f;
-            reverb[reverb_cursor * 2 + 1] = wet_buffer[i * 2 + 1] + r * 0.45f;
-            stereo[output] = Clamp(stereo[output] + l * master_wet, -1, 1);
+            stereo[output] = Clamp(stereo[output] + (double)wet[0] / 67108864.0, -1, 1);
             if (output_channels == 2)
-                stereo[output + 1] = Clamp(stereo[output + 1] + (driver_channels == 1 ? l : r) * master_wet, -1, 1);
-            reverb_cursor = (reverb_cursor + 1) % REVERB_FRAMES;
+                stereo[output + 1] = Clamp(stereo[output + 1] + (double)wet[driver_channels == 1 ? 0 : 1] / 67108864.0, -1, 1);
         }
     }
 }
@@ -530,6 +629,8 @@ void *AIL_open_digital_driver(int frequency, int bits, int channels, int flags)
         return AUDIO_DRIVER;
     driver_rate = frequency;
     driver_channels = channels;
+    memset(&room_reverb, 0, sizeof(room_reverb));
+    ConfigureReverb(0);
     AudioComponentDescription description = {
         .componentType = kAudioUnitType_Output,
         .componentSubType = kAudioUnitSubType_DefaultOutput,
@@ -582,8 +683,7 @@ void AIL_shutdown(void)
         free(samples[i].pcm[1]);
     }
     memset(samples, 0, sizeof(samples));
-    memset(reverb, 0, sizeof(reverb));
-    reverb_cursor = 0;
+    memset(&room_reverb, 0, sizeof(room_reverb));
     pthread_mutex_unlock(&audio_mutex);
 }
 
@@ -803,14 +903,10 @@ void AIL_set_digital_master_room_type(void *driver, int room)
 {
     (void)driver;
     pthread_mutex_lock(&audio_mutex);
-    /* Miles 6 Windows room table at 0x21155838, first float of each
-     * 16-byte entry. Both digital and Fast 2D provider room setters restore
-     * these master levels after SND_SetRoomtype's pre-fade wet assignment. */
-    static const float wet[26] = { 0.000f, 0.250f, 0.417f, 0.750f, 0.208f, 0.300f, 0.403f, 0.500f, 0.500f, 0.361f, 0.500f, 0.153f, 0.361f, 0.444f, 0.250f, 0.111f, 0.111f, 0.200f, 0.550f, 0.120f, 0.208f, 0.652f, 1.000f, 0.875f, 0.139f, 0.486f };
     if ((unsigned int)room >= 26) room = 0;
     master_dry = 1.0f;
-    master_wet = wet[room];
-    reverb_delay = REVERB_DELAY(2401 + (int)((unsigned int)room % 16) * 337);
+    master_wet = room_parameters[room][0];
+    ConfigureReverb(room);
     pthread_mutex_unlock(&audio_mutex);
 }
 
