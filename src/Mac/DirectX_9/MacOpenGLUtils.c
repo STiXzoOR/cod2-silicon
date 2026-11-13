@@ -293,8 +293,10 @@ int MacOpenGLUtils_GetDeclarationInfo(GLint *VSize, GLenum *VType, UINT32 *Compo
 int MacOpenGLUtils_GetSubPixelOffset(float *XOffset, float *YOffset)
 {
 #if COD2_APPLE_SDK
-    *XOffset = 0.0f;
-    *YOffset = 0.0f;
+    /* Screen shaders retain D3D clip coordinates. Match its half-texel
+     * lookup, with Y reversed for the bottom-up OpenGL render texture. */
+    *XOffset = 0.5f;
+    *YOffset = -0.5f;
 #else
     if (MacDisplay_GetCardType() == 2) {
 

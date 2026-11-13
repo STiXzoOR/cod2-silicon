@@ -9,7 +9,7 @@
 
 struct DxState dxState;
 r_backEndGlobals_t backEnd;
-static float subpixelX, subpixelY;
+static float subpixelX = 0.5f, subpixelY = -0.5f;
 static int constantCalls, offsetCalls;
 
 int MacOpenGLUtils_GetSubPixelOffset(float *x, float *y)
@@ -55,8 +55,8 @@ static void Check(int width, int height, GfxViewport viewport, GfxViewportBehavi
     /* Clip corners map to the viewport rectangle inside the actual NPOT image. */
     Close(offset[0] - scale[0], (viewport.x + (double)subpixelX) / width);
     Close(offset[0] + scale[0], (viewport.x + viewport.width + (double)subpixelX) / width);
-    Close(offset[1] - scale[1], (viewport.y + (double)subpixelY) / height);
-    Close(offset[1] + scale[1], (viewport.y + viewport.height + (double)subpixelY) / height);
+    Close(offset[1] - scale[1], 1.0 - (viewport.y + viewport.height - (double)subpixelY) / height);
+    Close(offset[1] + scale[1], 1.0 - (viewport.y - (double)subpixelY) / height);
 }
 
 int main(void)

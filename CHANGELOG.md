@@ -65,7 +65,7 @@ The original shaders are built from your own game files.
 - Shadow-cookie clears preserve scene depth near the bottom-left corner.
 - Glow samples the correct sky direction on widescreen displays; glow and menu
   blur align to pixel centers and cover the right edge.
-- Consecutive heat-distortion batches keep sampling the scene image.
+- Heat distortion samples the correct scene pixels, including consecutive batches.
 - Shellshock retains its previous frame while shadows and post effects draw.
 - Colored impact marks preserve red and blue; cylinder effects retain their tint
   and transparency.

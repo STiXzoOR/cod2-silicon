@@ -1024,6 +1024,9 @@ void RB_UpdateViewportConstants(void)
 #endif
     viewportCenterX = viewport.x * invRenderTargetWidth + halfViewportWidth;
     viewportCenterY = viewport.y * invRenderTargetHeight + halfViewportHeight;
+#if COD2_APPLE_SDK
+    viewportCenterY = 1.0f - viewportCenterY;
+#endif
 
     MacOpenGLUtils_GetSubPixelOffset(&xOffset, &yOffset);
     viewportCenterX += invRenderTargetWidth * xOffset;
