@@ -160,6 +160,8 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 - Console and chat support Ctrl+V paste, Ctrl+C clear and Ctrl+H backspace.
   Typed and pasted text is converted to the game's language encoding so
   accented letters and punctuation no longer turn into unrelated characters.
+- Scrolling outside a focused menu list moves focus to the next or previous
+  control, as in Windows 1.3.
 - Keypad navigation now works in menu lists, edit fields, focus movement and
   console history, matching the original keyboard alternatives.
 - Ambient tracks and music decode in the background with bounded buffers,

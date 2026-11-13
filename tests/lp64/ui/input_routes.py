@@ -43,6 +43,9 @@ def function(source, name):
 keys = function(active('src/PC/client_mp/cl_keys_mp.c'), 'CL_KeyEvent')
 start = keys.index('bypassUi = 0;')
 route = keys[start:keys.index('if (keyCatchers & 0x10)', start)]
+menu_keys = function(active('src/PC/ui_mp/ui_shared_mp.c'), 'Menu_HandleKey')
+focus_start = menu_keys.index('if (key == 9 ||')
+focus_fallback = menu_keys[focus_start:menu_keys.index('if (key >= 0xc8', focus_start)]
 oob = function(active('src/PC/ui_mp/ui_shared_mp.c'), 'Menus_HandleOOBClick')
 cleanup = oob[oob.index('int menuCount ='):oob.rfind('}')]
 source = out / 'routes.c'
@@ -75,7 +78,21 @@ static void route(int key) { int down = 1, keyCatchers = 8, bypassUi;
 ''' + route + '''gameplay++; }
 static void cleanup(displayContextDef_t *dc) { byte *d = (byte *)dc; int i,j,k,openCount;
 ''' + cleanup + '}\n' + oob + '''
+static int nextFocus, previousFocus;
+static itemDef_t *Menu_SetNextCursorItem(displayContextDef_t *dc, menuDef_t *m)
+{ (void)dc; (void)m; ++nextFocus; return NULL; }
+static itemDef_t *Menu_SetPrevCursorItem(displayContextDef_t *dc, menuDef_t *m)
+{ (void)dc; (void)m; ++previousFocus; return NULL; }
+static void focus_after_list_declines(int key) {
+  displayContextDef_t *dc = NULL; menuDef_t *menu = NULL;
+''' + focus_fallback + '''
+}
+
 int main(void) {
+  focus_after_list_declines(0xce); focus_after_list_declines(0xcd);
+  assert(previousFocus == 1 && nextFocus == 1);
+  focus_after_list_declines(0xb7); focus_after_list_declines(0xbd);
+  assert(previousFocus == 2 && nextFocus == 2);
   if (CASE_KEY) {
   cls.uiStarted = 1;
   bypass = 0; wants = 0; route(0xae); /* F8 while binding. */

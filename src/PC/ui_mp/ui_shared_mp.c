@@ -5376,7 +5376,7 @@ resume_menu:
     }
 
 #if defined(COD2_X64)
-    if (key == 9 || key == 0x9b || key == 0x9d || key == 0xbd) {
+    if (key == 9 || key == 0x9b || key == 0x9d || key == 0xbd || key == 0xcd) {
 #else
     if (key == 9 || key == 0x9b || key == 0x9d || key == 0x9c) {
 #endif
@@ -5385,7 +5385,7 @@ resume_menu:
     }
 
 #if defined(COD2_X64)
-    if (key == 0x9a || key == 0x9c || key == 0xb7) {
+    if (key == 0x9a || key == 0x9c || key == 0xb7 || key == 0xce) {
 #else
     if (key == 0x9a) {
 #endif
