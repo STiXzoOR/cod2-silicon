@@ -2175,7 +2175,12 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
             msec = rawMsec;
             useTimescale = 0;
         } else {
+#if COD2_APPLE_SDK
+            /* Windows Com_ModifyMsec 0x434cb0 uses nearest-even conversion. */
+            msec = (int)__builtin_rintf((float)rawMsec * com_codeTimeScale * ts);
+#else
             msec = (int)floorf((float)rawMsec * ts * com_codeTimeScale + 0.5f);
+#endif
             useTimescale = 1;
         }
     }
