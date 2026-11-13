@@ -142,6 +142,9 @@ extension KeyStore {
     // MARK: Start-up (boot calls this once)
     /// Applies the saved appearance, reopens Settings on the pane it was left on, and starts the daily check.
     func startSettings() {
+        onUpdateReady = { [weak self] version, installsOnQuit in
+            self?.notifyUpdateReady(version: version, installsOnQuit: installsOnQuit)
+        }
         if let raw = UserDefaults.standard.string(forKey: Self.settingsPaneKey), let pane = SettingsPane(rawValue: raw) { settingsPane = pane }
         applyAppearance()
         scheduleAutomaticUpdateCheck()

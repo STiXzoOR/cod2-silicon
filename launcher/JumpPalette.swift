@@ -21,15 +21,16 @@ struct JumpItem: Identifiable {
 
 @MainActor enum JumpIndex {
     /// Settings rows by their visible names (SettingsWin board), each with the pane it opens.
-    /// Rows the board shows only in some states (automatic updates, dismissed warnings) are left out.
+    /// Keep these names aligned with the actual panes; conditional rows are filtered below.
     static let settingsRows: [(title: String, pane: SettingsPane)] = [
         ("Game version", .general), ("Hide CoD2 Silicon while the game is running", .general), ("Appearance", .general),
         ("Refresh the server list when Servers opens", .general),
         ("Display", .display), ("Mode", .display), ("Resolution", .display), ("Vertical sync", .display), ("Texture sharpness at a distance", .display),
         ("Game data", .gameData), ("CD key", .gameData), ("Shaders", .gameData), ("Loadouts, demos and screenshots", .gameData),
-        ("Game versions installed", .gameData), ("Set up again", .gameData),
+        ("Game versions installed", .gameData), ("CoD2x menus and icons", .gameData), ("Set up again", .gameData),
         ("Send crash reports to CoD2 Silicon", .privacy), ("Send CoD2x crash reports to the CoD2x project", .privacy), ("Match summaries", .privacy),
-        ("Extra launch options", .advanced), ("Logs", .advanced), ("Launcher settings", .advanced),
+        ("Check for updates automatically", .updates),
+        ("Extra launch options", .advanced), ("Logs", .advanced), ("Warnings you dismissed", .advanced), ("Launcher settings", .advanced),
         ("Acknowledgements", .about), ("Release notes", .about),
     ]
     static func items(_ model: LauncherModel, query raw: String) -> [JumpItem] {
@@ -60,7 +61,7 @@ struct JumpItem: Identifiable {
                 result.append(JumpItem(id: "pane-" + pane.rawValue, section: .settings, title: pane.title, detail: "Settings",
                                        symbol: pane.symbol, open: { model.openSettings(pane) }))
             }
-            for row in settingsRows where matches(row.title) {
+            for row in settingsRows where matches(row.title) && !(model.usesLoadouts && row.title == "Texture sharpness at a distance") {
                 result.append(JumpItem(id: "row-" + row.title, section: .settings, title: row.title, detail: "Settings › \(row.pane.title)",
                                        symbol: "gearshape", open: { model.openSettings(row.pane) }))
             }

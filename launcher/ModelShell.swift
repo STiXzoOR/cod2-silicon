@@ -40,9 +40,8 @@ enum PlayerNameRules {
 
 @MainActor extension LauncherModel {
     // MARK: While the game runs
-    /// Settings › General › Hide CoD2 Silicon while the game is running. ship-settings owns the
-    /// setting; until it exists here the launcher hides, as it always has.
-    var hidesLauncherWhilePlaying: Bool { true }
+    /// Settings › General › Hide CoD2 Silicon while the game is running.
+    var hidesLauncherWhilePlaying: Bool { settings.hideWhilePlaying }
     /// The game has the screen: the launcher keeps its Dock icon (clicking it brings the launcher
     /// back), and its windows step aside if the player wants that.
     func gameTookOver() {

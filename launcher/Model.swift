@@ -38,7 +38,7 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
     var symbol: String {
         switch self {
         case .general: "gearshape"; case .display: "display"; case .gameData: "folder"; case .privacy: "lock"
-        case .updates: "arrow.down.circle"; case .advanced: "slider.horizontal.3"; case .about: "info.circle"
+        case .updates: "arrow.down.to.line"; case .advanced: "slider.horizontal.3"; case .about: "info.circle"
         }
     }
 }
@@ -57,7 +57,7 @@ enum UpdateState: Equatable {
     case failed(message: String)
 }
 
-enum ServerFilter: String, CaseIterable, Identifiable { case all = "All", stock = "Stock 1.3", codx = "CoD2x 1.4"; var id: String { rawValue } }
+enum ServerFilter: String, CaseIterable, Identifiable { case all = "All", stock = "Original 1.3", codx = "CoD2x 1.4.6.8"; var id: String { rawValue } }
 enum ServerSort: String { case ping, players, name }
 enum LibraryTab: String, CaseIterable, Identifiable { case matches = "Matches", demos = "Demos", screenshots = "Screenshots"; var id: String { rawValue } }
 
@@ -223,7 +223,7 @@ struct MediaEntry: Identifiable {
     /// Acknowledgements: the component whose licence is showing.
     @Published var selectedAcknowledgement: String?
     /// Integration hook: called with (version, installsOnQuit) when the automatic check finds a newer release.
-    /// ship-shell connects it to `notifyUpdateReady(version:installsOnQuit:)` at merge; nil until then.
+    /// Connected to shell notifications by `startSettings()`.
     var onUpdateReady: ((String, Bool) -> Void)?
     @Published var shaderRebuildMessage: String?
     /// Settings › Privacy › See What's Sent… is open.
@@ -488,7 +488,7 @@ struct MediaEntry: Identifiable {
     /// View › Hide Sidebar / Show Sidebar (⌃⌘S).
     func toggleSidebar() { sidebarVisibility = sidebarVisibility == .detailOnly ? .all : .detailOnly }
     /// Edit › Find (⌘F): focuses the current page's search. Servers listens to `serverSearchRequested`;
-    /// Configs keeps its own ⌘F inside the page (ship-configs may move it here).
+    /// Configs routes to the search in its active section.
     func findInPage() {
         switch page {
         case .servers: serverSearchRequested.toggle()
@@ -496,8 +496,11 @@ struct MediaEntry: Identifiable {
         case .configs: findInConfigs()  // ship-configs
         }
     }
-    /// View › Jump to… (⌘K). ship-shell builds the palette that `jumpPresented` shows.
-    func showJump() { guard canNavigate else { return }; jumpQuery = ""; jumpPresented = true }
+    /// View › Jump to… (⌘K): Configs searches settings; elsewhere it searches the launcher.
+    func showJump() {
+        guard canNavigate, !jumpToSetting() else { return }
+        jumpQuery = ""; jumpPresented = true
+    }
 
     // MARK: Loadouts and engine
     var usesLoadouts: Bool { (studio.session ?? configStudio)?.migrationCompleted == true }

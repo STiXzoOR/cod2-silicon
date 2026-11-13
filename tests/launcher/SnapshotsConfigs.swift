@@ -254,12 +254,15 @@ extension Snapshots {
             await waitReview()
             if screen == "configs-import" { discover.review?.setTarget("Main") } else { discover.review?.setMode(.everything) }
         case "servers-ready", "servers-ready-fixed":
-            // A game-written config saves every archived setting; the rules also read these three.
+            // A game-written config saves every archived setting; the rules also read these three. Scrim
+            // gets them too, so its check is known and the card can offer it as the loadout that fits.
             let store = try ConfigProfileStore(homeURL: home, dialect: .cod2x)
-            let main = try store.read(id: "Main")
-            var document = main.document
-            for (name, value) in [("m_filter", "0"), ("cl_mouseAccel", "0"), ("r_picmip_manual", "0")] { try document.setSetting(named: name, value: value) }
-            try store.update(id: "Main", document: document, expected: main.version, summary: "Changed 3 settings")
+            for id in ["Main", "Scrim"] {
+                let read = try store.read(id: id)
+                var document = read.document
+                for (name, value) in [("m_filter", "0"), ("cl_mouseAccel", "0"), ("r_picmip_manual", "0")] { try document.setSetting(named: name, value: value) }
+                try store.update(id: id, document: document, expected: read.version, summary: "Changed 3 settings")
+            }
             try model.studio.session?.refresh()
             let server = GameServer(address: "203.0.113.200:28960", fields: ["sv_hostname": "^3Desert ^7Fox ^1League", "mapname": "mp_matmata",
                 "g_gametype": "sd", "clients": "8", "sv_maxclients": "10", "protocol": "120", "shortversion": "1.4.6.8", "fs_game": "", "g_competitive": "1"],

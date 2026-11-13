@@ -117,8 +117,6 @@ import Foundation
         precondition(GameEngine.original.check(server: nil, lookedUp: false) == .lookUp)
         precondition(GameEngine.original.check(server: nil, lookedUp: true) == .go, "an unanswered server is the game's to try")
         let request = EngineRequest(link: link)
-        precondition(request.title == "This server needs CoD2x")
-        precondition(request.message == "This server runs CoD2x 1.4. Original 1.3 can only join Stock 1.3 servers. CoD2x stays on for later games; you can change this in Settings.")
 
         // Both engines take their server as an Apple event once running: never +connect or a password in argv.
         let plan = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", link: secret)

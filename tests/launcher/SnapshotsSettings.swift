@@ -75,8 +75,20 @@ extension Snapshots {
         try FileManager.default.createDirectory(at: demo.deletingLastPathComponent(), withIntermediateDirectories: true)
         try Data("demo".utf8).write(to: demo)
         model.settings.hideWhilePlaying = false; model.settings.refreshServersOnOpen = true
+        // MARK: - ship-integrate: Settings choices drive the shell and server join flow.
+        guard !model.hidesLauncherWhilePlaying, model.refreshServersOnOpen else {
+            print("FAIL: shell or server browser ignored the Settings choice"); return false
+        }
+        model.alwaysUseServerVersion = true
+        model.flushSettings()
+        guard model.isWarningDismissed(DismissibleWarning.switchVersion),
+              try JSONDecoder().decode(GameSettings.self, from: Data(contentsOf: saved)).dismissedWarnings.contains(DismissibleWarning.switchVersion) else {
+            print("FAIL: the server version choice was not saved with Settings"); return false
+        }
+        model.resetWarnings()
+        guard !model.alwaysUseServerVersion else { print("FAIL: Reset Warnings did not restore the version question"); return false }
         model.dismissWarning(DismissibleWarning.switchVersion)
-        guard model.isWarningDismissed(DismissibleWarning.switchVersion) else { print("FAIL: a dismissed warning was not remembered"); return false }
+        print("PASS: hide during play, refresh on opening Servers and Reset Warnings share the Settings choices")
         model.resetSettings()
         model.flushSettings()
         let reset = try JSONDecoder().decode(GameSettings.self, from: Data(contentsOf: saved))

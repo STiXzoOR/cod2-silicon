@@ -279,10 +279,6 @@ extension GameEngine {
 struct EngineRequest: Identifiable, Sendable {
     let link: LaunchLink
     var id: String { link.address }
-    var title: String { "This server needs CoD2x" }
-    var message: String {
-        "This server runs CoD2x 1.4. Original 1.3 can only join Stock 1.3 servers. CoD2x stays on for later games; you can change this in Settings."
-    }
 }
 
 /// The reports either engine writes into the app home (its fs_homepath) when it crashes

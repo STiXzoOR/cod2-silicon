@@ -59,17 +59,12 @@ struct ServerFilters: Codable, Equatable {
 /// Servers' own file, launcher-servers.json in the app home.
 struct ServerBrowserPrefs: Codable {
     var filters = ServerFilters()
-    /// The Switching game version sheet's “Don’t ask again”. MERGE(ship-settings): this moves to
-    /// `settings.dismissedWarnings` (key `DismissibleWarning.switchVersion`); `LauncherModel.alwaysUseServerVersion`
-    /// is the one accessor, and this field goes.
-    var alwaysUseServerVersion = false
     /// When you last launched on each server (canonical address), for Connect to Address's recent list.
     var launchedAt: [String: Date] = [:]
     init() {}
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         filters = (try? c.decodeIfPresent(ServerFilters.self, forKey: .filters)) ?? ServerFilters()
-        alwaysUseServerVersion = (try? c.decodeIfPresent(Bool.self, forKey: .alwaysUseServerVersion)) ?? false
         launchedAt = (try? c.decodeIfPresent([String: Date].self, forKey: .launchedAt)) ?? [:]
     }
 }
@@ -372,16 +367,14 @@ enum ServerPasswords {
         catch { notice = "Your server filters couldn’t be saved." }
     }
     /// Settings › General › Refresh the server list when Servers opens.
-    /// MERGE(ship-settings, ship/settings 9b87bf05): replace the body with `settings.refreshServersOnOpen`.
-    /// Default until then: false (nothing is contacted until Refresh).
-    var refreshServersOnOpen: Bool { false }
-    /// Switching game version › “Don’t ask again; always use the version the server runs”.
-    /// MERGE(ship-settings, ship/settings 9b87bf05): get → `isWarningDismissed(DismissibleWarning.switchVersion)`;
-    /// set true → `dismissWarning(DismissibleWarning.switchVersion)` (only true is ever set here; Settings ›
-    /// Advanced › Reset Warnings clears it). Then drop `ServerBrowserPrefs.alwaysUseServerVersion`.
+    var refreshServersOnOpen: Bool { settings.refreshServersOnOpen }
+    /// Shared with Settings › Advanced › Reset Warnings.
     var alwaysUseServerVersion: Bool {
-        get { loadServerPrefsOnce(); return serverPrefs.alwaysUseServerVersion }
-        set { loadServerPrefsOnce(); serverPrefs.alwaysUseServerVersion = newValue; saveServerPrefs() }
+        get { isWarningDismissed(DismissibleWarning.switchVersion) }
+        set {
+            if newValue { dismissWarning(DismissibleWarning.switchVersion) }
+            else { settings.dismissedWarnings.remove(DismissibleWarning.switchVersion) }
+        }
     }
     /// When you last launched on a server, for Connect to Address's recent addresses.
     func lastLaunched(_ address: String) -> Date? {

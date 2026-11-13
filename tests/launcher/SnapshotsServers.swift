@@ -141,13 +141,18 @@ extension Snapshots {
         defer { try? FileManager.default.removeItem(at: home) }
         try await ConfigsPreview.prepare(review, screen: "servers-ready", home: home)
         guard let server = review.selected else { print("FAIL: the ready-check server is not selected"); return false }
-        guard review.fittingLoadout(for: server.address, except: "Main") == nil else { print("FAIL: a loadout that breaks the rules was offered"); return false }
         let store = try ConfigProfileStore(homeURL: home, dialect: .cod2x)
         let scrim = try store.read(id: "Scrim")
         var document = scrim.document
-        // Scrim already keeps the competitive frame rate cap (250 fps); the server sets the rest while you play.
-        for (name, value) in [("m_filter", "0"), ("cl_mouseAccel", "0"), ("r_picmip_manual", "0")] { try document.setSetting(named: name, value: value) }
-        try store.update(id: "Scrim", document: document, expected: scrim.version, summary: "Changed 3 settings")
+        // MARK: - ship-integrate: the board fixture now fits; first make it break the cap.
+        try document.setSetting(named: "com_maxfps", value: "333")
+        try store.update(id: "Scrim", document: document, expected: scrim.version, summary: "Changed frame cap")
+        try review.studio.session?.refresh()
+        guard review.fittingLoadout(for: server.address, except: "Main") == nil else { print("FAIL: a loadout that breaks the rules was offered"); return false }
+        let mismatched = try store.read(id: "Scrim")
+        document = mismatched.document
+        try document.setSetting(named: "com_maxfps", value: "250")
+        try store.update(id: "Scrim", document: document, expected: mismatched.version, summary: "Restored frame cap")
         try review.studio.session?.refresh()
         guard review.fittingLoadout(for: server.address, except: "Main")?.id == "Scrim" else {
             let profile = try review.readySession?.readProfile("Scrim")

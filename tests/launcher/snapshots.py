@@ -142,6 +142,13 @@ def size(png):
     return struct.unpack(">II", data[16:24]), len(data)
 
 
+# MARK: - ship-integrate
+# Keep the original floor for full-size captures, but scale it down for smaller windows.
+# Sparse 900×700 Settings panes are complete at 1× even when their PNG is below 60 KB.
+def content_floor(width, height):
+    return min(60_000, 60_000 * width * height / (1440 * 900))
+
+
 run(out)
 for screen in screens:
     shots = {}
@@ -149,7 +156,7 @@ for screen in screens:
         png = out / f"{screen}-{appearance}.png"
         (width, height), length = size(png)
         assert (width, height) in sizes(screen), (png, width, height)
-        assert length > 60_000, f"{png} looks blank ({length} bytes)"
+        assert length > content_floor(width, height), f"{png} looks blank ({length} bytes)"
         shots[appearance] = png.read_bytes()
     assert shots["dark"] != shots["light"], screen
 
@@ -157,7 +164,7 @@ fallback = out / "fallback"
 run(fallback, "--fallback", "--only", "servers")
 for appearance in ["dark", "light"]:
     (width, height), length = size(fallback / f"servers-{appearance}.png")
-    assert (width, height) in WINDOW and length > 60_000
+    assert (width, height) in WINDOW and length > content_floor(width, height)
     assert (fallback / f"servers-{appearance}.png").read_bytes() != (out / f"servers-{appearance}.png").read_bytes()
 run(fallback, "--fallback", "--only", "configs-guided")
 
@@ -177,7 +184,7 @@ for variant in ["increase-contrast", "reduce-transparency"]:
         for appearance in ["dark", "light"]:
             png = folder / f"{screen}-{appearance}.png"
             (width, height), length = size(png)
-            assert (width, height) in WINDOW and length > 60_000, png
+            assert (width, height) in WINDOW and length > content_floor(width, height), png
             if variant == "reduce-transparency" and screen in sheets:
                 continue
             glass = any("glass" in item["name"] for item in audit[f"{screen}-{appearance}"])
@@ -194,7 +201,7 @@ for screen in screens:
         png = minimum / f"{screen}-{appearance}.png"
         (width, height), length = size(png)
         assert (width, height) in sizes(screen, minimum=True), (png, width, height)
-        assert length > 40_000, f"{png} looks blank ({length} bytes)"
+        assert length > content_floor(width, height), f"{png} looks blank ({length} bytes)"
         shots[appearance] = png.read_bytes()
     assert shots["dark"] != shots["light"], f"minimum {screen}"
 
@@ -205,7 +212,7 @@ run(motion, "--group", "configs", "--reduce-motion")
 for screen in configs:
     for appearance in ["dark", "light"]:
         (width, height), length = size(motion / f"{screen}-{appearance}.png")
-        assert (width, height) in WINDOW and length > 60_000, (screen, appearance, width, height, length)
+        assert (width, height) in WINDOW and length > content_floor(width, height), (screen, appearance, width, height, length)
 
 # Window-driving suites from every unit (setup keyboard and validation, page actions with real saved
 # settings and media, …), each isolated from the player's home in a private one below the output.
@@ -238,7 +245,7 @@ run(out / "overlays", "--overlays")
 for overlay in overlays:
     for appearance in ["dark", "light"]:
         (width, height), length = size(out / "overlays" / f"overlay-{overlay}-{appearance}.png")
-        assert width >= 1440 and height >= 900 and length > 60_000, (overlay, appearance, width, height, length)
+        assert width >= 1440 and height >= 900 and length > content_floor(width, height), (overlay, appearance, width, height, length)
 
 # Expert's group rail as navigation in a real window: active and inactive, with the window's sidebar
 # hidden and shown by its own toolbar button, and resized to the minimum and back.
@@ -247,7 +254,7 @@ run(navigation, "--navigation")
 for step in ["active", "inactive", "sidebar-hidden", "sidebar-shown", "minimum", "minimum-sidebar-hidden", "minimum-sidebar-shown", "resized-back"]:
     for appearance in ["dark", "light"]:
         (width, height), length = size(navigation / f"navigation-{step}-{appearance}.png")
-        assert (width, height) in (MINIMUM if step.startswith("minimum") else WINDOW) and length > 40_000, (step, appearance, width, height, length)
+        assert (width, height) in (MINIMUM if step.startswith("minimum") else WINDOW) and length > content_floor(width, height), (step, appearance, width, height, length)
 
 for variant in ["increase-contrast", "reduce-transparency", "reduce-motion"]:
     folder = out / f"pages-{variant}"
@@ -256,7 +263,7 @@ for variant in ["increase-contrast", "reduce-transparency", "reduce-motion"]:
         for appearance in ["dark", "light"]:
             png = folder / f"{screen}-{appearance}.png"
             (width, height), length = size(png)
-            assert (width, height) in sizes(screen) and length > 60_000, png
+            assert (width, height) in sizes(screen) and length > content_floor(width, height), png
 
 # The harness exits non-zero on any shape-audit finding, so reaching here means none.
 print(f"PASS: {len(screens) * 2} launcher screens (main window 1440x900, Settings 900x700 points) in dark and light, plus the material fallback, with bundled fonts"

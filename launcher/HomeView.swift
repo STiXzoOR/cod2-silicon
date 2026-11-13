@@ -509,8 +509,7 @@ private struct JumpBackInCard: View {
     init(model: LauncherModel) { self.model = model; artwork = model.artwork }
     var body: some View {
         ContentPanel(radius: 20, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
-            // ship-servers adds the Recent scope; at merge this opens Servers on Recent.
-            PanelHeading(title: "Jump back in", action: "All Recent") { model.navigate(to: .servers) }
+            PanelHeading(title: "Jump back in", action: "All Recent") { model.showRecentServers() }
                 .disabled(!model.canNavigate)
             let recent = model.homeRecent
             if recent.isEmpty {

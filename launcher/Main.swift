@@ -166,7 +166,7 @@ struct LauncherCommands: Commands {
             Button("Import Config…") { model.importConfig() }.keyboardShortcut("o", modifiers: .command).disabled(!model.canImport)
             Button("Paste Config") { model.pasteConfig() }.keyboardShortcut("v", modifiers: [.command, .shift]).disabled(!model.canImport)
             Button("Export Loadout…") { model.showMainWindow(); model.exportLoadout() }
-                .keyboardShortcut("e", modifiers: [.command, .shift]).disabled(!model.canNavigate || studio.profiles.isEmpty)
+                .keyboardShortcut("e", modifiers: [.command, .shift]).disabled(!model.canExportLoadout)
             Divider()
             Button("Show Game Data in Finder") { model.showGameDataInFinder() }.disabled(model.dataPath.isEmpty)
             Button("Show My Files in Finder") { model.showMyFilesInFinder() }
@@ -191,8 +191,10 @@ struct LauncherCommands: Commands {
         }
     }
     @ViewBuilder private var serverMenu: some View {
-        Button("Refresh Server List") { show(.servers); model.refresh() }.keyboardShortcut("r", modifiers: .command)
-            .disabled(!model.canNavigate || model.refreshing)
+        Button(model.refreshing ? "Stop Refreshing" : "Refresh Server List") {
+            show(.servers)
+            if model.refreshing { model.cancelRefresh() } else { model.refresh() }
+        }.keyboardShortcut("r", modifiers: .command).disabled(!model.canNavigate)
         Button("Filters…") { show(.servers); model.showServerFilters() }.keyboardShortcut("f", modifiers: [.command, .option]).disabled(!model.canNavigate)
         Divider()
         // ⌘↩ belongs to File › Launch, which also launches on this selection.
@@ -213,22 +215,21 @@ struct LauncherCommands: Commands {
         Button("Clear Recent Servers") { model.clearRecentServers() }.disabled(model.library.recent.isEmpty || !model.canNavigate)
     }
     @ViewBuilder private var loadoutMenu: some View {
-        let editable = model.canNavigate && !studio.profiles.isEmpty
         Menu("Use for Next Game") {
             ForEach(studio.profiles) { profile in
                 Toggle(profile.displayName, isOn: Binding(get: { profile.isActive }, set: { _ in model.useLoadoutForNextGame(profile.id) }))
             }
         }
-        .disabled(!editable)
+        .disabled(!model.canUseLoadouts)
         Divider()
-        Button("New Loadout…") { show(.configs); model.newLoadout() }.keyboardShortcut("n", modifiers: .command).disabled(!editable)
-        Button("Duplicate") { show(.configs); model.duplicateLoadout() }.keyboardShortcut("d", modifiers: [.command, .shift]).disabled(!editable)
-        Button("Rename…") { show(.configs); model.renameLoadout() }.disabled(!editable)
+        Button("New Loadout…") { show(.configs); model.newLoadout() }.keyboardShortcut("n", modifiers: .command).disabled(!model.canNewLoadout)
+        Button("Duplicate") { show(.configs); model.duplicateLoadout() }.keyboardShortcut("d", modifiers: [.command, .shift]).disabled(!model.canDuplicateLoadout)
+        Button("Rename…") { show(.configs); model.renameLoadout() }.disabled(!model.canRenameLoadout)
         Divider()
-        Button("Run Check-up") { model.showMainWindow(); model.openCheckup() }.disabled(!model.canNavigate)
-        Button("Show History") { model.showMainWindow(); model.showHistory() }.disabled(!editable)
+        Button("Run Check-up") { model.showMainWindow(); model.openCheckup() }.disabled(!model.canUseLoadouts)
+        Button("Show History") { model.showMainWindow(); model.showHistory() }.disabled(!model.canUseLoadouts)
         Divider()
-        Button("Delete Loadout…") { show(.configs); model.requestDeleteLoadout() }.disabled(!editable || studio.profiles.count < 2)
+        Button("Delete Loadout…") { show(.configs); model.requestDeleteLoadout() }.disabled(!model.canDeleteLoadout)
     }
     private func selection(_ page: LauncherPage) -> Binding<Bool> {
         Binding(get: { !model.onboard && model.page == page }, set: { _ in show(page) })
