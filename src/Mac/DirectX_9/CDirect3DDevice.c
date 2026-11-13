@@ -3523,12 +3523,7 @@ HRESULT CDirect3DDevice_GetRenderState(const CDirect3DDevice *_this, D3DRENDERST
         *pValue = dev->blendOp;
         break;
     case D3DRS_SEPARATEALPHABLENDENABLE:
-#if defined(COD2_X64)
-        /* Mac 0x13c53 falls through to the CULLMODE store at 0x13bcf. */
-        *pValue = dev->cullMode;
-#else
         *pValue = dev->separateAlphaBlendEnable;
-#endif
         break;
     case D3DRS_SRCBLENDALPHA:
         *pValue = dev->srcBlendAlpha;
