@@ -1,8 +1,11 @@
 # WS13 — native performance and frame pacing
 
 Branch: `port/perf`. Machine: Apple M6, 12 cores, 24 GiB, macOS 27.0.1.
-Display verified with `system_profiler`: PA27JCV, 6016×3384 physical pixels,
-3008×1692 logical pixels, 60 Hz. Worktree: `cod2-native-wt/perf`.
+Display: PA27JCV, 5120×2880 native panel pixels (5K), 60 Hz. The measured
+desktop mode was 3008×1692 logical pixels with a 6016×3384 backing (2×).
+That backing size was mistaken for the physical resolution in the original
+`system_profiler` reading; later CoreGraphics native-mode enumeration confirmed
+5120×2880. Worktree: `cod2-native-wt/perf`.
 
 **The stable 333 FPS acceptance criterion is not established.** The native
 client runs Release, records/replays Toujane, and has substantially more CPU
@@ -348,8 +351,9 @@ headroom but does not meet the strict low-FPS criterion. 720p gives the most
 measured headroom if visual resolution is secondary. Inspect the actual
 drawable rather than assuming the requested mode succeeded. Fullscreen
 and borderless currently need a quiet, interactive retest: several requests
-had no fullscreen flag, some returned an 800×600 desktop, and true 6K desktop
-fullscreen was considerably slower. Do not select a mode merely because
+had no fullscreen flag, some returned an 800×600 desktop, and desktop
+fullscreen with a 6016×3384 backing was considerably slower. That workload
+exceeds the 5K panel's native pixel count. Do not select a mode merely because
 `r_fullscreen` reads 1.
 
 The `SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS=0` experiment did not establish correct
@@ -363,9 +367,12 @@ cost was tiny in the original adaptive runs as well.
 
 A 60 Hz panel cannot display 333 distinct scanouts per second, though
 uncapped engine rendering still controls input/update latency. Keep rendering
-at 1080p or 1440p instead of 6K; desktop fullscreen still presents a scaled
-frame to the 6016×3384 drawable. Request vsync off with `r_swapInterval 0` and
-check actual SDL swap interval, rather than setting an unregistered `r_vsync`.
+at 1080p or 1440p for the measured headroom; desktop fullscreen in these runs
+still presented a scaled frame to the 6016×3384 drawable, which macOS then
+scaled to the panel's 5120×2880 pixels. The drawable and FPS measurements above
+remain valid; they do not describe a native 6K panel. Request vsync off with
+`r_swapInterval 0` and check actual SDL swap interval, rather than setting an
+unregistered `r_vsync`.
 
 `cg_drawFPS Simple` is accepted and queried in the live console, but no FPS
 counter is visible in the saved game JPEG. `MTL_HUD_ENABLED=1` was passed on
