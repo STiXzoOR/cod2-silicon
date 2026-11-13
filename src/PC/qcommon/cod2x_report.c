@@ -31,7 +31,7 @@
 #define COD2X_ERROR_URL "https://master.cod2x.me/api/telemetry/cod2x-errors"
 #define COD2X_EXCEPTION_URL "https://master.cod2x.me/api/telemetry/cod2x-exceptions"
 /* An error report repeats only after a day, unless it was not delivered. */
-#define COD2X_ERROR_REPEAT_SECONDS (24 * 60 * 60)
+#define COD2X_ERROR_REPEAT_MS (24ULL * 60 * 60 * 1000)
 #define COD2X_FATAL_WAIT_MS 3000
 #define COD2X_PENDING_SUFFIX ".pending.json"
 #define COD2X_PENDING_MAX_AGE_DAYS 14
@@ -261,12 +261,24 @@ static int Cod2x_ReplyString(const char *body, const char *key, char *out, size_
 }
 
 /* ---- Sending ---- */
+/* History and each in-flight attempt retain their own delivery reference.
+   A late answer must never change a newer attempt's suppression state. */
+typedef struct {
+    int references, delivered;
+} Cod2xDelivery;
+
+static void Cod2x_DeliveryRelease(Cod2xDelivery *delivery)
+{
+    if (delivery && __atomic_sub_fetch(&delivery->references, 1, __ATOMIC_ACQ_REL) == 0)
+        free(delivery);
+}
+
 typedef struct {
     char *json;
     char pending[1100];
     int exception, timeout;
     volatile int finished;
-    volatile int *delivered;
+    Cod2xDelivery *delivered;
     Cod2xCrashSent sent;
     char reply[16384];
     size_t replyLength;
@@ -331,7 +343,7 @@ static void Cod2x_ReportSend(Cod2xPost *post)
         if (status >= 200 && status < 300) {
             Cod2x_Log("[ERROR] Report sent successfully (HTTP %d)", (int)status);
             if (post->delivered)
-                *post->delivered = 1;
+                __atomic_store_n(&post->delivered->delivered, 1, __ATOMIC_RELEASE);
         } else {
             Cod2x_Log("[ERROR] Report rejected by endpoint (HTTP %d)", (int)status);
         }
@@ -364,6 +376,7 @@ static void *Cod2x_ReportThread(void *data)
 {
     Cod2xPost *post = (Cod2xPost *)data;
     Cod2x_ReportSend(post);
+    Cod2x_DeliveryRelease(post->delivered);
     free(post->json);
     post->json = NULL;
     /* The waiting side may have gone; whoever comes second frees the post. */
@@ -386,7 +399,7 @@ static void Cod2x_Sleep(int milliseconds)
 }
 
 /* Sends on its own thread and waits at most wait ms (0: does not wait). */
-static void Cod2x_PostStart(char *json, int timeout, int wait, volatile int *delivered)
+static void Cod2x_PostStart(char *json, int timeout, int wait, Cod2xDelivery *delivered)
 {
     Cod2xPost *post = (Cod2xPost *)calloc(1, sizeof(*post));
     int waited = 0;
@@ -402,10 +415,13 @@ static void Cod2x_PostStart(char *json, int timeout, int wait, volatile int *del
     post->json = json;
     post->timeout = timeout;
     post->delivered = delivered;
+    if (delivered)
+        __atomic_add_fetch(&delivered->references, 1, __ATOMIC_RELAXED);
 #if defined(_WIN32)
     {
         HANDLE thread = CreateThread(NULL, 0, Cod2x_ReportThread, post, 0, NULL);
         if (!thread) {
+            Cod2x_DeliveryRelease(post->delivered);
             free(json);
             free(post);
             return;
@@ -417,6 +433,7 @@ static void Cod2x_PostStart(char *json, int timeout, int wait, volatile int *del
     pthread_attr_setdetachstate(&attributes, PTHREAD_CREATE_DETACHED);
     if (pthread_create(&thread, &attributes, Cod2x_ReportThread, post) != 0) {
         pthread_attr_destroy(&attributes);
+        Cod2x_DeliveryRelease(post->delivered);
         free(json);
         free(post);
         return;
@@ -431,7 +448,7 @@ static void Cod2x_PostStart(char *json, int timeout, int wait, volatile int *del
         free(post);
 }
 
-static void Cod2x_ReportPost(char *json, int timeout, int wait, volatile int *delivered)
+static void Cod2x_ReportPost(char *json, int timeout, int wait, Cod2xDelivery *delivered)
 {
     Cod2x_PostStart(json, timeout, wait, delivered);
 }
@@ -753,29 +770,50 @@ void Cod2x_ReportFatal(const char *message, const void *site)
    one was not delivered. */
 void Cod2x_ReportError(const char *kind, const char *message)
 {
-    static struct {
-        char message[256];
-        time_t sent;
-        volatile int delivered;
-    } reports[32];
-    static int next;
-    time_t now = time(NULL);
-    int i;
+    typedef struct ReportHistory {
+        char *message;
+        unsigned long long sent;
+        Cod2xDelivery *delivery;
+        struct ReportHistory *next;
+    } ReportHistory;
+    static ReportHistory *reports;
+    ReportHistory *record;
+    Cod2xDelivery *delivery;
+    unsigned long long now;
+#if defined(_WIN32)
+    now = GetTickCount64();
+#else
+    struct timespec ticks;
+    clock_gettime(CLOCK_MONOTONIC, &ticks);
+    now = (unsigned long long)ticks.tv_sec * 1000 + (unsigned long long)ticks.tv_nsec / 1000000;
+#endif
     if (!Cod2x_ReportConsent())
         return;
-    for (i = 0; i < 32; ++i) {
-        if (reports[i].sent && !strncmp(reports[i].message, message, sizeof(reports[i].message) - 1)) {
-            if (reports[i].delivered && now - reports[i].sent < COD2X_ERROR_REPEAT_SECONDS)
-                return;
-            break;
+    if (!message)
+        message = "";
+    for (record = reports; record && strcmp(record->message, message); record = record->next)
+        ;
+    if (record && __atomic_load_n(&record->delivery->delivered, __ATOMIC_ACQUIRE) &&
+        now - record->sent < COD2X_ERROR_REPEAT_MS)
+        return;
+    delivery = calloc(1, sizeof(*delivery));
+    if (!delivery)
+        return;
+    delivery->references = 1;
+    if (!record) {
+        record = calloc(1, sizeof(*record));
+        if (!record || !(record->message = strdup(message))) {
+            free(record);
+            free(delivery);
+            return;
         }
+        record->next = reports;
+        reports = record;
     }
-    if (i == 32)
-        i = next++ % 32;
-    snprintf(reports[i].message, sizeof(reports[i].message), "%s", message);
-    reports[i].sent = now;
-    reports[i].delivered = 0;
-    Cod2x_ReportPost(Cod2x_ErrorJson(kind, message, ""), 5000, 0, &reports[i].delivered);
+    Cod2x_DeliveryRelease(record->delivery);
+    record->delivery = delivery;
+    record->sent = now;
+    Cod2x_ReportPost(Cod2x_ErrorJson(kind, message, ""), 5000, 0, delivery);
 }
 
 /* ---- Crash reports left by the crash handler (cod2x-exceptions) ---- */
