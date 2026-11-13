@@ -8,6 +8,7 @@
 extern dvar_t *r_rendererInUse;
 extern DxGlobals dx;
 #include "imports.h"
+#include "r_cod2x_film.h"
 /* dvar globals */
 extern const dvar_t *com_statmon;
 extern const dvar_t *fx_sort;
@@ -1078,6 +1079,10 @@ void R_RenderScene(const refdef_t *refdef)
 
         R_UnlockSkinnedCache();
     }
+
+#if COD2X_FILM
+    R_AddCmdCod2xFilm(refdef);
+#endif
 
     {
         int debugEntCounts = (r_debugEntCounts)->current.integer;

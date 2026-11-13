@@ -1,6 +1,7 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
+#include "r_cod2x_film.h"
 #if defined(COD2_X64) && defined(__APPLE__)
 #include "platform/macos_system.h"
 extern float MacFeatures_GetCPUSpeedInGHz(void);
@@ -565,8 +566,19 @@ static void RB_DrawLinesCmd(GfxRenderCommandExecState *execState);
 static void RB_StencilPlanesCmd(GfxRenderCommandExecState *execState);
 static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState);
 
+#if COD2X_FILM
+static void RB_Cod2xFilmCmd(GfxRenderCommandExecState *execState)
+{
+    const GfxCmdCod2xFilm *cmd = (const GfxCmdCod2xFilm *)execState->cmd;
+    if (tess.indexCount || tess.optimizedIndexCount)
+        RB_EndSurface();
+    R_Cod2xFilm_Apply(&cmd->pass);
+    execState->cmd = (const byte *)cmd + cmd->header.byteCount;
+}
+#endif
+
 /* Mac table 0x36ace0: only slot 0 is the command-list terminator. */
-void (*const RB_RenderCommandTable[34])(GfxRenderCommandExecState *execState) = {
+void (*const RB_RenderCommandTable[])(GfxRenderCommandExecState *execState) = {
     NULL,
     RB_GotoCmd,
     RB_CallCmd,
@@ -633,6 +645,9 @@ void (*const RB_RenderCommandTable[34])(GfxRenderCommandExecState *execState) = 
     NULL,
 #endif
     RB_TouchAllImagesCmd,
+#if COD2X_FILM
+    RB_Cod2xFilmCmd,
+#endif
 };
 
 void RB_SetCodeConstant(int constant, vec_t x, vec_t y, vec_t z, vec_t w)

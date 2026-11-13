@@ -1,6 +1,7 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
+#include "r_cod2x_film.h"
 #include <stdio.h>
 /* dvar globals */
 extern const dvar_t *r_forceLod;
@@ -357,6 +358,25 @@ static inline __attribute__((always_inline)) void *R_AllocCmd(int byteCount, int
     cmd->byteCount = byteCount;
     return cmd;
 }
+
+#if COD2X_FILM
+void R_AddCmdCod2xFilm(const refdef_t *refdef)
+{
+    Cod2xFilmSettings settings;
+    if (!R_Cod2xFilm_Settings(&settings))
+        return;
+    GfxCmdCod2xFilm *cmd = R_AllocCmd(sizeof(*cmd), 0, GFX_CMD_COD2X_FILM);
+    if (!cmd)
+        return;
+    cmd->pass.x = refdef->x;
+    cmd->pass.y = refdef->y;
+    cmd->pass.width = refdef->width;
+    cmd->pass.height = refdef->height;
+    cmd->pass.targetWidth = ((const vidConfig_t *)imp_vidConfig)->width;
+    cmd->pass.targetHeight = ((const vidConfig_t *)imp_vidConfig)->height;
+    cmd->pass.settings = settings;
+}
+#endif
 
 static inline __attribute__((always_inline)) void *R_AllocCriticalCmd(int byteCount, unsigned short id)
 {
