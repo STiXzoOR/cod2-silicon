@@ -54,6 +54,16 @@ void TraceBindVertexArray(unsigned int array)
 
 
 static GLuint vertexProgram, fragmentProgram;
+/* This fixture exercises ordinary untagged geometry. Active x-ray targets and
+ * head masks are covered by the separate production CoD2x GL fixtures. */
+#if COD2X_XRAY_RENDER
+void Cod2xXray_GLHeadDraw(int before) { (void)before; }
+void R_Cod2xXrayDraw(unsigned int first, unsigned int last, unsigned int count,
+                    const void *indices, const void *renderTarget)
+{
+    (void)first; (void)last; (void)count; (void)indices; (void)renderTarget;
+}
+#endif
 static materialCommands_t commands;
 void *imp_tess = &commands;
 void *imp_backEnd;
