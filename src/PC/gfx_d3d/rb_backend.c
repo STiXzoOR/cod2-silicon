@@ -1272,10 +1272,19 @@ static void RB_ClearScreenCmd(GfxRenderCommandExecState *execState)
 
 static void RB_BACKEND_REGPARM2_ABI RB_UpdateColorInternal(const vec_t *floatColor, byte *color)
 {
+#if COD2_APPLE_SDK
+    /* Windows gfx 0x100328f0 writes RGBA without clamping; FISTP is
+       nearest-even after the single-precision product. */
+    color[0] = (byte)(int)__builtin_rintf(floatColor[0] * 255.0f);
+    color[1] = (byte)(int)__builtin_rintf(floatColor[1] * 255.0f);
+    color[2] = (byte)(int)__builtin_rintf(floatColor[2] * 255.0f);
+    color[3] = (byte)(int)__builtin_rintf(floatColor[3] * 255.0f);
+#else
     color[0] = (byte)(int)floorf(floatColor[0] * 255.0f + 0.5f);
     color[1] = (byte)(int)floorf(floatColor[1] * 255.0f + 0.5f);
     color[2] = (byte)(int)floorf(floatColor[2] * 255.0f + 0.5f);
     color[3] = (byte)(int)floorf(floatColor[3] * 255.0f + 0.5f);
+#endif
 }
 
 void RB_UpdateColor(const vec_t *color_allies, const vec_t *color_axis)

@@ -29,6 +29,7 @@ The original shaders are built from your own game files.
   overflowing callers' buffers.
 - Fresh CoD2x profiles now remember shadows, soft smoke, effect sorting,
   dynamic-light limits and model depth-prepass choices after restarting.
+- Team text colors now use Windows nearest-even byte conversion.
 - CoD2x spectator labels no longer leave later HUD drawing clipped when a
   crowded frame runs out of render commands.
 

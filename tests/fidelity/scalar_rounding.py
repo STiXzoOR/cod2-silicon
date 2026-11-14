@@ -21,6 +21,7 @@ def body(path, marker):
     return text[begin:end]
 
 color = body('src/PC/universal/dvar.c', 'byte Dvar_FloatToColorComponent(float value)')
+team = body('src/PC/gfx_d3d/rb_backend.c', 'RB_UpdateColorInternal(const vec_t *floatColor, byte *color)\n{')
 common = (ROOT / 'src/PC/qcommon/common.c').read_text()
 start = common.index('        float ts = com_timescale->current.value;')
 end = common.index('    if (msec <= 0)', start)
@@ -31,6 +32,7 @@ source = '''#include <assert.h>
 #include <stdio.h>
 typedef unsigned char byte;
 static byte color(float value) ''' + color + '''
+static void team_color(const float *floatColor, byte *color) ''' + team + '''
 static int frame(int rawMsec, float ts, float com_codeTimeScale) {
     int msec, useTimescale;
     {
@@ -48,7 +50,14 @@ int main(void) {
     assert(color(.3f) == 76 && color(.7f) == 178);
     assert(color(.5f) == 128 && color(.0f) == 0 && color(1.f) == 255);
     assert(color(-1.f) == 0 && color(2.f) == 255);
-    puts("Windows frame-time/color tie conversions pass");
+    float input[] = {.3f, .7f, .5f, 1.f};
+    byte teamColor[4];
+    team_color(input, teamColor);
+    assert(teamColor[0] == 76 && teamColor[1] == 178 && teamColor[2] == 128 && teamColor[3] == 255);
+    input[0] = -1.f; input[1] = 2.f;
+    team_color(input, teamColor);
+    assert(teamColor[0] == 1 && teamColor[1] == 254); /* Original wraps; no clamp. */
+    puts("Windows frame-time/dvar-color/team-color tie conversions pass");
 }
 '''
 fixture = a.output / 'scalar_rounding.c'
