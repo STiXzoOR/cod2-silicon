@@ -132,6 +132,20 @@ enum PlayedDate {
     func dispatches(rows: Int) -> [Dispatch] {
         HomeDispatches.list(version: version, releases: library.dispatches, news: library.news, next: rows >= 3 ? library.newsNext : nil, rows: rows)
     }
+    /// Every line the launcher has, for the What’s New dialog.
+    var allDispatches: [Dispatch] { dispatches(rows: 12) }
+    /// Home’s What’s New card (See All) and its chip at a narrow window.
+    func showNews() { present(.news) }
+    /// The button beside a line in the dialog: where it leads.
+    func openTitle(_ dispatch: Dispatch) -> String {
+        switch dispatch.open {
+        case "configs": "Open Configs"
+        case "servers": "Open Servers"
+        case "library": "Open Library"
+        case "updates": "Open Updates"
+        default: dispatch.version != nil ? "Open Updates" : "Read More"
+        }
+    }
     var dispatchesFoot: String { lastUpdateCheck.map { "Checked " + SettingsText.when($0) + "." } ?? "News appears after the first update check." }
     /// Whether a What’s New line leads anywhere: a place in the app, the Updates pane for a release, or a link.
     func canOpen(_ dispatch: Dispatch) -> Bool { dispatch.open != nil || dispatch.version != nil || dispatch.link != nil }
@@ -421,6 +435,16 @@ enum PlayedDate {
         if screen != "home-news-first" { previewNews() }
         switch screen {
         case "home-news-first": page = .home; previewMatches()
+        case "home-news-long", "home-news-all":
+            // Long news, as a release title and a paragraph from the network can be: the card shows what
+            // fits, the dialog everything.
+            page = .home; previewMatches()
+            let long = "Hosting a server from the launcher, player setups in Configs, a config checker, a loadout’s own resolution and vertical sync, and What’s New from the network. Read the full notes for what was tested and what was not."
+            library.dispatches = library.dispatches.map { var line = $0; line.title = "CoD2 Silicon \(version): hosting, player setups and the config checker"; line.summary = long; return line }
+                + [Dispatch(stamp: "13 OCT", title: "CoD2 Silicon 0.2.1", summary: "Fixes the resolution on 6K displays and a freeze when the server list refreshes while a game starts.",
+                            link: "https://github.com/STiXzoOR/cod2-silicon/releases", date: Date(timeIntervalSince1970: 1_791_849_600), version: "0.2.1")]
+            library.news = library.news.map { var line = $0; line.summary = "New in Configs: fourteen setups from the 2008 and 2009 seasons, each credited to the page it was published on and reviewed line by line before anything is imported."; return line }
+            if screen == "home-news-all" { present(.news) }
         case "home", "home-attention", "home-update", "home-crash", "home-crash-log", "home-crash-sent", "home-crash-not-sent", "home-running", "home-matches-off":
             page = .home; previewMatches()
             if screen == "home-attention" { approximate = true }

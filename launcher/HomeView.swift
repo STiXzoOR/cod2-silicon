@@ -27,7 +27,9 @@ struct HomeView: View {
             // tightened on shorter windows; past the minimum the page scrolls instead of overlapping.
             let heroTop = min(138, max(84, height - 762))
             let cardHeight = min(276, max(262, height - 624))
-            let cards = stacked ? 2 * cardHeight + 18 : cardHeight
+            // One row of cards at every size, so Home never needs scrolling at the minimum window. A window too
+            // narrow for three cards keeps two, and What's New becomes a chip that opens it as a dialog.
+            let cards = cardHeight
             let bottom = 40 + 32 + cards + 28
             let content = max(height, heroTop + heroHeight + 24 + bottom)
             ScrollView {
@@ -36,7 +38,7 @@ struct HomeView: View {
                         .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { heroHeight = $0 }
                         .padding(.top, heroTop)
                     VStack(alignment: .leading, spacing: 32) {
-                        HomeChips(model: model)
+                        HomeChips(model: model, news: stacked)
                         HomeCards(model: model, stacked: stacked, cardHeight: cardHeight, returning: !model.library.recent.isEmpty)
                     }
                     .padding(.bottom, 28)
@@ -364,17 +366,25 @@ private struct UpdatePill: View {
 /// The next game's loadout and frame cap, the display, and a chip for each thing that needs fixing.
 private struct HomeChips: View {
     @ObservedObject var model: LauncherModel
+    /// The window has no room for the What's New card: a chip opens it as a dialog instead.
+    var news = false
     @Environment(\.palette) private var palette
     var body: some View {
         let attention = model.homeAttention
         GlassContainer(spacing: 10) {
             ViewThatFits(in: .horizontal) {
-                HStack(spacing: 10) { loadoutChip; displayChip; resolutionChip; ForEach(attention) { attentionChip($0) } }
+                HStack(spacing: 10) { loadoutChip; displayChip; resolutionChip; ForEach(attention) { attentionChip($0) }; if news { newsChip } }
                 VStack(alignment: .leading, spacing: 10) {
-                    HStack(spacing: 10) { loadoutChip; displayChip }
+                    HStack(spacing: 10) { loadoutChip; displayChip; if news { newsChip } }
                     HStack(spacing: 10) { resolutionChip; ForEach(attention) { attentionChip($0) } }
                 }
             }
+        }
+    }
+    private var newsChip: some View {
+        Chip("What’s New. Shows the news and releases", size: .large, glass: true, action: model.showNews) {
+            Image(systemName: "newspaper").font(.system(size: 14)).foregroundStyle(palette.chipIcon)
+            Text("What’s New")
         }
     }
 
@@ -483,14 +493,14 @@ private struct HomeCards: View {
     var returning: Bool
     var body: some View {
         if stacked {
-            VStack(spacing: 18) {
-                JumpBackInCard(model: model).frame(height: cardHeight)
+            GeometryReader { proxy in
+                let unit = (proxy.size.width - 18) / (1.22 + 0.9)
                 HStack(alignment: .top, spacing: 18) {
-                    LastMatchCard(model: model)
-                    DispatchesCard(model: model)
+                    JumpBackInCard(model: model).frame(width: unit * 1.22)
+                    LastMatchCard(model: model).frame(width: unit * 0.9)
                 }
-                .frame(height: cardHeight)
             }
+            .frame(height: cardHeight)
         } else {
             GeometryReader { proxy in
                 let shares: [CGFloat] = returning ? [508, 298, 266] : [1.22, 0.9, 1]
@@ -575,7 +585,8 @@ private struct RecentRow: View {
             MapArtFrame(map: server.knownMap ?? "mp_toujane", image: server.knownMap == nil ? nil : image, size: .card, radius: Concentric.radius(in: 16, inset: 7))
             VStack(alignment: .leading, spacing: 3) {
                 Text(name).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1)
-                Text(compactDetail.isEmpty ? subtitle : compactDetail).font(.system(size: 12)).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                // One line: a wrapped detail would make this row taller than the others in a narrow card.
+                Text(compactDetail.isEmpty ? subtitle : compactDetail).font(.system(size: 12)).foregroundStyle(palette.secondary).lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if let played {
@@ -685,41 +696,88 @@ private struct DispatchesCard: View {
     @Environment(\.palette) private var palette
     var body: some View {
         ContentPanel(radius: 20, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
-            PanelHeading(title: "What's New", action: "Release Notes", perform: model.openReleaseNotes)
-            // As many lines as the card has room for: three, else two, else this version's alone.
+            // The card never runs past its edge: See All opens every line, in full, as a dialog.
+            PanelHeading(title: "What's New", action: "See All", perform: model.showNews)
+            // As many lines as the card has room for: three, else two, else this version's alone, with
+            // shorter text before fewer lines. The last choice always fits.
             ViewThatFits(in: .vertical) {
-                rows(model.dispatches(rows: 3))
-                rows(model.dispatches(rows: 2))
-                rows(model.dispatches(rows: 1))
+                rows(model.dispatches(rows: 3), summary: 3)
+                rows(model.dispatches(rows: 2), summary: 3)
+                rows(model.dispatches(rows: 2), summary: 2)
+                rows(model.dispatches(rows: 1), summary: 3)
+                rows(model.dispatches(rows: 1), summary: 0)
             }
             .padding(.top, 14)
             Spacer(minLength: 8)
-            Text(model.dispatchesFoot).font(.system(size: 12)).foregroundStyle(palette.tertiary)
+            Text(model.dispatchesFoot).font(.system(size: 12)).foregroundStyle(palette.tertiary).lineLimit(2)
         }
         .frame(maxHeight: .infinity)
     }
-    private func rows(_ list: [Dispatch]) -> some View {
+    private func rows(_ list: [Dispatch], summary: Int) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             ForEach(Array(list.enumerated()), id: \.offset) { _, dispatch in
                 if model.canOpen(dispatch) {
-                    Button { model.open(dispatch) } label: { row(dispatch).contentShape(Rectangle()) }
+                    Button { model.open(dispatch) } label: { NewsLine(dispatch: dispatch, titleLines: 2, summaryLines: summary).contentShape(Rectangle()) }
                         .buttonStyle(.plain).accessibilityElement(children: .combine)
                 } else {
-                    row(dispatch).accessibilityElement(children: .combine)
+                    NewsLine(dispatch: dispatch, titleLines: 2, summaryLines: summary).accessibilityElement(children: .combine)
                 }
             }
         }
     }
-    /// The date sits above the title: the card is 266 points wide at the smallest window, and a date
-    /// column beside the text would leave the sentence about 150.
-    private func row(_ dispatch: Dispatch) -> some View {
+}
+
+/// One line of What's New. The date sits above the title: the card is 266 points wide at the smallest
+/// window, and a date column beside the text would leave the sentence about 150. The card limits the
+/// lines of text; the dialog shows all of it (`nil`).
+private struct NewsLine: View {
+    var dispatch: Dispatch
+    var titleLines: Int?
+    var summaryLines: Int?
+    @Environment(\.palette) private var palette
+    var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(dispatch.stamp).font(.typewriter(12)).foregroundStyle(palette.address)
-            Text(dispatch.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
-            if !dispatch.summary.isEmpty {
-                Text(dispatch.summary).font(.system(size: 13)).foregroundStyle(palette.body).lineSpacing(2.6).fixedSize(horizontal: false, vertical: true)
+            Text(dispatch.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).lineLimit(titleLines)
+                .fixedSize(horizontal: false, vertical: true)
+            if !dispatch.summary.isEmpty, summaryLines != 0 {
+                Text(dispatch.summary).font(.system(size: 13)).foregroundStyle(palette.body).lineSpacing(2.6).lineLimit(summaryLines)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// What's New in full: every release and news line the launcher has, newest first, then what comes
+/// next. Home's card and its chip at a narrow window open it.
+struct HomeNewsSheet: View {
+    @ObservedObject var model: LauncherModel
+    @Environment(\.palette) private var palette
+    var body: some View {
+        let lines = model.allDispatches
+        SheetScaffold(icon: .mark, title: "What’s New", message: model.dispatchesFoot,
+                      actions: [SheetAction(title: "Release Notes", role: .leading, action: model.openReleaseNotes),
+                                .primary("Done") { model.dismissSheet() }]) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(lines.enumerated()), id: \.offset) { index, dispatch in
+                        HStack(alignment: .center, spacing: 12) {
+                            NewsLine(dispatch: dispatch, titleLines: nil, summaryLines: nil).accessibilityElement(children: .combine)
+                            if model.canOpen(dispatch) {
+                                Button(model.openTitle(dispatch)) { model.dismissSheet(); model.open(dispatch) }.controlSize(.small).fixedSize()
+                                    .accessibilityLabel("\(model.openTitle(dispatch)): \(dispatch.title)")
+                            }
+                        }
+                        .padding(.vertical, 12)
+                        .overlay(alignment: .top) { if index > 0 { Rectangle().fill(palette.separator).frame(height: 1) } }
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+            .frame(maxHeight: 380)
+            .background(palette.well, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
+        }
     }
 }
