@@ -248,7 +248,7 @@ def preprocess(root, path, mode, expanded=None, cache=None):
 
 
 def tables(text):
-    found = {}
+    found = []
     for match in re.finditer(r'\b(\w+)\s*\[[^]]*\]\s*=\s*\{', text):
         start = match.end()
         depth, end = 1, start
@@ -257,8 +257,18 @@ def tables(text):
             if text[end] == '{': depth += 1
             if text[end] == '}': depth -= 1
             if depth == 0: break
-        found[match[1]] = text[start:end]
+        found.append((match[1], match.start(), text[start:end]))
     return found
+
+
+def tables_at(found, offset):
+    # Functions in one file reuse local table names. A use reads the nearest
+    # definition before it; a table defined only below its use still counts.
+    view = {}
+    for name, position, body in found:
+        if position < offset or name not in view:
+            view[name] = body
+    return view
 
 
 def formatted_table(text, start, args, arrays):
@@ -384,7 +394,6 @@ def extract_source(root, mode):
             continue
         text, numbers = preprocess(root, path, mode, expanded, include_cache)
         text = strip_comments(text)
-        arrays = tables(text)
         rel = path.relative_to(root).as_posix()
         for m in ANY_REGISTER.finditer(text):
             if CALL.match(text, m.start()):
@@ -408,7 +417,9 @@ def extract_source(root, mode):
         for m in re.finditer(r'\b(flt_\w+)\s*=\s*\{\s*(0x[\da-fA-F]+)\s*\}', text):
             value = struct.unpack('!f', struct.pack('!I', int(m[2], 16)))[0]
             text = re.sub(r'\b' + m[1] + r'\.f\b', repr(value), text)
+        defined = tables(text)
         for match in CALL.finditer(text):
+            arrays = tables_at(defined, match.start())
             end = call_end(text, match.end())
             args = split_args(text[match.end():end])
             func = match[1]
