@@ -369,10 +369,10 @@ private struct HomeChips: View {
         let attention = model.homeAttention
         GlassContainer(spacing: 10) {
             ViewThatFits(in: .horizontal) {
-                HStack(spacing: 10) { loadoutChip; displayChip; ForEach(attention) { attentionChip($0) } }
+                HStack(spacing: 10) { loadoutChip; displayChip; resolutionChip; ForEach(attention) { attentionChip($0) } }
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 10) { loadoutChip; displayChip }
-                    HStack(spacing: 10) { ForEach(attention) { attentionChip($0) } }
+                    HStack(spacing: 10) { resolutionChip; ForEach(attention) { attentionChip($0) } }
                 }
             }
         }
@@ -384,7 +384,10 @@ private struct HomeChips: View {
         guard let fps = info.value else { return (nil, "Frame cap unavailable" + loadout, "Frame cap unavailable" + (info.name.map { ", \($0) loadout" } ?? "")) }
         let chip = FrameCap.chip(fps)
         let spokenLoadout = info.name.map { "\($0) loadout, " } ?? ""
-        return (chip.numeral, chip.text + loadout, spokenLoadout + (fps > 0 ? "\(fps) frames per second cap" : "no frame cap"))
+        // The resolution is the loadout's, so it sits with the loadout. Before loadouts it is a launcher setting, on the display chip.
+        let size = model.usesLoadouts ? model.nextGameResolution.value : nil
+        return (chip.numeral, chip.text + (size.map { " · " + SettingsText.resolution($0) } ?? "") + loadout,
+                spokenLoadout + (fps > 0 ? "\(fps) frames per second cap" : "no frame cap") + (size.map { ", " + $0.replacingOccurrences(of: "x", with: " by ") } ?? ""))
     }
 
     private var loadoutChip: some View { LoadoutChip(model: model, face: capFace) }
@@ -393,9 +396,27 @@ private struct HomeChips: View {
         let size = model.settings.resolution.replacingOccurrences(of: "x", with: " × ")
         let mode = ["exclusive": "Exclusive fullscreen", "borderless": "Borderless", "spaces": "Native Space", "windowed": "Window"][model.settings.fullscreen] ?? "Fullscreen"
         let spokenSize = model.settings.resolution.replacingOccurrences(of: "x", with: " by ")
-        return Chip("Display, \(spokenSize), \(mode.lowercased()). Open Display settings", size: .large, glass: true, action: { model.openSettings(.display) }) {
+        let spoken = model.usesLoadouts ? "Display mode, \(mode.lowercased())" : "Display, \(spokenSize), \(mode.lowercased())"
+        return Chip("\(spoken). Open Display settings", size: .large, glass: true, action: { model.openSettings(.display) }) {
             Image(systemName: "display").font(.system(size: 14)).foregroundStyle(palette.chipIcon)
-            Text("\(size) · \(mode)")
+            Text(model.usesLoadouts ? mode : "\(size) · \(mode)")
+        }
+    }
+
+    /// The loadout asks for a size this display can't show (it was made on a larger one).
+    @ViewBuilder private var resolutionChip: some View {
+        let next = model.nextGameResolution
+        if let used = next.used {
+            let asked = SettingsText.resolution(next.value)
+            Chip("This display can’t show \(next.value.replacingOccurrences(of: "x", with: " by ")). The game will use \(used.replacingOccurrences(of: "x", with: " by ")). Choose a resolution in Configs",
+                 size: .large, glass: true, action: model.openResolutionSettings) {
+                Image(systemName: "exclamationmark.triangle").font(.system(size: 14, weight: .medium)).foregroundStyle(palette.accent)
+                Text("This display can’t show \(asked) ·")
+                Text("Choose…").fontWeight(.semibold).foregroundStyle(palette.accent)
+            }
+            .overlay(Capsule().strokeBorder(palette.selectionStroke, lineWidth: 1).allowsHitTesting(false))
+            .disabled(!model.canNavigate)
+            .help("The game will use \(SettingsText.resolution(used)) on this display.")
         }
     }
 
@@ -441,7 +462,8 @@ private struct LoadoutChip: View {
         // While the game runs, it keeps the loadout it started with: the choice applies next time, so it waits.
         let entries: [PullDownMenu.Entry] = [.header("Use for your next game")]
             + choices.map { choice in
-                .item(choice.name, detail: choice.cap.map { $0 > 0 ? "\($0) fps" : "No cap" }, checked: choice.inUse, enabled: !model.gameRunning) {
+                .item(choice.name, detail: [choice.cap.map { $0 > 0 ? "\($0) fps" : "No cap" }, choice.resolution.map(SettingsText.resolution)].compactMap { $0 }.joined(separator: " · "),
+                      checked: choice.inUse, enabled: !model.gameRunning) {
                     model.useLoadoutForNextGame(choice.id)
                 }
             }

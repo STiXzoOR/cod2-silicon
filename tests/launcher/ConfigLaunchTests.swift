@@ -39,9 +39,23 @@ private enum InjectedFailure: Error { case write }
         let plan = try GameLaunchPlan(settings: settings, dataPath: "/Game", homePath: home.path, configStudio: ready)
         require(!plan.arguments.contains("sensitivity") && !plan.arguments.contains("SENSITIVITY"))
         require(!plan.arguments.contains("r_gamma") && !plan.arguments.contains("com_maxfps"))
-        for dvar in ["r_mode", "r_fullscreen", "r_borderless", "r_swapInterval", "logfile", "developer", "com_introPlayed", "fs_game", "net_port"] {
+        for dvar in ["r_fullscreen", "r_borderless", "logfile", "developer", "com_introPlayed", "fs_game", "net_port"] {
             require(plan.arguments.contains(dvar), "missing machine option \(dvar)")
         }
+        // Resolution and vertical sync belong to the loadout: never forced, and supplied once, archived,
+        // only while the loadout has none.
+        require(!plan.arguments.contains("r_mode") && !plan.arguments.contains("r_swapInterval"), "the launcher no longer sets the loadout's resolution or vertical sync")
+        func seta(_ plan: GameLaunchPlan, _ name: String) -> String? {
+            plan.arguments.indices.first { plan.arguments[$0] == "+seta" && plan.arguments[$0 + 1] == name }.map { plan.arguments[$0 + 2] }
+        }
+        let unset = try GameLaunchPlan(settings: settings, dataPath: "/Game", homePath: home.path, configStudio: ready, loadout: { _ in nil })
+        require(seta(unset, "r_mode") == "\"\(settings.resolution)\"" && seta(unset, "r_swapInterval") == "\"0\"",
+                "a loadout without them starts from the size chosen for this display, vertical sync off")
+        require(!unset.arguments.indices.contains { unset.arguments[$0] == "+set" && ["r_mode", "r_swapInterval"].contains(unset.arguments[$0 + 1]) })
+        let owned = try GameLaunchPlan(settings: settings, dataPath: "/Game", homePath: home.path, configStudio: ready,
+                                       loadout: { ["r_mode": "1024x768", "r_swapinterval": "1"][$0.lowercased()] })
+        require(!owned.arguments.contains("r_mode") && !owned.arguments.contains("r_swapInterval"), "a loadout's own resolution and vertical sync are left alone")
+        require(!GameSettings.machineDvarNames.contains("r_mode") && !GameSettings.machineDvarNames.contains("r_swapinterval"))
         require(try store.read(id: id).document.effectiveSetting(named: "sensitivity") == "3")
         require(!plan.arguments.contains("+exec"))
         // The intro films: once, on a new player's first plain launch; never with a link, a demo or forwarded arguments.

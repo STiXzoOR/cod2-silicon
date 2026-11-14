@@ -166,7 +166,9 @@ private final class WriteGate: @unchecked Sendable {
         require(main.profile.displayName == "Main" && main.metadata.dpi == 800, "migration creates Main with DPI metadata")
         require(main.document.effectiveSetting(named: "sensitivity") == "7.0", "effective case-insensitive last launcher override wins")
         require(main.document.effectiveSetting(named: "fs_basepath") == "licensed-data", "migration never applies fs_basepath")
-        require(main.document.effectiveSetting(named: "r_mode") == nil && main.document.effectiveSetting(named: "com_introPlayed") == nil, "machine and housekeeping values stay outside loadout")
+        require(main.document.effectiveSetting(named: "com_introPlayed") == nil, "machine and housekeeping values stay outside loadout")
+        require(main.document.effectiveSetting(named: "r_mode") == "1920x1080" && main.document.effectiveSetting(named: "r_swapInterval") == "1",
+                "the resolution and vertical sync the launcher used to set become the loadout's own")
         require(try store.activeSelection().profileID == "Main_2", "migration selects target only after applying it")
         let repeatResult = try ConfigMigration.run(store: store, input: input)
         require(repeatResult.alreadyCompleted, "migration is idempotent")

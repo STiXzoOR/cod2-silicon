@@ -11,7 +11,7 @@ extension Snapshots {
                                          "library-matches-empty", "library-matches-off", "library-matches-off-kept", "library-matches-error", "library-demos-selected",
                                          "library-screenshots-selected", "library-empty", "library-empty-screenshots", "library-reloaded",
                                          "library-error", "library-renaming", "library-rename-error", "library-trash", "library-running", "library-missing",
-                                         "library-trashed", "home-loadout", "home-loadout-unreadable"]
+                                         "library-trashed", "home-loadout", "home-loadout-unreadable", "home-loadout-resolution"]
     static let homeLibraryAccessibilityScreens = ["home", "home-crash-log", "home-first", "home-address", "home-attention", "home-running", "home-matches-off",
                                                   "library-matches", "library-demos", "library-screenshots"]
     static let homeLibraryLabels: [String: [String]] = [
@@ -27,6 +27,7 @@ extension Snapshots {
         "home-update-installing": ["Downloading version 0.4.0"],
         "home-loadout": ["Main loadout, 333 frames per second cap"],
         "home-loadout-unreadable": ["Frame cap unavailable"],
+        "home-loadout-resolution": ["Main loadout, 333 frames per second cap, 5120 by 2880", "This display can’t show 5120 by 2880. The game will use 3456 by 2234"],
         "library-matches": ["Toujane, Search & Destroy", "Check-up for Toujane · Search & Destroy", "Kept on this Mac", "Delete Summaries…"],
         "library-matches-empty": ["NO MATCHES YET", "Find a Server"],
         "library-matches-off": ["MATCH SUMMARIES ARE OFF", "Turn On in Settings…"],

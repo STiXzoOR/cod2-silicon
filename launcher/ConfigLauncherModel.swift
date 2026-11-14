@@ -150,6 +150,8 @@ import UniformTypeIdentifiers
             page = .configs; studio.level = .guided; studio.group = .frame
         case "configs-expert-rules": page = .configs; studio.level = .expert; studio.group = .net
         case "configs-guided-aim", "configs-running": page = .configs; studio.level = .guided; studio.group = .aim
+        // Graphics, with Display resolution listing the preview display's sizes.
+        case "configs-guided-picture": page = .configs; studio.level = .guided; studio.group = .gfx; refreshDisplay()
         case "configs-expert": page = .configs; studio.level = .expert; studio.group = .aim
         case "configs-text": page = .configs; studio.level = .expert; studio.group = .aim
         case "configs-history": page = .configs; studio.tab = .history

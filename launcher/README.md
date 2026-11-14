@@ -275,10 +275,18 @@ deduplicated and sorted by width then height. MainDisplay uses the CoreGraphics
 native-mode flag, with rotation applied. If no native mode is advertised it uses
 desktop coordinates conservatively, never the scaled backing or the largest mode.
 Fullscreen follows the active loadout’s monitor choice; windowed uses the main display.
-Screen changes, loadout changes and launch refresh the list. Unsupported saved sizes
-are normalized and explained in Display; Home and Ready read that same setting.
-New installs use native dimensions through 3840 × 2160, half the dimensions above it.
-Old extra resolution options move to the Resolution control, which owns that choice.
+Screen changes, loadout changes and launch refresh the list.
+
+The resolution and vertical sync belong to each loadout (`r_mode`, `r_swapInterval`): the
+launcher sets them once, archived, for a loadout that has neither (`GameSettings.loadoutDefaults`),
+and never again, so a change made in Configs or in the game's Graphics menu stays. Settings ›
+Display keeps what the game has no control for: the display and the mode (`r_fullscreen`,
+`r_borderless`), which are the only display values in `GameSettings.machineDvarNames`. Config
+Studio's Display resolution lists this display's sizes (`ConfigStudioModel.setDisplayResolutions`).
+A loadout size the display can't show is replaced by the game with the largest that fits inside
+(`MacPlatform_ChooseMode`); Home and Configs say so beforehand. A new loadout starts from native
+dimensions through 3840 × 2160, half the dimensions above it. Before loadouts exist (their set-up
+failed), Display still shows Resolution, Vertical sync and the rest, and applies them at every start.
 Trusted command-line options after `--` remain developer overrides.
 
 `GameSessionLog` drains stdout and stderr on a serial utility queue, filtering complete

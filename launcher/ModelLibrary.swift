@@ -11,6 +11,8 @@ struct LoadoutChoice: Identifiable, Equatable {
     let name: String
     let cap: Int?
     let inUse: Bool
+    /// The loadout's own resolution ("2560x1440"); nil until its first game gives it one.
+    var resolution: String? = nil
 }
 
 /// Something that keeps the next game from running as it should, with the place that fixes it.
@@ -185,14 +187,33 @@ enum PlayedDate {
             return (raw.flatMap(Int.init), profile.profile.displayName)
         } catch { return (nil, nil) }
     }
-    /// Home's loadout menu: every loadout with its frame cap, the one in use ticked. Empty before loadouts exist.
+    /// The next game's resolution. It belongs to the loadout; one that has none yet starts from the
+    /// size chosen for this display. `used` is set when the display can't show the loadout's size:
+    /// the game then takes the largest it offers that fits inside.
+    var nextGameResolution: (value: String, used: String?) {
+        guard usesLoadouts, let session = studio.session ?? configStudio else { return (settings.resolution, nil) }
+        let connection = serverConnection.address == lastServer?.address
+        let profile = (try? (connection ? serverConnection.profileID : nil).map(session.readProfile) ?? session.readActive()) ?? nil
+        guard let raw = profile?.document.effectiveSetting(named: "r_mode")?.trimmingCharacters(in: .whitespaces), DisplayResolution(raw) != nil else { return (settings.resolution, nil) }
+        guard let sizes = mainDisplay?.resolutions, !sizes.isEmpty, !sizes.contains(where: { $0.value == raw }) else { return (raw, nil) }
+        return (raw, DisplayResolutions.fitting(raw, in: sizes))
+    }
+    /// Home's loadout menu: every loadout with its frame cap and resolution, the one in use ticked. Empty before loadouts exist.
     var loadoutChoices: [LoadoutChoice] {
         guard usesLoadouts, let session = studio.session ?? configStudio else { return [] }
         return session.profiles.map { profile in
-            let cap = (try? session.readProfile(profile.id))?.document.effectiveSetting(named: "com_maxfps")
-                .flatMap { Int($0.trimmingCharacters(in: .whitespaces)) }
-            return LoadoutChoice(id: profile.id, name: profile.displayName, cap: cap, inUse: profile.isActive)
+            let document = (try? session.readProfile(profile.id))?.document
+            let cap = document?.effectiveSetting(named: "com_maxfps").flatMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+            let size = document?.effectiveSetting(named: "r_mode").map { $0.trimmingCharacters(in: .whitespaces) }.flatMap { DisplayResolution($0) != nil ? $0 : nil }
+            return LoadoutChoice(id: profile.id, name: profile.displayName, cap: cap, inUse: profile.isActive, resolution: size)
         }
+    }
+    /// Choose…: the next game's loadout in Configs, open at Display resolution.
+    func openResolutionSettings() {
+        guard usesLoadouts else { openSettings(.display); return }
+        openFrameSettings()
+        guard page == .configs else { return }
+        studio.group = .gfx; studio.search = "Display resolution"
     }
     /// Edit … in Configs: the next game's loadout, open at its frame settings (Settings › Display before loadouts exist).
     func openFrameSettings() {

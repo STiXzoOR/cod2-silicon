@@ -82,8 +82,12 @@ struct ConfigSettingSpec: Identifiable {
     let type: ConfigCatalogType
     let minimum: Double?
     let maximum: Double?
-    /// Names of an enumeration's values, in registration order.
-    let choices: [String]
+    /// Names of an enumeration's values, in registration order. The display resolution's are the
+    /// sizes this Mac's display offers (ConfigStudioModel.setDisplayResolutions), as the game lists them.
+    var choices: [String]
+    /// What a choice is called when its name is not what a person would read ("2560 × 1440 · Native").
+    var choiceTitles: [String: String] = [:]
+    func title(forChoice choice: String) -> String { choiceTitles[choice.lowercased()] ?? choice }
     /// The registered default as config text; nil when the default is dynamic.
     let defaultText: String?
     /// CoD2 Silicon sets this at every launch from Settings, so a loadout can't own it.
@@ -545,6 +549,10 @@ struct ConfigStudioFailure: Identifiable {
     private var textBase: Data?
 
     private(set) var specs: [ConfigSettingSpec] = []
+    private(set) var displayResolutions: [String] = []
+    private var nativeResolution: String?
+    /// The size a loadout without a resolution gets at its first game (GameSettings.loadoutDefaults).
+    private(set) var firstRunResolution: String?
     private var specsByName: [String: ConfigSettingSpec] = [:]
     private var protectedCounts: [ConfigPurposeGroup: Int] = [:]
     private var valueCache: (data: Data, values: [String: String])?
@@ -628,6 +636,7 @@ struct ConfigStudioFailure: Identifiable {
         }
         specs = built.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
         specsByName = Dictionary(specs.map { ($0.name.lowercased(), $0) }, uniquingKeysWith: { a, _ in a })
+        applyDisplayResolutions()
         protectedCounts = protected
         diffCache = [:]; sinceCache = nil
         self.catalog = catalog
@@ -850,6 +859,27 @@ struct ConfigStudioFailure: Identifiable {
                edit: { try $0.setSetting(named: spec.name, value: value) }, revert: { [weak self] in
             self?.restoreRaw(spec, previous, undo: undo)
         })
+    }
+    /// The sizes the game will offer for Display resolution on this display, largest last, and which
+    /// one is the display's own.
+    func setDisplayResolutions(_ sizes: [String], native: String?, firstRun: String? = nil) {
+        guard sizes != displayResolutions || native != nativeResolution || firstRun != firstRunResolution else { return }
+        displayResolutions = sizes; nativeResolution = native; firstRunResolution = firstRun
+        applyDisplayResolutions()
+        objectWillChange.send()
+    }
+    private func applyDisplayResolutions() {
+        guard let index = specs.firstIndex(where: { $0.name.lowercased() == "r_mode" }) else { return }
+        specs[index].choices = displayResolutions
+        specs[index].choiceTitles = Dictionary(displayResolutions.map { ($0.lowercased(), SettingsText.resolution($0) + ($0 == nativeResolution ? " · Native" : "")) }, uniquingKeysWith: { a, _ in a })
+        specsByName["r_mode"] = specs[index]
+    }
+    /// A loadout resolution this display can't show, with the one the game will use instead (the
+    /// largest it offers that fits inside, as MacPlatform_ChooseMode picks).
+    func unavailableResolution(_ value: String?) -> (asked: String, used: String)? {
+        guard let value = value?.trimmingCharacters(in: .whitespaces), DisplayResolution(value) != nil, !displayResolutions.isEmpty,
+              !displayResolutions.contains(value) else { return nil }
+        return (value, DisplayResolutions.fitting(value, in: displayResolutions.compactMap(DisplayResolution.init)))
     }
     func reset(_ spec: ConfigSettingSpec, undo: UndoManager? = nil) {
         guard let value = spec.defaultText else { return }

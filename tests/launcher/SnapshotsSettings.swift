@@ -9,7 +9,7 @@ extension Snapshots {
     /// SetAbout), their states, this unit's sheets (captured as -sheet.png) and alerts. Light variants come with every run.
     static let settingsScreens = [
         "settings", "settings-running", "settings-original", "settings-original-missing",
-        "settings-display", "settings-display-adjusted", "settings-display-windowed", "settings-display-restored",
+        "settings-display", "settings-display-windowed", "settings-display-restored",
         "settings-game-data", "settings-game-data-missing", "settings-game-data-building", "settings-set-up-again",
         "settings-cod2x-installed", "settings-cod2x-downloading", "settings-cod2x-error", "settings-sheet-replace-key",
         "settings-privacy", "settings-privacy-sent", "settings-reports", "settings-delete-summaries",
@@ -19,8 +19,8 @@ extension Snapshots {
         "about", "about-footer", "about-update", "settings-sheet-report", "settings-sheet-acknowledgement",
     ]
     /// Also rendered in the `--group pages` runs and read by `--accessibility`.
-    static let settingsPageScreens = ["settings-invalid", "settings-save-error", "settings-legacy", "settings-legacy-custom"]
-    static let settingsAccessibilityScreens = ["settings", "settings-display", "settings-display-adjusted", "about-footer", "settings-game-data", "settings-privacy", "settings-updates", "settings-advanced", "about"]
+    static let settingsPageScreens = ["settings-invalid", "settings-save-error", "settings-legacy", "settings-legacy-custom", "settings-legacy-display-adjusted"]
+    static let settingsAccessibilityScreens = ["settings", "settings-display", "about-footer", "settings-game-data", "settings-privacy", "settings-updates", "settings-advanced", "about"]
     static let settingsLabels: [String: [String]] = [
         "settings-invalid": ["Extra launch options", "Your last valid options still apply"],
         "settings-legacy": ["125 frames per second", "Custom frame cap", "Game volume"],
@@ -28,8 +28,8 @@ extension Snapshots {
         "settings-save-error": ["Problem: Your changes couldn’t be saved", "Try Again"],
         "settings": ["General", "Display", "Game Data", "Privacy", "Updates", "Advanced", "About", "Game version",
                      "Hide CoD2 Silicon while the game is running", "Appearance", "Refresh the server list when Servers opens", "Open Configs"],
-        "settings-display-adjusted": ["Resolution changed from 6016 × 3384 to 5120 × 2880", "Larger sizes are sharper and slower"],
-        "settings-display": ["Preview: the game fills the display", "Mode", "Resolution", "Vertical sync", "Restore Defaults"],
+        "settings-legacy-display-adjusted": ["Resolution changed from 6016 × 3384 to 5120 × 2880", "Larger sizes are sharper and slower"],
+        "settings-display": ["Preview: the game fills the display", "Mode", "Resolution, vertical sync and picture quality belong to each loadout", "Open Configs", "Restore Defaults"],
         "settings-game-data": ["Show in Finder", "Change…", "Replace…", "Rebuild", "Set Up Again…", "Game versions installed"],
         "settings-privacy": ["Send crash reports to CoD2 Silicon", "See What’s Sent…", "Send CoD2x crash reports to the CoD2x project",
                              "Match summaries", "Delete Summaries…", "Master servers"],
@@ -60,10 +60,10 @@ extension Snapshots {
         print("PASS: legacy resolution and monitor survive import; the selected named loadout takes precedence")
         let saved = model.home.appendingPathComponent("launcher-settings.json")
         let cfg = model.home.appendingPathComponent("main/launcher.cfg")
-        model.settings.vsync = true
+        model.settings.fullscreen = "windowed"
         try await Task.sleep(for: .milliseconds(500))
         let settings = try JSONDecoder().decode(GameSettings.self, from: Data(contentsOf: saved))
-        guard settings.vsync, try String(contentsOf: cfg, encoding: .utf8).contains("seta r_swapInterval \"1\"") else {
+        guard settings.fullscreen == "windowed", try String(contentsOf: cfg, encoding: .utf8).contains("seta r_fullscreen \"0\"") else {
             print("FAIL: auto-save did not persist the same value to JSON and game config"); return false
         }
         let validJSON = try Data(contentsOf: saved), validConfig = try Data(contentsOf: cfg)

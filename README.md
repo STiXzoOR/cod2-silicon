@@ -85,13 +85,13 @@ Its seven panes cover the launcher, display, game data, privacy, updates,
 advanced launch options and About. Changes save automatically. The renderer
 is OpenGL; Metal controls are not shown in this release. New installs start borderless at the display’s native size up to 3840 × 2160,
 or half its width and height above that (2560 × 1440 on a 5K panel).
-A saved supported size stays as chosen. Display lists unique sizes in ascending
-order, limited to the selected panel’s native pixels; an unavailable saved size
-moves down to the largest fitting size, with an explanation in Settings.
-Larger sizes are sharper and slower, and anti-aliasing adds to the work.
-Borderless stretches the picture to the desktop; Full Screen shows the selected
-size pixel for pixel. The other defaults are a 250 fps cap, vertical sync off
-and raw mouse input.
+The resolution and vertical sync belong to each loadout: change them in
+Configs or in the game’s own Graphics menu and they stay as you set them.
+Configs lists the sizes your display offers; a size it can’t show is replaced
+by the largest that fits, and Home tells you beforehand. Settings › Display
+keeps the display and the mode: Borderless stretches the picture to the
+desktop, Full Screen shows it pixel for pixel. The other defaults are a
+250 fps cap, vertical sync off and raw mouse input.
 
 **Configs** holds loadouts: frame cap, mouse, audio, graphics and binds, plus
 Check-up and History. Create, duplicate, rename, export or delete an unused

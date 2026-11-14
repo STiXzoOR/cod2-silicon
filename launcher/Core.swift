@@ -914,7 +914,10 @@ enum CoD2xFiles {
 }
 
 struct GameSettings: Codable, Sendable, Equatable {
-    static let machineDvarNames: Set<String> = ["r_mode", "r_fullscreen", "r_borderless", "r_swapinterval", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "com_introplayed", "logfile", "developer", "fs_basepath", "fs_homepath", "fs_game", "fs_cdpath", "fs_copyfiles", "fs_restrict", "loc_language", "dedicated", "com_hunkmegs", "net_port", "cl_matchsummaries"]
+    /// What CoD2 Silicon sets at every launch: the display mode, which the game has no control for,
+    /// and what must be decided before it starts. Resolution and vertical sync are not here: they
+    /// belong to each loadout, and the game's own Graphics menu changes them too.
+    static let machineDvarNames: Set<String> = ["r_fullscreen", "r_borderless", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "com_introplayed", "logfile", "developer", "fs_basepath", "fs_homepath", "fs_game", "fs_cdpath", "fs_copyfiles", "fs_restrict", "loc_language", "dedicated", "com_hunkmegs", "net_port", "cl_matchsummaries"]
     var resolution = "1920x1080"
     var fullscreen = "borderless"
     /// com_maxfps: 0 (no cap) to 1000, the engine dvar's range.
@@ -1030,15 +1033,17 @@ struct GameSettings: Codable, Sendable, Equatable {
     static let firstRunPicture: [(String, String)] = [("r_glow", "1"), ("r_distortion", "1"), ("r_rendererPreference", "none"),
         ("r_zfeather", "1"), ("sc_enable", "1"), ("r_dlightLimit", "4"), ("fx_sort", "1"), ("r_depthPrepassModels", "0")]
     /// Startup values for what neither these settings nor the loadout set: the frame cap and raw
-    /// mouse, which CoD2x registers as 85 and 0, and the stock first-run picture. They are archived
-    /// (seta), as the recommended settings were, so the loadout keeps them from then on.
+    /// mouse, which CoD2x registers as 85 and 0, a resolution chosen for this display with vertical
+    /// sync off, and the stock first-run picture. They are archived (seta), as the recommended
+    /// settings were, so the loadout keeps them from then on and the launcher never sets them again.
     func loadoutDefaults(migrated: Bool, loadout: (String) -> String?) throws -> [(String, String)] {
         let launched = Set(try launchDvars(migrated: migrated).map { $0.0.lowercased() })
         var values = Self.firstRunPicture
         if migrated {
             let own = Dictionary(try dvars().map { ($0.0.lowercased(), $0.1) }, uniquingKeysWith: { $1 })
             let raw = loadout("in_rawmouse").map { $0 == "0" ? "0" : "1" } ?? own["m_rinput"] ?? "1"
-            values = [("com_maxfps", own["com_maxfps"] ?? String(fps)), ("m_rinput", raw)] + values
+            values = [("com_maxfps", own["com_maxfps"] ?? String(fps)), ("m_rinput", raw),
+                      ("r_mode", own["r_mode"] ?? resolution), ("r_swapInterval", own["r_swapinterval"] ?? (vsync ? "1" : "0"))] + values
         }
         return values.filter { !launched.contains($0.0.lowercased()) && loadout($0.0) == nil }
     }

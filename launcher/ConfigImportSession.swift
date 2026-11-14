@@ -211,7 +211,7 @@ struct ConfigImportSession: Sendable {
             let writesSetting = command.kind == .setting || ["toggle", "togglep", "reset", "setfromdvar", "increase", "decrease"].contains(first)
             let name = writesSetting && tokens.count > 1 ? tokens[1].text.lowercased() : first
             if ["r_mode", "r_customwidth", "r_customheight", "r_fullscreen", "r_borderless", "r_displayrefresh", "r_aspectratio", "r_swapinterval"].contains(name) {
-                return "Choose display settings for this Mac in launcher Settings. Imported resolution and display modes are omitted."
+                return "Resolution and display modes are chosen for this Mac: the resolution in this loadout, the mode in Settings › Display. Imported ones are omitted."
             }
             if GameSettings.machineDvarNames.contains(name) || name == "r_rendererpreference" {
                 return "This value belongs to this Mac's launcher settings. Choose it there instead of importing a machine-specific value."

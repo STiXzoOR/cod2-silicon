@@ -5,7 +5,7 @@ import SwiftUI
 // --accessibility, --overlays, --navigation). Other units call its shared helpers (open, click, press, seed).
 
 extension Snapshots {
-    static let configScreens = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-text", "configs-history", "configs-running",
+    static let configScreens = ["configs-guided", "configs-guided-aim", "configs-guided-picture", "configs-expert", "configs-text", "configs-history", "configs-running",
                                 "discover-unavailable", "discover-players", "discover-saved", "discover-player", "configs-import",
                                 "configs-import-everything", "servers-ready", "servers-ready-fixed",
                                 "configs-binds-list", "configs-binds-advanced", "configs-binds-visual", "configs-checkup",
@@ -97,6 +97,8 @@ extension Snapshots {
         if screen.hasPrefix("home-loadout") || (screen.hasPrefix("settings") && !screen.hasPrefix("settings-legacy")) {
             var settings = model.settings
             settings.fps = 333
+            // A loadout made on a larger display than the preview's 3456 × 2234 one.
+            if screen == "home-loadout-resolution" { settings.resolution = "5120x2880" }
             try session.initialize(settings: settings)
         }
         model.studio.deviceProvider = { PreviewInputProvider() }
