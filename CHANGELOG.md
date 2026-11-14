@@ -83,6 +83,16 @@ The original shaders are built from your own game files.
 - CoD2x reports retain console text, apply the upstream retry and retention rules,
   and limit freeze reports to three per run. Loading refreshes the freeze
   heartbeat, and fatal reporting uses a real three-second wait deadline.
+- Decals no longer show through surfaces a few units in front of them. Grime,
+  marks and posters were pushed forward in depth twice as far as on Windows;
+  on Railyard the dirt on the brick wall drew over the factory windows.
+- A script that hits a runtime error no longer leaves its failed values on the
+  script stack. A loop of such errors used to grow the stack until the server
+  stopped; it now recovers as Windows does.
+- The CoD2x console types 8 and 2 from the keypad instead of walking the
+  command history, the mouse-rate meter counts a late update as upstream does,
+  and a CoD2x window saved on a display that is no longer connected opens on
+  the main display.
 
 ### Known CoD2x limitations
 
