@@ -181,6 +181,10 @@ trusted engine arguments after `--`.
 
 ## Known limitations
 
+- A CoD2x server hosted from the launcher takes CoD2 Silicon players only for
+  now. It follows CoD2x's current source (1.4.7.1-test.1), which turns away
+  the released CoD2x 1.4.6.8 for Windows until CoD2x's next release. A server
+  on the original 1.3 takes any 1.3 player.
 - Voice chat works with the original 1.3 only; CoD2x turns it off. It records
   from your microphone only while you hold the voice chat
   key on a server that has voice on. The sound path was tested with a

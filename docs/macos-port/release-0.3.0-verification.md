@@ -36,13 +36,17 @@ checks below were run on that Mac.
 - **A new profile.** Each engine was started with an empty home folder and
   the launcher's first-run values. Glow, heat distortion, soft smoke and
   shadows were on in the running game and saved to its config in both.
-- **The launcher.** Its full test suite passed on the release source: 200
-  checks, among them 320 screens captured in dark and light, again at the
-  smallest window size and under Increase Contrast, Reduce Transparency and
-  Reduce Motion, with every control read through the accessibility
-  interface.
+- **The launcher.** Its full test suite passed: 202 checks, among them 182
+  screens captured in dark and light, again at the smallest window size and
+  under Increase Contrast, Reduce Transparency and Reduce Motion, with every
+  control read through the accessibility interface. The run was finished in
+  parts. The captures were taken at `e36dfe22`; three later commits changed
+  one note in the Hosting form, one test's timing and one review screen, and
+  were checked on the final source with the click-driven suites, the
+  accessibility pass over every screen and the Hosting screens captured
+  again.
 - **Hosting a server.** The launcher's hosting code started both dedicated
-  servers, CoD2x and the original 1.3, from the assembled app's signed copies.
+  servers, CoD2x and the original 1.3, from the notarized app's own copies.
   Each wrote its `server.cfg`, answered a status query, moved to the next map
   when asked, refused a wrong admin password and shut down when stopped,
   leaving its port free. zPAM 4.12 and zPAM 3.36 were downloaded from the zPAM
@@ -53,18 +57,25 @@ checks below were run on that Mac.
   kind of finding and every fix. The 68 setups prepared for the catalogue were
   each read by the launcher's own import review in both game versions: none
   holds a line the review blocks, and names, chat lines, passwords, server
-  settings and timed macros were removed before that.
+  settings and timed macros were removed before that. The catalogue is
+  published, and its signed index, fetched from GitHub, verifies with the key
+  built into the app.
 - **Config Studio's catalogue.** The release build checks the bundled
   settings catalogue against the engine source. It was out of date and was
   regenerated: 852 settings, with no differences in either engine mode.
-- **The package.** `scripts/package-release.sh` built both engines and the
-  launcher from `00ccf9a1`, signed the app with a Developer ID and had Apple
-  notarize it; the ticket is stapled. Unpacked from the archive, the app
-  passes its checksum, the signature check, Gatekeeper's assessment
-  ("Notarized Developer ID") and the bundle audit. Started through the
-  launcher with an empty home folder, it built the shaders from the game's
-  files, verified all 834 and reached the game's menu. Each engine in the
-  archive, started on its own, then loaded a map and quit cleanly.
+- **The package.** `scripts/package-release.sh` built both engines, both
+  dedicated servers and the launcher from `c0b1de4c`, signed the app with a
+  Developer ID and had Apple notarize it; the ticket is stapled. Unpacked
+  from the archive, the app passes its checksum, the signature check,
+  Gatekeeper's assessment ("Notarized Developer ID") and the bundle audit.
+  Each engine in the archive, started on its own with an empty home folder,
+  reached the game's menu and quit cleanly, and both servers were hosted
+  from it as described above. The engine source is the same as in an earlier
+  package, built from `00ccf9a1`, which was also started through the
+  launcher with an empty home folder: it built the shaders from the game's
+  files, verified all 834 and reached the game's menu, and each of its
+  engines loaded a map. Those two steps were not repeated on the final
+  package.
 
 ## Known differences from the original
 
@@ -117,7 +128,9 @@ and CoD2x's `r_autopriority` setting is not included.
   as every CoD2x client does, and it answered that no update was available.
 - No player joined a hosted server. Kick, the invite link, joining from
   another machine, a server listed publicly and a router's port forward were
-  not tried, and no zPAM match was played on one.
+  not tried, and no zPAM match was played on one. A released CoD2x 1.4.6.8
+  client was not tried against a hosted CoD2x server; by the server's own
+  check it is turned away.
 - The launcher was not driven past starting the game in the packaged app:
   Setup, Settings and Launch were exercised by the launcher's tests, not by
   hand in the notarized build.
