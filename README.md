@@ -185,12 +185,13 @@ new performance claims for every release. Verified development results include:
   and certificates are always checked. An earlier inventory counted 41 of 68
   behaviors. [Earlier compatibility report](docs/macos-port/reports/WS10-cod2x-full.md)
 - In 0.3.0, a demo replayed in the original Windows 1.3 game and in this port
-  differs by a mean of **0.11 out of 255** per colour value, over 20 views on
-  four maps at 1920x1080 with the shaders built from the game's files. With
-  the HUD on it is 0.13, and on the Direct3D 7 path 0.15. The original ran
-  under Wine with DXVK, not on a Windows machine. The largest remaining
-  difference is on third-person player models, which sit about half a pixel
-  off in the replay.
+  differs by a mean of **0.02 to 0.30 out of 255** per colour value, view by
+  view on Toujane, Trainstation, Rhine and Harbor at 1920x1080 with the
+  shaders built from the game's files. Thin anti-aliased edges alone account
+  for 0.1 to 0.3. Every stock map was compared during the cycle, and the
+  port was audited against the original: 119 of 173 findings are fixed and
+  12 are still open. The original ran under Wine with DXVK, not on a Windows
+  machine. [What was tested, and what still differs](docs/macos-port/release-0.3.0-verification.md)
 - Before 0.3.0, with the original Mac shaders, three matched Toujane views had
   RGB mean absolute errors of **2.0050, 1.8726 and 0.5856 out of 255** against
   Windows. [Rendering report](docs/macos-port/reports/WS15-render.md)
