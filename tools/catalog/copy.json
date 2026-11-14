@@ -473,6 +473,12 @@
       "summary": "Bends the picture around heat sources such as flames and explosions.",
       "details": "Heat haze is one of the DirectX 9 effects, and competitive configs in the research often turn it off. Nothing in the research measures its cost."
     },
+    "r_zfeather": {
+      "group": "gfx",
+      "title": "Soft smoke edges",
+      "summary": "Fades smoke and dust where they meet walls and the ground, so they do not end in a hard line.",
+      "details": "The game's Graphics menu calls this Soft Smoke Edges. It is one of the DirectX 9 effects."
+    },
     "sc_enable": {
       "group": "gfx",
       "title": "Shadows",

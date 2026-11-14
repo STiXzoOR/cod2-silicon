@@ -82,16 +82,19 @@ void CG_Cod2xSpectatorInit(void)
     health = Dvar_RegisterBool("cg_xrayHealth", 1, 0x1000);
     healthColor = Dvar_RegisterString("cg_xrayHealthColor", "", 0x1000);
     healthAlpha = Dvar_RegisterFloat("cg_xrayHealthAlpha", .8f, 0, 1, 0x1000);
-    /* Internal dvars keep their name pointer for the life of the pool. */
-    static const char *const names[3][4] = {
-        {"cg_headNationIconSpectator", "cg_headNameSpectator", "cg_headWeaponIconSpectator", "cg_headWeaponNameSpectator"},
-        {"cg_headNationIconDead", "cg_headNameDead", "cg_headWeaponIconDead", "cg_headWeaponNameDead"},
-        {"cg_headNationIconAlive", "cg_headNameAlive", "cg_headWeaponIconAlive", "cg_headWeaponNameAlive"}
-    };
-    const int defaults[3][4] = {{0,2,2,0}, {1,2,2,0}, {1,0,0,0}};
-    for (int s = 0; s < 3; ++s) for (int e = 0; e < 4; ++e) {
-        head[s][e] = Dvar_RegisterInt(names[s][e], defaults[s][e], 0, 2, 0x1000);
-    }
+    /* One line each, in the original order, so the launcher's settings catalogue reads them. */
+    head[0][0] = Dvar_RegisterInt("cg_headNationIconSpectator", 0, 0, 2, 0x1000);
+    head[0][1] = Dvar_RegisterInt("cg_headNameSpectator", 2, 0, 2, 0x1000);
+    head[0][2] = Dvar_RegisterInt("cg_headWeaponIconSpectator", 2, 0, 2, 0x1000);
+    head[0][3] = Dvar_RegisterInt("cg_headWeaponNameSpectator", 0, 0, 2, 0x1000);
+    head[1][0] = Dvar_RegisterInt("cg_headNationIconDead", 1, 0, 2, 0x1000);
+    head[1][1] = Dvar_RegisterInt("cg_headNameDead", 2, 0, 2, 0x1000);
+    head[1][2] = Dvar_RegisterInt("cg_headWeaponIconDead", 2, 0, 2, 0x1000);
+    head[1][3] = Dvar_RegisterInt("cg_headWeaponNameDead", 0, 0, 2, 0x1000);
+    head[2][0] = Dvar_RegisterInt("cg_headNationIconAlive", 1, 0, 2, 0x1000);
+    head[2][1] = Dvar_RegisterInt("cg_headNameAlive", 0, 0, 2, 0x1000);
+    head[2][2] = Dvar_RegisterInt("cg_headWeaponIconAlive", 0, 0, 2, 0x1000);
+    head[2][3] = Dvar_RegisterInt("cg_headWeaponNameAlive", 0, 0, 2, 0x1000);
     nameScale = Dvar_RegisterFloat("cg_headNameScale", 1, .3f, 3, 0x1000);
     weaponScale = Dvar_RegisterFloat("cg_headWeaponIconScale", 1, 0, 3, 0x1000);
     iconScale = Dvar_RegisterFloat("cg_headIconScale", 1, 0, 10, 0x1000);

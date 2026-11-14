@@ -14,19 +14,22 @@ static const dvar_t *saturation, *skySaturation, *color, *darkTint, *lightTint;
 static _Atomic(const char *) failure;
 static atomic_int failed;
 
+/* CoD2x main filmtweak.cpp: archived, changeable-reset. A macro, so the launcher's
+   settings catalogue reads the flags as a literal. */
+#define FILM_DVAR_FLAGS 0x1001
+
 void R_Cod2xFilm_Init(void)
 {
-    /* CoD2x main filmtweak.cpp: archived, changeable-reset, identity defaults. */
-    const int flags = 0x1001;
-    enabled = ri.Dvar_RegisterBool("r_filmTweakEnable", 1, flags);
-    contrast = ri.Dvar_RegisterFloat("r_filmTweakContrast", 1, 0, 4, flags);
-    brightness = ri.Dvar_RegisterFloat("r_filmTweakBrightness", 0, -1, 1, flags);
-    gamma = ri.Dvar_RegisterFloat("r_filmTweakGamma", 1, .5f, 2, flags);
-    saturation = ri.Dvar_RegisterFloat("r_filmTweakSaturation", 1, 0, 2, flags);
-    skySaturation = ri.Dvar_RegisterFloat("r_filmTweakSkySaturation", 1, 0, 2, flags);
-    color = ri.Dvar_RegisterVec3("r_filmTweakColor", 1, 1, 1, 0, 2, flags);
-    darkTint = ri.Dvar_RegisterVec3("r_filmTweakDarkTint", 1, 1, 1, 0, 2, flags);
-    lightTint = ri.Dvar_RegisterVec3("r_filmTweakLightTint", 1, 1, 1, 0, 2, flags);
+    /* CoD2x main filmtweak.cpp: identity defaults. */
+    enabled = ri.Dvar_RegisterBool("r_filmTweakEnable", 1, FILM_DVAR_FLAGS);
+    contrast = ri.Dvar_RegisterFloat("r_filmTweakContrast", 1, 0, 4, FILM_DVAR_FLAGS);
+    brightness = ri.Dvar_RegisterFloat("r_filmTweakBrightness", 0, -1, 1, FILM_DVAR_FLAGS);
+    gamma = ri.Dvar_RegisterFloat("r_filmTweakGamma", 1, .5f, 2, FILM_DVAR_FLAGS);
+    saturation = ri.Dvar_RegisterFloat("r_filmTweakSaturation", 1, 0, 2, FILM_DVAR_FLAGS);
+    skySaturation = ri.Dvar_RegisterFloat("r_filmTweakSkySaturation", 1, 0, 2, FILM_DVAR_FLAGS);
+    color = ri.Dvar_RegisterVec3("r_filmTweakColor", 1, 1, 1, 0, 2, FILM_DVAR_FLAGS);
+    darkTint = ri.Dvar_RegisterVec3("r_filmTweakDarkTint", 1, 1, 1, 0, 2, FILM_DVAR_FLAGS);
+    lightTint = ri.Dvar_RegisterVec3("r_filmTweakLightTint", 1, 1, 1, 0, 2, FILM_DVAR_FLAGS);
 }
 
 int R_Cod2xFilm_Settings(Cod2xFilmSettings *settings)
