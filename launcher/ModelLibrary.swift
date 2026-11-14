@@ -433,6 +433,9 @@ enum PlayedDate {
         guard screen.hasPrefix("home") || screen.hasPrefix("library") else { return false }
         previewPlayed()
         if screen != "home-news-first" { previewNews() }
+        // Home learns the display when the app becomes active, which happens once per review run: a
+        // later screen that needs the preview's display (the resolution it can't show) asks for it here.
+        if screen == "home-loadout-resolution" { refreshDisplay() }
         switch screen {
         case "home-news-first": page = .home; previewMatches()
         case "home-news-long", "home-news-all":
