@@ -408,7 +408,12 @@ static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, 
             dev->slopeScaleDepthBias = g_slopeScaleDepthBias * g_scale1;
         } else {
             g_depthBias = DeviceRenderState_Float(value);
-            dev->scaledDepthBias = g_depthBias * g_scale2;
+            /* The engine's projection writes Direct3D clip depth, 0 to w, which
+             * OpenGL maps onto the upper half of its depth range: every depth
+             * difference in the buffer is half of Direct3D's. A Direct3D depth
+             * bias is therefore half as many buffer units. The slope term is
+             * measured in buffer depth and halves by itself. */
+            dev->scaledDepthBias = g_depthBias * g_scale2 * 0.5f;
         }
         glPolygonOffset(dev->slopeScaleDepthBias, dev->scaledDepthBias);
         DeviceRenderState_Enable(0x8037, dev->scaledDepthBias != 0.0f || dev->slopeScaleDepthBias != 0.0f);
