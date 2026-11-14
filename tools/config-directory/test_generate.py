@@ -29,11 +29,12 @@ class GeneratorTests(unittest.TestCase):
         folder = self.entries / "synthetic"
         folder.mkdir()
         (folder / "config.cfg").write_bytes(b'seta sensitivity "4"\r\nbind w "+forward"\r\n')
-        metadata = dict(player="Authored synthetic fixture", era="test", role="test", feel="Test only",
-                        story="No real player or permission claim.", styleTags=["fixture"], credit="Test author",
+        metadata = dict(player="Authored synthetic fixture", era="test", feel="Test only",
+                        story="No real player and no real page.", styleTags=["fixture"], credit="Test author",
                         sourceURL="https://fixtures.invalid/source", platform="windows",
-                        permission=dict(grantedBy="Test author", grantedAt="2026-10-09",
-                                        evidenceURL="https://fixtures.invalid/permission", scope="public-redistribution"))
+                        facts=dict(sensitivity="4"), featured=True,
+                        provenance=dict(publishedBy="fixtures.invalid", retrievedAt="2026-10-09",
+                                        attribution="listed", changes="Nothing was left out."))
         (folder / "entry.json").write_text(json.dumps(metadata))
         return folder, metadata
 
@@ -41,7 +42,7 @@ class GeneratorTests(unittest.TestCase):
         self.run_generator()
         self.assertEqual(json.loads((self.root / "index.json").read_bytes())["entries"], [])
         self.assertFalse((self.root / "index.sig").exists())
-        self.assertIn("No permissioned entries", (self.root / "INDEX.md").read_text())
+        self.assertIn("No entries yet", (self.root / "INDEX.md").read_text())
 
     def test_exact_bytes_and_real_classifier(self):
         folder, _ = self.fixture()
@@ -55,10 +56,12 @@ class GeneratorTests(unittest.TestCase):
         self.assertEqual(review["synthetic"]["stock"]["blocked"], 0)
         self.assertGreater(review["synthetic"]["stock"]["safe"], 0)
 
-    def test_permission_credit_and_schema_required(self):
+    def test_source_credit_and_schema_required(self):
         folder, metadata = self.fixture()
-        for change in [dict(permission={}), dict(credit=""), dict(extra="unsupported"),
-                       dict(permission=dict(metadata["permission"], scope="private-use"))]:
+        for change in [dict(provenance={}), dict(credit=""), dict(extra="unsupported"), dict(featured=False), dict(facts=dict(dpi="800")),
+                       dict(sourceURL="http://fixtures.invalid/source"),
+                       dict(provenance=dict(metadata["provenance"], attribution="approved")),
+                       dict(provenance=dict(metadata["provenance"], retrievedAt="9 October"))]:
             (folder / "entry.json").write_text(json.dumps(dict(metadata, **change)))
             self.run_generator(False)
         self.assertFalse((self.root / "index.json").exists())
@@ -69,6 +72,22 @@ class GeneratorTests(unittest.TestCase):
         result = self.run_generator(False)
         self.assertNotIn("synthetic-secret", result.stderr + result.stdout)
         self.assertFalse((self.root / "index.json").exists())
+
+    def test_cleaner_keeps_a_setup_and_nothing_else(self):
+        audit = Path(os.environ["COD2_DIRECTORY_AUDIT"])
+        source, cleaned = self.root / "published.cfg", self.root / "cleaned.cfg"
+        source.write_bytes(b'// a host banner\nunbindall\nseta sensitivity "2.5"\nseta name "synthetic-player"\n'
+                           b'seta rcon_password "synthetic-secret"\nseta sv_hostname "synthetic host"\nbind F1 "say synthetic chat"\n'
+                           b'bind MOUSE1 "+attack;wait 2;-attack"\nbind W "+forward"\nseta cg_notASettingOfThisGame "1"\nwait 5\n')
+        result = subprocess.run([str(audit.with_name("clean")), str(source), str(audit.with_name("ConfigCatalog.json")), str(cleaned)],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(cleaned.read_bytes(), b'unbindall\nseta sensitivity "2.5"\nbind W "+forward"\n')
+        summary = json.loads(result.stdout)
+        self.assertEqual((summary["kept"], summary["comments"], summary["settings"]["sensitivity"]), (3, 1, "2.5"))
+        for reason in ("identity", "credential", "hosting", "chat", "macro", "unknownSetting", "looseCommand"):
+            self.assertIn(reason, summary["reasons"])
+        self.assertNotIn("synthetic", result.stdout + result.stderr)
 
     def test_symlink_rejected(self):
         folder, _ = self.fixture()

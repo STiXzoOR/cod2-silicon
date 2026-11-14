@@ -48,22 +48,28 @@ struct ConfigsShell: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            LoadoutColumn(model: model, studio: studio, session: session, discover: discover,
-                          select: { id in leaveText { discover.page = nil; studio.select(id) } },
-                          act: { action in leaveText(action) }, open: { page in leaveText { discover.open(page) } })
-                .frame(width: StudioMetrics.loadoutColumn)
-                // The column's title shares the titlebar row with the app sidebar beside it; with that
-                // sidebar hidden, the row holds the window controls, so the column starts below the toolbar.
-                .ignoresSafeArea(.container, edges: origin.x < Self.windowControls ? [] : .top)
-            Rectangle().fill(palette.separator).frame(width: 1).ignoresSafeArea()
+            if !wide {
+                LoadoutColumn(model: model, studio: studio, session: session, discover: discover,
+                              select: { id in leaveText { discover.page = nil; studio.select(id) } },
+                              act: { action in leaveText(action) }, open: { page in leaveText { discover.open(page) } })
+                    .frame(width: StudioMetrics.loadoutColumn)
+                    // The column's title shares the titlebar row with the app sidebar beside it; with that
+                    // sidebar hidden, the row holds the window controls, so the column starts below the toolbar.
+                    .ignoresSafeArea(.container, edges: origin.x < Self.windowControls ? [] : .top)
+                Rectangle().fill(palette.separator).frame(width: 1).ignoresSafeArea()
+            }
             Group { if discover.page != nil { ConfigDiscoverView(model: model, discover: discover) } else { content } }
                 .ignoresSafeArea(.container, edges: .top)
         }
-        .padding(.leading, 20)
+        .padding(.leading, wide ? 0 : 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(WindowOriginReader(origin: $origin))
         .environment(\.configControlContext, session.current.map { ConfigControlContext(studio: studio, session: session, profileID: $0.profile.id) })
-        .onAppear { studio.refreshComparison(); studio.checkup.load() }
+        .onAppear {
+            studio.refreshComparison(); studio.checkup.load()
+            // Choosing Configs in the sidebar for the first time opens Home.
+            if discover.landsOnHome { discover.landsOnHome = false; if discover.page == nil { discover.open(.home) } }
+        }
         .onChange(of: studio.gameRunning) { _, running in if running { studio.binds.gameStarted() } }
         .onChange(of: session.current?.version) { _, _ in
             studio.refreshComparison()
@@ -103,6 +109,9 @@ struct ConfigsShell: View {
             Text("Your text edits aren’t saved to this loadout yet.")
         }
     }
+
+    /// Home and Check a Config take the whole page; everything else sits beside the loadout column.
+    private var wide: Bool { discover.page == .home || discover.page == .checker }
 
     /// Text edits are applied explicitly; leaving them asks first.
     private func leaveText(_ action: @escaping @MainActor () -> Void) {
@@ -208,7 +217,7 @@ private struct LoadoutColumn: View {
                     }
                     .disabled(!model.canNewLoadout)
                     AddConfigRow(discover: discover)
-                    if showsDiscover { DiscoverColumnSection(discover: discover, open: open) }
+                    DiscoverColumnSection(discover: discover, open: open)
                 }
             }
             .scrollIndicators(.never)
@@ -228,14 +237,6 @@ private struct LoadoutColumn: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Loadouts")
         .task { await discover.loadIfNeeded() }
-    }
-
-    /// Discover appears once the player directory lists someone or something is saved; until the
-    /// directory is published its rows would lead nowhere. Add a Config stays above it either way.
-    private var showsDiscover: Bool {
-        if discover.page != nil || !discover.saved.isEmpty { return true }
-        if case .loaded(let snapshot, _) = discover.state { return !snapshot.index.entries.isEmpty }
-        return false
     }
 
     /// The loadout's actions: the Loadout menu's, for this row (Menus board › Loadout).

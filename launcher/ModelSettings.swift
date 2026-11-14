@@ -115,7 +115,7 @@ extension KeyStore {
         for (index, line) in text.components(separatedBy: "\n").enumerated() where !line.trimmingCharacters(in: .whitespaces).isEmpty {
             candidate.advanced = line
             guard (try? candidate.launchConfig(migrated: configStudio?.migrationCompleted == true)) != nil else {
-                if GameSettings.advancedPair(line)?.0.lowercased() == "r_mode" { advancedError = "Choose the resolution in Settings › Display."; return }
+                if GameSettings.advancedPair(line)?.0.lowercased() == "r_mode" { advancedError = usesLoadouts ? "The resolution belongs to each loadout. Change it in Configs." : "Choose the resolution in Settings › Display."; return }
                 advancedError = "Line \(index + 1) can’t be used. Enter one setting and its value, without quotes or semicolons. Paths, passwords and your CD key are set by the app."
                 return
             }
@@ -199,6 +199,9 @@ extension KeyStore {
             if mainDisplay == nil { mainDisplay = MainDisplay(name: "Built-in Liquid Retina XDR Display", nativeWidth: 3456, nativeHeight: 2234, modes: [.init(1728, 1117)]) }
         } else { mainDisplay = MainDisplay.current(monitor: gameMonitor) }
         normalizeResolution()
+        // Config Studio's Display resolution control lists what this display offers.
+        studio.setDisplayResolutions(mainDisplay?.resolutions.map(\.value) ?? [], native: mainDisplay?.nativeKnown == true ? mainDisplay?.native.value : nil,
+                                     firstRun: settings.resolution)
         guard !snapshot, displayObserver == nil else { return }
         displayObserver = NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.refreshDisplay() }
@@ -210,6 +213,8 @@ extension KeyStore {
         let actual = DisplayResolutions.fitting(previous, in: display.resolutions)
         guard previous != actual else { return }
         settings.resolution = actual
+        // With loadouts this is only the value a loadout without a resolution starts from: nothing to announce.
+        guard !usesLoadouts else { return }
         resolutionAdjustment = "Resolution changed from \(SettingsText.resolution(previous)) to \(SettingsText.resolution(actual)) to fit this display."
     }
     var resolutionOptions: [(value: String, title: String)] {
@@ -243,9 +248,9 @@ extension KeyStore {
         let previous = settings, defaults = defaultSettings
         resolutionAdjustment = nil
         var restored = settings
-        restored.resolution = defaults.resolution; restored.fullscreen = defaults.fullscreen
-        restored.vsync = defaults.vsync; restored.anisotropy = defaults.anisotropy
+        restored.fullscreen = defaults.fullscreen
         if !usesLoadouts {
+            restored.resolution = defaults.resolution; restored.vsync = defaults.vsync; restored.anisotropy = defaults.anisotropy
             restored.fps = defaults.fps; restored.rawMouse = defaults.rawMouse; restored.sensitivity = defaults.sensitivity
             restored.dpi = defaults.dpi; restored.volume = defaults.volume
         }
@@ -509,6 +514,7 @@ extension KeyStore {
                 guard let response = response as? HTTPURLResponse, response.statusCode == 200 else { throw LauncherError(message: "Release service is unavailable. Try again later.") }
                 let feed = try ReleaseNotes.parse(data)
                 if !feed.dispatches.isEmpty { library.dispatches = feed.dispatches }
+                if let news = await Self.fetchNews() { library.news = news.items; library.newsNext = news.next }
                 library.dispatchesCheckedAt = Date(); saveLibrary()
                 updateWasChecked = true; updateError = false; updateFailedStage = nil
                 if let latest = feed.latestVersion, ReleaseNotes.isNewer(latest, than: version) {
@@ -528,6 +534,16 @@ extension KeyStore {
                 updateError = true; updateFailedStage = .check
             }
         }
+    }
+    /// The project’s news file, asked for with every update check. A missing file means no news; any
+    /// other failure keeps what Home already shows.
+    nonisolated static func fetchNews() async -> NewsFeed.Feed? {
+        var request = URLRequest(url: NewsFeed.url)
+        request.timeoutInterval = 15; request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.setValue("CoD2-Silicon-Launcher", forHTTPHeaderField: "User-Agent")
+        guard let (data, response) = try? await URLSession.shared.data(for: request), let code = (response as? HTTPURLResponse)?.statusCode else { return nil }
+        if code == 404 { return NewsFeed.Feed() }
+        return code == 200 ? try? NewsFeed.parse(data) : nil
     }
     /// Updates › Check for updates automatically: at most once a day while the launcher is open. Never in the
     /// review harness or the automated lifecycle tests (COD2_SETUP_NONINTERACTIVE).
@@ -692,7 +708,7 @@ extension KeyStore {
         refreshDisplay(); refreshGameData()
         switch screen {
         case "settings": settingsPane = .general
-        case "settings-display-adjusted":
+        case "settings-legacy-display-adjusted":
             settingsPane = .display
             mainDisplay = MainDisplay(name: "5K display", nativeWidth: 5120, nativeHeight: 2880, modes: [.init(3008, 1692), .init(6016, 3384)])
             settings.resolution = "6016x3384"; normalizeResolution(); savedSettings = settings

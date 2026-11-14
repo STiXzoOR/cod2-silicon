@@ -102,8 +102,19 @@ import Foundation
         require(model.guidedSpecs(in: .frame).first?.name == "com_maxfps")
         require(model.guidedSpecs(in: .aim).first?.name == "sensitivity")
         require(ConfigPurposeGroup.allCases.allSatisfy { !model.guidedSpecs(in: $0).isEmpty })
-        require(model.specs.filter { $0.setting.guided }.count == 22)
-        require(model.spec(named: "r_swapInterval").map { $0.launcherOwned } ?? true)
+        require(model.specs.filter { $0.setting.guided }.count == 24)
+        // Resolution and vertical sync belong to the loadout; the display mode stays with Settings.
+        require(model.spec(named: "r_swapInterval").map { !$0.launcherOwned && $0.setting.guided } ?? false)
+        require(model.spec(named: "r_mode").map { !$0.launcherOwned && $0.setting.guided } ?? false)
+        require(model.spec(named: "r_fullscreen").map { $0.launcherOwned } ?? true)
+        // The resolution's choices are this display's sizes, named as people read them.
+        require(model.spec(named: "r_mode")?.choices.isEmpty == true && model.unavailableResolution("5120x2880") == nil)
+        model.setDisplayResolutions(["640x480", "1920x1080", "3456x2234"], native: "3456x2234")
+        require(model.spec(named: "r_mode")?.choices == ["640x480", "1920x1080", "3456x2234"])
+        require(model.spec(named: "r_mode")?.title(forChoice: "3456x2234") == "3456 × 2234 · Native" && model.spec(named: "r_mode")?.title(forChoice: "1920x1080") == "1920 × 1080")
+        require(model.unavailableResolution("1920x1080") == nil && model.unavailableResolution("12") == nil && model.unavailableResolution(nil) == nil)
+        require(model.unavailableResolution("5120x2880").map { $0.asked == "5120x2880" && $0.used == "3456x2234" } ?? false)
+        require(model.unavailableResolution("2560x1440").map { $0.used == "1920x1080" } ?? false, "the largest size that fits inside, as the game picks")
         require(model.specs.allSatisfy { !$0.name.lowercased().hasPrefix("cg_fov") })
         require(model.protectedCount(in: .hud) > 0)
         let speed = model.spec(named: "SENSITIVITY")!

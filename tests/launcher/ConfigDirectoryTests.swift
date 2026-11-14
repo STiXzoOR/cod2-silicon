@@ -44,9 +44,9 @@ private actor IndexGate: ConfigImportTextFetcher {
         let profile = Data("seta sensitivity 4\nseta password synthetic-secret\nexec untrusted.cfg\n".utf8)
         let key = Curve25519.Signing.PrivateKey() // Ephemeral fixture only; never a production key.
         let entry = ConfigDirectoryEntry(id: "synthetic", player: "Authored test fixture", team: nil, era: "test", role: "test",
-            feel: "Synthetic test bytes", story: "Not a real player or permission grant.", styleTags: ["fixture"], favoriteMap: nil,
-            credit: "Test author", sourceURL: profileURL, permission: .init(grantedBy: "Test author", grantedAt: "2026-10-09",
-            evidenceURL: URL(string: "https://fixtures.invalid/permission")!, scope: "public-redistribution"),
+            feel: "Synthetic test bytes", story: "Not a real player or a real page.", styleTags: ["fixture"], favoriteMap: nil,
+            credit: "Test author", sourceURL: profileURL, provenance: .init(publishedBy: "fixtures.invalid", retrievedAt: "2026-10-09",
+            attribution: .selfPublished, changes: "Nothing was left out."), facts: nil, featured: nil,
             configURL: profileURL, sha256: ConfigDirectory.digest(profile), byteCount: profile.count, platform: .windows)
         let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         let bytes = try encoder.encode(ConfigDirectoryIndex(schemaVersion: 1, revision: 1, entries: [entry]))

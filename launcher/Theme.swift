@@ -276,6 +276,8 @@ extension View {
     func prominentAction() -> some View { modifier(ProminentAction()) }
     /// Secondary actions: neutral glass capsules, or circles for a lone symbol.
     func glassAction(circle: Bool = false) -> some View { modifier(GlassAction(circle: circle)) }
+    /// A filter in a row of filters: a quiet capsule, tinted while it is the one chosen.
+    func filterChip(on: Bool) -> some View { buttonStyle(FilterChipStyle(on: on)) }
     /// System controls drawn with a border (pop-up buttons, segmented controls) take the buttons'
     /// capsule shape too; glass buttons set theirs in their styles.
     @ViewBuilder func capsuleControls() -> some View {
@@ -459,6 +461,20 @@ private struct QuietAction: ViewModifier {
     func body(content: Content) -> some View {
         content.buttonStyle(.plain).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.link)
             .padding(.horizontal, 6).contentShape(Rectangle())
+    }
+}
+
+/// One filter in a row of filters (Configs · Home).
+private struct FilterChipStyle: ButtonStyle {
+    var on: Bool
+    @Environment(\.palette) private var palette
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 12, weight: .semibold)).foregroundStyle(on ? palette.heading : palette.secondary)
+            .padding(.horizontal, 12).frame(minHeight: 28)
+            .background(on ? palette.selection : palette.panel.opacity(configuration.isPressed ? 0.6 : 1), in: Capsule())
+            .overlay(Capsule().strokeBorder(on ? palette.selectionStroke : palette.panelStroke, lineWidth: 1))
+            .contentShape(Capsule())
     }
 }
 

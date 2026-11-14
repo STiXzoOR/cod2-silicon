@@ -630,9 +630,15 @@ private struct ExpertRow: View {
             }
             let evaluation = checkup.evaluation(spec)
             let issue = evaluation.flatMap { $0.status == .violation || $0.status == .conflict ? $0 : nil }
-            if theirs != nil || state.note != nil || spec.launcherOwned || issue != nil {
+            // A loadout made on a larger display: the game takes the nearest size this one offers.
+            let unavailable = spec.name.lowercased() == "r_mode" ? studio.unavailableResolution(state.value) : nil
+            if theirs != nil || state.note != nil || spec.launcherOwned || issue != nil || unavailable != nil {
                 HStack(spacing: 10) {
                     if let issue { StudioStatusLabel(title: issue.reason, tone: issue.status.tone) }
+                    if let unavailable {
+                        Text("This display can’t show \(SettingsText.resolution(unavailable.asked)). The game will use \(SettingsText.resolution(unavailable.used)).")
+                            .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                    }
                     if let theirs, let source = studio.comparisonName {
                         StudioCompareValue(value: theirs.display, source: source).fixedSize()
                         // The same rule guards the action: locks, the game running, the launcher and server-owned settings.
@@ -887,11 +893,18 @@ private struct ChoiceMenu: View {
     var spec: ConfigSettingSpec
     var state: ConfigSettingState
     var commit: (String) -> Void
+    @Environment(\.configControlContext) private var context
+    /// A value that isn't one of the choices, or none. A loadout gets its resolution at its first game.
+    private var unlisted: String {
+        guard spec.name.lowercased() == "r_mode" else { return state.value ?? "Not set" }
+        if let value = state.value { return SettingsText.resolution(value) }
+        return context?.studio.firstRunResolution.map { SettingsText.resolution($0) + " · set at the first game" } ?? "Set at the first game"
+    }
     var body: some View {
         let index = state.value.flatMap { ConfigValues.enumIndex($0, choices: spec.choices) }
         Picker(spec.title, selection: Binding(get: { index ?? -1 }, set: { if spec.choices.indices.contains($0) { commit(spec.choices[$0]) } })) {
-            ForEach(Array(spec.choices.enumerated()), id: \.offset) { Text($0.element).tag($0.offset) }
-            if index == nil { Text(state.value ?? "Not set").tag(-1) }
+            ForEach(Array(spec.choices.enumerated()), id: \.offset) { Text(spec.title(forChoice: $0.element)).tag($0.offset) }
+            if index == nil { Text(unlisted).tag(-1) }
         }
         .labelsHidden().fixedSize()
     }

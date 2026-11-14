@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a permission-gated index; never rewrite configs or invent signatures."""
+"""Build the catalogue index from entries that say where each config was published; never rewrite configs or invent signatures."""
 import argparse
 import datetime
 import hashlib
@@ -10,8 +10,11 @@ import subprocess
 import sys
 from urllib.parse import urlsplit
 
-REQUIRED = {"player", "era", "role", "feel", "story", "styleTags", "credit", "sourceURL", "permission", "platform"}
-OPTIONAL = {"team", "favoriteMap"}
+REQUIRED = {"player", "era", "feel", "story", "styleTags", "credit", "sourceURL", "provenance", "platform"}
+OPTIONAL_TEXT = {"team", "role", "favoriteMap"}
+OPTIONAL = OPTIONAL_TEXT | {"facts", "featured"}
+ATTRIBUTIONS = ("self-published", "listed", "uploaded")
+FACTS = {"sensitivity", "frameCap", "resolution"}
 
 
 def public_url(value):
@@ -32,19 +35,22 @@ def text(value, maximum=256):
 def metadata_valid(row):
     if not isinstance(row, dict) or not REQUIRED <= row.keys() <= REQUIRED | OPTIONAL:
         return False
-    if not all(text(row[key], 8192 if key == "story" else 256) for key in (REQUIRED - {"styleTags", "permission", "platform", "sourceURL"}) | (row.keys() & OPTIONAL)):
+    if not all(text(row[key], 8192 if key == "story" else 256) for key in (REQUIRED - {"styleTags", "provenance", "platform", "sourceURL"}) | (row.keys() & OPTIONAL_TEXT)):
         return False
     tags = row["styleTags"]
-    permission = row["permission"]
+    provenance = row["provenance"]
+    facts = row.get("facts", {})
     if not (isinstance(tags, list) and len(tags) <= 16 and all(text(tag, 64) for tag in tags) and len(set(tags)) == len(tags)
             and row["platform"] in ("native", "windows") and public_url(row["sourceURL"])
-            and isinstance(permission, dict) and permission.keys() == {"grantedBy", "grantedAt", "evidenceURL", "scope"}
-            and text(permission["grantedBy"]) and public_url(permission["evidenceURL"])
-            and permission["scope"] == "public-redistribution"):
+            and isinstance(provenance, dict) and provenance.keys() == {"publishedBy", "retrievedAt", "attribution", "changes"}
+            and text(provenance["publishedBy"]) and text(provenance["changes"], 512)
+            and provenance["attribution"] in ATTRIBUTIONS
+            and isinstance(facts, dict) and facts.keys() <= FACTS and all(text(value, 32) for value in facts.values())
+            and row.get("featured", True) is True):
         return False
     try:
-        date = datetime.date.fromisoformat(permission["grantedAt"])
-        return date.isoformat() == permission["grantedAt"]
+        date = datetime.date.fromisoformat(provenance["retrievedAt"])
+        return date.isoformat() == provenance["retrievedAt"]
     except (ValueError, TypeError):
         return False
 
@@ -84,7 +90,7 @@ def generate(root, base_url, revision, audit_binary):
             raise ValueError(f"{slug}: file size limit")
         row = read_json(metadata)
         if not metadata_valid(row):
-            raise ValueError(f"{slug}: permission, credit or metadata invalid")
+            raise ValueError(f"{slug}: source, credit or metadata invalid")
         before = config.read_bytes()
         audited = subprocess.run([str(audit_binary), str(config), str(audit_binary.parent / "ConfigCatalog.json")], capture_output=True)
         if audited.returncode:
@@ -107,11 +113,13 @@ def generate(root, base_url, revision, audit_binary):
         return value.replace("|", "\\|").replace("\n", " ").replace("\r", " ").replace("<", "&lt;").replace(">", "&gt;").replace("[", "&#91;").replace("]", "&#93;")
     readme = "# Config index\n\n"
     if not entries:
-        readme += "No permissioned entries are available. Nothing has been published or signed.\n"
+        readme += "No entries yet. Nothing has been published or signed.\n"
     else:
-        readme += "Player configs remain unchanged. Import them through safety review before use.\n\n| Player | Era | Style | Download |\n| --- | --- | --- | --- |\n"
+        readme += ("Each config is the text its source published, with the lines named in its entry left out. "
+                   "Import them through safety review before use.\n\n| Player | Team | Era | Published by | Config |\n| --- | --- | --- | --- | --- |\n")
         for row in entries:
-            readme += f"| {cell(row['player'])} | {cell(row['era'])} | {cell(', '.join(row['styleTags']))} | [config]({row['configURL']}) |\n"
+            readme += (f"| {cell(row['player'])} | {cell(row.get('team', ''))} | {cell(row['era'])} | "
+                       f"[{cell(row['provenance']['publishedBy'])}]({row['sourceURL']}) | [config]({row['configURL']}) |\n")
     return {"index.json": json_bytes(index), "review.json": json_bytes(reviews), "INDEX.md": readme.encode()}
 
 
@@ -134,7 +142,7 @@ def main():
                 if path.is_symlink():
                     raise ValueError("Unsafe output path")
                 path.write_bytes(content)
-        print(f"Checked {len(json.loads(outputs['index.json'])['entries'])} permissioned entries; no publication performed.")
+        print(f"Checked {len(json.loads(outputs['index.json'])['entries'])} entries; no publication performed.")
     except (ValueError, OSError, KeyError, TypeError, json.JSONDecodeError):
         print("Directory generation rejected invalid, unsafe or stale inputs.", file=sys.stderr)
         return 1

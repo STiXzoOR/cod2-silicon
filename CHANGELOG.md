@@ -112,6 +112,36 @@ built from your own game files.
 
 ### Added
 
+- **Servers → Hosting** runs your own server on this Mac, with CoD2x or the
+  original 1.3: name, who can join, players, passwords, game type and maps,
+  then Start Server. The page shows who is playing, the address to share, an
+  invite link and the server's log, with Next Map, Kick and Join; a full server
+  lists the players that fit and opens the rest with All Players. A CoD2x
+  server hosted here takes CoD2 Silicon players only for now: it follows
+  CoD2x's current source (1.4.7.1-test.1), and the released CoD2x 1.4.6.8
+  for Windows is turned away until CoD2x's next release. Competitive
+  rules use zPAM, downloaded on request from the zPAM project's releases and
+  checked against the checksum they publish; it is not bundled. Export for
+  Another Machine writes `server.cfg` and start commands for Linux and Windows,
+  without passwords unless you include them. Each server keeps its files in its
+  own folder; the game folder is only read.
+- Configs opens on a home page with your loadouts and **player setups** from a
+  public catalogue of configs published on the open web. Each setup says where
+  it was published and by whom, shows what it would change, and is reviewed
+  line by line before anything is imported. Names, chat lines, passwords,
+  server settings and timed macros are left out of the catalogue.
+- **Check a Config** reads a config without adding it and marks, line by line,
+  settings that don't exist or belong to the other game version, values the
+  game refuses, settings that only change with cheats on, repeats, stored
+  passwords, and lines a set of server rules such as zPAM's would change. Each
+  has a fix; the file you checked is never written.
+- Each loadout has its own resolution and vertical sync. The launcher no longer
+  sets them on every launch; it sets only the display mode it needs to manage
+  the window.
+- What's New on Home is filled from the project's GitHub releases and a news
+  file, fetched with the update check. The card shows what fits; See All opens
+  every line in full. Home fits its window at every size: at a narrow window
+  What's New is a button beside the frame cap.
 - Private logs for each game session, available from Settings → Advanced → Logs
   and failed-start or crash details. The last ten sessions stay on this Mac within
   a 20 MiB total limit, with passwords and CD keys filtered before writing.

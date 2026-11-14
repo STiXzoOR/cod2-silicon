@@ -1,3 +1,3 @@
 # Config index
 
-No permissioned entries are available. Nothing has been published or signed.
+No entries yet. Nothing has been published or signed.

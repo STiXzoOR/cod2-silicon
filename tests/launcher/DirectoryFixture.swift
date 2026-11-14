@@ -45,18 +45,18 @@ enum DirectoryFixture {
     }
     static let players: [Player] = [
         .init(id: "player-1", name: "[Player 1]", team: "[Team]", era: "2005–2008", role: "Rifle", feel: "Precise and unhurried.",
-              tags: ["Slow aim", "Clean HUD", "Sharp image"], map: "mp_toujane", platform: .windows, config: firstConfig),
+              tags: ["Classic era", "High frame rate"], map: "mp_toujane", platform: .windows, config: firstConfig),
         .init(id: "player-2", name: "[Player 2]", team: "[Team]", era: "2005–2008", role: "Sniper", feel: "Patient, then sudden.",
-              tags: ["Slow aim", "Bright picture"], map: "mp_carentan", platform: .windows,
+              tags: ["Classic era"], map: "mp_carentan", platform: .windows,
               config: "seta sensitivity \"1.8\"\nseta r_gamma \"1.6\"\nseta com_maxfps \"125\"\n"),
         .init(id: "player-3", name: "[Player 3]", team: "[Team]", era: "2005–2008", role: "SMG", feel: "Fast hands, crisp picture.",
-              tags: ["Crisp textures", "333 movement"], map: "mp_leningrad", platform: .native,
+              tags: ["Classic era", "High frame rate"], map: "mp_leningrad", platform: .native,
               config: "seta sensitivity \"3.2\"\nseta com_maxfps \"333\"\nseta r_picmip \"0\"\n"),
         .init(id: "player-4", name: "[Player 4]", team: "[Team]", era: "2009–2012", role: "Rifle · SMG", feel: "Jumps first, shoots second.",
-              tags: ["333 movement", "Clean HUD"], map: "mp_matmata", platform: .native,
+              tags: ["CoD2x era", "High frame rate"], map: "mp_matmata", platform: .native,
               config: "seta com_maxfps \"333\"\nseta cg_drawFPS \"Simple\"\nseta cg_chatHeight \"0\"\n"),
         .init(id: "player-5", name: "[Player 5]", team: nil, era: "2009–2012", role: "Support", feel: "Calm, clean screen.",
-              tags: ["333 movement", "Slow aim", "Clean HUD"], map: "mp_railyard", platform: .windows,
+              tags: ["CoD2x era", "High frame rate"], map: "mp_railyard", platform: .windows,
               config: "seta sensitivity \"2.4\"\nseta com_maxfps \"333\"\n"),
     ]
 
@@ -71,8 +71,9 @@ enum DirectoryFixture {
             return ConfigDirectoryEntry(id: player.id, player: player.name, team: player.team, era: player.era, role: player.role,
                 feel: player.feel, story: "[Two or three sentences from the player or the catalog editor about how they played, and why this setup looks the way it does.] Sample review data, not a real player.",
                 styleTags: player.tags, favoriteMap: player.map, credit: player.name, sourceURL: base.appendingPathComponent("entries/\(player.id)"),
-                permission: .init(grantedBy: player.name, grantedAt: "2026-10-09", evidenceURL: base.appendingPathComponent("permissions/\(player.id)"),
-                                  scope: "public-redistribution"),
+                provenance: .init(publishedBy: "configs.example", retrievedAt: "2026-10-09", attribution: .listed,
+                                  changes: "Passwords, chat lines and the player’s name were left out."),
+                facts: .init(sensitivity: "2.5", frameCap: "250", resolution: "1024x768"), featured: ["player-1", "player-3", "player-4"].contains(player.id) ? true : nil,
                 configURL: config, sha256: ConfigDirectory.digest(data), byteCount: data.count, platform: player.platform)
         })
         let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]

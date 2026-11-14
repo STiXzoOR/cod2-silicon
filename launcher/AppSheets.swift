@@ -16,6 +16,8 @@ enum AppSheet: Identifiable {
     // MARK: ship-settings (SettingsSheets.swift)
     case replaceKey
     case whatsNew
+    /// Home’s What’s New in full: every release and news line (HomeView.swift).
+    case news
     case reportProblem
     case acknowledgements
 
@@ -36,6 +38,7 @@ enum AppSheet: Identifiable {
         case .switchVersion(let request): "switch-version-" + request.id
         case .replaceKey: "replace-key"
         case .whatsNew: "whats-new"
+        case .news: "news"
         case .reportProblem: "report-problem"
         case .acknowledgements: "acknowledgements"
         case .keyboardShortcuts: "keyboard-shortcuts"
@@ -57,6 +60,7 @@ struct AppSheetView: View {
         case .switchVersion(let request): SwitchVersionSheet(model: model, request: request)
         case .replaceKey: ReplaceKeySheet(model: model)
         case .whatsNew: WhatsNewSheet(model: model)
+        case .news: HomeNewsSheet(model: model)
         case .reportProblem: ReportProblemSheet(model: model)
         case .acknowledgements: AcknowledgementsSheet(model: model)
         case .keyboardShortcuts: KeyboardShortcutsSheet(model: model)

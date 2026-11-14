@@ -100,6 +100,10 @@ def main():
     parser.add_argument("--engine-only", action="store_true", help="legacy engine-only bundle for native engine fixtures")
     parser.add_argument("--stock-engine", type=pathlib.Path,
                         help="original 1.3 engine (built without COD2_CODX) to bundle beside the CoD2x one")
+    parser.add_argument("--server-engine", type=pathlib.Path,
+                        help="CoD2x dedicated server (cod2_macos_ded) for Servers > Hosting")
+    parser.add_argument("--stock-server-engine", type=pathlib.Path,
+                        help="original 1.3 dedicated server for Servers > Hosting")
     parser.add_argument("--game-dir", type=pathlib.Path, default=None,
                         help="optional developer override; omitted in release bundles")
     parser.add_argument("--frameworks", type=pathlib.Path, help="pinned SDL install prefix for a self-contained bundle")
@@ -154,6 +158,22 @@ def main():
             parser.error("--stock-engine is a CoD2x build; build it without COD2_CODX")
         if "_Cod2xNativeApp_Arguments" not in stock_symbols:
             parser.error("--stock-engine lacks bundle argument support; rebuild the native target")
+    # The dedicated servers the launcher starts for Servers > Hosting. They have no window, sound or
+    # renderer, so anything but a system library among their dependencies is a build mistake.
+    servers = [(args.server_engine, "cod2_macos_ded", True), (args.stock_server_engine, "cod2_macos_ded_stock", False)]
+    for source, name, codx in servers:
+        if source is None:
+            continue
+        if args.engine_only or not source.is_file():
+            parser.error(f"--{'server' if codx else 'stock-server'}-engine needs the launcher bundle and an existing file")
+        subprocess.run(["lipo", str(source), "-verify_arch", "arm64"], check=True)
+        # The server has no CoD2x client start-up; its master heartbeat tells the two builds apart.
+        if ("_SV_Cod2xMasterHeartbeat" in subprocess.check_output(["nm", "-g", str(source)], text=True)) != codx:
+            parser.error(f"{name}: wrong build; the CoD2x server needs COD2_CODX=1 and the original one must not have it")
+        for line in subprocess.check_output(["otool", "-L", str(source)], text=True).splitlines()[1:]:
+            dependency = line.split()[0]
+            if not dependency.startswith(("/usr/lib/", "/System/Library/")):
+                parser.error(f"{name}: non-system dependency {dependency}")
     destination = args.app.expanduser().resolve()
     destination.parent.mkdir(parents=True, exist_ok=True)
     staging = tempfile.TemporaryDirectory(prefix=".cod2x-build-", dir=destination.parent)
@@ -173,6 +193,13 @@ def main():
         shutil.copy2(args.stock_engine, stock)
         stock.chmod(stock.stat().st_mode | 0o111)
         engines.append(stock)
+    hosted = []
+    for source, name, _ in servers:
+        if source is not None:
+            server = game_macos / name
+            shutil.copy2(source, server)
+            server.chmod(server.stat().st_mode | 0o111)
+            hosted.append(server)
     resources = contents / "Resources"
     resources.mkdir(parents=True)
     if args.frameworks:
@@ -295,6 +322,9 @@ def main():
         # before the game app's signature seals it.
         for engine in engines[1:]:
             codesign(engine, entitlements, args.bundle_id + ".game.stock")
+        for server in hosted:
+            # No entitlements: a server records nothing and loads only system libraries.
+            codesign(server, None, args.bundle_id + ".server" + (".stock" if server.name.endswith("_stock") else ""))
         codesign(game_contents.parent, entitlements)
         info["LSSupportsGameMode"] = False
         info["CoD2AutomaticShaderSetup"] = False

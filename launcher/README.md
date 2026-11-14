@@ -30,6 +30,24 @@ Source layout:
   window, with Setup in its place until setup is done. Config Studio's document,
   profile, history, import, rules, binding, directory and match-summary models supply
   Configs through the shared session and store.
+- `ConfigsHomeView.swift`: Configs · Home, the page Configs opens on: your loadouts, then
+  player setups from the signed catalogue (`ConfigDirectory.swift` reads and verifies it,
+  `ConfigDiscoverModel.swift` holds the page's state). With no public key in the build
+  (`ConfigDirectory.productionPublicKey`) the page says player setups aren't available.
+- `ConfigChecker.swift` and `ConfigCheckerView.swift`: Check a Config. The first is the
+  checks themselves, over the importer's parse, the settings catalogue and the rulesets,
+  with no window; `tests/launcher/config_checker.sh` covers each finding and fix.
+- `Hosting.swift`, `HostingModel.swift`, `HostingView.swift`: Servers › Hosting. The
+  first holds what can be decided without running anything: the saved form, the
+  `server.cfg` it becomes (every value is cleaned where it is written, so a name can't
+  carry a second command), launch arguments, the checks on zPAM's release listing and
+  the export. The model runs the dedicated servers the game app carries
+  (`cod2_macos_ded`, `cod2_macos_ded_stock`) as child processes, each in its own folder
+  under `hosting/servers`, asks them for status over UDP on 127.0.0.1, queues admin
+  commands half a second apart (the engine drops faster ones), downloads zPAM with a
+  size and SHA-256 check, and stops every server before the app quits.
+  `tests/launcher/hosting.sh` covers the first file and the saved list; with
+  `COD2_HOSTING_LIVE` set it also starts both real servers on test ports.
 - `SettingsWindow.swift` and `SettingsPanes.swift`: the Settings window, a second
   window (scene `settings`) with General, Display, Game Data, Privacy, Updates,
   Advanced and About panes. `model.openSettings(_:)` opens it at a pane; it reopens on
@@ -224,8 +242,15 @@ when Servers opens is on (off by default); opening the app itself never scans th
 Settings › Updates › Check for updates automatically on (the default), at most once a day while
 the launcher is open; an automatic check that fails says nothing, and the review harness and the
 lifecycle tests (`COD2_SETUP_NONINTERACTIVE=1`) never make one. It refreshes the release notes
-and What's New, which lists the newest release's Added, Changed and Fixed notes. Home's What's New card
-marks 0.3.0 as a preview without a made-up release date, and uses fetched notes for versions without a bundled headline. When a newer release carries
+and What's New, which lists the newest release's Added, Changed and Fixed notes. The same check fetches
+the project's news file, `docs/news.json` on the main branch (`NewsFeed` in `Presentation.swift`: plain
+text, a `github.com` link or a place in the app to open, at most 64 KiB, days in the future hidden
+until they come), so news needs no new build. Home's What's New card lists releases and news newest
+first, always with the running version's line, and what comes next last when the card has room.
+The card never runs past its edge (a title keeps two lines, a summary three, fewer lines before
+any overflow); See All opens `HomeNewsSheet` with every line in full. Home keeps one row of cards at
+every window size: below 980 points of page width What's New leaves the row and becomes a chip.
+Before the first check has answered it holds one built-in line about this version, with no date. When a newer release carries
 `CoD2-Silicon-<version>-macos-arm64.zip` and `SHA256SUMS`, Install Update (only on the player's
 click) downloads both into a folder on the app's volume, refuses any size or SHA-256 mismatch,
 unpacks with `ditto` and checks the app inside (bundle identifier, offered version,
@@ -271,10 +296,18 @@ deduplicated and sorted by width then height. MainDisplay uses the CoreGraphics
 native-mode flag, with rotation applied. If no native mode is advertised it uses
 desktop coordinates conservatively, never the scaled backing or the largest mode.
 Fullscreen follows the active loadout’s monitor choice; windowed uses the main display.
-Screen changes, loadout changes and launch refresh the list. Unsupported saved sizes
-are normalized and explained in Display; Home and Ready read that same setting.
-New installs use native dimensions through 3840 × 2160, half the dimensions above it.
-Old extra resolution options move to the Resolution control, which owns that choice.
+Screen changes, loadout changes and launch refresh the list.
+
+The resolution and vertical sync belong to each loadout (`r_mode`, `r_swapInterval`): the
+launcher sets them once, archived, for a loadout that has neither (`GameSettings.loadoutDefaults`),
+and never again, so a change made in Configs or in the game's Graphics menu stays. Settings ›
+Display keeps what the game has no control for: the display and the mode (`r_fullscreen`,
+`r_borderless`), which are the only display values in `GameSettings.machineDvarNames`. Config
+Studio's Display resolution lists this display's sizes (`ConfigStudioModel.setDisplayResolutions`).
+A loadout size the display can't show is replaced by the game with the largest that fits inside
+(`MacPlatform_ChooseMode`); Home and Configs say so beforehand. A new loadout starts from native
+dimensions through 3840 × 2160, half the dimensions above it. Before loadouts exist (their set-up
+failed), Display still shows Resolution, Vertical sync and the rest, and applies them at every start.
 Trusted command-line options after `--` remain developer overrides.
 
 `GameSessionLog` drains stdout and stderr on a serial utility queue, filtering complete

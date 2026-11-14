@@ -9,7 +9,10 @@ extension Snapshots {
                                  "servers-remove-favorite"]
     /// Also rendered in the `--group pages` runs and read by `--accessibility`.
     static let serversPageScreens = ["servers-refreshing", "servers-refreshing-empty", "servers-never", "servers-filtered", "servers-no-reply",
-                                     "servers-favorites", "servers-favorites-empty", "servers-recent", "servers-inspector-empty"]
+                                     "servers-favorites", "servers-favorites-empty", "servers-recent", "servers-inspector-empty",
+                                     "servers-hosting", "servers-hosting-new", "servers-hosting-zpam-missing", "servers-hosting-zpam-getting",
+                                     "servers-hosting-zpam-ready", "servers-hosting-port-busy", "servers-hosting-running", "servers-hosting-full", "servers-hosting-players",
+                                     "servers-hosting-export"]
     static let serversAccessibilityScreens = ["servers", "servers-filters", "servers-connect", "servers-password", "servers-version", "servers-remove-favorite"]
     static let serversLabels: [String: [String]] = [
         "servers": ["Which servers", "Search servers, maps or mods", "Filters", "Connect to Address…", "Refresh server list", "Sorted by ping",
@@ -28,6 +31,18 @@ extension Snapshots {
         "servers-no-reply": ["Problem: The master servers didn’t answer", "Try Again"],
         "servers-favorites": ["Launch on Northern Lights | Public"],
         "servers-favorites-empty": ["NO FAVORITES YET", "Show All Servers"],
+        "servers-hosting": ["HOST YOUR OWN SERVER", "New Server", "Write a server.cfg…", "Which servers"],
+        "servers-hosting-new": ["New server, Not saved yet", "Server name", "Game version", "Who can join", "Password to join", "Admin password", "Rules",
+                                "Game type", "Friendly fire", "Add Map", "Cancel", "Start Server"],
+        "servers-hosting-zpam-missing": ["zPAM isn’t on this Mac yet", "Get zPAM 4.12", "Delete Server…"],
+        "servers-hosting-zpam-getting": ["Downloading zPAM", "Cancel"],
+        "servers-hosting-zpam-ready": ["Match mode", "Players get maps from"],
+        "servers-hosting-port-busy": ["Use 28962 and Start"],
+        "servers-hosting-running": ["Friday Night Rifles, Running · 3 of 12 · Toujane", "Edit…", "Next Map", "Join", "Stop Server", "Copy", "Copy Link", "How To",
+                                    "Remove Sample Player from the server", "Server log", "Show in Finder"],
+        "servers-hosting-full": ["Friday Night Rifles, Running · 12 of 12 · Toujane", "All 12 Players…"],
+        "servers-hosting-players": ["Players on Friday Night Rifles", "Remove Third Sample 12 from the server", "Done"],
+        "servers-hosting-export": ["Include zPAM match settings", "Include passwords", "Export…"],
         "servers-recent": ["Launch on Northern Lights | Public"],
         "servers-inspector-empty": ["Select a server to see its map, rules and who’s playing."],
     ]

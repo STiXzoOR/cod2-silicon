@@ -519,7 +519,9 @@ import Foundation
         let feed = try ReleaseNotes.parse(try Data(contentsOf: fixtures.appendingPathComponent("releases.json")), calendar: utc)
         precondition(feed.dispatches.count == 3 && feed.latestVersion == "0.1.1")
         precondition(!feed.dispatches.contains { $0.summary.contains("Draft") })
-        precondition(feed.dispatches[0] == Dispatch(stamp: "02 NOV", title: "CoD2 Silicon 0.2 beta",
+        precondition(feed.dispatches[0].date != nil && feed.dispatches[0].version == "0.2.0-beta.1")
+        var first = feed.dispatches[0]; first.date = nil; first.version = nil
+        precondition(first == Dispatch(stamp: "02 NOV", title: "CoD2 Silicon 0.2 beta",
             summary: "Launcher redesign with Liquid Glass navigation. Server browser favourites.",
             link: "https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0-beta.1"))
         precondition(feed.dispatches[1].title == "CoD2 Silicon 0.1.1" && feed.dispatches[1].link == nil && feed.dispatches[1].stamp == "20 OCT")
@@ -529,6 +531,47 @@ import Foundation
         precondition((try? ReleaseNotes.parse(Data("{}".utf8))) == nil && (try? ReleaseNotes.parse(Data(count: 1_000_001))) == nil)
         let empty = try ReleaseNotes.parse(Data("[]".utf8))
         precondition(empty.dispatches.isEmpty && empty.latestVersion == nil)
+
+        // The news file: plain text only, github.com links or a known place, future days hidden, newest first.
+        let noon = utc.date(from: DateComponents(year: 2026, month: 11, day: 22, hour: 12))!
+        let news = try NewsFeed.parse(Data(#"""
+        {"items":[
+          {"date":"2026-11-18","title":"Older note","summary":"First."},
+          {"date":"2026-11-21","title":"  14 more\nplayer\u202e setups ","summary":"New in Configs.","open":"configs","link":"https://example.com/x"},
+          {"date":"2026-11-23","title":"Tomorrow","summary":"Not yet."},
+          {"date":"2026-02-31","title":"No such day"},
+          {"date":"21 Nov","title":"Bad date"},
+          {"date":"2026-11-20","title":"","summary":"No title"},
+          {"date":"2026-11-19","title":"Linked","link":"https://github.com/STiXzoOR/cod2-silicon/discussions/1","open":"terminal"}],
+         "next":{"title":"A Metal renderer","summary":"In the works.","link":"https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/ROADMAP.md"}}
+        """#.utf8), now: noon, calendar: utc)
+        precondition(news.items.map(\.title) == ["14 more player setups", "Linked", "Older note"], "\(news.items.map(\.title))")
+        precondition(news.items[0].stamp == "21 NOV" && news.items[0].open == "configs" && news.items[0].link == nil && news.items[0].version == nil)
+        precondition(news.items[1].link == "https://github.com/STiXzoOR/cod2-silicon/discussions/1" && news.items[1].open == nil && news.items[1].summary.isEmpty)
+        precondition(news.next?.stamp == "NEXT" && news.next?.title == "A Metal renderer" && news.next?.date == nil)
+        precondition((try? NewsFeed.parse(Data(count: 65_537))) == nil && (try? NewsFeed.parse(Data("[]".utf8))) == nil)
+        let noNews = try NewsFeed.parse(Data("{}".utf8))
+        precondition(noNews == NewsFeed.Feed())
+        let longNews = try NewsFeed.parse(Data(("{\"items\":[{\"date\":\"2026-11-01\",\"title\":\"" + String(repeating: "word ", count: 60) + "\"}]}").utf8), now: noon, calendar: utc)
+        precondition(longNews.items[0].title.count == 80 && longNews.items[0].title.hasSuffix("…"))
+        let shipped = try NewsFeed.parse(try Data(contentsOf: URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../docs/news.json")))
+        precondition(shipped.next != nil, "the news file in this repository must parse")
+
+        // What’s New on Home: this version’s line is always there, newest first, what comes next last.
+        let builtIn = HomeDispatches.builtIn(version: "0.3.0")
+        precondition(HomeDispatches.list(version: "0.3.0", releases: []) == [builtIn] && builtIn.stamp == "NOW" && builtIn.date == nil)
+        func dated(_ title: String, _ day: Int, version: String? = nil) -> Dispatch {
+            Dispatch(stamp: "\(day) NOV", title: title, summary: "", link: nil, date: utc.date(from: DateComponents(year: 2026, month: 11, day: day)), version: version)
+        }
+        let mine = dated("CoD2 Silicon 0.3.0", 18, version: "0.3.0"), newer = dated("CoD2 Silicon 0.3.1", 25, version: "0.3.1")
+        let note = dated("A note", 21), late = dated("A later note", 27)
+        precondition(HomeDispatches.list(version: "0.3.0", releases: [mine], news: [note], next: news.next).map(\.title) == ["A note", "CoD2 Silicon 0.3.0", "A Metal renderer"])
+        precondition(HomeDispatches.list(version: "0.3.0", releases: [newer, mine], news: [late, note], next: news.next).map(\.title) == ["A later note", "CoD2 Silicon 0.3.0", "A Metal renderer"])
+        precondition(HomeDispatches.list(version: "0.3.0", releases: [newer, mine], news: [late, note]).map(\.title) == ["A later note", "CoD2 Silicon 0.3.1", "CoD2 Silicon 0.3.0"])
+        precondition(HomeDispatches.list(version: "0.3.9", releases: [mine], news: [note]).map(\.stamp) == ["21 NOV", "18 NOV", "NOW"])
+        let stored = try JSONDecoder().decode(LauncherLibrary.self, from: Data(#"{"dispatches":[{"stamp":"02 NOV","title":"CoD2 Silicon 0.3.0","summary":"Old."}],"news":"damaged"}"#.utf8))
+        precondition(stored.news.isEmpty && stored.newsNext == nil && stored.dispatches[0].date == nil)
+        precondition(HomeDispatches.list(version: "0.3.0", releases: stored.dispatches).map(\.stamp) == ["02 NOV"], "a release an older build stored still stands for this version")
 
         // Maps: stock regions and scenery, safe names for untrusted metadata, stable custom scenes.
         precondition(MapCatalog.displayName("mp_toujane") == "Toujane" && MapCatalog.region("MP_TOUJANE") == "NORTH AFRICA")

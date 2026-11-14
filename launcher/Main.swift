@@ -41,6 +41,13 @@ import UserNotifications
             model.confirmQuitWithGame()
             return .terminateCancel
         }
+        if !model.hosting.running.isEmpty && !model.hostingQuitConfirmed {
+            LauncherState.showWindow()
+            model.confirmQuitWithServers()
+            return .terminateCancel
+        }
+        // Hosted servers are this app's children: they get their clean shutdown before it goes.
+        model.hosting.stopAllAndWait()
         return .terminateNow
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }

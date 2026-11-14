@@ -326,7 +326,7 @@ private struct ImportReviewSheet: View {
             if review.provenance.signed { ProvenanceChip(text: "Signed catalog entry", symbol: "checkmark.seal", tone: .positive) }
             if review.provenance.windows { ProvenanceChip(text: "From Windows", symbol: "pc") }
             if let credit = review.provenance.credit {
-                Text("Credit: \(credit)" + (review.provenance.permission ? " · Shared with permission" : ""))
+                Text("Credit: \(credit)" + (review.provenance.publishedBy.map { " · As published by \($0)" } ?? ""))
                     .font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1)
             } else if let detail = review.provenance.detail {
                 Text(detail).font(.typewriter(12)).foregroundStyle(palette.address).lineLimit(1).truncationMode(.middle)

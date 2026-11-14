@@ -44134,13 +44134,13 @@
       ],
       "group": "gfx",
       "title": "Display resolution",
-      "summary": "The size of the picture the game draws.",
-      "details": "The game's menu calls this Video Mode. On macOS the list is built from your display's available modes when the game starts, so the catalog cannot list the sizes. It is latched and applies after the renderer restarts.",
+      "summary": "The size of the picture the game draws. Larger is sharper and slower.",
+      "details": "The game's menu calls this Video Mode. On macOS the game builds the list from your display when it starts, so the catalog cannot list the sizes; Configs lists the ones this Mac's display offers. A size the display can't show is replaced by the largest one that fits inside it. It is latched and applies after the renderer restarts.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:606",
         "src/PC/gfx_d3d/r_init.c:1046"
       ],
-      "guided": false,
+      "guided": true,
       "control": {
         "kind": "menu"
       },
@@ -49738,13 +49738,13 @@
         "stock"
       ],
       "group": "frame",
-      "title": "Wait for the display",
-      "summary": "Matches every frame to your display's refresh, which stops tearing but limits how fast frames can come.",
+      "title": "Vertical sync",
+      "summary": "Waits for your display before showing each frame. It stops tearing, adds a little delay and limits how fast frames can come; most competitive players leave it off.",
       "details": "The game's menu calls this Sync Every Frame. With it on, frames per second cannot go above your display's refresh rate. It is a latched setting, so it applies after the renderer restarts, and what happens in the end depends on your graphics driver.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:411"
       ],
-      "guided": false,
+      "guided": true,
       "control": {
         "kind": "switch"
       },

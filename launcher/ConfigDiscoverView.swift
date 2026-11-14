@@ -2,8 +2,8 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
-// Discover › Players, Saved and a player's detail. Every card, credit and permission comes
-// from a verified signed index; without one the page says so and offers import instead.
+// Discover › Saved and a player's detail, and the switch between Configs' pages. Every card, credit
+// and source comes from a verified signed index. Home is in ConfigsHomeView.swift.
 
 /// The Discover rows under My Loadouts in the Configs column.
 struct DiscoverColumnSection: View {
@@ -15,14 +15,18 @@ struct DiscoverColumnSection: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("DISCOVER").font(.system(size: 11, weight: .semibold)).tracking(0.88).foregroundStyle(palette.tertiary)
                 .padding(.horizontal, 10).padding(.top, 22).padding(.bottom, 6).accessibilityAddTraits(.isHeader)
-            row("Players", symbol: "person.2", count: nil, selected: isPlayers) { open(.players) }
-            row("Saved", symbol: "bookmark", count: discover.saved.count, selected: discover.page == .saved) { open(.saved) }
+            row("Player Setups", symbol: "person.2", count: nil, selected: isPlayers) { open(.home) }
+            // Saved has nothing to show until the catalogue lists someone.
+            if !discover.saved.isEmpty || !discover.entries.isEmpty {
+                row("Saved", symbol: "bookmark", count: discover.saved.count, selected: discover.page == .saved) { open(.saved) }
+            }
+            row("Check a Config", symbol: "checkmark.shield", count: nil, selected: false) { open(.checker) }
         }
         .task { await discover.loadIfNeeded() }
     }
 
     private var isPlayers: Bool {
-        switch discover.page { case .players, .player: true; default: false }
+        switch discover.page { case .home, .player: true; default: false }
     }
 
     private func row(_ title: String, symbol: String, count: Int?, selected: Bool, action: @escaping () -> Void) -> some View {
@@ -60,7 +64,8 @@ struct ConfigDiscoverView: View {
             switch discover.page {
             case .player(let id): PlayerDetailPage(model: model, discover: discover, artwork: artwork, entryID: id)
             case .saved: SavedPage(discover: discover, artwork: artwork)
-            default: PlayersPage(discover: discover, artwork: artwork)
+            case .checker: ConfigCheckerPage(model: model, checker: discover.checker)
+            default: ConfigsHomePage(model: model, discover: discover)
             }
         }
         .frame(minWidth: 480, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -167,83 +172,6 @@ enum NativeMenu {
     }
 }
 
-private struct DiscoverSearchField: View {
-    @ObservedObject var discover: ConfigDiscoverModel
-    @FocusState private var focused: Bool
-    var body: some View {
-        SearchPill("Search a player, team or style", text: $discover.query, focus: $focused, width: 260, label: "Search players")
-            .help("Search players by name, team, role or style (⌘F)")
-            // Edit › Find (⌘F) asks through the model; the hidden button keeps ⌘F working inside the page too.
-            .onChange(of: discover.findRequest) { _, _ in focused = true }
-            .background { Button("") { focused = true }.keyboardShortcut("f", modifiers: .command).opacity(0).accessibilityHidden(true) }
-    }
-}
-
-// MARK: - Players
-
-private struct PlayersPage: View {
-    @ObservedObject var discover: ConfigDiscoverModel
-    @ObservedObject var artwork: MapArtworkStore
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
-                DiscoverHeader(title: "Players") {
-                    HStack(spacing: 10) {
-                        if discover.snapshot.map({ !$0.index.entries.isEmpty }) == true { DiscoverSearchField(discover: discover) }
-                        AddConfigButton(discover: discover)
-                    }
-                }
-                content
-            }
-            .padding(.top, 82).padding(.horizontal, StudioMetrics.pageInset).padding(.bottom, 28)
-        }
-        .scrollIndicators(.automatic)
-    }
-
-    @ViewBuilder private var content: some View {
-        switch discover.state {
-        case .idle, .loading:
-            HStack(spacing: 10) { ProgressView().controlSize(.small); Text("Looking for shared setups…").font(.system(size: 13)).foregroundStyle(palette.secondary) }
-                .frame(maxWidth: .infinity).padding(.vertical, 60).accessibilityElement(children: .combine)
-        case .unavailable:
-            StudioEmptyState(title: "NO PLAYERS YET",
-                             message: "Shared setups from players aren’t available yet. Each one needs the player’s permission and a signed catalog entry before it appears here. You can still bring in a config of your own.",
-                             action: ("Add a Config from a File…", { discover.chooseFile(in: NSApp.keyWindow) }))
-                .frame(maxWidth: .infinity)
-        case .failed(let message):
-            StudioEmptyState(title: "OUT OF REACH", message: "The player directory couldn’t be checked. \(message)",
-                             action: ("Try Again", { Task { await discover.reload() } }))
-                .frame(maxWidth: .infinity)
-        case .loaded(let snapshot, let refreshError):
-            if let refreshError {
-                StudioBanner(title: "Showing the copy saved on this Mac.", detail: "The directory couldn’t be refreshed: \(refreshError)", tone: .information)
-            }
-            if snapshot.index.entries.isEmpty {
-                StudioEmptyState(title: "NO PLAYERS YET", message: "The signed catalog doesn’t list any shared setups yet. You can still bring in a config of your own.",
-                                 action: ("Add a Config from a File…", { discover.chooseFile(in: NSApp.keyWindow) }))
-                    .frame(maxWidth: .infinity)
-            } else if discover.shelves.isEmpty {
-                StudioEmptyState(title: "NO ONE BY THAT NAME", message: "Try a team, a role or a style.")
-                    .frame(maxWidth: .infinity)
-            } else {
-                ForEach(discover.shelves) { shelf in
-                    VStack(alignment: .leading, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(shelf.id).font(.system(size: 18, weight: .bold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
-                            Text(shelf.entries.count == 1 ? "1 setup" : "\(shelf.entries.count) setups").font(StudioTypography.help).foregroundStyle(palette.secondary)
-                        }
-                        PlayerGrid(entries: shelf.entries, discover: discover, artwork: artwork)
-                    }
-                }
-                Label("Every setup here is shared with its player’s permission. You still review every line before anything changes.", systemImage: "checkmark.seal")
-                    .font(StudioTypography.help).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-}
-
 private struct PlayerGrid: View {
     var entries: [ConfigDirectoryEntry]
     @ObservedObject var discover: ConfigDiscoverModel
@@ -296,7 +224,7 @@ private struct PlayerCard: View {
                         Spacer(minLength: 4)
                         if saved { Image(systemName: "bookmark.fill").font(.system(size: 11)).foregroundStyle(palette.accent).accessibilityHidden(true) }
                     }
-                    Text([entry.team, entry.role].compactMap { $0 }.joined(separator: " · ")).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1)
+                    Text([entry.team, entry.role ?? entry.era].compactMap { $0 }.joined(separator: " · ")).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1)
                     Text(entry.feel).font(.system(size: 13)).italic().foregroundStyle(palette.dark ? Palette.hex(0xe2dbc9) : palette.text)
                         .fixedSize(horizontal: false, vertical: true)
                     if !entry.styleTags.isEmpty { FlowChips(tags: entry.styleTags) }
@@ -395,7 +323,7 @@ private struct SavedPage: View {
                                      message: discover.snapshot == nil
                                         ? "Players you save appear here. The player directory isn’t available yet, so there’s nothing to save."
                                         : "Players you save appear here, so you can come back to their setups.",
-                                     action: ("Browse Players", { discover.open(.players) }))
+                                     action: ("Browse Player Setups", { discover.open(.home) }))
                         .frame(maxWidth: .infinity)
                 } else {
                     if !verified.isEmpty { PlayerGrid(entries: verified, discover: discover, artwork: artwork) }
@@ -440,7 +368,7 @@ private struct PlayerDetailPage: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                Button { discover.open(.players) } label: { Label("Players", systemImage: "chevron.left").font(.system(size: 13, weight: .semibold)) }
+                Button { discover.open(.home) } label: { Label("Player Setups", systemImage: "chevron.left").font(.system(size: 13, weight: .semibold)) }
                     .buttonStyle(.plain).foregroundStyle(palette.link).frame(height: 28)
                     .keyboardShortcut("[", modifiers: .command)
                     .help("Back to Players (⌘[)")
@@ -465,7 +393,7 @@ private struct PlayerDetailPage: View {
                     .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { width = $0 }
                 } else {
                     StudioEmptyState(title: "NOT IN THE DIRECTORY", message: "This setup isn’t in the signed catalog any more.",
-                                     action: ("Browse Players", { discover.open(.players) }))
+                                     action: ("Browse Player Setups", { discover.open(.home) }))
                         .frame(maxWidth: .infinity)
                 }
             }
@@ -515,7 +443,7 @@ private struct PlayerHero: View {
                 .overlay(Circle().stroke(ink.accent.opacity(0.6), lineWidth: 1))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 6) {
-                Eyebrow(text: "\(entry.era) · \(entry.role)", color: Palette.hex(0xf2d394))
+                Eyebrow(text: [entry.era, entry.role].compactMap { $0 }.joined(separator: " · "), color: Palette.hex(0xf2d394))
                 Text(entry.player.uppercased()).font(.stencil(56)).tracking(1.1).foregroundStyle(ink.heading).lineLimit(1).minimumScaleFactor(0.6)
                     .accessibilityLabel(entry.player).accessibilityAddTraits(.isHeader)
                 Text(entry.feel).font(.system(size: 14)).italic().foregroundStyle(Palette.hex(0xe2dbc9)).lineLimit(2)
@@ -569,7 +497,7 @@ private struct StoryPanel: View {
                     GridRow {
                         fact("Era", entry.era)
                         fact("Team", entry.team ?? "None listed")
-                        fact("Role", entry.role)
+                        if let role = entry.role { fact("Role", role) }
                     }
                     if let map = entry.favoriteMap { GridRow { fact("Favorite map", MapCatalog.displayName(map)) } }
                 }
@@ -581,18 +509,27 @@ private struct StoryPanel: View {
                         VStack(alignment: .leading, spacing: 4) { permission; credit }
                     }
                     .font(StudioTypography.help)
-                    Text("Permission from \(entry.permission.grantedBy) on \(entry.permission.grantedAt). The signature shows this entry came from the catalog unchanged; it doesn’t make a config safe, so you still review every line.")
-                        .font(StudioTypography.help).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
-                    Link("See the permission record", destination: entry.permission.evidenceURL).font(StudioTypography.help).foregroundStyle(palette.link)
+                    Text(provenanceNote).font(StudioTypography.help).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
+                    Link("Ask to remove or correct this setup", destination: ConfigDirectory.removalURL).font(StudioTypography.help).foregroundStyle(palette.link)
                 }
                 .padding(.top, 4)
             }
         }
     }
+    /// The catalogue says where it found a setup, never that the player approved the listing.
+    private var provenanceNote: String {
+        let how: String
+        switch entry.provenance.attribution {
+        case .selfPublished: how = "The player published it there."
+        case .listed: how = "That page lists it under this name; the catalogue can’t confirm who made it."
+        case .uploaded: how = "It was uploaded there under this name; the catalogue can’t confirm who made it."
+        }
+        return "Copied on \(entry.provenance.retrievedAt). \(how) \(entry.provenance.changes) The signature shows this entry came from the catalogue unchanged; it doesn’t make a config safe, so you still review every line."
+    }
     private var permission: some View {
         HStack(spacing: 8) {
-            Image(systemName: "checkmark.seal").foregroundStyle(palette.positive).accessibilityHidden(true)
-            Text("Shared with permission").foregroundStyle(palette.secondary)
+            Image(systemName: "link").foregroundStyle(palette.secondary).accessibilityHidden(true)
+            Text("As published by \(entry.provenance.publishedBy)").foregroundStyle(palette.secondary)
             Dot()
             Link("Source", destination: entry.sourceURL).foregroundStyle(palette.link)
         }

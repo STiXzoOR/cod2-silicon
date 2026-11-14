@@ -82,12 +82,14 @@ build_app() {
         "${configure[@]}" "-DCOD2_TYPED_DATA_DIR=$build/typed"
     run_build cmake -S "$root" -B "$build/client-stock" -DCOD2_FEATURE_CFLAGS= \
         "${configure[@]}" "-DCOD2_TYPED_DATA_DIR=$build/typed-stock"
-    run_build cmake --build "$build/client" --target cod2_macos cod2_shadergen --parallel "${COD2_BUILD_JOBS:-$(/usr/sbin/sysctl -n hw.ncpu)}"
-    run_build cmake --build "$build/client-stock" --target cod2_macos --parallel "${COD2_BUILD_JOBS:-$(/usr/sbin/sysctl -n hw.ncpu)}"
+    # Each engine also builds its dedicated server, which Servers › Hosting starts.
+    run_build cmake --build "$build/client" --target cod2_macos cod2_macos_ded cod2_shadergen --parallel "${COD2_BUILD_JOBS:-$(/usr/sbin/sysctl -n hw.ncpu)}"
+    run_build cmake --build "$build/client-stock" --target cod2_macos cod2_macos_ded --parallel "${COD2_BUILD_JOBS:-$(/usr/sbin/sysctl -n hw.ncpu)}"
     run_build cmake --build "$build/client" --target cod2_launcher --parallel "${COD2_BUILD_JOBS:-3}"
     run_build "$python" "$root/tools/cod2x/make_macos_app.py" \
         "$build/client/cod2_macos" "$app" --replace --launcher "$build/client/launcher/CoD2Launcher" --frameworks "$prefix" \
         --stock-engine "$build/client-stock/cod2_macos" \
+        --server-engine "$build/client/cod2_macos_ded" --stock-server-engine "$build/client-stock/cod2_macos_ded" \
         --shadergen "$build/client/cod2-shadergen" --vkd3d "$build/vkd3d/install" --version "$version" \
         ${COD2_SENTRY_DSN:+--sentry-dsn "$COD2_SENTRY_DSN"}
 }

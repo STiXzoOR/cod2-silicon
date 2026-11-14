@@ -41,6 +41,19 @@ checks below were run on that Mac.
   smallest window size and under Increase Contrast, Reduce Transparency and
   Reduce Motion, with every control read through the accessibility
   interface.
+- **Hosting a server.** The launcher's hosting code started both dedicated
+  servers, CoD2x and the original 1.3, from the assembled app's signed copies.
+  Each wrote its `server.cfg`, answered a status query, moved to the next map
+  when asked, refused a wrong admin password and shut down when stopped,
+  leaving its port free. zPAM 4.12 and zPAM 3.36 were downloaded from the zPAM
+  project's releases, matched the checksums published there, and a match
+  server ran with each: 4.12 on CoD2x, 3.36 on the original 1.3. CoD2x's
+  update service was replaced by a stand-in on this Mac for these runs.
+- **The config checker and player setups.** The checker's tests cover every
+  kind of finding and every fix. The 68 setups prepared for the catalogue were
+  each read by the launcher's own import review in both game versions: none
+  holds a line the review blocks, and names, chat lines, passwords, server
+  settings and timed macros were removed before that.
 - **Config Studio's catalogue.** The release build checks the bundled
   settings catalogue against the engine source. It was out of date and was
   regenerated: 852 settings, with no differences in either engine mode.
@@ -102,6 +115,9 @@ and CoD2x's `r_autopriority` setting is not included.
   stand-ins on this Mac. The one exception is the start-up update check:
   test runs of the CoD2x engine made it against the CoD2x project's server,
   as every CoD2x client does, and it answered that no update was available.
+- No player joined a hosted server. Kick, the invite link, joining from
+  another machine, a server listed publicly and a router's port forward were
+  not tried, and no zPAM match was played on one.
 - The launcher was not driven past starting the game in the packaged app:
   Setup, Settings and Launch were exercised by the launcher's tests, not by
   hand in the notarized build.

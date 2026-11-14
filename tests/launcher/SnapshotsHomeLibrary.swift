@@ -7,16 +7,17 @@ extension Snapshots {
     static let homeLibraryScreens = ["home", "home-first", "home-address", "home-attention", "home-running", "home-crash", "home-crash-log", "home-matches-off",
                                      "library-matches", "library-demos", "library-screenshots"]
     /// Also rendered in the `--group pages` runs and read by `--accessibility`.
-    static let homeLibraryPageScreens = ["home-update", "home-update-installing", "home-crash-sent", "home-crash-not-sent",
+    static let homeLibraryPageScreens = ["home-news-first", "home-news-long", "home-news-all", "home-update", "home-update-installing", "home-crash-sent", "home-crash-not-sent",
                                          "library-matches-empty", "library-matches-off", "library-matches-off-kept", "library-matches-error", "library-demos-selected",
                                          "library-screenshots-selected", "library-empty", "library-empty-screenshots", "library-reloaded",
                                          "library-error", "library-renaming", "library-rename-error", "library-trash", "library-running", "library-missing",
-                                         "library-trashed", "home-loadout", "home-loadout-unreadable"]
+                                         "library-trashed", "home-loadout", "home-loadout-unreadable", "home-loadout-resolution"]
     static let homeLibraryAccessibilityScreens = ["home", "home-crash-log", "home-first", "home-address", "home-attention", "home-running", "home-matches-off",
                                                   "library-matches", "library-demos", "library-screenshots"]
     static let homeLibraryLabels: [String: [String]] = [
         "home": ["Launch on Northern Lights | Public", "Find a Server", "Jump back in", "All Recent", "Launch on Sunday Rifles · EU",
-                 "Last match", "All Matches", "Connection Steady", "Open Check-up", "What's New", "Release Notes"],
+                 "Last match", "All Matches", "Connection Steady", "Open Check-up", "What's New", "See All"],
+        "home-news-all": ["What’s New", "Release Notes", "Done", "Open Configs: 14 more player setups"],
         "home-first": ["Find a Server", "Open Game Menu", "NOTHING PLAYED YET", "NOT MEASURED YET"],
         "home-address": ["Launch on 203.0.113.77:28960", "203.0.113.77:28960, Joined by address"],
         "home-attention": ["Approximate shaders. Build the original shaders"],
@@ -27,6 +28,7 @@ extension Snapshots {
         "home-update-installing": ["Downloading version 0.4.0"],
         "home-loadout": ["Main loadout, 333 frames per second cap"],
         "home-loadout-unreadable": ["Frame cap unavailable"],
+        "home-loadout-resolution": ["Main loadout, 333 frames per second cap, 5120 by 2880", "This display can’t show 5120 by 2880. The game will use 3456 by 2234"],
         "library-matches": ["Toujane, Search & Destroy", "Check-up for Toujane · Search & Destroy", "Kept on this Mac", "Delete Summaries…"],
         "library-matches-empty": ["NO MATCHES YET", "Find a Server"],
         "library-matches-off": ["MATCH SUMMARIES ARE OFF", "Turn On in Settings…"],

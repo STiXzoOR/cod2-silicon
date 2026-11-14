@@ -80,25 +80,46 @@ has All, Favorites and Recent views, saved filters, and **Connect to Address…*
 your default version stays in Settings. While playing, the launcher keeps its
 Dock icon and can hide its windows. Home offers Return to Game and Quit Game.
 
+**Servers → Hosting** runs your own server on this Mac, with CoD2x or the
+original 1.3, for people on your network or listed publicly. Choose the maps
+and rules, start it, and the page shows who is playing, the address to share
+and the server's log. Competitive rules use zPAM, which the launcher downloads
+from the zPAM project's releases when you ask for it; it is not bundled.
+**Export for Another Machine** writes `server.cfg` and start commands for a
+Linux or Windows server instead. See [the server guide](docs/server.md).
+
 **Settings** is a separate window, reached from the sidebar, app menu or ⌘,.
 Its seven panes cover the launcher, display, game data, privacy, updates,
 advanced launch options and About. Changes save automatically. The renderer
 is OpenGL; Metal controls are not shown in this release. New installs start borderless at the display’s native size up to 3840 × 2160,
 or half its width and height above that (2560 × 1440 on a 5K panel).
-A saved supported size stays as chosen. Display lists unique sizes in ascending
-order, limited to the selected panel’s native pixels; an unavailable saved size
-moves down to the largest fitting size, with an explanation in Settings.
-Larger sizes are sharper and slower, and anti-aliasing adds to the work.
-Borderless stretches the picture to the desktop; Full Screen shows the selected
-size pixel for pixel. The other defaults are a 250 fps cap, vertical sync off
-and raw mouse input.
+The resolution and vertical sync belong to each loadout: change them in
+Configs or in the game’s own Graphics menu and they stay as you set them.
+Configs lists the sizes your display offers; a size it can’t show is replaced
+by the largest that fits, and Home tells you beforehand. Settings › Display
+keeps the display and the mode: Borderless stretches the picture to the
+desktop, Full Screen shows it pixel for pixel. The other defaults are a
+250 fps cap, vertical sync off and raw mouse input.
 
 **Configs** holds loadouts: frame cap, mouse, audio, graphics and binds, plus
 Check-up and History. Create, duplicate, rename, export or delete an unused
 loadout with Undo; **Use for Next Game** selects the one the game will read.
-Home also has a loadout picker. The Players directory stays hidden until a
-signed directory is available. Import from a file, link or clipboard still
-works, with review before anything is applied. Configs is read-only during a game.
+Home also has a loadout picker. Configs is read-only during a game.
+
+Configs opens on its own home page: your loadouts, and **player setups** from a
+[public catalogue](https://github.com/STiXzoOR/cod2-configs). The catalogue
+collects configs that were published on the open web, credits each to the page
+it came from, and leaves out names, chat lines, passwords, server settings and
+timed key macros. It does not claim a player approved a listing, and removes
+one on request. You see what a setup would change and review every line before
+anything is imported. **Add a Config** brings in one of your own from a file, a
+link, the clipboard or a Windows install, with the same review.
+
+**Check a Config** reads any config on this Mac, for CoD2x or the original 1.3
+and optionally a set of server rules such as zPAM's. It marks, line by line,
+settings that don't exist, values the game refuses, settings that only change
+with cheats on, repeats and stored passwords, and offers a fix for each. Fixes
+change a copy; the file you checked is never written.
 
 **Library** keeps Matches, Demos and Screenshots. Match summaries stay on this
 Mac and open Check-up for that match. Check-up shows freezes over 0.1 s,
@@ -144,10 +165,19 @@ trusted engine arguments after `--`.
   Servers, and asks a single server when you type its address in **Connect to
   Address**. Passwords you choose to remember stay in your keychain on this Mac
   and are sent only to that server. **Settings → Privacy** lists these contacts.
+- **Configs** fetches the player setups catalogue from GitHub when its home page
+  opens, and a setup's config when you look at it.
+- **A server you host** contacts nothing while it is set to My Network. Set to
+  The Internet, it lists itself on the master servers. A CoD2x server asks the
+  CoD2x project's update service about new versions while it runs, and players'
+  games fetch zPAM and its maps from the CoD2x project's site. Getting zPAM
+  downloads it from GitHub.
 - **Report a Problem** opens a prefilled issue in your browser; the app sends
   nothing itself.
 - **Crash reports** are sent only if you turn a switch on in **Settings →
-  Privacy**. Your CD key is never part of one.
+  Privacy**. 0.3.0 has one, for CoD2x's own reports to the CoD2x project. It
+  is built without a report service of this project's own, so nothing is
+  sent here. Your CD key is never part of a report.
 
 ## Known limitations
 

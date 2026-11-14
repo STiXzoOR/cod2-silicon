@@ -11,6 +11,8 @@ struct LoadoutChoice: Identifiable, Equatable {
     let name: String
     let cap: Int?
     let inUse: Bool
+    /// The loadout's own resolution ("2560x1440"); nil until its first game gives it one.
+    var resolution: String? = nil
 }
 
 /// Something that keeps the next game from running as it should, with the place that fixes it.
@@ -34,24 +36,6 @@ extension GameServer {
     /// The map and mode the server reported; nil for an address only ever joined (never seen in a list).
     var knownMap: String? { fields["mapname"] }
     var knownMode: String? { fields["g_gametype"] ?? fields["gametype"] }
-}
-
-/// Home’s What’s New card: this build’s headline with its release date, then what comes next.
-enum HomeDispatches {
-    static let releaseVersion = "0.3.0"
-    static let release = Dispatch(stamp: "14 NOV", title: "CoD2 Silicon 0.3.0",
-                                  summary: "CoD2x 1.4.6.8 beside the original 1.3, loadouts, and one-click updates.",
-                                  link: "https://github.com/STiXzoOR/cod2-silicon/releases")
-    static let next = Dispatch(stamp: "NEXT", title: "A Metal renderer", summary: "In the works. The original look stays until it matches.",
-                               link: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/ROADMAP.md")
-    /// The headline for `version`: the bundled one for this release, else that version's entry in the
-    /// fetched release notes, else a plain pointer to them.
-    static func list(version: String, feed: [Dispatch]) -> [Dispatch] {
-        let current = version == releaseVersion ? release
-            : feed.first { $0.title == version || $0.title.hasSuffix(" " + version) }
-            ?? Dispatch(stamp: "NOW", title: "CoD2 Silicon \(version)", summary: "What changed in this version is in the release notes.", link: nil)
-        return [current, next]
-    }
 }
 
 /// One stored match summary as Home and Library show it: typical frame rate, ping and the connection in a word.
@@ -143,7 +127,39 @@ enum PlayedDate {
 @MainActor extension LauncherModel {
     // MARK: Home: hero, chips and cards
 
-    var dispatches: [Dispatch] { HomeDispatches.list(version: version, feed: library.dispatches) }
+    var dispatches: [Dispatch] { dispatches(rows: 3) }
+    /// What’s New in `rows` lines. A card too short for three drops what comes next first, then older lines.
+    func dispatches(rows: Int) -> [Dispatch] {
+        HomeDispatches.list(version: version, releases: library.dispatches, news: library.news, next: rows >= 3 ? library.newsNext : nil, rows: rows)
+    }
+    /// Every line the launcher has, for the What’s New dialog.
+    var allDispatches: [Dispatch] { dispatches(rows: 12) }
+    /// Home’s What’s New card (See All) and its chip at a narrow window.
+    func showNews() { present(.news) }
+    /// The button beside a line in the dialog: where it leads.
+    func openTitle(_ dispatch: Dispatch) -> String {
+        switch dispatch.open {
+        case "configs": "Open Configs"
+        case "servers": "Open Servers"
+        case "library": "Open Library"
+        case "updates": "Open Updates"
+        default: dispatch.version != nil ? "Open Updates" : "Read More"
+        }
+    }
+    var dispatchesFoot: String { lastUpdateCheck.map { "Checked " + SettingsText.when($0) + "." } ?? "News appears after the first update check." }
+    /// Whether a What’s New line leads anywhere: a place in the app, the Updates pane for a release, or a link.
+    func canOpen(_ dispatch: Dispatch) -> Bool { dispatch.open != nil || dispatch.version != nil || dispatch.link != nil }
+    func open(_ dispatch: Dispatch) {
+        switch dispatch.open {
+        case "configs": navigate(to: .configs)
+        case "servers": navigate(to: .servers)
+        case "library": navigate(to: .library)
+        case "updates": openSettings(.updates)
+        default:
+            if dispatch.version != nil { openSettings(.updates) }
+            else if let link = dispatch.link.flatMap(URL.init(string:)) { NSWorkspace.shared.open(link) }
+        }
+    }
 
     /// The server behind a recent address: what the launcher last saw of it, or for one it never listed
     /// (joined by address), a bare entry with the map and mode of its newest match summary, if any.
@@ -185,20 +201,42 @@ enum PlayedDate {
             return (raw.flatMap(Int.init), profile.profile.displayName)
         } catch { return (nil, nil) }
     }
-    /// Home's loadout menu: every loadout with its frame cap, the one in use ticked. Empty before loadouts exist.
-    var loadoutChoices: [LoadoutChoice] {
-        guard usesLoadouts, let session = studio.session ?? configStudio else { return [] }
+    /// The next game's resolution. It belongs to the loadout; one that has none yet starts from the
+    /// size chosen for this display. `used` is set when the display can't show the loadout's size:
+    /// the game then takes the largest it offers that fits inside.
+    var nextGameResolution: (value: String, used: String?) {
+        guard usesLoadouts, let session = studio.session ?? configStudio else { return (settings.resolution, nil) }
+        let connection = serverConnection.address == lastServer?.address
+        let profile = (try? (connection ? serverConnection.profileID : nil).map(session.readProfile) ?? session.readActive()) ?? nil
+        guard let raw = profile?.document.effectiveSetting(named: "r_mode")?.trimmingCharacters(in: .whitespaces), DisplayResolution(raw) != nil else { return (settings.resolution, nil) }
+        guard let sizes = mainDisplay?.resolutions, !sizes.isEmpty, !sizes.contains(where: { $0.value == raw }) else { return (raw, nil) }
+        return (raw, DisplayResolutions.fitting(raw, in: sizes))
+    }
+    /// Home's loadout menu: every loadout with its frame cap and resolution, the one in use ticked. Empty before loadouts exist.
+    var loadoutChoices: [LoadoutChoice] { usesLoadouts ? loadoutCards : [] }
+    /// Every loadout with its frame cap and resolution, for Configs · Home.
+    var loadoutCards: [LoadoutChoice] {
+        guard let session = studio.session ?? configStudio else { return [] }
         return session.profiles.map { profile in
-            let cap = (try? session.readProfile(profile.id))?.document.effectiveSetting(named: "com_maxfps")
-                .flatMap { Int($0.trimmingCharacters(in: .whitespaces)) }
-            return LoadoutChoice(id: profile.id, name: profile.displayName, cap: cap, inUse: profile.isActive)
+            let document = (try? session.readProfile(profile.id))?.document
+            let cap = document?.effectiveSetting(named: "com_maxfps").flatMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+            let size = document?.effectiveSetting(named: "r_mode").map { $0.trimmingCharacters(in: .whitespaces) }.flatMap { DisplayResolution($0) != nil ? $0 : nil }
+            return LoadoutChoice(id: profile.id, name: profile.displayName, cap: cap, inUse: profile.isActive, resolution: size)
         }
+    }
+    /// Choose…: the next game's loadout in Configs, open at Display resolution.
+    func openResolutionSettings() {
+        guard usesLoadouts else { openSettings(.display); return }
+        openFrameSettings()
+        guard page == .configs else { return }
+        studio.group = .gfx; studio.search = "Display resolution"
     }
     /// Edit … in Configs: the next game's loadout, open at its frame settings (Settings › Display before loadouts exist).
     func openFrameSettings() {
         guard usesLoadouts else { openSettings(.display); return }
         navigate(to: .configs)
         guard page == .configs else { return }
+        discover.landsOnHome = false; discover.page = nil
         studio.loadCatalogNow()
         let target = (serverConnection.address == lastServer?.address ? serverConnection.profileID : nil) ?? studio.activeProfile?.id
         if let target { studio.select(target) }
@@ -394,7 +432,22 @@ enum PlayedDate {
     func previewHomeLibrary(_ screen: String) -> Bool {
         guard screen.hasPrefix("home") || screen.hasPrefix("library") else { return false }
         previewPlayed()
+        if screen != "home-news-first" { previewNews() }
+        // Home learns the display when the app becomes active, which happens once per review run: a
+        // later screen that needs the preview's display (the resolution it can't show) asks for it here.
+        if screen == "home-loadout-resolution" { refreshDisplay() }
         switch screen {
+        case "home-news-first": page = .home; previewMatches()
+        case "home-news-long", "home-news-all":
+            // Long news, as a release title and a paragraph from the network can be: the card shows what
+            // fits, the dialog everything.
+            page = .home; previewMatches()
+            let long = "Hosting a server from the launcher, player setups in Configs, a config checker, a loadout’s own resolution and vertical sync, and What’s New from the network. Read the full notes for what was tested and what was not."
+            library.dispatches = library.dispatches.map { var line = $0; line.title = "CoD2 Silicon \(version): hosting, player setups and the config checker"; line.summary = long; return line }
+                + [Dispatch(stamp: "13 OCT", title: "CoD2 Silicon 0.2.1", summary: "Fixes the resolution on 6K displays and a freeze when the server list refreshes while a game starts.",
+                            link: "https://github.com/STiXzoOR/cod2-silicon/releases", date: Date(timeIntervalSince1970: 1_791_849_600), version: "0.2.1")]
+            library.news = library.news.map { var line = $0; line.summary = "New in Configs: fourteen setups from the 2008 and 2009 seasons, each credited to the page it was published on and reviewed line by line before anything is imported."; return line }
+            if screen == "home-news-all" { present(.news) }
         case "home", "home-attention", "home-update", "home-crash", "home-crash-log", "home-crash-sent", "home-crash-not-sent", "home-running", "home-matches-off":
             page = .home; previewMatches()
             if screen == "home-attention" { approximate = true }
@@ -454,6 +507,17 @@ enum PlayedDate {
         return true
     }
     /// The three recent servers' join dates: yesterday evening, then two earlier nights.
+    /// What’s New after a check: a note from the news file, this version’s release, and what comes next.
+    private func previewNews() {
+        let calendar = Calendar(identifier: .gregorian)
+        func day(_ day: Int) -> Date { calendar.date(from: DateComponents(year: 2026, month: 11, day: day, hour: 12)) ?? Date() }
+        library.dispatches = [Dispatch(stamp: StencilDate.day(day(18)), title: "CoD2 Silicon \(version)", summary: HomeDispatches.builtIn(version: "0.3.0").summary,
+                                       link: "https://github.com/STiXzoOR/cod2-silicon/releases", date: day(18), version: version)]
+        library.news = [Dispatch(stamp: StencilDate.day(day(21)), title: "14 more player setups", summary: "New in Configs: setups from the 2008 and 2009 seasons.", date: day(21), open: "configs")]
+        library.newsNext = Dispatch(stamp: "NEXT", title: "A Metal renderer", summary: "In the works. The original look stays until it matches.",
+                                    link: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/ROADMAP.md")
+        library.dispatchesCheckedAt = Calendar.current.date(bySettingHour: 14, minute: 2, second: 0, of: Date())
+    }
     private func previewPlayed() {
         let calendar = Calendar(identifier: .gregorian)
         let yesterday = calendar.date(byAdding: .day, value: -1, to: Date()) ?? Date()

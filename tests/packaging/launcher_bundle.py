@@ -35,11 +35,22 @@ binaries = [app / 'Contents/MacOS/CoD2Launcher', *sorted((game / 'Contents/MacOS
             game / 'Contents/Helpers/cod2-shadergen']
 binaries += [p for p in (game / 'Contents/Frameworks').glob('*.dylib') if not p.is_symlink()]
 # Both engines: CoD2x (the helper's executable) and the original 1.3 beside it, chosen in Settings.
-assert sorted(p.name for p in binaries) == ['CoD2Launcher', 'cod2-shadergen', 'cod2_macos', 'cod2_macos_stock',
+# and each one's dedicated server, which Servers > Hosting starts.
+assert sorted(p.name for p in binaries) == ['CoD2Launcher', 'cod2-shadergen', 'cod2_macos', 'cod2_macos_ded', 'cod2_macos_ded_stock', 'cod2_macos_stock',
                                             'libSDL2-2.0.0.dylib', 'libSDL3.0.dylib', 'libvkd3d-shader.1.dylib'], binaries
 symbols = {p.name: subprocess.check_output(['nm', '-g', str(p)], text=True) for p in (game / 'Contents/MacOS').iterdir()}
 assert '_Cod2x_Init' in symbols['cod2_macos'] and '_Cod2x_Init' not in symbols['cod2_macos_stock']
 assert all('_Cod2xNativeApp_Arguments' in symbols[name] for name in ('cod2_macos', 'cod2_macos_stock'))
+assert '_SV_Cod2xMasterHeartbeat' in symbols['cod2_macos_ded'] and '_SV_Cod2xMasterHeartbeat' not in symbols['cod2_macos_ded_stock']
+for name, identifier in (('cod2_macos_ded', '.server'), ('cod2_macos_ded_stock', '.server.stock')):
+    server = game / 'Contents/MacOS' / name
+    # A server has no window, sound or renderer: system libraries only, and no entitlements.
+    for line in subprocess.check_output(['otool', '-L', str(server)], text=True).splitlines()[1:]:
+        assert line.strip().startswith(('/System/', '/usr/lib/')), (name, line)
+    held = subprocess.run(['codesign', '-d', '--entitlements', '-', '--xml', str(server)], capture_output=True, check=True).stdout
+    assert not held or plistlib.loads(held) == {}, (name, held)
+    signed = subprocess.run(['codesign', '-dv', str(server)], capture_output=True, text=True, check=True).stderr
+    assert 'Identifier=' + info['CFBundleIdentifier'] + identifier + '\n' in signed, signed
 stock = subprocess.run(['codesign', '-d', '--entitlements', '-', '--xml', str(game / 'Contents/MacOS/cod2_macos_stock')],
                        capture_output=True, check=True)
 assert plistlib.loads(stock.stdout) == {'com.apple.security.device.audio-input': True}, stock.stdout
@@ -58,4 +69,4 @@ for path in app.rglob('*'):
     assert path.suffix not in {'.iwd', '.py', '.dm_1', '.dm_2'}, path
     assert path.name not in {'preferences', 'manifest.json', 'data-path.txt'}, path
 subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
-print('PASS: launcher + isolated Game Mode helper with CoD2x and original 1.3 engines, one URL owner, seven arm64/macOS26 Mach-Os, portable links, deep signature, no game content, icon G in both apps, OFL fonts with licences')
+print('PASS: launcher + isolated Game Mode helper with CoD2x and original 1.3 engines, one URL owner, both dedicated servers, nine arm64/macOS26 Mach-Os, portable links, deep signature, no game content, icon G in both apps, OFL fonts with licences')

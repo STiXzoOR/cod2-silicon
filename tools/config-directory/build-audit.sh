@@ -15,5 +15,11 @@ taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 \
     "$models/launcher/ConfigImportCatalogAdapter.swift" "$here/Audit.swift" -o "$output/audit"
 taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 \
     -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
+    -target "$architecture-apple-macos13" -sdk "$sdk" -O \
+    "$models/launcher/ConfigDocument.swift" "$models/launcher/ConfigImport.swift" \
+    "$models/launcher/ConfigImportSafety.swift" "$models/launcher/ConfigCatalog.swift" \
+    "$models/launcher/ConfigImportCatalogAdapter.swift" "$here/Clean.swift" -o "$output/clean"
+taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 \
+    -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
     -target "$architecture-apple-macos13" -sdk "$sdk" -O -parse-as-library "$here/Sign.swift" -o "$output/sign"
 cp "$models/launcher/Resources/ConfigCatalog.json" "$output/ConfigCatalog.json"

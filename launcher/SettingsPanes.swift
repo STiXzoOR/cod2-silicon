@@ -97,6 +97,7 @@ struct DisplayPane: View {
         SettingsPaneScroll {
             HStack(alignment: .top, spacing: 20) {
                 DisplayPreview(model: model).frame(width: 300)
+                VStack(alignment: .leading, spacing: 8) {
                 FormGroup {
                     FormRow("Display", detail: model.gameMonitor > 0 ? "Chosen by the loadout for the next game" : "The main display") {
                         Text(model.mainDisplay?.name ?? "Main display").font(.system(size: 13)).foregroundStyle(palette.secondary).lineLimit(1)
@@ -104,27 +105,39 @@ struct DisplayPane: View {
                     FormRow("Mode", detail: LauncherModel.displayModeDetail(model.settings.fullscreen)) {
                         PopUpButton("Mode", selection: $model.settings.fullscreen, options: LauncherModel.displayModes)
                     }
-                    VStack(alignment: .leading, spacing: 6) {
-                        FormRow("Resolution") {
-                            PopUpButton("Resolution", selection: Binding(get: { model.settings.resolution }, set: { model.resolutionAdjustment = nil; model.settings.resolution = $0 }), options: model.resolutionOptions)
+                    if legacy {
+                        VStack(alignment: .leading, spacing: 6) {
+                            FormRow("Resolution") {
+                                PopUpButton("Resolution", selection: Binding(get: { model.settings.resolution }, set: { model.resolutionAdjustment = nil; model.settings.resolution = $0 }), options: model.resolutionOptions)
+                            }
+                            Text(model.resolutionHelp).font(.system(size: 12)).foregroundStyle(palette.tertiary)
+                                .fixedSize(horizontal: false, vertical: true).padding(.horizontal, 20).padding(.bottom, 12)
                         }
-                        Text(model.resolutionHelp).font(.system(size: 12)).foregroundStyle(palette.tertiary)
-                            .fixedSize(horizontal: false, vertical: true).padding(.horizontal, 20).padding(.bottom, 12)
                     }
                 }
+                if !legacy {
+                    Text("The game has no control for these two, so they are set here and apply to every loadout.")
+                        .font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true).padding(.leading, 6)
+                }
+                }
             }
-            FormSection("Picture") {
-                FormGroup {
-                    FormRow("Vertical sync", detail: "Stops tearing by matching your display. Adds a little delay; most competitive players leave it off.", isOn: $model.settings.vsync)
-                    if legacy {
+            if legacy {
+                FormSection("Picture") {
+                    FormGroup {
+                        FormRow("Vertical sync", detail: "Stops tearing by matching your display. Adds a little delay; most competitive players leave it off.", isOn: $model.settings.vsync)
                         FormRow("Texture sharpness at a distance", detail: "Anisotropic filtering. Higher is sharper and costs almost nothing on Apple silicon.") {
                             PopUpButton("Texture sharpness at a distance", selection: $model.settings.anisotropy,
                                         options: GameSettings.anisotropyLevels.map { ($0, "\($0)×") })
                         }
                     }
                 }
-            } footer: {
-                if !legacy { Text("Texture sharpness and the other picture settings belong to each loadout, in Configs.") }
+            } else {
+                // Resolution, vertical sync and the picture belong to each loadout: the game's own Graphics menu
+                // changes them too, and the launcher no longer sets them back at every start.
+                Banner(.tip, symbol: "square.stack.3d.up", title: "Resolution, vertical sync and picture quality belong to each loadout",
+                       message: "Change them in Configs or in the game’s own Graphics menu. Either way they stay as you set them.") {
+                    Button("Open Configs", action: model.openResolutionSettings).glassAction().disabled(!model.canNavigate)
+                }
             }
             if legacy {
                 FormSection("Frame rate") {
@@ -151,7 +164,7 @@ struct DisplayPane: View {
     }
     private var atDefaults: Bool {
         let d = model.defaultSettings, s = model.settings
-        let display = s.resolution == d.resolution && s.fullscreen == d.fullscreen && s.vsync == d.vsync && s.anisotropy == d.anisotropy
+        let display = s.fullscreen == d.fullscreen && (!legacy || (s.resolution == d.resolution && s.vsync == d.vsync && s.anisotropy == d.anisotropy))
         return display && (!legacy || (s.fps == d.fps && s.rawMouse == d.rawMouse && s.sensitivity == d.sensitivity && s.dpi == d.dpi && s.volume == d.volume))
     }
     private func restore() {
@@ -162,8 +175,8 @@ struct DisplayPane: View {
     private func undoRestore() {
         guard let previous = beforeRestore else { model.settingsFeedback = nil; return }
         var settings = model.settings
-        settings.resolution = previous.resolution; settings.fullscreen = previous.fullscreen; settings.vsync = previous.vsync; settings.anisotropy = previous.anisotropy
-        if legacy { settings.fps = previous.fps; settings.rawMouse = previous.rawMouse; settings.sensitivity = previous.sensitivity; settings.dpi = previous.dpi; settings.volume = previous.volume }
+        settings.fullscreen = previous.fullscreen
+        if legacy { settings.resolution = previous.resolution; settings.vsync = previous.vsync; settings.anisotropy = previous.anisotropy; settings.fps = previous.fps; settings.rawMouse = previous.rawMouse; settings.sensitivity = previous.sensitivity; settings.dpi = previous.dpi; settings.volume = previous.volume }
         model.settings = settings
         customFPS = !FrameCap.isPreset(settings.fps)
         beforeRestore = nil
@@ -177,7 +190,8 @@ struct DisplayPreview: View {
     @Environment(\.palette) private var palette
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
-        let size = SettingsText.size(model.settings.resolution) ?? (1920, 1080)
+        // With loadouts the size is the next game's loadout's; the pane itself only chooses the mode.
+        let size = SettingsText.size(model.usesLoadouts ? model.nextGameResolution.value : model.settings.resolution) ?? (1920, 1080)
         let windowed = model.settings.fullscreen == "windowed"
         VStack(spacing: 12) {
             ZStack(alignment: .top) {
@@ -220,14 +234,16 @@ struct DisplayPreview: View {
                     .frame(width: window.width, height: window.height)
             }
             VStack(spacing: 4) {
-                Text(SettingsText.resolution(model.settings.resolution)).font(.stencil(windowed ? 20 : 26)).foregroundStyle(palette.accent)
+                Text(model.usesLoadouts ? modeTitle.uppercased() : SettingsText.resolution(model.settings.resolution)).font(.stencil(windowed ? 20 : 26)).foregroundStyle(palette.accent)
                     .lineLimit(1).minimumScaleFactor(0.6)
                 Text(caption(windowed: windowed, size: size)).font(.system(size: 11)).foregroundStyle(palette.secondary)
             }
             .frame(width: window.width - 8)
         }
     }
+    private var modeTitle: String { LauncherModel.displayModes.first { $0.value == model.settings.fullscreen }?.title ?? "Full Screen" }
     private func caption(windowed: Bool, size: (width: Int, height: Int)) -> String {
+        if model.usesLoadouts { return windowed ? "beside your other apps" : "fills the display" }
         let aspect = SettingsText.aspect(width: size.width, height: size.height)
         let mode = LauncherModel.displayModes.first { $0.value == model.settings.fullscreen }?.title.lowercased() ?? "full screen"
         return aspect + " · " + (windowed ? "in a window" : mode)
@@ -235,6 +251,7 @@ struct DisplayPreview: View {
     private func spoken(windowed: Bool, size: (width: Int, height: Int)) -> String {
         let mode = LauncherModel.displayModes.first { $0.value == model.settings.fullscreen }?.title.lowercased() ?? "full screen"
         let how = windowed ? "the game in a window" : "the game fills the display"
+        if model.usesLoadouts { return "Preview: \(how), \(mode), on \(model.mainDisplay?.name ?? "the main display")" }
         return "Preview: \(how), \(size.width) by \(size.height), \(mode), on \(model.mainDisplay?.name ?? "the main display")"
     }
 }

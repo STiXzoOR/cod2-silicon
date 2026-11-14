@@ -118,6 +118,8 @@ struct MediaEntry: Identifiable {
     let studio: ConfigStudioModel
     /// Discover and import. The player directory has no signed publication yet, so it reports itself unavailable.
     let discover: ConfigDiscoverModel
+    /// Servers › Hosting: the servers this Mac runs.
+    let hosting: HostingModel
     /// The engines this app carries. Without the original one, Settings explains and CoD2x plays.
     var installedEngines: Set<GameEngine>
     var engine: Process?
@@ -179,6 +181,7 @@ struct MediaEntry: Identifiable {
     var pendingJoinAddress: String?
     /// The player chose Quit Launcher Only or Quit Both, so quitting no longer asks.
     var quitConfirmed = false
+    var hostingQuitConfirmed = false
     var quitGameTask: Task<Void, Never>?
     /// The game was already running when the launcher started: its window hides when it first appears.
     var hideLauncherWindowOnAppear = false
@@ -331,8 +334,15 @@ struct MediaEntry: Identifiable {
             } catch { configStudio = nil; sessionError = error.localizedDescription }
         }
         studio = ConfigStudioModel(session: configStudio, dialect: .cod2x, catalog: catalog)
-        discover = ConfigDiscoverModel(studio: studio, directory: ConfigDirectory(cacheURL: home.appendingPathComponent("directory/index.json")))
+        // The review harness never reaches the network: it gets no catalogue address, or a signed fixture.
+        discover = ConfigDiscoverModel(studio: studio, directory: ConfigDirectory(configuration: snapshot ? nil : ConfigDirectory.production,
+                                                                                  cacheURL: home.appendingPathComponent("directory/index.json")))
+        hosting = HostingModel(folder: home.appendingPathComponent("hosting"),
+                               gameBundle: Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app"))
+        discover.landsOnHome = !snapshot
         discover.notify = { [weak self] in self?.notice = $0 }
+        hosting.dataPath = { [weak self] in self?.dataPath ?? "" }
+        hosting.notify = { [weak self] in self?.notice = $0 }
         if let sessionError { notice = sessionError }
         if snapshot { seedPreview(); return }
         mainDisplay = MainDisplay.current()

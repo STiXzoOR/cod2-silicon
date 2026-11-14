@@ -7,6 +7,67 @@ OpenGL, renderer, window or audio device. A locked user session can run it.
 See [WS26 validation](macos-port/reports/WS26-dedicated.md) for current gameplay
 limits and the checks still required before release.
 
+## From the launcher
+
+Servers › Hosting in CoD2 Silicon runs this server for you. New Server asks for
+a name, the game version (CoD2x or the original 1.3), who can join, the rules
+and the maps; Start Server runs it, and the page then shows who is on it, the
+address to share, and its log. Next Map and Kick go through the server's own
+admin channel on this Mac. Quitting CoD2 Silicon asks first, then stops the
+servers it started.
+
+- The app carries both servers, `cod2_macos_ded` (CoD2x) and
+  `cod2_macos_ded_stock` (original 1.3), inside its game app.
+- Each server has its own folder, `hosting/servers/<id>` in CoD2 Silicon's
+  Application Support folder: `main/server.cfg`, which the launcher writes on
+  every start, the game's own logs, and `logs/console.log`. The game folder is
+  only read.
+- **Who can join a CoD2x server.** This app's CoD2x server follows CoD2x's
+  current source, 1.4.7.1-test.1, which asks every player for that version or
+  newer. CoD2 Silicon 0.3.0 has it. The released CoD2x 1.4.6.8 for Windows and
+  Linux does not, so those players are turned away with "Update CoD2x" until
+  CoD2x publishes its next release. A server on the original 1.3 takes any 1.3
+  player. This applies to competitive zPAM servers too: zPAM 4 needs CoD2x.
+- "My Network" is `dedicated 1`: nothing is announced. "The Internet" is
+  `dedicated 2`: the server lists itself on the public master servers. See
+  [Network and configuration](#network-and-configuration) before choosing it.
+- Export for Another Machine writes `server.cfg`, start commands for Linux and
+  Windows and a read-me into a folder. Passwords are left out unless you turn
+  them on. Game files and zPAM's files are never copied.
+
+### Competitive rules: zPAM
+
+zPAM is the match mod competitive CoD2 servers run, by the author of CoD2x. It
+is not part of CoD2 Silicon and is not bundled. Choosing Competitive · zPAM
+offers to download it from the
+[zPAM project's releases](https://github.com/eyza-cod2/zpam3/releases): zPAM 4
+for a CoD2x server, zPAM 3.36 for the original 1.3. The download is checked
+against the size and SHA-256 its release publishes, and only its `.iwd` archives
+and its `server.cfg` are kept, in `hosting/zpam`. A match server's `server.cfg`
+is zPAM's own, with your name, passwords, match mode and maps put on its lines.
+
+Players' games fetch zPAM and its maps from `http://cod2x.me/zpam`, zPAM's
+default. A CoD2x server also asks CoD2x's update service about newer versions;
+see [CoD2x servers](#cod2x-servers).
+
+### Letting players in from the internet
+
+People on your network join with the address the Hosting page shows. For
+anyone else, your router has to pass the server's UDP port (28960 unless you
+changed it) to this Mac:
+
+1. In your router's settings, add a port forward (sometimes "virtual server")
+   for UDP 28960 to this Mac's address on your network, the one the Hosting
+   page shows under "On your network".
+2. When macOS asks whether CoD2 Silicon's server may accept incoming
+   connections, allow it.
+3. Give players your public address and the port. CoD2 Silicon can't see from
+   inside your network whether the forward works; ask a friend to try, or use
+   "The Internet" so the server shows in the public list.
+
+Keep the Mac awake while the server runs. The admin password travels
+unencrypted, as it always has in this game: use one you use nowhere else.
+
 ## Build and data layout
 
 Build on Apple Silicon with the project's existing development dependencies:
