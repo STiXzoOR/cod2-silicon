@@ -298,6 +298,9 @@ python3 tests/voice/regenerate_windows_crt.py \
 cmp tests/voice/windows_crt_fixtures.json /absolute/private/path/windows_crt_fixtures.json
 ```
 
-The optional Mac decoder comparison retains Mac CRT behavior. Its stochastic
-mode-6 loss observation is not a Windows CRT reference; do not use that optional
-comparison to claim Windows PCM parity.
+The optional Mac oracle records its untouched Darwin-CRT PCM as informational
+output. Its existing bounded acceptance checks additionally run the Mac decoder
+with Windows-normalized random samples projected into the Mac import's 31-bit
+range. The projection is checked for all 32768 legal Windows draw values. This
+explicitly labeled mixed reference retains the 15 RMS / 64 maximum bounds;
+it is not a claim of original Windows full-decoder or bit-exact PCM parity.
