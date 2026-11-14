@@ -29,7 +29,11 @@ extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern unsigned char Com_Filter(const char *filter, const char *name, int casesensitive);
 extern void FS_Printf(int f, const char *fmt, ...);
 extern void Info_SetValueForKey(char *s, const char *key, const char *value);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+extern void Info_SetValueForKey_BigSized(char *s, size_t capacity, const char *key, const char *value);
+#else
 extern void Info_SetValueForKey_Big(char *s, const char *key, const char *value);
+#endif
 extern const char *CL_GetUsernameForLocalClient(int controllerIndex);
 extern void SV_SetConfigValueForKey(int start, int max, const char *key, const char *value);
 
@@ -47,7 +51,12 @@ extern const dvar_t *Dvar_RegisterInt(const char *name, int value, int min, int 
 extern const dvar_t *Dvar_RegisterFloat(const char *name, float value, float min, float max, int flags);
 
 static char info1[1024];
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* CoD2x permits 8192 characters, plus the string terminator. */
+static char info2[8193];
+#else
 static char info2[8192];
+#endif
 
 void Dvar_ForEach(void (*callback)());
 static void Dvar_GetCombinedString(void);
@@ -815,7 +824,11 @@ char *Dvar_InfoString_Big(int bit)
     var = (dvar_t *)(sortedDvars);
     while (var) {
         if (var->flags & bit) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            Info_SetValueForKey_BigSized(info2, sizeof(info2), var->name, Dvar_DisplayableValue(var));
+#else
             Info_SetValueForKey_Big(info2, var->name, Dvar_DisplayableValue(var));
+#endif
         }
         var = *(dvar_t **)&var->next;
     }

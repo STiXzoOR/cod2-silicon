@@ -25,6 +25,8 @@ The original shaders are built from your own game files.
 - CoD2x recognizes stock pack names with Windows filename case and separator rules.
 - CoD2x finds required and latest zPAM packs even after large lists of ignored packs.
 - Demo playback uses upstream's base movie directory without an extra home override.
+- CoD2x preserves the upstream 8192-character info-string boundary without
+  overflowing callers' buffers.
 - CoD2x spectator labels no longer leave later HUD drawing clipped when a
   crowded frame runs out of render commands.
 
