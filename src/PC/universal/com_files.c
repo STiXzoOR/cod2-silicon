@@ -2657,8 +2657,6 @@ void FS_Startup(const char *gameName)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
     if (clc && clc->demoplaying) {
         FS_AddGameDirectoryAllLanguages(fs_basepath->current.string, "movie");
-        if (I_stricmp(fs_homepath->current.string, fs_basepath->current.string))
-            FS_AddGameDirectoryAllLanguages(fs_homepath->current.string, "movie");
         I_strncpyz(fs_gamedir, fs_gameDirVar->current.string[0] ? fs_gameDirVar->current.string : "main", sizeof(fs_gamedir));
     }
     Cod2x_IwdDirty(1);
