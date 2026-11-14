@@ -224,8 +224,12 @@ when Servers opens is on (off by default); opening the app itself never scans th
 Settings › Updates › Check for updates automatically on (the default), at most once a day while
 the launcher is open; an automatic check that fails says nothing, and the review harness and the
 lifecycle tests (`COD2_SETUP_NONINTERACTIVE=1`) never make one. It refreshes the release notes
-and What's New, which lists the newest release's Added, Changed and Fixed notes. Home's What's New card
-marks 0.3.0 as a preview without a made-up release date, and uses fetched notes for versions without a bundled headline. When a newer release carries
+and What's New, which lists the newest release's Added, Changed and Fixed notes. The same check fetches
+the project's news file, `docs/news.json` on the main branch (`NewsFeed` in `Presentation.swift`: plain
+text, a `github.com` link or a place in the app to open, at most 64 KiB, days in the future hidden
+until they come), so news needs no new build. Home's What's New card lists releases and news newest
+first, always with the running version's line, and what comes next last when the card has room.
+Before the first check has answered it holds one built-in line about this version, with no date. When a newer release carries
 `CoD2-Silicon-<version>-macos-arm64.zip` and `SHA256SUMS`, Install Update (only on the player's
 click) downloads both into a folder on the app's volume, refuses any size or SHA-256 mismatch,
 unpacks with `ditto` and checks the app inside (bundle identifier, offered version,

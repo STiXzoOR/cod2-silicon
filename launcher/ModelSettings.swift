@@ -509,6 +509,7 @@ extension KeyStore {
                 guard let response = response as? HTTPURLResponse, response.statusCode == 200 else { throw LauncherError(message: "Release service is unavailable. Try again later.") }
                 let feed = try ReleaseNotes.parse(data)
                 if !feed.dispatches.isEmpty { library.dispatches = feed.dispatches }
+                if let news = await Self.fetchNews() { library.news = news.items; library.newsNext = news.next }
                 library.dispatchesCheckedAt = Date(); saveLibrary()
                 updateWasChecked = true; updateError = false; updateFailedStage = nil
                 if let latest = feed.latestVersion, ReleaseNotes.isNewer(latest, than: version) {
@@ -528,6 +529,16 @@ extension KeyStore {
                 updateError = true; updateFailedStage = .check
             }
         }
+    }
+    /// The project’s news file, asked for with every update check. A missing file means no news; any
+    /// other failure keeps what Home already shows.
+    nonisolated static func fetchNews() async -> NewsFeed.Feed? {
+        var request = URLRequest(url: NewsFeed.url)
+        request.timeoutInterval = 15; request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.setValue("CoD2-Silicon-Launcher", forHTTPHeaderField: "User-Agent")
+        guard let (data, response) = try? await URLSession.shared.data(for: request), let code = (response as? HTTPURLResponse)?.statusCode else { return nil }
+        if code == 404 { return NewsFeed.Feed() }
+        return code == 200 ? try? NewsFeed.parse(data) : nil
     }
     /// Updates › Check for updates automatically: at most once a day while the launcher is open. Never in the
     /// review harness or the automated lifecycle tests (COD2_SETUP_NONINTERACTIVE).

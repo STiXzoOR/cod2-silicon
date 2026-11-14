@@ -1060,6 +1060,9 @@ struct LauncherLibrary: Codable {
     var cachedAt: Date? = nil
     var dispatches: [Dispatch] = []
     var dispatchesCheckedAt: Date? = nil
+    /// The project’s news file as last fetched (NewsFeed), and its “what comes next” line.
+    var news: [Dispatch] = []
+    var newsNext: Dispatch? = nil
     /// ship-home-library: when each recent server was last joined (Home's “Played yesterday at 21:14”).
     var played: [String: Date] = [:]
     init() {}
@@ -1071,6 +1074,8 @@ struct LauncherLibrary: Codable {
         cachedAt = try c.decodeIfPresent(Date.self, forKey: .cachedAt)
         dispatches = Array((try c.decodeIfPresent([Dispatch].self, forKey: .dispatches) ?? []).prefix(5))
         dispatchesCheckedAt = try c.decodeIfPresent(Date.self, forKey: .dispatchesCheckedAt)
+        news = Array(((try? c.decodeIfPresent([Dispatch].self, forKey: .news)) ?? []).prefix(5))
+        newsNext = (try? c.decodeIfPresent(Dispatch.self, forKey: .newsNext)) ?? nil
         // Older libraries have no dates; a damaged entry loses only the dates, never the library.
         let recent = recent
         played = ((try? c.decodeIfPresent([String: Date].self, forKey: .played)) ?? [:]).filter { recent.contains($0.key) }

@@ -120,12 +120,91 @@ struct Dispatch: Codable, Equatable, Sendable {
     var title: String
     var summary: String
     var link: String?
+    /// When it was published, which orders What’s New. Entries an older build stored have none.
+    var date: Date? = nil
+    /// A release’s version ("0.3.0"); news has none.
+    var version: String? = nil
+    /// A place in the app that a news entry opens instead of a link (NewsFeed.places).
+    var open: String? = nil
     static let bundled = [
         Dispatch(stamp: "PREVIEW", title: "CoD2 Silicon 0.3.0", summary: "The original’s picture, CoD2x or Original 1.3, and updates you can install from the launcher.",
                  link: "https://github.com/STiXzoOR/cod2-silicon/releases"),
         Dispatch(stamp: "AHEAD", title: "What’s next", summary: "Longer match testing and launcher improvements come next. Metal is planned, but isn’t in this release.",
                  link: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/ROADMAP.md"),
     ]
+}
+
+/// The project’s news file, `docs/news.json` on the main branch: short notes that are not releases, and
+/// what comes next. It is fetched with the update check, so news needs no new build. Plain text only:
+/// a title, a sentence, and either a github.com link or a place in the app to open.
+///
+///     { "items": [ { "date": "2026-11-21", "title": "…", "summary": "…", "open": "configs" } ],
+///       "next":  { "title": "…", "summary": "…", "link": "https://github.com/…" } }
+///
+/// An item dated in the future stays hidden until that day.
+enum NewsFeed {
+    static let url = URL(string: "https://raw.githubusercontent.com/STiXzoOR/cod2-silicon/main/docs/news.json")!
+    static let places = ["configs", "servers", "library", "updates"]
+    struct Feed: Equatable { var items: [Dispatch] = []; var next: Dispatch? = nil }
+    private struct Item: Decodable { var date: String?; var title: String?; var summary: String?; var link: String?; var open: String? }
+    private struct File: Decodable { var items: [Item]?; var next: Item? }
+
+    static func parse(_ data: Data, now: Date = Date(), calendar: Calendar = .current) throws -> Feed {
+        guard data.count <= 65_536 else { throw LauncherError(message: "The news file is too large.") }
+        let file = try JSONDecoder().decode(File.self, from: data)
+        var items: [Dispatch] = []
+        for item in (file.items ?? []).prefix(50) {
+            guard var entry = dispatch(item), let day = item.date.flatMap({ date($0, calendar: calendar) }), day <= now else { continue }
+            entry.date = day; entry.stamp = StencilDate.day(day, calendar: calendar)
+            items.append(entry)
+        }
+        items.sort { ($0.date ?? .distantPast) > ($1.date ?? .distantPast) }
+        return Feed(items: Array(items.prefix(5)), next: file.next.flatMap(dispatch))
+    }
+    private static func dispatch(_ item: Item) -> Dispatch? {
+        let title = text(item.title, limit: 80)
+        guard !title.isEmpty else { return nil }
+        let link = item.link.flatMap { $0.hasPrefix("https://github.com/") && $0.count <= 256 && !$0.contains(where: \.isWhitespace) ? $0 : nil }
+        return Dispatch(stamp: "NEXT", title: title, summary: text(item.summary, limit: 160), link: link,
+                        open: item.open.flatMap { places.contains($0) ? $0 : nil })
+    }
+    /// One line of plain text: control and formatting characters become spaces, runs of spaces close up.
+    private static func text(_ raw: String?, limit: Int) -> String {
+        let flat = String(String.UnicodeScalarView((raw ?? "").unicodeScalars.prefix(2_000).map { CharacterSet.controlCharacters.contains($0) || CharacterSet.newlines.contains($0) ? " " : $0 }))
+        let line = flat.split(separator: " ", omittingEmptySubsequences: true).joined(separator: " ")
+        return line.count > limit ? String(line.prefix(limit - 1)).trimmingCharacters(in: .whitespaces) + "…" : line
+    }
+    /// The start of a `YYYY-MM-DD` day in `calendar`; nil for anything else, including days that don’t exist.
+    private static func date(_ raw: String, calendar: Calendar) -> Date? {
+        let parts = raw.split(separator: "-", omittingEmptySubsequences: false)
+        guard raw.count == 10, parts.count == 3, parts.allSatisfy({ $0.allSatisfy(\.isASCII) && $0.allSatisfy(\.isNumber) }),
+              let year = Int(parts[0]), let month = Int(parts[1]), let day = Int(parts[2]), year >= 2026,
+              let date = calendar.date(from: DateComponents(year: year, month: month, day: day)) else { return nil }
+        let back = calendar.dateComponents([.year, .month, .day], from: date)
+        return back.year == year && back.month == month && back.day == day ? date : nil
+    }
+}
+
+/// Home’s What’s New card: releases from GitHub Releases and notes from the project’s news file, newest
+/// first, with what comes next last. Both arrive with the update check; until one has answered the card
+/// holds one line about this version, with no date.
+enum HomeDispatches {
+    static func builtIn(version: String) -> Dispatch {
+        Dispatch(stamp: "NOW", title: "CoD2 Silicon \(version)",
+                 summary: version == "0.3.0" ? "CoD2x 1.4.6.8 beside the original 1.3, loadouts, and one-click updates."
+                                             : "What changed in this version is in the release notes.",
+                 link: "https://github.com/STiXzoOR/cod2-silicon/releases", version: version)
+    }
+    /// At most `rows` lines. The running version’s line is always among them: its release as fetched,
+    /// else the built-in one.
+    static func list(version: String, releases: [Dispatch], news: [Dispatch] = [], next: Dispatch? = nil, rows: Int = 3) -> [Dispatch] {
+        let mine = releases.first { $0.version == version || $0.title == version || $0.title.hasSuffix(" " + version) } ?? builtIn(version: version)
+        let dated = (releases + news).filter { $0.date != nil && $0 != mine }
+        let all = (dated + [mine]).sorted { ($0.date ?? .distantPast) > ($1.date ?? .distantPast) }
+        var top = Array(all.prefix(max(1, rows - (next == nil ? 0 : 1))))
+        if !top.contains(mine) { top[top.count - 1] = mine }
+        return top + (next.map { [$0] } ?? [])
+    }
 }
 
 enum ReleaseNotes {
@@ -155,10 +234,11 @@ enum ReleaseNotes {
             let tag = String((release.tag_name ?? "").prefix(32))
             let title = String((release.name ?? "").trimmingCharacters(in: .whitespacesAndNewlines).prefix(80))
             var stamp = "NEW"
-            if let published = release.published_at, let date = ISO8601DateFormatter().date(from: published) { stamp = StencilDate.day(date, calendar: calendar) }
+            let date = release.published_at.flatMap { ISO8601DateFormatter().date(from: $0) }
+            if let date { stamp = StencilDate.day(date, calendar: calendar) }
             let link = release.html_url.flatMap { $0.hasPrefix("https://github.com/") ? String($0.prefix(256)) : nil }
             dispatches.append(Dispatch(stamp: stamp, title: title.isEmpty ? "CoD2 Silicon \(version(tag))" : title,
-                                       summary: summary(release.body ?? ""), link: link))
+                                       summary: summary(release.body ?? ""), link: link, date: date, version: tag.isEmpty ? nil : version(tag)))
         }
         let newest = releases.first { $0.prerelease != true }
         let assets = (newest?.assets ?? []).prefix(64).compactMap { asset -> ReleaseAsset? in
@@ -342,7 +422,7 @@ enum PrivacyContacts {
         ("Master servers", "Activision’s and the CoD2x project’s, when the server list refreshes. The game also asks them and the key server, as the original does."),
         ("Game servers", "Those in the list when it refreshes, and the one you join. CoD2x servers also get a hash of CoD2x’s ID for this Mac."),
         ("The CoD2x project", "With CoD2x, its update check each time the game’s menu opens: your CoD2x version, a hash of your CD key, CoD2x’s IDs for this Mac and a short description of it. Mod files a server needs come from its site."),
-        ("GitHub", "When you check for or install updates, or download CoD2x’s menus and icons. Nothing about you."),
+        ("GitHub", "When you check for or install updates, which also fetches the news on Home, or download CoD2x’s menus and icons. Nothing about you."),
         ("Crash reports", "Only with a switch above on, once for each crash or freeze."),
         ("Config links", "Only a link you paste into Configs to import from it."),
     ]

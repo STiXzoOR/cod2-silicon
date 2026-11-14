@@ -36,24 +36,6 @@ extension GameServer {
     var knownMode: String? { fields["g_gametype"] ?? fields["gametype"] }
 }
 
-/// Home’s What’s New card: this build’s headline with its release date, then what comes next.
-enum HomeDispatches {
-    static let releaseVersion = "0.3.0"
-    static let release = Dispatch(stamp: "14 NOV", title: "CoD2 Silicon 0.3.0",
-                                  summary: "CoD2x 1.4.6.8 beside the original 1.3, loadouts, and one-click updates.",
-                                  link: "https://github.com/STiXzoOR/cod2-silicon/releases")
-    static let next = Dispatch(stamp: "NEXT", title: "A Metal renderer", summary: "In the works. The original look stays until it matches.",
-                               link: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/ROADMAP.md")
-    /// The headline for `version`: the bundled one for this release, else that version's entry in the
-    /// fetched release notes, else a plain pointer to them.
-    static func list(version: String, feed: [Dispatch]) -> [Dispatch] {
-        let current = version == releaseVersion ? release
-            : feed.first { $0.title == version || $0.title.hasSuffix(" " + version) }
-            ?? Dispatch(stamp: "NOW", title: "CoD2 Silicon \(version)", summary: "What changed in this version is in the release notes.", link: nil)
-        return [current, next]
-    }
-}
-
 /// One stored match summary as Home and Library show it: typical frame rate, ping and the connection in a word.
 struct MatchFacts: Identifiable {
     enum Connection { case steady, dips, notMeasured
@@ -143,7 +125,25 @@ enum PlayedDate {
 @MainActor extension LauncherModel {
     // MARK: Home: hero, chips and cards
 
-    var dispatches: [Dispatch] { HomeDispatches.list(version: version, feed: library.dispatches) }
+    var dispatches: [Dispatch] { dispatches(rows: 3) }
+    /// What’s New in `rows` lines. A card too short for three drops what comes next first, then older lines.
+    func dispatches(rows: Int) -> [Dispatch] {
+        HomeDispatches.list(version: version, releases: library.dispatches, news: library.news, next: rows >= 3 ? library.newsNext : nil, rows: rows)
+    }
+    var dispatchesFoot: String { lastUpdateCheck.map { "Checked " + SettingsText.when($0) + "." } ?? "News appears after the first update check." }
+    /// Whether a What’s New line leads anywhere: a place in the app, the Updates pane for a release, or a link.
+    func canOpen(_ dispatch: Dispatch) -> Bool { dispatch.open != nil || dispatch.version != nil || dispatch.link != nil }
+    func open(_ dispatch: Dispatch) {
+        switch dispatch.open {
+        case "configs": navigate(to: .configs)
+        case "servers": navigate(to: .servers)
+        case "library": navigate(to: .library)
+        case "updates": openSettings(.updates)
+        default:
+            if dispatch.version != nil { openSettings(.updates) }
+            else if let link = dispatch.link.flatMap(URL.init(string:)) { NSWorkspace.shared.open(link) }
+        }
+    }
 
     /// The server behind a recent address: what the launcher last saw of it, or for one it never listed
     /// (joined by address), a bare entry with the map and mode of its newest match summary, if any.
@@ -394,7 +394,9 @@ enum PlayedDate {
     func previewHomeLibrary(_ screen: String) -> Bool {
         guard screen.hasPrefix("home") || screen.hasPrefix("library") else { return false }
         previewPlayed()
+        if screen != "home-news-first" { previewNews() }
         switch screen {
+        case "home-news-first": page = .home; previewMatches()
         case "home", "home-attention", "home-update", "home-crash", "home-crash-log", "home-crash-sent", "home-crash-not-sent", "home-running", "home-matches-off":
             page = .home; previewMatches()
             if screen == "home-attention" { approximate = true }
@@ -454,6 +456,17 @@ enum PlayedDate {
         return true
     }
     /// The three recent servers' join dates: yesterday evening, then two earlier nights.
+    /// What’s New after a check: a note from the news file, this version’s release, and what comes next.
+    private func previewNews() {
+        let calendar = Calendar(identifier: .gregorian)
+        func day(_ day: Int) -> Date { calendar.date(from: DateComponents(year: 2026, month: 11, day: day, hour: 12)) ?? Date() }
+        library.dispatches = [Dispatch(stamp: StencilDate.day(day(18)), title: "CoD2 Silicon \(version)", summary: HomeDispatches.builtIn(version: "0.3.0").summary,
+                                       link: "https://github.com/STiXzoOR/cod2-silicon/releases", date: day(18), version: version)]
+        library.news = [Dispatch(stamp: StencilDate.day(day(21)), title: "14 more player setups", summary: "New in Configs: setups from the 2008 and 2009 seasons.", date: day(21), open: "configs")]
+        library.newsNext = Dispatch(stamp: "NEXT", title: "A Metal renderer", summary: "In the works. The original look stays until it matches.",
+                                    link: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/ROADMAP.md")
+        library.dispatchesCheckedAt = Calendar.current.date(bySettingHour: 14, minute: 2, second: 0, of: Date())
+    }
     private func previewPlayed() {
         let calendar = Calendar(identifier: .gregorian)
         let yesterday = calendar.date(byAdding: .day, value: -1, to: Date()) ?? Date()

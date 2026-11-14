@@ -7,7 +7,7 @@ extension Snapshots {
     static let homeLibraryScreens = ["home", "home-first", "home-address", "home-attention", "home-running", "home-crash", "home-crash-log", "home-matches-off",
                                      "library-matches", "library-demos", "library-screenshots"]
     /// Also rendered in the `--group pages` runs and read by `--accessibility`.
-    static let homeLibraryPageScreens = ["home-update", "home-update-installing", "home-crash-sent", "home-crash-not-sent",
+    static let homeLibraryPageScreens = ["home-news-first", "home-update", "home-update-installing", "home-crash-sent", "home-crash-not-sent",
                                          "library-matches-empty", "library-matches-off", "library-matches-off-kept", "library-matches-error", "library-demos-selected",
                                          "library-screenshots-selected", "library-empty", "library-empty-screenshots", "library-reloaded",
                                          "library-error", "library-renaming", "library-rename-error", "library-trash", "library-running", "library-missing",

@@ -664,21 +664,40 @@ private struct DispatchesCard: View {
     var body: some View {
         ContentPanel(radius: 20, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
             PanelHeading(title: "What's New", action: "Release Notes", perform: model.openReleaseNotes)
-            VStack(alignment: .leading, spacing: 14) {
-                ForEach(Array(model.dispatches.enumerated()), id: \.offset) { _, dispatch in
-                    HStack(alignment: .firstTextBaseline, spacing: 14) {
-                        Text(dispatch.stamp).font(.typewriter(12)).foregroundStyle(palette.address).frame(width: 62, alignment: .leading)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(dispatch.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text)
-                            Text(dispatch.summary).font(.system(size: 13)).foregroundStyle(palette.body).lineSpacing(2.6).fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    .accessibilityElement(children: .combine)
-                }
+            // As many lines as the card has room for: three, else two, else this version's alone.
+            ViewThatFits(in: .vertical) {
+                rows(model.dispatches(rows: 3))
+                rows(model.dispatches(rows: 2))
+                rows(model.dispatches(rows: 1))
             }
             .padding(.top, 14)
-            Spacer(minLength: 0)
+            Spacer(minLength: 8)
+            Text(model.dispatchesFoot).font(.system(size: 12)).foregroundStyle(palette.tertiary)
         }
         .frame(maxHeight: .infinity)
+    }
+    private func rows(_ list: [Dispatch]) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            ForEach(Array(list.enumerated()), id: \.offset) { _, dispatch in
+                if model.canOpen(dispatch) {
+                    Button { model.open(dispatch) } label: { row(dispatch).contentShape(Rectangle()) }
+                        .buttonStyle(.plain).accessibilityElement(children: .combine)
+                } else {
+                    row(dispatch).accessibilityElement(children: .combine)
+                }
+            }
+        }
+    }
+    /// The date sits above the title: the card is 266 points wide at the smallest window, and a date
+    /// column beside the text would leave the sentence about 150.
+    private func row(_ dispatch: Dispatch) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(dispatch.stamp).font(.typewriter(12)).foregroundStyle(palette.address)
+            Text(dispatch.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
+            if !dispatch.summary.isEmpty {
+                Text(dispatch.summary).font(.system(size: 13)).foregroundStyle(palette.body).lineSpacing(2.6).fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
