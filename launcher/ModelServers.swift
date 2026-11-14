@@ -9,10 +9,11 @@ import SwiftUI
 
 /// All · Favorites · Recent, the switch at the left of the Servers toolbar.
 enum ServerScope: String, CaseIterable, Identifiable {
-    case all, favorites, recent
+    /// `hosting` is the servers this Mac runs (HostingView.swift), not a slice of the list.
+    case all, favorites, recent, hosting
     var id: String { rawValue }
     var title: String {
-        switch self { case .all: "All"; case .favorites: "Favorites"; case .recent: "Recent" }
+        switch self { case .all: "All"; case .favorites: "Favorites"; case .recent: "Recent"; case .hosting: "Hosting" }
     }
 }
 
@@ -173,6 +174,7 @@ enum ServerPasswords {
         case .all: servers
         case .favorites: favoriteServers
         case .recent: recent(limit: 30)
+        case .hosting: []
         }
     }
     var visibleServers: [GameServer] {
@@ -606,9 +608,26 @@ enum ServerPasswords {
         })
     }
 
+    /// Deleting a hosted server asks first; its folder goes to the Trash.
+    func requestDeleteHostedServer(_ server: HostedServer) {
+        confirm(ConfirmationRequest(title: "Delete “\(server.name)”?", message: "Its settings are removed. Its folder, with the log, moves to the Trash.",
+                                    actionTitle: "Delete") { [weak self] in self?.hosting.delete(server) })
+    }
+    /// Quitting with servers running asks first: they can't keep running without the app.
+    func confirmQuitWithServers() {
+        let count = hosting.running.count
+        confirm(ConfirmationRequest(title: count == 1 ? "“\(hosting.running[0].name)” is still running" : "\(count) servers are still running",
+                                    message: "Quitting CoD2 Silicon stops \(count == 1 ? "it" : "them"). Players on \(count == 1 ? "it" : "them") are disconnected.",
+                                    actionTitle: count == 1 ? "Stop Server and Quit" : "Stop Servers and Quit") { [weak self] in
+            self?.hostingQuitConfirmed = true
+            NSApp.terminate(nil)
+        })
+    }
+
     // MARK: Review harness
     /// Review-harness states for this unit's screens; true when `screen` is one of them.
     func previewServers(_ screen: String) -> Bool {
+        if screen.hasPrefix("servers-hosting") { page = .servers; serverScope = .hosting; previewHosting(screen); return true }
         let base = servers
         switch screen {
         case "servers": page = .servers

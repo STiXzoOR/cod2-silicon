@@ -422,7 +422,8 @@ enum PrivacyContacts {
         ("Master servers", "Activision’s and the CoD2x project’s, when the server list refreshes. The game also asks them and the key server, as the original does."),
         ("Game servers", "Those in the list when it refreshes, and the one you join. CoD2x servers also get a hash of CoD2x’s ID for this Mac."),
         ("The CoD2x project", "With CoD2x, its update check each time the game’s menu opens: your CoD2x version, a hash of your CD key, CoD2x’s IDs for this Mac and a short description of it. Mod files a server needs come from its site."),
-        ("GitHub", "When you check for or install updates, which also fetches the news on Home, or download CoD2x’s menus and icons. Nothing about you."),
+        ("GitHub", "When you check for or install updates, which also fetches the news on Home; when Configs loads player setups; when you download CoD2x’s menus and icons, or zPAM for a server you host. Nothing about you."),
+        ("Servers you host", "Only while one runs. Set to The Internet, it lists itself on the master servers. A CoD2x server asks the CoD2x project about new versions."),
         ("Crash reports", "Only with a switch above on, once for each crash or freeze."),
         ("Config links", "Only a link you paste into Configs to import from it."),
     ]

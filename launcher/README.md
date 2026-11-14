@@ -30,6 +30,24 @@ Source layout:
   window, with Setup in its place until setup is done. Config Studio's document,
   profile, history, import, rules, binding, directory and match-summary models supply
   Configs through the shared session and store.
+- `ConfigsHomeView.swift`: Configs · Home, the page Configs opens on: your loadouts, then
+  player setups from the signed catalogue (`ConfigDirectory.swift` reads and verifies it,
+  `ConfigDiscoverModel.swift` holds the page's state). With no public key in the build
+  (`ConfigDirectory.productionPublicKey`) the page says player setups aren't available.
+- `ConfigChecker.swift` and `ConfigCheckerView.swift`: Check a Config. The first is the
+  checks themselves, over the importer's parse, the settings catalogue and the rulesets,
+  with no window; `tests/launcher/config_checker.sh` covers each finding and fix.
+- `Hosting.swift`, `HostingModel.swift`, `HostingView.swift`: Servers › Hosting. The
+  first holds what can be decided without running anything: the saved form, the
+  `server.cfg` it becomes (every value is cleaned where it is written, so a name can't
+  carry a second command), launch arguments, the checks on zPAM's release listing and
+  the export. The model runs the dedicated servers the game app carries
+  (`cod2_macos_ded`, `cod2_macos_ded_stock`) as child processes, each in its own folder
+  under `hosting/servers`, asks them for status over UDP on 127.0.0.1, queues admin
+  commands half a second apart (the engine drops faster ones), downloads zPAM with a
+  size and SHA-256 check, and stops every server before the app quits.
+  `tests/launcher/hosting.sh` covers the first file and the saved list; with
+  `COD2_HOSTING_LIVE` set it also starts both real servers on test ports.
 - `SettingsWindow.swift` and `SettingsPanes.swift`: the Settings window, a second
   window (scene `settings`) with General, Display, Game Data, Privacy, Updates,
   Advanced and About panes. `model.openSettings(_:)` opens it at a pane; it reopens on

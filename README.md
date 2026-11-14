@@ -80,6 +80,14 @@ has All, Favorites and Recent views, saved filters, and **Connect to Address…*
 your default version stays in Settings. While playing, the launcher keeps its
 Dock icon and can hide its windows. Home offers Return to Game and Quit Game.
 
+**Servers → Hosting** runs your own server on this Mac, with CoD2x or the
+original 1.3, for people on your network or listed publicly. Choose the maps
+and rules, start it, and the page shows who is playing, the address to share
+and the server's log. Competitive rules use zPAM, which the launcher downloads
+from the zPAM project's releases when you ask for it; it is not bundled.
+**Export for Another Machine** writes `server.cfg` and start commands for a
+Linux or Windows server instead. See [the server guide](docs/server.md).
+
 **Settings** is a separate window, reached from the sidebar, app menu or ⌘,.
 Its seven panes cover the launcher, display, game data, privacy, updates,
 advanced launch options and About. Changes save automatically. The renderer
@@ -157,6 +165,13 @@ trusted engine arguments after `--`.
   Servers, and asks a single server when you type its address in **Connect to
   Address**. Passwords you choose to remember stay in your keychain on this Mac
   and are sent only to that server. **Settings → Privacy** lists these contacts.
+- **Configs** fetches the player setups catalogue from GitHub when its home page
+  opens, and a setup's config when you look at it.
+- **A server you host** contacts nothing while it is set to My Network. Set to
+  The Internet, it lists itself on the master servers. A CoD2x server asks the
+  CoD2x project's update service about new versions while it runs, and players'
+  games fetch zPAM and its maps from the CoD2x project's site. Getting zPAM
+  downloads it from GitHub.
 - **Report a Problem** opens a prefilled issue in your browser; the app sends
   nothing itself.
 - **Crash reports** are sent only if you turn a switch on in **Settings →

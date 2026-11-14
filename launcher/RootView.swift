@@ -80,7 +80,8 @@ struct LauncherSplitView: View {
             Group {
                 switch model.page {
                 case .home: HomeView(model: model)
-                case .servers: ServersView(model: model)
+                case .servers:
+                    if model.serverScope == .hosting { HostingView(model: model, hosting: model.hosting) } else { ServersView(model: model) }
                 case .library: LibraryView(model: model)
                 case .configs: ConfigsView(model: model)
                 }
