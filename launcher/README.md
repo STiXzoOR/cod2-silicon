@@ -247,6 +247,9 @@ the project's news file, `docs/news.json` on the main branch (`NewsFeed` in `Pre
 text, a `github.com` link or a place in the app to open, at most 64 KiB, days in the future hidden
 until they come), so news needs no new build. Home's What's New card lists releases and news newest
 first, always with the running version's line, and what comes next last when the card has room.
+The card never runs past its edge (a title keeps two lines, a summary three, fewer lines before
+any overflow); See All opens `HomeNewsSheet` with every line in full. Home keeps one row of cards at
+every window size: below 980 points of page width What's New leaves the row and becomes a chip.
 Before the first check has answered it holds one built-in line about this version, with no date. When a newer release carries
 `CoD2-Silicon-<version>-macos-arm64.zip` and `SHA256SUMS`, Install Update (only on the player's
 click) downloads both into a folder on the app's volume, refuses any size or SHA-256 mismatch,

@@ -115,7 +115,8 @@ built from your own game files.
 - **Servers → Hosting** runs your own server on this Mac, with CoD2x or the
   original 1.3: name, who can join, players, passwords, game type and maps,
   then Start Server. The page shows who is playing, the address to share, an
-  invite link and the server's log, with Next Map, Kick and Join. Competitive
+  invite link and the server's log, with Next Map, Kick and Join; a full server
+  lists the players that fit and opens the rest with All Players. Competitive
   rules use zPAM, downloaded on request from the zPAM project's releases and
   checked against the checksum they publish; it is not bundled. Export for
   Another Machine writes `server.cfg` and start commands for Linux and Windows,
@@ -135,7 +136,9 @@ built from your own game files.
   sets them on every launch; it sets only the display mode it needs to manage
   the window.
 - What's New on Home is filled from the project's GitHub releases and a news
-  file, fetched with the update check.
+  file, fetched with the update check. The card shows what fits; See All opens
+  every line in full. Home fits its window at every size: at a narrow window
+  What's New is a button beside the frame cap.
 - Private logs for each game session, available from Settings → Advanced → Logs
   and failed-start or crash details. The last ten sessions stay on this Mac within
   a 20 MiB total limit, with passwords and CD keys filtered before writing.
