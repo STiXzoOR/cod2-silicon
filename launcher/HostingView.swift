@@ -13,11 +13,12 @@ struct HostingView: View {
     var body: some View {
         // The reader gives the page the window's size and no minimum of its own, so a wide control
         // can never push the split view around.
-        GeometryReader { _ in
+        GeometryReader { proxy in
+            let leading = max(22, 264 - origin.x)
             Group {
-                if hosting.servers.isEmpty && hosting.draft == nil { none } else { some }
+                if hosting.servers.isEmpty && hosting.draft == nil { none } else { some(width: proxy.size.width - leading - 22) }
             }
-            .padding(.leading, max(22, 264 - origin.x)).padding(.trailing, 22).padding(.top, 84).padding(.bottom, 22)
+            .padding(.leading, leading).padding(.trailing, 22).padding(.top, 84).padding(.bottom, 22)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .background { ContourBackdrop().ignoresSafeArea() }
@@ -25,6 +26,7 @@ struct HostingView: View {
         .background(WindowOriginReader(origin: $origin))
         .modifier(HostingToolbar(model: model, hosting: hosting))
         .sheet(item: $hosting.exporting) { server in HostingExportSheet(hosting: hosting, server: server).sheetShapeAudit() }
+        .sheet(item: $hosting.showingPlayers) { server in HostingPlayersSheet(hosting: hosting, server: server).sheetShapeAudit() }
     }
 
     private var none: some View {
@@ -44,15 +46,20 @@ struct HostingView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private var some: some View {
-        HStack(alignment: .top, spacing: 18) {
-            list.frame(width: 280)
+    /// The board's layout at 1440 wide: a 280-point list and two columns beside it. A narrower window
+    /// (down to the 1100 minimum) keeps everything inside it: the list narrows, and the form's two
+    /// columns become one.
+    private func some(width: CGFloat) -> some View {
+        let listWidth: CGFloat = width < 900 ? 200 : 280
+        let columns = width - listWidth - 18 >= 700 ? 2 : 1
+        return HStack(alignment: .top, spacing: 18) {
+            list.frame(width: listWidth)
             Group {
                 if hosting.showingDraft, let draft = hosting.draft {
-                    HostingForm(model: model, hosting: hosting, initial: draft, isNew: true)
+                    HostingForm(model: model, hosting: hosting, initial: draft, isNew: true, columns: columns)
                 } else if let server = hosting.selected {
                     if hosting.isRunning(server.id) && hosting.editing != server.id { HostingRunning(model: model, hosting: hosting, server: server) }
-                    else { HostingForm(model: model, hosting: hosting, initial: server, isNew: false) }
+                    else { HostingForm(model: model, hosting: hosting, initial: server, isNew: false, columns: columns) }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -163,6 +170,8 @@ private struct HostingForm: View {
     /// started or saved; a saved one saves with every edit.
     var initial: HostedServer
     var isNew: Bool
+    /// Two columns as on the board, or one when the window is too narrow for two.
+    var columns = 2
     @Environment(\.palette) private var palette
     @State private var showAdmin = false
     @State private var mapMenu = MenuAnchorBox()
@@ -186,10 +195,14 @@ private struct HostingForm: View {
         let current = server.wrappedValue
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center, spacing: 12) {
-                Text(isNew ? "New server" : current.name).font(.system(size: 26, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1)
-                    .accessibilityAddTraits(.isHeader)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(isNew ? "New server" : current.name).font(.system(size: 26, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1)
+                        .accessibilityAddTraits(.isHeader)
+                    // One column has no room for the hint beside the buttons: it goes under the name.
+                    if columns == 1 { Text(hint(current)).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1) }
+                }
                 Spacer(minLength: 12)
-                Text(hint(current)).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1)
+                if columns == 2 { Text(hint(current)).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1) }
                 if hosting.isRunning(current.id) {
                     Button("Done") { hosting.editing = nil }.prominentAction()
                 } else {
@@ -201,7 +214,8 @@ private struct HostingForm: View {
             }
             problem(current)
             ScrollView {
-                HStack(alignment: .top, spacing: 14) {
+                let layout = columns == 2 ? AnyLayout(HStackLayout(alignment: .top, spacing: 14)) : AnyLayout(VStackLayout(alignment: .leading, spacing: 18))
+                layout {
                     VStack(alignment: .leading, spacing: 8) {
                         label("Server")
                         FormGroup {
@@ -375,19 +389,10 @@ private struct HostingRunning: View {
     var body: some View {
         let status = hosting.statuses[server.id]
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(server.name).font(.system(size: 26, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1).accessibilityAddTraits(.isHeader)
-                    TimelineView(.periodic(from: .now, by: 30)) { context in
-                        Label(running(now: context.date), systemImage: "checkmark.circle").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.positive)
-                    }
-                }
-                Spacer(minLength: 12)
-                Button("Edit…") { hosting.editing = server.id }.help("Change its settings. They apply the next time it starts.")
-                Button("Next Map") { hosting.nextMap(server) }.disabled(status == nil)
-                Button { model.join("127.0.0.1:\(server.port)", password: server.joinPassword.isEmpty ? nil : server.joinPassword) } label: { Label("Join", systemImage: "play.fill") }
-                    .prominentAction().disabled(status == nil || !model.canNavigate)
-                Button("Stop Server") { hosting.stop(server) }
+            // One row as on the board; a window too narrow for the name beside the buttons puts them under it.
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: 12) { title; Spacer(minLength: 12); actions(status) }
+                VStack(alignment: .leading, spacing: 10) { title; HStack(spacing: 8) { actions(status) } }.frame(maxWidth: .infinity, alignment: .leading)
             }
             HStack(spacing: 12) {
                 tile(status.map { "\($0.players.count)" } ?? "—", suffix: status.map { " / \($0.maxPlayers)" } ?? "", "players")
@@ -409,18 +414,22 @@ private struct HostingRunning: View {
                             Button("Copy Link") { if let link = (try? LaunchLink.direct(hosting.localAddress(server)))?.url { copy(link) } }
                         }
                     }
+                    // Its full height always: the players below take what is left, never this group's lines.
+                    .fixedSize(horizontal: false, vertical: true)
                     label("Players").padding(.top, 8)
-                    FormGroup {
-                        if let players = status?.players, !players.isEmpty {
-                            ForEach(players) { player in
-                                FormRow(QuakeColors.plain(player.name), detail: "\(player.ping) ms") {
-                                    Button("Kick") { hosting.kick(player, from: server) }.controlSize(.small)
-                                        .accessibilityLabel("Remove \(QuakeColors.plain(player.name)) from the server")
-                                }
-                            }
-                        } else {
-                            FormRow("No one is on the server yet", detail: "Share the address above.") { EmptyView() }
-                        }
+                    // The page never runs past the window: as many players as fit, and the rest behind
+                    // All Players, which opens every one of them as a dialog.
+                    let players = status?.players ?? []
+                    ViewThatFits(in: .vertical) {
+                        playerRows(players, shown: players.count)
+                        playerRows(players, shown: 10)
+                        playerRows(players, shown: 8)
+                        playerRows(players, shown: 6)
+                        playerRows(players, shown: 4)
+                        playerRows(players, shown: 3)
+                        playerRows(players, shown: 2)
+                        playerRows(players, shown: 1)
+                        playerRows(players, shown: 0)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -448,6 +457,36 @@ private struct HostingRunning: View {
                     .accessibilityLabel("Server log")
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
+        }
+    }
+    private var title: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(server.name).font(.system(size: 26, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1).accessibilityAddTraits(.isHeader)
+            TimelineView(.periodic(from: .now, by: 30)) { context in
+                Label(running(now: context.date), systemImage: "checkmark.circle").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.positive)
+            }
+        }
+    }
+    @ViewBuilder private func actions(_ status: HostedStatus?) -> some View {
+        Button("Edit…") { hosting.editing = server.id }.help("Change its settings. They apply the next time it starts.").fixedSize()
+        Button("Next Map") { hosting.nextMap(server) }.disabled(status == nil).fixedSize()
+        Button { model.join("127.0.0.1:\(server.port)", password: server.joinPassword.isEmpty ? nil : server.joinPassword) } label: { Label("Join", systemImage: "play.fill") }
+            .prominentAction().disabled(status == nil || !model.canNavigate).fixedSize()
+        Button("Stop Server") { hosting.stop(server) }.fixedSize()
+    }
+    private func playerRows(_ players: [HostedStatus.Player], shown: Int) -> some View {
+        let shown = min(shown, players.count)
+        return FormGroup {
+            if players.isEmpty {
+                FormRow("No one is on the server yet", detail: "Share the address above.") { EmptyView() }
+            } else {
+                ForEach(players.prefix(shown)) { player in HostingPlayerRow(hosting: hosting, server: server, player: player) }
+                if shown < players.count {
+                    FormRow(shown == 0 ? "\(players.count) players" : "\(players.count - shown) more") {
+                        Button("All \(players.count) Players…") { hosting.showingPlayers = server }.fixedSize()
+                    }
+                }
             }
         }
     }
@@ -531,6 +570,40 @@ private struct HostingExportSheet: View {
     }
 }
 
+/// One player on a running server, with the button that removes them.
+private struct HostingPlayerRow: View {
+    var hosting: HostingModel
+    var server: HostedServer
+    var player: HostedStatus.Player
+    var body: some View {
+        FormRow(QuakeColors.plain(player.name), detail: "\(player.ping) ms") {
+            Button("Kick") { hosting.kick(player, from: server) }.controlSize(.small)
+                .accessibilityLabel("Remove \(QuakeColors.plain(player.name)) from the server")
+        }
+    }
+}
+
+/// Everyone on a running server, when its page has room for only some of them.
+private struct HostingPlayersSheet: View {
+    @ObservedObject var hosting: HostingModel
+    var server: HostedServer
+    var body: some View {
+        let status = hosting.statuses[server.id]
+        let players = status?.players ?? []
+        SheetScaffold(icon: .symbol("person.2"), title: "Players on \(server.name)",
+                      message: status.map { "\(players.count) of \($0.maxPlayers). Kick removes a player; they can join again." } ?? "The server isn’t answering.",
+                      actions: [.primary("Done") { hosting.showingPlayers = nil }]) {
+            ScrollView {
+                FormGroup {
+                    if players.isEmpty { FormRow("No one is on the server", detail: nil) { EmptyView() } }
+                    ForEach(players) { player in HostingPlayerRow(hosting: hosting, server: server, player: player) }
+                }
+            }
+            .frame(maxHeight: 380)
+        }
+    }
+}
+
 // MARK: - Review harness
 
 extension LauncherModel {
@@ -557,6 +630,12 @@ extension LauncherModel {
         case "servers-hosting-running":
             hosting.preview(servers: [friends, scrim], selection: "friends", phases: ["friends": .running(since: Date().addingTimeInterval(-41 * 60))],
                             statuses: ["friends": status], logs: ["friends": log])
+        case "servers-hosting-full", "servers-hosting-players":
+            // A full server: the page lists the players it has room for, the dialog all of them.
+            var full = status
+            full.players = (0..<12).map { .init(id: $0, name: ["Sample Player", "Second Sample", "Third Sample"][$0 % 3] + ($0 < 3 ? "" : " \($0 + 1)"), score: 20 - $0, ping: 4 + $0 * 7) }
+            hosting.preview(servers: [friends, scrim], selection: "friends", phases: ["friends": .running(since: Date().addingTimeInterval(-41 * 60))],
+                            statuses: ["friends": full], logs: ["friends": log], showingPlayers: screen.hasSuffix("players") ? friends : nil)
         case "servers-hosting-export":
             hosting.preview(servers: [friends, scrim], selection: "scrim", zpam: [.four: .ready(version: "4.12")], exporting: scrim)
         default:

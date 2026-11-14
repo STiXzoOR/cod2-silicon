@@ -40,6 +40,8 @@ enum ZPAMState: Equatable {
     @Published private(set) var logs: [String: [String]] = [:]
     @Published private(set) var zpam: [ZPAMLine: ZPAMState] = [.four: .unknown, .three: .unknown]
     @Published var exporting: HostedServer?
+    /// The running server whose whole player list is open as a dialog: its page lists as many as fit.
+    @Published var showingPlayers: HostedServer?
     private var processes: [String: Process] = [:]
     private var poll: Task<Void, Never>?
     private var commands: Task<Void, Never>?
@@ -363,10 +365,11 @@ enum ZPAMState: Equatable {
     // MARK: Review harness (preview mode only)
 
     func preview(servers: [HostedServer], selection: String?, draft: HostedServer? = nil, editing: String? = nil, phases: [String: Phase] = [:], statuses: [String: HostedStatus] = [:],
-                 logs: [String: [String]] = [:], zpam: [ZPAMLine: ZPAMState] = [:], exporting: HostedServer? = nil) {
+                 logs: [String: [String]] = [:], zpam: [ZPAMLine: ZPAMState] = [:], exporting: HostedServer? = nil,
+                 showingPlayers: HostedServer? = nil) {
         self.servers = servers; self.selection = selection; self.draft = draft; self.editing = editing; self.phases = phases; self.statuses = statuses; self.logs = logs
         for (line, state) in zpam { self.zpam[line] = state }
-        self.exporting = exporting
+        self.exporting = exporting; self.showingPlayers = showingPlayers
     }
 }
 
