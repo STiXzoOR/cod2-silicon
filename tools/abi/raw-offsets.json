@@ -8125,5 +8125,488 @@
     "count": 1,
     "classification": "safe",
     "reason": "Writes the 4-byte string \"Mac\" (with terminator) into the engine's 256-byte old_rec_source buffer, as the Mac game does."
+  },
+  {
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "text": "void *surface = calloc(1, 0x13c);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Native depth-stencil surface allocation is 316 bytes. CDirect3DSurface.c:895 statically asserts sizeof(CDirect3DSurfaceImpl) <= 128 for COD2_X64; the typed constructor and depth-storage methods use that struct. This allocation exceeds the full native extent and is not an i386 field overlay."
+  },
+  {
+    "file": "src/PC/cgame_mp/cg_players_mp.c",
+    "text": "additionalRadiusSize = 6.0f + (((*(const dvar_t **)(imp_cg_scriptIconSize))->current.value) + 10) * CG_Cod2xHeadIconScale();",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Floating-point head-icon radius arithmetic after dereferencing a typed dvar_t pointer. The constants 6 and 10 are screen/sprite distances, not byte offsets."
+  },
+  {
+    "file": "src/PC/cgame_mp/cg_servercmds_mp.c",
+    "text": "str += lastSpace - dst + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Chat word wrapping: str, lastSpace and dst are character cursors; lastSpace - dst counts the characters to re-read after a wrapping space. The added one skips that space."
+  },
+  {
+    "file": "src/PC/client_mp/cl_console_mp.c",
+    "text": "width += (value + 15) / 16;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Both width and value are int counters in CL_Cod2xKillfeedLineWidth; (value + 15) / 16 rounds encoded icon width up to a cell count. A same-named byte-buffer variable elsewhere in the translation unit triggers the scanner."
+  },
+  {
+    "file": "src/PC/game_mp/g_cod2x_script.c",
+    "text": "const char *value = colon + 1, *valueEnd = line + length;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "HTTP header splitting: colon was found by memchr within the current character line; colon + 1 selects the byte after the colon and line + length bounds the value."
+  },
+  {
+    "file": "src/PC/game_mp/g_cod2x_script.c",
+    "text": "line = end ? end + 1 : NULL;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "HTTP header splitting: end is the newline returned by strchr; end + 1 starts the next character line, with NULL terminating iteration."
+  },
+  {
+    "file": "src/PC/gfx_d3d/r_font.c",
+    "text": "memcpy(out, base, sizeof(float) * 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Copies exactly four native floats from the caller RGBA array into float color[4]; no native pointers or packed structure layout are copied. R_Cod2xCodeColor callers at r_font.c:496/517 provide the four-element destination."
+  },
+  {
+    "file": "src/PC/gfx_d3d/r_font.c",
+    "text": "memcpy(out, style->color, sizeof(float) * 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Copies Cod2xTextStyle.color[4] into caller float color[4] (r_font.c:588/592). sizeof(float) * 4 is an RGBA element count, independent of pointer width."
+  },
+  {
+    "file": "src/PC/gfx_d3d/r_image_load_obj.c",
+    "text": "((byte *)&color)[3] = (byte)(int)floorf(fresnel * 255.0f + 0.5f);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Writes byte 3 of a 32-bit int packed A8R8G8B8 color, the alpha component on little-endian arm64. The whole int is copied to a four-byte pixel; no object-pointer field is involved."
+  },
+  {
+    "file": "src/PC/gfx_d3d/r_rendercmds.c",
+    "text": "if (id == 0x15) return bytes - 8;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "bytes is an int byte-count, not a pointer. Subtracting 8 maps the LP64 text-command request align4(52 + len + 1) to the original logical charge align4(44 + len + 1). Physical allocation still uses native size and align8. See fix-renderer/reference/capacity-review2/text-arithmetic.json."
+  },
+  {
+    "file": "src/PC/gfx_d3d/r_rendercmds.c",
+    "text": "if (id == 0x16) return bytes - 4;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "bytes is an int byte-count, not a pointer. Subtracting 4 maps text-in-space request align4(52 + len + 1) to original logical charge align4(48 + len + 1). Physical allocation remains native. See fix-renderer/reference/capacity-review2/text-arithmetic.json."
+  },
+  {
+    "file": "src/PC/gfx_d3d/r_rendercmds.c",
+    "text": "bytes = (bytes + 7) & ~7;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Integer allocation-size rounding to eight-byte alignment; bytes has already been bounded to 1..65528. This is correct native command alignment, not an object offset."
+  },
+  {
+    "file": "src/PC/gfx_d3d/r_screenshot.c",
+    "text": "byte *padded = border ? (byte *)malloc((size_t)paddedRes * paddedRes * 4) : buffer;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Allocates paddedRes squared four-byte RGBA pixels for cubemap readback. The stride of 4 is pixel format size; R_GetFrontBufferData is called with the same dimensions and four components."
+  },
+  {
+    "file": "src/PC/gfx_d3d/r_screenshot.c",
+    "text": "memcpy(buffer + row * res * 4, padded + ((row + border) * paddedRes + border) * 4, res * 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Copies res four-byte RGBA pixels per row out of the padded cubemap buffer; row/border arithmetic uses pixel coordinates and does not depend on native object layout."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_demo.c",
+    "text": "p = (const unsigned char *)url + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "URL parser skips the first validated alphabetic character and scans the remaining scheme bytes. unsigned char avoids ctype signed-character problems; no structure offset."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_features.c",
+    "text": "index = (value - 0x40) % 40;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Integer packed text-color decoding: removes the 0x40 encoding base and takes a 40-color palette index. value is int, not a pointer."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_features.c",
+    "text": "rainbow = (value - 0x40) / 40;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Integer packed text-color decoding: removes the 0x40 encoding base and extracts the rainbow flag by division by 40. value is int, not a pointer."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_features.c",
+    "text": "if (p < len && (Cod2x_IpAlnum(text[p]) || (text[p] == '.' && p + 1 < len && Cod2x_IpDigit(text[p + 1]))))",
+    "count": 1,
+    "classification": "safe",
+    "reason": "p is an int character index in Cod2x_IpLength; p + 1 < len guards the next text byte while rejecting an extra numeric component. A same-named buffer elsewhere triggers the scanner."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_features.c",
+    "text": "if (p + 1 < len && text[p] == ':' && Cod2x_IpDigit(text[p + 1]))",
+    "count": 1,
+    "classification": "safe",
+    "reason": "p is an int character index; p + 1 < len bounds the character following a port colon. This is index arithmetic, not pointer-layout arithmetic."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_features.c",
+    "text": "*x += (int)floorf(messageOffsetX->current.value + 0.5f);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Adds a rounded floating dvar value to an int screen-coordinate output. The +0.5 constant belongs to rounding and is not a byte offset."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_features.c",
+    "text": "*y += (int)floorf(messageOffsetY->current.value + 0.5f);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Adds a rounded floating dvar value to an int screen-coordinate output. The +0.5 constant belongs to rounding and is not a byte offset."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_features.c",
+    "text": "(Cod2x_ZpamVersion(remoteName + 5, \"zpam\") < 0 && Cod2x_ZpamVersion(remoteName + 5, \"zpam_maps_v\") < 0))",
+    "count": 1,
+    "classification": "safe",
+    "reason": "After strncasecmp has matched the five-character main/ prefix, remoteName + 5 selects the archive basename for version parsing."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_http.c",
+    "text": "line = end ? end + 2 : NULL;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "HTTP header parser advances past the two-byte CRLF returned by strstr; this is a character delimiter in the wire text."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_http.c",
+    "text": "response->body = calloc(1, 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Allocates one zero-filled character for an empty HTTP response body string on initialization failure."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_http.c",
+    "text": "response->headers = calloc(1, 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Allocates one zero-filled character for an empty HTTP response headers string on initialization failure."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_http.c",
+    "text": "response->body = body.data ? body.data : calloc(1, 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Provides an allocated empty NUL string when the HTTP response body buffer has no data; one byte is the string terminator."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_http.c",
+    "text": "response->headers = headers.data ? headers.data : calloc(1, 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Provides an allocated empty NUL string when the HTTP response header buffer has no data; one byte is the string terminator."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_http.c",
+    "text": "if (*p == '@') host = p + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "URL authority parsing: p scans characters in the bounded authority and host = p + 1 skips a user-info @ separator."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_http.c",
+    "text": "if (!response->body) response->body = calloc(1, 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Provides one zero-filled terminator for the empty HTTP response body after the receive path; body is a char string."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_http.c",
+    "text": "if (!response->headers) response->headers = calloc(1, 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Provides one zero-filled terminator for the empty HTTP response headers after the receive path; headers is a char string."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_http.c",
+    "text": "const char *value = data + 18, *end = data + length;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "HTTP download-header parser first requires length > 18 and a matched Transfer-Encoding: prefix; data + 18 skips those eighteen wire-text bytes."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_http_parse.c",
+    "text": "*cursor = p + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Http_Line has verified p points to an LF before end; *cursor = p + 1 consumes that one-byte line separator."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_http_parse.c",
+    "text": "if (*cursor == '\\n' || (*cursor == '\\r' && cursor + 1 < end && cursor[1] == '\\n')) break;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "HTTP header parser checks cursor + 1 < end before reading the LF after CR. This is a bounded two-character delimiter test."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_json.c",
+    "text": "if (!Json_Hex(p + 1, &code) || (decode && code > 0xff))",
+    "count": 1,
+    "classification": "safe",
+    "reason": "JSON string decoder skips the u in a Unicode escape before reading its four hexadecimal characters; p is a character cursor."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_json.c",
+    "text": "return p + 1;",
+    "count": 3,
+    "classification": "safe",
+    "reason": "All three returns advance a character cursor past a validated closing quote, empty-container delimiter, or closing container delimiter. Occurrence bound is exactly 3."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_json.c",
+    "text": "p = Json_Space(p + 1);",
+    "count": 5,
+    "classification": "safe",
+    "reason": "All five occurrences advance a character cursor past a validated opening object/array delimiter or comma before skipping whitespace. Occurrence bound is exactly 5."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_json.c",
+    "text": "return p + 4;",
+    "count": 2,
+    "classification": "safe",
+    "reason": "The two returns follow successful strncmp checks for true or null and consume their four character bytes. Occurrence bound is exactly 2."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_json.c",
+    "text": "return p + 5;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "The return follows a successful strncmp for false and consumes its five character bytes."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_json.c",
+    "text": "length = (size_t)(after - name - 2);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Json_String returns the character cursor after the closing quote; after - name - 2 is the key length excluding its two quotes."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_json.c",
+    "text": "if (!strncmp(name + 1, path, length) &&",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Compares the JSON key spelling beginning one character after its opening quote; name/length come from a successfully parsed string."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_json.c",
+    "text": "p = Json_Member(p, path + 1, &keyLength);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "JSON path parser has matched a dot and passes the next character to Json_Member. The output key length determines later path advancement."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_json.c",
+    "text": "long index = strtol(path + 1, &close, 10);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "JSON path parser has matched an opening bracket and parses its decimal index from the next character."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_json.c",
+    "text": "path = close + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "After verifying the parsed index ends at a closing bracket, advance the JSON path cursor past that character."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_report.c",
+    "text": "char *grown = (char *)realloc(get->body, get->length + length + 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Grows a character response buffer by received byte length plus one NUL terminator. The cast targets char storage, not a reconstructed object layout."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_report.c",
+    "text": "char *wire = (char *)malloc(strlen(get->url) * 3 + 1), *w = wire;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Allocates at most three characters per input URL byte for percent encoding plus one NUL terminator; wire and w are character buffers."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_report.c",
+    "text": "const char *path = scheme ? strchr(scheme + 3, '/') : NULL;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Finds the path after the three-character :// scheme separator returned by strstr."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_report.c",
+    "text": "snprintf(module, sizeof(module), \"%s\", name ? name + 1 : info.dli_fname);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Uses the basename following the final slash in dladdr character-path output; no module/object-layout offset is being used."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_report.c",
+    "text": "? (char *)malloc((size_t)info.st_size + extra + 1)",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Allocates a bounded pending-report text size, extra JSON prefix characters, and one terminator; st_size is checked positive and <= COD2X_PENDING_MAX_SIZE."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_report.c",
+    "text": "memcpy(json + 1, \"\\\"resent\\\":true,\", extra);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Inserts the literal resent field after a JSON opening brace. extra is its character length; json is a character buffer allocated with extra space."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_websocket.c",
+    "text": "memcpy(header + used, mask, 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Copies the four-byte WebSocket wire mask from unsigned char mask[4] into unsigned char header[14]. used is 2, 4, or 10 before the copy, so it fits exactly."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_websocket.c",
+    "text": "start = rest ? rest + 3 : url;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "URL parsing advances past the three-character :// separator; start points into URL text."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_websocket.c",
+    "text": "start = at + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "URL authority parsing advances past an @ separator found inside the authority span."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_websocket.c",
+    "text": "end = close + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "IPv6 URL parsing includes the closing ] character in the bounded host substring."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_websocket.c",
+    "text": "if (end - received->data < 15 || memcmp(received->data + 9, \"101\", 3)) {",
+    "count": 1,
+    "classification": "safe",
+    "reason": "WebSocket handshake parser requires at least fifteen header bytes, then compares the three-character HTTP status at wire-text byte 9. No native structure is overlaid."
+  },
+  {
+    "file": "src/PC/qcommon/cod2x_websocket.c",
+    "text": "memcpy(mask, p + header, 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Copies the four-byte WebSocket wire mask into unsigned char mask[4], only after verifying received->length >= header + 4."
+  },
+  {
+    "file": "src/PC/qcommon/com_fileaccess.c",
+    "text": "requestedName = requestedName ? requestedName + 1 : to;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Case-preserving rename compares the basename after the final slash in the requested character path."
+  },
+  {
+    "file": "src/PC/qcommon/com_fileaccess.c",
+    "text": "storedName = storedName ? storedName + 1 : destination;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Case-preserving rename compares the basename after the final slash in the resolved character path."
+  },
+  {
+    "file": "src/PC/qcommon/common.c",
+    "text": "com_consoleLines[com_numConsoleLines++] = p + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Command-line splitter records the text immediately after a +, newline, or comma delimiter, after checking that another command character follows."
+  },
+  {
+    "file": "src/PC/qcommon/crash_handler.c",
+    "text": "snprintf(module, moduleSize, \"%s\", name ? name + 1 : info.dli_fname);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Uses the basename following the final slash in dladdr character-path output. The separate address offset is calculated with uintptr_t."
+  },
+  {
+    "file": "src/PC/qcommon/crash_handler.c",
+    "text": "cr_jkv(\"moduleName\", name ? name + 1 : path);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Uses the basename following the final slash in a dyld image path string for crash-report JSON."
+  },
+  {
+    "file": "src/PC/qcommon/dl_main.c",
+    "text": "value = data + 18;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "HTTP download-header parser requires length > 18 and a matching Transfer-Encoding: prefix before consuming its eighteen characters."
+  },
+  {
+    "file": "src/PC/qcommon/net_chan_mp.c",
+    "text": "SV_Cod2xShowPacket(1, to, (const char *)data + 4, length - 4, length);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "CoD out-of-band protocol logging omits the four-byte -1 marker and passes the remaining payload length; the offset belongs to the packet wire format, not a native struct."
+  },
+  {
+    "file": "src/PC/server_mp/cod2x_match.c",
+    "text": "start = bar + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Splits optional match headers on the pipe character and advances past the separator found by strchr."
+  },
+  {
+    "file": "src/PC/server_mp/cod2x_match.c",
+    "text": "if (team >= 0 && (!strcmp(key + 6, \"player_uuids\") || !strcmp(key + 6, \"player_names\"))) {",
+    "count": 1,
+    "classification": "safe",
+    "reason": "After matching team1_ or team2_ (six characters), compares the remaining script-key name; team >= 0 guards the prefix requirement."
+  },
+  {
+    "file": "src/PC/server_mp/cod2x_match.c",
+    "text": "int names = !strcmp(key + 6, \"player_names\");",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Inside the validated team-key branch, skips the six-character team prefix to select whether the array contains names or UUIDs."
+  },
+  {
+    "file": "src/PC/server_mp/cod2x_zpam.c",
+    "text": "char **grown = realloc(*names, sizeof(char *) * (size_t)(capacity ? capacity * 2 : 64));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Pointer array growth uses sizeof(char *) multiplied by the element capacity (initial 64, then doubled); native pointer width is explicitly respected."
+  },
+  {
+    "file": "src/PC/server_mp/cod2x_zpam.c",
+    "text": "hidden = calloc((size_t)count, 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Allocates one zero-filled char flag for each archive-list entry; hidden is a byte/boolean array, not an array of native structs."
+  },
+  {
+    "file": "src/PC/server_mp/cod2x_zpam.c",
+    "text": "char *fetched = calloc((size_t)job->manifest.fileCount, 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Allocates one zero-filled char flag per manifest file for fetched state; the array is explicitly char storage."
+  },
+  {
+    "file": "src/platform/cod2x_native.c",
+    "text": "snprintf(country, sizeof(country), \"%.2s\", language + 3);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Locale parsing first requires at least five characters and an underscore at byte 2, then reads the two-character country code at byte 3."
   }
 ]
