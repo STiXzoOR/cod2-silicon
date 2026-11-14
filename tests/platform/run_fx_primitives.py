@@ -43,11 +43,13 @@ with (contextlib.nullcontext(str(a.output.resolve())) if a.output else tempfile.
     scheduler = native_scheduler.stdout
     (out / 'fx_creation_source.h').write_text('\n'.join(function(scheduler, name) for name in ['FX_GetBoltingFrame', 'FxScheduler_CreateEffect']))
     (out / 'fx_play_source.h').write_text(
+        '#include "PC/EffectsCore/fx_memory.h"\n' +
         function(scheduler, 'FxScheduler_GetDvar') + '\n' +
         '#define FxScheduler_PlayEffect FxScheduler_PlayEffectUnderTest\n' +
         function(scheduler, 'FxScheduler_PlayEffect') + '\n#undef FxScheduler_PlayEffect\n')
     sources = ['tests/platform/macos_fx_primitives.c',
                'src/PC/EffectsCore/FxPrimitives.c', 'src/PC/EffectsCore/FxUtil.c',
+               'src/PC/EffectsCore/FxMemMgr.c',
                'src/PC/EffectsCore/FxCurve.c', 'src/PC/qcommon/q_math.c',
                'src/PC/universal/com_math.c', 'src/PC/universal/com_random.c']
     rows = json.loads(a.compile_db.read_text()) if a.compile_db else []

@@ -13,6 +13,7 @@ qboolean fxInitialized[1] = { 0x0 };
 
 extern Bool g_rendererExists;
 #include "imports.h"
+#include "PC/EffectsCore/fx_memory.h"
 #include "bytematch.h"
 #include <math.h>
 
@@ -537,7 +538,7 @@ void FX_AddScheduledEffects(const vec_t *start, const vec_t *end)
         }
 
         if (scheduled)
-            __ZdaPv(scheduled);
+            FX_MEMORY_FREE(scheduled);
 
         scheduled = *prevNext;
     }
@@ -1138,7 +1139,10 @@ static Bool FX_AddPrimitive(EffectPrimitive *prim, Effect *particle, const vec_t
 extern void Cloud_Cloud(void *cloud);
 void FX_AddCloud(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
-    Effect *p = (Effect *)__Znam(sizeof(Cloud));
+    Effect *p = (Effect *)FX_MEMORY_ALLOC(Cloud, sizeof(Cloud));
+#if COD2_APPLE_SDK
+    if (!p) return;
+#endif
     if (p)
         memset(p, 0, sizeof(Cloud));
     Cloud_Cloud(p);
@@ -1177,7 +1181,10 @@ void FX_AddFlash(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const i
     (void)ax;
     (void)lateTime;
     (void)indexInBatch;
-    Effect *p = (Effect *)__Znam(sizeof(Light));
+    Effect *p = (Effect *)FX_MEMORY_ALLOC(Light, sizeof(Light));
+#if COD2_APPLE_SDK
+    if (!p) return;
+#endif
     if (p)
         memset(p, 0, sizeof(Light));
     Light_Light( (const Light *)(p));
@@ -1228,7 +1235,10 @@ void FX_AddLight(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const i
 {
     (void)lateTime;
     (void)indexInBatch;
-    Light *light = (Light *)__Znam(sizeof(Light));
+    Light *light = (Light *)FX_MEMORY_ALLOC(Light, sizeof(Light));
+#if COD2_APPLE_SDK
+    if (!light) return;
+#endif
     if (light)
         memset(light, 0, sizeof(Light));
     Light_Light(light);
@@ -1262,7 +1272,10 @@ extern void OrientationDirFromWorldDir(const orientation_t *or_, const vec_t *di
 void FX_AddCylinder(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
     (void)lateTime;
-    Effect *p = (Effect *)__Znam(FX_OBJECT_SIZE(Cylinder, 0x278));
+    Effect *p = (Effect *)FX_MEMORY_ALLOC(Cylinder, FX_OBJECT_SIZE(Cylinder, 0x278));
+#if COD2_APPLE_SDK
+    if (!p) return;
+#endif
     if (p)
         memset(p, 0, FX_OBJECT_SIZE(Cylinder, 0x278));
     Cylinder_Cylinder( (const Cylinder *)(p));
@@ -1310,7 +1323,10 @@ void FX_AddLine(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const in
 {
     (void)lateTime;
     (void)indexInBatch;
-    Effect *p = (Effect *)__Znam(FX_OBJECT_SIZE(Line, 0x258));
+    Effect *p = (Effect *)FX_MEMORY_ALLOC(Line, FX_OBJECT_SIZE(Line, 0x258));
+#if COD2_APPLE_SDK
+    if (!p) return;
+#endif
     if (p)
         memset(p, 0, FX_OBJECT_SIZE(Line, 0x258));
     Line_Line( (const Line *)(p));
@@ -1389,7 +1405,10 @@ extern void Particle_Particle(const Particle *particle);
 extern void Particle_IntegrateTotalVelocity(const Particle *particle, int time, vec_t *velSum);
 void FX_AddParticle(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
-    Particle *p = (Particle *)__Znam(sizeof(Particle));
+    Particle *p = (Particle *)FX_MEMORY_ALLOC(Particle, sizeof(Particle));
+#if COD2_APPLE_SDK
+    if (!p) return;
+#endif
     if (p)
         memset(p, 0, sizeof(Particle));
     Particle_Particle((const Particle *)(p));
@@ -1427,7 +1446,10 @@ extern void Tail_Tail(const Tail *tail);
 extern void Tail_InitEndPoint(const Tail *_this);
 void FX_AddTail(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
-    Effect *p = (Effect *)__Znam(sizeof(Tail));
+    Effect *p = (Effect *)FX_MEMORY_ALLOC(Tail, sizeof(Tail));
+#if COD2_APPLE_SDK
+    if (!p) return;
+#endif
     if (p)
         memset(p, 0, sizeof(Tail));
     Tail_Tail((const Tail *)(p));
@@ -1471,7 +1493,10 @@ extern void vectoangles(const vec_t *vec, vec_t *angles);
 extern float crandom(void);
 void FX_AddEmitter(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
-    Effect *p = (Effect *)__Znam(FX_OBJECT_SIZE(Emitter, 0x29c));
+    Effect *p = (Effect *)FX_MEMORY_ALLOC(Emitter, FX_OBJECT_SIZE(Emitter, 0x29c));
+#if COD2_APPLE_SDK
+    if (!p) return;
+#endif
     if (p)
         memset(p, 0, FX_OBJECT_SIZE(Emitter, 0x29c));
     Emitter_Emitter( (const Emitter *)(p));
@@ -1586,7 +1611,10 @@ void FX_AddEmitter(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const
 extern void OrientedParticle_OrientedParticle(const OrientedParticle *op);
 void FX_AddOrientedParticle(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
-    Effect *p = (Effect *)__Znam(FX_OBJECT_SIZE(OrientedParticle, 0x258));
+    Effect *p = (Effect *)FX_MEMORY_ALLOC(OrientedParticle, FX_OBJECT_SIZE(OrientedParticle, 0x258));
+#if COD2_APPLE_SDK
+    if (!p) return;
+#endif
     if (p)
         memset(p, 0, FX_OBJECT_SIZE(OrientedParticle, 0x258));
     OrientedParticle_OrientedParticle((const OrientedParticle *)(p));
@@ -2191,7 +2219,17 @@ int FX_Restore(MemoryFile *memFile)
         if (allocSize == 0)
             continue;
 
+#if COD2_APPLE_SDK
+        static const FxMemoryType memoryTypes[] = {
+            FX_MEMORY_Effect, FX_MEMORY_Particle, FX_MEMORY_Line, FX_MEMORY_Tail,
+            FX_MEMORY_Cylinder, FX_MEMORY_Emitter, FX_MEMORY_Effect,
+            FX_MEMORY_OrientedParticle, FX_MEMORY_Effect, FX_MEMORY_Light,
+            FX_MEMORY_Effect, FX_MEMORY_Light, FX_MEMORY_Cloud
+        };
+        Effect *eff = (Effect *)FxMem_Alloc(memoryTypes[effectType]);
+#else
         Effect *eff = (Effect *)__Znam(allocSize);
+#endif
         if (eff)
             memset(eff, 0, allocSize);
 

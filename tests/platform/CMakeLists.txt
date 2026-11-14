@@ -126,6 +126,7 @@ endif()
 add_executable(macos_dedicated_fx_test macos_dedicated_fx.c
   "${PORT_ROOT}/src/PC/EffectsCore/GenericParser2.c" "${PORT_ROOT}/src/PC/EffectsCore/FxTemplate.c"
   "${PORT_ROOT}/src/PC/EffectsCore/FxScheduler.c" "${PORT_ROOT}/src/PC/EffectsCore/FxScheduler_load_obj.c"
+  "${PORT_ROOT}/src/PC/EffectsCore/FxMemMgr.c"
   "${PORT_ROOT}/src/PC/EffectsCore/FxChannel.c" "${PORT_ROOT}/src/PC/EffectsCore/FxCurve.c"
   "${PORT_ROOT}/src/PC/EffectsCore/FxCurve_load_obj.c")
 target_compile_definitions(macos_dedicated_fx_test PRIVATE DEDICATED=1)

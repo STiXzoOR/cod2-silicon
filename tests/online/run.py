@@ -74,6 +74,7 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
             functions.append(source[source.index('#if defined(COD2_X64)'):
                                     source.index('extern commandDef_t')])
         if name == 'scheduled_fx':
+            functions.append('#include "PC/EffectsCore/fx_memory.h"')
             # Keep the production native link accessor and its layout assertion.
             functions.append(source[source.index('#if defined(COD2_X64)'):
                                     source.index('extern int irand')])
@@ -108,7 +109,13 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
         subprocess.run([*flags, '-I' + tmp, '-c', str(root / ('tests/online/' + name + '.c')),
                         '-o', str(obj)], check=True, cwd=root)
         exe = out / name
-        subprocess.run(['clang', '-fsanitize=address,undefined', str(obj), str(trace_obj), '-o', str(exe)],
+        extra_objects = []
+        if name == 'scheduled_fx':
+            memory_obj = out / 'fx_memory.o'
+            subprocess.run([*flags, '-c', str(root / 'src/PC/EffectsCore/FxMemMgr.c'),
+                            '-o', str(memory_obj)], check=True, cwd=root)
+            extra_objects.append(str(memory_obj))
+        subprocess.run(['clang', '-fsanitize=address,undefined', str(obj), str(trace_obj), *extra_objects, '-o', str(exe)],
                        check=True)
         subprocess.run([str(exe)], check=True, timeout=20,
                        env={**os.environ, 'ASAN_OPTIONS': 'symbolize=0'})

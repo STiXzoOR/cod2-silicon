@@ -20,6 +20,8 @@ The original shaders are built from your own game files.
 - Dropped weapons now tumble along the same axes as Windows for each random draw.
 - Bullet and rocket spread now preserve the original degree conversion and
   trigonometric rounding.
+- Dense effects now share the original fixed block arena and its allocation
+  limits, including delayed effects and reuse across effect types.
 - CoD2x spectator labels no longer leave later HUD drawing clipped when a
   crowded frame runs out of render commands.
 

@@ -1,5 +1,6 @@
 /* Synthetic fixtures exercise the real dedicated FX parser without game data. */
 #include "common_types.h"
+extern void FxMem_Init(void);
 #include <assert.h>
 #include <ctype.h>
 #include <math.h>
@@ -164,6 +165,8 @@ void Com_Error(int code, const char *format, ...)
     abort();
 }
 
+void Com_DPrintf(const char *format, ...) { (void)format; }
+
 void Com_Printf(const char *format, ...)
 {
     va_list args;
@@ -224,6 +227,7 @@ float flrand(float low, float high)
 
 int main(int argc, char **argv)
 {
+    FxMem_Init();
     EffectTemplate *effect;
     FxScheduler scheduler = { 0 };
     MediaHandles handles = { 0 };

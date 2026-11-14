@@ -15,6 +15,7 @@ cc -arch arm64 -std=gnu99 -g -O0 -fcommon -ffp-contract=off \
   tests/platform/macos_dedicated_fx.c \
   src/PC/EffectsCore/GenericParser2.c src/PC/EffectsCore/FxTemplate.c \
   src/PC/EffectsCore/FxScheduler.c src/PC/EffectsCore/FxScheduler_load_obj.c \
+  src/PC/EffectsCore/FxMemMgr.c \
   src/PC/EffectsCore/FxChannel.c src/PC/EffectsCore/FxCurve.c \
   src/PC/EffectsCore/FxCurve_load_obj.c \
   -o build-macos/headless-fx-parser \
