@@ -318,6 +318,7 @@ private struct CheckerDropZone: View {
     @ObservedObject var checker: ConfigCheckerModel
     @Environment(\.palette) private var palette
     @State private var targeted = false
+    @State private var loadoutMenu = MenuAnchorBox()
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous)
@@ -330,12 +331,17 @@ private struct CheckerDropZone: View {
             HStack(spacing: 10) {
                 Button("Choose a File…") { checker.chooseFile() }.prominentAction()
                 Button("Paste from Clipboard") { checker.paste() }
-                Menu("Check a Loadout") {
-                    ForEach(checker.studio.session?.profiles ?? []) { profile in
-                        Button(profile.displayName) { checker.checkLoadout(profile) }
-                    }
-                }
+                // A real AppKit menu under the button, as the launcher's other menus of places are.
+                Button {
+                    guard let view = loadoutMenu.view else { return }
+                    let checker = checker
+                    NativeMenu.popUp((checker.studio.session?.profiles ?? []).map { profile in
+                        .init(title: profile.displayName, symbol: "slider.horizontal.3") { checker.checkLoadout(profile) }
+                    }, below: view)
+                } label: { Label("Check a Loadout", systemImage: "chevron.down").labelStyle(.titleOnly) }
+                .background(MenuAnchor(box: loadoutMenu))
                 .fixedSize().disabled((checker.studio.session?.profiles ?? []).isEmpty)
+                .accessibilityLabel("Check a Loadout").accessibilityHint("Shows your loadouts")
             }
             .controlSize(.large).padding(.top, 4)
         }
@@ -403,7 +409,7 @@ private struct CheckerLineRow: View {
         }
         .padding(.vertical, 3).padding(.trailing, 18)
         .background(tinted ? color.opacity(0.09) : .clear)
-        .accessibilityElement(children: .ignore)
+        .accessibilityElement(children: .ignore).accessibilityAddTraits(.isStaticText)
         .accessibilityLabel("Line \(line.id): \(line.text)" + (line.note.isEmpty ? "" : ". \(line.note)"))
     }
     private var tinted: Bool { if case .finding = line.mark { return true }; return false }

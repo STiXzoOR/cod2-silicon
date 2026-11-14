@@ -226,12 +226,12 @@ struct ConfigsHomePage: View {
             HStack(spacing: 8) {
                 ForEach(discover.filters) { filter in
                     Button(filter.rawValue) { discover.filter = filter }
-                        .buttonStyle(FilterChipStyle(on: chosen == filter))
+                        .filterChip(on: chosen == filter)
                         .accessibilityAddTraits(chosen == filter ? .isSelected : [])
                 }
                 if !discover.saved.isEmpty {
                     Button { discover.open(.saved) } label: { Label("Saved · \(discover.saved.count)", systemImage: "bookmark") }
-                        .buttonStyle(FilterChipStyle(on: false)).help("The setups you saved for later")
+                        .filterChip(on: false).help("The setups you saved for later")
                 }
             }
             .fixedSize()
@@ -276,19 +276,6 @@ struct ConfigsHomePage: View {
             Link("Ask to remove or correct a setup", destination: ConfigDirectory.removalURL)
         }
         .foregroundStyle(palette.link).fixedSize()
-    }
-}
-
-struct FilterChipStyle: ButtonStyle {
-    var on: Bool
-    @Environment(\.palette) private var palette
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 12, weight: .semibold)).foregroundStyle(on ? palette.heading : palette.secondary)
-            .padding(.horizontal, 12).frame(minHeight: StudioMetrics.minimumHitTarget)
-            .background(on ? palette.selection : palette.panel.opacity(configuration.isPressed ? 0.6 : 1), in: Capsule())
-            .overlay(Capsule().strokeBorder(on ? palette.selectionStroke : palette.panelStroke, lineWidth: 1))
-            .contentShape(Capsule())
     }
 }
 
