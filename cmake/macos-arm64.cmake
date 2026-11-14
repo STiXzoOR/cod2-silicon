@@ -94,6 +94,9 @@ foreach(target cod2_macos cod2_macos_ded)
   else()
     add_executable(${target} ${MACOS_C})
   endif()
+  # Both executables consume the same generated blobs. Finish their shared
+  # producer before parallel Make targets can start compiling either view.
+  add_dependencies(${target} cod2_datagen)
   target_include_directories(${target} PRIVATE
     ${COD2_SRC_DIR}/PC/speex ${COD2_SRC_DIR} ${COD2_SRC_DIR}/headers ${CMAKE_SOURCE_DIR})
   # Respect CMAKE_BUILD_TYPE optimization; Debug/unspecified still default to O0.
