@@ -6,10 +6,19 @@
 #undef CG_PlayEntitySoundAlias
 #undef main
 #include "imports.h"
+#include "snd_rounding.h"
 
 #if defined(COD2_CODX) && COD2_CODX
 /* CoD2x's obituary helpers live in units this test does not link. */
 int BG_GetNumWeapons(void) { return 0; }
+/* Obituary/head-icon branches are outside this sound-output fixture. */
+int Cod2x_GameVersion(void) { abort(); }
+int Cod2x_TextEnabled(void) { abort(); }
+void CG_Cod2xHeadEvent(const centity_t *cent, int event)
+{
+    (void)cent; (void)event;
+    abort();
+}
 void CL_DeathMessageExtendedIcons(int extended, const char *const *icons) { (void)extended; (void)icons; }
 void SV_Cod2xStripTextCodes(const char *text, char *out, size_t size)
 {
@@ -44,6 +53,7 @@ extern void AIL_3D_position(void *sample, float *x, float *y, float *z);
 extern void AIL_set_3D_sample_loop_count(void *sample, int loops);
 extern void AIL_set_3D_sample_effects_level(void *sample, float wet);
 extern void AIL_set_3D_sample_offset(void *sample, int offset);
+extern unsigned long AIL_3D_sample_offset(void *sample);
 extern void AIL_resume_3D_sample(void *sample);
 extern void AIL_stop_3D_sample(void *sample);
 extern void AIL_end_3D_sample(void *sample);
@@ -258,6 +268,29 @@ static void TimelineCase(void)
     puts("PASS sample start: 44.1k PCM, 88.2k playback, delay, stop/resume cursor and exact 240 output-frame duration");
 }
 
+static void RoundingCase(void)
+{
+    vec3_t world = {117, 29, 41};
+    memcpy(entities[1].lerpOrigin, world, sizeof(world));
+    /* Owned Windows 0x4b6f39/0x4b6f99/0x4b6fff/0x4b703f:
+       start rate uses timescale then pitch; byte offset rounds ties even. */
+    const struct { int rate; float pitch, timescale; int adjusted, duration; } cases[] = {
+        {11025, 0.5f, 1.0f, 5512, 87},
+        {22050, 0.3f, 1.5f, 9922, 73},
+    };
+    for (unsigned i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        sound.info.rate = cases[i].rate;
+        g_snd.timescale = cases[i].timescale;
+        assert(SND_StartAlias3DSample(&sampleAlias, &sampleAlias, 0, 1, world,
+                   0.5f, cases[i].pitch, 0, 3.0f / 128.0f, 0, 0, NULL, SASYS_CGAME) == cases[i].duration);
+        assert(AIL_3D_sample_playback_rate(milesGlob.handle_3D[0]) == cases[i].adjusted);
+        assert(g_snd.chaninfo[0].endtime == g_snd.time + cases[i].duration - 2);
+        assert(AIL_3D_sample_offset(milesGlob.handle_3D[0]) == 22);
+        AIL_stop_3D_sample(milesGlob.handle_3D[0]);
+    }
+    puts("PASS Windows sample rate order, nearest-even start rate, duration, start time and byte offset");
+}
+
 static float ExpectedPcm(size_t frame)
 {
     const unsigned char *data = sound.info.data_ptr;
@@ -349,6 +382,7 @@ int main(int argc, char **argv)
     if (!strcmp(argv[1], "position")) PositionCases();
     else if (!strcmp(argv[1], "update")) UpdateCase();
     else if (!strcmp(argv[1], "timeline")) TimelineCase();
+    else if (!strcmp(argv[1], "rounding")) RoundingCase();
     else if (!strcmp(argv[1], "footsteps")) FootstepsCase();
     else abort();
     AIL_release_sample_handle(milesGlob.handle_3D[0]);

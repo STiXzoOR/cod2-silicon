@@ -33,7 +33,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--compile-db', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--case', choices=['position', 'update', 'timeline', 'footsteps', 'all'], default='all')
+    parser.add_argument('--case', choices=['position', 'update', 'timeline', 'rounding', 'footsteps', 'all'], default='all')
     parser.add_argument('--wave', type=Path, help='Optional private PCM footstep WAV; never copied into the repository')
     args = parser.parse_args()
     if args.wave and args.case != 'footsteps':
@@ -68,7 +68,7 @@ def main():
                    str(ROOT / 'tests/audio/output.c'), str(ROOT / 'src/PC/cgame_mp/cg_event_mp.c'),
                    str(ROOT / 'src/PC/universal/com_math.c'), str(ROOT / 'src/PC/qcommon/port_debug.c'),
                    str(backend_object), '-framework', 'AudioToolbox', '-framework', 'CoreAudio', '-o', str(binary)], check=True)
-    cases = ['position', 'update', 'timeline', 'footsteps'] if args.case == 'all' else [args.case]
+    cases = ['position', 'update', 'timeline', 'rounding', 'footsteps'] if args.case == 'all' else [args.case]
     result = []
     for case in cases:
         command = [str(binary), case]

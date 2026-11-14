@@ -1,5 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
+#if COD2_APPLE_SDK
+#include "snd_rounding.h"
+#endif
 #include "bytematch.h"
 extern snd_local_t g_snd;
 
@@ -586,7 +589,11 @@ void SND_GetStreamChannelSaveInfo(int index, snd_save_stream_t *info)
     info->fraction = (float)(unsigned long int)offset / (float)(unsigned long int)length;
 #endif
     sndGlob = &g_snd;
+#if COD2_APPLE_SDK
+    info->rate = SND_WindowsUnscale(AIL_stream_playback_rate(handle), sndGlob->timescale);
+#else
     info->rate = (int)floorf((float)AIL_stream_playback_rate(handle) / sndGlob->timescale + 0.5f);
+#endif
     info->basevolume = sndGlob->chaninfo[index].basevolume;
     AIL_stream_volume_pan(handle, &info->volume, &info->pan);
     masterVol = sndGlob->volume;
@@ -1242,7 +1249,11 @@ int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
 
     sndGlob = SND_GLOB_PTR;
 #if defined(COD2_X64)
+#if COD2_APPLE_SDK
+    AIL_set_sample_playback_rate(handle, SND_WindowsUnsignedRate((unsigned int)((MssSound *)sound)->info.rate, sndGlob->timescale, pitch));
+#else
     AIL_set_sample_playback_rate(handle, (int)floorf((float)(unsigned int)((MssSound *)sound)->info.rate * pitch * sndGlob->timescale + 0.5f));
+#endif
 #else
     AIL_set_sample_playback_rate(handle, (int)floorf((float)(int)((MssSound *)sound)->info.rate * pitch * sndGlob->timescale + 0.5f));
 #endif
@@ -1274,7 +1285,11 @@ int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
     }
 
     if (fraction != 0.0f) {
+#if COD2_APPLE_SDK
+        start_msec = SND_WindowsScale((int)total_msec, fraction);
+#else
         start_msec = (int)floorf((float)total_msec * fraction + 0.5f);
+#endif
     } else {
         start_msec = timeshift;
     }
@@ -1363,7 +1378,11 @@ int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
     playbackRate = AIL_3D_sample_playback_rate(handle);
     sndGlob = SND_GLOB_PTR;
 #if defined(COD2_X64)
+#if COD2_APPLE_SDK
+    playbackRate = SND_WindowsRate(playbackRate, sndGlob->timescale, pitch);
+#else
     playbackRate = (int)floorf((float)playbackRate * pitch * sndGlob->timescale + 0.5f);
+#endif
     AIL_set_3D_sample_playback_rate(handle, playbackRate);
 #else
     AIL_set_3D_sample_playback_rate(handle, (int)floorf((float)playbackRate * pitch * sndGlob->timescale + 0.5f));
@@ -1375,11 +1394,18 @@ int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
 
 #if defined(COD2_X64)
     {
+#if COD2_APPLE_SDK
+        /* Windows 0x4b6f99 wraps samples * 1000, preserves the FILD
+           integer operand, and divides by the adjusted playback rate. */
+        total_msec = SND_WindowsDuration((unsigned int)((MssSound *)sound)->info.samples,
+                                         g_snd.timescale, playbackRate);
+#else
         /* Mac 0x57a14-0x57a3b wraps samples * 1000 before converting to
            float, then divides by the adjusted rate held in edi. */
         unsigned int sampleMillis = (unsigned int)((MssSound *)sound)->info.samples * 1000u;
         float totalFloat = (float)sampleMillis * g_snd.timescale / (float)playbackRate + 0.5f;
         total_msec = (int)floorf(totalFloat);
+#endif
     }
 #else
     soundSamples = (int)((MssSound *)sound)->info.samples;
@@ -1395,7 +1421,11 @@ int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
     }
 
     if (fraction != 0.0f) {
+#if COD2_APPLE_SDK
+        start_msec = SND_WindowsScale((int)total_msec, fraction);
+#else
         start_msec = (int)floorf((float)total_msec * fraction + 0.5f);
+#endif
     } else {
         start_msec = timeshift;
     }
@@ -1412,8 +1442,12 @@ int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
 #else
         int datasize = (int)((MssSound *)sound)->info.data_len;
 #endif
+#if COD2_APPLE_SDK
+        AIL_set_3D_sample_offset(handle, SND_WindowsOffset(datasize, fraction));
+#else
         float bytePos = (float)datasize * fraction + 0.5f;
         AIL_set_3D_sample_offset(handle, (int)floorf(bytePos));
+#endif
     }
 
     if (startDelay == 0) {
@@ -1496,7 +1530,11 @@ got_handle:
 
     baserate = AIL_stream_playback_rate(handle);
     sndGlob = SND_GLOB_PTR;
+#if COD2_APPLE_SDK
+    AIL_set_stream_playback_rate(handle, SND_WindowsRate(baserate, sndGlob->timescale, pitch));
+#else
     AIL_set_stream_playback_rate(handle, (int)floorf((float)baserate * pitch * sndGlob->timescale + 0.5f));
+#endif
 
     aliasFlags = pAlias0->flags;
     scaledVol = sndGlob->volume * volume;
@@ -1536,7 +1574,11 @@ got_handle:
     }
 
     if (fraction != 0.0f) {
+#if COD2_APPLE_SDK
+        start_msec = SND_WindowsScale((int)total_msec, fraction);
+#else
         start_msec = (int)floorf((float)total_msec * fraction + 0.5f);
+#endif
     } else {
         start_msec = timeshift;
     }
