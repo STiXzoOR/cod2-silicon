@@ -68,6 +68,10 @@ def main():
             start = client.index('typedef struct Cod2x_ChallengeIdentity')
             end = client.index('\nvoid SV_AuthorizeRequest', start)
             generated += client[start:end] + '\n'
+        if enabled:
+            generated += ''.join(function(client, n) for n in ('SV_Cod2xTempBanned', 'SV_Cod2xAdmitConnect'))
+            server = active('src/PC/server_mp/cod2x_server.c')
+            generated += ''.join(function(server, n) for n in ('SV_Cod2xIsStyleCode', 'SV_Cod2xStripTextCodes'))
         for name in ('SV_CloseDownload', 'SV_AuthorizeRequest',
                      'SV_AuthorizeIpPacket', 'SV_GetChallenge', 'SV_UserinfoChanged',
                      'SV_FreeClient', 'SV_DropClient', 'SV_DirectConnect', 'SV_FreeClientScriptPers', 'SV_FreeClients'):
@@ -86,6 +90,7 @@ def main():
             (out / 'nat_packet_source.h').write_text(
                 function(network, 'Netchan_Process') +
                 function(discovery, 'SV_PacketEvent') + function(discovery, 'SV_VoicePacket'))
+        fixture = fixture.replace('playerState_t *SV_GameClientNum(int n) { (void)n; return NULL; }','playerState_t *SV_GameClientNum(int n);')
         fixture = fixture.replace('void SV_FreeClient(client_t *cl) { (void)cl; }', '')
         fixture = fixture.replace('++connects; return NULL;',
                                   '++connects; WS76_ConnectScript(n); return (char *)gameDenial;')
@@ -94,20 +99,17 @@ def main():
         lifecycle = active('src/PC/server_mp/sv_init_mp.c')
         commands = active('src/PC/server_mp/sv_ccmds_mp.c')
         map_change = ''
-        if 'SV_Cod2xBeginMapChangeApproved' in commands:
-            # Identity shutdown runs without a callback. WS81 separately tests
-            # the real callback/VM; retain actual server guard bodies here.
+        if enabled:
+            # Real callback execution is covered by stop_gametype_vm.py.
             map_change = '''
 qboolean GScr_Cod2xBeforeMapChange(qboolean shutdown, const char *source)
 { (void)shutdown; (void)source; return 1; }
-qboolean GScr_Cod2xConsumeMapChange(const char *source, const char *command,
-                                  const char *target, const char *marker)
-{ (void)source; (void)command; (void)target; (void)marker; return 0; }
-void GScr_Cod2xResetMapChange(void) {}
+void GScr_Cod2xNetBeforeMapChange(int shutdown) { (void)shutdown; }
+void SV_Cod2xMatchBeforeMapChange(int shutdown) { (void)shutdown; }
+void GScr_Cod2xDropCallbacks(void) {}
 '''
-            map_change += re.search(r'^static unsigned int cod2xMapChangeDepth;', commands, re.M)[0] + '\n'
-            map_change += ''.join(function(commands, name) for name in
-                                 ('SV_Cod2xBeginMapChangeApproved', 'SV_Cod2xBeginMapChange', 'SV_Cod2xEndMapChange'))
+            map_change += re.search(r'^static qboolean cod2xMapChangeAsked;', commands, re.M)[0] + '\n'
+            map_change += function(commands, 'SV_Cod2xBeforeMapChange')
         (out / 'identity_shutdown_source.h').write_text(map_change + function(lifecycle, 'SV_Shutdown') +
                                                         function(lifecycle, 'SV_ChangeMaxClients'))
 
@@ -116,7 +118,7 @@ void GScr_Cod2xResetMapChange(void) {}
         methods = ''.join('static unsigned int ' + n + '(void) { return 0; }\n' for n in names)
         methods += table + '\n' + function(player, 'Player_GetMethod')
         if 'Player_Cod2xGetMethod' in player:
-            start = player.index('static gentity_t *PlayerCmd_Cod2xPlayer')
+            start = player.index(function(player, 'PlayerCmd_Cod2xPlayer').rstrip())
             end = player.index('static const BuiltinMethodDef player_methods', start)
             methods += function(player, 'PlayerCmd_GetPlayerEntity') + player[start:end]
         methods += function(main_source, 'Scr_GetMethod')
@@ -124,11 +126,12 @@ void GScr_Cod2xResetMapChange(void) {}
 
         compiler = active('src/PC/script/scr_compiler.c')
         vm = active('src/PC/script/scr_vm.c')
-        boundary = ''.join(function(compiler, n) for n in
+        boundary = vm[vm.index('typedef enum VM_BuiltinMethodContinuation_e'):vm.index('static VM_BuiltinMethodResult VM_CandidateCallBuiltinMethod')]
+        boundary += ''.join(function(compiler, n) for n in
                            ('EmitOpcode', 'EmitFunctionTableIndex', 'EmitBuiltinMethodOpcode'))
         boundary += ''.join(function(vm, n) for n in
                             ('VM_ReadU16', 'VM_PushValue', 'IncInParam', 'Scr_GetNumParam',
-                             'Scr_AddBool', 'Scr_AddString', 'Scr_AddVector',
+                             'Scr_AddUndefined', 'Scr_AddBool', 'Scr_AddString', 'Scr_AddVector',
                              'VM_CandidateCompleteCall', 'VM_CandidateCallBuiltinMethod'))
         view = active('src/PC/game_mp/g_client_mp.c')
         boundary += ''.join(function(view, n) for n in

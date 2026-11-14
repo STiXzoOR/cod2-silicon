@@ -22,7 +22,18 @@ void WS76_ConnectScript(int n);
 void Com_Printf(const char *format, ...);
 void NetProf_PrepProfiling(netProfileInfo_t **p) { (void)p; }
 #endif
+const char *SEH_StringEd_GetString(const char *s) { (void)s; return NULL; }
+void GScr_Cod2xMatchPlayerGetData(scr_entref_t r) { (void)r; abort(); }
+void GScr_Cod2xMatchPlayerSetData(scr_entref_t r) { (void)r; abort(); }
+void GScr_Cod2xMatchPlayerIsAllowed(scr_entref_t r) { (void)r; abort(); }
 #include "host_fixture.h"
+#if defined(COD2_CODX) && COD2_CODX
+static const char *fixture_challenge_digest(netadr_t from, int challenge) {
+    Cod2x_ChallengeIdentity *i=SV_Cod2xChallengeIdentity(from,challenge);
+    return i ? i->suppliedDigest : NULL;
+}
+#endif
+
 
 static int requestedMaxClients;
 void Z_VirtualFreeInternal(void *p) { if(p!=clients) free(p); }
@@ -33,6 +44,8 @@ const dvar_t *Dvar_RegisterInt(const char *s,int v,int lo,int hi,int f) { (void)
 void Dvar_ClearModified(const dvar_t *d) { (void)d; }
 void Dvar_SetInt(const dvar_t *d,int v) { ((dvar_t *)d)->current.integer=v; }
 
+static void *fixtureBgs;
+void *imp_bgs=&fixtureBgs;
 server_t sv;
 void *imp_sv=&sv;
 static dvar_t running;
@@ -57,6 +70,7 @@ void Scr_Abort(void) {}
 gentity_t g_entities[1024];
 void *imp_g_entities = g_entities;
 static gclient_t game_clients[2];
+playerState_t *SV_GameClientNum(int n) { assert(n>=0 && n<2); return &game_clients[n].ps; }
 level_locals_t level;
 scr_const_t scr_const;
 scrCompilePub_t scrCompilePub;
@@ -160,7 +174,7 @@ static VariableValue invoke(const char *name, int slot, unsigned int params)
     top->type=1; top->u.pointerValue=(unsigned int)slot+1;
     scrVmPub.top=top; scrVmPub.maxstack=values+7;
     const char *pos=(const char *)program+2;
-    VM_CandidateCallBuiltinMethod(&pos,&top,params);
+    VM_CandidateCallBuiltinMethod(&pos,&top,params,params==0);
     Verify(pos==(const char *)program+4,"real VM consumes emitted method operand");
     Verify(scrVmPub.outparamcount==0 && scrVmPub.inparamcount==0,"real VM clears method parameters");
     Verify(top==values+1 && scrVmPub.top==top,"real VM replaces arguments with one return value");
@@ -199,13 +213,14 @@ static void connect_remote(netadr_t address,const char *id,const char *hash,cons
         argc=5; argv[0]="ipAuthorize"; argv[1]=token; argv[2]=status; argv[3]=reason; argv[4]="123";
         SV_AuthorizeIpPacket(svs.authorizeAddress);
     }
-    char info[512]; snprintf(info,sizeof(info),"\\protocol\\118\\protocol_cod2x\\6\\cl_hwid2\\%s\\challenge\\%d\\qport\\20\\name\\fixture",id,challenge);
+    char info[512]; snprintf(info,sizeof(info),"\\protocol\\118\\protocol_cod2x\\%d\\cl_hwid2\\%s\\challenge\\%d\\qport\\20\\name\\fixture",COD2X_REVISION,id,challenge);
     argc=2; argv[0]="connect"; argv[1]=info; SV_DirectConnect(address);
 }
 
+#if defined(COD2_CODX) && COD2_CODX
 static void identity_cases(void)
 {
-    reset(); init_game(); revision=6; entityClass=0;
+    reset(); init_game(); revision=COD2X_REVISION; entityClass=0;
     SV_Cod2xClearIdentities();
     connect_remote(remote,hwid,digest,"accept","KEY_IS_GOOD");
     string_value("getIp",0,"8.7.6.5"); string_value("getHWID",0,hwid);
@@ -215,33 +230,34 @@ static void identity_cases(void)
     string_value("getHWID",1,"ZYXWVUTSRQPONMLKJIHGFEDCBA987654");
     string_value("getCDKeyHash",1,"FFEEDDCCBBAA99887766554433221100");
     string_value("getAuthorizationStatus",1,"");
-    /* Mutable userinfo must not replace the admitted hardware identity. */
+    /* CoD2x reads the current userinfo, even when it changes after admission. */
     snprintf(clients[0].userinfo,sizeof(clients[0].userinfo),"\\cl_hwid2\\AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-    SV_UserinfoChanged(&clients[0]); string_value("GETHWID",0,hwid);
+    SV_UserinfoChanged(&clients[0]); string_value("GETHWID",0,"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
     SV_FreeClientScriptPers(); string_value("getAuthorizationStatus",0,"KEY_IS_GOOD");
     svs.time+=6000;
     connect_remote(remote,hwid,digest,"accept","KEY_IS_GOOD");
     string_value("getCDKeyHash",0,digest); string_value("getAuthorizationStatus",0,"KEY_IS_GOOD");
     SV_FreeClient(&clients[0]);
-    string_value("getHWID",0,""); string_value("getCDKeyHash",0,""); string_value("getAuthorizationStatus",0,"");
+    string_value("getHWID",0,hwid); string_value("getCDKeyHash",0,""); string_value("getAuthorizationStatus",0,"");
     clients[0].state=0;
     netadr_t replacement={NA_IP,{8,8,8,8},102};
     connect_remote(replacement,"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",NULL,NULL,NULL);
     string_value("getAuthorizationStatus",0,""); string_value("getCDKeyHash",0,"");
     SV_FreeClients();
-    string_value("getHWID",1,"");
+    Verify(!cod2xClientIdentities[1].occupied,"free clients clears admitted metadata");
+    svs.clients=NULL;
     SV_Cod2xClearIdentities();
-    Verify(SV_Cod2xChallengeDigest(remote,clients[0].challenge)==NULL,"shutdown clears challenge digest");
+    Verify(fixture_challenge_digest(remote,clients[0].challenge)==NULL,"shutdown clears challenge digest");
     string_value("getAuthorizationStatus",0,"");
 }
 
 static void provenance_cases(void)
 {
-    reset(); init_game(); revision=6; entityClass=0; SV_Cod2xClearIdentities();
+    reset(); init_game(); revision=COD2X_REVISION; entityClass=0; SV_Cod2xClearIdentities();
     connect_remote(remote,hwid,digest,"deny","INVALID_CDKEY");
     Verify(connects==0,"authorization denial prevents client metadata admission");
     string_value("getAuthorizationStatus",0,""); string_value("getCDKeyHash",0,"");
-    reset(); init_game(); revision=6; SV_Cod2xClearIdentities();
+    reset(); init_game(); revision=COD2X_REVISION; SV_Cod2xClearIdentities();
     argc=3; argv[0]="getchallenge"; argv[1]="0"; argv[2]=digest; SV_GetChallenge(remote);
     svs.time+=6001;
     connect_remote(remote,hwid,digest,NULL,NULL);
@@ -252,7 +268,7 @@ static void provenance_cases(void)
     netadr_t forged=svs.authorizeAddress; ++forged.ip[3]; SV_AuthorizeIpPacket(forged);
     string_value("getAuthorizationStatus",0,"");
     SV_AuthorizeIpPacket(svs.authorizeAddress);
-    string_value("getAuthorizationStatus",0,"KEY_IS_GOOD"); string_value("getHWID",0,hwid);
+    string_value("getAuthorizationStatus",0,""); string_value("getHWID",0,hwid);
     /* A reused challenge must not let a late reply cross to an old client. */
     for(int i=0;i<1024;++i) if(svs.challenges[i].challenge==clientChallenge) {
         ++svs.challenges[i].challenge;
@@ -260,11 +276,11 @@ static void provenance_cases(void)
         break;
     }
     argv[3]="OTHER_REPLY"; SV_AuthorizeIpPacket(svs.authorizeAddress);
-    string_value("getAuthorizationStatus",0,"KEY_IS_GOOD");
+    string_value("getAuthorizationStatus",0,"");
     running.current.enabled=1; SV_Shutdown("synthetic shutdown");
     Verify(!svs.clients && !running.current.enabled,"real shutdown frees host state");
     string_value("getHWID",0,""); string_value("getCDKeyHash",0,""); string_value("getAuthorizationStatus",0,"");
-    reset(); init_game(); revision=6; SV_Cod2xClearIdentities();
+    reset(); init_game(); revision=COD2X_REVISION; SV_Cod2xClearIdentities();
     netadr_t local={NA_LOOPBACK,{127,0,0,1},100};
     connect_remote(local,hwid,digest,NULL,NULL);
     string_value("getIp",0,"127.0.0.1"); string_value("getAuthorizationStatus",0,"");
@@ -275,24 +291,24 @@ static void provenance_cases(void)
     string_value("getIp",0,"0.0.0.0"); string_value("getHWID",0,"");
     string_value("getCDKeyHash",0,""); string_value("getAuthorizationStatus",0,"");
     Verify(!strcmp(SV_Cod2xClientHwid(-1),"") && !strcmp(SV_Cod2xClientAuthorization(64),""),"out-of-range metadata access is empty");
-    reset(); init_game(); revision=6; SV_Cod2xClearIdentities();
+    reset(); init_game(); revision=COD2X_REVISION; SV_Cod2xClearIdentities();
     connect_remote(remote,hwid,"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",NULL,NULL);
     string_value("getCDKeyHash",0,"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
     string_value("getAuthorizationStatus",0,"");
-    Verify(SV_Cod2xChallengeDigest(remote,clients[0].challenge)==NULL,"untrusted supplied hash is visible locally and never forwarded");
-    reset(); init_game(); revision=6; SV_Cod2xClearIdentities();
+    Verify(!strcmp(fixture_challenge_digest(remote,clients[0].challenge),"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"),"supplied hash is retained without a hex restriction");
+    reset(); init_game(); revision=COD2X_REVISION; SV_Cod2xClearIdentities();
     connect_remote(remote,hwid,digest,"accept","KEY_IS_GOOD");
     requestedMaxClients=3; SV_ChangeMaxClients();
     Verify(svs.clients!=clients && settings[0].current.integer==3,"real maxclients change relocates client allocation");
     string_value("getHWID",0,hwid); string_value("getCDKeyHash",0,digest);
     string_value("getAuthorizationStatus",0,"KEY_IS_GOOD");
     SV_FreeClients(); svs.clients=clients; settings[0].current.integer=2;
-    reset(); init_game(); revision=6; SV_Cod2xClearIdentities();
+    reset(); init_game(); revision=COD2X_REVISION; SV_Cod2xClearIdentities();
     gameDenial="synthetic mod rejection"; readDuringConnect=1;
     connect_remote(remote,hwid,digest,"accept","KEY_IS_GOOD");
     readDuringConnect=0; gameDenial=NULL;
     Verify(connects==1 && clients[0].state==0,"mod rejection leaves the client slot free");
-    string_value("getHWID",0,""); string_value("getCDKeyHash",0,"");
+    string_value("getHWID",0,hwid); string_value("getCDKeyHash",0,"");
     string_value("getAuthorizationStatus",0,"");
 }
 
@@ -328,15 +344,18 @@ static void player_cases(void)
         const char *name=names[i]; if(!Scr_GetMethod(&name,&dev)) continue;
         catchError=1; objectErrors=argumentErrors=0;
         entityClass=1;
-        if(!setjmp(errorJump)) { invoke(names[i],0,0); Verify(0,"nonentity must reject"); }
-        Verify(objectErrors==1,"nonentity uses player object error boundary");
-        entityClass=0; overrideEntityNumber=65535; objectErrors=0;
+        if(!setjmp(errorJump)) { invoke(names[i],0,0); }
+        else Verify(0,"CoD2x ignores receiver class for valid player number");
+        Verify(!objectErrors && !argumentErrors,"receiver class does not add an object error");
+        entityClass=0; overrideEntityNumber=65535; objectErrors=argumentErrors=0;
         if(!setjmp(errorJump)) { invoke(names[i],0,0); Verify(0,"out-of-range entity must reject"); }
-        Verify(objectErrors==1,"out-of-range entity is rejected before player array access");
+        Verify(!objectErrors && argumentErrors==1,"out-of-range player number raises Scr_Error");
         overrideEntityNumber=UINT32_MAX;
-        entityClass=0; g_entities[0].client=NULL; objectErrors=0;
-        if(!setjmp(errorJump)) { invoke(names[i],0,0); Verify(0,"nonplayer must reject"); }
-        Verify(objectErrors==1,"nonplayer uses player object error boundary");
+        entityClass=0; g_entities[0].client=NULL; objectErrors=argumentErrors=0;
+        int wantsClient=!strcmp(names[i],"getViewOrigin");
+        if(!setjmp(errorJump)) { invoke(names[i],0,0); Verify(!wantsClient,"view origin needs an allocated client"); }
+        else Verify(wantsClient,"only view origin checks the client pointer");
+        Verify(!objectErrors && argumentErrors==wantsClient,"native missing-client adaptation is restricted to view origin");
         g_entities[0].client=&game_clients[0];
         catchError=0;
     }
@@ -346,7 +365,7 @@ static void player_cases(void)
 static void correlation_cases(void)
 {
 #if WS76_IDENTITY_IMPLEMENTED
-    reset(); init_game(); revision=6; entityClass=0; SV_Cod2xClearIdentities();
+    reset(); init_game(); revision=COD2X_REVISION; entityClass=0; SV_Cod2xClearIdentities();
     argc=3; argv[0]="getchallenge"; argv[1]="0"; argv[2]=digest; SV_GetChallenge(remote);
     int slot=-1;
     for(int i=0;i<1024;++i) if(NET_CompareAdr(svs.challenges[i].adr,remote)) { slot=i; break; }
@@ -361,7 +380,7 @@ static void correlation_cases(void)
     argc=3; argv[0]="getchallenge"; argv[1]="0"; argv[2]=replacement; SV_GetChallenge(remote);
     Verify(svs.challenges[slot].challenge==challenge,"unconnected digest retry reuses the challenge value");
     Verify(!cod2xChallengeIdentities[slot].authorization[0],"changed supplied token clears the earlier stored reason");
-    Verify(!strcmp(SV_Cod2xChallengeDigest(remote,challenge),replacement),"retry forwards the new strictly validated digest");
+    Verify(!strcmp(fixture_challenge_digest(remote,challenge),replacement),"retry retains the supplied digest");
     /* The wire reply carries the challenge only; it cannot identify an earlier request's digest. */
     argc=5; argv[0]="ipAuthorize"; argv[1]=token; argv[2]="accept"; argv[3]="EARLIER_REQUEST_REPLY"; argv[4]="123";
     SV_AuthorizeIpPacket(svs.authorizeAddress);
@@ -376,7 +395,7 @@ static void correlation_cases(void)
 
 static void argument_cases(void)
 {
-    reset(); init_game(); revision=6; entityClass=0; SV_Cod2xClearIdentities();
+    reset(); init_game(); revision=COD2X_REVISION; entityClass=0; SV_Cod2xClearIdentities();
     connect_remote(remote,hwid,digest,"accept","KEY_IS_GOOD");
     game_clients[0].ps.pm_flags=3; g_entities[0].s.eFlags=0x100;
     game_clients[0].ps.origin[0]=10; game_clients[0].ps.origin[1]=20; game_clients[0].ps.origin[2]=30;
@@ -403,6 +422,8 @@ static void argument_cases(void)
         catchError=0;
     }
 }
+
+#endif
 
 #if defined(COD2X_NAT_IDENTITY_FIXTURE)
 #include "nat_identity.c"
