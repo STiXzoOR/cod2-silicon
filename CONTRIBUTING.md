@@ -266,8 +266,8 @@ bash tools/ci/compare-x86.sh 410342a HEAD output/x86-reference
 
 Use a fresh output directory. The script fixes metadata/path differences and
 compares every game object and both binaries. Its result must be byte-identical.
-Keep the original Windows build path buildable too. Preprocessor checks against
-the pre-change commit supplement this gate:
+Keep the original Windows build path buildable too. Legacy preprocessor checks and the native stock compiler-isolation check
+against the pre-change commit supplement this gate:
 
 ```sh
 python3 tests/fixes13/legacy.py --base <pre-change-commit>
