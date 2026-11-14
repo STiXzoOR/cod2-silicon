@@ -175,7 +175,9 @@ trusted engine arguments after `--`.
 - **Report a Problem** opens a prefilled issue in your browser; the app sends
   nothing itself.
 - **Crash reports** are sent only if you turn a switch on in **Settings →
-  Privacy**. Your CD key is never part of one.
+  Privacy**. 0.3.0 has one, for CoD2x's own reports to the CoD2x project. It
+  is built without a report service of this project's own, so nothing is
+  sent here. Your CD key is never part of a report.
 
 ## Known limitations
 

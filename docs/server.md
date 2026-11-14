@@ -22,6 +22,12 @@ servers it started.
   Application Support folder: `main/server.cfg`, which the launcher writes on
   every start, the game's own logs, and `logs/console.log`. The game folder is
   only read.
+- **Who can join a CoD2x server.** This app's CoD2x server follows CoD2x's
+  current source, 1.4.7.1-test.1, which asks every player for that version or
+  newer. CoD2 Silicon 0.3.0 has it. The released CoD2x 1.4.6.8 for Windows and
+  Linux does not, so those players are turned away with "Update CoD2x" until
+  CoD2x publishes its next release. A server on the original 1.3 takes any 1.3
+  player. This applies to competitive zPAM servers too: zPAM 4 needs CoD2x.
 - "My Network" is `dedicated 1`: nothing is announced. "The Internet" is
   `dedicated 2`: the server lists itself on the public master servers. See
   [Network and configuration](#network-and-configuration) before choosing it.

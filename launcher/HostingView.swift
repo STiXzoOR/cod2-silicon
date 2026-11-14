@@ -222,12 +222,24 @@ private struct HostingForm: View {
                             FormRow("Name", detail: "What players see in the server list.") {
                                 TextField("Server name", text: server.name).textFieldStyle(.roundedBorder).frame(width: 200).accessibilityLabel("Server name")
                             }
-                            FormRow("Game version", detail: current.engine == .cod2x ? "A running CoD2x server asks CoD2x’s update service about new versions." : nil) {
-                                Picker("Game version", selection: server.engine) {
-                                    Text("CoD2x").tag(GameEngine.cod2x); Text("Original 1.3").tag(GameEngine.original)
+                            // Who can join depends on the version, and that takes a sentence: it goes under
+                            // the switch, across the row, as Rules' explanation does.
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack(spacing: 14) {
+                                    Text("Game version").font(.system(size: 14)).foregroundStyle(palette.text)
+                                    Spacer(minLength: 8)
+                                    Picker("Game version", selection: server.engine) {
+                                        Text("CoD2x").tag(GameEngine.cod2x); Text("Original 1.3").tag(GameEngine.original)
+                                    }
+                                    .pickerStyle(.segmented).labelsHidden().fixedSize()
                                 }
-                                .pickerStyle(.segmented).labelsHidden().fixedSize()
+                                Text(current.engine == .cod2x
+                                     ? "For CoD2 Silicon players for now: CoD2x \(CoD2xFiles.version) on Windows can’t join until CoD2x’s next release. A running CoD2x server asks CoD2x’s update service about new versions."
+                                     : "Anyone with the original 1.3 can join, on Mac or Windows.")
+                                    .font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
                             }
+                            .padding(.horizontal, FormMetrics.rowInset(.panel)).padding(.vertical, 10)
+                            .accessibilityElement(children: .contain)
                             FormRow("Who can join", detail: current.reach.detail) {
                                 Picker("Who can join", selection: server.reach) { ForEach(HostedServer.Reach.allCases, id: \.self) { Text($0.title).tag($0) } }
                                     .labelsHidden().fixedSize()

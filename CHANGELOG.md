@@ -116,7 +116,10 @@ built from your own game files.
   original 1.3: name, who can join, players, passwords, game type and maps,
   then Start Server. The page shows who is playing, the address to share, an
   invite link and the server's log, with Next Map, Kick and Join; a full server
-  lists the players that fit and opens the rest with All Players. Competitive
+  lists the players that fit and opens the rest with All Players. A CoD2x
+  server hosted here takes CoD2 Silicon players only for now: it follows
+  CoD2x's current source (1.4.7.1-test.1), and the released CoD2x 1.4.6.8
+  for Windows is turned away until CoD2x's next release. Competitive
   rules use zPAM, downloaded on request from the zPAM project's releases and
   checked against the checksum they publish; it is not bundled. Export for
   Another Machine writes `server.cfg` and start commands for Linux and Windows,
