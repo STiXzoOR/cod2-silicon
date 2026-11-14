@@ -274,8 +274,14 @@ static void check_controllers(void)
         BG_Player_DoControllers(&object, &es, bits, ci, 1000);
         /* Mac 0x1832e0 and 0x183390: torso minus waist for back_low;
            the pelvis takes the opposite subtraction. */
+#if defined(COD2_CODX) && COD2_CODX
+        /* Upstream replacement quantizes AngleSubtract to 360/65536 steps. */
+        assert(ci->angles[0][0] == 9.99755859375f);
+        assert(ci->angles[5][0] == -9.99755859375f);
+#else
         assert(ci->angles[0][0] == 10.0f);
         assert(ci->angles[5][0] == -10.0f);
+#endif
     }
 }
 
@@ -346,7 +352,8 @@ static void check_codx(void)
     bgs->time = 1001; revision = 3;
     int bits[4] = {0};
     BG_Player_DoControllers(&object, &es, bits, ci, 1);
-    assert(ci->angles[0][0] == 0.040000081062316895f);
+    /* Quantized base torso 49.998779296875 times .2, then transition fraction. */
+    assert(ci->angles[0][0] == 0.0399991050362587f);
 #endif
 }
 
