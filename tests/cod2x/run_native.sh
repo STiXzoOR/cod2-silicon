@@ -2,7 +2,14 @@
 set -eu
 cd "$(dirname "$0")/../.."
 test_work=$(mktemp -d "${TMPDIR:-/tmp}/cod2x-native.XXXXXX")
-trap '/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u "$test_work/URLProbe.app"; rm -rf "$test_work"' EXIT HUP INT TERM
+cleanup() {
+    if [ -d "$test_work/apps.noindex/URLProbe.app" ]; then
+        /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+            -u "$test_work/apps.noindex/URLProbe.app" || true
+    fi
+    /bin/rm -rf "$test_work"
+}
+trap cleanup EXIT HUP INT TERM
 compile() {
     clang -std=c11 -Wall -Wextra -Werror -DCOD2_X64=1 -DCOD2_CODX=1 "$@"
 }
@@ -15,7 +22,7 @@ compile -Wno-unused-function -Wno-unused-but-set-variable -Wno-typedef-redefinit
     -DSDL_PollEvent=Test_PollEvent -DSDL_GetWindowFlags=Test_GetWindowFlags \
     -DSDL_GetRelativeMouseMode=Test_GetRelativeMouseMode -DSDL_SetRelativeMouseMode=Test_SetRelativeMouseMode \
     -DSDL_SetWindowGrab=Test_SetWindowGrab -DSDL_IsTextInputActive=Test_IsTextInputActive \
-    -DSDL_StartTextInput=Test_StartTextInput tests/cod2x/test_mouse_input.c \
+    -DSDL_StartTextInput=Test_StartTextInput -Wl,-dead_strip tests/cod2x/test_mouse_input.c \
     src/unix/linux_input.c src/platform/cod2x_native_mouse.c -o "$test_work/input"
 "$test_work/input"
 compile -fobjc-arc -Isrc tests/cod2x/test_url_native.m src/platform/cod2x_native_macos.m \
@@ -28,13 +35,14 @@ while [ "$index" -lt 16 ]; do
     touch "$test_work/game/main/$(printf 'iw_%02d.iwd' "$index")"
     index=$((index + 1))
 done
-python3 tools/cod2x/make_macos_app.py "$test_work/url_native" "$test_work/URLProbe.app" --engine-only --game-dir "$test_work/game"
-plutil -lint "$test_work/URLProbe.app/Contents/Info.plist"
+mkdir -p "$test_work/apps.noindex"
+python3 tools/cod2x/make_macos_app.py "$test_work/url_native" "$test_work/apps.noindex/URLProbe.app" --engine-only --game-dir "$test_work/game"
+plutil -lint "$test_work/apps.noindex/URLProbe.app/Contents/Info.plist"
 expected_game=$(cd "$test_work/game" && pwd -P)
 mkdir -p "$test_work/home"
-CFFIXED_USER_HOME="$test_work/home" COD2_SETUP_NONINTERACTIVE=1 COD2_SETUP_CD_KEY=000000000000000086D3 \
-    WS10_EXPECT_GAME="$expected_game" "$test_work/URLProbe.app/Contents/MacOS/cod2_macos"
-codesign --verify --deep --strict "$test_work/URLProbe.app"
+HOME="$test_work/home" CFFIXED_USER_HOME="$test_work/home" COD2_SETUP_NONINTERACTIVE=1 COD2_SETUP_CD_KEY=000000000000000086D3 \
+    WS10_EXPECT_GAME="$expected_game" "$test_work/apps.noindex/URLProbe.app/Contents/MacOS/cod2_macos"
+codesign --verify --deep --strict "$test_work/apps.noindex/URLProbe.app"
 compile -Wno-unused-function -Wno-typedef-redefinition -Wno-duplicate-decl-specifier -Isrc -Isrc/headers \
     tests/cod2x/test_native_freeze.c src/platform/cod2x_native.c src/PC/qcommon/crash_handler.c \
     src/PC/qcommon/cod2x_layer_start.c src/PC/qcommon/cod2x_protocol.c src/PC/qcommon/cod2x_report.c \

@@ -15,6 +15,14 @@ dvar_t *in_mouse = &mouse, *in_rawmouse = &raw;
 static int variableCount, relativeMode, rawMode, rawActive, focused = 1;
 static int rawX, rawY, resultX, resultY, pendingMotion;
 static uint64_t now, rawEvents;
+const dvar_t *loc_language;
+int Sys_Milliseconds(void) { return (int)(now / 1000000) + 1000; }
+char *MacText_EncodeUTF8(const char *text, int language)
+{
+    /* Text conversion is covered by the platform/input fixtures. */
+    (void)text; (void)language;
+    abort();
+}
 #if defined(COD2_X64) && COD2_X64
 int MacDisplay_IsFullscreen(void) { return 0; }
 int MacDisplay_WindowVisible(void) { return 1; }
