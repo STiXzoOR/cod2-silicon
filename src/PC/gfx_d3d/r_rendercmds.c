@@ -441,7 +441,11 @@ void R_AddCmdCod2xXray(void)
 }
 int R_AddCmdCod2xHead(int operation, const float *point)
 {
-    if (operation && (!s_cmdList || (int)sizeof(s_cmdList->cmds) - s_cmdList->usedTotal + s_cmdList->usedCritical - 0x2000 < 0x1000)) return 0;
+    /* Reserve the matching end command and label in both allocator budgets.
+     * Native pointer padding enlarges storage, not the retail logical limit. */
+    if (operation && (!s_cmdList ||
+        196608 - s_cmdList->logicalUsedTotal + s_cmdList->logicalUsedCritical - 8192 < 4096 ||
+        (int)sizeof(s_cmdList->cmds) - s_cmdList->usedTotal + s_cmdList->usedCritical - 8192 < 4096)) return 0;
     GfxCmdCod2xHead *cmd = R_AllocCmd(sizeof(*cmd), 0, GFX_CMD_COD2X_HEAD);
     if (!cmd) return 0;
     cmd->operation = operation;

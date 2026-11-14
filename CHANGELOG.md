@@ -14,6 +14,9 @@ The original shaders are built from your own game files.
 
 ### Fixed
 
+- CoD2x spectator labels no longer leave later HUD drawing clipped when a
+  crowded frame runs out of render commands.
+
 - CoD2x now honors competitive settings requested by stock 1.3 servers, including
   frame-rate and network limits, shadows, and the restriction on `wait`. Turning
   the rules off restores the same setting limits as upstream.

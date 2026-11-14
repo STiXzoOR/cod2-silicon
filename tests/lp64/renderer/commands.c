@@ -481,6 +481,31 @@ int main(void)
     }
 #endif
     const float rgba[4] = {1,1,1,1};
+#if COD2X_XRAY_RENDER
+    /* Real pictures reproduce the merged physical/logical budget divergence.
+     * A begin must reserve enough room for its text and stencil-clear pair. */
+    const int headPictureCounts[] = {4189, 4190, 4280};
+    for (unsigned caseIndex = 0; caseIndex < sizeof(headPictureCounts) / sizeof(headPictureCounts[0]); ++caseIndex) {
+        int pictures = headPictureCounts[caseIndex];
+        R_ResetCmdArray(&list);
+        for (int n = 0; n < pictures; ++n)
+            R_AddCmdDrawStretchPic(0,0,1,1,0,0,1,1,rgba,(void *)1);
+        Counts beforeHead = Count(&list);
+        const float point[3] = {0,0,1};
+        int begin = R_AddCmdCod2xHead(1, point);
+        assert(begin == (pictures == 4189));
+        if (begin) {
+            EmitText("0123456789abcdef", 0);
+            assert(list.lastCmd && list.lastCmd->id == 21);
+            assert(R_AddCmdCod2xHead(0, NULL));
+            assert(list.lastCmd->id == GFX_CMD_COD2X_HEAD);
+            assert(!((GfxCmdCod2xHead *)list.lastCmd)->operation);
+        } else {
+            CheckCounts(&list, beforeHead);
+        }
+    }
+    puts("CoD2x head mask: logical reserve preserves begin/text/end pairing");
+#endif
     R_ResetCmdArray(&list);
     for (int n = 0; n < 4282; ++n) {
         R_AddCmdDrawStretchPic(0,0,1,1,0,0,1,1,rgba,(void *)1);
