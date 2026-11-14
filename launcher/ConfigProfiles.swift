@@ -3,9 +3,11 @@ import Darwin
 
 enum ConfigProfileError: Error, LocalizedError, Equatable, Sendable {
     case invalidHome, invalidIdentifier, unsafePath, alreadyExists, missingProfile
-    case conflict, gameRunning, invalidMetadata, invalidHistory, invalidMigration, cannotLock, cannotPublish
+    case conflict, gameRunning, invalidMetadata, invalidHistory, invalidMigration, cannotLock, cannotPublish, inUse, cannotTrash
     var errorDescription: String? {
         switch self {
+        case .inUse: return "This loadout is the one your next game uses. Choose another loadout for your next game first."
+        case .cannotTrash: return "The loadout couldn’t be moved to the Trash. Nothing was removed."
         case .invalidHome: return "Choose a writable game home folder."
         case .invalidIdentifier: return "Loadout identifiers need 1–41 ASCII letters, numbers, dots, underscores or hyphens, starting with a letter or number."
         case .unsafePath: return "A loadout path points outside the game home or through a symbolic link."
@@ -428,7 +430,84 @@ final class ConfigProfileStore: Sendable {
         let after: ConfigProfileVersion
         let entry: ConfigHistoryEntry
     }
+    // MARK: Moving a loadout to the Trash
+
+    /// The advanced-binds companion travels inside a trashed loadout's folder under this name, so
+    /// the one folder holds everything and putting it back from the Trash restores it whole.
+    static let trashedChainName = ".studio-advanced-binds.cfg"
+
+    /// Moves a loadout that isn't in use to the Trash with its settings, binds, notes and History.
+    /// `trash` moves the folder (the system Trash in the app; a scratch folder in tests) and returns
+    /// where it went. The loadout the next game uses is never moved.
+    @discardableResult
+    func moveToTrash(id: String, expected: ConfigProfileVersion, runningGame: Bool = false, trash: (URL) throws -> URL?) throws -> URL? {
+        try guardWritable(runningGame)
+        return try withLock {
+            try guardWritable(runningGame)
+            let directory = try profileURL(id)
+            let read = try readLocked(id: id)
+            guard read.version == expected else { throw ConfigProfileError.conflict }
+            guard try selection().profileID?.caseInsensitiveCompare(id) != .orderedSame else { throw ConfigProfileError.inUse }
+            let chainPath = try chainURL(id: id), stash = directory.appendingPathComponent(Self.trashedChainName)
+            let chain = try optionalData(chainPath)
+            if let chain {
+                // Stash first, then remove: an interruption leaves the folder able to restore it.
+                try write(chain, to: stash)
+                try guardWritable(false)
+                try FileManager.default.removeItem(at: chainPath)
+                try syncDirectory(chainPath.deletingLastPathComponent())
+            }
+            try guardWritable(false)
+            do {
+                let moved = try trash(directory)
+                try syncDirectory(playersURL)
+                return moved
+            } catch {
+                // Nothing moved: put the companion back where the game reads it.
+                if let chain, (try? optionalData(chainPath)) == nil {
+                    try? write(chain, to: chainPath)
+                    try? FileManager.default.removeItem(at: stash)
+                }
+                throw ConfigProfileError.cannotTrash
+            }
+        }
+    }
+
+    /// Undo of a delete: moves a trashed loadout folder back under its own name, if nothing took it.
+    func restoreFromTrash(_ url: URL, id: String) throws {
+        try guardWritable(false)
+        try withLock {
+            try guardWritable(false)
+            let target = try profileURL(id)
+            guard FileManager.default.fileExists(atPath: url.path) else { throw ConfigProfileError.missingProfile }
+            guard try !identifiers().contains(where: { $0.caseInsensitiveCompare(id) == .orderedSame }) else { throw ConfigProfileError.alreadyExists }
+            guard renamex_np(url.path, target.path, UInt32(RENAME_EXCL)) == 0 else {
+                // Another volume's Trash: copy, then remove the trashed copy.
+                guard errno == EXDEV else { throw ConfigProfileError.cannotPublish }
+                try FileManager.default.copyItem(at: url, to: target)
+                try? FileManager.default.removeItem(at: url)
+                try syncDirectory(playersURL)
+                try restoreTrashedChain(directory: target)
+                return
+            }
+            try syncDirectory(playersURL)
+            try restoreTrashedChain(directory: target)
+        }
+    }
+
+    /// A folder put back from the Trash carries its advanced binds inside; return them to `main/`.
+    private func restoreTrashedChain(directory: URL) throws {
+        let stash = directory.appendingPathComponent(Self.trashedChainName)
+        guard let saved = try optionalData(stash), !gameIsRunning() else { return }
+        let chainPath = try chainURL(id: directory.lastPathComponent)
+        if try optionalData(chainPath) == nil { try write(saved, to: chainPath) }
+        try guardWritable(false)
+        try FileManager.default.removeItem(at: stash)
+        try syncDirectory(directory)
+    }
+
     private func recover(directory: URL) throws {
+        try restoreTrashedChain(directory: directory)
         let journal = directory.appendingPathComponent(".studio-transaction.json")
         guard let data = try optionalData(journal) else { return }
         try guardWritable(false)

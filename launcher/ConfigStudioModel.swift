@@ -530,7 +530,14 @@ struct ConfigStudioFailure: Identifiable {
     @Published private(set) var restoredSnapshotID: String?
     @Published var failure: ConfigStudioFailure?
     /// A completed action worth a calm line (export, for example); errors use `failure`.
-    @Published var notice: String?
+    @Published var notice: String? { didSet { if notice != oldValue { noticeAction = nil } } }
+    /// The calm line's one action, when it can be undone there (a deleted loadout's Undo).
+    @Published var noticeAction: (title: String, run: @MainActor () -> Void)?
+    /// Jump to Any Setting is showing (the toolbar button, ⌘K or the menu's Jump on this page).
+    @Published var jumpPresented = false
+    /// Find (⌘F) on this page: the visible tab's search field takes the focus when this changes.
+    @Published private(set) var findRequest = 0
+    func requestFind() { findRequest += 1 }
     @Published var textMode = false
     @Published private(set) var text = ""
     @Published private(set) var textIssues: [ConfigTextIssue] = []
@@ -1064,6 +1071,63 @@ struct ConfigStudioFailure: Identifiable {
             announce("Created \(display).")
             return true
         } catch { fail("Couldn’t create \(display)", error); return false }
+    }
+
+    /// Loadout › Duplicate: a copy of the loadout on screen, named “Copy of …”, shown at once.
+    @discardableResult
+    func duplicateLoadout() -> Bool {
+        guard let current else { return false }
+        let base = "Copy of \(current.profile.displayName)"
+        let names = Set(profiles.map { $0.displayName.lowercased() })
+        var name = base, suffix = 2
+        while names.contains(name.lowercased()) { name = "\(base) \(suffix)"; suffix += 1 }
+        return createLoadout(named: name, copyingCurrent: true)
+    }
+
+    // MARK: Deleting
+
+    /// Why `id` can't be deleted now, or nil when it can.
+    func deleteBlock(_ id: String?) -> String? {
+        guard session != nil, let id, let profile = profiles.first(where: { $0.id.caseInsensitiveCompare(id) == .orderedSame }) else { return "There’s no loadout to delete." }
+        if isReadOnly { return "Configs are read-only while Call of Duty 2 is running." }
+        if profile.isActive { return "\(profile.displayName) is in use for your next game. Choose another loadout for your next game first." }
+        return nil
+    }
+    /// Moves a loadout that isn't in use to the Trash, with its settings, binds and History.
+    /// Undo (the banner's button or ⌘Z) puts it back; so does Finder's Put Back.
+    func moveToTrash(_ id: String, undo: UndoManager? = nil) {
+        guard let session, deleteBlock(id) == nil else { return }
+        let name = profiles.first { $0.id.caseInsensitiveCompare(id) == .orderedSame }?.displayName ?? id
+        do {
+            let moved = try session.moveToTrash(id)
+            if compareID?.caseInsensitiveCompare(id) == .orderedSame { compareID = nil }
+            snapshotID = nil; restoredSnapshotID = nil; highlighted = nil; failure = nil
+            if textMode { loadText() }
+            notice = "Moved “\(name)” to the Trash, with its settings, binds and history."
+            if let moved {
+                noticeAction = ("Undo", { [weak self] in self?.putBack(moved, id: id, name: name) })
+                if let undo {
+                    undo.registerUndo(withTarget: self) { model in model.putBack(moved, id: id, name: name) }
+                    undo.setActionName("Delete Loadout")
+                }
+            }
+            announce("Moved \(name) to the Trash.")
+        } catch { fail("Couldn’t delete \(name)", error) }
+    }
+    private func putBack(_ url: URL, id: String, name: String) {
+        guard let session else { return }
+        // Already back (the banner's Undo, then ⌘Z): show it rather than fail.
+        if profiles.contains(where: { $0.id.caseInsensitiveCompare(id) == .orderedSame }) { select(id); return }
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            failure = ConfigStudioFailure(title: "Couldn’t put \(name) back", message: "It’s no longer in the Trash.", retry: nil)
+            return
+        }
+        do {
+            try session.restoreFromTrash(url, id: id)
+            tab = .settings; snapshotID = nil
+            notice = "Put “\(name)” back from the Trash."
+            announce("Put \(name) back.")
+        } catch { fail("Couldn’t put \(name) back", error) }
     }
 
     // MARK: Restore

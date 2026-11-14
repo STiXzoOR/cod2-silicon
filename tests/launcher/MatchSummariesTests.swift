@@ -3,7 +3,9 @@ import Darwin
 
 @main struct MatchSummariesTests {
     static func main() throws {
-        let scratch = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
+        // MARK: - ship-play: repeated full checks must not inherit rejected-path fixtures.
+        let scratch = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true).appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: scratch) }
         try FileManager.default.createDirectory(at: scratch.appendingPathComponent("main/stats"), withIntermediateDirectories: true)
         var settings = GameSettings()
         precondition(settings.matchSummariesEnabled)
@@ -36,6 +38,7 @@ import Darwin
         try oversized.write(to: path, atomically: true, encoding: .utf8)
         let tail = try MatchSummaries.read(homePath: scratch)
         precondition(tail.count == 1, "Reader considers a bounded complete tail of an oversized file")
+        try freezeDiagnostics(path: path, home: scratch)
         try numericContract(row: row, path: path, home: scratch)
         try accessFailure(row: row, path: path, home: scratch)
         try FileManager.default.removeItem(at: path)
@@ -163,5 +166,31 @@ import Darwin
             FileHandle.standardError.write(Data((failures.map { "FAIL: \($0)" }.joined(separator: "\n") + "\n").utf8))
             throw NSError(domain: "MatchSummariesTests", code: failures.count, userInfo: [NSLocalizedDescriptionKey: "Malformed numeric records were accepted"])
         }
+    }
+}
+
+// MARK: - ship-play
+extension MatchSummariesTests {
+    static func freezeDiagnostics(path: URL, home: URL) throws {
+        let fixtures = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("fixtures")
+        for name in ["match-freezes", "match-freeze-legacy"] {
+            let bytes = try Data(contentsOf: fixtures.appendingPathComponent(name + ".json"))
+            try bytes.write(to: path)
+            let read = try MatchSummaries.read(homePath: home)
+            precondition(read.count == 1)
+            let match = read[0]
+            if name == "match-freezes" {
+                precondition(match.hitchCount == 3 && match.hitches?.count == 3 && match.rendererActivity?["draw"] == [151200, 14200.5])
+                precondition(match.freezeSummary == "3 freezes over 0.1 s, the longest 0.37 s at 0:12.")
+                precondition(match.freezeTimes?.contains("3:02 (0.12 s)") == true)
+                var omitted = match; omitted.hitchCount = 4; omitted.hitchesOmitted = 1
+                precondition(omitted.freezeTimes?.contains("1 more not listed here. Check the game log") == true)
+            } else {
+                precondition(match.hitchCount == nil && match.hitches == nil)
+                precondition(match.freezeSummary == "A frame froze for 0.37 s. This older summary didn’t record when it happened.")
+                precondition(match.freezeTimes == nil)
+            }
+        }
+        print("PASS: new and older freeze fixtures decode; counts, maximum, match times and omitted events stay honest")
     }
 }

@@ -28,6 +28,12 @@ struct MatchSummary: Codable, Equatable, Sendable {
     let packetLossSource: String?
     let snapshotsReceived: UInt64
 
+    // MARK: - ship-play: additive schema-1 freeze diagnostics (older engines omit them)
+    var hitchCount: UInt64? = nil
+    var hitchesOmitted: UInt64? = nil
+    var hitches: [MatchHitch]? = nil
+    var rendererActivity: [String: [Double]]? = nil
+
     /// Millisecond samples up to this bound are exact; longer quantiles use the match maximum.
     var frameQuantilesAreExact: Bool {
         guard let limit = frameTimeHistogramLimitMS, let p99 = frameTimeP99MS else { return false }
@@ -45,6 +51,14 @@ struct MatchSummary: Codable, Equatable, Sendable {
               durationSeconds <= Double(UInt64.max) / 1000,
               (0...1000).contains(capFPS), capSampleFrames <= frameCount,
               pingSamples <= snapshotsReceived else { return false }
+        if let hitches {
+            guard hitches.count <= 8, hitches.allSatisfy({ $0.msec.isFinite && $0.msec > 100 && $0.msec <= maximumSampleMS && $0.frame <= frameCount && Self.validActivity($0.renderer) }) else { return false }
+            if let hitchCount {
+                guard hitchCount >= UInt64(hitches.count), hitchCount <= frameCount,
+                      hitchesOmitted == nil || hitchesOmitted == hitchCount - UInt64(hitches.count) else { return false }
+            }
+        }
+        guard Self.validActivity(rendererActivity) else { return false }
         if let limit = frameTimeHistogramLimitMS {
             guard limit > 0, limit <= maximumSampleMS else { return false }
         }
@@ -132,5 +146,40 @@ enum MatchSummaries {
         case ENOENT, ENOTDIR, ELOOP: return []
         default: throw NSError(domain: NSPOSIXErrorDomain, code: Int(code))
         }
+    }
+}
+
+/// One match, for Library › Matches, Home's Last match and Check-up (`model.openCheckup(match:)`):
+/// when it ended, where, on which map. Stable across reads of the same file.
+extension MatchSummary: Identifiable {
+    var id: String { "\(endedAt) \(serverAddress) \(map)" }
+}
+
+// MARK: - ship-play
+struct MatchHitch: Codable, Equatable, Sendable {
+    let atMS: UInt64
+    let frame: UInt64
+    let msec: Double
+    let renderer: [String: [Double]]?
+    var time: String { "\(atMS / 60_000):" + String(format: "%02llu", (atMS / 1000) % 60) }
+}
+
+extension MatchSummary {
+    fileprivate static func validActivity(_ values: [String: [Double]]?) -> Bool {
+        values?.values.allSatisfy { $0.count == 2 && $0.allSatisfy { $0.isFinite && $0 >= 0 } } ?? true
+    }
+    static func freezeDuration(_ milliseconds: Double) -> String { String(format: "%.2f s", locale: Locale(identifier: "en_US_POSIX"), milliseconds / 1000) }
+    var freezeSummary: String? {
+        guard let maximum = frameTimeMaxMS, maximum > 100 else { return nil }
+        let duration = Self.freezeDuration(maximum)
+        guard let count = hitchCount, count > 0 else { return "A frame froze for \(duration). This older summary didn’t record when it happened." }
+        let when = hitches?.first(where: { $0.msec == maximum }).map { " at \($0.time)" } ?? ""
+        return "\(count) \(count == 1 ? "freeze" : "freezes") over 0.1 s, the longest \(duration)\(when)."
+    }
+    var freezeTimes: String? {
+        guard let hitches, !hitches.isEmpty else { return nil }
+        let times = hitches.map { "\($0.time) (\(Self.freezeDuration($0.msec)))" }.joined(separator: ", ")
+        let omitted = (hitchesOmitted ?? 0) > 0 ? " \(hitchesOmitted!) more not listed here. Check the game log for details." : ""
+        return "Time into the match: " + times + "." + omitted
     }
 }

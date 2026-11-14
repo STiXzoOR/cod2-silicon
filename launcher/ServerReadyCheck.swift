@@ -1,6 +1,6 @@
 import Foundation
 
-// The Servers ready check in plain words, and the gestures above Deploy. Evaluation,
+// The Servers ready check in plain words, and the gestures above Launch. Evaluation,
 // staging and launch stay in A3 (ConfigReadyCheck, ConfigServerConnection, LauncherModel);
 // this never writes a loadout. A match is scoped to the cited rules; unknown is never a pass.
 
@@ -92,7 +92,7 @@ struct ReadyCheckPresentation {
         if !report.rulesetIDs.isEmpty { exact.append("Rules: " + zip(titles, report.rulesetIDs).map { "\($0) (\($1))" }.joined(separator: ", ")) }
         for detail in report.details {
             var line = "\(detail.setting) \"\(detail.value ?? "not set")\" · \(detail.status.rawValue)\(detail.serverOwned ? " · set by the server" : ""): \(detail.reason)"
-            if let source = detail.sources.first { line += " Source: \(source.sourceURL) (\(source.sourceDate))." }
+            if let source = detail.sources.first { line += " Source: \(source.sourceURL), \(ConfigCheckupModel.sourceDate(source.sourceDate))." }
             exact.append(line)
         }
         exact += report.limitations
@@ -126,7 +126,7 @@ struct ReadyCheckPresentation {
     }
 }
 
-/// The card's store: the current report for one server and the three gestures above Deploy.
+/// The card's store: the current report for one server and the three gestures above Launch.
 @MainActor final class ServerReadyCheckModel: ObservableObject {
     @Published private(set) var report: ConfigReadyReport?
     @Published private(set) var evaluated = false

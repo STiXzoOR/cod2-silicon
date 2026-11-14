@@ -1,17 +1,19 @@
 import SwiftUI
 import AppKit
 
-/// The ready check above Deploy in the server inspector: does the loadout this game would use
-/// suit this server, which loadout to use for this connection, and a fix that lasts for this
-/// connection only. Unknown rules get general advice, never an all-clear.
+/// The ready check in the details panel (Servers and ServersReady boards): a quiet line when the
+/// loadout suits the server; a card that says what must change, with Fix for This Server Only and
+/// another loadout that already fits; general advice when the server's rules are unknown (never an
+/// all-clear). A fix or another loadout lasts for this connection only.
 struct ReadyCheckCard: View {
     @ObservedObject var model: LauncherModel
     @ObservedObject var studio: ConfigStudioModel
     @ObservedObject var connection: ConfigServerConnection
+    @ObservedObject var check: ServerReadyCheckModel
     var server: GameServer
-    @StateObject private var check = ServerReadyCheckModel()
     @State private var showDetails = false
     @State private var confirmingFix = false
+    @State private var fitting: ConfigProfile?
     @Environment(\.palette) private var palette
     private let radius: CGFloat = 16
 
@@ -22,6 +24,7 @@ struct ReadyCheckCard: View {
         var active: String?
         var observed: Date?
         var catalog: Bool
+        var profiles: [String]
     }
 
     var body: some View {
@@ -36,13 +39,14 @@ struct ReadyCheckCard: View {
                 fixedBanner(overrides, loadout: loadout, address: address)
             } else {
                 if let chosen { usingBanner(name(chosen), address: address) }
-                if check.evaluated { evaluation(presentation, address: address) }
+                if check.evaluated && check.address == address { evaluation(presentation, loadout: loadout, chosen: chosen, address: address) }
             }
-            loadoutPicker(chosen: chosen, address: address)
         }
         .task(id: Key(address: address, chosen: chosen, overrides: overrides, active: studio.activeProfile?.id,
-                      observed: server.observedAt, catalog: studio.catalog != nil)) {
+                      observed: server.observedAt, catalog: studio.catalog != nil, profiles: studio.profiles.map(\.id))) {
             check.evaluate(model, address: address)
+            let current = chosen ?? studio.activeProfile?.id
+            fitting = check.presentation(model, loadout: loadout).kind == .needsChange ? model.fittingLoadout(for: address, except: current) : nil
         }
         .onAppear { studio.loadCatalog() }
         .confirmationDialog("Fix for this server only?", isPresented: $confirmingFix) {
@@ -55,11 +59,11 @@ struct ReadyCheckCard: View {
         .accessibilityLabel("Ready check")
     }
 
-    /// “Deploy with Scrim” when this connection uses another loadout.
-    @MainActor static func deployTitle(_ model: LauncherModel, _ server: GameServer) -> String {
+    /// “Launch with Scrim” when this connection uses another loadout.
+    @MainActor static func launchTitle(_ model: LauncherModel, _ server: GameServer) -> String {
         guard owns(model.serverConnection, server.address), let id = model.serverConnection.profileID,
-              let profile = model.studio.profiles.first(where: { $0.id == id }) else { return "Deploy" }
-        return "Deploy with \(profile.displayName)"
+              let profile = model.studio.profiles.first(where: { $0.id == id }) else { return "Launch" }
+        return "Launch with \(profile.displayName)"
     }
     @MainActor private static func owns(_ connection: ConfigServerConnection, _ address: String) -> Bool {
         guard let mine = connection.address else { return false }
@@ -73,86 +77,88 @@ struct ReadyCheckCard: View {
 
     // MARK: Evaluation
 
-    @ViewBuilder private func evaluation(_ p: ReadyCheckPresentation, address: String) -> some View {
-        if p.kind == .matches {
+    @ViewBuilder private func evaluation(_ p: ReadyCheckPresentation, loadout: String, chosen: String?, address: String) -> some View {
+        switch p.kind {
+        case .matches, .serverSets:
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 8) {
-                    StudioStatusLabel(title: p.title, tone: .positive)
+                    StudioStatusLabel(title: "Your “\(loadout)” loadout is ready for this server", tone: .positive)
                     Spacer(minLength: 4)
                     detailsButton
                 }
+                if p.kind == .serverSets {
+                    Text("This server sets some of your settings while you play here. Your loadout doesn’t change.")
+                        .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                }
                 if showDetails { detailsList(p) }
             }
-            .padding(.horizontal, 8)
-        } else {
+            .padding(.horizontal, 6)
+        case .needsChange:
             VStack(alignment: .leading, spacing: 8) {
-                Label { Text(p.title).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.heading) }
-                    icon: { Image(systemName: p.tone.symbol).foregroundStyle(p.tone.color(in: palette)) }
+                Label { Text(p.title).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.caution) }
+                    icon: { Image(systemName: "exclamationmark.triangle").foregroundStyle(palette.caution) }
                     .accessibilityAddTraits(.isHeader)
-                if let message = p.message {
-                    Text(message).font(StudioTypography.help).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.text)
-                }
-                ForEach(p.lines) { line in
-                    HStack(alignment: .top, spacing: 8) {
-                        Image(systemName: line.tone.symbol).font(.system(size: 11)).foregroundStyle(line.tone.color(in: palette)).padding(.top, 1)
-                            .accessibilityHidden(true)
-                        Text(line.text).font(StudioTypography.help)
-                            .foregroundStyle(line.tone == .caution ? palette.text : (palette.dark ? Palette.hex(0xcfc6b1) : palette.secondary))
-                    }
-                    .accessibilityElement(children: .combine)
+                ForEach(p.lines.filter { $0.tone == .caution }) { line in
+                    Text(line.text).font(.system(size: 12)).foregroundStyle(palette.text).lineSpacing(1.5)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 if showDetails { detailsList(p) }
                 HStack(spacing: 6) {
                     if p.canFix {
-                        Button("Fix for This Server Only") { confirmingFix = true }.glassAction().controlSize(.large).disabled(locked)
-                            .help(locked ? "Quit the game first" : "Use these values while you play here only. Your loadout doesn’t change.")
+                        Button("Fix") { confirmingFix = true }.glassAction().actionControlSize().disabled(locked)
+                            .accessibilityLabel("Fix for This Server Only")
+                            .help(locked ? "Quit the game first" : "Use the server’s values while you play here only. Your loadout doesn’t change.")
                     }
-                    if p.kind == .unknown, !model.snapshot {
-                        Button(check.checking ? "Checking…" : "Check Again") { Task { await check.checkAgain(model, address: address) } }
-                            .glassAction().controlSize(.large).disabled(check.checking)
-                            .help("Ask this server for its current rules")
+                    if let fitting {
+                        Button("Use “\(fitting.displayName)”") { check.useLoadout(fitting.id, model: model, address: address) }.quietAction().disabled(locked)
+                            .help("Your “\(fitting.displayName)” loadout already suits this server. Use it for this game only.")
                     }
+                    Spacer(minLength: 0)
                     if !p.exact.isEmpty { detailsButton }
                 }
-                .padding(.top, 2)
             }
-            .fixedSize(horizontal: false, vertical: true)
             .padding(.vertical, 12).padding(.horizontal, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(fill(p.kind), in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).stroke(edge(p.kind), lineWidth: 1))
+            .background(palette.selection, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(palette.selectionStroke, lineWidth: 1))
+        case .unknown, .unavailable:
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 8) {
+                    StudioStatusLabel(title: p.title, tone: .unknown)
+                    Spacer(minLength: 4)
+                    if p.kind == .unknown, !model.snapshot {
+                        Button(check.checking ? "Checking…" : "Check Again") { Task { await check.checkAgain(model, address: address) } }
+                            .quietAction().disabled(check.checking)
+                            .help("Ask this server for its current rules")
+                    }
+                }
+                if let message = p.message {
+                    Text(message).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(.horizontal, 6)
         }
     }
 
     private var detailsButton: some View {
         Button(showDetails ? "Hide Details" : "Details") { showDetails.toggle() }
-            .buttonStyle(.plain).font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.link)
+            .quietAction().font(.system(size: 12, weight: .semibold))
             .accessibilityHint("Shows the rules that were checked and what isn’t checked")
     }
 
     private func detailsList(_ p: ReadyCheckPresentation) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            if p.kind == .matches, let message = p.message {
+            if let message = p.message {
                 Text(message).font(StudioTypography.help).foregroundStyle(palette.secondary)
+            }
+            ForEach(p.lines.filter { $0.tone != .caution }) { line in
+                Text(line.text).font(StudioTypography.help).foregroundStyle(palette.secondary)
             }
             ForEach(Array(p.exact.enumerated()), id: \.offset) { _, line in
                 Text(line).font(.typewriter(11)).foregroundStyle(palette.address).textSelection(.enabled)
             }
         }
         .fixedSize(horizontal: false, vertical: true)
-    }
-
-    private func fill(_ kind: ReadyCheckPresentation.Kind) -> Color {
-        switch kind {
-        case .needsChange: palette.caution.opacity(0.07)
-        default: palette.dark ? Palette.hex(0x11140f) : palette.crate
-        }
-    }
-    private func edge(_ kind: ReadyCheckPresentation.Kind) -> Color {
-        switch kind {
-        case .needsChange: palette.caution.opacity(0.42)
-        default: palette.dark ? Color.white.opacity(0.09) : palette.wellStroke
-        }
     }
 
     // MARK: Choices for this connection
@@ -162,7 +168,7 @@ struct ReadyCheckCard: View {
             .padding(.vertical, 12).padding(.horizontal, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(palette.positive.opacity(0.07), in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).stroke(palette.positive.opacity(0.38), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(palette.positive.opacity(0.38), lineWidth: 1))
     }
 
     private func fixedBanner(_ overrides: [String: String], loadout: String, address: String) -> some View {
@@ -183,7 +189,7 @@ struct ReadyCheckCard: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityElement(children: .combine)
                 Spacer(minLength: 4)
-                Button("Undo") { check.undo(model, address: address) }.glassAction().controlSize(.large)
+                Button("Undo") { check.undo(model, address: address) }.glassAction().actionControlSize()
                     .accessibilityLabel("Undo the fix for this server")
             }
         }
@@ -196,28 +202,9 @@ struct ReadyCheckCard: View {
                 Text("Using your “\(chosen)” loadout for this game. \(studio.activeProfile?.displayName ?? "Your active loadout") stays as it is.")
                     .font(StudioTypography.help).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 4)
-                Button("Undo") { check.useLoadout(nil, model: model, address: address) }.glassAction().controlSize(.large)
+                Button("Undo") { check.useLoadout(nil, model: model, address: address) }.glassAction().actionControlSize()
                     .accessibilityLabel("Go back to your active loadout for this game")
             }
-        }
-    }
-
-    @ViewBuilder private func loadoutPicker(chosen: String?, address: String) -> some View {
-        if studio.profiles.count > 1, let active = studio.activeProfile?.id {
-            HStack(spacing: 8) {
-                Text("Loadout for this game").font(StudioTypography.help).foregroundStyle(palette.secondary)
-                Spacer(minLength: 4)
-                Picker("Loadout for this game", selection: Binding(get: { chosen ?? active }, set: { id in
-                    check.useLoadout(id == active ? nil : id, model: model, address: address)
-                })) {
-                    ForEach(studio.profiles) { profile in
-                        Text(profile.isActive ? "\(profile.displayName) (in use)" : profile.displayName).tag(profile.id)
-                    }
-                }
-                .labelsHidden().fixedSize().disabled(locked)
-                .help(locked ? "Quit the game first" : "Use another of your loadouts for this game only. It doesn’t change which loadout is in use.")
-            }
-            .padding(.horizontal, 8)
         }
     }
 }

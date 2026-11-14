@@ -117,13 +117,15 @@ struct AddConfigButton: View {
     }
     private func show() {
         guard let view = anchor.view else { return }
-        NativeMenu.popUp([
-            .init(title: "From a File…", symbol: "doc", key: "o", modifiers: .command) { discover.chooseFile() },
-            .init(title: "From a Link or GitHub…", symbol: "link") { discover.step = .link("") },
-            .init(title: "From This Mac’s Server (localhost)…", symbol: "desktopcomputer") { discover.step = .link("http://localhost:") },
-            .init(title: "From Your Windows Install…", symbol: "pc") { discover.step = .windows },
-            .init(title: "Paste", symbol: "doc.on.clipboard", key: "v", modifiers: [.command, .shift], separatorBefore: true) { discover.importPasteboard() },
-        ], below: view)
+        NativeMenu.popUp(Self.items(discover, window: view.window), below: view)
+    }
+    /// Every import source, with the File menu's shortcuts shown beside the matching items.
+    @MainActor static func items(_ discover: ConfigDiscoverModel, window: NSWindow?) -> [NativeMenu.Item] {
+        [.init(title: "From a File…", symbol: "doc", key: "o", modifiers: .command) { discover.chooseFile(in: window) },
+         .init(title: "From a Link or GitHub…", symbol: "link") { discover.step = .link("") },
+         .init(title: "From This Mac’s Server (localhost)…", symbol: "desktopcomputer") { discover.step = .link("http://localhost:") },
+         .init(title: "From Your Windows Install…", symbol: "pc") { discover.step = .windows },
+         .init(title: "Paste Config", symbol: "doc.on.clipboard", key: "v", modifiers: [.command, .shift], separatorBefore: true) { discover.importPasteboard() }]
     }
 }
 
@@ -166,24 +168,14 @@ enum NativeMenu {
 }
 
 private struct DiscoverSearchField: View {
-    @Binding var text: String
+    @ObservedObject var discover: ConfigDiscoverModel
     @FocusState private var focused: Bool
-    @Environment(\.palette) private var palette
     var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass").foregroundStyle(palette.secondary).accessibilityHidden(true)
-            TextField("Search a player, team or style", text: $text).textFieldStyle(.plain).focused($focused)
-                .onExitCommand { text = ""; focused = false }
-                .accessibilityLabel("Search players")
-            if !text.isEmpty {
-                Button { text = "" } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(palette.tertiary).accessibilityLabel("Clear search")
-            }
-        }
-        .padding(.horizontal, 14).frame(width: 260, height: ControlMetrics.action)
-        .background(palette.dark ? Color.black.opacity(0.22) : Color.white.opacity(0.6), in: Capsule())
-        .overlay(Capsule().stroke(palette.wellStroke, lineWidth: 1))
-        .help("Search players by name, team, role or style (⌘F)")
-        .background { Button("") { focused = true }.keyboardShortcut("f", modifiers: .command).opacity(0).accessibilityHidden(true) }
+        SearchPill("Search a player, team or style", text: $discover.query, focus: $focused, width: 260, label: "Search players")
+            .help("Search players by name, team, role or style (⌘F)")
+            // Edit › Find (⌘F) asks through the model; the hidden button keeps ⌘F working inside the page too.
+            .onChange(of: discover.findRequest) { _, _ in focused = true }
+            .background { Button("") { focused = true }.keyboardShortcut("f", modifiers: .command).opacity(0).accessibilityHidden(true) }
     }
 }
 
@@ -199,7 +191,7 @@ private struct PlayersPage: View {
             VStack(alignment: .leading, spacing: 22) {
                 DiscoverHeader(title: "Players") {
                     HStack(spacing: 10) {
-                        if discover.snapshot.map({ !$0.index.entries.isEmpty }) == true { DiscoverSearchField(text: $discover.query) }
+                        if discover.snapshot.map({ !$0.index.entries.isEmpty }) == true { DiscoverSearchField(discover: discover) }
                         AddConfigButton(discover: discover)
                     }
                 }
@@ -218,7 +210,7 @@ private struct PlayersPage: View {
         case .unavailable:
             StudioEmptyState(title: "NO PLAYERS YET",
                              message: "Shared setups from players aren’t available yet. Each one needs the player’s permission and a signed catalog entry before it appears here. You can still bring in a config of your own.",
-                             action: ("Add a Config from a File…", { discover.chooseFile() }))
+                             action: ("Add a Config from a File…", { discover.chooseFile(in: NSApp.keyWindow) }))
                 .frame(maxWidth: .infinity)
         case .failed(let message):
             StudioEmptyState(title: "OUT OF REACH", message: "The player directory couldn’t be checked. \(message)",
@@ -230,7 +222,7 @@ private struct PlayersPage: View {
             }
             if snapshot.index.entries.isEmpty {
                 StudioEmptyState(title: "NO PLAYERS YET", message: "The signed catalog doesn’t list any shared setups yet. You can still bring in a config of your own.",
-                                 action: ("Add a Config from a File…", { discover.chooseFile() }))
+                                 action: ("Add a Config from a File…", { discover.chooseFile(in: NSApp.keyWindow) }))
                     .frame(maxWidth: .infinity)
             } else if discover.shelves.isEmpty {
                 StudioEmptyState(title: "NO ONE BY THAT NAME", message: "Try a team, a role or a style.")
@@ -288,7 +280,7 @@ private struct PlayerCard: View {
         Button(action: open) {
             VStack(alignment: .leading, spacing: 0) {
                 ZStack(alignment: .bottomLeading) {
-                    MapArt(map: entry.favoriteMap ?? "", image: image).frame(height: 104).clipped()
+                    MapArtFrame(map: entry.favoriteMap ?? "", image: image, size: .fill).frame(height: 104)
                     Text(PlayerInitials.of(entry.player)).font(.stencil(18)).foregroundStyle(palette.accent)
                         .frame(width: 40, height: 40)
                         .background(palette.dark ? Palette.hex(0x1b1f17) : palette.crate, in: Circle())
@@ -497,7 +489,7 @@ private struct PlayerHero: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            MapArt(map: entry.favoriteMap ?? "", image: image, hero: true)
+            MapArtFrame(map: entry.favoriteMap ?? "", image: image, size: .fill, hero: true)
             // A scrim strong enough for the light inks over the pale and the dark scenes alike.
             LinearGradient(stops: [.init(color: .clear, location: 0), .init(color: .black.opacity(0.5), location: 0.35), .init(color: .black.opacity(0.85), location: 1)],
                            startPoint: .top, endPoint: .bottom)

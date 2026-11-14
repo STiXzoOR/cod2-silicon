@@ -264,8 +264,16 @@ struct IWDArtworkArchive: Sendable {
     private func publish(_ decoded: [String: MapPixels]) {
         for (map, pixels) in decoded {
             guard let image = Self.cgImage(pixels) else { continue }
-            images[map] = NSImage(cgImage: image, size: NSSize(width: pixels.width, height: pixels.height))
+            images[map] = NSImage(cgImage: image, size: Self.displaySize(width: pixels.width, height: pixels.height))
         }
+    }
+
+    /// Loading screens are stored as square textures and drawn across the game's 4:3 screen, so a
+    /// square image gets a 4:3 logical size. Views then fill their frames from the true shape
+    /// instead of from the squeezed one. Other shapes are already as they should appear.
+    nonisolated static func displaySize(width: Int, height: Int) -> NSSize {
+        guard width == height else { return NSSize(width: width, height: height) }
+        return NSSize(width: CGFloat(width) * 4 / 3, height: CGFloat(height))
     }
 
     private nonisolated static func cacheDirectory(home: URL, dataPath: String) -> URL? {

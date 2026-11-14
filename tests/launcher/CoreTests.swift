@@ -2,7 +2,10 @@ import Foundation
 
 @main struct CoreTests {
     static func main() throws {
+        try displayResolutions()
         let fixtures = URL(fileURLWithPath: CommandLine.arguments[1])
+        precondition(Dispatch.bundled.first?.title == "CoD2 Silicon 0.3.0", "bundled news must describe the shipping release")
+        precondition(!Dispatch.bundled.contains { $0.summary.contains("Planned for 0.3") }, "future work has no promised version")
         let master = try Data(contentsOf: fixtures.appendingPathComponent("master.cod2x.me-120.bin"))
         let servers = WireParser.master(master)
         precondition(servers.count > 50 && servers.contains("151.80.40.237:28962"))
@@ -67,6 +70,7 @@ import Foundation
         precondition(plan.arguments.contains("\"/Game Data\""))
         precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 32))) == nil)
         precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 31))) != nil)
+        try sessionLogs(scratch: scratch)
         try engines(server: server, scratch: scratch)
         try cod2xFiles(scratch: scratch)
         try crashReporting(scratch: scratch)
@@ -108,15 +112,12 @@ import Foundation
         var codx = stock; codx.fields["shortversion"] = "1.4.6.8"
         precondition(GameEngine.original.canJoin(stock) && !GameEngine.original.canJoin(codx))
         precondition(GameEngine.cod2x.canJoin(stock) && GameEngine.cod2x.canJoin(codx))
-        let link = try LaunchLink.direct("203.0.113.24:28960"), secret = try LaunchLink.direct("203.0.113.24:28960", password: "hunter2")
+        let secret = try LaunchLink.direct("203.0.113.24:28960", password: "hunter2")
         precondition(GameEngine.cod2x.check(server: codx, lookedUp: false) == .go)
         precondition(GameEngine.original.check(server: stock, lookedUp: false) == .go)
         precondition(GameEngine.original.check(server: codx, lookedUp: false) == .needsCoD2x)
         precondition(GameEngine.original.check(server: nil, lookedUp: false) == .lookUp)
         precondition(GameEngine.original.check(server: nil, lookedUp: true) == .go, "an unanswered server is the game's to try")
-        let request = EngineRequest(link: link)
-        precondition(request.title == "This server needs CoD2x")
-        precondition(request.message == "This server runs CoD2x 1.4. Original 1.3 can only join Stock 1.3 servers. CoD2x stays on for later games; you can change this in Settings.")
 
         // Both engines take their server as an Apple event once running: never +connect or a password in argv.
         let plan = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game", homePath: "/Home", link: secret)
@@ -542,7 +543,7 @@ import Foundation
         let codx = ServerFacts(server(["shortversion": "1.4.6.8", "clients": "24", "sv_maxclients": "24", "sv_maxfps": "250", "pswrd": "1"]))
         precondition(codx.isCoD2x && codx.versionLabel == "CoD2x 1.4.6.8" && codx.occupancy == .full && codx.frameCap == "250 fps" && codx.access == "Password")
         let stock = ServerFacts(server(["protocol": "118", "clients": "0", "sv_maxclients": "20"], ping: 88))
-        precondition(!stock.isCoD2x && stock.versionLabel == "Stock 1.3" && stock.occupancy == .empty && stock.frameCap == "Not set" && stock.pingLevel == 1)
+        precondition(!stock.isCoD2x && stock.versionLabel == "Original 1.3" && stock.occupancy == .empty && stock.frameCap == "Not set" && stock.pingLevel == 1)
         precondition(ServerFacts(server(["protocol": "120"])).versionLabel == "CoD2x 1.4")
         precondition([18, 39, 40, 59, 60, 79, 80].map(ServerFacts.pingLevel) == [4, 4, 3, 3, 2, 2, 1])
 
@@ -586,6 +587,7 @@ import Foundation
         precondition(PlayerProfile.activeProfile("\"My Squad\"\n") == "My Squad" && PlayerProfile.activeProfile("alpha bravo") == "alpha")
         for unsafe in ["", "..", ".", "../etc", "a/b", "a\\b", "c:d", "\"\""] { precondition(PlayerProfile.activeProfile(unsafe) == nil, unsafe) }
         precondition(PlayerProfile.activeProfile(String(repeating: "x", count: 65)) == nil && PlayerProfile.unnamed == "Player")
+        try settingsChecks()  // ship-settings
     }
 
     static func requireValue<T>(_ value: T?) throws -> T {
@@ -643,5 +645,161 @@ final class StandIn: @unchecked Sendable {
                 close(client)
             }
         }
+    }
+}
+
+// MARK: - ship-settings
+extension CoreTests {
+    /// Settings wording, What's New, Report a Problem and the extra launch options' +set lines.
+    static func settingsChecks() throws {
+        var utc = Calendar(identifier: .gregorian); utc.timeZone = TimeZone(identifier: "UTC")!
+        let english = Locale(identifier: "en_GB")
+        let now = try requireValue(utc.date(from: DateComponents(year: 2026, month: 11, day: 11, hour: 15)))
+        func at(_ day: Int, _ hour: Int, _ minute: Int, year: Int = 2026) throws -> Date { try requireValue(utc.date(from: DateComponents(year: year, month: 11, day: day, hour: hour, minute: minute))) }
+        let today = try at(11, 14, 2), yesterday = try at(10, 21, 30), earlier = try at(8, 21, 30), lastYear = try at(8, 21, 30, year: 2025)
+        precondition(SettingsText.when(today, now: now, calendar: utc, locale: english) == "today at 14:02")
+        precondition(SettingsText.when(yesterday, now: now, calendar: utc, locale: english) == "yesterday at 21:30")
+        precondition(SettingsText.when(earlier, now: now, calendar: utc, locale: english) == "on 8 Nov at 21:30")
+        precondition(SettingsText.when(lastYear, now: now, calendar: utc, locale: english) == "on 8 Nov 2025 at 21:30")
+        precondition(SettingsText.resolution("2560x1440") == "2560 × 1440" && SettingsText.size("2560x1440")! == (2560, 1440) && SettingsText.size("wide") == nil)
+        precondition(SettingsText.aspect(width: 2560, height: 1440) == "16:9" && SettingsText.aspect(width: 3456, height: 2234) == "1.55:1")
+        precondition(SettingsText.aspect(width: 1680, height: 1050) == "16:10" && SettingsText.aspect(width: 1024, height: 768) == "4:3")
+        precondition(SettingsText.maskedKey(lastFour: "7k2d") == "•••• •••• •••• •••• 7K2D")
+
+        let notes = """
+        ## CoD2 Silicon 0.3.1
+
+        ### Added
+        - **Connect to an address.** Join a server by address or `cod2x://` link,
+          with ⌘L.
+
+        ### Fixed
+        - Map art is no longer stretched. See [the issue](https://example.invalid/1).
+        - Setup remembers your CD key
+
+        ### Removed
+        - Old thing.
+        """
+        let items = ReleaseNotes.items(notes)
+        precondition(items == [ReleaseNoteItem(tag: "New", title: "Connect to an address", detail: "Join a server by address or cod2x:// link, with ⌘L."),
+                               ReleaseNoteItem(tag: "Fixed", title: "Map art is no longer stretched", detail: "See the issue."),
+                               ReleaseNoteItem(tag: "Fixed", title: "Setup remembers your CD key", detail: "")], "\(items)")
+        precondition(ReleaseNotes.items(notes, limit: 1).count == 1 && ReleaseNotes.items("Plain text, no sections.").isEmpty)
+        let long = ReleaseNotes.items("### Fixed\n- Title. " + String(repeating: "word ", count: 80), length: 40)
+        precondition(long.first.map { $0.detail.count <= 41 && $0.detail.hasSuffix("…") } == true)
+
+        let report = ReportDetails(version: "0.3.0", build: "412", engines: ["CoD2x 1.4.6.8", "Original 1.3"], macOS: "27.0",
+                                   model: "MacBook Pro, Apple M4 Pro", shaders: "original", display: "2560 × 1440 borderless")
+        precondition(report.lines == ["CoD2 Silicon 0.3.0 (412)", "CoD2x 1.4.6.8 · Original 1.3", "macOS 27.0 · MacBook Pro, Apple M4 Pro",
+                                      "Shaders: original · Display: 2560 × 1440 borderless"])
+        let issue = try requireValue(report.issueURL().flatMap { URLComponents(url: $0, resolvingAgainstBaseURL: false) })
+        precondition(issue.host == "github.com" && issue.path == "/STiXzoOR/cod2-silicon/issues/new")
+        let fields = Dictionary(uniqueKeysWithValues: (issue.queryItems ?? []).map { ($0.name, $0.value ?? "") })
+        precondition(fields["template"] == "bug_report.yml" && fields["version"] == "0.3.0 (412)" && fields["macos"] == "27.0")
+        precondition(!report.text.lowercased().contains("key") && ReportDetails(version: "0.3.0", build: "", engines: [], macOS: "", model: "", shaders: "", display: "").lines[0] == "CoD2 Silicon 0.3.0")
+
+        for line in ["+set com_hunkMegs 512", "+seta com_hunkMegs 512", "seta com_hunkMegs 512", "set com_hunkMegs=512", "com_hunkMegs 512"] {
+            precondition(GameSettings.advancedPair(line).map { $0.0 == "com_hunkMegs" && $0.1 == "512" } == true, line)
+        }
+        var typed = GameSettings(); typed.advanced = "+set net_port 29980"
+        let typedConfig = try typed.launchConfig(migrated: true)
+        precondition(typedConfig.contains("seta net_port \"29980\""))
+        typed.advanced = "+set cl_cdkey ABCD"
+        precondition((try? typed.launchConfig(migrated: false)) == nil, "a +set prefix must not get past the refused names")
+        var legacy = Data(#"{"resolution":"1920x1080"}"#.utf8)
+        var decoded = try JSONDecoder().decode(GameSettings.self, from: legacy)
+        precondition(decoded.hideWhilePlaying && decoded.appearance == .system && !decoded.refreshServersOnOpen && decoded.checkUpdatesAutomatically && decoded.dismissedWarnings.isEmpty)
+        legacy = Data(#"{"appearance":"sepia","dismissedWarnings":["switch-version"]}"#.utf8)
+        decoded = try JSONDecoder().decode(GameSettings.self, from: legacy)
+        precondition(decoded.appearance == .system && decoded.dismissedWarnings == [DismissibleWarning.switchVersion])
+    }
+}
+
+// MARK: - ship-play
+extension CoreTests {
+    static func displayResolutions() throws {
+        let expected = [
+            (DisplayResolution(5120, 2880), "640x480 800x600 1024x768 1280x720 1920x1080 2560x1440 3008x1692 3840x2160 5120x2880", "2560x1440"),
+            (DisplayResolution(6016, 3384), "640x480 800x600 1024x768 1280x720 1920x1080 2560x1440 3008x1692 3840x2160 5120x2880 6016x3384", "3008x1692"),
+            (DisplayResolution(1920, 1080), "640x480 800x600 1024x768 1280x720 1920x1080", "1920x1080"),
+            (DisplayResolution(3024, 1964), "640x480 800x600 1024x768 1280x720 1920x1080 2560x1440 3008x1692 3024x1964", "3024x1964")
+        ]
+        for (native, values, initial) in expected {
+            let list = DisplayResolutions.offered(native: native, modes: [])
+            precondition(list.map(\.value).joined(separator: " ") == values)
+            precondition(DisplayResolutions.initial(native: native) == initial)
+            let modes = [native, native, DisplayResolution(6016,3384), DisplayResolution(320,240),
+                         DisplayResolution(640,480), DisplayResolution(1600,1200), DisplayResolution(1600,900)]
+            let union = DisplayResolutions.offered(native: native, modes: modes)
+            precondition(union == Array(Set(union)).sorted() && union.allSatisfy { $0.fits(native) })
+            precondition(union.contains(DisplayResolution(1600,900)))
+            precondition(union.contains(DisplayResolution(1600,1200)) == (native.height >= 1200))
+            precondition(DisplayResolutions.fitting("6016x3384", in: list) == native.value)
+            precondition(DisplayResolutions.fitting("1280x720", in: list) == "1280x720", "A player's supported choice stays")
+            print("PASS: display \(native.value): \(values); first run \(initial)")
+        }
+        let scaled = DisplayResolutions.offered(native: .init(5120,2880), modes: [.init(3008,1692), .init(6016,3384)])
+        precondition(!scaled.contains(.init(6016,3384)) && scaled.last?.value == "5120x2880", "Scaled backing cannot raise the native limit")
+        let narrow = DisplayResolutions.offered(native: .init(1920,1080), modes: [.init(1600,1200)])
+        precondition(!narrow.contains(.init(1600,1200)), "Both dimensions must fit")
+        var older = try JSONDecoder().decode(GameSettings.self, from: Data(#"{"resolution":"3024x1964"}"#.utf8))
+        let notebookConfig = try older.config()
+        precondition(notebookConfig.contains("3024x1964"), "Native notebook sizes are valid settings")
+        older.resolution = "1920x1080;quit"
+        precondition((try? older.config()) == nil, "Resolution validation still blocks commands")
+    }
+}
+
+// MARK: - ship-play
+extension CoreTests {
+    static func sessionLogs(scratch: URL) throws {
+        let home = scratch.appendingPathComponent("session-logs")
+        let log = try GameSessionLog(home: home, password: "fixture-secret")
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", "printf 'Starting game\\n'; printf 'CoD2 slow frame: 373 ms\\n' >&2; printf 'pass'; printf 'word fixture-secret\\n'; printf '0000-0000-0000-0000-86D3\\n' >&2; printf 'unlabelled fixture-secret\\n'; printf 'final line' >&2; exit 7"]
+        process.standardOutput = log.pipe; process.standardError = log.pipe
+        try process.run(); log.closeParentWriter(); process.waitUntilExit(); log.finish()
+        let text = try String(contentsOf: log.url, encoding: .utf8)
+        precondition(process.terminationStatus == 7 && text.contains("Starting game") && text.contains("373 ms") && text.contains("final line"))
+        precondition(!text.contains("fixture-secret") && !text.contains("86D3") && !text.contains("0000"), "Filter before disk, across writes and streams")
+        for file in [log.url, home.appendingPathComponent("logs")] {
+            let attrs = try FileManager.default.attributesOfItem(atPath: file.path)
+            precondition((attrs[.posixPermissions] as? NSNumber)?.intValue == (file == log.url ? 0o600 : 0o700))
+        }
+        precondition(GameSessionLog.filtered("\\password\\secret").contains("omitted"))
+        precondition(GameSessionLog.filtered("OOB Print: getKeyAuthorize 0 ABCDEFGHIJKLMNOP PB digest").contains("omitted"))
+        precondition(GameSessionLog.filtered("OOB Print: getchallenge 0 key-digest").contains("omitted"))
+        precondition(!GameSessionLog.filtered("+set password secret").contains("secret"))
+        for index in 1...12 {
+            let session = try GameSessionLog(home: home, now: Date().addingTimeInterval(Double(index)))
+            try session.pipe.fileHandleForWriting.write(contentsOf: Data("session \(index)\n".utf8))
+            session.finish()
+        }
+        precondition(GameSessionLog.files(home: home).count == 10 && !FileManager.default.fileExists(atPath: log.url.path))
+        let bounded = try GameSessionLog(home: home, now: Date().addingTimeInterval(20))
+        let chunk = Data((String(repeating: "x", count: 1023) + "\n").utf8)
+        for _ in 0..<5000 { try bounded.pipe.fileHandleForWriting.write(contentsOf: chunk) }
+        bounded.finish()
+        let size = try bounded.url.resourceValues(forKeys: [.fileSizeKey]).fileSize!
+        precondition(size <= GameSessionLog.fileLimit)
+        let contents = try String(contentsOf: bounded.url, encoding: .utf8)
+        precondition(contents.contains("limit; later output omitted"))
+        // Old sessions exceeding the total allowance are removed, even if there are fewer than ten.
+        for url in GameSessionLog.files(home: home).prefix(6) { try Data(repeating: 65, count: 4 * 1024 * 1024).write(to: url) }
+        let rotated = try GameSessionLog(home: home, now: Date().addingTimeInterval(30)); rotated.finish()
+        let bytes = try GameSessionLog.files(home: home).reduce(0) { try $0 + $1.resourceValues(forKeys: [.fileSizeKey]).fileSize! }
+        precondition(bytes <= GameSessionLog.totalLimit - GameSessionLog.fileLimit)
+        let unsafeHome = scratch.appendingPathComponent("unsafe-logs")
+        try FileManager.default.createDirectory(at: unsafeHome, withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: unsafeHome.appendingPathComponent("logs"), withDestinationURL: home)
+        precondition((try? GameSessionLog(home: unsafeHome)) == nil, "Never follow a logs-folder symlink")
+        let disconnected = try GameSessionLog(home: scratch.appendingPathComponent("disconnected-log"))
+        let child = Process(); child.executableURL = URL(fileURLWithPath: "/bin/sh")
+        child.arguments = ["-c", "sleep 0.2; printf after; exit 7"]
+        child.standardOutput = disconnected.pipe; child.standardError = disconnected.pipe
+        try child.run(); disconnected.closeParentWriter(); disconnected.finish(); child.waitUntilExit()
+        precondition(child.terminationReason == .exit && child.terminationStatus == 7, "Closing the log reader must not kill the game with SIGPIPE")
+        print("PASS: session stdout/stderr and failed exit retained; split credentials filtered before disk; owner-only files; ten-session and byte limits; symlinks refused")
     }
 }

@@ -5,7 +5,7 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-11-11
+## [0.3.0] - Unreleased
 
 Renderer fixes are compared with the original Windows 1.3 behavior using
 replayed demos and targeted checks. Full rendering parity is still incomplete.
@@ -111,11 +111,18 @@ The original shaders are built from your own game files.
 
 ### Added
 
-- Play with CoD2x or with the original 1.3. **Settings → Game → Version**
-  chooses which game starts; CoD2x is the default. The original 1.3 can only
-  join stock 1.3 servers, and the launcher offers to turn CoD2x on when you
-  pick a CoD2x server. Config Studio, Check-up and the ready check follow the
-  version you chose, and the few settings one version cannot hold are kept
+- Private logs for each game session, available from Settings → Advanced → Logs
+  and failed-start or crash details. The last ten sessions stay on this Mac within
+  a 20 MiB total limit, with passwords and CD keys filtered before writing.
+- Check-up reports freezes longer than 0.1 s, their longest duration and recorded
+  match times. Older match summaries still show the longest frozen frame.
+
+- Play with CoD2x or with the original 1.3. **Settings → General → Game
+  version** chooses which game starts; CoD2x is the default. Launching on a
+  server that runs the other version starts that version for the match, after
+  asking (“Don’t ask again” always uses the server’s version), and goes back
+  to your choice afterwards. Config Studio, Check-up and the ready check follow
+  the version you play, and the few settings one version cannot hold are kept
   for the other.
 - Additional CoD2x compatibility features. As a player: demo
   upload, CoD2x's text colours and killfeed icons, hidden server addresses on
@@ -136,16 +143,26 @@ The original shaders are built from your own game files.
   releases; servers still enforce their own version requirements. The original
   1.3 sends none of this.
   [What the app sends](README.md#what-the-app-sends) lists everything.
-- CoD2x's own menus and icons. **Settings → Game → CoD2x files** downloads
+- CoD2x's own menus and icons. **Settings → Game Data → CoD2x menus and
+  icons** downloads
   the official CoD2x 1.4.6.8 release from the CoD2x project's GitHub page,
   checks it, and keeps only those files on this Mac; or copies them from a
   Windows game folder that has CoD2x installed. The launcher manages them for
   CoD2x games; Original 1.3 ignores matching archives in a shared game folder.
   Your game folder is never changed by engine archive setup.
 - Install updates from the launcher. When a newer release is found, **Install
-  Update** downloads it, checks it against the release's checksum and
+  and Relaunch** downloads it, checks it against the release's checksum and
   signature, replaces the app and restarts it. Nothing installs without that
-  click.
+  click, and Cancel stops it until the new app takes the old one's place.
+- A Settings window with seven panes: General, Display, Game Data, Privacy,
+  Updates, Advanced and About. It can hide the launcher while you play, follow
+  or override the system's appearance, check for updates once a day while the
+  launcher is open (on unless you turn it off), name the display and the
+  resolutions the game can use, rebuild your shaders, replace your CD key,
+  delete match summaries, reset launcher settings, copy the last game log,
+  list everything the app contacts, and show every bundled component's
+  licence in full. **Report a Problem** opens a prefilled GitHub issue in your
+  browser; the app sends nothing itself.
 - Crash reports you can choose to send. Two switches in **Settings →
   Privacy**, both off unless you turn them on: one sends CoD2x's reports for
   faults in CoD2x's own code to the CoD2x project, as CoD2x itself does; the
@@ -199,6 +216,64 @@ The original shaders are built from your own game files.
   as in Windows 1.3. Sunlit walls and ground keep their lighting. In the original
   multiplayer game, your own body casts a shadow in third person, not in
   the normal first-person view.
+- Resolution choices follow the selected display’s native pixels, including notebook
+  sizes, in ascending order without duplicates. Unsupported saved sizes move down
+  to a fitting size and Settings explains the change. New installs start at native
+  size through 4K or half the panel’s dimensions above it. Display explains the cost
+  of larger sizes, anti-aliasing and fullscreen modes.
+- Home’s recent-server rows keep the map, game mode and version readable, including
+  at the minimum window size. About indicates when its credits and footer continue
+  below the window.
+
+- Setup has six steps: welcome, game data, CD key, shaders, your name and
+  display, and a summary. A wrong folder says which archives are missing, the
+  CD key is checked as you type and can be skipped, a stored key is never asked
+  for again, and running setup again from Settings can be cancelled at any step
+  without losing your place in the launcher; only confirmed choices are kept.
+- The sidebar's player card edits your in-game name in place, showing its
+  colours, and saves it as you type. Jump to… (⌘K) finds servers, loadouts,
+  settings and menu actions. The menu bar has Server and Loadout menus, and the
+  Dock menu lists recent servers.
+- A `cod2x://` or `cod2://` link opens Connect to Address with the address filled
+  in, preserving a supplied password in memory, instead of starting the game. Opening a demo plays it; opening a config
+  shows the import review.
+- While you play, the launcher keeps its Dock icon and hides its window when
+  **Settings → General → Hide CoD2 Silicon while the game is running** is on.
+  Quitting it with the game open asks whether to quit the game too.
+- Launcher settings save automatically. Invalid advanced options stay editable
+  with an explanation, while your last valid options remain in use. Extra
+  launch options are kept as you typed them and accept lines copied from a
+  shortcut or the console, such as `+set com_hunkMegs 512`.
+- The server browser shows how old its results are, explains empty lists, and
+  offers search (⌘F), reversible sorting and server context menus. All,
+  Favorites and Recent switch between every server, your starred ones and the
+  ones you played; Filters (game version, mode, ping, empty, full, locked) are
+  kept between launches. Refresh shows how many servers have answered and can
+  be stopped, keeping what arrived; when the master servers don’t answer, the
+  last list stays with its time. **Connect to Address…** (⌘L) replaces the
+  direct-connect bar: it takes an address, a host name or a `cod2x://` link,
+  asks that server and shows what answered. A locked server asks for its
+  password, which can be remembered in your keychain on this Mac. The ready
+  check offers another loadout that already suits the server. Copy Join Link
+  copies a `cod2x://` link CoD2x on Windows also opens.
+- Library has three tabs. Matches lists how each recent match ran (typical
+  frame rate, ping and the connection in a word) from the summaries kept on
+  this Mac, with Check-up one click away. Demos and Screenshots list the newest
+  first and refresh when you come back to the launcher. Recordings play, can be
+  renamed, copied or moved to the Trash (with Undo); screenshots open with a
+  double-click and offer Quick Look, Copy Image and Share.
+- Home shows the server you last played with Launch to rejoin it, the three
+  servers you joined most recently, how your last match ran, this release's
+  notes, and the loadout and frame cap your next game uses, with a menu to
+  switch. Game data not found, a missing CD key or approximate shaders each get
+  a chip that goes straight to the fix. While the game runs, Home offers
+  Return to Game and Quit Game; when an update is ready it offers What's New
+  and Install Update.
+- Config Studio can create, duplicate, rename and export loadouts, or move an
+  unused loadout to the Trash with Undo. The Loadout menu and row menus use
+  the same actions. Check-up opens a selected match from Home or Library and
+  explains frame rate and connection quality in words, with figures behind
+  Show Details. Configs stays read-only while the game runs.
 - With CoD2x on, voice chat is off, as in CoD2x. It works with the original
   1.3.
 - With CoD2x on, the game no longer writes its recommended graphics settings
@@ -211,7 +286,9 @@ The original shaders are built from your own game files.
   (publisher and studio logos, then the game's intro film) were switched off
   because they showed a black screen. Started without the launcher, the game
   plays the intro once on its first run, as on Windows; any key skips each
-  part. The launcher still goes straight to the menu.
+  part. The launcher does the same for a new player: the first launch to the
+  game menu plays the films, and later launches, server links and demos go
+  straight in. Players who have launched before are not shown them again.
 - A dedicated server build keeps its settings in `config_mp_server.cfg` and
   its log in `console_mp_server.log`, like the original Linux server, and no
   longer needs a player profile to load a map.
@@ -405,11 +482,10 @@ The original shaders are built from your own game files.
 
 - Voice chat has not been tested with a real microphone, only with a
   recording in its place.
-- The launcher skips the intro videos.
 - CoD2x's services (the update check, zPAM updates, the match service, script
   web requests, vMix, and crash and error reports) were tested against
   stand-ins on a Mac, not against the CoD2x project's own servers.
-- The new Settings rows (CoD2x files, the report switches, Install Update)
+- The new Settings rows (CoD2x files, the report switches, Install and Relaunch)
   were tested through the launcher's tests, and nobody has installed an update
   from a real release yet: 0.3.0 is the first version that can.
 - Third-person player models sit about half a pixel off the original in
@@ -588,8 +664,8 @@ The original shaders are built from your own game files.
 Evidence and historical qualifications are preserved in the
 [workstream reports](docs/macos-port/README.md).
 
-[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.3.0
+[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.1...HEAD
+[0.3.0]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.1...HEAD
 [0.2.1]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.1
 [0.2.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0
 [0.1.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.1.0

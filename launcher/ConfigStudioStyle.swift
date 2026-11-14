@@ -52,51 +52,6 @@ enum StudioStatusTone {
     }
 }
 
-struct StudioStatusLabel: View {
-    var title: String
-    var tone: StudioStatusTone
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        Label(title, systemImage: tone.symbol)
-            .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(tone.color(in: palette))
-            .fixedSize(horizontal: false, vertical: true)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(title)
-            .accessibilityAddTraits(.isStaticText)
-    }
-}
-
-/// Calm inline content. Interactive actions belong beside this view, not inside
-/// its combined accessibility element. Announce successful saves at the caller.
-struct StudioBanner: View {
-    var title: String
-    var detail: String? = nil
-    var tone: StudioStatusTone = .information
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: tone.symbol)
-                .foregroundStyle(tone.color(in: palette))
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: StudioMetrics.rowGap) {
-                Text(title).font(.system(size: 13, weight: .medium)).foregroundStyle(palette.text)
-                if let detail {
-                    Text(detail).font(StudioTypography.help).foregroundStyle(palette.secondary)
-                }
-            }
-            .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-        .padding(StudioMetrics.cardInset)
-        .background(palette.panel, in: RoundedRectangle(cornerRadius: StudioMetrics.bannerRadius))
-        .overlay(RoundedRectangle(cornerRadius: StudioMetrics.bannerRadius).stroke(palette.panelStroke))
-        .accessibilityElement(children: .combine)
-    }
-}
-
 /// A readable label for a native Toggle, Slider, Picker or text field. Supply a
 /// console name only in Expert. Controls keep their own label/value semantics.
 struct StudioSettingLabel: View {

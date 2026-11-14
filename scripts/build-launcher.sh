@@ -15,19 +15,11 @@ clang=(/usr/bin/xcrun clang -target arm64-apple-macos26 -isysroot "$sdk" -fobjc-
 "${clang[@]}" -c "$root/src/platform/cod2x_native_shaders.m" -o "$out/NativeShaders.o"
 /usr/bin/xcrun clang -target arm64-apple-macos26 -isysroot "$sdk" -DCOD2_X64=1 -DCOD2_CODX=1 -c "$root/src/PC/qcommon/cod2x_url.c" -o "$out/URL.o"
 sources=("$root/launcher/Core.swift" "$root/launcher/Presentation.swift")
-views=("$root/launcher/MatchSummaries.swift" "$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift"
-    "$root/launcher/ConfigHistory.swift" "$root/launcher/ConfigStudioSession.swift"
-    "$root/launcher/ConfigCatalog.swift" "$root/launcher/ConfigRules.swift" "$root/launcher/ConfigReadyCheck.swift")
-# Every Config Studio model ships in the launcher, ready for its screens.
-for file in ConfigCheckup ConfigBindings InputDevices ConfigChains ConfigImport ConfigImportSafety WindowsProfiles \
-    ConfigImportSession ConfigImportCatalogAdapter ConfigDirectory; do
-    views+=("$root/launcher/$file.swift")
-done
-for file in Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView \
-    ConfigStudioModel ConfigStudioBinds ConfigStudioCheckup ConfigStudioStyle ConfigsView ConfigSettingsView ConfigHistoryView \
-    ConfigDiscoverModel ConfigDiscoverView ConfigImportView ServerReadyCheck ServerReadyCheckView \
-    ConfigBindsView ConfigCheckupView; do
-    views+=("$root/launcher/$file.swift")
+# Every other launcher source: models, views and Config Studio. A new file in launcher/ is built
+# without editing this script; Main.swift is the app's entry point and joins only the app build.
+views=()
+for file in "$root"/launcher/*.swift; do
+    case ${file##*/} in Core.swift|Presentation.swift|Main.swift) ;; *) views+=("$file") ;; esac
 done
 name=CoD2Launcher
 if [[ ${2:-} == --test ]]; then
@@ -37,7 +29,7 @@ elif [[ ${2:-} == --snapshots ]]; then
     # Review harness: every launcher view with a test-only window that can capture real glass.
     # Like an app bundle, it names its accent colour in an embedded Info.plist and finds the
     # compiled Assets.car beside the executable.
-    sources+=("${views[@]}" "$root/tests/launcher/Snapshots.swift" "$root/tests/launcher/DirectoryFixture.swift")
+    sources+=("${views[@]}" "$root"/tests/launcher/Snapshots*.swift "$root/tests/launcher/DirectoryFixture.swift")
     name=LauncherSnapshots
     /usr/bin/plutil -create xml1 "$out/Info.plist"
     /usr/bin/plutil -insert CFBundleIdentifier -string io.github.stixzoor.cod2silicon.snapshots "$out/Info.plist"
