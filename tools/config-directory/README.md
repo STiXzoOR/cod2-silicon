@@ -1,16 +1,27 @@
-# cod2-configs repository preparation
+# cod2-configs repository tooling
 
-This directory is the unpublished repository scaffold. It contains no players,
-permission grants, publication URLs, signatures or production trust root.
-`entries/` is intentionally empty. The launcher ships an unavailable state until
-the maintainer establishes permissioned content and signed publication.
+This directory is the tooling of the public catalogue of player setups,
+[STiXzoOR/cod2-configs](https://github.com/STiXzoOR/cod2-configs). `entries/` is empty here: the
+entries live in that repository, which carries a copy of these files at its root.
 
-Each future `entries/<slug>/` contains `config.cfg` (the player's exact published
-bytes) and `entry.json` conforming to `entry.schema.json`. Obtain public
-redistribution permission and record who granted it, the date and an HTTPS link
-to evidence. Include source credit and the original source URL. Do not use the
-private research corpus. Review permission evidence yourself: schema validation
-can require a record, but cannot prove that a grant is genuine or legally sufficient.
+The catalogue collects configs that were published on the open web and credits the page each one
+came from. It does not claim that a player approved the listing, and it removes or corrects an entry
+when the player or the page asks, through an issue on that repository. Each `entries/<slug>/` holds
+`config.cfg` and `entry.json` (see `entry.schema.json`):
+
+- `config.cfg` is the published text after `clean` (built by `build-audit.sh` from `Clean.swift`):
+  the launcher's own import review reads it for both game versions, and every line it blocks, and
+  every line that says who the player is, what they typed, a secret, a path or a setting of another
+  game, is left out. The rest keeps its order and bytes.
+- `entry.json` says who it is credited to and where it was published: `sourceURL`, and `provenance`
+  with the page's name, the day the copy was taken, how the name got on it (`self-published`,
+  `listed` by a page under that name, or `uploaded` under that name) and a sentence on what was left
+  out. `facts` carries the three numbers a card shows, as the config writes them. `featured` marks an
+  entry for the first shelf: the launcher counts nothing about what players import, so there is no
+  popularity ranking. No real names, nationalities or birthdays, even when a page shows them.
+
+Schema validation can require a source record; it cannot prove that the page was right about whose
+config it is. Say `listed` or `uploaded` unless the player posted it themselves.
 
 The generator computes signed download identity, length and SHA-256 from the
 actual file. It invokes the production Swift ConfigDocument parser and I1 safety
@@ -43,7 +54,7 @@ download index. `--check` compares all generated artifacts byte for byte and
 refuses stale output. Config files are never rewritten. The checked-in empty
 index is unsigned preparation only and cannot be loaded as a verified directory.
 
-Signing is a separate maintainer operation after content and permission review.
+Signing is a separate maintainer operation after content review.
 The `sign` binary compiled above accepts **raw 32-byte Ed25519 key material** and
 creates a detached **raw 64-byte signature over the exact index.json bytes**:
 

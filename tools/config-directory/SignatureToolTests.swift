@@ -27,6 +27,13 @@ import CryptoKit
         try bytes.write(to: index)
         try Curve25519.Signing.PrivateKey().publicKey.rawRepresentation.write(to: publicURL)
         guard try run(signer, ["verify", index.path, publicURL.path, signature.path]) != 0 else { fatalError("FAIL: wrong tool public key") }
-        print("PASS: standalone Ed25519 signer/verifier round trip, tamper and wrong-key rejection")
+        let made = folder.appendingPathComponent("fixture-made-private"), madePublic = folder.appendingPathComponent("fixture-made-public")
+        guard try run(signer, ["create", made.path]) == 0, try run(signer, ["public", made.path, madePublic.path]) == 0,
+              (try FileManager.default.attributesOfItem(atPath: made.path)[.posixPermissions] as? Int) == 0o600,
+              try run(signer, ["sign", index.path, made.path, signature.path]) == 0,
+              try run(signer, ["verify", index.path, madePublic.path, signature.path]) == 0 else { fatalError("FAIL: created key round trip") }
+        let first = try Data(contentsOf: made)
+        guard try run(signer, ["create", made.path]) != 0, try Data(contentsOf: made) == first else { fatalError("FAIL: create replaced a key") }
+        print("PASS: standalone Ed25519 signer/verifier round trip, tamper and wrong-key rejection, key creation that never replaces")
     }
 }

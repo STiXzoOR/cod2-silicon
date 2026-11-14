@@ -331,7 +331,10 @@ struct MediaEntry: Identifiable {
             } catch { configStudio = nil; sessionError = error.localizedDescription }
         }
         studio = ConfigStudioModel(session: configStudio, dialect: .cod2x, catalog: catalog)
-        discover = ConfigDiscoverModel(studio: studio, directory: ConfigDirectory(cacheURL: home.appendingPathComponent("directory/index.json")))
+        // The review harness never reaches the network: it gets no catalogue address, or a signed fixture.
+        discover = ConfigDiscoverModel(studio: studio, directory: ConfigDirectory(configuration: snapshot ? nil : ConfigDirectory.production,
+                                                                                  cacheURL: home.appendingPathComponent("directory/index.json")))
+        discover.landsOnHome = !snapshot
         discover.notify = { [weak self] in self?.notice = $0 }
         if let sessionError { notice = sessionError }
         if snapshot { seedPreview(); return }

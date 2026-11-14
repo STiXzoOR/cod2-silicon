@@ -18,11 +18,27 @@ enum ConfigDirectoryError: Error, Equatable, LocalizedError, Sendable {
         }
     }
 }
-struct ConfigDirectoryPermission: Codable, Equatable, Sendable {
-    let grantedBy: String
-    let grantedAt: String
-    let evidenceURL: URL
-    let scope: String
+/// Where a setup was found. The catalogue collects configs that were published on the open web and
+/// credits the page; it does not claim the player approved the listing, and removes one on request.
+struct ConfigDirectoryProvenance: Codable, Equatable, Sendable {
+    enum Attribution: String, Codable, Sendable {
+        /// The player posted it themselves; a page lists it under that name; someone uploaded it under that name.
+        case selfPublished = "self-published", listed, uploaded
+    }
+    /// The page that published it, as people name it ("configs.eu").
+    let publishedBy: String
+    /// The day the catalogue took its copy, `YYYY-MM-DD`.
+    let retrievedAt: String
+    let attribution: Attribution
+    /// What the catalogue left out of the published text, in a sentence.
+    let changes: String
+}
+/// The three numbers a card shows, as the config writes them. Sensitivity means little across players
+/// without the mouse's DPI, which no published config states.
+struct ConfigDirectoryFacts: Codable, Equatable, Sendable {
+    let sensitivity: String?
+    let frameCap: String?
+    let resolution: String?
 }
 enum ConfigDirectoryPlatform: String, Codable, Sendable { case windows, native }
 struct ConfigDirectoryEntry: Codable, Equatable, Sendable, Identifiable {
@@ -30,14 +46,17 @@ struct ConfigDirectoryEntry: Codable, Equatable, Sendable, Identifiable {
     let player: String
     let team: String?
     let era: String
-    let role: String
+    let role: String?
     let feel: String
     let story: String
     let styleTags: [String]
     let favoriteMap: String?
     let credit: String
     let sourceURL: URL
-    let permission: ConfigDirectoryPermission
+    let provenance: ConfigDirectoryProvenance
+    let facts: ConfigDirectoryFacts?
+    /// Chosen in the catalogue for the first shelf; nothing is counted about what players import.
+    let featured: Bool?
     let configURL: URL
     let sha256: String
     let byteCount: Int
@@ -84,11 +103,23 @@ struct ConfigDirectorySavedEntry: Sendable, Identifiable {
     let entry: ConfigDirectoryEntry?
 }
 
-/// There is deliberately no production URL or embedded key yet. Explicit
-/// configuration is required, and tests generate ephemeral fixture keys.
+/// Tests supply their own configuration with ephemeral fixture keys; the app uses `production`.
 struct ConfigDirectory: Sendable {
+    /// Where a player, or anyone, asks for a setup to be removed or corrected.
+    static let removalURL = URL(string: "https://github.com/STiXzoOR/cod2-configs/issues/new")!
+    static let repositoryURL = URL(string: "https://github.com/STiXzoOR/cod2-configs")!
+    /// The catalogue's address and the public half of the key its maintainer signs the index with.
+    /// Empty until the first index is signed; the app then says the catalogue isn't available.
+    static let productionRoot = "https://raw.githubusercontent.com/STiXzoOR/cod2-configs/main/"
+    static let productionPublicKey = ""
+    static var production: ConfigDirectoryConfiguration? {
+        guard let key = Data(base64Encoded: productionPublicKey), !key.isEmpty, let root = URL(string: productionRoot) else { return nil }
+        return try? ConfigDirectoryConfiguration(indexURL: root.appendingPathComponent("index.json"), signatureURL: root.appendingPathComponent("index.sig"), publicKey: key)
+    }
     var configuration: ConfigDirectoryConfiguration? = nil
     let cacheURL: URL
+    /// When the verified copy on this Mac was written.
+    var cacheDate: Date? { (try? FileManager.default.attributesOfItem(atPath: cacheURL.path))?[.modificationDate] as? Date }
     var fetcher: any ConfigImportTextFetcher = ConfigImportURLSessionFetcher()
     static let maximumIndexBytes = 1_048_576
     private struct Cache: Codable {
@@ -141,7 +172,7 @@ struct ConfigDirectory: Sendable {
 
     func load() async throws -> ConfigDirectoryLoad {
         guard let configuration else {
-            return .init(snapshot: nil, unavailableReason: "The player directory is not available yet. Permissioned entries and signed publication are still being prepared.", refreshError: nil)
+            return .init(snapshot: nil, unavailableReason: "Player setups aren’t available in this build.", refreshError: nil)
         }
         let cached = try withCacheLock { try readCache(configuration) }
         let responses: (ConfigImportTextResponse, ConfigImportTextResponse)
@@ -216,13 +247,14 @@ struct ConfigDirectory: Sendable {
                 && !value.unicodeScalars.contains { $0.value < 32 && $0.value != 10 || $0.value == 127 }
         }
         guard validID(entry.id),
-              text(entry.player), text(entry.era), text(entry.role), text(entry.feel), text(entry.story, maximum: 8192), text(entry.credit),
-              entry.team.map({ text($0) }) ?? true, entry.favoriteMap.map({ text($0) }) ?? true,
+              text(entry.player), text(entry.era), text(entry.feel), text(entry.story, maximum: 8192), text(entry.credit),
+              entry.role.map({ text($0) }) ?? true, entry.team.map({ text($0) }) ?? true, entry.favoriteMap.map({ text($0) }) ?? true,
+              [entry.facts?.sensitivity, entry.facts?.frameCap, entry.facts?.resolution].allSatisfy({ $0.map { text($0, maximum: 32) } ?? true }),
               entry.styleTags.count <= 16, entry.styleTags.allSatisfy({ text($0, maximum: 64) }),
               Set(entry.styleTags).count == entry.styleTags.count,
-              publicURL(entry.sourceURL), publicURL(entry.configURL), publicURL(entry.permission.evidenceURL),
-              text(entry.permission.grantedBy), entry.permission.scope == "public-redistribution",
-              validDate(entry.permission.grantedAt), (1...65535).contains(entry.byteCount),
+              publicURL(entry.sourceURL), publicURL(entry.configURL),
+              text(entry.provenance.publishedBy), text(entry.provenance.changes, maximum: 512),
+              validDate(entry.provenance.retrievedAt), (1...65535).contains(entry.byteCount),
               entry.sha256.utf8.count == 64, entry.sha256.utf8.allSatisfy({ (48...57).contains($0) || (97...102).contains($0) }) else { return false }
         return true
     }
@@ -239,16 +271,17 @@ struct ConfigDirectory: Sendable {
         return formatter.string(from: date) == value
     }
     /// Match the published schema's closed objects. Unsupported metadata cannot
-    /// silently masquerade as understood permission or download identity.
+    /// silently masquerade as understood provenance or download identity.
     private static func validShape(_ bytes: Data) -> Bool {
         guard let root = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any],
               Set(root.keys) == ["schemaVersion", "revision", "entries"], let entries = root["entries"] as? [[String: Any]] else { return false }
-        let required: Set<String> = ["id", "player", "era", "role", "feel", "story", "styleTags", "credit", "sourceURL", "permission", "configURL", "sha256", "byteCount", "platform"]
+        let required: Set<String> = ["id", "player", "era", "feel", "story", "styleTags", "credit", "sourceURL", "provenance", "configURL", "sha256", "byteCount", "platform"]
         for entry in entries {
             let keys = Set(entry.keys)
-            guard required.isSubset(of: keys), keys.isSubset(of: required.union(["team", "favoriteMap"])),
-                  let permission = entry["permission"] as? [String: Any],
-                  Set(permission.keys) == ["grantedBy", "grantedAt", "evidenceURL", "scope"] else { return false }
+            guard required.isSubset(of: keys), keys.isSubset(of: required.union(["team", "role", "favoriteMap", "facts", "featured"])),
+                  let provenance = entry["provenance"] as? [String: Any],
+                  Set(provenance.keys) == ["publishedBy", "retrievedAt", "attribution", "changes"],
+                  (entry["facts"] as? [String: Any]).map({ Set($0.keys).isSubset(of: ["sensitivity", "frameCap", "resolution"]) }) ?? (entry["facts"] == nil) else { return false }
         }
         return true
     }

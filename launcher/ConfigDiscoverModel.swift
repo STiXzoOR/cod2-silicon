@@ -5,9 +5,24 @@ import UniformTypeIdentifiers
 // Discover and import: the player directory, Saved, a player's detail and the import
 // review. Players come only from a verified signed index (the production directory is
 // honestly unavailable today); every import goes through the I1/I2 review and one
-// guarded transaction. Nothing here invents players, permissions, values or signatures.
+// guarded transaction. Nothing here invents players, credits, values or signatures.
 
-enum ConfigDiscoverPage: Hashable { case players, saved, player(String) }
+/// Configs · Home and Check a Config take the whole page; Saved and a player's detail keep the loadout column.
+enum ConfigDiscoverPage: Hashable { case home, saved, player(String), checker }
+
+/// How Home narrows the player setups. Featured is chosen in the catalogue; nothing is counted about
+/// what people import, so there is no popularity order.
+enum ConfigSetupFilter: String, CaseIterable, Identifiable {
+    case featured = "Featured", classic = "Classic era", cod2x = "CoD2x era", highFrameRate = "High frame rate", all = "All"
+    var id: String { rawValue }
+    func keeps(_ entry: ConfigDirectoryEntry) -> Bool {
+        switch self {
+        case .featured: entry.featured == true
+        case .all: true
+        default: entry.styleTags.contains(rawValue)
+        }
+    }
+}
 
 enum ConfigDirectoryState {
     case idle, loading
@@ -36,7 +51,8 @@ struct ConfigImportProvenance: Sendable {
     var detail: String? = nil
     var signed = false
     var credit: String? = nil
-    var permission = false
+    /// The page a catalogue setup was published on ("configs.eu").
+    var publishedBy: String? = nil
     var windows = false
     var symbol = "doc.text"
 }
@@ -536,6 +552,13 @@ extension ConfigImportPresentation {
     @Published var page: ConfigDiscoverPage?
     @Published private(set) var state: ConfigDirectoryState = .idle
     @Published var query = ""
+    @Published var filter: ConfigSetupFilter = .featured
+    /// When the copy on this Mac was last fetched and verified.
+    @Published private(set) var fetched: Date?
+    /// The first time Configs is chosen in the sidebar it opens on Home. Anything that asks for a
+    /// loadout by name clears this first.
+    var landsOnHome = false
+    let checker: ConfigCheckerModel
     @Published private(set) var saved: [ConfigDirectorySavedEntry] = []
     @Published private(set) var detail: ConfigPlayerDetail?
     @Published private(set) var review: ConfigImportReviewModel?
@@ -551,6 +574,9 @@ extension ConfigImportPresentation {
 
     init(studio: ConfigStudioModel, directory: ConfigDirectory) {
         self.studio = studio; self.directory = directory
+        checker = ConfigCheckerModel(studio: studio)
+        checker.save = { [weak self] name, data in self?.importChecked(name: name, data: data) }
+        checker.notify = { [weak self] in self?.notify($0) }
     }
 
     /// The review harness swaps in a signed fixture directory (preview mode only).
@@ -567,7 +593,28 @@ extension ConfigImportPresentation {
         let query = query.trimmingCharacters(in: .whitespaces)
         guard !query.isEmpty else { return entries }
         return entries.filter { entry in
-            ([entry.player, entry.team ?? "", entry.role, entry.era, entry.feel] + entry.styleTags).contains { $0.localizedCaseInsensitiveContains(query) }
+            ([entry.player, entry.team ?? "", entry.role ?? "", entry.era, entry.feel, entry.provenance.publishedBy] + entry.styleTags).contains { $0.localizedCaseInsensitiveContains(query) }
+        }
+    }
+    var searching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
+    /// The filters that keep at least one setup, so no chip leads to an empty page.
+    var filters: [ConfigSetupFilter] { ConfigSetupFilter.allCases.filter { filter in entries.contains(where: filter.keeps) } }
+    /// Home's grid: a search looks through every setup; otherwise the chosen filter, by name.
+    var setups: [ConfigDirectoryEntry] {
+        let chosen = filters.contains(filter) ? filter : .all
+        let shown = searching ? matches : entries.filter(chosen.keeps)
+        return shown.sorted { $0.player.localizedCaseInsensitiveCompare($1.player) == .orderedAscending }
+    }
+    /// “68 setups · updated today”, or the day of the saved copy.
+    func status(now: Date = Date(), calendar: Calendar = .current) -> String {
+        switch state {
+        case .idle, .loading: return "Getting the catalogue…"
+        case .unavailable, .failed: return "Catalogue not loaded"
+        case .loaded(let snapshot, let refreshError):
+            let count = snapshot.index.entries.count, setups = count == 1 ? "1 setup" : "\(count) setups"
+            guard let fetched else { return setups }
+            if refreshError == nil, calendar.isDate(fetched, inSameDayAs: now) { return "\(setups) · updated today" }
+            return "\(setups) · saved \(fetched.formatted(.dateTime.day().month(.abbreviated)))"
         }
     }
     /// Shelves follow the signed entries' own eras, in the index's order. No invented shelves.
@@ -594,6 +641,7 @@ extension ConfigImportPresentation {
         do {
             let result = try await directory.load()
             if let snapshot = result.snapshot {
+                fetched = directory.cacheDate
                 state = .loaded(snapshot, refreshError: result.refreshError)
                 saved = (try? directory.savedEntries(snapshot: snapshot)) ?? []
             } else {
@@ -755,6 +803,14 @@ extension ConfigImportPresentation {
         }
         importText(text, dropped: false)
     }
+    /// Check a Config › Save as Loadout…: the checked text, with the fixes the person applied, goes
+    /// through the same review as any other import.
+    func importChecked(name: String, data: Data) {
+        beginImport(displayName: name, provenance: .init(source: "Checked config", symbol: "checkmark.shield"),
+                    origin: ConfigOrigin(kind: .imported, source: "paste")) { adapter, dialect in
+            try await ConfigImportLoader(catalog: adapter).load(.paste(data), dialect: dialect)
+        }
+    }
     func importText(_ text: String, dropped: Bool) {
         let data: Data
         do { data = try ConfigDocument.encode(text) } catch {
@@ -772,7 +828,7 @@ extension ConfigImportPresentation {
         let cached = detail?.entryID == entry.id ? detail?.bundle : nil
         let directory = self.directory
         beginImport(displayName: entry.player,
-                    provenance: .init(source: "Players catalog", signed: true, credit: entry.credit, permission: true,
+                    provenance: .init(source: "Players catalog", signed: true, credit: entry.credit, publishedBy: entry.provenance.publishedBy,
                                       windows: entry.platform == .windows, symbol: "person.2"),
                     platform: entry.platform == .windows ? .windows : .native,
                     origin: ConfigOrigin(kind: .imported, source: entry.sourceURL.absoluteString, credit: entry.credit)) { adapter, dialect in

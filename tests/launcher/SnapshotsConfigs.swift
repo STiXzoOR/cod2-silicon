@@ -16,7 +16,10 @@ extension Snapshots {
                                 "discover-saved-removed", "configs-save-failure", "configs-import-windows-profiles", "configs-catalog-loading",
                                 // ship-configs: Discover hidden, loadout management and a chosen match.
                                 "configs-discover-hidden", "configs-other-loadout", "configs-delete-confirm", "configs-new-loadout-sheet",
-                                "configs-rename-sheet", "configs-checkup-match", "configs-checkup-freezes", "configs-checkup-freeze-legacy"]
+                                "configs-rename-sheet", "configs-checkup-match", "configs-checkup-freezes", "configs-checkup-freeze-legacy",
+                                // Configs · Home and Check a Config.
+                                "configs-home", "configs-home-search", "configs-home-nomatch",
+                                "configs-checker-empty", "configs-checker", "configs-checker-fixed", "configs-checker-clean"]
 }
 
 /// Synthetic loadouts for the Config Studio screens, written through the real store into a
@@ -203,7 +206,26 @@ extension Snapshots {
             // As drawn: Discover in the column, with two saved players.
             try await fixture()
             discover.setSaved("player-2", true); discover.setSaved("player-4", true)
-        case "discover-players": try await fixture()
+        case "discover-players", "configs-home": try await fixture()
+        case "configs-home-search", "configs-home-nomatch":
+            try await fixture()
+            discover.query = screen == "configs-home-search" ? "classic" : "quake"
+        case "configs-checker", "configs-checker-fixed", "configs-checker-clean":
+            // An invented config: no player, no real password.
+            let lines = screen == "configs-checker-clean"
+                ? ["seta com_maxfps \"250\"", "seta sensitivity \"1.4\"", "seta rate \"25000\"", "seta snaps \"30\"", "bind MOUSE1 \"+attack\"", "bind SPACE \"+gostand\""]
+                : ["// scrim config", "seta com_maxfps \"333\"", "seta sensitivity \"1.4\"", "seta cl_maxpakets \"100\"", "seta rate \"25000\"", "seta snaps \"40\"",
+                   "seta cg_fov \"90\"", "seta r_vsync \"0\"", "seta m_pitch \"0.022\"", "seta m_pitch \"0.022\"", "bind MOUSE1 \"+attack\"", "bind SPACE \"+gostand\"",
+                   "bind F9 \"rcon login sample\"", "seta cg_drawFPS \"Simple\""]
+            let checker = discover.checker
+            if screen != "configs-checker-clean" { checker.dialect = .stock; checker.ruleset = "zpam-3.36" }
+            checker.checkText(lines.joined(separator: "\n") + "\n", name: screen == "configs-checker-clean" ? "Main loadout" : "scrim.cfg",
+                              origin: screen == "configs-checker-clean" ? "your loadout, unchanged" : "from Downloads")
+            for _ in 0..<300 {
+                if checker.report != nil, !checker.checking { break }
+                try? await Task.sleep(for: .milliseconds(20))
+            }
+            if screen == "configs-checker-fixed" { checker.fixAll() }
         case "discover-saved":
             try await fixture()
             discover.setSaved("player-2", true); discover.setSaved("player-4", true)

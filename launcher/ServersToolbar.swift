@@ -46,7 +46,7 @@ private struct ServersToolbar: ViewModifier {
         ToolbarItem(placement: .navigation) { search }
         ToolbarItem(placement: .navigation) { ServerFiltersButton(model: model) }
     }
-    private var search: some View { ServersSearchField(text: $model.search, focus: searchFocused, request: searchRequest) }
+    private var search: some View { ToolbarSearchField(prompt: "Search servers, maps or mods", text: $model.search, focus: searchFocused, request: searchRequest) }
     private var scope: some View {
         ScopeSwitch("Which servers", selection: $model.serverScope, options: ServerScope.allCases.map { ($0, $0.title) })
     }
@@ -60,8 +60,10 @@ private struct ServersToolbar: ViewModifier {
     }
 }
 
-/// The search field: names, maps and mods. ⌘F (Edit › Find, or the page's own key) focuses it; Escape clears it.
-private struct ServersSearchField: View {
+/// A toolbar's search field. ⌘F (Edit › Find, or the page's own key) focuses it; Escape clears it.
+struct ToolbarSearchField: View {
+    var prompt: String
+    var width: CGFloat = 260
     @Binding var text: String
     var focus: FocusState<Bool>.Binding
     var request: Int
@@ -69,11 +71,11 @@ private struct ServersSearchField: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass").font(.system(size: 13)).foregroundStyle(palette.tertiary).accessibilityHidden(true)
-            TextField("Search servers, maps or mods", text: $text, prompt: Text("Search servers, maps or mods").foregroundStyle(palette.tertiary))
+            TextField(prompt, text: $text, prompt: Text(prompt).foregroundStyle(palette.tertiary))
                 .textFieldStyle(.plain).font(.system(size: 13)).foregroundStyle(palette.text)
                 .focused(focus)
                 .onExitCommand { text = ""; focus.wrappedValue = false }
-                .accessibilityLabel("Search servers, maps or mods")
+                .accessibilityLabel(prompt)
             if text.isEmpty {
                 Text("⌘F").font(.system(size: 12)).tracking(0.5).foregroundStyle(palette.hint).accessibilityHidden(true)
             } else {
@@ -82,7 +84,7 @@ private struct ServersSearchField: View {
             }
         }
         .padding(.horizontal, 8)
-        .frame(width: 260)
+        .frame(width: width)
         // A toolbar item is hosted apart from the page, where focus state doesn't reach; ⌘F hands
         // the field the keyboard through AppKit instead.
         .background(FieldFocusAnchor(request: request))

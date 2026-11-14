@@ -52,7 +52,7 @@ struct JumpItem: Identifiable {
         for profile in model.studio.profiles where matches(profile.displayName, "loadout") && !query.isEmpty {
             result.append(JumpItem(id: "loadout-" + profile.id, section: .loadouts, title: profile.displayName,
                                    detail: profile.isActive ? "Loadout · used for your next game" : "Loadout", symbol: "square.stack",
-                                   open: { model.navigate(to: .configs); model.studio.select(profile.id) }))
+                                   open: { model.navigate(to: .configs); model.discover.landsOnHome = false; model.discover.page = nil; model.studio.select(profile.id) }))
         }
         // Settings: every pane and row by its visible name.
         if !query.isEmpty {

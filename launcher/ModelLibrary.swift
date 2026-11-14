@@ -199,8 +199,10 @@ enum PlayedDate {
         return (raw, DisplayResolutions.fitting(raw, in: sizes))
     }
     /// Home's loadout menu: every loadout with its frame cap and resolution, the one in use ticked. Empty before loadouts exist.
-    var loadoutChoices: [LoadoutChoice] {
-        guard usesLoadouts, let session = studio.session ?? configStudio else { return [] }
+    var loadoutChoices: [LoadoutChoice] { usesLoadouts ? loadoutCards : [] }
+    /// Every loadout with its frame cap and resolution, for Configs · Home.
+    var loadoutCards: [LoadoutChoice] {
+        guard let session = studio.session ?? configStudio else { return [] }
         return session.profiles.map { profile in
             let document = (try? session.readProfile(profile.id))?.document
             let cap = document?.effectiveSetting(named: "com_maxfps").flatMap { Int($0.trimmingCharacters(in: .whitespaces)) }
@@ -220,6 +222,7 @@ enum PlayedDate {
         guard usesLoadouts else { openSettings(.display); return }
         navigate(to: .configs)
         guard page == .configs else { return }
+        discover.landsOnHome = false; discover.page = nil
         studio.loadCatalogNow()
         let target = (serverConnection.address == lastServer?.address ? serverConnection.profileID : nil) ?? studio.activeProfile?.id
         if let target { studio.select(target) }

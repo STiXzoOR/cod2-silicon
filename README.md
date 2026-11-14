@@ -96,9 +96,22 @@ desktop, Full Screen shows it pixel for pixel. The other defaults are a
 **Configs** holds loadouts: frame cap, mouse, audio, graphics and binds, plus
 Check-up and History. Create, duplicate, rename, export or delete an unused
 loadout with Undo; **Use for Next Game** selects the one the game will read.
-Home also has a loadout picker. The Players directory stays hidden until a
-signed directory is available. Import from a file, link or clipboard still
-works, with review before anything is applied. Configs is read-only during a game.
+Home also has a loadout picker. Configs is read-only during a game.
+
+Configs opens on its own home page: your loadouts, and **player setups** from a
+[public catalogue](https://github.com/STiXzoOR/cod2-configs). The catalogue
+collects configs that were published on the open web, credits each to the page
+it came from, and leaves out names, chat lines, passwords, server settings and
+timed key macros. It does not claim a player approved a listing, and removes
+one on request. You see what a setup would change and review every line before
+anything is imported. **Add a Config** brings in one of your own from a file, a
+link, the clipboard or a Windows install, with the same review.
+
+**Check a Config** reads any config on this Mac, for CoD2x or the original 1.3
+and optionally a set of server rules such as zPAM's. It marks, line by line,
+settings that don't exist, values the game refuses, settings that only change
+with cheats on, repeats and stored passwords, and offers a fix for each. Fixes
+change a copy; the file you checked is never written.
 
 **Library** keeps Matches, Demos and Screenshots. Match summaries stay on this
 Mac and open Check-up for that match. Check-up shows freezes over 0.1 s,
