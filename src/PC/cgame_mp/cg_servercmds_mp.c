@@ -1,5 +1,8 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
+#if defined(COD2_APPLE_SDK)
+#include "PC/universal/windows_number.h"
+#endif
 #include "imports.h"
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
@@ -682,9 +685,9 @@ void CG_ParseFog(void)
 
     CL_SetFog(1, start, (float)halfDist_d,
 #if defined(COD2_APPLE_SDK)
-              (int)(unsigned char)(int)__builtin_rintf((float)val4_d * 255.0f),
-              (int)(unsigned char)(int)__builtin_rintf((float)val5_d * 255.0f),
-              (int)(unsigned char)(int)__builtin_rintf((float)val6_d * 255.0f),
+              (int)(unsigned char)(int)Q_WindowsScaleDoubleToInt(val4_d, 255),
+              (int)(unsigned char)(int)Q_WindowsScaleDoubleToInt(val5_d, 255),
+              (int)(unsigned char)(int)Q_WindowsScaleDoubleToInt(val6_d, 255),
 #else
               (int)(unsigned char)(int)floorf((float)val4_d * 255.0f + 0.5f),
               (int)(unsigned char)(int)floorf((float)val5_d * 255.0f + 0.5f),

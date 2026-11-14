@@ -10,6 +10,9 @@
 #include "../qcommon/cod2x.h"
 #endif
 #include "common_types.h"
+#if defined(COD2_APPLE_SDK)
+#include "PC/universal/windows_number.h"
+#endif
 #if COD2_APPLE_SDK
 #include "../qcommon/cdkey_hash.h"
 #endif
@@ -2227,9 +2230,9 @@ void CL_PlayLogo_f(void)
 
     name = Cmd_Argv(1);
 #if defined(COD2_APPLE_SDK)
-    cls.logo.fadein = (int)__builtin_rintf((float)atof(Cmd_Argv(2)) * 1000.0f);
-    cls.logo.duration = (int)__builtin_rintf((float)atof(Cmd_Argv(3)) * 1000.0f);
-    cls.logo.fadeout = (int)__builtin_rintf((float)atof(Cmd_Argv(4)) * 1000.0f);
+    cls.logo.fadein = (int)Q_WindowsScaleDoubleToInt(atof(Cmd_Argv(2)), 1000);
+    cls.logo.duration = (int)Q_WindowsScaleDoubleToInt(atof(Cmd_Argv(3)), 1000);
+    cls.logo.fadeout = (int)Q_WindowsScaleDoubleToInt(atof(Cmd_Argv(4)), 1000);
 #else
     cls.logo.fadein = (int)floorf((float)atof(Cmd_Argv(2)) * 1000.0f + 0.5f);
     cls.logo.duration = (int)floorf((float)atof(Cmd_Argv(3)) * 1000.0f + 0.5f);

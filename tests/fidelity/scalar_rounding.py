@@ -30,6 +30,7 @@ frame = common[start:end].replace('float ts = com_timescale->current.value;', ''
 source = '''#include <assert.h>
 #include <math.h>
 #include <stdio.h>
+#include "PC/universal/windows_number.h"
 typedef unsigned char byte;
 static byte color(float value) ''' + color + '''
 static void team_color(const float *floatColor, byte *color) ''' + team + '''
@@ -57,13 +58,28 @@ int main(void) {
     input[0] = -1.f; input[1] = 2.f;
     team_color(input, teamColor);
     assert(teamColor[0] == 1 && teamColor[1] == 254); /* Original wraps; no clamp. */
-    puts("Windows frame-time/dvar-color/team-color tie conversions pass");
+    /* Original parsed-number spans: shellshock4c1591, logo410620, fog4d08c5. */
+    assert(Q_WindowsScaleDoubleToInt(-0x1.cac0822d0e560p-9, 1000) == -4);
+    assert(Q_WindowsScaleDoubleToInt(-0x1.47ae151eb851fp-9, 1000) == -2);
+    assert(Q_WindowsScaleDoubleToInt(0x1.05a1cac083127p-2, 1000) == 256);
+    assert(Q_WindowsScaleDoubleToInt(0x1.0020c51bb645ap+0, 1000) == 1000);
+    assert(Q_WindowsScaleDoubleToInt(-0x1.0624de353f7cfp-11, 1000) == -1);
+    assert(Q_WindowsScaleDoubleToInt(0x1.0624de353f7cfp-11, 1000) == 1);
+    assert(Q_WindowsScaleDoubleToInt(-0x1.c1c1c0e0e0e0ep-7, 255) == -4);
+    assert(Q_WindowsScaleDoubleToInt(-0x1.4141428282828p-7, 255) == -3);
+    assert(Q_WindowsScaleDoubleToInt(0x1.00807f8000000p+0, 255) == 255);
+    assert(Q_WindowsScaleDoubleToInt(0x1.f636373151515p+1, 255) == 1000);
+    assert(Q_WindowsScaleDoubleToInt(1.0, 1000) == 1000);
+    assert(Q_WindowsScaleDoubleToInt(0.0, 255) == 0);
+    assert(Q_WindowsScaleDoubleToInt(1.0, 255) == 255);
+    assert(Q_WindowsScaleDoubleToInt(INFINITY, 1000) == INT32_MIN);
+    puts("Windows frame-time/colors/parsed-number conversions pass");
 }
 '''
 fixture = a.output / 'scalar_rounding.c'
 fixture.write_text(source)
 exe = a.output / 'scalar_rounding'
-command = ['clang', '-std=c11', '-O3', '-ffp-contract=off', '-fno-strict-aliasing', '-DCOD2_APPLE_SDK=1', str(fixture), '-o', str(exe)]
+command = ['clang', '-std=c11', '-O3', '-ffp-contract=off', '-fno-strict-aliasing', '-DCOD2_APPLE_SDK=1', '-I' + str(ROOT / 'src'), '-fsanitize=address,undefined', str(fixture), '-o', str(exe)]
 build = subprocess.run(command, capture_output=True, text=True)
 (a.output / 'compile.log').write_text(build.stdout + build.stderr)
 if build.returncode:

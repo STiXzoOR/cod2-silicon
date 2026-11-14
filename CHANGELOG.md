@@ -32,6 +32,8 @@ The original shaders are built from your own game files.
 - Team text colors now use Windows nearest-even byte conversion.
 - Sound pitch, playback positions and durations now preserve Windows arithmetic
   and rounding, including the distinct order used when starting a sound.
+- Shellshock duration, logo timing and fog colors retain Windows precision
+  when converting parsed decimal values.
 - CoD2x spectator labels no longer leave later HUD drawing clipped when a
   crowded frame runs out of render commands.
 
