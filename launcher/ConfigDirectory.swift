@@ -109,9 +109,10 @@ struct ConfigDirectory: Sendable {
     static let removalURL = URL(string: "https://github.com/STiXzoOR/cod2-configs/issues/new")!
     static let repositoryURL = URL(string: "https://github.com/STiXzoOR/cod2-configs")!
     /// The catalogue's address and the public half of the key its maintainer signs the index with.
-    /// Empty until the first index is signed; the app then says the catalogue isn't available.
+    /// The catalogue's address and the Ed25519 public key its index is signed with (`index.pub` in
+    /// that repository). With an empty key the app says the catalogue isn't available.
     static let productionRoot = "https://raw.githubusercontent.com/STiXzoOR/cod2-configs/main/"
-    static let productionPublicKey = ""
+    static let productionPublicKey = "iTOphG+NSxzT4k9BumMTP7h3Ui408zuH63b8S+3klSs="
     static var production: ConfigDirectoryConfiguration? {
         guard let key = Data(base64Encoded: productionPublicKey), !key.isEmpty, let root = URL(string: productionRoot) else { return nil }
         return try? ConfigDirectoryConfiguration(indexURL: root.appendingPathComponent("index.json"), signatureURL: root.appendingPathComponent("index.sig"), publicKey: key)
