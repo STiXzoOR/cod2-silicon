@@ -17,6 +17,7 @@ The original shaders are built from your own game files.
 - Recoil, spread, tracers, item drops and randomized sound/effects now use the
   original Windows random stream. CoD2x keeps its separate shotgun and server
   challenge stream, and renderer clouds and water retain their own stream.
+- Dropped weapons now tumble along the same axes as Windows for each random draw.
 - CoD2x spectator labels no longer leave later HUD drawing clipped when a
   crowded frame runs out of render commands.
 

@@ -136,8 +136,9 @@ static void AngularRandom(void)
     Reset(1); gentity_t *drop = Drop(9);
     assert(randomCalls == 4);
     assert(drop->s.apos.trType == TR_LINEAR && drop->s.apos.trTime == 1000);
-    assert(drop->s.apos.trDelta[0] == 25);
-    assert(drop->s.apos.trDelta[1] == 0 && drop->s.apos.trDelta[2] == -60);
+    /* After the launch draw, Windows consumes angular Y, X, Z. */
+    assert(drop->s.apos.trDelta[0] == 0);
+    assert(drop->s.apos.trDelta[1] == -40 && drop->s.apos.trDelta[2] == 30);
 }
 static void Weapon31(void) { Reset(31); Drop(0); assert(randomCalls == 1 && angleCalls == 0); }
 static void Controls(void)

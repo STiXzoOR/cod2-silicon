@@ -1003,9 +1003,10 @@ gentity_t *Drop_Weapon(gentity_t *pEnt, int iWeaponIndex, unsigned int tag)
         pDrop->s.apos.trType = TR_LINEAR;
         pDrop->s.apos.trTime = level.time;
 #if defined(COD2_X64)
-        float randomZ = crandom();
+        /* Windows 51f293 stores the first draw in Y, the second in X, then Z. */
         float randomY = crandom();
         float randomX = crandom();
+        float randomZ = crandom();
         pDrop->s.apos.trDelta[0] = randomX * 50.0f;
         pDrop->s.apos.trDelta[1] = randomY * 40.0f;
         pDrop->s.apos.trDelta[2] = randomZ * 60.0f;
