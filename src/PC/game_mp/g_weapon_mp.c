@@ -14,6 +14,8 @@ extern const dvar_t *player_meleeWidth;
 extern const dvar_t *sv_fps;
 
 extern double tan(double x);
+extern double sin(double x);
+extern double cos(double x);
 extern float sinf(float x);
 extern float cosf(float x);
 extern float sqrtf(float x);
@@ -217,12 +219,20 @@ void Weapon_RocketLauncher_Fire(gentity_t *ent, float spread, weaponParms *wp)
     float upOffset;
     gclient_t *client;
 
+#if defined(COD2_X64) && COD2_X64
+    /* Original 527cc0/527350 use float radians, then x87 transcendental results. */
+    fAimOffset = (float)(tan((double)(spread * 0.01745329238474369f)) * 16.0);
+    angle = (randomf() * 360.0f) * 0.01745329238474369f;
+    r = randomf();
+    rightOffset = (float)cos((double)angle) * r * fAimOffset;
+    upOffset = (float)sin((double)angle) * r * fAimOffset;
+#else
     fAimOffset = (float)tan((double)spread * 0.017453292519943295) * 16.0f;
-
     angle = (float)((double)(randomf() * 360.0f) * 0.017453292519943295);
     r = randomf();
     rightOffset = cosf(angle) * r * fAimOffset;
     upOffset = sinf(angle) * r * fAimOffset;
+#endif
 
     dir[0] = wp->forward[0] * 16.0f;
     dir[1] = wp->forward[1] * 16.0f;
@@ -573,14 +583,25 @@ void Bullet_Endpos(float spread, vec_t *end, const weaponParms *wp, float maxRan
     float rightOffset;
     float upOffset;
 
+#if defined(COD2_X64) && COD2_X64
+    /* Original 5273f0 multiplies by the float degree constant before fptan. */
+    aimOffset = (float)(tan((double)(spread * 0.01745329238474369f)) * (double)maxRange);
+#else
     aimOffset = (float)tan((double)spread * 0.017453292519943295) * maxRange;
+#endif
 
     randAngle = randomf();
     randRadius = randomf();
+#if defined(COD2_X64) && COD2_X64
+    angle = (randAngle * 360.0f) * 0.01745329238474369f;
+    /* A double evaluation followed by one float store matches 527350 fsincos. */
+    rightOffset = (float)cos((double)angle) * randRadius * aimOffset;
+    upOffset = (float)sin((double)angle) * randRadius * aimOffset;
+#else
     angle = (float)((double)(randAngle * 360.0f) * 0.017453292519943295);
-
     rightOffset = cosf(angle) * randRadius * aimOffset;
     upOffset = sinf(angle) * randRadius * aimOffset;
+#endif
 
     {
         const vec_t *muzzle = wp->muzzleTrace;
