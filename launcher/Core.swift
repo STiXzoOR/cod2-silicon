@@ -1022,11 +1022,13 @@ struct GameSettings: Codable, Sendable, Equatable {
         guard pairs.reduce(0, { $0 + $1.0.utf8.count + $1.1.utf8.count + 12 }) < 2500 else { throw LauncherError(message: "Advanced options exceed the engine's startup limit.") }
         return pairs
     }
-    /// What the stock first run wrote from the game's recommended settings (configure_mp.csv)
-    /// on this Mac. CoD2x builds never apply recommended settings, so the launcher supplies
-    /// these while the loadout does not set them, and the first picture stays the same.
-    static let firstRunPicture: [(String, String)] = [("r_glow", "0"), ("r_distortion", "0"), ("r_rendererPreference", "none"),
-        ("r_zfeather", "0"), ("sc_enable", "0"), ("r_dlightLimit", "4"), ("fx_sort", "1"), ("r_depthPrepassModels", "0")]
+    /// The first picture: what the game's recommended settings (configure_mp.csv) give its best
+    /// graphics cards, with glow, heat distortion, soft smoke and shadows on. The table does not
+    /// know Apple graphics, so the stock first run takes its fallback row and turns the four off,
+    /// and CoD2x builds never apply recommended settings at all. The launcher supplies these while
+    /// the loadout does not set them, so both engines start with the same full picture.
+    static let firstRunPicture: [(String, String)] = [("r_glow", "1"), ("r_distortion", "1"), ("r_rendererPreference", "none"),
+        ("r_zfeather", "1"), ("sc_enable", "1"), ("r_dlightLimit", "4"), ("fx_sort", "1"), ("r_depthPrepassModels", "0")]
     /// Startup values for what neither these settings nor the loadout set: the frame cap and raw
     /// mouse, which CoD2x registers as 85 and 0, and the stock first-run picture. They are archived
     /// (seta), as the recommended settings were, so the loadout keeps them from then on.
