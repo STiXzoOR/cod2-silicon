@@ -94,6 +94,9 @@ foreach(target cod2_macos cod2_macos_ded)
   else()
     add_executable(${target} ${MACOS_C})
   endif()
+  # Both executables consume the same generated blobs. Finish their shared
+  # producer before parallel Make targets can start compiling either view.
+  add_dependencies(${target} cod2_datagen)
   target_include_directories(${target} PRIVATE
     ${COD2_SRC_DIR}/PC/speex ${COD2_SRC_DIR} ${COD2_SRC_DIR}/headers ${CMAKE_SOURCE_DIR})
   # Respect CMAKE_BUILD_TYPE optimization; Debug/unspecified still default to O0.
@@ -149,15 +152,9 @@ target_sources(cod2_macos PRIVATE src/platform/cod2x_native.c
 set_property(SOURCE src/platform/cod2x_native_macos.m src/platform/cod2x_native_shaders.m
   APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
 target_link_libraries(cod2_macos PRIVATE ${COD2_APPKIT_FRAMEWORK})
-if(NOT COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
-  # The link parser is a CoD2x unit with nothing of CoD2x in it; the original
-  # engine compiles it unchanged for the launcher's links.
-  set_source_files_properties(src/PC/qcommon/cod2x_url.c PROPERTIES
-    HEADER_FILE_ONLY FALSE COMPILE_DEFINITIONS COD2_CODX=1)
-endif()
 if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
-  target_sources(cod2_macos PRIVATE src/platform/cod2x_native_mouse.c)
+  target_sources(cod2_macos PRIVATE src/platform/cod2x_native_mouse.c src/platform/cod2x_film_gl.c src/platform/cod2x_xray_gl.c)
   # The shader generator builds the OpenGL shader cache from the game's HLSL at
   # setup time. It is a separate program so that libvkd3d-shader (LGPL) stays a
   # replaceable library and a compiler fault cannot take the game down.

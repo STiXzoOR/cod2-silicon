@@ -26,7 +26,7 @@ int cod2_native_trace_enabled;
 void Com_Printf(const char *fmt, ...) { abort(); }
 
 /* External randomness is fixed; normalization, angles and random scaling are real. */
-int rand(void) { ++randomCalls; return 0x40000000; }
+int Com_CrtRand(void) { ++randomCalls; return 16384; }
 static void Record(int action) { assert(actionCount < 8); actions[actionCount++] = action; }
 static void Touch(gentity_t *self, gentity_t *other, int touched)
 {
@@ -227,7 +227,8 @@ static void DamageAngle(int pitch)
     Reset();
     clients[0].damage_blood = 10;
     clients[0].damage_from[0] = 1.0f;
-    clients[0].damage_from[pitch ? 2 : 1] = FloatBits(0x3dfc98c1) * (pitch ? -1 : 1);
+    /* Windows 0x427750 maps this input to angle bits 0x40e0ffff. */
+    clients[0].damage_from[pitch ? 2 : 1] = FloatBits(0x3dfc98c2) * (pitch ? -1 : 1);
     vec3_t angles;
     vectoangles(clients[0].damage_from, angles);
     assert(angles[pitch ? 0 : 1] == FloatBits(0x40e0ffff));

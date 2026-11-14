@@ -7,9 +7,17 @@
 #include <limits.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
-extern int Sys_Milliseconds(void);
+static uint64_t SV_Cod2xUdpMilliseconds(void)
+{
+    struct timespec value;
+    clock_gettime(CLOCK_MONOTONIC, &value);
+    return (uint64_t)value.tv_sec * 1000 + (uint64_t)value.tv_nsec / 1000000;
+}
 extern qboolean Sys_IsLANAddress(netadr_t from);
+extern const char *NET_AdrToString(netadr_t from);
+extern void Com_DPrintf(const char *format, ...);
 extern const dvar_t *Dvar_RegisterBool(const char *name, unsigned char value, unsigned short flags);
 extern const dvar_t *Dvar_RegisterInt(const char *name, int value, int min, int max, unsigned short flags);
 extern void Dvar_SetInt(const dvar_t *dvar, int value);
@@ -22,7 +30,7 @@ const dvar_t *sv_rateLimiterUniqueIPCount;
 #define COD2X_UDP_HASH_COUNT 1024
 
 typedef struct {
-    uint32_t time;
+    uint64_t time;
     unsigned int burst;
 } cod2xUdpBucket_t;
 
@@ -36,7 +44,7 @@ typedef struct {
 static cod2xUdpAddress_t cod2xUdpAddresses[COD2X_UDP_ADDRESS_COUNT];
 static unsigned int cod2xUdpHashes[COD2X_UDP_HASH_COUNT];
 static cod2xUdpBucket_t cod2xUdpGlobals[3];
-static uint32_t cod2xUdpStatsTime;
+static uint64_t cod2xUdpStatsTime;
 
 static unsigned int SV_Cod2xUdpHash(const byte ip[4])
 {
@@ -46,7 +54,7 @@ static unsigned int SV_Cod2xUdpHash(const byte ip[4])
     return hash % COD2X_UDP_HASH_COUNT;
 }
 
-static cod2xUdpBucket_t *SV_Cod2xUdpAddress(netadr_t from, unsigned int limit, uint32_t now)
+static cod2xUdpBucket_t *SV_Cod2xUdpAddress(netadr_t from, unsigned int limit, uint64_t now)
 {
     unsigned int hash = SV_Cod2xUdpHash(from.ip);
     for (unsigned int link = cod2xUdpHashes[hash]; link; link = cod2xUdpAddresses[link - 1].next) {
@@ -57,10 +65,10 @@ static cod2xUdpBucket_t *SV_Cod2xUdpAddress(netadr_t from, unsigned int limit, u
 
     for (unsigned int i = 0; i < COD2X_UDP_ADDRESS_COUNT; ++i) {
         cod2xUdpAddress_t *entry = &cod2xUdpAddresses[i];
-        uint32_t elapsed = now - entry->bucket.time;
+        int32_t elapsed = (int32_t)(now - entry->bucket.time);
         /* Keep the reference's strict reuse boundary and action-dependent
          * window, including disconnect's shorter address retention. */
-        if (entry->active && elapsed <= limit * 1000 && elapsed <= INT32_MAX)
+        if (entry->active && (!entry->bucket.time || (elapsed >= 0 && elapsed <= (int)(limit * 1000))))
             continue;
         if (entry->active) {
             unsigned int *link = &cod2xUdpHashes[SV_Cod2xUdpHash(entry->ip)];
@@ -79,13 +87,13 @@ static cod2xUdpBucket_t *SV_Cod2xUdpAddress(netadr_t from, unsigned int limit, u
     return NULL;
 }
 
-static int SV_Cod2xUdpTake(cod2xUdpBucket_t *bucket, unsigned int limit, unsigned int period, uint32_t now)
+static int SV_Cod2xUdpTake(cod2xUdpBucket_t *bucket, unsigned int limit, unsigned int period, uint64_t now)
 {
     if (!bucket)
         return 0;
-    uint32_t elapsed = now - bucket->time;
-    unsigned int drained = elapsed / period;
-    if (elapsed > INT32_MAX || drained > bucket->burst) {
+    int32_t elapsed = (int32_t)(now - bucket->time);
+    int drained = elapsed / (int)period;
+    if (elapsed < 0 || drained > (int)bucket->burst) {
         bucket->burst = 0;
         bucket->time = now;
     } else {
@@ -111,25 +119,31 @@ void SV_Cod2xUdpInit(void)
     Dvar_SetInt(sv_rateLimiterUniqueIPCount, 0);
 }
 
-int SV_Cod2xUdpAllow(netadr_t from, cod2xUdpOperation_t operation)
+int SV_Cod2xUdpAllow(netadr_t from, cod2xUdpOperation_t operation, const char *action)
 {
     if (!sv_rateLimiter || !sv_rateLimiter->current.enabled)
         return 1;
-    uint32_t now = (uint32_t)Sys_Milliseconds();
+    uint64_t now = SV_Cod2xUdpMilliseconds();
     unsigned int addressLimit = operation == COD2X_UDP_DISCONNECT ? 2 : 10;
     unsigned int globalLimit = operation == COD2X_UDP_DISCONNECT ? 64 : 10;
     unsigned int globalPeriod = operation == COD2X_UDP_QUERY ? 100 : 1000;
     if (!Sys_IsLANAddress(from) &&
-        !SV_Cod2xUdpTake(SV_Cod2xUdpAddress(from, addressLimit, now), addressLimit, 1000, now))
+        !SV_Cod2xUdpTake(SV_Cod2xUdpAddress(from, addressLimit, now), addressLimit, 1000, now)) {
+        Com_DPrintf("%s: rate limit from %s exceeded, dropping request\n", action, NET_AdrToString(from));
         return 0;
-    return SV_Cod2xUdpTake(&cod2xUdpGlobals[operation], globalLimit, globalPeriod, now);
+    }
+    if (!SV_Cod2xUdpTake(&cod2xUdpGlobals[operation], globalLimit, globalPeriod, now)) {
+        Com_DPrintf("%s: overall rate limit exceeded, dropping request\n", action);
+        return 0;
+    }
+    return 1;
 }
 
 void SV_Cod2xUdpStats(void)
 {
     if (!sv_rateLimiter || !sv_rateLimiter->current.enabled)
         return;
-    uint32_t now = (uint32_t)Sys_Milliseconds();
+    uint64_t now = SV_Cod2xUdpMilliseconds();
     if (now - cod2xUdpStatsTime < 1000)
         return;
     cod2xUdpStatsTime = now;
@@ -138,7 +152,7 @@ void SV_Cod2xUdpStats(void)
         const cod2xUdpAddress_t *entry = &cod2xUdpAddresses[i];
         /* These are the reference's recent bucket count and sum of already
          * drained bursts, including addresses rejected by a global bucket. */
-        if (entry->active && now - entry->bucket.time <= 1000) {
+        if (entry->bucket.time > 0 && now - entry->bucket.time <= 1000) {
             ++uniqueIPs;
             requests += (int)entry->bucket.burst;
         }

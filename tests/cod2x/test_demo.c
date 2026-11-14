@@ -29,25 +29,31 @@ static void write_file(const char *path, const char *body)
 int main(void)
 {
     char name[64], url[1024], directory[] = "/tmp/cod2x-demo.XXXXXX";
-    char demo[512], marker[512];
+    char demo[512], marker[512], target[512], link[512];
     int i;
     assert(Cod2x_DemoName(name, sizeof(name), "round/one;quit\n", 0));
-    assert(!strcmp(name, "round_one;quit_"));
+    assert(!strcmp(name, "round_one;quit\n"));
     assert(Cod2x_DemoName(name, sizeof(name), "a\\b:c*d?e\"f<g>h|i j", 0));
     assert(!strcmp(name, "a_b_c_d_e_f_g_h_i j"));
     assert(Cod2x_DemoName(name, sizeof(name), "round/one", 17));
-    assert(!strcmp(name, "round_one_17"));
+    assert(!strcmp(name, "round/one_17"));
     assert(!Cod2x_DemoName(name, sizeof(name), "", 0));
-    assert(!Cod2x_DemoName(name, sizeof(name), "..", 0));
+    assert(Cod2x_DemoName(name, sizeof(name), "..", 0));
     assert(Cod2x_DemoUploadAllowed("https://example.test:443/demos/"));
     assert(Cod2x_DemoUploadAllowed("http://example.test/demos/"));
-    assert(!Cod2x_DemoUploadAllowed("http://user@example.test/demos/"));
-    assert(!Cod2x_DemoUploadAllowed("file:///tmp/example"));
+    assert(Cod2x_DemoUploadAllowed("http://user@example.test/demos/"));
+    assert(Cod2x_DemoUploadAllowed("other+scheme://example/path"));
     assert(!Cod2x_DemoUploadAllowed("https://example.test/a\r\nb"));
-    assert(!Cod2x_DemoUploadAllowed("https://user:pass@example.test/a"));
+    assert(Cod2x_DemoUploadAllowed("https://user:pass@example.test/a"));
+    assert(!Cod2x_DemoUploadAllowed("https://example.test/\"quoted\""));
+    assert(!Cod2x_DemoUploadAllowed("https://example.test/`quoted`"));
+    assert(!Cod2x_DemoUploadAllowed("https://example.test/caf\303\251"));
     assert(Cod2x_DemoUploadURL(url, sizeof(url), "https://example.test/demos/", "round_17"));
     assert(!strcmp(url, "https://example.test/demos/round_17"));
-    assert(!Cod2x_DemoUploadURL(url, 12, "https://example.test/demos/", "round_17"));
+    assert(Cod2x_DemoUploadURL(url, 12, "https://example.test/demos/", "round_17"));
+    assert(!strcmp(url, "https://exa"));
+    assert(Cod2x_DemoUploadURL(url, sizeof(url), "invalid URL ", "round_17"));
+    assert(!strcmp(url, "invalid URL round_17"));
     assert(Cod2x_DemoUploadSucceeded(200));
     assert(Cod2x_DemoUploadSucceeded(201));
     assert(Cod2x_DemoUploadSucceeded(409));
@@ -57,7 +63,7 @@ int main(void)
     snprintf(demo, sizeof(demo), "%s/round.dm_1", directory);
     snprintf(marker, sizeof(marker), "%s.upload", demo);
     write_file(demo, "owned demo fixture");
-    write_file(marker, "http://user@127.0.0.1:9/round");
+    write_file(marker, "invalid URL");
     assert(Cod2x_DemoUploadsPending(directory));
     Cod2x_DemoUploadFrame(directory, 10, 0);
     assert(Cod2x_DemoUploadsPending(directory));
@@ -65,6 +71,20 @@ int main(void)
     assert(!Cod2x_DemoUploadsPending(directory));
     assert(!access(demo, F_OK));
     assert(access(marker, F_OK));
+    snprintf(target, sizeof(target), "%s/marker-target", directory);
+    write_file(target, "invalid URL");
+    assert(!symlink(target, marker));
+    assert(Cod2x_DemoUploadsPending(directory));
+    Cod2x_DemoUploadFrame(directory, 10, 1);
+    assert(access(marker, F_OK) && !access(target, F_OK));
+    assert(!unlink(target));
+    snprintf(target, sizeof(target), "%s/demo-target", directory);
+    assert(!rename(demo, target));
+    assert(!symlink(target, demo));
+    snprintf(link, sizeof(link), "%s/directory.upload", directory);
+    assert(!symlink(directory, link));
+    assert(!Cod2x_DemoUploadsPending(directory));
+    assert(!unlink(link));
     write_file(marker, "https://127.0.0.1:9/round");
     for (i = 0; i < 500 && Cod2x_DemoUploadsPending(directory); ++i) {
         Cod2x_DemoUploadFrame(directory, 10, 1);
@@ -79,6 +99,7 @@ int main(void)
     Cod2x_DemoUploadShutdown();
     assert(!unlink(marker));
     assert(!unlink(demo));
+    assert(!unlink(target));
     assert(!rmdir(directory));
     puts("CoD2x demo policy and persistent upload queue: pass");
     return 0;

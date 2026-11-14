@@ -28,14 +28,18 @@ int CGDataProviderCreateWithURL();
 int CGDataProviderRelease();
 int CGDisplayAvailableModes();
 int CGDisplayBitsPerPixel(void *display);
+#if !(defined(__APPLE__) && defined(COD2_X64))
 int CGDisplayBounds();
+#endif
 int CGDisplayCurrentMode();
 int CGDisplayFade();
 int CGDisplayIDToOpenGLDisplayMask();
 int CGDisplayIOServicePort();
 int CGDisplayPixelsHigh();
 int CGDisplayPixelsWide();
+#if !(defined(__APPLE__) && defined(COD2_X64))
 int CGGetActiveDisplayList();
+#endif
 int CGGetDisplayTransferByTable();
 int CGImageCreateWithPNGDataProvider();
 int CGImageRelease();

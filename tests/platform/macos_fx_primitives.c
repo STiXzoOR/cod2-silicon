@@ -1,5 +1,8 @@
+#include "com_random.h"
 /* Native primitive creation/update/draw uses the real FX implementations. */
 #include "common_types.h"
+#include "PC/EffectsCore/fx_memory.h"
+extern void FxMem_Init(void);
 #include <assert.h>
 #include <math.h>
 #include <stdarg.h>
@@ -171,6 +174,7 @@ float FxRange_GetVal(const FxRange *p) { return (p->mMin + p->mMax) * 0.5f; }
 void FxHelper_AddFxToScene(const FxHelper *p, GfxEntity *ent, const XModel *model)
 { (void)p; (void)model; submitted = *ent; ++draws; }
 void FX_Print(const char *fmt, ...) { (void)fmt; }
+void Com_DPrintf(const char *fmt, ...) { (void)fmt; }
 void FxHelper_Trace(const FxHelper *p, trace_t *tr, vec_t *start, const vec_t *mins, const vec_t *maxs, vec_t *end, int skip, int flags)
 { (void)p; (void)start; (void)mins; (void)maxs; (void)end; (void)skip; (void)flags; memset(tr, 0, sizeof(*tr)); tr->fraction = simulateImpact ? .5f : 1.0f; tr->normal[2] = 1.0f; }
 extern const vec_t Vec3DistanceSq(const vec_t *, const vec_t *);
@@ -380,12 +384,12 @@ static void CheckEmitterMotion(void)
         emitter.spawnVariance = test == 5 ? 1 : 10;
         float variance = test == 5 ? 0 : .25f;
         memcpy(emitter._tail, &variance, sizeof(variance));
-        srand(17);
+        Com_CrtSrand(17);
         float expectedStep = emitter.emitStep;
         for (int i = 0; i < cases[test].count; ++i)
             expectedStep = emitter.spawnVariance + crandom() * variance;
-        int expectedNextRandom = rand();
-        srand(17);
+        int expectedNextRandom = Com_CrtRand();
+        Com_CrtSrand(17);
         theFxHelper->mTime = cases[test].now;
         theFxHelper->mFrameTime = 16;
         emissionCount = 0;
@@ -399,7 +403,7 @@ static void CheckEmitterMotion(void)
         EMITTER_CHECK(fabsf(emitter.emitPos[0] - cases[test].finalX) < .00001f);
         EMITTER_CHECK(emitter.emitPos[1] == 4 && emitter.emitPos[2] == 5);
         EMITTER_CHECK(emitter.emitStep == expectedStep);
-        EMITTER_CHECK(rand() == expectedNextRandom);
+        EMITTER_CHECK(Com_CrtRand() == expectedNextRandom);
         EMITTER_CHECK(emitter.velocityDelta[0] == cases[test].bindOffset);
         EMITTER_CHECK(fabsf(emitter.velocityDelta[1] - (cases[test].bolted && !cases[test].pauseClock ? .2f : 0)) < .00001f);
         EMITTER_CHECK(emitter.velocityDelta[2] == 0);
@@ -759,6 +763,7 @@ static void CheckCylinderUpdate(void)
 
 int main(void)
 {
+    FxMem_Init();
     PrimitiveTemplate pt = {0};
     EffectTemplate fx = {0};
     vec3_t axes[3] = {{1,0,0}, {0,1,0}, {0,0,1}};
@@ -961,6 +966,24 @@ int main(void)
     CheckCylinderUpdate();
     if (spawnFailures || physicsFailures || emitterFailures || motionFailures || cylinderFailures)
         return 1;
+#if COD2_APPLE_SDK
+    assert(!effectActiveCount && !__ZN11FxBoltFrame12g_mFrameListE);
+    FxMem_Init();
+    static void *arenaItems[64 * 409];
+    for (unsigned i = 0; i < 64 * 409; ++i) {
+        arenaItems[i] = FxMem_Alloc(FX_MEMORY_ScheduledEffect);
+        assert(arenaItems[i]);
+    }
+    const int exhaustedTypes[] = {1, 2, 3, 4, 5, 7, 9, 11, 12};
+    for (unsigned i = 0; i < sizeof(exhaustedTypes) / sizeof(exhaustedTypes[0]); ++i) {
+        pt.mType = exhaustedTypes[i];
+        FxScheduler_CreateEffect(&scheduler, &fx, &pt, NULL, origin,
+                                (MediaHandles *(*)[4])axes, 0, 0);
+        assert(!effectActiveCount);
+    }
+    for (unsigned i = 0; i < 64 * 409; ++i) FxMem_Free(arenaItems[i]);
+    puts("native FX: nine primitive allocation failures return without construction");
+#endif
     puts("native FX: nine primitive lifecycles, scheduler dispatch, bolting, impact axes, spawn filters and particle physics passed");
     return 0;
 }

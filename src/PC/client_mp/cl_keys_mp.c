@@ -125,6 +125,8 @@ enum {
     K_PGUP = 0xa4,
     K_HOME = 0xa5,
     K_END = 0xa6,
+    K_KP_UPARROW = 0xb7,
+    K_KP_DOWNARROW = 0xbd,
     K_KP_ENTER = 0xbf,
     K_KP_INS = 0xc0,
     K_MWHEELDOWN = 0xcd,
@@ -672,7 +674,7 @@ static inline __attribute__((always_inline)) void Field_PasteClipboard(field_t *
 
     len = (int)strlen(cbd);
     for (i = 0; i < len; ++i) {
-        Field_CharEvent(edit, cbd[i]);
+        Field_CharEvent(edit, (unsigned char)cbd[i]);
     }
 
     Z_FreeInternal(cbd);
@@ -1137,6 +1139,13 @@ static void Console_CompleteCommand(void)
 
 void Console_Key(int key)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* CoD2x console.cpp Console_Key: with NumLock on, keypad 8 and 2 type their
+       digit and do not walk the history. A Mac keypad has no NumLock state and
+       always types the digit, so that is always the case here. */
+    if (key == K_KP_UPARROW || key == K_KP_DOWNARROW)
+        return;
+#endif
 #if defined(COD2_X64)
     if (key == 0x6c && Key_IsDown(K_CTRL)) {
 #else
@@ -1156,13 +1165,13 @@ void Console_Key(int key)
         return;
     }
 
-    if (key == K_UPARROW || (tolower(key) == 0x70 && Key_IsDown(K_CTRL)) ||
+    if (key == K_UPARROW || key == K_KP_UPARROW || (tolower(key) == 0x70 && Key_IsDown(K_CTRL)) ||
         (key == K_MWHEELUP && Key_IsDown(K_SHIFT))) {
         Console_HistoryUp();
         return;
     }
 
-    if (key == K_DOWNARROW || (tolower(key) == 0x6e && Key_IsDown(K_CTRL)) ||
+    if (key == K_DOWNARROW || key == K_KP_DOWNARROW || (tolower(key) == 0x6e && Key_IsDown(K_CTRL)) ||
         (key == K_MWHEELDOWN && Key_IsDown(K_SHIFT))) {
         Console_HistoryDown();
         return;

@@ -23,6 +23,13 @@ extern int Scr_IsSystemActive(int inst);
 extern scrVmPub_t scrVmPub;
 extern void RemoveRefToValue(int type, VariableUnion value);
 static scr_func_t cod2xStopGameType;
+#if defined(DEBUG) && DEBUG
+static scr_func_t cod2xTestStart, cod2xTestStartReturn, cod2xTestStartUndefined;
+static scr_func_t cod2xTestConnect, cod2xTestConnectReturn;
+static scr_func_t cod2xTestMatchStart, cod2xTestMatchConnect, cod2xTestMatchStop;
+extern void Scr_AddExecEntThreadNum(int entnum, int classnum, scr_func_t handle, unsigned int paramcount);
+extern scr_thread_t Scr_ExecEntThreadNum(int entnum, int classnum, scr_func_t handle, unsigned int paramcount);
+#endif
 #endif
 extern BuiltinMethod ScriptEnt_GetMethod(const char **pName);
 extern BuiltinMethod HudElem_GetMethod(const char **pName);
@@ -750,6 +757,15 @@ qboolean GScr_Cod2xBeforeMapChange(qboolean shutdown, const char *source)
         return 0;
     }
     cod2xAllowOneMapChange = 0;
+#if defined(DEBUG) && DEBUG
+    if (cod2xTestMatchStop && Scr_IsSystemActive(1)) {
+        Scr_AddString(source);
+        Scr_AddBool(shutdown);
+        Scr_AddBool(complete);
+        Scr_AddBool(fromScript);
+        Scr_FreeThread(Scr_ExecThread(cod2xTestMatchStop, 4));
+    }
+#endif
     return 1;
 }
 #endif
@@ -759,6 +775,11 @@ void GScr_FreeScripts(void)
     int classnum;
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     cod2xStopGameType = 0;
+#if defined(DEBUG) && DEBUG
+    cod2xTestStart = cod2xTestStartReturn = cod2xTestStartUndefined = 0;
+    cod2xTestConnect = cod2xTestConnectReturn = 0;
+    cod2xTestMatchStart = cod2xTestMatchConnect = cod2xTestMatchStop = 0;
+#endif
 #endif
     for (classnum = 0; classnum < 4; classnum++) {
         Scr_RemoveClassMap(classnum);
@@ -1920,7 +1941,11 @@ static void GScr_GetAnimDeltaTimes(float *startTime, float *endTime)
 
 static inline __attribute__((always_inline)) int GScr_SecondsToMilliseconds(float seconds)
 {
+#if defined(COD2_APPLE_SDK)
+    return (int)__builtin_rintf(seconds * 1000.0f);
+#else
     return (int)floorf(seconds * 1000.0f + 0.5f);
+#endif
 }
 
 static void GScr_CleanDvarValue(const char *dvarValue, char *outString, int outLimit)
@@ -2966,14 +2991,66 @@ void Scr_LoadGameType(void)
     Scr_FreeThread((unsigned short)threadId);
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && defined(DEBUG) && DEBUG
+static void GScr_Cod2xTestReturn(const char *callback, const char *expectedType, int expectedInt)
+{
+    const char *type = Scr_GetTypeName(0);
+    if (!type || strcmp(type, expectedType))
+        Com_Error(ERR_DROP, "%s: expected type of return value to be '%s', got '%s'",
+                  callback, expectedType, type ? type : "NULL");
+    if (!strcmp(expectedType, "int")) {
+        int value = Scr_GetInt(0);
+        if (value != expectedInt)
+            Com_Error(ERR_DROP, "%s: expected return value to be %d, got %d", callback, expectedInt, value);
+    }
+}
+
+static void GScr_Cod2xTestStartGameType(void)
+{
+    if (cod2xTestStart && Scr_IsSystemActive(1)) {
+        Scr_AddString("hello from CoD2x");
+        Scr_FreeThread(Scr_ExecThread(cod2xTestStart, 1));
+    }
+    if (cod2xTestStartReturn && Scr_IsSystemActive(1)) {
+        Scr_AddString("hello from CoD2x");
+        Scr_AddExecThread(cod2xTestStartReturn, 1);
+        GScr_Cod2xTestReturn("gsc_test_onStartGameType", "int", 1337);
+    }
+    if (cod2xTestStartUndefined && Scr_IsSystemActive(1)) {
+        Scr_AddExecThread(cod2xTestStartUndefined, 0);
+        GScr_Cod2xTestReturn("gsc_test_onStartGameType", "undefined", 0);
+    }
+}
+
+static void GScr_Cod2xTestPlayerConnect(int number)
+{
+    if (cod2xTestConnect && Scr_IsSystemActive(1))
+        Scr_FreeThread(Scr_ExecEntThreadNum(number, 0, cod2xTestConnect, 0));
+    if (cod2xTestConnectReturn && Scr_IsSystemActive(1)) {
+        Scr_AddString("hello from CoD2x");
+        Scr_AddExecEntThreadNum(number, 0, cod2xTestConnectReturn, 1);
+        GScr_Cod2xTestReturn("gsc_test_onPlayerConnect", "int", 1338);
+    }
+    if (cod2xTestMatchConnect && Scr_IsSystemActive(1))
+        Scr_FreeThread(Scr_ExecEntThreadNum(number, 0, cod2xTestMatchConnect, 0));
+}
+#endif
+
 void Scr_StartupGameType(void)
 {
     unsigned int handle = g_scr_data.gametype.startupgametype;
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     {
+#if defined(DEBUG) && DEBUG
+        GScr_Cod2xTestStartGameType();
+#endif
         /* A match's first map starts the match before the mod's callback runs. */
         extern void SV_Cod2xMatchStartGameType(void);
         SV_Cod2xMatchStartGameType();
+#if defined(DEBUG) && DEBUG
+        if (cod2xTestMatchStart && Scr_IsSystemActive(1))
+            Scr_FreeThread(Scr_ExecThread(cod2xTestMatchStart, 0));
+#endif
     }
 #endif
     unsigned int threadId = Scr_ExecThread(handle, 0);
@@ -2982,6 +3059,9 @@ void Scr_StartupGameType(void)
 
 void Scr_PlayerConnect(gentity_t *self)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && defined(DEBUG) && DEBUG
+    GScr_Cod2xTestPlayerConnect(self->s.number);
+#endif
     unsigned int threadId = Scr_ExecEntThread(self, g_scr_data.gametype.playerconnect, 0);
     if (COD2_DEBUG_ENV("DBGSPAM"))
         Com_Printf("[team-trace] Scr_PlayerConnect ent=%p handle=%u thread=%u\n",
@@ -3509,7 +3589,11 @@ void Scr_PlayLoopedFX(void)
         cullDist = 0.0f;
 
     Scr_GetVector(2, pos);
+#if defined(COD2_APPLE_SDK)
+    repeat = (int)__builtin_rintf(Scr_GetFloat(1) * 1000.0f);
+#else
     repeat = (int)floorf(Scr_GetFloat(1) * 1000.0f + 0.5f);
+#endif
     if (repeat <= 0)
         Scr_Error(va("playLoopedFx called with %f s repeat (should be >= 0.0005s)\n", (double)repeat));
 
@@ -4283,7 +4367,11 @@ void ScrCmd_SetNormalHealth(scr_entref_t entref)
         normalHealth = 1.0f;
 
     if (ent->client) {
+#if defined(COD2_APPLE_SDK)
+        newHealth = (int)__builtin_rintf((float)ent->client->sess.maxHealth * normalHealth);
+#else
         newHealth = (int)floorf((float)ent->client->sess.maxHealth * normalHealth + 0.5f);
+#endif
         SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%i\"", 0x49, 0));
     } else if (ent->maxHealth) {
         newHealth = (int)((float)ent->maxHealth * normalHealth);
@@ -4469,7 +4557,11 @@ void GScr_ShellShock(scr_entref_t entref)
         return;
     }
 
+#if defined(COD2_APPLE_SDK)
+    duration = (int)__builtin_rintf(Scr_GetFloat(1) * 1000.0f);
+#else
     duration = (int)floorf(Scr_GetFloat(1) * 1000.0f + 0.5f);
+#endif
     if ((unsigned int)duration > 60000u)
         Scr_ParamError(1, va("duration %g should be >= 0 and <= 60", duration * 0.001f));
 
@@ -4816,6 +4908,16 @@ void GScr_LoadGameTypeScript(void)
     g_scr_data.gametype.playerdamage = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_PlayerDamage", 1);
     g_scr_data.gametype.playerkilled = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_PlayerKilled", 1);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#if defined(DEBUG) && DEBUG
+    cod2xTestStart = GScr_LoadScriptFunction("_callback_tests", "callback_test_onStartGameType", 1);
+    cod2xTestStartReturn = GScr_LoadScriptFunction("_callback_tests", "callback_test_onStartGameType2", 1);
+    cod2xTestStartUndefined = GScr_LoadScriptFunction("_callback_tests", "callback_test_onStartGameType3", 1);
+    cod2xTestConnect = GScr_LoadScriptFunction("_callback_tests", "callback_test_onPlayerConnect", 1);
+    cod2xTestConnectReturn = GScr_LoadScriptFunction("_callback_tests", "callback_test_onPlayerConnect2", 1);
+    cod2xTestMatchStart = GScr_LoadScriptFunction("_callback_match", "callback_match_onStartGameType", 1);
+    cod2xTestMatchConnect = GScr_LoadScriptFunction("_callback_match", "callback_match_onPlayerConnect", 1);
+    cod2xTestMatchStop = GScr_LoadScriptFunction("_callback_match", "callback_match_onStopGameType", 1);
+#endif
     cod2xStopGameType = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_StopGameType", 0);
 #endif
 }

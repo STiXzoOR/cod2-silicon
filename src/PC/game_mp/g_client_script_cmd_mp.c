@@ -1758,10 +1758,17 @@ extern void GScr_Cod2xMatchPlayerGetData(scr_entref_t entref);
 extern void GScr_Cod2xMatchPlayerSetData(scr_entref_t entref);
 extern void GScr_Cod2xMatchPlayerIsAllowed(scr_entref_t entref);
 
+#if defined(DEBUG) && DEBUG
+extern void GScr_Cod2xTestPlayerGetName(scr_entref_t entref);
+#endif
+
 /* Separate native table leaves the original builtin table and layout intact. */
 BuiltinMethod Player_Cod2xGetMethod(const char **pName, int *type)
 {
     static const BuiltinMethodDef extensionMethods[] = {
+#if defined(DEBUG) && DEBUG
+        { "test_playerGetName", (BuiltinMethod)GScr_Cod2xTestPlayerGetName, 0 },
+#endif
         { "getIp", (BuiltinMethod)PlayerCmd_Cod2xGetIp, 0 },
         { "getHWID", (BuiltinMethod)PlayerCmd_Cod2xGetHwid, 0 },
         { "getCDKeyHash", (BuiltinMethod)PlayerCmd_Cod2xGetDigest, 0 },

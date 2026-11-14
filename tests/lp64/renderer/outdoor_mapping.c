@@ -11,6 +11,7 @@
 #include "PC/gfx_d3d/rb_shade.c"
 
 r_global_permanent_t rgp;
+materialCommands_t tess;
 void *imp_rgp = &rgp;
 void *imp_backEnd;
 static dvar_t rendererDvar, awayBiasDvar, downBiasDvar;

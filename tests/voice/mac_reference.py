@@ -21,7 +21,10 @@ REFERENCE_SHA256 = '15efec53aa25a3bc686745edbb32ad4b565b9e82606e1cc5349c61753a70
 
 
 class MacReference:
-    def __init__(self, binary):
+    def __init__(self, binary, random_profile="darwin"):
+        if random_profile not in ("darwin", "windows_crt_normalized"):
+            raise ValueError("Unknown codec random profile")
+        self.random_profile = random_profile
         self.binary = Path(binary)
         data = self.binary.read_bytes()
         if hashlib.sha256(data).hexdigest() != REFERENCE_SHA256:
@@ -72,7 +75,25 @@ class MacReference:
         self.libc = ctypes.CDLL(None)
         self.libc.srand.argtypes = [ctypes.c_uint]
         self.libc.rand.restype = ctypes.c_int
+        self._seed_rand()
+
+    def _seed_rand(self):
+        self.random_state = 17
         self.libc.srand(17)
+
+    @staticmethod
+    def _project_windows_draw(draw):
+        # The immutable Mac decoder divides its imported rand by 2^31.
+        # Project the Windows float-normalized sample into that import range.
+        f32 = lambda value: struct.unpack('<f', struct.pack('<f', value))[0]
+        normalized = f32(draw * f32(1.0 / 32767.0))
+        return min(2147483647, round(normalized * 2147483648.0))
+
+    def _rand(self):
+        if self.random_profile == "darwin":
+            return self.libc.rand()
+        self.random_state = (self.random_state * 214013 + 2531011) & 0xffffffff
+        return self._project_windows_draw((self.random_state >> 16) & 32767)
 
     def alloc(self, size):
         result = self.heap
@@ -104,7 +125,7 @@ class MacReference:
             mu.mem_write(destination, bytes(mu.mem_read(source, length)))
             result = destination
         elif name == '_rand':
-            result = self.libc.rand()
+            result = self._rand()
         elif name == '_fprintf':
             pass  # Warning text has no codec state effect; calls are counted.
         elif name in ('_exp', '_cos', '_acos', '_sin', '_sqrt', '_log', '_floor'):
@@ -156,7 +177,12 @@ class MacReference:
         memmove = next(address for address, name in self.stubs.items() if name == '_memmove')
         self.call(memmove, data + 2, data, 8)
         assert bytes(self.mu.mem_read(data, 10)) == b'0101234567'
-        self.libc.srand(17)
+        if self.random_profile == "windows_crt_normalized":
+            f32 = lambda value: struct.unpack('<f', struct.pack('<f', value))[0]
+            for draw in range(32768):
+                projected = self._project_windows_draw(draw)
+                assert f32(f32(projected) / 2147483648.0) == f32(draw * f32(1.0 / 32767.0))
+        self._seed_rand()
         self.imports.clear()
 
     def decode(self, packets, enhancement):
@@ -166,7 +192,7 @@ class MacReference:
         assert self.call('__Z17speex_decoder_ctlPviS_', state, 0, option) == 0
         bits, output = self.alloc(36), self.alloc(640)
         self.call('__Z15speex_bits_initP9SpeexBits', bits)
-        self.libc.srand(17)
+        self._seed_rand()
         frames = []
         for index, packet in enumerate(packets):
             lost = packet == '-'
@@ -188,5 +214,8 @@ class MacReference:
 
     def metadata(self):
         return dict(binary_sha256=REFERENCE_SHA256, unicorn=unicorn.__version__,
-                    imports=dict(self.imports), self_test='passed',
-                    model='i386 SSE/x87; zeroing arena; host libm and libc rand seeded 17; warnings counted')
+                    imports=dict(self.imports), self_test='passed', random_profile=self.random_profile,
+                    model=('i386 SSE/x87; zeroing arena; host libm; ' +
+                           ('libc rand seeded 17' if self.random_profile == 'darwin' else
+                            'modeled Windows CRT seed 17 normalized into Mac rand import range') +
+                           '; warnings counted'))

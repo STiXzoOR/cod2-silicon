@@ -27,6 +27,7 @@ unsigned short Scr_ExecThread(unsigned int handle, unsigned int params)
 }
 void Scr_FreeThread(unsigned short thread) { assert(thread == ++frees); }
 void CalculateRanks(void) { assert(calls == 3); }
+void SV_Cod2xMatchStartGameType(void) { assert(calls == 2); }
 int BG_GetNumWeapons(void) { return 1; }
 WeaponDef *BG_GetWeaponDef(int index) { assert(index == 1); return &rifle; }
 void I_strncat(char *dest, int size, const char *src)

@@ -2,6 +2,7 @@
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <string.h>
+#include "cg_cod2x_spectator.h"
 
 extern const dvar_t *cg_debugPosition;
 extern const dvar_t *cg_headIconMinScreenRadius;
@@ -192,6 +193,12 @@ static void CG_PlayerFloatSprite(centity_t *cent, MaterialHandle material, float
     int drawFlags;
     float minScreenRadius;
 
+#if COD2X_SPECTATOR
+    float iconScale = CG_Cod2xHeadIconScale();
+    if (iconScale <= 0) return;
+    additionalRadiusSize = (additionalRadiusSize + 10) * iconScale - 10;
+    height += CG_Cod2xHeadOffset();
+#endif
     snap = (*(byte **)&cg->nextSnap);
 
     if (*(int *)(snap + 0x18) & 0xc00000) {
@@ -233,6 +240,9 @@ draw:
     rgbaColor[3] = 0xFF;
 
     minScreenRadius = cg_headIconMinScreenRadius->current.value;
+#if COD2X_SPECTATOR
+    minScreenRadius *= iconScale;
+#endif
     CL_DrawSprite(material, rgbaColor, origin, radius, minScreenRadius, drawFlags);
 }
 
@@ -274,6 +284,9 @@ void CG_PlayerSprites(centity_t *cent)
 
     {
         int headicon = cent->nextState.iHeadIcon;
+#if COD2X_SPECTATOR
+        if (CG_Cod2xHeadHidesNation(cent)) headicon = 0;
+#endif
         if (headicon) {
             int headiconTeam = cent->nextState.iHeadIconTeam;
             if (!headiconTeam || localTeam == 3 || localTeam == headiconTeam) {
@@ -283,6 +296,9 @@ void CG_PlayerSprites(centity_t *cent)
                     CG_PlayerFloatSprite(cent, material, ((*(const dvar_t **)(imp_cg_scriptIconSize))->current.value), 0,
                                          (Bool)((*(const dvar_t **)(imp_cg_constantSizeHeadIcons))->current.enabled));
                     additionalRadiusSize = 16.0f + ((*(const dvar_t **)(imp_cg_scriptIconSize))->current.value);
+#if COD2X_SPECTATOR
+                    additionalRadiusSize = 6.0f + (((*(const dvar_t **)(imp_cg_scriptIconSize))->current.value) + 10) * CG_Cod2xHeadIconScale();
+#endif
                     goto check_local_player;
                 }
             }
@@ -789,6 +805,9 @@ void CG_Player(centity_t *cent)
 
     ((GfxEntity *)body)->renderFxFlags = 0x80;
 
+#if COD2X_SPECTATOR
+    CG_Cod2xTagPlayer((GfxEntity *)body, obj, cent);
+#endif
     CG_AddCEntityToScene((const GfxEntity *)body, obj, cent);
 
 #if defined(COD2_X64)

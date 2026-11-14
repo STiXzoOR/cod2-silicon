@@ -9,7 +9,7 @@ Duty 2: no game content is included.
 
 ## Status
 
-The `0.3.0` release is playable on stock 1.3 and CoD2x 1.4 servers, with a
+Version `0.3.0` is playable on original 1.3 and CoD2x 1.4 servers, with a
 native launcher, server browser and Config Studio. Movement, firing, grenades, mounted
 turrets, HTTP mod downloads and round restarts have been tested, and every
 menu is opened by an automated sweep. The picture is compared with the
@@ -45,13 +45,8 @@ Existing Windows 1.3 data works as it is. See
 
 3. Move **CoD2 Silicon.app** to `/Applications` and open it.
 
-The app is ad-hoc signed and **not notarized**. On macOS 15 and later, open it
-once, then go to **System Settings → Privacy & Security → Open Anyway**.
-Alternatively, after verifying your download:
-
-```sh
-xattr -dr com.apple.quarantine "/Applications/CoD2 Silicon.app"
-```
+The app is signed with a Developer ID and notarized by Apple, so it opens
+like any other downloaded app.
 
 ### From source
 
@@ -67,47 +62,66 @@ Gatekeeper does not block it.
 
 ## First run and playing
 
-Open **CoD2 Silicon.app** to use the native SwiftUI launcher: Play, a server
-browser with favorites and recents, Config Studio, settings, demos/screenshots and update checks.
-It finds the game folder automatically or asks you
-to choose the folder containing `main/`. If no CD key is stored, it asks for
-yours and saves it in `~/.cod2/preferences`. Never share that file or your key.
-It builds the original shaders from the game's own shader sources, the way
-the Windows game does when it starts; this takes a few seconds, once. If that
-fails, it can use the shaders from a Steam Mac copy, and otherwise continues
-with approximate shaders. Configs, logs, demos, screenshots and the shader
-cache live in `~/Library/Application Support/CoD2 Silicon`.
+Open **CoD2 Silicon.app** to use Home, Servers, Library and Configs (⌘1–⌘4).
+Setup walks through your game data, CD key, shaders, name and display mode,
+then shows a Ready summary. It finds a game folder or lets you choose or drop
+one. A CD key can be skipped; servers need one. A verified key is stored in
+`~/.cod2/preferences`. Never share that file or your key.
 
-Use **Configs** to create and edit loadouts. Choose **Use for Next Game** to make a
-selected loadout active. Its **Settings** tab holds frame cap, mouse, audio and
-graphics controls; **Binds**, **Check-up** and **History** cover bindings, rule
-checks and earlier changes. **Settings** in the sidebar controls this Mac: game
-data, display, renderer, updates, privacy and advanced launch options.
+The app builds original shaders from your own game files. If that fails, you
+can choose a Steam Mac copy or continue with approximate shaders. Configs,
+logs, demos, screenshots and the shader cache live in
+`~/Library/Application Support/CoD2 Silicon`.
 
-The **Players** directory is not available yet. Shared setups need redistribution
-permission and a signed publication before they can appear. You can still bring
-in your own configs through import review.
+**Launch** (⌘↩) rejoins the last server, or the selected server when Servers
+is showing one. **Open Game Menu** (⇧⌘↩) opens the multiplayer menu. Servers
+has All, Favorites and Recent views, saved filters, and **Connect to Address…**
+(⌘L). A server using the other game version asks to switch for that match;
+your default version stays in Settings. While playing, the launcher keeps its
+Dock icon and can hide its windows. Home offers Return to Game and Quit Game.
 
-Use **Play** to enter the original multiplayer menus, or join from the launcher
-server browser. Quitting the game returns to the launcher; a game crash leaves
-the launcher open with a link to its crash report. You can also open a `cod2x://`
-server link (including while the game is running):
+**Settings** is a separate window, reached from the sidebar, app menu or ⌘,.
+Its seven panes cover the launcher, display, game data, privacy, updates,
+advanced launch options and About. Changes save automatically. The renderer
+is OpenGL; Metal controls are not shown in this release. New installs start borderless at the display’s native size up to 3840 × 2160,
+or half its width and height above that (2560 × 1440 on a 5K panel).
+A saved supported size stays as chosen. Display lists unique sizes in ascending
+order, limited to the selected panel’s native pixels; an unavailable saved size
+moves down to the largest fitting size, with an explanation in Settings.
+Larger sizes are sharper and slower, and anti-aliasing adds to the work.
+Borderless stretches the picture to the desktop; Full Screen shows the selected
+size pixel for pixel. The other defaults are a 250 fps cap, vertical sync off
+and raw mouse input.
+
+**Configs** holds loadouts: frame cap, mouse, audio, graphics and binds, plus
+Check-up and History. Create, duplicate, rename, export or delete an unused
+loadout with Undo; **Use for Next Game** selects the one the game will read.
+Home also has a loadout picker. The Players directory stays hidden until a
+signed directory is available. Import from a file, link or clipboard still
+works, with review before anything is applied. Configs is read-only during a game.
+
+**Library** keeps Matches, Demos and Screenshots. Match summaries stay on this
+Mac and open Check-up for that match. Check-up shows freezes over 0.1 s,
+the longest and the recorded times; older summaries still show the worst frame.
+Each game session also keeps a private, filtered output log under `logs` beside
+`main`: the last 10 sessions, at most 4 MiB each and 20 MiB total. Passwords and
+CD keys are filtered before writing. **Settings → Advanced → Logs → Show in
+Finder** selects the latest session. These logs are never sent automatically. Demos can be played, renamed, copied
+or moved to the Trash with Undo. Screenshots support Quick Look, Copy Image
+and Share. **Jump to…** (⌘K) finds servers, loadouts, Settings and actions;
+in Configs it finds game settings.
+
+A `cod2x://` join link opens Connect to Address for review before Launch;
+pasted `cod2://` links work too. For example:
 
 ```sh
 open -a "/Applications/CoD2 Silicon.app" 'cod2x://connect/127.0.0.1:28960'
 ```
 
-For a direct CLI launch, run the app executable with `--play`. Append
-`--exit-after-game` to close the launcher when the game quits, or pass trusted
-engine arguments after `--`. Choose resolution, fullscreen mode and vsync in
-sidebar **Settings**. Change frame cap, mouse and audio in your **Configs**
-loadout. Metal options remain marked as upcoming.
-
 Replace the address with your server. For a source install, use the app under
-`~/Applications` instead. The default settings target 1080p fullscreen,
-a 250 fps cap, vsync off and raw mouse input. The cap can be set anywhere from
-0 (no cap) to 1000. Competitive CoD2x servers enforce their own 125–250 fps
-caps.
+`~/Applications`. For direct CLI launch, run the executable with `--play`;
+append `--exit-after-game` to close the launcher when the game quits, or pass
+trusted engine arguments after `--`.
 
 ## What the app sends
 
@@ -120,10 +134,18 @@ caps.
   or, when that fails, plain UDP. CoD2x servers you join receive your hardware
   ID hash. zPAM files a server needs are downloaded from the CoD2x project's
   site.
-- **With the original 1.3 chosen** in **Settings → Game → Version**, the game
-  sends nothing to the CoD2x project.
-- **The launcher** contacts GitHub when you check for updates, install one, or
-  download the CoD2x files, and asks both master servers for its server list.
+- **With the original 1.3 running**, the game sends nothing to the CoD2x
+  project. **Settings → General → Game version** sets your default; joining
+  a server can use the other version for that match.
+- **The launcher** contacts GitHub when you check for updates (once a day while
+  it is open, unless you turn off **Settings → Updates → Check for updates
+  automatically**), install one, or download the CoD2x files. It asks both
+  master servers when you refresh the server list or enable refresh on opening
+  Servers, and asks a single server when you type its address in **Connect to
+  Address**. Passwords you choose to remember stay in your keychain on this Mac
+  and are sent only to that server. **Settings → Privacy** lists these contacts.
+- **Report a Problem** opens a prefilled issue in your browser; the app sends
+  nothing itself.
 - **Crash reports** are sent only if you turn a switch on in **Settings →
   Privacy**. Your CD key is never part of one.
 
@@ -135,8 +157,9 @@ caps.
   recording in place of a microphone, not yet with a real one, and the level
   meter in the options moves only while you are sending. Device changes while
   talking are not handled.
-- The launcher skips the intro videos. `cinematic cod_intro` in the console
-  plays the intro film.
+- The intro videos play once, the first time a new player launches to the
+  game menu, as in the original; any key skips each part. `cinematic
+  cod_intro` in the console plays the intro film again.
 - The native dedicated server is available from source; see the
   [server guide](docs/server.md).
 - Frame-pacing hitches remain; active Game Mode and quiet-desktop display

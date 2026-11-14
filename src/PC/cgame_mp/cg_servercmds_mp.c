@@ -1,5 +1,8 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
+#if defined(COD2_APPLE_SDK)
+#include "PC/universal/windows_number.h"
+#endif
 #include "imports.h"
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
@@ -120,7 +123,11 @@ void CG_ExecuteNewServerCommands(int latestSequence);
 #if defined(COD2_X64)
 static int CG_SoundFadeTime(float seconds)
 {
+#if defined(COD2_APPLE_SDK)
+    float rounded = __builtin_rintf(seconds * 1000.0f);
+#else
     float rounded = floorf(seconds * 1000.0f + 0.5f);
+#endif
 
     /* Mac's cvttss2si yields INT_MIN for invalid conversions, then clamps to 0.
      * Integral floats in this range survive its int/float/int round trip. */
@@ -677,9 +684,15 @@ void CG_ParseFog(void)
     transitionTime = atoi(token);
 
     CL_SetFog(1, start, (float)halfDist_d,
+#if defined(COD2_APPLE_SDK)
+              (int)(unsigned char)(int)Q_WindowsScaleDoubleToInt(val4_d, 255),
+              (int)(unsigned char)(int)Q_WindowsScaleDoubleToInt(val5_d, 255),
+              (int)(unsigned char)(int)Q_WindowsScaleDoubleToInt(val6_d, 255),
+#else
               (int)(unsigned char)(int)floorf((float)val4_d * 255.0f + 0.5f),
               (int)(unsigned char)(int)floorf((float)val5_d * 255.0f + 0.5f),
               (int)(unsigned char)(int)floorf((float)val6_d * 255.0f + 0.5f),
+#endif
               (float)val3_d);
 
     CL_SwitchFog(1, cg->time, transitionTime);

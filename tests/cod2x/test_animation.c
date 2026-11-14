@@ -15,7 +15,7 @@ typedef struct {
     int flags;
     int64_t movetype;
 } animation_t;
-typedef struct { animation_t *animation; int animationTime; float yawAngle; } lerpFrame_t;
+typedef struct { animation_t *animation; int animationTime; float yawAngle, pitchAngle; } lerpFrame_t;
 typedef struct {
     XAnimTree_s *pXAnimTree;
     int clientNum;
@@ -24,7 +24,7 @@ typedef struct {
     float lerpMoveDir, lerpLean;
     int clientConditions[9][2];
 } clientInfo_t;
-typedef struct { int eFlags, legsAnim; } entityState_t;
+typedef struct { int eFlags, legsAnim; float fTorsoHeight, fTorsoPitch, fWaistPitch; } entityState_t;
 typedef struct {
     int time, anim_user;
     struct { animation_t animations[2]; } animScriptData;
@@ -43,13 +43,8 @@ enum {
     ANIM_MT_STUMBLE_CROUCH_FORWARD = 39, ANIM_MT_STUMBLE_CROUCH_BACKWARD = 40
 };
 
-static float AngleNormalize180(float angle)
-{
-    angle = fmodf(angle + 180.0f, 360.0f);
-    if (angle < 0.0f)
-        angle += 360.0f;
-    return angle - 180.0f;
-}
+
+static float GetLeanFraction(float value) { return value; }
 
 #include "../../src/PC/bgame/cod2x_animation.h"
 
@@ -79,7 +74,7 @@ int main(void)
     state = BG_Cod2xState(&ci);
     assert(ci.legs.animationTime == 200 && state->stance == 1 && state->stanceDuration == 200);
     BG_Cod2xBlendTime(&ci, &ci.legs, &crouch, &prone);
-    assert(ci.legs.animationTime == 232 && state->stance == 2 && state->stanceDuration == 400);
+    assert(ci.legs.animationTime == 231 && state->stance == 2 && state->stanceDuration == 400);
     BG_Cod2xBlendTime(&ci, &ci.legs, &prone, &crouch);
     assert(ci.legs.animationTime == 400 && state->stance == 3);
     BG_Cod2xBlendTime(&ci, &ci.legs, &crouch, &stand);
@@ -129,7 +124,31 @@ int main(void)
     assert(server != state && server->stance == 0);
     world.anim_user = 0;
     world.time = 50;
-    assert(BG_Cod2xState(&ci)->stance == 0); /* time rewind/demo reset */
-    puts("cod2x: stance timing, posture, diagonal alignment, state reset tests passed");
+    printf("persistent controller stance across rewind: %d\n", BG_Cod2xState(&ci)->stance);
+    fflush(stdout);
+    assert(BG_Cod2xState(&ci)->stance == 2);
+    ci.pXAnimTree = NULL;
+    assert(BG_Cod2xState(&ci)->stance == 2);
+    /* Full prone lean changes the live transition interval without a new move key. */
+    Cod2x_ResetAnimation();
+    memset(goals, 0, sizeof(goals));
+    es.eFlags = 8; ci.lerpLean = 0;
+    world.animScriptData.animations[0].flags = 0x10;
+    world.time = 100;
+    BG_Cod2xControllerGoals(&es, &ci, goals, 0, state);
+    assert(state->movementDuration == 150);
+    world.time = 175; ci.lerpLean = .25f;
+    BG_Cod2xControllerGoals(&es, &ci, goals, .25f, state);
+    printf("prone side interval at full lean: %d\n", state->movementDuration);
+    assert(state->movementDuration == 400);
+    assert(state->movementEnd == 250);
+
+    memset(&ci, 0, sizeof(ci));
+    memset(&es, 0, sizeof(es));
+    es.fTorsoPitch = 10.001f;
+    float lean;
+    BG_Cod2xBaseControllerGoals(&es, &ci, goals, &lean);
+    assert(goals[0][0] == 9.99755859375f && goals[5][0] == -9.99755859375f);
+    puts("cod2x: stance timing, posture, diagonal alignment, persistent state, live interval and quantized controller tests passed");
     return 0;
 }

@@ -1,5 +1,6 @@
 /* Exercise production 2D matrix setup without a window or GL context. */
 #include "common_types.h"
+#include "PC/gfx_d3d/r_log.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -10,6 +11,8 @@ static materialCommands_t tess;
 static DxGlobals dx;
 static void *dx_g = &dx;
 static int alwaysfails;
+int R_LogEnabled(void) { return 0; }
+void R_LogPrintf(const char *format, ...) { (void)format; abort(); }
 static dvar_t renderer;
 static const dvar_t *r_rendererInUse = &renderer;
 static GfxViewport viewport;

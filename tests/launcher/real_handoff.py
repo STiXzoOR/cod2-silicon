@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Real-engine hand-offs through LaunchServices Play, Deploy and cold URLs."""
+"""Real-engine hand-offs through LaunchServices Play, Launch and cold URLs."""
 import argparse
 import json
 import os
@@ -46,15 +46,15 @@ for bundle, bundle_id in ((test_app, identifier),
 for bundle in (test_app / 'Contents/Helpers/CoD2 Game.app', test_app):
     subprocess.run(['codesign', '--force', '--sign', '-', str(bundle)], check=True)
 app = test_app
-probe, state_tool = out / 'deploy-probe.dylib', out / 'window-state'
+probe, state_tool = out / 'launch-probe.dylib', out / 'window-state'
 subprocess.run(['taskpolicy', '-b', 'nice', '-n', '19', 'clang', '-dynamiclib', '-fobjc-arc', '-mmacosx-version-min=26.0',
-                str(ROOT / 'tests/launcher/deploy_probe.m'), '-framework', 'AppKit', '-o', str(probe)], check=True)
+                str(ROOT / 'tests/launcher/launch_probe.m'), '-framework', 'AppKit', '-o', str(probe)], check=True)
 subprocess.run(['taskpolicy', '-b', 'nice', '-n', '19', 'swiftc', str(ROOT / 'tests/platform/window_state.swift'), '-o', str(state_tool)], check=True)
 unregister = '/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister'
 results = []
 try:
     for cycle in range(a.cycles):
-        for route in ('play', 'deploy', 'url'):
+        for route in ('play', 'launch', 'url'):
             subprocess.run(['pgrep', '-fl', 'cod2_macos'], check=False)
             if subprocess.run(['pgrep', '-x', 'cod2_macos'], capture_output=True).returncode != 1:
                 raise RuntimeError('A game is already running; no process was changed')
@@ -73,7 +73,7 @@ try:
                                COD2_QA_WINDOW_TRACE=str(case / 'launcher-windows.jsonl'),
                                COD2_QA_CURSOR_PATH=str(cursor), DYLD_INSERT_LIBRARIES=str(probe))
             environment.pop('COD2_MAC_SHADER_CACHE', None)
-            if route == 'deploy': environment['COD2_QA_DEPLOY'] = '1'
+            if route == 'launch': environment['COD2_QA_LAUNCH'] = '1'
             forwarded = ['--', '+set', 'r_fullscreen', '1', '+set', 'r_borderless', '1',
                          '+set', 'r_mode', '1280x720', '+set', 'developer', '1',
                          '+set', 'com_introPlayed', '1', '+set', 'net_port', '29936']
@@ -115,7 +115,7 @@ try:
                            '--stdout', str(log), '--stderr', str(log)]
                 for key in ('CFFIXED_USER_HOME', 'HOME', 'COD2_SETUP_NONINTERACTIVE',
                             'COD2_SETUP_GAME_DIR', 'COD2_SETUP_MAC_BINARY', 'COD2_SETUP_CD_KEY',
-                            'COD2_QA_CURSOR_PATH', 'COD2_QA_WINDOW_TRACE', 'COD2_QA_DEPLOY',
+                            'COD2_QA_CURSOR_PATH', 'COD2_QA_WINDOW_TRACE', 'COD2_QA_LAUNCH',
                             'DYLD_INSERT_LIBRARIES'):
                     if key in environment: command += ['--env', key + '=' + environment[key]]
                 if route == 'url': command.append('cod2x://connect/127.0.0.1:29937')
@@ -133,8 +133,8 @@ try:
                 game_state = state(child)
                 assert game_state['windows'], 'Active game has no visible window'
                 assert json.loads(cursor.read_text()) == dict(system_cursor_hidden=True, relative_mouse=True)
-                if route == 'deploy':
-                    assert '[deploy-probe] invoked Deploy menu action' in log.read_text(errors='replace')
+                if route == 'launch':
+                    assert '[launch-probe] invoked Launch menu action' in log.read_text(errors='replace')
                 if route == 'url':
                     wait_for(lambda: '127.0.0.1:29937' in log.read_text(errors='replace'), 10)
                 subprocess.run(['screencapture', '-x', '-C', str(case / 'game.png')], check=True)

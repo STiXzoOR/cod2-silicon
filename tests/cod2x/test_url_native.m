@@ -38,10 +38,11 @@ int main(void)
             assert(!gamePath[0]); /* Explicit prepared launch paths win. */
         }
         Cod2xNativeURL_Install();
+#if defined(COD2_CODX) && COD2_CODX
         assert(Cod2xNativeURL_Queue("cod2x://%2Bconnect%20localhost/"));
         assert(!Cod2xNativeURL_Queue("cod2x://%2Bquit/"));
         Cod2xNativeURL_Frame();
-        assert(queueCount == 1 && !strcmp(queued, "password \"\"\nconnect localhost\n"));
+        assert(queueCount == 1 && !strcmp(queued, "connect localhost\n"));
         Cod2xNativeURL_Frame();
         assert(queueCount == 1);
         NSObject *handler = [[NSClassFromString(@"Cod2xURLHandler") alloc] init];
@@ -52,6 +53,12 @@ int main(void)
         [handler openURL:event reply:nil];
         Cod2xNativeURL_Frame();
         assert(queueCount == 2 && !strcmp(queued, "password \"pivo\"\nconnect localhost:28960\n"));
+#else
+        assert(!Cod2xNativeURL_Queue("cod2x://%2Bconnect%20localhost/"));
+        Cod2xNativeURL_Frame();
+        assert(queueCount == 0);
+        assert(NSClassFromString(@"Cod2xURLHandler") == nil);
+#endif
         Cod2xNativeURL_Shutdown();
         puts("cod2x native AppleEvent decoding and command queue passed");
     }

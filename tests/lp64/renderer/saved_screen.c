@@ -41,6 +41,12 @@ bool CDirect3DSurface_IsDirty(const CDirect3DSurface *s) { return 0; }
 void CDirect3DSurface_SetDirty(void *s, int dirty) { }
 void CDirect3DSurface_MarkGPUWritten(void *s) { }
 void CDirect3DSurface_UpdateOpenGLSurfaceObject(const CDirect3DSurface *s, int recreate) { }
+HRESULT CDirect3DSurface_BindFloatTarget(void *surface)
+{
+    /* This fixture uses ordinary RGBA surfaces, never the float prepass. */
+    (void)surface;
+    abort();
+}
 static GLenum FixtureBuffer(GLenum buffer)
 {
     /* The production context maps its BACK/AUX buffers to FBO attachments. */

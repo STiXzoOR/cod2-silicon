@@ -29,7 +29,7 @@ static const dvar_t *cod2x_revision, *cod2x_identity;
 static char cod2x_hwid[33];
 static int cod2x_playing, cod2x_demo;
 #if defined(COD2_X64) && COD2_X64
-static int cod2x_serverActive, cod2x_remotePolicy;
+static int cod2x_serverActive, cod2x_remotePolicy, cod2x_dedicated;
 #endif
 
 int Cod2x_GameVersion(void)
@@ -43,7 +43,7 @@ int Cod2x_GameVersion(void)
 
 int Cod2x_Competitive(void)
 {
-    return cod2x_playing && !cod2x_demo && Cod2x_GameVersion() > 0 &&
+    return cod2x_playing && !cod2x_demo &&
            cod2x_competitive && cod2x_competitive->current.enabled;
 }
 
@@ -62,14 +62,32 @@ static void Cod2x_SharedInit(int dedicated)
 {
     if (cod2x_game)
         return;
-    cod2x_game = Dvar_RegisterInt("g_cod2x", 0, 0, COD2X_REVISION, 0x18);
-    cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, dedicated ? 0x1008 : 0x18);
+    cod2x_game = Dvar_RegisterInt("g_cod2x", 0, 0, COD2X_REVISION,
+#ifdef DEBUG
+                                  0x08);
+#else
+                                  0x18);
+#endif
+    cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, dedicated ? 0x1008 : 0x1018);
+    Dvar_RegisterInt("sv_playerBroadcastLimit", 15, 0, 64, 0x1000);
+    Dvar_RegisterBool("g_shotgun_spread_fix", 1, 0x1080);
+#if defined(DEBUG) && DEBUG
+    extern void GScr_Cod2xDebugInit(void);
+    GScr_Cod2xDebugInit();
+#endif
 }
 
 void Cod2x_ServerInit(int dedicated)
 {
     /* Dedicated startup has no client identity, features, or connection state. */
     Cod2x_SharedInit(dedicated);
+    cod2x_dedicated = dedicated;
+    if (dedicated) {
+        ((dvar_t *)cod2x_game)->domain.integer.min = COD2X_HOST_REVISION;
+        ((dvar_t *)cod2x_game)->domain.integer.max = COD2X_HOST_REVISION;
+        Dvar_SetInt(cod2x_game, COD2X_HOST_REVISION);
+        ((dvar_t *)cod2x_game)->modified = 0;
+    }
     /* A server sends what an earlier crash left for CoD2x too (CoD2x linux/exception.cpp). */
     Cod2x_ReportInit();
 #if defined(DEDICATED)
@@ -98,19 +116,17 @@ void Cod2x_ServerSpawn(void)
     ((dvar_t *)cod2x_game)->domain.integer.min = COD2X_HOST_REVISION;
     ((dvar_t *)cod2x_game)->domain.integer.max = COD2X_HOST_REVISION;
     Dvar_SetInt(cod2x_game, COD2X_HOST_REVISION);
-    Cod2x_ResetAnimation();
 }
 
 void Cod2x_ServerShutdown(void)
 {
     cod2x_serverActive = 0;
     cod2x_remotePolicy = 0;
-    if (cod2x_game) {
+    if (cod2x_game && !cod2x_dedicated) {
         ((dvar_t *)cod2x_game)->domain.integer.min = 0;
         ((dvar_t *)cod2x_game)->domain.integer.max = COD2X_REVISION;
         Dvar_SetInt(cod2x_game, 0);
     }
-    Cod2x_ResetAnimation();
 }
 
 int Cod2x_SetClientDvar(const char *name, const char *value)
@@ -136,7 +152,7 @@ void Cod2x_Init(void)
     Cod2x_SharedInit(0);
 #else
     cod2x_game = Dvar_RegisterInt("g_cod2x", 0, 0, COD2X_REVISION, 0x18);
-    cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, 0x18);
+    cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, 0x1018);
 #endif
     cod2x_revision = Dvar_RegisterInt("protocol_cod2x", COD2X_REVISION, COD2X_REVISION, COD2X_REVISION, 0x42);
     Dvar_RegisterString("cl_cod2x_version", COD2X_VERSION, 0x40);
@@ -223,22 +239,22 @@ void Cod2x_PrepareConnect(void)
     Dvar_SetString(cod2x_identity, cod2x_hwid);
 }
 
-/* Only the limits are restored: like CoD2x, the user keeps the applied values.
-   Preserve each original domain/type instead of assuming renderer dvar types. */
+/* competitive.cpp restores fixed lower limits, not the domains present on entry.
+   Network upper limits survive both transitions; only FPS and booleans replace
+   their upper bound. Applied values remain after the restrictions are lifted. */
 static struct {
     const char *name;
-    int min, max, value;
+    int min, max, value, restoredMin;
+    int boolean;
     const dvar_t *var;
-    DvarLimits domain;
-    byte type;
 } cod2x_settings[] = {
     { .name = "com_maxfps", .min = 125, .max = 250, .value = 250 },
-    { .name = "rate", .min = 25000, .max = 25000, .value = 25000 },
-    { .name = "snaps", .min = 40, .max = 40, .value = 40 },
-    { .name = "cl_maxpackets", .min = 125, .max = 125, .value = 125 },
-    { .name = "sc_enable", .min = 0, .max = 0, .value = 0 },
-    { .name = "fx_sort", .min = 1, .max = 1, .value = 1 },
-    { .name = "mss_q3fs", .min = 1, .max = 1, .value = 1 }
+    { .name = "rate", .min = 25000, .value = 25000, .restoredMin = 1000 },
+    { .name = "snaps", .min = 40, .value = 40, .restoredMin = 1 },
+    { .name = "cl_maxpackets", .min = 125, .value = 125, .restoredMin = 10 },
+    { .name = "sc_enable", .value = 0, .boolean = 1 },
+    { .name = "fx_sort", .min = 1, .max = 1, .value = 1, .boolean = 1 },
+    { .name = "mss_q3fs", .min = 1, .max = 1, .value = 1, .boolean = 1 }
 };
 
 void Cod2x_Frame(int active, int demo)
@@ -250,32 +266,38 @@ void Cod2x_Frame(int active, int demo)
 #if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2x_FeaturesFrame(active, demo);
 #endif
-    competitive = Cod2x_Competitive();
+    if (!cod2x_competitive || !cod2x_competitive->modified)
+        return;
+    ((dvar_t *)cod2x_competitive)->modified = 0;
+    if (demo)
+        Dvar_SetBool(cod2x_competitive, 0);
+    competitive = cod2x_competitive->current.enabled;
     /* CoD2x src/mss32/competitive.cpp:54-135. */
     for (i = 0; i < sizeof(cod2x_settings) / sizeof(cod2x_settings[0]); ++i) {
         dvar_t *var;
+        if (!cod2x_settings[i].var)
+            cod2x_settings[i].var = Dvar_FindVar(cod2x_settings[i].name);
+        if (!cod2x_settings[i].var)
+            continue;
+        var = (dvar_t *)cod2x_settings[i].var;
         if (competitive) {
-            if (!cod2x_settings[i].var) {
-                cod2x_settings[i].var = Dvar_FindVar(cod2x_settings[i].name);
-                if (!cod2x_settings[i].var)
-                    continue;
-                cod2x_settings[i].domain = cod2x_settings[i].var->domain;
-                cod2x_settings[i].type = cod2x_settings[i].var->type;
-            }
-            var = (dvar_t *)cod2x_settings[i].var;
             {
-                int wasBool = var->type == 0;
-                var->type = 5; /* DVAR_TYPE_INT */
+                if (cod2x_settings[i].boolean)
+                    var->type = 5; /* DVAR_TYPE_INT */
                 var->domain.integer.min = cod2x_settings[i].min;
-                var->domain.integer.max = cod2x_settings[i].max;
-                if (wasBool || var->current.integer < cod2x_settings[i].min ||
-                    var->current.integer > cod2x_settings[i].max)
+                if (i == 0 || cod2x_settings[i].boolean)
+                    var->domain.integer.max = cod2x_settings[i].max;
+                if (i == 0 ? (var->current.integer < 125 || var->current.integer > 250)
+                           : var->current.integer != cod2x_settings[i].value)
                     Dvar_SetInt(var, cod2x_settings[i].value);
             }
         } else if (cod2x_settings[i].var) {
             var = (dvar_t *)cod2x_settings[i].var;
-            var->domain = cod2x_settings[i].domain;
-            var->type = cod2x_settings[i].type;
+            var->domain.integer.min = cod2x_settings[i].restoredMin;
+            if (i == 0)
+                var->domain.integer.max = 1000;
+            if (cod2x_settings[i].boolean)
+                var->type = 0; /* DVAR_TYPE_BOOL */
             cod2x_settings[i].var = 0;
         }
     }
@@ -283,24 +305,18 @@ void Cod2x_Frame(int active, int demo)
 
 void Cod2x_Disconnect(void)
 {
+    if (cod2x_competitive)
+        Dvar_SetBool(cod2x_competitive, 0);
     Cod2x_Frame(0, 0);
-#if defined(COD2_X64) && COD2_X64
-    if (cod2x_serverActive)
-        Cod2x_ResetClientAnimation();
-    else
-#endif
-    Cod2x_ResetAnimation();
 #if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2x_IwdSystemInfo("");
 #endif
 #if defined(COD2_X64) && COD2_X64
     cod2x_remotePolicy = 0;
-    if (cod2x_serverActive)
+    if (cod2x_serverActive || cod2x_dedicated)
         return;
 #endif
     if (cod2x_game)
         Dvar_SetInt(cod2x_game, 0);
-    if (cod2x_competitive)
-        Dvar_SetBool(cod2x_competitive, 0);
 }
 #endif

@@ -83,7 +83,7 @@ void *imp_riflePriorityMap = riflePriority;
 static weaponParms params;
 static WeaponDef weapon;
 static float tape[64];
-static int randomCalls, traceCalls, damageCalls, triggerCalls;
+static int randomCalls, originalRandomCalls, dllRandomCalls, traceCalls, damageCalls, triggerCalls;
 static int linkCalls, unlinkCalls, historyCalls, lagged, glass;
 static int tracePassEntity;
 static vec3_t tracedEnds[32], tracedStarts[32], damagePoints[32];
@@ -93,8 +93,18 @@ static const float historical[3] = {11.0f, 22.0f, 33.0f};
 float randomf(void)
 {
     assert(randomCalls < 64);
+    ++originalRandomCalls;
     return tape[randomCalls++];
 }
+
+#if defined(COD2_CODX) && COD2_CODX
+float Cod2x_CrtRandomf(void)
+{
+    assert(randomCalls < 64);
+    ++dllRandomCalls;
+    return tape[randomCalls++];
+}
+#endif
 
 const vec_t Vec3Normalize(vec_t *v)
 {
@@ -231,7 +241,7 @@ static void Reset(int count, int enabled, float range, int rotatedBasis, int use
     memset(&weapon, 0, sizeof(weapon));
     memset(&params, 0, sizeof(params));
     memset(&level, 0, sizeof(level));
-    randomCalls = traceCalls = damageCalls = triggerCalls = 0;
+    randomCalls = originalRandomCalls = dllRandomCalls = traceCalls = damageCalls = triggerCalls = 0;
     linkCalls = unlinkCalls = historyCalls = glass = 0;
     lagged = useLag;
     tracePassEntity = 4;
@@ -317,6 +327,14 @@ static void VerifyDispatch(int count, int patterned, int quarterTurns, int varia
                 count, patterned, expectedCalls, randomCalls);
         abort();
     }
+#if defined(COD2_CODX) && COD2_CODX
+    if (weapon.weapClass == WEAPCLASS_SPREAD)
+        assert(dllRandomCalls == expectedCalls && originalRandomCalls == 0);
+    else
+        assert(originalRandomCalls == expectedCalls && dllRandomCalls == 0);
+#else
+    assert(originalRandomCalls == expectedCalls && dllRandomCalls == 0);
+#endif
     assert(traceCalls == count && damageCalls == count && triggerCalls == count);
     for (int i = 0; i < count; ++i) {
         double end[3], distanceSquared = 0;
@@ -435,7 +453,13 @@ int main(void)
     glass = 1;
     Bullet_Fire((gentity_s (*)[16])&entities[0], 6.0f, &params,
                 (gentity_s (*)[16])&entities[4], level.time - 25);
-    assert(randomCalls == 2 && traceCalls == 2 && triggerCalls == 2 && damageCalls == 1);
+    assert(randomCalls == 2);
+#if defined(COD2_CODX) && COD2_CODX
+    assert(dllRandomCalls == 2 && originalRandomCalls == 0);
+#else
+    assert(originalRandomCalls == 2 && dllRandomCalls == 0);
+#endif
+    assert(traceCalls == 2 && triggerCalls == 2 && damageCalls == 1);
     assert(!memcmp(tracedEnds[0], tracedEnds[1], sizeof(vec3_t)));
     assert(tracedStarts[1][0] > tracedStarts[0][0]);
     assert(damageFlags[0] == 0 && damageMods[0] == 1 && damageOffsets[0] == 25);

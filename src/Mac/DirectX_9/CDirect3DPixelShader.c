@@ -1,3 +1,6 @@
+#if defined(COD2_X64) && !defined(DEDICATED)
+#include "PC/qcommon/frame_activity.h"
+#endif
 #include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
@@ -300,7 +303,15 @@ void COpenGLATITextFragmentShader_COpenGLATITextFragmentShader(const COpenGLATIT
     glGetProgramivARB(0x8200, 0x8677, &previousProgram);
     glGenProgramsARB(1, &shader->programId);
     glBindProgramARB(0x8200, shader->programId);
+#if defined(COD2_X64) && !defined(DEDICATED)
+    {
+        FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
     glProgramStringARB(0x8200, 0x8875, (GLsizei)strlen((const char *)pSrcData), pSrcData);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        FRAME_ACTIVITY_END(FRAME_PROGRAM_UPLOAD, activityStart);
+    }
+#endif
     glBindProgramARB(0x8200, (GLuint)previousProgram);
 #else
     COpenGLATITextFragmentShaderImpl *shader;
@@ -612,8 +623,16 @@ void COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(const COpenGLARBFragmen
 
     glGenProgramsARB(1, &program->programId);
     glBindProgramARB(0x8804, program->programId);
+#if defined(COD2_X64) && !defined(DEDICATED)
+    {
+        FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
     glProgramStringARB(0x8804, 0x8875 ,
                        codeLen, codeStr);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        FRAME_ACTIVITY_END(FRAME_PROGRAM_UPLOAD, activityStart);
+    }
+#endif
 
     {
         int errorPos = 0;

@@ -1,13 +1,56 @@
 #include "common_types.h"
 #include "imports.h"
+#include <stdint.h>
 
 extern void *Material_Alloc(int size);
 extern void GaussianRandom(float *real, float *imag);
 extern GfxImage * R_CreateWaterMap(char *name, int imageWidth, int imageHeight);
 extern const char *va(const char *fmt, ...);
 extern double exp(double x);
+extern double log(double x);
 extern float fabsf(float x);
 extern float sqrtf(float x);
+
+#if defined(COD2_X64)
+/* Windows' renderer DLL owns its CRT random stream independently of the game.
+ * Its per-thread seed starts at 1 (100fb56c), and no renderer code calls srand.
+ * Cloud construction and water setup are the only reachable consumers. */
+static unsigned int s_rendererRandomGeneration;
+
+void R_ResetRendererRandom(void)
+{
+    /* CL_ShutdownRef unloads that DLL; GetRefAPI starts its next lifetime.
+     * A generation also resets any surviving native worker's private stream. */
+    ++s_rendererRandomGeneration;
+}
+
+int R_RendererRandom(void)
+{
+    static _Thread_local unsigned int generation;
+    static _Thread_local uint32_t state = 1;
+    if (generation != s_rendererRandomGeneration) {
+        generation = s_rendererRandomGeneration;
+        state = 1;
+    }
+    state = state * UINT32_C(214013) + UINT32_C(2531011);
+    return (int)((state >> 16) & UINT32_C(32767));
+}
+
+static void R_WaterGaussianRandom(float *real, float *imag)
+{
+    float s1, s2, w;
+    do {
+        s1 = ((float)R_RendererRandom() / 32768.0f) * 2.0f - 1.0f;
+        s2 = ((float)R_RendererRandom() / 32768.0f) * 2.0f - 1.0f;
+        w = s1 * s1 + s2 * s2;
+    } while (w > 1.0f);
+    /* 100587f0 stores log(w), the quotient and sqrt back to float. */
+    float logW = (float)log((double)w);
+    float scale = sqrtf((-2.0f * logW) / w);
+    *real = s1 * scale;
+    *imag = s2 * scale;
+}
+#endif
 
 #ifndef M_PI
 #    define M_PI 3.14159265358979323846
@@ -90,7 +133,11 @@ void R_CreateWaterSetup(const water_t *source, int waterMapSetupIndex, water_t *
         for (m = -(M / 2); m < M / 2; m++) {
             ky = (float)m * m_scale;
 
+#if defined(COD2_X64)
+            R_WaterGaussianRandom(&E_real, &E_imag);
+#else
             GaussianRandom(&E_real, &E_imag);
+#endif
 
             k_sq = kx * kx + ky * ky;
             k = sqrtf(k_sq);

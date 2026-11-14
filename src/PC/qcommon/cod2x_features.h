@@ -8,10 +8,13 @@
 void Cod2x_FeaturesInit(void);
 void Cod2x_FeaturesFrame(int active, int demo);
 void Cod2x_FeaturesClientState(int state);
+void Cod2x_FeaturesUpdateFrame(void);
+void Cod2x_FeaturesRenderer(void);
 /* cod2x_vmix.c */
 void Cod2x_VmixInit(void);
 void Cod2x_VmixFrame(int clientState);
-/* CoD2x text codes: player names are coloured only on the scoreboard. */
+/* Extended codes and name rules apply in menus and on revision-7 servers. */
+int Cod2x_TextEnabled(void);
 int Cod2x_TextCode(const char *p, char *code);
 int Cod2x_IsStyleCode(char code);
 int Cod2x_ConsoleCode(const char *text, int *color);
@@ -34,8 +37,9 @@ const char *Cod2x_ZpamDirectRemote(void);
 void Cod2x_ZpamDirectEnd(int cancelled);
 /* The update prompt's "getautoupdate" menu command. */
 void Cod2x_UpdateConfirmed(void);
-/* Once, when the file system first starts: CoD2x's IWD cleanup and iw_CoD2x_01.iwd. */
+/* Startup boundary retained for the filesystem; archive setup belongs to the launcher. */
 void Cod2x_IwdStartup(const char *base);
+void Cod2x_IwdFrame(int state);
 /* fs_processedList: the IWD decisions of this file-system start and of the one before. */
 void Cod2x_IwdLogRotate(void);
 void Cod2x_IwdLogDirectory(const char *directory, const char *basepath, const char *game, int version,
@@ -50,8 +54,8 @@ int Cod2x_DrawCompass(void);
 void Cod2x_CompassOffset(float *x, float *y);
 int Cod2x_FeaturesDemo(void);
 void CG_Cod2xRadarInit(void);
+void CG_Cod2xRadarFrame(void);
 void CG_Cod2xRadarDraw(void);
-void CG_Cod2xRadarFire(int entityNum);
 
 static inline int Cod2x_StepInt(int value, int direction)
 {

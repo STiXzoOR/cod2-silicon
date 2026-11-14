@@ -1,3 +1,4 @@
+#include "com_random.h"
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #if COD2_APPLE_SDK
@@ -458,7 +459,13 @@ void SV_Init(void)
     sv_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 0x40, 0x1025);
     sv_hostname = Dvar_RegisterString("sv_hostname", "CoD2Host", 0x1005);
 #if COD2_IS_PATCH_13
+#if COD2_APPLE_SDK && defined(COD2_CODX) && COD2_CODX
+    extern void Dvar_SetBoolByName(const char *, unsigned char);
+    sv_punkbuster = Dvar_RegisterBool("sv_punkbuster", 0, 0x1055);
+    Dvar_SetBoolByName("sv_punkbuster", 0); /* Never advertise unavailable protection. */
+#else
     sv_punkbuster = Dvar_RegisterBool("sv_punkbuster", 0, 0x1015);
+#endif
 #endif
     sv_maxRate = Dvar_RegisterInt("sv_maxRate", 0, 0, 25000, 0x1005);
     sv_minPing = Dvar_RegisterInt("sv_minPing", 0, 0, 999, 0x1005);
@@ -1027,10 +1034,10 @@ void SV_SpawnServer(const char *server)
     I_strncpyz(svg->gametype,
                (sv_gametype)->current.string, 64);
 
-    srand(Sys_MillisecondsRaw());
+    Com_CrtSrand(Sys_MillisecondsRaw());
     {
-        int r1 = rand();
-        int r2 = rand();
+        int r1 = Com_CrtRand();
+        int r2 = Com_CrtRand();
         int ms = Sys_Milliseconds();
         int checksumFeed = (r1 << 16) ^ r2 ^ ms;
         svg->checksumFeed = checksumFeed;

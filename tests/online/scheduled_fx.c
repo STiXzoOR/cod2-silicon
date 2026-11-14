@@ -1,4 +1,6 @@
 #include "common_types.h"
+#include "PC/EffectsCore/fx_memory.h"
+extern void FxMem_Init(void);
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -14,7 +16,9 @@ void *imp_fx_enable = &enablePtr, *imp_fx_freeze = &freezePtr, *imp_fx_count = &
 void *imp_colorYellow;
 refexport_t re;
 static EffectTemplate *effectTemplateArray[256];
-static int effectTemplateArrayCount, freed;
+static int effectTemplateArrayCount, freed, memoryWarnings;
+void Com_DPrintf(const char *format, ...)
+{ assert(!strcmp(format, "^1Out of effects memory!\n")); ++memoryWarnings; }
 int FxHelper_GetSeed(const FxHelper *h) { return 123; }
 void Rand_Init(int seed) { (void)seed; }
 void FxHelper_SetIgnorePrecacheErrors(const FxHelper *h, int ignore) { (void)h; (void)ignore; }
@@ -38,6 +42,7 @@ void FX_CleanTemplate(EffectTemplate *fx) { (void)fx; abort(); }
 
 int main(void)
 {
+    FxMem_Init();
     FxScheduler scheduler = {0};
     PrimitiveTemplate primitive = { .mSpawnCount = {2, 2}, .mSpawnDelay = {100, 100} };
     EffectTemplate effect = { .mPrimitiveCount = 1 };
@@ -56,7 +61,32 @@ int main(void)
     assert(first->mAxis[2][0] == 0 && first->mAxis[2][1] == 1 && first->mAxis[2][2] == 0);
     assert(first->mIndexInBatch == 1 && second->mIndexInBatch == 0);
     FxScheduler_Clean(&scheduler, 0, NULL);
-    assert(freed == 2 && !scheduler.mScheduledHead && scheduler.mScheduledCount == 0);
+    assert(!scheduler.mScheduledHead && scheduler.mScheduledCount == 0);
+#if COD2_APPLE_SDK
+    assert(freed == 0); /* No generic C++ allocation/free is involved. */
+    assert(FxMem_Alloc(FX_MEMORY_ScheduledEffect) == second);
+    FxMem_Free(second);
+    FxMem_Init();
+    primitive.mSpawnCount.mMin = primitive.mSpawnCount.mMax = 27000;
+    FxScheduler_PlayEffect(&scheduler, &effect, origin, NULL, NULL);
+    assert(scheduler.mScheduledCount == 64 * 409);
+    assert(memoryWarnings == 27000 - 64 * 409);
+    FxScheduler_Clean(&scheduler, 0, NULL);
+    assert(!scheduler.mScheduledHead && !scheduler.mScheduledCount);
+    /* A particle manager retains its last empty block, sharing the arena. */
+    void *particle = FxMem_Alloc(FX_MEMORY_Particle);
+    assert(particle);
+    FxMem_Free(particle);
+    memoryWarnings = 0;
+    FxScheduler_PlayEffect(&scheduler, &effect, origin, NULL, NULL);
+    assert(scheduler.mScheduledCount == 63 * 409);
+    assert(memoryWarnings == 27000 - 63 * 409);
+    FxScheduler_Clean(&scheduler, 0, NULL);
+    assert(!scheduler.mScheduledHead && !scheduler.mScheduledCount && !freed);
+    puts("online: shared FX arena capacities 26176 and 25767, null returns and cleanup passed");
+#else
+    assert(freed == 2);
+#endif
     puts("online: delayed FX allocation, native queue links and cleanup passed");
     return 0;
 }

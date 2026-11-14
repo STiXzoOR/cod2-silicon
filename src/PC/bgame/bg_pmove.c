@@ -8,6 +8,7 @@
 
 #if defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
+#include "../qcommon/cod2x_math.h"
 extern const float AngleNormalize180(const float angle);
 #endif
 
@@ -987,7 +988,12 @@ static void PM_ACCELERATE_ABI PM_Accelerate(playerState_t *ps, pml_t *pml, const
 #if defined(COD2_X64)
     /* Original MAXSS selects wishspeed on equal operands, including signed zero. */
     float speed = stopspeed->current.value > wishspeed ? stopspeed->current.value : wishspeed;
+#if defined(COD2_APPLE_SDK)
+    /* Windows 1.3 PM_Accelerate multiplies speed by frame time before acceleration. */
+    accelspeed = fminf(addspeed, (speed * pml->frametime) * accel);
+#else
     accelspeed = fminf(addspeed, speed * (accel * pml->frametime));
+#endif
 #else
     accelspeed = fminf(addspeed, fmaxf(stopspeed->current.value, wishspeed) * (accel * pml->frametime));
 #endif
@@ -1390,12 +1396,12 @@ static void PM_REGPARM2_ABI PM_SetMovementDir(pmove_t *pm, pml_t *pml)
 
 #if defined(COD2_CODX) && COD2_CODX
     /* CoD2x src/shared/animation.cpp:1308-1355. movementDir holds degrees. */
-    if (Cod2x_GameVersion() >= 3) {
+    {
         float yaw = 0.0f;
         if ((ps->pm_flags & 1) && !(ps->eFlags & 0x300)) {
-            yaw = AngleDelta(ps->proneDirection, ps->viewangles[1]);
+            yaw = Cod2x_AngleSubtract(ps->proneDirection, ps->viewangles[1]);
         } else if ((fmove || smove) && ps->groundEntityNum != 1023 && pml->frametime > 0.0f) {
-            vec3_t displacement;
+            vec3_t displacement, direction;
             float speedSquared = 0.0f;
             int axis;
             for (axis = 0; axis < 3; ++axis) {
@@ -1403,9 +1409,11 @@ static void PM_REGPARM2_ABI PM_SetMovementDir(pmove_t *pm, pml_t *pml)
                 speedSquared += displacement[axis] * displacement[axis];
             }
             if (sqrtf(speedSquared) / pml->frametime > 5.0f) {
-                yaw = AngleDelta(vectoyaw(displacement), ps->viewangles[1]);
-                if (fmove < 0 && (yaw > 90.0f || yaw < -90.0f))
-                    yaw = AngleNormalize180(yaw + 180.0f);
+                Cod2x_VectorNormalizeTo(displacement, direction);
+                Cod2x_VectorToAngles(direction, direction);
+                yaw = Cod2x_AngleSubtract(direction[1], ps->viewangles[1]);
+                if (fmove < 0 && (Cod2x_GameVersion() < 3 || yaw > 90.0f || yaw < -90.0f))
+                    yaw = Cod2x_AngleNormalize180(yaw + 180.0f);
             }
         }
         if (yaw > 90.0f) yaw = 90.0f;
@@ -2007,7 +2015,12 @@ restart_lerp: {
 
     ps->viewHeightLerpTime =
         pm->cmd.serverTime -
+#if defined(COD2_APPLE_SDK)
+        /* Windows 1.3 0x517821: multiply duration before percent conversion. */
+        (int)(((float)newDuration * (float)iLerpFrac) * 0.01f);
+#else
         (int)((float)iLerpFrac * 0.01f * (float)newDuration);
+#endif
 
     if (lerpTarget == 11) {
         table = viewLerp_CrouchProne;
@@ -2455,14 +2468,22 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
     if (ps->groundEntityNum == ENTITYNUM_NONE) {
 
 #if defined(COD2_X64)
-        /* Mac 1.3 0x70678: inlined PM_CrashLand, including double sqrt/divide. */
+        /* Inlined PM_CrashLand; Windows 1.3 uses single-precision x87 operations. */
         float vz = pml->previous_velocity[2];
         float grav = (float)ps->gravity;
         float acc = -grav;
         float halfg = acc * 0.5f;
+#if defined(COD2_APPLE_SDK)
+        float disc = vz * vz - ((pml->previous_origin[2] - ps->origin[2]) * halfg) * 4.0f;
+#else
         float disc = vz * vz + (pml->previous_origin[2] - ps->origin[2]) * (halfg * -4.0f);
+#endif
         if (!(disc < 0.0f)) {
+#if defined(COD2_APPLE_SDK)
+            float t = (-vz - sqrtf(disc)) / (halfg + halfg);
+#else
             float t = (float)((-(double)vz - sqrt((double)disc)) / (double)(halfg + halfg));
+#endif
             float landVel = -(t * acc + vz);
             float fallHeight = landVel * landVel / (grav + grav);
             float minH = bg_fallDamageMinHeight->current.value;
@@ -2482,7 +2503,11 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
                 }
             }
             if (!(fallHeight <= 12.0f)) {
+#if defined(COD2_APPLE_SDK)
+                viewDip = PM_CrashLandFloatToInt(((fallHeight - 12.0f) * 0.03846153989434242f + 1.0f) * 4.0f);
+#else
                 viewDip = PM_CrashLandFloatToInt((fallHeight - 12.0f) / 26.0f * 4.0f + 4.0f);
+#endif
                 if (viewDip > 24) viewDip = 24;
                 BG_AnimScriptEvent(ps, ANIM_ET_LAND, 0, 1);
             }
@@ -2491,7 +2516,11 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
                 if (damage <= 99 && !(pml->groundTrace.surfaceFlags & 2)) {
                     int stun = damage * 35 + 500;
                     if (stun > 2000) stun = 2000;
+#if defined(COD2_APPLE_SDK)
+                    scale = stun <= 500 ? 0.5f : (stun >= 1500 ? 0.2f : 0.5f - ((float)stun - 500.0f) * 0.001f * 0.3f);
+#else
                     scale = stun <= 500 ? 0.5f : (stun >= 1500 ? 0.2f : ((float)stun - 500.0f) / 1000.0f * -0.3f + 0.5f);
+#endif
                     ps->pm_time = stun;
                     ps->pm_flags |= 0x200;
                 }

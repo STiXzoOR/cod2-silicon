@@ -1,7 +1,9 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
+#include "r_cod2x_xray.h"
 #include "imports.h"
 #include "bytematch.h"
+#include "r_cod2x_film.h"
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -31,6 +33,10 @@ extern void *R_AllocStaticIndexBuffer(IDirect3DIndexBuffer9 **outBuf, int size);
 extern void R_FinishStaticVertexBuffer(IDirect3DVertexBuffer9 *buf);
 extern void R_FinishStaticIndexBuffer(IDirect3DIndexBuffer9 *ib);
 extern int rand(void);
+#if defined(COD2_X64)
+extern void R_ResetRendererRandom(void);
+extern int R_RendererRandom(void);
+#endif
 extern void R_ShutdownRenderTargets(void);
 extern void R_ShutdownStaticModelCache(void);
 extern void R_FreeStaticVertexBuffer(IDirect3DVertexBuffer9 *buf);
@@ -149,9 +155,17 @@ static void R_CreateParticleCloudBuffer(void)
 
             for (zIter = 0; zIter < 16; zIter++) {
 
+#if defined(COD2_X64)
+                /* Windows 10011d47..10011dba uses the renderer DLL CRT and
+                 * float 1/32767, also advancing the subsequent water stream. */
+                float px = ((float)R_RendererRandom() * 3.0518509447574615e-5f + xBase) * 0.25f - 1.0f;
+                float py = ((float)R_RendererRandom() * 3.0518509447574615e-5f + yBase) * 0.25f - 1.0f;
+                float pz = ((float)R_RendererRandom() * 3.0518509447574615e-5f + (float)zIter) * 0.125f - 1.0f;
+#else
                 float px = ((float)rand() * 4.656612873077393e-10f + xBase) * 0.25f - 1.0f;
                 float py = ((float)rand() * 4.656612873077393e-10f + yBase) * 0.25f - 1.0f;
                 float pz = ((float)rand() * 4.656612873077393e-10f + (float)zIter) * 0.125f - 1.0f;
+#endif
 
                 for (corner = 0; corner < 4; corner++) {
 
@@ -192,6 +206,12 @@ static inline void R_SafeRelease(void **objPtr)
 
 static void R_ReleaseForShutdownOrReset(void)
 {
+#if COD2X_FILM
+    R_Cod2xFilm_Release();
+#if COD2X_XRAY_RENDER
+    R_Cod2xXrayRelease();
+#endif
+#endif
 #if defined(COD2_X64)
     int i, j;
     SunFlareDynamic *flares = (SunFlareDynamic *)imp_sunFlareArray;
@@ -389,6 +409,10 @@ refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp)
         ((ri_Printf_fn)(*(void **)&ri))(0, "Mismatched REF_API_VERSION: expected %i, got %i\n", 59, apiVersion);
         return NULL;
     }
+
+#if defined(COD2_X64)
+    R_ResetRendererRandom();
+#endif
 
     byte *r = (byte *)&re;
 /* The offsets below are x86 byte offsets into refexport_t (4-byte pointer slots).
@@ -820,8 +844,16 @@ static Bool R_CreateForInitOrReset(void)
 #if defined(COD2_X64)
     SunFlareDynamic *sunFlares = (SunFlareDynamic *)imp_sunFlareArray;
     for (i = 0; i < 4; i++) {
-        sunFlares[i].sunQueryIssued[0] = 0;
-        sunFlares[i].sunQueryIssued[1] = 0;
+        for (int slot = 0; slot < 2; ++slot) {
+            typedef HRESULT(D3DVTCC *CreateQueryFn)(void *, int, void **);
+            void **table = *(void ***)dx.device;
+            sunFlares[i].sunQuery[slot] = NULL;
+            HRESULT result = ((CreateQueryFn)table[118])(dx.device, 9,
+                (void **)&sunFlares[i].sunQuery[slot]);
+            if (result < 0)
+                ri.Printf(0, "Couldn't create a sun occlusion query: %s\n", R_ErrorDescription(result));
+            sunFlares[i].sunQueryIssued[slot] = 0;
+        }
     }
 #else
     byte *sunFlares = (byte *)imp_sunFlareArray;
@@ -1019,10 +1051,10 @@ static Bool R_InitNativeDisplayModes(void)
             defaultRefresh = i;
     }
     dx.refreshRateNameTable[refreshCount] = NULL;
-    /* Native registration already supplies the SDL render-size domain, which
-     * also permits sizes absent from the physical display modes. Keep it.
-     * Re-registering an enum does not replace its domain, so refresh needs an
-     * explicit update after the native early registration. */
+    /* Native registration supplies the sorted render sizes bounded by the
+     * selected panel's native pixels, including Retina sizes absent from SDL's
+     * point-size modes. Keep that domain. Refresh rates need an explicit update
+     * because re-registering an enum does not replace its domain. */
     sscanf(ri.Dvar_EnumToString((dvar_t *)r_displayRefresh), "%i", &requestedRefresh);
     r_displayRefresh = ri.Dvar_RegisterEnum("r_displayRefresh", dx.refreshRateNameTable, defaultRefresh, 0x2021);
     ri.Dvar_UpdateEnumDomain(r_displayRefresh, dx.refreshRateNameTable);
@@ -1228,8 +1260,15 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     if (!ri_printf)
         return;
     ri_printf(0, "----- R_Init -----\n");
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    extern void Cod2x_FeaturesRenderer(void);
+    Cod2x_FeaturesRenderer();
+#endif
     Swap_Init();
     R_RegisterDvars();
+#if COD2X_FILM
+    R_Cod2xFilm_Init();
+#endif
     R_RegisterCmds();
     memset(&rg, 0, sizeof(r_globals_t));
     memset(&rgp, 0, sizeof(r_global_permanent_t));

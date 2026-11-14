@@ -2,7 +2,14 @@
 set -eu
 cd "$(dirname "$0")/../.."
 work=$(mktemp -d "${TMPDIR:-/tmp}/cod2x-full.XXXXXX")
-trap 'rm -rf "$work"' EXIT HUP INT TERM
+cleanup() {
+    if [ -d "$work/apps.noindex/URLProbe.app" ]; then
+        /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+            -u "$work/apps.noindex/URLProbe.app" || true
+    fi
+    /bin/rm -rf "$work"
+}
+trap cleanup EXIT HUP INT TERM
 flags="-std=gnu11 -g -ffp-contract=off -DCOD2_X64=1 -DCOD2_CODX=1 -Isrc/headers -Isrc -I. -Isrc/PC/qcommon -Isrc/platform -Wno-duplicate-decl-specifier -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-deprecated-non-prototype -Wno-pointer-to-int-cast"
 if [ "${COD2X_SANITIZERS:-0}" = 1 ]; then
     flags="$flags -fsanitize=address,undefined -fno-omit-frame-pointer"
@@ -26,7 +33,7 @@ for test in policy features mouse url dvar_pool info; do
     "$work/$test"
 done
 clang $flags tests/cod2x/test_features_engine.c src/PC/qcommon/cod2x_features.c src/PC/qcommon/cod2x_protocol.c \
-    src/PC/qcommon/cod2x_json.c -o "$work/features-engine"
+    src/PC/qcommon/cod2x_policy.c src/PC/qcommon/cod2x_json.c -o "$work/features-engine"
 "$work/features-engine"
 clang $flags -Wl,-dead_strip tests/cod2x/test_radar_engine.c -o "$work/radar-engine"
 "$work/radar-engine"
@@ -54,20 +61,21 @@ while [ "$index" -lt 16 ]; do
     touch "$work/game/main/$(printf 'iw_%02d.iwd' "$index")"
     index=$((index + 1))
 done
-python3 tools/cod2x/make_macos_app.py "$work/native-url" "$work/URLProbe.app" --engine-only --game-dir "$work/game"
-plutil -lint "$work/URLProbe.app/Contents/Info.plist"
+mkdir -p "$work/apps.noindex"
+python3 tools/cod2x/make_macos_app.py "$work/native-url" "$work/apps.noindex/URLProbe.app" --engine-only --game-dir "$work/game"
+plutil -lint "$work/apps.noindex/URLProbe.app/Contents/Info.plist"
 expected_game=$(cd "$work/game" && pwd -P)
-CFFIXED_USER_HOME="$work/home" COD2_SETUP_NONINTERACTIVE=1 COD2_SETUP_CD_KEY=000000000000000086D3 \
-    WS10_EXPECT_GAME="$expected_game" "$work/URLProbe.app/Contents/MacOS/cod2_macos"
+HOME="$work/home" CFFIXED_USER_HOME="$work/home" COD2_SETUP_NONINTERACTIVE=1 COD2_SETUP_CD_KEY=000000000000000086D3 \
+    WS10_EXPECT_GAME="$expected_game" "$work/apps.noindex/URLProbe.app/Contents/MacOS/cod2_macos"
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
-    -u "$work/URLProbe.app" || true
-codesign --verify --deep --strict "$work/URLProbe.app"
+    -u "$work/apps.noindex/URLProbe.app" || true
+codesign --verify --deep --strict "$work/apps.noindex/URLProbe.app"
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/cod2x -p test_extract_iwd.py
 PYTHONDONTWRITEBYTECODE=1 python3 tests/cod2x/test_demo_https.py
 if [ "${COD2X_SANITIZERS:-0}" != 1 ]; then
     clang $flags -Wl,-dead_strip tests/cod2x/test_native_freeze.c src/platform/cod2x_native.c \
         src/PC/qcommon/crash_handler.c src/PC/qcommon/cod2x_layer_start.c src/PC/qcommon/cod2x_protocol.c \
-        src/PC/qcommon/cod2x_report.c src/PC/qcommon/cod2x_layer_stop.c -lcurl -o "$work/freeze"
+        src/PC/qcommon/cod2x_report.c src/PC/qcommon/cod2x_layer_stop.c src/PC/qcommon/cod2x_json.c -lcurl -o "$work/freeze"
     "$work/freeze" "$work" > "$work/freeze.log" 2>&1
     python3 - "$work" <<'PY'
 from pathlib import Path

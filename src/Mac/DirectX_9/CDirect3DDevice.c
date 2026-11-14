@@ -1,8 +1,12 @@
+#if defined(COD2_X64) && !defined(DEDICATED)
+#include "PC/qcommon/frame_activity.h"
+#endif
 #include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #if COD2_APPLE_SDK
 #include "platform/macos_display.h"
 #endif
@@ -250,6 +254,10 @@ static IDirect3DVertexDeclaration9 *g_activeVertexDeclaration = NULL;
 typedef struct {
     void **vtable;
     ULONG refCount;
+#if COD2_APPLE_SDK
+    GLuint name;
+    Bool active, issued;
+#endif
 } QueryStub;
 
 static HRESULT Q_QueryInterface(const void *t, const IID *i, void **p)
@@ -268,8 +276,12 @@ static ULONG Q_Release(const void *t)
 {
     QueryStub *q = (QueryStub *)t;
     ULONG rc = --q->refCount;
-    if (!rc)
+    if (!rc) {
+#if COD2_APPLE_SDK
+        if (q->name) glDeleteQueriesARB(1, &q->name);
+#endif
         free(q);
+    }
     return rc;
 }
 static HRESULT Q_GetDevice(const void *t, void **d)
@@ -281,25 +293,54 @@ static HRESULT Q_GetDevice(const void *t, void **d)
 static int Q_GetType(const void *t)
 {
     (void)t;
-    return 0;
+    return 9; /* D3DQUERYTYPE_OCCLUSION */
 }
 static UINT Q_GetDataSize(const void *t)
 {
     (void)t;
-    return 0;
+    return sizeof(DWORD);
 }
 static HRESULT Q_Issue(const void *t, DWORD f)
 {
-    (void)t;
-    (void)f;
+#if COD2_APPLE_SDK
+    QueryStub *q = (QueryStub *)t;
+    if (f == 2 && !q->active) {
+        glBeginQueryARB(GL_SAMPLES_PASSED_ARB, q->name);
+        q->active = 1;
+        q->issued = 0;
+    } else if (f == 1 && q->active) {
+        glEndQueryARB(GL_SAMPLES_PASSED_ARB);
+        q->active = 0;
+        q->issued = 1;
+    } else {
+        return (HRESULT)0x8876086c;
+    }
+#else
+    (void)t; (void)f;
+#endif
     return 0;
 }
 static HRESULT Q_GetData(const void *t, void *d, DWORD s, DWORD f)
 {
-    (void)t;
-    (void)d;
-    (void)s;
-    (void)f;
+#if COD2_APPLE_SDK
+    QueryStub *q = (QueryStub *)t;
+    if ((d && s != sizeof(DWORD)) || (!d && s) || (f & ~1u))
+        return (HRESULT)0x8876086c;
+    if (!q->issued)
+        return 1;
+    if (f & 1) glFlush();
+    GLuint ready = 0;
+    glGetQueryObjectuivARB(q->name, GL_QUERY_RESULT_AVAILABLE_ARB, &ready);
+    if (!ready)
+        return 1;
+    if (d) {
+        GLuint samples;
+        glGetQueryObjectuivARB(q->name, GL_QUERY_RESULT_ARB, &samples);
+        memcpy(d, &samples, sizeof(samples));
+    }
+#else
+    (void)t; (void)d; (void)s; (void)f;
+#endif
     return 0;
 }
 static void Q_D1(void *t)
@@ -433,11 +474,19 @@ typedef struct {
     struct DeviceStreamsNative *streamState;
     GLenum glSrcBlend, glDestBlend, glSrcBlendAlpha, glDestBlendAlpha;
     GLenum glStencilFunc;
+    DWORD twoSidedStencil, ccwStencilFail, ccwStencilZFail, ccwStencilPass, ccwStencilFunc;
     DWORD alphaBlendValue, ditherValue;
+    DWORD alphaAAFormat;
     DWORD ambientMaterialSource, diffuseMaterialSource;
     unsigned char blendStateChanged;
     GLfloat lightModelAmbient[4];
     GLfloat slopeScaleDepthBias, scaledDepthBias;
+#if COD2_APPLE_SDK
+    struct DeviceAlphaAA *alphaAA;
+    unsigned char floatTargetActive;
+    GLint savedDrawFramebuffer, savedReadFramebuffer;
+    GLint savedDrawBuffer, savedReadBuffer;
+#endif
 #endif
 } DeviceImpl;
 #if defined(COD2_X64)
@@ -633,6 +682,7 @@ static COpenGLNative *CDirect3DDevice_GL(void)
  * Their matching restoration reads the persistent COpenGL state. */
 #include "lp64_device_targets.inc"
 #include "lp64_device_draw_scope.inc"
+#include "lp64_alpha_aa.inc"
 
 static void CDirect3DDevice_ActiveTexture(GLenum texture)
 {
@@ -1773,6 +1823,10 @@ HRESULT CDirect3DDevice_CreateTexture(const CDirect3DDevice *_this, UINT Width, 
         return macResult;
 #endif
 
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
+
     void *tex;
     (void)_this;
     (void)Pool;
@@ -1780,6 +1834,9 @@ HRESULT CDirect3DDevice_CreateTexture(const CDirect3DDevice *_this, UINT Width, 
     tex = malloc(((0x68) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DTexture_CDirect3DTexture((const CDirect3DTexture *)tex, Width, Height, Levels, Usage, Format);
     *ppTexture = (IDirect3DTexture9 *)tex;
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_END(FRAME_TEXTURE_CREATE, activityStart);
+#endif
     return 0;
 }
 
@@ -1794,6 +1851,10 @@ HRESULT CDirect3DDevice_CreateVolumeTexture(const CDirect3DDevice *_this, UINT W
         return macResult;
 #endif
 
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
+
     void *tex;
     (void)_this;
     (void)Pool;
@@ -1801,6 +1862,9 @@ HRESULT CDirect3DDevice_CreateVolumeTexture(const CDirect3DDevice *_this, UINT W
     tex = malloc(((0x6c) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DVolumeTexture_CDirect3DVolumeTexture((const CDirect3DVolumeTexture *)tex, Width, Height, Depth, Levels, Usage, Format);
     *ppVolumeTexture = (IDirect3DVolumeTexture9 *)tex;
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_END(FRAME_TEXTURE_CREATE, activityStart);
+#endif
     return 0;
 }
 
@@ -1815,6 +1879,10 @@ HRESULT CDirect3DDevice_CreateCubeTexture(const CDirect3DDevice *_this, UINT Edg
         return macResult;
 #endif
 
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
+
     void *tex;
     (void)_this;
     (void)Pool;
@@ -1822,6 +1890,9 @@ HRESULT CDirect3DDevice_CreateCubeTexture(const CDirect3DDevice *_this, UINT Edg
     tex = malloc(((0x7c) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DCubeTexture_CDirect3DCubeTexture((const CDirect3DCubeTexture *)tex, EdgeLength, Levels, Usage, Format);
     *ppCubeTexture = (IDirect3DCubeTexture9 *)tex;
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_END(FRAME_TEXTURE_CREATE, activityStart);
+#endif
     return 0;
 }
 
@@ -2111,6 +2182,34 @@ HRESULT CDirect3DDevice_CreateDepthStencilSurface(const CDirect3DDevice *_this,
         return macResult;
 #endif
 
+#if COD2_APPLE_SDK
+    if (!ppSurface || !Width || !Height)
+        return (HRESULT)0x8876086c;
+    *ppSurface = NULL;
+    void *surface = calloc(1, 0x13c);
+    if (!surface)
+        return (HRESULT)0x8007000e;
+    CXX_BOOL previousNoTextureID = g_NoTextureID;
+    g_NoTextureID = 1;
+    CDirect3DSurface_CDirect3DSurface(surface, 0, 0, 0, Width, Height, Format, NULL, NULL);
+    g_NoTextureID = previousNoTextureID;
+    /* AUX color attachments use the display extent. EXT FBOs require matching
+     * storage extents even for a logical 128x128 cookie. Each D3D surface still
+     * owns distinct depth/stencil storage; its viewport limits every clear. */
+    D3DSURFACE_DESC back = {0};
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    if (dev->backBuffer)
+        DeviceTargets_GetDesc(dev->backBuffer, &back);
+    HRESULT result = CDirect3DSurface_CreateDepthStorage(surface,
+        Width > back.Width ? Width : back.Width,
+        Height > back.Height ? Height : back.Height, MultiSample);
+    if (result < 0) {
+        DeviceTargets_Release(surface);
+        return result;
+    }
+    *ppSurface = surface;
+    return 0;
+#else
     void *surfMem = NULL;
     void *surf;
     int currentTexture = 0;
@@ -2145,6 +2244,7 @@ HRESULT CDirect3DDevice_CreateDepthStencilSurface(const CDirect3DDevice *_this,
     *ppSurface = (IDirect3DSurface9 *)surf;
     glBindTexture(0xde1, currentTexture);
     return 0;
+#endif
 }
 
 HRESULT CDirect3DDevice_CreateRenderTarget(const CDirect3DDevice *_this,
@@ -2157,6 +2257,10 @@ HRESULT CDirect3DDevice_CreateRenderTarget(const CDirect3DDevice *_this,
     HRESULT macResult = { 0 };
     if (MacShim_Dispatch("CDirect3DDevice_CreateRenderTarget", _this, macArguments, &macResult, sizeof(macResult)))
         return macResult;
+#endif
+
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_BEGIN(activityStart);
 #endif
 
     void *surfMem = NULL;
@@ -2192,6 +2296,9 @@ HRESULT CDirect3DDevice_CreateRenderTarget(const CDirect3DDevice *_this,
     CDirect3DSurface_CDirect3DSurface((const CDirect3DSurface *)surf, 0, 0, 0, Width, Height, Format, surfMem, 0);
     *ppSurface = (IDirect3DSurface9 *)surf;
     glBindTexture(0xde1, currentTexture);
+#if defined(COD2_X64) && !defined(DEDICATED)
+    FRAME_ACTIVITY_END(FRAME_TARGET_CREATE, activityStart);
+#endif
     return 0;
 }
 
@@ -2206,11 +2313,20 @@ HRESULT CDirect3DDevice_CreateQuery(const CDirect3DDevice *_this, D3DQUERYTYPE T
 
     QueryStub *q;
     (void)_this;
-    (void)Type;
+#if COD2_APPLE_SDK
+    if (Type != 9) {
+        if (ppQuery) *(void **)ppQuery = NULL;
+        return (HRESULT)0x8876086a;
+    }
+#endif
     if (ppQuery) {
         q = (QueryStub *)calloc(1, sizeof(QueryStub));
+        if (!q) return (HRESULT)0x8007000e;
         q->vtable = query_stub_vtbl;
         q->refCount = 1;
+#if COD2_APPLE_SDK
+        glGenQueriesARB(1, &q->name);
+#endif
         *(void **)ppQuery = (void *)q;
     }
     return 0;
@@ -2332,7 +2448,7 @@ HRESULT CDirect3DDevice_GetDeviceCaps(const CDirect3DDevice *_this, D3DCAPS9 *pC
 #endif
 
     DeviceImpl *dev = (DeviceImpl *)_this;
-    int maxTexUnits, maxTexImageUnits, maxStages;
+    int maxStages;
     (void)dev;
 
     memset(pCaps, 0, sizeof(D3DCAPS9));
@@ -2411,9 +2527,10 @@ HRESULT CDirect3DDevice_GetDeviceCaps(const CDirect3DDevice *_this, D3DCAPS9 *pC
     pCaps->MaxVertexShaderConst = 0x100;
     pCaps->PixelShader1xMaxValue = 8.0f;
 
-    maxTexImageUnits = MacDisplay_GetMaxTextureImageUnits();
-    maxTexUnits = MacDisplay_GetMaxTextureUnits();
-    maxStages = (maxTexUnits < maxTexImageUnits) ? maxTexImageUnits : maxTexUnits;
+    /* These D3D9 caps describe fixed-function stages, not shader samplers. */
+    maxStages = MacDisplay_GetMaxTextureUnits();
+    if (maxStages > 8)
+        maxStages = 8;
     pCaps->MaxSimultaneousTextures = maxStages;
     pCaps->MaxTextureBlendStages = maxStages;
 
@@ -2674,8 +2791,11 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
 #endif
 
 #if defined(COD2_X64)
-    return CDirect3DDevice_DrawIndexedNative(_this, PrimitiveType, BaseVertexIndex,
-                                           MinVertexIndex, NumVertices, startIndex, primCount);
+    FRAME_ACTIVITY_BEGIN(drawStart);
+    HRESULT result = CDirect3DDevice_DrawIndexedNative(_this, PrimitiveType, BaseVertexIndex,
+                                                     MinVertexIndex, NumVertices, startIndex, primCount);
+    FRAME_ACTIVITY_END(FRAME_DRAW, drawStart);
+    return result;
 #else
     DeviceImpl *dev = (DeviceImpl *)_this;
 #if defined(COD2_X64)
@@ -3355,6 +3475,9 @@ HRESULT CDirect3DDevice_GetRenderState(const CDirect3DDevice *_this, D3DRENDERST
     DeviceImpl *dev = (DeviceImpl *)_this;
     if (!pValue)
         return 0;
+#if defined(COD2_X64)
+    if ((unsigned)State == 181) { *pValue = dev->alphaAAFormat; return 0; }
+#endif
     switch (State) {
     case D3DRS_ZENABLE:
         *pValue = dev->zEnable;
@@ -3369,6 +3492,11 @@ HRESULT CDirect3DDevice_GetRenderState(const CDirect3DDevice *_this, D3DRENDERST
     case D3DRS_STENCILENABLE:
         *pValue = dev->stencilEnable;
         break;
+    case D3DRS_TWOSIDEDSTENCILMODE: *pValue = dev->twoSidedStencil; break;
+    case D3DRS_CCW_STENCILFAIL: *pValue = dev->ccwStencilFail; break;
+    case D3DRS_CCW_STENCILZFAIL: *pValue = dev->ccwStencilZFail; break;
+    case D3DRS_CCW_STENCILPASS: *pValue = dev->ccwStencilPass; break;
+    case D3DRS_CCW_STENCILFUNC: *pValue = dev->ccwStencilFunc; break;
     case D3DRS_STENCILWRITEMASK:
         *pValue = dev->stencilWriteMask;
         break;
@@ -3414,12 +3542,7 @@ HRESULT CDirect3DDevice_GetRenderState(const CDirect3DDevice *_this, D3DRENDERST
         *pValue = dev->blendOp;
         break;
     case D3DRS_SEPARATEALPHABLENDENABLE:
-#if defined(COD2_X64)
-        /* Mac 0x13c53 falls through to the CULLMODE store at 0x13bcf. */
-        *pValue = dev->cullMode;
-#else
         *pValue = dev->separateAlphaBlendEnable;
-#endif
         break;
     case D3DRS_SRCBLENDALPHA:
         *pValue = dev->srcBlendAlpha;
@@ -3494,12 +3617,14 @@ HRESULT CDirect3DDevice_GetTexture(const CDirect3DDevice *_this, DWORD Stage, ID
 #if defined(COD2_X64)
     DeviceImpl *dev = (DeviceImpl *)_this;
     IDirect3DBaseTexture9 *texture = NULL;
-    if (Stage < dev->maxTextureUnits && Stage < sizeof(g_boundTextures) / sizeof(g_boundTextures[0]))
+    if (!ppTexture)
+        return (HRESULT)0x8876086cu;
+    UINT limit = dev->maxTextureUnits > dev->maxTextureImageUnits ? dev->maxTextureUnits : dev->maxTextureImageUnits;
+    if (Stage < limit && Stage < sizeof(g_boundTextures) / sizeof(g_boundTextures[0]))
         texture = g_boundTextures[Stage];
     if (CDirect3DDevice_IsRealTexture(texture))
         ((ULONG (*)(const void *))(*(void ***)texture)[1])(texture);
-    if (ppTexture)
-        *ppTexture = texture;
+    *ppTexture = texture;
     return 0;
 #else
     (void)_this;
@@ -3594,7 +3719,7 @@ HRESULT CDirect3DDevice_SetSamplerState(const CDirect3DDevice *_this, DWORD Samp
     if (field)
         previous = *field;
     else if (Type == 8)
-        previous = CDirect3DDevice_TruncateSampler(stage->lodBias * 4.0f);
+        memcpy(&previous, &stage->lodBias, sizeof(previous));
     else if (Type == 10)
         previous = CDirect3DDevice_TruncateSampler(stage->anisotropy);
     else
@@ -3607,7 +3732,7 @@ HRESULT CDirect3DDevice_SetSamplerState(const CDirect3DDevice *_this, DWORD Samp
     else if (Type == 8) {
         float value;
         memcpy(&value, &Value, sizeof(value));
-        stage->lodBias = 0.25f * value;
+        stage->lodBias = value;
     } else {
         if (MacDisplay_GetSupportsAnisotropicFiltering())
 #if defined(COD2_X64)
@@ -3651,7 +3776,7 @@ HRESULT CDirect3DDevice_GetSamplerState(const CDirect3DDevice *_this, DWORD Samp
         if (field)
             *pValue = *field;
         else if (Type == 8)
-            *pValue = CDirect3DDevice_TruncateSampler(4.0f * stage->lodBias);
+            memcpy(pValue, &stage->lodBias, sizeof(*pValue));
         else if (Type == 10)
             *pValue = CDirect3DDevice_TruncateSampler(stage->anisotropy);
     }
@@ -6076,6 +6201,16 @@ static void CDirect3DDevice_ReleaseNativeObject(void *object)
 
 static void CDirect3DDevice_ReleaseNativeContents(DeviceImpl *dev)
 {
+#if COD2_APPLE_SDK
+    DeviceAlphaAA_Destroy(dev);
+    if (dev->floatTargetActive) {
+        glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, dev->savedDrawFramebuffer);
+        glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, dev->savedReadFramebuffer);
+        glDrawBuffer(dev->savedDrawBuffer);
+        glReadBuffer(dev->savedReadBuffer);
+        dev->floatTargetActive = 0;
+    }
+#endif
     CDirect3DDevice_ReleaseNativeObject(dev->swapChain); dev->swapChain = NULL;
     CDirect3DDevice_ReleaseNativeObject(dev->backBuffer); dev->backBuffer = NULL;
     CDirect3DDevice_ReleaseNativeObject(dev->renderTarget); dev->renderTarget = NULL;

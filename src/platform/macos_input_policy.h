@@ -3,15 +3,22 @@
 
 static inline int MacInput_UseRaw(int active, int keyCatchers, int relative, int rawMode, int enabled, int available)
 {
-    return active && keyCatchers == 0 && relative && rawMode > 0 && enabled && available;
+    return active && !(keyCatchers & ~16) && relative && rawMode > 0 && enabled && available;
+}
+
+static inline int MacInput_CaptureMouse(int fullscreen, int active, int keyCatchers, int codx)
+{
+    /* Windows 1.3 IN_Frame releases only for the console. CoD2x deliberately
+     * uses the desktop pointer in windowed menus, but chat is still gameplay. */
+    return fullscreen || (codx ? active && !(keyCatchers & ~16) : !(keyCatchers & 1));
 }
 
 static inline int MacInput_WheelSteps(float *remainder, float delta)
 {
-    *remainder += delta;
-    int steps = (int)*remainder;
-    *remainder -= steps;
-    return steps;
+    /* Windows WndProc and Mac DoMouseWheel emit one pair per message,
+     * independent of the reported magnitude. */
+    *remainder = 0;
+    return (delta > 0) - (delta < 0);
 }
 
 /* The menu cursor is drawn with full-screen alignment in 640x480 virtual

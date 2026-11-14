@@ -47,6 +47,7 @@ private struct BindsListLayout: View {
     @ObservedObject var studio: ConfigStudioModel
     @ObservedObject var binds: ConfigBindsModel
     @Environment(\.palette) private var palette
+    @FocusState private var searchFocused: Bool
 
     var body: some View {
         GeometryReader { proxy in
@@ -71,16 +72,10 @@ private struct BindsListLayout: View {
 
     private var search: some View {
         HStack(spacing: 12) {
-            HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass").foregroundStyle(palette.secondary).accessibilityHidden(true)
-                TextField("Find an action or key", text: $binds.query).textFieldStyle(.plain)
-                if !binds.query.isEmpty {
-                    Button { binds.query = "" } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(palette.tertiary).accessibilityLabel("Clear search")
-                }
-            }
-            .padding(.horizontal, 12).frame(height: 32)
-            .background(palette.dark ? Color.white.opacity(0.07) : Color.white.opacity(0.6), in: Capsule())
-            .overlay(Capsule().stroke(palette.wellStroke, lineWidth: 1))
+            SearchPill("Find an action or key", text: $binds.query, focus: $searchFocused, width: nil)
+                .frame(maxWidth: .infinity)
+                .help("Find an action or a key (⌘F)")
+                .onChange(of: studio.findRequest) { _, _ in searchFocused = true }
             HStack(spacing: 10) {
                 Text("PRIMARY").frame(width: 72)
                 Text("SECOND").frame(width: 72)
@@ -448,7 +443,7 @@ private struct ChainEditor: View {
                 }
                 HStack(spacing: 8) {
                     Button(draft.isNew ? "Discard" : "Delete Bind", role: .destructive) { binds.deleteChain(undo: undo) }
-                        .glassAction().controlSize(.small).disabled(studio.isReadOnly && !draft.isNew)
+                        .destructiveAction().controlSize(.small).disabled(studio.isReadOnly && !draft.isNew)
                     Spacer()
                     Button("Save Bind") {
                         if binds.chainNeedsConfirmation { confirming = true } else { binds.saveChain(undo: undo) }

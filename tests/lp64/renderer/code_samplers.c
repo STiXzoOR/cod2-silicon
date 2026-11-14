@@ -13,6 +13,8 @@ void *imp_rgp = &rgp;
 void *imp_backEnd = &backend;
 void *imp_tess = &tess;
 static dvar_t shadowDvar, lightmapDvar;
+static int cookiesValid;
+int RB_ShadowCookiesValid(void) { return cookiesValid; }
 const dvar_t *sc_enable = &shadowDvar;
 const dvar_t *r_lightMap = &lightmapDvar;
 void *imp_sc_enable = &sc_enable;
@@ -32,15 +34,17 @@ static void Check(int source, GfxImage *expected, byte expectedState)
 
 int main(void)
 {
-    GfxImage white = { 0 }, black = { 0 }, shadow = { 0 }, images[4] = { 0 };
+    GfxImage white = { 0 }, black = { 0 }, shadow = { 0 }, floatZ = { 0 }, images[4] = { 0 };
     GfxEntity entity = { .reType = (refEntityType_t)3 };
     rgp.whiteImage = &white;
     rgp.blackImage = &black;
     dx.renderTargets[3].image = &shadow;
+    dx.renderTargets[R_RENDERTARGET_FLOAT_Z].image = &floatZ;
+    Check(21, &floatZ, 0x31);
     backend.currentEntity = &entity;
     shadowDvar.current.enabled = 1;
-    /* Mac 1.3 0xf6930 tests current.enabled, not native dvar flags at +8. */
-    Check(19, &shadow, 0x32);
+    /* An enabled toggle cannot authorize an unfilled/overwritten target. */
+    Check(19, &white, 0x32);
     shadowDvar.flags = 1;
     shadowDvar.current.enabled = 0;
     Check(19, &white, 0x32);
@@ -48,7 +52,16 @@ int main(void)
     entity.reType = 0;
     Check(19, &white, 0x32);
     entity.renderFxFlags = 0x100;
+    Check(19, &white, 0x32);
+
+    cookiesValid = 1;
     Check(19, &shadow, 0x32);
+    entity.renderFxFlags = 0;
+    Check(19, &white, 0x32);
+    entity.reType = 3;
+    Check(19, &shadow, 0x32);
+    cookiesValid = 0;
+    Check(19, &white, 0x32);
 
     GfxImage *lightmaps[1][4] = { { &images[0], &images[1], &images[2], &images[3] } };
     GfxWorld world = { .lightmaps = lightmaps };
@@ -64,5 +77,5 @@ int main(void)
         lightmapDvar.current.integer = 2;
         Check(8 + i, &black, 1);
     }
-    puts("native code samplers: typed shadow toggle and lightmap debug modes passed");
+    puts("native code samplers: float depth, unfilled shadow target and lightmap debug modes passed");
 }

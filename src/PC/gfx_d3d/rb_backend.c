@@ -1,6 +1,9 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
+#include "r_cod2x_xray.h"
+#include "PC/gfx_d3d/r_log.h"
 #include "imports.h"
+#include "r_cod2x_film.h"
 #if defined(COD2_X64) && defined(__APPLE__)
 #include "platform/macos_system.h"
 extern float MacFeatures_GetCPUSpeedInGHz(void);
@@ -303,6 +306,26 @@ static void diag_rb_frame_end(void)
 extern struct materialCommands_t tess;
 extern struct r_backEndGlobals_t backEnd;
 extern const GfxBackEndData *backEndData;
+
+#if defined(COD2_X64)
+/* Track the receiver depth views represented by the copied shadow texture. */
+static struct {
+    const GfxViewParms *view[4];
+    int viewCount[4];
+    int count;
+    int copied;
+} shadowCookieViews;
+
+int RB_ShadowCookiesValid(void)
+{
+    if (!shadowCookieViews.copied) return 0;
+    for (int i = 0; i < shadowCookieViews.count; ++i)
+        if (shadowCookieViews.view[i] == backEnd.viewParms &&
+            shadowCookieViews.viewCount[i] == backEnd.viewCount)
+            return 1;
+    return 0;
+}
+#endif
 extern GLuint g_FenceID;
 extern const byte color_table[8][4];
 extern const Bool refEntIsInWorldSpace[10];
@@ -545,8 +568,36 @@ static void RB_DrawLinesCmd(GfxRenderCommandExecState *execState);
 static void RB_StencilPlanesCmd(GfxRenderCommandExecState *execState);
 static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState);
 
+#if COD2X_FILM
+static void RB_Cod2xFilmCmd(GfxRenderCommandExecState *execState)
+{
+    const GfxCmdCod2xFilm *cmd = (const GfxCmdCod2xFilm *)execState->cmd;
+    if (tess.indexCount || tess.optimizedIndexCount)
+        RB_EndSurface();
+    R_Cod2xFilm_Apply(&cmd->pass);
+    execState->cmd = (const byte *)cmd + cmd->header.byteCount;
+}
+#endif
+
+#if COD2X_XRAY_RENDER
+static void RB_Cod2xXrayCmd(GfxRenderCommandExecState *state)
+{
+    const GfxCmdCod2xXray *cmd = state->cmd;
+    if (tess.indexCount || tess.optimizedIndexCount) RB_EndSurface();
+    R_Cod2xXraySettings(&cmd->settings);
+    state->cmd = (const byte *)cmd + cmd->header.byteCount;
+}
+static void RB_Cod2xHeadCmd(GfxRenderCommandExecState *state)
+{
+    const GfxCmdCod2xHead *cmd = state->cmd;
+    if (tess.indexCount || tess.optimizedIndexCount) RB_EndSurface();
+    R_Cod2xHeadCommand(cmd->operation, cmd->point);
+    state->cmd = (const byte *)cmd + cmd->header.byteCount;
+}
+#endif
+
 /* Mac table 0x36ace0: only slot 0 is the command-list terminator. */
-void (*const RB_RenderCommandTable[34])(GfxRenderCommandExecState *execState) = {
+void (*const RB_RenderCommandTable[])(GfxRenderCommandExecState *execState) = {
     NULL,
     RB_GotoCmd,
     RB_CallCmd,
@@ -613,6 +664,13 @@ void (*const RB_RenderCommandTable[34])(GfxRenderCommandExecState *execState) = 
     NULL,
 #endif
     RB_TouchAllImagesCmd,
+#if COD2X_FILM
+    RB_Cod2xFilmCmd,
+#endif
+#if COD2X_XRAY_RENDER
+    RB_Cod2xXrayCmd,
+    RB_Cod2xHeadCmd,
+#endif
 };
 
 void RB_SetCodeConstant(int constant, vec_t x, vec_t y, vec_t z, vec_t w)
@@ -716,6 +774,7 @@ long long QueryPerf(void)
 
 static void RB_EndFrame_real(void)
 {
+    R_LOG("***************** RB_SwapBuffers *****************\n\n\n");
     char *dx = (char *)dx_g;
     void *device;
     void **vtable;
@@ -878,6 +937,7 @@ static void RB_EndFrame_real(void)
         *(int *)((DxGlobals *)dx)->dynamicIndexBuffer = 0;
 
     backEnd.projection2D = 0;
+    R_LogFrameEnd();
 
     r_gamma_cvar = *(char **)imp_r_gamma;
 
@@ -978,6 +1038,7 @@ static void RB_SetClipPlanesCmd(GfxRenderCommandExecState *execState)
         do {
             device = ((DxGlobals *)imp_dx)->device;
             vtable = *(void ***)device;
+            R_LOG("dx.device->SetRenderState( D3DRS_CLIPPLANEENABLE, (1 << cmd->clipPlaneCount) - 1 )\n");
             ((HRESULT(D3DVTCC *)(void *, DWORD, DWORD))(vtable[0xE4 / 4]))(
                 device, 0x98, (DWORD)((1 << planeCount) - 1));
         } while (*(volatile int *)&alwaysfails);
@@ -992,6 +1053,7 @@ static void RB_SetClipPlanesCmd(GfxRenderCommandExecState *execState)
             do {
                 device = ((DxGlobals *)imp_dx)->device;
                 vtable = *(void ***)device;
+                R_LOG("dx.device->SetClipPlane( planeIndex, cmd->clipPlanes[planeIndex] )\n");
                 ((HRESULT(D3DVTCC *)(void *, DWORD, const float *))(vtable[0xDC / 4]))(
                     device, (DWORD)i, (const float *)planeData);
             } while (*(volatile int *)&alwaysfails);
@@ -1041,6 +1103,7 @@ static void RB_StretchRawCmd(GfxRenderCommandExecState *execState)
 
         do {
             texVtable = *(void ***)rawTexture;
+            R_LOG("rawSurf->LockRect( &lockedRect, 0, 0x00002000L )\n");
             ((HRESULT(D3DVTCC *)(void *, UINT, void *, void *, DWORD))(texVtable[0x4C / 4]))(
 #if defined(COD2_X64)
                 rawTexture, 0, &lockedRect, NULL, 0x2000);
@@ -1178,6 +1241,7 @@ void RB_ClearScreen(int whichToClear, const vec_t *color, float depth, int stenc
             }
         }
 #endif
+        R_LOG("dx.device->Clear( 0, 0, clearFlags, nativeColor.packed, depth, stencil )\n");
         ((HRESULT(D3DVTCC *)(void *, DWORD, void *, DWORD, DWORD, float, DWORD))(vtable[0xAC / 4]))(
             device, 0, NULL, clearFlags, d3dColor, depth, (DWORD)(byte)stencil);
     } while (*(volatile int *)&alwaysfails);
@@ -1187,6 +1251,16 @@ static void RB_ClearScreenCmd(GfxRenderCommandExecState *execState)
 {
     byte *cmd = (byte *)execState->cmd;
     unsigned int byteCount;
+#if defined(COD2_X64)
+    /* Float depth is also the shadow receiver prepass. Its later color-only
+     * shadow-target clear must preserve these view tags. */
+    if ((dxState.renderTargetId == R_RENDERTARGET_DYNAMICSHADOWS ||
+         dxState.renderTargetId == R_RENDERTARGET_FLOAT_Z) &&
+        (((GfxCmdClearScreen *)cmd)->whichToClear & 2))
+        memset(&shadowCookieViews, 0, sizeof(shadowCookieViews));
+    if (dxState.renderTargetId == R_RENDERTARGET_DYNAMICSHADOWS)
+        shadowCookieViews.copied = 0;
+#endif
     RB_ClearScreen(((GfxCmdClearScreen *)cmd)->whichToClear,
                    ((GfxCmdClearScreen *)cmd)->color,
                    ((GfxCmdClearScreen *)cmd)->depth,
@@ -1198,10 +1272,19 @@ static void RB_ClearScreenCmd(GfxRenderCommandExecState *execState)
 
 static void RB_BACKEND_REGPARM2_ABI RB_UpdateColorInternal(const vec_t *floatColor, byte *color)
 {
+#if COD2_APPLE_SDK
+    /* Windows gfx 0x100328f0 writes RGBA without clamping; FISTP is
+       nearest-even after the single-precision product. */
+    color[0] = (byte)(int)__builtin_rintf(floatColor[0] * 255.0f);
+    color[1] = (byte)(int)__builtin_rintf(floatColor[1] * 255.0f);
+    color[2] = (byte)(int)__builtin_rintf(floatColor[2] * 255.0f);
+    color[3] = (byte)(int)__builtin_rintf(floatColor[3] * 255.0f);
+#else
     color[0] = (byte)(int)floorf(floatColor[0] * 255.0f + 0.5f);
     color[1] = (byte)(int)floorf(floatColor[1] * 255.0f + 0.5f);
     color[2] = (byte)(int)floorf(floatColor[2] * 255.0f + 0.5f);
     color[3] = (byte)(int)floorf(floatColor[3] * 255.0f + 0.5f);
+#endif
 }
 
 void RB_UpdateColor(const vec_t *color_allies, const vec_t *color_axis)
@@ -1338,6 +1421,7 @@ static void RB_BACKEND_REGPARM1_ABI RB_EndBenchmarkGpu_impl(void *time)
         dx = (byte *)dx_g;
         device = ((DxGlobals *)dx)->device;
         vtable = *(void ***)device;
+        R_LOG("dx.device->EndScene()\n");
         ((HRESULT(D3DVTCC *)(void *))(vtable[0xA8 / 4]))(device);
     } while (*(volatile int *)&alwaysfails);
 
@@ -1356,6 +1440,7 @@ static void RB_BACKEND_REGPARM1_ABI RB_EndBenchmarkGpu_impl(void *time)
     }
 
     glGenFencesAPPLE(1, (unsigned int *)(&g_FenceID));
+    R_LOG("dx.flushGpuQuery->Issue( (1 << 0) )\n");
     glSetFenceAPPLE(g_FenceID);
     dx = (byte *)dx_g;
     ((DxGlobals *)dx)->flushGpuQueryIssued = 1;
@@ -1398,6 +1483,7 @@ static void RB_BACKEND_REGPARM1_ABI RB_BeginBenchmarkGpu_impl(void *time)
     }
 
     glGenFencesAPPLE(1, (unsigned int *)(&g_FenceID));
+    R_LOG("dx.flushGpuQuery->Issue( (1 << 0) )\n");
     glSetFenceAPPLE(g_FenceID);
     dx = (byte *)dx_g;
     ((DxGlobals *)dx)->flushGpuQueryIssued = 1;
@@ -1422,6 +1508,7 @@ static void RB_BACKEND_REGPARM1_ABI RB_BeginBenchmarkGpu_impl(void *time)
         dx = (byte *)dx_g;
         device = ((DxGlobals *)dx)->device;
         vtable = *(void ***)device;
+        R_LOG("dx.device->BeginScene()\n");
         ((HRESULT(D3DVTCC *)(void *))(vtable[0xA4 / 4]))(device);
     } while (*(volatile int *)&alwaysfails);
 }
@@ -1546,6 +1633,7 @@ static void RB_SetStencilRefValueCmd(GfxRenderCommandExecState *execState)
         do {
             void *dev = ((DxGlobals *)imp_dx)->device;
             void **vt = *(void ***)dev;
+            R_LOG("dx.device->SetRenderState( D3DRS_STENCILREF, cmd->refValue )\n");
             ((int(D3DVTCC *)(void *, int, int))vt[0xe4 / 4])(dev, 0x39, stencilRef);
         } while (*(int *)&alwaysfails);
         dxs->stencilRefValue = stencilRef;
@@ -1640,16 +1728,25 @@ static void RB_BeginViewCmd(GfxRenderCommandExecState *execState)
 
     twoInvProjDist = invProjDist * 2.0f;
 
+#if COD2_APPLE_SDK
+    /* Windows sky rays span the exact-size screen texture's UV range. */
+    pixelScaleW = 1.0f;
+#else
     pow2W = (float)nextPow2((unsigned int)backEnd.width);
     pixelScaleW = 1.0f / ((float)backEnd.width / pow2W);
+#endif
     scale = pixelScaleW * twoInvProjDist;
     backEnd.codeConsts[16][0] = scale * invVPMatrix[0];
     backEnd.codeConsts[16][1] = scale * invVPMatrix[1];
     backEnd.codeConsts[16][2] = scale * invVPMatrix[2];
     backEnd.codeConsts[16][3] = 0.0f;
 
+#if COD2_APPLE_SDK
+    pixelScaleH = 1.0f;
+#else
     pow2H = (float)nextPow2((unsigned int)backEnd.height);
     pixelScaleH = 1.0f / ((float)backEnd.height / pow2H);
+#endif
     scale = -(pixelScaleH * twoInvProjDist);
     backEnd.codeConsts[17][0] = scale * invVPMatrix[4];
     backEnd.codeConsts[17][1] = scale * invVPMatrix[5];
@@ -1684,7 +1781,14 @@ static void RB_SetRenderTargetCmd(GfxRenderCommandExecState *execState)
     if (tess.indexCount || tess.optimizedIndexCount)
         RB_EndSurface();
 
+#if defined(COD2_X64)
+    int copiedShadows = dxState.renderTargetId == R_RENDERTARGET_DYNAMICSHADOWS &&
+        ((GfxCmdSetRenderTarget *)cmd)->renderTargetId == R_RENDERTARGET_FRAME_BUFFER;
+#endif
     RB_SetRenderTarget(((GfxCmdSetRenderTarget *)cmd)->renderTargetId);
+#if defined(COD2_X64)
+    if (copiedShadows) shadowCookieViews.copied = 1;
+#endif
 
     cmd = (byte *)execState->cmd;
     execState->cmd = (const void *)(cmd + ((const GfxCmdHeader *)cmd)->byteCount);
@@ -1707,6 +1811,9 @@ static void RB_RenderDrawSurfList(GfxDrawSurf *drawSurfs, int drawSurfCount,
     float materialTime, materialTimePrev;
     GfxEntity *entities;
 
+#if COD2X_XRAY_RENDER
+    R_Cod2xXrayBegin(drawSurfs, drawSurfCount, techType, order);
+#endif
     COD2_DEBUG_ONLY(rb_rdsl_call_count++;)
 
     backEnd.currentEntity = &backEnd.worldEntity;
@@ -1910,6 +2017,12 @@ have_tech:
     }
 
 check_material:
+#if COD2X_XRAY_RENDER
+    if (entityIndex != entityIndexPrev &&
+        ((entityIndex < 0x7fe && (entities[entityIndex].renderFxFlags & COD2X_XRAY_TAG)) ||
+         (entityIndexPrev < 0x7fe && (entities[entityIndexPrev].renderFxFlags & COD2X_XRAY_TAG))))
+        entityMergable = 0;
+#endif
 
     if (materialPrev == material) {
         if (lightmapPrev == lightmap &&
@@ -2051,6 +2164,9 @@ cleanup:
 
     if (tess.indexCount || tess.optimizedIndexCount)
         RB_EndSurface();
+#if COD2X_XRAY_RENDER
+    R_Cod2xXrayEnd();
+#endif
 
     if (depthRange) {
         RB_SetDepthRange(0.0f, 1.0f);
@@ -2094,6 +2210,17 @@ static void RB_DrawSurfsCmd(GfxRenderCommandExecState *execState)
         ((GfxCmdDrawSurfs *)cmd)->drawSurfCount,
         ((GfxCmdDrawSurfs *)cmd)->techType,
         ((GfxCmdDrawSurfs *)cmd)->order);
+#if defined(COD2_X64)
+    MaterialTechniqueType prepass = ((GfxCmdDrawSurfs *)cmd)->techType;
+    if (((dxs->renderTargetId == R_RENDERTARGET_DYNAMICSHADOWS &&
+          prepass == TECHNIQUE_DEPTH_PREPASS) ||
+         (dxs->renderTargetId == R_RENDERTARGET_FLOAT_Z &&
+          prepass == TECHNIQUE_BUILD_FLOAT_Z)) && shadowCookieViews.count < 4) {
+        int index = shadowCookieViews.count++;
+        shadowCookieViews.view[index] = backEnd.viewParms;
+        shadowCookieViews.viewCount[index] = backEnd.viewCount;
+    }
+#endif
 }
 
 static void RB_DrawSunPostEffectsCmd(GfxRenderCommandExecState *execState)
@@ -2230,18 +2357,21 @@ static void RB_Set2D(void)
         do {
             void *device = ((DxGlobals *)dx)->device;
             void **vtable = *(void ***)device;
+            R_LOG("dx.device->SetTransform( (D3DTRANSFORMSTATETYPE)(0 + 256), &identity )\n");
             ((int(__attribute__((stdcall)) *)(void *, int, const void *))vtable[0xb0 / 4])(
                 device, 0x100, identity);
         } while (*(int *)&alwaysfails);
         do {
             void *device = ((DxGlobals *)dx)->device;
             void **vtable = *(void ***)device;
+            R_LOG("dx.device->SetTransform( D3DTS_VIEW, &identity )\n");
             ((int(__attribute__((stdcall)) *)(void *, int, const void *))vtable[0xb0 / 4])(
                 device, 2, identity);
         } while (*(int *)&alwaysfails);
         do {
             void *device = ((DxGlobals *)dx)->device;
             void **vtable = *(void ***)device;
+            R_LOG("dx.device->SetTransform( D3DTS_PROJECTION, &transform )\n");
             ((int(__attribute__((stdcall)) *)(void *, int, const void *))vtable[0xb0 / 4])(
                 device, 3, transform);
         } while (*(int *)&alwaysfails);
@@ -2427,17 +2557,22 @@ static void RB_SaveScreenCmd(GfxRenderCommandExecState *execState)
         RB_EndSurface();
 
     dx = (char *)dx_g;
+#if defined(COD2_X64)
+    memset(&shadowCookieViews, 0, sizeof(shadowCookieViews));
+#endif
     imageSurface = Image_GetSurface(((DxGlobals *)dx)->renderTargets[7].image);
 
     do {
         void *device = ((DxGlobals *)dx)->device;
         void **vtable = *(void ***)device;
         void *backBuffer = dxs->renderTargetSurface;
+        R_LOG("dx.device->StretchRect( dxState.renderTargetSurface, 0, imageSurface, 0, D3DTEXF_LINEAR )\n");
         ((int(__attribute__((stdcall)) *)(void *, void *, void *, void *, void *, int))vtable[0x88 / 4])(
             device, backBuffer, NULL, imageSurface, NULL, 2);
     } while (*(int *)&alwaysfails);
 
     do {
+        R_LOG("imageSurface->Release()\n");
         ((int(__attribute__((stdcall)) *)(void *))((*(void ***)imageSurface)[2]))(imageSurface);
     } while (*(int *)&alwaysfails);
 
@@ -2457,6 +2592,9 @@ static void RB_ApplyEarlyPostEffectsCmd(GfxRenderCommandExecState *execState)
     if (tess.indexCount || tess.optimizedIndexCount)
         RB_EndSurface();
 
+#if defined(COD2_X64)
+    memset(&shadowCookieViews, 0, sizeof(shadowCookieViews));
+#endif
     backEnd.resolvedPostSunTarget = (GfxRenderTargetId)(0xe);
 
     needCopy = r_distortion->current.enabled;
@@ -2479,11 +2617,13 @@ static void RB_ApplyEarlyPostEffectsCmd(GfxRenderCommandExecState *execState)
             void *device = ((DxGlobals *)dx)->device;
             void **vtable = *(void ***)device;
             void *backBuffer = dxs->renderTargetSurface;
+            R_LOG("dx.device->StretchRect( dxState.renderTargetSurface, 0, imageSurface, 0, D3DTEXF_LINEAR )\n");
             ((int(__attribute__((stdcall)) *)(void *, void *, void *, void *, void *, int))vtable[0x88 / 4])(
                 device, backBuffer, NULL, imageSurface, NULL, 2);
         } while (*(int *)&alwaysfails);
 
         do {
+            R_LOG("imageSurface->Release()\n");
             ((int(__attribute__((stdcall)) *)(void *))((*(void ***)imageSurface)[2]))(imageSurface);
         } while (*(int *)&alwaysfails);
 
@@ -3313,6 +3453,9 @@ void RB_ExecuteRenderCommands(const void *data)
     GfxRenderCommandExecState execState;
 
     backEndData = 0;
+#if defined(COD2_X64)
+    memset(&shadowCookieViews, 0, sizeof(shadowCookieViews));
+#endif
 
 #if defined(COD2_X64) && defined(__APPLE__)
     /* Retire a completed fence after switching sync off, including disabled or
@@ -3406,6 +3549,7 @@ void RB_ExecuteRenderCommands(const void *data)
         while (!RB_IsGpuFenceFinished()) {
         }
         glGenFencesAPPLE(1, (unsigned int *)(&g_FenceID));
+        R_LOG("dx.flushGpuQuery->Issue( (1 << 0) )\n");
         glSetFenceAPPLE(g_FenceID);
         ((DxGlobals *)dx_g)->flushGpuQueryIssued = 1;
     }
@@ -3436,6 +3580,7 @@ void RB_ExecuteRenderCommands(const void *data)
         }
 
         glGenFencesAPPLE(1, (unsigned int *)(&g_FenceID));
+        R_LOG("dx.flushGpuQuery->Issue( (1 << 0) )\n");
         glSetFenceAPPLE(g_FenceID);
         dx = (char *)dx_g;
         ((DxGlobals *)dx)->flushGpuQueryIssued = 1;
@@ -3447,6 +3592,7 @@ void RB_ExecuteRenderCommands(const void *data)
     do {
         void *device = ((DxGlobals *)dx)->device;
         void **vtable = *(void ***)device;
+        R_LOG("dx.device->BeginScene()\n");
         ((HRESULT(__attribute__((stdcall)) *)(void *))(vtable[0xa4 / 4]))(device);
     } while (*(volatile int *)&alwaysfails);
 
@@ -3463,6 +3609,7 @@ void RB_ExecuteRenderCommands(const void *data)
             dx = (char *)dx_g;
             void *device = ((DxGlobals *)dx)->device;
             void **vtable = *(void ***)device;
+            R_LOG("dx.device->Clear( 0, 0, 0x00000001l, 0, 0, 0 )\n");
             ((HRESULT(D3DVTCC *)(void *, DWORD, void *, DWORD, DWORD, float, DWORD))(vtable[0xac / 4]))(device, 0, NULL, 1, 0x00000000u, 0.0f, 0);
         } while (*(volatile int *)&alwaysfails);
         goto post_render;
@@ -3538,6 +3685,7 @@ post_render:
             dx = (char *)dx_g;
             void *device = ((DxGlobals *)dx)->device;
             void **vtable = *(void ***)device;
+            R_LOG("dx.device->Clear( 0, 0, 0x00000001l, 0, 0, 0 )\n");
             ((HRESULT(D3DVTCC *)(void *, DWORD, void *, DWORD, DWORD, float, DWORD))(vtable[0xac / 4]))(device, 0, NULL, 1, 0x00000000u, 0.0f, 0);
         } while (*(volatile int *)&alwaysfails);
 
@@ -3553,6 +3701,7 @@ post_render:
     do {
         void *device = ((DxGlobals *)dx)->device;
         void **vtable = *(void ***)device;
+        R_LOG("dx.device->EndScene()\n");
         ((HRESULT(__attribute__((stdcall)) *)(void *))(vtable[0xa8 / 4]))(device);
     } while (*(volatile int *)&alwaysfails);
     ((DxGlobals *)dx)->inScene = 0;
@@ -3676,11 +3825,13 @@ post_render:
     }
 
     glGenFencesAPPLE(1, (unsigned int *)(&g_FenceID));
+    R_LOG("dx.flushGpuQuery->Issue( (1 << 0) )\n");
     glSetFenceAPPLE(g_FenceID);
     ((DxGlobals *)dx_g)->flushGpuQueryIssued = 1;
 #else
     if (deviceState == 3) {
         glGenFencesAPPLE(1, (unsigned int *)(&g_FenceID));
+        R_LOG("dx.flushGpuQuery->Issue( (1 << 0) )\n");
         glSetFenceAPPLE(g_FenceID);
         ((DxGlobals *)dx)->flushGpuQueryIssued = 1;
         goto done;
@@ -3730,6 +3881,7 @@ post_render:
     }
 
     glGenFencesAPPLE(1, (unsigned int *)(&g_FenceID));
+    R_LOG("dx.flushGpuQuery->Issue( (1 << 0) )\n");
     glSetFenceAPPLE(g_FenceID);
     dx = (char *)dx_g;
     ((DxGlobals *)dx)->flushGpuQueryIssued = 1;
@@ -3854,11 +4006,13 @@ static void RB_CopyBackBufferToSurface(void *image)
         void *device = ((DxGlobals *)dx)->device;
         void **vtable = *(void ***)device;
         void *backBuffer = dxs->renderTargetSurface;
+        R_LOG("dx.device->StretchRect( dxState.renderTargetSurface, 0, imageSurface, 0, D3DTEXF_LINEAR )\n");
         ((int(__attribute__((stdcall)) *)(void *, void *, void *, void *, void *, int))vtable[0x88 / 4])(
             device, backBuffer, NULL, imageSurface, NULL, 2);
     } while (*(int *)&alwaysfails);
 
     do {
+        R_LOG("imageSurface->Release()\n");
         ((int(__attribute__((stdcall)) *)(void *))((*(void ***)imageSurface)[2]))(imageSurface);
     } while (*(int *)&alwaysfails);
 }
@@ -3888,7 +4042,11 @@ static void RB_BlurShadowCookieCmd(GfxRenderCommandExecState *execState)
 
         RB_DrawStretchPic(blurMaterial,
                           1.0f, 1.0f, screenWidth - 2.0f, screenHeight - 2.0f,
+#if defined(COD2_X64)
+                          0.01171875f, 0.98828125f, 0.99609375f, 0.00390625f,
+#else
                           0.01171875f, 0.01171875f, 0.99609375f, 0.99609375f,
+#endif
                           0xffffffff, (GfxPrimStatsTarget)10);
         RB_EndSurface();
 
@@ -3901,7 +4059,11 @@ static void RB_BlurShadowCookieCmd(GfxRenderCommandExecState *execState)
 
         RB_DrawStretchPic(blurMaterial,
                           1.0f, 1.0f, screenWidth - 2.0f, screenHeight - 2.0f,
+#if defined(COD2_X64)
+                          0.00390625f, 0.99609375f, 0.98828125f, 0.01171875f,
+#else
                           0.00390625f, 0.00390625f, 0.98828125f, 0.98828125f,
+#endif
                           0xffffffff, (GfxPrimStatsTarget)10);
         RB_EndSurface();
     }
@@ -4207,11 +4369,13 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
             void *device = ((DxGlobals *)dx)->device;
             void **vtable = *(void ***)device;
             void *backBuffer = dxs->renderTargetSurface;
+            R_LOG("dx.device->StretchRect( dxState.renderTargetSurface, 0, imageSurface, 0, D3DTEXF_LINEAR )\n");
             ((HRESULT(__attribute__((stdcall)) *)(void *, void *, void *, void *, void *, int))
                  vtable[0x88 / 4])(device, backBuffer, NULL, imageSurface, NULL, 2);
         } while (*(volatile int *)&alwaysfails);
 
         do {
+            R_LOG("imageSurface->Release()\n");
             ((HRESULT(__attribute__((stdcall)) *)(void *))((*(void ***)imageSurface)[2]))(imageSurface);
         } while (*(volatile int *)&alwaysfails);
 
@@ -4405,9 +4569,9 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
         const Material *colorMtl = rgp.frameColorDebugMaterial;
 
         RB_DrawStretchPic(colorMtl, halfW * 0.5f, 0.5f * halfH, halfW * 0.5f, 0.5f * halfH,
-                          0, 0, 1.0f, 1.0f, 0xff000000, (GfxPrimStatsTarget)10);
+                          0, 0, 1.0f, 1.0f, 0x0000ffff, (GfxPrimStatsTarget)10);
         RB_DrawStretchPic(colorMtl, halfW, 0.5f * halfH, halfW * 0.5f, 0.5f * halfH,
-                          0, 0, 1.0f, 1.0f, 0xff000000, (GfxPrimStatsTarget)10);
+                          0, 0, 1.0f, 1.0f, 0x00ff00ff, (GfxPrimStatsTarget)10);
         RB_DrawStretchPic(colorMtl, halfW * 0.5f, halfH, halfW * 0.5f, 0.5f * halfH,
                           0, 0, 1.0f, 1.0f, 0xff0000ff, (GfxPrimStatsTarget)10);
         RB_DrawStretchPic(rgp.frameAlphaDebugMaterial,
@@ -4488,7 +4652,8 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
         int halfH = (int)((float)dxState.renderTargetHeight * 0.5f);
         int halfW = (int)((float)dxState.renderTargetWidth * 0.5f);
         const Material *mixMtl = rgp.colorChannelMixerMaterial;
-        float save3 = backEnd.codeConsts[27][3];
+        float savedColor[4];
+        memcpy(savedColor, backEnd.codeConsts[27], sizeof(savedColor));
 
         RB_SetRenderTarget(0);
         backEnd.currentFeedbackImage = dxg->renderTargets[3].image;
@@ -4501,7 +4666,7 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
                           0.25f, 0.25f, 0.75f, 0.75f, 0xffffffff, (GfxPrimStatsTarget)10);
         RB_EndSurface();
 
-        backEnd.codeConsts[27][3] = save3;
+        memcpy(backEnd.codeConsts[27], savedColor, sizeof(savedColor));
 
         {
             const byte *c = (const byte *)execState->cmd;
@@ -5064,6 +5229,7 @@ static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState)
             cy = xyz[0] * row0[1] + xyz[1] * row1[1] + xyz[2] * row2[1] + row3[1];
             cz = xyz[0] * row0[2] + xyz[1] * row1[2] + xyz[2] * row2[2] + row3[2];
             cw = xyz[0] * row0[3] + xyz[1] * row1[3] + xyz[2] * row2[3] + row3[3];
+            cz -= 0.001f * cw;
             ox = cw * invWidth;
             oy = cw * invHeight;
 

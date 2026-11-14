@@ -1,3 +1,4 @@
+#include "PC/gfx_d3d/r_cod2x_xray.h"
 /* Native indexed-draw orchestration. Kept separate from the preserved i386
  * source and from the explicit source-shader approximation below. */
 #if defined(COD2_X64)
@@ -28,7 +29,15 @@ static void CDirect3DDevice_SubmitIndexedNative(DeviceImpl *dev, const byte *ind
     while (count) {
         UINT32 batch = count > 65534 ? 65535 : count;
 #if defined(COD2_X64)
-        glDrawRangeElements(0x4, start, end, batch, 0x1403, indices);
+#if COD2X_XRAY_RENDER
+        Cod2xXray_GLHeadDraw(1);
+#endif
+        if (!DeviceAlphaAA_Draw(dev, start, end, batch, indices))
+            glDrawRangeElements(0x4, start, end, batch, 0x1403, indices);
+#if COD2X_XRAY_RENDER
+        Cod2xXray_GLHeadDraw(0);
+        R_Cod2xXrayDraw(start, end, batch, indices, dev->renderTarget);
+#endif
 #else
         glDrawRangeElements(0x4, state->low, state->high, batch, 0x1403, indices);
 #endif

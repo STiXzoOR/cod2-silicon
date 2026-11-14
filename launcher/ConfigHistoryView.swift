@@ -6,6 +6,8 @@ struct ConfigHistoryView: View {
     @ObservedObject var studio: ConfigStudioModel
     @ObservedObject var session: ConfigStudioSession
     @Environment(\.palette) private var palette
+    /// The timeline shows focus the way a native list does, on the selected row, not as a ring.
+    @FocusState private var focused: Bool
 
     var body: some View {
         GeometryReader { proxy in
@@ -39,10 +41,10 @@ struct ConfigHistoryView: View {
                 SnapshotRow(kind: .now, title: "How \(session.current?.profile.displayName ?? "this loadout") is set up now",
                             detail: session.current?.profile.isActive == true ? "Everything the next game will use." : "Everything the game uses when you choose this loadout.",
                             source: "Now", time: session.history.first.map { StencilDate.dayAndTime($0.date) },
-                            selected: studio.snapshotID == nil) { studio.snapshotID = nil }
+                            selected: studio.snapshotID == nil, focused: focused) { studio.snapshotID = nil }
                 ForEach(entries) { entry in
                     SnapshotRow(kind: .source(entry.source), title: studio.title(of: entry), detail: ConfigDiff.sentence(studio.changes(in: entry)),
-                                source: entry.source.title, time: StencilDate.dayAndTime(entry.date), selected: studio.snapshotID == entry.id) {
+                                source: entry.source.title, time: StencilDate.dayAndTime(entry.date), selected: studio.snapshotID == entry.id, focused: focused) {
                         studio.snapshotID = entry.id
                     }
                 }
@@ -53,7 +55,7 @@ struct ConfigHistoryView: View {
                 }
             }
         }
-        .focusable()
+        .focusable(interactions: .edit).focused($focused).focusEffectDisabled()
         .onMoveCommand { direction in
             let ids: [String?] = [nil] + entries.map(\.id)
             guard let index = ids.firstIndex(of: studio.snapshotID) else { return }
@@ -91,6 +93,7 @@ private struct SnapshotRow: View {
     var source: String
     var time: String?
     var selected: Bool
+    var focused = false
     var action: () -> Void
     @Environment(\.palette) private var palette
 
@@ -117,7 +120,7 @@ private struct SnapshotRow: View {
             }
             .padding(.vertical, 12).padding(.leading, 12).padding(.trailing, 14)
             .background(selected ? palette.selection : .clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(selected ? palette.selectionStroke : .clear, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(selected ? (focused ? palette.accent : palette.selectionStroke) : .clear, lineWidth: selected && focused ? 2 : 1))
             .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(RowButtonStyle(radius: 16))

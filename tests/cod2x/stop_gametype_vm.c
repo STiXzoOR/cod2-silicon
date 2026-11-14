@@ -33,7 +33,7 @@ const dvar_t *g_gametype = &gametype;
 static char bytecode[65536] __attribute__((aligned(8)));
 int currentPos;
 #define emitted currentPos
-static char scriptText[2048];
+static char scriptText[4096];
 static void *nodes[4096];
 static size_t nodeCount;
 static void *permanent[32];
@@ -70,11 +70,13 @@ extern void Scr_AddInt(int value);
 extern void Scr_Abort(void);
 extern void Scr_Settings(int developer, int developerScript, int abortOnError);
 extern void RemoveRefToValue(int type, VariableUnion value);
-void Com_Printf(const char *fmt, ...) { (void)fmt; }
+static char printed[4096];
+void Com_Printf(const char *fmt, ...) { va_list ap; va_start(ap, fmt); vsnprintf(printed, sizeof(printed), fmt, ap); va_end(ap); }
 void Com_DPrintf(const char *fmt, ...) { (void)fmt; }
 void Com_Error(errorParm_t code, const char *fmt, ...);
 static errorParm_t errorcode;
 static char com_errorMessage[4096];
+const void *com_errorCaller;
 qboolean com_errorEntered, com_fixedConsolePosition;
 static jmp_buf recoverableDrop;
 static clientStatic_t fixtureCls;
@@ -119,9 +121,25 @@ void Scr_InitOpcodeLookup(void) {}
 void AddOpcodePos(unsigned int pos, int type) { (void)pos; (void)type; }
 void RemoveOpcodePos(void) {}
 void AddThreadStartOpcodePos(unsigned int pos) { (void)pos; }
+#if defined(COD2_CODX) && COD2_CODX && defined(DEBUG) && DEBUG
+static const char debugTests[] =
+    "callback_test_onStartGameType(greeting) { probe_debug(1, greeting); } "
+    "callback_test_onStartGameType2(greeting) { probe_debug(2, greeting); return 1337; } "
+    "callback_test_onStartGameType3() { probe_debug(3); } "
+    "callback_test_onPlayerConnect() { probe_debug(5); } "
+    "callback_test_onPlayerConnect2(greeting) { probe_debug(6, greeting); return 1338; } ";
+static const char debugMatch[] =
+    "callback_match_onStartGameType() { probe_debug(4); } "
+    "callback_match_onPlayerConnect() { probe_debug(7); } "
+    "callback_match_onStopGameType(a,b,c,d) { probe_debug_stop(a,b,c,d); return 0; } ";
+#endif
 byte *Scr_AddSourceBuffer(const char *filename, const char *ext, byte *code, int flag)
 {
     (void)filename; (void)ext; (void)code; (void)flag;
+#if defined(COD2_CODX) && COD2_CODX && defined(DEBUG) && DEBUG
+    if (strstr(filename, "_callback_tests")) { scrParserPub.sourceBuf = (char *)debugTests; return (byte *)debugTests; }
+    if (strstr(filename, "_callback_match")) { scrParserPub.sourceBuf = (char *)debugMatch; return (byte *)debugMatch; }
+#endif
     scrParserPub.sourceBuf = scriptText; return (byte *)scriptText;
 }
 static void ProbeStop(void)
@@ -133,6 +151,67 @@ static void ProbeStop(void)
     assert(Scr_GetType(3) == 2 && !strcmp(Scr_GetString(3), expectedSource));
     ++observedStops;
 }
+#if defined(COD2_CODX) && COD2_CODX && defined(DEBUG) && DEBUG
+extern float Scr_GetFloat(unsigned int index);
+extern void Scr_GetVector(unsigned int index, float *value);
+extern const char *Scr_GetIString(unsigned int index);
+extern int Scr_GetFunc(unsigned int index);
+extern const char *Scr_GetTypeName(unsigned int index);
+extern void Scr_AddFloat(float value);
+extern void Scr_AddVector(const float *value);
+extern void Scr_AddString(const char *value);
+extern void Scr_AddUndefined(void);
+extern void Scr_MakeArray(void);
+extern void Scr_AddArray(void);
+extern void Scr_AddExecEntThreadNum(int, int, scr_func_t, unsigned int);
+extern scr_thread_t Scr_ExecEntThreadNum(int, int, scr_func_t, unsigned int);
+extern void Scr_SetClassMap(int classnum);
+extern void Scr_RemoveClassMap(int classnum);
+static client_t debugClients[64];
+serverStatic_t svs = { .clients = debugClients };
+static int debugTrace[64], debugTraceCount, debugStops, debugValues, debugPassed;
+static void (*debugCommand)(void);
+static const char *debugArgs[3];
+int I_stricmp(const char *a, const char *b) { return strcasecmp(a, b); }
+int Cmd_Argc(void) { return debugArgs[1] ? (debugArgs[2] ? 3 : 2) : 1; }
+const char *Cmd_Argv(int n) { return n < 3 && debugArgs[n] ? debugArgs[n] : ""; }
+void Cmd_AddCommand(const char *name, void (*call)(void)) { assert(!strcmp(name, "ws")); debugCommand = call; }
+#include "stop_vm_debug.h"
+static void ProbeDebug(void)
+{
+    int stage = Scr_GetInt(0);
+    if (stage == 1 || stage == 2 || stage == 6)
+        assert(Scr_GetNumParam() == 2 && !strcmp(Scr_GetString(1), "hello from CoD2x"));
+    else
+        assert(Scr_GetNumParam() == 1);
+    if (debugTraceCount < 64) debugTrace[debugTraceCount++] = stage;
+}
+static void ProbeDebugStop(void)
+{
+    assert(Scr_GetNumParam() == 4);
+    assert(Scr_GetType(0) == 6 && Scr_GetType(1) == 6 && Scr_GetType(2) == 6 && Scr_GetType(3) == 2);
+    ++debugStops;
+}
+static void ProbeDebugValues(void)
+{
+    vec3_t vector;
+    assert(Scr_GetNumParam() == 10);
+    assert(Scr_GetType(0) == 0);
+    /* Windows Scr_AddBool (0x483530) stores the integer unchanged. */
+    assert(Scr_GetInt(1) == 2 && Scr_GetInt(2) == -701);
+    assert(Scr_GetFloat(3) == 1.25f && !strcmp(Scr_GetString(4), "return string"));
+    Scr_GetVector(5, vector); assert(vector[0] == 9 && vector[1] == 8 && vector[2] == 7);
+    assert(Scr_GetInt(6) == 10 && Scr_GetInt(7) == 20 && Scr_GetInt(8) == 30);
+    assert(!strcmp(Scr_GetString(9), "test player"));
+    ++debugValues;
+}
+static void ProbeDebugPassed(void) { ++debugPassed; }
+static void GScr_Cod2xTestReturn(const char *, const char *, int);
+void SV_Cod2xMatchStartGameType(void) { debugTrace[debugTraceCount++] = 40; }
+scr_thread_t Scr_ExecEntThread(gentity_t *self, scr_func_t handle, unsigned int count)
+{ return Scr_ExecEntThreadNum(self->s.number, 0, handle, count); }
+#define COD2_DEBUG_ENV(name) 0
+#endif
 BuiltinFunction Scr_GetFunction(const char **name, int *type)
 {
     *type = 0;
@@ -141,9 +220,21 @@ BuiltinFunction Scr_GetFunction(const char **name, int *type)
     if (!strcmp(*name, "map_restart")) return GScr_MapRestart;
     if (!strcmp(*name, "exitlevel")) return GScr_ExitLevel;
     if (!strcmp(*name, "randomint")) return Scr_RandomInt;
+#if defined(COD2_CODX) && COD2_CODX && defined(DEBUG) && DEBUG
+    if (!strcmp(*name, "probe_debug")) return ProbeDebug;
+    if (!strcmp(*name, "probe_debug_stop")) return ProbeDebugStop;
+    if (!strcmp(*name, "probe_debug_values")) return ProbeDebugValues;
+    if (!strcmp(*name, "probe_debug_passed")) return ProbeDebugPassed;
+    return (BuiltinFunction)GScr_Cod2xGetFunction(name, type);
+#endif
     return NULL;
 }
-BuiltinMethod Scr_GetMethod(const char **name, int *type) { (void)name; (void)type; return NULL; }
+BuiltinMethod Scr_GetMethod(const char **name, int *type) {
+#if defined(COD2_CODX) && COD2_CODX && defined(DEBUG) && DEBUG
+    if (!strcasecmp(*name, "test_playerGetName")) { *name = "test_playerGetName"; *type = 0; return (BuiltinMethod)GScr_Cod2xTestPlayerGetName; }
+#endif
+    (void)name; (void)type; return NULL;
+}
 #if defined(COD2_X64)
 void Scr_ResetAnimRefs(void) {}
 #endif
@@ -185,6 +276,52 @@ static void ClearRequest(void)
 int main(void)
 {
     Scr_Init(); Scr_InitSystem(1);
+#if defined(COD2_CODX) && COD2_CODX && defined(DEBUG) && DEBUG
+    GScr_Cod2xDebugInit(); assert(debugCommand);
+    debugArgs[0] = "ws"; debugArgs[1] = NULL; printed[0] = 0; debugCommand(); assert(!printed[0]);
+    debugArgs[1] = "send"; debugCommand(); assert(strstr(printed, "Please provide a message"));
+    debugArgs[2] = "message"; debugCommand(); assert(strstr(printed, "not connected"));
+    debugArgs[1] = "reconnect"; debugCommand(); assert(strstr(printed, "reconnecting"));
+    debugArgs[1] = "send"; debugCommand(); assert(strstr(printed, "not connected"));
+    debugArgs[1] = "close"; debugCommand(); assert(strstr(printed, "connection closed"));
+    debugArgs[1] = "other"; debugCommand(); assert(strstr(printed, "Unknown match command: other"));
+    Scr_BeginLoadScripts();
+    snprintf(scriptText, sizeof(scriptText),
+        "main() {} CodeCallback_StartGameType() { probe_debug(9); } CodeCallback_PlayerConnect() { probe_debug(10); } "
+        "CodeCallback_PlayerDisconnect() {} CodeCallback_PlayerDamage() {} CodeCallback_PlayerKilled() {} "
+        "CodeCallback_StopGameType(a,b,c,d) { return 1; } "
+        "passed() { probe_debug_passed(); } "
+        "values() { a = test_returnArray(); probe_debug_values(test_returnUndefined(), test_returnBool(2), "
+        "test_returnInt(-701), test_returnFloat(1.25), test_returnString(\"return string\"), "
+        "test_returnVector((9,8,7)), a[0], a[1], a[2], self test_playerGetName()); "
+        "test_getAll(true,1,2.222,\"variable test string\", &\"Localized text string\",(1,2,3),::passed); "
+        "test_allOk(\"all ok\"); return 1338; }");
+    GScr_LoadGameTypeScript();
+    scrCompilePub.programLen = emitted; scrVarPub.endScriptBuffer = bytecode + emitted;
+    scrCompilePub.script_loading = 0;
+    Scr_SetClassMap(0);
+    Scr_StartupGameType();
+    const int startOrder[] = {1, 2, 3, 40, 4, 9};
+    assert(debugTraceCount == 6 && !memcmp(debugTrace, startOrder, sizeof(startOrder)));
+    debugTraceCount = 0;
+    gentity_t player = {0}; player.s.number = 7;
+    Scr_PlayerConnect(&player);
+    const int connectOrder[] = {5, 6, 7, 10};
+    assert(debugTraceCount == 4 && !memcmp(debugTrace, connectOrder, sizeof(connectOrder)));
+    strcpy(debugClients[7].name, "test player");
+    scr_func_t values = Scr_GetFunctionHandle("maps/mp/gametypes/_callbacksetup", "values");
+    Scr_AddExecEntThreadNum(7, 0, values, 0);
+    assert(Scr_GetType(0) == 6 && Scr_GetInt(0) == 1338);
+    assert(debugValues == 1 && debugPassed == 1 && strstr(printed, "GSC test OK"));
+    while (scrVmPub.outparamcount) { RemoveRefToValue(scrVmPub.top->type, scrVmPub.top->u); --scrVmPub.top; --scrVmPub.outparamcount; }
+    assert(scrVmPub.top == scrVmPub.stack && !scrVmPub.inparamcount);
+    debugStops = 0;
+    assert(GScr_Cod2xBeforeMapChange(0, "map") && debugStops == 1);
+    assert(scrVmPub.top == scrVmPub.stack && !scrVmPub.inparamcount && !scrVmPub.outparamcount);
+    Scr_RemoveClassMap(0);
+    Scr_EndLoadAnimTrees(); Scr_EndLoadScripts();
+    puts("DEBUG GSC: nine typed functions, entity name, eight required callbacks, start/connect order, entity return 1338 and unpolled ws command passed");
+#endif
     const char *returns[] = { "0", "1", "-7", "undefined", "0.0", "\"allow\"" };
     for (int i = 0; i < 6; ++i) {
         Scr_BeginLoadScripts();

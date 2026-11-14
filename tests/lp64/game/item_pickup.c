@@ -65,7 +65,7 @@ void G_AddPredictableEvent(gentity_t *e, int event, int param)
 void G_AddEvent(gentity_t *e, int event, int param) { G_AddPredictableEvent(e, event, param); }
 void G_FreeEntity(gentity_t *e) { assert(e == &g_entities[1]); ++freed; }
 gentity_t *G_Spawn(void) { g_entities[2].tagInfo = 77; g_entities[2].parent = 88; return &g_entities[2]; }
-int rand(void) { return 0; }
+int Com_CrtRand(void) { return 0; }
 void G_SetOrigin(gentity_t *e, const vec_t *p) { memcpy(e->r.currentOrigin, p, sizeof(vec3_t)); }
 void G_SetAngle(gentity_t *e, const vec_t *p) { memcpy(e->r.currentAngles, p, sizeof(vec3_t)); }
 void SV_LinkEntity(gentity_t *e) { }

@@ -25,10 +25,10 @@ const dvar_t *g_maxDroppedWeapons = &maxDropped;
 static int randomCalls, weaponNumber, tookWeapon, linked, angleCalls, tagFound;
 static vec3_t observedAngles;
 
-int rand(void)
+int Com_CrtRand(void)
 {
     /* Drop launch consumes the first draw; angular draws are then Z, Y, X. */
-    static const int draws[] = {0, 0, 1073741824, 1610612736};
+    static const int draws[] = {0, 0, 16384, 24576};
     assert(randomCalls < 4);
     return draws[randomCalls++];
 }
@@ -136,8 +136,9 @@ static void AngularRandom(void)
     Reset(1); gentity_t *drop = Drop(9);
     assert(randomCalls == 4);
     assert(drop->s.apos.trType == TR_LINEAR && drop->s.apos.trTime == 1000);
-    assert(drop->s.apos.trDelta[0] == 25);
-    assert(drop->s.apos.trDelta[1] == 0 && drop->s.apos.trDelta[2] == -60);
+    /* After the launch draw, Windows consumes angular Y, X, Z. */
+    assert(drop->s.apos.trDelta[0] == 0);
+    assert(drop->s.apos.trDelta[1] == -40 && drop->s.apos.trDelta[2] == 30);
 }
 static void Weapon31(void) { Reset(31); Drop(0); assert(randomCalls == 1 && angleCalls == 0); }
 static void Controls(void)

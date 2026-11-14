@@ -343,7 +343,7 @@ import Darwin
 
     static let matchRow = #"{"schemaVersion":1,"endedAt":"2026-10-12T00:00:00Z","endReason":"disconnect","map":"mp_toujane","mode":"sd","durationSeconds":30,"serverAddress":"192.0.2.1:28960","ruleHints":{},"frameCount":100,"frameTimeP50MS":3,"frameTimeP99MS":7,"frameTimeMaxMS":20,"frameTimeHistogramLimitMS":250,"framesUnderCap":98,"capSampleFrames":100,"capFPS":333,"pingAverageMS":40,"pingMaximumMS":50,"pingSamples":3,"packetsReceived":3,"packetsLost":2,"packetLossPercent":40,"snapshotsReceived":4}"#
 
-    /// Editing Settings applies on the next launch before Save, and Check-up must say the same thing.
+    /// Privacy changes apply immediately to the next launch and Check-up, including during the auto-save debounce.
     @MainActor static func matchPrivacy(_ homes: inout [URL]) throws {
         let home = try makeHome("match-privacy"); homes.append(home.url)
         try PrivateFile.write(Data((matchRow + "\n").utf8), to: home.url.appendingPathComponent("main/stats/matches.jsonl"))
@@ -373,30 +373,30 @@ import Darwin
         }
 
         model.settings.matchSummariesEnabled = false
-        require(!model.settingsSaved && !checkup.matchSummariesEnabled && checkup.matchPresentation?.detail.contains("off now") == true,
-                "an unsaved opt-out updates Check-up immediately")
+        require(!checkup.matchSummariesEnabled && checkup.matchPresentation?.detail.contains("off now") == true,
+                "a pending opt-out updates Check-up immediately")
         require(reads == 1, "editing privacy does not reread stats")
         try launchPrivacy("\"0\"")
-        model.saveSettings()
-        require(model.settingsSaved && !model.settings.matchSummariesEnabled && !checkup.matchSummariesEnabled,
-                "the real preview Save intent keeps the current opt-out and marks Settings saved")
+        model.flushSettings()
+        require(model.settingsSaveError == nil && !model.settings.matchSummariesEnabled && !checkup.matchSummariesEnabled,
+                "the preview auto-save flush keeps the current opt-out and reports no save error")
 
         model.settings.matchSummariesEnabled = true
         require(model.settings.matchSummariesEnabled && checkup.matchSummariesEnabled && checkup.matchPresentation?.detail.contains("off now") == false,
-                "an unsaved opt-in updates Check-up immediately")
+                "a pending opt-in updates Check-up immediately")
         try launchPrivacy("\"1\"")
-        require(reads == 1, "Save and launch construction do not reread stats")
+        require(reads == 1, "Auto-save and launch construction do not reread stats")
         checkup.refreshMatches()
         require(reads == 2 && checkup.matchSummariesEnabled && checkup.matchCount == 1,
                 "manual Refresh retains the current opt-in and earlier history")
-        model.saveSettings()
-        require(model.settingsSaved && checkup.matchSummariesEnabled, "Save retains the current opt-in")
+        model.flushSettings()
+        require(model.settingsSaveError == nil && checkup.matchSummariesEnabled, "Auto-save retains the current opt-in")
         model.settings.matchSummariesEnabled = false
         try launchPrivacy("\"0\"")
         checkup.refreshMatches()
-        require(!model.settingsSaved && !checkup.matchSummariesEnabled && reads == 3 && checkup.matchCount == 1,
-                "the reverse unsaved draft stays off after Refresh without deleting earlier history")
-        print("PASS: real LauncherModel privacy drafts and Save intent agree with legacy/migrated launch plans and Check-up without extra stats reads")
+        require(!checkup.matchSummariesEnabled && reads == 3 && checkup.matchCount == 1,
+                "the pending change stays off after Refresh without deleting earlier history")
+        print("PASS: real LauncherModel privacy changes and auto-save flush agree with legacy/migrated launch plans and Check-up without extra stats reads")
     }
 
     /// The production reader's EACCES reaches the real Check-up failure UI and clears measurements.
@@ -428,7 +428,7 @@ import Darwin
     }
 
     /// A real loopback UDP peer holds Check Again pending, answers, then times out.
-    /// This checks the same selected server that the list and Deploy read.
+    /// This checks the same selected server that the list and Launch read.
     @MainActor static func serverRefresh(_ homes: inout [URL]) async throws {
         let socketFD = socket(AF_INET, SOCK_DGRAM, 0)
         require(socketFD >= 0, "create loopback peer")
@@ -463,7 +463,7 @@ import Darwin
         require(!overrides.isEmpty, "the selected server has a staged fix")
         func preserved() {
             require(model.selectedServer == address && model.selected?.address == address,
-                    "Check Again changed the effective selected server and Deploy target")
+                    "Check Again changed the effective selected server and Launch target")
             require(model.servers.map(\.address) == [other.address, address], "Check Again reordered or removed a server")
             require(model.serverConnection.address == address && model.serverConnection.overrides == overrides,
                     "Check Again changed the staged connection fix")
@@ -540,7 +540,7 @@ import Darwin
         require(model.serverConnection.profileID == "Scrim" && model.serverConnection.overrides.isEmpty && check.report?.profileID == "Scrim",
                 "another loadout for this connection, reviewed in place")
         let afterChoice = try snapshot()
-        require(afterChoice == before && ReadyCheckCard.deployTitle(model, competitive) == "Deploy with Scrim", "choosing it changes nothing on disk")
+        require(afterChoice == before && ReadyCheckCard.launchTitle(model, competitive) == "Launch with Scrim", "choosing it changes nothing on disk")
         check.undo(model, address: competitive.address)
         require(model.serverConnection.profileID == nil && model.serverConnection.overrides.isEmpty, "Undo returns to the active loadout")
 

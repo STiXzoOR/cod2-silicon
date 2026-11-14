@@ -1,3 +1,6 @@
+#if defined(COD2_X64) && !defined(DEDICATED)
+#include "PC/qcommon/frame_activity.h"
+#endif
 #include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
@@ -61,9 +64,65 @@ typedef struct {
     GLenum openGLInternalFormat;
     GLenum openGLFormat;
     GLenum openGLElementType;
+#if COD2_APPLE_SDK
+    GLuint depthRenderbuffer;
+    GLuint colorFramebuffer;
+#endif
 } CDirect3DSurfaceImpl;
 
 #if COD2_APPLE_SDK
+HRESULT CDirect3DSurface_BindFloatTarget(void *object)
+{
+    CDirect3DSurfaceImpl *surface = object;
+    if (!surface || surface->format != D3DFMT_R32F || !surface->owner)
+        return (HRESULT)0x8876086c;
+    if (!surface->colorFramebuffer)
+        glGenFramebuffersEXT(1, &surface->colorFramebuffer);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, surface->colorFramebuffer);
+    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
+        GL_TEXTURE_2D, COpenGLTexture_GetGLNameNative(surface->owner), surface->level);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+    glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+    return glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE_EXT ?
+        0 : (HRESULT)0x8876086c;
+}
+
+HRESULT CDirect3DSurface_CreateDepthStorage(void *object, UINT32 width, UINT32 height, UINT32 samples)
+{
+    CDirect3DSurfaceImpl *surface = object;
+    GLenum format;
+    switch (surface->format) {
+    case D3DFMT_D24S8: format = GL_DEPTH24_STENCIL8_EXT; break;
+    case D3DFMT_D16: format = GL_DEPTH_COMPONENT16; break;
+    case D3DFMT_D24X8: format = GL_DEPTH_COMPONENT24; break;
+    case D3DFMT_D32: format = GL_DEPTH_COMPONENT32; break;
+    default: return (HRESULT)0x8876086c;
+    }
+    GLint previous;
+    glGetIntegerv(GL_RENDERBUFFER_BINDING_EXT, &previous);
+    glGenRenderbuffersEXT(1, &surface->depthRenderbuffer);
+    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, surface->depthRenderbuffer);
+    if (samples > 1)
+        glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT, samples, format, width, height);
+    else
+        glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, format, width, height);
+    GLint allocatedWidth = 0;
+    glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT, GL_RENDERBUFFER_WIDTH_EXT, &allocatedWidth);
+    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, previous);
+    return allocatedWidth == (GLint)width ? 0 : (HRESULT)0x8876017c;
+}
+
+void CDirect3DSurface_BindDepthStorage(const void *object)
+{
+    const CDirect3DSurfaceImpl *surface = object;
+    if (!surface || !surface->depthRenderbuffer)
+        return;
+    glFramebufferRenderbufferEXT(GL_DRAW_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
+        GL_RENDERBUFFER_EXT, surface->depthRenderbuffer);
+    glFramebufferRenderbufferEXT(GL_DRAW_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT,
+        GL_RENDERBUFFER_EXT, surface->format == D3DFMT_D24S8 ? surface->depthRenderbuffer : 0);
+}
+
 void CDirect3DSurface_SetNativeDimensions(void *surface, UINT32 width, UINT32 height)
 {
 #if MAC_METAL_NATIVE
@@ -177,6 +236,12 @@ static IUnknownLikeVTable *CDirect3DSurface_GetIUnknownVTable(void *object)
 static void CDirect3DSurface_Destroy(CDirect3DSurfaceImpl *surface)
 {
 
+#if COD2_APPLE_SDK
+    if (surface->colorFramebuffer)
+        glDeleteFramebuffersEXT(1, &surface->colorFramebuffer);
+    if (surface->depthRenderbuffer)
+        glDeleteRenderbuffersEXT(1, &surface->depthRenderbuffer);
+#endif
 #if defined(COD2_X64)
     surface->vtable = (void **)vtbl_CDirect3DSurface;
     if (surface->releaseOwnerOnDestroy && surface->owner)
@@ -389,15 +454,31 @@ void CDirect3DSurface_CreateOpenGLSurfaceObject(const CDirect3DSurface *_this)
     if (surface->format == D3DFMT_DXT1 || surface->format == D3DFMT_DXT2 ||
         surface->format == D3DFMT_DXT3 || surface->format == D3DFMT_DXT5) {
         UINT32 size = MacOpenGLUtils_GetLevelSizeInBytes(surface->width, surface->height, 1, &surface->format);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
         glCompressedTexImage2DARB(target, surface->level, surface->openGLInternalFormat,
                                   surface->width, surface->height, 0, size, surface->surfaceMemory);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
+        }
+#endif
         surface->pixelsBottomUp = 0;
     } else {
         /* Synchronous native uploads use proven logical extents. Mac's client
          * storage path rounds these up and requires a different backing contract. */
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
         glTexImage2D(target, surface->level, surface->openGLInternalFormat, width, height, 0,
                      surface->openGLFormat, surface->openGLElementType,
                      surface->openGLInternalFormat == 0x1902 ? NULL : surface->surfaceMemory);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
+        }
+#endif
         surface->pixelsBottomUp = 0;
     }
 #else
@@ -419,12 +500,28 @@ void CDirect3DSurface_CreateOpenGLSurfaceObject(const CDirect3DSurface *_this)
 
     if (MacOpenGLUtils_IsCompressed(&surface->format)) {
         UINT32 dataSize = MacOpenGLUtils_GetLevelSizeInBytes(w, h, 1, &surface->format);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
         glCompressedTexImage2DARB(target, surface->level,
                                   surface->openGLInternalFormat, w, h, 0, dataSize, surface->surfaceMemory);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
+        }
+#endif
     } else {
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
         glTexImage2D(target, surface->level,
                      surface->openGLInternalFormat, w, h, 0,
                      surface->openGLFormat, surface->openGLElementType, surface->surfaceMemory);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
+        }
+#endif
     }
 #endif
 }
@@ -448,13 +545,17 @@ void CDirect3DSurface_UpdateOpenGLSurfaceObject(const CDirect3DSurface *_this, i
         surface->format == D3DFMT_DXT3 || surface->format == D3DFMT_DXT5) {
         UINT32 size = MacOpenGLUtils_GetLevelSizeInBytes(surface->width, surface->height, 1, &surface->format);
         if (surface->width > 3 && surface->height > 3) {
+            FRAME_ACTIVITY_BEGIN(activityStart);
             glCompressedTexSubImage2D(target, surface->level, 0, 0, surface->width, surface->height,
                                       surface->openGLInternalFormat, size, surface->surfaceMemory);
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
             surface->pixelsBottomUp = 0;
         }
     } else {
+        FRAME_ACTIVITY_BEGIN(activityStart);
         glTexSubImage2D(target, surface->level, 0, 0, surface->width, surface->height,
                         surface->openGLFormat, surface->openGLElementType, surface->surfaceMemory);
+        FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
         surface->pixelsBottomUp = 0;
     }
 #else

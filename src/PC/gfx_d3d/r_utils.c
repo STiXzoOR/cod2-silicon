@@ -208,7 +208,7 @@ Bool R_ValidXModelName(const char *name)
         return 0;
     if (strnicmp(name, "xmodel", 6) != 0)
         return 0;
-    if (name[6] != '/')
+    if (name[6] != '/' && name[6] != '\\')
         return 0;
     return 1;
 }

@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include "PC/gfx_d3d/r_log.h"
 extern dvar_t *r_rendererInUse;
 #include "imports.h"
 /* dvar globals */
@@ -34,7 +35,11 @@ static int imageGlobals[2064];
 #define IG_SCALAR(i)   (imageGlobals[i])
 #define IG_CLEARHASH() memset(imageGlobals, 0, 0x2000)
 #endif
+#if defined(COD2_X64)
+static GfxImage g_imageProgs[13];
+#else
 static GfxImage g_imageProgs[12];
+#endif
 
 __attribute__((used, packed, aligned(4)))
 const char *imageTypeName[] = {
@@ -69,7 +74,11 @@ const char *g_imageProgNames[] = {
     "$resolved_scene",
     "$savedscreen",
     "$raw",
+#if defined(COD2_X64)
+    "$floatz",
+#else
     NULL,
+#endif
     NULL,
     NULL,
     NULL,
@@ -284,6 +293,7 @@ IDirect3DSurface9 *Image_GetSurface(GfxImage *image)
     do {
         texture = image->texture.map;
         vtable = *(void ***)texture;
+        R_LOG("image->texture.map->GetSurfaceLevel( 0, &surface )\n");
         ((HRESULT(D3DVTCC *)(void *, UINT, IDirect3DSurface9 **))vtable[0x48 / 4])(texture, 0, &surface);
     } while (*fails);
 
@@ -777,7 +787,7 @@ void R_ImageList_f(void)
 
     R_GetImageList(&list);
     if (listAllImages) {
-        for (int i = 0; i < 12 && (unsigned int)list.count <= 0x7ff; ++i) {
+        for (int i = 0; i < sizeof(g_imageProgs) / sizeof(g_imageProgs[0]) && (unsigned int)list.count <= 0x7ff; ++i) {
             if (g_imageProgs[i].mapType)
                 list.image[list.count++] = &g_imageProgs[i];
         }

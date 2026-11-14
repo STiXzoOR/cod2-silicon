@@ -135,8 +135,30 @@ For the full native-client workstream, run:
 ```sh
 sh tests/cod2x/run_full.sh
 COD2X_SANITIZERS=1 UBSAN_OPTIONS=halt_on_error=1 sh tests/cod2x/run_full.sh
-python3 tests/cod2x/check_inactive_gates.py --base b834082bc95cf5fdb44f62bffa0f31dad21a6592
+python3 tests/cod2x/check_inactive_gates.py
+# For a later CoD2x change, compare with its own pre-change commit:
+python3 tests/cod2x/check_inactive_gates.py --base <pre-change-commit>
 ```
+
+The inactivity gate configures both revisions as native Original 1.3 Release
+client and dedicated builds. It compares source membership, compiler flags,
+complete preprocessing (including headers and `.inc` files), then optimized
+assembly for any remaining differences. Both undefined and zero `COD2_CODX`
+are checked. Compilation errors, added/removed modules and changed output fail;
+tests and source excluded from the stock build are not pretend stock inputs.
+The gate uses each revision's committed typed-data snapshot and dedicated
+generator, without requiring proprietary binaries. Temporary trees are removed;
+comparison hashes and failure diffs remain in `output/inactive-gates`.
+
+The default baseline is frozen in `inactive-baseline.json`. Its review accounts
+for all 799 historical lexical differences and all 651 stock translation units
+against the game/platform/renderer merge without CoD2x. Five compiled changes
+and one removed module deliberately remove extension features from Original
+1.3. The receipt records those exact decisions and evidence hashes; the checker
+has no path exceptions. An explicit `--base` must pass independently. This is
+compiler isolation evidence, not running-game parity or legacy 32-bit proof.
+Intentional stock changes need their own reference review and an appropriate
+pre-change base; never update the receipt just to hide a failing comparison.
 
 The full runner first repeats the identity test with the engine's SDK-named
 function/data stubs linked in (`test_identity_sdk.c`), checking that installed

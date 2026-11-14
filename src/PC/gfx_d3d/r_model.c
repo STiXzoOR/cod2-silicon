@@ -1,5 +1,6 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
+#include "PC/gfx_d3d/r_log.h"
 extern struct DxGlobals dx;
 /* File-scope alias: bound where no local can shadow `dx`, so uses below
    always reach the global even inside functions that declare their own `dx`. */
@@ -213,6 +214,7 @@ void R_UnlockSkinnedCache(void)
     vb = (IDirect3DVertexBuffer9 *)frontEndData->skinnedCacheVb->buffer;
 
     do {
+        R_LOG("vb->Unlock()\n");
         ((BufferUnlockFn)VTABLE(vb)[0x30 / 4])((void *)vb);
     } while (*(volatile int *)&alwaysfails != 0);
 }
@@ -806,6 +808,26 @@ set_origin_bounds:
 #define PSK_SZ_RIGID 0x38
 #endif
 
+#if defined(COD2_X64)
+/* Native pointers enlarge the records, but Windows admits 131072 logical
+ * bytes, charging 16 for skinned/cached surfaces and 56 for rigid ones. */
+static int R_AllocModelSurfaces(GfxBackEndData *fed, int bytes, int logicalBytes)
+{
+    int logicalOffset = InterlockedExchangeAdd(&fed->logicalSurfPos, logicalBytes);
+    if (logicalOffset + logicalBytes > 131072) {
+        fed->logicalSurfPos = 131072;
+        return -1;
+    }
+    int offset = InterlockedExchangeAdd(&fed->surfPos, bytes);
+    if (offset + bytes > (int)sizeof(fed->surfsBuffer)) {
+        fed->surfPos = sizeof(fed->surfsBuffer);
+        fed->logicalSurfPos = 131072;
+        return -1;
+    }
+    return offset;
+}
+#endif
+
 static int R_PreSkinXSurface(GfxSceneEntity *sceneEnt, const struct DObj_s *obj, const DSurface *surface, int surfaceIndex, char *lods, byte *surfPos)
 {
     int surfIdx = surface->modelIndex;
@@ -1002,6 +1024,9 @@ void R_SkinSceneDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent)
 
     {
         byte *surfPtr = surfBuf;
+#if defined(COD2_X64)
+        int logicalBytes = 0;
+#endif
         int i;
 
         for (i = 0; i < surfaceCount; i++) {
@@ -1011,15 +1036,23 @@ void R_SkinSceneDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent)
                 ((GfxSceneEntity *)se)->cullState = 4;
                 return;
             }
+#if defined(COD2_X64)
+            logicalBytes += *(const surfaceType_t *)surfPtr == 4 ? 56 : 16;
+#endif
             surfPtr += result;
         }
 
         {
             int size = (int)(surfPtr - surfBuf);
             GfxBackEndData *fed = frontEndDataOut;
+#if defined(COD2_X64)
+            int offset = R_AllocModelSurfaces(fed, size, logicalBytes);
+            if (offset < 0) {
+#else
             int offset = InterlockedExchangeAdd((volatile int *)&fed->surfPos, size);
             if (offset + size > 0x20000) {
                 fed->surfPos = 0x20000;
+#endif
 #if defined(COD2_X64)
                 if (*(int *)fed != warnCount_00c85b08) {
                     warnCount_00c85b08 = *(int *)fed;
@@ -1360,6 +1393,9 @@ void R_SkinXModel(GfxSceneEntity *sceneEnt, GfxEntity *ent, int smodelIndex)
 
     {
         byte *surfPtr = surfBuf;
+#if defined(COD2_X64)
+        int logicalBytes = 0;
+#endif
         int i;
         XSurface **surfArray = surfacesPtr;
         for (i = 0; i < surfaceCount; i++) {
@@ -1369,15 +1405,23 @@ void R_SkinXModel(GfxSceneEntity *sceneEnt, GfxEntity *ent, int smodelIndex)
                 ((GfxSceneEntity *)se)->cullState = 4;
                 return;
             }
+#if defined(COD2_X64)
+            logicalBytes += *(const surfaceType_t *)surfPtr == 4 ? 56 : 16;
+#endif
             surfPtr += result;
         }
 
         {
             int size = (int)(surfPtr - surfBuf);
             GfxBackEndData *fed = frontEndDataOut;
+#if defined(COD2_X64)
+            int offset = R_AllocModelSurfaces(fed, size, logicalBytes);
+            if (offset < 0) {
+#else
             int offset = InterlockedExchangeAdd((volatile int *)&fed->surfPos, size);
             if (offset + size > 0x20000) {
                 fed->surfPos = 0x20000;
+#endif
 #if defined(COD2_X64)
                 if (*(int *)fed != warnCount_00c85b10) {
                     warnCount_00c85b10 = *(int *)fed;

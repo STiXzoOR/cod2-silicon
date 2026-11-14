@@ -1,0 +1,94 @@
+{
+  "baseline": "473c779a88ac1040b7224f931808532dc8877f6d",
+  "review": "Merged Original 1.3 compiler isolation review, fix-cross/inactive-gate/recommendation.md",
+  "historical_base": "834a720d7728a08c8ea5cb6cdf0233610f328238",
+  "cod2x_branch": "cd3f52d37c60dfc68d17ce99897a779b26b2ce05",
+  "reference_without_cod2x": {
+    "game_platform": "24c183c465cbac6845b342fe14b58c0fcd1f557b",
+    "renderer": "cc164d2e6116af9396c1eac0a5d698be50a0c2f4",
+    "merge": "Renderer changes applied three-way against 834a720d; 37 paths, one clean automatic merge, zero conflicts or manual source changes."
+  },
+  "historical_lexical_pairs": {
+    "total": 799,
+    "test_only": 564,
+    "unreachable_stock_header": 102,
+    "excluded_stock_module": 27,
+    "identical_compiled_stock_inputs": 84,
+    "private_header_identical_assembly": 17,
+    "intentional_stock_isolation": 5
+  },
+  "complete_compiler_proof": {
+    "translation_units": 651,
+    "configurations": [
+      "COD2_CODX undefined",
+      "COD2_CODX=0"
+    ],
+    "per_configuration": {
+      "identical_preprocessed": 640,
+      "identical_assembly": 6,
+      "reviewed_isolation_changes": 5,
+      "errors": 0
+    },
+    "zero_versus_undefined_comparisons": 1302,
+    "zero_versus_undefined_differences": 0
+  },
+  "intentional_isolation_changes": [
+    {
+      "path": "src/PC/qcommon/com_files.c",
+      "modes": [
+        "client",
+        "dedicated"
+      ],
+      "commit": "ba3a50c7",
+      "finding": "parity-cod2x-14",
+      "reason": "Filter iw_CoD2x_ packs before the retail pack cap so Original 1.3 does not load the extension assets; allocation/free ownership preserved."
+    },
+    {
+      "path": "src/Mac/Main/mac_main.c",
+      "modes": [
+        "client"
+      ],
+      "commit": "6af08665",
+      "finding": "parity-cod2x-09",
+      "reason": "Do not install or dispatch the CoD2x URL extension in Original 1.3."
+    },
+    {
+      "path": "src/platform/cod2x_native.c",
+      "modes": [
+        "client"
+      ],
+      "commit": "6af08665",
+      "finding": "parity-cod2x-09",
+      "reason": "Do not register com_freezeWatch, SIGUSR2 or extension watchdog in Original 1.3."
+    },
+    {
+      "path": "src/platform/cod2x_native_macos.m",
+      "modes": [
+        "client"
+      ],
+      "commit": "6af08665",
+      "finding": "parity-cod2x-09",
+      "reason": "Remove Original 1.3 extension URL handler/queue; retain platform bundle/path setup."
+    }
+  ],
+  "removed_stock_module": {
+    "path": "src/PC/qcommon/cod2x_url.c",
+    "reason": "Old stock CMake forced COD2_CODX=1 for this URL module; removing it completes extension isolation. Reviewed separately from the 651 retained units."
+  },
+  "evidence_sha256": {
+    "historical-mismatch-dispositions.json": "6025cdadd1891e8942e26b02c36bea608d75b76ba4341b868589f863979baa17",
+    "exhaustive-stock.json": "47dcdc4bc3e6f5ad2530b0d6bd8e14920342d0819a278ee3f4238531ff7ec762",
+    "private-header-proof.json": "ec1a83bb1669b69ef8f94844068a8aa7a5b38225e1ea0801115f8d806f9a4f9a",
+    "merged-source-provenance.json": "1f2c480e1b1bc0c6c349dcadcd67ce8a44a1ef58736e1c191e87a9340b41e8d6",
+    "no-cod2x-reference-provenance.json": "75e7107f570a1c4c3c60006e641de65401362ec71bc9d592b804e74ad27a7be1",
+    "zero-versus-undefined.json": "e4c041a3fc1a6527877cc66636461a94926f24a571476ccc91b86103ddd3c081",
+    "removed-stock-url-module.json": "50b07629f8596b4a9dcf29140aa886e7cd80fc449baa8a057fefcfab6fa472c5",
+    "merged-proof/exhaustive-stock.json": "077592ba6b486908ace8e14a0f52005a5d5212569f9a244efcf18152ac8151f9",
+    "merged-proof-undefined/exhaustive-stock.json": "d33ddd2888e558f2b8cdf343e397239b647bddaacd6f193f2af62f09d2905207"
+  },
+  "limitations": [
+    "Compiler comparison is not gameplay parity or legacy 32-bit certification.",
+    "No blanket path exceptions are applied by the gate. An explicit --base comparison must pass on its own.",
+    "The default baseline freezes this reviewed integration; intentional later Original 1.3 changes require a suitable pre-change base and their own reference review."
+  ]
+}

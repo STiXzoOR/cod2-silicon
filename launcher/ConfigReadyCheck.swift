@@ -154,7 +154,7 @@ struct ConfigReadyCheck: Sendable {
         }
         let cod2x = protocolNumber == "120" || fields["shortversion"]?.hasPrefix("1.4.") == true
         let mod = fields["fs_game"]?.lowercased()
-        guard mod != nil || fields["mod"] == "0" || fields["_zpam"] != nil else { return unknown("The server did not identify its mod or a stock installation.") }
+        guard mod != nil || fields["mod"] == "0" || fields["_zpam"] != nil else { return unknown("The server didn’t say which mod it runs, or that it runs Original 1.3.") }
         let competitive = fields["g_competitive"]
         guard competitive == nil || ["0", "1"].contains(competitive) else { return unknown("The competitive flag is unknown.") }
         // Pinned zPAM 3.36/4.08 default_mp.cfg advertise `sets _zpam`.
@@ -169,7 +169,7 @@ struct ConfigReadyCheck: Sendable {
             guard mod == nil || mod == "" || mod == "zpam" || folderVersion != nil else { return unknown("The zPAM version does not identify this mod folder.") }
             switch zpamVersion {
             case "3.36":
-                guard !cod2x, competitive != "1" else { return unknown("The zPAM 3.36 policy is verified only for the stock client.") }
+                guard !cod2x, competitive != "1" else { return unknown("The zPAM 3.36 rules are checked only for Original 1.3 players.") }
                 base = "zpam-3.36"
             case "4.08":
                 guard cod2x, competitive != "0" else { return unknown("zPAM 4.08 requires CoD2x competitive rules, including pub.") }
@@ -182,7 +182,7 @@ struct ConfigReadyCheck: Sendable {
                 guard let competitive else { return unknown("CoD2x status does not advertise whether competitive rules apply.") }
                 base = competitive == "1" ? "cod2x-competitive" : "public-cod2x"
             } else {
-                guard competitive != "1" else { return unknown("A stock identity contradicts the CoD2x competitive flag.") }
+                guard competitive != "1" else { return unknown("The server says it runs Original 1.3 but also turns on CoD2x competitive rules.") }
                 base = "stock-1.3"
             }
         }

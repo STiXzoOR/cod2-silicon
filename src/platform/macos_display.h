@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 const char **MacPlatform_ModeNames(void);
+#if defined(COD2_X64)
+void MacPlatform_SelectMonitor(int monitor);
+#endif
 
 enum { MAC_WINDOWED, MAC_FULLSCREEN, MAC_BORDERLESS };
 void MacPlatform_ConfigureWindow(int width, int height, int mode, int refresh);
@@ -20,7 +23,7 @@ void SDL_GL_SwapWindowDirect(void);
 int MacPlatform_GetRenderSize(int *width, int *height);
 void MacPlatform_GetDrawableSize(int *width, int *height);
 uint16_t MacDisplay_SetMode(int width, int height, int depth, int refresh);
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64) && COD2_X64
 void MacDisplay_WindowMoved(int x, int y);
 #endif
 void MacPlatform_TransformPoint(int x, int y, int logicalWidth, int logicalHeight,
@@ -28,6 +31,9 @@ void MacPlatform_TransformPoint(int x, int y, int logicalWidth, int logicalHeigh
 void MacPlatform_MapWindowPoint(int x, int y, int *renderX, int *renderY);
 void MacGL_DrawBuffer(unsigned int buffer);
 void MacGL_ReadBuffer(unsigned int buffer);
+#if defined(COD2_X64)
+void MacGL_SelectReadBuffer(unsigned int buffer);
+#endif
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
 void MacPlatform_ConfigurePresentation(int metal, int edr);
 #endif

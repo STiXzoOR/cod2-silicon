@@ -1,3 +1,4 @@
+#include "com_random.h"
 #include "common_types.h"
 #include "imports.h"
 #include <string.h>
@@ -79,7 +80,6 @@ extern qboolean G_TraceCapsuleComplete(const vec_t *start, const vec_t *mins, co
 extern float crandom(void);
 extern float randomf(void);
 extern float floorf(float);
-extern int rand(void);
 extern qboolean G_DObjGetWorldTagMatrix(gentity_t *ent, unsigned int tagName, vec3_t *tagMat);
 extern qboolean BG_CanItemBeGrabbed(const entityState_t *ent, const playerState_t *ps, qboolean bTouched);
 extern void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text);
@@ -911,22 +911,30 @@ gentity_t *Drop_Weapon(gentity_t *pEnt, int iWeaponIndex, unsigned int tag)
             int clipSize = BG_GetAmmoClipSize(iClipIndex);
             int total;
 
+#if defined(COD2_APPLE_SDK)
+            total = (int)__builtin_rintf(((randomf() + 1.0f) * 0.5f) * (float)(clipSize - 1)) + 1;
+#else
             total = (int)floorf(((randomf() + 1.0f) * 0.5f) * (float)(clipSize - 1) + 0.5f) + 1;
+#endif
+#if defined(COD2_APPLE_SDK)
+            iMax = (int)__builtin_rintf((randomf() * 0.5f + 0.25f) * (float)total);
+#else
             iMax = (int)floorf((randomf() * 0.5f + 0.25f) * (float)total + 0.5f);
+#endif
             iMin = total - iMax;
         } else if (iMax < 0) {
             iMin = 0;
             iMax = 0;
         } else {
             if (iMax != iMin) {
-                iMin += rand() % (iMax - iMin);
+                iMin += Com_CrtRand() % (iMax - iMin);
             }
 
             if (iMin > 0) {
                 int clipSize = BG_GetAmmoClipSize(iClipIndex);
 
                 if (clipSize) {
-                    iMax = rand() % clipSize;
+                    iMax = Com_CrtRand() % clipSize;
                     if (iMin > iMax) {
                         iMin -= iMax;
                     } else {
@@ -995,9 +1003,10 @@ gentity_t *Drop_Weapon(gentity_t *pEnt, int iWeaponIndex, unsigned int tag)
         pDrop->s.apos.trType = TR_LINEAR;
         pDrop->s.apos.trTime = level.time;
 #if defined(COD2_X64)
-        float randomZ = crandom();
+        /* Windows 51f293 stores the first draw in Y, the second in X, then Z. */
         float randomY = crandom();
         float randomX = crandom();
+        float randomZ = crandom();
         pDrop->s.apos.trDelta[0] = randomX * 50.0f;
         pDrop->s.apos.trDelta[1] = randomY * 40.0f;
         pDrop->s.apos.trDelta[2] = randomZ * 60.0f;
@@ -1178,11 +1187,15 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
 
             if (high == 0 && low == 0) {
                 int clipSize = BG_GetAmmoClipSize(BG_ClipForWeapon(weapon));
+#if defined(COD2_APPLE_SDK)
+                quantity = (int)__builtin_rintf(((randomf() + 1.0f) * 0.5f) * (float)(clipSize - 1)) + 1;
+#else
                 quantity = (int)floorf(((randomf() + 1.0f) * 0.5f) * (float)(clipSize - 1) + 0.5f) + 1;
+#endif
             } else if (high < 0) {
                 quantity = 0;
             } else if (high != low) {
-                quantity = low + rand() % (high - low);
+                quantity = low + Com_CrtRand() % (high - low);
             } else {
                 quantity = high;
             }
@@ -1414,9 +1427,17 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
     }
 
     if (other->client->sess.predictItemPickup)
+#if defined(COD2_APPLE_SDK)
+        G_AddPredictableEvent(other, eventParm, ent->s.index.item);
+#else
         G_AddPredictableEvent(other, eventParm, ent->s.eventParm);
+#endif
     else
+#if defined(COD2_APPLE_SDK)
+        G_AddEvent(other, eventParm, ent->s.index.item);
+#else
         G_AddEvent(other, eventParm, ent->s.eventParm);
+#endif
 
     G_FreeEntity(ent);
 }

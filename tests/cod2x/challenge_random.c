@@ -1,4 +1,4 @@
-/* Fixed libc-random inputs exercise the real challenge creation path. */
+/* Fixed CRT-boundary inputs (including out-of-range arithmetic stress cases) exercise the real challenge creation path. */
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -10,11 +10,13 @@ static int ChallengeRand(void)
     return randomInputs[randomIndex++];
 }
 
-#define rand ChallengeRand
+#define Com_CrtRand ChallengeRand
+#define Cod2x_CrtRand ChallengeRand
 #define main ExistingProtocolMain
 #include "test_host_protocol.c"
 #undef main
-#undef rand
+#undef Com_CrtRand
+#undef Cod2x_CrtRand
 
 int main(void)
 {

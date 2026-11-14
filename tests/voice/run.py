@@ -12,6 +12,7 @@ from contracts import compatibility_checks
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = Path(__file__).with_name('fixtures.json')
+WINDOWS_CRT_FIXTURES = Path(__file__).with_name('windows_crt_fixtures.json')
 BACKGROUND = ['taskpolicy', '-b', 'nice', '-n', '19']
 
 
@@ -38,6 +39,12 @@ def compile_native(database, output, sanitizers):
                        capture_output=True, text=True)
         objects.append(str(obj))
         probe_flags = flags
+    # Seed and codec must share the engine CRT state in this same library.
+    random_object = output / 'com_random.o'
+    subprocess.run(BACKGROUND + probe_flags + ['-fPIC', '-c',
+                   str(ROOT / 'src/PC/universal/com_random.c'), '-o', str(random_object)],
+                   check=True, capture_output=True, text=True)
+    objects.append(str(random_object))
     library = output / 'native.dylib'
     link = [probe_flags[0], '-dynamiclib', '-arch', 'arm64']
     if sanitizers:
@@ -80,7 +87,14 @@ def main():
     if args.output.resolve().is_relative_to(ROOT):
         parser.error('Keep binary-derived observations outside Git')
     fixture = json.loads(FIXTURES.read_text())
-    checks, original, upstream_pcm = [], [], []
+    windows_fixture = json.loads(WINDOWS_CRT_FIXTURES.read_text())
+    if windows_fixture['provenance']['fixture_sha256'] != hashlib.sha256(FIXTURES.read_bytes()).hexdigest():
+        raise ValueError('Regenerate Windows CRT PCM for the current independent packet corpus')
+    windows_cases = {(case['mode'], case['enhancement'], case['loss']): case['expected']
+                     for case in windows_fixture['decode']}
+    if set(windows_cases) != {(1, 0, False), (1, 0, True), (8, 0, True)}:
+        raise ValueError('Expected the three independent PCM cases affected by Windows CRT draws')
+    checks, original, upstream_pcm, windows_pcm, mac_windows_pcm = [], [], [], [], []
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='cod2-voice-') as directory:
         probe, library, compatibility_probe = compile_native(args.compile_db.resolve(), Path(directory), args.sanitizers)
@@ -93,17 +107,23 @@ def main():
                                identical_packets=identical, total=8))
         for case in fixture['decode']:
             _, actual = observe(probe, library, 'decode', case['enhancement'], case['sequence'])
-            error = differences(actual, case['expected'])
+            upstream_error = differences(actual, case['expected'])
+            key = (case['mode'], case['enhancement'], case['loss'])
+            expected = windows_cases.get(key, case['expected'])
+            error = differences(actual, expected)
             # Original enhancement and three-tap loss history deliberately
             # differ from unmodified 1.0.4. Preserve its fixed vectors and
             # report those comparisons separately; never loosen PCM limits.
             pcm_acceptance = not case['enhancement'] and (not case['loss'] or case['mode'] in [1, 8])
             upstream_pcm.append(dict(mode=case['mode'], enhancement=case['enhancement'], loss=case['loss'],
-                                     acceptance=pcm_acceptance, **error))
+                                     acceptance=pcm_acceptance and key not in windows_cases, **upstream_error))
+            if key in windows_cases:
+                windows_pcm.append(dict(mode=case['mode'], enhancement=case['enhancement'],
+                                        loss=case['loss'], acceptance=pcm_acceptance, **error))
             passed = error['status_mismatches'] == 0 and len(actual) == 8
             if pcm_acceptance:
                 passed &= error['max_abs'] <= 0.25
-            name = 'PCM' if pcm_acceptance else 'packet/status compatibility'
+            name = ('Windows CRT PCM' if key in windows_cases else 'PCM') if pcm_acceptance else 'packet/status compatibility'
             checks.append(dict(name=f"{name} mode {case['mode']} enhancement {case['enhancement']} loss {case['loss']}",
                                passed=passed, **error))
         mode6 = next(case for case in fixture['decode'] if case['mode'] == 6 and
@@ -141,22 +161,30 @@ def main():
         loss_peak = max(abs(sample) for sample in first_loss[0]['pcm'])
         checks.append(dict(name='initial loss noise floor', passed=0.05 < loss_peak < 1.0, peak=loss_peak))
         oracle_metadata = None
+        mac_windows_metadata = None
         if args.mac_binary:
             from mac_reference import MacReference
             reference = MacReference(args.mac_binary)
             reference.self_test()
+            matched_reference = MacReference(args.mac_binary, random_profile="windows_crt_normalized")
+            matched_reference.self_test()
             for case in fixture['decode']:
                 _, actual = observe(probe, library, 'decode', case['enhancement'], case['sequence'])
                 expected = reference.decode(case['sequence'], case['enhancement'])
                 error = differences(actual, expected)
                 original.append(dict(mode=case['mode'], enhancement=case['enhancement'], loss=case['loss'], **error))
-                # Bounded original acceptance for the two diagnosed cases.
+                matched = matched_reference.decode(case['sequence'], case['enhancement'])
+                matched_error = differences(actual, matched)
+                mac_windows_pcm.append(dict(mode=case['mode'], enhancement=case['enhancement'],
+                                            loss=case['loss'], **matched_error))
+                # Bounded Mac decoder acceptance with Windows normalized samples.
+                # The untouched Mac/Darwin observation remains informational.
                 # The oracle's import models cannot prove bit-exact PCM.
                 if ((case['mode'], case['enhancement'], case['loss']) in
                         [(5, 1, False), (6, 0, True)]):
-                    checks.append(dict(name=f"original PCM mode {case['mode']} enhancement {case['enhancement']} loss {case['loss']}",
-                                       passed=len(expected) == 8 and error['status_mismatches'] == 0 and
-                                       error['rmse'] <= 15 and error['max_abs'] <= 64, **error))
+                    checks.append(dict(name=f"Mac decoder / Windows CRT PCM mode {case['mode']} enhancement {case['enhancement']} loss {case['loss']}",
+                                       passed=len(matched) == 8 and matched_error['status_mismatches'] == 0 and
+                                       matched_error['rmse'] <= 15 and matched_error['max_abs'] <= 64, **matched_error))
             for case in fixture['framing_cases']:
                 expected = reference.decode([case['packet']], 1)[0]
                 assert expected['result'] == case['result'], case
@@ -168,11 +196,14 @@ def main():
             expected = reference.decode(['-'], 0)
             assert 0.05 < max(map(abs, expected[0]['pcm'])) < 1.0
             oracle_metadata = reference.metadata()
+            mac_windows_metadata = matched_reference.metadata()
         result = dict(native=metadata, sanitizers=args.sanitizers, compile_db=str(args.compile_db.resolve()),
                       fixture_sha256=hashlib.sha256(FIXTURES.read_bytes()).hexdigest(), checks=checks,
                       failures=sum(not check['passed'] for check in checks),
                       original_oracle=oracle_metadata, original_pcm=original,
-                      upstream_1_0_4_pcm=upstream_pcm,
+                      mac_windows_crt_oracle=mac_windows_metadata, mac_windows_crt_pcm=mac_windows_pcm,
+                      upstream_1_0_4_pcm=upstream_pcm, windows_crt_1_0_4_pcm=windows_pcm,
+                      windows_crt_provenance=windows_fixture['provenance'],
                       original_pcm_bit_parity=False,
                       scope='Narrowband synthetic codec vectors; no capture, live audio, network or game run')
         args.output.write_text(json.dumps(result, indent=2) + '\n')

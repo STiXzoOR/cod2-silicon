@@ -1,3 +1,6 @@
+#if defined(COD2_X64) && !defined(DEDICATED)
+#include "PC/qcommon/frame_activity.h"
+#endif
 #include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
@@ -1490,7 +1493,15 @@ unsigned int COpenGLVertexProgram_COpenGLVertexProgram(const COpenGLVertexProgra
     glGetProgramivARB(0x8620, 0x8677, &previousProgram);
     glGenProgramsARB(1, program);
     glBindProgramARB(0x8620, *program);
+#if defined(COD2_X64) && !defined(DEDICATED)
+    {
+        FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
     glProgramStringARB(0x8620, 0x8875, (GLsizei)strlen(pSrcData), pSrcData);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        FRAME_ACTIVITY_END(FRAME_PROGRAM_UPLOAD, activityStart);
+    }
+#endif
     glBindProgramARB(0x8620, (GLuint)previousProgram);
     return 0;
 }
@@ -1506,6 +1517,10 @@ static void COpenGLVertexProgram_Destroy(void *_this)
     if ((GLuint)currentProgram == program)
         glDisable(0x8620);
     glDeleteProgramsARB(1, &program);
+    /* Mac 0x1d7f6 invalidates the cached name on deletion. GL unbinds a
+     * deleted program, and asset reload may immediately reuse its name. */
+    if (s_nativeOpenGL.vertexProgram == program)
+        s_nativeOpenGL.vertexProgram = 0;
     if (imp___ZN15CDirect3DDevice28mNeedsVertexShaderValidationE)
         *imp___ZN15CDirect3DDevice28mNeedsVertexShaderValidationE = 1;
     if (imp___ZN15CDirect3DDevice30mNeedsTransformationValidationE)
@@ -1568,8 +1583,16 @@ unsigned int COpenGLVertexProgram_COpenGLVertexProgram(const COpenGLVertexProgra
 
         glGenProgramsARB(1, progIdPtr);
         glBindProgramARB(0x8620 , *progIdPtr);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
         glProgramStringARB(0x8620, 0x8875 ,
                            len, pSrcData);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_PROGRAM_UPLOAD, activityStart);
+        }
+#endif
 
         glGetIntegerv(0x864B , &errorPos);
         if (errorPos != -1) {

@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include "PC/gfx_d3d/r_log.h"
 extern materialCommands_t tess;
 /* File-scope alias: bound where no local can shadow `tess`, so uses below
    always reach the global even inside functions that declare their own `tess`. */
@@ -59,6 +60,7 @@ or_mask:
         void *device = dx.device;
         void **vtable = *(void ***)device;
         typedef int(D3DVTCC * SetRenderStateFn)(void *, int, unsigned int);
+        R_LOG("dx.device->SetRenderState( D3DRS_FOGCOLOR, fogColor.packed )\n");
         ((SetRenderStateFn)vtable[0xe4 / 4])(device, 0x22, fogColor);
     } while (*(volatile int *)&alwaysfails != 0);
 
@@ -105,6 +107,7 @@ void RB_SetIteratorFog(void)
                 void *device = dx.device;
                 void **vtable = *(void ***)device;
                 typedef int(D3DVTCC * SetRenderStateFn)(void *, int, unsigned int);
+                R_LOG("dx.device->SetRenderState( D3DRS_FOGCOLOR, fogColor.packed )\n");
                 ((SetRenderStateFn)vtable[0xe4 / 4])(device, 0x22, fogColor);
             } while (*(volatile int *)&alwaysfails != 0);
 
@@ -157,6 +160,7 @@ void RB_SetIteratorFog(void)
                 void *device = dx.device;
                 void **vtable = *(void ***)device;
                 typedef int(D3DVTCC * SetRenderStateFn)(void *, int, int);
+                R_LOG("dx.device->SetRenderState( D3DRS_FOGVERTEXMODE, D3DFOG_EXP )\n");
                 ((SetRenderStateFn)vtable[0xe4 / 4])(device, 0x8c, 1);
             } while (*(volatile int *)&alwaysfails != 0);
             dxState.fog.mode = (D3DFOGMODE)(1);
@@ -167,6 +171,7 @@ void RB_SetIteratorFog(void)
                 void *device = dx.device;
                 void **vtable = *(void ***)device;
                 typedef int(D3DVTCC * SetRenderStateFn)(void *, int, int);
+                R_LOG("dx.device->SetRenderState( D3DRS_FOGDENSITY, FloatAsInt( &fog->density ) )\n");
                 ((SetRenderStateFn)vtable[0xe4 / 4])(device, 0x26, *(int *)&fog->density);
             } while (*(volatile int *)&alwaysfails != 0);
             dxState.fog.density = fog->density;
@@ -181,6 +186,7 @@ void RB_SetIteratorFog(void)
                 void *device = dx.device;
                 void **vtable = *(void ***)device;
                 typedef int(D3DVTCC * SetRenderStateFn)(void *, int, int);
+                R_LOG("dx.device->SetRenderState( D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR )\n");
                 ((SetRenderStateFn)vtable[0xe4 / 4])(device, 0x8c, 3);
             } while (*(volatile int *)&alwaysfails != 0);
             dxState.fog.mode = (D3DFOGMODE)(3);
@@ -191,6 +197,7 @@ void RB_SetIteratorFog(void)
                 void *device = dx.device;
                 void **vtable = *(void ***)device;
                 typedef int(D3DVTCC * SetRenderStateFn)(void *, int, int);
+                R_LOG("dx.device->SetRenderState( D3DRS_FOGSTART, FloatAsInt( &fog->fogStart ) )\n");
                 ((SetRenderStateFn)vtable[0xe4 / 4])(device, 0x24, *(int *)&fog->fogStart);
             } while (*(volatile int *)&alwaysfails != 0);
             dxState.fog.start = fog->fogStart;
@@ -201,6 +208,7 @@ void RB_SetIteratorFog(void)
                 void *device = dx.device;
                 void **vtable = *(void ***)device;
                 typedef int(D3DVTCC * SetRenderStateFn)(void *, int, int);
+                R_LOG("dx.device->SetRenderState( D3DRS_FOGEND, FloatAsInt( &end ) )\n");
                 ((SetRenderStateFn)vtable[0xe4 / 4])(device, 0x25, *(int *)&fogEnd);
             } while (*(volatile int *)&alwaysfails != 0);
             dxState.fog.end = fogEnd;

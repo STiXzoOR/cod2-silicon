@@ -282,9 +282,16 @@ static void CM_TraceThroughBrush(const traceWork_t *tw, cbrush_t *brush, trace_t
     for (i = 0; i < brush->numsides; i++) {
         const cbrushside_t *side = &brush->sides[i];
         const cplane_t *plane = side->plane;
+#if defined(COD2_APPLE_SDK)
+        /* Windows 1.3 CM_TraceThroughBrush preserves these sum orders. */
+        float dist = (CM_AbsFloat(tw->offsetZ * plane->normal[2]) + plane->dist) + tw->radius;
+        float d1 = ((tw->extents.start[2] * plane->normal[2] + plane->normal[0] * tw->extents.start[0]) + tw->extents.start[1] * plane->normal[1]) - dist;
+        float d2 = ((plane->normal[0] * tw->extents.end[0] + tw->extents.end[2] * plane->normal[2]) + tw->extents.end[1] * plane->normal[1]) - dist;
+#else
         float dist = CM_AbsFloat(tw->offsetZ * plane->normal[2]) + (tw->radius + plane->dist);
         float d1 = CM_DotProduct(tw->extents.start, plane->normal) - dist;
         float d2 = CM_DotProduct(tw->extents.end, plane->normal) - dist;
+#endif
         float delta = d1 - d2;
 
         if (d1 > 0.0f) {

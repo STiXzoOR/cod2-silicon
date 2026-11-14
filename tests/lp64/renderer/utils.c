@@ -4,8 +4,10 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include "utils_source.h"
 
+int strnicmp(const char *a, const char *b, size_t count) { return strncasecmp(a, b, (size_t)count); }
 refimport_t ri;
 static vec3_t zero;
 static infoParm_t parms[23];
@@ -31,6 +33,14 @@ int main(int argc, char **argv)
         /* Total internal reflection: asin's input saturates at one. */
         float value = FresnelTerm(1.5f, 1.0f, 0.5f);
         assert(isfinite(value) && fabsf(value - 1.0f) < 0.000001f);
+        return 0;
+    }
+    if (!strcmp(argv[1], "model-path")) {
+        assert(R_ValidXModelName("xmodel/example"));
+        assert(R_ValidXModelName("xmodel\\example"));
+        assert(R_ValidXModelName("XMODEL\\example"));
+        assert(!R_ValidXModelName("xmodels/example"));
+        assert(!R_ValidXModelName("example"));
         return 0;
     }
     ri.CM_BoxTrace = Trace;

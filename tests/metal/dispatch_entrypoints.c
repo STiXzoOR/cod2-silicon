@@ -158,6 +158,16 @@ void glClear(GLbitfield mask) { (void)mask; unexpectedGL(); }
 void glDepthFunc(GLenum function) { (void)function; unexpectedGL(); }
 void glEnable(GLenum capability) { (void)capability; unexpectedGL(); }
 void glDisable(GLenum capability) { (void)capability; unexpectedGL(); }
+void glFlush(void) { unexpectedGL(); }
+void glGenQueriesARB(GLsizei count, GLuint *queries)
+{ (void)count; (void)queries; unexpectedGL(); }
+void glDeleteQueriesARB(GLsizei count, const GLuint *queries)
+{ (void)count; (void)queries; unexpectedGL(); }
+void glBeginQueryARB(GLenum target, GLuint query)
+{ (void)target; (void)query; unexpectedGL(); }
+void glEndQueryARB(GLenum target) { (void)target; unexpectedGL(); }
+void glGetQueryObjectuivARB(GLuint query, GLenum name, GLuint *value)
+{ (void)query; (void)name; (void)value; unexpectedGL(); }
 void glScissor(GLint x, GLint y, GLsizei width, GLsizei height)
 { (void)x; (void)y; (void)width; (void)height; unexpectedGL(); }
 void *imp__ZN7COpenGL7sOpenGLE;

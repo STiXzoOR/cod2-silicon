@@ -139,7 +139,11 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
     int i;
 
     const dvar_t *fadeDvar = *dvar_compassFade;
+#if defined(COD2_APPLE_SDK)
+    int duration = (int)__builtin_rintf(fadeDvar->current.value * 1000.0f);
+#else
     int duration = (int)floorf(fadeDvar->current.value * 1000.0f + 0.5f);
+#endif
 
     int displayStartTime = cg->compassFadeTime;
     compassFadeOutAlpha = CG_FadeHudMenu(fadeDvar, displayStartTime, duration);

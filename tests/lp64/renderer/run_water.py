@@ -37,7 +37,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--compile-commands', type=Path, required=True)
     parser.add_argument('--baseline')
-    parser.add_argument('--test', choices=['draw', 'spectrum', 'mode', 'coords', 'vertices'], action='append')
+    parser.add_argument('--test', choices=['draw', 'spectrum', 'mode', 'coords', 'vertices', 'random'], action='append')
     options = parser.parse_args()
     rows = json.loads(options.compile_commands.read_text())
     entry = next(row for row in rows if row['file'].endswith('/src/PC/gfx_d3d/rb_shade.c'))
@@ -58,6 +58,15 @@ def main():
         for path, name in [('src/PC/gfx_d3d/rb_shade.c', 'shade_source.h'),
                            ('src/PC/gfx_d3d/r_water.c', 'water_source.h')]:
             (out / name).write_text(source(path, options.baseline))
+        water_load = source('src/PC/gfx_d3d/r_water_load_obj.c', options.baseline)
+        random_source = ''
+        if 'R_RendererRandom' in water_load:
+            random_source = '#define WATER_HAS_RENDERER_RANDOM 1\n' + water_load + '\n'
+            init = source('src/PC/gfx_d3d/r_init.c', options.baseline)
+            for declaration in ['cornerTexCoords', 'quadIndices']:
+                random_source += re.search(r'^static [^\n]*\b' + declaration + r'\[[^;]*;', init, re.M)[0] + '\n'
+            random_source += function(init, 'R_CreateParticleCloudBuffer')
+        (out / 'water_random_source.h').write_text(random_source)
         state = source('src/PC/gfx_d3d/rb_state.c', options.baseline)
         utilities = re.search(r'^const byte s_filterTable\[16\] = .*?;', state, re.M)[0] + '\n'
         utilities += '\n'.join(function(state, name) for name in [
@@ -82,7 +91,7 @@ def main():
                                  '-fno-omit-frame-pointer', '-ffunction-sections', '-fdata-sections']
         objects = []
         for path in ['tests/lp64/renderer/water.c', 'src/PC/universal/fft.c',
-                     'src/PC/universal/com_math.c']:
+                     'src/PC/universal/com_math.c', 'src/PC/universal/com_random.c']:
             obj = out / (Path(path).stem + '.o')
             subprocess.run([*fixture_flags, '-c', str(ROOT / path), '-o', str(obj)],
                            cwd=ROOT, check=True)
@@ -91,7 +100,7 @@ def main():
         subprocess.run([flags[0], '-arch', 'arm64', '-fsanitize=address,undefined',
                         '-Wl,-dead_strip', *objects, '-o', str(binary)], cwd=ROOT, check=True)
         failures = []
-        for name in options.test or ['draw', 'spectrum', 'mode', 'coords', 'vertices']:
+        for name in options.test or ['draw', 'spectrum', 'mode', 'coords', 'vertices', 'random']:
             result = subprocess.run([str(binary), name], env={
                 **os.environ, 'ASAN_OPTIONS': 'symbolize=0', 'UBSAN_OPTIONS': 'halt_on_error=1'})
             if result.returncode:

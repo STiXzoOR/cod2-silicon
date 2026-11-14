@@ -1,5 +1,6 @@
 #include "common_types.h"
 #include "imports.h"
+#include "PC/EffectsCore/fx_memory.h"
 
 #if defined(COD2_X64)
 /* Scheduled effects are 0x50 bytes with a 32-bit link at 0x4c on i386. The
@@ -505,9 +506,9 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
             if (delay > 0) {
 
 #if defined(COD2_X64)
-                ScheduledEffect *sfx = (ScheduledEffect *)__Znam(sizeof(ScheduledEffect));
+                ScheduledEffect *sfx = (ScheduledEffect *)FX_MEMORY_ALLOC(ScheduledEffect, sizeof(ScheduledEffect));
 #else
-                ScheduledEffect *sfx = (ScheduledEffect *)__Znam(0x50);
+                ScheduledEffect *sfx = (ScheduledEffect *)FX_MEMORY_ALLOC(ScheduledEffect, 0x50);
 #endif
                 if (!sfx)
                     continue;
@@ -585,7 +586,7 @@ void FxScheduler_Clean(const FxScheduler *_this, unsigned char bRemoveTemplates,
 #else
         ((FxScheduler *)_this)->mScheduledHead = (ScheduledEffect *)(size_t)sfx->mScheduledNext;
 #endif
-        __ZdaPv(sfx);
+        FX_MEMORY_FREE(sfx);
     }
     ((FxScheduler *)_this)->mScheduledCount = 0;
 
@@ -953,9 +954,9 @@ void FxScheduler_Archive(const FxScheduler *_this, FxArchive *arch)
 
         for (i = 0; i < pendingCount; i++) {
 #if defined(COD2_X64)
-            ScheduledEffect *newSfx = (ScheduledEffect *)__Znam(sizeof(ScheduledEffect));
+            ScheduledEffect *newSfx = (ScheduledEffect *)FX_MEMORY_ALLOC(ScheduledEffect, sizeof(ScheduledEffect));
 #else
-            ScheduledEffect *newSfx = (ScheduledEffect *)__Znam(0x50);
+            ScheduledEffect *newSfx = (ScheduledEffect *)FX_MEMORY_ALLOC(ScheduledEffect, 0x50);
 #endif
             if (newSfx) {
                 memset(newSfx, 0, sizeof(ScheduledEffect));
@@ -979,7 +980,7 @@ void FxScheduler_Archive(const FxScheduler *_this, FxArchive *arch)
                 } else {
 
                     if (newSfx)
-                        __ZdaPv(newSfx);
+                        FX_MEMORY_FREE(newSfx);
                 }
             }
         }

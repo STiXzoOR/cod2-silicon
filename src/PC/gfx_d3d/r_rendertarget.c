@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include "PC/gfx_d3d/r_log.h"
 extern struct DxGlobals dx;
 /* File-scope alias: bound where no local can shadow `dx`, so uses below
    always reach the global even inside functions that declare their own `dx`. */
@@ -7,6 +8,10 @@ extern Bool g_NoTextureID;
 #include "imports.h"
 extern vidConfig_t vidConfig;
 extern DxGlobals dx;
+#if defined(COD2_X64)
+extern const dvar_t *r_zFeather;
+extern const dvar_t *r_rendererInUse;
+#endif
 
 extern void *imp_dx;
 extern void *imp_vidConfig;
@@ -197,9 +202,11 @@ void R_ShutdownRenderTargets(void)
 
     for (renderTargetId = 0; renderTargetId <= 12; renderTargetId++) {
 
+#if !defined(COD2_X64)
         if (renderTargetId == 1 || renderTargetId == 7) {
             continue;
         }
+#endif
 
         dxPtr = DX();
         byte *rt = ((byte *)&((DxGlobals *)(dxPtr))->renderTargets[renderTargetId]);
@@ -273,6 +280,7 @@ void R_InitRenderTargets(void)
         dxPtr = DX();
         device = ((DxGlobals *)(dxPtr))->device;
         vtable = VTABLE(device);
+        R_LOG("dx.device->GetBackBuffer( 0, 0, D3DBACKBUFFER_TYPE_MONO, &renderTarget->colorSurface )\n");
         hr = ((HRESULT(D3DVTCC *)(void *, DWORD, DWORD, DWORD, byte *))vtable[0x48 / 4])(
             device, 0, 0, 0, (byte *)&DX_PTR()->renderTargets[0].colorSurface);
 
@@ -327,8 +335,8 @@ void R_InitRenderTargets(void)
                                       &((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_DYNAMICSHADOWS]);
 
 #if defined(COD2_X64)
-    ((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_RESOLVED_POST_SUN] =
-        ((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_DYNAMICSHADOWS];
+    R_InitFullscreenRenderTargetImage(8, 0, backBufferFormat, RENDERTARGET_USAGE_TEXTURE,
+                                      &((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_RESOLVED_POST_SUN]);
 #else
     {
         byte *rt3 = ((byte *)&((DxGlobals *)(dxPtr))->renderTargets[3]);
@@ -346,8 +354,8 @@ void R_InitRenderTargets(void)
                                       &((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_RESOLVED_SCENE]);
 
 #if defined(COD2_X64)
-    ((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_SAVED_SCREEN] =
-        ((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_RESOLVED_POST_SUN];
+    R_InitFullscreenRenderTargetImage(10, 0, backBufferFormat, RENDERTARGET_USAGE_TEXTURE,
+                                      &((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_SAVED_SCREEN]);
 #else
     {
         byte *rt1 = ((byte *)&((DxGlobals *)(dxPtr))->renderTargets[1]);
@@ -404,6 +412,12 @@ void R_InitRenderTargets(void)
 
     dxPtr = DX();
     backBufferFormat = ((DxGlobals *)(dxPtr))->backBufferFormat;
+#if defined(COD2_X64)
+    /* Windows 1.3 10023163: full-size R32F, sharing single-sample depth. */
+    if (r_rendererInUse->current.integer != 2 && r_zFeather->current.enabled)
+        R_InitFullscreenRenderTargetImage(12, 0, D3DFMT_R32F, RENDERTARGET_USAGE_RENDER,
+                                          &((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_FLOAT_Z]);
+#endif
     R_InitFullscreenRenderTargetImage(3, 2, backBufferFormat, RENDERTARGET_USAGE_RENDER,
                                       (GfxRenderTarget *)&((DxGlobals *)dxPtr)->renderTargets[8].image);
 

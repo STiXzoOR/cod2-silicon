@@ -16,8 +16,11 @@ class Receiver(http.server.BaseHTTPRequestHandler):
     def log_message(self, *args): pass
 receiver = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Receiver)
 threading.Thread(target=receiver.serve_forever, daemon=True).start()
-subprocess.run([str(root/'scripts/build-launcher.sh'), str(out/'launcher')], check=True)
-subprocess.run(['python3',str(root/'tools/cod2x/make_macos_app.py'),str(fixture),str(app),'--replace','--bundle-id','io.github.stixzoor.cod2silicon.ws25fixture','--launcher',str(out/'launcher/CoD2Launcher'),'--stock-engine',str(out/'fixture-stock'),
+launcher_binary = os.environ.get('COD2_LAUNCHER_BINARY')
+if not launcher_binary:
+    subprocess.run(['taskpolicy', '-b', 'nice', '-n', '19', str(root/'scripts/build-launcher.sh'), str(out/'launcher')], check=True)
+    launcher_binary = str(out/'launcher/CoD2Launcher')
+subprocess.run(['python3',str(root/'tools/cod2x/make_macos_app.py'),str(fixture),str(app),'--replace','--bundle-id','io.github.stixzoor.cod2silicon.ws25fixture','--launcher',launcher_binary,'--stock-engine',str(out/'fixture-stock'),
                 '--sentry-dsn',f'http://lifecyclekey@127.0.0.1:{receiver.server_address[1]}/7'],check=True)
 home = out/'home';home.mkdir(exist_ok=True)
 game = home/'Games/CoD2/main';game.mkdir(parents=True,exist_ok=True)
@@ -26,7 +29,7 @@ apphome = home/'Library/Application Support/CoD2 Silicon'
 apphome.mkdir(parents=True, exist_ok=True)
 (apphome/'main').mkdir(exist_ok=True)
 (apphome/'main/config_mp.cfg').write_bytes(b'seta sensitivity "2"\r\n')
-(apphome/'launcher-settings.json').write_text(json.dumps({'advanced': 'net_port 29972'}))
+(apphome/'launcher-settings.json').write_text(json.dumps({'resolution': '6016x3384', 'advanced': 'net_port 29972'}))
 # Settings › Game › CoD2x files: a kept (synthetic) archive goes into the app home's main for CoD2x only.
 kept = b'synthetic CoD2x archive'
 (apphome/'cod2x').mkdir(exist_ok=True); (apphome/'cod2x/iw_CoD2x_01.iwd').write_bytes(kept)
@@ -37,46 +40,61 @@ env = {**os.environ,'CFFIXED_USER_HOME':str(home),'HOME':str(home),'COD2_SETUP_N
 exitfile = apphome/'exit-fixture'
 exitfile.unlink(missing_ok=True)
 log = out/'console.log'
+# MARK: - ship-play: the fixture receipt survives loss of the launcher log reader.
+fixture_events = apphome / 'fixture-events.log'
+fixture_events.unlink(missing_ok=True)
+def output_text():
+    return (log.read_text(errors='replace') if log.exists() else '') + (fixture_events.read_text(errors='replace') if fixture_events.exists() else '')
+
 with log.open('w') as stream:
     launcher = subprocess.Popen([str(app/'Contents/MacOS/CoD2Launcher'),'cod2x://connect%20localhost%3A28963%20password%20%22p%2Bquit%20%22'],stdout=stream,stderr=stream,env=env,cwd=out)
     child = None
     def wait(predicate):
         deadline=time.monotonic()+25
         while not predicate():
-            assert launcher.poll() is None, f"launcher exit {launcher.returncode}: " + log.read_text(errors='replace')
-            assert time.monotonic()<deadline, log.read_text(errors='replace')
+            assert launcher.poll() is None, f"launcher exit {launcher.returncode}: " + output_text()
+            assert time.monotonic()<deadline, output_text()
             time.sleep(.05)
     try:
-        wait(lambda: 'fixture ready' in log.read_text(errors='replace'))
-        wait(lambda: 'fixture link localhost:28963' in log.read_text(errors='replace'))
-        child=int(re.search(r'fixture ready (\d+)',log.read_text()).group(1))
+        wait(lambda: 'fixture ready' in output_text())
+        wait(lambda: 'fixture link localhost:28963' in output_text())
+        child=int(re.search(r'fixture ready (\d+)',output_text()).group(1))
         assert placed.read_bytes() == kept and not (game/'iw_CoD2x_01.iwd').exists(), 'CoD2x starts with the kept archive in the app home only'
         assert (apphome/'fixture-reports-consent.txt').read_text() == 'unset', 'CoD2x reports are off until turned on'
         wait(lambda: (apphome/'fixture-arguments.json').is_file())
         arguments = json.loads((apphome/'fixture-arguments.json').read_text())
         assert 'sensitivity' not in arguments and 'com_maxfps' not in arguments
         assert 'r_mode' in arguments and 'net_port' in arguments
+        effective = json.loads((apphome/'launcher-settings.json').read_text())['resolution']
+        assert arguments[arguments.index('r_mode') + 1].strip('"') == effective, 'saved and launched size must agree'
         active = (apphome/'main/players/active.txt').read_text().strip()
         assert active == 'Main'
         assert 'seta sensitivity "5.0"' in (apphome/f'main/players/{active}/config_mp.cfg').read_text()
         assert (apphome/'main/players/.studio-game-session.json').is_file()
         def policy(pid):return subprocess.check_output([str(fixture),'policy',str(pid)],text=True).strip()
-        assert policy(launcher.pid)=='1' # accessory: the launcher has no Dock tile
-        assert policy(child)=='0' # regular: the game owns the Dock
+        def visible(pid):return int(subprocess.check_output([str(fixture),'visible-windows',str(pid)],text=True))
+        # The launcher keeps its Dock tile (and Dock menu) while the game plays, with its windows hidden.
+        wait(lambda: visible(launcher.pid) == 0)
+        assert policy(launcher.pid)=='0' and policy(child)=='0'
+        subprocess.run([str(fixture), 'quit', str(launcher.pid)], check=True)
+        wait(lambda: visible(launcher.pid) > 0)
+        assert launcher.poll() is None and policy(launcher.pid) == '0'
+        print('PASS: Quit during play asks first, over a visible launcher window, and quits nothing on its own')
         for address in ['127.0.0.1:28960','localhost:28961']:
             subprocess.run([str(fixture),'event',str(launcher.pid),'cod2x://connect/'+address],check=True)
-            wait(lambda: 'fixture link '+address in log.read_text(errors='replace'))
-        assert log.read_text().count('fixture ready')==1
+            wait(lambda: 'fixture link '+address in output_text())
+        assert output_text().count('fixture ready')==1
         # A launcher crash must not cause a duplicate game on relaunch.
         launcher.kill(); launcher.wait(timeout=5)
         launcher = subprocess.Popen([str(app/"Contents/MacOS/CoD2Launcher"), "--play"], stdout=stream, stderr=stream, env=env, cwd=out)
-        wait(lambda: "reconnected to existing game" in log.read_text(errors="replace"))
+        wait(lambda: "reconnected to existing game" in output_text())
         subprocess.run([str(fixture), "event", str(launcher.pid), "cod2x://connect/localhost:28962"], check=True)
-        wait(lambda: "fixture link localhost:28962" in log.read_text(errors="replace"))
-        assert log.read_text().count("fixture ready") == 1
-        assert policy(launcher.pid) == "1"
+        wait(lambda: "fixture link localhost:28962" in output_text())
+        assert output_text().count("fixture ready") == 1
+        wait(lambda: visible(launcher.pid) == 0)
         exitfile.touch()
-        wait(lambda:'returned to launcher (game exit unavailable)' in log.read_text(errors='replace'))
+        wait(lambda:'returned to launcher (game exit unavailable)' in output_text())
+        wait(lambda: visible(launcher.pid) > 0)
         assert launcher.poll() is None and policy(launcher.pid)=='0'
         assert (apphome/'cod2_crash_fixture.txt').is_file()
         snapshots = [json.loads(path.read_text()) for path in (apphome/f'main/players/{active}/history').glob('*.json')]
@@ -95,9 +113,9 @@ with log.open('w') as stream:
         loadout = apphome/f'main/players/{active}/config_mp.cfg'
         loadout.write_text(loadout.read_text() + 'seta cl_maxpackets "125"\n')
         launcher = subprocess.Popen([str(app/'Contents/MacOS/CoD2Launcher'), 'cod2x://connect%20localhost%3A28964%20password%20%22s3cret%2Bx%22'], stdout=stream, stderr=stream, env=env, cwd=out)
-        wait(lambda: log.read_text(errors='replace').count('fixture ready') == 2 and (apphome/'fixture-arguments.json').is_file())
-        wait(lambda: 'fixture link localhost:28964 password s3cret+x' in log.read_text(errors='replace'))
-        stock = int(re.findall(r'fixture ready (\d+)', log.read_text())[-1])
+        wait(lambda: output_text().count('fixture ready') == 2 and (apphome/'fixture-arguments.json').is_file())
+        wait(lambda: 'fixture link localhost:28964 password s3cret+x' in output_text())
+        stock = int(re.findall(r'fixture ready (\d+)', output_text())[-1])
         assert not placed.exists() and (apphome/'cod2x/iw_CoD2x_01.iwd').read_bytes() == kept, 'Original 1.3 starts without the CoD2x archive'
         assert (apphome/'fixture-reports-consent.txt').read_text() == 'unset', 'only a CoD2x game gets the CoD2x report switch'
         assert subprocess.check_output(['ps', '-o', 'comm=', '-p', str(stock)], text=True).strip().endswith('/MacOS/cod2_macos_stock')
@@ -105,12 +123,12 @@ with log.open('w') as stream:
         assert '+connect' not in arguments and not any('s3cret' in a or 'password' in a.lower() for a in arguments), arguments
         launcher.kill(); launcher.wait(timeout=5)
         launcher = subprocess.Popen([str(app/'Contents/MacOS/CoD2Launcher'), '--play'], stdout=stream, stderr=stream, env=env, cwd=out)
-        wait(lambda: log.read_text(errors='replace').count('reconnected to existing game') == 2)
+        wait(lambda: output_text().count('reconnected to existing game') == 2)
         subprocess.run([str(fixture), 'event', str(launcher.pid), 'cod2x://connect/localhost:28965'], check=True)
-        wait(lambda: 'fixture link localhost:28965' in log.read_text(errors='replace'))
-        assert log.read_text(errors='replace').count('fixture ready') == 2
+        wait(lambda: 'fixture link localhost:28965' in output_text())
+        assert output_text().count('fixture ready') == 2
         exitfile.touch()
-        wait(lambda: log.read_text(errors='replace').count('returned to launcher') == 2)
+        wait(lambda: output_text().count('returned to launcher') == 2)
         assert launcher.poll() is None
         assert 'seta cl_maxpackets "30"' in loadout.read_text() and 'seta cl_maxpackets "125"' not in loadout.read_text()
         print('PASS: Original 1.3 starts cod2_macos_stock without the CoD2x archive, takes a passworded cold link and a live link as Apple events (never in argv) and is reattached after a force-quit')
@@ -120,8 +138,8 @@ with log.open('w') as stream:
         settings['engine'] = 'cod2x'; settings['sendCrashReports'] = True; (apphome/'launcher-settings.json').write_text(json.dumps(settings))
         exitfile.unlink()
         launcher = subprocess.Popen([str(app/'Contents/MacOS/CoD2Launcher'), '--play'], stdout=stream, stderr=stream, env=env, cwd=out)
-        wait(lambda: log.read_text(errors='replace').count('fixture ready') == 3)
-        cod2x = int(re.findall(r'fixture ready (\d+)', log.read_text())[-1])
+        wait(lambda: output_text().count('fixture ready') == 3)
+        cod2x = int(re.findall(r'fixture ready (\d+)', output_text())[-1])
         assert placed.read_bytes() == kept and sorted(p.name for p in game.iterdir()) == [f'iw_{i:02}.iwd' for i in range(16)]
         assert subprocess.check_output(['ps', '-o', 'comm=', '-p', str(cod2x)], text=True).strip().endswith('/MacOS/cod2_macos')
         text = loadout.read_text()
@@ -133,7 +151,7 @@ with log.open('w') as stream:
         assert (apphome/'fixture-reports-consent.txt').read_text() == '1'
         assert not received, 'nothing was sent while sending was off'
         exitfile.touch()
-        wait(lambda: log.read_text(errors='replace').count('returned to launcher') == 3 and received)
+        wait(lambda: output_text().count('returned to launcher') == 3 and received)
         time.sleep(1)
         assert len(received) == 1, received
         path, headers, body = received[0]
@@ -147,6 +165,13 @@ with log.open('w') as stream:
         assert 'command' not in text and 'fs_homepath' not in text and str(home) not in text and str(pathlib.Path.home()) not in text and 'executable : ~/fixture' in text, text
         assert len(json.loads((apphome/'crash-reports-sent.json').read_text())) == 1
         print('PASS: crash reports: CoD2x\'s report switch only for a CoD2x game with it on (an inherited value removed), nothing sent while off, one shortened envelope to the build\'s receiver once on')
+        session_logs = list((apphome/'logs').glob('game-*.log'))
+        assert len(session_logs) == 3, session_logs
+        kept_output = ''.join(path.read_text() for path in session_logs)
+        assert 'fixture ready' in kept_output and '[Private connection or key details omitted]' in kept_output
+        assert 's3cret' not in kept_output and 'p+quit' not in kept_output
+        assert all(path.stat().st_mode & 0o777 == 0o600 for path in session_logs)
+        print('PASS: all three game starts kept private filtered logs; credential echoes never reached them; launcher force-quit did not kill either engine')
         print('PASS: launcher→nested child, Dock handoff, two live cod2x Apple events, no duplicate engine, launcher force-quit/reconnect, game crash→live launcher/Dock restoration/report')
         print('PASS: real launch migration and machine argv, personal config ownership, persisted before-session archive and exactly one snapshot after reattachment/exit')
     finally:
@@ -155,9 +180,9 @@ with log.open('w') as stream:
         try:launcher.wait(timeout=5)
         except subprocess.TimeoutExpired:launcher.kill();launcher.wait()
         if child is None:
-            match = re.search(r'fixture ready (\d+)', log.read_text(errors='replace'))
+            match = re.search(r'fixture ready (\d+)', output_text())
             if match: child = int(match.group(1))
-        for owned in {int(pid) for pid in re.findall(r"fixture ready (\d+)", log.read_text(errors="replace"))}:
+        for owned in {int(pid) for pid in re.findall(r"fixture ready (\d+)", output_text())}:
             try:os.kill(owned,15)
             except ProcessLookupError:pass
         unregister='/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister'

@@ -12,5 +12,10 @@ typedef struct {
 } CDirect3DSurfaceNativeInfo;
 int CDirect3DSurface_GetNativeInfo(const void *surface, CDirect3DSurfaceNativeInfo *info);
 void CDirect3DSurface_MarkGPUWritten(void *surface);
+#if COD2_APPLE_SDK
+HRESULT CDirect3DSurface_BindFloatTarget(void *surface);
+HRESULT CDirect3DSurface_CreateDepthStorage(void *surface, UINT32 width, UINT32 height, UINT32 samples);
+void CDirect3DSurface_BindDepthStorage(const void *surface);
+#endif
 #endif
 #endif

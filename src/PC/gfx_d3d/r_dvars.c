@@ -1,7 +1,22 @@
+/* Original presets add archive flags to these five controls. CoD2x skips the
+   presets; preserve edited values without applying their hardware choices. */
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#define R_PRESET_ARCHIVE_FLAGS 0x2001
+#else
+#define R_PRESET_ARCHIVE_FLAGS 0x2000
+#endif
+
 #include "common_types.h"
 #include "imports.h"
+#include "PC/gfx_d3d/r_log.h"
+#include <stdarg.h>
+#include <time.h>
+
+static void R_LogClose(void);
 #if COD2_APPLE_SDK
 #include "platform/macos_display.h"
+#include "platform/macos_display_modes.h"
+extern const dvar_t *Dvar_FindVar(const char *name);
 #endif
 /* dvar globals */
 extern const dvar_t *com_statmon;
@@ -88,6 +103,9 @@ extern const dvar_t *r_drawPrimCap;
 extern const dvar_t *r_drawPrimFloor;
 extern const dvar_t *r_drawWater;
 extern const dvar_t *r_depthPrepassModels;
+#if defined(COD2_X64)
+const dvar_t *r_zFeather;
+#endif
 extern const dvar_t *r_lockPvs;
 extern const dvar_t *r_skipPvs;
 extern const dvar_t *r_pvsStats;
@@ -414,7 +432,7 @@ void R_RegisterDvars(void)
 
     r_drawXModels = ri.Dvar_RegisterBool("r_drawXModels", 1, 0x2080);
 
-    r_dlightLimit = ri.Dvar_RegisterInt("r_dlightLimit", 4, 0, 32, 0x2000);
+    r_dlightLimit = ri.Dvar_RegisterInt("r_dlightLimit", 4, 0, 32, R_PRESET_ARCHIVE_FLAGS);
 
     r_drawPrimCap = ri.Dvar_RegisterInt("r_drawPrimCap", 0, -1, 10000, 0x2080);
 
@@ -422,7 +440,10 @@ void R_RegisterDvars(void)
 
     r_drawWater = ri.Dvar_RegisterBool("r_drawWater", 1, 0x2080);
 
-    r_depthPrepassModels = ri.Dvar_RegisterBool("r_depthPrepassModels", 0, 0x2000);
+    r_depthPrepassModels = ri.Dvar_RegisterBool("r_depthPrepassModels", 0, R_PRESET_ARCHIVE_FLAGS);
+#if defined(COD2_X64)
+    r_zFeather = ri.Dvar_RegisterBool("r_zFeather", 1, R_PRESET_ARCHIVE_FLAGS);
+#endif
 
     r_lockPvs = ri.Dvar_RegisterBool("r_lockPvs", 0, 0x2080);
 
@@ -462,7 +483,7 @@ void R_RegisterDvars(void)
 
     r_forceLod = ri.Dvar_RegisterEnum("r_forceLod", r_forceLodNames, 4, 0x2080);
 
-    sc_enable = ri.Dvar_RegisterBool("sc_enable", 1, 0x2000);
+    sc_enable = ri.Dvar_RegisterBool("sc_enable", 1, R_PRESET_ARCHIVE_FLAGS);
 
     sc_blur = ri.Dvar_RegisterInt("sc_blur", 2, 0, 4, 0x2080);
 
@@ -530,7 +551,7 @@ void R_RegisterDvars(void)
 
     r_testFillEnable = ri.Dvar_RegisterBool("r_testFillEnable", 0, 0x2020);
 
-    fx_sort = ri.Dvar_RegisterBool("fx_sort", 1, 0x2000);
+    fx_sort = ri.Dvar_RegisterBool("fx_sort", 1, R_PRESET_ARCHIVE_FLAGS);
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     /* CoD2x registers these first in the executable (-100000..100000, archived,
@@ -555,7 +576,11 @@ void R_RegisterDvars(void)
     r_sse_skinning = ri.Dvar_RegisterBool("r_sse_skinning", 1, 0x2000);
 
 #if COD2_APPLE_SDK
+#if defined(COD2_CODX) && COD2_CODX
+    r_fullscreen = ri.Dvar_RegisterBool("r_fullscreen", 1, 0x3021);
+#else
     r_fullscreen = ri.Dvar_RegisterBool("r_fullscreen", 1, 0x2021);
+#endif
 #else
     r_fullscreen = ri.Dvar_RegisterBool("r_fullscreen", 1, 0x2040);
 #endif
@@ -563,7 +588,27 @@ void R_RegisterDvars(void)
     r_monitor = ri.Dvar_RegisterInt("r_monitor", 0, 0, 8, 0x2021);
 
 #if COD2_APPLE_SDK
-    r_mode = ri.Dvar_RegisterEnum("r_mode", MacPlatform_ModeNames(), 0, 0x2021);
+    {
+        /* Copy before refreshing the static names: r_mode retains their
+         * addresses between renderer restarts, and its pending value wins. */
+        char requested[MAC_MODE_NAME_SIZE];
+        const dvar_t *previous = Dvar_FindVar("r_mode");
+        const char *value = ri.Dvar_GetVariantString("r_mode");
+        if (previous && previous->type == 6 /* enum */ && previous->latched.integer >= 0 &&
+            previous->latched.integer < previous->domain.enumeration.stringCount)
+            value = previous->domain.enumeration.strings[previous->latched.integer];
+        snprintf(requested, sizeof(requested), "%s", value);
+        /* Windows applies r_monitor to fullscreen; a window follows its own
+         * monitor (and CoD2x's saved vid_xpos/vid_ypos). */
+        MacPlatform_SelectMonitor(r_fullscreen->current.enabled ? r_monitor->current.integer : 0);
+        const char **names = MacPlatform_ModeNames();
+        int selected = MacPlatform_ChooseMode(names, requested);
+        r_mode = ri.Dvar_RegisterEnum("r_mode", names, 0, 0x2021);
+        ri.Dvar_UpdateEnumDomain(r_mode, names);
+        ri.Dvar_SetInt(r_mode, selected);
+        if (*requested && strcmp(requested, names[selected]))
+            ri.Printf(0, "Display no longer offers r_mode %s; using %s\n", requested, names[selected]);
+    }
 #else
     r_mode = ri.Dvar_RegisterEnum("r_mode", s_displayModeNames, 0, 0x2021);
 #endif
@@ -579,5 +624,173 @@ void R_RegisterDvars(void)
 
 void R_UnregisterDvars(void)
 {
+    R_LogClose();
     ri.Dvar_UnregisterSystem(0x2000);
+}
+
+/* Windows 1.3 10037c50--10038642. The first presentation opens dx.log;
+ * subsequent presentations consume the requested number of logged frames. */
+static FILE *r_logStream;
+
+int R_LogEnabled(void)
+{
+    return r_logFile && r_logFile->current.integer && r_logStream;
+}
+
+static void R_LogClose(void)
+{
+    if (r_logStream) {
+        fclose(r_logStream);
+        r_logStream = NULL;
+    }
+}
+
+void R_LogFrameEnd(void)
+{
+    time_t now;
+    struct tm *local;
+    if (!r_logFile)
+        return;
+    if (R_LogEnabled())
+        ri.Dvar_SetInt(r_logFile, r_logFile->current.integer - 1);
+    if (!r_logFile->current.integer) {
+        R_LogClose();
+        return;
+    }
+    if (r_logStream)
+        return;
+    r_logStream = fopen("dx.log", "wt");
+    if (!r_logStream)
+        return;
+    time(&now);
+    local = localtime(&now);
+    if (local)
+        fprintf(r_logStream, "%s\n", asctime(local));
+    fflush(r_logStream);
+}
+
+void R_LogPrintf(const char *format, ...)
+{
+    va_list args;
+    if (!R_LogEnabled())
+        return;
+    va_start(args, format);
+    vfprintf(r_logStream, format, args);
+    va_end(args);
+    fflush(r_logStream);
+}
+
+const char *R_LogTechniqueName(int technique)
+{
+    static const char *const names[] = {
+        "TECHNIQUE_DEPTH_PREPASS",
+        "TECHNIQUE_SKY",
+        "TECHNIQUE_BUILD_FLOAT_Z",
+        "TECHNIQUE_FOGABLE_FIRST",
+        "TECHNIQUE_UNLIT_FOG_LINEAR",
+        "TECHNIQUE_UNLIT_FOG_EXP",
+        "TECHNIQUE_LIGHTMAP",
+        "TECHNIQUE_LIGHTMAP_FOG_LINEAR",
+        "TECHNIQUE_LIGHTMAP_FOG_EXP",
+        "TECHNIQUE_LIGHTPROBE",
+        "TECHNIQUE_LIGHTPROBE_FOG_LINEAR",
+        "TECHNIQUE_LIGHTPROBE_FOG_EXP",
+        "TECHNIQUE_LIGHTPROBE_SMODEL",
+        "TECHNIQUE_LIGHTPROBE_SMODEL_FOG_LINEAR",
+        "TECHNIQUE_LIGHTPROBE_SMODEL_FOG_EXP",
+        "TECHNIQUE_LIGHTPROBE_SMODEL_CACHED",
+        "TECHNIQUE_LIGHTPROBE_SMODEL_CACHED_FOG_LINEAR",
+        "TECHNIQUE_LIGHTPROBE_SMODEL_CACHED_FOG_EXP",
+        "TECHNIQUE_POINTLIGHT",
+        "TECHNIQUE_POINTLIGHT_FOG_LINEAR",
+        "TECHNIQUE_POINTLIGHT_FOG_EXP",
+        "TECHNIQUE_EMISSIVE",
+        "TECHNIQUE_EMISSIVE_FOG_LINEAR",
+        "TECHNIQUE_EMISSIVE_FOG_EXP",
+        "TECHNIQUE_EMISSIVE_FEATHERED",
+        "TECHNIQUE_EMISSIVE_FEATHERED_FOG_LINEAR",
+        "TECHNIQUE_EMISSIVE_FEATHERED_FOG_EXP",
+        "TECHNIQUE_FAKELIGHT_NORMAL",
+        "TECHNIQUE_FAKELIGHT_VIEW",
+        "TECHNIQUE_WIREFRAME_SOLID",
+        "TECHNIQUE_WIREFRAME_SHADED",
+        "TECHNIQUE_SHADOWCOOKIE_CASTER",
+        "TECHNIQUE_SHADOWCOOKIE_RECEIVER",
+        "TECHNIQUE_DEBUG_BUMPMAP",
+        "TECHNIQUE_COUNT",
+    };
+    return (unsigned int)technique < sizeof(names) / sizeof(names[0]) ? names[technique] : "TECHNIQUE_COUNT";
+}
+
+typedef struct R_LogStateName {
+    unsigned int value;
+    const char *name;
+} R_LogStateName;
+
+static void R_LogStateEnum(unsigned int state, unsigned int changed, unsigned int mask,
+                           const char *label, const R_LogStateName *names, int count)
+{
+    int i;
+    for (i = 0; i < count; ++i) {
+        if ((state & mask) == names[i].value) {
+            R_LogPrintf("---------- (%c)%-14s: %s\n", (changed & mask) ? '*' : ' ', label, names[i].name);
+            return;
+        }
+    }
+    R_LogPrintf("---------- (%c)%-14s: unknown - %08x\n", (changed & mask) ? '*' : ' ', label, state & mask);
+}
+
+static void R_LogStateBool(unsigned int state, unsigned int changed, unsigned int mask, const char *label)
+{
+    R_LogPrintf("---------- (%c)%-14s: %s\n", (changed & mask) ? '*' : ' ', label,
+                (state & mask) ? "Enabled" : "Disabled");
+}
+
+static void R_LogBlend(unsigned int state)
+{
+    static const char *const factors[] = {
+        "Disabled", "Zero", "One", "SrcColor", "InvSrcColor", "SrcAlpha", "InvSrcAlpha",
+        "DestAlpha", "InvDestAlpha", "DestColor", "InvDestColor", "SrcAlphaSat", "BlendFactor", "InvBlendFactor"
+    };
+    static const char *const operations[] = {"Disabled", "Add", "Subtract", "RevSubtract", "Min", "Max"};
+    unsigned int op = (state >> 8) & 7;
+    unsigned int src = state & 15, dst = (state >> 4) & 15;
+    if (!op) {
+        R_LogPrintf("Disabled\n");
+        return;
+    }
+    /* Material state enumerants occupy the original table domains. */
+    R_LogPrintf("%s( ", op < 6 ? operations[op] : "unknown");
+    R_LogPrintf("%s, ", src < 14 ? factors[src] : "unknown");
+    R_LogPrintf("%s )\n", dst < 14 ? factors[dst] : "unknown");
+}
+
+void R_LogState(unsigned int state, unsigned int changed, int word)
+{
+    static const R_LogStateName alpha[] = {{0x800,"Disabled"},{0x1000,"GT0"},{0x2000,"LT128"},{0x3000,"GE128"}};
+    static const R_LogStateName cull[] = {{0x4000,"None"},{0x8000,"Back"},{0xc000,"Front"}};
+    static const R_LogStateName depth[] = {{2,"Disabled"},{4,"LessEqual"},{8,"Equal"},{12,"Always"}};
+    static const R_LogStateName offset[] = {{0,"0"},{16,"1"},{32,"2"}};
+    const char *rgb;
+    if (!R_LogEnabled())
+        return;
+    if (word) {
+        R_LogStateBool(state, changed, 1, "Depth Write");
+        R_LogStateEnum(state, changed, 0xe, "Depth Test", depth, 4);
+        R_LogStateEnum(state, changed, 0x30, "Polygon Offset", offset, 3);
+        return;
+    }
+    R_LogPrintf("---------- (%c)Blend         : ", (changed & 0x7ff) ? '*' : ' ');
+    R_LogBlend(state);
+    R_LogPrintf("---------- (%c)SeparateAlpha : ", (changed & 0x7ff0000) ? '*' : ' ');
+    R_LogBlend(state >> 16);
+    R_LogStateEnum(state, changed, 0x3800, "AlphaTest", alpha, 4);
+    R_LogPrintf("---------- (%c)Color Write   : ", (changed & 0x18000000) ? '*' : ' ');
+    rgb = (state & 0x8000000) ? "true" : "false";
+    R_LogPrintf("%s, ", rgb);
+    R_LogPrintf("%s, ", rgb);
+    R_LogPrintf("%s, ", rgb);
+    R_LogPrintf("%s\n", (state & 0x10000000) ? "true" : "false");
+    R_LogStateBool(state, changed, 0x20000000, "Fog");
+    R_LogStateEnum(state, changed, 0xc000, "Cull Face", cull, 3);
 }

@@ -1,10 +1,16 @@
 #include "macos_display.h"
+#if defined(COD2_X64)
+#include "macos_display_modes.h"
+#include "PC/qcommon/frame_activity.h"
+#endif
 #include "macos_system.h"
 #include <SDL2/SDL.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
 #if defined(__APPLE__) && defined(COD2_X64)
 #include <OpenGL/OpenGL.h>
+#include <CoreGraphics/CoreGraphics.h>
+#include <IOKit/graphics/IOGraphicsTypes.h>
 #endif
 #include <stdlib.h>
 #include <string.h>
@@ -40,17 +46,46 @@ typedef struct {
 #endif
 } MacContext;
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64) && COD2_X64
 extern const void *Dvar_FindVar(const char *);
 extern int Dvar_GetInt(const char *);
 extern void Dvar_SetInt(const void *, int);
 extern void Dvar_ClearModified(const void *);
 extern void Com_Printf(const char *, ...);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* CoD2x window.cpp: a saved position that no display shows (a disconnected
+ * monitor, the corner saved from a minimised window) moves to the primary
+ * display's usable area. */
+static void Cod2x_KeepWindowOnADisplay(int *x, int *y, int width, int height)
+{
+    SDL_Rect window = { *x, *y, width, height }, bounds;
+    int count = SDL_GetNumVideoDisplays();
+    for (int i = 0; i < count; ++i)
+        if (SDL_GetDisplayBounds(i, &bounds) == 0 && SDL_HasIntersection(&window, &bounds))
+            return;
+    if (SDL_GetDisplayUsableBounds(0, &bounds) == 0) {
+        *x = bounds.x;
+        *y = bounds.y;
+    } else {
+        *x = *y = 0;
+    }
+    Com_Printf("Window position is outside of all monitors, moving to (%i, %i)\n", *x, *y);
+}
+#endif
 #endif
 
+#if defined(COD2_X64)
+typedef MacDisplayMode MacMode;
+#else
 typedef struct { int width, height, depth, refresh; } MacMode;
+#endif
 static MacMode *modes;
 static int modeCount;
+#if defined(COD2_X64)
+static int selectedDisplay;
+static int requestedMonitor;
+static int nativeWidth = 640, nativeHeight = 480;
+#endif
 static int windowMode = MAC_WINDOWED;
 #if defined(__APPLE__) && defined(COD2_X64)
 static int exclusiveSuspended;
@@ -144,6 +179,11 @@ int MacDisplay_Initialize(void)
      * initialization. Restore the validated link handler afterwards. */
     { extern void Cod2xNativeURL_Install(void); Cod2xNativeURL_Install(); }
 #endif
+#if defined(COD2_X64)
+    initialized = 1;
+    MacPlatform_SelectMonitor(requestedMonitor);
+    return 0;
+#else
     int count = SDL_GetNumDisplayModes(0);
     modes = calloc((size_t)(count > 0 ? count : 1), sizeof(*modes));
     if (!modes)
@@ -162,7 +202,90 @@ int MacDisplay_Initialize(void)
         modes[modeCount++] = (MacMode){ 640, 480, 32, 60 };
     initialized = 1;
     return 0;
+#endif
 }
+
+#if defined(COD2_X64)
+void MacPlatform_SelectMonitor(int monitor)
+{
+    requestedMonitor = monitor;
+    if (!initialized) {
+        MacDisplay_Initialize();
+        return;
+    }
+    /* Windows: 0 follows the window/default monitor; 1 is the first monitor,
+     * 2 the second. Out-of-range selections fall back to the primary display. */
+    int display = monitor > 0 ? monitor - 1 : sdl_gl_window ? SDL_GetWindowDisplayIndex(sdl_gl_window) : 0;
+    selectedDisplay = display >= 0 && display < SDL_GetNumVideoDisplays() ? display : 0;
+    sDisplayIndex = (size_t)selectedDisplay;
+    free(modes);
+    modes = NULL;
+    modeCount = 0;
+    int count = SDL_GetNumDisplayModes(selectedDisplay);
+    modes = calloc((size_t)(count > 0 ? count : 1), sizeof(*modes));
+    if (!modes) {
+        nativeWidth = 640;
+        nativeHeight = 480;
+        return;
+    }
+    for (int i = 0; i < count; ++i) {
+        SDL_DisplayMode m;
+        if (SDL_GetDisplayMode(selectedDisplay, i, &m) != 0)
+            continue;
+        int duplicate = 0;
+        for (int j = 0; j < modeCount; ++j)
+            duplicate |= modes[j].width == m.w && modes[j].height == m.h && modes[j].refresh == m.refresh_rate;
+        if (!duplicate)
+            modes[modeCount++] = (MacMode){ m.w, m.h, 32, m.refresh_rate };
+    }
+    if (!modeCount)
+        modes[modeCount++] = (MacMode){ 640, 480, 32, 60 };
+
+    SDL_DisplayMode desktop;
+    nativeWidth = 640;
+    nativeHeight = 480;
+    if (SDL_GetDesktopDisplayMode(selectedDisplay, &desktop) == 0) {
+        /* Virtual displays need not advertise a native mode. Do not use a
+         * scaled Retina backing size as the fallback panel limit. */
+        nativeWidth = desktop.w;
+        nativeHeight = desktop.h;
+    }
+#if defined(__APPLE__) && defined(COD2_X64)
+    SDL_Rect bounds;
+    CGDirectDisplayID displays[32];
+    uint32_t displayCount = 0;
+    int foundNative = 0;
+    if (SDL_GetDisplayBounds(selectedDisplay, &bounds) == 0 &&
+        CGGetActiveDisplayList(32, displays, &displayCount) == kCGErrorSuccess) {
+        for (uint32_t i = 0; i < displayCount; ++i) {
+            CGRect rect = CGDisplayBounds(displays[i]);
+            if ((int)rect.origin.x != bounds.x || (int)rect.origin.y != bounds.y ||
+                (int)rect.size.width != bounds.w || (int)rect.size.height != bounds.h)
+                continue;
+            CFArrayRef cgModes = CGDisplayCopyAllDisplayModes(displays[i], NULL);
+            for (CFIndex j = 0; cgModes && j < CFArrayGetCount(cgModes); ++j) {
+                CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(cgModes, j);
+                if (!(CGDisplayModeGetIOFlags(mode) & kDisplayModeNativeFlag))
+                    continue;
+                int w = (int)CGDisplayModeGetPixelWidth(mode);
+                int h = (int)CGDisplayModeGetPixelHeight(mode);
+                int rotation = (int)CGDisplayRotation(displays[i]);
+                if (rotation == 90 || rotation == 270) { int temp = w; w = h; h = temp; }
+                if (!foundNative || (w >= nativeWidth && h >= nativeHeight)) {
+                    nativeWidth = w;
+                    nativeHeight = h;
+                    foundNative = 1;
+                }
+            }
+            if (cgModes) CFRelease(cgModes);
+            break;
+        }
+    }
+    fprintf(stderr, "CoD2 Silicon display %d: render-size limit %dx%d (%s)\n", selectedDisplay,
+            nativeWidth, nativeHeight, foundNative ? "native pixels" : "desktop fallback; no native mode");
+#endif
+}
+#endif
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 static int cod2xInternalMode;
@@ -181,8 +304,8 @@ void MacPlatform_ConfigureWindow(int width, int height, int mode, int refresh)
         } else if (mode == MAC_WINDOWED) {
             SDL_DisplayMode desktop;
             SDL_Rect bounds;
-            if (MacDisplay_Initialize() == 0 && SDL_GetDesktopDisplayMode(0, &desktop) == 0 &&
-                desktop.w == width && desktop.h == height && SDL_GetDisplayBounds(0, &bounds) == 0) {
+            if (MacDisplay_Initialize() == 0 && SDL_GetDesktopDisplayMode(selectedDisplay, &desktop) == 0 &&
+                desktop.w == width && desktop.h == height && SDL_GetDisplayBounds(selectedDisplay, &bounds) == 0) {
                 if (creating)
                     Com_Printf("Attempting %i x %i borderless window at (%i, %i)\n", width, height, bounds.x, bounds.y);
                 mode = MAC_BORDERLESS;
@@ -218,6 +341,12 @@ static int SetWindowMode(void)
      * its game mode (a black screen). MacDisplay_FocusChanged steps down to the
      * desktop mode instead and restores exclusive mode on return. */
     SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
+    if (SDL_GetWindowDisplayIndex(sdl_gl_window) != selectedDisplay) {
+        if (SDL_SetWindowFullscreen(sdl_gl_window, 0) != 0)
+            return -1;
+        SDL_SetWindowPosition(sdl_gl_window, SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay),
+                              SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay));
+    }
     if (windowMode == MAC_WINDOWED && SDL_SetWindowFullscreen(sdl_gl_window, 0) != 0)
 #else
     if (SDL_SetWindowFullscreen(sdl_gl_window, 0) != 0)
@@ -273,15 +402,24 @@ static int SetWindowMode(void)
         double scaleX = logicalW > 0 ? (double)pixelW / logicalW : 1;
         double scaleY = logicalH > 0 ? (double)pixelH / logicalH : 1;
         SDL_SetWindowSize(sdl_gl_window, (int)(sdl_gl_width / scaleX), (int)(sdl_gl_height / scaleY));
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64) && COD2_X64
         {
             /* vid_xpos/vid_ypos hold the window's outer corner, as on Windows. */
-            int top = 0, left = 0;
-            SDL_GetWindowBordersSize(sdl_gl_window, &top, &left, NULL, NULL);
-            SDL_SetWindowPosition(sdl_gl_window, Dvar_GetInt("vid_xpos") + left, Dvar_GetInt("vid_ypos") + top);
+            int top = 0, left = 0, bottom = 0, right = 0;
+            int x = Dvar_GetInt("vid_xpos"), y = Dvar_GetInt("vid_ypos");
+            SDL_GetWindowBordersSize(sdl_gl_window, &top, &left, &bottom, &right);
+#if defined(COD2_CODX) && COD2_CODX
+            Cod2x_KeepWindowOnADisplay(&x, &y, (int)(sdl_gl_width / scaleX) + left + right,
+                                       (int)(sdl_gl_height / scaleY) + top + bottom);
+#endif
+            SDL_SetWindowPosition(sdl_gl_window, x + left, y + top);
         }
 #else
+#if defined(COD2_X64)
+        SDL_SetWindowPosition(sdl_gl_window, SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay), SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay));
+#else
         SDL_SetWindowPosition(sdl_gl_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+#endif
 #endif
     }
 #if defined(__APPLE__) && defined(COD2_X64)
@@ -316,6 +454,9 @@ static GLenum DepthStencilStorageFormat(int depthBits, int stencil)
 
 static int CreateRenderBuffer(MacContext *ctx, int depthBits, int stencil)
 {
+#if defined(COD2_X64)
+    FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
     glGenFramebuffersEXT(1, &ctx->framebuffer);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, ctx->framebuffer);
     glGenRenderbuffersEXT(3, ctx->color);
@@ -337,7 +478,13 @@ static int CreateRenderBuffer(MacContext *ctx, int depthBits, int stencil)
         glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, ctx->depth);
     glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
     glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+#if defined(COD2_X64)
+    int result = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE_EXT ? 0 : -1;
+    FRAME_ACTIVITY_END(FRAME_TARGET_CREATE, activityStart);
+    return result;
+#else
     return glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE_EXT ? 0 : -1;
+#endif
 }
 #if defined(COD2_X64)
 
@@ -358,6 +505,7 @@ static void DestroyMultisampleBuffer(MacContext *ctx)
 static void CreateMultisampleBuffer(MacContext *ctx)
 {
     if (ctx->samples > 1) {
+        FRAME_ACTIVITY_BEGIN(activityStart);
         glGenFramebuffersEXT(1, &ctx->msFramebuffer);
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, ctx->msFramebuffer);
         glGenRenderbuffersEXT(1, &ctx->msColor);
@@ -378,6 +526,7 @@ static void CreateMultisampleBuffer(MacContext *ctx)
             DestroyMultisampleBuffer(ctx);
             ctx->samples = 0;
         }
+        FRAME_ACTIVITY_END(FRAME_TARGET_CREATE, activityStart);
     }
     glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, ctx->msFramebuffer ? ctx->msFramebuffer : ctx->framebuffer);
     glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, ctx->framebuffer);
@@ -390,6 +539,7 @@ static void ResolveFrameBuffer(MacContext *ctx)
 {
     if (!ctx || !ctx->msFramebuffer)
         return;
+    FRAME_ACTIVITY_BEGIN(activityStart);
     GLint drawFramebuffer, readFramebuffer, drawBuffer;
     GLboolean mask[4], scissor = glIsEnabled(GL_SCISSOR_TEST);
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING_EXT, &drawFramebuffer);
@@ -407,6 +557,7 @@ static void ResolveFrameBuffer(MacContext *ctx)
     glDrawBuffer(drawBuffer);
     glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, drawFramebuffer);
     glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, readFramebuffer);
+    FRAME_ACTIVITY_END(FRAME_RESOLVE, activityStart);
 }
 #endif
 
@@ -598,9 +749,17 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
         }
         if (!sdl_gl_window)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64)
+            sdl_gl_window = SDL_CreateWindow("Call of Duty 2x Multiplayer", SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay), SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay),
+#else
             sdl_gl_window = SDL_CreateWindow("Call of Duty 2x Multiplayer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+#endif
+#else
+#if defined(COD2_X64)
+            sdl_gl_window = SDL_CreateWindow("CoD2 Silicon", SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay), SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay),
 #else
             sdl_gl_window = SDL_CreateWindow("CoD2 Silicon", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+#endif
 #endif
                 sdl_gl_width, sdl_gl_height, SDL_WINDOW_METAL | SDL_WINDOW_SHOWN |
                 (windowMode == MAC_WINDOWED ? SDL_WINDOW_ALLOW_HIGHDPI : 0));
@@ -638,9 +797,17 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     if (!sdl_gl_window)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64)
+        sdl_gl_window = SDL_CreateWindow("Call of Duty 2x Multiplayer", SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay), SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay),
+#else
         sdl_gl_window = SDL_CreateWindow("Call of Duty 2x Multiplayer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+#endif
+#else
+#if defined(COD2_X64)
+        sdl_gl_window = SDL_CreateWindow("CoD2 Silicon", SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay), SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay),
 #else
         sdl_gl_window = SDL_CreateWindow("CoD2 Silicon", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+#endif
 #endif
                                          sdl_gl_width, sdl_gl_height,
 #if defined(__APPLE__) && defined(COD2_X64)
@@ -748,6 +915,18 @@ void MacGL_ReadBuffer(unsigned int buffer) {
 #endif
     glReadBuffer(RenderBuffer(buffer));
 }
+
+#if defined(COD2_X64)
+/* Target selection does not consume pixels. Actual reads still resolve in
+ * MacGL_ReadBuffer; resolving here would copy the previous scene needlessly. */
+void MacGL_SelectReadBuffer(unsigned int buffer)
+{
+#if defined(__APPLE__) && defined(__aarch64__)
+    if (MacShim_Metal()) return;
+#endif
+    glReadBuffer(RenderBuffer(buffer));
+}
+#endif
 
 static void PresentationRect(int renderW, int renderH, int drawableW, int drawableH,
                              int *x, int *y, int *w, int *h)
@@ -868,7 +1047,13 @@ void SDL_GL_SwapWindowDirect(void)
     if (presentMode)
         presentFence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 #endif
+#if defined(COD2_X64)
+    FRAME_ACTIVITY_BEGIN(presentStart);
+#endif
     SDL_GL_SwapWindow(sdl_gl_window);
+#if defined(COD2_X64)
+    FRAME_ACTIVITY_END(FRAME_PRESENT, presentStart);
+#endif
 #if defined(COD2_X64)
     glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, readFramebuffer);
     glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, drawFramebuffer);
@@ -997,6 +1182,16 @@ void MacPlatform_GetDrawableSize(int *width, int *height)
 uint16_t MacDisplay_GetCurrentDimensions(int *w, int *h) { MacPlatform_GetRenderSize(w, h); return 0; }
 int MacDisplay_GetCurrentDepth(void) { return 32; }
 int MacDisplay_GetNumModes(void) { MacDisplay_Initialize(); return modeCount; }
+#if defined(COD2_X64)
+const char **MacPlatform_ModeNames(void)
+{
+    static const char *names[MAC_MODE_LIMIT + 1];
+    static char storage[MAC_MODE_LIMIT][MAC_MODE_NAME_SIZE];
+    MacDisplay_Initialize();
+    MacPlatform_BuildModeNames(nativeWidth, nativeHeight, modes, modeCount, storage, names);
+    return names;
+}
+#else
 const char **MacPlatform_ModeNames(void)
 {
     static const char *names[128];
@@ -1034,6 +1229,7 @@ const char **MacPlatform_ModeNames(void)
     }
     return names;
 }
+#endif
 uint16_t MacDisplay_GetNthMode(int i, int *w, int *h, int *d, int *r)
 {
     if (MacDisplay_Initialize() != 0 || i < 0 || i >= modeCount)
@@ -1115,10 +1311,10 @@ uint16_t MacDisplay_SetMode(int w, int h, int d, int r)
 }
 int MacDisplay_SetupDisplay(int w, int h) { sdl_gl_width = w; sdl_gl_height = h; return MacDisplay_Initialize(); }
 int MacDisplay_IsFullscreen(void) { return screenContext && windowMode != MAC_WINDOWED; }
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64) && COD2_X64
 void MacDisplay_WindowMoved(int x, int y)
 {
-    /* CoD2x keeps the windowed position in vid_xpos/vid_ypos, so it is saved. */
+    /* Both engines archive the outer window corner, as Windows WM_MOVE does. */
     const void *xpos = Dvar_FindVar("vid_xpos"), *ypos = Dvar_FindVar("vid_ypos");
     int top = 0, left = 0;
     if (!sdl_gl_window || windowMode != MAC_WINDOWED || !xpos || !ypos)

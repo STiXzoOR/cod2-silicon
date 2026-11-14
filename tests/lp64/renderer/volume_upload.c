@@ -14,6 +14,8 @@ void *imp___ZTV12CNormalArray = fixtureArrayVtables;
 void *imp___ZTV12CVertexArray = fixtureArrayVtables;
 DxGlobals dx;
 int alwaysfails;
+int R_LogEnabled(void) { return 0; }
+void R_LogPrintf(const char *format, ...) { (void)format; abort(); }
 void __ZdlPv(void *p) { free(p); }
 int MacDisplay_GetCardType(void) { return 0; }
 int MacDisplay_IsGLExtensionSupported(const char *name) { (void)name; return 1; }

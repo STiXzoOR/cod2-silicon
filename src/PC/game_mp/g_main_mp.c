@@ -1,6 +1,8 @@
+#include "com_random.h"
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
+#include "g_cod2x_playerinfo.h"
 #if COD2_APPLE_SDK
 #include "platform/macos_system.h"
 #include <sys/mman.h>
@@ -669,7 +671,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     level.currentEntityThink = -1;
 
     randomSeed = Sys_DiffSeed(randomSeed);
-    srand(randomSeed);
+    Com_CrtSrand(randomSeed);
     Rand_Init(randomSeed);
     G_SetupWeaponDef();
     if (!restart || !savepersist) {
@@ -783,7 +785,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
         extern int Sys_DiffSeed(int fallback);   /* sysdiff_statehash.c */
         randomSeed = Sys_DiffSeed(randomSeed);
     }
-    srand(randomSeed);
+    Com_CrtSrand(randomSeed);
     Rand_Init(randomSeed);
     G_SetupWeaponDef();
     G_RegisterDvars_impl();
@@ -1200,7 +1202,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
         extern int Sys_DiffSeed(int fallback);   /* sysdiff_statehash.c */
         randomSeed = Sys_DiffSeed(randomSeed);
     }
-    srand(randomSeed);
+    Com_CrtSrand(randomSeed);
     Rand_Init(randomSeed);
     G_SetupWeaponDef();
     G_RegisterDvars_impl();
@@ -1945,6 +1947,11 @@ int G_RunFrame(int levelTime)
 
     *(void **)imp_bgs = NULL;
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    extern void SV_Cod2xMapChangeFrameDone(void);
+    extern void SV_Cod2xUdpStats(void);
+    SV_Cod2xMapChangeFrameDone();
+    G_Cod2xPlayerInfoFrame(g_entities);
+    SV_Cod2xUdpStats();
     G_RefreshPlayerBroadcast();
 #endif
     return (int)imp_bgs;

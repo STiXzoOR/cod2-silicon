@@ -103,13 +103,14 @@ void CG_TraceCapsule(trace_t *trace, const vec_t *start, const vec_t *minimum,
     memset(trace, 0, sizeof(*trace));
     trace->fraction = 1.0f;
 }
-int rand(void)
+int Com_CrtRand(void)
 {
     assert(random_index < 4);
-    ++random_index; return 1073741824;
+    ++random_index; return 16384;
 }
 #if defined(COD2_CODX) && COD2_CODX
 int Cod2x_ThirdPersonMode(void) { return third_person_mode; }
+int Cod2x_GameVersion(void) { return 0; }
 #endif
 
 static void Near(float actual, float expected)

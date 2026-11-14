@@ -1,3 +1,4 @@
+#include "com_random.h"
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
@@ -84,7 +85,6 @@ extern const vec_t Vec3Normalize(vec_t *v);
 extern const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out);
 extern const vec_t Vec3Distance(const vec_t *v1, const vec_t *v2);
 extern localEntity_t *CG_AllocLocalEntity(void);
-extern int rand(void);
 extern float sqrtf(float x);
 extern int CG_PlaySoundAlias(int entitynum, const vec_t *origin, snd_alias_list_t *aliasList);
 extern void CL_DefaultVertexFrames(int vertCount, GfxWorldVertex *verts);
@@ -603,9 +603,6 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
     weapInfo = &cg_weaponsArray[ent->weapon];
     BG_GetWeaponDef(ent->weapon);
     cent->bMuzzleFlash = 1;
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    CG_Cod2xRadarFire(ent->number);
-#endif
 
     if (CG_IsLocalClientEntity_inl(cg, ent))
         BG_WeaponFireRecoil(&cg->predictedPlayerState, cg->vGunSpeed, cg->kickAVel);
@@ -827,9 +824,17 @@ void CG_RegisterWeapon(int weaponNum)
 
     if (weapDef->szHudIcon[0]) {
         weapInfo->hHudIcon = (MaterialHandle)CL_RegisterMaterial(weapDef->szHudIcon, 7);
+#if defined(COD2_APPLE_SDK)
+        cgs->media.hintMaterials[weaponNum + 4] = weapInfo->hHudIcon;
+#else
         cgs->media.hintMaterials[weaponNum + 2] = weapInfo->hHudIcon;
+#endif
     } else {
+#if defined(COD2_APPLE_SDK)
+        cgs->media.hintMaterials[weaponNum + 4] = cgs->media.hintMaterials[2];
+#else
         cgs->media.hintMaterials[weaponNum + 2] = cgs->media.hintMaterials[0];
+#endif
     }
 
     if (weapDef->killIcon[0]) {
@@ -1009,10 +1014,14 @@ void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
     time = cg->time;
     tracerDelay = cg->frametime;
     if (tracerDelay)
-        time -= (rand() % tracerDelay) / 2;
+        time -= (Com_CrtRand() % tracerDelay) / 2;
 
     speed = cg_tracerSpeed->current.value;
+#if defined(COD2_APPLE_SDK)
+    le->endTime = time - (int)((dist / speed) * -1000.0f);
+#else
     le->endTime = time + (int)((dist * 1000.0f) / speed);
+#endif
     le->pos.trType = TR_LINEAR;
     le->pos.trTime = time;
 
@@ -1122,7 +1131,7 @@ void CG_BulletHitClientEvent(int sourceEntityNum, vec_t *position, int surfType,
 
     snap = cg->nextSnap;
     if (!((snap->ps.pm_flags & 0xc00000) && snap->ps.clientNum == sourceEntityNum)) {
-        int randInt = rand();
+        int randInt = Com_CrtRand();
         float randValue;
 
         if (randInt < 0) {
@@ -1132,7 +1141,7 @@ void CG_BulletHitClientEvent(int sourceEntityNum, vec_t *position, int surfType,
             randValue = (float)randInt;
         }
 
-        if (2147483648.0f * tracerChance > randValue)
+        if ((COM_CRT_RAND_MAX + 1.0f) * tracerChance > randValue)
             CG_SpawnTracer(muzzle, position);
     }
 
@@ -1684,7 +1693,7 @@ void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_
 
     snap = cg->nextSnap;
     if (!((snap->ps.pm_flags & 0xc00000) && snap->ps.clientNum == sourceEntityNum)) {
-        int randInt = rand();
+        int randInt = Com_CrtRand();
         float randValue;
 
         if (randInt < 0) {
@@ -1694,7 +1703,7 @@ void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_
             randValue = (float)randInt;
         }
 
-        if (2147483648.0f * tracerChance > randValue)
+        if ((COM_CRT_RAND_MAX + 1.0f) * tracerChance > randValue)
             CG_SpawnTracer(muzzle, position);
     }
 

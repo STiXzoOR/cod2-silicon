@@ -31,7 +31,7 @@ for name in ['weapons', 'mantle']:
     (out / (name + '_source.h')).write_bytes(data)
 objects = []
 if a.revision_matrix:
-    flags += ['-DGAMEPLAY_MATRIX=1']
+    flags += ['-DGAMEPLAY_MATRIX=1', '-DOFFHAND_FUTURE_REVISION=1']
     misc = (ROOT / 'src/PC/bgame/bg_misc.c').read_text()
     pmove = (ROOT / 'src/PC/bgame/bg_pmove.c').read_text()
     event = (ROOT / 'src/PC/cgame_mp/cg_event_mp.c').read_text()
@@ -45,5 +45,5 @@ if a.revision_matrix:
     subprocess.run([*flags, '-c', str(ROOT / 'src/PC/universal/com_math.c'), '-o', str(math)], cwd=ROOT, check=True)
     objects.append(math)
 subprocess.run([*flags, str(ROOT / 'tests/movement/weapons.c'), str(ROOT / 'tests/movement/weapon_mantle.c'), *map(str, objects), '-Wl,-dead_strip', '-o', str(out / 'weapons')], cwd=ROOT, check=True)
-for revision in ([0, 3, 4, 6, -1] if a.revision_matrix else [None]):
+for revision in ([0, 3, 4, 6, 7, -1] if a.revision_matrix else [None]):
     subprocess.run([str(out / 'weapons'), *([] if revision is None else [str(revision)])], check=True)

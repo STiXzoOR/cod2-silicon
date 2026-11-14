@@ -62,12 +62,14 @@ void Dvar_SetInt(const dvar_t *var, int value)
 {
     assert(var->type == 5);
     assert(value >= var->domain.integer.min && value <= var->domain.integer.max);
+    if (var->current.integer != value) ((dvar_t *)var)->modified = 1;
     ((dvar_t *)var)->current.integer = value;
 }
 
 void Dvar_SetBool(const dvar_t *var, unsigned char value)
 {
     assert(var->type == 0);
+    if (var->current.integer != value) ((dvar_t *)var)->modified = 1;
     ((dvar_t *)var)->current.integer = value;
 }
 
@@ -90,9 +92,9 @@ static int integer(const char *name)
 int main(void)
 {
     const dvar_t *fps = Dvar_RegisterInt("com_maxfps", 333, 0, 1000, 1);
-    Dvar_RegisterInt("rate", 5000, 1000, 25000, 3);
-    Dvar_RegisterInt("snaps", 20, 1, 40, 3);
-    Dvar_RegisterInt("cl_maxpackets", 30, 15, 125, 1);
+    Dvar_RegisterInt("rate", 5000, 4000, 50000, 3);
+    Dvar_RegisterInt("snaps", 20, 2, 60, 3);
+    Dvar_RegisterInt("cl_maxpackets", 30, 15, 200, 1);
     Dvar_RegisterBool("sc_enable", 1, 1);
     Dvar_RegisterBool("fx_sort", 0, 1);
     Dvar_RegisterBool("mss_q3fs", 0, 1);
@@ -102,18 +104,34 @@ int main(void)
 #if defined(COD2_X64) && COD2_X64
     assert(Dvar_FindVar("cl_hwid")->flags == 0x12 && integer("cl_hwid") > 0);
 #endif
-    assert(integer("protocol_cod2x") == 6);
+    assert(integer("protocol_cod2x") == COD2X_REVISION);
     Dvar_SetString(Dvar_FindVar("cl_hwid2"), "server-supplied-identity");
     Cod2x_PrepareConnect();
     assert(!strcmp(Dvar_FindVar("cl_hwid2")->current.string, Cod2x_Hwid()));
 
-    /* Stock servers keep original settings, even if they send unrelated policy. */
+    /* A stock server can request the same competitive rules as a CoD2x server. */
     Dvar_SetBool(Dvar_FindVar("g_competitive"), 1);
+    Cod2x_Frame(0, 0);
+    printf("preprimed competitive: fps=%d min=%d modified=%d\n", integer("com_maxfps"), fps->domain.integer.min, Dvar_FindVar("g_competitive")->modified);
+    fflush(stdout);
+    assert(integer("com_maxfps") == 250 && fps->domain.integer.min == 125);
+    assert(!Dvar_FindVar("g_competitive")->modified);
     Cod2x_Frame(1, 0);
-    assert(!Cod2x_Competitive() && integer("com_maxfps") == 333);
-    assert(Cod2x_FrameFPS(0) == 0);
+    assert(Cod2x_Competitive() && integer("com_maxfps") == 250);
+    assert(integer("rate") == 25000 && integer("snaps") == 40);
+    assert(integer("cl_maxpackets") == 125);
+    /* Upstream changes only these lower limits, even with a custom upper limit. */
+    printf("competitive upper limits: rate=%d snaps=%d packets=%d\n",
+           Dvar_FindVar("rate")->domain.integer.max, Dvar_FindVar("snaps")->domain.integer.max,
+           Dvar_FindVar("cl_maxpackets")->domain.integer.max);
+    fflush(stdout);
+    assert(Dvar_FindVar("rate")->domain.integer.max == 50000);
+    assert(Dvar_FindVar("snaps")->domain.integer.max == 60);
+    assert(Dvar_FindVar("cl_maxpackets")->domain.integer.max == 200);
+    assert(integer("sc_enable") == 0 && integer("fx_sort") == 1 && integer("mss_q3fs") == 1);
+    assert(Cod2x_FrameFPS(0) == 250);
 
-    /* Connecting is exempt; active CoD2x play enforces all seven settings. */
+    /* Wait/FPS enforcement is primed-only; modified settings apply beforehand. */
     Dvar_SetInt(Dvar_FindVar("g_cod2x"), 6);
     Cod2x_Frame(0, 0);
     assert(!Cod2x_Competitive());
@@ -128,12 +146,23 @@ int main(void)
     Cod2x_Frame(1, 0);
     assert(integer("com_maxfps") == 125);
 
-    /* Demo and disable restore original domains/types. */
+    /* Unmodified policy leaves legal network choices alone on later frames. */
+    Dvar_SetInt(Dvar_FindVar("rate"), 30000);
+    Cod2x_Frame(1, 0);
+    assert(integer("rate") == 30000);
+    /* Demo parsing modifies competitive state; playback clears the request. */
+    ((dvar_t *)Dvar_FindVar("g_competitive"))->modified = 1;
     Cod2x_Frame(1, 1);
+    assert(!integer("g_competitive"));
     assert(!Cod2x_Competitive());
     assert(fps->domain.integer.min == 0 && fps->domain.integer.max == 1000);
     assert(Dvar_FindVar("sc_enable")->type == 0);
     assert(Dvar_FindVar("snaps")->domain.integer.min == 1);
+    assert(Dvar_FindVar("rate")->domain.integer.min == 1000);
+    assert(Dvar_FindVar("cl_maxpackets")->domain.integer.min == 10);
+    assert(Dvar_FindVar("rate")->domain.integer.max == 50000);
+    assert(Dvar_FindVar("snaps")->domain.integer.max == 60);
+    assert(Dvar_FindVar("cl_maxpackets")->domain.integer.max == 200);
     assert(Cod2x_FrameFPS(0) == 0);
     Dvar_SetBool(Dvar_FindVar("g_competitive"), 0);
     Cod2x_Frame(1, 0);
@@ -145,7 +174,7 @@ int main(void)
     Cod2x_Frame(1, 0);
     assert(integer("com_maxfps") == 333 && fps->domain.integer.max == 1000);
     Cod2x_Disconnect();
-    assert(animationResets == 1);
+    assert(animationResets == 0);
     assert(Cod2x_GameVersion() == 0 && !integer("g_competitive"));
     assert(fps->domain.integer.max == 1000 && Cod2x_FrameFPS(333) == 333);
     puts("cod2x: runtime policy, demo, reconnect, immutable identity tests passed");

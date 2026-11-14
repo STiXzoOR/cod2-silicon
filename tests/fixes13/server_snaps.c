@@ -10,13 +10,15 @@ static const dvar_t *dedicatedPointer = &dedicated;
 void *imp_com_dedicated = &dedicatedPointer;
 static const char *requested;
 static int lan;
+static const char *download = "1";
 char *Info_ValueForKey(const char *info, const char *key)
 {
     assert(info == client.userinfo);
     if (!strcmp(key, "name")) return "fixture";
     if (!strcmp(key, "rate")) return "25000";
     if (!strcmp(key, "snaps")) return (char *)requested;
-    if (!strcmp(key, "cl_voice") || !strcmp(key, "cl_wwwDownload")) return "1";
+    if (!strcmp(key, "cl_voice")) return "1";
+    if (!strcmp(key, "cl_wwwDownload")) return (char *)download;
     assert(!"unexpected userinfo key");
     return "";
 }
@@ -57,6 +59,19 @@ int main(void)
             }
         }
     }
+#if COD2_IS_PATCH_13
+    const char *downloadCases[] = {"", "0", "-1", "1", "2"};
+    for (unsigned i = 0; i < sizeof(downloadCases) / sizeof(downloadCases[0]); ++i) {
+        download = downloadCases[i];
+        SV_UserinfoChanged(&client);
+#if defined(COD2_CODX) && COD2_CODX
+        int expected = atoi(download) > 0;
+#else
+        int expected = atoi(download) != 0;
+#endif
+        if (client.wwwOk != expected) { fprintf(stderr, "download %s: got %d expected %d\n", download, client.wwwOk, expected); ++failures; }
+    }
+#endif
     printf("server snapshot intervals: %d failures\n", failures);
     return failures != 0;
 }

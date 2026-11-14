@@ -2,6 +2,14 @@
 #include "cod2x.h"
 #include <assert.h>
 
+#if defined(COD2_CODX) && COD2_CODX
+#define EXPECTED_HOST_REVISION COD2X_HOST_REVISION
+#define EXPECTED_PROTOCOL COD2X_PROTOCOL
+#else
+#define EXPECTED_HOST_REVISION 0
+#define EXPECTED_PROTOCOL 118
+#endif
+
 #include "host_globals.h"
 const dvar_t *sv_punkbuster, *sv_wwwDownload, *sv_wwwBaseURL, *sv_wwwDlDisconnected;
 const dvar_t *net_lanauthorize;
@@ -11,6 +19,8 @@ void *imp_sv = &sv, *imp_svs = &svs;
 static LegacyHacks legacy;
 static LegacyHacks *legacyPointer = &legacy;
 void *imp_legacyHacks = &legacyPointer;
+static void *bgsPointer;
+void *imp_bgs = &bgsPointer;
 int sv_serverId_value, com_frameTime = 1000, com_errorEntered;
 void *imp_com_frameTime = &com_frameTime, *imp_com_errorEntered = &com_errorEntered;
 void *imp_dvar_modifiedFlags = &dvar_modifiedFlags;
@@ -33,6 +43,16 @@ static int identityClears;
 static char published[128], serialized[128];
 static int valueindex;
 static char value1[2][8192];
+static int tracingFrame;
+static char frameTrace[64];
+static void frame_event(char event)
+{
+    if (tracingFrame) {
+        size_t length = strlen(frameTrace);
+        assert(length < sizeof(frameTrace) - 1);
+        frameTrace[length] = event; frameTrace[length + 1] = 0;
+    }
+}
 
 extern void Dvar_SetInt(const dvar_t *, int);
 extern void Dvar_SetString(const dvar_t *, const char *);
@@ -49,8 +69,21 @@ void Cod2x_ResetClientAnimation(void) { ++clientResets; }
 int Cod2x_ReadMachineHwid(char id[33]) { ++identityReads; memset(id, 'a', 32); id[32] = 0; return 1; }
 int Cod2x_LimitedFPS(int fps, int limited) { return limited && (fps < 125 || fps > 250) ? 250 : fps; }
 void Cod2x_FeaturesInit(void) {}
-void Cod2x_FeaturesFrame(int active, int demo) { (void)active; (void)demo; }
+void Cod2x_FeaturesFrame(int active, int demo) { (void)active; (void)demo; frame_event('F'); }
 void Cod2x_IwdSystemInfo(const char *names) { (void)names; }
+void Cod2x_ReportInit(void) {}
+void Cod2x_PoseInit(void) {}
+int Cod2x_ShortHwid(void) { return 1; }
+const char *Cod2x_HwidError(unsigned int *code) { *code = 0; CHECK(0); return "unexpected identity failure"; }
+int Sys_Cod2xHwidRetry(unsigned int code, const char *error) { (void)code; (void)error; CHECK(0); return 0; }
+/* Server service setup is outside this fixture; revision ownership uses the
+   production Cod2x_ServerInit/Spawn/Shutdown bodies linked below. */
+void SV_Cod2xServerInit(void) {}
+void SV_Cod2xServerSpawned(void) {}
+void GScr_Cod2xNetBeforeMapChange(int shutdown) { (void)shutdown; }
+void GScr_Cod2xDropCallbacks(void) {}
+void SV_Cod2xMatchBeforeMapChange(int shutdown) { (void)shutdown; }
+void UI_LoadIngameMenus(void) {}
 #if !defined(COD2_CODX) || !COD2_CODX
 int Cod2x_GameVersion(void) { return 0; }
 void Cod2x_Disconnect(void) {}
@@ -80,7 +113,7 @@ void SV_SendServerCommand(client_t *client_, svscmd_type type, const char *forma
 }
 void ClientBegin(int num) { CHECK(num == 0); ++begins; }
 gentity_t *SV_GentityNum(int num) { assert(num >= 0 && num < 2); return &entities[num]; }
-void SV_RunFrame(void) { CHECK(Cod2x_GameVersion() == 0); }
+void SV_RunFrame(void) { CHECK(Cod2x_GameVersion() == EXPECTED_HOST_REVISION); }
 void SV_Heartbeat_f(void) {}
 void SV_SetConfig(int start, int max, int count) { (void)start; (void)max; (void)count; }
 void SV_SetGametype(void) {}
@@ -88,7 +121,7 @@ void SV_InitGameProgs(int savepersist)
 {
     (void)savepersist;
     ++gameplayStarts;
-    CHECK(Cod2x_GameVersion() == 0);
+    CHECK(Cod2x_GameVersion() == EXPECTED_HOST_REVISION);
 }
 void SV_RestartGameProgs(qboolean savepersist) { SV_InitGameProgs(savepersist); }
 void SV_AddServerCommand(client_t *client_, svscmd_type type, const char *cmd)
@@ -129,8 +162,8 @@ const char *FS_ReferencedIwdNames(void) { return ""; }
 const char *GetBspExtension(void) { return "d3dbsp"; }
 int Sys_Milliseconds(void) { return 1000; }
 int Sys_MillisecondsRaw(void) { return 1000; }
-int rand(void) { return 1; }
-void srand(unsigned int seed) { (void)seed; }
+int Com_CrtRand(void) { return 1; }
+void Com_CrtSrand(unsigned int seed) { (void)seed; }
 void NET_Sleep(int ms) { (void)ms; }
 Bool NET_OutOfBandPrint(int source, netadr_t address, const char *text) { (void)source; (void)address; (void)text; return 1; }
 int G_GetSavePersist(void) { return 0; }
@@ -151,7 +184,7 @@ char *Dvar_InfoString(int flags) { (void)flags; return ""; }
 void SV_SetConfigstring(int index, const char *text)
 {
     if (index == 1)
-        CHECK(strstr(text, "\\g_cod2x\\0") != NULL);
+        CHECK(strstr(text, va("\\g_cod2x\\%d", EXPECTED_HOST_REVISION)) != NULL);
 }
 void LargeLocal_LargeLocal(const LargeLocal *local, int size) { (void)local; CHECK(size == 0x2000); }
 void *LargeLocal_GetBuf(const LargeLocal *local)
@@ -182,6 +215,25 @@ char *SV_Cmd_Argv(int arg) { (void)arg; return ""; }
 #include "host_systeminfo_source.h"
 #include "host_reliable_source.h"
 
+clientConnection_t *clientConnections = &connection;
+LegacyHacks *legacyHacks = &legacy;
+snd_local_t g_snd;
+void Cod2x_FeaturesClientState(int state) { (void)state; frame_event('C'); }
+void Cod2x_HideServerIpFrame(const char *info) { (void)info; frame_event('I'); }
+const char *CL_GetConfigString(int index) { (void)index; return ""; }
+void CG_Cod2xSpectatorFrame(void) { frame_event('X'); }
+void Cod2x_FeaturesUpdateFrame(void) { frame_event('U'); }
+void SV_Cod2xUpdaterFrame(void) { frame_event('S'); }
+void GScr_Cod2xHttpFrame(void) { frame_event('H'); }
+void GScr_Cod2xWebSocketFrame(void) { frame_event('W'); }
+void SV_Cod2xMatchFrame(void) { frame_event('M'); }
+void SV_Cod2xZpamFrame(void) { frame_event('Z'); }
+void Cod2x_IwdFrame(int state) { (void)state; frame_event('J'); }
+void CG_Cod2xRadarFrame(void) { frame_event('R'); }
+static void Cod2x_DemoClientFrame(void) { frame_event('D'); }
+void Cod2x_VmixFrame(int state) { (void)state; frame_event('V'); }
+#include "host_frame_source.h"
+
 static void systemInfo(const char *text, int demo)
 {
     client.gameState.stringOffsets[1] = 0;
@@ -192,11 +244,11 @@ static void systemInfo(const char *text, int demo)
 
 static void checkHost(void)
 {
-    CHECK(Cod2x_GameVersion() == 0);
-    CHECK(Dvar_FindVar("g_cod2x")->current.integer == 0);
+    CHECK(Cod2x_GameVersion() == EXPECTED_HOST_REVISION);
+    CHECK(Dvar_FindVar("g_cod2x")->current.integer == EXPECTED_HOST_REVISION);
 #ifdef COD2X_HOST_REVISION
     CHECK(Cod2x_ServerActive());
-    CHECK(Cod2x_ServerGameVersion() == 0);
+    CHECK(Cod2x_ServerGameVersion() == EXPECTED_HOST_REVISION);
 #endif
 }
 
@@ -211,9 +263,9 @@ int main(void)
     com_sv_running = Dvar_RegisterBool("sv_running", 0, 0);
     cl_paused = Dvar_RegisterInt("cl_paused", 0, 0, 1, 0);
     SV_Init();
-    CHECK(Dvar_FindVar("protocol")->current.integer == 118);
-    CHECK(Dvar_FindVar("protocol")->domain.integer.min == 118);
-    CHECK(Dvar_FindVar("protocol")->domain.integer.max == 118);
+    CHECK(Dvar_FindVar("protocol")->current.integer == EXPECTED_PROTOCOL);
+    CHECK(Dvar_FindVar("protocol")->domain.integer.min == EXPECTED_PROTOCOL);
+    CHECK(Dvar_FindVar("protocol")->domain.integer.max == EXPECTED_PROTOCOL);
 #if !defined(COD2_CODX) || !COD2_CODX
     CHECK(Dvar_FindVar("g_cod2x") == NULL);
     SV_SpawnServer("stock_fixture");
@@ -237,22 +289,42 @@ int main(void)
     const dvar_t *shared = Dvar_FindVar("g_cod2x");
 #ifdef DEDICATED
     CHECK(Dvar_FindVar("g_competitive")->flags == 0x1008);
+    CHECK(shared->current.integer == EXPECTED_HOST_REVISION);
+    CHECK(shared->domain.integer.min == EXPECTED_HOST_REVISION);
+    CHECK(shared->domain.integer.max == EXPECTED_HOST_REVISION);
+    CHECK(!shared->modified);
 #else
-    CHECK(Dvar_FindVar("g_competitive")->flags == 0x18);
+    CHECK(Dvar_FindVar("g_competitive")->flags == 0x1018);
+#endif
+    CHECK(Dvar_FindVar("sv_playerBroadcastLimit")->current.integer == 15);
+    CHECK(Dvar_FindVar("g_shotgun_spread_fix")->current.enabled);
+#if HOST_HAS_FRAME_DISPATCH
+    static snd_channelvolgroup channelVolume;
+    g_snd.channelvol = &channelVolume;
+    legacy.cl_running = 1;
+    tracingFrame = 1;
+    Com_Cod2xFrame();
+    tracingFrame = 0;
+#ifdef DEDICATED
+    CHECK(!strcmp(frameTrace, "SHWMZ"));
+#else
+    CHECK(!strcmp(frameTrace, "FCIXUSHWMZJRDV"));
+#endif
+    printf("extension frame trace before engine: %s\n", frameTrace);
 #endif
     SV_SpawnServer("fixture");
     checkHost();
     CHECK(gameplayStarts == 1);
     CHECK(identityReads == 0);
-    CHECK(shared->domain.integer.min == 0 && shared->domain.integer.max == 0);
-    Dvar_SetInt(shared, 6);
+    CHECK(shared->domain.integer.min == EXPECTED_HOST_REVISION && shared->domain.integer.max == EXPECTED_HOST_REVISION);
+    Dvar_SetInt(shared, 0);
     checkHost();
 
 #ifndef DEDICATED
     Dvar_SetInt(com_dedicated, 0);
     Cod2x_Init();
     CHECK(Dvar_FindVar("g_cod2x") == shared && identityReads == 1);
-    CHECK(Cod2x_GameVersion() == 0);
+    CHECK(Cod2x_GameVersion() == EXPECTED_HOST_REVISION);
 
     /* Explicit defaults and the generic systeminfo loop must respect ownership. */
     systemInfo("\\g_cod2x\\6\\g_competitive\\1\\sv_serverid\\17", 0);
@@ -267,13 +339,13 @@ int main(void)
     CHECK(Dvar_FindVar("g_competitive")->current.enabled);
     Cod2x_Disconnect();
     checkHost();
-    CHECK(Dvar_FindVar("g_competitive")->current.enabled);
+    CHECK(!Dvar_FindVar("g_competitive")->current.enabled);
     Dvar_SetBool(Dvar_FindVar("g_competitive"), 0);
-    CHECK(clientResets > 0);
+    CHECK(clientResets == 0 && allResets == 0);
 #endif
 
     /* Soft restart reasserts before gameplay; full spawn republishes systeminfo. */
-    ((dvar_t *)shared)->current.integer = 6;
+    ((dvar_t *)shared)->current.integer = 0;
     SV_InitDvar();
     checkHost();
     SV_SpawnServer("fixture_restart");
@@ -286,14 +358,14 @@ int main(void)
     usercmd_t cmd = {0};
     SV_ClientEnterWorld(&hostClient, (const dvar_t *(*)[4])&cmd);
     CHECK(begins == 1 && publications == 1);
-    CHECK(!strcmp(published, "v g_cod2x \"0\""));
+    CHECK(!strcmp(published, va("v g_cod2x \"%d\"", EXPECTED_HOST_REVISION)));
     Dvar_ClearModified(sv_maxclients);
     ++com_frameTime;
-    ((dvar_t *)shared)->current.integer = 6;
+    ((dvar_t *)shared)->current.integer = 0;
     SV_MapRestart(1);
     checkHost();
     CHECK(begins == 2 && publications == 2);
-    CHECK(!strcmp(published, "v g_cod2x \"0\""));
+    CHECK(!strcmp(published, va("v g_cod2x \"%d\"", EXPECTED_HOST_REVISION)));
     CHECK(gameplayStarts == 3);
     SV_MapRestart(0);
     checkHost();
@@ -304,10 +376,22 @@ int main(void)
     svs.clients = NULL;
     SV_Shutdown("fixture shutdown");
     CHECK(identityClears == HOST_HAS_IDENTITY_CLEANUP);
-    CHECK(Cod2x_GameVersion() == 0);
+    CHECK(Cod2x_GameVersion() ==
+#ifdef DEDICATED
+          EXPECTED_HOST_REVISION
+#else
+          0
+#endif
+    );
 #ifdef COD2X_HOST_REVISION
     CHECK(!Cod2x_ServerActive() && Cod2x_ServerGameVersion() == 0);
-    CHECK(shared->domain.integer.min == 0 && shared->domain.integer.max == 6);
+    CHECK(shared->domain.integer.min ==
+#ifdef DEDICATED
+          EXPECTED_HOST_REVISION
+#else
+          0
+#endif
+          && shared->domain.integer.max == COD2X_REVISION);
 #endif
 
 #ifndef DEDICATED
@@ -319,6 +403,7 @@ int main(void)
     CHECK(Cod2x_GameVersion() == 6);
     Cod2x_Frame(1, 0);
     CHECK(Cod2x_Competitive() && fps->domain.integer.min == 125);
+    ((dvar_t *)Dvar_FindVar("g_competitive"))->modified = 1;
     Cod2x_Frame(1, 1);
     CHECK(!Cod2x_Competitive() && fps->domain.integer.min == 0);
     CG_SetClientDvarFromServer("g_cod2x", "3");

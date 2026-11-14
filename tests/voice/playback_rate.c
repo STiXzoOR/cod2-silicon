@@ -1,3 +1,4 @@
+#include "com_random.h"
 /* Reuse the receive fixture's device/capture boundaries, not its test main. */
 #define VOICE_RATE_CONTRACT 1
 #define main PlaybackInit_ControlMain
@@ -82,7 +83,7 @@ int main(int argc, char **argv)
     CheckGameSound(game);
     imp_speex_nb_mode = (void *)&speex_nb_mode;
     voiceEnabled.current.enabled = 1;
-    srand(17);
+    Com_CrtSrand(17);
     Voice_Init();
     assert(g_voice_initialized && g_frame_size == 160);
     CheckGameSound(game);

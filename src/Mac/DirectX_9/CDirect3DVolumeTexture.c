@@ -1,3 +1,6 @@
+#if defined(COD2_X64) && !defined(DEDICATED)
+#include "PC/qcommon/frame_activity.h"
+#endif
 #include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
@@ -263,12 +266,28 @@ void CDirect3DVolume_CreateOpenGLSurfaceObject(const void *_this)
     if (volume->format == D3DFMT_DXT1 || volume->format == D3DFMT_DXT2 ||
         volume->format == D3DFMT_DXT3 || volume->format == D3DFMT_DXT5) {
         UINT32 size = MacOpenGLUtils_GetLevelSizeInBytes(volume->width, volume->height, volume->depth, &volume->format);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
         glCompressedTexImage3DARB(GL_TEXTURE_3D, volume->level, volume->glInternalFormat,
                                   volume->width, volume->height, volume->depth, 0, size, volume->volumeMemory);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
+        }
+#endif
     } else {
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
         glTexImage3D(GL_TEXTURE_3D, volume->level, volume->glInternalFormat, width, height, depth,
                      0, volume->glFormat, volume->glType,
                      volume->glInternalFormat == 0x1902 ? NULL : volume->volumeMemory);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
+        }
+#endif
     }
 #else
 
@@ -282,12 +301,28 @@ void CDirect3DVolume_CreateOpenGLSurfaceObject(const void *_this)
 
     if (MacOpenGLUtils_IsCompressed(&vol->format)) {
         UINT32 dataSize = MacOpenGLUtils_GetLevelSizeInBytes(w, h, d, &vol->format);
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
         glCompressedTexImage3DARB(GL_TEXTURE_3D, vol->level,
                                   vol->glInternalFormat, w, h, d, 0, dataSize, vol->volumeMemory);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
+        }
+#endif
     } else {
+#if defined(COD2_X64) && !defined(DEDICATED)
+        {
+            FRAME_ACTIVITY_BEGIN(activityStart);
+#endif
         glTexImage3D(GL_TEXTURE_3D, vol->level,
                      vol->glInternalFormat, w, h, d, 0,
                      vol->glFormat, vol->glType, vol->volumeMemory);
+#if defined(COD2_X64) && !defined(DEDICATED)
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
+        }
+#endif
     }
 #endif
 }
@@ -311,12 +346,17 @@ void CDirect3DVolume_UpdateOpenGLSurfaceObject(const void *_this, int bRecreate)
     } else if (volume->format == D3DFMT_DXT1 || volume->format == D3DFMT_DXT2 ||
                volume->format == D3DFMT_DXT3 || volume->format == D3DFMT_DXT5) {
         UINT32 size = MacOpenGLUtils_GetLevelSizeInBytes(volume->width, volume->height, volume->depth, &volume->format);
-        if (volume->width > 3 && volume->height > 3 && volume->depth > 3)
+        if (volume->width > 3 && volume->height > 3 && volume->depth > 3) {
+            FRAME_ACTIVITY_BEGIN(activityStart);
             glCompressedTexSubImage3D(GL_TEXTURE_3D, volume->level, 0, 0, 0, volume->width, volume->height,
                                       volume->depth, volume->glInternalFormat, size, volume->volumeMemory);
+            FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
+        }
     } else {
+        FRAME_ACTIVITY_BEGIN(activityStart);
         glTexSubImage3D(GL_TEXTURE_3D, volume->level, 0, 0, 0, volume->width, volume->height,
                         volume->depth, volume->glFormat, volume->glType, volume->volumeMemory);
+        FRAME_ACTIVITY_END(FRAME_TEXTURE_UPLOAD, activityStart);
     }
 #else
 

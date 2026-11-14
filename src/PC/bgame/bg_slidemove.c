@@ -325,7 +325,12 @@ static void PM_ApplyStepEvent(pmove_t *pm, pml_t *pml, playerState_t *ps,
         }
     }
 
+#if defined(COD2_APPLE_SDK)
+    /* Windows 1.3 0x531081 rounds the signed step to nearest-even. */
+    rounded = (int)__builtin_rintf(stepDelta);
+#else
     rounded = (int)floorf(stepDelta + 0.5f);
+#endif
 
     if (rounded == 0) {
         return;

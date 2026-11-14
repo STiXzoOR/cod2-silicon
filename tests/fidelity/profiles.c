@@ -37,6 +37,11 @@ void Dvar_SetString(const dvar_t *var, const char *s)
     ((dvar_t *)var)->current.string = selected;
 }
 void Dvar_SetInt(const dvar_t *var, int value) { ((dvar_t *)var)->current.integer = value; }
+const char *Dvar_GetString(const char *name)
+{
+    CHECK(!strcmp(name, "com_playerProfile"));
+    return profile.current.string;
+}
 const dvar_t *Dvar_RegisterInt(const char *n, int v, int min, int max, unsigned int flags) { (void)n; (void)v; (void)min; (void)max; (void)flags; return &chosen; }
 const dvar_t *Dvar_RegisterString(const char *n, const char *v, unsigned int flags) { (void)n; (void)v; (void)flags; return &profile; }
 void Dvar_ChangeResetValue(const dvar_t *var, DvarValue value) { ((dvar_t *)var)->reset = value; }
@@ -95,7 +100,8 @@ int main(void)
 #endif
     /* fs_gamedir is the resolved fs_game; NULL/empty game uses that mod. */
     const struct { const char *game, *qpath, *expected; } cases[] = {
-        {"pam", "players/One/config_mp.cfg", "/writable/" PROFILE_GAME "/players/One/config_mp.cfg"},
+        /* Only the active profile (Two) is redirected by upstream CoD2x. */
+        {"pam", "players/One/config_mp.cfg", "/writable/pam/players/One/config_mp.cfg"},
         {"pam", "players/Two/config_mp.cfg", "/writable/" PROFILE_GAME "/players/Two/config_mp.cfg"},
         {"mods/pam", "players/Two/config_mp.cfg",
 #if defined(COD2_CODX) && COD2_CODX

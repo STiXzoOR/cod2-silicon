@@ -11,49 +11,88 @@ struct LauncherRoot: View {
             if model.onboard {
                 SetupView(model: model).transition(.opacity)
             } else {
+                // While the game runs Home shows Return to Game and Quit Game; the sidebar and the
+                // menus keep other pages out of reach until it ends (`canNavigate`).
                 LauncherSplitView(model: model).transition(.opacity)
+                    .overlay { if model.jumpPresented { JumpToPalette(model: model) } }
+                    .dropDestination(for: URL.self) { urls, _ in
+                        // A config or a demo dropped on the window: import review, or the demo plays.
+                        let files = urls.filter { $0.isFileURL && ["cfg", "dm_1"].contains($0.pathExtension.lowercased()) }
+                        guard !files.isEmpty else { return false }
+                        model.open(files)
+                        return true
+                    }
             }
         }
         // Controls follow the app accent (NSAccentColorName: brass in dark, olive in light);
         // only the one prominent action per view is tinted explicitly.
-        .environment(\.palette, palette)
         .capsuleControls()
         .background(palette.ground)
-        .overlay(alignment: .bottom) { NoticeBanner(model: model).padding(.bottom, 24) }
-        .alert(model.engineRequest?.title ?? "", isPresented: Binding(get: { model.engineRequest != nil }, set: { if !$0 { model.engineRequest = nil } }),
-               presenting: model.engineRequest) { request in
-            Button("Turn On CoD2x and Join") { model.turnOnCoD2x(andJoin: request) }
-            Button("Cancel", role: .cancel) { model.engineRequest = nil }
-        } message: { request in Text(request.message) }
+        .background(LauncherWindowReader(model: model))
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            // Over setup the message takes the window's width; beside the sidebar it stays in the page
+            // (LauncherSplitView), so the player plate is never covered.
+            if model.onboard && !model.notice.isEmpty { NoticeBanner(model: model).padding(12).frame(maxWidth: .infinity).background(palette.ground) }
+        }
+        .onChange(of: model.notice, initial: true) { _, message in
+            guard !message.isEmpty else { return }
+            NSAccessibility.post(element: model.launcherWindow ?? NSApplication.shared, notification: .announcementRequested,
+                                 userInfo: [.announcement: message, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+        }
+        .appSheets(model, sheet: $model.sheet, confirmation: $model.confirmation)
         // The minimum window is 1100×760 points in all. This view sits below the unified toolbar's
         // 52 points of safe area, so asking it for 760 would hang 26 points off the window's bottom.
         .frame(minWidth: 1100, minHeight: 760 - 52)
+        .environment(\.palette, palette)
+    }
+}
+
+/// Keep file panels attached to this window, including in the review harness.
+private struct LauncherWindowReader: NSViewRepresentable {
+    let model: LauncherModel
+    func makeNSView(context: Context) -> WindowView { WindowView(model: model) }
+    func updateNSView(_ view: WindowView, context: Context) { view.model = model; if let window = view.window { model.launcherWindow = window } }
+    final class WindowView: NSView {
+        var model: LauncherModel
+        init(model: LauncherModel) { self.model = model; super.init(frame: .zero) }
+        required init?(coder: NSCoder) { nil }
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            guard let window else { return }
+            model.launcherWindow = window
+            if model.hideLauncherWindowOnAppear {
+                model.hideLauncherWindowOnAppear = false
+                if model.gameRunning { Task { @MainActor in window.orderOut(nil) } }
+            }
+        }
     }
 }
 
 struct LauncherSplitView: View {
     @ObservedObject var model: LauncherModel
-    @State private var columns = NavigationSplitViewVisibility.all
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.palette) private var palette
     var body: some View {
-        NavigationSplitView(columnVisibility: $columns) {
+        NavigationSplitView(columnVisibility: $model.sidebarVisibility) {
             Sidebar(model: model)
-                .navigationSplitViewColumnWidth(min: 220, ideal: 232, max: 300)
+                .navigationSplitViewColumnWidth(min: 220, ideal: 240, max: 300)
         } detail: {
             Group {
                 switch model.page {
-                case .deploy: HomeView(model: model)
+                case .home: HomeView(model: model)
                 case .servers: ServersView(model: model)
                 case .library: LibraryView(model: model)
                 case .configs: ConfigsView(model: model)
-                case .settings: SettingsView(model: model)
-                case .about: AboutView(model: model)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if !model.notice.isEmpty { NoticeBanner(model: model).padding(12).frame(maxWidth: .infinity).background(palette.ground) }
+            }
             .background(palette.ground)
         }
         .hiddenToolbarTitle()
+        .animation(reduceMotion ? .easeInOut(duration: 0.15) : .launcherSpring, value: model.page)
     }
 }
 
@@ -65,31 +104,27 @@ private extension View {
 
 // MARK: - Sidebar
 
+/// The sidebar (Side board): brand, the four pages with their shortcuts, starred servers, a labelled
+/// Settings row, and the player's plate, which opens the player card.
 struct Sidebar: View {
     @ObservedObject var model: LauncherModel
     @Environment(\.palette) private var palette
     var body: some View {
         List(selection: Binding(get: { model.page }, set: { page in
             guard let page else { return }
-            withAnimation(.launcherSpring) { model.page = page }
-            if page == .library { model.loadMedia() }
-            if page == .configs { model.studio.loadCatalog() }
+            model.navigate(to: page)
         })) {
             Section {
-                // Icons take the app accent (brass/olive), or the accent the person chose in System Settings.
                 ForEach(LauncherPage.navigation) { page in
-                    Label(page.title, systemImage: page.symbol).tag(page)
+                    SidebarRow(title: page.title, symbol: page.symbol, keys: "⌘\(page.shortcut)", spoken: "Command \(page.shortcut)")
+                        .tag(page)
                 }
             }
-            if !model.favoriteServers.isEmpty {
+            .disabled(!model.canNavigate)
+            let favorites = model.favoriteServers
+            if !favorites.isEmpty {
                 Section {
-                    ForEach(model.favoriteServers.prefix(6)) { server in
-                        Button { model.showServer(server.address) } label: {
-                            Label { Text(Self.shortName(server.name)).lineLimit(1) } icon: { Image(systemName: "star.fill").foregroundStyle(palette.dark ? Palette.hex(0xc99a4c) : palette.link) }
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Favorite server \(QuakeColors.plain(server.name))")
-                    }
+                    ForEach(favorites) { server in FavoriteRow(model: model, server: server) }
                 } header: { Text("Favorites") }
             }
         }
@@ -97,12 +132,71 @@ struct Sidebar: View {
         .sidebarRowSize()
         .safeAreaInset(edge: .top, spacing: 0) { BrandHeader().padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 18) }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            PlayerTag(name: model.playerName, verified: model.keyVerified).padding(.horizontal, 12).padding(.bottom, 12)
+            VStack(spacing: 0) {
+                // Settings is its own window (⌘,): a visible row, so nobody has to know the shortcut.
+                Button { model.openSettings() } label: {
+                    SidebarRow(title: "Settings", symbol: "gearshape", keys: "⌘,", spoken: "Command comma")
+                        .padding(.horizontal, 10).frame(height: 36).contentShape(Rectangle())
+                }
+                .buttonStyle(RowButtonStyle(radius: 10))
+                .disabled(model.onboard || model.installingUpdate)
+                .help("Open Settings (⌘,)")
+                .padding(.horizontal, 10)
+                Rectangle().fill(palette.separator).frame(height: 1).padding(.horizontal, 18).padding(.vertical, 8)
+                PlayerPlate(model: model).padding(.horizontal, 12).padding(.bottom, 12)
+            }
         }
     }
     static func shortName(_ name: String) -> String {
         let plain = QuakeColors.plain(name)
         return plain.split(separator: "|").first.map { $0.trimmingCharacters(in: .whitespaces) } ?? plain
+    }
+}
+
+/// One sidebar row: symbol, title and its shortcut, read as “Home, Command 1”.
+private struct SidebarRow: View {
+    var title: String, symbol: String, keys: String, spoken: String
+    @Environment(\.palette) private var palette
+    var body: some View {
+        HStack(spacing: 8) {
+            Label(title, systemImage: symbol)
+            Spacer(minLength: 6)
+            Text(keys).font(.system(size: 12)).foregroundStyle(palette.secondary).opacity(0.85).monospacedDigit()
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(title), \(spoken)")
+        .accessibilityAddTraits(.isStaticText)
+    }
+}
+
+/// A starred server: click shows it in Servers; Control-click has the Menus board's context menu.
+private struct FavoriteRow: View {
+    @ObservedObject var model: LauncherModel
+    var server: GameServer
+    @Environment(\.palette) private var palette
+    var body: some View {
+        let name = Sidebar.shortName(server.name)
+        let count = server.maxPlayers > 0 ? "\(server.playerCount)/\(server.maxPlayers)" : nil
+        Button { model.showServer(server.address) } label: {
+            HStack(spacing: 8) {
+                Label { Text(name).lineLimit(1).truncationMode(.tail) } icon: { Image(systemName: "star.fill").foregroundStyle(palette.accent) }
+                Spacer(minLength: 6)
+                if let count { Text(count).font(.system(size: 12)).foregroundStyle(palette.secondary).monospacedDigit() }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!model.canNavigate)
+        .accessibilityLabel("Favorite server \(name)" + (count.map { _ in ", \(server.playerCount) of \(server.maxPlayers) players" } ?? ""))
+        .accessibilityHint("Shows it in Servers")
+        .contextMenu {
+            Button("Launch") { model.connect(server) }.disabled(!model.canNavigate)
+            Button("Show in Servers") { model.showServer(server.address) }.disabled(!model.canNavigate)
+            Divider()
+            Button("Copy Address") { model.copyServer(server) }
+            Divider()
+            Button("Remove from Favorites…") { model.requestRemoveFavorite(server) }
+        }
     }
 }
 
@@ -129,27 +223,37 @@ struct BrandHeader: View {
     }
 }
 
-struct PlayerTag: View {
-    var name: String
-    var verified: Bool
+/// The player's plate at the bottom of the sidebar: their name in its colours and the next game's
+/// loadout. It opens the player card.
+struct PlayerPlate: View {
+    @ObservedObject var model: LauncherModel
     @Environment(\.palette) private var palette
     var body: some View {
-        HStack(spacing: 12) {
-            MiniDogTag()
-            VStack(alignment: .leading, spacing: 4) {
-                QuakeName(name: name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
-                Text(verified ? "CD key verified" : "CD key needed").font(.system(size: 11)).foregroundStyle(palette.secondary)
+        let plain = QuakeColors.plain(model.playerName)
+        Button { model.playerCardPresented.toggle() } label: {
+            HStack(spacing: 12) {
+                MiniDogTag().scaleEffect(0.87).frame(width: 26, height: 33)
+                VStack(alignment: .leading, spacing: 3) {
+                    QuakeName(name: model.playerName).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                    Text(model.playerPlateDetail).font(.system(size: 11)).foregroundStyle(palette.secondary).lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.tertiary)
             }
-            Spacer(minLength: 0)
+            .padding(.horizontal, 12).padding(.vertical, 10)
+            .contentShape(Rectangle())
         }
-        .padding(12)
+        .buttonStyle(.plain)
         .modifier(PlayerTagPlate(fill: palette.dark ? Color.white.opacity(0.05) : Color.white.opacity(0.5),
                                  stroke: palette.dark ? Color.white.opacity(0.07) : Color.white.opacity(0.8)))
-        .accessibilityElement(children: .combine)
+        .disabled(model.onboard)
+        .help("Your name, CD key and the loadout for your next game")
+        .accessibilityLabel("\(plain), \(model.keyVerified ? "CD key verified" : "no CD key yet"). Open your player card")
+        .popover(isPresented: $model.playerCardPresented, arrowEdge: .trailing) { PlayerCardPopover(model: model) }
     }
 }
 
-/// The tag sits in the window's bottom corner: on macOS 26 its corners follow the window's
+/// The plate sits in the window's bottom corner: on macOS 26 its corners follow the window's
 /// (concentric, never tighter than 10 points); earlier versions keep a fixed 16.
 private struct PlayerTagPlate: ViewModifier {
     var fill: Color, stroke: Color
@@ -170,105 +274,54 @@ private struct PlayerTagPlate: ViewModifier {
     }
 }
 
-// MARK: - Shared content components
-
-struct Eyebrow: View {
-    var text: String
-    var size: CGFloat = 13
-    var tracking: CGFloat = 0.32
-    var color: Color?
-    @Environment(\.palette) private var palette
-    var body: some View {
-        Text(text.uppercased()).font(.stencil(size, heavy: false)).tracking(size * tracking).foregroundStyle(color ?? palette.accent)
-    }
-}
-
-struct PageHeader: View {
-    var eyebrow: String? = nil
-    var title: String
-    var subtitle: String? = nil
-    @Environment(\.palette) private var palette
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            if let eyebrow { Eyebrow(text: eyebrow) }
-            Text(title).font(.system(size: 30, weight: .bold)).tracking(-0.3).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
-            if let subtitle { Text(subtitle).font(.system(size: 13)).foregroundStyle(palette.secondary) }
-        }
-    }
-}
-
-/// Content panel: opaque and quiet, never glass. Padding equals the corner radius, so nothing
-/// inside reaches into a corner.
-struct ContentPanel<Content: View>: View {
-    var radius: CGFloat = 22
-    var padding = EdgeInsets(top: 22, leading: 22, bottom: 22, trailing: 22)
-    @ViewBuilder var content: Content
-    @Environment(\.palette) private var palette
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) { content }
-            .padding(padding)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-            .background(palette.panel, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).stroke(palette.panelStroke, lineWidth: 1))
-            .shapeAudit(.container, .rounded(radius), "panel")
-    }
-}
-
 struct NoticeBanner: View {
     @ObservedObject var model: LauncherModel
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
         if !model.notice.isEmpty {
-            // One container: the banner's glass and its button's are drawn together, not glass sampling glass.
-            GlassContainer { banner }
+            // The toast draws its glass and its buttons' in one container, not glass sampling glass.
+            banner
                 .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
         }
     }
+    /// On one line it is 48 points tall, a capsule with 28-point buttons 10 points in (concentric with
+    /// its 24-point ends). A message that wraps keeps every word; the buttons stay 10 points from the
+    /// bottom corner, and from the second line on the top corner is clear of them.
     private var banner: some View {
-        HStack(spacing: 12) {
-            Image(systemName: model.crashReport == nil ? "info.circle" : "exclamationmark.triangle").foregroundStyle(palette.accent)
-            Text(model.notice).font(.system(size: 13)).foregroundStyle(palette.text).textSelection(.enabled).lineLimit(3)
-            if let report = model.crashReport {
-                Button("Show Crash Report") { NSWorkspace.shared.activateFileViewerSelecting([report]) }.glassAction()
+        GlassContainer {
+            HStack(alignment: .bottom, spacing: 12) {
+                message.padding(.vertical, 16).frame(maxWidth: .infinity, alignment: .leading)
+                actions.padding(.bottom, 10)
             }
-            Button { withAnimation(reduceMotion ? nil : .launcherSpring) { model.notice = "" } } label: { Image(systemName: "xmark") }
-                .buttonStyle(.plain).foregroundStyle(palette.secondary).accessibilityLabel("Dismiss message")
+            .padding(.leading, 20).padding(.trailing, 10)
+            .frame(minHeight: 48)
+            .frame(maxWidth: 720)
+            .glassSurface(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
-        .padding(.vertical, 12).padding(.horizontal, 18)
-        .frame(maxWidth: 720)
-        .glassSurface(Capsule())
         .accessibilityElement(children: .contain)
+        .accessibilityLabel("Status message")
     }
-}
-
-/// Pins a group of toolbar items to the trailing edge: ToolbarSpacer on macOS 26, a flexible space before.
-struct TrailingToolbar<Items: View>: ViewModifier {
-    @ViewBuilder var items: Items
-    func body(content: Content) -> some View {
-        #if COD2_LIQUID_GLASS
-        if #available(macOS 26.0, *) {
-            content.toolbar { ToolbarSpacer(.flexible); ToolbarItemGroup(placement: .automatic) { items } }
-        } else { legacy(content) }
-        #else
-        legacy(content)
-        #endif
+    private var message: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Image(systemName: model.crashReport == nil ? "info.circle" : "exclamationmark.triangle")
+                .foregroundStyle(model.crashReport == nil ? palette.accent : palette.caution).accessibilityHidden(true)
+            Text(model.notice).font(.system(size: 13)).foregroundStyle(palette.text).textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true).id(model.notice)
+        }
     }
-    private func legacy(_ content: Content) -> some View {
-        content.toolbar { ToolbarItem(placement: .automatic) { Spacer() }; ToolbarItemGroup(placement: .automatic) { items } }
-    }
-}
-extension View {
-    func trailingToolbar<Items: View>(@ViewBuilder _ items: () -> Items) -> some View { modifier(TrailingToolbar(items: items)) }
-}
-
-/// Reads the detail column's origin in window coordinates so content can keep the design's grid.
-struct WindowOriginReader: View {
-    @Binding var origin: CGPoint
-    var body: some View {
-        GeometryReader { proxy in
-            Color.clear.onAppear { origin = proxy.frame(in: .global).origin }
-                .onChange(of: proxy.frame(in: .global).origin) { _, value in origin = value }
+    @ViewBuilder private var actions: some View {
+        HStack(spacing: 8) {
+            if model.gameRunning { Button("Return to Game", action: model.returnToGame).glassAction().controlSize(.large) }
+            if let report = model.crashReport {
+                Button(report.lastPathComponent.hasPrefix("game-") ? "Show Game Log" : "Show Crash Report") { NSWorkspace.shared.activateFileViewerSelecting([report]) }.glassAction().controlSize(.large)
+            }
+            if !model.gameRunning {
+                SymbolButton("xmark", label: "Dismiss message", help: "Dismiss") {
+                    withAnimation(.easeInOut(duration: 0.15)) { model.notice = "" }
+                }
+                .controlSize(.large)
+            }
         }
     }
 }

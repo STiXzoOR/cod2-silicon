@@ -40,12 +40,8 @@ echo "PASS: every button style comes from launcher/Theme.swift"
 # Keep the material rendering path typechecked for accessibility and explicit fallback captures.
 sdk=$(/usr/bin/xcrun --sdk macosx --show-sdk-path)
 views=""
-for file in Core Presentation MatchSummaries ConfigDocument ConfigProfiles ConfigHistory ConfigStudioSession ConfigCatalog ConfigRules ConfigReadyCheck \
-    ConfigCheckup ConfigBindings InputDevices ConfigChains ConfigImport ConfigImportSafety WindowsProfiles ConfigImportSession \
-    ConfigImportCatalogAdapter ConfigDirectory ConfigStudioModel ConfigStudioBinds ConfigStudioCheckup ConfigStudioStyle \
-    Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView ConfigsView ConfigSettingsView ConfigHistoryView \
-    ConfigDiscoverModel ConfigDiscoverView ConfigImportView ServerReadyCheck ServerReadyCheckView ConfigBindsView ConfigCheckupView Main; do
-    views="$views $root/launcher/$file.swift"
+for file in "$root"/launcher/*.swift; do
+    views="$views $file"
 done
 # shellcheck disable=SC2086
 taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 -typecheck -swift-version 6 -strict-concurrency=complete -warnings-as-errors \

@@ -78,7 +78,8 @@ int main(int argc, char **argv)
     if (!library || !LoadAPI(library, &api))
         return 1;
     puts("{}");
-    srand(17);
+    void (*seed)(unsigned int) = dlsym(library, "Com_CrtSrand");
+    if (seed) seed(17); else srand(17); /* Independent upstream codec uses libc. */
     int result = CombContracts(library) || PitchHistory(&api);
     dlclose(library);
     return result;

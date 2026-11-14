@@ -75,7 +75,7 @@ static void grenade_events(void)
     rifle.iFireTime = 10; rifle.quickDropTime = 10;
     int suppressed = 0;
 #if defined(COD2_CODX) && COD2_CODX
-    suppressed = Cod2x_GameVersion() != 0;
+    suppressed = 1;
 #endif
     for (int handler = 0; handler < 2; ++handler) {
         for (int index = 2; index <= 3; ++index) {

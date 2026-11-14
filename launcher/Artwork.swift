@@ -423,22 +423,6 @@ struct StampedDogTag: View {
     }
 }
 
-/// Four signal bars for a server's ping.
-struct PingBars: View {
-    var level: Int
-    @Environment(\.palette) private var palette
-    var body: some View {
-        HStack(alignment: .bottom, spacing: 2) {
-            ForEach(1...4, id: \.self) { bar in
-                RoundedRectangle(cornerRadius: 1).fill(bar <= level ? color : palette.track).frame(width: 3, height: CGFloat(3 + bar * 3))
-            }
-        }
-        .frame(height: 15, alignment: .bottom)
-        .accessibilityHidden(true)
-    }
-    private var color: Color { level >= 3 ? palette.positive : level == 2 ? palette.accent : palette.negative }
-}
-
 /// A server name with its Quake colour codes, as one Text for wrapping and VoiceOver.
 struct QuakeName: View {
     var name: String

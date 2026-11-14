@@ -56,6 +56,7 @@ void CL_ServerStatusResponse(netadr_t a, msg_t *m) { (void)a; (void)m; }
 void CL_ServersResponsePacket(netadr_t a, msg_t *m) { (void)a; (void)m; }
 const char *SEH_LocalizeTextMessage(const char *a, const char *b, int c) { (void)b; (void)c; return a; }
 void CL_RequestAuthorization(void) {}
+void Cod2x_UpdatePacket(netadr_t address) { (void)address; abort(); }
 #if defined(COD2_X64) && COD2_IS_PATCH_13
 void CL_Disconnect(void) {}
 #endif

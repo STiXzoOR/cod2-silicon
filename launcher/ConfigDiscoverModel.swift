@@ -696,15 +696,26 @@ extension ConfigImportPresentation {
     /// The review harness opens a reviewed session directly (preview mode only).
     func present(_ review: ConfigImportReviewModel) { self.review = review; step = .review }
 
-    func chooseFile() {
+    /// The config file chooser, attached to `window` as a sheet (a free-standing panel only when
+    /// there's no window to attach it to, or the window already shows a sheet).
+    func chooseFile(in window: NSWindow? = NSApp?.keyWindow) {
         let panel = NSOpenPanel()
         panel.canChooseFiles = true; panel.canChooseDirectories = false; panel.allowsMultipleSelection = false
         panel.allowedContentTypes = [UTType(filenameExtension: "cfg"), UTType(filenameExtension: "bak"), UTType.plainText].compactMap { $0 }
         panel.message = "Choose a Call of Duty 2 config. Files it runs from the same folder are reviewed with it."
         panel.prompt = "Review"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        importFile(url)
+        if let window, window.isVisible, window.attachedSheet == nil {
+            panel.beginSheetModal(for: window) { [weak self] response in
+                guard response == .OK, let url = panel.url else { return }
+                MainActor.assumeIsolated { self?.importFile(url) }
+            }
+        } else if panel.runModal() == .OK, let url = panel.url {
+            importFile(url)
+        }
     }
+    /// Edit › Find (⌘F) while Discover shows: the player search takes the focus.
+    @Published private(set) var findRequest = 0
+    func requestFind() { findRequest += 1 }
     func importFile(_ url: URL) {
         beginImport(displayName: Self.name(for: url), provenance: .init(source: "File", detail: url.lastPathComponent, symbol: "doc.text"),
                     origin: ConfigOrigin(kind: .imported, source: url.lastPathComponent)) { adapter, dialect in

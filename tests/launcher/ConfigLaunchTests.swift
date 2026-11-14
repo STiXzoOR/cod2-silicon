@@ -44,6 +44,21 @@ private enum InjectedFailure: Error { case write }
         }
         require(try store.read(id: id).document.effectiveSetting(named: "sensitivity") == "3")
         require(!plan.arguments.contains("+exec"))
+        // The intro films: once, on a new player's first plain launch; never with a link, a demo or forwarded arguments.
+        func introPlayed(_ plan: GameLaunchPlan) -> String? {
+            plan.arguments.indices.last { plan.arguments[$0].lowercased() == "com_introplayed" }.map { plan.arguments[$0 + 1] }
+        }
+        require(!settings.introFilmsPlayed && plan.playsIntroFilms && introPlayed(plan) == "\"0\"", "a new player's first launch plays the intro films")
+        var played = settings; played.introFilmsPlayed = true
+        let later = try GameLaunchPlan(settings: played, dataPath: "/Game", homePath: home.path, configStudio: ready)
+        require(!later.playsIntroFilms && introPlayed(later) == "\"1\"", "later launches skip the intro films")
+        let demoPlan = try GameLaunchPlan(settings: settings, dataPath: "/Game", homePath: home.path, demo: "first", configStudio: ready)
+        require(!demoPlan.playsIntroFilms && introPlayed(demoPlan) == "\"1\"", "a demo launch leaves the films for a plain launch")
+        let forwardedPlan = try GameLaunchPlan(settings: settings, dataPath: "/Game", homePath: home.path, forwarded: ["+set", "developer", "\"1\""], configStudio: ready)
+        require(!forwardedPlan.playsIntroFilms && introPlayed(forwardedPlan) == "\"1\"", "forwarded engine arguments leave the films for a plain launch")
+        let older = try JSONDecoder().decode(GameSettings.self, from: Data("{\"fps\":250}".utf8))
+        let fresh = try JSONDecoder().decode(GameSettings.self, from: JSONEncoder().encode(GameSettings()))
+        require(older.introFilmsPlayed && !fresh.introFilmsPlayed, "settings saved before the key count as played; a new player's do not")
         try session.cancelLaunch()
         let other = try store.create(id: "match.one-two", displayName: "Match", document: personal)
         try store.select(id: other.profile.id, expectedActive: store.activeSelection().originalBytes)

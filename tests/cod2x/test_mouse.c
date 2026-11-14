@@ -21,10 +21,14 @@ int main(void)
     Cod2x_MouseStatsReset(&stats, 1200000000ULL, 1100);
     assert(stats.hz == 0 && stats.maxHz == 0);
     assert(Cod2x_MouseStatsUpdate(&stats, 2200000000ULL, 2100));
-    assert(stats.hz == 1000); /* ten elapsed buckets, rather than a 10x spike */
-    assert(Cod2x_MouseStatsUpdate(&stats, 2300000000ULL, UINT64_MAX));
+    assert(stats.hz == 1000);
+    /* A late update is one bucket, as in CoD2x: it stays in the sum for the
+       next nine updates. */
+    assert(Cod2x_MouseStatsUpdate(&stats, 2300000000ULL, 2200));
+    assert(stats.hz == 1100);
+    assert(Cod2x_MouseStatsUpdate(&stats, 2400000000ULL, UINT64_MAX));
     assert(stats.hz == INT_MAX && stats.maxHz == INT_MAX);
-    assert(Cod2x_MouseStatsUpdate(&stats, 2400000000ULL, 0)); /* device counter reset */
+    assert(Cod2x_MouseStatsUpdate(&stats, 2500000000ULL, 0)); /* device counter reset */
     assert(stats.hz == 0);
     puts("cod2x mouse rate tests passed");
     return 0;

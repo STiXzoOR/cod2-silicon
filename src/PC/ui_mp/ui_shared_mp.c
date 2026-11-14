@@ -2473,7 +2473,6 @@ qboolean Display_MouseMove(displayContextDef_t *dc, void *p, int x, int y)
                 Menu_HandleMouseMove(dc, (menuDef_t *)menu, (float)x, (float)y);
                 return 1;
             }
-            startIdx = i;
             break;
         }
     }
@@ -3208,15 +3207,6 @@ void Item_Bind_Paint(displayContextDef_t *dc, itemDef_t *item)
         return;
 #endif
 
-    if (g_waitingForKey && g_bindItem == item) {
-        drawText = UI_SafeTranslateString("EXE_KEYWAIT");
-        newColor[0] = 0.8f;
-        newColor[1] = 0.0f;
-        newColor[2] = 0.0f;
-        newColor[3] = 0.8f;
-        goto draw;
-    }
-
 #if COD2_APPLE_SDK
     if (bindName)
         BindingFromName(bindName, bindText);
@@ -3230,12 +3220,21 @@ void Item_Bind_Paint(displayContextDef_t *dc, itemDef_t *item)
     int flags = ((itemDef_t *)it)->window.dynamicFlags[0];
     if ((flags & 4) && (flags & 2)) {
         float lowLight[4];
-        for (i = 0; i < 4; i++)
-            lowLight[i] = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4) * 0.8f;
+        /* Windows 1.3 (0x540a12): keep the key name while the selected
+         * binding pulses between the focus color and red. */
+        if (g_bindItem == item) {
+            lowLight[0] = 0.8f;
+            lowLight[1] = 0.0f;
+            lowLight[2] = 0.0f;
+            lowLight[3] = 0.8f;
+        } else {
+            for (i = 0; i < 4; i++)
+                lowLight[i] = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4) * 0.8f;
+        }
 
         int curTime = dc->realTime;
         float t = sinf((float)(curTime / UI_PULSE_DIVISOR));
-        t = t * 0.5f + 0.5f;
+        t = (t + 1.0f) * 0.5f;
 
         for (i = 0; i < 4; i++) {
             float hi = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4);
@@ -3250,8 +3249,6 @@ void Item_Bind_Paint(displayContextDef_t *dc, itemDef_t *item)
         for (i = 0; i < 4; i++)
             newColor[i] = ((itemDef_t *)it)->window.foreColor[i];
     }
-
-draw:;
 
     byte *textRect = (byte *)((itemDef_t *)it)->textRect;
     if (((itemDef_t *)it)->text) {
@@ -3993,7 +3990,7 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
 
         viewmax = (int)((((rectDef_t*)(it))->w) / (((listBoxDef_s*)(listPtr))->elementWidth));
 
-        if (key == 0x9c) {
+        if (key == 0x9c || key == 0xb9) {
 
             if ((((listBoxDef_s*)(listPtr))->notselectable)) {
 
@@ -4010,7 +4007,7 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
             goto do_feeder_selection;
         }
 
-        if (key == 0x9d) {
+        if (key == 0x9d || key == 0xbb) {
 
             if ((((listBoxDef_s*)(listPtr))->notselectable)) {
 
@@ -4035,7 +4032,7 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
 
         viewmax = (int)((((rectDef_t*)(it))->h) / (((listBoxDef_s*)(listPtr))->elementHeight));
 
-        if (key == 0x9a || key == 0xce) {
+        if (key == 0x9a || key == 0xb7 || key == 0xce) {
 
             if ((((listBoxDef_s*)(listPtr))->notselectable)) {
 
@@ -4052,7 +4049,7 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
             return 1;
         }
 
-        if (key == 0x9b || key == 0xcd) {
+        if (key == 0x9b || key == 0xbd || key == 0xcd) {
 
             if ((((listBoxDef_s*)(listPtr))->notselectable)) {
 
@@ -4133,7 +4130,7 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
         }
     }
 
-    if (key == 0xa5) {
+    if (key == 0xa5 || key == 0xb6) {
 
         if ((((listBoxDef_s*)(listPtr))->notselectable)) {
 
@@ -4146,7 +4143,7 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
         goto do_feeder_selection;
     }
 
-    if (key == 0xa6) {
+    if (key == 0xa6 || key == 0xbc) {
 
         if ((((listBoxDef_s*)(listPtr))->notselectable)) {
 
@@ -4164,7 +4161,7 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
         goto do_feeder_selection;
     }
 
-    if (key == 0xa4) {
+    if (key == 0xa4 || key == 0xb8) {
 
         if ((((listBoxDef_s*)(listPtr))->notselectable)) {
             goto scroll_start_pgup;
@@ -4180,7 +4177,7 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
         goto do_feeder_selection;
     }
 
-    if (key == 0xa3) {
+    if (key == 0xa3 || key == 0xbe) {
 
         if ((((listBoxDef_s*)(listPtr))->notselectable)) {
             goto scroll_start_pgdn;
@@ -5163,7 +5160,7 @@ qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int 
         }
 #if defined(COD2_X64)
     post_character:
-        if (key != 0x9b && key != 0x9a && key != 0xbf)
+        if (key != 0x9b && key != 0xbd && key != 0x9a && key != 0xb7 && key != 0xbf)
             return 1;
 #else
         return 1;
@@ -5172,6 +5169,7 @@ qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int 
 
     switch (key) {
     case 0xa2:
+    case 0xc1:
         cursorPos = ((itemDef_t *)it)->cursorPos[0];
         if (len > cursorPos) {
             memmove(buff + cursorPos, buff + cursorPos + 1, len - cursorPos);
@@ -5180,10 +5178,12 @@ qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int 
         return 1;
 
     case 0x9d:
+    case 0xbb:
         Item_SetCursorPos(item, Item_GetCursorPosOffset(item, buff, 1));
         goto scroll_update;
 
     case 0x9c:
+    case 0xb9:
         Item_SetCursorPos(item, Item_GetCursorPosOffset(item, buff, -1));
     scroll_update:
         editPtr = Item_GetEditFieldDef(item);
@@ -5202,20 +5202,24 @@ qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int 
         return 1;
 
     case 0xa5:
+    case 0xb6:
         Item_SetCursorPos(item, 0);
         editPtr->paintOffset = 0;
         return 1;
 
     case 0xa6:
+    case 0xbc:
         Item_SetCursorPos(item, len);
         goto scroll_update;
 
     case 0xa1:
+    case 0xc0:
         Key_SetOverstrikeMode(Key_GetOverstrikeMode() == 0);
         return 1;
 
     case 9:
     case 0x9b:
+    case 0xbd:
     {
         itemDef_t *nextItem = Menu_SetNextCursorItem(dc, ((itemDef_t *)it)->parent);
         if (nextItem && (unsigned int)((itemDef_s *)nextItem)->type <= 0x12 &&
@@ -5225,6 +5229,7 @@ qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int 
         return 1;
 
     case 0x9a:
+    case 0xb7:
     {
         itemDef_t *prevItem = Menu_SetPrevCursorItem(dc, ((itemDef_t *)it)->parent);
         if (prevItem && (unsigned int)((itemDef_s *)prevItem)->type <= 0x12 &&
@@ -5368,7 +5373,7 @@ resume_menu:
     }
 
 #if defined(COD2_X64)
-    if (key == 9 || key == 0x9b || key == 0x9d) {
+    if (key == 9 || key == 0x9b || key == 0x9d || key == 0xbd || key == 0xcd) {
 #else
     if (key == 9 || key == 0x9b || key == 0x9d || key == 0x9c) {
 #endif
@@ -5377,7 +5382,7 @@ resume_menu:
     }
 
 #if defined(COD2_X64)
-    if (key == 0x9a || key == 0x9c) {
+    if (key == 0x9a || key == 0x9c || key == 0xb7 || key == 0xce) {
 #else
     if (key == 0x9a) {
 #endif

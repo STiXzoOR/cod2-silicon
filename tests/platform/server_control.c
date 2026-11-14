@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include "PC/qcommon/cod2x.h"
 #include <assert.h>
 #include <signal.h>
 #include <stdio.h>
@@ -27,7 +28,7 @@ const dvar_t *Dvar_RegisterString(const char *name, const char *value, int flags
         assert(!strcmp(value, "cod2master.activision.com:20710"));
     else if (index == 1) {
 #if defined(COD2_CODX) && COD2_CODX
-        assert(!strcmp(value, hostRevision >= 6 ? "master.cod2x.me:20710" : ""));
+        assert(!strcmp(value, hostRevision >= COD2X_REVISION ? "master.cod2x.me:20710" : ""));
 #else
         assert(!*value);
 #endif
@@ -69,9 +70,9 @@ uint64_t MacSystem_Nanoseconds(void) { return 0; }
 int main(int argc, char **argv)
 {
     int extra = 0;
-    hostRevision = argc > 1 ? atoi(argv[1]) : 0;
+    hostRevision = argc > 1 ? (!strcmp(argv[1], "current") ? COD2X_REVISION : atoi(argv[1])) : 0;
 #if defined(COD2_CODX) && COD2_CODX
-    extra = hostRevision >= 6;
+    extra = hostRevision >= COD2X_REVISION;
 #endif
     unsetenv("COD2_SERVER_TICK_CSV");
     dedicated.current.integer = 1;

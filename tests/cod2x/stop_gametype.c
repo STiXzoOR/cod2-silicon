@@ -89,6 +89,8 @@ void Cod2x_ResetClientAnimation(void) {}
 int Cod2x_ReadMachineHwid(char id[33]) { memset(id, 'a', 32); id[32] = 0; return 1; }
 int Cod2x_LimitedFPS(int fps, int limited) { return limited && (fps < 125 || fps > 250) ? 250 : fps; }
 void Cod2x_FeaturesInit(void) {}
+void Cod2x_ReportInit(void) {}
+void UI_LoadIngameMenus(void) {}
 void Cod2x_FeaturesFrame(int active, int demo) { (void)active; (void)demo; }
 void Cod2x_IwdSystemInfo(const char *names) { (void)names; }
 void GScr_Cod2xNetBeforeMapChange(int shutdown) { (void)shutdown; }
@@ -161,8 +163,8 @@ const char *FS_ReferencedIwdNames(void) { return ""; }
 const char *GetBspExtension(void) { return "d3dbsp"; }
 int Sys_Milliseconds(void) { return 1000; }
 int Sys_MillisecondsRaw(void) { return 1000; }
-int rand(void) { return 1; }
-void srand(unsigned int seed) { (void)seed; }
+int Com_CrtRand(void) { return 1; }
+void Com_CrtSrand(unsigned int seed) { (void)seed; }
 void NET_Sleep(int ms) { (void)ms; }
 Bool NET_OutOfBandPrint(int source, netadr_t address, const char *text) { (void)source; (void)address; (void)text; return 1; }
 const char *ClientConnect(int num, unsigned short id) { (void)num; (void)id; return NULL; }

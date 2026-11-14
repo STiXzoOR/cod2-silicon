@@ -74,6 +74,9 @@ static clientInfo_t *animation_init(int user)
 static void check_prone_angles(int version, int user, float yaw, int backward)
 {
     Fixture_SetRevision(version);
+#if defined(COD2_CODX) && COD2_CODX
+    version = Cod2x_GameVersion();
+#endif
     clientInfo_t *ci = animation_init(user);
     entityState_t es = {.clientNum = 5, .eType = 1, .eFlags = 8, .legsAnim = 3};
     ci->lerpMoveDir = yaw;
@@ -132,6 +135,9 @@ static void check_mounted_flags(int version, int user, int flags)
     /* Mac controllers 0x182b94 test high byte0x3; angle paths 0x183f4b,
        0x184034 do likewise. Entity bits0x1/0x2 are not mounted bits. */
     Fixture_SetRevision(version);
+#if defined(COD2_CODX) && COD2_CODX
+    version = Cod2x_GameVersion();
+#endif
     clientInfo_t *ci = animation_init(user);
     entityState_t es = {.clientNum = 5, .eType = 1, .eFlags = 8 | flags, .legsAnim = 3};
     ci->playerAngles[0] = 30;
@@ -158,13 +164,21 @@ static void check_mounted_flags(int version, int user, int flags)
         }
     } else {
         animation_close(emittedTags[2][0], 8.997802734375f);
+#if defined(COD2_CODX) && COD2_CODX
+        /* CoD2x quantizes the head-minus-torso difference to21.000366deg. */
+        assert(emittedTags[3][0] == 6.30010986328125f);
+#else
         animation_close(emittedTags[3][0], 6.3006591796875f);
+#endif
     }
 }
 
 static void check_blend(int version, int user, int before, int after, int codxTime)
 {
     Fixture_SetRevision(version);
+#if defined(COD2_CODX) && COD2_CODX
+    version = Cod2x_GameVersion();
+#endif
     clientInfo_t *ci = animation_init(user);
     ci->legs.animationNumber = before;
     ci->legs.animation = &bgs->animScriptData.animations[before];
@@ -196,6 +210,65 @@ static void check_blend(int version, int user, int before, int after, int codxTi
     assert(ci->legs.oldFrameSnapshotTime == 1100);
 }
 
+static void check_controller_lifecycle(int user)
+{
+#if defined(COD2_CODX) && COD2_CODX
+    Fixture_SetRevision(6);
+    Cod2x_ResetAnimation();
+    clientInfo_t *ci = animation_init(user);
+    entityState_t es = {.clientNum = 5, .eType = 1, .eFlags = 8, .legsAnim = 3};
+    ci->clientConditions[3][0] = 1 << ANIM_MT_WALKPRONE;
+    ci->lerpMoveDir = 0;
+    bgs->animScriptData.animations[3].flags = 0x10;
+    int bits[4] = {0};
+    BG_Player_DoControllers(&object, &es, bits, ci, 25);
+    cod2xAnimationState_t *state = BG_Cod2xState(ci);
+    assert(state->movementEnd == 1150 && state->movementDuration == 150);
+    bgs->time = 1075; ci->lerpLean = .25f;
+    BG_Player_DoControllers(&object, &es, bits, ci, 25);
+    assert(state->movementEnd == 1150 && state->movementDuration == 400);
+    animation_close(emittedTags[5][0], 2.4375f);
+    printf("controller user%d at1075: duration400 end1150 pelvis %.4f\n", user, emittedTags[5][0]);
+    ci->pXAnimTree = NULL; bgs->time = 900;
+    assert(BG_Cod2xState(ci)->movementEnd == 1150);
+    assert(BG_Cod2xState(ci)->movementDuration == 400);
+    for (int version = 0; version <= 6; version += 3) {
+        Fixture_SetRevision(version);
+        ci = animation_init(user);
+        poseNeutral = 1; poseResets = 0;
+        BG_PlayerAnimation(&object, &es, ci);
+        assert(poseResets == 0);
+        BG_Player_DoControllers(&object, &es, bits, ci, 25);
+        assert(poseResets == 1);
+        poseNeutral = 0;
+    }
+#else
+    (void)user;
+#endif
+}
+
+static void check_quantized_controllers(int user)
+{
+    Fixture_SetRevision(0);
+    clientInfo_t *ci = animation_init(user);
+    entityState_t es = {.clientNum = 5, .eType = 1, .fTorsoPitch = 10.001f};
+    ci->playerAngles[0] = 10.001f;
+    ci->legs.yawAngle = 10.001f;
+    int bits[4] = {0};
+    BG_Player_DoControllers(&object, &es, bits, ci, 1000);
+#if defined(COD2_CODX) && COD2_CODX
+    const float expected = 9.99755859375f;
+#else
+    const float expected = 10.001f;
+#endif
+    printf("controller angle user%d: %.9g; expected %.9g\n", user, ci->angles[0][0], expected);
+    assert(ci->angles[0][0] == expected);
+    assert(ci->angles[5][0] == -expected);
+    assert(ci->tag_origin_angles[1] == expected);
+    assert(emittedTags[0][0] == expected && emittedTags[5][0] == -expected);
+    assert(emittedOriginAngles[1] == expected);
+}
+
 static void animation_matrix(void)
 {
     const int versions[] = {0, 3, 4, 6, -1};
@@ -211,10 +284,14 @@ static void animation_matrix(void)
             check_mounted_flags(versions[version], user, 0x100);
             check_mounted_flags(versions[version], user, 0x200);
             check_blend(versions[version], user, 1, 2, 200);
-            check_blend(versions[version], user, 2, 3, 232);
+            check_blend(versions[version], user, 2, 3, 231);
             check_blend(versions[version], user, 3, 2, 400);
             check_blend(versions[version], user, 2, 1, 200);
         }
     }
-    puts("PASS production angle/controller/tag/prone-yaw and stance lerp/rate contracts at remote 0/3/4/6 and hosted 0 for both animation users");
+    check_quantized_controllers(0);
+    check_quantized_controllers(1);
+    check_controller_lifecycle(0);
+    check_controller_lifecycle(1);
+    puts("PASS production angle/controller/tag/prone-yaw and stance lerp/rate contracts at remote 0/3/4/6 and the hosted build revision for both animation users");
 }

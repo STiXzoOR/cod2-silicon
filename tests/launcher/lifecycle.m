@@ -6,6 +6,14 @@
 /* Built with LIFECYCLE_STOCK, the fixture stands in for the original 1.3 engine: the same app layer
  * (bundle arguments, link handler), no CoD2x layer. */
 int Cod2xNativeApp_Arguments(char *buffer, int capacity) { (void)buffer; (void)capacity; return 0; }
+// MARK: - ship-play: synthetic receipt, separate from the production session-log capture.
+static void fixtureEvent(NSString *text) {
+    const char *home = getenv("WS25_FIXTURE_HOME");
+    if (!home) return;
+    NSString *path = [@(home) stringByAppendingPathComponent:@"fixture-events.log"];
+    FILE *file = fopen(path.fileSystemRepresentation, "a");
+    if (file) { fputs(text.UTF8String, file); fclose(file); }
+}
 @interface FixtureURLs : NSObject
 - (void)openURL:(NSAppleEventDescriptor *)event reply:(NSAppleEventDescriptor *)reply;
 @end
@@ -16,6 +24,7 @@ int Cod2xNativeApp_Arguments(char *buffer, int capacity) { (void)buffer; (void)c
     Cod2xURL link;
     NSString *text = [event paramDescriptorForKeyword:keyDirectObject].stringValue;
     if (Cod2x_ParseURL(text.UTF8String, &link)) {
+        fixtureEvent([NSString stringWithFormat:@"fixture link %s%s%s\n", link.address, link.hasPassword ? " password " : "", link.hasPassword ? link.password : ""]);
         printf("fixture link %s%s%s\n", link.address, link.hasPassword ? " password " : "", link.hasPassword ? link.password : "");
         fflush(stdout);
     }
@@ -33,6 +42,18 @@ int main(int argc, char **argv)
             NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:atoi(argv[2])];
             printf("%ld\n", (long)app.activationPolicy); return app ? 0 : 1;
         }
+        if (argc == 3 && !strcmp(argv[1], "quit")) {
+            NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:atoi(argv[2])];
+            return app && [app terminate] ? 0 : 1;
+        }
+        if (argc == 3 && !strcmp(argv[1], "visible-windows")) {
+            int pid = atoi(argv[2]), count = 0;
+            NSArray *windows = CFBridgingRelease(CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID));
+            for (NSDictionary *window in windows) {
+                if ([window[(id)kCGWindowOwnerPID] intValue] == pid && [window[(id)kCGWindowLayer] intValue] == 0) ++count;
+            }
+            printf("%d\n", count); return 0;
+        }
         if (argc == 4 && !strcmp(argv[1], "event")) {
             NSAppleEventDescriptor *event = [[NSAppleEventDescriptor alloc] initWithEventClass:kInternetEventClass eventID:kAEGetURL
                 targetDescriptor:[NSAppleEventDescriptor descriptorWithProcessIdentifier:atoi(argv[2])]
@@ -46,6 +67,7 @@ int main(int argc, char **argv)
         [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular]; [NSApp finishLaunching];
         FixtureURLs *handler = [[FixtureURLs alloc] init];
         [NSAppleEventManager.sharedAppleEventManager setEventHandler:handler andSelector:@selector(openURL:reply:) forEventClass:kInternetEventClass andEventID:kAEGetURL];
+        fixtureEvent([NSString stringWithFormat:@"fixture ready %d\n", getpid()]);
         printf("fixture ready %d\n", getpid()); fflush(stdout);
         NSString *home = @(getenv("WS25_FIXTURE_HOME"));
         NSMutableArray *arguments = [NSMutableArray array];

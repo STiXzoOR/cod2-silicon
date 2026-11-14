@@ -20,7 +20,7 @@ void TeleportPlayer(gentity_t *ent, vec_t *origin, vec_t *angles)
     assert(ent == g_entities);
     assert(origin[0] == 10 && origin[1] == 20 && origin[2] == 20);
     assert(angles[1] == 135 && angles[2] == 0);
-    assert(angles[0] == (argc == 6 ? 25 : 0));
+    assert(argc == 5 && angles[0] == 0);
     ++teleports;
 }
 #include "setviewpos_source.h"
@@ -33,6 +33,6 @@ int main(void)
     argc = 4; Cmd_SetViewpos_f(g_entities);
     cheats.current.enabled = 0;
     argc = 6; Cmd_SetViewpos_f(g_entities);
-    assert(teleports == 2 && messages == 2);
-    puts("online: deterministic native yaw/pitch camera preserves cheats and eye height passed");
+    assert(teleports == 1 && messages == 3);
+    puts("online: Windows setviewpos argument count, cheats and eye height passed");
 }

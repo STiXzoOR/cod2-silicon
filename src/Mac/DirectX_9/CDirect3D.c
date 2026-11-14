@@ -314,11 +314,17 @@ HRESULT CDirect3D_CheckDeviceFormat(const void *t, UINT a, int dt, D3DFORMAT af,
     (void)t; (void)dt; (void)af;
     if (a)
         return (HRESULT)(int32_t)0x8876086cu;
+#if COD2_APPLE_SDK
+    if (!u && rt==1 && (cf==0x41415353 || cf==0x434f5441)) {
+        extern int CDirect3DDevice_SupportsTransparencyAA(void);
+        return CDirect3DDevice_SupportsTransparencyAA() ? 0 : (HRESULT)(int32_t)0x8876086au;
+    }
+#endif
     depth = MacDisplay_GetCurrentDepth();
     if (u == 0 && (cf == 0x31545844 || cf == 0x32545844 || cf == 0x33545844 || cf == 0x35545844))
         return 0;
     if (u == 0 || u == 1)
-        return cf == 21 || cf == 22 ? 0 : (HRESULT)(int32_t)0x8876086au;
+        return cf == 21 || cf == 22 || (cf == D3DFMT_R32F && rt == 3) ? 0 : (HRESULT)(int32_t)0x8876086au;
     if (u == 2) {
         if (rt == 1 && (depth == 16 || depth == 32) &&
             (cf == 80 || cf == 73 || (depth == 32 && (cf == 71 || cf == 75))))
@@ -355,7 +361,9 @@ HRESULT CDirect3D_CheckDeviceMultiSampleType(const void *t, UINT a, int dt, D3DF
     /* Mac 1.3 (0xd9ca) refuses windowed multisampling, an AGL limit; the
      * offscreen frame buffer has none, and Windows 1.3 multisamples windows. */
     (void)w;
-    if (!ms || !super || (UINT)ms > (UINT)samples)
+    /* This backend exposes power-of-two sample counts. GL rounds a request
+     * such as 3 up to 4; D3D must reject it so the renderer retries at 2. */
+    if (!ms || (ms & (ms - 1)) || !super || (UINT)ms > (UINT)samples)
         return (HRESULT)(int32_t)0x8876086au;
     if (q)
         *q = 1;
@@ -419,7 +427,7 @@ HRESULT CDirect3D_GetDeviceCaps(const void *_this, UINT Adapter, int DeviceType,
     (void)DeviceType;
 
 #if defined(COD2_X64)
-    int maxTexUnits, maxTexImageUnits, maxStages;
+    int maxStages;
     D3DCAPS9 *caps = (D3DCAPS9 *)pCaps;
     memset(caps, 0, sizeof(D3DCAPS9));
     caps->DeviceType = 1;
@@ -491,9 +499,10 @@ HRESULT CDirect3D_GetDeviceCaps(const void *_this, UINT Adapter, int DeviceType,
     caps->MaxVertexShaderConst = 0x100;
     caps->PixelShader1xMaxValue = 8.0f;
 
-    maxTexImageUnits = MacDisplay_GetMaxTextureImageUnits();
-    maxTexUnits = MacDisplay_GetMaxTextureUnits();
-    maxStages = (maxTexUnits < maxTexImageUnits) ? maxTexImageUnits : maxTexUnits;
+    /* These D3D9 caps describe fixed-function stages, not shader samplers. */
+    maxStages = MacDisplay_GetMaxTextureUnits();
+    if (maxStages > 8)
+        maxStages = 8;
     caps->MaxSimultaneousTextures = maxStages;
     caps->MaxTextureBlendStages = maxStages;
 

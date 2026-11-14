@@ -93,7 +93,7 @@ int XSurfaceGetBoneOffset(const XSurface *surface) { return surface->boneOffset;
 int XModelNumBones(const XModel *model) { assert(0); return 0; }
 const DObjAnimMat *XModelGetBasePose(const XModel *model) { assert(0); return NULL; }
 int InterlockedExchange(volatile int *value, int exchange) { assert(0); return 0; }
-int InterlockedExchangeAdd(volatile int *value, int add) { assert(0); return 0; }
+int InterlockedExchangeAdd(volatile int *value, int add) { int old=*value; *value+=add; return old; }
 void R_AddFrontendCmd(int type, void *data) { assert(0); }
 GfxStaticModelSurfaceCached *R_CacheStaticModelSurface(GfxStaticSurface *surface,
     const XSurface *xsurf, int index, const Material *material) { assert(0); return NULL; }
@@ -218,8 +218,38 @@ static void TestNonuniformBoneBounds(XModel *model, XModelParts *parts)
     model->lodInfo[0].surfs = NULL;
 }
 
+static void TestCapacity(void)
+{
+    static GfxBackEndData data;
+    for (int i=0;i<2340;i++) assert(R_AllocModelSurfaces(&data,64,56)==i*64);
+    assert(data.logicalSurfPos==131040 && data.surfPos==149760);
+    assert(R_AllocModelSurfaces(&data,64,56)==-1);
+    assert(data.logicalSurfPos==131072 && data.surfPos==149760);
+    assert(R_AllocModelSurfaces(&data,32,16)==-1);
+    data.surfPos=data.logicalSurfPos=0;
+    for (int i=0;i<2340;i++) assert(R_AllocModelSurfaces(&data,64,56)==i*64);
+    assert(R_AllocModelSurfaces(&data,32,16)==149760);
+    assert(R_AllocModelSurfaces(&data,32,16)==149792);
+    assert(data.logicalSurfPos==131072 && data.surfPos==149824);
+    assert(R_AllocModelSurfaces(&data,32,16)==-1);
+    data.surfPos=data.logicalSurfPos=0;
+    for (int i=0;i<1820;i++) {
+        assert(R_AllocModelSurfaces(&data,64,56)==i*96);
+        assert(R_AllocModelSurfaces(&data,32,16)==i*96+64);
+    }
+    assert(R_AllocModelSurfaces(&data,64,32)==174720);
+    assert(data.surfPos==174784 && data.logicalSurfPos==131072);
+    assert(R_AllocModelSurfaces(&data,32,16)==-1);
+    data.surfPos=data.logicalSurfPos=0;
+    for(int i=0;i<8192;i++) assert(R_AllocModelSurfaces(&data,32,16)==i*32);
+    assert(data.surfPos==262144 && data.logicalSurfPos==131072);
+    assert(R_AllocModelSurfaces(&data,32,16)==-1);
+    puts("Windows model arena: 2340 rigid, 3642 mixed, 8192 skinned allocator bound; overflow closes tail");
+}
+
 int main(int argc, char **argv)
 {
+    if (argc > 1 && !strcmp(argv[1], "capacity")) { TestCapacity(); return 0; }
     XModel *model = calloc(1, sizeof(*model));
     XModelParts *parts = calloc(1, sizeof(*parts));
     DObj wrapper = {0}, animated = {0};

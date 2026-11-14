@@ -32,7 +32,7 @@ source = subprocess.check_output(['git', 'show', f'{a.baseline}:{path}'], cwd=RO
 exe = a.output / 'utils'
 subprocess.run([*flags, '-UNDEBUG', '-I' + str(a.output), '-fsanitize=address,undefined', '-fno-omit-frame-pointer', '-ffunction-sections', '-Wl,-dead_strip', str(ROOT / 'tests/lp64/renderer/utils.c'), '-o', str(exe)], check=True, cwd=ROOT)
 failed = []
-for case in ['dispatch', 'default', 'startsolid', 'fresnel']:
+for case in ['dispatch', 'default', 'startsolid', 'fresnel', 'model-path']:
     result = subprocess.run([str(exe), case], capture_output=True, text=True, env={**os.environ, 'ASAN_OPTIONS': 'symbolize=0', 'UBSAN_OPTIONS': 'halt_on_error=1'})
     (a.output / (case + '.log')).write_text(result.stdout + result.stderr)
     print(f'{case}: {result.returncode}')

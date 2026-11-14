@@ -1,5 +1,8 @@
 #include "cod2_feature_config.h"
 #include "common_types.h"
+#if defined(COD2_APPLE_SDK)
+#include "PC/universal/windows_number.h"
+#endif
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <stdlib.h>
@@ -208,7 +211,11 @@ static void CG_ShellShock_f(void)
     CG_SetShellShockParmsFromDvars( (shellshock_parms_t *)((byte *)cgs->shellshockParms));
 
     cg->testShock.time = cg->time;
+#if defined(COD2_APPLE_SDK)
+    cg->testShock.duration = (int)Q_WindowsScaleDoubleToInt(duration, 1000);
+#else
     cg->testShock.duration = (int)floorf((float)duration * 1000.0f + 0.5f);
+#endif
 }
 
 static void CG_ShellShock_Load_f(void)
@@ -332,12 +339,7 @@ qboolean CG_ConsoleCommand(void)
     const char *name;
     int i;
 
-#if defined(COD2_X64)
-    /* A local server may have no future snapshot between its ticks. */
-    if (cg->snap == NULL && cg->nextSnap == NULL)
-#else
     if (cg->nextSnap == NULL)
-#endif
         return 0;
 
     cmd = CG_Argv(0);

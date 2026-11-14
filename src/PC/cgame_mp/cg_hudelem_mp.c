@@ -3,6 +3,9 @@
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <stdlib.h>
 #include <string.h>
+#if COD2_APPLE_SDK
+#include "PC/universal/win_sort.h"
+#endif
 
 extern float floorf(float x);
 
@@ -413,7 +416,11 @@ static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *h
     }
     case HE_TYPE_PLAYERNAME: {
 
+#if defined(COD2_APPLE_SDK)
+        int idx = (int)(__builtin_rintf(elem->value));
+#else
         int idx = (int)(floorf(elem->value + 0.5f));
+#endif
         if (idx > 63)
             break;
 
@@ -999,7 +1006,11 @@ void CG_Draw2dHudElems(qboolean foreground)
         }
     }
 
+#if COD2_APPLE_SDK
+    Com_SortLikeWindows(elems, elemCount, sizeof(*elems), (int (*)(const void *, const void *))compare_hudelems);
+#else
     qsort(elems, elemCount, sizeof(void *), (int (*)(const void *, const void *))compare_hudelems);
+#endif
 
     if (elemCount <= 0)
         return;
@@ -1225,7 +1236,11 @@ void CG_Draw3dHudElems(void)
         }
     }
 
+#if COD2_APPLE_SDK
+    Com_SortLikeWindows(elems, elemCount, sizeof(*elems), (int (*)(const void *, const void *))compare_hudelems);
+#else
     qsort(elems, elemCount, sizeof(void *), (int (*)(const void *, const void *))compare_hudelems);
+#endif
 
     if (elemCount <= 0)
         return;
@@ -1278,7 +1293,11 @@ void CG_Draw3dHudElems(void)
         rgbaColor[0] = 0xFF;
         rgbaColor[1] = 0xFF;
         rgbaColor[2] = 0xFF;
+#if defined(COD2_APPLE_SDK)
+        rgbaColor[3] = (byte)(int)(__builtin_rintf(alpha * 255.0f));
+#else
         rgbaColor[3] = (byte)(int)(floorf(alpha * 255.0f + 0.5f));
+#endif
 
         CL_DrawSprite((Material *)material, rgbaColor, pos, height, 0.0f, renderFxFlags);
     }

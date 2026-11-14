@@ -3,6 +3,7 @@
 #endif
 #include "common_types.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/qcommon/cod2x.h"
 #include "PC/qcommon/cod2x_features.h"
 #define COD2X_CON_NAME_CHARS 40
 #define COD2X_CON_VALUE_OFFSET 340.0f
@@ -699,7 +700,7 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
 
 #if defined(COD2_X64) && COD2_X64 && defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
 #if defined(COD2_CODX) && COD2_CODX
-    version = va("CoD2 Silicon %s · CoD2x 1.4.6.8 · macOS arm64", COD2_RELEASE_VERSION);
+    version = va("CoD2 Silicon %s · CoD2x " COD2X_RELEASE " · macOS arm64", COD2_RELEASE_VERSION);
 #else
     version = va("Build %s %s", getBuildNumber(), "macOS arm64");
 #endif
@@ -782,7 +783,7 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
 
 #if defined(COD2_X64) && COD2_X64 && defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
 #if defined(COD2_CODX) && COD2_CODX
-    version = va("CoD2 Silicon %s · CoD2x 1.4.6.8 · macOS arm64", COD2_RELEASE_VERSION);
+    version = va("CoD2 Silicon %s · CoD2x " COD2X_RELEASE " · macOS arm64", COD2_RELEASE_VERSION);
 #else
     version = va("Build %s %s", getBuildNumber(), "macOS arm64");
 #endif
@@ -944,7 +945,11 @@ static int Con_MessageLineScrollOffset(MessageWindow *msgwnd, MessageLine *line,
     if (remaining <= 0)
         return 0;
 
+#if defined(COD2_APPLE_SDK)
+    return (int)__builtin_rintf(((float)remaining / (float)msgwnd->scrolltime) * (float)charHeight);
+#else
     return (int)floorf(((float)remaining / (float)msgwnd->scrolltime) * (float)charHeight + 0.5f);
+#endif
 }
 
 static qboolean Con_MessageLineAlpha(MessageWindow *msgwnd, MessageLine *line, int serverTime, float baseAlpha, float *drawAlpha)
@@ -1092,7 +1097,11 @@ static void Con_DrawMessageWindow(MessageWindow *msgwnd, int x, int y, int charH
             elapsed = cl->serverTime - line->startTime;
             if (elapsed < msgwnd->scrolltime) {
                 float fraction = 1.0f - (float)elapsed / (float)msgwnd->scrolltime;
+#if defined(COD2_APPLE_SDK)
+                y += (int)__builtin_rintf(fraction * (float)charHeight);
+#else
                 y += (int)floorf(fraction * (float)charHeight + 0.5f);
+#endif
             }
         }
         for (lineIndex = msgwnd->current_line + msgwnd->count - 1;
@@ -1143,7 +1152,11 @@ static void Con_DrawMessageWindow(MessageWindow *msgwnd, int x, int y, int charH
         if (serverTime > line->endTime) {
             remaining = msgwnd->scrolltime - (serverTime - line->endTime);
             if (remaining > 0) {
+#if defined(COD2_APPLE_SDK)
+                int offset = (int)__builtin_rintf(((float)remaining / (float)msgwnd->scrolltime) * (float)charHeight);
+#else
                 int offset = (int)floorf(((float)remaining / (float)msgwnd->scrolltime) * (float)charHeight + 0.5f);
+#endif
                 v += mode == MWM_TOPDOWN_REVERSED ? -offset : offset;
             }
             lineIndex++;
@@ -1538,7 +1551,11 @@ static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int d
                         break;
                     wordChars++;
                     wordWidth += width;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+                    if (wordChars > con.linewidth || (double)wordWidth * normalizedScale > (double)maxWidth) {
+#else
                     if (wordChars > con.linewidth || (float)wordWidth * normalizedScale > maxWidth) {
+#endif
                         Con_Linefeed(type, duration);
                         lineBroken = 1;
                         pixelWidth = 0;
@@ -1767,13 +1784,25 @@ void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int l
     if (!duration) {
         switch (type) {
         case PMSG_CONSOLE:
+#if defined(COD2_APPLE_SDK)
+            duration = (int)__builtin_rintf(con_minicontime->current.value * 1000.0f);
+#else
             duration = (int)floorf(con_minicontime->current.value * 1000.0f + 0.5f);
+#endif
             break;
         case PMSG_GAME:
+#if defined(COD2_APPLE_SDK)
+            duration = (int)__builtin_rintf(con_gamemessagetime->current.value * 1000.0f);
+#else
             duration = (int)floorf(con_gamemessagetime->current.value * 1000.0f + 0.5f);
+#endif
             break;
         case PMSG_BOLDGAME:
+#if defined(COD2_APPLE_SDK)
+            duration = (int)__builtin_rintf(con_boldgamemessagetime->current.value * 1000.0f);
+#else
             duration = (int)floorf(con_boldgamemessagetime->current.value * 1000.0f + 0.5f);
+#endif
             break;
         case PMSG_SUBTITLE:
             duration = 5000;
@@ -2135,7 +2164,7 @@ static BM_NOINLINE void Con_DrawInput(void)
         return;
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    prompt = va("%s: %s> ", "CoD2x MP", "1.4.6.8");
+    prompt = va("%s: %s> ", "CoD2x MP", COD2X_RELEASE);
 #else
     prompt = va("%s: %s> ", "CoD2 MP", COD2_VERSION_SHORT);
 #endif
@@ -2215,7 +2244,7 @@ static BM_NOINLINE void Con_DrawInput(void)
         return;
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    prompt = va("%s: %s> ", "CoD2x MP", "1.4.6.8");
+    prompt = va("%s: %s> ", "CoD2x MP", COD2X_RELEASE);
 #else
     prompt = va("%s: %s> ", "CoD2 MP", COD2_VERSION_SHORT);
 #endif
@@ -2389,7 +2418,7 @@ static void CL_WriteDeathMessageText(const char *text, int color)
     if (!text)
         return;
     /* CoD2x text.cpp: names in the team colour lose every code, doubles and CoD2x codes too. */
-    if (color >= 0) {
+    if (color >= 0 && Cod2x_TextEnabled()) {
         SV_Cod2xStripTextCodes(text, clean, sizeof(clean));
         text = clean;
     }
@@ -2512,7 +2541,11 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
     if (!con.initialized)
         Con_OneTimeInit();
 
+#if defined(COD2_APPLE_SDK)
+    duration = (int)__builtin_rintf(con_gamemessagetime->current.value * 1000.0f);
+#else
     duration = (int)floorf(con_gamemessagetime->current.value * 1000.0f + 0.5f);
+#endif
     if (duration < 0)
         duration = 0;
 
@@ -2533,7 +2566,7 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
            then the extra ones while there is room for the victim behind them. The victim
            wraps by its length without codes, or when the line would pass cg_gameMessageWidth. */
         extern const dvar_t *cg_gameMessageWidth;
-        int limit = initialLinewidth > 78 ? 78 : initialLinewidth, i;
+        int limit = initialLinewidth > 78 && Cod2x_TextEnabled() ? 78 : initialLinewidth, i;
         char cleanVictim[256];
         CL_Cod2xKillfeedIcon(iconShader, iconWidth, iconHeight, iconColor, (unsigned char)horzFlipIcon);
         for (i = 0; cod2xKillfeedExtended && i < 4; ++i) {
@@ -2546,7 +2579,10 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
         }
         CL_WriteDeathMessageText(" ", defaultColor);
         CL_AddConsoleInfoColor(0x0a, victimColor);
-        SV_Cod2xStripTextCodes(victimName ? victimName : "", cleanVictim, sizeof(cleanVictim));
+        if (Cod2x_TextEnabled())
+            SV_Cod2xStripTextCodes(victimName ? victimName : "", cleanVictim, sizeof(cleanVictim));
+        else
+            I_strncpyz(cleanVictim, victimName ? victimName : "", sizeof(cleanVictim));
         if ((int)strlen(cleanVictim) + con.lineOffset + 3 >= limit ||
             (cg_gameMessageWidth &&
              CL_Cod2xKillfeedLineWidth() + (int)strlen(cleanVictim) > cg_gameMessageWidth->current.integer)) {

@@ -438,7 +438,11 @@ static byte HudElem_ColorFloatToByte(float value)
     if (!(value > 0.0f))
         return 0;
 
+#if defined(COD2_APPLE_SDK)
+    return (byte)(int)__builtin_rintf(value * 255.0f);
+#else
     return (byte)(int)floorf(value * 255.0f + 0.5f);
+#endif
 }
 
 static void HudElem_SetColor(game_hudelem_t *hud, int offset)
@@ -729,7 +733,11 @@ static void HECmd_ClearTimingFieldsForValue(hudelem_t *elem)
 
 static int HECmd_MillisecondsFromSecondsRounded(float seconds)
 {
+#if defined(COD2_APPLE_SDK)
+    return (int)__builtin_rintf(seconds * 1000.0f);
+#else
     return (int)floorf(seconds * 1000.0f + 0.5f);
+#endif
 }
 
 static void HECmd_ValidateTime(unsigned int paramIndex, float time, const char *tooSmallMsg, const char *tooLargeMsg)

@@ -1,3 +1,12 @@
+#include "PC/gfx_d3d/r_log.h"
+/* This isolated renderer fixture does not start the diagnostic log. */
+int R_LogEnabled(void) { return 0; }
+void R_LogPrintf(const char *format, ...) { (void)format; }
+void R_LogFrameEnd(void) {}
+void R_LogState(unsigned int state, unsigned int changed, int word)
+{ (void)state; (void)changed; (void)word; }
+const char *R_LogTechniqueName(int technique) { (void)technique; return ""; }
+
 #include "common_types.h"
 #include "imports.h"
 #include <assert.h>
@@ -59,8 +68,8 @@ void glGetIntegerv(GLenum name, GLint *value)
 void glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
                   GLenum format, GLenum type, GLvoid *data)
 {
-    /* Mac ignores the cubemap border and reads the requested square at x=0. */
-    assert(x == 0 && y == 12 && width == 4 && height == 4);
+    /* Capture the expanded view; R_EndCubemapShot removes its one-pixel border. */
+    assert(x == 0 && y == 10 && width == 6 && height == 6);
     assert(format == GL_RGBA && type == GL_UNSIGNED_BYTE);
     ++reads;
     if (failRead) {
@@ -121,7 +130,7 @@ void R_GammaCorrect(byte *data, int size)
     for (int y = 0; y < 4; ++y)
         for (int x = 0; x < 4; ++x)
             for (int c = 0; c < 3; ++c)
-                assert(data[(y * 4 + x) * 4 + (2 - c)] == Color(c, x, y));
+                assert(data[(y * 4 + x) * 4 + (2 - c)] == Color(c, x + 1, y + 1));
     ++gammaCalls;
 }
 double ObservedPow(double value, double exponent)
@@ -165,7 +174,7 @@ static void SaveAndCheck(int expectedLight)
         for (int x = 0; x < 4; ++x) {
             int offset = 18 + (y * 4 + x) * 4;
             for (int c = 0; c < 3; ++c) {
-                int expected = lighting ? expectedLight : Color(c, x, y);
+                int expected = lighting ? expectedLight : Color(c, x + 1, y + 1);
                 if (lighting && expectedLight < 0) {
                     /* Mac hemisphere averages of constant RGB(191,127,63),
                        at corner, edge, and interior pixel directions. */

@@ -31,6 +31,7 @@
 */
 
 #include "misc.h"
+#include "com_random.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -129,13 +130,29 @@ void speex_warning_int(char *str, int val)
 void speex_rand_vec(float std, float *data, int len)
 {
    int i;
+#if defined(COD2_X64) && COD2_X64
+   /* Windows 1.3 4e2620 rounds each operation at x87 single precision. */
+   for (i=0;i<len;i++) {
+      float sample = (float)Com_CrtRand() * 0x1.0002p-15f;
+      sample -= .5f;
+      sample *= std;
+      sample *= 3.0f;
+      data[i] += sample;
+   }
+#else
    for (i=0;i<len;i++)
-      data[i]+=3*std*((((float)rand())/RAND_MAX)-.5);
+      data[i]+=3*std*((((float)Com_CrtRand())/COM_CRT_RAND_MAX)-.5);
+#endif
 }
 
 float speex_rand(float std)
 {
-   return 3*std*((((float)rand())/RAND_MAX)-.5);
+#if defined(COD2_X64) && COD2_X64
+   /* 4e2660 uses the same float reciprocal, with 3*std evaluated first. */
+   return (3.0f * std) * ((float)Com_CrtRand() * 0x1.0002p-15f - .5f);
+#else
+   return 3*std*((((float)Com_CrtRand())/COM_CRT_RAND_MAX)-.5);
+#endif
 }
 
 void _speex_putc(int ch, void *file)

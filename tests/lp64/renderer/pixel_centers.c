@@ -13,7 +13,7 @@ static void Check(int width, int height)
     memcpy(gl, d3d, sizeof(gl));
     MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(gl, width, height);
     MacOpenGLUtils_GetSubPixelOffset(&offsetX, &offsetY);
-    assert(offsetX == 0 && offsetY == 0);
+    assert(offsetX == 0.5f && offsetY == -0.5f);
     const float positions[][3] = {{0,0,10}, {13,-27,100}, {-93,84,1000}};
     for (int i = 0; i < 3; ++i) {
         const float *p = positions[i];

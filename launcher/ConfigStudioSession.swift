@@ -323,6 +323,31 @@ private final class ConfigGameGuard: @unchecked Sendable {
         try refresh(); return result
     }
 
+    /// Where a deleted loadout goes: the system Trash, so it can be put back from Finder. Tests and
+    /// the review harness move it into a scratch folder instead and never touch the person's Trash.
+    var trashItem: @Sendable (URL) throws -> URL? = { url in
+        var moved: NSURL?
+        try FileManager.default.trashItem(at: url, resultingItemURL: &moved)
+        return moved as URL?
+    }
+    /// Moves a loadout that isn't the one in use to the Trash. Returns where it went, for Undo.
+    @discardableResult
+    func moveToTrash(_ id: String) throws -> URL? {
+        guard !isReadOnly else { throw ConfigProfileError.gameRunning }
+        guard draft == nil else { throw ConfigProfileError.conflict }
+        let read = try store.read(id: id)
+        let moved = try store.moveToTrash(id: id, expected: read.version, trash: trashItem)
+        if focusedProfileID?.caseInsensitiveCompare(id) == .orderedSame { focusedProfileID = nil }
+        try refresh()
+        return moved
+    }
+    /// Undo of a delete: puts the trashed folder back and shows it.
+    func restoreFromTrash(_ url: URL, id: String) throws {
+        guard !isReadOnly else { throw ConfigProfileError.gameRunning }
+        try store.restoreFromTrash(url, id: id)
+        try focus(id)
+    }
+
     /// Review captures an explicit target without changing active.txt or exposing
     /// a second store to the view. Pending drafts must be disposed first.
     func readImportTarget(id: String) throws -> ConfigProfileRead {

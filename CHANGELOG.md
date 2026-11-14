@@ -5,47 +5,165 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-11-11
+## [0.3.0] - 2026-11-14
 
-The picture now follows the original Windows 1.3 game, checked frame by frame
-in replayed demos, and the original shaders are built from your own game
-files. [What was tested and what was not](docs/macos-port/release-0.3.0-verification.md).
+The port was audited against the original Windows 1.3 game, and its picture
+was compared with it on every stock map in replayed demos. The differences
+that remain are listed in the verification record. The original shaders are
+built from your own game files.
+[What was tested and what was not](docs/macos-port/release-0.3.0-verification.md).
+
+### Fixed
+
+- Recoil, spread, tracers, item drops and randomized sound/effects now use the
+  original Windows random stream. CoD2x keeps its separate shotgun and server
+  challenge stream, and renderer clouds and water retain their own stream.
+- Dropped weapons now tumble along the same axes as Windows for each random draw.
+- Bullet and rocket spread now preserve the original degree conversion and
+  trigonometric rounding.
+- Dense effects now share the original fixed block arena and its allocation
+  limits, including delayed effects and reuse across effect types.
+- CoD2x recognizes stock pack names with Windows filename case and separator rules.
+- CoD2x finds required and latest zPAM packs even after large lists of ignored packs.
+- Demo playback uses upstream's base movie directory without an extra home override.
+- CoD2x preserves the upstream 8192-character info-string boundary without
+  overflowing callers' buffers.
+- Fresh CoD2x profiles now remember shadows, soft smoke, effect sorting,
+  dynamic-light limits and model depth-prepass choices after restarting.
+- Team text colors now use Windows nearest-even byte conversion.
+- Sound pitch, playback positions and durations now preserve Windows arithmetic
+  and rounding, including the distinct order used when starting a sound.
+- Shellshock duration, logo timing and fog colors retain Windows precision
+  when converting parsed decimal values.
+- CoD2x spectator labels no longer leave later HUD drawing clipped when a
+  crowded frame runs out of render commands.
+
+- CoD2x now honors competitive settings requested by stock 1.3 servers, including
+  frame-rate and network limits, shadows, and the restriction on `wait`. Turning
+  the rules off restores the same setting limits as upstream.
+- CoD2x's nine film-color controls now adjust the 3D scene, including separate
+  sky saturation, while leaving the HUD and the default picture unchanged.
+- Older servers retain their literal text and player names; CoD2x's extended
+  formatting is enabled only where upstream enables it.
+- Radar firing flashes keep their captured position when the radar moves or
+  zooms. Radar calibration starts at the correct origin and handles each mouse
+  update. Long vMix overlay names no longer lose characters prematurely.
+- CoD2x update notices explain how to update this native app and open its release
+  page. They no longer prevent joining servers that still accept this version.
+- Explicit `writeconfig` works with automatic saving disabled. Passwordless
+  connect links preserve the existing password, and engine archive setup no
+  longer deletes CoD2x files from the game-data folder.
+- Mod WebSockets deliver messages received with the connection reply and accept
+  long upgrade requests. Server shutdown cancels pending mod HTTP work without
+  waiting for a stalled DNS resolver.
+- CoD2x diagnostic reports preserve complete log lines and legacy text, distinguish
+  long messages, retry failed delivery and send the oldest queued reports first.
+- Original 1.3 no longer starts CoD2x's freeze watcher or handles CoD2x links.
+  Native CoD2x keeps PunkBuster off and explains that its provider is unavailable.
+
+- CoD2x now announces revision 7 and implements its extra player information,
+  spectator and demo x-ray, occluded outlines and glow, health fills, head names
+  and weapon icons, with the upstream controls. Revision checks accept this
+  client on both current revision-7 and released revision-6 servers. The native
+  client has joined our servers at both revisions; revision-7 spectator health
+  and recorded-demo playback have been captured.
+- Automatic demo recording follows name changes, playback and disconnects at
+  the right time. Upload markers, retry and quit behavior, filenames and the
+  displayed transfer speed now follow upstream. vMix keeps long camera/API
+  names and cancels pending requests when disconnecting.
+- CoD2x stance transitions retain their state and use the correct changing
+  blend duration. Movement on older servers and third-person camera arithmetic
+  follow upstream; competitive requests apply at the correct lifecycle points.
+- Asian console text wraps at the same boundary as upstream. Chat uses its
+  intended fading background, and hidden-IP text uses the upstream length limit.
+- CoD2x file selection handles quoted required files and active-profile configs.
+  Original 1.3 ignores shared CoD2x menu archives without deleting them.
+- Mod HTTP and WebSocket receive limits, response parsing and shutdown callbacks
+  follow upstream more closely. zPAM manifests and download history retain long
+  lists, and downloads enforce the expected status, length and transfer format.
+- CoD2x reports retain console text, apply the upstream retry and retention rules,
+  and limit freeze reports to three per run. Loading refreshes the freeze
+  heartbeat, and fatal reporting uses a real three-second wait deadline.
+- Decals no longer show through surfaces a few units in front of them. Grime,
+  marks and posters were pushed forward in depth twice as far as on Windows;
+  on Railyard the dirt on the brick wall drew over the factory windows.
+- A script that hits a runtime error no longer leaves its failed values on the
+  script stack. A loop of such errors used to grow the stack until the server
+  stopped; it now recovers as Windows does.
+- The CoD2x console types 8 and 2 from the keypad instead of walking the
+  command history, the mouse-rate meter counts a late update as upstream does,
+  and a CoD2x window saved on a display that is no longer connected opens on
+  the main display.
+
+### Known CoD2x limitations
+
+- Revision-7 spectator/demo, automatic recording/upload, film controls and
+  Original isolation have running-game evidence. Main-menu/update-button
+  readbacks remain black and need physical inspection; this is not a claim
+  that the on-screen menu is black. Original baseline and film-control replays
+  are unchanged across all five views. The
+  [compatibility matrix](docs/macos-port/cod2x-compat.md) records exact proof
+  and remaining platform/service limits.
+- The experimental native Metal renderer lacks the CoD2x film and x-ray passes;
+  the shipped OpenGL renderer implements them. The CoD2x filesystem still caps
+  directory lists at 1024 archives before filtering. Input, focus and audio
+  hardware checks remain with their platform owners. PunkBuster protection is
+  unavailable in both engines.
 
 ### Added
 
-- Play with CoD2x or with the original 1.3. **Settings → Game → Version**
-  chooses which game starts; CoD2x is the default. The original 1.3 can only
-  join stock 1.3 servers, and the launcher offers to turn CoD2x on when you
-  pick a CoD2x server. Config Studio, Check-up and the ready check follow the
-  version you chose, and the few settings one version cannot hold are kept
+- Private logs for each game session, available from Settings → Advanced → Logs
+  and failed-start or crash details. The last ten sessions stay on this Mac within
+  a 20 MiB total limit, with passwords and CD keys filtered before writing.
+- Check-up reports freezes longer than 0.1 s, their longest duration and recorded
+  match times. Older match summaries still show the longest frozen frame.
+
+- Play with CoD2x or with the original 1.3. **Settings → General → Game
+  version** chooses which game starts; CoD2x is the default. Launching on a
+  server that runs the other version starts that version for the match, after
+  asking (“Don’t ask again” always uses the server’s version), and goes back
+  to your choice afterwards. Config Studio, Check-up and the ready check follow
+  the version you play, and the few settings one version cannot hold are kept
   for the other.
-- CoD2x 1.4.6.8 in full, where 0.2.1 covered part of it. As a player: demo
+- Additional CoD2x compatibility features. As a player: demo
   upload, CoD2x's text colours and killfeed icons, hidden server addresses on
   streamed matches, the 32-port LAN search, zPAM downloads from CoD2x's site,
   the update notice, and vMix control for broadcasts. As a host: your server
   is a real CoD2x server, with its bans and hardware IDs, wallbang settings,
   zPAM selection and updates, the match service, and web requests and
   WebSocket connections for mods. Certificates are checked on every request,
-  which CoD2x itself does not do, and nothing from the CoD2x project is
-  installed or run: updates are only announced.
+  which CoD2x itself does not do. Upstream executable updates are announced;
+  their Windows/Linux binaries are not installed by this native engine.
 - CoD2x's update check, done the way CoD2x does it. With CoD2x on, the game
   asks the CoD2x project's update server for the current CoD2x version each
   time the main menu opens, and shows the game's Auto-Update notice. As in
   CoD2x on Windows, the request carries your CoD2x version, an MD5 hash of
   your CD key, an install ID, your CoD2x hardware IDs and a short description
   of your Mac. It goes over HTTPS, and over plain UDP when that fails. If
-  CoD2x marks an update as required, the game stops joining servers until
-  this app has a release for it. The original 1.3 sends none of this.
+  CoD2x marks an update as required, the notice directs you to this app’s
+  releases; servers still enforce their own version requirements. The original
+  1.3 sends none of this.
   [What the app sends](README.md#what-the-app-sends) lists everything.
-- CoD2x's own menus and icons. **Settings → Game → CoD2x files** downloads
+- CoD2x's own menus and icons. **Settings → Game Data → CoD2x menus and
+  icons** downloads
   the official CoD2x 1.4.6.8 release from the CoD2x project's GitHub page,
   checks it, and keeps only those files on this Mac; or copies them from a
-  Windows game folder that has CoD2x installed. They are used for CoD2x games
-  only, and your game folder is never changed.
+  Windows game folder that has CoD2x installed. The launcher manages them for
+  CoD2x games; Original 1.3 ignores matching archives in a shared game folder.
+  Your game folder is never changed by engine archive setup.
 - Install updates from the launcher. When a newer release is found, **Install
-  Update** downloads it, checks it against the release's checksum and
+  and Relaunch** downloads it, checks it against the release's checksum and
   signature, replaces the app and restarts it. Nothing installs without that
-  click.
+  click, and Cancel stops it until the new app takes the old one's place.
+- A Settings window with seven panes: General, Display, Game Data, Privacy,
+  Updates, Advanced and About. It can hide the launcher while you play, follow
+  or override the system's appearance, check for updates once a day while the
+  launcher is open (on unless you turn it off), name the display and the
+  resolutions the game can use, rebuild your shaders, replace your CD key,
+  delete match summaries, reset launcher settings, copy the last game log,
+  list everything the app contacts, and show every bundled component's
+  licence in full. **Report a Problem** opens a prefilled GitHub issue in your
+  browser; the app sends nothing itself.
 - Crash reports you can choose to send. Two switches in **Settings →
   Privacy**, both off unless you turn them on: one sends CoD2x's reports for
   faults in CoD2x's own code to the CoD2x project, as CoD2x itself does; the
@@ -61,11 +179,111 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Changed
 
+- The Original 1.3 engine reports its platform as `macOS-arm64` in the
+  `version` text that servers and status queries see, instead of the Intel
+  Mac release's `MacOSXS-i386`.
+- Shadow-cookie clears preserve scene depth near the bottom-left corner.
+  Character shadows also remain visible when soft smoke edges are enabled.
+- Glow samples the correct sky direction on widescreen displays; glow and menu
+  blur align to pixel centers and cover the right edge.
+- Heat distortion samples the correct scene pixels.
+- Smoke fades where it meets walls, ground and characters when Soften Smoke
+  Edges is enabled.
+- Crowded custom menus retain the original drawing limit instead of dropping
+  elements early.
+- The renderer logging option writes its requested graphics-call trace.
+- Changing specular power preserves the original lighting response instead of
+  making world surfaces excessively shiny.
+- Colored impact marks preserve red and blue; cylinder effects retain their tint
+  and transparency.
+- Impact marks use the original clipping arithmetic at surface edges.
+- Sun glare fades with the visible area of the sun, using GPU occlusion queries.
+- Sun glare stays visible after loading or changing maps.
+- DirectX 7 water keeps its blue-gray color instead of turning purple or yellow
+  with the viewing angle.
+- Water wave patterns follow the original renderer's random sequence.
+- Snow cloud positions follow the original renderer and remain consistent
+  across repeated demos and both game versions.
+- Unsupported 3× antialiasing falls back to 2×, as in the original game.
+- Custom models accept Windows path separators.
+- Menus with a blurred game background avoid an unnecessary full-screen
+  copy when anti-aliasing is enabled.
+- Local match summaries retain slow-frame timings and renderer activity to
+  help diagnose freezes during play.
+- Graphics resolutions are listed once, in ascending order, up to the selected
+  display’s native pixel size. An old oversized setting falls back to a size
+  the display supports; a 5K panel is no longer offered a scaled 6K backing.
+- Turning Shadows on draws soft character shadows in both game versions,
+  as in Windows 1.3. Sunlit walls and ground keep their lighting. In the original
+  multiplayer game, your own body casts a shadow in third person, not in
+  the normal first-person view.
+- Resolution choices follow the selected display’s native pixels, including notebook
+  sizes, in ascending order without duplicates. Unsupported saved sizes move down
+  to a fitting size and Settings explains the change. New installs start at native
+  size through 4K or half the panel’s dimensions above it. Display explains the cost
+  of larger sizes, anti-aliasing and fullscreen modes.
+- Home’s recent-server rows keep the map, game mode and version readable, including
+  at the minimum window size. About indicates when its credits and footer continue
+  below the window.
+
+- Setup has six steps: welcome, game data, CD key, shaders, your name and
+  display, and a summary. A wrong folder says which archives are missing, the
+  CD key is checked as you type and can be skipped, a stored key is never asked
+  for again, and running setup again from Settings can be cancelled at any step
+  without losing your place in the launcher; only confirmed choices are kept.
+- The sidebar's player card edits your in-game name in place, showing its
+  colours, and saves it as you type. Jump to… (⌘K) finds servers, loadouts,
+  settings and menu actions. The menu bar has Server and Loadout menus, and the
+  Dock menu lists recent servers.
+- A `cod2x://` or `cod2://` link opens Connect to Address with the address filled
+  in, preserving a supplied password in memory, instead of starting the game. Opening a demo plays it; opening a config
+  shows the import review.
+- While you play, the launcher keeps its Dock icon and hides its window when
+  **Settings → General → Hide CoD2 Silicon while the game is running** is on.
+  Quitting it with the game open asks whether to quit the game too.
+- Launcher settings save automatically. Invalid advanced options stay editable
+  with an explanation, while your last valid options remain in use. Extra
+  launch options are kept as you typed them and accept lines copied from a
+  shortcut or the console, such as `+set com_hunkMegs 512`.
+- The server browser shows how old its results are, explains empty lists, and
+  offers search (⌘F), reversible sorting and server context menus. All,
+  Favorites and Recent switch between every server, your starred ones and the
+  ones you played; Filters (game version, mode, ping, empty, full, locked) are
+  kept between launches. Refresh shows how many servers have answered and can
+  be stopped, keeping what arrived; when the master servers don’t answer, the
+  last list stays with its time. **Connect to Address…** (⌘L) replaces the
+  direct-connect bar: it takes an address, a host name or a `cod2x://` link,
+  asks that server and shows what answered. A locked server asks for its
+  password, which can be remembered in your keychain on this Mac. The ready
+  check offers another loadout that already suits the server. Copy Join Link
+  copies a `cod2x://` link CoD2x on Windows also opens.
+- Library has three tabs. Matches lists how each recent match ran (typical
+  frame rate, ping and the connection in a word) from the summaries kept on
+  this Mac, with Check-up one click away. Demos and Screenshots list the newest
+  first and refresh when you come back to the launcher. Recordings play, can be
+  renamed, copied or moved to the Trash (with Undo); screenshots open with a
+  double-click and offer Quick Look, Copy Image and Share.
+- Home shows the server you last played with Launch to rejoin it, the three
+  servers you joined most recently, how your last match ran, this release's
+  notes, and the loadout and frame cap your next game uses, with a menu to
+  switch. Game data not found, a missing CD key or approximate shaders each get
+  a chip that goes straight to the fix. While the game runs, Home offers
+  Return to Game and Quit Game; when an update is ready it offers What's New
+  and Install Update.
+- Config Studio can create, duplicate, rename and export loadouts, or move an
+  unused loadout to the Trash with Undo. The Loadout menu and row menus use
+  the same actions. Check-up opens a selected match from Home or Library and
+  explains frame rate and connection quality in words, with figures behind
+  Show Details. Configs stays read-only while the game runs.
 - With CoD2x on, voice chat is off, as in CoD2x. It works with the original
   1.3.
 - With CoD2x on, the game no longer writes its recommended graphics settings
-  into a new profile, as in CoD2x. The launcher supplies the same first-run
+  into a new profile, as in CoD2x. The launcher supplies the first-run
   picture, the 250 fps cap and raw mouse input unless your loadout sets them.
+- A new profile starts with glow, heat distortion, soft smoke and shadows on
+  in both engines, as the game recommends for its best graphics cards. The
+  game's own table does not know Apple graphics and used to turn them off.
+  Existing profiles keep their settings.
 - Crash reports from a CoD2x game are named `cod2x_crash.<date>_<time>.<pid>.log`
   and follow CoD2x's form; the original 1.3 keeps `cod2_crash_<pid>.txt`.
   Nothing is sent unless you turn a report switch on in Settings.
@@ -73,7 +291,9 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
   (publisher and studio logos, then the game's intro film) were switched off
   because they showed a black screen. Started without the launcher, the game
   plays the intro once on its first run, as on Windows; any key skips each
-  part. The launcher still goes straight to the menu.
+  part. The launcher does the same for a new player: the first launch to the
+  game menu plays the films, and later launches, server links and demos go
+  straight in. Players who have launched before are not shown them again.
 - A dedicated server build keeps its settings in `config_mp_server.cfg` and
   its log in `console_mp_server.log`, like the original Linux server, and no
   longer needs a player profile to load a map.
@@ -141,6 +361,63 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 ### Fixed
 
+- Remove the spurious fall-damage camera kick and restore Windows 1.3 landing
+  slowdown and view dips, small-step footsteps, acceleration rounding, aiming
+  sway and stance-transition timing.
+  Moving objects, collision contacts and explosion damage also follow the
+  original arithmetic at threshold boundaries.
+- Attach weapon effects to the gun and restore the original cylinder-smoke
+  random draw order, tracer lifetime, equal-distance effect ordering and HUD
+  layer ordering. Turret prompts show the matching weapon icon, telefrags use
+  the generic death icon, and locally hosted item pickups retain their sounds.
+- Match Windows screen scaling, HUD rounding, script waits, slow-motion timing
+  and color conversion. Control rebinding keeps the pulsing key name; visible
+  menus receive hover updates, loading images retry correctly, and deleting a
+  favorite no longer uses a selection made stale by a server-list refresh.
+- Original 1.3’s startup banner correctly identifies macOS on Apple silicon.
+- Brief movement-key presses queued during a slow frame retain their held
+  duration, as in Windows 1.3.
+- The physical console key works across keyboard layouts, and the original
+  extended Latin key bindings are available.
+- Console and chat support Ctrl+V paste, Ctrl+C clear and Ctrl+H backspace.
+  Typed and pasted text is converted to the game's language encoding so
+  accented letters and punctuation no longer turn into unrelated characters.
+- Scrolling outside a focused menu list moves focus to the next or previous
+  control, as in Windows 1.3.
+- Keypad navigation now works in menu lists, edit fields, focus movement and
+  console history, matching the original keyboard alternatives.
+- Mono output and the 11 kHz and 22 kHz sound settings now use the original
+  channel routing, mixing rate and downsampling behavior. Positional sound
+  uses the original gain steps.
+- Ambient tracks and music decode in the background with bounded buffers,
+  avoiding the full-track decode pause and the decoded-size limit on long music.
+  A bounded read cache also prevents repeated archive decompression while
+  opening tracks stored in IWD files.
+- Game files load consistently on case-sensitive disks, including paths whose
+  directory or filename casing differs. Listings, writes, renames and deletes
+  follow the same rule; the default case-insensitive disk keeps its OS behavior.
+- Room and shellshock reverberation now reproduce the original software mixer’s
+  room presets, reflections, decay, damping and stereo spread.
+- Consecutive screenshot commands retain every image, and `cl_avidemo` saves
+  frames continuously instead of continually postponing the capture.
+- `viewlog` opens a native scrolling console with a command field; it can be
+  hidden, restored and minimized as in the original game.
+- Fatal engine errors show their explanation before the game exits and return
+  a failure status.
+- Minimized games pause for five milliseconds between frames, as in Windows 1.3.
+- Original 1.3 restores the saved window position after restarting video.
+- HTTP downloads fail after 30 seconds without receiving data, instead of
+  waiting indefinitely for a stalled server.
+- After an abnormal exit, Original 1.3 offers its safe-mode recovery choice
+  on the next launch. A normal exit clears the recovery marker.
+- File loading follows Windows archive/search-path priority. Pure servers
+  reject loose string tables and RoQ files outside localized search paths.
+- Archive discovery accepts dot-prefixed `.iwd` files and rejects filenames
+  that only end in `iwd` without the extension separator.
+- Wheel messages change weapons once each, including high-resolution scrolling,
+  as in Windows 1.3.
+- Opening chat in a window keeps mouse-look active. Original 1.3 windowed
+  menus use the original cursor speed and can reach every edge.
 - Sounds in the world are placed as in Windows 1.3. A sound straight ahead
   was 3 dB louder than in the original and one behind you 5.5 dB louder,
   because sounds were panned on a different curve and front and back were
@@ -210,11 +487,10 @@ files. [What was tested and what was not](docs/macos-port/release-0.3.0-verifica
 
 - Voice chat has not been tested with a real microphone, only with a
   recording in its place.
-- The launcher skips the intro videos.
 - CoD2x's services (the update check, zPAM updates, the match service, script
   web requests, vMix, and crash and error reports) were tested against
   stand-ins on a Mac, not against the CoD2x project's own servers.
-- The new Settings rows (CoD2x files, the report switches, Install Update)
+- The new Settings rows (CoD2x files, the report switches, Install and Relaunch)
   were tested through the launcher's tests, and nobody has installed an update
   from a real release yet: 0.3.0 is the first version that can.
 - Third-person player models sit about half a pixel off the original in
@@ -394,7 +670,7 @@ Evidence and historical qualifications are preserved in the
 [workstream reports](docs/macos-port/README.md).
 
 [Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.3.0
+[0.3.0]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.1
 [0.2.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0
 [0.1.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.1.0

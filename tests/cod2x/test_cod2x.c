@@ -60,14 +60,14 @@ int main(void)
 #endif
     assert(!Cod2x_HwidValid("0123456789abcdef"));
     assert(!Cod2x_HwidValid("g123456789abcdef0123456789abcdef"));
-    snprintf(info, sizeof(info), "\\protocol\\118\\protocol_cod2x\\6\\cl_hwid2\\%s\\challenge\\-2147483647\\qport\\65535", id);
+    snprintf(info, sizeof(info), "\\protocol\\118\\protocol_cod2x\\%d\\cl_hwid2\\%s\\challenge\\-2147483647\\qport\\65535", COD2X_REVISION, id);
     encoded = Cod2x_EncodeConnect(packet, sizeof(packet), info);
     assert(encoded == strlen(info) + 10);
     assert(!strncmp(packet, "connect \"", 9));
     assert(packet[encoded - 1] == '"' && packet[encoded] == '\0');
     assert(sscanf(packet, "connect \"\\protocol\\%d\\protocol_cod2x\\%d\\cl_hwid2\\%32[0-9a-f]\\challenge\\%d\\qport\\%d\"",
                   &protocol, &revision, decoded, &challenge, &qport) == 5);
-    assert(protocol == 118 && revision == 6 && !strcmp(decoded, id));
+    assert(protocol == 118 && revision == COD2X_REVISION && !strcmp(decoded, id));
     assert(challenge == -2147483647 && qport == 65535);
     assert(Cod2x_EncodeConnect(packet, encoded, info) == 0);
     assert(Cod2x_CDKeyHash("abcd-1234", hash));

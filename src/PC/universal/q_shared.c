@@ -619,14 +619,23 @@ void Info_SetValueForKey(char *s, const char *key, const char *value)
     strcat(s, newi);
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+void Info_SetValueForKey_BigSized(char *s, size_t capacity, const char *key, const char *value)
+#else
 void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
+#endif
 {
     char cleanValue[8192];
     char newi[8192];
     int i, j;
     int len;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* Keep the upstream input-length check and require a terminated destination. */
+    if (strnlen(s, capacity) >= capacity || strlen(s) >= 8192) {
+#else
     if (strlen(s) >= 8192) {
+#endif
 #if defined(COD2_X64)
         Com_Printf("\025Info_SetValueForKey: oversize infostring");
 #else
@@ -683,7 +692,8 @@ void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
     }
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    if (strlen(newi) + strlen(s) >= sizeof(newi)) {
+    /* Upstream allows 8192 characters; the caller must also own the NUL. */
+    if (strlen(newi) + strlen(s) > 8192 || strlen(newi) + strlen(s) >= capacity) {
 #else
     if (strlen(newi) + strlen(s) > 1024) {
 #endif
@@ -697,6 +707,15 @@ void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
 
     strcat(s, newi);
 }
+
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* Legacy callers own an 8192-byte buffer. Expanded engine callers pass an
+   explicit capacity for the upstream 8192-character limit and its NUL. */
+void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
+{
+    Info_SetValueForKey_BigSized(s, 8192, key, value);
+}
+#endif
 
 static inline __attribute__((always_inline)) float GetLeanFraction_core(const float fFrac)
 {

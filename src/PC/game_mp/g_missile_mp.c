@@ -1,3 +1,4 @@
+#include "com_random.h"
 #if defined(COD2_X64)
 #include "PC/qcommon/port_debug.h"
 #endif
@@ -12,7 +13,6 @@ extern scr_const_t scr_const;
 
 extern float sqrtf(float x);
 extern float tanf(float x);
-extern int rand(void);
 
 #define _ENT(e) ((gentity_t *)(e))
 
@@ -473,7 +473,7 @@ static void G_MissileLandAngles(gentity_t *ent, trace_t *trace, vec_t *vAngles, 
         return;
     }
 
-    (&_ENT(ent)->s.apos)->trDelta[0] = AngleNormalize360((&_ENT(ent)->s.apos)->trDelta[0] + (float)((rand() & 0x7F) - 0x3F));
+    (&_ENT(ent)->s.apos)->trDelta[0] = AngleNormalize360((&_ENT(ent)->s.apos)->trDelta[0] + (float)((Com_CrtRand() & 0x7F) - 0x3F));
 }
 
 static qboolean G_BounceMissile(gentity_t *ent, trace_t *trace)
