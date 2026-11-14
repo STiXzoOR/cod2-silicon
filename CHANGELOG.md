@@ -27,6 +27,8 @@ The original shaders are built from your own game files.
 - Demo playback uses upstream's base movie directory without an extra home override.
 - CoD2x preserves the upstream 8192-character info-string boundary without
   overflowing callers' buffers.
+- Fresh CoD2x profiles now remember shadows, soft smoke, effect sorting,
+  dynamic-light limits and model depth-prepass choices after restarting.
 - CoD2x spectator labels no longer leave later HUD drawing clipped when a
   crowded frame runs out of render commands.
 

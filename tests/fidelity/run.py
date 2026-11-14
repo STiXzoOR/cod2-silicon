@@ -90,14 +90,21 @@ names = ['r_lodBias', 'r_lodScale', 'r_lightTweakAmbient', 'r_lightTweakDiffuseF
     'cl_connectTimeout', 'cl_forceavidemo', 'cl_freezeDemo', 'cl_noprint',
     'cl_serverStatusResendTime', 'cl_showSend', 'cl_showServerCommands',
     'cl_showTimeDelta', 'cl_showmouserate', 'cl_shownet', 'cl_shownuments',
-    'cl_talking', 'cl_timeout', 'fx_cull', 'fx_sort', 'nextdemo']
+    'cl_talking', 'cl_timeout', 'fx_cull', 'fx_sort', 'nextdemo',
+    'sc_enable', 'r_zFeather', 'r_dlightLimit', 'r_depthPrepassModels', 'r_multiGpu', 'r_glow']
 calls = []
 for path in ['src/PC/stringed/stringed_hooks.c', 'src/PC/gfx_d3d/r_dvars.c', 'src/PC/client_mp/cl_main_mp.c']:
     for match in re.finditer(r'(?:ri\.)?Dvar_Register\w+\([^;]*\);', active(path)):
         if any('"' + name + '"' in match[0] for name in names):
             calls.append(match[0].replace('ri.', '').replace('_mac(', '('))
-run('registrations', 'static void RegisterCorrections(void) {\nunion { int i; float f; } flt_max = { 0x7f7fffff };\n' + '\n'.join(calls) + '\n}\n',
-    ['src/PC/universal/dvar.c'])
+registration_source = 'static void RegisterCorrections(void) {\nunion { int i; float f; } flt_max = { 0x7f7fffff };\n' + '\n'.join(calls) + '\n}\n'
+# Exercise saved seta commands through the real validator and platform rune table.
+registration_source += 'static unsigned int bsd_rune_data[13 + 256];\nvoid *__DefaultRuneLocale;\n'
+registration_source += ''.join(function('src/stubs/macos_compat.c', n) for n in ['___maskrune', 'init_rune_locale'])
+registration_source += ''.join(function('src/PC/qcommon/dvar_cmds.c', n) for n in
+    ['Dvar_GetCombinedString_impl', 'Dvar_Set_f', 'Dvar_SetA_f', 'Dvar_WriteVariables'])
+registration_source += function('src/PC/qcommon/common.c', 'Com_SetConfigureDvars')
+run('registrations', registration_source, ['src/PC/universal/dvar.c'])
 path = 'src/PC/stringed/stringed_hooks.c'
 run('language', declaration(path, 'g_languages') + ''.join(function(path, n) for n in
     ['SEH_GetLanguageName', 'SEH_GetLanguageIndexForName', 'SEH_VerifyLanguageSelection',

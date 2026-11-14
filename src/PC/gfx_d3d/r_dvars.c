@@ -1,3 +1,11 @@
+/* Original presets add archive flags to these five controls. CoD2x skips the
+   presets; preserve edited values without applying their hardware choices. */
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#define R_PRESET_ARCHIVE_FLAGS 0x2001
+#else
+#define R_PRESET_ARCHIVE_FLAGS 0x2000
+#endif
+
 #include "common_types.h"
 #include "imports.h"
 #include "PC/gfx_d3d/r_log.h"
@@ -424,7 +432,7 @@ void R_RegisterDvars(void)
 
     r_drawXModels = ri.Dvar_RegisterBool("r_drawXModels", 1, 0x2080);
 
-    r_dlightLimit = ri.Dvar_RegisterInt("r_dlightLimit", 4, 0, 32, 0x2000);
+    r_dlightLimit = ri.Dvar_RegisterInt("r_dlightLimit", 4, 0, 32, R_PRESET_ARCHIVE_FLAGS);
 
     r_drawPrimCap = ri.Dvar_RegisterInt("r_drawPrimCap", 0, -1, 10000, 0x2080);
 
@@ -432,9 +440,9 @@ void R_RegisterDvars(void)
 
     r_drawWater = ri.Dvar_RegisterBool("r_drawWater", 1, 0x2080);
 
-    r_depthPrepassModels = ri.Dvar_RegisterBool("r_depthPrepassModels", 0, 0x2000);
+    r_depthPrepassModels = ri.Dvar_RegisterBool("r_depthPrepassModels", 0, R_PRESET_ARCHIVE_FLAGS);
 #if defined(COD2_X64)
-    r_zFeather = ri.Dvar_RegisterBool("r_zFeather", 1, 0x2000);
+    r_zFeather = ri.Dvar_RegisterBool("r_zFeather", 1, R_PRESET_ARCHIVE_FLAGS);
 #endif
 
     r_lockPvs = ri.Dvar_RegisterBool("r_lockPvs", 0, 0x2080);
@@ -475,7 +483,7 @@ void R_RegisterDvars(void)
 
     r_forceLod = ri.Dvar_RegisterEnum("r_forceLod", r_forceLodNames, 4, 0x2080);
 
-    sc_enable = ri.Dvar_RegisterBool("sc_enable", 1, 0x2000);
+    sc_enable = ri.Dvar_RegisterBool("sc_enable", 1, R_PRESET_ARCHIVE_FLAGS);
 
     sc_blur = ri.Dvar_RegisterInt("sc_blur", 2, 0, 4, 0x2080);
 
@@ -543,7 +551,7 @@ void R_RegisterDvars(void)
 
     r_testFillEnable = ri.Dvar_RegisterBool("r_testFillEnable", 0, 0x2020);
 
-    fx_sort = ri.Dvar_RegisterBool("fx_sort", 1, 0x2000);
+    fx_sort = ri.Dvar_RegisterBool("fx_sort", 1, R_PRESET_ARCHIVE_FLAGS);
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     /* CoD2x registers these first in the executable (-100000..100000, archived,

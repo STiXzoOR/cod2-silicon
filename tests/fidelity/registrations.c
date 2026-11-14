@@ -1,5 +1,55 @@
 #include "dvar_services.h"
+#include <assert.h>
+
+static char config[65536];static size_t configLength;static const char *tokens[3];
+const char *Dvar_DisplayableLatchedValue(const dvar_t *);
+const char *Dvar_DisplayableValue(const dvar_t *);
+Bool Dvar_IsValidName(const char *);
+static int Cmd_Argc(void) { return 3; }
+static char *Cmd_Argv(int i) { return (char *)tokens[i]; }
+static void FS_Printf(int file,const char *format,...) { (void)file;va_list ap;va_start(ap,format);int n=vsnprintf(config+configLength,sizeof config-configLength,format,ap);va_end(ap);assert(n>=0&&(size_t)n<sizeof config-configLength);configLength+=n; }
+
+
 #include "registrations_source.h"
+static void persistence(void) {
+ init_rune_locale();
+ const char *names[]={"fx_sort","sc_enable","r_zFeather","r_dlightLimit","r_depthPrepassModels"};
+ const char *defaults[]={"1","1","1","4","0"};const char *values[]={"0","0","0","0","1"};
+ Dvar_Init();RegisterCorrections();
+#if !COD2_CODX
+ char presetNames[5][32]={0},presetValues[5][32]={0};
+ for(int i=0;i<5;i++){strcpy(presetNames[i],names[i]);strcpy(presetValues[i],defaults[i]);}
+ Com_SetConfigureDvars(5,(char *)presetNames,(char *)presetValues);
+#endif
+ for(int i=0;i<5;i++){
+  const dvar_t *v=Dvar_FindVar(names[i]);CHECK(v);CHECK(!strcmp(Dvar_DisplayableValue(v),defaults[i]));
+  Dvar_SetCommand(names[i],values[i]);CHECK(!strcmp(Dvar_DisplayableValue(v),values[i]));
+  printf("graphics before-save name=%s value=%s flags=%x\n",names[i],Dvar_DisplayableValue(v),v->flags);
+ }
+ /* No new archive policy for a configure_mp.cfg `set`, nor loss of existing flags. */
+ CHECK(!(Dvar_FindVar("r_multiGpu")->flags&1));CHECK(Dvar_FindVar("r_glow")->flags&1);
+ configLength=0;config[0]=0;Dvar_WriteVariables(1);
+ char saved[65536];memcpy(saved,config,configLength+1);
+ int expectedPersist=1;int written=0;
+ for(int i=0;i<5;i++){char search[128];snprintf(search,sizeof search,"seta %s \"%s\"",names[i],values[i]);written+=strstr(saved,search)!=NULL;}
+ CHECK(written==(expectedPersist?5:0));printf("graphics written=%d/5\n",written);
+ puts("saved-config-begin");fputs(saved,stdout);puts("saved-config-end");Dvar_Shutdown();
+ /* Fresh registry loads saved seta commands before typed renderer registration. */
+ Dvar_Init();char *line=saved;
+ while(*line){char name[256],value[4096];int used=0;CHECK(sscanf(line,"seta %255s \"%4095[^\"]\"%n",name,value,&used)>=1);
+  char *end=strchr(line,'\n');if(!end)break;
+  char *quote=strchr(line,'"');
+  if(quote && quote[1]=='"')value[0]=0;
+  tokens[0]="seta";tokens[1]=name;tokens[2]=value;Dvar_SetA_f();line=end+1;
+ }
+ RegisterCorrections();int restored=0;
+ for(int i=0;i<5;i++){const dvar_t *v=Dvar_FindVar(names[i]);const char *value=Dvar_DisplayableValue(v);restored+=!strcmp(value,values[i]);CHECK(!strcmp(value,expectedPersist?values[i]:defaults[i]));printf("graphics reloaded name=%s value=%s flags=%x\n",names[i],value,v->flags);}
+ CHECK(restored==(expectedPersist?5:0));printf("graphics restored=%d/5\n",restored);
+ /* Re-registration preserves both imported archives and user-selected values. */
+ RegisterCorrections();for(int i=0;i<5;i++)CHECK(!strcmp(Dvar_DisplayableValue(Dvar_FindVar(names[i])),expectedPersist?values[i]:defaults[i]));
+ Dvar_Shutdown();
+}
+
 int main(void)
 {
     Dvar_Init();
@@ -81,5 +131,6 @@ int main(void)
     CHECK(Dvar_FindVar("r_lodBias")->current.value == 0 && (Dvar_FindVar("r_lodBias")->flags & 0x80));
     CHECK(Dvar_FindVar("r_lightTweakAmbient")->current.value == 0.1f);
     Dvar_Shutdown();
+    persistence();
     FINISH("registrations");
 }
