@@ -227,7 +227,8 @@ static void DamageAngle(int pitch)
     Reset();
     clients[0].damage_blood = 10;
     clients[0].damage_from[0] = 1.0f;
-    clients[0].damage_from[pitch ? 2 : 1] = FloatBits(0x3dfc98c1) * (pitch ? -1 : 1);
+    /* Windows 0x427750 maps this input to angle bits 0x40e0ffff. */
+    clients[0].damage_from[pitch ? 2 : 1] = FloatBits(0x3dfc98c2) * (pitch ? -1 : 1);
     vec3_t angles;
     vectoangles(clients[0].damage_from, angles);
     assert(angles[pitch ? 0 : 1] == FloatBits(0x40e0ffff));
