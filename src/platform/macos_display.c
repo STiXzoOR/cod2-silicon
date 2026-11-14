@@ -52,6 +52,26 @@ extern int Dvar_GetInt(const char *);
 extern void Dvar_SetInt(const void *, int);
 extern void Dvar_ClearModified(const void *);
 extern void Com_Printf(const char *, ...);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* CoD2x window.cpp: a saved position that no display shows (a disconnected
+ * monitor, the corner saved from a minimised window) moves to the primary
+ * display's usable area. */
+static void Cod2x_KeepWindowOnADisplay(int *x, int *y, int width, int height)
+{
+    SDL_Rect window = { *x, *y, width, height }, bounds;
+    int count = SDL_GetNumVideoDisplays();
+    for (int i = 0; i < count; ++i)
+        if (SDL_GetDisplayBounds(i, &bounds) == 0 && SDL_HasIntersection(&window, &bounds))
+            return;
+    if (SDL_GetDisplayUsableBounds(0, &bounds) == 0) {
+        *x = bounds.x;
+        *y = bounds.y;
+    } else {
+        *x = *y = 0;
+    }
+    Com_Printf("Window position is outside of all monitors, moving to (%i, %i)\n", *x, *y);
+}
+#endif
 #endif
 
 #if defined(COD2_X64)
@@ -385,9 +405,14 @@ static int SetWindowMode(void)
 #if defined(COD2_X64) && COD2_X64
         {
             /* vid_xpos/vid_ypos hold the window's outer corner, as on Windows. */
-            int top = 0, left = 0;
-            SDL_GetWindowBordersSize(sdl_gl_window, &top, &left, NULL, NULL);
-            SDL_SetWindowPosition(sdl_gl_window, Dvar_GetInt("vid_xpos") + left, Dvar_GetInt("vid_ypos") + top);
+            int top = 0, left = 0, bottom = 0, right = 0;
+            int x = Dvar_GetInt("vid_xpos"), y = Dvar_GetInt("vid_ypos");
+            SDL_GetWindowBordersSize(sdl_gl_window, &top, &left, &bottom, &right);
+#if defined(COD2_CODX) && COD2_CODX
+            Cod2x_KeepWindowOnADisplay(&x, &y, (int)(sdl_gl_width / scaleX) + left + right,
+                                       (int)(sdl_gl_height / scaleY) + top + bottom);
+#endif
+            SDL_SetWindowPosition(sdl_gl_window, x + left, y + top);
         }
 #else
 #if defined(COD2_X64)
