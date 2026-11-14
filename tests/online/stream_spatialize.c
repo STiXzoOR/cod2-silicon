@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include "snd_rounding.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
