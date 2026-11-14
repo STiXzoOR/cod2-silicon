@@ -1,3 +1,4 @@
+#include "com_random.h"
 /* Native primitive creation/update/draw uses the real FX implementations. */
 #include "common_types.h"
 #include <assert.h>
@@ -380,12 +381,12 @@ static void CheckEmitterMotion(void)
         emitter.spawnVariance = test == 5 ? 1 : 10;
         float variance = test == 5 ? 0 : .25f;
         memcpy(emitter._tail, &variance, sizeof(variance));
-        srand(17);
+        Com_CrtSrand(17);
         float expectedStep = emitter.emitStep;
         for (int i = 0; i < cases[test].count; ++i)
             expectedStep = emitter.spawnVariance + crandom() * variance;
-        int expectedNextRandom = rand();
-        srand(17);
+        int expectedNextRandom = Com_CrtRand();
+        Com_CrtSrand(17);
         theFxHelper->mTime = cases[test].now;
         theFxHelper->mFrameTime = 16;
         emissionCount = 0;
@@ -399,7 +400,7 @@ static void CheckEmitterMotion(void)
         EMITTER_CHECK(fabsf(emitter.emitPos[0] - cases[test].finalX) < .00001f);
         EMITTER_CHECK(emitter.emitPos[1] == 4 && emitter.emitPos[2] == 5);
         EMITTER_CHECK(emitter.emitStep == expectedStep);
-        EMITTER_CHECK(rand() == expectedNextRandom);
+        EMITTER_CHECK(Com_CrtRand() == expectedNextRandom);
         EMITTER_CHECK(emitter.velocityDelta[0] == cases[test].bindOffset);
         EMITTER_CHECK(fabsf(emitter.velocityDelta[1] - (cases[test].bolted && !cases[test].pauseClock ? .2f : 0)) < .00001f);
         EMITTER_CHECK(emitter.velocityDelta[2] == 0);

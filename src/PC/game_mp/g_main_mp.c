@@ -1,3 +1,4 @@
+#include "com_random.h"
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
@@ -670,7 +671,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     level.currentEntityThink = -1;
 
     randomSeed = Sys_DiffSeed(randomSeed);
-    srand(randomSeed);
+    Com_CrtSrand(randomSeed);
     Rand_Init(randomSeed);
     G_SetupWeaponDef();
     if (!restart || !savepersist) {
@@ -784,7 +785,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
         extern int Sys_DiffSeed(int fallback);   /* sysdiff_statehash.c */
         randomSeed = Sys_DiffSeed(randomSeed);
     }
-    srand(randomSeed);
+    Com_CrtSrand(randomSeed);
     Rand_Init(randomSeed);
     G_SetupWeaponDef();
     G_RegisterDvars_impl();
@@ -1201,7 +1202,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
         extern int Sys_DiffSeed(int fallback);   /* sysdiff_statehash.c */
         randomSeed = Sys_DiffSeed(randomSeed);
     }
-    srand(randomSeed);
+    Com_CrtSrand(randomSeed);
     Rand_Init(randomSeed);
     G_SetupWeaponDef();
     G_RegisterDvars_impl();

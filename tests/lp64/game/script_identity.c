@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int rand(void) { static int serial=1; return serial++ & 0x7fff; }
+int Com_CrtRand(void) { static int serial=1; return serial++ & 0x7fff; }
 void FS_FCloseFile(fileHandle_t f) { (void)f; }
 void Z_FreeInternal(void *p) { free(p); }
 Bool SV_Loaded(void) { return 0; }

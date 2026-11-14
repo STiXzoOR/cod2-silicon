@@ -1,3 +1,4 @@
+#include "com_random.h"
 #include "PC/gfx_d3d/r_log.h"
 /* This isolated renderer fixture does not start the diagnostic log. */
 int R_LogEnabled(void) { return 0; }
@@ -553,8 +554,8 @@ static void CheckRandom(void)
     assert(!pthread_join(thread, NULL));
     for (int pass = 0; pass < 2; ++pass) {
         R_ResetRendererRandom();
-        srand(pass ? 9999 : 1);
-        for (int i = 0; i < pass * 1000; ++i) (void)rand();
+        Com_CrtSrand(pass ? 9999 : 1);
+        for (int i = 0; i < pass * 1000; ++i) (void)Com_CrtRand();
         R_CreateParticleCloudBuffer();
         for (int axis = 0; axis < 3; ++axis) {
             float scale = axis == 2 ? .125f : .25f;
@@ -581,8 +582,8 @@ static void CheckRandom(void)
             R_ResetRendererRandom();
             R_CreateParticleCloudBuffer();
         }
-        srand(pass + 4567);
-        for (int i = 0; i < 1000; ++i) (void)rand();
+        Com_CrtSrand(pass + 4567);
+        for (int i = 0; i < 1000; ++i) (void)Com_CrtRand();
         R_CreateWaterSetup(&source, 0, &setups[pass]);
         assert(setups[pass].image == &image);
         assert(setups[pass].H0[0].real != 0 && setups[pass].H0[0].imag != 0);

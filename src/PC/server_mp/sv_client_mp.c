@@ -1,3 +1,4 @@
+#include "com_random.h"
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
@@ -86,7 +87,6 @@ extern qboolean NET_CompareAdr(netadr_t a, netadr_t b);
 extern qboolean NET_StringToAdr(const char *s, netadr_t *a);
 extern Bool NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *data);
 extern const netadr_t *SV_MasterAddress(void);
-extern int rand(void);
 extern const char *va(const char *fmt, ...);
 extern void SV_Heartbeat_f(void);
 extern int I_stricmp(const char *s1, const char *s2);
@@ -1338,13 +1338,19 @@ void SV_GetChallenge(netadr_t from)
     challenge = &svsLocal->challenges[oldest];
 #if defined(COD2_X64) && COD2_X64
     {
-        uint32_t high = (uint32_t)rand();
-        uint32_t bits = (high << 16) ^ (uint32_t)rand() ^ (uint32_t)svsLocal->time;
+#if defined(COD2_CODX) && COD2_CODX
+        uint32_t high = (uint32_t)Cod2x_CrtRand();
+        uint32_t low = (uint32_t)Cod2x_CrtRand();
+#else
+        uint32_t high = (uint32_t)Com_CrtRand();
+        uint32_t low = (uint32_t)Com_CrtRand();
+#endif
+        uint32_t bits = (high << 16) ^ low ^ (uint32_t)svsLocal->time;
         /* Retain the original 32-bit result without signed-shift overflow. */
         memcpy(&challenge->challenge, &bits, sizeof(bits));
     }
 #else
-    challenge->challenge = ((rand() << 16) ^ rand()) ^ svsLocal->time;
+    challenge->challenge = ((Com_CrtRand() << 16) ^ Com_CrtRand()) ^ svsLocal->time;
 #endif
     challenge->adr = from;
     challenge->firstTime = svsLocal->time;

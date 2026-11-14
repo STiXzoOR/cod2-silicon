@@ -1,3 +1,4 @@
+#include "com_random.h"
 #include "common_types.h"
 #include "imports.h"
 #include "PC/qcommon/com_fileaccess.h"
@@ -17,7 +18,6 @@ extern clientConnection_t *clc;
 /* dvar globals */
 extern const dvar_t *com_sv_running;
 
-extern int rand(void);
 extern int unzOpenCurrentFile(unzFile file);
 extern unzFile unzReOpen(const char *path, unzFile file);
 extern int unzReadCurrentFile(unzFile file, voidp buf, unsigned int len);
@@ -2150,7 +2150,7 @@ static __attribute_regparm__(3) int FS_FOpenFileRead_Internal(const char *filena
             }
 
             if (!search->bLocalized && !FS_PureIgnoresExtension(extension)) {
-                fs_fakeChkSum = rand() + 1;
+                fs_fakeChkSum = Com_CrtRand() + 1;
             }
 
             I_strncpyz(fsh[*file].name, sanitizedName, sizeof(fsh[*file].name));

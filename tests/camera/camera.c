@@ -106,10 +106,10 @@ void CG_TraceCapsule(trace_t *trace, const vec_t *start, const vec_t *minimum,
     trace->fraction = blocked_trace ? (trace_calls ? .25f : .5f) : 1.0f;
     ++trace_calls;
 }
-int rand(void)
+int Com_CrtRand(void)
 {
     assert(random_index < 2);
-    return random_index++ == 0 ? 1610612736 : 536870912;
+    return random_index++ == 0 ? 24576 : 8192;
 }
 #if defined(COD2_CODX) && COD2_CODX
 int Cod2x_ThirdPersonMode(void) { return third_person_mode; }

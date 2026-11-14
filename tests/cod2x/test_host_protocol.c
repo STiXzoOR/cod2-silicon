@@ -1,3 +1,4 @@
+#include "com_random.h"
 #include "common_types.h"
 #include "PC/qcommon/cod2x.h"
 #include <assert.h>

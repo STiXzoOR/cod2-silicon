@@ -161,7 +161,8 @@ int main(int argc, char **argv)
     if (api.lib_ctl(SPEEX_LIB_GET_VERSION_STRING, &version) || !version)
         return 1;
     printf("{\"version\":\"%s\",\"bitstream_version\":%d}\n", version, api.mode->bitstream_version);
-    srand(17);
+    void (*seed)(unsigned int) = dlsym(library, "Com_CrtSrand");
+    if (seed) seed(17); else srand(17); /* Independent upstream codec uses libc. */
     int result = !strcmp(argv[2], "encode") ? Generate(&api, atoi(argv[3])) : Decode(&api, atoi(argv[3]));
     dlclose(library);
     return result;

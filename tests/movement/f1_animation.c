@@ -1,3 +1,4 @@
+#include "com_random.h"
 #include "common_types.h"
 #include <assert.h>
 #include <math.h>
@@ -182,13 +183,13 @@ static void check_selection(void)
         item->commands[i].animIndex[0] = i + 1;
         item->commands[i].animDuration[0] = 500;
     }
-    srand(19);
-    int expectedRand = rand();
-    srand(19);
+    Com_CrtSrand(19);
+    int expectedRand = Com_CrtRand();
+    Com_CrtSrand(19);
     /* Mac 0x187576 loads clientNum before idiv numCommands; no rand call. */
     assert(BG_AnimScriptAnimation(&ps, (aistateEnum_t)0, (scriptAnimMoveTypes_t)1, 1) == 1);
     assert(ps.legsAnim == 515);
-    assert(rand() == expectedRand);
+    assert(Com_CrtRand() == expectedRand);
     assert(BG_AnimScriptAnimation(&ps, (aistateEnum_t)0, (scriptAnimMoveTypes_t)1, 1) == 0);
     assert(ps.legsAnim == 515);
 }

@@ -32,7 +32,7 @@ flags += ['-UNDEBUG', '-I' + str(output), '-I' + str(ROOT / 'src/PC/bgame'),
           '-ffunction-sections', '-fdata-sections', '-fsanitize=address,undefined',
           '-fno-omit-frame-pointer']
 objects = []
-for path in ['tests/movement/f1_animation.c', 'src/PC/universal/com_math.c', 'src/PC/universal/q_parse.c']:
+for path in ['tests/movement/f1_animation.c', 'src/PC/universal/com_math.c', 'src/PC/universal/com_random.c', 'src/PC/universal/q_parse.c']:
     obj = output / (Path(path).stem + '.o')
     with (output / (Path(path).stem + '.compile.log')).open('w') as log:
         subprocess.run([*flags, '-c', str(ROOT / path), '-o', str(obj)], cwd=ROOT,

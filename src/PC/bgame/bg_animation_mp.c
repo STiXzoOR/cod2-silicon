@@ -1,3 +1,4 @@
+#include "com_random.h"
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -2388,7 +2389,7 @@ int BG_AnimScriptEvent(playerState_t *ps, scriptAnimEventTypes_t event, qboolean
     if (numCommands == 0)
         return -1;
 
-    randIdx = rand() % numCommands;
+    randIdx = Com_CrtRand() % numCommands;
     return BG_ExecuteCommand(ps, &scriptItem->commands[randIdx], 1, isContinue, force);
 }
 
@@ -2453,7 +2454,7 @@ int BG_AnimScriptAnimation(playerState_t *ps, aistateEnum_t state, scriptAnimMov
 #if defined(COD2_X64)
             return BG_ExecuteCommand(ps, &scriptItem->commands[ps->clientNum % scriptItem->numCommands], 0, isContinue, 0) != -1;
 #else
-            return BG_ExecuteCommand(ps, &scriptItem->commands[rand() % scriptItem->numCommands], 0, isContinue, 0) != -1;
+            return BG_ExecuteCommand(ps, &scriptItem->commands[Com_CrtRand() % scriptItem->numCommands], 0, isContinue, 0) != -1;
 #endif
         }
 

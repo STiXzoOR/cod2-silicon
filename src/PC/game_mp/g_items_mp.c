@@ -1,3 +1,4 @@
+#include "com_random.h"
 #include "common_types.h"
 #include "imports.h"
 #include <string.h>
@@ -79,7 +80,6 @@ extern qboolean G_TraceCapsuleComplete(const vec_t *start, const vec_t *mins, co
 extern float crandom(void);
 extern float randomf(void);
 extern float floorf(float);
-extern int rand(void);
 extern qboolean G_DObjGetWorldTagMatrix(gentity_t *ent, unsigned int tagName, vec3_t *tagMat);
 extern qboolean BG_CanItemBeGrabbed(const entityState_t *ent, const playerState_t *ps, qboolean bTouched);
 extern void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text);
@@ -927,14 +927,14 @@ gentity_t *Drop_Weapon(gentity_t *pEnt, int iWeaponIndex, unsigned int tag)
             iMax = 0;
         } else {
             if (iMax != iMin) {
-                iMin += rand() % (iMax - iMin);
+                iMin += Com_CrtRand() % (iMax - iMin);
             }
 
             if (iMin > 0) {
                 int clipSize = BG_GetAmmoClipSize(iClipIndex);
 
                 if (clipSize) {
-                    iMax = rand() % clipSize;
+                    iMax = Com_CrtRand() % clipSize;
                     if (iMin > iMax) {
                         iMin -= iMax;
                     } else {
@@ -1194,7 +1194,7 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
             } else if (high < 0) {
                 quantity = 0;
             } else if (high != low) {
-                quantity = low + rand() % (high - low);
+                quantity = low + Com_CrtRand() % (high - low);
             } else {
                 quantity = high;
             }

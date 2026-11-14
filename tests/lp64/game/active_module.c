@@ -26,7 +26,7 @@ int cod2_native_trace_enabled;
 void Com_Printf(const char *fmt, ...) { abort(); }
 
 /* External randomness is fixed; normalization, angles and random scaling are real. */
-int rand(void) { ++randomCalls; return 0x40000000; }
+int Com_CrtRand(void) { ++randomCalls; return 16384; }
 static void Record(int action) { assert(actionCount < 8); actions[actionCount++] = action; }
 static void Touch(gentity_t *self, gentity_t *other, int touched)
 {

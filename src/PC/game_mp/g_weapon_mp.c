@@ -1,3 +1,4 @@
+#include "com_random.h"
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -12,7 +13,6 @@ extern const dvar_t *player_meleeRange;
 extern const dvar_t *player_meleeWidth;
 extern const dvar_t *sv_fps;
 
-extern int rand(void);
 extern double tan(double x);
 extern float sinf(float x);
 extern float cosf(float x);
@@ -177,10 +177,10 @@ void Weapon_Melee(gentity_s (*ent)[16], weaponParms *wp, float range, float widt
 
 #if defined(COD2_X64)
     G_Damage(traceEnt, (gentity_t *)ent, (gentity_t *)ent, wp->forward, endpos,
-             damage + (rand() % 5), 0, 7, (hitLocation_t)tr.partGroup, 0);
+             damage + (Com_CrtRand() % 5), 0, 7, (hitLocation_t)tr.partGroup, 0);
 #else
     G_Damage(traceEnt, (gentity_t *)ent, (gentity_t *)ent, wp->forward, endpos,
-             damage + (rand() % 5), 7, 0, (hitLocation_t)tr.partGroup, 0);
+             damage + (Com_CrtRand() % 5), 7, 0, (hitLocation_t)tr.partGroup, 0);
 #endif
 }
 
@@ -605,6 +605,50 @@ void Bullet_Endpos(float spread, vec_t *end, const weaponParms *wp, float maxRan
 }
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* Upstream shared/weapons.cpp owns its fallback shotgun RNG stream.
+ * Keep this DLL calculation separate from the original executable helper. */
+static void Cod2x_Bullet_Endpos(float spread, vec_t *end, const weaponParms *wp, float maxRange)
+{
+    float aimOffset;
+    float randAngle;
+    float randRadius;
+    float angle;
+    float rightOffset;
+    float upOffset;
+
+    aimOffset = (float)(tan((double)spread * 0.0174532925199433) * (double)maxRange);
+
+    randAngle = Cod2x_CrtRandomf();
+    randRadius = Cod2x_CrtRandomf();
+    angle = (float)((double)(randAngle * 360.0f) * 0.0174532925199433);
+
+    rightOffset = cosf(angle) * randRadius * aimOffset;
+    upOffset = sinf(angle) * randRadius * aimOffset;
+
+    {
+        const vec_t *muzzle = wp->muzzleTrace;
+        end[0] = muzzle[0] + maxRange * wp->forward[0];
+        end[1] = muzzle[1] + maxRange * wp->forward[1];
+        end[2] = muzzle[2] + maxRange * wp->forward[2];
+    }
+
+    {
+        const vec_t *right = wp->right;
+        end[0] += rightOffset * right[0];
+        end[1] += rightOffset * right[1];
+        end[2] += rightOffset * right[2];
+    }
+
+    {
+        const vec_t *up = wp->up;
+        end[0] += upOffset * up[0];
+        end[1] += upOffset * up[1];
+        end[2] += upOffset * up[2];
+    }
+}
+#endif
+
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 static void Bullet_ShotgunEndpos(vec_t *end, const weaponParms *wp, int pellet, int variant, float sine, float cosine, float radius)
 {
     /* CoD2x's two eight-pellet distributions, in tenths of the spread radius. */
@@ -689,8 +733,8 @@ void Bullet_Fire(gentity_s (*attacker)[16], float spread, weaponParms *wp, genti
             float rotation;
 
             radius = tanf((float)((double)spread * 0.0174532925199433)) * wp->weapDef->fMinDamageRange;
-            rotation = (float)((double)randomf() * 6.28318530717958647693);
-            variant = randomf() < 0.5f ? 0 : 1;
+            rotation = (float)((double)Cod2x_CrtRandomf() * 6.28318530717958647693);
+            variant = Cod2x_CrtRandomf() < 0.5f ? 0 : 1;
             sine = sinf(rotation);
             cosine = cosf(rotation);
         }
@@ -705,8 +749,10 @@ void Bullet_Fire(gentity_s (*attacker)[16], float spread, weaponParms *wp, genti
             if (patterned)
                 Bullet_ShotgunEndpos(end, wp, shotIndex, variant, sine, cosine, radius);
             else
-#endif
+                Cod2x_Bullet_Endpos(spread, end, wp, wp->weapDef->fMinDamageRange);
+#else
             Bullet_Endpos(spread, end, wp, wp->weapDef->fMinDamageRange);
+#endif
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
             G_Cod2xWallbangFire(Bullet_Fire_Extended, (gentity_t *)weaponEnt, attacker, start, end, 1.0f, wp,
                                 (gentity_t *)weaponEnt, gametime);

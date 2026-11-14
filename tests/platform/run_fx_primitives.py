@@ -49,7 +49,7 @@ with (contextlib.nullcontext(str(a.output.resolve())) if a.output else tempfile.
     sources = ['tests/platform/macos_fx_primitives.c',
                'src/PC/EffectsCore/FxPrimitives.c', 'src/PC/EffectsCore/FxUtil.c',
                'src/PC/EffectsCore/FxCurve.c', 'src/PC/qcommon/q_math.c',
-               'src/PC/universal/com_math.c']
+               'src/PC/universal/com_math.c', 'src/PC/universal/com_random.c']
     rows = json.loads(a.compile_db.read_text()) if a.compile_db else []
     objects = []
     for source in sources:

@@ -91,7 +91,7 @@ def main():
                                  '-fno-omit-frame-pointer', '-ffunction-sections', '-fdata-sections']
         objects = []
         for path in ['tests/lp64/renderer/water.c', 'src/PC/universal/fft.c',
-                     'src/PC/universal/com_math.c']:
+                     'src/PC/universal/com_math.c', 'src/PC/universal/com_random.c']:
             obj = out / (Path(path).stem + '.o')
             subprocess.run([*fixture_flags, '-c', str(ROOT / path), '-o', str(obj)],
                            cwd=ROOT, check=True)

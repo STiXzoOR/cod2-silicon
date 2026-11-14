@@ -25,10 +25,10 @@ const dvar_t *g_maxDroppedWeapons = &maxDropped;
 static int randomCalls, weaponNumber, tookWeapon, linked, angleCalls, tagFound;
 static vec3_t observedAngles;
 
-int rand(void)
+int Com_CrtRand(void)
 {
     /* Drop launch consumes the first draw; angular draws are then Z, Y, X. */
-    static const int draws[] = {0, 0, 1073741824, 1610612736};
+    static const int draws[] = {0, 0, 16384, 24576};
     assert(randomCalls < 4);
     return draws[randomCalls++];
 }

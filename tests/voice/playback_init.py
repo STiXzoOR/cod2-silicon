@@ -89,6 +89,7 @@ def main():
         paths += [str(Path(row['file']).relative_to(Path(row['file'].split('/src/')[0]))) for row in rows
                   if '/src/PC/speex/' in row['file'] and
                   'cod2_macos.dir/' in row.get('command', ' '.join(row.get('arguments', [])))]
+        paths.append('src/PC/universal/com_random.c')
         objects = []
         for index, path in enumerate(paths):
             unit = build / Path(path).name

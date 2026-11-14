@@ -72,7 +72,8 @@ def main():
         (out / 'host_protocol_source.h').write_text(generated)
         exe = out / target
         command = [*flags, '-Wl,-dead_strip', str(ROOT / 'tests/cod2x/test_host_protocol.c'),
-                   str(ROOT / 'src/PC/universal/q_shared.c'), '-o', str(exe)]
+                   str(ROOT / 'src/PC/universal/q_shared.c'),
+                   str(ROOT / 'src/PC/universal/com_random.c'), '-o', str(exe)]
         log = out / (target + '-compile.log')
         result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True)
         log.write_text(result.stdout + result.stderr)

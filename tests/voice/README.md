@@ -271,3 +271,33 @@ samples, partial buffers, volume, return values, offsets, encoded bytes and
 service order. It does not establish actual codec/network behavior, arbitrary
 inputs, unwinder behavior or whole-game fidelity. Floating-point controls are
 pinned for this fixture, not asserted to match every engine runtime state.
+
+
+## Windows CRT random stream
+
+The engine uses the original Windows 15-bit CRT generator. The original
+`fixtures.json` remains the independent Xiph corpus generated with Darwin's
+CRT. Three PCM cases consume random draws: both mode-1 configurations and the
+mode-8 loss configuration. For those cases, `windows_crt_fixtures.json` supplies
+independent Xiph 1.0.4 PCM under the Windows CRT contract. The maximum absolute
+error limit remains 0.25; every packet/status check and the other PCM
+expectations remain unchanged. Reports retain the Darwin comparisons and name
+the active Windows CRT reference separately.
+
+The separate profile compiles the pinned official Xiph archive without editing
+its codec sources. A forced include supplies `RAND_MAX == 32767` and a small
+CRT adapter. Its first 4096 seed-17 draws were compared to actual Windows 1.3
+CRT instructions, and the profile PCM was independently reproduced by replacing
+the adapter with that recorded draw table. Neither engine source nor original
+game PCM generates these expected values.
+
+```sh
+python3 tests/voice/regenerate_windows_crt.py \
+  --source-archive /absolute/private/path/speex-1.0.4.tar.gz \
+  --output /absolute/private/path/windows_crt_fixtures.json
+cmp tests/voice/windows_crt_fixtures.json /absolute/private/path/windows_crt_fixtures.json
+```
+
+The optional Mac decoder comparison retains Mac CRT behavior. Its stochastic
+mode-6 loss observation is not a Windows CRT reference; do not use that optional
+comparison to claim Windows PCM parity.
