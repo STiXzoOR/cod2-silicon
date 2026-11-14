@@ -1139,6 +1139,13 @@ static void Console_CompleteCommand(void)
 
 void Console_Key(int key)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* CoD2x console.cpp Console_Key: with NumLock on, keypad 8 and 2 type their
+       digit and do not walk the history. A Mac keypad has no NumLock state and
+       always types the digit, so that is always the case here. */
+    if (key == K_KP_UPARROW || key == K_KP_DOWNARROW)
+        return;
+#endif
 #if defined(COD2_X64)
     if (key == 0x6c && Key_IsDown(K_CTRL)) {
 #else
