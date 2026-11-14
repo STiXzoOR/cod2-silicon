@@ -25,6 +25,8 @@ static struct Material reticle_material, white_material;
 static struct Font_s font;
 static int split_screen, catchers, controls_calls, weapon_calls, follow_enabled;
 static int font_height, font_calls, binding_calls, failures;
+static int text_enabled;
+static char measured_text[512];
 static float font_scale;
 
 typedef struct {
@@ -89,7 +91,7 @@ FontHandle UI_GetFontHandle(int index, float scale)
 int UI_TextHeight(FontHandle handle, float scale)
 { assert(handle == &font && bits(scale) == 0x3e555555); return font_height; }
 int UI_TextWidth(const char *text, int max, FontHandle handle, float scale)
-{ (void)text; (void)max; assert(handle == &font); return (int)(60.0f * scale); }
+{ (void)max; assert(handle == &font); snprintf(measured_text, sizeof(measured_text), "%s", text); return (int)(60.0f * scale); }
 void UI_DrawText(const char *text, int max, FontHandle handle, float x, float y,
                  int horz, int vert, float scale, const vec_t *color, int style)
 {
@@ -138,6 +140,7 @@ const char *SEH_LocalizeTextMessage(const char *text, const char *context, int e
 { (void)text; (void)context; (void)error; return "Suit"; }
 #if defined(COD2_CODX) && COD2_CODX
 int Cod2x_DrawSpectatedName(void) { return follow_enabled; }
+int Cod2x_TextEnabled(void) { return text_enabled; }
 #endif
 
 static void reset(void)
@@ -340,6 +343,20 @@ static void follow_policy(void)
     snprintf(cg->bgs.clientinfo[2].name, sizeof(cg->bgs.clientinfo[2].name), "Player Two");
     CHECK(CG_DrawFollow() == 1 && text_count == 2);
     CHECK(!strcmp(texts[1].text, "Player Two"));
+    /* Older servers retain literal style bytes; revision-7 text mode strips
+     * them before both measuring and drawing the followed name. */
+    snprintf(cg->bgs.clientinfo[2].name, sizeof(cg->bgs.clientinfo[2].name), "^1Player$2 Two");
+    for (text_enabled = 0; text_enabled <= 1; ++text_enabled) {
+        text_count = 0;
+        CHECK(CG_DrawFollow() == 1 && text_count == 2);
+#if defined(COD2_CODX) && COD2_CODX
+        const char *expected = text_enabled ? "Player Two" : "^1Player$2 Two";
+#else
+        const char *expected = "^1Player$2 Two";
+#endif
+        CHECK(!strcmp(texts[1].text, expected));
+        CHECK(!strcmp(measured_text, expected));
+    }
     text_count = 0;
     follow_enabled = 0;
 #if defined(COD2_CODX) && COD2_CODX

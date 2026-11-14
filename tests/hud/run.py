@@ -87,7 +87,8 @@ flags = [flag for flag in flags if flag != '-DNDEBUG']
 fixture = output / 'hud.o'
 placement = output / 'placement.o'
 text_codes_object = output / 'text_codes.o'
-subprocess.run([*flags, *sanitize, '-I' + str(output), '-c', str(ROOT / 'tests/hud/hud.c'),
+subprocess.run([*flags, *sanitize, '-I' + str(output), '-I' + str((ROOT / path).parent),
+                '-c', str(ROOT / 'tests/hud/hud.c'),
                 '-o', str(fixture)], cwd=ROOT, check=True)
 placement_path = 'src/PC/client_mp/screen_placement_mp.c'
 placement_flags = [flag for flag in compile_entry(placement_path) if flag != '-DNDEBUG']
