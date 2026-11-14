@@ -8036,6 +8036,20 @@
     "reason": "Typed VariableValue stack arithmetic: one element below the top."
   },
   {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "incErrorPos = pos + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Instruction byte stream cursor: the increment/decrement opcode has a one-byte operand, and the error landing resumes after it. Typed const char arithmetic inside the bytecode, no in-memory pointer slots."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "top = scrVmPub.top + 1;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "VariableValue stack records remain eight bytes (encoded 32-bit union plus type); typed +1 advances one record to the slot that receives the undefined result after a failed builtin call."
+  },
+  {
     "file": "src/PC/server_mp/sv_main_mp.c",
     "text": "if (strcmp(cmd + 1, entry->cmd + 1) == 0) {",
     "count": 1,

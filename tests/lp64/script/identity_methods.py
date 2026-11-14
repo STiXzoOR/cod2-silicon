@@ -140,7 +140,8 @@ void GScr_Cod2xDropCallbacks(void) {}
         exe = out / target
         command = [*flags, '-DCOD2X_SCRIPT_IDENTITY_FIXTURE=1', '-Wl,-dead_strip',
                    str(ROOT / 'tests/lp64/game/script_api.c'),
-                   str(ROOT / 'src/PC/universal/q_shared.c'), '-o', str(exe)]
+                   str(ROOT / 'src/PC/universal/q_shared.c'),
+                   str(ROOT / 'src/PC/universal/com_random.c'), '-o', str(exe)]
         if args.nat_only:
             command.insert(1, '-DCOD2X_NAT_IDENTITY_FIXTURE=1')
         result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True)
