@@ -42,6 +42,21 @@ const char *Cod2x_IwdNames(void)
     return cod2x_iwdNames;
 }
 
+/* Original FS_FilenameCompare folds ASCII case and path separators. */
+static int filenameEqualn(const char *a, const char *b, size_t n)
+{
+    for (size_t i = 0; i < n; ++i) {
+        unsigned char x = (unsigned char)a[i], y = (unsigned char)b[i];
+        if (x >= 'a' && x <= 'z') x -= 'a' - 'A';
+        if (y >= 'a' && y <= 'z') y -= 'a' - 'A';
+        if (x == '\\' || x == ':') x = '/';
+        if (y == '\\' || y == ':') y = '/';
+        if (x != y) return 0;
+        if (!x) return 1;
+    }
+    return 1;
+}
+
 int Cod2x_IwdStock(const char *name, const char *base, int version)
 {
     char expected[256];
@@ -49,7 +64,7 @@ int Cod2x_IwdStock(const char *name, const char *base, int version)
     const char *local;
     for (i = 0; i < 25; ++i) {
         snprintf(expected, sizeof(expected), "%s/iw_%02d", base, i);
-        if (equal(name, expected))
+        if (strlen(name) == strlen(expected) && filenameEqualn(name, expected, strlen(expected)))
             return 1;
     }
     if (version >= 5) {
@@ -59,9 +74,11 @@ int Cod2x_IwdStock(const char *name, const char *base, int version)
     }
     snprintf(expected, sizeof(expected), "%s/localized_", base);
     /* The original first finds the literal lowercase localized_ marker. */
-    if (!strstr(name, "localized_") || !equaln(name, expected, strlen(expected)))
+    local = strstr(name, "localized_");
+    if (!local || (size_t)(local - name) + 10 != strlen(expected) ||
+        !filenameEqualn(name, expected, strlen(expected)))
         return 0;
-    local = name + strlen(expected);
+    local += 10;
     for (i = 0; i < 25; ++i) {
         const char *p;
         snprintf(expected, sizeof(expected), "_iw%02d", i);

@@ -25,6 +25,16 @@ int main(void)
     assert(Cod2x_IwdStock("main/localized_english_iw11", "main", 0));
     assert(!Cod2x_IwdStock("main/LOCALIZED_english_iw11", "main", 0));
     assert(Cod2x_IwdStock("MAIN/localized_ENGLISH_IW11", "main", 0));
+    /* Windows filename comparison folds case, backslash and colon. */
+    assert(Cod2x_IwdStock("main/iw_00", "main", 0));
+    assert(Cod2x_IwdStock("MAIN/iw_24", "main", 0));
+    assert(Cod2x_IwdStock("main\\iw_00", "main", 0));
+    assert(Cod2x_IwdStock("main:iw_00", "main", 0));
+    assert(Cod2x_IwdStock("main\\localized_english_iw00", "main", 0));
+    assert(Cod2x_IwdStock("main:localized_ENGLISH_IW00", "main", 0));
+    assert(!Cod2x_IwdStock("main/LOCALIZED_foo_localized_english_iw00", "main", 0));
+    assert(!Cod2x_IwdStock("main\\iw_CoD2x_01", "main", 5));
+    assert(Cod2x_IwdStock("base\\main/localized_english_iw00", "base/main", 0));
     s.connecting = 1; s.version = 0; s.names = "zpam_maps_v4 zpam334";
     assert(!Cod2x_IwdAllowed("main", list[1], list, 7, &s));
     assert(Cod2x_IwdAllowed("main", list[2], list, 7, &s));
