@@ -148,6 +148,13 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[1], "field-self-compound"))
         snprintf(scriptText, sizeof(scriptText), "main() { ent=entity(); ent child(); observe(99); } child() { for(i=0;i<1000;i++) { self.spawnflags+=1; self.spawnflags++; self.spawnflags--; } }");
     else abort();
+    /* Windows 0x47d721..0x47d770 normalizes the source operand index. */
+    if (!strcmp(argv[1], "builtin-many")) expectedIndex = 5;
+    if (!strcmp(argv[1], "method")) expectedIndex = 1;
+    if (!strcmp(argv[1], "entity-method")) expectedIndex = 3;
+    if (!strcmp(argv[1], "entity-method-many")) expectedIndex = 6;
+    if (!strcmp(argv[1], "partial") || !strcmp(argv[1], "partial-nested")) expectedIndex = -1;
+    if (!strcmp(argv[1], "partial-method")) expectedIndex = 0;
     assert(Scr_LoadScript("recovery"));
     scrCompilePub.programLen = emitted;
     scrVarPub.endScriptBuffer = bytecode + emitted;

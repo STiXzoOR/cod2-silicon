@@ -6554,7 +6554,7 @@ static unsigned int VM_LocalVarCacheId(unsigned int slot)
 }
 
 #if defined(COD2_X64)
-static void VM_EvalArrayRefAndPop(unsigned int *fieldValueId, VariableValue *volatile *top)
+static void VM_EvalArrayRefAndPop(volatile unsigned int *fieldValueId, VariableValue *volatile *top)
 #else
 static void VM_EvalArrayRefAndPop(unsigned int *fieldValueId, VariableValue **top)
 #endif
@@ -6610,7 +6610,7 @@ static void VM_CandidatePushEntityObject(VariableValue **top, int classnum, int 
 }
 
 #if defined(COD2_X64)
-static Bool VM_CandidateIncDecField(unsigned int fieldValueId, VariableValue *volatile *top, int delta)
+static Bool VM_CandidateIncDecField(unsigned int fieldValueId, VariableValue *volatile *top, const char *volatile *pos, int delta)
 #else
 static void VM_CandidateIncDecField(unsigned int fieldValueId, VariableValue **top, int delta)
 #endif
@@ -6627,7 +6627,7 @@ static void VM_CandidateIncDecField(unsigned int fieldValueId, VariableValue **t
         /* Mac 0x85bf7 enters decrement after a returned increment error;
          * decrement's returned error enters the OR operation at 0x843e8. */
         if (delta > 0)
-            return VM_CandidateIncDecField(fieldValueId, top, -1);
+            return VM_CandidateIncDecField(fieldValueId, top, pos, -1);
         VM_EvalBinaryAndPop(top, Scr_EvalOr);
         return 0;
 #else
@@ -6638,6 +6638,9 @@ static void VM_CandidateIncDecField(unsigned int fieldValueId, VariableValue **t
     (*top)->u.intValue = (int)((unsigned int)(*top)->u.intValue + (unsigned int)delta);
 #else
     (*top)->u.intValue += delta;
+#endif
+#if defined(COD2_X64)
+    ++*pos;
 #endif
     SetVariableFieldValue(fieldValueId, *top);
     --*top;
@@ -6880,19 +6883,19 @@ static void VM_CandidatePopToFrameSentinel(VariableValue **top)
 static int VM_CandidateThreadSuspendReturn(const char *volatile *pos, volatile unsigned int *localId,
                                            volatile unsigned int *localVarCount, VariableValue *volatile *top,
                                            VariableValue *volatile *startTop, unsigned int *resultLocalId,
-                                           unsigned int *threadCount);
+                                           volatile unsigned int *threadCount);
 #else
 static int VM_CandidateThreadSuspendReturn(const char **pos, unsigned int *localId,
                                            unsigned int *localVarCount, VariableValue **top,
                                            VariableValue **startTop, unsigned int *resultLocalId,
-                                           unsigned int *threadCount);
+                                           volatile unsigned int *threadCount);
 #endif
 
 #if defined(COD2_X64)
 static int VM_CandidateThreadReturn(const char *volatile *pos, volatile unsigned int *localId,
                                     volatile unsigned int *localVarCount, VariableValue *volatile *top,
                                     VariableValue *volatile *startTop, unsigned int *resultLocalId,
-                                    unsigned int *threadCount)
+                                    volatile unsigned int *threadCount)
 {
     if (*threadCount == 0) {
         *resultLocalId = VM_CandidateFinishOutermost(*startTop, *localId);
@@ -6918,12 +6921,12 @@ static int VM_CandidateThreadReturn(const char *volatile *pos, volatile unsigned
 static int VM_CandidateHandleEnd(const char *volatile *pos, volatile unsigned int *localId,
                                  volatile unsigned int *localVarCount, VariableValue *volatile *top,
                                  VariableValue *volatile *startTop, unsigned int *resultLocalId,
-                                 unsigned int *threadCount)
+                                 volatile unsigned int *threadCount)
 #else
 static int VM_CandidateHandleEnd(const char **pos, unsigned int *localId,
                                  unsigned int *localVarCount, VariableValue **top,
                                  VariableValue **startTop, unsigned int *resultLocalId,
-                                 unsigned int *threadCount)
+                                 volatile unsigned int *threadCount)
 #endif
 {
     unsigned int parentLocalId = GetSafeParentLocalId(*localId);
@@ -6956,12 +6959,12 @@ static int VM_CandidateHandleEnd(const char **pos, unsigned int *localId,
 static int VM_CandidateHandleReturn(const char *volatile *pos, volatile unsigned int *localId,
                                     volatile unsigned int *localVarCount, VariableValue *volatile *top,
                                     VariableValue *volatile *startTop, unsigned int *resultLocalId,
-                                    unsigned int *threadCount)
+                                    volatile unsigned int *threadCount)
 #else
 static int VM_CandidateHandleReturn(const char **pos, unsigned int *localId,
                                     unsigned int *localVarCount, VariableValue **top,
                                     VariableValue **startTop, unsigned int *resultLocalId,
-                                    unsigned int *threadCount)
+                                    volatile unsigned int *threadCount)
 #endif
 {
     unsigned int parentLocalId = GetSafeParentLocalId(*localId);
@@ -7030,12 +7033,12 @@ static unsigned int VM_CandidateFinishSuspend(VariableValue *startTop, unsigned 
 static int VM_CandidateThreadSuspendReturn(const char *volatile *pos, volatile unsigned int *localId,
                                            volatile unsigned int *localVarCount, VariableValue *volatile *top,
                                            VariableValue *volatile *startTop, unsigned int *resultLocalId,
-                                           unsigned int *threadCount)
+                                           volatile unsigned int *threadCount)
 #else
 static int VM_CandidateThreadSuspendReturn(const char **pos, unsigned int *localId,
                                            unsigned int *localVarCount, VariableValue **top,
                                            VariableValue **startTop, unsigned int *resultLocalId,
-                                           unsigned int *threadCount)
+                                           volatile unsigned int *threadCount)
 #endif
 {
     ((*startTop) + 1)->type = VAR_UNDEFINED;
@@ -7068,12 +7071,12 @@ static int VM_CandidateThreadSuspendReturn(const char **pos, unsigned int *local
 static int VM_CandidateHandleJumpBack(const char *volatile *pos, volatile unsigned int *localId,
                                       volatile unsigned int *localVarCount, VariableValue *volatile *top,
                                       VariableValue *volatile *startTop, unsigned int *resultLocalId,
-                                      unsigned int *threadCount)
+                                      volatile unsigned int *threadCount)
 #else
 static int VM_CandidateHandleJumpBack(const char **pos, unsigned int *localId,
                                       unsigned int *localVarCount, VariableValue **top,
                                       VariableValue **startTop, unsigned int *resultLocalId,
-                                      unsigned int *threadCount)
+                                      volatile unsigned int *threadCount)
 #endif
 {
     scrVmGlob_t *glob = (scrVmGlob_t *)scrVmGlob;
@@ -7201,18 +7204,18 @@ static void VM_CandidateClearConsumedWaitOperand(VariableValue *value)
 static int VM_CandidateHandleWaitTillFrameEnd(const char *volatile *pos, volatile unsigned int *localVarCount,
                                               VariableValue *volatile *top, VariableValue *volatile *startTop,
                                               volatile unsigned int *localId, unsigned int *resultLocalId,
-                                              unsigned int *threadCount);
+                                              volatile unsigned int *threadCount);
 
 static int VM_CandidateHandleWait(const char *volatile *pos, volatile unsigned int *localVarCount,
                                   VariableValue *volatile *top, VariableValue *volatile *startTop,
                                   volatile unsigned int *localId, unsigned int *resultLocalId,
-                                  unsigned int *threadCount, unsigned int *waitTimeScratch,
+                                  volatile unsigned int *threadCount, volatile unsigned int *waitTimeScratch,
                                   int capturedReceiverType, Bool consumedReceiver)
 #else
 static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
                                   VariableValue **top, VariableValue **startTop,
                                   unsigned int *localId, unsigned int *resultLocalId,
-                                  unsigned int *threadCount)
+                                  volatile unsigned int *threadCount)
 #endif
 {
     struct scrVarPub_t *varPub = (struct scrVarPub_t *)imp_scrVarPub;
@@ -7286,12 +7289,12 @@ static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
 static int VM_CandidateHandleWaitTillFrameEnd(const char *volatile *pos, volatile unsigned int *localVarCount,
                                               VariableValue *volatile *top, VariableValue *volatile *startTop,
                                               volatile unsigned int *localId, unsigned int *resultLocalId,
-                                              unsigned int *threadCount)
+                                              volatile unsigned int *threadCount)
 #else
 static int VM_CandidateHandleWaitTillFrameEnd(const char **pos, unsigned int *localVarCount,
                                               VariableValue **top, VariableValue **startTop,
                                               unsigned int *localId, unsigned int *resultLocalId,
-                                              unsigned int *threadCount)
+                                              volatile unsigned int *threadCount)
 #endif
 {
     struct scrVarPub_t *varPub = (struct scrVarPub_t *)imp_scrVarPub;
@@ -7357,12 +7360,12 @@ static void VM_CandidateRecoverEventError(const char *volatile *pos, VariableVal
 static int VM_CandidateHandleWaitTill(unsigned int opcode, const char *volatile *pos, volatile unsigned int *localVarCount,
                                       VariableValue *volatile *top, VariableValue *volatile *startTop,
                                       volatile unsigned int *localId, unsigned int *resultLocalId,
-                                      unsigned int *threadCount)
+                                      volatile unsigned int *threadCount)
 #else
 static int VM_CandidateHandleWaitTill(const char **pos, unsigned int *localVarCount,
                                       VariableValue **top, VariableValue **startTop,
                                       unsigned int *localId, unsigned int *resultLocalId,
-                                      unsigned int *threadCount)
+                                      volatile unsigned int *threadCount)
 #endif
 {
     const char *archivePos = *pos;
@@ -7567,7 +7570,10 @@ static void VM_CandidateHandleEndOnCallback(unsigned int localId, VariableValue 
 
 #if defined(COD2_X64)
 static void VM_CandidateHandleSwitch(const char *volatile *pos, VariableValue *volatile *top,
-                                      volatile unsigned int *caseValueScratch)
+                                      volatile unsigned int *caseValueScratch,
+                                      volatile unsigned int *caseCountScratch,
+                                      volatile unsigned int *currentCaseValueScratch,
+                                      const char *volatile *currentCodePosScratch)
 #else
 static void VM_CandidateHandleSwitch(const char **pos, VariableValue **top)
 #endif
@@ -7585,6 +7591,9 @@ static void VM_CandidateHandleSwitch(const char **pos, VariableValue **top)
 
     *pos = tablePos;
     caseCount = VM_ReadU16(pos);
+#if defined(COD2_X64)
+    *caseCountScratch = caseCount;
+#endif
 
     if ((*top)->type == VAR_STRING) {
         caseValue = (*top)->u.stringValue;
@@ -7636,6 +7645,10 @@ static void VM_CandidateHandleSwitch(const char **pos, VariableValue **top)
         const char *currentCodePos = *(const char *const *)(*pos + 4);
 #    endif
         *pos += 8;
+#if defined(COD2_X64)
+        *currentCaseValueScratch = currentCaseValue;
+        *currentCodePosScratch = currentCodePos;
+#endif
 
         if (currentCaseValue == caseValue) {
             *pos = currentCodePos;
@@ -7643,6 +7656,7 @@ static void VM_CandidateHandleSwitch(const char **pos, VariableValue **top)
             return;
         }
 #if defined(COD2_X64)
+        --*caseCountScratch;
         if (!currentCaseValue && i + 1 == caseCount) {
 #else
         if (!currentCaseValue) {
@@ -7913,7 +7927,7 @@ static void VM_CandidateEnterCallNeighbor(unsigned int opcode, const char *volat
                                            volatile unsigned int *localVarCount,
                                            VariableValue *volatile *top,
                                            VariableValue *volatile *startTop,
-                                           unsigned int *threadCount)
+                                           volatile unsigned int *threadCount)
 {
     function_frame_t *frame;
 
@@ -8130,18 +8144,19 @@ static void VM_CandidateEnterMethodThreadCall(const char **pos, unsigned int *lo
 static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 {
     struct scrVarPub_t *varPub = (struct scrVarPub_t *)imp_scrVarPub;
-    unsigned int fieldValueId = 0;
-    unsigned int objectId = 0;
-    unsigned int waitTime = 0;
-    unsigned int caseCount = 0;
+
+    volatile unsigned int fieldValueId = 0;
+    volatile unsigned int objectId = 0;
+    volatile unsigned int waitTime = 0;
+    volatile unsigned int caseCount = 0;
 #if defined(COD2_X64)
     volatile unsigned int caseValue = 0;
 #else
     unsigned int caseValue = 0;
 #endif
-    unsigned int currentCaseValue = 0;
-    const char *currentCodePos = NULL;
-    unsigned int thread_count = 0;
+    volatile unsigned int currentCaseValue = 0;
+    const char *volatile currentCodePos = NULL;
+    volatile unsigned int thread_count = 0;
 #if defined(COD2_X64)
     /* Mac keeps these live frame fields in its by-value stack argument. Their
      * latest stores must survive longjmp, including stores made by helpers. */
@@ -8158,27 +8173,9 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
     VariableValue *startTop = fs.startTop;
 #endif
     unsigned int resultLocalId = 0;
-#if defined(COD2_X64)
-    /* Calls and entity setters can longjmp after modifying interpreter locals.
-     * Volatile state survives recovery under the C setjmp rules. */
-    volatile struct {
-        function_stack_t frame;
-        unsigned int fieldValueId;
-        unsigned int objectId;
-        unsigned int thread_count;
-        Bool active;
-        Bool returnsValue;
-    } errorCheckpoint = {0};
-    /* Mac's landing zeroes the opcode (0x86244), so its call unwind at
-     * 0x3299d8 never runs and execution resumes inside the call operands.
-     * Linux 0x8082350 runs that unwind and keeps the thread count. */
-    volatile struct {
-        unsigned int opcode;
-        unsigned int fieldValueId;
-        unsigned int objectId;
-        unsigned int thread_count;
-    } callError = {0};
-#endif
+    volatile unsigned int activeOpcode = 0;
+    VariableValue *volatile incErrorTop = NULL;
+    const char *volatile incErrorPos = NULL;
 
     (void)waitTime;
     (void)caseCount;
@@ -8190,44 +8187,162 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
     g_script_error_level++;
     if (setjmp(g_script_error[g_script_error_level])) {
 #if defined(COD2_X64)
-        /* Mac 0x8623d resets this scratch on every interpreter longjmp,
-         * including the native checkpoint path, before any later read. */
-        waitTime = 0;
-        /* Mac 0x8624d also resets the persistent switch key on every jump. */
-        caseValue = 0;
-        if (errorCheckpoint.active) {
-            pos = errorCheckpoint.frame.pos;
-            localId = errorCheckpoint.frame.localId;
-            localVarCount = errorCheckpoint.frame.localVarCount;
-            top = errorCheckpoint.frame.top;
-            startTop = errorCheckpoint.frame.startTop;
-            fieldValueId = errorCheckpoint.fieldValueId;
-            objectId = errorCheckpoint.objectId;
-            thread_count = errorCheckpoint.thread_count;
-        } else if (callError.opcode) {
-            fieldValueId = callError.fieldValueId;
-            objectId = callError.objectId;
-            thread_count = callError.thread_count;
-        } else {
-            /* Mac 0x8622f-0x86262 resets all interpreter scratch after a jump.
-             * Its zeroed opcode bypasses the recovery table at 0x862af. */
-            fieldValueId = 0;
-            objectId = 0;
-            caseCount = 0;
-            currentCaseValue = 0;
-            currentCodePos = NULL;
-            thread_count = 0;
+
+        /* Windows 1.3 VM_Execute 0x47d708..0x47db10. Diagnostic candidate. */
+        switch (activeOpcode) {
+        case 33: case 34: case 35: case 36: case 132:
+            if ((int)varPub->error_index < 0) varPub->error_index = 1;
+            break;
+        case 41: case 42: case 47: case 57: case 59: case 100: case 101:
+            varPub->error_index = 0;
+            break;
+        case 62: case 63: case 64: case 65: case 66: case 67: case 68:
+            if ((int)varPub->error_index > 0)
+                varPub->error_index = scrVmPub.outparamcount - varPub->error_index + 1;
+            break;
+        case 69: case 70: case 71: case 72: case 73: case 74: case 75:
+            if ((int)varPub->error_index > 0)
+                varPub->error_index = scrVmPub.outparamcount - varPub->error_index + 2;
+            else if ((int)varPub->error_index < 0) varPub->error_index = 1;
+            break;
         }
-#endif
         RuntimeError(pos, varPub->error_index, varPub->error_message,
                      ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message);
         varPub->error_message = NULL;
         ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message = NULL;
         varPub->error_index = 0;
-#if defined(COD2_X64)
-        if (errorCheckpoint.active) {
-            /* Mac VM_Execute's builtin recovery block at 0x86994 releases
-             * unconsumed parameters and produces an undefined result. */
+        switch (activeOpcode) {
+        case 45: case 46:
+            ClearVariableValue(varPub->tempVariable);
+            fieldValueId = varPub->tempVariable;
+            break;
+        case 33: case 34: case 35: case 132:
+            ClearVariableValue(varPub->tempVariable);
+            fieldValueId = varPub->tempVariable;
+            RemoveRefToValue(top->type, top->u);
+            --top;
+            break;
+        case 89:
+            ClearVariableValue(varPub->tempVariable);
+            objectId = GetObjectA(varPub->tempVariable);
+            --top;
+            break;
+        case 90:
+            ++pos;
+            /* fall through */
+        case 38:
+            ClearVariableValue(varPub->tempVariable);
+            objectId = GetObjectA(varPub->tempVariable);
+            break;
+        case 41: case 42:
+            top->type = VAR_UNDEFINED;
+            break;
+        case 47:
+            scrVmPub.outparamcount = 0;
+            break;
+        case 59:
+            RemoveRefToValue(top->type, top->u);
+            scrVmPub.outparamcount = 0;
+            --top;
+            break;
+        case 57:
+            if (scrVmPub.outparamcount) {
+                RemoveRefToValue(top->type, top->u);
+                scrVmPub.outparamcount = 0;
+            }
+            --top;
+            break;
+        case 62: case 63: case 64: case 65: case 66: case 67: case 68:
+        case 69: case 70: case 71: case 72: case 73: case 74: case 75:
+            while (scrVmPub.outparamcount) {
+                RemoveRefToValue(scrVmPub.top->type, scrVmPub.top->u);
+                --scrVmPub.top;
+                --scrVmPub.outparamcount;
+            }
+            /* Preserve native ownership cleanup of partial builtin returns. */
+            while (scrVmPub.inparamcount) {
+                RemoveRefToValue(scrVmPub.top->type, scrVmPub.top->u);
+                --scrVmPub.top;
+                --scrVmPub.inparamcount;
+            }
+            top = scrVmPub.top + 1;
+            top->type = VAR_UNDEFINED;
+            break;
+        case 99:
+            { const char *p = pos; unsigned int offset = (unsigned char)p[0] | ((unsigned char)p[1] << 8); pos += 2 - (int)offset; }
+            break;
+        case 119:
+            ++pos;
+            /* fall through */
+        case 120: case 122:
+            RemoveRefToValue(top->type, top->u);
+            --top;
+            RemoveRefToValue(top->type, top->u);
+            --top;
+            break;
+        case 31: case 32:
+            RemoveRefToValue(top->type, top->u);
+            --top;
+            RemoveRefToValue(top->type, top->u);
+            top->type = VAR_UNDEFINED;
+            break;
+        case 53:
+            while (top->type != 8) {
+                RemoveRefToValue(top->type, top->u);
+                --top;
+            }
+            top->type = 7;
+            break;
+        case 79: case 80: case 82:
+            pos += 4;
+            /* fall through */
+        case 81: case 83:
+            while (top->type != 8) {
+                RemoveRefToValue(top->type, top->u);
+                --top;
+            }
+            top->type = VAR_UNDEFINED;
+            break;
+        case 84: case 86:
+            pos += 4;
+            /* fall through */
+        case 85: case 87: {
+            unsigned int count = VM_ReadI32(&pos);
+            while (count--) {
+                RemoveRefToValue(top->type, top->u);
+                --top;
+            }
+            (++top)->type = VAR_UNDEFINED;
+            break;
+        }
+        case 94: case 95: case 96: case 97:
+            pos += 2;
+            --top;
+            break;
+        case 121:
+            while (top->type != 8) {
+                RemoveRefToValue(top->type, top->u);
+                --top;
+            }
+            RemoveRefToValue(top->type, top->u);
+            --top;
+            break;
+        case 124:
+            /* An empty table has no default; do not use stale case scratch. */
+            if (caseCount) {
+            while (caseCount) {
+                currentCaseValue = (unsigned int)VM_ReadI32(&pos);
+                unsigned int codeOffset = (unsigned int)VM_ReadI32(&pos);
+                currentCodePos = SCR_CODEPOS_PTR(codeOffset);
+                --caseCount;
+            }
+            if (!currentCaseValue) pos = currentCodePos;
+            }
+            RemoveRefToValue(top->type, top->u);
+            --top;
+            break;
+        /* Preserve native inc/dec cleanup after a getter or setter error. */
+        case 100: case 101:
             while (scrVmPub.outparamcount) {
                 RemoveRefToValue(scrVmPub.top->type, scrVmPub.top->u);
                 --scrVmPub.top;
@@ -8238,26 +8353,29 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
                 --scrVmPub.top;
                 --scrVmPub.inparamcount;
             }
-            if (errorCheckpoint.returnsValue) {
-                top = scrVmPub.top;
-                VM_PushValue(&top)->type = VAR_UNDEFINED;
-            } else {
-                /* Field assignment consumes its value without a result. An
-                 * inc/dec may fail before the setter establishes parameters. */
-                while (scrVmPub.top > errorCheckpoint.frame.top) {
-                    RemoveRefToValue(scrVmPub.top->type, scrVmPub.top->u);
-                    --scrVmPub.top;
-                }
-                top = errorCheckpoint.frame.top;
+            while (scrVmPub.top > incErrorTop) {
+                RemoveRefToValue(scrVmPub.top->type, scrVmPub.top->u);
+                --scrVmPub.top;
             }
-            errorCheckpoint.active = 0;
+            top = incErrorTop;
+            pos = incErrorPos;
+            break;
+        case 36: case 76:
+            RemoveRefToValue(top->type, top->u);
+            --top;
+            break;
+        case 102: case 103: case 104: case 105: case 106: case 107:
+        case 108: case 109: case 110: case 111: case 112: case 113:
+        case 114: case 115: case 116: case 117:
+            --top;
+            break;
         }
-        if (callError.opcode) {
-            VM_CallErrorContinuation continuation = VM_CandidateScriptCallRecovery(callError.opcode);
-
-            callError.opcode = 0;
-            VM_CandidateRecoverScriptCall(continuation, &pos, &top);
-        }
+    #else
+        RuntimeError(pos, varPub->error_index, varPub->error_message,
+                     ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message);
+        varPub->error_message = NULL;
+        ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message = NULL;
+        varPub->error_index = 0;
 #endif
     }
 
@@ -8285,42 +8403,17 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 #    endif
 
 #if defined(COD2_X64)
-        if ((opcode >= VMOP_CallBuiltin0 && opcode <= VMOP_CallBuiltinMethod) ||
-            opcode == VMOP_SetSelfFieldVariableField || opcode == VMOP_EvalLocalArrayRefCached0 ||
-            opcode == VMOP_Inc || opcode == VMOP_Dec) {
-            errorCheckpoint.active = 1;
-            errorCheckpoint.returnsValue = opcode >= VMOP_CallBuiltin0 && opcode <= VMOP_CallBuiltinMethod;
-            errorCheckpoint.frame.pos = pos;
-            if (errorCheckpoint.returnsValue)
-                errorCheckpoint.frame.pos += 2 +
-                    (opcode == VMOP_CallBuiltin || opcode == VMOP_CallBuiltinMethod);
-            else if (opcode == VMOP_SetSelfFieldVariableField)
-                errorCheckpoint.frame.pos += 2;
-            else if (opcode == VMOP_Inc || opcode == VMOP_Dec)
-                ++errorCheckpoint.frame.pos;
-            errorCheckpoint.frame.localId = localId;
-            errorCheckpoint.frame.localVarCount = localVarCount;
-            errorCheckpoint.frame.top = top;
-            if (!errorCheckpoint.returnsValue) {
-                scrVmPub.top = top;
-                if (opcode != VMOP_Inc && opcode != VMOP_Dec)
-                    --errorCheckpoint.frame.top;
-            }
-            errorCheckpoint.frame.startTop = startTop;
-            errorCheckpoint.fieldValueId = fieldValueId;
-            errorCheckpoint.objectId = objectId;
-            errorCheckpoint.thread_count = thread_count;
+        activeOpcode = opcode;
+        if (opcode == VMOP_Inc || opcode == VMOP_Dec) {
+            incErrorTop = top;
+            incErrorPos = pos + 1;
+            scrVmPub.top = top;
         }
         if (opcode >= VMOP_ScriptFunctionCallPointer && opcode <= VMOP_ScriptMethodThreadCallExpr) {
             VM_CallErrorContinuation continuation;
 
             /* A call check that jumps unwinds this call on landing. */
-            callError.opcode = opcode;
-            callError.fieldValueId = fieldValueId;
-            callError.objectId = objectId;
-            callError.thread_count = thread_count;
             continuation = VM_CandidateCheckScriptCall(opcode, &top);
-            callError.opcode = 0;
             if (continuation == VM_CALL_ENTER_NEIGHBOR) {
                 VM_CandidateEnterCallNeighbor(opcode, &pos, &localId, &localVarCount,
                                                &top, &startTop, &thread_count);
@@ -8584,11 +8677,19 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 #else
             VM_CandidateFieldObjectCheck(objectId);
 #endif
-            VM_PushPackedValue(&top, Scr_FindVariableField(objectId, VM_ReadU16(&pos)));
+            {
+                unsigned int name = VM_ReadU16(&pos);
+                ++top;
+                *top = VM_ValueFromPacked(Scr_FindVariableField(objectId, name));
+            }
             break;
 
         case VMOP_EvalFieldVariable:
-            VM_PushPackedValue(&top, Scr_FindVariableField(objectId, VM_ReadU16(&pos)));
+            {
+                unsigned int name = VM_ReadU16(&pos);
+                ++top;
+                *top = VM_ValueFromPacked(Scr_FindVariableField(objectId, name));
+            }
             break;
 
         case VMOP_EvalLevelFieldVariable:
@@ -8718,18 +8819,12 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             fieldValueId = Scr_GetVariableField(objectId, fieldName);
             SetVariableFieldValue(fieldValueId, top);
             top--;
-#if defined(COD2_X64)
-            errorCheckpoint.active = 0;
-#endif
             break;
         }
 
         case VMOP_EvalLocalArrayRefCached0:
             SetVariableFieldValue(fieldValueId, top);
             top--;
-#if defined(COD2_X64)
-            errorCheckpoint.active = 0;
-#endif
             break;
 
         case VMOP_SetLocalVariableFieldCached:
@@ -8846,7 +8941,8 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             break;
 
         case VMOP_EvalLocalVariableObjectCached:
-            objectId = Scr_EvalVariableObject(VM_LocalVarCacheId(*(const unsigned char *)pos++));
+            objectId = Scr_EvalVariableObject(VM_LocalVarCacheId(*(const unsigned char *)pos));
+            ++pos;
             break;
 
         case VMOP_Wait:
@@ -8875,17 +8971,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         case VMOP_CallBuiltin4:
         case VMOP_CallBuiltin5:
             VM_CandidateCallBuiltin(&pos, &top, opcode - VMOP_CallBuiltin0);
-#if defined(COD2_X64)
-            errorCheckpoint.active = 0;
-#endif
             break;
 
         case VMOP_CallBuiltin: {
             unsigned int paramCount = *(const unsigned char *)pos++;
             VM_CandidateCallBuiltin(&pos, &top, paramCount);
-#if defined(COD2_X64)
-            errorCheckpoint.active = 0;
-#endif
             break;
         }
 
@@ -8910,9 +9000,6 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 #else
             VM_CandidateCallBuiltinMethod(&pos, &top, opcode - VMOP_CallBuiltinMethod0);
 #endif
-#if defined(COD2_X64)
-            errorCheckpoint.active = 0;
-#endif
             break;
 
         case VMOP_CallBuiltinMethod: {
@@ -8927,9 +9014,6 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             }
 #else
             VM_CandidateCallBuiltinMethod(&pos, &top, paramCount);
-#endif
-#if defined(COD2_X64)
-            errorCheckpoint.active = 0;
 #endif
             break;
         }
@@ -9015,27 +9099,19 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 
         case VMOP_Inc:
 #if defined(COD2_X64)
-            if (VM_CandidateIncDecField(fieldValueId, &top, 1))
-                pos++;
+            VM_CandidateIncDecField(fieldValueId, &top, &pos, 1);
 #else
             VM_CandidateIncDecField(fieldValueId, &top, 1);
             pos++;
-#endif
-#if defined(COD2_X64)
-            errorCheckpoint.active = 0;
 #endif
             break;
 
         case VMOP_Dec:
 #if defined(COD2_X64)
-            if (VM_CandidateIncDecField(fieldValueId, &top, -1))
-                pos++;
+            VM_CandidateIncDecField(fieldValueId, &top, &pos, -1);
 #else
             VM_CandidateIncDecField(fieldValueId, &top, -1);
             pos++;
-#endif
-#if defined(COD2_X64)
-            errorCheckpoint.active = 0;
 #endif
             break;
 
@@ -9135,7 +9211,7 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 
         case VMOP_Switch:
 #if defined(COD2_X64)
-            VM_CandidateHandleSwitch(&pos, &top, &caseValue);
+            VM_CandidateHandleSwitch(&pos, &top, &caseValue, &caseCount, &currentCaseValue, &currentCodePos);
 #else
             VM_CandidateHandleSwitch(&pos, &top);
 #endif
