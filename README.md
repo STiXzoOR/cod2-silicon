@@ -9,7 +9,7 @@ Duty 2: no game content is included.
 
 ## Status
 
-The upcoming `0.3.0` release is playable on original 1.3 and CoD2x 1.4 servers, with a
+Version `0.3.0` is playable on original 1.3 and CoD2x 1.4 servers, with a
 native launcher, server browser and Config Studio. Movement, firing, grenades, mounted
 turrets, HTTP mod downloads and round restarts have been tested, and every
 menu is opened by an automated sweep. The picture is compared with the
@@ -35,9 +35,6 @@ Existing Windows 1.3 data works as it is. See
 
 ### Prebuilt app
 
-Version 0.3.0 has not been released. These steps apply when its archive appears
-on the Releases page; build from source to try the current launcher.
-
 1. Open [GitHub Releases](https://github.com/STiXzoOR/cod2-silicon/releases).
 2. Download `CoD2-Silicon-0.3.0-macos-arm64.zip` and `SHA256SUMS` into the same
    folder. Verify the archive, then unzip it:
@@ -48,13 +45,8 @@ on the Releases page; build from source to try the current launcher.
 
 3. Move **CoD2 Silicon.app** to `/Applications` and open it.
 
-The app is ad-hoc signed and **not notarized**. On macOS 15 and later, open it
-once, then go to **System Settings → Privacy & Security → Open Anyway**.
-Alternatively, after verifying your download:
-
-```sh
-xattr -dr com.apple.quarantine "/Applications/CoD2 Silicon.app"
-```
+The app is signed with a Developer ID and notarized by Apple, so it opens
+like any other downloaded app.
 
 ### From source
 

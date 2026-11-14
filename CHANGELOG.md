@@ -5,11 +5,12 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
-## [0.3.0] - Unreleased
+## [0.3.0] - 2026-11-14
 
-Renderer fixes are compared with the original Windows 1.3 behavior using
-replayed demos and targeted checks. Full rendering parity is still incomplete.
-The original shaders are built from your own game files.
+The port was audited against the original Windows 1.3 game, and its picture
+was compared with it on every stock map in replayed demos. The differences
+that remain are listed in the verification record. The original shaders are
+built from your own game files.
 [What was tested and what was not](docs/macos-port/release-0.3.0-verification.md).
 
 ### Fixed
@@ -277,8 +278,12 @@ The original shaders are built from your own game files.
 - With CoD2x on, voice chat is off, as in CoD2x. It works with the original
   1.3.
 - With CoD2x on, the game no longer writes its recommended graphics settings
-  into a new profile, as in CoD2x. The launcher supplies the same first-run
+  into a new profile, as in CoD2x. The launcher supplies the first-run
   picture, the 250 fps cap and raw mouse input unless your loadout sets them.
+- A new profile starts with glow, heat distortion, soft smoke and shadows on
+  in both engines, as the game recommends for its best graphics cards. The
+  game's own table does not know Apple graphics and used to turn them off.
+  Existing profiles keep their settings.
 - Crash reports from a CoD2x game are named `cod2x_crash.<date>_<time>.<pid>.log`
   and follow CoD2x's form; the original 1.3 keeps `cod2_crash_<pid>.txt`.
   Nothing is sent unless you turn a report switch on in Settings.
@@ -664,8 +669,8 @@ The original shaders are built from your own game files.
 Evidence and historical qualifications are preserved in the
 [workstream reports](docs/macos-port/README.md).
 
-[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.1...HEAD
-[0.3.0]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.1
 [0.2.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0
 [0.1.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.1.0
