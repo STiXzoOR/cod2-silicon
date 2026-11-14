@@ -154,6 +154,14 @@ extension Snapshots {
             }
             ConfigsPreview.click(window, element: cancel)
             await settle()
+            // AppKit can drop the first posted click after the system's folder panel closes, although the
+            // window is key and only this Cancel is listed (about half the runs; a click 0.7 s later
+            // always lands). The check is that Cancel leaves setup, so a dropped click is posted again.
+            if model.onboard {
+                await settle(700)
+                ConfigsPreview.click(window, element: cancel)
+                await settle()
+            }
             try require(!model.onboard && model.page == .library, "Cancel leaves Set Up Again for the page it came from (onboard \(model.onboard), page \(model.page), sheet \(window.attachedSheet != nil))")
             print("PASS: Set Up Again cancels from any step with nothing changed; a wrong folder names what's missing; Choose Folder attaches its panel")
 
