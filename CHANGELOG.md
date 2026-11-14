@@ -23,6 +23,7 @@ The original shaders are built from your own game files.
 - Dense effects now share the original fixed block arena and its allocation
   limits, including delayed effects and reuse across effect types.
 - CoD2x recognizes stock pack names with Windows filename case and separator rules.
+- CoD2x finds required and latest zPAM packs even after large lists of ignored packs.
 - CoD2x spectator labels no longer leave later HUD drawing clipped when a
   crowded frame runs out of render commands.
 

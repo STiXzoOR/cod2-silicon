@@ -1771,10 +1771,6 @@ static void FS_AddIwdFilesForGameDirectory(const char *path, const char *pszGame
 #endif
         numfiles = SV_Cod2xZpamFilterIwds(iwdfile, iwdfiles, numfiles);
 #endif
-    if (numfiles > 1024) {
-        Com_Printf("WARNING: Exceeded max number of iwd files in %s/%s (%1/%1)\n", path, pszGameFolder, numfiles, 1024);
-        numfiles = 1024;
-    }
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     {
@@ -1806,17 +1802,24 @@ static void FS_AddIwdFilesForGameDirectory(const char *path, const char *pszGame
             if (!selection.dedicated)
                 Cod2x_IwdLogFile(iwdfile, iwdfiles[i], reason);
 #endif
-            if (reason)
-                sorted[write++] = iwdfiles[i];
+            if (reason) {
+                /* Keep every allocated name for Sys_FreeFileList, as upstream does. */
+                char *excluded = iwdfiles[write];
+                iwdfiles[write++] = iwdfiles[i];
+                iwdfiles[i] = excluded;
+            }
         }
         numfiles = write;
     }
 #endif
 
+    if (numfiles > 1024) {
+        Com_Printf("WARNING: Exceeded max number of iwd files in %s/%s (%1/%1)\n", path, pszGameFolder, numfiles, 1024);
+        numfiles = 1024;
+    }
+
     for (i = 0; i < numfiles; i++) {
-#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
         sorted[i] = iwdfiles[i];
-#endif
         if (!I_strncmp(sorted[i], "localized_", 10)) {
             memset(sorted[i], ' ', 10);
         }
