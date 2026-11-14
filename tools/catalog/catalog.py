@@ -314,7 +314,10 @@ def startup_privacy_flag_additions(text, start, end, numbers, path, owner, name,
                        r'const\s+dvar_t\s*\*\s*privacy\s*=\s*$', text[:start])
     suffix = re.match(r';\s*matchEnabled\s*=\s*privacy\s*->\s*current\s*\.\s*enabled\s*;\s*'
                       r'(?P<addition>Dvar_AddFlags)\s*\(\s*privacy\s*,\s*(?P<flags>[^;]+?)\s*\)\s*;\s*'
-                      r'memset\s*\(\s*&match\s*,\s*0\s*,\s*sizeof\s*\(\s*match\s*\)\s*\)\s*;\s*}',
+                      r'memset\s*\(\s*&match\s*,\s*0\s*,\s*sizeof\s*\(\s*match\s*\)\s*\)\s*;\s*'
+                      # The frame-activity recorder set up after it does not touch the dvar.
+                      r'(?:memset\s*\(\s*&frameActivity\s*,\s*0\s*,\s*sizeof\s*\(\s*frameActivity\s*\)\s*\)\s*;\s*'
+                      r'cod2_frame_activity\s*=\s*matchEnabled\s*\?\s*&frameActivity\s*:\s*NULL\s*;\s*)?}',
                       text[end + 1:])
     if (path != 'src/PC/qcommon/match_summary.c' or owner != 'MatchSummary_Init'
             or not prefix or not suffix or not re.fullmatch(r'(?:64|0[xX]40)', suffix['flags'].strip())):
