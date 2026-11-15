@@ -34,6 +34,15 @@ const dvar_t *Dvar_RegisterInt(const char *name, int value, int min, int max, un
 }
 void Dvar_SetInt(const dvar_t *var, int value) { ((dvar_t *)var)->current.integer = value; }
 int Cod2x_ServerGameVersion(void) { return 0; }
+/* The update and address replies only compare the sender with the updater's or
+ * the master's address before reading one argument; those addresses need the
+ * server's registered settings and a name lookup, so both stay at the boundary. */
+void SV_Cod2xUpdateResponse(netadr_t from) { (void)from; }
+void SV_Cod2xIpResponse(netadr_t from) { (void)from; }
+void SV_Cod2xShowPacket(int sent, netadr_t address, const void *text, int length, int size)
+{
+    (void)sent; (void)address; (void)text; (void)length; (void)size;
+}
 qboolean Sys_IsLANAddress(netadr_t from) { return from.type == NA_LOOPBACK || from.type == NA_BOT; }
 #endif
 
