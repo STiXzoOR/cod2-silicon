@@ -360,5 +360,23 @@ void Init(void) {
                 self.assertEqual(entry['origins'], ['stock', 'cod2x'])
 
 
+class CommittedCopyTests(unittest.TestCase):
+    """The shipped catalogue and its authored descriptions, as committed."""
+
+    def test_every_registered_setting_is_described(self):
+        import json
+        here = Path(__file__).resolve().parent
+        shipped = json.loads((here.parents[1] / 'launcher/Resources/ConfigCatalog.json').read_text())
+        authored = json.loads((here / 'copy.json').read_text())['settings']
+        registered = [entry['name'].lower() for entry in shipped['settings'] if entry['availability'] == 'registered']
+        self.assertEqual([name for name in registered if name not in authored], [])
+        for name in registered:
+            for field in ('title', 'summary', 'details'):
+                self.assertTrue(authored[name].get(field, '').strip(), f'{name} has no {field}')
+        # The generator's stand-in text for a setting nobody described must not ship.
+        self.assertEqual([entry['name'] for entry in shipped['settings']
+                          if entry['summary'].startswith('An engine reference setting.')], [])
+
+
 if __name__ == '__main__':
     unittest.main()

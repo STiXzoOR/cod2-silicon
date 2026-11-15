@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceRevision": "f028e48499e50dd1a49519fc5e6b5b561179e92d",
+  "sourceRevision": "e35e900b91f5cbe048a7348290522770cef94d83",
   "groups": [
     {
       "id": "frame",
@@ -6023,10 +6023,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head icon scale",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head icon size",
+      "summary": "Scales the voice, connection and objective icons above heads.",
+      "details": "From 0 to 10, and 1 by default. It also lifts the labels to clear a larger icon, and applies to the game's own icons too.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:100"
       ],
@@ -6075,10 +6075,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head max distance",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head label range",
+      "summary": "The farthest distance at which head labels are drawn.",
+      "details": "From 0 to 10,000 game units, and 0 by default, which means no limit. Beyond the range the name, weapon and icon labels are not drawn. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:102"
       ],
@@ -6127,10 +6127,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head name alive",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head name, alive",
+      "summary": "Shows player names above their heads for your teammates while you play.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. Turning it on also hides the game's own name under the crosshair. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:95"
       ],
@@ -6179,10 +6179,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head name dead",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head name, dead",
+      "summary": "Shows player names above their heads while you are dead and watching a teammate.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. Turning it on also hides the game's own name under the crosshair. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:91"
       ],
@@ -6231,10 +6231,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head name scale",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head name size",
+      "summary": "Scales the player names and weapon names drawn above heads.",
+      "details": "From 0.3 to 3, and 1 by default. It changes the size of the name and weapon name labels only. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:98"
       ],
@@ -6283,10 +6283,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head name spectator",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head name, spectator",
+      "summary": "Shows player names above their heads while you spectate.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. Turning it on also hides the game's own name under the crosshair. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:87"
       ],
@@ -6335,10 +6335,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head nation icon alive",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head icon, alive",
+      "summary": "The icon above a player's head for your teammates while you play.",
+      "details": "Covers the icons the game draws over heads, such as voice and objective icons. 0 hides them, 1 keeps the game's standard icon, and 2 also shows it through walls. Turning on any other head label makes the standard icon follow the same rules. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:94"
       ],
@@ -6387,10 +6387,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head nation icon dead",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head icon, dead",
+      "summary": "The icon above a player's head while you are dead and watching a teammate.",
+      "details": "Covers the icons the game draws over heads, such as voice and objective icons. 0 hides them, 1 keeps the game's standard icon, and 2 also shows it through walls. Turning on any other head label makes the standard icon follow the same rules. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:90"
       ],
@@ -6439,10 +6439,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head nation icon spectator",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head icon, spectator",
+      "summary": "The icon above a player's head while you spectate.",
+      "details": "Covers the icons the game draws over heads, such as voice and objective icons. 0 hides them, 1 keeps the game's standard icon, and 2 also shows it through walls. Turning on any other head label makes the standard icon follow the same rules. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:86"
       ],
@@ -6491,10 +6491,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head offset",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head label height",
+      "summary": "Raises or lowers the labels and icons above players' heads.",
+      "details": "From -64 to 128 game units, and 0 by default. Positive values lift them higher; it applies to the game's own head icons as well.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:101"
       ],
@@ -6543,10 +6543,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head weapon icon alive",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head weapon icon, alive",
+      "summary": "Shows the weapon each player holds above their head for your teammates while you play.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. A grenade shows for five seconds after it is thrown. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:96"
       ],
@@ -6595,10 +6595,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head weapon icon dead",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head weapon icon, dead",
+      "summary": "Shows the weapon each player holds above their head while you are dead and watching a teammate.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. A grenade shows for five seconds after it is thrown. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:92"
       ],
@@ -6647,10 +6647,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head weapon icon scale",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head weapon icon size",
+      "summary": "Scales the weapon icons drawn above heads.",
+      "details": "From 0 to 3, and 1 by default. 0 hides the weapon icon. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:99"
       ],
@@ -6699,10 +6699,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head weapon icon spectator",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head weapon icon, spectator",
+      "summary": "Shows the weapon each player holds above their head while you spectate.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. A grenade shows for five seconds after it is thrown. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:88"
       ],
@@ -6751,10 +6751,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head weapon name alive",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head weapon name, alive",
+      "summary": "Shows the name of each player's weapon above their head for your teammates while you play.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. It draws a little smaller than the player name. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:97"
       ],
@@ -6803,10 +6803,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head weapon name dead",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head weapon name, dead",
+      "summary": "Shows the name of each player's weapon above their head while you are dead and watching a teammate.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. It draws a little smaller than the player name. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:93"
       ],
@@ -6855,10 +6855,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Head weapon name spectator",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head weapon name, spectator",
+      "summary": "Shows the name of each player's weapon above their head while you spectate.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. It draws a little smaller than the player name. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:89"
       ],
@@ -15588,10 +15588,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray style",
+      "summary": "A developer x-ray that shows players through walls, in one of four styles.",
+      "details": "From 0 (off) to 4, and 0 by default. It works only in demos or with cheats on, and the game locks it in normal play. 2 fills the hidden part of each player, 3 outlines them and 4 adds a glow; style 1 only marks the players and draws nothing in this port.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:68"
       ],
@@ -15640,10 +15640,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray center fade alpha",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray centre fade strength",
+      "summary": "How faint the x-ray becomes at the very middle of the screen.",
+      "details": "From 0 (invisible) to 1 (no fade), and 0.15 by default. It has no effect while the centre fade size is 0.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:75"
       ],
@@ -15692,10 +15692,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray center fade radius",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray centre fade size",
+      "summary": "How far from the middle of the screen the x-ray fades out.",
+      "details": "From 0 to 320, and 80 by default, in the menu's 640 by 480 screen units. 0 turns the fade off. The fade also applies to labels shown through walls.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:74"
       ],
@@ -15736,10 +15736,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray color allies",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray colour, Allies",
+      "summary": "The x-ray and name colour for Allied players.",
+      "details": "Empty by default, which uses the game's Allies team colour (blue if the game sets none). It also colours the player names shown above heads.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:81"
       ],
@@ -15780,10 +15780,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray color axis",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray colour, Axis",
+      "summary": "The x-ray and name colour for Axis players.",
+      "details": "Empty by default, which uses the game's Axis team colour (red if the game sets none). It also colours the player names shown above heads.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:80"
       ],
@@ -15832,10 +15832,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray dead",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray, dead",
+      "summary": "Chooses the x-ray style while you are dead and watching a teammate.",
+      "details": "0 is off, 1 outlines players and 2 adds a glow, and the default is 2. Players show through walls. It works in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:71"
       ],
@@ -15884,10 +15884,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray glow core intensity",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray glow core",
+      "summary": "How bright the tight core of the glow is.",
+      "details": "From 0 to 2, and 0.5 by default. It applies only to the glow style, on top of the wide glow.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:79"
       ],
@@ -15936,10 +15936,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray glow intensity",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray glow strength",
+      "summary": "How bright the wide glow is in the glow style.",
+      "details": "From 0 to 4, and 1 by default. It applies only to the glow style (4 for the cheat setting, 2 for the spectator and dead settings).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:78"
       ],
@@ -15980,10 +15980,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray health",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray health marking",
+      "summary": "Shows how hurt each player is, as part of the x-ray.",
+      "details": "On by default. It marks injured players only, from the head down in proportion to their health, and needs an x-ray style that fills or outlines (2 or more) and a server that tells you players' health.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:82"
       ],
@@ -16032,10 +16032,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray health alpha",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray health strength",
+      "summary": "How solid the health marking is.",
+      "details": "From 0 (invisible) to 1 (solid), and 0.8 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:84"
       ],
@@ -16076,10 +16076,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray health color",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray health colour",
+      "summary": "The colour of the health marking on the x-ray.",
+      "details": "Empty by default, which draws it red.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:83"
       ],
@@ -16128,10 +16128,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray hidden threshold",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray hidden margin",
+      "summary": "How far behind a surface a player must be to count as hidden.",
+      "details": "From 0 to 256, and 24 by default. A larger margin stops thin cover from hiding the x-ray; 0 turns the margin off.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:76"
       ],
@@ -16180,10 +16180,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray outline width",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray outline width",
+      "summary": "How thick the outline is in the outline style.",
+      "details": "From 0.5 to 4 pixels, and 1.5 by default. It does not change the glow style.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:77"
       ],
@@ -16232,10 +16232,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray spectator",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray, spectator",
+      "summary": "Chooses the x-ray style while you spectate.",
+      "details": "0 is off, 1 outlines players and 2 adds a glow, and the default is 2. Players show through walls. It works in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later).",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:70"
       ],
@@ -16276,10 +16276,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray visible dead",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray on visible, dead",
+      "summary": "Also draws the x-ray on players you can see while you are dead and watching a teammate.",
+      "details": "Off by default, so only players hidden behind something are marked. It applies when the matching x-ray setting is on.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:73"
       ],
@@ -16320,10 +16320,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Xray visible spectator",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "X-ray on visible, spectator",
+      "summary": "Also draws the x-ray on players you can see while you spectate.",
+      "details": "Off by default, so only players hidden behind something are marked. It applies when the matching x-ray setting is on.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_spectator.c:72"
       ],
@@ -16900,7 +16900,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/cod2x_runtime.c",
-              "line": 225236,
+              "line": 225260,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 64,
@@ -16929,7 +16929,7 @@
       "summary": "The CoD2x build this game reports.",
       "details": "The game fills this in itself and treats it as read-only.",
       "sources": [
-        "src/PC/qcommon/cod2x_runtime.c:225236"
+        "src/PC/qcommon/cod2x_runtime.c:225260"
       ],
       "guided": false,
       "control": {
@@ -17426,7 +17426,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/cod2x_runtime.c",
-              "line": 225252,
+              "line": 225276,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 18,
@@ -17461,11 +17461,11 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Hwid",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Short hardware ID",
+      "summary": "A number that CoD2x servers use to recognise your computer.",
+      "details": "The game works it out from details of your Mac and sends it to servers; it is read-only and never worth editing. A longer version is cl_hwid2.",
       "sources": [
-        "src/PC/qcommon/cod2x_runtime.c:225252"
+        "src/PC/qcommon/cod2x_runtime.c:225276"
       ],
       "guided": false,
       "control": {
@@ -17480,7 +17480,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/cod2x_runtime.c",
-              "line": 225254,
+              "line": 225278,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 18,
@@ -17511,7 +17511,7 @@
       "summary": "A long identity code CoD2x servers use to recognise your computer.",
       "details": "The game builds it itself and treats it as read-only. CoD2x servers use it for bans in place of PunkBuster IDs, and reject players who send no valid one. Never edit it.",
       "sources": [
-        "src/PC/qcommon/cod2x_runtime.c:225254"
+        "src/PC/qcommon/cod2x_runtime.c:225278"
       ],
       "guided": false,
       "control": {
@@ -17596,7 +17596,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/match_summary.c",
-              "line": 199,
+              "line": 208,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -17608,7 +17608,7 @@
               "flagAdditions": [
                 {
                   "path": "src/PC/qcommon/match_summary.c",
-                  "line": 201,
+                  "line": 210,
                   "mechanism": "Dvar_AddFlags",
                   "flags": 64
                 }
@@ -17666,7 +17666,7 @@
       "summary": "Save frame timing and connection measurements on this Mac after each match.",
       "details": "Change this in Settings › Privacy before starting the game. The launcher stores at most 200 summaries locally and never sends them anywhere. Turning it off prevents new summaries; earlier records remain. This choice belongs to this Mac, not to a loadout.",
       "sources": [
-        "src/PC/qcommon/match_summary.c:199",
+        "src/PC/qcommon/match_summary.c:208",
         "src/PC/qcommon/match_summary.c:63"
       ],
       "guided": false,
@@ -18556,10 +18556,10 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 226590,
+              "line": 226587,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
-              "flags": 4115,
+              "flags": 4179,
               "default": {
                 "status": "literal",
                 "value": false
@@ -18567,11 +18567,12 @@
               "name": "cl_punkbuster"
             }
           ],
-          "flags": 4115,
+          "flags": 4179,
           "flagNames": [
             "archive",
             "userinfo",
             "writeProtected",
+            "readOnly",
             "engineOwned"
           ],
           "flagsDynamic": false,
@@ -18606,10 +18607,9 @@
           "editable": false
         }
       },
-      "cod2x": "changed",
+      "cod2x": "unchanged",
       "origins": [
-        "stock",
-        "cod2x"
+        "stock"
       ],
       "group": "net",
       "title": "PunkBuster (your game)",
@@ -18617,7 +18617,7 @@
       "details": "The game's menu shows it as PunkBuster, and the game protects it from changes here. This version of the game cannot show that a working PunkBuster service exists, and CoD2x does not support PunkBuster. League rules disagree: ScrimBase wants it on, while FPSChallenge and the 2026 Polish championship want it off.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:226388",
-        "src/PC/client_mp/cl_main_mp.c:226590"
+        "src/PC/client_mp/cl_main_mp.c:226587"
       ],
       "guided": false,
       "control": {
@@ -19410,10 +19410,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Updateavailable",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "CoD2x update found",
+      "summary": "Whether the update check found a newer CoD2x.",
+      "details": "The game sets it itself when it checks for a CoD2x update; it is read-only and not a player setting. It is 1 only after a check found a newer version.",
       "sources": [
         "src/PC/qcommon/cod2x_features.c:266"
       ],
@@ -19455,10 +19455,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Updatefiles",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "CoD2x update address",
+      "summary": "Where the newer CoD2x version was announced to be.",
+      "details": "The game sets it itself when it checks for a CoD2x update; it is read-only and not a player setting. This Mac build does not install Windows updates; it opens the release page instead.",
       "sources": [
         "src/PC/qcommon/cod2x_features.c:267"
       ],
@@ -19500,10 +19500,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Updateoldversion",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "CoD2x version now",
+      "summary": "The CoD2x version this game is running.",
+      "details": "The game sets it itself when it checks for a CoD2x update; it is read-only and not a player setting. It is filled in when the update check finds a newer version.",
       "sources": [
         "src/PC/qcommon/cod2x_features.c:268"
       ],
@@ -19545,10 +19545,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Updateversion",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "CoD2x newer version",
+      "summary": "The newer CoD2x version the update check found.",
+      "details": "The game sets it itself when it checks for a CoD2x update; it is read-only and not a player setting. It is empty until a check finds one.",
       "sources": [
         "src/PC/qcommon/cod2x_features.c:269"
       ],
@@ -19589,10 +19589,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix control",
+      "summary": "Lets a match broadcast follow the player you spectate, using vMix.",
+      "details": "Off by default. While on and in a game, the game tells vMix over its web address to show the spectated player's camera and page when the server's scripts change who is spectated. It needs vMix, the broadcast software, running at the address in cl_vmix_cfg_url. Turning it off hides the cameras again.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:286"
       ],
@@ -19641,10 +19641,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera mode",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera mode",
+      "summary": "Chooses how the spectated player's camera is shown.",
+      "details": "1 switches the camera on in vMix, and 2 passes the camera's name to the browser page instead. The default is 1.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:302"
       ],
@@ -19693,10 +19693,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera overlay num",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix overlay number",
+      "summary": "Which vMix overlay (1 to 4) shows the player cameras.",
+      "details": "From 1 to 4, and 1 by default. It applies when the camera mode is 1.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:301"
       ],
@@ -19737,10 +19737,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player10 id",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 10 player",
+      "summary": "The hardware ID of the player whose camera is camera 10.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 10 is used.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:304"
       ],
@@ -19781,10 +19781,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player10 source name",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 10 input",
+      "summary": "The vMix input name for camera 10.",
+      "details": "Empty by default. This is the input switched on when its player is spectated.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:305"
       ],
@@ -19825,10 +19825,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player1 id",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 1 player",
+      "summary": "The hardware ID of the player whose camera is camera 1.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 1 is used.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:304"
       ],
@@ -19869,10 +19869,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player1 source name",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 1 input",
+      "summary": "The vMix input name for camera 1.",
+      "details": "Empty by default. This is the input switched on when its player is spectated.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:305"
       ],
@@ -19913,10 +19913,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player2 id",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 2 player",
+      "summary": "The hardware ID of the player whose camera is camera 2.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 2 is used.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:304"
       ],
@@ -19957,10 +19957,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player2 source name",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 2 input",
+      "summary": "The vMix input name for camera 2.",
+      "details": "Empty by default. This is the input switched on when its player is spectated.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:305"
       ],
@@ -20001,10 +20001,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player3 id",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 3 player",
+      "summary": "The hardware ID of the player whose camera is camera 3.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 3 is used.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:304"
       ],
@@ -20045,10 +20045,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player3 source name",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 3 input",
+      "summary": "The vMix input name for camera 3.",
+      "details": "Empty by default. This is the input switched on when its player is spectated.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:305"
       ],
@@ -20089,10 +20089,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player4 id",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 4 player",
+      "summary": "The hardware ID of the player whose camera is camera 4.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 4 is used.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:304"
       ],
@@ -20133,10 +20133,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player4 source name",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 4 input",
+      "summary": "The vMix input name for camera 4.",
+      "details": "Empty by default. This is the input switched on when its player is spectated.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:305"
       ],
@@ -20177,10 +20177,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player5 id",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 5 player",
+      "summary": "The hardware ID of the player whose camera is camera 5.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 5 is used.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:304"
       ],
@@ -20221,10 +20221,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player5 source name",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 5 input",
+      "summary": "The vMix input name for camera 5.",
+      "details": "Empty by default. This is the input switched on when its player is spectated.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:305"
       ],
@@ -20265,10 +20265,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player6 id",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 6 player",
+      "summary": "The hardware ID of the player whose camera is camera 6.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 6 is used.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:304"
       ],
@@ -20309,10 +20309,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player6 source name",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 6 input",
+      "summary": "The vMix input name for camera 6.",
+      "details": "Empty by default. This is the input switched on when its player is spectated.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:305"
       ],
@@ -20353,10 +20353,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player7 id",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 7 player",
+      "summary": "The hardware ID of the player whose camera is camera 7.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 7 is used.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:304"
       ],
@@ -20397,10 +20397,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player7 source name",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 7 input",
+      "summary": "The vMix input name for camera 7.",
+      "details": "Empty by default. This is the input switched on when its player is spectated.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:305"
       ],
@@ -20441,10 +20441,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player8 id",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 8 player",
+      "summary": "The hardware ID of the player whose camera is camera 8.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 8 is used.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:304"
       ],
@@ -20485,10 +20485,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player8 source name",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 8 input",
+      "summary": "The vMix input name for camera 8.",
+      "details": "Empty by default. This is the input switched on when its player is spectated.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:305"
       ],
@@ -20529,10 +20529,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player9 id",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 9 player",
+      "summary": "The hardware ID of the player whose camera is camera 9.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 9 is used.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:304"
       ],
@@ -20573,10 +20573,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg camera player9 source name",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix camera 9 input",
+      "summary": "The vMix input name for camera 9.",
+      "details": "Empty by default. This is the input switched on when its player is spectated.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:305"
       ],
@@ -20617,10 +20617,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg url",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix address",
+      "summary": "The web address of the vMix program the game controls.",
+      "details": "Empty by default; use the address of vMix's web controller, with no trailing slash. Nothing useful is sent without it while the vMix control is on.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:295"
       ],
@@ -20661,10 +20661,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg webbrowser source name",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix browser input",
+      "summary": "The name of the vMix browser input that shows the player page.",
+      "details": "Empty by default. The game points this input at a page with the spectated player's details.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:298"
       ],
@@ -20705,10 +20705,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg webbrowser url prefix",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix page address start",
+      "summary": "The start of the web page address given to the vMix browser input.",
+      "details": "Empty by default. The game adds the spectated player's ID, hardware ID, camera name, team, name and data after it. The input goes back to this address when the vMix control is turned off.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:296"
       ],
@@ -20749,10 +20749,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix cfg webbrowser url suffix",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix page address end",
+      "summary": "Meant for the end of the browser page address.",
+      "details": "It has no effect in this port: it is registered but nothing reads it.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:297"
       ],
@@ -20793,10 +20793,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix debug",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix debug messages",
+      "summary": "Prints each vMix request and answer in the console.",
+      "details": "Off by default. It is for people setting up the vMix link; it prints only while the vMix control is on.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:287"
       ],
@@ -20837,10 +20837,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix scr data",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix extra data",
+      "summary": "Extra match data the server passes to the vMix page.",
+      "details": "The server's scripts set it for the vMix control; it is not a player setting.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:293"
       ],
@@ -20881,10 +20881,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix scr player ids",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix player list",
+      "summary": "A player list the server could pass for vMix.",
+      "details": "The server's scripts set it for the vMix control; it is not a player setting. It has no effect in this port: it is registered but nothing reads it.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:294"
       ],
@@ -20925,10 +20925,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix scr spectated hwid",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix spectated hardware ID",
+      "summary": "The hardware ID of the player being spectated, for vMix.",
+      "details": "The server's scripts set it for the vMix control; it is not a player setting. A change here, or in the ID, makes the game send vMix its next instructions.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:292"
       ],
@@ -20969,10 +20969,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix scr spectated user id",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix spectated ID",
+      "summary": "The ID of the player being spectated, for vMix.",
+      "details": "The server's scripts set it for the vMix control; it is not a player setting.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:289"
       ],
@@ -21013,10 +21013,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix scr spectated user name",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix spectated name",
+      "summary": "The name of the player being spectated, for vMix.",
+      "details": "The server's scripts set it for the vMix control; it is not a player setting. A | in the name is turned into a space.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:290"
       ],
@@ -21057,10 +21057,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "net",
-      "title": "Vmix scr spectated user team",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "other",
+      "title": "vMix spectated team",
+      "summary": "The team of the player being spectated, for vMix.",
+      "details": "The server's scripts set it for the vMix control; it is not a player setting.",
       "sources": [
         "src/PC/qcommon/cod2x_vmix.c:291"
       ],
@@ -21563,7 +21563,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 775,
+              "line": 784,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -21634,7 +21634,7 @@
       "details": "The game treats this as read-only and sets it itself.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:519",
-        "src/PC/server_mp/sv_init_mp.c:775"
+        "src/PC/server_mp/sv_init_mp.c:784"
       ],
       "guided": false,
       "control": {
@@ -23874,7 +23874,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 829,
+              "line": 838,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4112,
@@ -23929,7 +23929,7 @@
       "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:444",
-        "src/PC/universal/com_files.c:829"
+        "src/PC/universal/com_files.c:838"
       ],
       "guided": false,
       "control": {
@@ -23944,7 +23944,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 828,
+              "line": 837,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4112,
@@ -24001,7 +24001,7 @@
       "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:443",
-        "src/PC/universal/com_files.c:828"
+        "src/PC/universal/com_files.c:837"
       ],
       "guided": false,
       "control": {
@@ -24016,7 +24016,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 827,
+              "line": 836,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4112,
@@ -24073,7 +24073,7 @@
       "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:442",
-        "src/PC/universal/com_files.c:827"
+        "src/PC/universal/com_files.c:836"
       ],
       "guided": false,
       "control": {
@@ -24088,7 +24088,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 826,
+              "line": 835,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4112,
@@ -24143,7 +24143,7 @@
       "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:441",
-        "src/PC/universal/com_files.c:826"
+        "src/PC/universal/com_files.c:835"
       ],
       "guided": false,
       "control": {
@@ -24158,7 +24158,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 825,
+              "line": 834,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -24227,7 +24227,7 @@
       "details": "A developer aid; its effect is not documented here. It runs from 0 to 2.",
       "sources": [
         "src/PC/universal/com_files.c:440",
-        "src/PC/universal/com_files.c:825"
+        "src/PC/universal/com_files.c:834"
       ],
       "guided": false,
       "control": {
@@ -24254,7 +24254,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_client_mp.c",
-              "line": 658,
+              "line": 667,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4124,
@@ -24266,7 +24266,7 @@
             },
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 843,
+              "line": 852,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4124,
@@ -24350,9 +24350,9 @@
       "sources": [
         "src/PC/client_mp/cl_ui_mp.c:387",
         "src/PC/server_mp/sv_client_mp.c:395",
-        "src/PC/server_mp/sv_client_mp.c:658",
+        "src/PC/server_mp/sv_client_mp.c:667",
         "src/PC/universal/com_files.c:458",
-        "src/PC/universal/com_files.c:843"
+        "src/PC/universal/com_files.c:852"
       ],
       "guided": false,
       "control": {
@@ -24367,7 +24367,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 842,
+              "line": 851,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4112,
@@ -24424,7 +24424,7 @@
       "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:457",
-        "src/PC/universal/com_files.c:842"
+        "src/PC/universal/com_files.c:851"
       ],
       "guided": false,
       "control": {
@@ -24451,7 +24451,7 @@
             },
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 845,
+              "line": 854,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4256,
@@ -24522,7 +24522,7 @@
         "src/PC/client_mp/cl_main_mp.c:228017",
         "src/PC/client_mp/cl_main_mp.c:228216",
         "src/PC/universal/com_files.c:460",
-        "src/PC/universal/com_files.c:845"
+        "src/PC/universal/com_files.c:854"
       ],
       "guided": false,
       "control": {
@@ -24537,7 +24537,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 844,
+              "line": 853,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4112,
@@ -24592,7 +24592,7 @@
       "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:459",
-        "src/PC/universal/com_files.c:844"
+        "src/PC/universal/com_files.c:853"
       ],
       "guided": false,
       "control": {
@@ -24607,7 +24607,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 830,
+              "line": 839,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -24660,7 +24660,7 @@
       "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/universal/com_files.c:445",
-        "src/PC/universal/com_files.c:830"
+        "src/PC/universal/com_files.c:839"
       ],
       "guided": false,
       "control": {
@@ -25759,7 +25759,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/cod2x_runtime.c",
-              "line": 225143,
+              "line": 225156,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 24,
@@ -25797,7 +25797,7 @@
       "summary": "Which level of CoD2x features the server you are on supports.",
       "details": "The server sets this and the game protects it from changes here. 0 means Original 1.3 behaviour, and CoD2x servers report 6, the current level. Some CoD2x fixes only switch on at certain levels.",
       "sources": [
-        "src/PC/qcommon/cod2x_runtime.c:225143"
+        "src/PC/qcommon/cod2x_runtime.c:225156"
       ],
       "guided": false,
       "control": {
@@ -25812,7 +25812,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/cod2x_runtime.c",
-              "line": 225149,
+              "line": 225162,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flagsExpression": "dedicated ? 0x1008 : 0x1018",
@@ -25848,7 +25848,7 @@
       "summary": "Whether the server has switched on CoD2x's competitive rules.",
       "details": "The server sets this and the game protects it from changes here. When it is on, your CoD2x game keeps the frame rate cap between 125 and 250, connection speed at 25,000, updates you receive at 40, updates you send at 125, shadows off, effect sorting on and the sound file system on, and it blocks the wait command once you are connected. zPAM 4's code turns it on in every mode, including public games. Your game turns it off again when you disconnect.",
       "sources": [
-        "src/PC/qcommon/cod2x_runtime.c:225149"
+        "src/PC/qcommon/cod2x_runtime.c:225162"
       ],
       "guided": false,
       "control": {
@@ -26693,7 +26693,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 703,
+              "line": 712,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4132,
@@ -26776,7 +26776,7 @@
         "src/PC/game_mp/g_main_mp.c:1109",
         "src/PC/server_mp/sv_game_mp.c:400",
         "src/PC/server_mp/sv_init_mp.c:447",
-        "src/PC/server_mp/sv_init_mp.c:703"
+        "src/PC/server_mp/sv_init_mp.c:712"
       ],
       "guided": false,
       "control": {
@@ -28057,7 +28057,7 @@
             },
             {
               "path": "src/PC/qcommon/cod2x_runtime.c",
-              "line": 225151,
+              "line": 225168,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4224,
@@ -28088,7 +28088,7 @@
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. CoD2x only. The server picks one of two fixed patterns for each shot.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1119",
-        "src/PC/qcommon/cod2x_runtime.c:225151"
+        "src/PC/qcommon/cod2x_runtime.c:225168"
       ],
       "guided": false,
       "control": {
@@ -33843,7 +33843,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 713,
+              "line": 722,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4164,
@@ -33914,7 +33914,7 @@
         "src/PC/game_mp/g_cmds_mp.c:460",
         "src/PC/game_mp/g_cmds_mp.c:524",
         "src/PC/server_mp/sv_init_mp.c:457",
-        "src/PC/server_mp/sv_init_mp.c:713"
+        "src/PC/server_mp/sv_init_mp.c:722"
       ],
       "guided": false,
       "control": {
@@ -35262,7 +35262,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 771,
+              "line": 780,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -35315,7 +35315,7 @@
       "details": "It only matters on a server you host. The default is empty.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:515",
-        "src/PC/server_mp/sv_init_mp.c:771"
+        "src/PC/server_mp/sv_init_mp.c:780"
       ],
       "guided": false,
       "control": {
@@ -38410,7 +38410,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 711,
+              "line": 720,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4164,
@@ -38487,7 +38487,7 @@
       "details": "Read-only. Original 1.3 uses 118 and CoD2x servers use 120.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:452",
-        "src/PC/server_mp/sv_init_mp.c:711"
+        "src/PC/server_mp/sv_init_mp.c:720"
       ],
       "guided": false,
       "control": {
@@ -38502,7 +38502,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/cod2x_runtime.c",
-              "line": 225235,
+              "line": 225259,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 66,
@@ -38540,7 +38540,7 @@
       "summary": "The CoD2x protocol level your game announces when it connects.",
       "details": "Fixed at 6 and read-only. CoD2x servers turn away clients that send 0 or a lower level than their own.",
       "sources": [
-        "src/PC/qcommon/cod2x_runtime.c:225235"
+        "src/PC/qcommon/cod2x_runtime.c:225259"
       ],
       "guided": false,
       "control": {
@@ -40740,9 +40740,9 @@
         "cod2x"
       ],
       "group": "gfx",
-      "title": "Film tweak brightness",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Brightness",
+      "summary": "Makes the whole picture lighter or darker.",
+      "details": "From -1 to 1, and 0 (unchanged) by default. It needs the colour adjustment switch on.",
       "sources": [
         "src/PC/gfx_d3d/r_cod2x_film.c:26"
       ],
@@ -40797,9 +40797,9 @@
         "cod2x"
       ],
       "group": "gfx",
-      "title": "Film tweak color",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Colour balance",
+      "summary": "Multiplies the red, green and blue of the whole picture.",
+      "details": "Three numbers from 0 to 2, and 1 1 1 (unchanged) by default. It needs the colour adjustment switch on.",
       "sources": [
         "src/PC/gfx_d3d/r_cod2x_film.c:30"
       ],
@@ -40850,9 +40850,9 @@
         "cod2x"
       ],
       "group": "gfx",
-      "title": "Film tweak contrast",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Contrast",
+      "summary": "Makes light and dark areas of the picture more or less different.",
+      "details": "From 0 to 4, and 1 (unchanged) by default. Below 1 flattens the picture and above 1 strengthens it. It needs the colour adjustment switch on.",
       "sources": [
         "src/PC/gfx_d3d/r_cod2x_film.c:25"
       ],
@@ -40907,9 +40907,9 @@
         "cod2x"
       ],
       "group": "gfx",
-      "title": "Film tweak dark tint",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shadow tint",
+      "summary": "Tints the dark parts of the picture.",
+      "details": "Three numbers (red, green, blue) from 0 to 2, and 1 1 1 (unchanged) by default. It needs the colour adjustment switch on.",
       "sources": [
         "src/PC/gfx_d3d/r_cod2x_film.c:31"
       ],
@@ -40952,9 +40952,9 @@
         "cod2x"
       ],
       "group": "gfx",
-      "title": "Film tweak enable",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Colour adjustment",
+      "summary": "Switches the CoD2x picture colour adjustments on or off.",
+      "details": "On by default, and the other colour adjustments change nothing until you move them. It affects the 3D view.",
       "sources": [
         "src/PC/gfx_d3d/r_cod2x_film.c:24"
       ],
@@ -41005,9 +41005,9 @@
         "cod2x"
       ],
       "group": "gfx",
-      "title": "Film tweak gamma",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Gamma",
+      "summary": "Lifts or lowers the mid-tones of the picture.",
+      "details": "From 0.5 to 2, and 1 (unchanged) by default. Higher values brighten the mid-tones. It needs the colour adjustment switch on.",
       "sources": [
         "src/PC/gfx_d3d/r_cod2x_film.c:27"
       ],
@@ -41062,9 +41062,9 @@
         "cod2x"
       ],
       "group": "gfx",
-      "title": "Film tweak light tint",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Highlight tint",
+      "summary": "Tints the bright parts of the picture.",
+      "details": "Three numbers (red, green, blue) from 0 to 2, and 1 1 1 (unchanged) by default. It needs the colour adjustment switch on.",
       "sources": [
         "src/PC/gfx_d3d/r_cod2x_film.c:32"
       ],
@@ -41115,9 +41115,9 @@
         "cod2x"
       ],
       "group": "gfx",
-      "title": "Film tweak saturation",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Colour saturation",
+      "summary": "How vivid the colours are.",
+      "details": "From 0 (black and white) to 2, and 1 (unchanged) by default. It needs the colour adjustment switch on.",
       "sources": [
         "src/PC/gfx_d3d/r_cod2x_film.c:28"
       ],
@@ -41168,9 +41168,9 @@
         "cod2x"
       ],
       "group": "gfx",
-      "title": "Film tweak sky saturation",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sky saturation",
+      "summary": "How vivid the colours of the sky are.",
+      "details": "From 0 to 2, and 1 (unchanged) by default. When it differs from the colour saturation, the sky and the rest of the scene are adjusted separately. It needs the colour adjustment switch on.",
       "sources": [
         "src/PC/gfx_d3d/r_cod2x_film.c:29"
       ],
@@ -50781,7 +50781,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 742,
+              "line": 751,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -50834,7 +50834,7 @@
       "details": "Treat it as private. It is not saved to your config.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:486",
-        "src/PC/server_mp/sv_init_mp.c:742"
+        "src/PC/server_mp/sv_init_mp.c:751"
       ],
       "guided": false,
       "control": {
@@ -54658,7 +54658,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 730,
+              "line": 739,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4100,
@@ -54713,7 +54713,7 @@
       "details": "Off by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:474",
-        "src/PC/server_mp/sv_init_mp.c:730"
+        "src/PC/server_mp/sv_init_mp.c:739"
       ],
       "guided": false,
       "control": {
@@ -54728,7 +54728,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 747,
+              "line": 756,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -54783,7 +54783,7 @@
       "details": "On by default. Downloads through a web address are controlled separately.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:491",
-        "src/PC/server_mp/sv_init_mp.c:747"
+        "src/PC/server_mp/sv_init_mp.c:756"
       ],
       "guided": false,
       "control": {
@@ -54798,7 +54798,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 756,
+              "line": 765,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -54851,7 +54851,7 @@
       "details": "Its purpose is not documented.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:500",
-        "src/PC/server_mp/sv_init_mp.c:756"
+        "src/PC/server_mp/sv_init_mp.c:765"
       ],
       "guided": false,
       "control": {
@@ -54866,7 +54866,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 757,
+              "line": 766,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -54919,7 +54919,7 @@
       "details": "Its purpose is not documented.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:501",
-        "src/PC/server_mp/sv_init_mp.c:757"
+        "src/PC/server_mp/sv_init_mp.c:766"
       ],
       "guided": false,
       "control": {
@@ -54958,7 +54958,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 735,
+              "line": 744,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4120,
@@ -55069,12 +55069,65 @@
         "src/PC/game_mp/g_main_mp.c:1101",
         "src/PC/gfx_d3d/r_dvars.c:570",
         "src/PC/server_mp/sv_init_mp.c:479",
-        "src/PC/server_mp/sv_init_mp.c:735",
+        "src/PC/server_mp/sv_init_mp.c:744",
         "src/PC/universal/dvar.c:2115"
       ],
       "guided": false,
       "control": {
         "kind": "switch"
+      }
+    },
+    {
+      "name": "sv_cod2xRevision",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/qcommon/cod2x_runtime.c",
+              "line": 225165,
+              "mechanism": "Dvar_RegisterInt",
+              "type": "int",
+              "flags": 4128,
+              "default": {
+                "status": "literal",
+                "value": 7
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 6
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 7
+              },
+              "name": "sv_cod2xRevision"
+            }
+          ],
+          "flags": 4128,
+          "flagNames": [
+            "latched",
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "CoD2x version of your server",
+      "summary": "Which CoD2x a server you host runs as: the released 1.4.6.8, or the next one.",
+      "details": "6 is the released CoD2x 1.4.6.8, which players on Windows and Linux have; 7, the default, follows CoD2x's current source, which only CoD2 Silicon has so far. A server takes players on its own version or a newer one, so at 7 it turns released-CoD2x players away and at 6 it takes both. At 6, what only the next CoD2x has (coloured text codes, spectator x-ray, killfeed icons) stays off. It is read when the server starts: Hosting's \"Let CoD2x 1.4.6.8 players join\" sets it, and changing it in a running game does nothing.",
+      "sources": [
+        "src/PC/qcommon/cod2x_runtime.c:225165"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
       }
     },
     {
@@ -55129,7 +55182,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 763,
+              "line": 772,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -55182,7 +55235,7 @@
       "details": "A developer aid for servers you host.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:507",
-        "src/PC/server_mp/sv_init_mp.c:763"
+        "src/PC/server_mp/sv_init_mp.c:772"
       ],
       "guided": false,
       "control": {
@@ -55197,7 +55250,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 764,
+              "line": 773,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -55250,7 +55303,7 @@
       "details": "No effect is documented for it.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:508",
-        "src/PC/server_mp/sv_init_mp.c:764"
+        "src/PC/server_mp/sv_init_mp.c:773"
       ],
       "guided": false,
       "control": {
@@ -55277,7 +55330,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 732,
+              "line": 741,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4104,
@@ -55345,7 +55398,7 @@
       "sources": [
         "src/Mac/Main/mac_main.c:550",
         "src/PC/server_mp/sv_init_mp.c:476",
-        "src/PC/server_mp/sv_init_mp.c:732"
+        "src/PC/server_mp/sv_init_mp.c:741"
       ],
       "guided": false,
       "control": {
@@ -55360,7 +55413,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 729,
+              "line": 738,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4101,
@@ -55417,7 +55470,7 @@
       "details": "On by default. Team changes and score requests are exempt, and extra commands are ignored without removing the player.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:473",
-        "src/PC/server_mp/sv_init_mp.c:729"
+        "src/PC/server_mp/sv_init_mp.c:738"
       ],
       "guided": false,
       "control": {
@@ -55432,7 +55485,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 744,
+              "line": 753,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -55501,7 +55554,7 @@
       "details": "From 10 to 1,000, and 20 by default. It also caps how many updates per second any player can receive. zPAM's competitive rules default to 30 and support 40 on CoD2x. It is a server setting, not something you tune for yourself.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:488",
-        "src/PC/server_mp/sv_init_mp.c:744"
+        "src/PC/server_mp/sv_init_mp.c:753"
       ],
       "guided": false,
       "control": {
@@ -55561,7 +55614,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 716,
+              "line": 725,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4101,
@@ -55618,7 +55671,7 @@
       "details": "It is shown in server lists and can be up to 32 characters in the game's Create Server menu. It is separate from your player name.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:460",
-        "src/PC/server_mp/sv_init_mp.c:716"
+        "src/PC/server_mp/sv_init_mp.c:725"
       ],
       "guided": false,
       "control": {
@@ -55634,7 +55687,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 739,
+              "line": 748,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4168,
@@ -55691,7 +55744,7 @@
       "details": "The server sets this and your game treats it as read-only. While you are connected, the CoD2x client loads only these files plus the game's own.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:483",
-        "src/PC/server_mp/sv_init_mp.c:739"
+        "src/PC/server_mp/sv_init_mp.c:748"
       ],
       "guided": false,
       "control": {
@@ -55706,7 +55759,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 738,
+              "line": 747,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4168,
@@ -55763,7 +55816,7 @@
       "details": "The server sets this and your game treats it as read-only.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:482",
-        "src/PC/server_mp/sv_init_mp.c:738"
+        "src/PC/server_mp/sv_init_mp.c:747"
       ],
       "guided": false,
       "control": {
@@ -55778,7 +55831,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 704,
+              "line": 713,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4100,
@@ -55833,7 +55886,7 @@
       "details": "Empty by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:448",
-        "src/PC/server_mp/sv_init_mp.c:704"
+        "src/PC/server_mp/sv_init_mp.c:713"
       ],
       "guided": false,
       "control": {
@@ -55848,7 +55901,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 760,
+              "line": 769,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4096,
@@ -55917,7 +55970,7 @@
       "details": "From 0 to 3,600 seconds, 300 by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:504",
-        "src/PC/server_mp/sv_init_mp.c:760"
+        "src/PC/server_mp/sv_init_mp.c:769"
       ],
       "guided": false,
       "control": {
@@ -56003,7 +56056,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 761,
+              "line": 770,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -56056,7 +56109,7 @@
       "details": "Written as pairs of the words gametype and map followed by names, for example a game type, then a map. The server keeps the maps still to come in a separate setting.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:505",
-        "src/PC/server_mp/sv_init_mp.c:761"
+        "src/PC/server_mp/sv_init_mp.c:770"
       ],
       "guided": false,
       "control": {
@@ -56071,7 +56124,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 762,
+              "line": 771,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -56124,7 +56177,7 @@
       "details": "The server fills this in itself.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:506",
-        "src/PC/server_mp/sv_init_mp.c:762"
+        "src/PC/server_mp/sv_init_mp.c:771"
       ],
       "guided": false,
       "control": {
@@ -56293,7 +56346,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 715,
+              "line": 724,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4133,
@@ -56313,7 +56366,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 1058,
+              "line": 1067,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4133,
@@ -56333,7 +56386,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 1127,
+              "line": 1136,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4133,
@@ -56468,10 +56521,10 @@
       "details": "From 1 to 64, with 20 as the default. It is latched and applies after the map restarts. It only affects a server you host.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1110",
-        "src/PC/server_mp/sv_init_mp.c:1058",
-        "src/PC/server_mp/sv_init_mp.c:1127",
+        "src/PC/server_mp/sv_init_mp.c:1067",
+        "src/PC/server_mp/sv_init_mp.c:1136",
         "src/PC/server_mp/sv_init_mp.c:459",
-        "src/PC/server_mp/sv_init_mp.c:715",
+        "src/PC/server_mp/sv_init_mp.c:724",
         "src/PC/server_mp/sv_init_mp.c:802",
         "src/PC/server_mp/sv_init_mp.c:871"
       ],
@@ -56489,7 +56542,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 728,
+              "line": 737,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4101,
@@ -56562,7 +56615,7 @@
       "details": "It is checked only at the moment someone connects, not afterwards, and local network players are exempt. It affects a server you host, not your own connection.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:472",
-        "src/PC/server_mp/sv_init_mp.c:728"
+        "src/PC/server_mp/sv_init_mp.c:737"
       ],
       "guided": false,
       "control": {
@@ -56578,7 +56631,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 726,
+              "line": 735,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4101,
@@ -56651,7 +56704,7 @@
       "details": "0 means no limit and the highest allowed is 25,000. The server uses the smaller of this and each player's own connection speed. zPAM sets it to 25,000.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:470",
-        "src/PC/server_mp/sv_init_mp.c:726"
+        "src/PC/server_mp/sv_init_mp.c:735"
       ],
       "guided": false,
       "control": {
@@ -56667,7 +56720,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 727,
+              "line": 736,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4101,
@@ -56740,7 +56793,7 @@
       "details": "It is checked only at the moment someone connects, not afterwards, and local network players are exempt. It affects a server you host.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:471",
-        "src/PC/server_mp/sv_init_mp.c:727"
+        "src/PC/server_mp/sv_init_mp.c:736"
       ],
       "guided": false,
       "control": {
@@ -56756,7 +56809,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 758,
+              "line": 767,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -56809,7 +56862,7 @@
       "details": "No effect is documented for it.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:502",
-        "src/PC/server_mp/sv_init_mp.c:758"
+        "src/PC/server_mp/sv_init_mp.c:767"
       ],
       "guided": false,
       "control": {
@@ -56824,7 +56877,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 749,
+              "line": 758,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -56893,7 +56946,7 @@
       "details": "A test aid with 0 as the default. Never use it on a live server.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:493",
-        "src/PC/server_mp/sv_init_mp.c:749"
+        "src/PC/server_mp/sv_init_mp.c:758"
       ],
       "guided": false,
       "control": {
@@ -57013,7 +57066,7 @@
             },
             {
               "path": "src/PC/qcommon/cod2x_runtime.c",
-              "line": 225150,
+              "line": 225167,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -57051,7 +57104,7 @@
       "details": "From 0 to 64, 15 by default, and 0 turns it off. It fixes missing sounds from players outside your view. CoD2x servers only.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1118",
-        "src/PC/qcommon/cod2x_runtime.c:225150"
+        "src/PC/qcommon/cod2x_runtime.c:225167"
       ],
       "guided": false,
       "control": {
@@ -57066,7 +57119,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 714,
+              "line": 723,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4100,
@@ -57137,7 +57190,7 @@
       "details": "From 0 to 64, 0 by default. These slots come out of the server's total player slots, and the private password is set separately.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:458",
-        "src/PC/server_mp/sv_init_mp.c:714"
+        "src/PC/server_mp/sv_init_mp.c:723"
       ],
       "guided": false,
       "control": {
@@ -57152,7 +57205,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 743,
+              "line": 752,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -57205,7 +57258,7 @@
       "details": "Treat it as private. Empty by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:487",
-        "src/PC/server_mp/sv_init_mp.c:743"
+        "src/PC/server_mp/sv_init_mp.c:752"
       ],
       "guided": false,
       "control": {
@@ -57220,10 +57273,10 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 723,
+              "line": 729,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
-              "flags": 4117,
+              "flags": 4181,
               "default": {
                 "status": "literal",
                 "value": false
@@ -57231,11 +57284,12 @@
               "name": "sv_punkbuster"
             }
           ],
-          "flags": 4117,
+          "flags": 4181,
           "flagNames": [
             "archive",
             "serverinfo",
             "writeProtected",
+            "readOnly",
             "engineOwned"
           ],
           "flagsDynamic": false,
@@ -57270,10 +57324,9 @@
           "editable": false
         }
       },
-      "cod2x": "changed",
+      "cod2x": "unchanged",
       "origins": [
-        "stock",
-        "cod2x"
+        "stock"
       ],
       "group": "net",
       "title": "PunkBuster (your server)",
@@ -57281,7 +57334,7 @@
       "details": "The game's Create Server menu shows it as PunkBuster, and the game protects it from changes here. This version of the game cannot show that a working PunkBuster service exists.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:464",
-        "src/PC/server_mp/sv_init_mp.c:723"
+        "src/PC/server_mp/sv_init_mp.c:729"
       ],
       "guided": false,
       "control": {
@@ -57297,7 +57350,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 737,
+              "line": 746,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4108,
@@ -57354,7 +57407,7 @@
       "details": "Players with modified game files are dropped. zPAM forces it on, and league rules forbid modified game files. It does not change checks on a server someone else hosts.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:481",
-        "src/PC/server_mp/sv_init_mp.c:737"
+        "src/PC/server_mp/sv_init_mp.c:746"
       ],
       "guided": false,
       "control": {
@@ -57518,7 +57571,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 748,
+              "line": 757,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -57589,7 +57642,7 @@
       "details": "From 0 to 1,800 seconds, 3 by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:492",
-        "src/PC/server_mp/sv_init_mp.c:748"
+        "src/PC/server_mp/sv_init_mp.c:757"
       ],
       "guided": false,
       "control": {
@@ -57604,7 +57657,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 741,
+              "line": 750,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4168,
@@ -57661,7 +57714,7 @@
       "details": "The server sets this and your game treats it as read-only.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:485",
-        "src/PC/server_mp/sv_init_mp.c:741"
+        "src/PC/server_mp/sv_init_mp.c:750"
       ],
       "guided": false,
       "control": {
@@ -57676,7 +57729,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 740,
+              "line": 749,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4168,
@@ -57733,7 +57786,7 @@
       "details": "The server sets this and your game treats it as read-only.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:484",
-        "src/PC/server_mp/sv_init_mp.c:740"
+        "src/PC/server_mp/sv_init_mp.c:749"
       ],
       "guided": false,
       "control": {
@@ -57817,7 +57870,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 736,
+              "line": 745,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4168,
@@ -57890,7 +57943,7 @@
       "details": "The server sets this and your game treats it as read-only.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:480",
-        "src/PC/server_mp/sv_init_mp.c:736"
+        "src/PC/server_mp/sv_init_mp.c:745"
       ],
       "guided": false,
       "control": {
@@ -57905,7 +57958,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 759,
+              "line": 768,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -57958,7 +58011,7 @@
       "details": "No effect is documented for it.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:503",
-        "src/PC/server_mp/sv_init_mp.c:759"
+        "src/PC/server_mp/sv_init_mp.c:768"
       ],
       "guided": false,
       "control": {
@@ -57973,7 +58026,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 731,
+              "line": 740,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -58026,7 +58079,7 @@
       "details": "No effect is documented for it.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:475",
-        "src/PC/server_mp/sv_init_mp.c:731"
+        "src/PC/server_mp/sv_init_mp.c:740"
       ],
       "guided": false,
       "control": {
@@ -58041,7 +58094,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 745,
+              "line": 754,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -58110,7 +58163,7 @@
       "details": "From 0 to 1,800 seconds, 240 by default. A vanished player can hold their slot for about this long.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:489",
-        "src/PC/server_mp/sv_init_mp.c:745"
+        "src/PC/server_mp/sv_init_mp.c:754"
       ],
       "guided": false,
       "control": {
@@ -58213,7 +58266,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 733,
+              "line": 742,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4109,
@@ -58272,7 +58325,7 @@
       "details": "The game's Create Server menu has a Voice Chat switch for this. A player only gets voice if their connection speed is 5,000 or more.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:477",
-        "src/PC/server_mp/sv_init_mp.c:733"
+        "src/PC/server_mp/sv_init_mp.c:742"
       ],
       "guided": false,
       "control": {
@@ -58288,7 +58341,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 734,
+              "line": 743,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4104,
@@ -58359,7 +58412,7 @@
       "details": "From 0 to 9, 1 by default. The server sends this to players as part of its system information.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:478",
-        "src/PC/server_mp/sv_init_mp.c:734"
+        "src/PC/server_mp/sv_init_mp.c:743"
       ],
       "guided": false,
       "control": {
@@ -59814,7 +59867,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 778,
+              "line": 787,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4097,
@@ -59869,7 +59922,7 @@
       "details": "Empty by default. zPAM asks for a valid address and suggests one for people who have none.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:522",
-        "src/PC/server_mp/sv_init_mp.c:778"
+        "src/PC/server_mp/sv_init_mp.c:787"
       ],
       "guided": false,
       "control": {
@@ -59884,7 +59937,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 779,
+              "line": 788,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -59939,7 +59992,7 @@
       "details": "Off by default. zPAM's server config turns it off.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:523",
-        "src/PC/server_mp/sv_init_mp.c:779"
+        "src/PC/server_mp/sv_init_mp.c:788"
       ],
       "guided": false,
       "control": {
@@ -59954,7 +60007,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 777,
+              "line": 786,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -60009,7 +60062,7 @@
       "details": "Off by default. Players also need their own redirected downloads setting on. zPAM expects it on, with a valid web address, so its maps download quickly.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:521",
-        "src/PC/server_mp/sv_init_mp.c:777"
+        "src/PC/server_mp/sv_init_mp.c:786"
       ],
       "guided": false,
       "control": {
@@ -60024,7 +60077,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 746,
+              "line": 755,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -60093,7 +60146,7 @@
       "details": "From 0 to 1,800 seconds, 2 by default. Leave it alone.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:490",
-        "src/PC/server_mp/sv_init_mp.c:746"
+        "src/PC/server_mp/sv_init_mp.c:755"
       ],
       "guided": false,
       "control": {
@@ -67371,7 +67424,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/files.c",
-              "line": 625,
+              "line": 634,
               "mechanism": "Cmd_AddCommand",
               "name": "dir"
             }
@@ -67398,7 +67451,7 @@
       "details": "Accepts a directory and optional extension. The search uses the game's file system, which includes its configured search paths.",
       "sources": [
         "src/PC/qcommon/files.c:460",
-        "src/PC/qcommon/files.c:625"
+        "src/PC/qcommon/files.c:634"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -67919,7 +67972,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/files.c",
-              "line": 626,
+              "line": 635,
               "mechanism": "Cmd_AddCommand",
               "name": "fdir"
             }
@@ -67946,7 +67999,7 @@
       "details": "Searches the game's configured file paths and prints a sorted list. It does not create a directory despite the command's name.",
       "sources": [
         "src/PC/qcommon/files.c:461",
-        "src/PC/qcommon/files.c:626"
+        "src/PC/qcommon/files.c:635"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -68275,7 +68328,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/files.c",
-              "line": 624,
+              "line": 633,
               "mechanism": "Cmd_AddCommand",
               "name": "fullpath"
             }
@@ -68302,7 +68355,7 @@
       "details": "Includes paths that the current language filter would hide from path. It describes game file lookup, not the operating system's PATH variable.",
       "sources": [
         "src/PC/qcommon/files.c:459",
-        "src/PC/qcommon/files.c:624"
+        "src/PC/qcommon/files.c:633"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -70063,7 +70116,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/files.c",
-              "line": 623,
+              "line": 632,
               "mechanism": "Cmd_AddCommand",
               "name": "path"
             }
@@ -70090,7 +70143,7 @@
       "details": "Also lists open game file handles. fullpath includes paths excluded by the language filter.",
       "sources": [
         "src/PC/qcommon/files.c:458",
-        "src/PC/qcommon/files.c:623"
+        "src/PC/qcommon/files.c:632"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -72683,7 +72736,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/files.c",
-              "line": 627,
+              "line": 636,
               "mechanism": "Cmd_AddCommand",
               "name": "touchFile"
             }
@@ -72710,7 +72763,7 @@
       "details": "Records file access when the file can be opened. It does not create a file or update an operating-system file timestamp.",
       "sources": [
         "src/PC/qcommon/files.c:462",
-        "src/PC/qcommon/files.c:627"
+        "src/PC/qcommon/files.c:636"
       ],
       "bindable": false,
       "menuLabel": null,

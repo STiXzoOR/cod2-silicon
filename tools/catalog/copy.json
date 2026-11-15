@@ -5128,6 +5128,498 @@
       "title": "Check for CoD2x updates",
       "summary": "Lets a server you host ask CoD2x's update service whether a newer CoD2x or zPAM exists.",
       "details": "CoD2x only. On by default. A newer CoD2x is only reported in the console; nothing is installed. It is a setting for a server you host, not something you tune for yourself."
+    },
+    "cg_headiconscale": {
+      "group": "hud",
+      "title": "Head icon size",
+      "summary": "Scales the voice, connection and objective icons above heads.",
+      "details": "From 0 to 10, and 1 by default. It also lifts the labels to clear a larger icon, and applies to the game's own icons too."
+    },
+    "cg_headmaxdistance": {
+      "group": "hud",
+      "title": "Head label range",
+      "summary": "The farthest distance at which head labels are drawn.",
+      "details": "From 0 to 10,000 game units, and 0 by default, which means no limit. Beyond the range the name, weapon and icon labels are not drawn. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_headnamealive": {
+      "group": "hud",
+      "title": "Head name, alive",
+      "summary": "Shows player names above their heads for your teammates while you play.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. Turning it on also hides the game's own name under the crosshair. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_headnamedead": {
+      "group": "hud",
+      "title": "Head name, dead",
+      "summary": "Shows player names above their heads while you are dead and watching a teammate.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. Turning it on also hides the game's own name under the crosshair. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_headnamescale": {
+      "group": "hud",
+      "title": "Head name size",
+      "summary": "Scales the player names and weapon names drawn above heads.",
+      "details": "From 0.3 to 3, and 1 by default. It changes the size of the name and weapon name labels only. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_headnamespectator": {
+      "group": "hud",
+      "title": "Head name, spectator",
+      "summary": "Shows player names above their heads while you spectate.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. Turning it on also hides the game's own name under the crosshair. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_headnationiconalive": {
+      "group": "hud",
+      "title": "Head icon, alive",
+      "summary": "The icon above a player's head for your teammates while you play.",
+      "details": "Covers the icons the game draws over heads, such as voice and objective icons. 0 hides them, 1 keeps the game's standard icon, and 2 also shows it through walls. Turning on any other head label makes the standard icon follow the same rules. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_headnationicondead": {
+      "group": "hud",
+      "title": "Head icon, dead",
+      "summary": "The icon above a player's head while you are dead and watching a teammate.",
+      "details": "Covers the icons the game draws over heads, such as voice and objective icons. 0 hides them, 1 keeps the game's standard icon, and 2 also shows it through walls. Turning on any other head label makes the standard icon follow the same rules. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_headnationiconspectator": {
+      "group": "hud",
+      "title": "Head icon, spectator",
+      "summary": "The icon above a player's head while you spectate.",
+      "details": "Covers the icons the game draws over heads, such as voice and objective icons. 0 hides them, 1 keeps the game's standard icon, and 2 also shows it through walls. Turning on any other head label makes the standard icon follow the same rules. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_headoffset": {
+      "group": "hud",
+      "title": "Head label height",
+      "summary": "Raises or lowers the labels and icons above players' heads.",
+      "details": "From -64 to 128 game units, and 0 by default. Positive values lift them higher; it applies to the game's own head icons as well."
+    },
+    "cg_headweaponiconalive": {
+      "group": "hud",
+      "title": "Head weapon icon, alive",
+      "summary": "Shows the weapon each player holds above their head for your teammates while you play.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. A grenade shows for five seconds after it is thrown. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_headweaponicondead": {
+      "group": "hud",
+      "title": "Head weapon icon, dead",
+      "summary": "Shows the weapon each player holds above their head while you are dead and watching a teammate.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. A grenade shows for five seconds after it is thrown. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_headweaponiconscale": {
+      "group": "hud",
+      "title": "Head weapon icon size",
+      "summary": "Scales the weapon icons drawn above heads.",
+      "details": "From 0 to 3, and 1 by default. 0 hides the weapon icon. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_headweaponiconspectator": {
+      "group": "hud",
+      "title": "Head weapon icon, spectator",
+      "summary": "Shows the weapon each player holds above their head while you spectate.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. A grenade shows for five seconds after it is thrown. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_headweaponnamealive": {
+      "group": "hud",
+      "title": "Head weapon name, alive",
+      "summary": "Shows the name of each player's weapon above their head for your teammates while you play.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. It draws a little smaller than the player name. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_headweaponnamedead": {
+      "group": "hud",
+      "title": "Head weapon name, dead",
+      "summary": "Shows the name of each player's weapon above their head while you are dead and watching a teammate.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. It draws a little smaller than the player name. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_headweaponnamespectator": {
+      "group": "hud",
+      "title": "Head weapon name, spectator",
+      "summary": "Shows the name of each player's weapon above their head while you spectate.",
+      "details": "0 is off, 1 shows it only while the player is in view, and 2 shows it through walls too, fading near the middle of the screen. It draws a little smaller than the player name. It works only in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_xray": {
+      "group": "vis",
+      "title": "X-ray style",
+      "summary": "A developer x-ray that shows players through walls, in one of four styles.",
+      "details": "From 0 (off) to 4, and 0 by default. It works only in demos or with cheats on, and the game locks it in normal play. 2 fills the hidden part of each player, 3 outlines them and 4 adds a glow; style 1 only marks the players and draws nothing in this port."
+    },
+    "cg_xraycenterfadealpha": {
+      "group": "vis",
+      "title": "X-ray centre fade strength",
+      "summary": "How faint the x-ray becomes at the very middle of the screen.",
+      "details": "From 0 (invisible) to 1 (no fade), and 0.15 by default. It has no effect while the centre fade size is 0."
+    },
+    "cg_xraycenterfaderadius": {
+      "group": "vis",
+      "title": "X-ray centre fade size",
+      "summary": "How far from the middle of the screen the x-ray fades out.",
+      "details": "From 0 to 320, and 80 by default, in the menu's 640 by 480 screen units. 0 turns the fade off. The fade also applies to labels shown through walls."
+    },
+    "cg_xraycolorallies": {
+      "group": "vis",
+      "title": "X-ray colour, Allies",
+      "summary": "The x-ray and name colour for Allied players.",
+      "details": "Empty by default, which uses the game's Allies team colour (blue if the game sets none). It also colours the player names shown above heads."
+    },
+    "cg_xraycoloraxis": {
+      "group": "vis",
+      "title": "X-ray colour, Axis",
+      "summary": "The x-ray and name colour for Axis players.",
+      "details": "Empty by default, which uses the game's Axis team colour (red if the game sets none). It also colours the player names shown above heads."
+    },
+    "cg_xraydead": {
+      "group": "vis",
+      "title": "X-ray, dead",
+      "summary": "Chooses the x-ray style while you are dead and watching a teammate.",
+      "details": "0 is off, 1 outlines players and 2 adds a glow, and the default is 2. Players show through walls. It works in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_xrayglowcoreintensity": {
+      "group": "vis",
+      "title": "X-ray glow core",
+      "summary": "How bright the tight core of the glow is.",
+      "details": "From 0 to 2, and 0.5 by default. It applies only to the glow style, on top of the wide glow."
+    },
+    "cg_xrayglowintensity": {
+      "group": "vis",
+      "title": "X-ray glow strength",
+      "summary": "How bright the wide glow is in the glow style.",
+      "details": "From 0 to 4, and 1 by default. It applies only to the glow style (4 for the cheat setting, 2 for the spectator and dead settings)."
+    },
+    "cg_xrayhealth": {
+      "group": "vis",
+      "title": "X-ray health marking",
+      "summary": "Shows how hurt each player is, as part of the x-ray.",
+      "details": "On by default. It marks injured players only, from the head down in proportion to their health, and needs an x-ray style that fills or outlines (2 or more) and a server that tells you players' health."
+    },
+    "cg_xrayhealthalpha": {
+      "group": "vis",
+      "title": "X-ray health strength",
+      "summary": "How solid the health marking is.",
+      "details": "From 0 (invisible) to 1 (solid), and 0.8 by default."
+    },
+    "cg_xrayhealthcolor": {
+      "group": "vis",
+      "title": "X-ray health colour",
+      "summary": "The colour of the health marking on the x-ray.",
+      "details": "Empty by default, which draws it red."
+    },
+    "cg_xrayhiddenthreshold": {
+      "group": "vis",
+      "title": "X-ray hidden margin",
+      "summary": "How far behind a surface a player must be to count as hidden.",
+      "details": "From 0 to 256, and 24 by default. A larger margin stops thin cover from hiding the x-ray; 0 turns the margin off."
+    },
+    "cg_xrayoutlinewidth": {
+      "group": "vis",
+      "title": "X-ray outline width",
+      "summary": "How thick the outline is in the outline style.",
+      "details": "From 0.5 to 4 pixels, and 1.5 by default. It does not change the glow style."
+    },
+    "cg_xrayspectator": {
+      "group": "vis",
+      "title": "X-ray, spectator",
+      "summary": "Chooses the x-ray style while you spectate.",
+      "details": "0 is off, 1 outlines players and 2 adds a glow, and the default is 2. Players show through walls. It works in demos, with cheats on, or on a server that reports CoD2x spectator support (revision 7 or later)."
+    },
+    "cg_xrayvisibledead": {
+      "group": "vis",
+      "title": "X-ray on visible, dead",
+      "summary": "Also draws the x-ray on players you can see while you are dead and watching a teammate.",
+      "details": "Off by default, so only players hidden behind something are marked. It applies when the matching x-ray setting is on."
+    },
+    "cg_xrayvisiblespectator": {
+      "group": "vis",
+      "title": "X-ray on visible, spectator",
+      "summary": "Also draws the x-ray on players you can see while you spectate.",
+      "details": "Off by default, so only players hidden behind something are marked. It applies when the matching x-ray setting is on."
+    },
+    "cl_hwid": {
+      "group": "net",
+      "title": "Short hardware ID",
+      "summary": "A number that CoD2x servers use to recognise your computer.",
+      "details": "The game works it out from details of your Mac and sends it to servers; it is read-only and never worth editing. A longer version is cl_hwid2."
+    },
+    "cl_updateavailable": {
+      "group": "other",
+      "title": "CoD2x update found",
+      "summary": "Whether the update check found a newer CoD2x.",
+      "details": "The game sets it itself when it checks for a CoD2x update; it is read-only and not a player setting. It is 1 only after a check found a newer version."
+    },
+    "cl_updatefiles": {
+      "group": "other",
+      "title": "CoD2x update address",
+      "summary": "Where the newer CoD2x version was announced to be.",
+      "details": "The game sets it itself when it checks for a CoD2x update; it is read-only and not a player setting. This Mac build does not install Windows updates; it opens the release page instead."
+    },
+    "cl_updateoldversion": {
+      "group": "other",
+      "title": "CoD2x version now",
+      "summary": "The CoD2x version this game is running.",
+      "details": "The game sets it itself when it checks for a CoD2x update; it is read-only and not a player setting. It is filled in when the update check finds a newer version."
+    },
+    "cl_updateversion": {
+      "group": "other",
+      "title": "CoD2x newer version",
+      "summary": "The newer CoD2x version the update check found.",
+      "details": "The game sets it itself when it checks for a CoD2x update; it is read-only and not a player setting. It is empty until a check finds one."
+    },
+    "cl_vmix": {
+      "group": "other",
+      "title": "vMix control",
+      "summary": "Lets a match broadcast follow the player you spectate, using vMix.",
+      "details": "Off by default. While on and in a game, the game tells vMix over its web address to show the spectated player's camera and page when the server's scripts change who is spectated. It needs vMix, the broadcast software, running at the address in cl_vmix_cfg_url. Turning it off hides the cameras again."
+    },
+    "cl_vmix_cfg_camera_mode": {
+      "group": "other",
+      "title": "vMix camera mode",
+      "summary": "Chooses how the spectated player's camera is shown.",
+      "details": "1 switches the camera on in vMix, and 2 passes the camera's name to the browser page instead. The default is 1."
+    },
+    "cl_vmix_cfg_camera_overlaynum": {
+      "group": "other",
+      "title": "vMix overlay number",
+      "summary": "Which vMix overlay (1 to 4) shows the player cameras.",
+      "details": "From 1 to 4, and 1 by default. It applies when the camera mode is 1."
+    },
+    "cl_vmix_cfg_camera_player10_id": {
+      "group": "other",
+      "title": "vMix camera 10 player",
+      "summary": "The hardware ID of the player whose camera is camera 10.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 10 is used."
+    },
+    "cl_vmix_cfg_camera_player10_sourcename": {
+      "group": "other",
+      "title": "vMix camera 10 input",
+      "summary": "The vMix input name for camera 10.",
+      "details": "Empty by default. This is the input switched on when its player is spectated."
+    },
+    "cl_vmix_cfg_camera_player1_id": {
+      "group": "other",
+      "title": "vMix camera 1 player",
+      "summary": "The hardware ID of the player whose camera is camera 1.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 1 is used."
+    },
+    "cl_vmix_cfg_camera_player1_sourcename": {
+      "group": "other",
+      "title": "vMix camera 1 input",
+      "summary": "The vMix input name for camera 1.",
+      "details": "Empty by default. This is the input switched on when its player is spectated."
+    },
+    "cl_vmix_cfg_camera_player2_id": {
+      "group": "other",
+      "title": "vMix camera 2 player",
+      "summary": "The hardware ID of the player whose camera is camera 2.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 2 is used."
+    },
+    "cl_vmix_cfg_camera_player2_sourcename": {
+      "group": "other",
+      "title": "vMix camera 2 input",
+      "summary": "The vMix input name for camera 2.",
+      "details": "Empty by default. This is the input switched on when its player is spectated."
+    },
+    "cl_vmix_cfg_camera_player3_id": {
+      "group": "other",
+      "title": "vMix camera 3 player",
+      "summary": "The hardware ID of the player whose camera is camera 3.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 3 is used."
+    },
+    "cl_vmix_cfg_camera_player3_sourcename": {
+      "group": "other",
+      "title": "vMix camera 3 input",
+      "summary": "The vMix input name for camera 3.",
+      "details": "Empty by default. This is the input switched on when its player is spectated."
+    },
+    "cl_vmix_cfg_camera_player4_id": {
+      "group": "other",
+      "title": "vMix camera 4 player",
+      "summary": "The hardware ID of the player whose camera is camera 4.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 4 is used."
+    },
+    "cl_vmix_cfg_camera_player4_sourcename": {
+      "group": "other",
+      "title": "vMix camera 4 input",
+      "summary": "The vMix input name for camera 4.",
+      "details": "Empty by default. This is the input switched on when its player is spectated."
+    },
+    "cl_vmix_cfg_camera_player5_id": {
+      "group": "other",
+      "title": "vMix camera 5 player",
+      "summary": "The hardware ID of the player whose camera is camera 5.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 5 is used."
+    },
+    "cl_vmix_cfg_camera_player5_sourcename": {
+      "group": "other",
+      "title": "vMix camera 5 input",
+      "summary": "The vMix input name for camera 5.",
+      "details": "Empty by default. This is the input switched on when its player is spectated."
+    },
+    "cl_vmix_cfg_camera_player6_id": {
+      "group": "other",
+      "title": "vMix camera 6 player",
+      "summary": "The hardware ID of the player whose camera is camera 6.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 6 is used."
+    },
+    "cl_vmix_cfg_camera_player6_sourcename": {
+      "group": "other",
+      "title": "vMix camera 6 input",
+      "summary": "The vMix input name for camera 6.",
+      "details": "Empty by default. This is the input switched on when its player is spectated."
+    },
+    "cl_vmix_cfg_camera_player7_id": {
+      "group": "other",
+      "title": "vMix camera 7 player",
+      "summary": "The hardware ID of the player whose camera is camera 7.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 7 is used."
+    },
+    "cl_vmix_cfg_camera_player7_sourcename": {
+      "group": "other",
+      "title": "vMix camera 7 input",
+      "summary": "The vMix input name for camera 7.",
+      "details": "Empty by default. This is the input switched on when its player is spectated."
+    },
+    "cl_vmix_cfg_camera_player8_id": {
+      "group": "other",
+      "title": "vMix camera 8 player",
+      "summary": "The hardware ID of the player whose camera is camera 8.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 8 is used."
+    },
+    "cl_vmix_cfg_camera_player8_sourcename": {
+      "group": "other",
+      "title": "vMix camera 8 input",
+      "summary": "The vMix input name for camera 8.",
+      "details": "Empty by default. This is the input switched on when its player is spectated."
+    },
+    "cl_vmix_cfg_camera_player9_id": {
+      "group": "other",
+      "title": "vMix camera 9 player",
+      "summary": "The hardware ID of the player whose camera is camera 9.",
+      "details": "Empty by default. When the spectated player's hardware ID matches, camera 9 is used."
+    },
+    "cl_vmix_cfg_camera_player9_sourcename": {
+      "group": "other",
+      "title": "vMix camera 9 input",
+      "summary": "The vMix input name for camera 9.",
+      "details": "Empty by default. This is the input switched on when its player is spectated."
+    },
+    "cl_vmix_cfg_url": {
+      "group": "other",
+      "title": "vMix address",
+      "summary": "The web address of the vMix program the game controls.",
+      "details": "Empty by default; use the address of vMix's web controller, with no trailing slash. Nothing useful is sent without it while the vMix control is on."
+    },
+    "cl_vmix_cfg_webbrowser_sourcename": {
+      "group": "other",
+      "title": "vMix browser input",
+      "summary": "The name of the vMix browser input that shows the player page.",
+      "details": "Empty by default. The game points this input at a page with the spectated player's details."
+    },
+    "cl_vmix_cfg_webbrowser_url_prefix": {
+      "group": "other",
+      "title": "vMix page address start",
+      "summary": "The start of the web page address given to the vMix browser input.",
+      "details": "Empty by default. The game adds the spectated player's ID, hardware ID, camera name, team, name and data after it. The input goes back to this address when the vMix control is turned off."
+    },
+    "cl_vmix_cfg_webbrowser_url_suffix": {
+      "group": "other",
+      "title": "vMix page address end",
+      "summary": "Meant for the end of the browser page address.",
+      "details": "It has no effect in this port: it is registered but nothing reads it."
+    },
+    "cl_vmix_debug": {
+      "group": "other",
+      "title": "vMix debug messages",
+      "summary": "Prints each vMix request and answer in the console.",
+      "details": "Off by default. It is for people setting up the vMix link; it prints only while the vMix control is on."
+    },
+    "cl_vmix_scr_data": {
+      "group": "other",
+      "title": "vMix extra data",
+      "summary": "Extra match data the server passes to the vMix page.",
+      "details": "The server's scripts set it for the vMix control; it is not a player setting."
+    },
+    "cl_vmix_scr_playerids": {
+      "group": "other",
+      "title": "vMix player list",
+      "summary": "A player list the server could pass for vMix.",
+      "details": "The server's scripts set it for the vMix control; it is not a player setting. It has no effect in this port: it is registered but nothing reads it."
+    },
+    "cl_vmix_scr_spectatedhwid": {
+      "group": "other",
+      "title": "vMix spectated hardware ID",
+      "summary": "The hardware ID of the player being spectated, for vMix.",
+      "details": "The server's scripts set it for the vMix control; it is not a player setting. A change here, or in the ID, makes the game send vMix its next instructions."
+    },
+    "cl_vmix_scr_spectateduserid": {
+      "group": "other",
+      "title": "vMix spectated ID",
+      "summary": "The ID of the player being spectated, for vMix.",
+      "details": "The server's scripts set it for the vMix control; it is not a player setting."
+    },
+    "cl_vmix_scr_spectatedusername": {
+      "group": "other",
+      "title": "vMix spectated name",
+      "summary": "The name of the player being spectated, for vMix.",
+      "details": "The server's scripts set it for the vMix control; it is not a player setting. A | in the name is turned into a space."
+    },
+    "cl_vmix_scr_spectateduserteam": {
+      "group": "other",
+      "title": "vMix spectated team",
+      "summary": "The team of the player being spectated, for vMix.",
+      "details": "The server's scripts set it for the vMix control; it is not a player setting."
+    },
+    "r_filmtweakbrightness": {
+      "group": "gfx",
+      "title": "Brightness",
+      "summary": "Makes the whole picture lighter or darker.",
+      "details": "From -1 to 1, and 0 (unchanged) by default. It needs the colour adjustment switch on."
+    },
+    "r_filmtweakcolor": {
+      "group": "gfx",
+      "title": "Colour balance",
+      "summary": "Multiplies the red, green and blue of the whole picture.",
+      "details": "Three numbers from 0 to 2, and 1 1 1 (unchanged) by default. It needs the colour adjustment switch on."
+    },
+    "r_filmtweakcontrast": {
+      "group": "gfx",
+      "title": "Contrast",
+      "summary": "Makes light and dark areas of the picture more or less different.",
+      "details": "From 0 to 4, and 1 (unchanged) by default. Below 1 flattens the picture and above 1 strengthens it. It needs the colour adjustment switch on."
+    },
+    "r_filmtweakdarktint": {
+      "group": "gfx",
+      "title": "Shadow tint",
+      "summary": "Tints the dark parts of the picture.",
+      "details": "Three numbers (red, green, blue) from 0 to 2, and 1 1 1 (unchanged) by default. It needs the colour adjustment switch on."
+    },
+    "r_filmtweakenable": {
+      "group": "gfx",
+      "title": "Colour adjustment",
+      "summary": "Switches the CoD2x picture colour adjustments on or off.",
+      "details": "On by default, and the other colour adjustments change nothing until you move them. It affects the 3D view."
+    },
+    "r_filmtweakgamma": {
+      "group": "gfx",
+      "title": "Gamma",
+      "summary": "Lifts or lowers the mid-tones of the picture.",
+      "details": "From 0.5 to 2, and 1 (unchanged) by default. Higher values brighten the mid-tones. It needs the colour adjustment switch on."
+    },
+    "r_filmtweaklighttint": {
+      "group": "gfx",
+      "title": "Highlight tint",
+      "summary": "Tints the bright parts of the picture.",
+      "details": "Three numbers (red, green, blue) from 0 to 2, and 1 1 1 (unchanged) by default. It needs the colour adjustment switch on."
+    },
+    "r_filmtweaksaturation": {
+      "group": "gfx",
+      "title": "Colour saturation",
+      "summary": "How vivid the colours are.",
+      "details": "From 0 (black and white) to 2, and 1 (unchanged) by default. It needs the colour adjustment switch on."
+    },
+    "r_filmtweakskysaturation": {
+      "group": "gfx",
+      "title": "Sky saturation",
+      "summary": "How vivid the colours of the sky are.",
+      "details": "From 0 to 2, and 1 (unchanged) by default. When it differs from the colour saturation, the sky and the rest of the scene are adjusted separately. It needs the colour adjustment switch on."
+    },
+    "sv_cod2xrevision": {
+      "group": "net",
+      "title": "CoD2x version of your server",
+      "summary": "Which CoD2x a server you host runs as: the released 1.4.6.8, or the next one.",
+      "details": "6 is the released CoD2x 1.4.6.8, which players on Windows and Linux have; 7, the default, follows CoD2x's current source, which only CoD2 Silicon has so far. A server takes players on its own version or a newer one, so at 7 it turns released-CoD2x players away and at 6 it takes both. At 6, what only the next CoD2x has (coloured text codes, spectator x-ray, killfeed icons) stays off. It is read when the server starts: Hosting's \"Let CoD2x 1.4.6.8 players join\" sets it, and changing it in a running game does nothing."
     }
   },
   "commands": {
