@@ -55,7 +55,9 @@ def stop(process):
 
 def wait_for(process, log, text, limit, what):
     deadline = time.monotonic() + limit
-    while text not in log.read_text(errors='replace'):
+    while text not in (seen := log.read_text(errors='replace')):
+        if 'Error during initialization' in seen or 'Sys_Error' in seen:
+            raise Failed(f'the engine reported an error before {what}')
         if process.poll() is not None:
             raise Failed(f'it exited with {process.returncode} before {what}')
         if time.monotonic() > deadline:
@@ -65,6 +67,12 @@ def wait_for(process, log, text, limit, what):
 
 def environment(home, game):
     home.mkdir()
+    # A made-up key with a valid checksum, in this private home only: the game refuses to start
+    # without one, and a server on this Mac's own network never asks the key server about it.
+    (home / '.cod2').mkdir(mode=0o700)
+    preferences = home / '.cod2/preferences'
+    preferences.write_text('codkey=000000000000000086D3\n')
+    preferences.chmod(0o600)
     env = {**os.environ, 'HOME': str(home), 'CFFIXED_USER_HOME': str(home), 'COD2_SETUP_NONINTERACTIVE': '1',
            'COD2_SETUP_GAME_DIR': str(game), 'COD2_SETUP_CD_KEY': '000000000000000086D3'}
     env.pop('COD2_MAC_SHADER_CACHE', None)
@@ -74,7 +82,12 @@ def environment(home, game):
 def play(binary, game, out, port):
     """Menu, map, quit."""
     log = out / 'console.log'
-    command = [str(binary), '+set', 'r_fullscreen', '0', '+set', 'r_mode', '1280x720', '+set', 'developer', '1',
+    home = out / 'game'
+    home.mkdir()
+    for path in (game, home):
+        if any(c in str(path) for c in '"+;\n\r'):
+            raise Failed(f'{path} has a quote, plus sign or semicolon in it, which the game cannot read')
+    command = [str(binary), '+set', 'fs_basepath', f'"{game}"', '+set', 'fs_homepath', f'"{home}"', '+set', 'r_fullscreen', '0', '+set', 'r_mode', '1280x720', '+set', 'developer', '1',
                '+set', 'com_introPlayed', '1', '+set', 'sv_pure', '0', '+set', 'net_port', str(port), '+set', 'g_gametype', 'dm']
     with log.open('w') as stream:
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=stream, stderr=stream, text=True,

@@ -5,7 +5,7 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
-## [0.3.1] - 2026-11-15
+## [0.3.1] - 2026-11-16
 
 ### Added
 
