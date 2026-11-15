@@ -216,13 +216,12 @@ all of it before you post, and the app sends nothing itself.
 
 ## Known limitations
 
-- A CoD2x server hosted from the launcher takes CoD2 Silicon players only,
-  unless you turn on **Let CoD2x 1.4.6.8 players join**. By default it follows
-  CoD2x's current source (1.4.7.1-test.1), which turns away the released
-  CoD2x 1.4.6.8. With the switch on it runs as 1.4.6.8 and takes both. This
-  was tested against the server's own version rules, not yet with a person on
-  the released Windows CoD2x. A server on the original 1.3 takes any 1.3
-  player.
+- The CoD2x game and server run as CoD2x's latest stable release, 1.4.6.8,
+  so players on that release for Windows and Linux can join a server you
+  host. This was tested against the server's own version rules, not yet with
+  a person on the released Windows CoD2x. A CoD2x server still hosted from
+  CoD2 Silicon 0.3.0 turns 0.3.1 players away until it updates. A server on
+  the original 1.3 takes any 1.3 player.
 - Voice chat works with the original 1.3 only; CoD2x turns it off. It records
   from your microphone only while you hold the voice chat
   key on a server that has voice on. The sound path was tested with a

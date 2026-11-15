@@ -33,10 +33,6 @@ struct HostedServer: Codable, Identifiable, Equatable, Sendable {
     var matchMode: String
     var maps: [String]
     var port: Int
-    /// A CoD2x server only: run as the released CoD2x 1.4.6.8 (the engine's `sv_cod2xRevision 6`), so
-    /// players on it can join. Off, the server follows the next CoD2x, which turns them away.
-    var releasedCoD2x = false
-
     static let defaultPort = 28960
     static func new(id: String = UUID().uuidString.lowercased(), name: String = "My Server", engine: GameEngine = .cod2x) -> HostedServer {
         HostedServer(id: id, name: name, engine: engine, reach: .network, players: 12, joinPassword: "", adminPassword: Self.password(),
@@ -53,20 +49,6 @@ struct HostedServer: Codable, Identifiable, Equatable, Sendable {
 }
 
 extension HostedServer {
-    /// A list saved by 0.3.0 has no `releasedCoD2x`; every key added after it is read if present.
-    init(from decoder: Decoder) throws {
-        let values = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(id: try values.decode(String.self, forKey: .id), name: try values.decode(String.self, forKey: .name),
-                  engine: try values.decode(GameEngine.self, forKey: .engine), reach: try values.decode(Reach.self, forKey: .reach),
-                  players: try values.decode(Int.self, forKey: .players), joinPassword: try values.decode(String.self, forKey: .joinPassword),
-                  adminPassword: try values.decode(String.self, forKey: .adminPassword), rules: try values.decode(Rules.self, forKey: .rules),
-                  gameType: try values.decode(String.self, forKey: .gameType), friendlyFire: try values.decode(Bool.self, forKey: .friendlyFire),
-                  matchMode: try values.decode(String.self, forKey: .matchMode), maps: try values.decode([String].self, forKey: .maps),
-                  port: try values.decode(Int.self, forKey: .port),
-                  releasedCoD2x: try values.decodeIfPresent(Bool.self, forKey: .releasedCoD2x) ?? false)
-    }
-    /// Whether this server starts as the released CoD2x: the switch only means something on CoD2x.
-    var runsAsReleasedCoD2x: Bool { engine == .cod2x && releasedCoD2x }
     /// The ports the game's own local-network list asks (the engine's CL_LocalServers_f): the original
     /// 1.3 looks at four, CoD2x at thirty-two. A server on any other port is joined by its address.
     var listedPorts: ClosedRange<Int> { engine == .cod2x ? 28960...28991 : 28960...28963 }
@@ -244,7 +226,7 @@ enum HostingConfig {
         // The revision is chosen on the command line only: the engine registers it once, before any config runs.
         return ["+set", "fs_basepath", "\"\(dataPath)\"", "+set", "fs_homepath", "\"\(home)\"", "+set", "net_ip", bind,
                 "+set", "net_port", String(server.port), "+set", "dedicated", server.reach == .listed ? "2" : "1"]
-            + (server.runsAsReleasedCoD2x ? ["+set", "sv_cod2xRevision", "6"] : []) + ["+exec", "server.cfg"]
+            + ["+exec", "server.cfg"]
     }
 
     // MARK: Export for another machine

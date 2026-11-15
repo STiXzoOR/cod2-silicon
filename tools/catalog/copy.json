@@ -5614,12 +5614,6 @@
       "title": "Sky saturation",
       "summary": "How vivid the colours of the sky are.",
       "details": "From 0 to 2, and 1 (unchanged) by default. When it differs from the colour saturation, the sky and the rest of the scene are adjusted separately. It needs the colour adjustment switch on."
-    },
-    "sv_cod2xrevision": {
-      "group": "net",
-      "title": "CoD2x version of your server",
-      "summary": "Which CoD2x a server you host runs as: the released 1.4.6.8, or the next one.",
-      "details": "6 is the released CoD2x 1.4.6.8, which players on Windows and Linux have; 7, the default, follows CoD2x's current source, which only CoD2 Silicon has so far. A server takes players on its own version or a newer one, so at 7 it turns released-CoD2x players away and at 6 it takes both. At 6, what only the next CoD2x has (coloured text codes, spectator x-ray, killfeed icons) stays off. It is read when the server starts: Hosting's \"Let CoD2x 1.4.6.8 players join\" sets it, and changing it in a running game does nothing."
     }
   },
   "commands": {

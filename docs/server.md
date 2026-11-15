@@ -25,15 +25,13 @@ servers it started.
   and lines that hold either password are left out. Report a Problem can copy
   the last one for you to paste. The game folder is only read.
 - **Who can join a CoD2x server.** A CoD2x server takes players on its own
-  version or a newer one, never an older one. By default this app's CoD2x
-  server follows CoD2x's current source, 1.4.7.1-test.1, which only CoD2
-  Silicon has: players on the released CoD2x 1.4.6.8 for Windows and Linux are
-  turned away with "Update CoD2x". Turn on **Let CoD2x 1.4.6.8 players join**
-  and the server runs as 1.4.6.8 instead (`+set sv_cod2xRevision 6` on its
-  command line): those players and CoD2 Silicon players can both join, and
-  what only the next CoD2x has (coloured text codes, spectator x-ray, killfeed
-  icons) stays off on that server. A server on the original 1.3 takes any 1.3
-  player. This applies to competitive zPAM servers too: zPAM 4 needs CoD2x.
+  version or a newer one, never an older one. This app's CoD2x game and
+  server run as CoD2x's latest stable release, 1.4.6.8, so players on that
+  release for Windows and Linux can join, and so can CoD2 Silicon players.
+  There is nothing to set. (0.3.0 ran as CoD2x's unreleased source instead,
+  which turned those players away; a 0.3.1 player cannot join a server still
+  hosted from 0.3.0.) A server on the original 1.3 takes any 1.3 player. This
+  applies to competitive zPAM servers too: zPAM 4 needs CoD2x.
 - **The game's own local list.** In the game, the list of servers on your
   network only asks a few ports: 28960 to 28963 on the original 1.3, and
   28960 to 28991 on CoD2x. Hosting keeps to those when it picks a port. On

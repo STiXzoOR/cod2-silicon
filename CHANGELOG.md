@@ -9,13 +9,13 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Added
 
-- **Friends on the released CoD2x can join your server.** Hosting has a new
-  switch, "Let CoD2x 1.4.6.8 players join". With it on, the server runs as
-  CoD2x 1.4.6.8, so players on the released Windows and Linux CoD2x and CoD2
-  Silicon players can both join. What only the next CoD2x has (coloured text
-  codes, spectator x-ray, killfeed icons) stays off on that server. Without
-  it, a CoD2x server follows the next CoD2x as before, which only CoD2 Silicon
-  has.
+- **Friends on Windows and Linux can join your CoD2x server.** The CoD2x game
+  and server now run as CoD2x's latest stable release, 1.4.6.8, where 0.3.0
+  ran as CoD2x's unreleased source and turned players on the release away.
+  There is nothing to set. What only CoD2x's unreleased source has (coloured
+  text codes, spectator x-ray, killfeed icons) is off until a CoD2x release
+  carries it. A 0.3.1 player cannot join a CoD2x server still hosted from
+  0.3.0; that host needs to update.
 - The Hosting page says when this Mac is on Wi-Fi, where AirDrop and Handoff
   can make players freeze for a moment, and the server guide explains what to
   do about it.
@@ -42,8 +42,7 @@ All notable changes to CoD2 Silicon are documented here, following
   told; the exported read-me now says so and how to prevent it.
 - The PunkBuster settings are shown as unavailable in the original 1.3 game
   too, not only in CoD2x.
-- Settings names the CoD2x version the built-in game really is
-  (1.4.7.1-test.1), separately from the CoD2x 1.4.6.8 files it downloads.
+- Settings names the CoD2x version the built-in game runs as (1.4.6.8).
 
 ### For contributors
 

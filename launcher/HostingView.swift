@@ -234,20 +234,12 @@ private struct HostingForm: View {
                                     .pickerStyle(.segmented).labelsHidden().fixedSize()
                                 }
                                 Text(current.engine == .cod2x
-                                     ? (current.releasedCoD2x
-                                        ? "CoD2 Silicon and CoD2x \(CoD2xFiles.version) players can join. A running CoD2x server asks CoD2x’s update service about new versions."
-                                        : "CoD2 Silicon players only: this server follows the next CoD2x, which the released \(CoD2xFiles.version) can’t join. A running CoD2x server asks CoD2x’s update service about new versions.")
+                                     ? "Anyone with CoD2x \(CoD2xFiles.version) or newer can join, on Mac, Windows or Linux. A running CoD2x server asks CoD2x’s update service about new versions."
                                      : "Anyone with the original 1.3 can join, on Mac or Windows.")
                                     .font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
                             }
                             .padding(.horizontal, FormMetrics.rowInset(.panel)).padding(.vertical, 10)
                             .accessibilityElement(children: .contain)
-                            if current.engine == .cod2x {
-                                FormRow("Let CoD2x \(CoD2xFiles.version) players join",
-                                        detail: "For friends on Windows with the released CoD2x. Coloured text codes, spectator x-ray and killfeed icons stay off on this server.") {
-                                    SwitchToggle("Let CoD2x \(CoD2xFiles.version) players join", isOn: server.releasedCoD2x)
-                                }
-                            }
                             FormRow("Who can join", detail: current.reach.detail) {
                                 Picker("Who can join", selection: server.reach) { ForEach(HostedServer.Reach.allCases, id: \.self) { Text($0.title).tag($0) } }
                                     .labelsHidden().fixedSize()
@@ -650,9 +642,6 @@ extension LauncherModel {
         switch screen {
         case "servers-hosting-new":
             hosting.preview(servers: [], selection: nil, draft: HostedServer.new(id: "draft", name: "My Server"))
-        case "servers-hosting-new-released":
-            var draft = HostedServer.new(id: "draft", name: "My Server"); draft.releasedCoD2x = true
-            hosting.preview(servers: [], selection: nil, draft: draft)
         case "servers-hosting-running-wifi":
             hosting.preview(servers: [friends, scrim], selection: "friends", phases: ["friends": .running(since: Date().addingTimeInterval(-41 * 60))],
                             statuses: ["friends": status], logs: ["friends": log], onWiFi: true)

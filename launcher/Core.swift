@@ -709,10 +709,10 @@ enum CrashReporting {
 enum CoD2xFiles {
     /// The one release this build uses, pinned by size and SHA-256 next to its version. Never "latest".
     static let version = "1.4.6.8"
-    /// The CoD2x version the bundled engine follows and announces to servers: `COD2X_RELEASE` in
-    /// src/PC/qcommon/cod2x.h, which CoreTests reads and compares. Not the same thing as `version`,
-    /// the released Windows build whose menus and icons are downloaded.
-    static let engineRelease = "1.4.7.1-test.1"
+    /// The CoD2x version the bundled engine runs as and announces to servers: `COD2X_RELEASE` in
+    /// src/PC/qcommon/cod2x.h, which CoreTests reads and compares. It is CoD2x's latest stable
+    /// release, the same one whose menus and icons are downloaded.
+    static let engineRelease = version
     static let engineTitle = "CoD2x \(engineRelease)"
     static let releaseURL = URL(string: "https://github.com/callofduty2x/CoD2x/releases/download/v1.4.6.8/CoD2x_1.4.6.8_windows.zip")!
     static let releaseSize = 2_577_745
