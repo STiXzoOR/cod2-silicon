@@ -12,6 +12,65 @@ extern void CDirect3DVertexBuffer_SetFence(const CDirect3DVertexBuffer *, const 
                                           const CDirect3DVertexBuffer *);
 extern intptr_t g_Low, g_High;
 
+#if COD2_APPLE_SDK
+/* Direct3D's fixed-function vertex fog (D3DRS_FOGVERTEXMODE) works out the fog amount at each
+ * vertex and interpolates that amount across the triangle. OpenGL's own fog is worked out at each
+ * pixel here, which gives a different amount inside a large triangle: the water of Harbor came
+ * out less fogged near the camera and more fogged far away than on Windows. The amount is
+ * therefore worked out per vertex and handed to OpenGL as a linear fog coordinate. */
+static UINT32 g_vertexFogMode;
+static float g_vertexFogDensity = 1.0f, g_vertexFogStart, g_vertexFogEnd = 1.0f;
+extern void glFogCoordPointer(unsigned int type, int stride, const void *pointer);
+
+static int DeviceVertexFog_Begin(DeviceImpl *dev, UINT32 start, UINT32 end)
+{
+    static float *amounts;
+    static UINT32 capacity;
+    DeviceStreamsNative *state = dev->streamState;
+    float modelView[16];
+    if (!dev->fogEnable || g_activeVertexShader || dev->pixelShader || !state->position.pointer ||
+        !state->position.stride || g_vertexFogMode < 1 || g_vertexFogMode > 3 || end < start)
+        return 0;
+    UINT32 count = end - start + 1;
+    if (count > capacity) {
+        float *grown = (float *)realloc(amounts, (size_t)count * sizeof(float));
+        if (!grown) return 0;
+        amounts = grown; capacity = count;
+    }
+    D3DXMatrixMultiply((void *)modelView, (const void *)dev->worldMatrix, (const void *)dev->viewMatrix);
+    const byte *vertex = (const byte *)state->position.pointer + (size_t)start * state->position.stride;
+    float range = g_vertexFogEnd - g_vertexFogStart;
+    for (UINT32 i = 0; i < count; ++i, vertex += state->position.stride) {
+        float position[3], visible;
+        memcpy(position, vertex, sizeof(position));
+        float depth = fabsf(position[0] * modelView[2] + position[1] * modelView[6] +
+                            position[2] * modelView[10] + modelView[14]);
+        if (g_vertexFogMode == 1) visible = expf(-depth * g_vertexFogDensity);
+        else if (g_vertexFogMode == 2) visible = expf(-(depth * g_vertexFogDensity) * (depth * g_vertexFogDensity));
+        else visible = range != 0.0f ? (g_vertexFogEnd - depth) / range : 1.0f;
+        if (!(visible > 0.0f)) visible = 0.0f;
+        if (visible > 1.0f) visible = 1.0f;
+        amounts[i] = 1.0f - visible;
+    }
+    glFogCoordPointer(0x1406, 0, amounts - start);
+    glEnableClientState(0x8457);
+    glFogi(0x8450, 0x8451);
+    glFogi(0xb65, 0x2601);
+    glFogf(0xb63, 0.0f);
+    glFogf(0xb64, 1.0f);
+    return 1;
+}
+
+static void DeviceVertexFog_End(void)
+{
+    glDisableClientState(0x8457);
+    glFogi(0x8450, 0x8452);
+    glFogi(0xb65, g_vertexFogMode <= 1 ? 0x0800 : g_vertexFogMode == 2 ? 0x0801 : 0x2601);
+    glFogf(0xb63, g_vertexFogStart);
+    glFogf(0xb64, g_vertexFogEnd);
+}
+#endif
+
 static void CDirect3DDevice_SubmitIndexedNative(DeviceImpl *dev, const byte *indices, UINT32 count)
 {
     DeviceStreamsNative *state = dev->streamState;
@@ -24,6 +83,9 @@ static void CDirect3DDevice_SubmitIndexedNative(DeviceImpl *dev, const byte *ind
      * data. Hint the range the raw indices use, as glDrawRangeElements
      * requires. _pad0A8 holds this draw's base. */
     UINT32 start = state->low - dev->_pad0A8, end = state->high - dev->_pad0A8;
+#endif
+#if defined(COD2_X64) && COD2_APPLE_SDK
+    int vertexFog = DeviceVertexFog_Begin(dev, start, end);
 #endif
     /* Mac 0x1233c-0x12397: a 65535-element chunk is exactly 21845 triangles. */
     while (count) {
@@ -44,6 +106,9 @@ static void CDirect3DDevice_SubmitIndexedNative(DeviceImpl *dev, const byte *ind
         indices += batch * 2;
         count -= batch;
     }
+#if defined(COD2_X64) && COD2_APPLE_SDK
+    if (vertexFog) DeviceVertexFog_End();
+#endif
 }
 
 static HRESULT CDirect3DDevice_DrawApproximateNative(const CDirect3DDevice *_this,

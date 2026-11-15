@@ -48,6 +48,10 @@ All notable changes to CoD2 Silicon are documented here, following
   Windows draws them on. At resolutions such as 1080p and 4K a panel's top
   border lost a row and its bottom border gained one (with anti-aliasing,
   half a row each).
+- In the Direct3D 7 renderer (`r_rendererPreference dx7`), fog is worked out
+  at each corner of a surface and blended across it, as Windows does. On large
+  surfaces the amount of fog was off: Harbor's water was too dark near you
+  and too pale in the distance.
 - Library's Demos and Screenshots each come back at the place you had
   scrolled to. On some displays switching between them went back to the top.
 

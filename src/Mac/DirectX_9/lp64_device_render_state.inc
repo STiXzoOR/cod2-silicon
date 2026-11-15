@@ -31,6 +31,9 @@ static void DeviceRenderState_Init(DeviceImpl *dev)
     glFogf(0xb63, 0.0f);
     glFogf(0xb64, 1.0f);
     glFogf(0xb62, 1.0f);
+#if COD2_APPLE_SDK
+    g_vertexFogStart = 0.0f; g_vertexFogEnd = 1.0f; g_vertexFogDensity = 1.0f;
+#endif
     glColorMaterial(0x408, 0x1602);
     GLfloat smoothRange[2], aliasedRange[2];
     glGetFloatv(0xb12, smoothRange);
@@ -263,10 +266,16 @@ static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, 
     case D3DRS_FOGEND: {
         GLfloat parameter = DeviceRenderState_Float(value);
         if (parameter < 0.0f) parameter = 0.0f;
+#if COD2_APPLE_SDK
+        if (state == D3DRS_FOGSTART) g_vertexFogStart = parameter; else g_vertexFogEnd = parameter;
+#endif
         glFogf(state == D3DRS_FOGSTART ? 0xb63 : 0xb64, parameter);
         break;
     }
     case D3DRS_FOGDENSITY:
+#if COD2_APPLE_SDK
+        g_vertexFogDensity = DeviceRenderState_Float(value);
+#endif
         glFogf(0xb62, DeviceRenderState_Float(value));
         break;
     case D3DRS_STENCILENABLE:
@@ -352,6 +361,9 @@ static HRESULT DeviceRenderState_Set(DeviceImpl *dev, D3DRENDERSTATETYPE state, 
             glLightModelfv(0xb53, dev->lightModelAmbient);
         break;
     case D3DRS_FOGVERTEXMODE:
+#if COD2_APPLE_SDK
+        g_vertexFogMode = value;
+#endif
         if (value <= 3) glFogf(0xb65, value <= 1 ? 2048.0f : value == 2 ? 2049.0f : 9729.0f);
         break;
     case D3DRS_COLORVERTEX:
