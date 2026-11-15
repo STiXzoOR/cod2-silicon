@@ -267,8 +267,11 @@ enum HostingConfig {
         let mode = server.reach == .listed ? "2" : "1"
         let options = "+set net_port \(server.port) +set dedicated \(mode) +exec server.cfg"
         let linux = "./cod2_lnxded"
+        // The Linux server keeps `dedicated` at 2 whatever it is given (it answers "dedicated is read only"),
+        // so it always reports to the public master. Checked on the original 1.3 Linux server.
+        let linuxNote = server.reach == .listed ? "" : "# The Linux server lists itself on the public master servers whatever \"dedicated\" says. README.txt has the way round it.\n"
         var files = ["server.cfg": config,
-                     "start-linux.sh": "#!/bin/sh\n# Run from the game folder, beside main/. server.cfg goes into main/.\n\(linux) \(options)\n",
+                     "start-linux.sh": "#!/bin/sh\n# Run from the game folder, beside main/. server.cfg goes into main/.\n\(linuxNote)\(linux) \(options)\n",
                      "start-windows.bat": "@echo off\r\nrem Run from the game folder, beside main\\. server.cfg goes into main\\.\r\nCoD2MP_s.exe \(options)\r\n"]
         var readme = """
         \(safe(server.name, limit: 64)): server files written by CoD2 Silicon
@@ -286,7 +289,18 @@ enum HostingConfig {
             readme += "This server uses zPAM\(zpam.map { " \($0.version)" } ?? ""), which is not included. Download \(zpam?.asset ?? "its archive") from \(ZPAMRelease.projectURL.absoluteString)/releases and copy its .iwd files into main/ beside server.cfg.\n"
                 + "A zPAM server asks CoD2x’s update service for newer versions, and players’ games fetch zPAM’s maps from cod2x.me.\n\n"
         }
-        if server.reach == .listed { readme += "The server lists itself on the public master servers. Change dedicated to 1 in the start command to keep it unlisted.\n" }
+        if server.reach == .listed {
+            readme += "The server lists itself on the public master servers. On Windows, change dedicated to 1 in start-windows.bat to keep it unlisted. A Linux server always lists itself: see below.\n\n"
+        } else {
+            readme += "On Windows this server stays unlisted: nothing is announced.\n\n"
+        }
+        readme += """
+        On Linux the game's server program ignores the dedicated setting and always reports to the public master server, so the server shows in everyone's server list. To keep a Linux server unlisted, add this line to /etc/hosts on that machine before you start it:
+
+        127.0.0.1 cod2master.activision.com
+
+        \(server.engine == .cod2x ? "A CoD2x server also reports to CoD2x's own master, master.cod2x.me.\n" : "")
+        """
         files["README.txt"] = readme
         return files
     }

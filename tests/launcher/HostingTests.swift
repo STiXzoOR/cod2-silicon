@@ -142,6 +142,15 @@ struct LauncherError: Error { var message: String }
         require(export["server.cfg"]!.contains("set pam_mode \"comp_mr15\"") && export["README.txt"]!.contains("zpam411.zip") && export["README.txt"]!.contains("CHANGE_ME"),
                 "the zPAM export names the mode, the download and the passwords to set")
         require(export["start-linux.sh"]!.contains("+set net_port 28960 +set dedicated 1 +exec server.cfg") && export["start-windows.bat"]!.contains("CoD2MP_s.exe"), "start commands")
+        // The Linux server lists itself whatever it is told: a My Network export says so and how to stop it.
+        require(export["README.txt"]!.contains("127.0.0.1 cod2master.activision.com") && export["README.txt"]!.contains("On Windows this server stays unlisted")
+                && export["start-linux.sh"]!.contains("lists itself on the public master servers") && !export["start-windows.bat"]!.contains("lists itself"),
+                "a My Network export warns that a Linux server is listed anyway")
+        var listedMatch = match; listedMatch.reach = .listed
+        let listedExport = HostingConfig.export(listedMatch, zpamTemplate: template, zpam: four, passwords: false, matchSettings: true)
+        require(listedExport["README.txt"]!.contains("change dedicated to 1 in start-windows.bat") && !listedExport["start-linux.sh"]!.contains("#  The Linux")
+                && listedExport["start-linux.sh"]!.contains("+set dedicated 2") && !listedExport["start-linux.sh"]!.contains("whatever"),
+                "a listed export only tells Windows hosts how to unlist")
         let plain = HostingConfig.export(match, zpamTemplate: template, zpam: four, passwords: true, matchSettings: false)
         require(!plain["server.cfg"]!.contains("pam_mode") && plain["server.cfg"]!.contains("set g_gametype \"sd\"") && plain["server.cfg"]!.contains("scrimnight")
                 && !plain["README.txt"]!.contains("zPAM"), "without match settings the export is a public server of the same game type")
