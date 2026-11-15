@@ -53,6 +53,29 @@ struct LauncherError: Error { var message: String }
         let arguments = try HostingConfig.arguments(server, dataPath: "/Games/Call of Duty 2", home: "/Users/sample/Library/Application Support/CoD2 Silicon/hosting/servers/one")
         require(arguments == ["+set", "fs_basepath", "\"/Games/Call of Duty 2\"", "+set", "fs_homepath", "\"/Users/sample/Library/Application Support/CoD2 Silicon/hosting/servers/one\"",
                               "+set", "net_ip", "0.0.0.0", "+set", "net_port", "28960", "+set", "dedicated", "1", "+exec", "server.cfg"], "arguments: \(arguments)")
+        // Released CoD2x players: the engine's revision is set on the command line, before the config runs, and only for CoD2x.
+        server.releasedCoD2x = true
+        let released = try HostingConfig.arguments(server, dataPath: "/Games/CoD2", home: "/tmp/one")
+        require(Array(released.suffix(5)) == ["+set", "sv_cod2xRevision", "6", "+exec", "server.cfg"], "a server for released CoD2x players starts as revision 6: \(released)")
+        var original = server; original.engine = .original
+        let originalArguments = try HostingConfig.arguments(original, dataPath: "/Games/CoD2", home: "/tmp/one")
+        require(!originalArguments.contains("sv_cod2xRevision") && !original.runsAsReleasedCoD2x,
+                "the original 1.3 never gets a CoD2x revision")
+        let releasedExport = HostingConfig.export(server, zpamTemplate: nil, zpam: nil, passwords: false, matchSettings: false)
+        require(!releasedExport.values.contains { $0.contains("sv_cod2xRevision") }
+                    && releasedExport["README.txt"]!.contains("takes players on its own version or a newer one"),
+                "another machine's CoD2x decides who can join; the export only says so")
+        require(!HostingConfig.export(original, zpamTemplate: nil, zpam: nil, passwords: false, matchSettings: false)["README.txt"]!.contains("its own version"),
+                "the original 1.3 export says nothing about CoD2x versions")
+        server.releasedCoD2x = false
+        // A list saved by 0.3.0 has none of the later keys: every server loads, with the new options off.
+        let saved030 = Data(#"[{"adminPassword":"abcdefgh23456789","engine":"cod2x","friendlyFire":false,"gameType":"tdm","id":"one","joinPassword":"","maps":["mp_toujane"],"matchMode":"sd:comp","name":"Old Server","players":12,"port":28960,"reach":"network","rules":"public"},{"adminPassword":"x","engine":"original","friendlyFire":true,"gameType":"dm","id":"two","joinPassword":"pw","maps":["mp_carentan"],"matchMode":"sd:comp","name":"Second","players":8,"port":28961,"reach":"listed","rules":"zpam"}]"#.utf8)
+        let old = try JSONDecoder().decode([HostedServer].self, from: saved030)
+        require(old.count == 2 && old[0].name == "Old Server" && old[1].reach == .listed && old[1].rules == .zpam && old.allSatisfy { !$0.releasedCoD2x },
+                "a list saved by 0.3.0 loads whole, with released-CoD2x off")
+        var kept = old[0]; kept.releasedCoD2x = true
+        let reloaded = try JSONDecoder().decode(HostedServer.self, from: JSONEncoder().encode(kept))
+        require(reloaded == kept && reloaded.releasedCoD2x, "the new option survives saving")
         server.reach = .listed
         let listed = try HostingConfig.arguments(server, dataPath: "/Games/CoD2", home: "/tmp/one")
         require(listed.contains("2") && !listed.contains("1"), "a listed server is dedicated 2")

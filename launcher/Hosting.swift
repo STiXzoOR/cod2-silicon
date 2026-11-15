@@ -33,6 +33,9 @@ struct HostedServer: Codable, Identifiable, Equatable, Sendable {
     var matchMode: String
     var maps: [String]
     var port: Int
+    /// A CoD2x server only: run as the released CoD2x 1.4.6.8 (the engine's `sv_cod2xRevision 6`), so
+    /// players on it can join. Off, the server follows the next CoD2x, which turns them away.
+    var releasedCoD2x = false
 
     static let defaultPort = 28960
     static func new(id: String = UUID().uuidString.lowercased(), name: String = "My Server", engine: GameEngine = .cod2x) -> HostedServer {
@@ -47,6 +50,23 @@ struct HostedServer: Codable, Identifiable, Equatable, Sendable {
     }
     /// zPAM's version for this server's game: 4.x needs CoD2x, 3.36 is the last for the original 1.3.
     var zpamLine: ZPAMLine { engine == .cod2x ? .four : .three }
+}
+
+extension HostedServer {
+    /// A list saved by 0.3.0 has no `releasedCoD2x`; every key added after it is read if present.
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(id: try values.decode(String.self, forKey: .id), name: try values.decode(String.self, forKey: .name),
+                  engine: try values.decode(GameEngine.self, forKey: .engine), reach: try values.decode(Reach.self, forKey: .reach),
+                  players: try values.decode(Int.self, forKey: .players), joinPassword: try values.decode(String.self, forKey: .joinPassword),
+                  adminPassword: try values.decode(String.self, forKey: .adminPassword), rules: try values.decode(Rules.self, forKey: .rules),
+                  gameType: try values.decode(String.self, forKey: .gameType), friendlyFire: try values.decode(Bool.self, forKey: .friendlyFire),
+                  matchMode: try values.decode(String.self, forKey: .matchMode), maps: try values.decode([String].self, forKey: .maps),
+                  port: try values.decode(Int.self, forKey: .port),
+                  releasedCoD2x: try values.decodeIfPresent(Bool.self, forKey: .releasedCoD2x) ?? false)
+    }
+    /// Whether this server starts as the released CoD2x: the switch only means something on CoD2x.
+    var runsAsReleasedCoD2x: Bool { engine == .cod2x && releasedCoD2x }
 }
 
 /// The stock game types, and zPAM's match formats as its server.cfg names them.
@@ -210,8 +230,10 @@ enum HostingConfig {
         for path in [dataPath, home] where path.contains(where: { "\"+;\n\r".contains($0) }) || !path.hasPrefix("/") {
             throw LauncherError(message: "The game or server folder has a quote, plus sign or semicolon in its path, which the game can’t read. Move it and try again.")
         }
+        // The revision is chosen on the command line only: the engine registers it once, before any config runs.
         return ["+set", "fs_basepath", "\"\(dataPath)\"", "+set", "fs_homepath", "\"\(home)\"", "+set", "net_ip", bind,
-                "+set", "net_port", String(server.port), "+set", "dedicated", server.reach == .listed ? "2" : "1", "+exec", "server.cfg"]
+                "+set", "net_port", String(server.port), "+set", "dedicated", server.reach == .listed ? "2" : "1"]
+            + (server.runsAsReleasedCoD2x ? ["+set", "sv_cod2xRevision", "6"] : []) + ["+exec", "server.cfg"]
     }
 
     // MARK: Export for another machine
@@ -247,6 +269,7 @@ enum HostingConfig {
         Game files are not included: use your own licensed copy.
 
         """
+        if server.engine == .cod2x { readme += "Who can join is decided by the CoD2x on that machine: a CoD2x server takes players on its own version or a newer one.\n\n" }
         if !passwords { readme += "Passwords are not included. Replace every CHANGE_ME in server.cfg before starting.\n\n" }
         if server.rules == .zpam {
             readme += "This server uses zPAM\(zpam.map { " \($0.version)" } ?? ""), which is not included. Download \(zpam?.asset ?? "its archive") from \(ZPAMRelease.projectURL.absoluteString)/releases and copy its .iwd files into main/ beside server.cfg.\n"
