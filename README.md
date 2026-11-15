@@ -7,9 +7,14 @@ engine to native macOS arm64. It runs directly on Apple silicon, with raw mouse
 input, native audio and an OpenGL renderer. Bring a licensed copy of Call of
 Duty 2: no game content is included.
 
+**To play:** download the app from
+[Releases](https://github.com/STiXzoOR/cod2-silicon/releases), move it to
+Applications, open it, and point it at your Call of Duty 2 folder. Setup does
+the rest. A Windows 1.3 install's folder works as it is.
+
 ## Status
 
-Version `0.3.0` is playable on original 1.3 and CoD2x 1.4 servers, with a
+Version `0.3.1` is playable on original 1.3 and CoD2x 1.4 servers, with a
 native launcher, server browser and Config Studio. Movement, firing, grenades, mounted
 turrets, HTTP mod downloads and round restarts have been tested, and every
 menu is opened by an automated sweep. The picture is compared with the
@@ -36,7 +41,7 @@ Existing Windows 1.3 data works as it is. See
 ### Prebuilt app
 
 1. Open [GitHub Releases](https://github.com/STiXzoOR/cod2-silicon/releases).
-2. Download `CoD2-Silicon-0.3.0-macos-arm64.zip` and `SHA256SUMS` into the same
+2. Download `CoD2-Silicon-0.3.1-macos-arm64.zip` and `SHA256SUMS` into the same
    folder. Verify the archive, then unzip it:
 
    ```sh
@@ -87,6 +92,18 @@ and the server's log. Competitive rules use zPAM, which the launcher downloads
 from the zPAM project's releases when you ask for it; it is not bundled.
 **Export for Another Machine** writes `server.cfg` and start commands for a
 Linux or Windows server instead. See [the server guide](docs/server.md).
+
+Three things worth knowing before friends try to join:
+
+- **Ports.** The game's own local-server list only asks ports 28960 to 28963
+  (original 1.3) or 28960 to 28991 (CoD2x). Hosting keeps to them; on any
+  other port friends connect by address, and the page says so.
+- **Firewall.** The first start may bring up macOS's question about incoming
+  connections for the server. Deny means nobody else can see or join it.
+- **Wi-Fi.** A Mac hosting over Wi-Fi can make players freeze and jump while
+  AirDrop or Handoff is in use. A network cable is steadier; the guide's
+  [Wi-Fi section](docs/server.md#wi-fi-players-who-freeze-and-jump) has the
+  other remedies.
 
 **Settings** is a separate window, reached from the sidebar, app menu or ⌘,.
 Its seven panes cover the launcher, display, game data, privacy, updates,
@@ -144,6 +161,24 @@ Replace the address with your server. For a source install, use the app under
 append `--exit-after-game` to close the launcher when the game quits, or pass
 trusted engine arguments after `--`.
 
+## Reporting a problem
+
+**Settings → About → Report a Problem** opens a new issue on GitHub in your
+browser, filled in with the app version, the game versions installed, your
+macOS version and Mac model, and the shader and display modes. You can edit
+all of it before you post, and the app sends nothing itself.
+
+- **Include the last game log** copies the end of the last game session's log
+  to the clipboard for you to paste into the issue. **Include the last server
+  log** does the same for the last server you hosted, when there is one.
+- Logs are filtered as they are written: lines with a password or a CD key
+  are left out, and your user name is replaced in paths. A log can still hold
+  server names and player names, so read what you paste.
+- The game's logs are under `logs` in
+  `~/Library/Application Support/CoD2 Silicon` (**Settings → Advanced → Logs →
+  Show in Finder**); a hosted server's are in its own folder (**Show in
+  Finder** on its page).
+
 ## What the app sends
 
 - **As the original game does:** the game's master and key servers, and the
@@ -181,10 +216,13 @@ trusted engine arguments after `--`.
 
 ## Known limitations
 
-- A CoD2x server hosted from the launcher takes CoD2 Silicon players only for
-  now. It follows CoD2x's current source (1.4.7.1-test.1), which turns away
-  the released CoD2x 1.4.6.8 for Windows until CoD2x's next release. A server
-  on the original 1.3 takes any 1.3 player.
+- A CoD2x server hosted from the launcher takes CoD2 Silicon players only,
+  unless you turn on **Let CoD2x 1.4.6.8 players join**. By default it follows
+  CoD2x's current source (1.4.7.1-test.1), which turns away the released
+  CoD2x 1.4.6.8. With the switch on it runs as 1.4.6.8 and takes both. This
+  was tested against the server's own version rules, not yet with a person on
+  the released Windows CoD2x. A server on the original 1.3 takes any 1.3
+  player.
 - Voice chat works with the original 1.3 only; CoD2x turns it off. It records
   from your microphone only while you hold the voice chat
   key on a server that has voice on. The sound path was tested with a

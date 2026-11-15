@@ -5,6 +5,58 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-15
+
+### Added
+
+- **Friends on the released CoD2x can join your server.** Hosting has a new
+  switch, "Let CoD2x 1.4.6.8 players join". With it on, the server runs as
+  CoD2x 1.4.6.8, so players on the released Windows and Linux CoD2x and CoD2
+  Silicon players can both join. What only the next CoD2x has (coloured text
+  codes, spectator x-ray, killfeed icons) stays off on that server. Without
+  it, a CoD2x server follows the next CoD2x as before, which only CoD2 Silicon
+  has.
+- The Hosting page says when this Mac is on Wi-Fi, where AirDrop and Handoff
+  can make players freeze for a moment, and the server guide explains what to
+  do about it.
+- Each start of a hosted server writes its own log, with both passwords kept
+  out of it. Report a Problem can copy the last one for you to paste.
+
+### Fixed
+
+- Hosting picks ports the game's own local-server list looks at (28960 to
+  28963 for the original 1.3, 28960 to 28991 for CoD2x). Before, a busy port
+  could move a server to one where friends' games never looked. On any other
+  port the page now says friends connect by address.
+- A server's reply to the server list now ends with the PunkBuster field, as
+  every original server's does. It says 0: there is no PunkBuster for this
+  port.
+- Chat flood protection is off on a server you host from inside the game, as
+  in the original. A wrong field was being read, so it was on.
+- On a dedicated server, a script wait of exactly half a tick rounds up, as on
+  original dedicated servers.
+- Options > Sound > Sound Provider lists only the provider that exists. The
+  three EAX choices could be picked and jumped back after Apply.
+- Export for Another Machine no longer says a Linux server stays unlisted
+  with "dedicated 1". The original Linux server lists itself whatever it is
+  told; the exported read-me now says so and how to prevent it.
+- The PunkBuster settings are shown as unavailable in the original 1.3 game
+  too, not only in CoD2x.
+- Settings names the CoD2x version the built-in game really is
+  (1.4.7.1-test.1), separately from the CoD2x 1.4.6.8 files it downloads.
+
+### For contributors
+
+- The launcher's capture script reports every failing phase in one run and
+  can capture one page's screens (`COD2_LAUNCHER_SNAPSHOT_GROUP`).
+- Every test script that starts a CoD2x engine points CoD2x's services at a
+  local stand-in, and `tools/check_cod2x_standin.py` keeps it so.
+- `tests/packaging/release_smoke.py` starts all four engines of a packaged
+  app.
+- The CoD2x build of the connectionless-packet fuzz target links again.
+- A new fuzz target, `client`, runs connect requests and connected players'
+  messages through the server's real code.
+
 ## [0.3.0] - 2026-11-14
 
 The port was audited against the original Windows 1.3 game, and its picture
@@ -699,7 +751,8 @@ built from your own game files.
 Evidence and historical qualifications are preserved in the
 [workstream reports](docs/macos-port/README.md).
 
-[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.1
 [0.2.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0
