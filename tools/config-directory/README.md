@@ -4,6 +4,9 @@ This directory is the tooling of the public catalogue of player setups,
 [STiXzoOR/cod2-configs](https://github.com/STiXzoOR/cod2-configs). `entries/` is empty here: the
 entries live in that repository, which carries a copy of these files at its root.
 
+[CONTRIBUTING.md](CONTRIBUTING.md) is the step-by-step for adding, correcting and removing a setup,
+and for answering a removal request.
+
 The catalogue collects configs that were published on the open web and credits the page each one
 came from. It does not claim that a player approved the listing, and it removes or corrects an entry
 when the player or the page asks, through an issue on that repository. Each `entries/<slug>/` holds
