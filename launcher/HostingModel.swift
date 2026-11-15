@@ -2,6 +2,7 @@ import Foundation
 import AppKit
 import CryptoKit
 import Darwin
+import Network
 
 // Servers › Hosting: the servers this Mac runs. Each has its own folder under the app's data
 // (server.cfg, log, the game's writable files); the game folder is only read. Nothing is contacted
@@ -40,6 +41,10 @@ enum ZPAMState: Equatable {
     @Published private(set) var logs: [String: [String]] = [:]
     @Published private(set) var zpam: [ZPAMLine: ZPAMState] = [.four: .unknown, .three: .unknown]
     @Published var exporting: HostedServer?
+    /// Whether this Mac reaches its network over Wi-Fi. There, AirDrop and Handoff take the radio away
+    /// for a moment about twice a second, which players on a hosted server see as freezing and jumping.
+    @Published private(set) var onWiFi = false
+    private var pathMonitor: NWPathMonitor?
     /// The running server whose whole player list is open as a dialog: its page lists as many as fit.
     @Published var showingPlayers: HostedServer?
     private var processes: [String: Process] = [:]
@@ -89,8 +94,9 @@ enum ZPAMState: Equatable {
 
     func newServer(engine: GameEngine) {
         var server = HostedServer.new(engine: engine)
+        // A port no saved server has, from the ones the game's local list asks while there is one.
         let taken = Set(servers.map(\.port))
-        while taken.contains(server.port) { server.port += 1 }
+        if taken.contains(server.port) { server.port = HostingConfig.otherPort(for: server) { !taken.contains($0) } }
         if servers.contains(where: { $0.name == server.name }) { server.name = "My Server \(servers.count + 1)" }
         draft = server
         selection = nil
@@ -146,7 +152,7 @@ enum ZPAMState: Equatable {
             phases[server.id] = .failed("This server needs zPAM, which isn’t on this Mac yet. Get it in the server’s settings, then start again."); return
         }
         if !Self.portFree(server.port) {
-            phases[server.id] = .portBusy(next: (server.port + 1...server.port + 50).first(where: Self.portFree) ?? server.port + 1); return
+            phases[server.id] = .portBusy(next: HostingConfig.otherPort(for: server, free: Self.portFree)); return
         }
         do {
             try prepare(server)
@@ -232,7 +238,19 @@ enum ZPAMState: Equatable {
 
     // MARK: What a running server says
 
+    /// Follows the network path from the first server start on; nothing is asked of the network itself.
+    private func watchNetwork() {
+        guard pathMonitor == nil else { return }
+        let monitor = NWPathMonitor()
+        monitor.pathUpdateHandler = { [weak self] path in
+            let wifi = HostingNetwork.isWiFi(satisfied: path.status == .satisfied, preferred: path.availableInterfaces.first?.type)
+            Task { @MainActor [weak self] in self?.onWiFi = wifi }
+        }
+        monitor.start(queue: .global(qos: .utility))
+        pathMonitor = monitor
+    }
     private func startPolling() {
+        watchNetwork()
         guard poll == nil else { return }
         poll = Task { [weak self] in
             while !Task.isCancelled {
@@ -366,10 +384,10 @@ enum ZPAMState: Equatable {
 
     func preview(servers: [HostedServer], selection: String?, draft: HostedServer? = nil, editing: String? = nil, phases: [String: Phase] = [:], statuses: [String: HostedStatus] = [:],
                  logs: [String: [String]] = [:], zpam: [ZPAMLine: ZPAMState] = [:], exporting: HostedServer? = nil,
-                 showingPlayers: HostedServer? = nil) {
+                 showingPlayers: HostedServer? = nil, onWiFi: Bool = false) {
         self.servers = servers; self.selection = selection; self.draft = draft; self.editing = editing; self.phases = phases; self.statuses = statuses; self.logs = logs
         for (line, state) in zpam { self.zpam[line] = state }
-        self.exporting = exporting; self.showingPlayers = showingPlayers
+        self.exporting = exporting; self.showingPlayers = showingPlayers; self.onWiFi = onWiFi
     }
 }
 
@@ -465,6 +483,9 @@ enum HostingNetwork {
         guard count > 4 else { return nil }
         return String(decoding: buffer[4..<count], as: UTF8.self)
     }
+    /// Wi-Fi only when the path works and the interface the system prefers is Wi-Fi: wired, a VPN in
+    /// front, no network or any doubt is not Wi-Fi.
+    static func isWiFi(satisfied: Bool, preferred: NWInterface.InterfaceType?) -> Bool { satisfied && preferred == .wifi }
     /// Whether nothing on this Mac holds the UDP port.
     static func portFree(_ port: Int) -> Bool {
         guard (1025...65535).contains(port) else { return false }

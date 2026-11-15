@@ -22,12 +22,20 @@ servers it started.
   Application Support folder: `main/server.cfg`, which the launcher writes on
   every start, the game's own logs, and `logs/console.log`. The game folder is
   only read.
-- **Who can join a CoD2x server.** This app's CoD2x server follows CoD2x's
-  current source, 1.4.7.1-test.1, which asks every player for that version or
-  newer. CoD2 Silicon 0.3.0 has it. The released CoD2x 1.4.6.8 for Windows and
-  Linux does not, so those players are turned away with "Update CoD2x" until
-  CoD2x publishes its next release. A server on the original 1.3 takes any 1.3
+- **Who can join a CoD2x server.** A CoD2x server takes players on its own
+  version or a newer one, never an older one. By default this app's CoD2x
+  server follows CoD2x's current source, 1.4.7.1-test.1, which only CoD2
+  Silicon has: players on the released CoD2x 1.4.6.8 for Windows and Linux are
+  turned away with "Update CoD2x". Turn on **Let CoD2x 1.4.6.8 players join**
+  and the server runs as 1.4.6.8 instead (`+set sv_cod2xRevision 6` on its
+  command line): those players and CoD2 Silicon players can both join, and
+  what only the next CoD2x has (coloured text codes, spectator x-ray, killfeed
+  icons) stays off on that server. A server on the original 1.3 takes any 1.3
   player. This applies to competitive zPAM servers too: zPAM 4 needs CoD2x.
+- **The game's own local list.** In the game, the list of servers on your
+  network only asks a few ports: 28960 to 28963 on the original 1.3, and
+  28960 to 28991 on CoD2x. Hosting keeps to those when it picks a port. On
+  any other port the server works, but friends join it by its address.
 - "My Network" is `dedicated 1`: nothing is announced. "The Internet" is
   `dedicated 2`: the server lists itself on the public master servers. See
   [Network and configuration](#network-and-configuration) before choosing it.
@@ -49,6 +57,29 @@ is zPAM's own, with your name, passwords, match mode and maps put on its lines.
 Players' games fetch zPAM and its maps from `http://cod2x.me/zpam`, zPAM's
 default. A CoD2x server also asks CoD2x's update service about newer versions;
 see [CoD2x servers](#cod2x-servers).
+
+### Wi-Fi: players who freeze and jump
+
+If players on your server stand still for a moment and then jump forward,
+about twice a second, the usual cause on a Mac is its own Wi-Fi. AirDrop,
+Handoff, Sidecar and AirPlay share the Wi-Fi radio with your network, and
+macOS takes the radio off your network's channel for a moment to listen for
+them. Every packet in that moment waits, however strong the signal, and an
+ordinary once-a-second ping does not show it. The
+[OpenIW2](https://github.com/skowronmateusz/OpenIW2) project measured it on
+one Mac: pings to the router every 20 ms peaked at 96 ms with those features
+on and at 14 ms with them off. It has not been measured for CoD2 Silicon.
+
+The Hosting page says when this Mac is on Wi-Fi. In order of effect:
+
+1. Run the server on a network cable.
+2. Turn off AirDrop and Handoff while you host (System Settings › General ›
+   AirDrop & Handoff).
+3. Set your router's 5 GHz network to channel 149, the channel those features
+   use, so the radio has nowhere to switch to.
+
+The same pauses reach a player who is on Wi-Fi on their own Mac, on any
+server.
 
 ### Letting players in from the internet
 

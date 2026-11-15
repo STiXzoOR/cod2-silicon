@@ -67,6 +67,10 @@ extension HostedServer {
     }
     /// Whether this server starts as the released CoD2x: the switch only means something on CoD2x.
     var runsAsReleasedCoD2x: Bool { engine == .cod2x && releasedCoD2x }
+    /// The ports the game's own local-network list asks (the engine's CL_LocalServers_f): the original
+    /// 1.3 looks at four, CoD2x at thirty-two. A server on any other port is joined by its address.
+    var listedPorts: ClosedRange<Int> { engine == .cod2x ? 28960...28991 : 28960...28963 }
+    var inLocalList: Bool { listedPorts.contains(port) }
 }
 
 /// The stock game types, and zPAM's match formats as its server.cfg names them.
@@ -83,6 +87,8 @@ enum HostingCatalog {
     static func matchModeTitle(_ id: String) -> String { matchModes.first { $0.id == id }?.title ?? id }
     /// The server guide's part about letting players in from the internet.
     static let portGuide = URL(string: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/server.md#letting-players-in-from-the-internet")!
+    /// The server guide's part about Wi-Fi pauses.
+    static let wifiGuide = URL(string: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/server.md#wi-fi-players-who-freeze-and-jump")!
     /// zPAM plays its own corrected copies of stock maps, named like `mp_toujane_fix`; this is the stock name.
     static func stockMap(_ name: String) -> String { name.hasSuffix("_fix") ? String(name.dropLast(4)) : name }
     /// The maps both versions ship with.
@@ -137,6 +143,11 @@ struct ZPAMRelease: Equatable, Sendable {
 }
 
 enum HostingConfig {
+    /// Another port for this server: the first free one the game's local list asks, so friends still
+    /// see it there; when none is free, the first free one above its own.
+    static func otherPort(for server: HostedServer, free: (Int) -> Bool) -> Int {
+        server.listedPorts.first { $0 != server.port && free($0) } ?? (server.port + 1...server.port + 50).first(where: free) ?? server.port + 1
+    }
     /// A value as it can stand between quotes in a config: no quotes, semicolons, line breaks or
     /// control characters, and nothing that would start a comment.
     static func safe(_ value: String, limit: Int = 128) -> String {

@@ -234,12 +234,20 @@ private struct HostingForm: View {
                                     .pickerStyle(.segmented).labelsHidden().fixedSize()
                                 }
                                 Text(current.engine == .cod2x
-                                     ? "For CoD2 Silicon players for now: CoD2x \(CoD2xFiles.version) on Windows can’t join until CoD2x’s next release. A running CoD2x server asks CoD2x’s update service about new versions."
+                                     ? (current.releasedCoD2x
+                                        ? "CoD2 Silicon and CoD2x \(CoD2xFiles.version) players can join. A running CoD2x server asks CoD2x’s update service about new versions."
+                                        : "CoD2 Silicon players only: this server follows the next CoD2x, which the released \(CoD2xFiles.version) can’t join. A running CoD2x server asks CoD2x’s update service about new versions.")
                                      : "Anyone with the original 1.3 can join, on Mac or Windows.")
                                     .font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
                             }
                             .padding(.horizontal, FormMetrics.rowInset(.panel)).padding(.vertical, 10)
                             .accessibilityElement(children: .contain)
+                            if current.engine == .cod2x {
+                                FormRow("Let CoD2x \(CoD2xFiles.version) players join",
+                                        detail: "For friends on Windows with the released CoD2x. Coloured text codes, spectator x-ray and killfeed icons stay off on this server.") {
+                                    SwitchToggle("Let CoD2x \(CoD2xFiles.version) players join", isOn: server.releasedCoD2x)
+                                }
+                            }
                             FormRow("Who can join", detail: current.reach.detail) {
                                 Picker("Who can join", selection: server.reach) { ForEach(HostedServer.Reach.allCases, id: \.self) { Text($0.title).tag($0) } }
                                     .labelsHidden().fixedSize()
@@ -416,7 +424,10 @@ private struct HostingRunning: View {
                 VStack(alignment: .leading, spacing: 8) {
                     label("How to join")
                     FormGroup {
-                        FormRow("On your network", detail: hosting.localAddress(server), monospacedTitle: false) {
+                        // Off the ports the game's own list asks, friends need the address: say so here.
+                        FormRow("On your network", detail: server.inLocalList ? hosting.localAddress(server)
+                                    : "\(hosting.localAddress(server)) · Not in the game’s own local list, which looks at ports \(String(server.listedPorts.lowerBound)) to \(String(server.listedPorts.upperBound)). Friends connect to this address.",
+                                monospacedTitle: false) {
                             Button("Copy") { copy(hosting.localAddress(server)) }
                         }
                         FormRow("Over the internet", detail: "Your router has to pass UDP port \(String(server.port)) to this Mac. CoD2 Silicon can’t check that from here.") {
@@ -424,6 +435,11 @@ private struct HostingRunning: View {
                         }
                         FormRow("Invite link", detail: "Opens CoD2 Silicon on a friend’s Mac on your network. The password is not in the link.") {
                             Button("Copy Link") { if let link = (try? LaunchLink.direct(hosting.localAddress(server)))?.url { copy(link) } }
+                        }
+                        if hosting.onWiFi {
+                            FormRow("This Mac is on Wi-Fi", detail: "AirDrop and Handoff can make players freeze for a moment. A network cable is steadier.") {
+                                Button("Why") { NSWorkspace.shared.open(HostingCatalog.wifiGuide) }.help("Opens the server guide on GitHub")
+                            }
                         }
                     }
                     // Its full height always: the players below take what is left, never this group's lines.
@@ -634,6 +650,12 @@ extension LauncherModel {
         switch screen {
         case "servers-hosting-new":
             hosting.preview(servers: [], selection: nil, draft: HostedServer.new(id: "draft", name: "My Server"))
+        case "servers-hosting-new-released":
+            var draft = HostedServer.new(id: "draft", name: "My Server"); draft.releasedCoD2x = true
+            hosting.preview(servers: [], selection: nil, draft: draft)
+        case "servers-hosting-running-wifi":
+            hosting.preview(servers: [friends, scrim], selection: "friends", phases: ["friends": .running(since: Date().addingTimeInterval(-41 * 60))],
+                            statuses: ["friends": status], logs: ["friends": log], onWiFi: true)
         case "servers-hosting-zpam-missing", "servers-hosting-zpam-getting", "servers-hosting-zpam-ready":
             let state: ZPAMState = screen.hasSuffix("missing") ? .missing(release) : screen.hasSuffix("getting") ? .getting(release, received: 71_303_168) : .ready(version: "4.12")
             hosting.preview(servers: [friends, scrim], selection: "scrim", zpam: [.four: state])

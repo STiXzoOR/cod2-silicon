@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import Network
 
 // Stand-ins for the two types Hosting takes from the launcher's core.
 enum GameEngine: String, Codable, Sendable, CaseIterable { case cod2x, original }
@@ -76,6 +77,24 @@ struct LauncherError: Error { var message: String }
         var kept = old[0]; kept.releasedCoD2x = true
         let reloaded = try JSONDecoder().decode(HostedServer.self, from: JSONEncoder().encode(kept))
         require(reloaded == kept && reloaded.releasedCoD2x, "the new option survives saving")
+        // MARK: Ports the game's own local list asks, and Wi-Fi
+        var ported = HostedServer.new(id: "p", name: "Ports")
+        require(ported.listedPorts == 28960...28991 && ported.inLocalList, "CoD2x's local list asks 28960 to 28991")
+        ported.engine = .original
+        require(ported.listedPorts == 28960...28963, "the original 1.3's local list asks 28960 to 28963")
+        require(HostingConfig.otherPort(for: ported) { $0 != 28961 } == 28962, "a busy port is replaced by the next free one the game lists")
+        require(HostingConfig.otherPort(for: ported) { $0 > 28963 } == 28964, "with every listed port busy, the first free port above")
+        ported.port = 28963
+        require(HostingConfig.otherPort(for: ported) { _ in true } == 28960, "a listed port below is preferred to an unlisted one above")
+        ported.port = 28970
+        require(!ported.inLocalList && HostingConfig.otherPort(for: ported) { _ in false } == 28971, "nothing free still names a port")
+        ported.engine = .cod2x
+        require(ported.inLocalList, "28970 is in CoD2x's local list")
+        require(HostingNetwork.isWiFi(satisfied: true, preferred: .wifi), "Wi-Fi in front is Wi-Fi")
+        for other in [NWInterface.InterfaceType.wiredEthernet, .loopback, .cellular, .other] {
+            require(!HostingNetwork.isWiFi(satisfied: true, preferred: other), "\(other) in front is not Wi-Fi")
+        }
+        require(!HostingNetwork.isWiFi(satisfied: false, preferred: .wifi) && !HostingNetwork.isWiFi(satisfied: true, preferred: nil), "no working path, or no interface, is not Wi-Fi")
         server.reach = .listed
         let listed = try HostingConfig.arguments(server, dataPath: "/Games/CoD2", home: "/tmp/one")
         require(listed.contains("2") && !listed.contains("1"), "a listed server is dedicated 2")
