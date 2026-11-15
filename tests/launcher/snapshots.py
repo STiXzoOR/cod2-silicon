@@ -5,6 +5,7 @@ Needs a login session whose window server supplies rendered window pixels (macOS
 can return transparent captures while locked). Uses only the original fallback art
 and fake documentation-range servers; no game data is read.
 """
+import argparse
 import atexit
 import contextlib
 import os
@@ -21,7 +22,14 @@ import sys
 import tempfile
 
 root = pathlib.Path(__file__).resolve().parents[2]
-out = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else root / "output/ws28/unit/snapshots"
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from snapshot_phases import GROUPS, Phases, group_screens  # noqa: E402
+
+parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+parser.add_argument("output", nargs="?", type=pathlib.Path, default=root / "output/ws28/unit/snapshots")
+parser.add_argument("--group", choices=GROUPS, help="capture only this group of screens, full size and at the minimum; not the full suite")
+arguments = parser.parse_args()
+out, group = arguments.output, arguments.group
 build = out.parent / "snapshot-harness.noindex"
 subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", str(root / "scripts/build-launcher.sh"), str(build), "--snapshots"], check=True)
 # A normal bundle gives the review host a stable application identity for native
@@ -228,114 +236,167 @@ def check_capture(png, screen, minimum=False):
     assert length > content_floor(width, height), f"{png} looks blank ({length} bytes)"
 
 
-run(out)
-for screen in screens:
+def check_pair(folder, screen, minimum=False, label=None):
+    """Both appearances of one screen: whole, not blank, and different from each other."""
     shots = {}
     for appearance in ["dark", "light"]:
-        png = out / f"{screen}-{appearance}.png"
+        png = folder / f"{screen}-{appearance}.png"
         (width, height), length = size(png)
-        check_capture(png, screen)
+        check_capture(png, screen, minimum=minimum)
         assert length > content_floor(width, height), f"{png} looks blank ({length} bytes)"
         shots[appearance] = png.read_bytes()
-    assert shots["dark"] != shots["light"], screen
+    assert shots["dark"] != shots["light"], label or screen
 
-fallback = out / "fallback"
-run(fallback, "--fallback", "--only", "servers")
-for appearance in ["dark", "light"]:
-    (width, height), length = size(fallback / f"servers-{appearance}.png")
-    assert (width, height) in WINDOW and length > content_floor(width, height)
-    assert (fallback / f"servers-{appearance}.png").read_bytes() != (out / f"servers-{appearance}.png").read_bytes()
-run(fallback, "--fallback", "--only", "configs-guided")
+
+# Each phase runs even when an earlier one failed, unless it reads that phase's output; every
+# failure is listed again at the end, and the last line is the summary to read.
+phases = Phases(after_failure=release_lease)
+minimum = out / "minimum"
+
+if group:
+    # One group of screens, full size and at the minimum: enough for a change to one page.
+    chosen = group_screens(listing, group)
+    assert chosen, f"no screens in group {group}"
+
+    def group_captures():
+        run(out, "--screens", ",".join(chosen))
+        for screen in chosen:
+            check_pair(out, screen)
+
+    def group_minimum():
+        run(minimum, "--minimum", "--screens", ",".join(chosen))
+        for screen in chosen:
+            check_pair(minimum, screen, minimum=True, label=f"minimum {screen}")
+
+    phases.phase("captures", [], group_captures)
+    phases.phase("minimum", [], group_minimum)
+    status = phases.report()
+    if status == 0:
+        print(f"PASS: group {group}: {len(chosen) * 2} captures at full size and {len(chosen) * 2} at the 1100x760 minimum, with a clean shape audit."
+              " This is not the full suite: run without --group before a release.")
+    sys.exit(status)
+
+
+def captures():
+    run(out)
+    for screen in screens:
+        check_pair(out, screen)
+
+
+def material_fallback():
+    fallback = out / "fallback"
+    run(fallback, "--fallback", "--only", "servers")
+    for appearance in ["dark", "light"]:
+        (width, height), length = size(fallback / f"servers-{appearance}.png")
+        assert (width, height) in WINDOW and length > content_floor(width, height)
+        assert (fallback / f"servers-{appearance}.png").read_bytes() != (out / f"servers-{appearance}.png").read_bytes()
+    run(fallback, "--fallback", "--only", "configs-guided")
+
 
 # Config Studio under Increase Contrast and Reduce Transparency (set for the capture only).
 # Increase Contrast changes every screen's palette. Reduce Transparency swaps glass for
 # opaque fills, so only screens whose shape audit lists glass must change; a screen of
 # opaque panels (Guided, the read-only banner) can capture identically.
-audit = {entry["screen"]: entry["items"] for entry in json.loads((out / "shape-audit.json").read_text())}
-# Behind the import sheet the window shows no translucent surface of its own, and the sheet's
-# material belongs to the system, so Reduce Transparency can leave those captures unchanged.
-sheets = {"configs-import", "configs-import-everything", "configs-import-link", "configs-import-windows", "configs-import-loading",
-          "configs-import-windows-profiles"}
-for variant in ["increase-contrast", "reduce-transparency"]:
-    folder = out / variant
-    run(folder, "--group", "configs", f"--{variant}")
-    for screen in configs:
-        for appearance in ["dark", "light"]:
-            png = folder / f"{screen}-{appearance}.png"
-            (width, height), length = size(png)
-            assert (width, height) in WINDOW and length > content_floor(width, height), png
-            if variant == "reduce-transparency" and screen in sheets:
-                continue
-            glass = any("glass" in item["name"] for item in audit[f"{screen}-{appearance}"])
-            if variant == "increase-contrast" or glass:
-                assert png.read_bytes() != (out / f"{screen}-{appearance}.png").read_bytes(), f"{png} matches the standard capture"
+def contrast_and_transparency():
+    audit = {entry["screen"]: entry["items"] for entry in json.loads((out / "shape-audit.json").read_text())}
+    # Behind the import sheet the window shows no translucent surface of its own, and the sheet's
+    # material belongs to the system, so Reduce Transparency can leave those captures unchanged.
+    sheets = {"configs-import", "configs-import-everything", "configs-import-link", "configs-import-windows", "configs-import-loading",
+              "configs-import-windows-profiles"}
+    for variant in ["increase-contrast", "reduce-transparency"]:
+        folder = out / variant
+        run(folder, "--group", "configs", f"--{variant}")
+        for screen in configs:
+            for appearance in ["dark", "light"]:
+                png = folder / f"{screen}-{appearance}.png"
+                (width, height), length = size(png)
+                assert (width, height) in WINDOW and length > content_floor(width, height), png
+                if variant == "reduce-transparency" and screen in sheets:
+                    continue
+                glass = any("glass" in item["name"] for item in audit[f"{screen}-{appearance}"])
+                if variant == "increase-contrast" or glass:
+                    assert png.read_bytes() != (out / f"{screen}-{appearance}.png").read_bytes(), f"{png} matches the standard capture"
+
 
 # Every page at the launcher's 1100x760 minimum: actual window images, both appearances, with the
 # same shape audit (the harness fails on a finding).
-minimum = out / "minimum"
-run(minimum, "--minimum")
-for screen in screens:
-    shots = {}
-    for appearance in ["dark", "light"]:
-        png = minimum / f"{screen}-{appearance}.png"
-        (width, height), length = size(png)
-        check_capture(png, screen, minimum=True)
-        assert length > content_floor(width, height), f"{png} looks blank ({length} bytes)"
-        shots[appearance] = png.read_bytes()
-    assert shots["dark"] != shots["light"], f"minimum {screen}"
+def minimum_size():
+    run(minimum, "--minimum")
+    for screen in screens:
+        check_pair(minimum, screen, minimum=True, label=f"minimum {screen}")
+
 
 # Reduce Motion, set in the view environment for the capture only (never the Mac's setting).
 # Stills can match the standard captures; each must still be a whole window.
-motion = out / "reduce-motion"
-run(motion, "--group", "configs", "--reduce-motion")
-for screen in configs:
-    for appearance in ["dark", "light"]:
-        (width, height), length = size(motion / f"{screen}-{appearance}.png")
-        assert (width, height) in WINDOW and length > content_floor(width, height), (screen, appearance, width, height, length)
+def reduce_motion():
+    motion = out / "reduce-motion"
+    run(motion, "--group", "configs", "--reduce-motion")
+    for screen in configs:
+        for appearance in ["dark", "light"]:
+            (width, height), length = size(motion / f"{screen}-{appearance}.png")
+            assert (width, height) in WINDOW and length > content_floor(width, height), (screen, appearance, width, height, length)
+
 
 # Window-driving suites from every unit (setup keyboard and validation, page actions with real saved
 # settings and media, …), each isolated from the player's home in a private one below the output.
-for suite in suites:
+def window_suite(suite):
     private_home = out / f"{suite}-home"
     if private_home.exists():
         shutil.rmtree(private_home)
     private_home.mkdir(parents=True, exist_ok=True)
     run(out / suite, "--suite", suite, env={"HOME": str(private_home), "CFFIXED_USER_HOME": str(private_home)})
-for variant in ["increase-contrast", "reduce-transparency", "reduce-motion"]:
-    run(out / variant, "--only", "setup-ready-approximate", f"--{variant}")
+
+
+def setup_variants():
+    for variant in ["increase-contrast", "reduce-transparency", "reduce-motion"]:
+        run(out / variant, "--only", "setup-ready-approximate", f"--{variant}")
+
 
 # Real clicks on Config Studio controls (including a Binds key capture and Check-up Apply and
 # Undo) write exact bytes and History rows in a temporary home.
-run(out / "actions", "--actions")
+def config_actions():
+    run(out / "actions", "--actions")
+
+
 # A Mouse speed keyboard step or typed value never lands on the loadout chosen before it saved, and
 # Show Controls with a text draft asks to Apply, Discard or Keep Editing; each with a positive save.
-run(out / "actions", "--actions", "--only", "review-controls")
+def review_controls():
+    run(out / "actions", "--actions", "--only", "review-controls")
+
 
 # Every Config Studio control has a name in the accessibility tree VoiceOver reads; the trees
 # are written in reading order for review.
-run(out, "--accessibility")
-for screen in configs:
-    assert (out / "accessibility" / f"{screen}.txt").stat().st_size > 1000, screen
+def accessibility_trees():
+    run(out, "--accessibility")
+    for screen in configs:
+        assert (out / "accessibility" / f"{screen}.txt").stat().st_size > 1000, screen
+
 
 # Sheets, popovers and alerts, opened by real clicks and captured over their window.
 overlays = ["configs-jump", "configs-new-loadout", "configs-expert-note", "configs-binds-keyboard", "configs-binds-pointer", "configs-binds-confirm",
             "configs-import-confirm"]
-run(out / "overlays", "--overlays")
-for overlay in overlays:
-    for appearance in ["dark", "light"]:
-        (width, height), length = size(out / "overlays" / f"overlay-{overlay}-{appearance}.png")
-        assert width >= 1440 and height >= 900 and length > content_floor(width, height), (overlay, appearance, width, height, length)
+
+
+def overlay_captures():
+    run(out / "overlays", "--overlays")
+    for overlay in overlays:
+        for appearance in ["dark", "light"]:
+            (width, height), length = size(out / "overlays" / f"overlay-{overlay}-{appearance}.png")
+            assert width >= 1440 and height >= 900 and length > content_floor(width, height), (overlay, appearance, width, height, length)
+
 
 # Expert's group rail as navigation in a real window: active and inactive, with the window's sidebar
 # hidden and shown by its own toolbar button, and resized to the minimum and back.
-navigation = out / "navigation"
-run(navigation, "--navigation")
-for step in ["active", "inactive", "sidebar-hidden", "sidebar-shown", "minimum", "minimum-sidebar-hidden", "minimum-sidebar-shown", "resized-back"]:
-    for appearance in ["dark", "light"]:
-        (width, height), length = size(navigation / f"navigation-{step}-{appearance}.png")
-        assert (width, height) in (MINIMUM if step.startswith("minimum") else WINDOW) and length > content_floor(width, height), (step, appearance, width, height, length)
+def navigation_captures():
+    navigation = out / "navigation"
+    run(navigation, "--navigation")
+    for step in ["active", "inactive", "sidebar-hidden", "sidebar-shown", "minimum", "minimum-sidebar-hidden", "minimum-sidebar-shown", "resized-back"]:
+        for appearance in ["dark", "light"]:
+            (width, height), length = size(navigation / f"navigation-{step}-{appearance}.png")
+            assert (width, height) in (MINIMUM if step.startswith("minimum") else WINDOW) and length > content_floor(width, height), (step, appearance, width, height, length)
 
-for variant in ["increase-contrast", "reduce-transparency", "reduce-motion"]:
+
+def page_variant(variant):
     folder = out / f"pages-{variant}"
     run(folder, "--group", "pages", f"--{variant}")
     for screen in pages:
@@ -343,11 +404,30 @@ for variant in ["increase-contrast", "reduce-transparency", "reduce-motion"]:
             # A popover extends past its parent window here too: check the capture as the full-size pass does.
             check_capture(folder / f"{screen}-{appearance}.png", screen)
 
-# The harness exits non-zero on any shape-audit finding, so reaching here means none.
-print(f"PASS: {len(screens) * 2} launcher screens (main window 1440x900, Settings 900x700 points) in dark and light, plus the material fallback, with bundled fonts"
-      " and a clean shape audit (capsule buttons, concentric nesting, equal insets); Config Studio under Increase Contrast,"
-      f" Reduce Transparency and Reduce Motion, and {len(screens) * 2} captures at the 1100x760 minimum; Config Studio clicks"
-      " write exact bytes; every launcher page control is named for VoiceOver;"
-      f" {len(overlays) * 2} sheet, popover and alert captures")
 
-print(f"PASS: suites {', '.join(suites)}; page captures under all three accessibility appearance preferences")
+phases.phase("captures", [], captures)
+phases.phase("material fallback", ["captures"], material_fallback)
+phases.phase("contrast and transparency", ["captures"], contrast_and_transparency)
+phases.phase("minimum size", [], minimum_size)
+phases.phase("reduce motion", [], reduce_motion)
+for suite in suites:
+    phases.phase(f"suite {suite}", [], lambda suite=suite: window_suite(suite))
+phases.phase("setup variants", [], setup_variants)
+phases.phase("config actions", [], config_actions)
+phases.phase("review controls", [], review_controls)
+phases.phase("accessibility trees", [], accessibility_trees)
+phases.phase("overlays", [], overlay_captures)
+phases.phase("navigation", [], navigation_captures)
+for variant in ["increase-contrast", "reduce-transparency", "reduce-motion"]:
+    phases.phase(f"pages {variant}", [], lambda variant=variant: page_variant(variant))
+
+status = phases.report()
+if status == 0:
+    # The harness exits non-zero on any shape-audit finding, so reaching here means none.
+    print(f"PASS: {len(screens) * 2} launcher screens (main window 1440x900, Settings 900x700 points) in dark and light, plus the material fallback, with bundled fonts"
+          " and a clean shape audit (capsule buttons, concentric nesting, equal insets); Config Studio under Increase Contrast,"
+          f" Reduce Transparency and Reduce Motion, and {len(screens) * 2} captures at the 1100x760 minimum; Config Studio clicks"
+          " write exact bytes; every launcher page control is named for VoiceOver;"
+          f" {len(overlays) * 2} sheet, popover and alert captures")
+    print(f"PASS: suites {', '.join(suites)}; page captures under all three accessibility appearance preferences")
+sys.exit(status)

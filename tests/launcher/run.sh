@@ -51,4 +51,11 @@ taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 -typecheck -swift-version 6 
 echo "PASS: views typecheck without COD2_LIQUID_GLASS (material rendering branch)"
 
 # Render every screen in both appearances through the review harness and check the images.
-python3 "$root/tests/launcher/snapshots.py" "${COD2_LAUNCHER_SNAPSHOT_OUTPUT:-$out/snapshots}"
+# COD2_LAUNCHER_SNAPSHOT_GROUP=home|servers|library|configs|settings|shell captures that group only,
+# for a change to one page. A release needs the full run, without it.
+python3 "$root/tests/launcher/test_snapshots_script.py"
+if [ -n "${COD2_LAUNCHER_SNAPSHOT_GROUP:-}" ]; then
+    python3 "$root/tests/launcher/snapshots.py" "${COD2_LAUNCHER_SNAPSHOT_OUTPUT:-$out/snapshots}" --group "$COD2_LAUNCHER_SNAPSHOT_GROUP"
+else
+    python3 "$root/tests/launcher/snapshots.py" "${COD2_LAUNCHER_SNAPSHOT_OUTPUT:-$out/snapshots}"
+fi

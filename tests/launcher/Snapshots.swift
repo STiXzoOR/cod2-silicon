@@ -404,7 +404,7 @@ final class Watchdog: @unchecked Sendable {
             Darwin.exit(0)
         }
         if arguments.count >= 2, arguments[1] == "--list-suites" { suites.forEach { print($0.name) }; Darwin.exit(0) }
-        guard arguments.count >= 2 else { fputs("usage: LauncherSnapshots OUTPUT [--data GAME_DIR] [--fallback] [--scale2] [--only SCREEN]\n", stderr); Snapshots.finish(2) }
+        guard arguments.count >= 2 else { fputs("usage: LauncherSnapshots OUTPUT [--data GAME_DIR] [--fallback] [--scale2] [--only SCREEN] [--screens A,B]\n", stderr); Snapshots.finish(2) }
         let output = URL(fileURLWithPath: arguments[1])
         outputDirectory = output
         let data = arguments.firstIndex(of: "--data").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil }
@@ -412,6 +412,11 @@ final class Watchdog: @unchecked Sendable {
         let only = arguments.firstIndex(of: "--only").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil }
         let group = arguments.firstIndex(of: "--group").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil }
         let configsOnly = group == "configs", pagesOnly = group == "pages"
+        // `--screens a,b,c`: only these, for snapshots.py's `--group` runs.
+        let chosen = arguments.firstIndex(of: "--screens").flatMap { arguments.count > $0 + 1 ? Set(arguments[$0 + 1].split(separator: ",").map(String.init)) : nil }
+        if let unknown = chosen?.subtracting(screens).sorted(), !unknown.isEmpty {
+            fputs("No screen named \(unknown.joined(separator: ", ")).\n", stderr); Snapshots.finish(2)
+        }
         if arguments.contains("--minimum") { windowSize = NSSize(width: 1100, height: 760) }
         let accessibility = Accessibility(increaseContrast: arguments.contains("--increase-contrast"), reduceTransparency: arguments.contains("--reduce-transparency"),
                                           reduceMotion: arguments.contains("--reduce-motion"))
@@ -458,7 +463,7 @@ final class Watchdog: @unchecked Sendable {
             var written = 0, checked = 0
             var findings: [String] = [], report: [[String: Any]] = [], geometries: [[String: Any]] = []
             for dark in [true, false] {
-                for screen in screens where (only == nil || only == screen) && (!configsOnly || configScreens.contains(screen)) && (!pagesOnly || inPagesGroup(screen)) {
+                for screen in screens where (only == nil || only == screen) && (chosen == nil || chosen!.contains(screen)) && (!configsOnly || configScreens.contains(screen)) && (!pagesOnly || inPagesGroup(screen)) {
                     let gate = screen == "configs-catalog-loading" ? PreviewCatalogGate() : nil
                     defer { gate?.release() }
                     let model = LauncherModel(snapshot: true, catalog: { try gate?.load() ?? ConfigStudioModel.bundledCatalog() })
@@ -923,9 +928,13 @@ final class PreviewCatalogGate: Sendable {
 /// lives in its harness file (SettingsChecks, ServersChecks, HomeLibraryChecks); they share one model and window.
 @MainActor enum PagesPreview {
     static func actions(output: URL) async -> Bool {
+        // Compare resolved paths: /tmp and /var are links into /private, and Foundation drops that
+        // prefix from some paths and not others, which once refused every run under /private/tmp.
+        func resolved(_ path: String) -> String { URL(fileURLWithPath: path).resolvingSymlinksInPath().path }
+        let parent = resolved(output.deletingLastPathComponent().path)
         guard let privateHome = ProcessInfo.processInfo.environment["CFFIXED_USER_HOME"],
-              privateHome.hasPrefix(output.deletingLastPathComponent().path + "/"), NSHomeDirectory() == privateHome else {
-            print("FAIL: page actions require a private home below the test output"); return false
+              resolved(privateHome).hasPrefix(parent + "/"), resolved(NSHomeDirectory()) == resolved(privateHome) else {
+            print("FAIL: page actions require a private home below the test output (home \(NSHomeDirectory()), output folder \(parent))"); return false
         }
         let model = LauncherModel()
         model.onboard = false
