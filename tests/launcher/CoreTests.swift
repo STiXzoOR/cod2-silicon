@@ -77,6 +77,11 @@ import Foundation
         try appUpdate(scratch: scratch)
         print("PASS: install update: the release's archive and SHA256SUMS from this project only, one checksum line, any size or SHA-256 mismatch refused, refusals while a game runs or where the app can't replace itself, synthetic bundles checked for identifier, version, signature and Team ID, and the swap on a copy with the old app kept until the new one is in place")
         try presentation(fixtures)
+        // The launcher names the CoD2x its engine really is: the engine header's own release string.
+        let header = try String(contentsOf: fixtures.appendingPathComponent("../../../src/PC/qcommon/cod2x.h").standardizedFileURL, encoding: .utf8)
+        let define = header.components(separatedBy: "\n").first { $0.hasPrefix("#define COD2X_RELEASE ") } ?? ""
+        precondition(define == "#define COD2X_RELEASE \"\(CoD2xFiles.engineRelease)\"", "CoD2xFiles.engineRelease must be the engine's COD2X_RELEASE: \(define)")
+        precondition(CoD2xFiles.engineTitle == "CoD2x " + CoD2xFiles.engineRelease && CoD2xFiles.version == "1.4.6.8", "the engine and the downloaded Windows files are named apart")
         print("PASS: crash reports: CoD2x's own (log with its pending report) never opened or sent, ours shortened, command lines dropped, a CD key refuses, one envelope to a stand-in Sentry on 127.0.0.1, nothing when off or without a receiver, never twice; CoD2x's switch reaches only a CoD2x game")
         print("PASS: CoD2x files: the archive taken from a CoD2x mss32.dll by the engine's rule (none or two refused, a stock DLL named), the release refused at any other size or hash with only the archive kept, present for CoD2x and absent for Original 1.3, the game data folder never written")
         print("PASS: game version: CoD2x by default and kept across saves, both engines found by executable, Original 1.3 asks for CoD2x only on CoD2x servers, links and passwords never in argv, crash and freeze reports from either engine")

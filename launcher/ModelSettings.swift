@@ -178,7 +178,7 @@ extension KeyStore {
 
     // MARK: General
     var engineOptions: [(value: GameEngine, title: String)] {
-        [(.cod2x, "CoD2x \(CoD2xFiles.version)"), (.original, "Original 1.3")]
+        [(.cod2x, CoD2xFiles.engineTitle), (.original, "Original 1.3")]
     }
     /// The board's pointer: personal settings live in loadouts.
     func openConfigs() { showMainWindow(); navigate(to: .configs) }
@@ -364,7 +364,7 @@ extension KeyStore {
                                     actionTitle: "Set Up Again", destructive: false) { [weak self] in self?.setUpAgain() })
     }
     var installedEngineNames: [String] {
-        GameEngine.allCases.filter { installedEngines.contains($0) }.map { $0 == .cod2x ? "CoD2x \(CoD2xFiles.version)" : "Original 1.3" }
+        GameEngine.allCases.filter { installedEngines.contains($0) }.map { $0 == .cod2x ? CoD2xFiles.engineTitle : "Original 1.3" }
     }
 
     /// What the app home keeps of CoD2x's files now.

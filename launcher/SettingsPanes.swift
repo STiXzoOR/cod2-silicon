@@ -79,7 +79,7 @@ struct GeneralPane: View {
             }
             .pickerStyle(.segmented).labelsHidden().fixedSize()
         } else {
-            Text("CoD2x \(CoD2xFiles.version)").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text)
+            Text(CoD2xFiles.engineTitle).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text)
             Button("View Release") { NSWorkspace.shared.open(AppUpdate.releases) }.quietAction()
         }
     }
@@ -516,7 +516,7 @@ struct UpdatesPane: View {
             }
             FormSection("Game versions") {
                 FormGroup {
-                    FormRow("CoD2x \(CoD2xFiles.version)", detail: "Included in this release. A newer CoD2x arrives with an app update.") { StatusLabel(.ready, "Included") }
+                    FormRow(CoD2xFiles.engineTitle, detail: "Included in this release. A newer CoD2x arrives with an app update.") { StatusLabel(.ready, "Included") }
                     FormRow("Original 1.3", detail: model.originalAvailable ? "The final official patch. It doesn’t change." : "Not included in this copy of the app.") {
                         Text(model.originalAvailable ? "Final" : "Not included").font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.secondary)
                     }
