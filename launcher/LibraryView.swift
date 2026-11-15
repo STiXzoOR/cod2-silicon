@@ -79,7 +79,10 @@ private struct LibraryTabContent: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .scrollPosition($position)
-                .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentOffset.y + $0.contentInsets.top }) { _, offset in model.libraryOffsets[tab] = offset }
+                // A tab being left is emptied and scrolls back to the top on its way out; that isn't where it was left.
+                .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentOffset.y + $0.contentInsets.top }) { _, offset in
+                    if model.libraryTab == tab { model.libraryOffsets[tab] = offset }
+                }
                 .onAppear {
                     guard let offset = model.libraryOffsets[tab], offset > 1 else { return }
                     Task { @MainActor in try? await Task.sleep(for: .milliseconds(60)); position.scrollTo(y: offset) }

@@ -43,6 +43,8 @@ All notable changes to CoD2 Silicon are documented here, following
 - The PunkBuster settings are shown as unavailable in the original 1.3 game
   too, not only in CoD2x.
 - Settings names the CoD2x version the built-in game runs as (1.4.6.8).
+- Library's Demos and Screenshots each come back at the place you had
+  scrolled to. On some displays switching between them went back to the top.
 
 ### For contributors
 
