@@ -698,6 +698,14 @@ qboolean ItemParse_dvarStrList(const char (*item)[4], int handle)
             }
 
             multiPtr->dvarStr[multiPtr->count] = String_Alloc(token.string);
+#if defined(COD2_APPLE_SDK) && COD2_APPLE_SDK
+            /* Options > Sound > Sound Provider lists three Creative Labs EAX providers. None
+               exists on a Mac: the sound layer offers one provider, and choosing another
+               snapped back to it after Apply. The row lists what there is. */
+            if (itemDef->dvar && !I_stricmp(itemDef->dvar, "ui_mss_3d_provider") &&
+                !strncmp(token.string, "Creative Labs EAX", 17))
+                break;
+#endif
             multiPtr->count++;
             if (multiPtr->count > 31)
                 return 0;
