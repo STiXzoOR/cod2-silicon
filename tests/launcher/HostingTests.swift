@@ -2,10 +2,6 @@ import Foundation
 import AppKit
 import Network
 
-// Stand-ins for the two types Hosting takes from the launcher's core.
-enum GameEngine: String, Codable, Sendable, CaseIterable { case cod2x, original }
-struct LauncherError: Error { var message: String }
-
 @main struct HostingTests {
     /// Run before a failing test exits, so no server it started is left behind.
     nonisolated(unsafe) static var cleanup: () -> Void = {}

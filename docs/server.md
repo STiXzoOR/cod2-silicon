@@ -20,8 +20,10 @@ servers it started.
   `cod2_macos_ded_stock` (original 1.3), inside its game app.
 - Each server has its own folder, `hosting/servers/<id>` in CoD2 Silicon's
   Application Support folder: `main/server.cfg`, which the launcher writes on
-  every start, the game's own logs, and `logs/console.log`. The game folder is
-  only read.
+  every start, the game's own logs, and one log per start,
+  `logs/server-<time>-<id>.log`. The newest ten are kept, 4 MB each at most,
+  and lines that hold either password are left out. Report a Problem can copy
+  the last one for you to paste. The game folder is only read.
 - **Who can join a CoD2x server.** A CoD2x server takes players on its own
   version or a newer one, never an older one. By default this app's CoD2x
   server follows CoD2x's current source, 1.4.7.1-test.1, which only CoD2

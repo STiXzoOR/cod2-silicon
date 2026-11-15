@@ -123,6 +123,8 @@ struct ReportProblemSheet: View {
     @Environment(\.palette) private var palette
     @State private var includeLog = false
     @State private var hasLog = false
+    @State private var includeServerLog = false
+    @State private var hasServerLog = false
     @State private var copied = false
     @State private var logMessage: String?
     var body: some View {
@@ -149,6 +151,12 @@ struct ReportProblemSheet: View {
                             : "There’s no game log yet. The game writes one when it crashes or freezes.") {
                         SwitchToggle("Include the last game log", isOn: $includeLog).disabled(!hasLog)
                     }
+                    // Only for someone who has hosted a server here.
+                    if hasServerLog {
+                        FormRow("Include the last server log", detail: "From a server you hosted. Copied to the clipboard for you to paste. It can contain player names.") {
+                            SwitchToggle("Include the last server log", isOn: $includeServerLog)
+                        }
+                    }
                 }
                 if let logMessage {
                     Label(logMessage, systemImage: "exclamationmark.triangle").font(.system(size: 12)).foregroundStyle(palette.negative)
@@ -156,13 +164,16 @@ struct ReportProblemSheet: View {
                 }
                 Text("Never includes your CD key or your name.").font(.system(size: 12)).foregroundStyle(palette.tertiary).padding(.horizontal, 6)
             }
-            .onAppear { hasLog = model.snapshot || model.lastGameLog() != nil }
+            .onAppear {
+                hasLog = model.snapshot || model.lastGameLog() != nil
+                hasServerLog = model.snapshot ? !model.hosting.servers.isEmpty : model.lastServerLog() != nil
+            }
             .task(id: copied) { if copied { try? await Task.sleep(for: .seconds(2)); copied = false } }
         }
     }
     private func open() {
-        if includeLog {
-            let result = model.copyLastGameLog()
+        if includeLog || includeServerLog {
+            let result = model.copyReportLogs(game: includeLog, server: includeServerLog)
             guard result.copied else { logMessage = result.text; return }
         }
         model.openIssue()

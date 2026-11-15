@@ -1134,6 +1134,8 @@ enum DisplayResolutions {
 
 // MARK: - ship-play: private, bounded game output
 /// A serial reader drains both game streams without blocking the UI. Only complete, filtered lines reach disk.
+/// A game's log is `logs/game-<time>-<id>.log` in the launcher's home; a hosted server's is
+/// `logs/server-<time>-<id>.log` in that server's folder. The same limits hold for both.
 /// Mutable state and the file handle belong to `queue`; the pipe is configured before Process.run().
 final class GameSessionLog: @unchecked Sendable {
     static let sessionLimit = 10
@@ -1150,10 +1152,14 @@ final class GameSessionLog: @unchecked Sendable {
     private var finished = false
     private var secrets: Set<String>
 
-    init(home: URL, password: String? = nil, now: Date = Date()) throws {
-        secrets = Set([password].compactMap { $0 }.filter { !$0.isEmpty })
-        let folder = home.appendingPathComponent("logs", isDirectory: true)
-        try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
+    /// The game's own log, in the launcher's home.
+    convenience init(home: URL, password: String? = nil, now: Date = Date()) throws {
+        try self.init(folder: home.appendingPathComponent("logs", isDirectory: true), prefix: "game", secrets: [password].compactMap { $0 }, now: now)
+    }
+    /// A log named `<prefix>-<time>-<id>.log` in `folder`. A line that holds one of `secrets` is not written.
+    init(folder: URL, prefix: String, secrets: [String], now: Date = Date()) throws {
+        self.secrets = Set(secrets.filter { !$0.isEmpty })
+        try FileManager.default.createDirectory(at: folder.deletingLastPathComponent(), withIntermediateDirectories: true)
         if mkdir(folder.path, 0o700) != 0 && errno != EEXIST { throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno)) }
         let directory = open(folder.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW)
         guard directory >= 0 else { throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno)) }
@@ -1162,12 +1168,12 @@ final class GameSessionLog: @unchecked Sendable {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let timestamp = formatter.string(from: now).replacingOccurrences(of: ":", with: "-")
-        let name = "game-\(timestamp)-\(UUID().uuidString.prefix(8)).log"
+        let name = "\(prefix)-\(timestamp)-\(UUID().uuidString.prefix(8)).log"
         url = folder.appendingPathComponent(name)
         let fd = openat(directory, name, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600)
         guard fd >= 0 else { throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno)) }
         handle = FileHandle(fileDescriptor: fd, closeOnDealloc: true)
-        Self.prune(home: home, keeping: url)
+        Self.prune(folder: folder, prefix: prefix, keeping: url)
         // Foundation resets signal dispositions on spawn. This descriptor flag survives dup/exec:
         // quitting or force-quitting the launcher must not kill the game with SIGPIPE.
         guard fcntl(pipe.fileHandleForWriting.fileDescriptor, F_SETNOSIGPIPE, 1) == 0 else {
@@ -1237,19 +1243,21 @@ final class GameSessionLog: @unchecked Sendable {
         }
         return (try? CrashReporting.redact(line)) ?? "[Private details omitted]"
     }
-    static func files(home: URL) -> [URL] {
-        let folder = home.appendingPathComponent("logs")
+    static func files(home: URL) -> [URL] { files(folder: home.appendingPathComponent("logs"), prefix: "game") }
+    /// The logs with this prefix, newest first.
+    static func files(folder: URL, prefix: String) -> [URL] {
         guard let facts = try? folder.resourceValues(forKeys: [.isSymbolicLinkKey]), facts.isSymbolicLink != true else { return [] }
         return ((try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])) ?? []).filter {
-            guard $0.lastPathComponent.hasPrefix("game-"), $0.pathExtension == "log",
+            guard $0.lastPathComponent.hasPrefix(prefix + "-"), $0.pathExtension == "log",
                   let facts = try? $0.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey]) else { return false }
             return facts.isRegularFile == true && facts.isSymbolicLink != true
         }.sorted { $0.lastPathComponent > $1.lastPathComponent }
     }
     static func latest(home: URL) -> URL? { files(home: home).first }
-    private static func prune(home: URL, keeping current: URL) {
+    static func latest(folder: URL, prefix: String) -> URL? { files(folder: folder, prefix: prefix).first }
+    private static func prune(folder: URL, prefix: String, keeping current: URL) {
         var count = 1, bytes = fileLimit // Reserve the new session's full allowance while it is running.
-        for file in files(home: home) where file.lastPathComponent != current.lastPathComponent {
+        for file in files(folder: folder, prefix: prefix) where file.lastPathComponent != current.lastPathComponent {
             let size = (try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
             if count >= sessionLimit || size > totalLimit - bytes { try? FileManager.default.removeItem(at: file) }
             else { count += 1; bytes += size }

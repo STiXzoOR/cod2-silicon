@@ -838,6 +838,22 @@ extension CoreTests {
         let rotated = try GameSessionLog(home: home, now: Date().addingTimeInterval(30)); rotated.finish()
         let bytes = try GameSessionLog.files(home: home).reduce(0) { try $0 + $1.resourceValues(forKeys: [.fileSizeKey]).fileSize! }
         precondition(bytes <= GameSessionLog.totalLimit - GameSessionLog.fileLimit)
+        // A hosted server's logs: their own folder and prefix, both passwords kept out, pruned on their own.
+        let serverFolder = scratch.appendingPathComponent("server-logs/logs")
+        let gameLogs = GameSessionLog.files(home: home).map(\.lastPathComponent)
+        let first = try GameSessionLog(folder: serverFolder, prefix: "server", secrets: ["joinword", "", "adminword"])
+        try first.pipe.fileHandleForWriting.write(contentsOf: Data("Server: mp_toujane\nsays joinword\nsays adminword\nPlayer connected\n".utf8))
+        first.finish()
+        let serverText = try String(contentsOf: first.url, encoding: .utf8)
+        precondition(first.url.lastPathComponent.hasPrefix("server-") && serverText.contains("Server: mp_toujane") && serverText.contains("Player connected")
+                     && !serverText.contains("joinword") && !serverText.contains("adminword"), "a server log keeps both passwords out: \(serverText)")
+        precondition(GameSessionLog.latest(folder: serverFolder, prefix: "server")?.lastPathComponent == first.url.lastPathComponent
+                     && GameSessionLog.latest(folder: serverFolder, prefix: "game") == nil
+                     && GameSessionLog.files(home: home).map(\.lastPathComponent) == gameLogs, "server logs and game logs do not count against each other")
+        try Data("old".utf8).write(to: serverFolder.appendingPathComponent("console.log"))
+        for index in 1...12 { try GameSessionLog(folder: serverFolder, prefix: "server", secrets: [], now: Date().addingTimeInterval(Double(index))).finish() }
+        precondition(GameSessionLog.files(folder: serverFolder, prefix: "server").count == 10
+                     && FileManager.default.fileExists(atPath: serverFolder.appendingPathComponent("console.log").path), "ten starts are kept; 0.3.0's single log is left alone")
         let unsafeHome = scratch.appendingPathComponent("unsafe-logs")
         try FileManager.default.createDirectory(at: unsafeHome, withIntermediateDirectories: true)
         try FileManager.default.createSymbolicLink(at: unsafeHome.appendingPathComponent("logs"), withDestinationURL: home)

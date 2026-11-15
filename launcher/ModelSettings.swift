@@ -465,22 +465,49 @@ extension KeyStore {
     /// Returns what happened, in words.
     @discardableResult func copyLastGameLog() -> (text: String, copied: Bool) {
         guard !snapshot else { return ("Copied the crash report from today at 14:02.", true) }
-        guard let log = lastGameLog(), let handle = try? FileHandle(forReadingFrom: log) else {
+        guard let log = lastGameLog(), let shortened = Self.shortened(log) else {
             return ("There’s no game log yet. Launch the game once, then try again.", false)
         }
-        defer { try? handle.close() }
-        let size = (try? handle.seekToEnd()) ?? 0
-        try? handle.seek(toOffset: size > 262_144 ? size - 262_144 : 0)
-        let raw = String(decoding: (try? handle.readToEnd()) ?? Data(), as: UTF8.self)
-        let text: String
-        do { text = try CrashReporting.redact(raw) } catch {
+        guard let text = shortened.text else {
             return ("It wasn’t copied: it looks like it holds your CD key. Open it from Show in Finder to check it yourself.", false)
         }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
-        let modified = (try? log.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date()
+        let modified = shortened.modified
         let kind = log.lastPathComponent.hasPrefix("game-") ? "the game log" : log.lastPathComponent.hasPrefix("console") ? "the game’s console log" : log.lastPathComponent.contains("freeze") ? "the freeze report" : "the crash report"
         return ("Copied \(kind) from \(SettingsText.when(modified)).", true)
+    }
+    /// A log's last 256 KB with user names and command lines taken out. `text` is nil when what is left
+    /// still looks like it holds a CD key; the whole result is nil when the file can't be read.
+    static func shortened(_ log: URL) -> (text: String?, modified: Date)? {
+        guard let handle = try? FileHandle(forReadingFrom: log) else { return nil }
+        defer { try? handle.close() }
+        let size = (try? handle.seekToEnd()) ?? 0
+        try? handle.seek(toOffset: size > 262_144 ? size - 262_144 : 0)
+        let raw = String(decoding: (try? handle.readToEnd()) ?? Data(), as: UTF8.self)
+        let modified = (try? log.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date()
+        return ((try? CrashReporting.redact(raw)), modified)
+    }
+    /// The log of the hosted server that was started last, if any server here has been started.
+    func lastServerLog() -> URL? { hosting.latestLog() }
+    /// Report a Problem's logs: the last game log, the last hosted server's log, or both under a heading
+    /// each, on the clipboard. Nothing is copied unless every chosen log can be.
+    @discardableResult func copyReportLogs(game: Bool, server: Bool) -> (text: String, copied: Bool) {
+        guard !snapshot else { return ("Copied.", true) }
+        var parts: [(title: String, text: String)] = []
+        for (wanted, title, log, missing) in [(game, "Game log", lastGameLog(), "There’s no game log yet. Launch the game once, then try again."),
+                                              (server, "Server log", lastServerLog(), "There’s no server log yet. Start a server once, then try again.")] where wanted {
+            guard let log, let shortened = Self.shortened(log) else { return (missing, false) }
+            guard let text = shortened.text else {
+                return ("Nothing was copied: \(title == "Game log" ? "the game log" : "the server log") looks like it holds your CD key. Open it from Show in Finder to check it yourself.", false)
+            }
+            parts.append((title, text))
+        }
+        guard !parts.isEmpty else { return ("", true) }
+        let text = parts.count == 1 ? parts[0].text : parts.map { "===== \($0.title) =====\n\($0.text)" }.joined(separator: "\n\n")
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        return (parts.count == 1 ? "Copied \(parts[0].title == "Game log" ? "the game log" : "the server log")." : "Copied both logs.", true)
     }
     /// Settings › Advanced › Reset Settings…, behind its alert.
     func requestResetSettings() {
@@ -743,6 +770,10 @@ extension KeyStore {
         case "about", "about-footer": settingsPane = .about
         case "settings-sheet-replace-key": settingsPane = .gameData; settingsSheet = .replaceKey
         case "settings-sheet-report": settingsPane = .about; settingsSheet = .reportProblem
+        case "settings-sheet-report-server":
+            // A server has been hosted here: the sheet offers its log too.
+            hosting.preview(servers: [HostedServer.new(id: "friends", name: "Friday Night Rifles")], selection: nil)
+            settingsPane = .about; settingsSheet = .reportProblem
         case "settings-sheet-acknowledgement": settingsPane = .about; settingsSheet = .acknowledgements; selectedAcknowledgement = "vkd3d 2.1"
         case "settings-running": settingsPane = .general; gameRunning = true
         case "settings-legacy": settingsPane = .display

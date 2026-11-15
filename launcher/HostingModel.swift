@@ -48,6 +48,7 @@ enum ZPAMState: Equatable {
     /// The running server whose whole player list is open as a dialog: its page lists as many as fit.
     @Published var showingPlayers: HostedServer?
     private var processes: [String: Process] = [:]
+    private var sessionLogs: [String: GameSessionLog] = [:]
     private var poll: Task<Void, Never>?
     private var commands: Task<Void, Never>?
     private var download: Task<Void, Never>?
@@ -69,7 +70,18 @@ enum ZPAMState: Equatable {
 
     private var listURL: URL { folder.appendingPathComponent("servers.json") }
     func home(_ id: String) -> URL { folder.appendingPathComponent("servers/\(id)") }
-    func logURL(_ id: String) -> URL { home(id).appendingPathComponent("logs/console.log") }
+    private func logFolder(_ id: String) -> URL { home(id).appendingPathComponent("logs", isDirectory: true) }
+    /// The server's log: the newest start's, or the single file 0.3.0 wrote when there is none yet.
+    func logURL(_ id: String) -> URL { latestLog(id) ?? logFolder(id).appendingPathComponent("console.log") }
+    /// The log of the server's last start. One per start: the newest ten are kept, 4 MB each, 20 MB a server.
+    func latestLog(_ id: String) -> URL? { GameSessionLog.latest(folder: logFolder(id), prefix: "server") }
+    /// The newest log among all the servers saved here.
+    func latestLog() -> URL? {
+        servers.compactMap { latestLog($0.id) }.max {
+            let dates = [$0, $1].map { (try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast }
+            return dates[0] < dates[1]
+        }
+    }
     private func load() {
         guard let data = try? Data(contentsOf: listURL), let saved = try? JSONDecoder().decode([HostedServer].self, from: data) else { return }
         servers = saved
@@ -163,17 +175,19 @@ enum ZPAMState: Equatable {
             var environment = ProcessInfo.processInfo.environment
             environment["HOME"] = home(server.id).appendingPathComponent("user").path
             process.environment = environment
-            let log = logURL(server.id)
-            FileManager.default.createFile(atPath: log.path, contents: nil, attributes: [.posixPermissions: 0o600])
-            let handle = try FileHandle(forWritingTo: log)
-            process.standardOutput = handle; process.standardError = handle; process.standardInput = FileHandle.nullDevice
+            // A log per start, with both passwords kept out of it. The server writes into the log's
+            // pipe, which outlives this app without stopping the server.
+            let log = try GameSessionLog(folder: logFolder(server.id), prefix: "server", secrets: [server.joinPassword, server.adminPassword])
+            process.standardOutput = log.pipe; process.standardError = log.pipe; process.standardInput = FileHandle.nullDevice
             let id = server.id
             process.terminationHandler = { [weak self] finished in
                 let status = finished.terminationStatus, signalled = finished.terminationReason == .uncaughtSignal
-                try? handle.close()
+                log.finish()
                 Task { @MainActor [weak self] in self?.ended(id, status: status, signalled: signalled) }
             }
-            try process.run()
+            do { try process.run() } catch { log.finish(); throw error }
+            log.closeParentWriter()
+            sessionLogs[id] = log
             processes[id] = process
             phases[id] = .starting
             statuses[id] = nil
@@ -223,6 +237,7 @@ enum ZPAMState: Equatable {
     }
     private func ended(_ id: String, status: Int32, signalled: Bool) {
         processes[id] = nil
+        sessionLogs[id] = nil
         statuses[id] = nil
         if editing == id { editing = nil }
         refreshLog(id)

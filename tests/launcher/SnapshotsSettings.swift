@@ -16,7 +16,7 @@ extension Snapshots {
         "settings-updates", "settings-updates-never", "settings-updates-checking", "settings-updates-offline",
         "settings-update", "settings-update-installing", "settings-update-error", "settings-sheet-whats-new",
         "settings-advanced", "settings-reset",
-        "about", "about-footer", "about-update", "settings-sheet-report", "settings-sheet-acknowledgement",
+        "about", "about-footer", "about-update", "settings-sheet-report", "settings-sheet-report-server", "settings-sheet-acknowledgement",
     ]
     /// Also rendered in the `--group pages` runs and read by `--accessibility`.
     static let settingsPageScreens = ["settings-invalid", "settings-save-error", "settings-legacy", "settings-legacy-custom", "settings-legacy-display-adjusted"]
