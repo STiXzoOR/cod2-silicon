@@ -6,9 +6,15 @@
 /* Opt in with COD2_FEATURE_CFLAGS=-DCOD2_CODX=1; no engine layout dependencies. */
 #define COD2X_PROTOCOL 120
 #define COD2X_CONNECT_PROTOCOL 118
-#define COD2X_REVISION 7
-/* The CoD2x release this layer follows, as CoD2x prints it to players and admins. */
-#define COD2X_RELEASE "1.4.7.1-test.1"
+/* This layer runs as CoD2x's latest stable release, never its unreleased source: a game or a
+   server that named a test version would be turned away by, or turn away, everybody on the
+   release. Revision 6 is 1.4.6.8 (CoD2x src/shared/version.h at tag v1.4.6.8). What CoD2x's
+   source has beyond it (revision 7: coloured text codes, spectator x-ray, killfeed icons) is
+   in this layer behind tests on the revision a server reports, and stays off until a CoD2x
+   release carries it and these two lines move to that release. */
+#define COD2X_REVISION 6
+/* The CoD2x release this layer runs as, as CoD2x prints it to players and admins. */
+#define COD2X_RELEASE "1.4.6.8"
 #if defined(COD2_X64) && COD2_X64
 #define COD2X_VERSION "opencod2-native-CoD2x-" COD2X_RELEASE
 #else
@@ -47,13 +53,10 @@ int Cod2x_LimitedFPS(int requested, int limited);
 
 void Cod2x_Init(void);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-/* A host runs as a CoD2x server of one revision: g_cod2x is forced to it, the
-   protocol dvar is 120 and that revision's admission rules apply. The dvar
-   sv_cod2xRevision, set on the command line, chooses it: 7 follows CoD2x's
-   current source; 6 is the released 1.4.6.8, whose players can then join.
-   CoD2x refuses a client older than its server and takes one that is newer
-   (CoD2x src/shared/server.cpp, "Older client can not connect newer server"),
-   so admitting 1.4.6.8 players means running the whole server as revision 6. */
+/* A host runs as a CoD2x server of this layer's revision: g_cod2x is forced to it, the
+   protocol dvar is 120 and that revision's admission rules apply. CoD2x refuses a client
+   older than its server and takes one that is newer (CoD2x src/shared/server.cpp, "Older
+   client can not connect newer server"), so players on the release can join. */
 #define COD2X_HOST_REVISION_MIN 6
 int Cod2x_HostRevision(void);
 /* The release a host of that revision names to players it turns away. */

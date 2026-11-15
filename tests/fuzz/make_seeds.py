@@ -142,7 +142,7 @@ def client_seeds():
     seeds = {
         'connect': b'\x00' + userinfo,
         'connect-loopback': b'\x02' + userinfo,
-        'connect-cod2x': b'\x00' + userinfo[:-1] + b'\\protocol_cod2x\\7\\cl_hwid\\123456\\cl_hwid2\\0123456789abcdef0123456789abcdef"',
+        'connect-cod2x': b'\x00' + userinfo[:-1] + b'\\protocol_cod2x\\6\\cl_hwid\\123456\\cl_hwid2\\0123456789abcdef0123456789abcdef"',
         'connect-private': b'\x00' + userinfo.replace(b'password\\x', b'password\\private'),
         'connect-empty': b'\x00""',
         # 0x04: getchallenge; 0x06 from the local network. 0x0a: the key server's reply for a known challenge.

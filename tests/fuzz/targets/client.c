@@ -163,10 +163,10 @@ void FS_FCloseFile(fileHandle_t f) { (void)f; }
 const char *FS_LoadedIwdPureChecksums(void) { return "1 2 3"; }
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-/* The newest revision, so CoD2x's own admission rules run on every connect. */
-int Cod2x_ServerGameVersion(void) { return 7; }
-int Cod2x_HostRevision(void) { return 7; }
-const char *Cod2x_HostRelease(void) { return "1.4.7.1"; }
+/* A CoD2x server, so CoD2x's own admission rules run on every connect. */
+int Cod2x_ServerGameVersion(void) { return 6; }
+int Cod2x_HostRevision(void) { return 6; }
+const char *Cod2x_HostRelease(void) { return "1.4.6.8"; }
 void SV_Cod2xShowPacket(int sent, netadr_t address, const void *text, int length, int size)
 {
     (void)sent; (void)address; (void)text; (void)length; (void)size;

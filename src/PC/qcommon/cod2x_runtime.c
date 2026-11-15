@@ -30,18 +30,15 @@ static char cod2x_hwid[33];
 static int cod2x_playing, cod2x_demo;
 #if defined(COD2_X64) && COD2_X64
 static int cod2x_serverActive, cod2x_remotePolicy, cod2x_dedicated;
-static const dvar_t *cod2x_hostRevision;
 
 int Cod2x_HostRevision(void)
 {
-    int revision = cod2x_hostRevision ? cod2x_hostRevision->current.integer : COD2X_REVISION;
-    return revision < COD2X_HOST_REVISION_MIN || revision > COD2X_REVISION ? COD2X_REVISION : revision;
+    return COD2X_REVISION;
 }
 
 const char *Cod2x_HostRelease(void)
 {
-    /* Revision 6 is CoD2x 1.4.6.8 (CoD2x src/shared/version.h at tag v1.4.6.8). */
-    return Cod2x_HostRevision() == 6 ? "1.4.6.8" : COD2X_RELEASE;
+    return COD2X_RELEASE;
 }
 #endif
 
@@ -82,10 +79,6 @@ static void Cod2x_SharedInit(int dedicated)
                                   0x18);
 #endif
     cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, dedicated ? 0x1008 : 0x1018);
-    /* Latched and registered once, like net_port: only the command line that starts the
-       server can choose it, so a running server never changes revision under its players. */
-    cod2x_hostRevision = Dvar_RegisterInt("sv_cod2xRevision", COD2X_REVISION, COD2X_HOST_REVISION_MIN,
-                                          COD2X_REVISION, 0x1020);
     Dvar_RegisterInt("sv_playerBroadcastLimit", 15, 0, 64, 0x1000);
     Dvar_RegisterBool("g_shotgun_spread_fix", 1, 0x1080);
 #if defined(DEBUG) && DEBUG
@@ -104,13 +97,6 @@ void Cod2x_ServerInit(int dedicated)
         ((dvar_t *)cod2x_game)->domain.integer.max = COD2X_HOST_REVISION;
         Dvar_SetInt(cod2x_game, COD2X_HOST_REVISION);
         ((dvar_t *)cod2x_game)->modified = 0;
-        /* A server run as an earlier release names that release in the server list, as it
-           does to a player it turns away. The default revision keeps the dvar as registered. */
-        if (Cod2x_HostRevision() != COD2X_REVISION) {
-            const dvar_t *shortversion = Dvar_FindVar("shortversion");
-            if (shortversion)
-                Dvar_SetString(shortversion, Cod2x_HostRelease());
-        }
     }
     /* A server sends what an earlier crash left for CoD2x too (CoD2x linux/exception.cpp). */
     Cod2x_ReportInit();
