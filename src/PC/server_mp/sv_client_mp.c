@@ -678,7 +678,9 @@ void SV_AuthorizeIpPacket(netadr_t from)
     if (reason && *reason) {
         char ret[1024];
 
-        sprintf(ret, "error\n%s", reason);
+        /* The original has sprintf here. The reason comes from a line of at most 1023
+           characters, so it fits; the bound costs nothing and holds if that ever changes. */
+        snprintf(ret, sizeof(ret), "error\n%s", reason);
         NET_OutOfBandPrint(NS_SERVER, challengeInfo->adr, ret);
     } else {
         NET_OutOfBandPrint(NS_SERVER, challengeInfo->adr, "error\nEXE_ERR_BAD_CDKEY");
