@@ -66,6 +66,7 @@ FUZZ_DVAR(sv_minPing);
 FUZZ_DVAR(sv_maxPing);
 FUZZ_DVAR(sv_pure);
 FUZZ_DVAR(sv_voice);
+FUZZ_DVAR(sv_punkbuster);
 FUZZ_DVAR(sv_allowAnonymous);
 FUZZ_DVAR(sv_disableClientConsole);
 FUZZ_DVAR(com_dedicated);
@@ -192,6 +193,7 @@ static void SetupDvars(void)
     FuzzDvarInt(&sv_maxPing_value, "sv_maxPing", 0);
     FuzzDvarBool(&sv_pure_value, "sv_pure", 0);
     FuzzDvarBool(&sv_voice_value, "sv_voice", 1);
+    FuzzDvarBool(&sv_punkbuster_value, "sv_punkbuster", 0);
     FuzzDvarBool(&sv_allowAnonymous_value, "sv_allowAnonymous", 0);
     FuzzDvarBool(&sv_disableClientConsole_value, "sv_disableClientConsole", 0);
     FuzzDvarInt(&com_dedicated_value, "dedicated", 2);
