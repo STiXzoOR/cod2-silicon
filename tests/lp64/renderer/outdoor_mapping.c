@@ -12,6 +12,8 @@
 
 r_global_permanent_t rgp;
 materialCommands_t tess;
+/* The 2D projection reads which render target is current. */
+struct DxState dxState;
 void *imp_rgp = &rgp;
 void *imp_backEnd;
 static dvar_t rendererDvar, awayBiasDvar, downBiasDvar;
