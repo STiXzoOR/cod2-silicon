@@ -122,11 +122,17 @@ struct ReportProblemSheet: View {
     @ObservedObject var model: LauncherModel
     @Environment(\.palette) private var palette
     @State private var includeLog = false
-    @State private var hasLog = false
+    @State private var hasLog: Bool
     @State private var includeServerLog = false
-    @State private var hasServerLog = false
+    @State private var hasServerLog: Bool
     @State private var copied = false
     @State private var logMessage: String?
+    /// Which logs exist is read before the sheet is first laid out, so it opens at its final height.
+    init(model: LauncherModel) {
+        self.model = model
+        _hasLog = State(initialValue: model.snapshot || model.lastGameLog() != nil)
+        _hasServerLog = State(initialValue: model.snapshot ? !model.hosting.servers.isEmpty : model.lastServerLog() != nil)
+    }
     var body: some View {
         let details = model.reportDetails
         SheetScaffold(icon: .symbol("ladybug"), title: "Report a problem",
@@ -158,15 +164,14 @@ struct ReportProblemSheet: View {
                         }
                     }
                 }
+                // A row can be laid out shorter than its text, down to the standard row height, and a sheet
+                // measures two such rows that way: each lost its padding and the text ran to the edges.
+                .fixedSize(horizontal: false, vertical: true)
                 if let logMessage {
                     Label(logMessage, systemImage: "exclamationmark.triangle").font(.system(size: 12)).foregroundStyle(palette.negative)
                         .fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isStaticText)
                 }
                 Text("Never includes your CD key or your name.").font(.system(size: 12)).foregroundStyle(palette.tertiary).padding(.horizontal, 6)
-            }
-            .onAppear {
-                hasLog = model.snapshot || model.lastGameLog() != nil
-                hasServerLog = model.snapshot ? !model.hosting.servers.isEmpty : model.lastServerLog() != nil
             }
             .task(id: copied) { if copied { try? await Task.sleep(for: .seconds(2)); copied = false } }
         }
