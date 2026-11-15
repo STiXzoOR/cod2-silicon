@@ -135,7 +135,40 @@ def oob_seeds():
     }
 
 
+def client_seeds():
+    """Mode byte, then a connect line or a plain (uncompressed) client message."""
+    userinfo = (b'"\\protocol\\118\\challenge\\12345\\qport\\2\\name\\p\\rate\\25000\\snaps\\20'
+                b'\\cl_punkbuster\\0\\password\\x"')
+    seeds = {
+        'connect': b'\x00' + userinfo,
+        'connect-loopback': b'\x02' + userinfo,
+        'connect-cod2x': b'\x00' + userinfo[:-1] + b'\\protocol_cod2x\\7\\cl_hwid\\123456\\cl_hwid2\\0123456789abcdef0123456789abcdef"',
+        'connect-private': b'\x00' + userinfo.replace(b'password\\x', b'password\\private'),
+        'connect-empty': b'\x00""',
+    }
+
+    def command(sequence, text):
+        return BitWriter().bits(2, 3).long(sequence).string(text)
+
+    # 0x09 + state bits: plain message, current server id; 0x0d is an active client.
+    for name, text in (('userinfo', 'userinfo "\\name\\q\\rate\\5000\\snaps\\30"'), ('disconnect', 'disconnect'),
+                       ('download', 'download main/zpam.iwd'), ('nextdl', 'nextdl 3'), ('stopdl', 'stopdl'),
+                       ('donedl', 'donedl'), ('retransdl', 'retransdl 2'), ('say', 'say hello'), ('team', 'team allies'),
+                       ('score', 'score'), ('mr', 'mr 1 2 3'), ('vdr', 'vdr'), ('cp', 'cp 48 1 2 3 4 5 @ 48 6')):
+        seeds['cmd-' + name] = bytes([0x0d]) + bytes(command(1, text).bits(3, 3).data)
+    seeds['cmd-two'] = bytes([0x0d]) + bytes(command(1, 'say a').bits(2, 3).long(2).string('say b').bits(3, 3).data)
+    seeds['cmd-lost'] = bytes([0x0d]) + bytes(command(9, 'say gap').bits(3, 3).data)
+    seeds['cmd-connected'] = bytes([0x09]) + bytes(command(1, 'begin 48').bits(3, 3).data)
+    # A move: op 0 or 1, a command count byte, then delta user commands; left to the fuzzer after the count.
+    for name, op in (('move', 0), ('move-nodelta', 1)):
+        seeds[name] = bytes([0x0d]) + bytes(BitWriter().bits(op, 3).byte(1).long(100050).bits(0, 8).byte(0).byte(0).data) + bytes(24)
+    seeds['old-serverid'] = bytes([0x05]) + bytes(command(1, 'say x').bits(3, 3).data)
+    seeds['wire'] = bytes([0x1d]) + bytes(range(1, 60))
+    return seeds
+
+
 TARGETS = {
+    'client': client_seeds,
     'msg': msg_seeds,
     'tokenize': tokenize_seeds,
     'netchan': netchan_seeds,

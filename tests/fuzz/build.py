@@ -35,6 +35,17 @@ TARGETS = {
         'codx_sources': ['src/PC/qcommon/cod2x_policy.c'],
         'max_len': 8192,
     },
+    'client': {
+        'flavor': 'ded',
+        'sources': [
+            'src/PC/server_mp/sv_client_mp.c', 'src/PC/server_mp/sv_net_chan_mp.c',
+            'src/PC/qcommon/net_chan_mp.c', 'src/PC/qcommon/msg_mp.c',
+            'src/PC/qcommon/huffman.c', 'src/PC/qcommon/cmd.c',
+            'src/PC/universal/q_shared.c', 'src/PC/universal/com_shared.c',
+        ],
+        'codx_sources': ['src/PC/qcommon/cod2x_policy.c', 'src/PC/universal/q_parse.c'],
+        'max_len': 8192,
+    },
     'netchan': {
         'flavor': 'ded',
         'sources': [
