@@ -1,0 +1,18 @@
+# Read by tools/check_cod2x_standin.py.
+#
+# The check finds scripts that build an engine command line (+set, +map,
+# +exec ...) by itself. This file adds what it cannot see:
+#
+#   starts <path>            starts an engine without such a command line
+#   exempt <path>  <reason>  has such a command line and starts no engine of ours
+#
+starts tests/packaging/first_run.py
+starts tests/cod2x/run_native.sh
+starts tests/launcher/hosting.sh
+starts tests/launcher/real_handoff.py
+starts tools/macos/validate-333.sh
+exempt tools/cod2x/make_macos_app.py      writes the launch arguments into the app's Info.plist; starts nothing
+exempt tools/tests/test_server_service.py runs /usr/bin/true in place of the server
+exempt tools/tests/test_verification.py   runs small Python stand-ins in place of the engine
+exempt tools/wine/play-cod2x.sh           starts the original Windows game under Wine for a person, not this engine
+exempt tests/launcher/lifecycle.py        starts the launcher with a probe in place of both engines

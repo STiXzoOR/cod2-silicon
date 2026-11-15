@@ -130,6 +130,7 @@ python3 tools/abi/test_imports.py
 python3 tools/abi/test_raw_offsets.py
 python3 tools/abi/test_bit_conversions.py
 python3 tools/check_trace_guards.py
+python3 tools/check_cod2x_standin.py
 python3 tests/rendering/shader_setup.py
 python3 -m unittest discover -s tests/lp64/renderer -p test_wine_draw_trace.py -v
 COD2X_SANITIZERS=1 sh tests/cod2x/run_full.sh
@@ -247,6 +248,39 @@ sh tools/abi/check.sh build-macos/compile_commands.engine.json output/abi-stock
 sh tools/abi/check.sh build-macos-codx/compile_commands.engine.json output/abi-codx
 git diff --check
 ```
+
+### Launcher, catalogue and package
+
+The launcher and the packaged app have their own part of the gate. The
+launcher suite opens windows on this Mac to capture every screen and takes
+about an hour and a half; read its last lines (`SNAPSHOTS: n phases, 0 failed`
+and the `PASS` lines), not the shell's exit code alone.
+
+```sh
+python3 tests/launcher/test_snapshots_script.py
+sh tests/launcher/run.sh
+# While working on one page, capture only its screens (home, servers, library,
+# configs, settings or shell). This does not replace the full run.
+COD2_LAUNCHER_SNAPSHOT_GROUP=servers sh tests/launcher/run.sh
+
+# Config Studio's catalogue against the source it describes, both game versions.
+python3 -m unittest discover -s tools/catalog -v
+git archive --format=tar --prefix=export/ HEAD | tar -x -C "$TMPDIR"
+for mode in stock cod2x; do
+  python3 tools/catalog/catalog.py check --source-root "$TMPDIR/export" \
+    --catalog launcher/Resources/ConfigCatalog.json --mode "$mode"
+done
+
+# Hosting, against both real servers from a built game app. Needs the game files.
+COD2_HOSTING_LIVE="/path/to/CoD2 Silicon Game.app|$HOME/Games/CoD2" sh tests/launcher/hosting.sh
+```
+
+Every script that starts a CoD2x engine must point CoD2x's own services at a
+local stand-in: a CoD2x engine asks them at every start. Shell scripts source
+`tools/cod2x/standin_env.sh`; Python scripts set `COD2X_TEST_SERVICE_URL` and
+its two companions before starting anything. `tools/check_cod2x_standin.py`
+names any script that does neither, and `tools/cod2x/standin-review.txt` holds
+the few it cannot classify from their text.
 
 The full ABI check must report **zero mismatches**; it includes function,
 renderer callback, import-indirection and reviewed raw-offset audits. The raw

@@ -6,6 +6,9 @@ if [[ $# -lt 1 ]]; then
     exit 2
 fi
 repo=$(cd "$(dirname "$0")/../.." && pwd)
+# A CoD2x build asks CoD2x's services at every start; COD2X_LIVE_SERVICES=1 lets it.
+# shellcheck source=/dev/null
+. "$repo/tools/cod2x/standin_env.sh"
 binary=${COD2_BINARY:-"$repo/output/build-macos/cod2_macos"}
 data=$(cd "$1" && pwd)
 shift

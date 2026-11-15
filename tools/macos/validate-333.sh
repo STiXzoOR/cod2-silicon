@@ -3,6 +3,9 @@
 set -euo pipefail
 repo=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$repo"
+# The matrix measures; it never asks CoD2x's services.
+# shellcheck source=/dev/null
+. "$repo/tools/cod2x/standin_env.sh"
 out=${COD2_VALIDATE_OUT:-"$repo/output/validate-333-$(date -u +%Y%m%dT%H%M%SZ)-$$"}
 if [[ -z ${COD2_BINARY:-} ]]; then
     cmake -S . -B build-macos-codx -DCOD2_X64=ON \

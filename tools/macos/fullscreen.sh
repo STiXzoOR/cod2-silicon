@@ -2,6 +2,9 @@
 # Launch the local arm64 client at 333, with no writes to licensed game data.
 set -euo pipefail
 repo=$(cd "$(dirname "$0")/../.." && pwd)
+# A CoD2x build asks CoD2x's services at every start; COD2X_LIVE_SERVICES=1 lets it.
+# shellcheck source=/dev/null
+. "$repo/tools/cod2x/standin_env.sh"
 binary=${COD2_BINARY:-"$repo/build-macos/cod2_macos"}
 data=${COD2_DATA_DIR:-"$HOME/Games/CoD2"}
 resolution=${COD2_RESOLUTION:-1920x1080}

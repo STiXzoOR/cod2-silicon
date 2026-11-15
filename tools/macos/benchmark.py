@@ -13,6 +13,11 @@ import subprocess
 import sys
 import time
 
+# A CoD2x engine asks CoD2x's own services at every start; a test points it at a local stand-in.
+os.environ.setdefault('COD2X_TEST_SERVICE_URL', 'http://127.0.0.1:9')
+os.environ.setdefault('COD2X_TEST_UPDATER_ADDRESS', '127.0.0.1:9')
+os.environ.setdefault('COD2X_TEST_UPDATER_URL', 'http://127.0.0.1:9/api/updater/check')
+
 SUMMARY = re.compile(r'(\d+) frames,\s*([0-9.]+) seconds:\s*([0-9.]+) fps')
 
 

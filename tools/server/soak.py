@@ -3,6 +3,11 @@
 import os, subprocess, time, socket, json, re, shutil, signal
 from pathlib import Path
 import argparse
+
+# A CoD2x engine asks CoD2x's own services at every start; a test points it at a local stand-in.
+os.environ.setdefault('COD2X_TEST_SERVICE_URL', 'http://127.0.0.1:9')
+os.environ.setdefault('COD2X_TEST_UPDATER_ADDRESS', '127.0.0.1:9')
+os.environ.setdefault('COD2X_TEST_UPDATER_URL', 'http://127.0.0.1:9/api/updater/check')
 root = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description='Two native clients, private homes, bounded stock-server soak')
 parser.add_argument('--server', type=Path, required=True)
