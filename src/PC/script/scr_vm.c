@@ -7158,9 +7158,15 @@ static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value)
         }
 
 #if defined(COD2_X64)
-#if COD2_APPLE_SDK
-        /* Windows VM_Execute 0x47e86d rounds wait ticks to nearest-even. */
+#if COD2_APPLE_SDK && !defined(DEDICATED)
+        /* Windows VM_Execute 0x47e86d adds 2^-30 and rounds with fistp. In the game, where
+           Direct3D holds the FPU at single precision, the 2^-30 is lost and an exact half
+           goes to the even tick: a Windows player hosting a match waits 2 ticks for 0.125. */
         float rounded = __builtin_rintf(seconds * 20.0f);
+#elif COD2_APPLE_SDK
+        /* A dedicated server never loads Direct3D: there the 2^-30 survives and an exact
+           half goes up, as on the Linux server and in the Mac game (0x859cf, floorf(x + 0.5)). */
+        float rounded = floorf(seconds * 20.0f + 0.5f);
 #else
         float rounded = floorf(seconds * 20.0f + 0.5f);
 #endif
