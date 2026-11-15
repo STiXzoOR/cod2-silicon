@@ -678,9 +678,13 @@ void SV_AuthorizeIpPacket(netadr_t from)
     if (reason && *reason) {
         char ret[1024];
 
+#if defined(COD2_X64)
         /* The original has sprintf here. The reason comes from a line of at most 1023
            characters, so it fits; the bound costs nothing and holds if that ever changes. */
         snprintf(ret, sizeof(ret), "error\n%s", reason);
+#else
+        sprintf(ret, "error\n%s", reason);
+#endif
         NET_OutOfBandPrint(NS_SERVER, challengeInfo->adr, ret);
     } else {
         NET_OutOfBandPrint(NS_SERVER, challengeInfo->adr, "error\nEXE_ERR_BAD_CDKEY");
@@ -2173,10 +2177,11 @@ void SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
                            I_strncmp(s, "score ", 6) &&
                            I_strncmp(s, "mr ", 3);
 
+#if defined(COD2_X64)
                 /* The first test is legacyHacks.cl_running (Mac 1.3 0x1803c4 reads +4): no flood
                    protection on a server with its own player. It had been read through a
-                   dvar_t, which is cl_downloadSize on 64-bit and cl_stance on 32-bit. */
-#if defined(COD2_X64)
+                   dvar_t, which is cl_downloadSize on 64-bit and cl_stance on 32-bit. The 32-bit
+                   builds keep the upstream text, which is compared byte for byte. */
                 {
                     int floodable = clientOK;
                     clientOK = 1;
@@ -2191,7 +2196,7 @@ void SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
                         cl->nextReliableTime = svs.time + 800;
                 }
 #else
-                if (!(*(LegacyHacks **)imp_legacyHacks)->cl_running &&
+                if (!(*(const dvar_t **)imp_legacyHacks)->current.integer &&
                     cl->state > 3 &&
                     (*(const dvar_t **)imp_sv_floodProtect)->current.enabled &&
                     svs.time < cl->nextReliableTime) {

@@ -50,7 +50,8 @@ def main():
     configurations = {k: v for k, v in guards.CONFIGURATIONS.items() if 'COD2_X64=1' not in v}
     paths = subprocess.check_output(['git', 'diff', '--diff-filter=M', '--name-only', options.base],
                                     cwd=root, text=True).splitlines()
-    paths = [p for p in paths if p.endswith(('.c', '.h'))]
+    # Test harnesses under tests/ are built only for the native engines, never by a 32-bit build.
+    paths = [p for p in paths if p.endswith(('.c', '.h')) and not p.startswith('tests/')]
     failures = []
     sources = {}
     for path in paths:

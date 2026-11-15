@@ -118,7 +118,9 @@ extern const dvar_t *sv_allowAnonymous;
 extern const dvar_t *sv_showCommands;
 extern const dvar_t *sv_packet_info;
 extern const dvar_t *sv_voice;
+#if defined(COD2_X64)
 extern const dvar_t *sv_punkbuster;
+#endif
 extern const dvar_t *sv_voiceQuality;
 extern const dvar_t *sv_showAverageBPS;
 extern const dvar_t *sv_kickBanTime;
@@ -795,10 +797,13 @@ void SVC_Info(netadr_t from)
 
     Info_SetValueForKey(infostring, "mod", va("%i", mod));
     Info_SetValueForKey(infostring, "voice", va("%i", sv_voice->current.enabled));
+#if defined(COD2_X64)
     /* The original's last key (SVC_Info, Mac 1.3 0x15a937). It had been left out here, so this
        server was the only 1.3 server whose reply lacked it. There is no PunkBuster for this
-       engine and the setting is held at 0, which is what a server without it has always said. */
+       engine and the setting is held at 0, which is what a server without it has always said.
+       The 32-bit builds keep the upstream text, which is compared byte for byte. */
     Info_SetValueForKey(infostring, "pb", va("%i", sv_punkbuster->current.enabled));
+#endif
 
     I_strncpyz(response, "infoResponse\n", sizeof(response));
     I_strncat(response, sizeof(response), infostring);
