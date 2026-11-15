@@ -198,8 +198,27 @@ the application firewall prompts. In System Settings → Network → Firewall �
 Options, add/allow the executable as needed; do not disable the whole firewall.
 Apple describes the controls in [Allow incoming connections](https://support.apple.com/en-gb/guide/mac-help/mh34041/26/mac/26).
 For routed LANs/cloud machines, allow the selected UDP port in the host/network
-firewall and restrict who can reach rcon. Internet-facing packet-parser hardening
-is still a separate workstream; start with a trusted LAN or VPN.
+firewall and restrict who can reach rcon.
+
+**What was tested against hostile packets.** For 0.3.1 the code that reads
+what a stranger can send a listed server was fuzzed under the address and
+undefined-behaviour sanitizers, 30 minutes for each of five targets on each
+game version, with no crash:
+
+- connectionless packets (`getstatus`, `getinfo`, `rcon` and the rest of
+  that dispatcher);
+- the challenge request, the connect request and the key server's reply;
+- the packet channel and its fragment reassembly;
+- a connected player's messages: client commands, userinfo, the download
+  commands and both move packets;
+- the message reader (delta decoding) and the command tokeniser.
+
+That is evidence, not a guarantee, and it does not cover the game scripts, map
+and mod files, or HTTP downloads. The engine is from 2005 and has had no
+security audit ([SECURITY.md](../SECURITY.md)). A server for friends on a
+trusted network or a VPN remains the safer choice; if you list one publicly,
+keep `sv_allowDownload 0`, set a strong rcon password or none, and run it
+under an account that holds nothing you care about.
 
 Recommended baseline: `sv_fps 20`, eight slots, `sv_maxRate 25000`, `sv_pure 1`,
 `sv_allowDownload 0`, `sv_punkbuster 0`. The rate setting limits non-LAN clients'
