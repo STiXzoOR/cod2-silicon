@@ -10,8 +10,9 @@
    server that named a test version would be turned away by, or turn away, everybody on the
    release. Revision 6 is 1.4.6.8 (CoD2x src/shared/version.h at tag v1.4.6.8). What CoD2x's
    source has beyond it (revision 7: coloured text codes, spectator x-ray, killfeed icons) is
-   in this layer behind tests on the revision a server reports, and stays off until a CoD2x
-   release carries it and these two lines move to that release. */
+   in this layer behind tests on the revision a server reports and, where a demo, sv_cheats or
+   the menus would turn it on without a server (x-ray, text codes), on this revision too. It
+   stays off until a CoD2x release carries it and these two lines move to that release. */
 #define COD2X_REVISION 6
 /* The CoD2x release this layer runs as, as CoD2x prints it to players and admins. */
 #define COD2X_RELEASE "1.4.6.8"

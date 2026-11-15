@@ -398,6 +398,10 @@ int Cod2x_IsStyleCode(char code)
 
 int Cod2x_TextEnabled(void)
 {
+    /* CoD2x's own text codes came after 1.4.6.8, and they are read in the menus whatever a server
+       says: without this a build running as the release would still read them there. */
+    if (Cod2x_HostRevision() < 7)
+        return 0;
     return lastClientState < CA_CONNECTING || Cod2x_GameVersion() >= 7;
 }
 

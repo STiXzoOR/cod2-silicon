@@ -33,6 +33,10 @@ static struct { float x, y, w, h, angle, alpha, rgb[3]; MaterialHandle material;
 static int drawCount;
 
 int Cod2x_FeaturesDemo(void) { return demoPlaying; }
+/* The revision this build runs as. X-ray is tested as the build that has it (7); one block
+   below checks that a build running as 1.4.6.8 shows none in a demo or with cheats on. */
+static int buildRevision = 7;
+int Cod2x_HostRevision(void) { return buildRevision; }
 const dvar_t *Dvar_FindVar(const char *name)
 {
     if (!strcmp(name, "g_cod2x")) return &gameRevision;
@@ -397,6 +401,12 @@ static void spectator_states(void)
     entities[2].currentState.dmgFlags = (int)0xC1000000; entities[2].nextValid = 2; assert(!CG_Cod2xPlayerInfo(2,&info));
     entities[2].nextValid = 1; entities[2].currentState.eType = 2; assert(!CG_Cod2xPlayerInfo(2,&info));
     entities[2].currentState.eType = 1;
+    /* Running as 1.4.6.8, which has no x-ray: a demo and sv_cheats show none. */
+    buildRevision = 6; demoPlaying = 1; gameRevision.current.integer = 0; CG_Cod2xSpectatorFrame();
+    assert(!settings.mode && !settings.health && !settings.visible);
+    demoPlaying = 0; cheatsEnabled.current.enabled = 1; CG_Cod2xSpectatorFrame();
+    assert(!settings.mode && !settings.health && !settings.visible);
+    cheatsEnabled.current.enabled = 0; buildRevision = 7;
     /* Demo player data survives missing snapshots until the connection leaves active. */
     demoPlaying = 1; gameRevision.current.integer = 0; CG_Cod2xSpectatorFrame(); assert(settings.health);
     memset(entities, 0, sizeof(entities)); CG_Cod2xSpectatorFrame(); assert(settings.health);

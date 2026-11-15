@@ -12,10 +12,11 @@ All notable changes to CoD2 Silicon are documented here, following
 - **Friends on Windows and Linux can join your CoD2x server.** The CoD2x game
   and server now run as CoD2x's latest stable release, 1.4.6.8, where 0.3.0
   ran as CoD2x's unreleased source and turned players on the release away.
-  There is nothing to set. What only CoD2x's unreleased source has (coloured
-  text codes, spectator x-ray, killfeed icons) is off until a CoD2x release
-  carries it. A 0.3.1 player cannot join a CoD2x server still hosted from
-  0.3.0; that host needs to update.
+  There is nothing to set. Three things only CoD2x's unreleased source has
+  (coloured text codes, x-ray outlines with health and head labels, killfeed
+  icons) are off until a CoD2x release carries them. That includes x-ray in
+  demos, which 0.3.0 showed around every player. A 0.3.1 player cannot join
+  a CoD2x server still hosted from 0.3.0; that host needs to update.
 - The Hosting page says when this Mac is on Wi-Fi, where AirDrop and Handoff
   can make players freeze for a moment, and the server guide explains what to
   do about it.

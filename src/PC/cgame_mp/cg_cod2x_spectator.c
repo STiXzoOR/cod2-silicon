@@ -3,6 +3,7 @@
 #include "cg_cod2x_spectator.h"
 #if COD2X_SPECTATOR
 #include "headers/PC/cgame_mp/cg_local.h"
+#include "PC/qcommon/cod2x.h"
 #include "PC/qcommon/cod2x_features.h"
 #include "PC/gfx_d3d/r_cod2x_xray.h"
 #include <math.h>
@@ -120,6 +121,9 @@ void CG_Cod2xSpectatorFrame(void)
 {
     if (!style) return;
     viewer = -1; settings.mode = 0; settings.visible = 0;
+    /* X-ray, health and head labels came after CoD2x 1.4.6.8. A demo or sv_cheats turns them on
+       without asking a server's revision, so a build running as the release leaves here. */
+    if (Cod2x_HostRevision() < 7) { infoSeen = 0; settings.health = 0; return; }
     const dvar_t *revision = Dvar_FindVar("g_cod2x"), *cheat = Dvar_FindVar("sv_cheats");
     int cheats = Cod2x_FeaturesDemo() || (cheat && cheat->current.enabled);
 #if DEBUG

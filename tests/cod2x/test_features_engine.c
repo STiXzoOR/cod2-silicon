@@ -142,6 +142,10 @@ char *Info_ValueForKey(const char *s, const char *key)
 }
 static int serverRevision = 6;
 int Cod2x_GameVersion(void) { return serverRevision; }
+/* The revision this build runs as. The text codes are tested as the build that has them (7);
+   one block below checks that a build running as 1.4.6.8 reads none. */
+static int buildRevision = 7;
+int Cod2x_HostRevision(void) { return buildRevision; }
 void Cod2x_PoseInit(void) {}
 static int radarInitializations, radarFrames;
 void CG_Cod2xRadarInit(void) { ++radarInitializations; }
@@ -296,6 +300,13 @@ int main(void)
         serverRevision = 0;
         Cod2x_FeaturesClientState(CA_DISCONNECTED);
         assert(Cod2x_TextCode("#1", &code) == 2);
+        /* Running as 1.4.6.8, which has no text codes of its own: none in the menus, none in a game. */
+        buildRevision = 6;
+        assert(!Cod2x_TextEnabled() && Cod2x_TextCode("#1", &code) == 0 && Cod2x_TextCode("^1", &code) == 2);
+        Cod2x_FeaturesClientState(CA_ACTIVE); serverRevision = 7;
+        assert(!Cod2x_TextEnabled() && Cod2x_TextCode("$5", &code) == 0);
+        serverRevision = 0; Cod2x_FeaturesClientState(CA_DISCONNECTED);
+        buildRevision = 7;
     }
     {
         const char *address = "^1127.0.0.1:28960";
