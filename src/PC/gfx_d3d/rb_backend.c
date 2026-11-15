@@ -3209,6 +3209,19 @@ void RB_DrawStretchPic(const Material *material, float x, float y, float w, floa
         ic = tess.indexCount;
     }
 
+#if defined(COD2_X64) && COD2_APPLE_SDK
+    {
+        /* See the 2D projection in rb_shade.c: full-viewport passes keep exact texel centres. */
+        extern int rb_wholeViewportBatch;
+        GfxViewport whole;
+        int fills = x <= 0.0f && y <= 0.0f && RB_GetViewport(&whole) &&
+                    x + w >= (float)whole.width && y + h >= (float)whole.height;
+        if (vc == 0)
+            rb_wholeViewportBatch = fills;
+        else if (!fills)
+            rb_wholeViewportBatch = 0;
+    }
+#endif
     indices = tess.indices;
     indices[ic + 0] = (r_index_t)(vc + 3);
     indices[ic + 1] = (r_index_t)vc;

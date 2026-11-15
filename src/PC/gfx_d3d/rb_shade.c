@@ -104,6 +104,11 @@ void RB_EndSurface(void);
 
 extern int g_tess_since_begin;
 int g_begin_surface_calls = 0;
+#if defined(COD2_X64) && COD2_APPLE_SDK
+/* Set while the batch being collected holds only pictures that fill their whole viewport
+ * (RB_DrawStretchPic); read where the 2D projection is built, below. */
+int rb_wholeViewportBatch = 0;
+#endif
 
 static int RB_MaterialNameContains(const Material *material, const char *needle)
 {
@@ -251,6 +256,9 @@ static void RB_X64TraceSampler(const char *stage, const Material *material, int 
 
 void RB_BeginSurface(const Material *material, MaterialTechniqueType techType, int lmapIndex)
 {
+#if defined(COD2_X64) && COD2_APPLE_SDK
+    rb_wholeViewportBatch = 0;
+#endif
     R_LOG("---------- RB_BeginSurface( %s, %s )\n", material->info.name, R_LogTechniqueName(techType));
     char *tess = RB_TessBase();
     (*(int *)&((materialCommands_t *)tess)->declType) = 0;
@@ -1133,6 +1141,21 @@ static const float *RB_GetCodeMatrix_impl(int source, int firstRow)
          * maps to GL +0.5 in both axes, unlike the onscreen/2D Y direction. */
         if (tess.techType == 31 && !((r_backEndGlobals_t *)imp_backEnd)->projection2D)
             OGLProjection[13] += 2.0f / (float)viewport.height;
+#endif
+#if defined(COD2_X64) && COD2_APPLE_SDK
+        /* Direct3D counts a sample that lies exactly on a rectangle's top edge as covered and one
+         * on its bottom edge as not. This OpenGL keeps the picture bottom row first and does the
+         * same in its own rows, which is the other way round on screen: a menu panel's one-pixel
+         * top edge lost a row and its bottom edge gained one wherever the edge met a sample, as
+         * 2D coordinates do at quarter and half pixels. One step of the rasteriser's 1/256-pixel
+         * grid upwards settles every such tie the way Direct3D does. Only menus and the HUD get
+         * it: they are drawn to the frame buffer. Passes that read one picture to make another
+         * must keep sampling at exact texel centres, so the off-screen targets (shadows, blur,
+         * glow) are left alone, and so is a picture that fills its whole viewport, which has no
+         * edge for a sample to lie on (the glow and screen copies onto the frame buffer). */
+        if (((r_backEndGlobals_t *)imp_backEnd)->projection2D && !rb_wholeViewportBatch &&
+            dxState.renderTargetId == R_RENDERTARGET_FRAME_BUFFER)
+            OGLProjection[13] += (2.0f / 256.0f) / (float)viewport.height;
 #endif
         MatrixMultiply44((vec4_t *)(OGLWorldView), (vec4_t *)(OGLProjection), (vec4_t *)(codeMatrix));
         ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0] = 1;

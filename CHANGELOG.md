@@ -43,6 +43,10 @@ All notable changes to CoD2 Silicon are documented here, following
 - The PunkBuster settings are shown as unavailable in the original 1.3 game
   too, not only in CoD2x.
 - Settings names the CoD2x version the built-in game runs as (1.4.6.8).
+- Menu panel borders that fall exactly on a pixel row are drawn on the row
+  Windows draws them on. At resolutions such as 1080p and 4K a panel's top
+  border lost a row and its bottom border gained one (with anti-aliasing,
+  half a row each).
 - Library's Demos and Screenshots each come back at the place you had
   scrolled to. On some displays switching between them went back to the top.
 
