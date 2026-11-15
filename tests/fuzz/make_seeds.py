@@ -145,6 +145,15 @@ def client_seeds():
         'connect-cod2x': b'\x00' + userinfo[:-1] + b'\\protocol_cod2x\\7\\cl_hwid\\123456\\cl_hwid2\\0123456789abcdef0123456789abcdef"',
         'connect-private': b'\x00' + userinfo.replace(b'password\\x', b'password\\private'),
         'connect-empty': b'\x00""',
+        # 0x04: getchallenge; 0x06 from the local network. 0x0a: the key server's reply for a known challenge.
+        'challenge': b'\x04',
+        'challenge-lan': b'\x06',
+        'challenge-digest': b'\x04' + b'0 "0123456789abcdef0123456789abcdef"',
+        'authorize-accept': b'\x0a' + b'12345 accept KEY_IS_GOOD 4242',
+        'authorize-banned': b'\x0a' + b'12345 accept KEY_IS_GOOD 777',
+        'authorize-deny': b'\x0a' + b'12345 deny INVALID_CDKEY',
+        'authorize-demo': b'\x0a' + b'12345 demo',
+        'authorize-unknown': b'\x08' + b'999 accept x 1',
     }
 
     def command(sequence, text):

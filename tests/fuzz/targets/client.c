@@ -5,6 +5,11 @@
  * real SV_DirectConnect: protocol, challenge, address and private-slot checks,
  * userinfo validation, slot choice and, on CoD2x, its admission rules. Bit 1
  * chooses a loopback sender, which skips the challenge table.
+ * Bits 2-3 choose another connectionless request instead: 1, the text after
+ * "getchallenge " for the real SV_GetChallenge, with a nearly full challenge
+ * table; 2, the text after "ipAuthorize " for the real SV_AuthorizeIpPacket,
+ * sent from the key server's address (any other is refused at once), bit 1
+ * choosing whether the challenge it names exists.
  *
  * Mode byte bit 0 set: a message from a connected client, given to the real
  * SV_ExecuteClientMessage: reliable client commands (through the real command
@@ -26,12 +31,16 @@
 
 extern void SV_ExecuteClientMessage(client_t *cl, msg_t *msg);
 extern void SV_DirectConnect(netadr_t from);
+extern void SV_GetChallenge(netadr_t from);
+extern void SV_AuthorizeIpPacket(netadr_t from);
 extern void SV_Cmd_TokenizeString(const char *text_in);
 extern void MSG_Init(msg_t *buf, byte *data, int length);
 extern int MSG_WriteBitsCompress(byte *from, byte *to, int size);
 
 #define FUZZ_MAXCLIENTS 4
 #define FUZZ_CHALLENGE 12345
+/* The longest connectionless line a server reads: MSG_ReadStringLine stops at 1023 characters. */
+#define FUZZ_LINE 1023
 
 /* Real engine globals the server paths read directly. */
 serverStatic_t svs;
@@ -167,12 +176,46 @@ void SV_Cod2xStripTextCodes(const char *text, char *out, size_t size)
     if (size)
         snprintf(out, size, "%s", text);
 }
+#endif
+
 /* The parser's tables name the engine's empty string (literals.S). */
 const char str_002157b8[] = "";
 /* No ban list on disk. */
 int FS_ReadFile(const char *qpath, void **buffer) { (void)qpath; if (buffer) *buffer = NULL; return -1; }
 void FS_FreeFile(void *buffer) { (void)buffer; }
+
+/* For the challenge request and the key server's reply. Challenge numbers come from a fixed
+   sequence, so an input always meets the same server, and no name is ever looked up. */
+static unsigned fuzz_rand_state;
+static int FuzzRand(void)
+{
+    fuzz_rand_state = fuzz_rand_state * 214013u + 2531011u;
+    return (int)((fuzz_rand_state >> 16) & 0x7fff);
+}
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+int Cod2x_CrtRand(void) { return FuzzRand(); }
+int SV_Cod2xCracked(void) { return 0; }
+int SV_Cod2xIsMasterAddress(netadr_t from) { (void)from; return 0; }
+#else
+int Com_CrtRand(void) { return FuzzRand(); }
+const netadr_t *SV_MasterAddress(void)
+{
+    static netadr_t none;
+    none.type = NA_BAD;
+    return &none;
+}
 #endif
+qboolean Sys_StringToAdr(const char *s, netadr_t *a) { (void)s; (void)a; return 0; }
+Bool Dvar_GetBool(const char *name) { (void)name; return 0; }
+const dvar_t *Dvar_RegisterString(const char *name, const char *value, int flags)
+{
+    static dvar_t var;
+    (void)flags;
+    FuzzDvarString(&var, name, value);
+    return &var;
+}
+FUZZ_DVAR(net_lanauthorize);
+void *imp_net_lanauthorize = &net_lanauthorize;
 
 static void Setup(void)
 {
@@ -196,6 +239,7 @@ static void Setup(void)
     FuzzDvarInt(&net_profile_value, "net_profile", 0);
     FuzzDvarInt(&net_showprofile_value, "net_showprofile", 0);
     FuzzDvarBool(&showpackets_value, "showpackets", 0);
+    FuzzDvarBool(&net_lanauthorize_value, "net_lanauthorize", 0);
     {
         /* The first MSG_Init builds the Huffman tables the compressor needs. */
         static byte scratch[8];
@@ -214,9 +258,9 @@ static void Setup(void)
 
 static void Connect(const uint8_t *data, size_t size, int loopback)
 {
-    static char line[1200];
+    static char line[FUZZ_LINE + 1];
     netadr_t from;
-    size_t length = size < sizeof(line) - 9 ? size : sizeof(line) - 9;
+    size_t length = size < FUZZ_LINE - 8 ? size : FUZZ_LINE - 8;
 
     memset(&from, 0, sizeof(from));
     from.type = loopback ? NA_LOOPBACK : NA_IP;
@@ -235,6 +279,71 @@ static void Connect(const uint8_t *data, size_t size, int loopback)
     line[8 + length] = '\0';
     SV_Cmd_TokenizeString(line);
     SV_DirectConnect(from);
+}
+
+/* The key server the fuzzed server believes in. Set before either handler runs, so neither
+   ever looks a name up. */
+static netadr_t KeyServer(void)
+{
+    netadr_t adr;
+    memset(&adr, 0, sizeof(adr));
+    adr.type = NA_IP;
+    adr.ip[0] = 10;
+    adr.ip[3] = 99;
+    adr.port = 0x5cd0;
+    svs.authorizeAddress = adr;
+    return adr;
+}
+
+/* "getchallenge [...]": a slot in the challenge table, and for an address that is not on the
+   local network, the request to the key server. */
+static void Challenge(const uint8_t *data, size_t size, int loopback)
+{
+    static char line[FUZZ_LINE + 1];
+    netadr_t from;
+    size_t length = size < FUZZ_LINE - 13 ? size : FUZZ_LINE - 13;
+
+    KeyServer();
+    memset(&from, 0, sizeof(from));
+    from.type = loopback ? NA_LOOPBACK : NA_IP;
+    from.ip[0] = 10;
+    from.ip[3] = 7;
+    from.port = loopback ? 0 : 0x1234;
+    /* A table that is nearly full: the oldest slot is the one reused. */
+    for (int i = 0; i < 1024; ++i) {
+        svs.challenges[i].adr.type = NA_IP;
+        svs.challenges[i].adr.ip[0] = 11;
+        svs.challenges[i].adr.port = (unsigned short)i;
+        svs.challenges[i].time = svs.time - 1000 - (i * 7) % 900;
+    }
+    memcpy(line, "getchallenge ", 13);
+    memcpy(line + 13, data, length);
+    line[13 + length] = '\0';
+    SV_Cmd_TokenizeString(line);
+    SV_GetChallenge(from);
+}
+
+/* "ipAuthorize <challenge> <status> <reason> <guid>": the key server's verdict on a player.
+   Only the key server's address gets past the first test, so the packet comes from it. */
+static void Authorize(const uint8_t *data, size_t size, int known)
+{
+    static char line[FUZZ_LINE + 1];
+    netadr_t from = KeyServer();
+    size_t length = size < FUZZ_LINE - 12 ? size : FUZZ_LINE - 12;
+
+    svs.challenges[3].adr.type = NA_IP;
+    svs.challenges[3].adr.ip[0] = 10;
+    svs.challenges[3].adr.ip[3] = 7;
+    svs.challenges[3].adr.port = 0x1234;
+    svs.challenges[3].challenge = known ? FUZZ_CHALLENGE : 1;
+    svs.challenges[3].time = svs.time - 40;
+    svs.tempBans[2].guid = 777;
+    svs.tempBans[2].banTime = svs.time - 1000;
+    memcpy(line, "ipAuthorize ", 12);
+    memcpy(line + 12, data, length);
+    line[12 + length] = '\0';
+    SV_Cmd_TokenizeString(line);
+    SV_AuthorizeIpPacket(from);
 }
 
 static void Message(const uint8_t *data, size_t size, int mode)
@@ -295,11 +404,16 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     memset(entities, 0, FUZZ_MAXCLIENTS * sizeof(gentity_t));
     memset(&legacyHacks, 0, sizeof(legacyHacks));
 
+    fuzz_rand_state = 1;
     fuzz_error_armed = 1;
     fuzz_error_allow_drop = 1;
     if (!setjmp(fuzz_error_jump)) {
         if (mode & 1)
             Message(data, size, mode);
+        else if ((mode & 12) == 4)
+            Challenge(data, size, mode & 2);
+        else if ((mode & 12) == 8)
+            Authorize(data, size, mode & 2);
         else
             Connect(data, size, mode & 2);
     }

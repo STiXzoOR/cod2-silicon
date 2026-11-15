@@ -42,8 +42,9 @@ TARGETS = {
             'src/PC/qcommon/net_chan_mp.c', 'src/PC/qcommon/msg_mp.c',
             'src/PC/qcommon/huffman.c', 'src/PC/qcommon/cmd.c',
             'src/PC/universal/q_shared.c', 'src/PC/universal/com_shared.c',
+            'src/PC/universal/q_parse.c',
         ],
-        'codx_sources': ['src/PC/qcommon/cod2x_policy.c', 'src/PC/universal/q_parse.c'],
+        'codx_sources': ['src/PC/qcommon/cod2x_policy.c'],
         'max_len': 8192,
     },
     'netchan': {
