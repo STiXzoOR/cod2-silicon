@@ -2171,11 +2171,14 @@ void SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
                            I_strncmp(s, "score ", 6) &&
                            I_strncmp(s, "mr ", 3);
 
+                /* The first test is legacyHacks.cl_running (Mac 1.3 0x1803c4 reads +4): no flood
+                   protection on a server with its own player. It had been read through a
+                   dvar_t, which is cl_downloadSize on 64-bit and cl_stance on 32-bit. */
 #if defined(COD2_X64)
                 {
                     int floodable = clientOK;
                     clientOK = 1;
-                    if (!(*(const dvar_t **)imp_legacyHacks)->current.integer &&
+                    if (!(*(LegacyHacks **)imp_legacyHacks)->cl_running &&
                         cl->state > 3 &&
                         (*(const dvar_t **)imp_sv_floodProtect)->current.enabled &&
                         svs.time < cl->nextReliableTime && floodable) {
@@ -2186,7 +2189,7 @@ void SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
                         cl->nextReliableTime = svs.time + 800;
                 }
 #else
-                if (!(*(const dvar_t **)imp_legacyHacks)->current.integer &&
+                if (!(*(LegacyHacks **)imp_legacyHacks)->cl_running &&
                     cl->state > 3 &&
                     (*(const dvar_t **)imp_sv_floodProtect)->current.enabled &&
                     svs.time < cl->nextReliableTime) {
