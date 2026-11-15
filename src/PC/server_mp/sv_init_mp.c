@@ -448,7 +448,7 @@ void SV_Init(void)
     Dvar_RegisterString("sv_keywords", "", 0x1004);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     {
-        int protocol = COD2X_HOST_REVISION >= COD2X_REVISION ? COD2X_PROTOCOL : COD2X_CONNECT_PROTOCOL;
+        int protocol = Cod2x_HostRevision() >= COD2X_HOST_REVISION_MIN ? COD2X_PROTOCOL : COD2X_CONNECT_PROTOCOL;
         Dvar_RegisterInt("protocol", protocol, protocol, protocol, 0x1044);
     }
 #else

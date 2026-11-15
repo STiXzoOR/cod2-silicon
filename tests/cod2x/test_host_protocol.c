@@ -37,6 +37,8 @@ qboolean gameInitialized;
 char *Info_ValueForKey(const char *, const char *);
 void Info_SetValueForKey(char *, const char *, const char *);
 int Cod2x_ServerGameVersion(void) { return revision; }
+int Cod2x_HostRevision(void) { return revision ? revision : COD2X_REVISION; }
+const char *Cod2x_HostRelease(void) { return revision == 6 ? "1.4.6.8" : COD2X_RELEASE; }
 qboolean NET_CompareBaseAdr(netadr_t a, netadr_t b) { return a.type == b.type && !memcmp(a.ip, b.ip, 4); }
 qboolean NET_CompareAdr(netadr_t a, netadr_t b) { return NET_CompareBaseAdr(a, b) && a.port == b.port; }
 qboolean NET_IsLocalAddress(netadr_t a) { return a.type == NA_LOOPBACK || a.type == NA_BOT; }
@@ -153,11 +155,16 @@ static void connect_case(int host, int protocol, int extension, const char *id, 
     if (expected) Verify(clients[0].guid == expectedGuid, "production client GUID identity");
 }
 
-static void reject_case(int protocol, int extension, const char *id, const char *expected)
+static void reject_host_case(int host, int protocol, int extension, const char *id, const char *expected)
 {
-    prepare_connect(COD2X_REVISION, protocol, extension, id, remote);
+    prepare_connect(host, protocol, extension, id, remote);
     SV_DirectConnect(remote);
     Verify(!connects && !strcmp(packet, expected), "CoD2x connect rejection text");
+}
+
+static void reject_case(int protocol, int extension, const char *id, const char *expected)
+{
+    reject_host_case(COD2X_REVISION, protocol, extension, id, expected);
 }
 
 static void authorization_replies(void)
@@ -230,14 +237,17 @@ static void authorization_replies(void)
 
 static void discovery(void)
 {
-    for (int host = 0; host <= COD2X_REVISION; host += COD2X_REVISION) {
+    /* No CoD2x host, a host run as the released 1.4.6.8 (sv_cod2xRevision 6), and the current one. */
+    static const int hosts[] = {0, 6, COD2X_REVISION};
+    for (unsigned h = 0; h < sizeof(hosts) / sizeof(hosts[0]); ++h) {
+        int host = hosts[h];
         reset(); revision=host; argc=2; argv[0]="getinfo"; argv[1]="nonce";
         void (*responses[])(netadr_t) = {SVC_Info, SVC_Status, SVC_GameCompleteStatus};
         for (unsigned i = 0; i < sizeof(responses) / sizeof(responses[0]); ++i) {
             /* getinfo keeps the stock 118, as in CoD2x; the others carry the protocol dvar. */
             const char *expected = "118";
 #if defined(COD2_CODX) && COD2_CODX
-            if (host == COD2X_REVISION && responses[i] != SVC_Info) expected = "120";
+            if (host >= 6 && responses[i] != SVC_Info) expected = "120";
 #endif
             responses[i](remote);
             const char *info = strchr(packet, '\n');
@@ -312,6 +322,16 @@ int main(void)
     reject_case(118,0,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" COD2X_RELEASE "\n\nDownload CoD2x at:\nhttp://cod2x.me/\n");
     reject_case(118,6,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" COD2X_RELEASE "\n\nUpdate CoD2x to version " COD2X_RELEASE " or above\n");
     reject_case(118,COD2X_REVISION,"short","error\n\x15You have invalid HWID2");
+    /* A server run as the released 1.4.6.8 (sv_cod2xRevision 6) takes its players and newer ones,
+       refuses older ones, and names 1.4.6.8 in every refusal. */
+    connect_case(6,118,6,hwid,remote,1,-2033168971);
+    connect_case(6,118,COD2X_REVISION,hwid,remote,1,-2033168971);
+    connect_case(6,118,5,hwid,remote,0,0);
+    connect_case(6,118,0,"",remote,0,0);
+    connect_case(6,118,6,"short",remote,0,0);
+    reject_host_case(6,118,5,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" "1.4.6.8\n\nUpdate CoD2x to version 1.4.6.8 or above\n");
+    reject_host_case(6,118,0,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" "1.4.6.8\n\nDownload CoD2x at:\nhttp://cod2x.me/\n");
+    reject_host_case(6,115,6,hwid,"error\nEXE_SERVER_IS_DIFFERENT_VER\x15" "1.4.6.8\n\nYour version is 1.0\nYou need version 1.3 and CoD2x\n");
 #else
     connect_case(COD2X_REVISION,118,0,"",remote,1,123);
 #endif

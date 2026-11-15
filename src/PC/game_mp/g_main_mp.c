@@ -1949,8 +1949,11 @@ int G_RunFrame(int levelTime)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     extern void SV_Cod2xMapChangeFrameDone(void);
     extern void SV_Cod2xUdpStats(void);
+    extern int Cod2x_ServerGameVersion(void);
     SV_Cod2xMapChangeFrameDone();
-    G_Cod2xPlayerInfoFrame(g_entities);
+    /* Revision 7's spectator information; a server run as 1.4.6.8 leaves those fields alone, as it does. */
+    if (Cod2x_ServerGameVersion() >= 7)
+        G_Cod2xPlayerInfoFrame(g_entities);
     SV_Cod2xUdpStats();
     G_RefreshPlayerBroadcast();
 #endif

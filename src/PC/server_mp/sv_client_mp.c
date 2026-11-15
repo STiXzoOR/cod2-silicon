@@ -1615,22 +1615,23 @@ static int SV_Cod2xAdmitConnect(netadr_t from, const char *userinfo)
         default: reason = "Your CoD2 version is unknown"; break;
         }
         NET_OutOfBandPrint(NS_SERVER, from,
-                           va("error\nEXE_SERVER_IS_DIFFERENT_VER\x15%s%s\n", COD2X_RELEASE "\n\n", reason));
+                           va("error\nEXE_SERVER_IS_DIFFERENT_VER\x15%s\n\n%s\n", Cod2x_HostRelease(), reason));
         Com_DPrintf("    rejected connect from protocol version %i (should be %i)\n", version, 0x76);
         return 0;
     }
 
     revision = atoi(Info_ValueForKey(userinfo, "protocol_cod2x"));
     if (!revision) {
-        NET_OutOfBandPrint(NS_SERVER, from, "error\nEXE_SERVER_IS_DIFFERENT_VER\x15" COD2X_RELEASE
-                           "\n\nDownload CoD2x at:\nhttp://cod2x.me/\n");
+        NET_OutOfBandPrint(NS_SERVER, from, va("error\nEXE_SERVER_IS_DIFFERENT_VER\x15%s"
+                           "\n\nDownload CoD2x at:\nhttp://cod2x.me/\n", Cod2x_HostRelease()));
         Com_DPrintf("    rejected connect from non-CoD2x version\n");
         return 0;
     }
-    if (revision < COD2X_REVISION) {
-        NET_OutOfBandPrint(NS_SERVER, from, "error\nEXE_SERVER_IS_DIFFERENT_VER\x15" COD2X_RELEASE
-                           "\n\nUpdate CoD2x to version " COD2X_RELEASE " or above\n");
-        Com_DPrintf("    rejected connect from CoD2x version %i (should be %i)\n", revision, COD2X_REVISION);
+    /* A client older than the server is refused; a newer one plays by the server's revision. */
+    if (revision < Cod2x_ServerGameVersion()) {
+        NET_OutOfBandPrint(NS_SERVER, from, va("error\nEXE_SERVER_IS_DIFFERENT_VER\x15%s"
+                           "\n\nUpdate CoD2x to version %s or above\n", Cod2x_HostRelease(), Cod2x_HostRelease()));
+        Com_DPrintf("    rejected connect from CoD2x version %i (should be %i)\n", revision, Cod2x_ServerGameVersion());
         return 0;
     }
 

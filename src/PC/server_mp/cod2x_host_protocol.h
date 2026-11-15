@@ -10,7 +10,7 @@ extern int Cod2x_ServerGameVersion(void);
 
 static inline int SV_Cod2xHostAdmission(void)
 {
-    return Cod2x_ServerGameVersion() >= COD2X_REVISION;
+    return Cod2x_ServerGameVersion() >= COD2X_HOST_REVISION_MIN;
 }
 
 static inline int SV_Cod2xDiscoveryProtocol(void)

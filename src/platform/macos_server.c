@@ -78,7 +78,7 @@ static qboolean MacServer_MasterAddress(int index, netadr_t *address)
         snprintf(dvarName, sizeof(dvarName), "sv_master%d", index + 1);
 #if defined(COD2_CODX) && COD2_CODX
         const char *defaultMaster = index ? "" : "cod2master.activision.com:20710";
-        if (index == 1 && Cod2x_ServerGameVersion() >= COD2X_REVISION)
+        if (index == 1 && Cod2x_ServerGameVersion() >= COD2X_HOST_REVISION_MIN)
             defaultMaster = "master.cod2x.me:20710";
         masters[index] = Dvar_RegisterString(dvarName, defaultMaster, 0);
 #else

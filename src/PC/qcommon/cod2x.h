@@ -47,9 +47,18 @@ int Cod2x_LimitedFPS(int requested, int limited);
 
 void Cod2x_Init(void);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-/* A host runs as a CoD2x revision-7 server: g_cod2x is forced to this revision,
-   the protocol dvar is 120 and the revision 7 admission rules apply. */
-#define COD2X_HOST_REVISION COD2X_REVISION
+/* A host runs as a CoD2x server of one revision: g_cod2x is forced to it, the
+   protocol dvar is 120 and that revision's admission rules apply. The dvar
+   sv_cod2xRevision, set on the command line, chooses it: 7 follows CoD2x's
+   current source; 6 is the released 1.4.6.8, whose players can then join.
+   CoD2x refuses a client older than its server and takes one that is newer
+   (CoD2x src/shared/server.cpp, "Older client can not connect newer server"),
+   so admitting 1.4.6.8 players means running the whole server as revision 6. */
+#define COD2X_HOST_REVISION_MIN 6
+int Cod2x_HostRevision(void);
+/* The release a host of that revision names to players it turns away. */
+const char *Cod2x_HostRelease(void);
+#define COD2X_HOST_REVISION Cod2x_HostRevision()
 void Cod2x_ServerInit(int dedicated);
 void Cod2x_ServerSpawn(void);
 void Cod2x_ServerShutdown(void);
