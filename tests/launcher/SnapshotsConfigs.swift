@@ -1350,8 +1350,10 @@ extension Snapshots {
         "configs-import-windows-profiles": ["Bring in your Windows setup", "Morrow", "Scrim", "Choose Folder…"],
         "configs-catalog-loading": ["Loading settings"],
         "configs-discover-hidden": ["Add a Config", "New Loadout", "Main, in use for your next game", "Player Setups", "Check a Config"],
-        "configs-home": ["Featured setups", "See This Setup", "Next featured setup", "See all 3 Classic era setups", "[Team], 4 setups", "Refresh the catalogue",
+        "configs-home": ["Featured setups", "See This Setup", "Next featured setup", "See all 3 Classic era setups", "Refresh the catalogue",
                          "Search players, teams or styles", "Check a Config", "Add a Config"],
+        // Teams sit below the first screenful, and the page only builds what is in view.
+        "configs-home-end": ["[Team], 4 setups", "Check a Config", "Add a Config"],
         "configs-home-all": ["Narrow the setups", "Player Setups", "Search players, teams or styles"],
         "configs-other-loadout": ["Use for Next Game", "Scrim"],
         "configs-delete-confirm": ["Delete the loadout “Scrim”?", "Delete Loadout", "Cancel"],
