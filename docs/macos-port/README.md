@@ -62,7 +62,8 @@ to the new ones.
 
 ## Deeper references
 
-- [Release 0.3.0 verification](release-0.3.0-verification.md) — what was tested for the current release and what was not.
+- [Release 0.3.1 verification](release-0.3.1-verification.md) — what was tested for the current release and what was not.
+- [Release 0.3.0 verification](release-0.3.0-verification.md) — the release before it, with the replay comparison and the parity audit.
 - [Game data](game-data.md) — licensed content and local shader inputs.
 - [CoD2x compatibility](cod2x-compat.md) — reference behaviors and feature gates.
 - [Parity methodology](parity.md) — simulation, build and timing comparisons.

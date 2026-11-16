@@ -37,9 +37,26 @@ evidence is in the [port reports](macos-port/README.md).
 The [0.3.0 verification](macos-port/release-0.3.0-verification.md) says what
 was tested and what was not.
 
+## 0.3.1 — Hosting for friends on Windows (released 0.3.1)
+
+- **A CoD2x server that the released CoD2x can join.** The game and server
+  run as CoD2x's latest stable release, 1.4.6.8, so friends on Windows and
+  Linux get in with nothing to set.
+- **Hosting that is easier to get right:** ports the game's own local list
+  looks at, a note when the Mac is on Wi-Fi, a log for each start that Report
+  a Problem can include.
+- **Closer to the original:** differences found by comparing this source with
+  another project's reading of the game, settled in the original binaries and
+  fixed. The server's network parsers were fuzzed, including what a
+  connecting or connected player can send.
+
+The [0.3.1 verification](macos-port/release-0.3.1-verification.md) says what
+was tested and what was not.
+
 ## Next
 
-These are not in a fixed order.
+The Metal renderer, below, is the next piece of work. The rest are not in a
+fixed order.
 
 - **A whole match, played.** Every test so far was short and mostly on empty
   servers. Long sessions on busy servers, a real microphone, and CoD2x's

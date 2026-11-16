@@ -263,6 +263,9 @@ new performance claims for every release. Verified development results include:
   port was audited against the original: 119 of 173 findings are fixed and
   12 are still open. The original ran under Wine with DXVK, not on a Windows
   machine. [What was tested, and what still differs](docs/macos-port/release-0.3.0-verification.md)
+- 0.3.1 fixed two of the differences 0.3.0 listed (menu panel edges, and fog
+  in the Direct3D 7 renderer) and measured a third, the near clip plane, as
+  not a difference. [What was tested for 0.3.1](docs/macos-port/release-0.3.1-verification.md)
 - Before 0.3.0, with the original Mac shaders, three matched Toujane views had
   RGB mean absolute errors of **2.0050, 1.8726 and 0.5856 out of 255** against
   Windows. [Rendering report](docs/macos-port/reports/WS15-render.md)
