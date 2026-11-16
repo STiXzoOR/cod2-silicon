@@ -141,7 +141,7 @@ private struct LibraryTabContent: View {
     }
     static func subtitle(_ tab: LibraryTab) -> String {
         switch tab {
-        case .matches: "How your recent matches ran: frame rate, ping and connection."
+        case .matches: "How your recent matches ran: ping and connection."
         case .demos: "Recorded matches play back in the game, from any point."
         case .screenshots: "Screenshots you take in a match, kept in your CoD2 Silicon folder."
         }
@@ -186,7 +186,7 @@ private struct LibraryTabContent: View {
                        actionTitle: "Try Again", prominent: false, action: model.refreshLibraryMatches)
                 .padding(.top, 130)
         } else if model.storedMatches.isEmpty {
-            EmptyState("No matches yet", message: "After each match the game notes its frame rate and connection, so Check-up can advise you. Play one and it shows up here.",
+            EmptyState("No matches yet", message: "After each match the game notes how it ran, so Check-up can advise you. Play one and it shows up here.",
                        actionTitle: "Find a Server", prominent: false) { model.navigate(to: .servers) }
                 .padding(.top, 130)
         } else {
@@ -317,10 +317,10 @@ private struct LibraryTabContent: View {
 
 /// The Matches columns: the board's widths, narrower when the window is.
 private struct MatchColumns {
-    let fps: CGFloat, ping: CGFloat, connection: CGFloat, action: CGFloat
+    let ping: CGFloat, connection: CGFloat, action: CGFloat
     init(width: CGFloat) {
         let compact = width < 900
-        fps = compact ? 108 : 120; ping = compact ? 76 : 100; connection = compact ? 116 : 130; action = compact ? 96 : 110
+        ping = compact ? 76 : 100; connection = compact ? 116 : 130; action = compact ? 96 : 110
     }
 }
 
@@ -331,7 +331,6 @@ private struct MatchColumnHeader: View {
         HStack(spacing: 16) {
             title("Map").frame(width: 80, alignment: .leading)
             title("Match").frame(maxWidth: .infinity, alignment: .leading)
-            title("Frame rate").frame(width: columns.fps, alignment: .trailing)
             title("Ping").frame(width: columns.ping, alignment: .trailing)
             title("Connection").frame(width: columns.connection, alignment: .trailing)
             Color.clear.frame(width: columns.action, height: 1)
@@ -360,7 +359,6 @@ private struct MatchRow: View {
                     Text(facts.stamp(time: true)).font(.typewriter(12)).foregroundStyle(palette.secondary).lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                figure(facts.fps.map(String.init), unit: "fps typical").frame(width: columns.fps, alignment: .trailing)
                 figure(facts.ping.map(String.init), unit: "ms").frame(width: columns.ping, alignment: .trailing)
                 StatusLabel(facts.connection.kind, facts.connection.words).frame(width: columns.connection, alignment: .trailing)
             }

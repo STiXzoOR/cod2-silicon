@@ -504,7 +504,7 @@ enum ConfigStudioAcceptanceTests {
         let file = stats.appendingPathComponent("matches.jsonl")
 
         // Not read yet: nothing measured, nothing read.
-        require(checkup.matchState == .notRead && checkup.gauges(value(checkup.report)).map(\.status).prefix(3) == ["From settings", "Not measured", "Not measured"])
+        require(checkup.matchState == .notRead && checkup.gauges(value(checkup.report)).map(\.status).prefix(3) == ["Not measured", "Not measured", "Not measured"])
         require(reads == 0)
         // No file yet, summaries on: an honest empty state.
         checkup.refreshMatches(home: session.home)
@@ -533,9 +533,9 @@ enum ConfigStudioAcceptanceTests {
         require(measured.detail.contains("may have used a different loadout") && !measured.detail.contains("Main"), "a match isn't claimed for the selected loadout")
         require(measured.lines.contains("2 matches recorded on this Mac") && measured.lines.contains { $0.hasPrefix("Ended ") && $0.contains("21 min") })
         let gauges = checkup.gauges(report)
-        // The card says the outcome in words (the typical frame rate, how often the Mac fell below the
+        // The card says the outcome in words (how steady the match ran, how often the Mac fell below the
         // cap); the exact figures sit behind Show Details.
-        require(gauges[0].value == "333 FPS" && gauges[0].status == "Watch" && gauges[0].tone == .caution, "\(gauges[0].value) \(gauges[0].status)")
+        require(gauges[0].value == "SOME DIPS" && gauges[0].status == "Watch" && gauges[0].tone == .caution, "\(gauges[0].value) \(gauges[0].status)")
         require(gauges[0].detail.contains("about 2 in every 100 frames") && !gauges[0].detail.contains("p50"), gauges[0].detail)
         require(gauges[0].figures.contains("p50 3 ms · p99 7 ms · max 20 ms"), gauges[0].figures)
         // The cap can change during a match: the counts aren't attributed to the cap recorded at the end.
@@ -565,7 +565,7 @@ enum ConfigStudioAcceptanceTests {
         checkup.refreshMatches()
         require(checkup.latestMatch?.frameQuantilesAreExact == false && checkup.report?.dials[0].value == nil, "an upper bound isn't passed on as a measured p99")
         let bound = checkup.gauges(value(checkup.report))[0]
-        require(bound.value == "333 FPS" && bound.status == "Long pauses" && bound.figures.contains("p99 at least 250 ms (at most 300 ms)") && !bound.figures.contains("p99 300 ms"), bound.figures)
+        require(bound.value == "PAUSES" && bound.status == "Long pauses" && bound.figures.contains("p99 at least 250 ms (at most 300 ms)") && !bound.figures.contains("p99 300 ms"), bound.figures)
         // A p99 sample at exactly the limit is in the overflow bucket: at least the limit, not longer than it.
         let edge = row.replacingOccurrences(of: "\"frameTimeP99MS\":7,\"frameTimeMaxMS\":20,\"frameTimeHistogramLimitMS\":250",
                                             with: "\"frameTimeP99MS\":250,\"frameTimeMaxMS\":250,\"frameTimeHistogramLimitMS\":250")

@@ -5,6 +5,15 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
+### Changed
+
+- The launcher no longer leads with frame rate. Home's chip and the sidebar
+  show the loadout for your next game, Last match and Library › Matches show
+  ping and connection, player setups show sensitivity and resolution, and
+  Check-up's Movement dial says how steady the match ran in words. The frame
+  rate cap is still a setting: it is an ordinary row under Performance, which
+  now sits after Graphics, and server rules still check it.
+
 ## [0.3.1] - 2026-11-16
 
 ### Added

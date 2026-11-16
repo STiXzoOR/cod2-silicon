@@ -1332,13 +1332,13 @@ extension Snapshots {
         "configs-binds-list": ["Primary key for Throw frag grenade", "Find an action or key", "Advanced binds"],
         "configs-binds-advanced": ["Key for this bind", "Save Bind", "Step 1"],
         "configs-binds-visual": ["W, Move forward", "Find by Pressing", "Selected key"],
-        "configs-checkup": ["Movement: 333 FPS", "Apply", "Show Me", "Not Now", "Rules to check against"],
+        "configs-checkup": ["Movement: no value", "Apply", "Show Me", "Not Now", "Rules to check against"],
         "configs-history": ["Restore This Snapshot"],
         "configs-binds-verify": ["Verify your keyboard", "Press the key just to the left of the space bar", "Cancel"],
         "configs-binds-learn": ["Learn your mouse buttons", "Press down on the scroll wheel", "I Don’t Have This Button"],
         "configs-expert-player": ["Compare markers show [Player 1]’s values", "Take [Player 1]’s Mouse speed"],
         "discover-player": ["Compare in Expert", "Try This Setup"],
-        "configs-checkup-measured": ["Your last match: Toujane, Search & Destroy", "Movement: 333 FPS", "Connection: 38 MS", "Show the movement figures", "Refresh match summaries"],
+        "configs-checkup-measured": ["Your last match: Toujane, Search & Destroy", "Movement: STEADY", "Connection: 38 MS", "Show the movement figures", "Refresh match summaries"],
         "configs-checkup-off": ["Match summaries are off", "Refresh match summaries"],
         "configs-checkup-error": ["Couldn’t read your match summaries", "Connection: no value, Not measured"],
         "configs-import-link": ["Config link", "Review"],
@@ -1361,7 +1361,7 @@ extension Snapshots {
         "configs-rename-sheet": ["Rename “Main”", "Name", "Rename", "Cancel"],
         "configs-checkup-freezes": ["Your last match: Toujane, Search & Destroy"],
         "configs-checkup-freeze-legacy": ["Your last match: Toujane, Search & Destroy"],
-        "configs-checkup-match": ["Your match on Carentan, Search & Destroy", "Show Last Match", "Movement: 333 FPS"],
+        "configs-checkup-match": ["Your match on Carentan, Search & Destroy", "Show Last Match", "Movement: STEADY"],
     ]
 
     /// Every Config Studio screen's accessibility tree in reading order, with unnamed controls as failures.

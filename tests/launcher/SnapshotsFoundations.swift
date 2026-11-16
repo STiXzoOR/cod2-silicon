@@ -82,7 +82,7 @@ struct FoundationsGallery: View {
             }
             HStack(spacing: 8) { Badge("Stock 1.3"); Badge("CoD2x 1.4", tone: .accent); Badge("Locked", tone: .negative) }
             HStack(spacing: 8) {
-                Chip("Frame cap 250") { Text("250").font(.stencil(15)).foregroundStyle(Palette.of(scheme, contrast: contrast).accent); Text("fps") }
+                Chip("18 of 24 players") { Text("18").font(.stencil(15)).foregroundStyle(Palette.of(scheme, contrast: contrast).accent); Text("of 24") }
                 Chip("Toujane") { Image(systemName: "map"); Text("Toujane") }
             }
             Chip("Display 2560 × 1440", size: .large, glass: true, action: {}) { Image(systemName: "display"); Text("2560 × 1440 · Borderless") }

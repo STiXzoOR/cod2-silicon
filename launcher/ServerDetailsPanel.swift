@@ -71,7 +71,7 @@ struct ServerDetailsPanel: View {
             .padding(.horizontal, 6)
             Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
                 GridRow { fact("Version", ServerVersion.label(server)); fact("Mod", server.mod.isEmpty ? "None" : server.mod) }
-                GridRow { fact("Frame cap", facts.frameCap); fact("Access", facts.access) }
+                GridRow { fact("Access", facts.access) }
             }
             .padding(.horizontal, 6)
             ReadyCheckCard(model: model, studio: model.studio, connection: model.serverConnection, check: check, server: server)

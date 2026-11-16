@@ -513,7 +513,7 @@ struct ConfigStudioFailure: Identifiable {
 
     @Published var tab: ConfigStudioTab = .settings
     @Published var level: ConfigDetailLevel = .guided
-    @Published var group: ConfigPurposeGroup = .frame
+    @Published var group: ConfigPurposeGroup = .aim
     @Published var filter: ConfigExpertFilter?
     @Published var search = ""
     @Published var compareID: String? {

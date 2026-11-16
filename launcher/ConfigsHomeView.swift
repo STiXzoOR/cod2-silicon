@@ -409,7 +409,6 @@ struct SetupCard: View {
                     Text(entry.feel).font(.system(size: 13)).foregroundStyle(palette.dark ? Palette.hex(0xe2dbc9) : palette.text).lineLimit(1)
                     HStack(alignment: .top, spacing: 16) {
                         fact(entry.facts?.sensitivity, "sensitivity")
-                        fact(entry.facts?.frameCap.map { $0 == "0" ? "None" : $0 }, "fps cap")
                         fact(size, "resolution")
                     }
                     if source {
@@ -444,7 +443,6 @@ struct SetupCard: View {
     private var spoken: String {
         var parts = [[entry.player, entry.team, entry.era].compactMap { $0 }.joined(separator: ", ") + ".", entry.feel + "."]
         if let sensitivity = entry.facts?.sensitivity { parts.append("Sensitivity \(sensitivity).") }
-        if let cap = entry.facts?.frameCap { parts.append(cap == "0" ? "No frame rate cap." : "\(cap) frames per second cap.") }
         if source { parts.append("As published by \(entry.provenance.publishedBy).") }
         if saved { parts.append("Saved.") }
         return parts.joined(separator: " ")

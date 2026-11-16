@@ -260,13 +260,9 @@ enum PlayerNameRules {
     // MARK: Player card
     /// The loadout the name is saved in: the one the next game uses.
     var playerLoadoutName: String? { nextGameLoadout?.displayName }
-    /// The sidebar plate's second line: the next game's loadout and its frame cap.
+    /// The sidebar plate's second line: the next game's loadout.
     var playerPlateDetail: String {
-        let cap = nextGameFrameCap
-        let fps = cap.value.map { $0 > 0 ? "\($0) fps" : "No fps cap" }
-        let loadout = (cap.name ?? playerLoadoutName).map { "\($0) loadout" }
-        let parts = [loadout, fps].compactMap { $0 }
-        if !parts.isEmpty { return parts.joined(separator: " · ") }
+        if let name = nextGameLoadoutName ?? playerLoadoutName { return "\(name) loadout" }
         return keyVerified ? "CD key verified" : "CD key needed"
     }
     /// Saves as the person types, after a short pause (one History entry per pause, not per key).

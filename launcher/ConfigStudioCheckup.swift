@@ -306,31 +306,28 @@ struct ConfigAppliedSuggestion: Identifiable {
         parts.append(match.capFPS > 0 ? "cap at the end of the match \(match.capFPS) fps" : "no cap at the end of the match")
         parts.append(match.frameCount == 1 ? "1 frame" : "\(match.frameCount.formatted()) frames")
         let figures = parts.joined(separator: " · ") + "."
-        // The typical frame rate: half the frames came at least this fast.
-        let typical = p50 > 0 && p50 < (limit ?? .infinity) ? "\(Int((1000 / p50).rounded()).formatted()) FPS" : "—"
-        let pace = typical == "—" ? "" : " Most of it ran at about \(Int((1000 / p50).rounded()).formatted()) fps."
         guard match.frameQuantilesAreExact else {
             let pause = limit.map { "\(Self.figure($0)) ms" } ?? "a long time"
-            return .init(area: .movement, value: typical, detail: "Some frames took \(pause) or more, long enough to feel like a freeze." + pace,
+            return .init(area: .movement, value: "PAUSES", detail: "Some frames took \(pause) or more, long enough to feel like a freeze.",
                          status: "Long pauses", tone: .caution, figures: figures)
         }
         guard let under = match.framesUnderCap, match.capSampleFrames > 0 else {
-            return .init(area: .movement, value: typical, detail: "No frame rate cap was on, so there was no cap to keep up with." + pace,
+            return .init(area: .movement, value: "—", detail: "No frame rate cap was on, so there was no cap to keep up with.",
                          status: "No cap", tone: .unknown, figures: figures)
         }
         let share = Double(under) / Double(match.capSampleFrames)
         let slow = Swift.max(1, Int(((1 - share) * 100).rounded()))
         if share >= 0.99 {
-            return .init(area: .movement, value: typical, detail: share == 1 ? "Your Mac kept up with your frame rate cap the whole match."
-                                                                      : "Your Mac kept up with your frame rate cap for almost the whole match.",
+            return .init(area: .movement, value: "STEADY", detail: share == 1 ? "Your Mac kept up with your frame rate cap the whole match."
+                                                                       : "Your Mac kept up with your frame rate cap for almost the whole match.",
                          status: "Smooth", tone: .positive, figures: figures)
         }
         if share >= 0.95 {
-            return .init(area: .movement, value: typical,
+            return .init(area: .movement, value: "SOME DIPS",
                          detail: "Now and then your Mac fell below your frame rate cap, about \(slow) in every 100 frames. Jumps can feel different when it does.",
                          status: "Watch", tone: .caution, figures: figures)
         }
-        return .init(area: .movement, value: typical,
+        return .init(area: .movement, value: "UNEVEN",
                      detail: "Your Mac often fell below your frame rate cap, about \(slow) in every 100 frames, so jumps and aim felt less even.",
                      status: "Could be better", tone: .caution, figures: figures)
     }
@@ -469,13 +466,10 @@ struct ConfigAppliedSuggestion: Identifiable {
             switch dial.area {
             case .movement:
                 if let match, let gauge = frameGauge(match) { return gauge }
-                let cap = studio.spec(named: "com_maxfps").map { studio.state($0) }
-                let value = cap?.number.map { $0 == 0 ? "NO CAP" : "\(ConfigValues.format($0, integer: true)) FPS" } ?? "—"
-                let next = matchSummariesEnabled ? "Play a match to see how often your Mac keeps up with it."
-                                                  : "Turn on match summaries in Settings › Privacy to see how often your Mac keeps up with it."
-                return .init(area: .movement, value: value, detail: "Your frame rate cap. " + next,
-                             status: cap?.number == nil ? "Not measured" : "From settings", tone: cap?.number == nil ? .unknown : .information,
-                             figures: "The frame rate you actually get isn’t measured until a match is recorded.")
+                return .init(area: .movement, value: "—", detail: matchSummariesEnabled ? "Play a match to see how smoothly the game runs on your Mac."
+                                                                                       : "Turn on match summaries in Settings › Privacy to see how smoothly the game runs on your Mac.",
+                             status: "Not measured", tone: .unknown,
+                             figures: "How smoothly the game runs isn’t measured until a match is recorded.")
             case .aim:
                 let dpi = studio.metadata?.dpi
                 let speed = studio.spec(named: "sensitivity").flatMap { studio.state($0).number }

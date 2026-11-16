@@ -46,8 +46,7 @@ import Foundation
             precondition(((try? capped.config()) != nil) == valid, "frame cap \(fps)")
             if valid { let written = try capped.config(); precondition(written.contains("seta com_maxfps \"\(fps)\"")) }
         }
-        precondition(FrameCap.chip(250) == ("250", "fps cap") && FrameCap.chip(0) == (nil, "No fps cap"))
-        precondition(FrameCap.spoken(0) == "No frame cap" && FrameCap.customCaption(0) == "Unlimited" && FrameCap.customCaption(90) == "Custom value")
+        precondition(FrameCap.customCaption(0) == "Unlimited" && FrameCap.customCaption(90) == "Custom value")
         precondition(FrameCap.presets.map(\.value) == [125, 250, 333, 1000] && FrameCap.isPreset(250) && !FrameCap.isPreset(0) && !FrameCap.isPreset(144))
         settings.advanced = "name=bad;quit"
         precondition((try? settings.config()) == nil)
@@ -589,9 +588,9 @@ import Foundation
         // Server facts drive badges, ping bars and the details grid.
         func server(_ fields: [String: String], ping: Int = 18) -> GameServer { GameServer(address: "192.0.2.1:28960", fields: fields, ping: ping, players: []) }
         let codx = ServerFacts(server(["shortversion": "1.4.6.8", "clients": "24", "sv_maxclients": "24", "sv_maxfps": "250", "pswrd": "1"]))
-        precondition(codx.isCoD2x && codx.versionLabel == "CoD2x 1.4.6.8" && codx.occupancy == .full && codx.frameCap == "250 fps" && codx.access == "Password")
+        precondition(codx.isCoD2x && codx.versionLabel == "CoD2x 1.4.6.8" && codx.occupancy == .full && codx.access == "Password")
         let stock = ServerFacts(server(["protocol": "118", "clients": "0", "sv_maxclients": "20"], ping: 88))
-        precondition(!stock.isCoD2x && stock.versionLabel == "Original 1.3" && stock.occupancy == .empty && stock.frameCap == "Not set" && stock.pingLevel == 1)
+        precondition(!stock.isCoD2x && stock.versionLabel == "Original 1.3" && stock.occupancy == .empty && stock.pingLevel == 1)
         precondition(ServerFacts(server(["protocol": "120"])).versionLabel == "CoD2x 1.4")
         precondition([18, 39, 40, 59, 60, 79, 80].map(ServerFacts.pingLevel) == [4, 4, 3, 3, 2, 2, 1])
 

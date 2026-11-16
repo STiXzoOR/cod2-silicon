@@ -73,7 +73,7 @@ struct ConfigSettingsView: View {
 
 private struct GroupRail: View {
     /// Wider than StudioMetrics' 160 points (and the boards' 186): SF Pro needs 200 points for
-    /// “Frame & movement” and “HUD & crosshair” with Expert's counts, and names never truncate.
+    /// “HUD & crosshair” with Expert's counts, and names never truncate.
     static let width: CGFloat = 200
     @ObservedObject var studio: ConfigStudioModel
     var expert: Bool
@@ -206,14 +206,14 @@ private struct GuidedRow: View {
     var body: some View {
         let state = studio.state(spec)
         VStack(spacing: 0) {
-            if spec.name.lowercased() == "com_maxfps" {
-                FrameCapRow(studio: studio, spec: spec, state: state)
-            } else {
-                SettingsRow(spec.title, detail: spec.setting.summary) {
+            SettingsRow(spec.title, detail: spec.setting.summary) {
+                if spec.name.lowercased() == "com_maxfps" {
+                    FrameCapSegments(studio: studio, spec: spec, state: state, theirs: nil)
+                } else {
                     GuidedControl(studio: studio, spec: spec, state: state)
                 }
-                .accessibilityHint(spec.setting.summary)
             }
+            .accessibilityHint(spec.setting.summary)
             if let tip = checkup.tip(spec) { RuleTip(studio: studio, checkup: checkup, spec: spec, text: tip.text, fix: tip.fix) }
         }
     }
@@ -370,78 +370,6 @@ private struct DPIRow: View {
                 .accessibilityAddTraits(.isStaticText)
             }
         }
-    }
-}
-
-/// Frame rate cap: three meaningful presets and the person's own number (catalog range).
-private struct FrameCapRow: View {
-    @ObservedObject var studio: ConfigStudioModel
-    var spec: ConfigSettingSpec
-    var state: ConfigSettingState
-    @Environment(\.undoManager) private var undo
-    @Environment(\.palette) private var palette
-    @State private var custom = false
-
-    var body: some View {
-        let presets = FrameCap.presets.prefix(3)
-        let value = state.number.flatMap { Int(exactly: $0) }
-        let isCustom = custom || !presets.contains { $0.value == value }
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(spec.title).font(.system(size: 14)).foregroundStyle(palette.dark ? Palette.hex(0xe6dfcf) : palette.text)
-                Text(spec.setting.summary).font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
-            }
-            HStack(spacing: 10) {
-                ForEach(Array(presets), id: \.value) { preset in
-                    Button { custom = false; studio.set(spec, to: String(preset.value), undo: undo) } label: {
-                        CrateLabel(numeral: "\(preset.value)", caption: preset.caption, selected: !isCustom && value == preset.value)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(preset.value) frames per second, \(preset.caption)")
-                    .accessibilityAddTraits(!isCustom && value == preset.value ? .isSelected : [])
-                }
-                VStack(alignment: .leading, spacing: 6) {
-                    if isCustom {
-                        CommitField(value: state.value ?? "", label: "Custom frame rate cap", width: nil, plain: true,
-                                    validate: { ConfigValues.number($0, type: spec.type).map { ConfigValues.text(number: $0, spec: spec) } }) { studio.set(spec, to: $0, undo: undo) }
-                            .font(.stencil(34)).foregroundStyle(palette.dark ? palette.accent : Palette.hex(0x4e5b2f)).frame(height: 34)
-                    } else {
-                        Button { custom = true } label: { Text("—").font(.stencil(34)).foregroundStyle(palette.numeral).frame(maxWidth: .infinity, minHeight: 34, alignment: .leading) }
-                            .buttonStyle(.plain).accessibilityLabel("Custom frame rate cap")
-                    }
-                    Text(isCustom ? value.map(FrameCap.customCaption) ?? "Your own number" : "Your own number").font(.system(size: 11)).foregroundStyle(palette.secondary)
-                }
-                .crate(selected: isCustom, palette: palette)
-            }
-        }
-        .padding(.horizontal, SettingsMetrics.radius).padding(.top, 16).padding(.bottom, 14)
-        .overlay(alignment: .top) { Rectangle().fill(palette.separator).frame(height: 1) }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel(spec.title)
-    }
-}
-
-private struct CrateLabel: View {
-    var numeral: String
-    var caption: String
-    var selected: Bool
-    @Environment(\.palette) private var palette
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(numeral).font(.stencil(34)).tracking(0.68).foregroundStyle(selected ? (palette.dark ? palette.accent : Palette.hex(0x4e5b2f)) : palette.numeral).frame(height: 34)
-            Text(caption).font(.system(size: 11)).foregroundStyle(palette.secondary)
-        }
-        .crate(selected: selected, palette: palette)
-    }
-}
-
-private extension View {
-    func crate(selected: Bool, palette: Palette) -> some View {
-        self.padding(.vertical, 14).padding(.horizontal, 16)
-            .frame(maxWidth: .infinity, minHeight: 88, alignment: .topLeading)
-            .background(selected ? palette.selection : palette.crate, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(selected ? palette.selectionStroke : (palette.dark ? Color.white.opacity(0.09) : palette.panelStroke), lineWidth: 1))
-            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
@@ -717,7 +645,7 @@ private struct ExpertRow: View {
     }
 }
 
-/// Typed Expert controls: switch + word, segmented frame cap, slider + field + unit, menus and fields.
+/// Typed Expert controls: switch + word, segmented frame cap (Guided uses it too), slider + field + unit, menus and fields.
 private struct ExpertControl: View {
     @ObservedObject var studio: ConfigStudioModel
     var spec: ConfigSettingSpec

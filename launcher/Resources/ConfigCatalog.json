@@ -3,10 +3,6 @@
   "sourceRevision": "d2e2806b0bf73a217bcc8602ce8c67451e592ec5",
   "groups": [
     {
-      "id": "frame",
-      "title": "Frame & movement"
-    },
-    {
       "id": "aim",
       "title": "Aim & input"
     },
@@ -29,6 +25,10 @@
     {
       "id": "gfx",
       "title": "Graphics"
+    },
+    {
+      "id": "frame",
+      "title": "Performance"
     },
     {
       "id": "other",

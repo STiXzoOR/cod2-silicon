@@ -7,7 +7,7 @@ enum ConfigCatalogMode: String, Codable, CaseIterable, Sendable {
 }
 
 enum ConfigPurposeGroup: String, Codable, CaseIterable, Sendable {
-    case frame, aim, net, vis, hud, audio, gfx, other
+    case aim, net, vis, hud, audio, gfx, frame, other
 }
 
 enum ConfigCatalogAvailability: String, Codable, Sendable {

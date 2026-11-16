@@ -66,7 +66,6 @@ struct ServerFacts: Equatable {
     var versionLabel: String
     var pingLevel: Int
     var occupancy: Occupancy
-    var frameCap: String
     var access: String
     enum Occupancy: Equatable { case empty, open, full }
 
@@ -77,7 +76,6 @@ struct ServerFacts: Equatable {
         versionLabel = isCoD2x ? "CoD2x \(shown)" : "Original \(shown)"
         pingLevel = Self.pingLevel(server.ping)
         occupancy = server.playerCount == 0 ? .empty : (server.maxPlayers > 0 && server.playerCount >= server.maxPlayers ? .full : .open)
-        if let fps = Int(server.fps), fps > 0 { frameCap = "\(fps) fps" } else { frameCap = "Not set" }
         access = server.password ? "Password" : "Open"
     }
     static func pingLevel(_ ping: Int) -> Int { ping < 40 ? 4 : ping < 60 ? 3 : ping < 80 ? 2 : 1 }
@@ -88,9 +86,6 @@ enum FrameCap {
     /// Quick picks in Settings, with neutral captions; any other value is entered by hand.
     static let presets: [(value: Int, caption: String)] = [(125, "Low"), (250, "Default"), (333, "High"), (1000, "Engine maximum")]
     static func isPreset(_ fps: Int) -> Bool { presets.contains { $0.value == fps } }
-    /// Home's status chip: the numeral (nil for no cap) and the words after it.
-    static func chip(_ fps: Int) -> (numeral: String?, text: String) { fps > 0 ? ("\(fps)", "fps cap") : (nil, "No fps cap") }
-    static func spoken(_ fps: Int) -> String { fps > 0 ? "Frame cap \(fps) frames per second" : "No frame cap" }
     static func customCaption(_ fps: Int) -> String { fps == 0 ? "Unlimited" : "Custom value" }
 }
 

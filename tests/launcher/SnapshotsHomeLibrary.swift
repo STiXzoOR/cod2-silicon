@@ -26,9 +26,9 @@ extension Snapshots {
         "home-matches-off": ["MATCH SUMMARIES ARE OFF", "Turn On in Settings…"],
         "home-update": ["What’s New", "Install Update"],
         "home-update-installing": ["Downloading version 0.4.0"],
-        "home-loadout": ["Main loadout, 333 frames per second cap"],
-        "home-loadout-unreadable": ["Frame cap unavailable"],
-        "home-loadout-resolution": ["Main loadout, 333 frames per second cap, 5120 by 2880", "This display can’t show 5120 by 2880. The game will use 3456 by 2234"],
+        "home-loadout": ["Main loadout, "],
+        "home-loadout-unreadable": ["Loadout unavailable"],
+        "home-loadout-resolution": ["Main loadout, 5120 by 2880", "This display can’t show 5120 by 2880. The game will use 3456 by 2234"],
         "library-matches": ["Toujane, Search & Destroy", "Check-up for Toujane · Search & Destroy", "Kept on this Mac", "Delete Summaries…"],
         "library-matches-empty": ["NO MATCHES YET", "Find a Server"],
         "library-matches-off": ["MATCH SUMMARIES ARE OFF", "Turn On in Settings…"],
@@ -161,7 +161,7 @@ extension Snapshots {
             print("FAIL: Matches did not list the stored summaries newest first with their connection (\(model.storedMatches.count) read): "
                   + rows.filter { $0.contains("Toujane") || $0.contains("Carentan") }.joined(separator: " | ")); return false
         }
-        print("PASS: Matches lists the stored summaries newest first: frame rate, ping and the connection in a word")
+        print("PASS: Matches lists the stored summaries newest first: ping and the connection in a word")
 
         let screenshots = model.home.appendingPathComponent("main/screenshots")
         try FileManager.default.createDirectory(at: screenshots, withIntermediateDirectories: true)

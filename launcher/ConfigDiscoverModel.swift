@@ -13,7 +13,7 @@ enum ConfigDiscoverPage: Hashable { case home, saved, player(String), checker }
 /// How Discover groups the player setups. Featured is chosen in the catalogue; nothing is counted about
 /// what people import, so there is no popularity order.
 enum ConfigSetupFilter: String, CaseIterable, Identifiable {
-    case featured = "Featured", classic = "Classic era", cod2x = "CoD2x era", modern = "Modern", highFrameRate = "High frame rate", all = "All"
+    case featured = "Featured", classic = "Classic era", cod2x = "CoD2x era", modern = "Modern", all = "All"
     var id: String { rawValue }
     /// The page title when this group is shown on its own.
     var title: String { self == .all ? "All setups" : self == .featured ? "Featured setups" : rawValue }
@@ -24,7 +24,6 @@ enum ConfigSetupFilter: String, CaseIterable, Identifiable {
         case .classic: "From the game’s first years, around 2005 to 2008."
         case .cod2x: "Made for CoD2x."
         case .modern: "From the game’s later years."
-        case .highFrameRate: "Capped at 250 frames a second or more."
         case .all: "Every setup in the catalogue."
         }
     }
@@ -657,7 +656,7 @@ extension ConfigImportPresentation {
     }
     /// One shelf per style that has setups: featured ones first, then by name.
     var styleShelves: [ConfigStyleShelf] {
-        [ConfigSetupFilter.classic, .cod2x, .modern, .highFrameRate].compactMap { filter in
+        [ConfigSetupFilter.classic, .cod2x, .modern].compactMap { filter in
             let kept = entries.filter(filter.keeps)
             guard !kept.isEmpty else { return nil }
             let ordered = kept.sorted {

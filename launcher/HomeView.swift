@@ -363,7 +363,7 @@ private struct UpdatePill: View {
 
 // MARK: - Chips
 
-/// The next game's loadout and frame cap, the display, and a chip for each thing that needs fixing.
+/// The next game's loadout, the display, and a chip for each thing that needs fixing.
 private struct HomeChips: View {
     @ObservedObject var model: LauncherModel
     /// The window has no room for the What's New card: a chip opens it as a dialog instead.
@@ -388,19 +388,17 @@ private struct HomeChips: View {
         }
     }
 
-    private var capFace: (numeral: String?, text: String, spoken: String) {
-        let info = model.nextGameFrameCap
-        let loadout = info.name.map { " · \($0) loadout" } ?? ""
-        guard let fps = info.value else { return (nil, "Frame cap unavailable" + loadout, "Frame cap unavailable" + (info.name.map { ", \($0) loadout" } ?? "")) }
-        let chip = FrameCap.chip(fps)
-        let spokenLoadout = info.name.map { "\($0) loadout, " } ?? ""
-        // The resolution is the loadout's, so it sits with the loadout. Before loadouts it is a launcher setting, on the display chip.
-        let size = model.usesLoadouts ? model.nextGameResolution.value : nil
-        return (chip.numeral, chip.text + (size.map { " · " + SettingsText.resolution($0) } ?? "") + loadout,
-                spokenLoadout + (fps > 0 ? "\(fps) frames per second cap" : "no frame cap") + (size.map { ", " + $0.replacingOccurrences(of: "x", with: " by ") } ?? ""))
+    /// The loadout chip's words: the next game's loadout and its resolution, which belongs to the loadout.
+    private var loadoutFace: (text: String, spoken: String) {
+        guard let name = model.nextGameLoadoutName else { return ("Loadout unavailable", "Loadout unavailable") }
+        let size = model.nextGameResolution.value
+        return ("\(name) loadout · " + SettingsText.resolution(size), "\(name) loadout, " + size.replacingOccurrences(of: "x", with: " by "))
     }
 
-    private var loadoutChip: some View { LoadoutChip(model: model, face: capFace) }
+    /// Before loadouts exist there is nothing to choose: the display chip carries the resolution.
+    @ViewBuilder private var loadoutChip: some View {
+        if model.usesLoadouts { LoadoutChip(model: model, face: loadoutFace) }
+    }
 
     private var displayChip: some View {
         let size = model.settings.resolution.replacingOccurrences(of: "x", with: " × ")
@@ -442,42 +440,38 @@ private struct HomeChips: View {
     }
 }
 
-/// The next game's loadout and frame cap. With loadouts, it opens a menu to pick the one the next game uses
-/// or edit it in Configs; before loadouts exist the cap is a launcher setting, and the chip opens it.
+/// The next game's loadout. It opens a menu to pick the one the next game uses or edit it in Configs.
 private struct LoadoutChip: View {
     @ObservedObject var model: LauncherModel
-    var face: (numeral: String?, text: String, spoken: String)
+    var face: (text: String, spoken: String)
     @Environment(\.palette) private var palette
     @State private var anchor = PullDownAnchorBox()
     var body: some View {
         let choices = model.loadoutChoices
         if choices.isEmpty {
-            Chip(face.spoken + ". Open Display settings", size: .large, glass: true, action: model.openFrameSettings) { capLabel }
+            Chip(face.spoken + ". Open Configs", size: .large, glass: true, action: model.openLoadoutInConfigs) { label }
         } else {
             Chip(face.spoken + ". Choose the loadout for your next game", size: .large, glass: true, action: { showMenu(choices) }) {
-                capLabel
+                label
                 Image(systemName: "chevron.down").font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.secondary).accessibilityHidden(true)
             }
             .background(PullDownAnchor(box: anchor))
             .help("Choose the loadout for your next game")
         }
     }
-    @ViewBuilder private var capLabel: some View {
-        if let numeral = face.numeral { Text(numeral).font(.stencil(20)).foregroundStyle(palette.accent) }
-        Text(face.text).lineLimit(1)
-    }
+    private var label: some View { Text(face.text).lineLimit(1) }
     private func showMenu(_ choices: [LoadoutChoice]) {
         guard let view = anchor.view else { return }
         let current = choices.first(where: \.inUse) ?? choices[0]
         // While the game runs, it keeps the loadout it started with: the choice applies next time, so it waits.
         let entries: [PullDownMenu.Entry] = [.header("Use for your next game")]
             + choices.map { choice in
-                .item(choice.name, detail: [choice.cap.map { $0 > 0 ? "\($0) fps" : "No cap" }, choice.resolution.map(SettingsText.resolution)].compactMap { $0 }.joined(separator: " · "),
+                .item(choice.name, detail: choice.resolution.map(SettingsText.resolution) ?? "",
                       checked: choice.inUse, enabled: !model.gameRunning) {
                     model.useLoadoutForNextGame(choice.id)
                 }
             }
-            + [.separator, .item("Edit \(current.name) in Configs…", enabled: model.canNavigate, action: model.openFrameSettings)]
+            + [.separator, .item("Edit \(current.name) in Configs…", enabled: model.canNavigate, action: model.openLoadoutInConfigs)]
         PullDownMenu.show(entries, below: view)
     }
 }
@@ -658,7 +652,6 @@ private struct LastMatchCard: View {
                 }
                 .accessibilityElement(children: .combine)
                 HStack(alignment: .top, spacing: 8) {
-                    figure(facts.fps.map(String.init), caption: "fps, typical", spoken: facts.fps.map { "\($0) frames a second, typical" } ?? "Frame rate not measured")
                     figure(facts.ping.map(String.init), caption: "ms ping", spoken: facts.ping.map { "\($0) milliseconds ping" } ?? "Ping not measured")
                     VStack(alignment: .leading, spacing: 5) {
                         StatusLabel(facts.connection.kind, facts.connection.words).frame(height: 30)
@@ -677,7 +670,7 @@ private struct LastMatchCard: View {
                     .help("Open Check-up for this match")
             }
         } else {
-            CardEmpty(heading: "Not measured yet", message: "After your first match, its frame rate and connection show up here.")
+            CardEmpty(heading: "Not measured yet", message: "After your first match, its ping and connection show up here.")
             Spacer(minLength: 0)
         }
     }

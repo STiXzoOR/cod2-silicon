@@ -17,9 +17,9 @@ from pathlib import Path
 
 MODES = ('stock', 'cod2x')
 GROUPS = [
-    ('frame', 'Frame & movement'), ('aim', 'Aim & input'), ('net', 'Network'),
-    ('vis', 'Visibility'), ('hud', 'HUD & crosshair'), ('audio', 'Audio'),
-    ('gfx', 'Graphics'), ('other', 'Other'),
+    ('aim', 'Aim & input'), ('net', 'Network'), ('vis', 'Visibility'),
+    ('hud', 'HUD & crosshair'), ('audio', 'Audio'), ('gfx', 'Graphics'),
+    ('frame', 'Performance'), ('other', 'Other'),
 ]
 FLAG_NAMES = {1: 'archive', 2: 'userinfo', 4: 'serverinfo', 8: 'systeminfo',
               16: 'writeProtected', 32: 'latched', 64: 'readOnly', 128: 'cheatProtected',

@@ -353,7 +353,7 @@ enum ConfigStudioTabsTests {
         let cap = try require(report.suggestions.first { $0.id == "competitive-frame-cap" })
         require(checkup.changeText(cap.changes[0]) == "Frame rate cap: 333 fps → 250 fps")
         let gauges = checkup.gauges(report)
-        require(gauges.map(\.status).prefix(3) == ["From settings", "Not measured", "Not measured"] && gauges[0].value == "333 FPS")
+        require(gauges.map(\.status).prefix(3) == ["Not measured", "Not measured", "Not measured"] && gauges[0].value == "—")
         require(checkup.holdBack == nil)
         let capSpec = try require(model.spec(named: "com_maxfps"))
         require(checkup.badge(capSpec)?.text == "125 fps–250 fps" && checkup.badge(capSpec)?.tone == .negative)
@@ -367,7 +367,7 @@ enum ConfigStudioTabsTests {
         print("PASS: Check-up suggestions, plain changes, Not measured dials, rule badges and tips")
 
         // Imported and hand-edited bytes can exceed control ranges before any edit.
-        for (index, raw, expected) in [(0, "1e100", "1 FPS"), (1, "999999999999999999999", "—")] {
+        for (index, raw, expected) in [(0, "1e100", "—"), (1, "999999999999999999999", "—")] {
             let original = bytes("seta com_maxfps \"\(raw)\"\nseta snd_volume \"3e38\"\n")
             let (unusual, unusualSession, unusualFile) = try studio(home: scratch.appendingPathComponent("checkup-unusual-\(index)"), config: original, catalog: catalog)
             let unusualCheckup = ConfigCheckupModel(studio: unusual, loadRules: { rules }, loadOptimizer: { optimizer })

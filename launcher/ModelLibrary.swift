@@ -5,11 +5,10 @@ import SwiftUI
 // match summaries Library lists, and the demos and screenshots on disk.
 // Stored state lives in Model.swift (in this unit's MARK region); methods and derived values live here.
 
-/// A loadout in Home's loadout menu, with the frame cap it sets.
+/// A loadout in Home's loadout menu.
 struct LoadoutChoice: Identifiable, Equatable {
     let id: String
     let name: String
-    let cap: Int?
     let inUse: Bool
     /// The loadout's own resolution ("2560x1440"); nil until its first game gives it one.
     var resolution: String? = nil
@@ -38,7 +37,7 @@ extension GameServer {
     var knownMode: String? { fields["g_gametype"] ?? fields["gametype"] }
 }
 
-/// One stored match summary as Home and Library show it: typical frame rate, ping and the connection in a word.
+/// One stored match summary as Home and Library show it: ping and the connection in a word.
 struct MatchFacts: Identifiable {
     enum Connection { case steady, dips, notMeasured
         var words: String { switch self { case .steady: "Steady"; case .dips: "Some dips"; case .notMeasured: "Not measured" } }
@@ -74,9 +73,8 @@ struct MatchFacts: Identifiable {
     }
     var spoken: String {
         let when = ended.map(PlayedDate.spoken) ?? "Date not recorded"
-        let frames = fps.map { "\($0) frames a second typical" } ?? "frame rate not measured"
         let milliseconds = ping.map { "\($0) milliseconds ping" } ?? "ping not measured"
-        return "\(MapCatalog.displayName(map)), \(GameModes.long(mode)), \(when), \(duration), \(frames), \(milliseconds), connection \(connection.words)"
+        return "\(MapCatalog.displayName(map)), \(GameModes.long(mode)), \(when), \(duration), \(milliseconds), connection \(connection.words)"
     }
     /// “21 min”, “1 h 5 min”, “40 s” (as Check-up writes it), without trapping on any stored value.
     static func duration(_ seconds: Double) -> String {
@@ -190,16 +188,13 @@ enum PlayedDate {
         guard gameRunning, let server = homeLastServer, let date = library.played[server.address], date >= gameStartedAt.addingTimeInterval(-2) else { return nil }
         return server
     }
-    var nextGameFrameCap: (value: Int?, name: String?) {
-        guard usesLoadouts else { return (settings.fps, nil) }
-        guard let session = studio.session ?? configStudio else { return (nil, nil) }
-        do {
-            let connection = serverConnection.address == lastServer?.address
-            let profile = try (connection ? serverConnection.profileID : nil).map(session.readProfile) ?? session.readActive()
-            guard let profile else { return (nil, nil) }
-            let raw = (connection ? serverConnection.overrides["com_maxfps"] : nil) ?? profile.document.effectiveSetting(named: "com_maxfps")
-            return (raw.flatMap(Int.init), profile.profile.displayName)
-        } catch { return (nil, nil) }
+    /// The loadout the next game uses: the one chosen for the server it rejoins, or the one in use.
+    /// Nil before loadouts exist and when it can't be read.
+    var nextGameLoadoutName: String? {
+        guard usesLoadouts, let session = studio.session ?? configStudio else { return nil }
+        let connection = serverConnection.address == lastServer?.address
+        let profile = (try? (connection ? serverConnection.profileID : nil).map(session.readProfile) ?? session.readActive()) ?? nil
+        return profile?.profile.displayName
     }
     /// The next game's resolution. It belongs to the loadout; one that has none yet starts from the
     /// size chosen for this display. `used` is set when the display can't show the loadout's size:
@@ -212,27 +207,26 @@ enum PlayedDate {
         guard let sizes = mainDisplay?.resolutions, !sizes.isEmpty, !sizes.contains(where: { $0.value == raw }) else { return (raw, nil) }
         return (raw, DisplayResolutions.fitting(raw, in: sizes))
     }
-    /// Home's loadout menu: every loadout with its frame cap and resolution, the one in use ticked. Empty before loadouts exist.
+    /// Home's loadout menu: every loadout with its resolution, the one in use ticked. Empty before loadouts exist.
     var loadoutChoices: [LoadoutChoice] { usesLoadouts ? loadoutCards : [] }
-    /// Every loadout with its frame cap and resolution, for Configs · Home.
+    /// Every loadout with its resolution, for Configs · Home.
     var loadoutCards: [LoadoutChoice] {
         guard let session = studio.session ?? configStudio else { return [] }
         return session.profiles.map { profile in
             let document = (try? session.readProfile(profile.id))?.document
-            let cap = document?.effectiveSetting(named: "com_maxfps").flatMap { Int($0.trimmingCharacters(in: .whitespaces)) }
             let size = document?.effectiveSetting(named: "r_mode").map { $0.trimmingCharacters(in: .whitespaces) }.flatMap { DisplayResolution($0) != nil ? $0 : nil }
-            return LoadoutChoice(id: profile.id, name: profile.displayName, cap: cap, inUse: profile.isActive, resolution: size)
+            return LoadoutChoice(id: profile.id, name: profile.displayName, inUse: profile.isActive, resolution: size)
         }
     }
     /// Choose…: the next game's loadout in Configs, open at Display resolution.
     func openResolutionSettings() {
         guard usesLoadouts else { openSettings(.display); return }
-        openFrameSettings()
+        openLoadoutInConfigs()
         guard page == .configs else { return }
         studio.group = .gfx; studio.search = "Display resolution"
     }
-    /// Edit … in Configs: the next game's loadout, open at its frame settings (Settings › Display before loadouts exist).
-    func openFrameSettings() {
+    /// Edit … in Configs: the next game's loadout, open at its settings (Settings › Display before loadouts exist).
+    func openLoadoutInConfigs() {
         guard usesLoadouts else { openSettings(.display); return }
         navigate(to: .configs)
         guard page == .configs else { return }
@@ -240,7 +234,7 @@ enum PlayedDate {
         studio.loadCatalogNow()
         let target = (serverConnection.address == lastServer?.address ? serverConnection.profileID : nil) ?? studio.activeProfile?.id
         if let target { studio.select(target) }
-        studio.tab = .settings; studio.group = .frame; studio.search = ""; studio.filter = nil
+        studio.tab = .settings; studio.group = .aim; studio.search = ""; studio.filter = nil
     }
     /// The chips under the hero that something needs fixing, in the order they block a game.
     var homeAttention: [HomeAttention] {
