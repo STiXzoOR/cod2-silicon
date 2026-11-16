@@ -4,7 +4,7 @@ Recorded on 16 November 2026, on the same Mac mini as 0.3.0 (Apple silicon,
 macOS 27.0.1, the macOS 27 SDK, a 1920x1080 display). GitHub Actions were
 still switched off, so the checks below were run on that Mac.
 
-0.3.1 is 0.3.0 with 39 commits on top. This record covers what changed and
+0.3.1 is 0.3.0 with 42 commits on top. This record covers what changed and
 what was run again; [0.3.0's record](release-0.3.0-verification.md) still
 describes the rest.
 
@@ -72,19 +72,23 @@ describes the rest.
   Carentan, Burgundy and Breakout: 0.132 before and 0.089 after on average,
   none worse. The default renderer is untouched: ten views of Toujane and
   Carentan are byte-identical before and after.
-- **The launcher.** Its full test suite was run at `2713e7da`. Every unit
-  suite passed, and 16 of the 17 capture phases: 434 pictures of its screens
-  in dark and light, the same set at the smallest window size, the pages
-  again under Increase Contrast, Reduce Transparency and Reduce Motion, every
-  shape checked with no findings, and the suites that drive the pages with
-  real clicks. The 17th phase reads every control through the accessibility
-  interface, and it failed on its own expected text: the test still named
-  0.3.0 on the Updates pane, where the launcher correctly says 0.3.1. The
-  test was corrected (`83d058b9`, which changes nothing else) and the phase
-  passed on its own: 126 screens, every control named. An earlier full run
-  this cycle found two faults, both fixed before this one: Library's tabs
-  losing their scroll position, and two rows squeezed in Report a Problem at
-  the smallest window size.
+- **The launcher.** Its full test suite was run at `ddbc9af6`, after Configs
+  was changed to open on Player Setups and Hosting got its map pictures.
+  Every unit suite passed, and 11 of the 17 capture phases at the first
+  attempt: 440 pictures of its screens in dark and light, the same set at
+  the smallest window size, Config Studio under Increase Contrast, Reduce
+  Transparency and Reduce Motion, and every shape checked with no findings.
+  Five phases stopped because another app was in front of the test window on
+  this Mac. The sixth reads every control through the accessibility
+  interface, and it failed on its own expected text: the test looked for the
+  team tiles on the first screenful of Player Setups, and they sit further
+  down. The test was corrected (`f9561dfb`, which changes nothing else) and
+  those six phases were run again and passed: 129 screens with every control
+  named, the suites that drive the pages with real clicks, and the pages
+  again under the three accessibility settings. An earlier full run this
+  cycle found two faults, both fixed before this one: Library's tabs losing
+  their scroll position, and two rows squeezed in Report a Problem at the
+  smallest window size.
 - **Hosting a server.** The launcher's hosting code started both dedicated
   servers, CoD2x and the original 1.3, from the notarized app's own copies.
   Each wrote its `server.cfg` and a log of its own for that start, answered a
@@ -92,7 +96,7 @@ describes the rest.
   password and shut down when stopped. zPAM was not downloaded again; its
   checks are covered by the launcher's tests.
 - **The package.** `scripts/package-release.sh` built both engines, both
-  dedicated servers and the launcher from `83d058b9`, signed the app with a
+  dedicated servers and the launcher from `f9561dfb`, signed the app with a
   Developer ID and had Apple notarize it; the ticket is stapled. Unpacked
   from the archive, the app passes its checksum, the signature check,
   Gatekeeper's assessment ("Notarized Developer ID") and the bundle audit.
@@ -100,9 +104,12 @@ describes the rest.
   each with an empty home folder of its own: both games reached the menu,
   loaded Toujane, played it and quit cleanly, and both servers answered a
   status query with the map and stopped. The games ran with the approximate
-  shaders, because no set-up had run in those homes. The first attempt
-  failed in the test itself, which brought no player profile, and the game
-  loads no map without one; the test was corrected (`7cbc52df`).
+  shaders, because no set-up had run in those homes. This is the second
+  package of the cycle: the first, from `83d058b9`, passed the same checks
+  before the launcher's Configs and Hosting pages were changed. On that
+  first package the smoke test failed once in the test itself, which
+  brought no player profile, and the game loads no map without one; the
+  test was corrected (`7cbc52df`).
 
 ## Known differences from the original
 
