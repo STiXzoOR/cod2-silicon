@@ -10,7 +10,7 @@ extension Snapshots {
     /// Also rendered in the `--group pages` runs and read by `--accessibility`.
     static let serversPageScreens = ["servers-refreshing", "servers-refreshing-empty", "servers-never", "servers-filtered", "servers-no-reply",
                                      "servers-favorites", "servers-favorites-empty", "servers-recent", "servers-inspector-empty",
-                                     "servers-hosting", "servers-hosting-new", "servers-hosting-zpam-missing", "servers-hosting-zpam-getting",
+                                     "servers-hosting", "servers-hosting-new", "servers-hosting-add-map", "servers-hosting-zpam-missing", "servers-hosting-zpam-getting",
                                      "servers-hosting-zpam-ready", "servers-hosting-port-busy", "servers-hosting-running", "servers-hosting-running-wifi", "servers-hosting-full", "servers-hosting-players",
                                      "servers-hosting-export"]
     static let serversAccessibilityScreens = ["servers", "servers-filters", "servers-connect", "servers-password", "servers-version", "servers-remove-favorite"]
@@ -33,7 +33,8 @@ extension Snapshots {
         "servers-favorites-empty": ["NO FAVORITES YET", "Show All Servers"],
         "servers-hosting": ["HOST YOUR OWN SERVER", "New Server", "Write a server.cfg…", "Which servers"],
         "servers-hosting-new": ["New server, Not saved yet", "Server name", "Game version", "Who can join", "Password to join", "Admin password", "Rules",
-                                "Game type", "Friendly fire", "Add Map", "Cancel", "Start Server"],
+                                "Game type", "Friendly fire", "Toujane, map 1, the server starts here", "Remove Carentan", "Add Map", "Cancel", "Start Server"],
+        "servers-hosting-add-map": ["Add a map", "Add Breakout, Normandy", "Done"],
         "servers-hosting-running-wifi": ["This Mac is on Wi-Fi", "Why", "Copy Link"],
         "servers-hosting-zpam-missing": ["zPAM isn’t on this Mac yet", "Get zPAM 4.12", "Delete Server…"],
         "servers-hosting-zpam-getting": ["Downloading zPAM", "Cancel"],

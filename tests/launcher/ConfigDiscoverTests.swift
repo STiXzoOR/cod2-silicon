@@ -276,6 +276,19 @@ import Darwin
         discover.use(try DirectoryFixture.directory(cacheURL: fixtureCache))
         await discover.reload()
         require(discover.shelves.map(\.id) == ["2005–2008", "2009–2012"], "shelves follow the signed entries' eras")
+        // Discover's front page: the banner, a shelf per style, teams, and the picture each card shows.
+        require(discover.heroes.map(\.id) == ["player-1", "player-3", "player-4"], "the banner pages through the featured setups")
+        require(discover.styleShelves.map(\.filter) == [.classic, .cod2x, .highFrameRate] && discover.styleShelves.first?.total == 3, "one shelf for each style that has setups")
+        require(discover.styleShelves.first?.entries.map(\.id) == ["player-1", "player-3", "player-2"], "a shelf lists featured setups first, then by name")
+        require(discover.teams == [ConfigDirectoryTeam(name: "[Team]", count: 4)], "teams with more than one setup")
+        require(discover.entry("player-2")?.artMap == "mp_carentan", "a setup's picture is its favourite map when it names one")
+        discover.showAll(.cod2x)
+        require(discover.page == .home && discover.browsing && discover.setups.map(\.id) == ["player-4", "player-5"], "See All shows one style")
+        discover.page = .saved; discover.query = "sniper"
+        require(discover.page == .home && discover.setups.map(\.id) == ["player-2"], "a search leaves Saved for the results")
+        discover.openFront()
+        require(discover.page == .home && !discover.browsing && !discover.searching, "Player Setups opens the front page")
+        discover.page = nil
         discover.query = "sniper"
         require(discover.matches.map(\.id) == ["player-2"], "search matches role")
         discover.query = ""

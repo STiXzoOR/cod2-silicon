@@ -47,6 +47,8 @@ enum ZPAMState: Equatable {
     private var pathMonitor: NWPathMonitor?
     /// The running server whose whole player list is open as a dialog: its page lists as many as fit.
     @Published var showingPlayers: HostedServer?
+    /// The form's Add Map picker is open.
+    @Published var addingMap = false
     private var processes: [String: Process] = [:]
     private var sessionLogs: [String: GameSessionLog] = [:]
     private var poll: Task<Void, Never>?

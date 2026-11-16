@@ -2,10 +2,10 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
-// Discover › Saved and a player's detail, and the switch between Configs' pages. Every card, credit
-// and source comes from a verified signed index. Home is in ConfigsHomeView.swift.
+// Discover › Saved and a player's detail, and the switch between Discover's pages. Every card, credit
+// and source comes from a verified signed index. Player Setups itself is in ConfigsHomeView.swift.
 
-/// The Discover rows under My Loadouts in the Configs column.
+/// The Discover rows at the top of the Configs column, above My Loadouts.
 struct DiscoverColumnSection: View {
     @ObservedObject var discover: ConfigDiscoverModel
     var open: (ConfigDiscoverPage) -> Void
@@ -14,13 +14,13 @@ struct DiscoverColumnSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("DISCOVER").font(.system(size: 11, weight: .semibold)).tracking(0.88).foregroundStyle(palette.tertiary)
-                .padding(.horizontal, 10).padding(.top, 22).padding(.bottom, 6).accessibilityAddTraits(.isHeader)
+                .padding(.horizontal, 10).padding(.bottom, 6).accessibilityAddTraits(.isHeader)
             row("Player Setups", symbol: "person.2", count: nil, selected: isPlayers) { open(.home) }
             // Saved has nothing to show until the catalogue lists someone.
             if !discover.saved.isEmpty || !discover.entries.isEmpty {
                 row("Saved", symbol: "bookmark", count: discover.saved.count, selected: discover.page == .saved) { open(.saved) }
             }
-            row("Check a Config", symbol: "checkmark.shield", count: nil, selected: false) { open(.checker) }
+            row("Check a Config", symbol: "checkmark.shield", count: nil, selected: discover.page == .checker) { open(.checker) }
         }
         .task { await discover.loadIfNeeded() }
     }
@@ -69,19 +69,20 @@ struct ConfigDiscoverView: View {
             }
         }
         .frame(minWidth: 480, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .task(id: discover.entries.compactMap(\.favoriteMap)) {
+        .task(id: Set(discover.entries.map(\.artMap))) {
             // Card art comes from the person's own game data, with the existing illustrated fallback.
-            let maps = discover.entries.compactMap(\.favoriteMap)
-            guard !model.snapshot, !model.dataPath.isEmpty, !maps.isEmpty else { return }
-            await artwork.load(dataPath: model.dataPath, maps: maps + model.visibleServers.prefix(48).map(\.map))
+            model.discoverMaps = Array(Set(discover.entries.map(\.artMap))).sorted()
+            model.loadArtwork()
         }
     }
 }
 
 // MARK: - Shared header
 
-private struct DiscoverHeader<Trailing: View>: View {
+/// A Discover page's heading, at the size and in the place a loadout's name has.
+struct DiscoverHeader<Trailing: View>: View {
     var title: String
+    var subtitle: String? = nil
     @ViewBuilder var trailing: Trailing
     @Environment(\.palette) private var palette
     var body: some View {
@@ -94,26 +95,29 @@ private struct DiscoverHeader<Trailing: View>: View {
     private var heading: some View {
         VStack(alignment: .leading, spacing: 6) {
             Eyebrow(text: "Discover")
-            Text(title.uppercased()).font(StudioTypography.discoverTitle).tracking(1.2).foregroundStyle(palette.heading)
-                .lineLimit(1).accessibilityLabel(title).accessibilityAddTraits(.isHeader)
+            Text(title.uppercased()).font(StudioTypography.loadoutTitle).tracking(0.92).foregroundStyle(palette.heading)
+                .lineLimit(1).truncationMode(.tail).accessibilityLabel(title).accessibilityAddTraits(.isHeader)
+            if let subtitle { Text(subtitle).font(.system(size: 13)).monospacedDigit().foregroundStyle(palette.secondary).lineLimit(1) }
         }
-        .fixedSize()
     }
 }
 
-/// “Add a Config”: the page's one prominent action, a pull-down of every import source.
+/// “Add a Config”: a pull-down of every import source.
 struct AddConfigButton: View {
     @ObservedObject var discover: ConfigDiscoverModel
+    /// The page's one prominent action, or a glass button beside one.
+    var prominent = true
     @State private var anchor = MenuAnchorBox()
     var body: some View {
-        Button { show() } label: {
+        let button = Button { show() } label: {
             HStack(spacing: 8) {
                 Image(systemName: "plus").accessibilityHidden(true)
                 Text("Add a Config")
                 Image(systemName: "chevron.down").font(.system(size: 10, weight: .bold)).accessibilityHidden(true)
             }
         }
-        .prominentAction().actionControlSize().fixedSize()
+        Group { if prominent { button.prominentAction() } else { button.glassAction() } }
+        .actionControlSize().fixedSize()
         .background(MenuAnchor(box: anchor))
         .disabled(discover.studio.session == nil)
         .accessibilityLabel("Add a Config")
@@ -172,14 +176,14 @@ enum NativeMenu {
     }
 }
 
-private struct PlayerGrid: View {
+struct PlayerGrid: View {
     var entries: [ConfigDirectoryEntry]
     @ObservedObject var discover: ConfigDiscoverModel
     @ObservedObject var artwork: MapArtworkStore
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 230), spacing: 14, alignment: .top)], alignment: .leading, spacing: 14) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 236), spacing: 14, alignment: .top)], alignment: .leading, spacing: 14) {
             ForEach(entries) { entry in
-                PlayerCard(entry: entry, saved: discover.isSaved(entry.id), image: entry.favoriteMap.flatMap { artwork.image(for: $0) }) {
+                SetupCard(entry: entry, saved: discover.isSaved(entry.id), image: artwork.image(for: entry.artMap), source: true) {
                     discover.open(.player(entry.id))
                 }
             }
@@ -193,58 +197,6 @@ enum PlayerInitials {
         let words = name.split(whereSeparator: { !$0.isLetter && !$0.isNumber }).prefix(2)
         let text = words.map { word in word.allSatisfy(\.isNumber) ? String(word) : String(word.prefix(1)) }.joined().uppercased()
         return text.isEmpty ? "?" : text
-    }
-}
-
-private struct PlayerCard: View {
-    var entry: ConfigDirectoryEntry
-    var saved: Bool
-    var image: NSImage?
-    var open: () -> Void
-    @Environment(\.palette) private var palette
-    @State private var hovering = false
-
-    var body: some View {
-        Button(action: open) {
-            VStack(alignment: .leading, spacing: 0) {
-                ZStack(alignment: .bottomLeading) {
-                    MapArtFrame(map: entry.favoriteMap ?? "", image: image, size: .fill).frame(height: 104)
-                    Text(PlayerInitials.of(entry.player)).font(.stencil(18)).foregroundStyle(palette.accent)
-                        .frame(width: 40, height: 40)
-                        .background(palette.dark ? Palette.hex(0x1b1f17) : palette.crate, in: Circle())
-                        .overlay(Circle().strokeBorder(palette.panel, lineWidth: 2))
-                        .overlay(Circle().stroke(palette.selectionStroke, lineWidth: 1).padding(-1))
-                        .offset(x: 14, y: 18)
-                        .accessibilityHidden(true)
-                }
-                .zIndex(1)
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 6) {
-                        Text(entry.player).font(.system(size: 15, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1)
-                        Spacer(minLength: 4)
-                        if saved { Image(systemName: "bookmark.fill").font(.system(size: 11)).foregroundStyle(palette.accent).accessibilityHidden(true) }
-                    }
-                    Text([entry.team, entry.role ?? entry.era].compactMap { $0 }.joined(separator: " · ")).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1)
-                    Text(entry.feel).font(.system(size: 13)).italic().foregroundStyle(palette.dark ? Palette.hex(0xe2dbc9) : palette.text)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if !entry.styleTags.isEmpty { FlowChips(tags: entry.styleTags) }
-                }
-                .padding(.top, 26).padding(.horizontal, 16).padding(.bottom, 16)
-            }
-            // Cards in a row share the tallest card's height.
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(palette.panel)
-            .clipShape(RoundedRectangle(cornerRadius: StudioMetrics.cardRadius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: StudioMetrics.cardRadius, style: .continuous)
-                .stroke(hovering ? palette.selectionStroke : palette.panelStroke, lineWidth: 1))
-            .contentShape(RoundedRectangle(cornerRadius: StudioMetrics.cardRadius, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .onHover { hovering = $0 }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel([entry.player, entry.team, entry.role].compactMap { $0 }.joined(separator: ", ") + ". " + entry.feel + (saved ? " Saved." : ""))
-        .accessibilityHint("Shows what this setup changes for you")
-        .accessibilityAddTraits(.isButton)
     }
 }
 
@@ -315,7 +267,7 @@ private struct SavedPage: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                DiscoverHeader(title: "Saved") { AddConfigButton(discover: discover) }
+                DiscoverHeader(title: "Saved", subtitle: discover.saved.isEmpty ? nil : discover.saved.count == 1 ? "1 setup" : "\(discover.saved.count) setups") { EmptyView() }
                 let verified = discover.saved.compactMap(\.entry)
                 let gone = discover.saved.filter { $0.entry == nil }
                 if discover.saved.isEmpty {
@@ -323,7 +275,7 @@ private struct SavedPage: View {
                                      message: discover.snapshot == nil
                                         ? "Players you save appear here. The player directory isn’t available yet, so there’s nothing to save."
                                         : "Players you save appear here, so you can come back to their setups.",
-                                     action: ("Browse Player Setups", { discover.open(.home) }))
+                                     action: ("Browse Player Setups", { discover.openFront() }))
                         .frame(maxWidth: .infinity)
                 } else {
                     if !verified.isEmpty { PlayerGrid(entries: verified, discover: discover, artwork: artwork) }
@@ -371,9 +323,9 @@ private struct PlayerDetailPage: View {
                 Button { discover.open(.home) } label: { Label("Player Setups", systemImage: "chevron.left").font(.system(size: 13, weight: .semibold)) }
                     .buttonStyle(.plain).foregroundStyle(palette.link).frame(height: 28)
                     .keyboardShortcut("[", modifiers: .command)
-                    .help("Back to Players (⌘[)")
+                    .help("Back to Player Setups (⌘[)")
                 if let entry = discover.entry(entryID) {
-                    PlayerHero(entry: entry, saved: discover.isSaved(entry.id), image: entry.favoriteMap.flatMap { artwork.image(for: $0) },
+                    PlayerHero(entry: entry, saved: discover.isSaved(entry.id), image: artwork.image(for: entry.artMap),
                                canTry: discover.studio.session != nil && !discover.studio.isReadOnly,
                                canCompare: discover.studio.session != nil && discover.canCompare(entry.id),
                                tryIt: { discover.tryEntry(entry) }, compare: { discover.compareInExpert(entry) },
@@ -417,7 +369,7 @@ private struct PlayerHero: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            MapArtFrame(map: entry.favoriteMap ?? "", image: image, size: .fill, hero: true)
+            MapArtFrame(map: entry.artMap, image: image, size: .fill, hero: true)
             // A scrim strong enough for the light inks over the pale and the dark scenes alike.
             LinearGradient(stops: [.init(color: .clear, location: 0), .init(color: .black.opacity(0.5), location: 0.35), .init(color: .black.opacity(0.85), location: 1)],
                            startPoint: .top, endPoint: .bottom)

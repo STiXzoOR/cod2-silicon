@@ -1,263 +1,169 @@
 import SwiftUI
 import AppKit
 
-// Configs · Home: the person's loadouts, then player setups from the signed catalogue with filters
-// and a search. Every card, credit and source comes from the verified index; nothing is invented here.
-
-/// Home, Loadouts and Check a Config: the three places in Configs, shown in the toolbar on the two
-/// pages that take the whole width.
-enum ConfigsSection: String, CaseIterable, Identifiable {
-    case home = "Home", loadouts = "Loadouts", checker = "Check a Config"
-    var id: String { rawValue }
-}
-
-extension ConfigsSection {
-    /// The switch shown at the leading edge of the toolbar on Home and Check a Config.
-    @MainActor static func switcher(_ discover: ConfigDiscoverModel) -> some View {
-        ScopeSwitch("Configs section", selection: Binding<ConfigsSection>(get: { discover.page == .checker ? .checker : .home }, set: { section in
-            switch section {
-            case .home: discover.open(.home)
-            case .checker: discover.page = .checker
-            case .loadouts: discover.page = nil
-            }
-        }), options: ConfigsSection.allCases.map { ($0, $0.rawValue) })
-    }
-}
-
-/// Home's toolbar, as on the board: the sections, the search, the catalogue's status with Refresh,
-/// and Add a Config. Every item sits in the window's toolbar, so the system draws its glass.
-private struct ConfigsHomeToolbar: ViewModifier {
-    @ObservedObject var discover: ConfigDiscoverModel
-    var searchFocused: FocusState<Bool>.Binding
-    func body(content: Content) -> some View {
-        #if COD2_LIQUID_GLASS
-        if #available(macOS 26.0, *) {
-            content.toolbar {
-                leading
-                ToolbarSpacer(.flexible)
-                ToolbarItem { CatalogueStatusPill(discover: discover) }
-                ToolbarSpacer(.fixed)
-                ToolbarItem { AddConfigToolbarButton(discover: discover) }
-            }
-        } else { legacy(content) }
-        #else
-        legacy(content)
-        #endif
-    }
-    private func legacy(_ content: Content) -> some View {
-        content.toolbar {
-            leading
-            ToolbarItem { Spacer() }
-            ToolbarItem { CatalogueStatusPill(discover: discover) }
-            ToolbarItem { AddConfigToolbarButton(discover: discover) }
-        }
-    }
-    @ToolbarContentBuilder private var leading: some ToolbarContent {
-        ToolbarItem(placement: .navigation) { ConfigsSection.switcher(discover) }
-        ToolbarItem(placement: .navigation) {
-            ToolbarSearchField(prompt: "Search players, teams or styles", width: 280, text: $discover.query, focus: searchFocused, request: discover.findRequest)
-                .help("Search setups by player, team, era or where they were published (⌘F)")
-        }
-    }
-}
-
-/// “68 setups · updated today” with Refresh, like the Servers status pill.
-private struct CatalogueStatusPill: View {
-    @ObservedObject var discover: ConfigDiscoverModel
-    @Environment(\.palette) private var palette
-    var body: some View {
-        let loading: Bool = { if case .loading = discover.state { return true }; return false }()
-        HStack(spacing: 6) {
-            Text(discover.status()).font(.system(size: 12)).monospacedDigit().foregroundStyle(palette.secondary).lineLimit(1).fixedSize()
-                .padding(.leading, 10).accessibilityAddTraits(.isStaticText)
-            Button { Task { await discover.reload() } } label: {
-                Image(systemName: "arrow.clockwise").font(.system(size: 13, weight: .semibold)).frame(width: 18, height: 18)
-            }
-            .disabled(loading)
-            .accessibilityLabel("Refresh the catalogue").help("Check the catalogue for new setups")
-        }
-    }
-}
-
-/// Add a Config…: one menu for a link, a file, a Windows install or the clipboard.
-private struct AddConfigToolbarButton: View {
-    @ObservedObject var discover: ConfigDiscoverModel
-    @State private var anchor = MenuAnchorBox()
-    var body: some View {
-        Button {
-            guard let view = anchor.view else { return }
-            var items = AddConfigButton.items(discover, window: view.window)
-            items.append(.init(title: "Check a Config Without Adding It…", symbol: "checkmark.shield", separatorBefore: true) { discover.page = .checker })
-            NativeMenu.popUp(items, below: view)
-        } label: {
-            Label("Add a Config…", systemImage: "plus").labelStyle(.titleAndIcon).font(.system(size: 13, weight: .semibold))
-        }
-        .background(MenuAnchor(box: anchor))
-        .disabled(discover.studio.session == nil)
-        .accessibilityLabel("Add a Config").accessibilityHint("Shows the places you can add a config from")
-        .help("Add a config from a link, a file, your Windows install or the clipboard. Everything you add is reviewed first.")
-    }
-}
+// Discover › Player Setups: one featured setup at a time in a banner, a shelf for each style, the
+// teams, and two banners that lead to the person's own configs. See All, a filter or a search shows
+// a grid instead. Every card, credit and source comes from the verified index; nothing is invented here.
 
 struct ConfigsHomePage: View {
     @ObservedObject var model: LauncherModel
     @ObservedObject var discover: ConfigDiscoverModel
+    @ObservedObject private var artwork: MapArtworkStore
     @Environment(\.palette) private var palette
-    @FocusState private var searchFocused: Bool
+    init(model: LauncherModel, discover: ConfigDiscoverModel) { self.model = model; self.discover = discover; artwork = model.artwork }
+
+    /// A search or See All shows a grid; otherwise the front page.
+    private var grid: Bool { discover.searching || discover.browsing }
+    private var chosen: ConfigSetupFilter { discover.filters.contains(discover.filter) ? discover.filter : .all }
 
     var body: some View {
         GeometryReader { proxy in
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    if !discover.searching { loadouts }
-                    setups
+                VStack(alignment: .leading, spacing: 24) {
+                    if grid, discover.snapshot != nil { back }
+                    DiscoverHeader(title: title, subtitle: subtitle) { CatalogueStatus(discover: discover) }
+                    content(wide: proxy.size.width >= 700)
                 }
-                .padding(.top, 84).padding(.leading, 22).padding(.trailing, 32).padding(.bottom, 24)
+                .padding(.top, grid && discover.snapshot != nil ? 76 : 82).padding(.horizontal, StudioMetrics.pageInset).padding(.bottom, 24)
                 // A short page still fills the window, so the note about the catalogue sits at the bottom.
                 .frame(minHeight: proxy.size.height, alignment: .top)
             }
             .scrollIndicators(.automatic)
         }
-        .modifier(ConfigsHomeToolbar(discover: discover, searchFocused: $searchFocused))
         .background { Button("") { discover.requestFind() }.keyboardShortcut("f", modifiers: .command).opacity(0).accessibilityHidden(true) }
         .task { await discover.loadIfNeeded() }
     }
-    /// Four across in the standard window, fewer when it is narrow.
-    static let columns = [GridItem(.adaptive(minimum: 236), spacing: 14, alignment: .top)]
 
-    // MARK: Your loadouts
-
-    private var loadouts: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Your loadouts").font(StudioTypography.groupTitle).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
-                Spacer(minLength: 12)
-                Button("All Loadouts") { discover.page = nil }.buttonStyle(.plain).font(.system(size: 13)).foregroundStyle(palette.link)
-                    .help("Open your loadouts to change settings and keys")
-            }
-            LazyVGrid(columns: Self.columns, alignment: .leading, spacing: 14) {
-                ForEach(model.loadoutCards) { choice in
-                    LoadoutCard(choice: choice) { discover.page = nil; model.studio.select(choice.id) }
-                }
-                Button { model.newLoadout() } label: {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label("New Loadout", systemImage: "plus").font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text)
-                        Text("Start from the game’s defaults, or from a player’s setup below.").font(StudioTypography.help).foregroundStyle(palette.secondary)
-                            .multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(StudioMetrics.cardInset).frame(maxWidth: .infinity, minHeight: 104, alignment: .leading)
-                    .overlay(RoundedRectangle(cornerRadius: StudioMetrics.cardRadius, style: .continuous)
-                        .strokeBorder(palette.panelStroke, style: StrokeStyle(lineWidth: 1, dash: [6, 5])))
-                    .contentShape(RoundedRectangle(cornerRadius: StudioMetrics.cardRadius, style: .continuous))
-                }
-                .buttonStyle(.plain).disabled(!model.canNewLoadout)
-                .accessibilityLabel("New Loadout").accessibilityHint("Starts a loadout from the game’s defaults")
-            }
+    private var title: String {
+        guard discover.snapshot != nil else { return "Player setups" }
+        return discover.searching ? "Results" : discover.browsing ? chosen.title : "Player setups"
+    }
+    private var subtitle: String? {
+        guard grid, let total = discover.snapshot?.index.entries.count, total > 0 else { return nil }
+        let shown = discover.setups.count, setups = total == 1 ? "1 setup" : "\(total) setups"
+        if discover.searching {
+            let query = discover.query.trimmingCharacters(in: .whitespaces)
+            return shown == 0 ? "None of \(setups)" : "\(shown) of \(setups) \(shown == 1 ? "matches" : "match") “\(query)”"
         }
+        return chosen == .all ? "All \(setups)" : "\(shown) of \(setups)"
+    }
+    private var back: some View {
+        Button { discover.openFront() } label: { Label("Player Setups", systemImage: "chevron.left").font(.system(size: 13, weight: .semibold)) }
+            .buttonStyle(.plain).foregroundStyle(palette.link).frame(height: 28)
+            .padding(.bottom, -12)
+            .help("Back to Player Setups")
     }
 
-    // MARK: Player setups
-
-    private var setups: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            switch discover.state {
-            case .idle, .loading:
-                heading("Player setups")
-                loading
-            case .unavailable(let message):
-                heading("Player setups")
-                unreachable(title: "NO PLAYER SETUPS IN THIS BUILD", message: "\(message) Your own loadouts and Add a Config work without them.", retry: false)
-            case .failed(let message):
-                heading("Player setups")
-                unreachable(title: "THE CATALOGUE COULDN’T BE REACHED",
-                            message: "Player setups come from the catalogue on GitHub. \(message) Your own loadouts and Add a Config work without it.", retry: true)
-            case .loaded(let snapshot, let refreshError):
-                header(total: snapshot.index.entries.count)
-                if refreshError != nil {
-                    Banner(.neutral, message: "Couldn’t reach the catalogue just now. Showing the copy saved\(discover.fetched.map { " on \($0.formatted(.dateTime.day().month(.wide)))" } ?? " on this Mac").") {
-                        Button("Try Again") { Task { await discover.reload() } }
-                    }
+    @ViewBuilder private func content(wide: Bool) -> some View {
+        switch discover.state {
+        case .idle, .loading:
+            loading
+        case .unavailable(let message):
+            unreachable(title: "NO PLAYER SETUPS IN THIS BUILD", message: "\(message) Your own loadouts, Add a Config and Check a Config work without them.", retry: false)
+            promos(wide: wide)
+        case .failed(let message):
+            unreachable(title: "THE CATALOGUE COULDN’T BE REACHED",
+                        message: "Player setups come from the catalogue on GitHub. \(message) Your own loadouts, Add a Config and Check a Config work without it.", retry: true)
+            promos(wide: wide)
+        case .loaded(let snapshot, let refreshError):
+            if refreshError != nil {
+                Banner(.neutral, message: "Couldn’t reach the catalogue just now. Showing the copy saved\(discover.fetched.map { " on \($0.formatted(.dateTime.day().month(.wide)))" } ?? " on this Mac").") {
+                    Button("Try Again") { Task { await discover.reload() } }
                 }
-                if snapshot.index.entries.isEmpty {
-                    StudioEmptyState(title: "NO SETUPS YET", message: "The catalogue doesn’t list any player setups yet. You can still bring in a config of your own.")
-                        .frame(maxWidth: .infinity)
-                } else if discover.setups.isEmpty {
+            }
+            if snapshot.index.entries.isEmpty {
+                StudioEmptyState(title: "NO SETUPS YET", message: "The catalogue doesn’t list any player setups yet. You can still bring in a config of your own.")
+                    .frame(maxWidth: .infinity)
+                promos(wide: wide)
+            } else if grid {
+                if !discover.searching, discover.filters.count > 1 { filters }
+                if discover.setups.isEmpty {
                     EmptyState("NO SETUP MATCHES “\(discover.query.trimmingCharacters(in: .whitespaces).uppercased())”",
                                message: "Try a team, an era or where it was published. Search looks through \(snapshot.index.entries.count) setups.",
                                actionTitle: "Clear Search", prominent: false) { discover.query = "" }
                         .padding(.vertical, 40).frame(maxWidth: .infinity)
                 } else {
-                    LazyVGrid(columns: Self.columns, alignment: .leading, spacing: 14) {
-                        ForEach(discover.setups) { entry in
-                            SetupCard(entry: entry, saved: discover.isSaved(entry.id)) { discover.open(.player(entry.id)) }
-                        }
-                    }
+                    PlayerGrid(entries: discover.setups, discover: discover, artwork: artwork)
                 }
-                Spacer(minLength: 0)
-                footer
+            } else {
+                FeaturedBanner(entries: discover.heroes, discover: discover, artwork: artwork)
+                ForEach(discover.styleShelves) { shelf in SetupShelf(shelf: shelf, discover: discover, artwork: artwork) }
+                if !discover.teams.isEmpty { teams }
+                promos(wide: wide)
             }
+            Spacer(minLength: 0)
+            footer
         }
-        .frame(maxHeight: .infinity, alignment: .top)
-    }
-    private func heading(_ text: String) -> some View {
-        Text(text).font(StudioTypography.groupTitle).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
     }
 
-    /// “Player setups · Featured · 8 of 59” with the filters at the trailing edge; a search shows “Results”.
-    private func header(total: Int) -> some View {
-        let chosen = discover.filters.contains(discover.filter) ? discover.filter : ConfigSetupFilter.all
-        let shown = discover.setups.count
-        let count = discover.searching ? (shown == 0 ? "None of \(total)" : "\(shown) of \(total)")
-                                       : chosen == .all ? "All \(total)" : "\(chosen.rawValue) · \(shown) of \(total)"
-        return ViewThatFits(in: .horizontal) {
-            HStack(alignment: .center, spacing: 14) { title(count, total); Spacer(minLength: 12); filters(chosen) }
-            VStack(alignment: .leading, spacing: 10) { title(count, total); filters(chosen) }
-        }
-    }
-    private func title(_ count: String, _ total: Int) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 14) {
-            heading(discover.searching ? "Results" : "Player setups")
-            if total > 0 { Text(count).font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.secondary) }
-        }
-        .fixedSize()
-    }
-    @ViewBuilder private func filters(_ chosen: ConfigSetupFilter) -> some View {
-        if !discover.searching, discover.filters.count > 1 {
+    // MARK: Grid
+
+    /// The styles as chips. They scroll sideways when the page is too narrow for all of them.
+    private var filters: some View {
+        ScrollView(.horizontal) {
             HStack(spacing: 8) {
                 ForEach(discover.filters) { filter in
-                    Button(filter.rawValue) { discover.filter = filter }
+                    Button(filter.rawValue) { discover.showAll(filter) }
                         .filterChip(on: chosen == filter)
                         .accessibilityAddTraits(chosen == filter ? .isSelected : [])
                 }
-                if !discover.saved.isEmpty {
-                    Button { discover.open(.saved) } label: { Label("Saved · \(discover.saved.count)", systemImage: "bookmark") }
-                        .filterChip(on: false).help("The setups you saved for later")
-                }
             }
-            .fixedSize()
-            .accessibilityElement(children: .contain).accessibilityLabel("Narrow the setups")
+            .padding(.vertical, 2)
+        }
+        .scrollIndicators(.never)
+        .padding(.top, -8)
+        .accessibilityElement(children: .contain).accessibilityLabel("Narrow the setups")
+    }
+
+    // MARK: Front page
+
+    private var teams: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Teams").font(StudioTypography.groupTitle).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+                Text("Every setup published under a team’s name.").font(.system(size: 13)).foregroundStyle(palette.secondary)
+            }
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 12, alignment: .top)], alignment: .leading, spacing: 12) {
+                ForEach(discover.teams) { team in TeamTile(team: team) { discover.showTeam(team.name) } }
+            }
         }
     }
 
+    /// The two ways in that need no catalogue: bringing a config, and checking one.
+    private func promos(wide: Bool) -> some View {
+        let add = PromoBanner(eyebrow: "Your own config", title: "Bring the config you already play with", symbol: "square.and.arrow.down",
+                              message: "From a file, a link, your Windows install or the clipboard. You review every line before it becomes a loadout.") {
+            AddConfigButton(discover: discover, prominent: false)
+        }
+        let check = PromoBanner(eyebrow: "Before a match", title: "Check a config against a server’s rules", symbol: "checkmark.shield",
+                                message: "See which lines the rules would refuse and fix them, without adding anything to your loadouts.") {
+            Button("Check a Config") { discover.open(.checker) }.glassAction().actionControlSize()
+                .help("Check a config without adding it to your loadouts")
+        }
+        return Group {
+            if wide { HStack(alignment: .top, spacing: 14) { add; check }.fixedSize(horizontal: false, vertical: true) } else { VStack(spacing: 14) { add; check } }
+        }
+    }
+
+    // MARK: States
+
     private var loading: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 24) {
             HStack(spacing: 10) { ProgressView().controlSize(.small); Text("Getting the catalogue…").font(.system(size: 13)).foregroundStyle(palette.secondary) }
-                .accessibilityElement(children: .combine)
-            LazyVGrid(columns: Self.columns, alignment: .leading, spacing: 14) {
-                ForEach(0..<4, id: \.self) { index in
+                .padding(.top, -8).accessibilityElement(children: .combine)
+            RoundedRectangle(cornerRadius: 24, style: .continuous).fill(palette.panel).frame(height: FeaturedBanner.height).opacity(0.9).accessibilityHidden(true)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 236), spacing: 14, alignment: .top)], alignment: .leading, spacing: 14) {
+                ForEach(0..<3, id: \.self) { index in
                     RoundedRectangle(cornerRadius: StudioMetrics.cardRadius, style: .continuous).fill(palette.panel)
-                        .frame(height: 172).opacity(0.9 - Double(index) * 0.2)
+                        .frame(height: 250).opacity(0.8 - Double(index) * 0.25)
                 }
             }
             .accessibilityHidden(true)
         }
     }
     private func unreachable(title: String, message: String, retry: Bool) -> some View {
-        VStack(spacing: 14) {
-            EmptyState(title, message: message, actionTitle: retry ? "Try Again" : nil) { Task { await discover.reload() } }
-            Button("Check a Config") { discover.page = .checker }
-        }
-        .padding(.vertical, 48).frame(maxWidth: .infinity)
+        EmptyState(title, message: message, actionTitle: retry ? "Try Again" : nil) { Task { await discover.reload() } }
+            .padding(.top, 28).padding(.bottom, 8).frame(maxWidth: .infinity)
     }
     private var footer: some View {
         ViewThatFits(in: .horizontal) {
@@ -279,59 +185,199 @@ struct ConfigsHomePage: View {
     }
 }
 
-private struct LoadoutCard: View {
-    var choice: LoadoutChoice
-    var open: () -> Void
+/// “68 setups · updated today” with Refresh, beside the page's title.
+private struct CatalogueStatus: View {
+    @ObservedObject var discover: ConfigDiscoverModel
     @Environment(\.palette) private var palette
-    @State private var hovering = false
-
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: StudioMetrics.cardRadius, style: .continuous)
-        Button(action: open) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    Text(choice.name).font(.system(size: 15, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1)
-                    Spacer(minLength: 4)
-                    if choice.inUse {
-                        Text("Next game").font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.accent)
-                            .padding(.horizontal, 8).padding(.vertical, 3).background(palette.selection, in: Capsule())
-                    }
-                }
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(choice.cap.map { $0 == 0 ? "No" : "\($0)" } ?? "—").font(.stencil(26)).monospacedDigit().foregroundStyle(palette.numeral)
-                    Text("fps cap").font(StudioTypography.help).foregroundStyle(palette.secondary)
-                    if let size = resolution {
-                        Text("·").foregroundStyle(palette.tertiary).accessibilityHidden(true)
-                        Text(size).font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.secondary)
-                    }
-                }
-                Text(choice.inUse ? "In use for your next game" : "Ready to use").font(StudioTypography.help).foregroundStyle(palette.secondary)
+        let loading: Bool = { if case .loading = discover.state { return true }; return false }()
+        HStack(spacing: 8) {
+            Text(discover.status()).font(.system(size: 12)).monospacedDigit().foregroundStyle(palette.secondary).lineLimit(1).fixedSize()
+                .accessibilityAddTraits(.isStaticText)
+            Button { Task { await discover.reload() } } label: {
+                Image(systemName: "arrow.clockwise").font(.system(size: 13, weight: .semibold)).frame(width: 16, height: 16)
             }
-            .padding(StudioMetrics.cardInset).frame(maxWidth: .infinity, minHeight: 104, alignment: .topLeading)
-            .background(palette.panel, in: shape)
-            .overlay(shape.strokeBorder(choice.inUse || hovering ? palette.selectionStroke : palette.panelStroke, lineWidth: 1))
-            .contentShape(shape)
+            .glassAction(circle: true).actionControlSize()
+            .disabled(loading)
+            .accessibilityLabel("Refresh the catalogue").help("Check the catalogue for new setups")
         }
-        .buttonStyle(.plain).onHover { hovering = $0 }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(spoken)
-        .accessibilityHint("Opens this loadout").accessibilityAddTraits(.isButton)
-    }
-    private var resolution: String? { choice.resolution.flatMap { DisplayResolution($0) }.map { "\($0.width) × \($0.height)" } }
-    private var spoken: String {
-        let size: DisplayResolution? = choice.resolution.flatMap { DisplayResolution($0) }
-        var text = "\(choice.name) loadout"
-        if choice.inUse { text += ", used for your next game" }
-        if let cap = choice.cap { text += cap == 0 ? ". No frame rate cap" : ". \(cap) frames per second cap" } else { text += ". No frame rate cap set" }
-        if let size { text += ", \(size.width) by \(size.height)" }
-        return text
+        .fixedSize()
     }
 }
 
-/// One player setup: who, where it was published, and the three numbers its config writes.
-private struct SetupCard: View {
+// MARK: - Featured banner
+
+/// One featured setup at a time over its picture, with arrows and dots to page through the rest.
+private struct FeaturedBanner: View {
+    static let height: CGFloat = 300
+    var entries: [ConfigDirectoryEntry]
+    @ObservedObject var discover: ConfigDiscoverModel
+    @ObservedObject var artwork: MapArtworkStore
+    @State private var index = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    // Text sits on the scrim over the art, so it keeps the dark-appearance inks in both appearances.
+    private let ink = Palette.dark
+
+    var body: some View {
+        let position = min(index, max(0, entries.count - 1))
+        if entries.indices.contains(position) {
+            let entry = entries[position]
+            ZStack(alignment: .bottomLeading) {
+                MapArtFrame(map: entry.artMap, image: artwork.image(for: entry.artMap), size: .fill, hero: true)
+                    .id(entry.id).transition(.opacity)
+                LinearGradient(stops: [.init(color: .clear, location: 0), .init(color: .black.opacity(0.5), location: 0.42), .init(color: .black.opacity(0.88), location: 1)],
+                               startPoint: .top, endPoint: .bottom)
+                    .accessibilityHidden(true)
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .bottom, spacing: 18) { identity(entry, position); Spacer(minLength: 12); actions(entry) }
+                    VStack(alignment: .leading, spacing: 14) { identity(entry, position); actions(entry) }
+                }
+                .padding(.horizontal, 28).padding(.bottom, entries.count > 1 ? 32 : 24)
+            }
+            .frame(height: Self.height)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
+            // The paging arrows sit together in the top corner, as a shelf's do beside its title, clear of the banner's own corner.
+            .overlay(alignment: .topTrailing) {
+                if entries.count > 1 {
+                    HStack(spacing: 8) { arrow("chevron.left", "Previous featured setup", -1); arrow("chevron.right", "Next featured setup", 1) }.padding(24)
+                }
+            }
+            .overlay(alignment: .bottom) { if entries.count > 1 { dots(position).padding(.bottom, 12) } }
+            .shapeAudit(.container, .rounded(24), "featured banner")
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Featured setups")
+        }
+    }
+
+    private func identity(_ entry: ConfigDirectoryEntry, _ position: Int) -> some View {
+        HStack(alignment: .bottom, spacing: 18) {
+            Text(PlayerInitials.of(entry.player)).font(.stencil(34)).foregroundStyle(ink.accent)
+                .frame(width: 78, height: 78)
+                .background(Palette.hex(0x1b1f17), in: Circle())
+                .overlay(Circle().strokeBorder(Palette.hex(0x0d0f0c), lineWidth: 3))
+                .overlay(Circle().stroke(ink.accent.opacity(0.6), lineWidth: 1))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 6) {
+                Eyebrow(text: (["Featured setup"] + entry.styleTags.prefix(1)).joined(separator: " · "), color: Palette.hex(0xf2d394))
+                Text(entry.player.uppercased()).font(.stencil(56)).tracking(1.1).foregroundStyle(ink.heading).lineLimit(1).minimumScaleFactor(0.5)
+                Text(entry.feel).font(.system(size: 14)).italic().foregroundStyle(Palette.hex(0xe2dbc9)).lineLimit(2)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Featured setup \(position + 1) of \(entries.count): \(entry.player)\(entry.team.map { ", \($0)" } ?? ""). \(entry.feel)")
+            .accessibilityAddTraits(.isHeader)
+        }
+    }
+
+    private func actions(_ entry: ConfigDirectoryEntry) -> some View {
+        GlassContainer(spacing: 8) {
+            HStack(spacing: 8) {
+                Button("See This Setup") { discover.open(.player(entry.id)) }.prominentAction().actionControlSize()
+                    .help("Shows what this setup changes for you")
+                let saved = discover.isSaved(entry.id)
+                Button { discover.setSaved(entry.id, !saved) } label: {
+                    Image(systemName: saved ? "bookmark.fill" : "bookmark").font(.system(size: 15)).frame(width: 16, height: 16)
+                }
+                .glassAction(circle: true).actionControlSize()
+                .accessibilityLabel(saved ? "Remove from Saved" : "Save for later")
+                .help(saved ? "Remove from Saved" : "Save for later")
+            }
+        }
+        .fixedSize()
+    }
+
+    private func arrow(_ symbol: String, _ label: String, _ step: Int) -> some View {
+        Button {
+            withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .easeInOut(duration: 0.3)) { index = (min(index, entries.count - 1) + step + entries.count) % entries.count }
+        } label: {
+            Image(systemName: symbol).font(.system(size: 13, weight: .semibold)).frame(width: 16, height: 16)
+        }
+        .glassAction(circle: true).actionControlSize()
+        .accessibilityLabel(label).help(label)
+    }
+
+    private func dots(_ position: Int) -> some View {
+        HStack(spacing: 6) {
+            ForEach(entries.indices, id: \.self) { dot in
+                Capsule().fill(dot == position ? ink.accent : Color.white.opacity(0.38)).frame(width: dot == position ? 18 : 6, height: 6)
+            }
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+// MARK: - Shelf
+
+/// One style: its first setups in a row that scrolls sideways, and See All for the rest.
+private struct SetupShelf: View {
+    var shelf: ConfigStyleShelf
+    @ObservedObject var discover: ConfigDiscoverModel
+    @ObservedObject var artwork: MapArtworkStore
+    /// The card the arrows last brought to the leading edge. A mouse wheel can't scroll sideways.
+    @State private var first = 0
+    @Environment(\.palette) private var palette
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private static let page = 3
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .bottom, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(shelf.filter.rawValue).font(StudioTypography.groupTitle).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+                    Text(shelf.filter.note).font(.system(size: 13)).foregroundStyle(palette.secondary)
+                }
+                Spacer(minLength: 12)
+                Button("See All \(shelf.total)") { discover.showAll(shelf.filter) }
+                    .buttonStyle(.plain).font(.system(size: 13, weight: .semibold)).monospacedDigit().foregroundStyle(palette.link)
+                    .accessibilityLabel("See all \(shelf.total) \(shelf.filter.rawValue) setups")
+                    .help("Show every \(shelf.filter.rawValue) setup")
+                if shelf.entries.count > Self.page {
+                    HStack(spacing: 6) {
+                        arrow("chevron.left", "Earlier \(shelf.filter.rawValue) setups", -Self.page).disabled(first == 0)
+                        arrow("chevron.right", "More \(shelf.filter.rawValue) setups", Self.page).disabled(first >= shelf.entries.count - Self.page)
+                    }
+                }
+            }
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal) {
+                    HStack(alignment: .top, spacing: 14) {
+                        ForEach(shelf.entries) { entry in
+                            SetupCard(entry: entry, saved: discover.isSaved(entry.id), image: artwork.image(for: entry.artMap)) { discover.open(.player(entry.id)) }
+                                .frame(width: 250).id(entry.id)
+                        }
+                    }
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.trailing, StudioMetrics.pageInset)
+                }
+                .scrollIndicators(.never)
+                .onChange(of: first) { _, value in
+                    guard shelf.entries.indices.contains(value) else { return }
+                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) { proxy.scrollTo(shelf.entries[value].id, anchor: .leading) }
+                }
+            }
+            // The row runs to the window's edge, so a card cut off there shows that there are more.
+            .padding(.trailing, -StudioMetrics.pageInset)
+        }
+    }
+
+    private func arrow(_ symbol: String, _ label: String, _ step: Int) -> some View {
+        Button { first = max(0, min(shelf.entries.count - Self.page, first + step)) } label: {
+            Image(systemName: symbol).font(.system(size: 11, weight: .bold)).frame(width: 12, height: 12)
+        }
+        .glassAction(circle: true)
+        .accessibilityLabel(label).help(label)
+    }
+}
+
+// MARK: - Cards
+
+/// One player setup: a picture, who and when, how it feels, and the three numbers its config writes.
+struct SetupCard: View {
     var entry: ConfigDirectoryEntry
     var saved: Bool
+    var image: NSImage?
+    /// A grid names where each setup was published; a shelf leaves that to the setup's own page.
+    var source = false
     var open: () -> Void
     @Environment(\.palette) private var palette
     @State private var hovering = false
@@ -339,33 +385,44 @@ private struct SetupCard: View {
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: StudioMetrics.cardRadius, style: .continuous)
         Button(action: open) {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 0) {
+                ZStack(alignment: .bottomLeading) {
+                    MapArtFrame(map: entry.artMap, image: image, size: .fill).frame(height: 104).frame(maxWidth: .infinity)
                     Text(PlayerInitials.of(entry.player)).font(.stencil(18)).foregroundStyle(palette.accent)
                         .frame(width: 40, height: 40)
-                        .background(palette.dark ? Palette.hex(0x1b1f17) : palette.crate, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
+                        .background(palette.dark ? Palette.hex(0x1b1f17) : palette.crate, in: Circle())
+                        .overlay(Circle().strokeBorder(palette.panel, lineWidth: 2))
+                        .overlay(Circle().stroke(palette.selectionStroke, lineWidth: 1).padding(-1))
+                        .offset(x: 14, y: 18)
                         .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 3) {
+                }
+                .zIndex(1)
+                VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 6) {
                             Text(entry.player).font(.system(size: 15, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1)
-                            if saved { Image(systemName: "bookmark.fill").font(.system(size: 10)).foregroundStyle(palette.accent).accessibilityHidden(true) }
+                            Spacer(minLength: 4)
+                            if saved { Image(systemName: "bookmark.fill").font(.system(size: 11)).foregroundStyle(palette.accent).accessibilityHidden(true) }
                         }
                         Text([entry.team, entry.era].compactMap { $0 }.joined(separator: " · ")).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1)
                     }
-                    Spacer(minLength: 0)
+                    Text(entry.feel).font(.system(size: 13)).foregroundStyle(palette.dark ? Palette.hex(0xe2dbc9) : palette.text).lineLimit(1)
+                    HStack(alignment: .top, spacing: 16) {
+                        fact(entry.facts?.sensitivity, "sensitivity")
+                        fact(entry.facts?.frameCap.map { $0 == "0" ? "None" : $0 }, "fps cap")
+                        fact(size, "resolution")
+                    }
+                    if source {
+                        Text("As published by \(entry.provenance.publishedBy)").font(StudioTypography.help).foregroundStyle(palette.tertiary).lineLimit(1)
+                    }
                 }
-                Text(entry.feel).font(.system(size: 13)).foregroundStyle(palette.dark ? Palette.hex(0xe2dbc9) : palette.text).lineLimit(1)
-                HStack(alignment: .top, spacing: 16) {
-                    fact(entry.facts?.sensitivity, "sensitivity")
-                    fact(entry.facts?.frameCap.map { $0 == "0" ? "None" : $0 }, "fps cap")
-                    fact(size, "resolution")
-                }
-                Text("As published by \(entry.provenance.publishedBy)").font(StudioTypography.help).foregroundStyle(palette.tertiary).lineLimit(1)
+                .padding(.top, 26).padding(.horizontal, StudioMetrics.cardInset).padding(.bottom, 14)
             }
-            .padding(StudioMetrics.cardInset).frame(maxWidth: .infinity, alignment: .topLeading)
-            .background(palette.panel, in: shape)
-            .overlay(shape.strokeBorder(hovering ? palette.selectionStroke : palette.panelStroke, lineWidth: 1))
+            // Cards in a row share the tallest card's height.
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .background(palette.panel)
+            .clipShape(shape)
+            .overlay(shape.stroke(hovering ? palette.selectionStroke : palette.panelStroke, lineWidth: 1))
             .contentShape(shape)
         }
         .buttonStyle(.plain).onHover { hovering = $0 }
@@ -381,15 +438,69 @@ private struct SetupCard: View {
     private func fact(_ value: String?, _ label: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value ?? "—").font(.stencil(20)).monospacedDigit().foregroundStyle(palette.numeral).lineLimit(1)
-            Text(label).font(StudioTypography.help).foregroundStyle(palette.secondary)
+            Text(label).font(StudioTypography.help).foregroundStyle(palette.secondary).lineLimit(1)
         }
     }
     private var spoken: String {
         var parts = [[entry.player, entry.team, entry.era].compactMap { $0 }.joined(separator: ", ") + ".", entry.feel + "."]
         if let sensitivity = entry.facts?.sensitivity { parts.append("Sensitivity \(sensitivity).") }
         if let cap = entry.facts?.frameCap { parts.append(cap == "0" ? "No frame rate cap." : "\(cap) frames per second cap.") }
-        parts.append("As published by \(entry.provenance.publishedBy).")
+        if source { parts.append("As published by \(entry.provenance.publishedBy).") }
         if saved { parts.append("Saved.") }
         return parts.joined(separator: " ")
+    }
+}
+
+private struct TeamTile: View {
+    var team: ConfigDirectoryTeam
+    var open: () -> Void
+    @Environment(\.palette) private var palette
+    @State private var hovering = false
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
+        Button(action: open) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(team.name).font(.system(size: 15, weight: .bold)).foregroundStyle(palette.heading).lineLimit(1)
+                Text("\(team.count) setups").font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.secondary)
+            }
+            .padding(.horizontal, 18).frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+            .background(palette.crate, in: shape)
+            .overlay(shape.strokeBorder(hovering ? palette.selectionStroke : palette.wellStroke, lineWidth: 1))
+            .contentShape(shape)
+        }
+        .buttonStyle(.plain).onHover { hovering = $0 }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(team.name), \(team.count) setups")
+        .accessibilityHint("Shows this team’s setups").accessibilityAddTraits(.isButton)
+    }
+}
+
+/// A wide banner with one action: a short heading, what it does for the person, and a quiet symbol behind.
+private struct PromoBanner<Action: View>: View {
+    var eyebrow: String
+    var title: String
+    var symbol: String
+    var message: String
+    @ViewBuilder var action: Action
+    @Environment(\.palette) private var palette
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous)
+        VStack(alignment: .leading, spacing: 8) {
+            Eyebrow(text: eyebrow, size: 12, tracking: 0.28)
+            Text(title).font(StudioTypography.groupTitle).foregroundStyle(palette.heading).fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+            Text(message).font(.system(size: 13)).foregroundStyle(palette.secondary).lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true).frame(maxWidth: 380, alignment: .leading)
+            action.padding(.top, 6)
+        }
+        .padding(StudioMetrics.panelInset)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(alignment: .bottomTrailing) {
+            Image(systemName: symbol).font(.system(size: 130, weight: .light)).foregroundStyle(palette.accent.opacity(0.12))
+                .offset(x: 16, y: 26).accessibilityHidden(true)
+        }
+        .background(palette.panel)
+        .clipShape(shape)
+        .overlay(shape.stroke(palette.panelStroke, lineWidth: 1))
     }
 }

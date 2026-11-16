@@ -333,7 +333,7 @@ enum PlayedDate {
     /// none of them cancels the others).
     func loadLibraryArtwork() {
         guard !snapshot, !dataPath.isEmpty else { return }
-        var maps = homeRecent.map(\.map) + recentServers.map(\.map) + visibleServers.prefix(32).map(\.map)
+        var maps = pictureMaps + homeRecent.map(\.map) + recentServers.map(\.map) + visibleServers.prefix(32).map(\.map)
         if let selected { maps.append(selected.map) }
         maps += media.compactMap(\.facts.map) + storedMatches.suffix(24).map(\.map)
         let path = dataPath

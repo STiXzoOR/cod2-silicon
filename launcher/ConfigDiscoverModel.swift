@@ -7,14 +7,27 @@ import UniformTypeIdentifiers
 // honestly unavailable today); every import goes through the I1/I2 review and one
 // guarded transaction. Nothing here invents players, credits, values or signatures.
 
-/// Configs · Home and Check a Config take the whole page; Saved and a player's detail keep the loadout column.
+/// Discover's pages. Each sits beside the Configs column, like a loadout does.
 enum ConfigDiscoverPage: Hashable { case home, saved, player(String), checker }
 
-/// How Home narrows the player setups. Featured is chosen in the catalogue; nothing is counted about
+/// How Discover groups the player setups. Featured is chosen in the catalogue; nothing is counted about
 /// what people import, so there is no popularity order.
 enum ConfigSetupFilter: String, CaseIterable, Identifiable {
-    case featured = "Featured", classic = "Classic era", cod2x = "CoD2x era", highFrameRate = "High frame rate", all = "All"
+    case featured = "Featured", classic = "Classic era", cod2x = "CoD2x era", modern = "Modern", highFrameRate = "High frame rate", all = "All"
     var id: String { rawValue }
+    /// The page title when this group is shown on its own.
+    var title: String { self == .all ? "All setups" : self == .featured ? "Featured setups" : rawValue }
+    /// One line under a shelf's title: what the catalogue's tag means.
+    var note: String {
+        switch self {
+        case .featured: "Picked in the catalogue."
+        case .classic: "From the game’s first years, around 2005 to 2008."
+        case .cod2x: "Made for CoD2x."
+        case .modern: "From the game’s later years."
+        case .highFrameRate: "Capped at 250 frames a second or more."
+        case .all: "Every setup in the catalogue."
+        }
+    }
     func keeps(_ entry: ConfigDirectoryEntry) -> Bool {
         switch self {
         case .featured: entry.featured == true
@@ -42,6 +55,32 @@ enum ConfigImportStep: Equatable {
 struct ConfigDirectoryShelf: Identifiable {
     let id: String
     let entries: [ConfigDirectoryEntry]
+}
+
+/// One shelf on Discover's front page: a style and the first setups that carry it.
+struct ConfigStyleShelf: Identifiable {
+    let filter: ConfigSetupFilter
+    let entries: [ConfigDirectoryEntry]
+    let total: Int
+    var id: String { filter.rawValue }
+}
+
+/// A team with more than one setup in the catalogue.
+struct ConfigDirectoryTeam: Identifiable, Equatable {
+    let name: String
+    let count: Int
+    var id: String { name }
+}
+
+extension ConfigDirectoryEntry {
+    /// The map whose loading screen decorates this setup's card: its favourite map when the catalogue
+    /// names one, otherwise one of the stock maps, always the same one for the same setup. The
+    /// picture is decoration and is never labelled as the player's map.
+    var artMap: String {
+        if let favoriteMap { return favoriteMap }
+        let seed = id.utf8.reduce(0) { ($0 &* 31 &+ Int($1)) & 0xffff }
+        return HostingCatalog.maps[seed % HostingCatalog.maps.count]
+    }
 }
 
 /// What a source is and who it credits, as the review header shows it.
@@ -551,11 +590,17 @@ extension ConfigImportPresentation {
     private(set) var directory: ConfigDirectory
     @Published var page: ConfigDiscoverPage?
     @Published private(set) var state: ConfigDirectoryState = .idle
-    @Published var query = ""
+    /// A search looks through every setup, so it leaves Saved or a player's page for the results.
+    @Published var query = "" {
+        didSet { if searching, let page, page != .home, page != .checker { self.page = .home } }
+    }
     @Published var filter: ConfigSetupFilter = .featured
+    /// Player Setups shows its front page (the featured banner and the shelves) until See All or a
+    /// filter is chosen; then it shows that group as a grid.
+    @Published var browsing = false
     /// When the copy on this Mac was last fetched and verified.
     @Published private(set) var fetched: Date?
-    /// The first time Configs is chosen in the sidebar it opens on Home. Anything that asks for a
+    /// The first time Configs is chosen in the sidebar it opens on Discover. Anything that asks for a
     /// loadout by name clears this first.
     var landsOnHome = false
     let checker: ConfigCheckerModel
@@ -599,12 +644,42 @@ extension ConfigImportPresentation {
     var searching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
     /// The filters that keep at least one setup, so no chip leads to an empty page.
     var filters: [ConfigSetupFilter] { ConfigSetupFilter.allCases.filter { filter in entries.contains(where: filter.keeps) } }
-    /// Home's grid: a search looks through every setup; otherwise the chosen filter, by name.
+    /// The grid: a search looks through every setup; otherwise the chosen filter, by name.
     var setups: [ConfigDirectoryEntry] {
         let chosen = filters.contains(filter) ? filter : .all
         let shown = searching ? matches : entries.filter(chosen.keeps)
         return shown.sorted { $0.player.localizedCaseInsensitiveCompare($1.player) == .orderedAscending }
     }
+    /// The setups the front page's banner pages through: the first featured ones, in the index's order.
+    var heroes: [ConfigDirectoryEntry] {
+        let featured = entries.filter { $0.featured == true }
+        return Array((featured.isEmpty ? entries : featured).prefix(5))
+    }
+    /// One shelf per style that has setups: featured ones first, then by name.
+    var styleShelves: [ConfigStyleShelf] {
+        [ConfigSetupFilter.classic, .cod2x, .modern, .highFrameRate].compactMap { filter in
+            let kept = entries.filter(filter.keeps)
+            guard !kept.isEmpty else { return nil }
+            let ordered = kept.sorted {
+                if ($0.featured == true) != ($1.featured == true) { return $0.featured == true }
+                return $0.player.localizedCaseInsensitiveCompare($1.player) == .orderedAscending
+            }
+            return ConfigStyleShelf(filter: filter, entries: Array(ordered.prefix(10)), total: kept.count)
+        }
+    }
+    /// Teams with more than one setup, the largest first.
+    var teams: [ConfigDirectoryTeam] {
+        var counts: [String: Int] = [:]
+        for entry in entries { if let team = entry.team, !team.isEmpty { counts[team, default: 0] += 1 } }
+        return counts.filter { $0.value > 1 }.map { ConfigDirectoryTeam(name: $0.key, count: $0.value) }
+            .sorted { $0.count != $1.count ? $0.count > $1.count : $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+    /// Player Setups in the column: the front page, with no search and no filter.
+    func openFront() { query = ""; browsing = false; open(.home) }
+    /// See All on a shelf, or a filter chip.
+    func showAll(_ filter: ConfigSetupFilter) { query = ""; self.filter = filter; browsing = true; open(.home) }
+    /// A team's tile: every setup published under that name.
+    func showTeam(_ team: String) { query = team; open(.home) }
     /// “68 setups · updated today”, or the day of the saved copy.
     func status(now: Date = Date(), calendar: Calendar = .current) -> String {
         switch state {

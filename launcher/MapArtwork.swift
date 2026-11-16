@@ -243,19 +243,25 @@ struct IWDArtworkArchive: Sendable {
     func loadPrivatePreviewSynchronously(dataPath: String, maps: [String]) {
         request = UUID()
         if sourcePath != dataPath { images = [:]; sourcePath = dataPath }
-        let wanted = Array(Set(maps.compactMap(Self.mapName))).prefix(64)
+        let wanted = Self.wanted(maps)
         guard !dataPath.isEmpty, !wanted.isEmpty else { images = [:]; return }
-        publish(Self.readArtwork(dataPath: dataPath, maps: Array(wanted), cache: nil))
+        publish(Self.readArtwork(dataPath: dataPath, maps: wanted, cache: nil))
+    }
+
+    /// The maps to read, in the order asked for, so the first ones are never the ones dropped at the limit.
+    nonisolated static func wanted(_ maps: [String], limit: Int = 96) -> [String] {
+        var seen = Set<String>()
+        return Array(maps.compactMap(mapName).filter { seen.insert($0).inserted }.prefix(limit))
     }
 
     private func populate(dataPath: String, maps: [String], cache: Bool) async {
         let generation = UUID(); request = generation
-        let wanted = Array(Set(maps.compactMap(Self.mapName))).prefix(64)
+        let wanted = Self.wanted(maps)
         guard !dataPath.isEmpty, !wanted.isEmpty else { images = [:]; return }
         if sourcePath != dataPath { images = [:]; sourcePath = dataPath }
         let directory = cache ? Self.cacheDirectory(home: home, dataPath: dataPath) : nil
         let decoded = await Task.detached(priority: .utility) {
-            Self.readArtwork(dataPath: dataPath, maps: Array(wanted), cache: directory)
+            Self.readArtwork(dataPath: dataPath, maps: wanted, cache: directory)
         }.value
         guard generation == request, !Task.isCancelled else { return }
         publish(decoded)

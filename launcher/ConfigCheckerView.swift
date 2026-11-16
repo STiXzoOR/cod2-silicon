@@ -212,43 +212,52 @@ struct ConfigCheckerPage: View {
     @ObservedObject var model: LauncherModel
     @ObservedObject var checker: ConfigCheckerModel
     @Environment(\.palette) private var palette
+    @State private var width: CGFloat = 0
+    /// Two columns when there's room beside the Configs column; one above the other when there isn't.
+    private var sideBySide: Bool { width >= 700 }
 
     var body: some View {
         VStack(alignment: .leading, spacing: StudioMetrics.sectionGap) {
             if let failure = checker.failure { Banner(.error, title: "Couldn’t check that", message: failure) }
             if checker.report != nil { result } else { empty }
         }
-        .padding(.top, 84).padding(.leading, 22).padding(.trailing, 32).padding(.bottom, 24)
-        .frame(minWidth: 640, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .modifier(ConfigCheckerToolbar(model: model, checker: checker))
+        .padding(.top, 84).padding(.horizontal, StudioMetrics.pageInset).padding(.bottom, 24)
+        .frame(minWidth: 480, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { width = $0 }
         .onAppear { checker.studio.loadCatalog(); checker.studio.checkup.load() }
     }
 
     // MARK: Empty
 
     private var empty: some View {
-        HStack(alignment: .top, spacing: StudioMetrics.sectionGap) {
-            CheckerDropZone(checker: checker)
-            ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("What gets checked").font(StudioTypography.groupTitle).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
-                    ForEach(Self.checks, id: \.title) { check in
-                        HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: check.symbol).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.accent).frame(width: 22).accessibilityHidden(true)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(check.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text)
-                                Text(check.detail).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
-                            }
-                        }
-                        .accessibilityElement(children: .combine)
-                    }
-                }
+        Group {
+            if sideBySide {
+                HStack(alignment: .top, spacing: StudioMetrics.sectionGap) { CheckerDropZone(checker: checker); checks.frame(width: 340) }
+            } else {
+                ScrollView { VStack(spacing: StudioMetrics.sectionGap) { CheckerDropZone(checker: checker).frame(minHeight: 300); checks } }
             }
-            .frame(width: 380)
         }
         .frame(maxHeight: .infinity, alignment: .top)
     }
-    private static let checks: [(symbol: String, title: String, detail: String)] = [
+    private var checks: some View {
+        ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("What gets checked").font(StudioTypography.groupTitle).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+                ForEach(Self.checkList, id: \.title) { check in
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: check.symbol).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.accent).frame(width: 22).accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(check.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text)
+                            Text(check.detail).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityElement(children: .combine)
+                }
+            }
+        }
+    }
+    private static let checkList: [(symbol: String, title: String, detail: String)] = [
         ("xmark.circle", "Settings that don’t exist", "Typos and settings from other games, with the likely fix."),
         ("gauge.with.needle", "Values outside the limits", "Values the game refuses, and the nearest one it takes."),
         ("lock", "Protected settings", "Read-only, or only changing with cheats on."),
@@ -260,52 +269,43 @@ struct ConfigCheckerPage: View {
     // MARK: Result
 
     private var result: some View {
-        HStack(alignment: .top, spacing: StudioMetrics.sectionGap) {
-            CheckerLines(checker: checker)
-            CheckerFindings(checker: checker)
-                .frame(width: 400)
+        Group {
+            if sideBySide {
+                HStack(alignment: .top, spacing: StudioMetrics.sectionGap) { CheckerLines(checker: checker); CheckerFindings(checker: checker).frame(width: 340) }
+            } else {
+                // What needs a look comes first; the file's lines follow, each half scrolling on its own.
+                VStack(spacing: StudioMetrics.sectionGap) { CheckerFindings(checker: checker); CheckerLines(checker: checker) }
+            }
         }
         .frame(maxHeight: .infinity, alignment: .top)
     }
 }
 
-/// Check a Config's toolbar, as on the board: the sections, what the config is checked for, and
-/// Check Another once there is a result.
-private struct ConfigCheckerToolbar: ViewModifier {
-    @ObservedObject var model: LauncherModel
+/// Check a Config's toolbar, in the same places a loadout's toolbar uses: what the config is checked
+/// for in the middle, and Check Another at the trailing edge once there is a result.
+struct ConfigCheckerScope: View {
     @ObservedObject var checker: ConfigCheckerModel
     @Environment(\.palette) private var palette
-    func body(content: Content) -> some View {
-        #if COD2_LIQUID_GLASS
-        if #available(macOS 26.0, *) {
-            content.toolbar { leading; ToolbarSpacer(.flexible); ToolbarItem { another } }
-        } else { legacy(content) }
-        #else
-        legacy(content)
-        #endif
-    }
-    private func legacy(_ content: Content) -> some View {
-        content.toolbar { leading; ToolbarItem { Spacer() }; ToolbarItem { another } }
-    }
-    @ToolbarContentBuilder private var leading: some ToolbarContent {
-        ToolbarItem(placement: .navigation) { ConfigsSection.switcher(model.discover) }
-        ToolbarItem(placement: .navigation) {
-            HStack(spacing: 8) {
-                Text("Check for").font(.system(size: 12)).foregroundStyle(palette.secondary).padding(.leading, 10)
-                Picker("Game version to check for", selection: $checker.dialect) {
-                    Text(ConfigCheckerModel.title(.cod2x)).tag(ConfigDialect.cod2x)
-                    Text(ConfigCheckerModel.title(.stock)).tag(ConfigDialect.stock)
-                }
-                .labelsHidden().fixedSize().help("The game version whose settings and limits the config is checked against")
-                Picker("Server rules to check for", selection: $checker.ruleset) {
-                    Text("No server rules").tag(String?.none)
-                    ForEach(checker.rulesets) { Text($0.title).tag(String?.some($0.id)) }
-                }
-                .labelsHidden().fixedSize().help("Server rules to check against as well, such as zPAM’s")
+    var body: some View {
+        HStack(spacing: 8) {
+            Text("Check for").font(.system(size: 12)).foregroundStyle(palette.secondary).padding(.leading, 10)
+            Picker("Game version to check for", selection: $checker.dialect) {
+                Text(ConfigCheckerModel.title(.cod2x)).tag(ConfigDialect.cod2x)
+                Text(ConfigCheckerModel.title(.stock)).tag(ConfigDialect.stock)
             }
+            .labelsHidden().fixedSize().help("The game version whose settings and limits the config is checked against")
+            Picker("Server rules to check for", selection: $checker.ruleset) {
+                Text("No server rules").tag(String?.none)
+                ForEach(checker.rulesets) { Text($0.title).tag(String?.some($0.id)) }
+            }
+            .labelsHidden().fixedSize().help("Server rules to check against as well, such as zPAM’s")
         }
     }
-    private var another: some View {
+}
+
+struct ConfigCheckerAnother: View {
+    @ObservedObject var checker: ConfigCheckerModel
+    var body: some View {
         Button { checker.reset() } label: {
             Label("Check Another", systemImage: "xmark").labelStyle(.titleAndIcon).font(.system(size: 13, weight: .semibold))
         }

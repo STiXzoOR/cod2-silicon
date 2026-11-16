@@ -160,7 +160,7 @@ import UniformTypeIdentifiers
         case "configs-new-loadout-sheet": page = .configs; studio.level = .guided; studio.group = .frame; sheet = .newLoadout
         case "configs-rename-sheet": page = .configs; studio.level = .guided; studio.group = .frame; sheet = .renameLoadout
         // Discover and import: the harness supplies a signed fixture directory or a reviewed import.
-        case "discover-unavailable", "discover-players", "configs-home", "configs-home-search", "configs-home-nomatch": page = .configs; discover.page = .home
+        case "discover-unavailable", "discover-players", "configs-home", "configs-home-end", "configs-home-all", "configs-home-search", "configs-home-nomatch": page = .configs; discover.page = .home
         case "configs-checker-empty", "configs-checker", "configs-checker-fixed", "configs-checker-clean": page = .configs; discover.page = .checker
         case "discover-saved": page = .configs; discover.page = .saved
         case "discover-player": page = .configs

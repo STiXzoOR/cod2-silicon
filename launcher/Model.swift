@@ -109,6 +109,8 @@ struct MediaEntry: Identifiable {
         }
     }
     let artwork: MapArtworkStore
+    /// The maps the catalogue's setups show; Discover sets it when the catalogue loads.
+    var discoverMaps: [String] = []
     let home: URL
     let preferences: URL
     let snapshot: Bool
@@ -431,9 +433,12 @@ struct MediaEntry: Identifiable {
         else if (fastPlay || pendingLink != nil) && !onboard { play() }
         loadArtwork()
     }
+    /// Maps whose pictures are shown whatever the server list holds: the stock maps (Hosting's map
+    /// tiles, Discover's cards) and any map a catalogue setup names. Every request asks for them first.
+    var pictureMaps: [String] { HostingCatalog.maps + discoverMaps.filter { !HostingCatalog.maps.contains($0) } }
     func loadArtwork() {
         guard !snapshot, !dataPath.isEmpty else { return }
-        var maps = recentServers.map(\.map) + visibleServers.prefix(48).map(\.map)
+        var maps = pictureMaps + recentServers.prefix(16).map(\.map) + visibleServers.prefix(48).map(\.map)
         if let selected { maps.append(selected.map) }
         let path = dataPath
         Task { await artwork.load(dataPath: path, maps: maps) }

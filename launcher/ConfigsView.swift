@@ -2,10 +2,10 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
-/// Configs: the person's loadouts in a middle column, and the selected loadout's
-/// Settings, Binds, Check-up or History beside it. Selecting a loadout only shows
-/// it; “Use for next game” is the one action that changes which loadout the game
-/// starts with.
+/// Configs: one column with Discover first and the person's loadouts under it, and the chosen
+/// page beside it: Player Setups, Saved, Check a Config, or a loadout's Settings, Binds, Check-up
+/// or History. Selecting a loadout only shows it; “Use for next game” is the one action that
+/// changes which loadout the game starts with.
 struct ConfigsView: View {
     @ObservedObject var model: LauncherModel
     @ObservedObject var studio: ConfigStudioModel
@@ -43,31 +43,33 @@ struct ConfigsShell: View {
     @Environment(\.undoManager) private var undoManager
     @State private var origin = CGPoint.zero
     @State private var pendingLeave: (@MainActor () -> Void)?
+    @FocusState private var searchFocused: Bool
     /// The traffic lights and the sidebar button span the titlebar's first 140 points.
     private static let windowControls: CGFloat = 140
 
     var body: some View {
         HStack(spacing: 0) {
-            if !wide {
-                LoadoutColumn(model: model, studio: studio, session: session, discover: discover,
-                              select: { id in leaveText { discover.page = nil; studio.select(id) } },
-                              act: { action in leaveText(action) }, open: { page in leaveText { discover.open(page) } })
-                    .frame(width: StudioMetrics.loadoutColumn)
-                    // The column's title shares the titlebar row with the app sidebar beside it; with that
-                    // sidebar hidden, the row holds the window controls, so the column starts below the toolbar.
-                    .ignoresSafeArea(.container, edges: origin.x < Self.windowControls ? [] : .top)
-                Rectangle().fill(palette.separator).frame(width: 1).ignoresSafeArea()
-            }
+            // The same column on every Configs page, so moving between Discover and a loadout changes
+            // only what is beside it.
+            LoadoutColumn(model: model, studio: studio, session: session, discover: discover,
+                          select: { id in leaveText { discover.page = nil; studio.select(id) } },
+                          act: { action in leaveText(action) },
+                          open: { page in leaveText { if page == .home { discover.openFront() } else { discover.open(page) } } })
+                .frame(width: StudioMetrics.loadoutColumn)
+                // The column's title shares the titlebar row with the app sidebar beside it; with that
+                // sidebar hidden, the row holds the window controls, so the column starts below the toolbar.
+                .ignoresSafeArea(.container, edges: origin.x < Self.windowControls ? [] : .top)
+            Rectangle().fill(palette.separator).frame(width: 1).ignoresSafeArea()
             Group { if discover.page != nil { ConfigDiscoverView(model: model, discover: discover) } else { content } }
                 .ignoresSafeArea(.container, edges: .top)
         }
-        .padding(.leading, wide ? 0 : 20)
+        .padding(.leading, 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(WindowOriginReader(origin: $origin))
         .environment(\.configControlContext, session.current.map { ConfigControlContext(studio: studio, session: session, profileID: $0.profile.id) })
         .onAppear {
             studio.refreshComparison(); studio.checkup.load()
-            // Choosing Configs in the sidebar for the first time opens Home.
+            // Choosing Configs in the sidebar for the first time opens Discover.
             if discover.landsOnHome { discover.landsOnHome = false; if discover.page == nil { discover.open(.home) } }
         }
         .onChange(of: studio.gameRunning) { _, running in if running { studio.binds.gameStarted() } }
@@ -78,6 +80,8 @@ struct ConfigsShell: View {
         // A loadout made, imported or chosen elsewhere is shown in place of Discover.
         .onChange(of: session.current?.profile.id) { _, _ in discover.page = nil }
         .configImportFlows(discover)
+        // The toolbar keeps its two places on every page: what the page is about in the middle (a
+        // loadout's sections, or what a config is checked for) and its search and actions trailing.
         .toolbar {
             if discover.page == nil { ToolbarItem(placement: .principal) {
                 Picker("Loadout section", selection: Binding(get: { studio.tab }, set: { tab in leaveText { studio.tab = tab } })) {
@@ -86,8 +90,14 @@ struct ConfigsShell: View {
                 .pickerStyle(.segmented).labelsHidden().fixedSize()
                 .disabled(session.current == nil)
             } }
+            if discover.page == .checker { ToolbarItem(placement: .principal) { ConfigCheckerScope(checker: discover.checker) } }
         }
-        .trailingToolbar { if discover.page == nil {
+        .trailingToolbar { if discover.page == .checker {
+            ConfigCheckerAnother(checker: discover.checker)
+        } else if discover.page != nil {
+            ToolbarSearchField(prompt: "Search players, teams or styles", width: 286, text: $discover.query, focus: $searchFocused, request: discover.findRequest)
+                .help("Search setups by player, team, era or where they were published (⌘F)")
+        } else {
             if studio.tab == .history {
                 Button(action: studio.saveSnapshot) { Label("Save a Snapshot Now", systemImage: "clock.badge.checkmark") }
                     .disabled(studio.isReadOnly || session.current == nil)
@@ -109,9 +119,6 @@ struct ConfigsShell: View {
             Text("Your text edits aren’t saved to this loadout yet.")
         }
     }
-
-    /// Home and Check a Config take the whole page; everything else sits beside the loadout column.
-    private var wide: Bool { discover.page == .home || discover.page == .checker }
 
     /// Text edits are applied explicitly; leaving them asks first.
     private func leaveText(_ action: @escaping @MainActor () -> Void) {
@@ -203,9 +210,10 @@ private struct LoadoutColumn: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Configs").font(.system(size: 22, weight: .bold)).tracking(-0.2).foregroundStyle(palette.heading)
                 .padding(.horizontal, 10).padding(.bottom, 16).accessibilityAddTraits(.isHeader)
-            ColumnLabel(text: "MY LOADOUTS").padding(.horizontal, 10).padding(.bottom, 6)
             ScrollView {
                 VStack(alignment: .leading, spacing: 4) {
+                    DiscoverColumnSection(discover: discover, open: open)
+                    ColumnLabel(text: "MY LOADOUTS").padding(.horizontal, 10).padding(.top, 22).padding(.bottom, 6)
                     ForEach(session.profiles) { profile in
                         LoadoutRow(profile: profile, subtitle: subtitle(profile),
                                    selected: discover.page == nil && profile.id == session.current?.profile.id, focused: focused) { select(profile.id) }
@@ -217,7 +225,6 @@ private struct LoadoutColumn: View {
                     }
                     .disabled(!model.canNewLoadout)
                     AddConfigRow(discover: discover)
-                    DiscoverColumnSection(discover: discover, open: open)
                 }
             }
             .scrollIndicators(.never)
@@ -235,7 +242,7 @@ private struct LoadoutColumn: View {
         .padding(.top, 26).padding(.horizontal, 12).padding(.bottom, 20)
         .frame(maxHeight: .infinity, alignment: .top)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Loadouts")
+        .accessibilityLabel("Discover and loadouts")
         .task { await discover.loadIfNeeded() }
     }
 

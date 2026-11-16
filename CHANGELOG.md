@@ -23,6 +23,23 @@ All notable changes to CoD2 Silicon are documented here, following
 - Each start of a hosted server writes its own log, with both passwords kept
   out of it. Report a Problem can copy the last one for you to paste.
 
+### Changed
+
+- **Configs opens on Discover, and looks the same on every page.** The column
+  with Discover and your loadouts now stays in place on Player Setups, Saved,
+  Check a Config and a player's page, with Discover at the top. The toolbar
+  no longer swaps its buttons from page to page: search sits in the same
+  corner throughout.
+- **Player Setups is a front page.** A banner pages through the featured
+  setups, then one row for each style (Classic era, CoD2x era, Modern, High
+  frame rate) with See All, the teams that have more than one setup, and
+  two cards for adding a config of your own and checking one. Each setup
+  shows a map's loading screen from your own copy of the game.
+- **Hosting shows a picture of each map.** The maps in a server's rotation are
+  tiles with their loading screen and their place in the order, and Add Map
+  opens a grid of the maps not in the rotation yet, with pictures, so a map
+  is not picked by name alone.
+
 ### Fixed
 
 - Hosting picks ports the game's own local-server list looks at (28960 to

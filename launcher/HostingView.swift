@@ -174,7 +174,6 @@ private struct HostingForm: View {
     var columns = 2
     @Environment(\.palette) private var palette
     @State private var showAdmin = false
-    @State private var mapMenu = MenuAnchorBox()
 
     private var server: Binding<HostedServer> {
         let initial = initial, isNew = isNew, hosting = hosting
@@ -349,48 +348,141 @@ private struct HostingForm: View {
         }
     }
 
+    /// Each map is a tile with its picture, so two maps are told apart at a glance and not only by name.
     private func maps(_ current: HostedServer) -> some View {
         let box = RoundedRectangle(cornerRadius: FormMetrics.radius(.panel), style: .continuous)
         return VStack(alignment: .leading, spacing: 8) {
-            FlowChipsLayout(spacing: 8) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 84, maximum: 132), spacing: 10, alignment: .top)], alignment: .leading, spacing: 12) {
                 ForEach(Array(current.maps.enumerated()), id: \.offset) { index, map in
-                    HStack(spacing: 6) {
-                        Text(MapCatalog.displayName(map)).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text)
-                        Button { server.wrappedValue.maps.remove(at: index) } label: { Image(systemName: "xmark").font(.system(size: 9, weight: .bold)) }
-                            .buttonStyle(.plain).foregroundStyle(palette.secondary).disabled(current.maps.count <= 1)
-                            .accessibilityLabel("Remove \(MapCatalog.displayName(map))")
-                    }
-                    .padding(.horizontal, 12).frame(minHeight: StudioMetrics.minimumHitTarget)
-                    .background(palette.well, in: Capsule()).overlay(Capsule().strokeBorder(palette.wellStroke, lineWidth: 1))
-                    .draggable(map)
-                    .dropDestination(for: String.self) { items, _ in
-                        guard let moved = items.first, let from = current.maps.firstIndex(of: moved), from != index else { return false }
-                        var maps = current.maps
-                        maps.remove(at: from); maps.insert(moved, at: min(index, maps.count))
-                        server.wrappedValue.maps = maps
-                        return true
-                    }
+                    HostingMapTile(artwork: model.artwork, map: map, order: index + 1, canRemove: current.maps.count > 1) { server.wrappedValue.maps.remove(at: index) }
+                        .draggable(map)
+                        .dropDestination(for: String.self) { items, _ in
+                            guard let moved = items.first, let from = current.maps.firstIndex(of: moved), from != index else { return false }
+                            var maps = current.maps
+                            maps.remove(at: from); maps.insert(moved, at: min(index, maps.count))
+                            server.wrappedValue.maps = maps
+                            return true
+                        }
                 }
-                // A real AppKit menu under the button, as the launcher's other Add menus are.
-                Button {
-                    guard let view = mapMenu.view else { return }
-                    let binding = server
-                    NativeMenu.popUp(HostingCatalog.maps.filter { !current.maps.contains($0) }.map { map in
-                        .init(title: MapCatalog.displayName(map), symbol: "map") { binding.wrappedValue.maps.append(map) }
-                    }, below: view)
-                } label: { Label("Add Map", systemImage: "plus") }
-                .background(MenuAnchor(box: mapMenu))
-                .fixedSize().disabled(HostingCatalog.maps.allSatisfy(current.maps.contains))
-                .accessibilityLabel("Add Map").accessibilityHint("Shows the maps that aren’t in the rotation yet")
+                Button { hosting.addingMap = true } label: {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Color.clear.aspectRatio(4.0 / 3.0, contentMode: .fit)
+                            .overlay(Image(systemName: "plus").font(.system(size: 16, weight: .semibold)).accessibilityHidden(true))
+                            .overlay(RoundedRectangle(cornerRadius: HostingMapTile.radius, style: .continuous)
+                                .strokeBorder(palette.accent.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
+                        Text("Add Map").font(.system(size: 12, weight: .semibold)).lineLimit(1)
+                    }
+                    .foregroundStyle(palette.accent)
+                    .contentShape(RoundedRectangle(cornerRadius: HostingMapTile.radius, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .disabled(HostingCatalog.maps.allSatisfy(current.maps.contains))
+                .accessibilityLabel("Add Map").accessibilityHint("Shows the maps that aren’t in the rotation yet, with their pictures")
+                .popover(isPresented: $hosting.addingMap, arrowEdge: .leading) {
+                    HostingMapPicker(artwork: model.artwork, maps: Binding(get: { server.wrappedValue.maps }, set: { server.wrappedValue.maps = $0 })) { hosting.addingMap = false }
+                        .studioPopover()
+                }
             }
-            .padding(.vertical, 12).padding(.horizontal, 14).frame(maxWidth: .infinity, alignment: .leading)
+            .padding(HostingMapTile.inset).frame(maxWidth: .infinity, alignment: .leading)
             .background(palette.panel, in: box).overlay(box.strokeBorder(palette.panelStroke, lineWidth: 1))
             Text("Drag to reorder. The server starts on the first map.").font(StudioTypography.help).foregroundStyle(palette.tertiary).padding(.leading, 6)
         }
     }
 }
 
-// MARK: - Running
+/// One map in the rotation: its loading screen from the person's own game (or the drawn scene when
+/// there is none), its place in the order, and Remove.
+private struct HostingMapTile: View {
+    static let inset: CGFloat = 10
+    static var radius: CGFloat { Concentric.radius(in: FormMetrics.radius(.panel), inset: inset) }
+    @ObservedObject var artwork: MapArtworkStore
+    var map: String
+    var order: Int
+    var canRemove: Bool
+    var remove: () -> Void
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        let name = MapCatalog.displayName(map)
+        VStack(alignment: .leading, spacing: 6) {
+            Color.clear.aspectRatio(4.0 / 3.0, contentMode: .fit)
+                .overlay { MapArtFrame(map: map, image: artwork.image(for: map), size: .fill, radius: Self.radius) }
+                .overlay(RoundedRectangle(cornerRadius: Self.radius, style: .continuous).strokeBorder(palette.panelStroke, lineWidth: 1))
+                .overlay(alignment: .topLeading) {
+                    Text("\(order)").font(.stencil(13)).monospacedDigit().foregroundStyle(Palette.dark.numeral)
+                        .padding(.horizontal, 5).frame(minWidth: 20, minHeight: 20)
+                        .background(Color.black.opacity(0.66), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        .padding(5).accessibilityHidden(true)
+                }
+                .overlay(alignment: .topTrailing) {
+                    Button(action: remove) {
+                        Image(systemName: "xmark").font(.system(size: 8, weight: .heavy)).foregroundStyle(Palette.dark.heading)
+                            .frame(width: 20, height: 20)
+                            .background(Color.black.opacity(0.66), in: Circle())
+                            .overlay(Circle().strokeBorder(Color.white.opacity(0.16), lineWidth: 1))
+                            .frame(width: StudioMetrics.minimumHitTarget, height: StudioMetrics.minimumHitTarget).contentShape(Circle())
+                    }
+                    .buttonStyle(.plain).disabled(!canRemove).opacity(canRemove ? 1 : 0.4)
+                    .accessibilityLabel("Remove \(name)")
+                    .help(canRemove ? "Remove \(name) from the rotation" : "A server needs at least one map")
+                }
+            Text(name).font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1).truncationMode(.tail)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(name), map \(order)\(order == 1 ? ", the server starts here" : "")")
+    }
+}
+
+/// Add Map: the maps not in the rotation yet, each with its picture and where it is set. Clicking
+/// one adds it; the picker stays open so several can be added.
+private struct HostingMapPicker: View {
+    @ObservedObject var artwork: MapArtworkStore
+    @Binding var maps: [String]
+    var done: () -> Void
+    @Environment(\.palette) private var palette
+    private static let tile: CGFloat = 108
+
+    var body: some View {
+        let available = HostingCatalog.maps.filter { !maps.contains($0) }
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Add a map").padding(.leading, 6).font(.system(size: 17, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 12)
+                Text(available.isEmpty ? "Every map is in the rotation" : "\(available.count) not in the rotation").font(StudioTypography.help).monospacedDigit().foregroundStyle(palette.secondary)
+            }
+            if !available.isEmpty {
+                LazyVGrid(columns: Array(repeating: GridItem(.fixed(Self.tile + 12), spacing: 4, alignment: .top), count: 4), alignment: .leading, spacing: 4) {
+                    ForEach(available, id: \.self) { map in
+                        let name = MapCatalog.displayName(map)
+                        Button { maps.append(map) } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                MapArtFrame(map: map, image: artwork.image(for: map), size: .fill, radius: 8)
+                                    .frame(width: Self.tile, height: Self.tile * 3 / 4)
+                                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(palette.panelStroke, lineWidth: 1))
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(name).font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1)
+                                    Text(MapCatalog.region(map).map { $0.capitalized } ?? " ").font(.system(size: 11)).foregroundStyle(palette.secondary).lineLimit(1)
+                                }
+                                .padding(.horizontal, 2)
+                            }
+                            .padding(6)
+                            .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }
+                        .buttonStyle(RowButtonStyle(radius: 14))
+                        .accessibilityLabel("Add \(name)\(MapCatalog.region(map).map { ", \($0.capitalized)" } ?? "")")
+                    }
+                }
+            }
+            HStack(spacing: 12) {
+                Text("Click a map to add it to the end of the rotation.").font(StudioTypography.help).foregroundStyle(palette.tertiary).padding(.leading, 6)
+                Spacer(minLength: 12)
+                Button("Done", action: done).glassAction().keyboardShortcut(.defaultAction)
+            }
+        }
+        .frame(width: 4 * (Self.tile + 12) + 3 * 4)
+        .padding(.horizontal, 14).padding(.top, 16).padding(.bottom, 14)
+    }
+}
 
 private struct HostingRunning: View {
     @ObservedObject var model: LauncherModel
@@ -640,8 +732,9 @@ extension LauncherModel {
         let log = ["CoD2 MP 1.3 build mac-arm64", "Opening IP socket: 0.0.0.0:28960", "execing server.cfg", "------ Server Initialization ------",
                    "Server: mp_toujane", "-----------------------------------", "Sample Player connected", "Second Sample connected", "Third Sample connected"]
         switch screen {
-        case "servers-hosting-new":
+        case "servers-hosting-new", "servers-hosting-add-map":
             hosting.preview(servers: [], selection: nil, draft: HostedServer.new(id: "draft", name: "My Server"))
+            hosting.addingMap = screen.hasSuffix("add-map")
         case "servers-hosting-running-wifi":
             hosting.preview(servers: [friends, scrim], selection: "friends", phases: ["friends": .running(since: Date().addingTimeInterval(-41 * 60))],
                             statuses: ["friends": status], logs: ["friends": log], onWiFi: true)

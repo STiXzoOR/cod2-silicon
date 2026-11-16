@@ -17,8 +17,8 @@ extension Snapshots {
                                 // ship-configs: Discover hidden, loadout management and a chosen match.
                                 "configs-discover-hidden", "configs-other-loadout", "configs-delete-confirm", "configs-new-loadout-sheet",
                                 "configs-rename-sheet", "configs-checkup-match", "configs-checkup-freezes", "configs-checkup-freeze-legacy",
-                                // Configs · Home and Check a Config.
-                                "configs-home", "configs-home-search", "configs-home-nomatch",
+                                // Discover · Player Setups (the front page, See All, a search) and Check a Config.
+                                "configs-home", "configs-home-end", "configs-home-all", "configs-home-search", "configs-home-nomatch",
                                 "configs-checker-empty", "configs-checker", "configs-checker-fixed", "configs-checker-clean"]
 }
 
@@ -206,7 +206,11 @@ extension Snapshots {
             // As drawn: Discover in the column, with two saved players.
             try await fixture()
             discover.setSaved("player-2", true); discover.setSaved("player-4", true)
-        case "discover-players", "configs-home": try await fixture()
+        case "discover-players", "configs-home", "configs-home-end": try await fixture()
+        case "configs-home-all":
+            // See All on the Classic era shelf.
+            try await fixture()
+            discover.showAll(.classic)
         case "configs-home-search", "configs-home-nomatch":
             try await fixture()
             discover.query = screen == "configs-home-search" ? "classic" : "quake"
@@ -1044,7 +1048,7 @@ extension Snapshots {
                 let elements = AccessibilityTree.elements(of: window)
                 let win = CGRect(x: window.frame.minX, y: primary - window.frame.maxY, width: window.frame.width, height: window.frame.height)
                 guard let item = splitController()?.splitViewItems.first(where: { $0.behavior == .sidebar }),
-                      let column = elements.first(where: { $0.label == "Loadouts" && $0.frame.width > 200 })?.frame,
+                      let column = elements.first(where: { $0.label == "Discover and loadouts" && $0.frame.width > 200 })?.frame,
                       let title = elements.first(where: { ($0.label == "Configs" || $0.value == "Configs") && column.contains(CGPoint(x: $0.frame.midX, y: $0.frame.midY)) })?.frame else {
                     print("FAIL: navigation \(step)-\(appearance): the sidebar item, loadout column or Configs title could not be measured"); return false
                 }
@@ -1345,7 +1349,10 @@ extension Snapshots {
         "configs-save-failure": ["Problem: Couldn’t save: Changed Mouse speed"],
         "configs-import-windows-profiles": ["Bring in your Windows setup", "Morrow", "Scrim", "Choose Folder…"],
         "configs-catalog-loading": ["Loading settings"],
-        "configs-discover-hidden": ["Add a Config", "New Loadout", "Main, in use for your next game"],
+        "configs-discover-hidden": ["Add a Config", "New Loadout", "Main, in use for your next game", "Player Setups", "Check a Config"],
+        "configs-home": ["Featured setups", "See This Setup", "Next featured setup", "See all 3 Classic era setups", "[Team], 4 setups", "Refresh the catalogue",
+                         "Search players, teams or styles", "Check a Config", "Add a Config"],
+        "configs-home-all": ["Narrow the setups", "Player Setups", "Search players, teams or styles"],
         "configs-other-loadout": ["Use for Next Game", "Scrim"],
         "configs-delete-confirm": ["Delete the loadout “Scrim”?", "Delete Loadout", "Cancel"],
         "configs-new-loadout-sheet": ["New loadout", "Name", "Start from", "Create Loadout", "Cancel"],
