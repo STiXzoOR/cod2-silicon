@@ -33,7 +33,7 @@ extension Snapshots {
         "settings-game-data": ["Show in Finder", "Change…", "Replace…", "Rebuild", "Set Up Again…", "Game versions installed"],
         "settings-privacy": ["Send crash reports to CoD2 Silicon", "See What’s Sent…", "Send CoD2x crash reports to the CoD2x project",
                              "Match summaries", "Delete Summaries…", "Master servers"],
-        "settings-updates": ["CoD2 Silicon 0.3.0 is up to date", "Check Now", "Check for updates automatically", "Release notes for every version"],
+        "settings-updates": ["CoD2 Silicon \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") is up to date", "Check Now", "Check for updates automatically", "Release notes for every version"],
         "settings-advanced": ["Extra launch options, one per line", "Show in Finder", "Copy Last Game Log", "Reset Warnings", "Reset Settings…"],
         "about-footer": ["Call of Duty is a registered trademark"],
         "about": ["CoD2 Silicon", "Copy Version Info", "Release Notes", "Website", "Report a Problem…", "Acknowledgements", "Check for Updates…"],
