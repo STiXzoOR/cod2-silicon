@@ -83,7 +83,9 @@ def play(binary, game, out, port):
     """Menu, map, quit."""
     log = out / 'console.log'
     home = out / 'game'
-    home.mkdir()
+    # A new player is asked to make a profile before any map loads; the test brings one.
+    (home / 'main/players/default').mkdir(parents=True)
+    (home / 'main/players/active.txt').write_text('default')
     for path in (game, home):
         if any(c in str(path) for c in '"+;\n\r'):
             raise Failed(f'{path} has a quote, plus sign or semicolon in it, which the game cannot read')
