@@ -14,7 +14,7 @@ the rest. A Windows 1.3 install's folder works as it is.
 
 ## Status
 
-Version `0.3.1` is playable on original 1.3 and CoD2x 1.4 servers, with a
+Version `0.3.2` is playable on original 1.3 and CoD2x 1.4 servers, with a
 native launcher, server browser and Config Studio. Movement, firing, grenades, mounted
 turrets, HTTP mod downloads and round restarts have been tested, and every
 menu is opened by an automated sweep. The picture is compared with the
@@ -41,7 +41,7 @@ Existing Windows 1.3 data works as it is. See
 ### Prebuilt app
 
 1. Open [GitHub Releases](https://github.com/STiXzoOR/cod2-silicon/releases).
-2. Download `CoD2-Silicon-0.3.1-macos-arm64.zip` and `SHA256SUMS` into the same
+2. Download `CoD2-Silicon-0.3.2-macos-arm64.zip` and `SHA256SUMS` into the same
    folder. Verify the archive, then unzip it:
 
    ```sh
@@ -266,6 +266,8 @@ new performance claims for every release. Verified development results include:
 - 0.3.1 fixed two of the differences 0.3.0 listed (menu panel edges, and fog
   in the Direct3D 7 renderer) and measured a third, the near clip plane, as
   not a difference. [What was tested for 0.3.1](docs/macos-port/release-0.3.1-verification.md)
+- 0.3.2 enlarges the in-game console above 1080 lines and changes what the
+  launcher shows first. [What was tested for 0.3.2](docs/macos-port/release-0.3.2-verification.md)
 - Before 0.3.0, with the original Mac shaders, three matched Toujane views had
   RGB mean absolute errors of **2.0050, 1.8726 and 0.5856 out of 255** against
   Windows. [Rendering report](docs/macos-port/reports/WS15-render.md)

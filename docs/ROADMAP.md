@@ -53,6 +53,16 @@ was tested and what was not.
 The [0.3.1 verification](macos-port/release-0.3.1-verification.md) says what
 was tested and what was not.
 
+## 0.3.2 — A readable console (released 0.3.2)
+
+- **The in-game console is enlarged above 1080 lines,** so it can be read on
+  a 4K, 5K or 6K screen.
+- **The launcher no longer leads with frame rate.** It shows the loadout for
+  your next game; the frame rate cap is an ordinary setting.
+
+The [0.3.2 verification](macos-port/release-0.3.2-verification.md) says what
+was tested and what was not.
+
 ## Next
 
 The Metal renderer, below, is the next piece of work. The rest are not in a

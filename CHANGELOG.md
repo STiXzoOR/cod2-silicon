@@ -5,6 +5,16 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-17
+
+### Fixed
+
+- **The in-game console is readable on a 4K, 5K or 6K screen.** The console
+  was drawn 16 pixels to a row whatever the resolution, so above 1080 lines
+  its text shrank to a few millimetres. It is now enlarged above 1080 lines
+  and takes the same share of the screen at every resolution. At 1080 lines
+  and below nothing changes.
+
 ### Changed
 
 - The launcher no longer leads with frame rate. Home's chip and the sidebar

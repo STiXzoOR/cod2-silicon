@@ -122,7 +122,7 @@ struct Dispatch: Codable, Equatable, Sendable {
     /// A place in the app that a news entry opens instead of a link (NewsFeed.places).
     var open: String? = nil
     static let bundled = [
-        Dispatch(stamp: "PREVIEW", title: "CoD2 Silicon 0.3.1", summary: "Friends on Windows and Linux can join a CoD2x server you host, and more of the game matches the original.",
+        Dispatch(stamp: "PREVIEW", title: "CoD2 Silicon 0.3.2", summary: "The in-game console is readable on 4K, 5K and 6K screens, and the launcher shows your loadout where it showed frame rate.",
                  link: "https://github.com/STiXzoOR/cod2-silicon/releases"),
         Dispatch(stamp: "AHEAD", title: "What’s next", summary: "The Metal renderer comes next. It isn’t in this release, and the original look stays until it matches.",
                  link: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/ROADMAP.md"),
@@ -186,7 +186,8 @@ enum NewsFeed {
 enum HomeDispatches {
     static func builtIn(version: String) -> Dispatch {
         Dispatch(stamp: "NOW", title: "CoD2 Silicon \(version)",
-                 summary: version == "0.3.1" ? "Friends on Windows and Linux can join a CoD2x server you host, and a log for each server start."
+                 summary: version == "0.3.2" ? "A console you can read on 4K, 5K and 6K screens, and a launcher that shows your loadout where it showed frame rate."
+                        : version == "0.3.1" ? "Friends on Windows and Linux can join a CoD2x server you host, and a log for each server start."
                         : version == "0.3.0" ? "CoD2x 1.4.6.8 beside the original 1.3, loadouts, and one-click updates."
                                              : "What changed in this version is in the release notes.",
                  link: "https://github.com/STiXzoOR/cod2-silicon/releases", version: version)
