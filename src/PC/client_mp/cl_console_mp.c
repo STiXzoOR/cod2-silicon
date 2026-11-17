@@ -562,6 +562,21 @@ void Con_AutoCompleteFromList(const char **strings, int stringCount, const char 
     }
 }
 
+#if defined(COD2_X64)
+/* The console is laid out in pixels (16 to a row), which is unreadable on a
+ * 4K or 6K picture. Above 1080 lines it is laid out as if the picture were 1080
+ * lines high and drawn enlarged, so it covers the same share of the screen. */
+extern float ScrPlace_RealViewportHeight(void);
+extern void R_SetCmd2DScale(float scale);
+
+static float Con_PixelScale(void)
+{
+    float height = ScrPlace_RealViewportHeight();
+
+    return height > 1080.0f ? height / 1080.0f : 1.0f;
+}
+#endif
+
 static void ConDraw_Box(float x, float y, float w, float h, const vec_t *color)
 {
     clientStatic_t *cls_ = &cls;
@@ -1376,6 +1391,16 @@ static void Con_CheckResize(void)
     CalcScreenX(&con.screenMax[0], 3);
     CalcScreenY(&con.screenMax[1], 3);
 
+#if defined(COD2_X64)
+    {
+        float pixelScale = Con_PixelScale();
+
+        con.screenMin[0] /= pixelScale;
+        con.screenMin[1] /= pixelScale;
+        con.screenMax[0] /= pixelScale;
+        con.screenMax[1] /= pixelScale;
+    }
+#endif
     con.screenMin[0] = floorf(con.screenMin[0]);
     con.screenMin[1] = floorf(con.screenMin[1]);
     con.screenMax[0] = floorf(con.screenMax[0]);
@@ -2312,9 +2337,15 @@ void Con_DrawConsole(void)
     Con_CheckResize();
     if (!((*(clientActive_t **)imp_cl)->keyCatchers & 1))
         return;
+#if defined(COD2_X64)
+    R_SetCmd2DScale(Con_PixelScale());
+#endif
     if (con.outputVisible)
         Con_DrawOuputWindow();
     Con_DrawInput();
+#if defined(COD2_X64)
+    R_SetCmd2DScale(1.0f);
+#endif
 }
 
 void Con_Init(void)

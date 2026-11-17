@@ -658,8 +658,22 @@ static void R_BeginFrame_impl(void)
     }
 }
 
+#if defined(COD2_X64)
+/* Scale applied to 2D pictures and text as they are queued. The console sets it
+ * while it draws, so that it stays readable above 1080 lines; 1 everywhere else. */
+static float s_cmd2DScale = 1.0f;
+
+void R_SetCmd2DScale(float scale)
+{
+    s_cmd2DScale = scale > 0.0f ? scale : 1.0f;
+}
+#endif
+
 void R_BeginFrame(void)
 {
+#if defined(COD2_X64)
+    s_cmd2DScale = 1.0f;
+#endif
     R_BeginFrame_impl();
 }
 
@@ -844,6 +858,12 @@ void R_AddCmdDrawStretchPic(float x, float y, float w, float h, float s0, float 
         return;
     }
 
+#if defined(COD2_X64)
+    x *= s_cmd2DScale;
+    y *= s_cmd2DScale;
+    w *= s_cmd2DScale;
+    h *= s_cmd2DScale;
+#endif
     cmd->material = material;
     cmd->x = x;
     cmd->y = y;
@@ -938,6 +958,12 @@ void R_AddCmdDrawTextWithCursor(const char *text, int maxChars, FontHandle font,
         return;
     }
 
+#if defined(COD2_X64)
+    x *= s_cmd2DScale;
+    y *= s_cmd2DScale;
+    xScale *= s_cmd2DScale;
+    yScale *= s_cmd2DScale;
+#endif
     cmd->x = x;
     cmd->y = y;
     cmd->font = font;
