@@ -161,7 +161,7 @@ IDirect3DVertexBuffer9 *R_CreateWorldVertexBuffer(GfxWorldVertex *vertices, int 
         }
     }
 
-#if COD2_APPLE_SDK
+#if COD2_APPLE_SDK && !COD2_WIN32_D3D9
     /* World vertex colours are Direct3D colours, blue first in memory, as in
      * the map file. The draw path hands these two vertex layouts to OpenGL
      * as red first without converting them per draw, so the copy that goes

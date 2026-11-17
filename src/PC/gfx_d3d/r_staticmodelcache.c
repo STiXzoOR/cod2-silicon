@@ -97,7 +97,7 @@ void R_InitStaticModelCache(void)
     do {
         device = ((DxGlobals *)imp_dx)->device;
         vtable = *(void ***)device;
-#if defined(COD2_X64) && defined(__APPLE__)
+#if defined(COD2_X64) && defined(__APPLE__) && !COD2_WIN32_D3D9
         /* The Mac shim uses this private bit to allocate its dirty-block cache. */
         R_LOG("dx.device->CreateVertexBuffer( size, (0x00000200L) | (0x00000008L), 0, D3DPOOL_DEFAULT, &dx.smodelCacheVb, 0 )\n");
         ((HRESULT(D3DVTCC *)(void *, int, int, int, int, void **, void *))vtable[0x68 / 4])(
@@ -866,10 +866,15 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
                 {
                     byte *srcColor = skinVerts + i * 0x40 + 0xc;
                     byte *dstColor = dst + i * 0x40 + 0x18;
+#if COD2_WIN32_D3D9
+                    /* Model colours are blue first, which is what Direct3D reads. */
+                    memcpy(dstColor, srcColor, 4);
+#else
                     dstColor[0] = srcColor[3];
                     dstColor[1] = srcColor[0];
                     dstColor[2] = srcColor[1];
                     dstColor[3] = srcColor[2];
+#endif
                 }
 
                 *(int *)(dst + i * 0x40 + 0x1c) = *(int *)(skinVerts + i * 0x40 + 0x1c);
@@ -917,11 +922,15 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
 
                     memcpy(dst2, src2, 12);
 
+#if COD2_WIN32_D3D9
+                    memcpy(dst2 + 0x18, src2 + 0x18, 4);
+#else
                     {
                         void **ccvt = *(void ***)colorConverter;
                         ((void(D3DVTCC *)(void *, void *, void *))ccvt[0])(colorConverter,
                                                                            dst2 + 0x18, src2 + 0x18);
                     }
+#endif
 
                     memcpy(dst2 + 0xc, src2 + 0xc, 8);
                     memcpy(dst2 + 0x10, src2 + 0x10, 8);

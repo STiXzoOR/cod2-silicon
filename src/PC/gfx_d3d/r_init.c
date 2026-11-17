@@ -899,6 +899,11 @@ extern double sin(double);
 extern int R_CheckDxCaps(const D3DCAPS9 *caps);
 extern void RB_InitSceneViewport(void);
 #endif
+#if COD2_WIN32_D3D9
+extern void *Win_D3D9_Direct3DCreate9(void);
+extern void *Win_D3D9_PrepareWindow(int width, int height, int fullscreen, int refresh);
+extern void Win_D3D9_PresentParameters(const int *words, void *window, void *out);
+#endif
 #if defined(COD2_X64) && COD2_APPLE_SDK
 static void R_InitNativeDeviceCaps(void)
 {
@@ -1148,7 +1153,11 @@ static Bool R_InitNativeHardware(void)
 
     if (!dx.d3d9) {
         ri.Printf(0, "Getting Direct3D 9 interface...\n");
+#if COD2_WIN32_D3D9
+        dx.d3d9 = (IDirect3D9 *)Win_D3D9_Direct3DCreate9();
+#else
         dx.d3d9 = (IDirect3D9 *)Direct3DCreate9(0x20);
+#endif
         if (!dx.d3d9) {
             ri.Printf(0, "Direct3D 9 failed to initialize\n");
             R_FatalInitError("Couldn't initialize renderer");
@@ -1203,7 +1212,15 @@ static Bool R_InitNativeHardware(void)
         parameters[8] = 0x4b;
         parameters[11] = r_swapInterval->current.enabled ? 1 : (int)0x80000000u;
         parameters[12] = fullscreen ? refresh : 0;
+#if COD2_WIN32_D3D9
+        /* Windows 1.3 creates its window, then the device on it. */
+        HWND window = (HWND)Win_D3D9_PrepareWindow(width, height, fullscreen, refresh);
+        void *presentation[16]; /* D3DPRESENT_PARAMETERS, 64 bytes on x86_64 */
+        Win_D3D9_PresentParameters(parameters, window, presentation);
+        hr = window ? R_CreateDevice_impl(window, 0x40, presentation) : (HRESULT)0x8876086c;
+#else
         hr = R_CreateDevice_impl(NULL, 0x40, parameters);
+#endif
         if (hr >= 0) {
             /* Unlike AGL, SDL creates the current GL context in CreateDevice.
              * Query its capabilities before any renderer resources use them. */
@@ -1219,7 +1236,11 @@ static Bool R_InitNativeHardware(void)
             if (R_CreateForInitOrReset()) {
                 ri.Dvar_ClearModified(r_gamma);
                 R_InitSystems();
+#if COD2_WIN32_D3D9
+                dx.windows[0].hwnd = window;
+#else
                 dx.windows[0].hwnd = (HWND)MacDisplay_GetMainWindow();
+#endif
                 dx.windows[0].width = width;
                 dx.windows[0].height = height;
                 dx.windowCount = 1;
@@ -1579,7 +1600,13 @@ aa_done:;
     d3dDevice = (void *)dx.device;
     vtable = *(void ***)d3dDevice;
     typedef HRESULT(D3DVTCC * Reset_fn)(void *, void *);
+#if COD2_WIN32_D3D9
+    void *presentation[16]; /* D3DPRESENT_PARAMETERS, 64 bytes on x86_64 */
+    Win_D3D9_PresentParameters(d3dpp, dx.windows[0].hwnd, presentation);
+    hr = ((Reset_fn)vtable[16])(d3dDevice, presentation);
+#else
     hr = ((Reset_fn)vtable[16])(d3dDevice, d3dpp);
+#endif
 
     if (hr < 0) {
 #if defined(COD2_X64)

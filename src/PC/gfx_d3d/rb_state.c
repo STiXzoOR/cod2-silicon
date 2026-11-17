@@ -1092,6 +1092,8 @@ void RB_SetRenderTarget(GfxRenderTargetId newTargetId)
     RB_SetRenderTargetSurfaceDx7(renderTarget->colorSurface);
     dxState.renderTargetSurface = renderTarget->colorSurface;
 
+#if !COD2_WIN32_D3D9
+    /* The OpenGL layer keeps these targets in the frame buffer's attachments. */
     switch (newTargetId) {
     case R_RENDERTARGET_FRAME_BUFFER:
         glDrawBuffer(0x405);
@@ -1116,6 +1118,7 @@ void RB_SetRenderTarget(GfxRenderTargetId newTargetId)
     default:
         break;
     }
+#endif
 
     g_RenderToShadowCookie = (newTargetId == R_RENDERTARGET_SHADOWCOOKIE);
     dxState.viewportBehavior = s_viewportBehaviorForRenderTarget[newTargetId];

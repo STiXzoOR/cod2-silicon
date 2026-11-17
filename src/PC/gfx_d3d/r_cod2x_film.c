@@ -5,6 +5,13 @@
 #include <string.h>
 #include <stdatomic.h>
 #include "Mac/Metal/metal_backend.h"
+#if COD2_MAC_D3D9
+/* The Direct3D 9 on Metal path has no OpenGL context, and this pass is drawn with
+ * OpenGL. Until it has a Direct3D 9 pass of its own it is off there, as on the
+ * shim's own Metal backend. */
+#undef MacShim_IsMetal
+#define MacShim_IsMetal() 1
+#endif
 
 extern refimport_t ri;
 extern void Com_Printf(const char *, ...);

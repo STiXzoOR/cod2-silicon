@@ -121,6 +121,7 @@ foreach(target cod2_macos cod2_macos_ded)
 endforeach()
 # vidConfig lives in the renderer, which the dedicated server does not build.
 target_link_options(cod2_macos PRIVATE "LINKER:-alias,_vidConfig,_r_limits_ptr")
+target_sources(cod2_macos PRIVATE src/platform/macos_frame_trace.c)
 target_sources(cod2_macos PRIVATE src/unix/linux_input.c src/platform/macos_display.c src/platform/macos_window.m
   src/platform/macos_rawmouse.m src/platform/macos_audio.c src/platform/macos_voice.c
   src/platform/macos_record.c src/platform/macos_microphone.m
@@ -143,6 +144,25 @@ target_link_libraries(cod2_macos PRIVATE SDL2::SDL2 ${COD2_OPENGL_FRAMEWORK} ${C
   ${COD2_AUDIO_FRAMEWORK} ${COD2_COREAUDIO_FRAMEWORK}
   ${COD2_GAMECONTROLLER_FRAMEWORK} ${COD2_FOUNDATION_FRAMEWORK}
   "-framework ImageIO" "-framework CoreGraphics" "-framework AppKit" "-framework AVFoundation")
+# The client can render through libd3d9metal (mtld3d's Direct3D 9 on Metal) with
+# the renderer's system-Direct3D-9 path, instead of the OpenGL device layer.
+# COD2_D3D9METAL_DIR holds include/ (d3d9metal.h, vkd3d_shader.h) and lib/.
+option(COD2_MAC_D3D9 "Client: render through libd3d9metal instead of OpenGL" OFF)
+if(COD2_MAC_D3D9)
+  if(NOT COD2_D3D9METAL_DIR)
+    message(FATAL_ERROR "COD2_MAC_D3D9 needs COD2_D3D9METAL_DIR")
+  endif()
+  target_sources(cod2_macos PRIVATE src/platform/mac_d3d9.c)
+  target_compile_definitions(cod2_macos PRIVATE COD2_WIN32_D3D9=1 COD2_MAC_D3D9=1)
+  set_property(SOURCE src/platform/mac_d3d9.c APPEND PROPERTY INCLUDE_DIRECTORIES "${COD2_D3D9METAL_DIR}/include")
+  target_link_libraries(cod2_macos PRIVATE "${COD2_D3D9METAL_DIR}/lib/libd3d9metal.dylib"
+    "${COD2_D3D9METAL_DIR}/lib/libvkd3d-shader.1.dylib" "-framework QuartzCore" "-framework Metal")
+  set_target_properties(cod2_macos PROPERTIES BUILD_RPATH "${COD2_D3D9METAL_DIR}/lib")
+  # The backend paces itself with Apple's OpenGL fences. There is no OpenGL context on
+  # this path, so they become always-finished stand-ins.
+  set_property(SOURCE src/PC/gfx_d3d/rb_backend.c APPEND PROPERTY COMPILE_DEFINITIONS
+    "glGenFencesAPPLE=MacD3D9_GenFences;glSetFenceAPPLE=MacD3D9_SetFence;glTestFenceAPPLE=MacD3D9_TestFence;glDeleteFencesAPPLE=MacD3D9_DeleteFences")
+endif()
 # The app layer of the client is built with and without CoD2x: launch links from
 # the launcher, the freeze watcher, crash reports in the game's home and the
 # first-launch setup.

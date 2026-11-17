@@ -122,6 +122,31 @@ void R_BeginCubemapShot(const int pixelWidthHeight, const int pixelBorder)
     } while (*(volatile int *)&alwaysfails != 0);
 }
 
+#if COD2_WIN32_D3D9
+/* The system device reads its back buffer through a system-memory copy. The
+ * result has the OpenGL readback's layout: top row first, red first. */
+static Bool R_GetFrontBufferData(int width, int height, int bytesPerPixel, byte *buffer)
+{
+    extern int Win_D3D9_ReadBackBuffer(void *device, int width, int height, byte *rgba);
+    byte *rgba;
+    int i;
+
+    if (bytesPerPixel != 3 && bytesPerPixel != 4)
+        return 0;
+    rgba = (byte *)malloc((size_t)width * height * 4);
+    if (!rgba)
+        return 0;
+    if (!Win_D3D9_ReadBackBuffer(dx->device, width, height, rgba)) {
+        ri.Printf(0, "R_GetFrontBufferData: couldn't read the back buffer (%dx%d)\n", width, height);
+        free(rgba);
+        return 0;
+    }
+    for (i = 0; i < width * height; i++)
+        memcpy(buffer + i * bytesPerPixel, rgba + i * 4, bytesPerPixel);
+    free(rgba);
+    return 1;
+}
+#else
 static Bool R_GetFrontBufferData(int width, int height, int bytesPerPixel, byte *buffer)
 {
     int rowBytes;
@@ -297,6 +322,7 @@ static Bool R_GetFrontBufferData(int width, int height, int bytesPerPixel, byte 
     free(tempBuffer);
     return 0;
 }
+#endif
 
 void R_EndCubemapShot(const CubemapShot shotIndex)
 {

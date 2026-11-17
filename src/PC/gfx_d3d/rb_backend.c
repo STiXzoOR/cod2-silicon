@@ -922,7 +922,28 @@ static void RB_EndFrame_real(void)
         lastFrameEnd = t1;
     } else
 #endif
+#if COD2_WIN32_D3D9
+    {
+        /* The OpenGL device's Present takes a queued screenshot; this is the same point. */
+        extern void R_CapturePendingScreenshotBeforePresent(void);
+        R_CapturePendingScreenshotBeforePresent();
+#if defined(__APPLE__) && defined(COD2_X64)
+        {
+            extern void MacFrameTrace_PresentBegin(void);
+            MacFrameTrace_PresentBegin();
+        }
+#endif
         hr = ((HRESULT(D3DVTCC *)(void *, void *, void *, void *, void *))(vtable[0x44 / 4]))(device, NULL, NULL, NULL, NULL);
+    }
+#else
+        hr = ((HRESULT(D3DVTCC *)(void *, void *, void *, void *, void *))(vtable[0x44 / 4]))(device, NULL, NULL, NULL, NULL);
+#endif
+#if defined(__APPLE__) && defined(COD2_X64)
+    {
+        extern void MacFrameTrace_Mark(void);
+        MacFrameTrace_Mark();
+    }
+#endif
 
     if (hr < 0) {
         if (hr != (HRESULT)0x88760868) {

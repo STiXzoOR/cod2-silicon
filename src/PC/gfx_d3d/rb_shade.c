@@ -2236,7 +2236,12 @@ void RB_EndSurface(void)
 
     {
         uintptr_t ts = (uintptr_t)material->techniqueSet;   /* was unsigned int -> truncated ptr on x64 */
+#if COD2_WIN32_D3D9
+        /* With d3d9.dll loaded, Windows can place the material heap below 128 MB. */
+        if (!ts) {
+#else
         if (!ts || ts < 0x08000000u) {
+#endif
             COD2_DEBUG_ONLY(g_rb_endsurface_notechnique++;)
             goto cleanup;
         }

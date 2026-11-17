@@ -891,7 +891,12 @@ static Bool MATERIAL_REGPARM3_ABI Material_SetPassShaderArguments_impl(const cha
 #endif
     float literal[4];
 
+#if COD2_WIN32_D3D9
+    extern HRESULT Win_D3D9_GetShaderConstantTable(const void *function, void **table);
+    hr = Win_D3D9_GetShaderConstantTable((const void *)((const MaterialShader *)mtlShader)->program, &constants);
+#else
     hr = D3DXGetShaderConstantTable((const void *)((const MaterialShader *)mtlShader)->program, &constants);   /* was *(void**)(mtlShader+4) (x86 program offset) */
+#endif
     if (hr < 0) {
         Com_ScriptWarning("Couldn't get the constant table: %s (%08x)\n",
                           R_ErrorDescription(hr), hr);
@@ -1892,6 +1897,13 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
             hr = D3DXCompileShader((const char *)fileData, fileSize, realDefs, includeObj,
                                    entryPoint, target, compileFlags, &shaderBlob, &messages, NULL);
         }
+#elif COD2_WIN32_D3D9
+        /* The system device takes the bytecode compiled from the game's HLSL, as on Windows. */
+        extern HRESULT Win_D3D9_CompileShader(const char *source, int length, const char *name, const char *entry,
+                                              const char *target, void **shader, void **messages);
+        (void)sourceName;
+        hr = Win_D3D9_CompileShader((const char *)fileData, fileSize, filename, entryPoint, target,
+                                    &shaderBlob, &messages);
 #elif COD2_APPLE_SDK
         extern HRESULT MacD3DXCompileShader(const char *name, const char *source, UINT length, const char *profile,
                                             void **shader, void **messages);

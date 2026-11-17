@@ -524,6 +524,11 @@ GfxWorld *R_LoadWorldInternal(const char *name)
 
                 if (0) {
 
+#elif COD2_WIN32_D3D9
+                /* The system device runs the game's shaders, which read all four
+                 * planes; only Direct3D 7 draws the combined RGB image. */
+                if (rendererInUse == 2) {
+
 #elif COD2_APPLE_SDK
                 /* Packed directional coefficients are only colors after the ARB
                  * shader combines all four planes. Keep the RGB approximation
