@@ -452,6 +452,14 @@ void R_RegisterDvars(void)
      * million pixels of effects a frame has time for at 250 frames a second. */
     ri.Dvar_RegisterInt("r_fxLayer", 1, 0, 4, 0x1);
     ri.Dvar_RegisterInt("r_fxLayerBudget", 50, 1, 1000, 0x1);
+    /* With anti-aliasing on, draw the scene into a multisampled target of its own and
+     * everything after it onto the resolved picture (rb_scenetarget.c). 0 draws all of
+     * it into a multisampled back buffer, as Direct3D 9 does. Takes a vid_restart. */
+    ri.Dvar_RegisterInt("r_sceneTarget", 1, 0, 1, 0x1);
+    /* Glow reads which pixels are sky from the depth buffer when the scene is done,
+     * instead of from a copy of the scene made in the middle of it (rb_fxlayer.c:
+     * RB_ScreenPass_NonSkyAlpha). 0 makes the copy every frame, as the game does. */
+    ri.Dvar_RegisterInt("r_glowSkyFromDepth", 1, 0, 1, 0x1);
 #endif
 
     r_lockPvs = ri.Dvar_RegisterBool("r_lockPvs", 0, 0x2080);

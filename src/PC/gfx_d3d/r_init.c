@@ -220,7 +220,9 @@ static void R_ReleaseForShutdownOrReset(void)
 #if COD2_MAC_D3D9
     {
         extern void RB_FxLayer_Release(void);
+        extern void RB_SceneTarget_Release(void);
         RB_FxLayer_Release();
+        RB_SceneTarget_Release();
     }
 #endif
     R_ShutdownRenderTargets();

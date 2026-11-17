@@ -541,8 +541,16 @@ static void RB_SetRenderTargetCmd(GfxRenderCommandExecState *execState);
 static void RB_RenderDrawSurfList(GfxDrawSurf *drawSurfs, int drawSurfCount,
                                   MaterialTechniqueType techType, GfxDrawSurfOrder order);
 #if COD2_MAC_D3D9
+extern int RB_SceneTarget_InScene(void);
+extern int RB_SceneTarget_Select(int scene);
+extern void RB_SceneTarget_Resolve(void);
+static void RB_SceneTargetBind(int scene);
+static int rb_sceneResolved; /* this frame's scene is already in the back buffer */
+int rb_postSunUsed = 1;      /* something drew with the mid-scene copy of the scene (rb_shade.c) */
+static int rb_postSunFromDepth; /* this frame's glow has no such copy: see RB_ScreenPass_NonSkyAlpha */
 extern int RB_FxLayer_Wanted(void);
 extern void RB_FxLayer_DepthOnly(void *device, int on);
+static int rb_fxAlphaOnly; /* draw only the surfaces that blend into the frame buffer's alpha */
 static int rb_fxModelsOnly; /* the surface loop draws models only */
 #endif
 static void RB_DrawSurfsCmd(GfxRenderCommandExecState *execState);
@@ -931,6 +939,14 @@ static void RB_EndFrame_real(void)
     {
         /* The OpenGL device's Present takes a queued screenshot; this is the same point. */
         extern void R_CapturePendingScreenshotBeforePresent(void);
+#if COD2_MAC_D3D9
+        /* A scene that never reached its late post effects is resolved here. */
+        if (RB_SceneTarget_InScene()) {
+            RB_SceneTarget_Resolve();
+            RB_SceneTargetBind(0);
+        }
+        rb_sceneResolved = 0;
+#endif
         R_CapturePendingScreenshotBeforePresent();
 #if defined(__APPLE__) && defined(COD2_X64)
         {
@@ -1800,6 +1816,32 @@ static void RB_SetViewportCmd(GfxRenderCommandExecState *execState)
     execState->cmd = (const void *)((byte *)cmd + cmd->header.byteCount);
 }
 
+#if COD2_MAC_D3D9
+/* The frame buffer becomes the scene's own multisampled target (1) or the device's
+ * back buffer (0); see rb_scenetarget.c. Entering the scene clears all of it, so the
+ * graphics chip has nothing of the last frame to read back in. */
+static void RB_SceneTargetBind(int scene)
+{
+    if (tess.indexCount || tess.optimizedIndexCount)
+        RB_EndSurface();
+    if (!RB_SceneTarget_Select(scene))
+        return;
+    if (!scene) {
+        rb_sceneResolved = 1;
+        if (dxState.renderTargetId != R_RENDERTARGET_FRAME_BUFFER)
+            return; /* bound the next time the frame buffer is */
+    }
+    if (dxState.renderTargetId == R_RENDERTARGET_FRAME_BUFFER)
+        dxState.renderTargetId = (GfxRenderTargetId)-1;
+    RB_SetRenderTarget(R_RENDERTARGET_FRAME_BUFFER);
+    if (scene) {
+        void *device = dx.device;
+        ((HRESULT (*)(void *, unsigned, const void *, unsigned, unsigned, float, unsigned))(*(void ***)device)[43])(
+            device, 0, NULL, 7, 0xff000000u, 1.0f, 0);
+    }
+}
+#endif
+
 static void RB_SetRenderTargetCmd(GfxRenderCommandExecState *execState)
 {
     byte *cmd = (byte *)execState->cmd;
@@ -1810,6 +1852,12 @@ static void RB_SetRenderTargetCmd(GfxRenderCommandExecState *execState)
 #if defined(COD2_X64)
     int copiedShadows = dxState.renderTargetId == R_RENDERTARGET_DYNAMICSHADOWS &&
         ((GfxCmdSetRenderTarget *)cmd)->renderTargetId == R_RENDERTARGET_FRAME_BUFFER;
+#endif
+#if COD2_MAC_D3D9
+    /* Only the scene's own commands select the frame buffer this way: the scene begins.
+     * Once it has been resolved, anything more this frame goes onto the resolved picture. */
+    if (((GfxCmdSetRenderTarget *)cmd)->renderTargetId == R_RENDERTARGET_FRAME_BUFFER && !rb_sceneResolved)
+        RB_SceneTargetBind(1);
 #endif
     RB_SetRenderTarget(((GfxCmdSetRenderTarget *)cmd)->renderTargetId);
 #if defined(COD2_X64)
@@ -1893,6 +1941,8 @@ sort_changed:
     R_DecomposeSort(sortKey, &entityIndex, &material, &lightmap);
 #if COD2_MAC_D3D9
     /* The second float-Z pass, for the effects layer: models only (rb_fxlayer.c). */
+    if (rb_fxAlphaOnly && material && !(material->stateBits[0] & 0x10000000))
+        goto ignore_surf;
     if (rb_fxModelsOnly && material &&
         !(entityIndex == 0x7ff ||
           (entityIndex <= 0x7fd && backEnd.sceneDef.entities[entityIndex].reType <= 2 &&
@@ -2241,7 +2291,8 @@ static int RB_SurfInFxLayer(const GfxDrawSurf *drawSurf)
 static void RB_RenderDrawSurfListFxLayer(GfxDrawSurf *drawSurfs, int drawSurfCount, MaterialTechniqueType techType,
                                          GfxDrawSurfOrder order)
 {
-    extern void RB_FxLayer_Frame(void *device);
+    extern void RB_FxLayer_Frame(void *device, int skyOnlyAlpha);
+    extern void RB_FxLayer_AlphaBegin(void);
     extern int RB_FxLayer_Begin(void *device, int sceneDepthValid);
     extern int R_UseZFeather(void);
     extern void RB_FxLayer_End(void);
@@ -2264,17 +2315,31 @@ static void RB_RenderDrawSurfListFxLayer(GfxDrawSurf *drawSurfs, int drawSurfCou
         RB_RenderDrawSurfList(drawSurfs, drawSurfCount, techType, order);
         return;
     }
-    RB_FxLayer_Frame(dx.device);
+    RB_FxLayer_Frame(dx.device, rb_postSunFromDepth);
     while (first < drawSurfCount) {
         int inLayer = RB_SurfInFxLayer(&drawSurfs[first]);
         int end = first + 1;
         while (end < drawSurfCount && RB_SurfInFxLayer(&drawSurfs[end]) == inLayer)
             end++;
-        if (inLayer)
-            RB_FxLayer_Begin(dx.device, R_UseZFeather());
-        RB_RenderDrawSurfList(drawSurfs + first, end - first, techType, order);
-        if (inLayer)
+        if (inLayer) {
+            int held = RB_FxLayer_Begin(dx.device, R_UseZFeather()), i, blendsAlpha = 0;
+            RB_RenderDrawSurfList(drawSurfs + first, end - first, techType, order);
+            for (i = first; held && i < end && !blendsAlpha; i++) {
+                const Material *material;
+                int entityIndex, lightmap;
+                R_DecomposeSort(drawSurfs[i].sort, &entityIndex, &material, &lightmap);
+                blendsAlpha = material && (material->stateBits[0] & 0x10000000) != 0;
+            }
+            if (blendsAlpha) {
+                RB_FxLayer_AlphaBegin();
+                rb_fxAlphaOnly = 1;
+                RB_RenderDrawSurfList(drawSurfs + first, end - first, techType, order);
+                rb_fxAlphaOnly = 0;
+            }
             RB_FxLayer_End();
+        } else {
+            RB_RenderDrawSurfList(drawSurfs + first, end - first, techType, order);
+        }
         first = end;
     }
 }
@@ -2699,7 +2764,24 @@ static void RB_ApplyEarlyPostEffectsCmd(GfxRenderCommandExecState *execState)
 
     needCopy = r_distortion->current.enabled;
 
+#if COD2_MAC_D3D9
+    /* The copy made here costs a trip out of the frame buffer and back, so it is made
+     * only for those who draw with it. Distortion (heat haze and the like) gets it while
+     * something is drawing with it: a surface that finds no copy is left out, as the
+     * game does anyway, and has one from the next frame on. Glow reads the copy's alpha
+     * alone, and gets that from the depth buffer instead. */
+    if (ri.Dvar_GetInt("r_glowSkyFromDepth")) {
+        needCopy = needCopy && rb_postSunUsed;
+        rb_postSunUsed = 0;
+        rb_postSunFromDepth = !needCopy && r_rendererInUse->current.integer != 2 && dxg->hasSeparateAlphaBlend &&
+                              RB_DVAR(imp_r_glow)->current.enabled && !RB_DVAR(imp_r_fullbright)->current.enabled;
+    } else {
+        rb_postSunFromDepth = 0;
+    }
+    if (!needCopy && !rb_postSunFromDepth) {
+#else
     if (!needCopy) {
+#endif
 
         int isDx7 = r_rendererInUse->current.integer == 2;
         if (!isDx7 && dxg->hasSeparateAlphaBlend) {
@@ -4473,6 +4555,14 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
             needCopy = 1;
     }
 
+#if COD2_MAC_D3D9
+    if (rb_postSunFromDepth && needCopy && frameBufferTarget == R_RENDERTARGET_FRAME_BUFFER) {
+        extern void RB_ScreenPass_NonSkyAlpha(void *device, unsigned width, unsigned height);
+        RB_ScreenPass_NonSkyAlpha(dxg->device, (unsigned)dxs->renderTargetWidth, (unsigned)dxs->renderTargetHeight);
+    } else {
+        rb_postSunFromDepth = 0;
+    }
+#endif
     if (needCopy) {
         char *dx = (char *)dx_g;
         void *offscreenImage = ((DxGlobals *)dx)->renderTargets[2].image;
@@ -4487,6 +4577,17 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
                  vtable[0x88 / 4])(device, backBuffer, NULL, imageSurface, NULL, 2);
         } while (*(volatile int *)&alwaysfails);
 
+#if COD2_MAC_D3D9
+        /* The scene ends here. Its resolved picture goes into the back buffer, and what
+         * follows is drawn on that. */
+        if (frameBufferTarget == R_RENDERTARGET_FRAME_BUFFER && RB_SceneTarget_InScene()) {
+            extern void RB_ScreenPass_Copy(void *device, void *texture, unsigned width, unsigned height);
+            RB_SceneTargetBind(0);
+            RB_ScreenPass_Copy(dxg->device, ((GfxImage *)offscreenImage)->texture.map, (unsigned)dxs->renderTargetWidth,
+                               (unsigned)dxs->renderTargetHeight);
+        }
+#endif
+
         do {
             R_LOG("imageSurface->Release()\n");
             ((HRESULT(__attribute__((stdcall)) *)(void *))((*(void ***)imageSurface)[2]))(imageSurface);
@@ -4494,6 +4595,12 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
 
         backEnd.resolvedSceneTarget = (GfxRenderTargetId)(2);
     }
+#if COD2_MAC_D3D9
+    else if (frameBufferTarget == R_RENDERTARGET_FRAME_BUFFER && RB_SceneTarget_InScene()) {
+        RB_SceneTarget_Resolve();
+        RB_SceneTargetBind(0);
+    }
+#endif
 
     if (hasGlowSupport && r_glow->current.enabled &&
         !r_fullbright->current.enabled) {
@@ -4546,7 +4653,20 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
             backEnd.glowIndexFirst = glowAxisCount;
 #endif
             *(int *)imp_g_TotalFilterPasses = 0;
+#if COD2_MAC_D3D9
+            {
+                /* Glow's own set-up pass reads the copy too; it is not what the copy waits for. */
+                int postSunUsed = rb_postSunUsed;
+                if (rb_postSunFromDepth)
+                    backEnd.resolvedPostSunTarget = backEnd.resolvedSceneTarget;
+                RB_GlowFilterImage((float *)(glowRadii));
+                if (rb_postSunFromDepth)
+                    backEnd.resolvedPostSunTarget = (GfxRenderTargetId)(0xe);
+                rb_postSunUsed = postSunUsed;
+            }
+#else
             RB_GlowFilterImage( (float *)(glowRadii));
+#endif
         }
 
         RB_SetRenderTarget(0);

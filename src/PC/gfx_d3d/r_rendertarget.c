@@ -452,5 +452,22 @@ void R_InitRenderTargets(void)
     R_InitFullscreenRenderTargetImage(7, 2, backBufferFormat, RENDERTARGET_USAGE_RENDER,
                                       (GfxRenderTarget *)&((DxGlobals *)dxPtr)->renderTargets[12].image);
 
+#if COD2_MAC_D3D9
+    /* With anti-aliasing the scene gets a multisampled target of its own
+     * (rb_scenetarget.c); the frame buffer set up above is then the resolved picture. */
+    {
+        extern int RB_SceneTarget_Create(void *device, void **colorSlot, void **depthSlot, int width, int height,
+                                         unsigned format, unsigned samples, unsigned quality);
+        DxGlobals *globals = (DxGlobals *)DX();
+        GfxRenderTarget *frameBuffer = &globals->renderTargets[R_RENDERTARGET_FRAME_BUFFER];
+        if (!RB_SceneTarget_Create(globals->device, (void **)&frameBuffer->colorSurface,
+                                   (void **)&frameBuffer->depthStencilSurface, frameBuffer->width, frameBuffer->height,
+                                   (unsigned)globals->backBufferFormat, (unsigned)globals->multiSampleType,
+                                   (unsigned)globals->multiSampleQuality))
+            Com_Error(0, "Couldn't create a %i x %i multisampled render target\n", frameBuffer->width,
+                      frameBuffer->height);
+    }
+#endif
+
     return;
 }

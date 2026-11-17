@@ -137,6 +137,8 @@ void *Win_D3D9_PrepareWindow(int width, int height, int fullscreen, int refresh)
 
 /* D3DPRESENT_PARAMETERS as 64-bit Windows lays it out: the window handle sits in
  * the middle with pointer alignment. */
+extern int RB_SceneTarget_Wanted(void);
+
 typedef struct {
     uint32_t BackBufferWidth, BackBufferHeight, BackBufferFormat, BackBufferCount;
     uint32_t MultiSampleType, MultiSampleQuality, SwapEffect;
@@ -163,8 +165,12 @@ void Win_D3D9_PresentParameters(const int *words, void *window, void *out)
     parameters->BackBufferHeight = (uint32_t)words[1];
     parameters->BackBufferFormat = (uint32_t)words[2];
     parameters->BackBufferCount = (uint32_t)words[3];
-    parameters->MultiSampleType = (uint32_t)words[4];
-    parameters->MultiSampleQuality = (uint32_t)words[5];
+    /* With a scene target (rb_scenetarget.c) the samples live there, and the back
+     * buffer has one per pixel. */
+    if (!RB_SceneTarget_Wanted()) {
+        parameters->MultiSampleType = (uint32_t)words[4];
+        parameters->MultiSampleQuality = (uint32_t)words[5];
+    }
     parameters->SwapEffect = (uint32_t)words[6];
     parameters->hDeviceWindow = window;
     parameters->Windowed = 0;

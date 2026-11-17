@@ -2275,6 +2275,12 @@ void RB_EndSurface(void)
 
     techFlags = technique->flags;
     if (techFlags & 1) {
+#if COD2_MAC_D3D9
+        {
+            extern int rb_postSunUsed; /* rb_backend.c makes the copy while it is drawn with */
+            rb_postSunUsed = 1;
+        }
+#endif
         if (backEnd->resolvedPostSunTarget == 0xe) {
             COD2_DEBUG_ONLY(g_rb_endsurface_flag1skip++;)
             COD2_DEBUG_ONLY(RB_X64TraceEndSurface("skip-flag1", material, technique, (const materialCommands_t *)tess);)

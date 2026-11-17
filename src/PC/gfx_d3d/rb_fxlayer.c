@@ -46,10 +46,18 @@
  *   long to turn the unmarked samples away as it does to draw them.)
  *
  * - Only blends the target can hold go into it: source ZERO, ONE or SRCALPHA
- *   against destination ZERO, ONE or INVSRCALPHA, colour only. A material that
- *   also writes the frame buffer's alpha (which glow reads), writes depth or
- *   uses the stencil buffer is drawn as it always was. Without the float-Z
+ *   against destination ZERO, ONE or INVSRCALPHA. A material that writes depth
+ *   or uses the stencil buffer is drawn as it always was. Without the float-Z
  *   prepass (r_zFeather 0) there is no scene depth and the layer is not used.
+ *
+ * - Some smoke also blends into the frame buffer's alpha, which glow reads to
+ *   tell sky from everything else. Each such sprite leaves alpha as
+ *   alpha * b + a, with a and b set by its blend. Those sprites are drawn a
+ *   second time into a target that keeps the two running totals (the product
+ *   of the b's in its colour, the sum in its alpha), and the frame buffer's
+ *   alpha is brought up to date from it in two blends. While glow takes the
+ *   world from the depth buffer (r_glowSkyFromDepth) only sky samples need
+ *   that, so only they get it.
  *
  * One more thing is done for speed alone. Smoke is drawn with an alpha test
  * that only skips pixels of no opacity at all (alpha greater than zero, under
@@ -136,6 +144,7 @@ typedef struct {
     void *colorTexture, *colorSurface;
     void *depthTexture, *depthSurface; /* the scene's depth at this size; level 0 uses the scene's own */
     void *reduceShader;                /* fills that depth from the scene's */
+    void *alphaTexture, *alphaSurface; /* what its sprites do to the frame buffer's alpha */
     void *markShader[2];               /* samples farther, and nearer, than the layer's depth */
     void *fixShader[2];                /* the layer's value for each of the two */
     unsigned width, height;
@@ -154,6 +163,12 @@ static unsigned s_samples;              /* samples per pixel of the frame buffer
 static void *s_savedColor, *s_savedDepth;
 static Viewport s_viewport;             /* what the engine last asked for, at full size */
 /* The count of pixels the effects cover. */
+static void *s_opaqueShader; /* writes 1 to every channel it may */
+static void *s_redShader;    /* a texture's red channel in every channel */
+static int s_alphaPass;      /* the sprites that blend into alpha are being drawn a second time */
+static int s_alphaDrawn;     /* ...and the frame buffer's alpha is owed the result */
+static int s_skyOnlyAlpha;   /* this frame only sky samples need it */
+static DWORD s_destBlend;    /* DESTBLEND as the engine wants it */
 static void *s_query;
 static int s_queryPending, s_queryMode, s_measuring;
 static double s_fill;                   /* frame buffer pixels, as last counted */
@@ -208,6 +223,8 @@ static void ReleaseLayers(void)
         Release(&layer->colorTexture);
         Release(&layer->depthSurface);
         Release(&layer->depthTexture);
+        Release(&layer->alphaSurface);
+        Release(&layer->alphaTexture);
         Release(&layer->reduceShader);
         Release(&layer->markShader[0]);
         Release(&layer->markShader[1]);
@@ -224,6 +241,9 @@ void RB_FxLayer_Release(void)
     Release(&s_sceneDepthSurface);
     Release(&s_sceneDepthTexture);
     Release(&s_query);
+    Release(&s_opaqueShader);
+    Release(&s_redShader);
+    s_alphaPass = s_alphaDrawn = 0;
     s_active = s_depthOnly = s_queryPending = s_measuring = 0;
     s_fill = 0.0;
     s_mode = DIRECT;
@@ -404,7 +424,19 @@ static Layer *GetLayer(int level)
                                                          FORMAT_A16B16G16R16, 0, &layer->colorTexture, NULL) < 0)
         CALL(CreateTextureFn, device, DEV_CreateTexture)(device, layer->width, layer->height, 1, USAGE_RENDERTARGET,
                                                          FORMAT_A8R8G8B8, 0, &layer->colorTexture, NULL);
-    if (!layer->colorTexture ||
+    if (layer->colorTexture) {
+        SurfaceDesc desc;
+        void *surface = NULL;
+        memset(&desc, 0, sizeof(desc));
+        if (CALL(GetSurfaceFn, layer->colorTexture, TEX_GetSurfaceLevel)(layer->colorTexture, 0, &surface) >= 0) {
+            CALL(GetDescFn, surface, SURF_GetDesc)(surface, &desc);
+            Release(&surface);
+        }
+        if (CALL(CreateTextureFn, device, DEV_CreateTexture)(device, layer->width, layer->height, 1, USAGE_RENDERTARGET,
+                                                             desc.Format, 0, &layer->alphaTexture, NULL) >= 0)
+            CALL(GetSurfaceFn, layer->alphaTexture, TEX_GetSurfaceLevel)(layer->alphaTexture, 0, &layer->alphaSurface);
+    }
+    if (!layer->colorTexture || !layer->alphaSurface ||
         CALL(GetSurfaceFn, layer->colorTexture, TEX_GetSurfaceLevel)(layer->colorTexture, 0, &layer->colorSurface) < 0 ||
         (level && (!CreateDepth(device, layer->width, layer->height, &layer->depthTexture, &layer->depthSurface) ||
                    !(layer->reduceShader = ReduceShader(level)))) ||
@@ -506,16 +538,21 @@ static void PassTexture(DWORD unit, void *texture, DWORD filter)
                                                         i == 2 || i == 3 ? filter : values[i]);
 }
 
-/* The rectangle x, y, w, h of the bound target, reading u0, v0 to u1, v1. */
-static void PassDraw(float x, float y, float w, float h, float u0, float v0, float u1, float v1)
+/* The rectangle x, y, w, h of the bound target at depth z, reading u0, v0 to u1, v1. */
+static void PassDrawAt(float z, float x, float y, float w, float h, float u0, float v0, float u1, float v1)
 {
     QuadVertex quad[4];
     float x0 = x - 0.5f, y0 = y - 0.5f, x1 = x0 + w, y1 = y0 + h;
-    quad[0] = (QuadVertex){ x0, y0, 0.0f, 1.0f, u0, v0 };
-    quad[1] = (QuadVertex){ x1, y0, 0.0f, 1.0f, u1, v0 };
-    quad[2] = (QuadVertex){ x0, y1, 0.0f, 1.0f, u0, v1 };
-    quad[3] = (QuadVertex){ x1, y1, 0.0f, 1.0f, u1, v1 };
+    quad[0] = (QuadVertex){ x0, y0, z, 1.0f, u0, v0 };
+    quad[1] = (QuadVertex){ x1, y0, z, 1.0f, u1, v0 };
+    quad[2] = (QuadVertex){ x0, y1, z, 1.0f, u0, v1 };
+    quad[3] = (QuadVertex){ x1, y1, z, 1.0f, u1, v1 };
     CALL(DrawUpFn, s_device, DEV_DrawPrimitiveUP)(s_device, 5, 2, quad, sizeof(QuadVertex)); /* triangle strip */
+}
+
+static void PassDraw(float x, float y, float w, float h, float u0, float v0, float u1, float v1)
+{
+    PassDrawAt(0.0f, x, y, w, h, u0, v0, u1, v1);
 }
 
 /* The engine's viewport on the frame buffer, reading the same part of a texture whose
@@ -550,6 +587,57 @@ static void PassEnd(Saved *saved)
         SetState(passStates[i], saved->states[i]);
     /* DrawPrimitiveUP leaves stream 0 unset; make the engine's record agree. */
     RB_ClearAllStreamSources();
+}
+
+/* Glow tells sky from everything else by the frame buffer's alpha: the sky leaves it
+ * at nothing, the world writes it. Effects drawn later can lower it again, so the game
+ * keeps a copy of the scene from before them and takes the greater of the two alphas.
+ * Making that copy means leaving the frame buffer in mid-scene, which on this kind of
+ * graphics chip writes every sample of it out to memory and reads it back in.
+ *
+ * The same answer is in the depth buffer, which only the world writes: this pass, run
+ * when the scene is complete, sets alpha to 1 wherever anything nearer than the far
+ * plane was drawn, sample by sample, without leaving the frame buffer. Glow then reads
+ * one picture for both. (rb_backend.c: r_glowSkyFromDepth.) */
+void RB_ScreenPass_NonSkyAlpha(void *device, unsigned width, unsigned height)
+{
+    Saved saved;
+
+    s_device = device;
+    if (!s_opaqueShader)
+        s_opaqueShader = CompileShader("screenpass_opaque", "float4 main() : COLOR0 { return float4(1.0, 1.0, 1.0, 1.0); }\n");
+    if (!s_opaqueShader)
+        return;
+    PassBegin(&saved);
+    SetState(RS_ZENABLE, 1);
+    SetState(RS_ZFUNC, CMP_GREATER); /* the far plane lies beyond whatever was drawn here */
+    SetState(RS_ALPHABLENDENABLE, 0);
+    SetState(RS_COLORWRITEENABLE, 8); /* alpha alone */
+    CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_opaqueShader);
+    PassDrawAt(1.0f, 0.0f, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1.0f, 1.0f);
+    PassEnd(&saved);
+}
+
+/* All of `texture` onto the bound target of the same size, as it is. Drawn as the
+ * first thing on the back buffer in a frame, this costs less than a copy between the
+ * two: the graphics chip then has no old contents to read in before drawing on. */
+void RB_ScreenPass_Copy(void *device, void *texture, unsigned width, unsigned height)
+{
+    static const DWORD values[] = { 2, 2, 2, 2, 1, 1 }; /* select the texture; second stage off */
+    Saved saved;
+    unsigned i;
+
+    s_device = device;
+    PassBegin(&saved);
+    SetState(RS_ZENABLE, 0);
+    SetState(RS_ALPHABLENDENABLE, 0);
+    SetState(RS_COLORWRITEENABLE, 0xf);
+    CALL(SetObjectFn, device, DEV_SetPixelShader)(device, NULL);
+    for (i = 0; i < COUNT(passStages); i++)
+        CALL(SetStageFn, device, DEV_SetTextureStageState)(device, passStages[i][0], passStages[i][1], values[i]);
+    PassTexture(0, texture, 1);
+    PassDraw(0.0f, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1.0f, 1.0f);
+    PassEnd(&saved);
 }
 
 /* Fill the layer's smaller depth buffer from the scene's. The layer's colour target
@@ -635,6 +723,39 @@ static void Composite(void)
     }
     SetState(RS_STENCILPASS, OP_KEEP);
     SetState(RS_STENCILWRITEMASK, 0);
+}
+
+/* Bring the frame buffer's alpha up to date: times the product, plus the sum. */
+static void CompositeAlpha(void)
+{
+    static const DWORD values[] = { 2, 2, 2, 2, 1, 1 }; /* select the texture; second stage off */
+    void *device = s_device;
+    float w = (float)(s_layer->width << s_level), h = (float)(s_layer->height << s_level);
+    unsigned i;
+    int pass;
+
+    if (!s_redShader)
+        s_redShader = CompileShader("fxlayer_red", "sampler map : register(s0);\n"
+                                                   "float4 main(float2 uv : TEXCOORD0) : COLOR0 { return tex2D(map, uv).rrrr; }\n");
+    if (!s_redShader)
+        return;
+    /* Sky is what lies at the far plane, where nothing wrote depth. */
+    SetState(RS_ZENABLE, s_skyOnlyAlpha);
+    SetState(RS_ZFUNC, CMP_EQUAL);
+    SetState(RS_STENCILENABLE, 0);
+    SetState(RS_ALPHABLENDENABLE, 1);
+    SetState(RS_COLORWRITEENABLE, 8); /* alpha alone */
+    for (i = 0; i < COUNT(passStages); i++)
+        CALL(SetStageFn, device, DEV_SetTextureStageState)(device, passStages[i][0], passStages[i][1], values[i]);
+    PassTexture(0, s_layer->alphaTexture, s_level ? 2 : 1);
+    for (pass = 0; pass < 2; pass++) {
+        SetState(RS_SRCBLEND, pass ? BLEND_ONE : BLEND_ZERO);
+        SetState(RS_DESTBLEND, pass ? BLEND_ONE : BLEND_SRCALPHA);
+        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, pass ? NULL : s_redShader);
+        PassDrawAt(1.0f, (float)s_viewport.X, (float)s_viewport.Y, (float)s_viewport.Width, (float)s_viewport.Height,
+                   (float)s_viewport.X / w, (float)s_viewport.Y / h, (float)(s_viewport.X + s_viewport.Width) / w,
+                   (float)(s_viewport.Y + s_viewport.Height) / h);
+    }
 }
 
 /* Start counting the pixels drawn from here on, if the last count has been read. */
@@ -724,7 +845,9 @@ int RB_FxLayer_Active(void)
 int RB_FxLayer_Holds(unsigned stateBits0, unsigned stateBits1)
 {
     unsigned source = stateBits0 & 0xf, dest = (stateBits0 >> 4) & 0xf, op = (stateBits0 >> 8) & 7;
-    if (stateBits0 & 0x10000000) /* writes the frame buffer's alpha */
+    /* Blends into the frame buffer's alpha: held when alpha takes the colour's blend
+     * (no blend of its own), which the second target can follow. */
+    if ((stateBits0 & 0x10000000) && (stateBits0 & 0x07000000))
         return 0;
     if (stateBits1 & 0x41) /* writes depth, or uses the stencil buffer */
         return 0;
@@ -737,7 +860,7 @@ int RB_FxLayer_Holds(unsigned stateBits0, unsigned stateBits1)
 static void ApplyAlphaTest(void)
 {
     DWORD apply = s_alphaTest;
-    if (s_active && s_alphaFunc == CMP_GREATER && s_alphaRef == 0 && s_sourceBlend == BLEND_SRCALPHA)
+    if (s_active && !s_alphaPass && s_alphaFunc == CMP_GREATER && s_alphaRef == 0 && s_sourceBlend == BLEND_SRCALPHA)
         apply = 0;
     if (apply != s_alphaTestApplied) {
         s_alphaTestApplied = apply;
@@ -761,8 +884,9 @@ void RB_FxLayer_DepthOnly(void *device, int on)
 }
 
 /* Called before the emissive pass draws its effects: decides how. */
-void RB_FxLayer_Frame(void *device)
+void RB_FxLayer_Frame(void *device, int skyOnlyAlpha)
 {
+    s_skyOnlyAlpha = skyOnlyAlpha;
     s_mode = ChooseMode(device);
 }
 
@@ -803,6 +927,8 @@ int RB_FxLayer_Begin(void *device, int sceneDepthValid)
     s_alphaFunc = GetState(RS_ALPHAFUNC);
     s_alphaRef = GetState(RS_ALPHAREF);
     s_sourceBlend = GetState(RS_SRCBLEND);
+    s_destBlend = GetState(RS_DESTBLEND);
+    s_alphaPass = s_alphaDrawn = 0;
 
     CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, s_layer->colorSurface);
     if (s_level) {
@@ -828,6 +954,29 @@ int RB_FxLayer_Begin(void *device, int sceneDepthValid)
     return 1;
 }
 
+/* The run is drawn into the layer. Some of it also blends into the frame buffer's
+ * alpha: the caller now draws those sprites again, into the target that follows what
+ * they do to it. Colour holds the product of their destination factors and alpha the
+ * sum their source terms come to, under the blends the engine sets for each. */
+void RB_FxLayer_AlphaBegin(void)
+{
+    void *device = s_device;
+    Viewport scaled;
+
+    if (!s_active || s_alphaPass)
+        return;
+    CountEnd();
+    s_alphaPass = s_alphaDrawn = 1;
+    ApplyAlphaTest();
+    CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, s_layer->alphaSurface);
+    ScaleViewport(&s_viewport, &scaled);
+    CALL(ViewportFn, device, DEV_SetViewport)(device, &scaled);
+    CALL(ClearFn, device, DEV_Clear)(device, 0, NULL, 1, 0x00ffffffu, 1.0f, 0); /* product 1, sum 0 */
+    SetState(RS_SRCBLEND, BLEND_ZERO);
+    SetState(RS_SRCBLENDALPHA, s_sourceBlend);
+    SetState(RS_DESTBLENDALPHA, s_destBlend);
+}
+
 /* Called for every render state the engine sets while the layer is in use.
  * Returns 1 when the engine's value must not reach the device now. */
 int RB_FxLayer_RenderState(DWORD state, DWORD value)
@@ -843,7 +992,20 @@ int RB_FxLayer_RenderState(DWORD state, DWORD value)
     case RS_ALPHATESTENABLE: s_alphaTest = value; ApplyAlphaTest(); return 1;
     case RS_ALPHAFUNC: s_alphaFunc = value; ApplyAlphaTest(); return 0;
     case RS_ALPHAREF: s_alphaRef = value; ApplyAlphaTest(); return 0;
-    case RS_SRCBLEND: s_sourceBlend = value; ApplyAlphaTest(); return 0;
+    case RS_SRCBLEND:
+        s_sourceBlend = value;
+        ApplyAlphaTest();
+        if (!s_alphaPass)
+            return 0;
+        SetState(RS_SRCBLENDALPHA, value); /* colour keeps ZERO: it carries the product */
+        return 1;
+    case RS_DESTBLEND:
+        s_destBlend = value;
+        if (s_alphaPass) {
+            SetState(RS_DESTBLENDALPHA, value);
+            return 0;
+        }
+        break;
     default: break;
     }
     for (i = 0; i < COUNT(layerStates); i++)
@@ -878,6 +1040,10 @@ void RB_FxLayer_End(void)
     if (!s_active)
         return;
     s_active = 0;
+    if (s_alphaPass) {
+        s_alphaPass = 0;
+        SetState(RS_SRCBLEND, s_sourceBlend);
+    }
     ApplyAlphaTest();
     CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, s_savedColor);
     CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, s_savedDepth);
@@ -890,6 +1056,8 @@ void RB_FxLayer_End(void)
     PassBegin(&saved);
     Mark();
     Composite();
+    if (s_alphaDrawn)
+        CompositeAlpha();
     PassEnd(&saved);
 }
 #endif /* COD2_MAC_D3D9 */
