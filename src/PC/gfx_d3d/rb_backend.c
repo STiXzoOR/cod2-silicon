@@ -2410,6 +2410,7 @@ static int RB_SurfInFxLayer(const GfxDrawSurf *drawSurf)
 static void RB_DrawFxLayerRun(GfxDrawSurf *drawSurfs, int count, MaterialTechniqueType techType, GfxDrawSurfOrder order)
 {
     extern void RB_FxLayer_AlphaBegin(void);
+    extern int RB_FxLayer_FarBegin(void);
     int i, blendsAlpha = 0;
 
     RB_RenderDrawSurfList(drawSurfs, count, techType, order);
@@ -2425,6 +2426,8 @@ static void RB_DrawFxLayerRun(GfxDrawSurf *drawSurfs, int count, MaterialTechniq
         RB_RenderDrawSurfList(drawSurfs, count, techType, order);
         rb_fxAlphaOnly = 0;
     }
+    if (RB_FxLayer_FarBegin()) /* a smaller layer: once more, for how far its effects reach */
+        RB_RenderDrawSurfList(drawSurfs, count, techType, order);
 }
 
 /* Called when the float-Z prepass is done: draw the frame's effects into the layer now

@@ -158,6 +158,7 @@ typedef struct {
     void *fixShader[2];                /* the layer's value for each of the two */
     unsigned width, height;
     void *blendShader[3]; /* a smaller layer: BlendShader, by `pick` */
+    void *farTexture, *farSurface; /* a smaller layer: the farthest depth its effects reach in each texel */
     int failed;
 } Layer;
 
@@ -182,6 +183,8 @@ static DWORD s_destBlend;    /* DESTBLEND as the engine wants it */
 static void *s_query;
 static int s_queryPending, s_queryMode, s_measuring;
 static double s_fill;                   /* frame buffer pixels, as last counted */
+static int s_farPass;        /* the run is being drawn a last time, for the depth its effects reach */
+static DWORD s_zFuncWanted, s_zEnableWanted; /* the engine's, while that pass has its own */
 static int s_early;          /* the layer is being drawn ahead of the scene (RB_FxLayer_BeginEarly) */
 static int s_earlyPending;   /* and waits to be put over the frame buffer */
 static int s_mode = DIRECT;             /* how the effects are drawn this frame: DIRECT or a level */
@@ -245,6 +248,8 @@ static void ReleaseLayers(void)
         Release(&layer->blendShader[0]);
         Release(&layer->blendShader[1]);
         Release(&layer->blendShader[2]);
+        Release(&layer->farSurface);
+        Release(&layer->farTexture);
         memset(layer, 0, sizeof(*layer));
     }
 }
@@ -259,7 +264,7 @@ void RB_FxLayer_Release(void)
     Release(&s_opaqueShader);
     Release(&s_redShader);
     s_alphaPass = s_alphaDrawn = 0;
-    s_active = s_depthOnly = s_queryPending = s_measuring = 0;
+    s_active = s_depthOnly = s_queryPending = s_measuring = s_farPass = 0;
     s_fill = 0.0;
     s_mode = DIRECT;
 }
@@ -435,9 +440,17 @@ static void *FixShader(const Layer *layer, int nearer, int level)
  * farthest depth in it. Blending the four texels around a pixel as a picture is
  * blended would let smoke leak across every edge: beside the hand that holds the
  * weapon, a pixel of the street would take part of its smoke from a texel that lies on
- * the hand and has none. So only texels tested against this pixel's own surface count:
- * those whose depth is within the tolerance of a reference depth. They are blended by
- * their usual weights; if there is none, the one nearest in depth is taken alone.
+ * the hand and has none. So a texel counts only if it holds what this pixel should
+ * show. One tested against this pixel's own surface does: its depth is within the
+ * tolerance of a reference depth. So does one tested against another surface when all
+ * of its smoke lies in front of both (the far wall and the sky behind a cloud that
+ * hangs in the street): the layer keeps the farthest depth its effects reach in each
+ * texel for that (RB_FxLayer_FarBegin). Refusing those as well drew every roofline
+ * behind the smoke into it as a row of steps. The texels that count are blended by
+ * their usual weights. If there is none (a blade of grass in front of a far wall: every
+ * texel around it was tested against the wall), all four are blended, each counting
+ * for more the nearer its depth is to the reference; taking the nearest one alone
+ * showed every such blade as a speck in the smoke.
  *
  * The reference is the prepass's depth for this pixel (`pick` 0). The samples of an
  * anti-aliased edge that belong to the surface next door use the nearest (`pick` 1) or
@@ -448,7 +461,8 @@ static void *FixShader(const Layer *layer, int nearer, int level)
  * range, which nothing else reaches, and no effect lies in front of them. A reference
  * depth there takes nothing from the layer.
  *
- * Sampler 0 is the layer's depth, 1 the layer, 2 the prepass's depth. */
+ * Sampler 0 is the layer's depth, 1 the layer, 2 the prepass's depth, 3 the depth the
+ * layer's effects reach. */
 static void *BlendShader(const Layer *layer, int level, int pick)
 {
     static const char *const names[] = { "fxlayer_blend", "fxlayer_blend_near", "fxlayer_blend_far" };
@@ -460,6 +474,7 @@ static void *BlendShader(const Layer *layer, int level, int pick)
                     "sampler layerDepth : register(s0);\n"
                     "sampler layerMap : register(s1);\n"
                     "sampler sceneDepth : register(s2);\n"
+                    "sampler layerFar : register(s3);\n"
                     "float4 main(float2 uv : TEXCOORD0) : COLOR0\n"
                     "{\n"
                     "    float d = tex2D(sceneDepth, uv).r;\n");
@@ -482,26 +497,20 @@ static void *BlendShader(const Layer *layer, int level, int pick)
              "    float4 c2 = tex2D(layerMap, o + float2(0.0, e.y));\n"
              "    float4 c3 = tex2D(layerMap, o + e);\n"
              "    float r = 1.0 - d;\n"
-             "    float4 w = float4((1.0 - f.x) * (1.0 - f.y), f.x * (1.0 - f.y), (1.0 - f.x) * f.y, f.x * f.y);\n"
-             "    w *= step(q, r * %.9g) * step(r * %.9g, q);\n"
+             "    float4 b = float4((1.0 - f.x) * (1.0 - f.y), f.x * (1.0 - f.y), (1.0 - f.x) * f.y, f.x * f.y);\n"
+             "    float4 reach = 1.0 - float4(tex2D(layerFar, o).r, tex2D(layerFar, o + float2(e.x, 0.0)).r,\n"
+             "                                tex2D(layerFar, o + float2(0.0, e.y)).r, tex2D(layerFar, o + e).r);\n"
+             "    float4 same = step(q, r * %.9g) * step(r * %.9g, q);\n"
+             "    float4 w = b * max(same, step(max(q, r) * %.9g, reach));\n"
              "    float sum = w.x + w.y + w.z + w.w;\n"
              "    float4 mixed = (c0 * w.x + c1 * w.y + c2 * w.z + c3 * w.w) / max(sum, 0.00001);\n"
-             "    float4 k = abs(q - r);\n"
-             "    float4 one = c0;\n"
-             "    float best = k.x;\n"
-             "    float m = step(k.y, best);\n"
-             "    one = lerp(one, c1, m);\n"
-             "    best = lerp(best, k.y, m);\n"
-             "    m = step(k.z, best);\n"
-             "    one = lerp(one, c2, m);\n"
-             "    best = lerp(best, k.z, m);\n"
-             "    m = step(k.w, best);\n"
-             "    one = lerp(one, c3, m);\n"
-             "    float4 result = lerp(one, mixed, step(0.0001, sum));\n"
+             "    float4 s = b / (abs(q - r) + r * 0.02 + 0.000001);\n"
+             "    float4 soft = (c0 * s.x + c1 * s.y + c2 * s.z + c3 * s.w) / (s.x + s.y + s.z + s.w);\n"
+             "    float4 result = lerp(soft, mixed, step(0.0001, sum));\n"
              "    return lerp(result, float4(0.0, 0.0, 0.0, 1.0), step(d, %.9g));\n"
              "}\n",
              layer->width, layer->height, (double)s_sceneWidth / (layer->width << level),
-             (double)s_sceneHeight / (layer->height << level), 1.0 + tolerance, 1.0 / (1.0 + tolerance), WEAPON_DEPTH);
+             (double)s_sceneHeight / (layer->height << level), 1.0 + tolerance, 1.0 / (1.0 + tolerance), 1.0 + tolerance, WEAPON_DEPTH);
     return CompileShaderAs(names[pick], source, "ps_3_0");
 }
 
@@ -538,6 +547,7 @@ static Layer *GetLayer(int level)
                    !(layer->reduceShader = ReduceShader(level)))) ||
         !(layer->markShader[0] = MarkShader(layer, 0, 0)) || !(layer->markShader[1] = MarkShader(layer, 1, 0)) ||
         (!level && (!(layer->fixShader[0] = FixShader(layer, 0, level)) || !(layer->fixShader[1] = FixShader(layer, 1, level)))) ||
+        (level && !CreateDepth(device, layer->width, layer->height, &layer->farTexture, &layer->farSurface)) ||
         (level && (!(layer->blendShader[0] = BlendShader(layer, level, 0)) || !(layer->blendShader[1] = BlendShader(layer, level, 1)) ||
                    !(layer->blendShader[2] = BlendShader(layer, level, 2))))) {
         layer->failed = 1;
@@ -573,8 +583,8 @@ static void ScaleViewport(const Viewport *full, Viewport *out)
 
 /* A screen-filling pass of this module's own: every state it touches is put back. */
 typedef struct {
-    DWORD states[32], stages[6], samplers[3][5];
-    void *textures[3], *decl, *vs, *ps;
+    DWORD states[32], stages[6], samplers[4][5];
+    void *textures[4], *decl, *vs, *ps;
 } Saved;
 
 static const DWORD passStates[] = { RS_ZENABLE, RS_ZWRITEENABLE, RS_ZFUNC, RS_ALPHATESTENABLE, RS_SRCBLEND, RS_DESTBLEND,
@@ -594,7 +604,7 @@ static void PassBegin(Saved *saved)
         saved->states[i] = GetState(passStates[i]);
     for (i = 0; i < COUNT(passStages); i++)
         CALL(GetStageFn, device, DEV_GetTextureStageState)(device, passStages[i][0], passStages[i][1], &saved->stages[i]);
-    for (unit = 0; unit < 3; unit++) {
+    for (unit = 0; unit < 4; unit++) {
         saved->textures[unit] = NULL;
         CALL(GetTextureFn, device, DEV_GetTexture)(device, unit, &saved->textures[unit]);
         for (i = 0; i < COUNT(passSamplers); i++)
@@ -666,7 +676,7 @@ static void PassEnd(Saved *saved)
     void *device = s_device;
     unsigned i, unit;
 
-    for (unit = 0; unit < 3; unit++) {
+    for (unit = 0; unit < 4; unit++) {
         CALL(SetTextureFn, device, DEV_SetTexture)(device, unit, saved->textures[unit]);
         Release(&saved->textures[unit]);
         for (i = 0; i < COUNT(passSamplers); i++)
@@ -806,6 +816,7 @@ static void Composite(void)
         PassTexture(0, s_layer->depthTexture, 1);
         PassTexture(1, s_layer->colorTexture, 1);
         PassTexture(2, s_sceneDepthTexture, 1);
+        PassTexture(3, s_layer->farTexture, 1);
         CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_layer->blendShader[0]);
         PassDrawViewport((float)s_sceneWidth, (float)s_sceneHeight);
     } else {
@@ -967,7 +978,7 @@ int RB_FxLayer_Holds(unsigned stateBits0, unsigned stateBits1)
 static void ApplyAlphaTest(void)
 {
     DWORD apply = s_alphaTest;
-    if (s_active && !s_alphaPass && s_alphaFunc == CMP_GREATER && s_alphaRef == 0 && s_sourceBlend == BLEND_SRCALPHA)
+    if (s_active && !s_alphaPass && !s_farPass && s_alphaFunc == CMP_GREATER && s_alphaRef == 0 && s_sourceBlend == BLEND_SRCALPHA)
         apply = 0;
     if (apply != s_alphaTestApplied) {
         s_alphaTestApplied = apply;
@@ -1085,6 +1096,37 @@ void RB_FxLayer_AlphaBegin(void)
     SetState(RS_DESTBLENDALPHA, s_destBlend);
 }
 
+/* A smaller layer's run is drawn. The caller now draws it one more time, without
+ * colour, keeping in a depth buffer of its own the farthest depth any of it reaches in
+ * each texel (BlendShader says what for). Returns 0 when there is nothing to do. */
+int RB_FxLayer_FarBegin(void)
+{
+    void *device = s_device;
+    Viewport scaled;
+
+    if (!s_active || !s_level || s_farPass)
+        return 0;
+    CountEnd();
+    if (s_alphaPass) {
+        s_alphaPass = 0;
+        SetState(RS_SRCBLEND, s_sourceBlend);
+    }
+    s_farPass = 1;
+    ApplyAlphaTest(); /* the engine's own: a sprite's empty corners reach nowhere */
+    s_zFuncWanted = GetState(RS_ZFUNC);
+    s_zEnableWanted = GetState(RS_ZENABLE);
+    CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, s_layer->colorSurface);
+    CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, s_layer->farSurface);
+    ScaleViewport(&s_viewport, &scaled);
+    CALL(ViewportFn, device, DEV_SetViewport)(device, &scaled);
+    CALL(ClearFn, device, DEV_Clear)(device, 0, NULL, 2, 0, 0.0f, 0);
+    SetState(RS_COLORWRITEENABLE, 0);
+    SetState(RS_ZENABLE, 1);
+    SetState(RS_ZWRITEENABLE, 1);
+    SetState(RS_ZFUNC, CMP_GREATER);
+    return 1;
+}
+
 /* Called for every render state the engine sets while the layer is in use.
  * Returns 1 when the engine's value must not reach the device now. */
 int RB_FxLayer_RenderState(DWORD state, DWORD value)
@@ -1094,6 +1136,10 @@ int RB_FxLayer_RenderState(DWORD state, DWORD value)
         if (state != RS_COLORWRITEENABLE)
             return 0;
         s_colorWriteWanted = value;
+        return 1;
+    }
+    if (s_farPass && (state == RS_ZFUNC || state == RS_ZENABLE)) {
+        *(state == RS_ZFUNC ? &s_zFuncWanted : &s_zEnableWanted) = value;
         return 1;
     }
     switch (state) {
@@ -1146,6 +1192,11 @@ static void Leave(void)
     if (s_alphaPass) {
         s_alphaPass = 0;
         SetState(RS_SRCBLEND, s_sourceBlend);
+    }
+    if (s_farPass) {
+        s_farPass = 0;
+        SetState(RS_ZFUNC, s_zFuncWanted);
+        SetState(RS_ZENABLE, s_zEnableWanted);
     }
     ApplyAlphaTest();
     CALL(SetSurfaceFn, device, DEV_SetRenderTarget)(device, 0, s_savedColor);
