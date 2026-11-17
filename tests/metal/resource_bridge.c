@@ -60,7 +60,7 @@ void ResourceGL_Read(uint32_t format, unsigned int kind, unsigned int w, unsigne
                      unsigned int d, unsigned int face, unsigned int z,
                      const unsigned char *data, size_t length, unsigned char *out)
 {
-    GLenum internal = 0, input = 0, type = 0; bool create = 0;
+    GLenum internal = 0, input = 0, type = 0; bool create = 1;
     MacOpenGLUtils_GetOpenGLTextureType(&create, &internal, &input, &type, format);
     assert(create && internal);
     GLenum target = kind == MAC_SHIM_TEXTURE_CUBE ? GL_TEXTURE_CUBE_MAP : kind == MAC_SHIM_TEXTURE_3D ? GL_TEXTURE_3D : GL_TEXTURE_2D;

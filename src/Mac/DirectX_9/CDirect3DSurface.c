@@ -73,6 +73,13 @@ typedef struct {
 #if COD2_APPLE_SDK
 HRESULT CDirect3DSurface_BindFloatTarget(void *object)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &object };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_BindFloatTarget", object, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DSurfaceImpl *surface = object;
     if (!surface || surface->format != D3DFMT_R32F || !surface->owner)
         return (HRESULT)0x8876086c;
@@ -89,6 +96,13 @@ HRESULT CDirect3DSurface_BindFloatTarget(void *object)
 
 HRESULT CDirect3DSurface_CreateDepthStorage(void *object, UINT32 width, UINT32 height, UINT32 samples)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &object, &width, &height, &samples };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_CreateDepthStorage", object, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DSurfaceImpl *surface = object;
     GLenum format;
     switch (surface->format) {
@@ -114,6 +128,12 @@ HRESULT CDirect3DSurface_CreateDepthStorage(void *object, UINT32 width, UINT32 h
 
 void CDirect3DSurface_BindDepthStorage(const void *object)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &object };
+    if (MacShim_Dispatch("CDirect3DSurface_BindDepthStorage", object, macArguments, NULL, 0))
+        return;
+#endif
+
     const CDirect3DSurfaceImpl *surface = object;
     if (!surface || !surface->depthRenderbuffer)
         return;
@@ -146,6 +166,13 @@ static GLuint CDirect3DSurface_GetOwnerGLName(const CDirect3DSurfaceImpl *surfac
 
 int CDirect3DSurface_GetNativeInfo(const void *object, CDirect3DSurfaceNativeInfo *info)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &object, &info };
+    int macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSurface_GetNativeInfo", object, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     const CDirect3DSurfaceImpl *surface = object;
     if (!surface || surface->vtable != (void **)vtbl_CDirect3DSurface || !surface->owner)
         return 0;
@@ -161,6 +188,12 @@ int CDirect3DSurface_GetNativeInfo(const void *object, CDirect3DSurfaceNativeInf
 
 void CDirect3DSurface_MarkGPUWritten(void *object)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &object };
+    if (MacShim_Dispatch("CDirect3DSurface_MarkGPUWritten", object, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DSurfaceImpl *surface = object;
     surface->isDirty = 0;
     surface->pixelsBottomUp = 1;

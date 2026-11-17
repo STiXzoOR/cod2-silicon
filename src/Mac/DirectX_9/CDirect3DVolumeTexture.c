@@ -1192,6 +1192,12 @@ static void *vtbl_CDirect3DVolume[13] = {
 #if defined(COD2_X64)
 void CDirect3DVolumeTexture_UpdateOpenGLSurfacesNative(const CDirect3DVolumeTexture *_this, int recreate)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &recreate };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_UpdateOpenGLSurfacesNative", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DVolumeTextureClean *tex = (void *)_this;
 #if COD2_APPLE_SDK
     if (recreate)

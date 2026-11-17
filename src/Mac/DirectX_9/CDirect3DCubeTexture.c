@@ -787,6 +787,12 @@ fnptr_t vtbl_CDirect3DTexture_secondary[] = { (fnptr_t)ZThn4_N16CDirect3DTexture
 #if defined(COD2_X64)
 void CDirect3DCubeTexture_UpdateOpenGLSurfacesNative(const CDirect3DCubeTexture *_this, int recreate)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &recreate };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_UpdateOpenGLSurfacesNative", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DCubeTextureClean *tex = (void *)_this;
 #if COD2_APPLE_SDK
     if (recreate)
@@ -830,6 +836,12 @@ static void *COpenGLTextureNativeVtable[] = {
 
 void COpenGLTexture_InitNative(void *info, GLuint *name, UINT32 width, UINT32 height, UINT32 depth)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &info, &name, &width, &height, &depth };
+    if (MacShim_Dispatch("COpenGLTexture_InitNative", info, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLTextureNative *texture = info;
     texture->vtable = COpenGLTextureNativeVtable;
     texture->name = name;
@@ -850,6 +862,13 @@ void COpenGLTexture_InitNative(void *info, GLuint *name, UINT32 width, UINT32 he
 
 int COpenGLTexture_EnsureNameNative(void *info)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &info };
+    int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGLTexture_EnsureNameNative", info, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     COpenGLTextureNative *texture = info;
     if (*texture->name)
         return 0;
@@ -868,6 +887,13 @@ int COpenGLTexture_EnsureNameNative(void *info)
 
 void *COpenGLTexture_CreateNative(UINT32 width, UINT32 height, UINT32 depth)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &width, &height, &depth };
+    void * macResult = { 0 };
+    if (MacShim_Dispatch("COpenGLTexture_CreateNative", NULL, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     COpenGLTextureAllocation *allocation = calloc(1, sizeof(*allocation));
     COpenGLTexture_InitNative(&allocation->info, &allocation->name, width, height, depth);
     return &allocation->info;
@@ -875,12 +901,25 @@ void *COpenGLTexture_CreateNative(UINT32 width, UINT32 height, UINT32 depth)
 
 GLuint COpenGLTexture_GetGLNameNative(const void *info)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &info };
+    GLuint macResult = { 0 };
+    if (MacShim_Dispatch("COpenGLTexture_GetGLNameNative", info, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     const COpenGLTextureNative *texture = info;
     return *texture->name;
 }
 
 void ZN14COpenGLTextureD1Ev(void *info)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &info };
+    if (MacShim_Dispatch("ZN14COpenGLTextureD1Ev", info, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLTextureNative *texture = info;
     texture->vtable = COpenGLTextureNativeVtable;
     /* The native binding provider invalidates caches before deleting the name.
@@ -898,6 +937,12 @@ void ZN14COpenGLTextureD1Ev(void *info)
 
 void ZN14COpenGLTextureD0Ev(void *info)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &info };
+    if (MacShim_Dispatch("ZN14COpenGLTextureD0Ev", info, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN14COpenGLTextureD1Ev(info);
     free(info);
 }

@@ -1,5 +1,11 @@
 [
   {
+    "method": "CDirect3D_GetDirect3DInterface",
+    "file": "src/Mac/DirectX_9/CDirect3D.c",
+    "result": "void *",
+    "arguments": []
+  },
+  {
     "method": "CDirect3D_QueryInterface",
     "file": "src/Mac/DirectX_9/CDirect3D.c",
     "result": "HRESULT",
@@ -207,6 +213,58 @@
     "result": "void *",
     "arguments": [
       "sdkVersion"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_IsNativeLive",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "int",
+    "arguments": [
+      "device"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetNativeBackBuffer",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "device",
+      "backBuffer",
+      "adapter"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_DetachPixelShader",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "int",
+    "arguments": [
+      "shader"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_ValidateLighting",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_ValidateModelViewMatrix",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "texture",
+      "stageIndex"
     ]
   },
   {
@@ -1510,15 +1568,6 @@
     ]
   },
   {
-    "method": "CDirect3DDevice_CTexStage_GetUsesTexture",
-    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
-    "result": "bool",
-    "arguments": [
-      "_this",
-      "UsesTexFactor"
-    ]
-  },
-  {
     "method": "CDirect3DDevice_SetTextureCoordStream",
     "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
     "result": "long unsigned int",
@@ -1682,6 +1731,130 @@
     ]
   },
   {
+    "method": "CDirect3DDevice_ResetStreamsNative",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_SetStream",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "other",
+      "stream",
+      "reg",
+      "offset",
+      "stride",
+      "size",
+      "type"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_ParseShaderDeclaration",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "fixedFunction",
+      "canUseVAO"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetStreamPtrs",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "Bool",
+    "arguments": [
+      "_this",
+      "base"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_GetCanUseVAOWithTexCoordStreams",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "Bool",
+    "arguments": [
+      "_this",
+      "canUseVAO"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateAndSetGenericProgrammableVAO",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "base",
+      "count",
+      "indices",
+      "elements"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateAndSetGenericFixedFunctionVAO",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "base",
+      "count",
+      "indices",
+      "elements",
+      "normals"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateAndSetProgrammableVAO",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "base",
+      "count",
+      "indices",
+      "elements"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_CreateAndSetFixedFunctionVAO",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "canUseVAO",
+      "base",
+      "count",
+      "indices",
+      "elements",
+      "normals"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_ValidateTransformation",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "base",
+      "count",
+      "indices",
+      "elements"
+    ]
+  },
+  {
+    "method": "CDirect3DDevice_ValidateRasterization",
+    "file": "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "base",
+      "end"
+    ]
+  },
+  {
     "method": "CDirect3DSwapChain_AddRef",
     "file": "src/Mac/DirectX_9/CDirect3DSwapChain.c",
     "result": "ULONG",
@@ -1810,6 +1983,33 @@
     ]
   },
   {
+    "method": "CDirect3DSurface_BindFloatTarget",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "HRESULT",
+    "arguments": [
+      "object"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_CreateDepthStorage",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "HRESULT",
+    "arguments": [
+      "object",
+      "width",
+      "height",
+      "samples"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_BindDepthStorage",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "void",
+    "arguments": [
+      "object"
+    ]
+  },
+  {
     "method": "CDirect3DSurface_SetNativeDimensions",
     "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
     "result": "void",
@@ -1817,6 +2017,23 @@
       "surface",
       "width",
       "height"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_GetNativeInfo",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "int",
+    "arguments": [
+      "object",
+      "info"
+    ]
+  },
+  {
+    "method": "CDirect3DSurface_MarkGPUWritten",
+    "file": "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "result": "void",
+    "arguments": [
+      "object"
     ]
   },
   {
@@ -2333,6 +2550,15 @@
     ]
   },
   {
+    "method": "CDirect3DTexture_UpdateOpenGLSurfacesNative",
+    "file": "src/Mac/DirectX_9/CDirect3DTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "recreate"
+    ]
+  },
+  {
     "method": "CDirect3DCubeTexture_GetGLName",
     "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
     "result": "GLuint",
@@ -2658,6 +2884,69 @@
     "result": "void",
     "arguments": [
       "p"
+    ]
+  },
+  {
+    "method": "CDirect3DCubeTexture_UpdateOpenGLSurfacesNative",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "recreate"
+    ]
+  },
+  {
+    "method": "COpenGLTexture_InitNative",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "info",
+      "name",
+      "width",
+      "height",
+      "depth"
+    ]
+  },
+  {
+    "method": "COpenGLTexture_EnsureNameNative",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "int",
+    "arguments": [
+      "info"
+    ]
+  },
+  {
+    "method": "COpenGLTexture_CreateNative",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void *",
+    "arguments": [
+      "width",
+      "height",
+      "depth"
+    ]
+  },
+  {
+    "method": "COpenGLTexture_GetGLNameNative",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "GLuint",
+    "arguments": [
+      "info"
+    ]
+  },
+  {
+    "method": "ZN14COpenGLTextureD1Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "info"
+    ]
+  },
+  {
+    "method": "ZN14COpenGLTextureD0Ev",
+    "file": "src/Mac/DirectX_9/CDirect3DCubeTexture.c",
+    "result": "void",
+    "arguments": [
+      "info"
     ]
   },
   {
@@ -3058,6 +3347,15 @@
     "result": "void",
     "arguments": [
       "t"
+    ]
+  },
+  {
+    "method": "CDirect3DVolumeTexture_UpdateOpenGLSurfacesNative",
+    "file": "src/Mac/DirectX_9/CDirect3DVolumeTexture.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "recreate"
     ]
   },
   {
@@ -3482,6 +3780,22 @@
     ]
   },
   {
+    "method": "CDirect3DVertexShader_GetProgramInfo",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "const COpenGLVertexProgram *",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexShader_GetDrawPointFlag",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "Bool",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
     "method": "CDirect3DVertexShader_GetProgramId",
     "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
     "result": "GLuint",
@@ -3555,6 +3869,16 @@
     "arguments": [
       "_this",
       "ppDevice"
+    ]
+  },
+  {
+    "method": "CDirect3DVertexShader_GetFunction",
+    "file": "src/Mac/DirectX_9/CDirect3DVertexShader.c",
+    "result": "HRESULT",
+    "arguments": [
+      "_this",
+      "pDstData",
+      "pSizeOfData"
     ]
   },
   {
@@ -3801,6 +4125,15 @@
     ]
   },
   {
+    "method": "CDirect3DPixelShader_CreateARBNative",
+    "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
+    "result": "IDirect3DPixelShader9 *",
+    "arguments": [
+      "name",
+      "code"
+    ]
+  },
+  {
     "method": "ZN25COpenGLARBFragmentProgramD2Ev",
     "file": "src/Mac/DirectX_9/CDirect3DPixelShader.c",
     "result": "void",
@@ -3932,6 +4265,12 @@
     ]
   },
   {
+    "method": "CVAOPacket_GetCurrentGenericNative",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "COpenGLVAONative *",
+    "arguments": []
+  },
+  {
     "method": "CVAOPacket_CVAOPacket",
     "file": "src/Mac/DirectX_9/CVAOPacket.c",
     "result": "void",
@@ -4027,6 +4366,38 @@
     ]
   },
   {
+    "method": "ZN23CVAOPacketFixedFunctionD1Ev",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN23CVAOPacketFixedFunctionD0Ev",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN22CVAOPacketProgrammableD1Ev",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN22CVAOPacketProgrammableD0Ev",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
     "method": "ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_",
     "file": "src/Mac/DirectX_9/CVAOPacket.c",
     "result": "CVAOPacketRbTreeNodeBase *",
@@ -4042,6 +4413,17 @@
     "arguments": [
       "tree",
       "key"
+    ]
+  },
+  {
+    "method": "ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_",
+    "file": "src/Mac/DirectX_9/CVAOPacket.c",
+    "result": "CVAOPacketRbTreeIterator",
+    "arguments": [
+      "tree",
+      "x",
+      "parent",
+      "kv"
     ]
   },
   {
@@ -4383,6 +4765,17 @@
     ]
   },
   {
+    "method": "COpenGL_SetTexBorderColor",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "Unit",
+      "Target",
+      "Color"
+    ]
+  },
+  {
     "method": "COpenGL_SetTexMatrix",
     "file": "src/Mac/DirectX_9/COpenGL.c",
     "result": "unsigned int",
@@ -4440,6 +4833,15 @@
     ]
   },
   {
+    "method": "COpenGL_RegisterTextureBinding",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "void",
+    "arguments": [
+      "_this",
+      "name"
+    ]
+  },
+  {
     "method": "COpenGL_ReleaseTextureBinding",
     "file": "src/Mac/DirectX_9/COpenGL.c",
     "result": "unsigned int",
@@ -4485,6 +4887,39 @@
   },
   {
     "method": "ZN7COpenGLD2Ev",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "COpenGLVertexProgram_COpenGLVertexProgram",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "unsigned int",
+    "arguments": [
+      "_this",
+      "pSrcData"
+    ]
+  },
+  {
+    "method": "ZN20COpenGLVertexProgramD1Ev",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN20COpenGLVertexProgramD0Ev",
+    "file": "src/Mac/DirectX_9/COpenGL.c",
+    "result": "void",
+    "arguments": [
+      "_this"
+    ]
+  },
+  {
+    "method": "ZN20COpenGLVertexProgramD2Ev",
     "file": "src/Mac/DirectX_9/COpenGL.c",
     "result": "void",
     "arguments": [

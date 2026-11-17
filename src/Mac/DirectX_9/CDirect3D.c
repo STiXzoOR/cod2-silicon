@@ -81,6 +81,13 @@ extern UINT32 MacOpenGLUtils_GetPCPixelShaderVersion(void);
 
 void *CDirect3D_GetDirect3DInterface(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    void * macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_GetDirect3DInterface", NULL, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     if (sDirect3DInterfaceActive) {
         CDirect3D_AddRef(&sDirect3DInterface);
     } else {

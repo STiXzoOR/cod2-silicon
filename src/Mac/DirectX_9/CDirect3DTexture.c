@@ -748,6 +748,12 @@ fnptr_t vtbl_CDirect3DTexture[] = { (fnptr_t)CDirect3DTexture_QueryInterface, (f
 #if defined(COD2_X64)
 void CDirect3DTexture_UpdateOpenGLSurfacesNative(const CDirect3DTexture *_this, int recreate)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &recreate };
+    if (MacShim_Dispatch("CDirect3DTexture_UpdateOpenGLSurfacesNative", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DTextureClean *tex = (void *)_this;
 #if COD2_APPLE_SDK
     if (recreate)

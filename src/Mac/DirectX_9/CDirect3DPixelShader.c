@@ -655,6 +655,13 @@ void COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(const COpenGLARBFragmen
 #if defined(COD2_X64)
 IDirect3DPixelShader9 *CDirect3DPixelShader_CreateARBNative(const char *name, const char *code)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &name, &code };
+    IDirect3DPixelShader9 * macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DPixelShader_CreateARBNative", name, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     COpenGLARBFragmentProgramImpl *program = calloc(1, sizeof(*program));
     if (program)
         COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(

@@ -507,11 +507,24 @@ _Static_assert(offsetof(DeviceImpl, viewportMaxZ) - offsetof(DeviceImpl, viewpor
 #if defined(COD2_X64)
 int CDirect3DDevice_IsNativeLive(const void *device)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &device };
+    int macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DDevice_IsNativeLive", device, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return ((const DeviceImpl *)device)->context != NULL;
 }
 
 void CDirect3DDevice_SetNativeBackBuffer(void *device, void *backBuffer, UINT adapter)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &device, &backBuffer, &adapter };
+    if (MacShim_Dispatch("CDirect3DDevice_SetNativeBackBuffer", device, macArguments, NULL, 0))
+        return;
+#endif
+
     typedef struct { void **vtable; ULONG refCount; IDirect3DSurface9 *backBuffer; } NativeSwapChain;
     DeviceImpl *dev = (DeviceImpl *)device;
     dev->cardType = adapter;
@@ -533,6 +546,13 @@ static void CDirect3DDevice_ForgetPixelShaderNative(DeviceImpl *, const void *);
 
 int CDirect3DDevice_DetachPixelShader(const void *shader)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &shader };
+    int macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DDevice_DetachPixelShader", shader, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     extern struct DxGlobals dx;
     DeviceImpl *device = (DeviceImpl *)dx.device;
     if (device) CDirect3DDevice_ForgetPixelShaderNative(device, shader);
@@ -832,6 +852,12 @@ extern D3DXVECTOR4 *D3DXVec4Transform(D3DXVECTOR4 *, const D3DXVECTOR4 *, const 
 
 void CDirect3DDevice_ValidateLighting(const CDirect3DDevice *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DDevice_ValidateLighting", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     DeviceImpl *dev = (DeviceImpl *)_this;
     COpenGLNative *gl = CDirect3DDevice_GL();
     if (gl->supportsATIArrayRevComps) {
@@ -874,6 +900,12 @@ void CDirect3DDevice_ValidateLighting(const CDirect3DDevice *_this)
 
 void CDirect3DDevice_ValidateModelViewMatrix(const CDirect3DDevice *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DDevice_ValidateModelViewMatrix", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     DeviceImpl *dev = (DeviceImpl *)_this;
     if (!dev->isProjDirty)
         return;
@@ -1632,6 +1664,12 @@ static GLenum CDirect3DDevice_SamplerAddress(DWORD address)
 void CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState(const CDirect3DDevice *_this,
                                                        IDirect3DBaseTexture9 *texture, UINT stageIndex)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &texture, &stageIndex };
+    if (MacShim_Dispatch("CDirect3DDevice_SynchronizeD3DAndOpenGLTextureState", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     DeviceImpl *dev = (DeviceImpl *)_this;
     COpenGLNative *gl = CDirect3DDevice_GL();
     CTexStageNative *stage = CDirect3DDevice_Stage(dev, stageIndex);
@@ -6420,6 +6458,12 @@ static DeviceStreamsNative *CDirect3DDevice_StreamsNative(const CDirect3DDevice 
  * borrowed, as in the Mac setters; packet bindings belong to CVAOPacket. */
 void CDirect3DDevice_ResetStreamsNative(const CDirect3DDevice *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DDevice_ResetStreamsNative", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     DeviceImpl *dev = (DeviceImpl *)_this;
     if (dev->streamState)
         for (UINT32 i = 0; i < 16; ++i) {
@@ -6434,6 +6478,12 @@ void CDirect3DDevice_SetStream(const CDirect3DDevice *_this, Bool *other,
                                UINT32 stream, UINT32 reg, UINT32 offset,
                                UINT32 stride, GLint size, GLenum type)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &other, &stream, &reg, &offset, &stride, &size, &type };
+    if (MacShim_Dispatch("CDirect3DDevice_SetStream", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
     DeviceStreamNative *value;
     if (reg == 0) value = &state->position;
@@ -6455,6 +6505,12 @@ void CDirect3DDevice_SetStream(const CDirect3DDevice *_this, Bool *other,
 void CDirect3DDevice_ParseShaderDeclaration(const CDirect3DDevice *_this,
                                             Bool fixedFunction, Bool *canUseVAO)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &fixedFunction, &canUseVAO };
+    if (MacShim_Dispatch("CDirect3DDevice_ParseShaderDeclaration", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     DeviceImpl *dev = (DeviceImpl *)_this;
     DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
     UINT32 stream = 0xffffffff, offset = 0, stride = 0;
@@ -6513,6 +6569,13 @@ static const float *CDirect3DDevice_StreamPointerNative(DeviceImpl *dev,
 
 Bool CDirect3DDevice_GetStreamPtrs(const CDirect3DDevice *_this, UINT32 base)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &base };
+    Bool macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DDevice_GetStreamPtrs", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     DeviceImpl *dev = (DeviceImpl *)_this;
     DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
     state->position.pointer = CDirect3DDevice_StreamPointerNative(dev, &state->position, base);
@@ -6536,6 +6599,13 @@ Bool CDirect3DDevice_GetStreamPtrs(const CDirect3DDevice *_this, UINT32 base)
 
 Bool CDirect3DDevice_GetCanUseVAOWithTexCoordStreams(const CDirect3DDevice *_this, Bool canUseVAO)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &canUseVAO };
+    Bool macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DDevice_GetCanUseVAOWithTexCoordStreams", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     DeviceImpl *dev = (DeviceImpl *)_this;
     DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
     for (UINT32 i = 0; i < dev->maxTextureUnits; ++i) {
@@ -6704,6 +6774,12 @@ static void CDirect3DDevice_FixedArraysNative(DeviceImpl *dev, COpenGLVAONative 
 void CDirect3DDevice_CreateAndSetGenericProgrammableVAO(const CDirect3DDevice *_this,
                                                        UINT32 base, UINT32 count, const void *indices, UINT32 elements)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &base, &count, &indices, &elements };
+    if (MacShim_Dispatch("CDirect3DDevice_CreateAndSetGenericProgrammableVAO", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     DeviceImpl *dev = (DeviceImpl *)_this;
     DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
     (void)indices; (void)elements;
@@ -6721,6 +6797,12 @@ void CDirect3DDevice_CreateAndSetGenericFixedFunctionVAO(const CDirect3DDevice *
                                                         UINT32 base, UINT32 count, const void *indices,
                                                         UINT32 elements, Bool normals)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &base, &count, &indices, &elements, &normals };
+    if (MacShim_Dispatch("CDirect3DDevice_CreateAndSetGenericFixedFunctionVAO", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     DeviceImpl *dev = (DeviceImpl *)_this;
     DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
     (void)base; (void)indices; (void)elements;
@@ -6737,6 +6819,12 @@ void CDirect3DDevice_CreateAndSetGenericFixedFunctionVAO(const CDirect3DDevice *
 void CDirect3DDevice_CreateAndSetProgrammableVAO(const CDirect3DDevice *_this,
                                                 UINT32 base, UINT32 count, const void *indices, UINT32 elements)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &base, &count, &indices, &elements };
+    if (MacShim_Dispatch("CDirect3DDevice_CreateAndSetProgrammableVAO", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     DeviceImpl *dev = (DeviceImpl *)_this;
     COpenGLVAONative packet, virgin;
     const CDirect3DVertexBufferClean *buffer = (const void *)dev->streams[0];
@@ -6792,6 +6880,12 @@ void CDirect3DDevice_CreateAndSetFixedFunctionVAO(const CDirect3DDevice *_this, 
                                                  UINT32 base, UINT32 count, const void *indices,
                                                  UINT32 elements, Bool normals)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &canUseVAO, &base, &count, &indices, &elements, &normals };
+    if (MacShim_Dispatch("CDirect3DDevice_CreateAndSetFixedFunctionVAO", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     DeviceImpl *dev = (DeviceImpl *)_this;
     DeviceStreamsNative *state = dev->streamState;
     COpenGLVAONative packet, virgin;
@@ -6840,6 +6934,12 @@ void CDirect3DDevice_CreateAndSetFixedFunctionVAO(const CDirect3DDevice *_this, 
 void CDirect3DDevice_ValidateTransformation(const CDirect3DDevice *_this,
                                           UINT32 base, UINT32 count, const void *indices, UINT32 elements)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &base, &count, &indices, &elements };
+    if (MacShim_Dispatch("CDirect3DDevice_ValidateTransformation", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
     Bool canUseVAO = 1;
     state->indices = indices;
@@ -6926,6 +7026,12 @@ static void CDirect3DDevice_CombinerNative(COpenGL *gl, UINT32 unit, CTexStageNa
 
 void CDirect3DDevice_ValidateRasterization(const CDirect3DDevice *_this, UINT32 base, UINT32 end)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &base, &end };
+    if (MacShim_Dispatch("CDirect3DDevice_ValidateRasterization", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     DeviceImpl *dev = (DeviceImpl *)_this;
     DeviceStreamsNative *state = CDirect3DDevice_StreamsNative(_this);
     COpenGLNative *gl = CDirect3DDevice_GL();

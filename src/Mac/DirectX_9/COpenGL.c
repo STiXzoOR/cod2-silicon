@@ -889,6 +889,13 @@ unsigned int COpenGL_DisableTexCoordArray(const COpenGL *_this, UINT32 Unit)
 #if defined(COD2_X64)
 unsigned int COpenGL_SetTexBorderColor(const COpenGL *_this, UINT32 Unit, GLenum Target, GLuint Color)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Unit, &Target, &Color };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetTexBorderColor", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CTexUnitNative *unit = &((COpenGLNative *)_this)->texUnits[Unit];
     UINT32 index = COpenGL_TargetIndexNative(Target);
     if (unit->mTexBorderColor[index] != Color) {
@@ -1117,6 +1124,12 @@ unsigned int COpenGL_ReleaseVAOBinding(const COpenGL *_this, const GLuint *TexID
 #if defined(COD2_X64)
 void COpenGL_RegisterTextureBinding(const COpenGL *_this, GLuint *name)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &name };
+    if (MacShim_Dispatch("COpenGL_RegisterTextureBinding", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLBindingNodeNative *head = (COpenGLBindingNodeNative *)&((COpenGLNative *)_this)->textureBindings;
     if (!head->next) head->next = head->prev = head;
     for (COpenGLBindingNodeNative *existing = head->next; existing != head; existing = existing->next)

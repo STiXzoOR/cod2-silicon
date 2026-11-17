@@ -40,11 +40,25 @@ extern void ZN20COpenGLVertexProgramD2Ev(void);
  * trailing byte (+0x198). Expose their native owners without i386 offsets. */
 const COpenGLVertexProgram *CDirect3DVertexShader_GetProgramInfo(const CDirect3DVertexShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    const COpenGLVertexProgram * macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexShader_GetProgramInfo", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return (const COpenGLVertexProgram *)((const CDirect3DVertexShaderImpl *)_this)->baseState;
 }
 
 Bool CDirect3DVertexShader_GetDrawPointFlag(const CDirect3DVertexShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    Bool macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexShader_GetDrawPointFlag", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return ((const CDirect3DVertexShaderImpl *)_this)->isBound;
 }
 

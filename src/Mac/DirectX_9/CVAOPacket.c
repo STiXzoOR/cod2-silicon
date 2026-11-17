@@ -151,6 +151,13 @@ static const CVAOPacketRbTreeNode *CVAOPacket_GetConstTreeNode(const CVAOPacketR
 #if defined(COD2_X64)
 COpenGLVAONative *CVAOPacket_GetCurrentGenericNative(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    COpenGLVAONative * macResult = { 0 };
+    if (MacShim_Dispatch("CVAOPacket_GetCurrentGenericNative", NULL, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return CVAOPacket_GetGenericPacket(CVAOPacket_sCurrentPacket);
 }
 #endif
@@ -782,6 +789,12 @@ extern void *imp___ZTV22CVAOPacketProgrammable;
 
 void ZN23CVAOPacketFixedFunctionD1Ev(const CVAOPacket *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN23CVAOPacketFixedFunctionD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ((CVAOPacketImpl *)_this)->vtable =
         (void **)((char *)imp___ZTV23CVAOPacketFixedFunction + 2 * sizeof(void *));
     ZN10CVAOPacketD2Ev(_this);
@@ -789,12 +802,24 @@ void ZN23CVAOPacketFixedFunctionD1Ev(const CVAOPacket *_this)
 
 void ZN23CVAOPacketFixedFunctionD0Ev(const CVAOPacket *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN23CVAOPacketFixedFunctionD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN23CVAOPacketFixedFunctionD1Ev(_this);
     __ZdlPv((void *)_this);
 }
 
 void ZN22CVAOPacketProgrammableD1Ev(const CVAOPacket *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN22CVAOPacketProgrammableD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ((CVAOPacketImpl *)_this)->vtable =
         (void **)((char *)imp___ZTV22CVAOPacketProgrammable + 2 * sizeof(void *));
     ZN10CVAOPacketD2Ev(_this);
@@ -802,6 +827,12 @@ void ZN22CVAOPacketProgrammableD1Ev(const CVAOPacket *_this)
 
 void ZN22CVAOPacketProgrammableD0Ev(const CVAOPacket *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN22CVAOPacketProgrammableD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN22CVAOPacketProgrammableD1Ev(_this);
     __ZdlPv((void *)_this);
 }
