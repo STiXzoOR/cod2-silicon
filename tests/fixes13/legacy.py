@@ -18,8 +18,9 @@ failures = []
 for path in paths:
     if not path.endswith(('.c', '.h', '.inc')):
         continue
-    # The Metal providers are compiled only into the native client; no 32-bit build reads them.
-    if path.startswith('src/Mac/Metal/'):
+    # The Metal providers and the Direct3D 9 on Metal glue are compiled only into the
+    # native client; no 32-bit build reads them.
+    if path.startswith(('src/Mac/Metal/', 'src/platform/mac_d3d9')):
         continue
     old = subprocess.check_output(['git', 'show', f'{args.base}:{path}'], cwd=ROOT, text=True)
     new = (ROOT / path).read_text()

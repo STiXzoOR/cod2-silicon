@@ -11,7 +11,6 @@
  * shared, and it includes no engine headers: every Direct3D layout here is the
  * 64-bit Windows one, which libd3d9metal uses too. */
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_metal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,21 +31,25 @@ typedef int32_t HRESULT;
 
 extern SDL_Window *sdl_gl_window;
 extern int MacDisplay_Initialize(void);
+extern void *MacDisplay_CreateD3D9Window(void);
+extern void *MacD3D9View_Layer(SDL_Window *window, int renderWidth, int renderHeight);
+extern const void *Dvar_RegisterBool(const char *name, unsigned char value, unsigned short flags);
+extern unsigned char Dvar_GetBool(const char *name);
 
-static SDL_MetalView metalView;
+/* The window's Metal layer and the back buffer it is fitted to. */
+static void *metalLayer;
+static uint32_t layerWidth, layerHeight;
 
-/* The host table. The window handle is the SDL window; its layer is the Metal
- * view SDL made for it, and a default-size back buffer is the view in pixels. */
+/* The host table. The window handle is the SDL window, and a default-size back
+ * buffer is the size the layer was last fitted to. */
 static void *Host_MetalLayer(void *user, void *hwnd, uint32_t *width, uint32_t *height)
 {
-    int w = 0, h = 0;
     (void)user;
-    if (!hwnd || !metalView)
+    if (!hwnd || !metalLayer)
         return NULL;
-    SDL_Metal_GetDrawableSize((SDL_Window *)hwnd, &w, &h);
-    *width = (uint32_t)w;
-    *height = (uint32_t)h;
-    return SDL_Metal_GetLayer(metalView);
+    *width = layerWidth;
+    *height = layerHeight;
+    return metalLayer;
 }
 
 static void *Host_Alloc(void *user, size_t size, size_t align)
@@ -92,37 +95,44 @@ void *Win_D3D9_Direct3DCreate9(void)
     return d3d9metal_Direct3DCreate9(32);
 }
 
-/* The window the device presents to. It is SDL's window (and with it SDL's
- * input) with a Metal view and no OpenGL context. */
-void *Win_D3D9_PrepareWindow(int width, int height, int fullscreen, int refresh)
+/* The window the device presents to, in the mode the game asked for. It is the
+ * client's ordinary window (SDL's, and with it SDL's input, the monitor choice,
+ * vid_xpos and vid_ypos, r_borderless) with a Metal layer and no OpenGL context.
+ * The window is moved or resized only when what the game asks for changes, so a
+ * vid_restart with the same settings leaves it where it is. */
+static void *ConfigureWindow(int width, int height, int fullscreen, int refresh)
 {
-    if (MacDisplay_Initialize() != 0)
-        return NULL;
-    MacPlatform_ConfigureWindow(width, height, MAC_WINDOWED, refresh);
-    if (!sdl_gl_window) {
-        sdl_gl_window = SDL_CreateWindow("Call of Duty 2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,
-                                         SDL_WINDOW_SHOWN | SDL_WINDOW_METAL | (getenv("COD2_D3D9_HIDPI") ? SDL_WINDOW_ALLOW_HIGHDPI : 0) |
-                                             (fullscreen ? SDL_WINDOW_BORDERLESS : 0));
-        if (!sdl_gl_window) {
+    static int applied[4] = {0, 0, -1, 0};
+    int mode;
+
+    Dvar_RegisterBool("r_borderless", 1, 0x1001);
+    mode = !fullscreen ? MAC_WINDOWED : Dvar_GetBool("r_borderless") ? MAC_BORDERLESS : MAC_FULLSCREEN;
+    if (!fullscreen)
+        refresh = 0;
+    if (!sdl_gl_window || applied[0] != width || applied[1] != height || applied[2] != mode || applied[3] != refresh) {
+        MacPlatform_ConfigureWindow(width, height, mode, refresh);
+        if (!MacDisplay_CreateD3D9Window()) {
             fprintf(stderr, "Couldn't create the game window: %s\n", SDL_GetError());
             return NULL;
         }
-        metalView = SDL_Metal_CreateView(sdl_gl_window);
-        if (!metalView) {
-            fprintf(stderr, "Couldn't create the window's Metal view: %s\n", SDL_GetError());
-            return NULL;
-        }
-    } else {
-        SDL_SetWindowBordered(sdl_gl_window, fullscreen ? SDL_FALSE : SDL_TRUE);
-        SDL_SetWindowSize(sdl_gl_window, width, height);
-        SDL_ShowWindow(sdl_gl_window);
+        applied[0] = width;
+        applied[1] = height;
+        applied[2] = mode;
+        applied[3] = refresh;
     }
-    SDL_SetWindowPosition(sdl_gl_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-    /* Trial switch: cover the screen, to measure presentation without the compositor in between. */
-    if (getenv("COD2_D3D9_FULLSCREEN"))
-        SDL_SetWindowFullscreen(sdl_gl_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-    SDL_RaiseWindow(sdl_gl_window);
+    metalLayer = MacD3D9View_Layer(sdl_gl_window, width, height);
+    if (!metalLayer) {
+        fprintf(stderr, "Couldn't create the window's Metal layer\n");
+        return NULL;
+    }
+    layerWidth = (uint32_t)width;
+    layerHeight = (uint32_t)height;
     return sdl_gl_window;
+}
+
+void *Win_D3D9_PrepareWindow(int width, int height, int fullscreen, int refresh)
+{
+    return ConfigureWindow(width, height, fullscreen, refresh);
 }
 
 /* D3DPRESENT_PARAMETERS as 64-bit Windows lays it out: the window handle sits in
@@ -137,12 +147,17 @@ typedef struct {
 _Static_assert(sizeof(PresentParameters) == 64, "D3DPRESENT_PARAMETERS is 64 bytes");
 
 /* r_init.c describes the presentation in fourteen 32-bit words (see
- * win_d3d9.c). There is no exclusive mode on the Mac: the device is always
- * windowed, and a fullscreen game is a borderless window. */
+ * win_d3d9.c). Window and full screen are a matter for the window (see
+ * ConfigureWindow), which libd3d9metal never touches in a host application. The
+ * device is always described to it as full screen, because it applies the
+ * game's gamma ramp only for a full-screen device, as Windows does, and this
+ * client has always applied r_gamma in a window too. */
 void Win_D3D9_PresentParameters(const int *words, void *window, void *out)
 {
     PresentParameters *parameters = out;
 
+    /* Reset describes a new mode with the same words; the window follows it. */
+    ConfigureWindow(words[0], words[1], !words[7], words[12]);
     memset(parameters, 0, sizeof *parameters);
     parameters->BackBufferWidth = (uint32_t)words[0];
     parameters->BackBufferHeight = (uint32_t)words[1];
@@ -152,7 +167,7 @@ void Win_D3D9_PresentParameters(const int *words, void *window, void *out)
     parameters->MultiSampleQuality = (uint32_t)words[5];
     parameters->SwapEffect = (uint32_t)words[6];
     parameters->hDeviceWindow = window;
-    parameters->Windowed = 1;
+    parameters->Windowed = 0;
     parameters->EnableAutoDepthStencil = 1;
     parameters->AutoDepthStencilFormat = (uint32_t)words[8];
     parameters->Flags = (uint32_t)words[9];

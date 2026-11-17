@@ -44,6 +44,10 @@ typedef struct {
     MacMetalPresenter *metal;
     int nativeRenderer;
 #endif
+#if COD2_MAC_D3D9
+    /* The Direct3D 9 on Metal device draws into this window; there is no OpenGL here. */
+    int d3d9;
+#endif
 } MacContext;
 
 #if defined(COD2_X64) && COD2_X64
@@ -881,6 +885,45 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
     return ctx;
 }
 
+#if COD2_MAC_D3D9
+/* The window the Direct3D 9 on Metal device presents to (see mac_d3d9.c): this
+ * client's window in the mode MacPlatform_ConfigureWindow was last given, without
+ * an OpenGL context. A window that already exists is kept and put into that mode. */
+void *MacDisplay_CreateD3D9Window(void)
+{
+    if (MacDisplay_Initialize() != 0)
+        return NULL;
+    MacWindow_HideSplash();
+    if (!sdl_gl_window) {
+#if defined(COD2_CODX) && COD2_CODX
+        const char *title = "Call of Duty 2x Multiplayer";
+#else
+        const char *title = "CoD2 Silicon";
+#endif
+        /* Always high-DPI: a window is then sized so that its pixels are the game's. */
+        sdl_gl_window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay),
+                                         SDL_WINDOWPOS_CENTERED_DISPLAY(selectedDisplay), sdl_gl_width, sdl_gl_height,
+                                         SDL_WINDOW_METAL | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI);
+        if (!sdl_gl_window)
+            return NULL;
+    }
+    if (!screenContext) {
+        MacContext *ctx = calloc(1, sizeof(*ctx));
+        if (!ctx)
+            return NULL;
+        ctx->d3d9 = 1;
+        screenContext = ctx;
+    }
+    screenContext->drawable = sdl_gl_window;
+    screenContext->width = sdl_gl_width;
+    screenContext->height = sdl_gl_height;
+    if (SetWindowMode() != 0)
+        return NULL;
+    SDL_RaiseWindow(sdl_gl_window);
+    return sdl_gl_window;
+}
+#endif
+
 /* Preserve the original renderer's back/front, AUX0 and AUX1 selection. */
 static GLenum RenderBuffer(unsigned int buffer)
 {
@@ -1157,6 +1200,12 @@ int MacPlatform_GetRenderSize(int *width, int *height)
 }
 void MacPlatform_GetDrawableSize(int *width, int *height)
 {
+#if COD2_MAC_D3D9
+    if (screenContext && screenContext->d3d9) {
+        SDL_GetWindowSizeInPixels(sdl_gl_window, width, height);
+        return;
+    }
+#endif
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
     if (screenContext && (screenContext->metal || screenContext->nativeRenderer)) {
         /* Input maps view pixels through the same aspect-preserving rect.
