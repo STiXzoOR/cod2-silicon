@@ -72,7 +72,7 @@ and say in the pull request what you ran.
 
 The x86 byte-for-byte CI comparison is temporarily non-blocking because
 upstream `410342a` does not compile with GCC 14 on Linux; see
-[the tracking issue](https://github.com/STiXzoOR/cod2-silicon/issues/10).
+[the tracking issue](https://github.com/cod2unbound/cod2-unbound/issues/10).
 
 ## Native builds and merge gate
 

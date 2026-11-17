@@ -382,7 +382,7 @@ int main(void)
         Cod2x_FeaturesClientState(CA_CONNECTING);
         assert(errorCount == 0);
         Cod2x_UpdateConfirmed();
-        assert(strstr(openedURL, "github.com/STiXzoOR/cod2-silicon/releases"));
+        assert(strstr(openedURL, "github.com/cod2unbound/cod2-unbound/releases"));
         assert(strstr(lastError, "CoD2 Silicon") && strstr(lastError, "launcher"));
     }
     {

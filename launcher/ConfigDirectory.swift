@@ -106,12 +106,12 @@ struct ConfigDirectorySavedEntry: Sendable, Identifiable {
 /// Tests supply their own configuration with ephemeral fixture keys; the app uses `production`.
 struct ConfigDirectory: Sendable {
     /// Where a player, or anyone, asks for a setup to be removed or corrected.
-    static let removalURL = URL(string: "https://github.com/STiXzoOR/cod2-configs/issues/new")!
-    static let repositoryURL = URL(string: "https://github.com/STiXzoOR/cod2-configs")!
+    static let removalURL = URL(string: "https://github.com/cod2unbound/cod2-configs/issues/new")!
+    static let repositoryURL = URL(string: "https://github.com/cod2unbound/cod2-configs")!
     /// The catalogue's address and the public half of the key its maintainer signs the index with.
     /// The catalogue's address and the Ed25519 public key its index is signed with (`index.pub` in
     /// that repository). With an empty key the app says the catalogue isn't available.
-    static let productionRoot = "https://raw.githubusercontent.com/STiXzoOR/cod2-configs/main/"
+    static let productionRoot = "https://raw.githubusercontent.com/cod2unbound/cod2-configs/main/"
     static let productionPublicKey = "iTOphG+NSxzT4k9BumMTP7h3Ui408zuH63b8S+3klSs="
     static var production: ConfigDirectoryConfiguration? {
         guard let key = Data(base64Encoded: productionPublicKey), !key.isEmpty, let root = URL(string: productionRoot) else { return nil }

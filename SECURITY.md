@@ -8,7 +8,7 @@ off untrusted networks unless you accept those risks.
 
 ## Report a vulnerability privately
 
-Use [GitHub private vulnerability reporting](https://github.com/STiXzoOR/cod2-silicon/security/advisories/new)
+Use [GitHub private vulnerability reporting](https://github.com/cod2unbound/cod2-unbound/security/advisories/new)
 from this repository's **Security → Advisories → Report a vulnerability**.
 Do not open a public issue with an exploit or sensitive logs.
 

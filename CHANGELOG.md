@@ -5,6 +5,21 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-11-17
+
+### Changed
+
+- **The project lives at github.com/cod2unbound.** The app's repository is
+  now `cod2unbound/cod2-unbound` and the config catalogue is
+  `cod2unbound/cod2-configs`; both moved from a personal account. The app's
+  update check, What's New, links and the catalogue use the new addresses.
+  The app keeps its name, CoD2 Silicon, until 0.4.
+- **Updating from 0.3.2 or earlier is by hand, once.** Those versions only
+  install updates served from the old address, so they show that 0.3.3
+  exists and open its release page. Download the ZIP and replace the app.
+  From 0.3.3 on, Install Update works again, also across the repository's
+  earlier addresses.
+
 ## [0.3.2] - 2026-11-17
 
 ### Fixed
@@ -797,9 +812,9 @@ built from your own game files.
 Evidence and historical qualifications are preserved in the
 [workstream reports](docs/macos-port/README.md).
 
-[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.3.1...HEAD
-[0.3.1]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.1...v0.3.0
-[0.2.1]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.1
-[0.2.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0
-[0.1.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.1.0
+[Unreleased]: https://github.com/cod2unbound/cod2-unbound/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/cod2unbound/cod2-unbound/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/cod2unbound/cod2-unbound/compare/v0.2.1...v0.3.0
+[0.2.1]: https://github.com/cod2unbound/cod2-unbound/releases/tag/v0.2.1
+[0.2.0]: https://github.com/cod2unbound/cod2-unbound/releases/tag/v0.2.0
+[0.1.0]: https://github.com/cod2unbound/cod2-unbound/releases/tag/v0.1.0

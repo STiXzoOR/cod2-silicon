@@ -53,6 +53,15 @@ was tested and what was not.
 The [0.3.1 verification](macos-port/release-0.3.1-verification.md) says what
 was tested and what was not.
 
+## 0.3.3 — A new home (released 0.3.3)
+
+- **The project moved to github.com/cod2unbound.** The app, its update
+  check, its news and the config catalogue use the new addresses. Nothing in
+  the game changed.
+
+The [0.3.3 verification](macos-port/release-0.3.3-verification.md) says what
+was tested and what was not.
+
 ## 0.3.2 — A readable console (released 0.3.2)
 
 - **The in-game console is enlarged above 1080 lines,** so it can be read on

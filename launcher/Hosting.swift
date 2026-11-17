@@ -68,9 +68,9 @@ enum HostingCatalog {
         ("sd:pub", "Search & Destroy · public rules")]
     static func matchModeTitle(_ id: String) -> String { matchModes.first { $0.id == id }?.title ?? id }
     /// The server guide's part about letting players in from the internet.
-    static let portGuide = URL(string: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/server.md#letting-players-in-from-the-internet")!
+    static let portGuide = URL(string: "https://github.com/cod2unbound/cod2-unbound/blob/main/docs/server.md#letting-players-in-from-the-internet")!
     /// The server guide's part about Wi-Fi pauses.
-    static let wifiGuide = URL(string: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/server.md#wi-fi-players-who-freeze-and-jump")!
+    static let wifiGuide = URL(string: "https://github.com/cod2unbound/cod2-unbound/blob/main/docs/server.md#wi-fi-players-who-freeze-and-jump")!
     /// zPAM plays its own corrected copies of stock maps, named like `mp_toujane_fix`; this is the stock name.
     static func stockMap(_ name: String) -> String { name.hasSuffix("_fix") ? String(name.dropLast(4)) : name }
     /// The maps both versions ship with.

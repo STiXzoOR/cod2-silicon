@@ -122,10 +122,10 @@ struct Dispatch: Codable, Equatable, Sendable {
     /// A place in the app that a news entry opens instead of a link (NewsFeed.places).
     var open: String? = nil
     static let bundled = [
-        Dispatch(stamp: "PREVIEW", title: "CoD2 Silicon 0.3.2", summary: "The in-game console is readable on 4K, 5K and 6K screens, and the launcher shows your loadout where it showed frame rate.",
-                 link: "https://github.com/STiXzoOR/cod2-silicon/releases"),
+        Dispatch(stamp: "PREVIEW", title: "CoD2 Silicon 0.3.3", summary: "The project has a new home at github.com/cod2unbound, and the app updates from there.",
+                 link: "https://github.com/cod2unbound/cod2-unbound/releases"),
         Dispatch(stamp: "AHEAD", title: "What’s next", summary: "The Metal renderer comes next. It isn’t in this release, and the original look stays until it matches.",
-                 link: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/ROADMAP.md"),
+                 link: "https://github.com/cod2unbound/cod2-unbound/blob/main/docs/ROADMAP.md"),
     ]
 }
 
@@ -138,7 +138,7 @@ struct Dispatch: Codable, Equatable, Sendable {
 ///
 /// An item dated in the future stays hidden until that day.
 enum NewsFeed {
-    static let url = URL(string: "https://raw.githubusercontent.com/STiXzoOR/cod2-silicon/main/docs/news.json")!
+    static let url = URL(string: "https://raw.githubusercontent.com/cod2unbound/cod2-unbound/main/docs/news.json")!
     static let places = ["configs", "servers", "library", "updates"]
     struct Feed: Equatable { var items: [Dispatch] = []; var next: Dispatch? = nil }
     private struct Item: Decodable { var date: String?; var title: String?; var summary: String?; var link: String?; var open: String? }
@@ -186,11 +186,12 @@ enum NewsFeed {
 enum HomeDispatches {
     static func builtIn(version: String) -> Dispatch {
         Dispatch(stamp: "NOW", title: "CoD2 Silicon \(version)",
-                 summary: version == "0.3.2" ? "A console you can read on 4K, 5K and 6K screens, and a launcher that shows your loadout where it showed frame rate."
+                 summary: version == "0.3.3" ? "The project has a new home at github.com/cod2unbound, and the app updates from there."
+                        : version == "0.3.2" ? "A console you can read on 4K, 5K and 6K screens, and a launcher that shows your loadout where it showed frame rate."
                         : version == "0.3.1" ? "Friends on Windows and Linux can join a CoD2x server you host, and a log for each server start."
                         : version == "0.3.0" ? "CoD2x 1.4.6.8 beside the original 1.3, loadouts, and one-click updates."
                                              : "What changed in this version is in the release notes.",
-                 link: "https://github.com/STiXzoOR/cod2-silicon/releases", version: version)
+                 link: "https://github.com/cod2unbound/cod2-unbound/releases", version: version)
     }
     /// At most `rows` lines. The running version’s line is always among them: its release as fetched,
     /// else the built-in one.
@@ -398,7 +399,7 @@ struct ReportDetails: Equatable, Sendable {
     var text: String { lines.joined(separator: "\n") }
     /// A new issue on the project's bug form, its fields filled from these lines (GitHub's issue-form
     /// query parameters, by field id). Nothing is sent until the person posts it in the browser.
-    func issueURL(repository: String = "STiXzoOR/cod2-silicon") -> URL? {
+    func issueURL(repository: String = "cod2unbound/cod2-unbound") -> URL? {
         var parts = URLComponents(string: "https://github.com/\(repository)/issues/new")
         parts?.queryItems = [
             URLQueryItem(name: "template", value: "bug_report.yml"),

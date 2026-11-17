@@ -39,7 +39,7 @@ It covers:
 | Audience: newcomers and competitive players equally, via a Guided and an Expert view | user |
 | Edit the real active-profile `config_mp.cfg` while the game isn't running, with snapshots and undo | user |
 | Named loadouts built on CoD2 player profiles | user |
-| Directory: a curated public GitHub repo, `STiXzoOR/cod2-configs`, credited and permissioned, that Windows players can also download from; plus import from files, links, GitHub, localhost and paste | user |
+| Directory: a curated public GitHub repo, `cod2unbound/cod2-configs`, credited and permissioned, that Windows players can also download from; plus import from files, links, GitHub, localhost and paste | user |
 | Imports: Review by default (safe), with Import everything (with a warning) available; the user picks per import | user |
 | Optimizer scope: frame rate and physics, network, aim and input, visibility and HUD | user |
 | Server-aware ready check with suggestions; no auto-switching | user |
@@ -246,7 +246,7 @@ As drawn (BindsVisual, BindsList).
 
 ## 10. Directory
 
-**Repository `STiXzoOR/cod2-configs`,** public:
+**Repository `cod2unbound/cod2-configs`,** public:
 - `entries/<slug>/config.cfg`: exactly as published by the player.
 - `entries/<slug>/entry.json`:
   - player, team, era, role;

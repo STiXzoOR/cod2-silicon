@@ -326,8 +326,13 @@ enum CrashReports {
 /// when this app is signed with a Team ID, carry the same one. Then it takes the app's place in one
 /// swap, the old app goes to the Trash, and the launcher starts again.
 enum AppUpdate {
-    static let releases = URL(string: "https://github.com/STiXzoOR/cod2-silicon/releases")!
-    static let downloads = "https://github.com/STiXzoOR/cod2-silicon/releases/download/"
+    static let releases = URL(string: "https://github.com/cod2unbound/cod2-unbound/releases")!
+    static let downloads = "https://github.com/cod2unbound/cod2-unbound/releases/download/"
+    /// Where a release's files may come from. GitHub reports the repository's current owner and name in every
+    /// download address, so the list also holds the two addresses this project had before it took its
+    /// place in the organisation.
+    static let downloadRoots = [downloads, "https://github.com/cod2unbound/cod2-silicon/releases/download/",
+                                "https://github.com/STiXzoOR/cod2-silicon/releases/download/"]
     static let archiveLimit = 1 << 30
     static let sumsLimit = 64 * 1024
 
@@ -345,7 +350,7 @@ enum AppUpdate {
         func asset(_ name: String) -> ReleaseAsset? {
             let found = assets.filter { $0.name == name }
             guard found.count == 1, let one = found.first, one.url.scheme == "https", one.url.host == "github.com",
-                  one.url.absoluteString.hasPrefix(downloads) else { return nil }
+                  downloadRoots.contains(where: one.url.absoluteString.hasPrefix) else { return nil }
             return one
         }
         guard let archive = asset(archiveName(version)), (1...archiveLimit).contains(archive.size), let sums = asset("SHA256SUMS") else { return nil }

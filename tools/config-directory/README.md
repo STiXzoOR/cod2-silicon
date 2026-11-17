@@ -1,7 +1,7 @@
 # cod2-configs repository tooling
 
 This directory is the tooling of the public catalogue of player setups,
-[STiXzoOR/cod2-configs](https://github.com/STiXzoOR/cod2-configs). `entries/` is empty here: the
+[cod2unbound/cod2-configs](https://github.com/cod2unbound/cod2-configs). `entries/` is empty here: the
 entries live in that repository, which carries a copy of these files at its root.
 
 [CONTRIBUTING.md](CONTRIBUTING.md) is the step-by-step for adding, correcting and removing a setup,

@@ -439,7 +439,7 @@ enum PlayedDate {
             let long = "Hosting a server from the launcher, player setups in Configs, a config checker, a loadout’s own resolution and vertical sync, and What’s New from the network. Read the full notes for what was tested and what was not."
             library.dispatches = library.dispatches.map { var line = $0; line.title = "CoD2 Silicon \(version): hosting, player setups and the config checker"; line.summary = long; return line }
                 + [Dispatch(stamp: "13 OCT", title: "CoD2 Silicon 0.2.1", summary: "Fixes the resolution on 6K displays and a freeze when the server list refreshes while a game starts.",
-                            link: "https://github.com/STiXzoOR/cod2-silicon/releases", date: Date(timeIntervalSince1970: 1_791_849_600), version: "0.2.1")]
+                            link: "https://github.com/cod2unbound/cod2-unbound/releases", date: Date(timeIntervalSince1970: 1_791_849_600), version: "0.2.1")]
             library.news = library.news.map { var line = $0; line.summary = "New in Configs: fourteen setups from the 2008 and 2009 seasons, each credited to the page it was published on and reviewed line by line before anything is imported."; return line }
             if screen == "home-news-all" { present(.news) }
         case "home", "home-attention", "home-update", "home-crash", "home-crash-log", "home-crash-sent", "home-crash-not-sent", "home-running", "home-matches-off":
@@ -506,10 +506,10 @@ enum PlayedDate {
         let calendar = Calendar(identifier: .gregorian)
         func day(_ day: Int) -> Date { calendar.date(from: DateComponents(year: 2026, month: 11, day: day, hour: 12)) ?? Date() }
         library.dispatches = [Dispatch(stamp: StencilDate.day(day(18)), title: "CoD2 Silicon \(version)", summary: HomeDispatches.builtIn(version: "0.3.0").summary,
-                                       link: "https://github.com/STiXzoOR/cod2-silicon/releases", date: day(18), version: version)]
+                                       link: "https://github.com/cod2unbound/cod2-unbound/releases", date: day(18), version: version)]
         library.news = [Dispatch(stamp: StencilDate.day(day(21)), title: "14 more player setups", summary: "New in Configs: setups from the 2008 and 2009 seasons.", date: day(21), open: "configs")]
         library.newsNext = Dispatch(stamp: "NEXT", title: "A Metal renderer", summary: "In the works. The original look stays until it matches.",
-                                    link: "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/ROADMAP.md")
+                                    link: "https://github.com/cod2unbound/cod2-unbound/blob/main/docs/ROADMAP.md")
         library.dispatchesCheckedAt = Calendar.current.date(bySettingHour: 14, minute: 2, second: 0, of: Date())
     }
     private func previewPlayed() {

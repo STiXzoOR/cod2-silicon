@@ -386,7 +386,7 @@ struct MediaEntry: Identifiable {
         // Show the detected folder before asking for a key, so it can be reviewed or changed.
         step = 0
     }
-    var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.3.2" }
+    var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.3.3" }
     /// This build's crash report receiver (a Sentry DSN written at build time); without one nothing is ever sent
     /// and Settings doesn't offer it. The review harness shows the switch with a placeholder that is never used.
     var crashReportService: SentryDSN? {
@@ -519,7 +519,7 @@ struct MediaEntry: Identifiable {
         else { openHomeFolder() }
     }
     /// Help › CoD2 Silicon Help: the project's documentation page.
-    func openHelp() { NSWorkspace.shared.open(URL(string: "https://github.com/STiXzoOR/cod2-silicon")!) }
+    func openHelp() { NSWorkspace.shared.open(URL(string: "https://github.com/cod2unbound/cod2-unbound")!) }
     /// Help › Release Notes.
     func openReleaseNotes() { NSWorkspace.shared.open(AppUpdate.releases) }
     /// Help › Keyboard Shortcuts.

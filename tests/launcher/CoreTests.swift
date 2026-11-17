@@ -4,7 +4,7 @@ import Foundation
     static func main() throws {
         try displayResolutions()
         let fixtures = URL(fileURLWithPath: CommandLine.arguments[1])
-        precondition(Dispatch.bundled.first?.title == "CoD2 Silicon 0.3.2", "bundled news must describe the shipping release")
+        precondition(Dispatch.bundled.first?.title == "CoD2 Silicon 0.3.3", "bundled news must describe the shipping release")
         precondition(!Dispatch.bundled.contains { $0.summary.contains("Planned for 0.3") }, "future work has no promised version")
         let master = try Data(contentsOf: fixtures.appendingPathComponent("master.cod2x.me-120.bin"))
         let servers = WireParser.master(master)
@@ -264,7 +264,7 @@ import Foundation
             do { try work(); preconditionFailure(why) } catch { precondition(error as? AppUpdate.Failure == failure, "\(why): \(error)") }
         }
         // What the update check offers: the newest non-prerelease release's archive for this Mac and its SHA256SUMS.
-        let base = "https://github.com/STiXzoOR/cod2-silicon/releases/download/v0.4.0/"
+        let base = "https://github.com/cod2unbound/cod2-unbound/releases/download/v0.4.0/"
         let feed = try ReleaseNotes.parse(Data(#"""
             [{"tag_name":"v0.5.0-beta.1","prerelease":true,"assets":[{"name":"CoD2-Silicon-0.5.0-macos-arm64.zip","size":9,"browser_download_url":"https://github.com/x"}]},
              {"tag_name":"v0.4.0","prerelease":false,"assets":[{"name":"CoD2-Silicon-0.4.0-macos-arm64.zip","size":123456,"browser_download_url":"\#(base)CoD2-Silicon-0.4.0-macos-arm64.zip"},
@@ -274,9 +274,16 @@ import Foundation
         let offer = try requireValue(AppUpdate.offer(version: "0.4.0", assets: feed.latestAssets))
         precondition(offer.archiveSize == 123456 && offer.archive.lastPathComponent == "CoD2-Silicon-0.4.0-macos-arm64.zip" && offer.sums.lastPathComponent == "SHA256SUMS")
         let zipAsset = feed.latestAssets[0], sumsAsset = feed.latestAssets[1]
-        var foreign = zipAsset; foreign.url = URL(string: "https://example.com/STiXzoOR/cod2-silicon/releases/download/v0.4.0/CoD2-Silicon-0.4.0-macos-arm64.zip")!
+        var foreign = zipAsset; foreign.url = URL(string: "https://example.com/cod2unbound/cod2-unbound/releases/download/v0.4.0/CoD2-Silicon-0.4.0-macos-arm64.zip")!
         var other = zipAsset; other.url = URL(string: "https://github.com/someone/else/releases/download/v0.4.0/CoD2-Silicon-0.4.0-macos-arm64.zip")!
         var huge = zipAsset; huge.size = AppUpdate.archiveLimit + 1
+        // The same repository at the addresses it had before is still this project.
+        for root in ["https://github.com/STiXzoOR/cod2-silicon", "https://github.com/cod2unbound/cod2-silicon"] {
+            var zip = zipAsset, sums = sumsAsset
+            zip.url = URL(string: root + "/releases/download/v0.4.0/CoD2-Silicon-0.4.0-macos-arm64.zip")!
+            sums.url = URL(string: root + "/releases/download/v0.4.0/SHA256SUMS")!
+            precondition(AppUpdate.offer(version: "0.4.0", assets: [zip, sums])?.archive == zip.url, root)
+        }
         for (assets, why) in [([zipAsset], "no SHA256SUMS"), ([sumsAsset], "no archive"), ([foreign, sumsAsset], "another host"), ([other, sumsAsset], "another project"),
                               ([zipAsset, zipAsset, sumsAsset], "two archives"), ([huge, sumsAsset], "too large")] as [([ReleaseAsset], String)] {
             precondition(AppUpdate.offer(version: "0.4.0", assets: assets) == nil, why)
@@ -527,7 +534,7 @@ import Foundation
         var first = feed.dispatches[0]; first.date = nil; first.version = nil
         precondition(first == Dispatch(stamp: "02 NOV", title: "CoD2 Silicon 0.2 beta",
             summary: "Launcher redesign with Liquid Glass navigation. Server browser favourites.",
-            link: "https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0-beta.1"))
+            link: "https://github.com/cod2unbound/cod2-unbound/releases/tag/v0.2.0-beta.1"))
         precondition(feed.dispatches[1].title == "CoD2 Silicon 0.1.1" && feed.dispatches[1].link == nil && feed.dispatches[1].stamp == "20 OCT")
         precondition(feed.dispatches[1].summary.hasSuffix("…") && feed.dispatches[1].summary.count <= 161 && feed.dispatches[1].summary.hasPrefix("Fixes r_mode on 6K"))
         precondition(feed.dispatches[2].summary == "Call of Duty 2 multiplayer, native on Apple silicon. CoD2x 1.4 compatible.")
@@ -546,12 +553,12 @@ import Foundation
           {"date":"2026-02-31","title":"No such day"},
           {"date":"21 Nov","title":"Bad date"},
           {"date":"2026-11-20","title":"","summary":"No title"},
-          {"date":"2026-11-19","title":"Linked","link":"https://github.com/STiXzoOR/cod2-silicon/discussions/1","open":"terminal"}],
-         "next":{"title":"A Metal renderer","summary":"In the works.","link":"https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/ROADMAP.md"}}
+          {"date":"2026-11-19","title":"Linked","link":"https://github.com/cod2unbound/cod2-unbound/discussions/1","open":"terminal"}],
+         "next":{"title":"A Metal renderer","summary":"In the works.","link":"https://github.com/cod2unbound/cod2-unbound/blob/main/docs/ROADMAP.md"}}
         """#.utf8), now: noon, calendar: utc)
         precondition(news.items.map(\.title) == ["14 more player setups", "Linked", "Older note"], "\(news.items.map(\.title))")
         precondition(news.items[0].stamp == "21 NOV" && news.items[0].open == "configs" && news.items[0].link == nil && news.items[0].version == nil)
-        precondition(news.items[1].link == "https://github.com/STiXzoOR/cod2-silicon/discussions/1" && news.items[1].open == nil && news.items[1].summary.isEmpty)
+        precondition(news.items[1].link == "https://github.com/cod2unbound/cod2-unbound/discussions/1" && news.items[1].open == nil && news.items[1].summary.isEmpty)
         precondition(news.next?.stamp == "NEXT" && news.next?.title == "A Metal renderer" && news.next?.date == nil)
         precondition((try? NewsFeed.parse(Data(count: 65_537))) == nil && (try? NewsFeed.parse(Data("[]".utf8))) == nil)
         let noNews = try NewsFeed.parse(Data("{}".utf8))
@@ -740,7 +747,7 @@ extension CoreTests {
         precondition(report.lines == ["CoD2 Silicon 0.3.0 (412)", "CoD2x 1.4.6.8 · Original 1.3", "macOS 27.0 · MacBook Pro, Apple M4 Pro",
                                       "Shaders: original · Display: 2560 × 1440 borderless"])
         let issue = try requireValue(report.issueURL().flatMap { URLComponents(url: $0, resolvingAgainstBaseURL: false) })
-        precondition(issue.host == "github.com" && issue.path == "/STiXzoOR/cod2-silicon/issues/new")
+        precondition(issue.host == "github.com" && issue.path == "/cod2unbound/cod2-unbound/issues/new")
         let fields = Dictionary(uniqueKeysWithValues: (issue.queryItems ?? []).map { ($0.name, $0.value ?? "") })
         precondition(fields["template"] == "bug_report.yml" && fields["version"] == "0.3.0 (412)" && fields["macos"] == "27.0")
         precondition(!report.text.lowercased().contains("key") && ReportDetails(version: "0.3.0", build: "", engines: [], macOS: "", model: "", shaders: "", display: "").lines[0] == "CoD2 Silicon 0.3.0")

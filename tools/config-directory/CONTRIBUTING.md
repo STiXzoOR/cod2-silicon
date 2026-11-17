@@ -1,7 +1,7 @@
 # Changing the catalogue
 
 How a setup is added, corrected or removed in
-[STiXzoOR/cod2-configs](https://github.com/STiXzoOR/cod2-configs). The tools
+[cod2unbound/cod2-configs](https://github.com/cod2unbound/cod2-configs). The tools
 are in the CoD2 Silicon repository under `tools/config-directory`; the
 commands below are run from a checkout of it, with `CATALOGUE` set to a
 checkout of cod2-configs and `SCRATCH` to an empty folder outside both.
@@ -55,7 +55,7 @@ launcher's `ConfigCatalog.json`.
 
    ```sh
    python3 tools/config-directory/generate.py --root "$CATALOGUE" \
-     --base-url https://raw.githubusercontent.com/STiXzoOR/cod2-configs/main/ \
+     --base-url https://raw.githubusercontent.com/cod2unbound/cod2-configs/main/ \
      --revision <last revision + 1> --audit-binary "$SCRATCH/audit"
    ```
 
@@ -67,7 +67,7 @@ launcher's `ConfigCatalog.json`.
 
    ```sh
    python3 tools/config-directory/generate.py --root "$CATALOGUE" \
-     --base-url https://raw.githubusercontent.com/STiXzoOR/cod2-configs/main/ \
+     --base-url https://raw.githubusercontent.com/cod2unbound/cod2-configs/main/ \
      --revision <the same number> --audit-binary "$SCRATCH/audit" --check
    ```
 

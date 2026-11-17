@@ -534,7 +534,7 @@ extension KeyStore {
         updateTask = Task {
             defer { checkingUpdates = false; if !automatic { studio.announce(updateMessage) } }
             do {
-                var request = URLRequest(url: URL(string: "https://api.github.com/repos/STiXzoOR/cod2-silicon/releases?per_page=10")!)
+                var request = URLRequest(url: URL(string: "https://api.github.com/repos/cod2unbound/cod2-unbound/releases?per_page=10")!)
                 request.timeoutInterval = 15; request.setValue("CoD2-Silicon-Launcher", forHTTPHeaderField: "User-Agent")
                 request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
                 let (data, response) = try await URLSession.shared.data(for: request)
@@ -699,7 +699,7 @@ extension KeyStore {
     func openIssue() {
         if let url = reportDetails.issueURL(), !snapshot { NSWorkspace.shared.open(url) }
     }
-    func openWebsite() { NSWorkspace.shared.open(URL(string: "https://github.com/STiXzoOR/cod2-silicon")!) }
+    func openWebsite() { NSWorkspace.shared.open(URL(string: "https://github.com/cod2unbound/cod2-unbound")!) }
 
     // MARK: Sheets and confirmations this unit owns
     /// Player card and Settings › Game Data: Replace…

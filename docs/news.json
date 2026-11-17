@@ -2,6 +2,12 @@
   "items": [
     {
       "date": "2026-11-17",
+      "title": "A new home at github.com/cod2unbound",
+      "summary": "0.3.3 follows the project to its organisation. From 0.3.2 or earlier, download it once by hand.",
+      "open": "updates"
+    },
+    {
+      "date": "2026-11-17",
       "title": "A console you can read on a 4K or 6K screen",
       "summary": "0.3.2 enlarges the in-game console above 1080 lines.",
       "open": "updates"
@@ -16,6 +22,6 @@
   "next": {
     "title": "A Metal renderer",
     "summary": "In the works. The original look stays until it matches.",
-    "link": "https://github.com/STiXzoOR/cod2-silicon/blob/main/docs/ROADMAP.md"
+    "link": "https://github.com/cod2unbound/cod2-unbound/blob/main/docs/ROADMAP.md"
   }
 }

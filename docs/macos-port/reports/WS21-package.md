@@ -36,7 +36,7 @@ Bundle inventory contains our executable, the two SDL dylibs and three relative 
 Before engine initialization, Cocoa establishes the app home and aligns the engine's `HOME` with Foundation's home. This makes `CFFIXED_USER_HOME` isolate both app data and `.cod2/preferences` in tests.
 
 1. Copy old `CoD2x Native/main`, `shaders`, and `data-path.txt` into the new home if their destinations do not exist. A migration marker prevents later overwriting of new configs. The old directory is retained; every reused shader cache is verified.
-2. Find game data using the remembered path, an optional explicit developer plist override, `~/Games/CoD2`, Steam's default library and paths parsed from `libraryfolders.vdf`, or `/Applications/Call of Duty 2*`. Standard app `Contents/Resources`/`Contents` locations are considered. Otherwise show a directory picker, including app packages. Require readable `main/iw_00.iwd` through `iw_15.iwd`. Invalid selections show an `NSAlert` explaining that licensed data is needed, with a button linking to `https://github.com/STiXzoOR/cod2-silicon#game-data`. No release plist contains `CoD2GameDirectory` by default; `--game-dir` is an explicit developer-only choice.
+2. Find game data using the remembered path, an optional explicit developer plist override, `~/Games/CoD2`, Steam's default library and paths parsed from `libraryfolders.vdf`, or `/Applications/Call of Duty 2*`. Standard app `Contents/Resources`/`Contents` locations are considered. Otherwise show a directory picker, including app packages. Require readable `main/iw_00.iwd` through `iw_15.iwd`. Invalid selections show an `NSAlert` explaining that licensed data is needed, with a button linking to `https://github.com/cod2unbound/cod2-unbound#game-data`. No release plist contains `CoD2GameDirectory` by default; `--game-dir` is an explicit developer-only choice.
 3. Reuse a valid stored CD key or show an `NSSecureTextField` prompt. Normalize spaces/hyphens and check the same CRC-16 used by `CL_CDKeyValidate`. Blank/invalid saved keys require entry again. Write `.cod2/preferences` through an exclusive mode-600 temporary file and rename it, preserving other entries. The engine's native preferences rewrite also sets mode 600, so later in-game changes retain privacy. No supplied key is logged.
 4. Verify all 834 shader/constant payloads against the SHA-256 manifest. If missing or damaged, extract natively from the player's symbolized i386 Mac binary. Search the game folder, Steam libraries, `/Applications` and the conventional `~/Games/CoD2-mac-bin` folder, or let the player choose a Mac game folder. No private reference-project path is used at runtime. If no original shader cache can be produced, offer approximate rendering with an explicit lighting/sky warning; log the same outcome. The developer Python extractor stays in the repository but is not bundled or executed by the app.
 
@@ -126,7 +126,7 @@ No global Gatekeeper disabling or `sudo` is needed. The local test exercised qua
 **From source:** install Apple's Command Line Tools with `xcode-select --install`. Install CMake from [cmake.org](https://cmake.org/download/) and add its `bin` directory to PATH, or optionally use `brew install cmake`. Clone the public repository and run:
 
 ```sh
-git clone https://github.com/STiXzoOR/cod2-silicon.git
+git clone https://github.com/cod2unbound/cod2-unbound.git
 cd cod2-silicon
 ./scripts/install.sh \
   --mac-binary "/path/to/your/Call of Duty 2 Multiplayer" \

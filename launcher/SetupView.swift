@@ -216,7 +216,7 @@ struct SetupView: View {
                         .accessibilityElement(children: .combine).accessibilityAddTraits(.isStaticText)
                     }
                 }
-                Link("Don’t have the files yet?", destination: URL(string: "https://github.com/STiXzoOR/cod2-silicon#game-data")!)
+                Link("Don’t have the files yet?", destination: URL(string: "https://github.com/cod2unbound/cod2-unbound#game-data")!)
                     .font(.system(size: 13)).foregroundStyle(palette.link).frame(maxWidth: .infinity).padding(.bottom, 8)
             }
             .dropZone(model: model, targeted: $dropTarget)

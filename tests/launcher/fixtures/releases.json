@@ -5,7 +5,7 @@
     "draft": true,
     "prerelease": false,
     "published_at": null,
-    "html_url": "https://github.com/STiXzoOR/cod2-silicon/releases/tag/untagged-1",
+    "html_url": "https://github.com/cod2unbound/cod2-unbound/releases/tag/untagged-1",
     "body": "Draft notes must never be shown."
   },
   {
@@ -14,7 +14,7 @@
     "draft": false,
     "prerelease": true,
     "published_at": "2026-11-02T18:40:00Z",
-    "html_url": "https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0-beta.1",
+    "html_url": "https://github.com/cod2unbound/cod2-unbound/releases/tag/v0.2.0-beta.1",
     "body": "## Highlights\r\n\r\n- **Launcher redesign** with [Liquid Glass](https://developer.apple.com/design/) navigation.\r\n- Server browser favourites.\r\n\r\n## Install\r\nUnzip it."
   },
   {
@@ -32,7 +32,7 @@
     "draft": false,
     "prerelease": false,
     "published_at": "2026-10-04T13:13:24Z",
-    "html_url": "https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.1.0",
+    "html_url": "https://github.com/cod2unbound/cod2-unbound/releases/tag/v0.1.0",
     "body": "**Call of Duty 2 multiplayer, native on Apple silicon. CoD2x 1.4 compatible.**\n\nFirst public release. Bring your own licensed copy of Call of Duty 2; no game content is included.\n\n### Install\n\n1. Download the zip."
   }
 ]

@@ -91,7 +91,7 @@ static void Cod2xGameDataAlert(void)
     alert.informativeText = detail;
     [alert addButtonWithTitle:@"Choose Again"]; [alert addButtonWithTitle:@"Game Data Instructions"];
     if ([alert runModal] == NSAlertSecondButtonReturn)
-        [NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:@"https://github.com/STiXzoOR/cod2-silicon#game-data"]];
+        [NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:@"https://github.com/cod2unbound/cod2-unbound#game-data"]];
 }
 
 static NSString *Cod2xDataInFolder(NSString *folder)

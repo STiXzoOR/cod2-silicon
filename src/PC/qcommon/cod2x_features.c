@@ -1003,7 +1003,7 @@ void Cod2x_UpdatePacket(netadr_t from)
 void Cod2x_UpdateConfirmed(void)
 {
     extern void Sys_OpenURL(const char *, int);
-    Sys_OpenURL("https://github.com/STiXzoOR/cod2-silicon/releases", 1);
+    Sys_OpenURL("https://github.com/cod2unbound/cod2-unbound/releases", 1);
     Com_Error(1, "CoD2x %s is available.\n\nCheck for CoD2 Silicon updates in the launcher or on the release page opened in your browser.\n"
               "Upstream Windows updates cannot be installed in this native Mac build.\n"
               "You can still join servers compatible with this version.\n",
