@@ -217,6 +217,12 @@ static void R_ReleaseForShutdownOrReset(void)
     SunFlareDynamic *flares = (SunFlareDynamic *)imp_sunFlareArray;
     for (i = 0; i < dx.windowCount; ++i)
         R_SafeRelease((void **)&dx.windows[i].swapChain);
+#if COD2_MAC_D3D9
+    {
+        extern void RB_FxLayer_Release(void);
+        RB_FxLayer_Release();
+    }
+#endif
     R_ShutdownRenderTargets();
     R_ShutdownStaticModelCache();
     R_SafeRelease((void **)&dx.dynamicIndexBufferPool[0].buffer);

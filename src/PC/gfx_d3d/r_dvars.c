@@ -444,6 +444,15 @@ void R_RegisterDvars(void)
 #if defined(COD2_X64)
     r_zFeather = ri.Dvar_RegisterBool("r_zFeather", 1, R_PRESET_ARCHIVE_FLAGS);
 #endif
+#if COD2_MAC_D3D9
+    /* Smoke and other effects in a layer of their own (rb_fxlayer.c): 0 never, 1 when
+     * they cover too much to draw at the frame rate asked for, 2 always at the picture's
+     * size, 3 a half, 4 a quarter. Turning it on from 0 takes a vid_restart: the depth
+     * buffer it reads is made with the renderer's targets. r_fxLayerBudget is how many
+     * million pixels of effects a frame has time for at 250 frames a second. */
+    ri.Dvar_RegisterInt("r_fxLayer", 1, 0, 4, 0x1);
+    ri.Dvar_RegisterInt("r_fxLayerBudget", 50, 1, 1000, 0x1);
+#endif
 
     r_lockPvs = ri.Dvar_RegisterBool("r_lockPvs", 0, 0x2080);
 

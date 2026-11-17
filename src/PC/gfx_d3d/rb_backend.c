@@ -540,6 +540,11 @@ static void RB_SetViewportCmd(GfxRenderCommandExecState *execState);
 static void RB_SetRenderTargetCmd(GfxRenderCommandExecState *execState);
 static void RB_RenderDrawSurfList(GfxDrawSurf *drawSurfs, int drawSurfCount,
                                   MaterialTechniqueType techType, GfxDrawSurfOrder order);
+#if COD2_MAC_D3D9
+extern int RB_FxLayer_Wanted(void);
+extern void RB_FxLayer_DepthOnly(void *device, int on);
+static int rb_fxModelsOnly; /* the surface loop draws models only */
+#endif
 static void RB_DrawSurfsCmd(GfxRenderCommandExecState *execState);
 static void RB_DrawSunPostEffectsCmd(GfxRenderCommandExecState *execState);
 static void RB_Set2D(void);
@@ -1886,6 +1891,14 @@ sort_changed:
     COD2_DEBUG_ONLY(g_rdsl_sortchange++;)
     prevSort = sortKey;
     R_DecomposeSort(sortKey, &entityIndex, &material, &lightmap);
+#if COD2_MAC_D3D9
+    /* The second float-Z pass, for the effects layer: models only (rb_fxlayer.c). */
+    if (rb_fxModelsOnly && material &&
+        !(entityIndex == 0x7ff ||
+          (entityIndex <= 0x7fd && backEnd.sceneDef.entities[entityIndex].reType <= 2 &&
+           !(*(byte *)((char *)&backEnd.sceneDef.entities[entityIndex] + 5) & 1))))
+        goto ignore_surf;
+#endif
 
     if (!material) {
         COD2_DEBUG_ONLY(g_rdsl_ignore_technull++;)
@@ -1929,7 +1942,11 @@ sort_changed:
 
 non_lightmap:
 
+#if COD2_MAC_D3D9
+    if (!r_depthPrepassModels->current.enabled && !rb_fxModelsOnly) {
+#else
     if (!r_depthPrepassModels->current.enabled) {
+#endif
         if (techType == 0 || techType == 2) {
 
             entities = backEnd.sceneDef.entities;
@@ -2205,6 +2222,64 @@ cleanup:
     backEnd.currentEntityLighting = NULL;
 }
 
+#if COD2_MAC_D3D9
+/* Does this surface go into the effects layer (rb_fxlayer.c)? */
+static int RB_SurfInFxLayer(const GfxDrawSurf *drawSurf)
+{
+    extern int RB_FxLayer_Holds(unsigned stateBits0, unsigned stateBits1);
+    const Material *material;
+    int entityIndex, lightmap;
+
+    R_DecomposeSort(drawSurf->sort, &entityIndex, &material, &lightmap);
+    return material && material->info.sortKey >= 25 &&
+           RB_FxLayer_Holds((unsigned)material->stateBits[0], (unsigned)material->stateBits[1]);
+}
+
+/* The emissive pass with its effects (smoke, dust, fire: sort key 25 and up) handed to
+ * the effects layer: each run of surfaces the layer can hold is drawn into it and
+ * blended over the frame buffer, or drawn as ever when the layer is not needed. */
+static void RB_RenderDrawSurfListFxLayer(GfxDrawSurf *drawSurfs, int drawSurfCount, MaterialTechniqueType techType,
+                                         GfxDrawSurfOrder order)
+{
+    extern void RB_FxLayer_Frame(void *device);
+    extern int RB_FxLayer_Begin(void *device, int sceneDepthValid);
+    extern int R_UseZFeather(void);
+    extern void RB_FxLayer_End(void);
+    int first = 0;
+
+    /* The layer tests effects against the float-Z pass's depth, so it needs the models
+     * there as well. They go in afterwards and without colour, so the float-Z picture
+     * that soft particles read is the one the pass has always made. */
+    if (techType == TECHNIQUE_BUILD_FLOAT_Z && RB_FxLayer_Wanted() && !r_depthPrepassModels->current.enabled) {
+        RB_RenderDrawSurfList(drawSurfs, drawSurfCount, techType, order);
+        RB_FxLayer_DepthOnly(dx.device, 1);
+        rb_fxModelsOnly = 1;
+        RB_RenderDrawSurfList(drawSurfs, drawSurfCount, techType, order);
+        rb_fxModelsOnly = 0;
+        RB_FxLayer_DepthOnly(dx.device, 0);
+        return;
+    }
+    if ((techType != TECHNIQUE_EMISSIVE && techType != TECHNIQUE_EMISSIVE_FEATHERED) || order != 0 ||
+        !RB_FxLayer_Wanted()) {
+        RB_RenderDrawSurfList(drawSurfs, drawSurfCount, techType, order);
+        return;
+    }
+    RB_FxLayer_Frame(dx.device);
+    while (first < drawSurfCount) {
+        int inLayer = RB_SurfInFxLayer(&drawSurfs[first]);
+        int end = first + 1;
+        while (end < drawSurfCount && RB_SurfInFxLayer(&drawSurfs[end]) == inLayer)
+            end++;
+        if (inLayer)
+            RB_FxLayer_Begin(dx.device, R_UseZFeather());
+        RB_RenderDrawSurfList(drawSurfs + first, end - first, techType, order);
+        if (inLayer)
+            RB_FxLayer_End();
+        first = end;
+    }
+}
+#endif
+
 static void RB_DrawSurfsCmd(GfxRenderCommandExecState *execState)
 {
     DxState *dxs = &dxState;
@@ -2226,7 +2301,11 @@ static void RB_DrawSurfsCmd(GfxRenderCommandExecState *execState)
     if (dxs->viewportIsNull)
         return;
 
+#if COD2_MAC_D3D9
+    RB_RenderDrawSurfListFxLayer(
+#else
     RB_RenderDrawSurfList(
+#endif
         ((GfxCmdDrawSurfs *)cmd)->drawSurfs,
         ((GfxCmdDrawSurfs *)cmd)->drawSurfCount,
         ((GfxCmdDrawSurfs *)cmd)->techType,

@@ -166,6 +166,15 @@ static void RB_SetRenderStateDx7(DWORD state, DWORD value, const char *logCall)
 {
     void *device;
 
+#if COD2_MAC_D3D9
+    {
+        /* While effects are drawn into their layer, a few states are the layer's to set. */
+        extern int RB_FxLayer_Active(void);
+        extern int RB_FxLayer_RenderState(DWORD state, DWORD value);
+        if (RB_FxLayer_Active() && RB_FxLayer_RenderState(state, value))
+            return;
+    }
+#endif
     device = dx.device;
     do {
         if (logCall) R_LOG("%s", logCall);
@@ -188,6 +197,17 @@ static inline __attribute__((always_inline)) void RB_SetViewportDx7(const D3DVIE
 {
     void *device;
 
+#if COD2_MAC_D3D9
+    D3DVIEWPORT9 layerViewport;
+    {
+        extern int RB_FxLayer_Active(void);
+        extern void RB_FxLayer_Viewport(const void *requested, void *scaled);
+        if (RB_FxLayer_Active()) {
+            RB_FxLayer_Viewport(viewport, &layerViewport);
+            viewport = &layerViewport;
+        }
+    }
+#endif
     device = dx.device;
     do {
         R_LOG("dx.device->SetViewport( &dxState.viewport )\n");
@@ -1028,9 +1048,21 @@ void RB_UpdateViewportConstants(void)
     viewportCenterY = 1.0f - viewportCenterY;
 #endif
 
+#if COD2_WIN32_D3D9
+    /* Direct3D: a texture's first row is the top of the picture, so clip-space y runs
+     * against v, and a pixel's centre reads half a texel past the corner its position
+     * maps to. The OpenGL values below made soft particles and distortion look up an
+     * upside-down picture. */
+    (void)xOffset;
+    (void)yOffset;
+    halfViewportHeight = -halfViewportHeight;
+    viewportCenterX += invRenderTargetWidth * 0.5f;
+    viewportCenterY += invRenderTargetHeight * 0.5f;
+#else
     MacOpenGLUtils_GetSubPixelOffset(&xOffset, &yOffset);
     viewportCenterX += invRenderTargetWidth * xOffset;
     viewportCenterY += invRenderTargetHeight * yOffset;
+#endif
 
 #if COD2_APPLE_SDK
     /* Native screen textures use the target's exact extent without POT padding. */

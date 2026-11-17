@@ -99,6 +99,21 @@ static IDirect3DSurface9 *R_GetOrCreateDepthStencil(byte *dxPtr, int fullWidth, 
         return ((DxGlobals *)(dxPtr))->singleSampleDepthStencilSurface ;
     }
 
+#if COD2_MAC_D3D9
+    {
+        /* With the effects layer on, this buffer is a depth texture, so the layer can
+         * test against the scene and read it (rb_fxlayer.c). It is then never the
+         * frame buffer's own depth, which cannot be read. */
+        extern void *RB_FxLayer_CreateSceneDepth(void *device, int width, int height);
+        dsSurface = RB_FxLayer_CreateSceneDepth(((DxGlobals *)(dxPtr))->device, fullWidth, fullHeight);
+        if (dsSurface != NULL) {
+            extern void RB_FxLayer_Prepare(void *device);
+            ((DxGlobals *)(dxPtr))->singleSampleDepthStencilSurface = dsSurface;
+            RB_FxLayer_Prepare(((DxGlobals *)(dxPtr))->device);
+            return dsSurface;
+        }
+    }
+#endif
     if (((DxGlobals *)(dxPtr))->multiSampleType        == 0) {
         byte *rt0 = ((byte *)&((DxGlobals *)(dxPtr))->renderTargets[0]);
         IDirect3DSurface9 *rt0ds = DX_RT_DEPTH_SURFACE(rt0);
