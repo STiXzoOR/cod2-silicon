@@ -19,6 +19,14 @@
  * rectangles are no longer anti-aliased by the buffer; the HUD's shapes come
  * from its textures, which are filtered as before.
  *
+ * Without anti-aliasing there is nothing to resolve, but glow still has to read
+ * the scene, and the game copies the back buffer for it and then goes on drawing
+ * into the back buffer. Here the scene is drawn straight into the texture glow
+ * reads (the engine's resolved-scene target) in the frames glow runs, and that
+ * texture is drawn into the back buffer once, where the HUD follows: no copy,
+ * and the back buffer is entered once. Frames without glow draw into the back
+ * buffer as the game does.
+ *
  * rb_backend.c decides when the scene starts and ends; this file owns the
  * surfaces and swaps them in and out of the engine's frame buffer record. */
 #if COD2_MAC_D3D9
@@ -29,7 +37,10 @@ typedef int32_t HRESULT;
 typedef uint32_t DWORD;
 
 #define VT(obj) (*(void ***)(obj))
-enum { DEV_CreateTexture = 23, DEV_CreateRenderTarget = 28, DEV_StretchRect = 34, TEX_GetSurfaceLevel = 18, UNK_Release = 2 };
+enum {
+    DEV_CreateTexture = 23, DEV_CreateRenderTarget = 28, DEV_StretchRect = 34, TEX_GetSurfaceLevel = 18,
+    UNK_AddRef = 1, UNK_Release = 2
+};
 
 typedef HRESULT (*CreateRenderTargetFn)(void *, unsigned, unsigned, DWORD, DWORD, DWORD, int, void **, void *);
 typedef HRESULT (*StretchRectFn)(void *, void *, const void *, void *, const void *, DWORD);
@@ -44,6 +55,7 @@ static void *s_sceneColor;              /* made here: the scene's multisampled c
 static void *s_sceneDepth, *s_backBuffer; /* the engine's: the scene's depth, the device's back buffer */
 static void **s_colorSlot, **s_depthSlot; /* the engine's frame buffer record */
 static int s_inScene;
+static int s_plain; /* one sample a pixel: the scene's target is the engine's resolved-scene texture */
 typedef struct {
     void *texture, *surface;
     unsigned width, height;
@@ -78,20 +90,25 @@ void RB_SceneTarget_Release(void)
     ScratchRelease(&s_scratch[1]);
     s_sceneColor = s_sceneDepth = s_backBuffer = NULL;
     s_colorSlot = s_depthSlot = NULL;
-    s_inScene = 0;
+    s_inScene = s_plain = 0;
 }
 
-/* Called once the engine has the back buffer in *colorSlot and the scene's
- * multisampled depth buffer in *depthSlot. Returns 0 if the target is wanted and
- * cannot be made. */
+/* Called once the engine has the back buffer in *colorSlot and the scene's depth
+ * buffer in *depthSlot. `resolved` is the surface of the engine's resolved-scene
+ * texture, or NULL. Returns 0 if the target is wanted and cannot be made. */
 int RB_SceneTarget_Create(void *device, void **colorSlot, void **depthSlot, int width, int height, DWORD format,
-                          DWORD samples, DWORD quality)
+                          DWORD samples, DWORD quality, void *resolved)
 {
     RB_SceneTarget_Release();
-    if (samples <= 1 || !RB_SceneTarget_Wanted())
+    if (!RB_SceneTarget_Wanted() || (samples <= 1 && !resolved))
         return 1;
-    if (((CreateRenderTargetFn)VT(device)[DEV_CreateRenderTarget])(device, (unsigned)width, (unsigned)height, format,
-                                                                   samples, quality, 0, &s_sceneColor, NULL) < 0) {
+    if (samples <= 1) {
+        s_sceneColor = resolved;
+        ((ReleaseFn)VT(resolved)[UNK_AddRef])(resolved);
+        s_plain = 1;
+    } else if (((CreateRenderTargetFn)VT(device)[DEV_CreateRenderTarget])(device, (unsigned)width, (unsigned)height,
+                                                                          format, samples, quality, 0, &s_sceneColor,
+                                                                          NULL) < 0) {
         s_sceneColor = NULL;
         return 0;
     }
@@ -100,7 +117,26 @@ int RB_SceneTarget_Create(void *device, void **colorSlot, void **depthSlot, int 
     s_depthSlot = depthSlot;
     s_backBuffer = *colorSlot;
     s_sceneDepth = *depthSlot;
-    *depthSlot = NULL; /* a frame starts outside the scene */
+    if (!s_plain)
+        *depthSlot = NULL; /* a frame starts outside the scene */
+    return 1;
+}
+
+/* Is the scene's target the resolved-scene texture itself (no anti-aliasing)? */
+int RB_SceneTarget_Plain(void)
+{
+    return s_plain;
+}
+
+/* The frame is over. Without anti-aliasing the next one starts on the back buffer with
+ * its depth buffer, as the game has it, and takes the scene's target only if glow runs.
+ * Returns 1 if that changed the engine's record. */
+int RB_SceneTarget_FrameEnd(void)
+{
+    if (!s_plain || s_inScene || *s_depthSlot == s_sceneDepth)
+        return 0;
+    *s_colorSlot = s_backBuffer;
+    *s_depthSlot = s_sceneDepth;
     return 1;
 }
 

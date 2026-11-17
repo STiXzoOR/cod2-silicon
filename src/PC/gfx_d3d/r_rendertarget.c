@@ -476,13 +476,13 @@ void R_InitRenderTargets(void)
      * (rb_scenetarget.c); the frame buffer set up above is then the resolved picture. */
     {
         extern int RB_SceneTarget_Create(void *device, void **colorSlot, void **depthSlot, int width, int height,
-                                         unsigned format, unsigned samples, unsigned quality);
+                                         unsigned format, unsigned samples, unsigned quality, void *resolved);
         DxGlobals *globals = (DxGlobals *)DX();
         GfxRenderTarget *frameBuffer = &globals->renderTargets[R_RENDERTARGET_FRAME_BUFFER];
         if (!RB_SceneTarget_Create(globals->device, (void **)&frameBuffer->colorSurface,
                                    (void **)&frameBuffer->depthStencilSurface, frameBuffer->width, frameBuffer->height,
                                    (unsigned)globals->backBufferFormat, (unsigned)globals->multiSampleType,
-                                   (unsigned)globals->multiSampleQuality))
+                                   (unsigned)globals->multiSampleQuality, globals->renderTargets[2].colorSurface))
             Com_Error(0, "Couldn't create a %i x %i multisampled render target\n", frameBuffer->width,
                       frameBuffer->height);
     }

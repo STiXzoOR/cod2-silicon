@@ -542,6 +542,8 @@ static void RB_RenderDrawSurfList(GfxDrawSurf *drawSurfs, int drawSurfCount,
                                   MaterialTechniqueType techType, GfxDrawSurfOrder order);
 #if COD2_MAC_D3D9
 extern int RB_SceneTarget_InScene(void);
+extern int RB_SceneTarget_Plain(void);
+extern int RB_SceneTarget_FrameEnd(void);
 extern int RB_SceneTarget_Select(int scene);
 extern void RB_SceneTarget_Resolve(void);
 static void RB_SceneTargetBind(int scene);
@@ -955,6 +957,10 @@ static void RB_EndFrame_real(void)
             RB_SceneTargetBind(0);
         }
         rb_sceneResolved = 0;
+        if (RB_SceneTarget_FrameEnd()) {
+            dxState.renderTargetId = (GfxRenderTargetId)-1;
+            RB_SetRenderTarget(R_RENDERTARGET_FRAME_BUFFER);
+        }
 #endif
         R_CapturePendingScreenshotBeforePresent();
 #if defined(__APPLE__) && defined(COD2_X64)
@@ -1968,8 +1974,10 @@ static void RB_SetRenderTargetCmd(GfxRenderCommandExecState *execState)
 #if COD2_MAC_D3D9
     /* Only the scene's own commands select the frame buffer this way: the scene begins.
      * Once it has been resolved, anything more this frame goes onto the resolved picture. */
-    if (((GfxCmdSetRenderTarget *)cmd)->renderTargetId == R_RENDERTARGET_FRAME_BUFFER && !rb_sceneResolved)
-        RB_SceneTargetBind(1);
+    if (((GfxCmdSetRenderTarget *)cmd)->renderTargetId == R_RENDERTARGET_FRAME_BUFFER && !rb_sceneResolved &&
+        (!RB_SceneTarget_Plain() || (r_rendererInUse->current.integer != 2 && dx.hasSeparateAlphaBlend &&
+                                     r_glow->current.enabled && !r_fullbright->current.enabled)))
+        RB_SceneTargetBind(1); /* without anti-aliasing, only in the frames glow reads the scene */
 #endif
     RB_SetRenderTarget(((GfxCmdSetRenderTarget *)cmd)->renderTargetId);
 #if defined(COD2_X64)
@@ -4759,6 +4767,9 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
         void *offscreenImage = ((DxGlobals *)dx)->renderTargets[2].image;
         void *imageSurface = Image_GetSurface( (GfxImage *)(offscreenImage));
 
+#if COD2_MAC_D3D9
+        if (!(RB_SceneTarget_InScene() && RB_SceneTarget_Plain())) /* else the scene was drawn into this very texture */
+#endif
         do {
             void *device = ((DxGlobals *)dx)->device;
             void **vtable = *(void ***)device;
