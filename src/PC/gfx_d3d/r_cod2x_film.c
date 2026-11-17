@@ -6,11 +6,11 @@
 #include <stdatomic.h>
 #include "Mac/Metal/metal_backend.h"
 #if COD2_MAC_D3D9
-/* The Direct3D 9 on Metal path has no OpenGL context, and this pass is drawn with
- * OpenGL. Until it has a Direct3D 9 pass of its own it is off there, as on the
- * shim's own Metal backend. */
+/* The Direct3D 9 on Metal path has no OpenGL context. It draws this pass itself
+ * (rb_backend.c: RB_Cod2xFilm_D3D9) and must never reach the OpenGL one. */
 #undef MacShim_IsMetal
 #define MacShim_IsMetal() 1
+extern const char *RB_Cod2xFilm_D3D9(const Cod2xFilmPass *pass);
 #endif
 
 extern refimport_t ri;
@@ -70,7 +70,11 @@ void R_Cod2xFilm_Apply(const Cod2xFilmPass *pass)
 {
     if (failed)
         return;
+#if COD2_MAC_D3D9
+    const char *error = RB_Cod2xFilm_D3D9(pass);
+#else
     const char *error = MacShim_IsMetal() ? "the native Metal renderer has no film pass" : Cod2xFilm_GLApply(pass);
+#endif
     if (error) {
         failure = error;
         failed = 1;

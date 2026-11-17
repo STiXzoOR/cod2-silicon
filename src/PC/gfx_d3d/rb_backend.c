@@ -592,6 +592,51 @@ static void RB_DrawLinesCmd(GfxRenderCommandExecState *execState);
 static void RB_StencilPlanesCmd(GfxRenderCommandExecState *execState);
 static void RB_DrawPointsCmd(GfxRenderCommandExecState *execState);
 
+#if COD2X_FILM && COD2_MAC_D3D9
+/* CoD2x's film colour controls on the Direct3D path. The command stands after the late
+ * post effects, so the picture to grade (scene and glow) is in the frame buffer: it is
+ * copied, and drawn back through the film shader (rb_fxlayer.c: RB_ScreenPass_Film).
+ * Returns NULL, or what went wrong. */
+const char *RB_Cod2xFilm_D3D9(const Cod2xFilmPass *pass)
+{
+    extern const char *RB_ScreenPass_Film(void *device, void *source, void *depthIfNone, unsigned width,
+                                          unsigned height, float x, float y, float w, float h, const float *values,
+                                          float saturation, float skySaturation);
+    extern void *RB_SceneTarget_PlainDepth(void);
+    extern void *RB_SceneTarget_Scratch(void *device, int slot, unsigned width, unsigned height, unsigned format,
+                                        void **surface);
+    extern int RB_SceneTarget_Shrink(void *device, void *from, void *to);
+    const Cod2xFilmSettings *s = &pass->settings;
+    int64_t endX = (int64_t)pass->x + pass->width, endY = (int64_t)pass->y + pass->height;
+    int left = pass->x < 0 ? 0 : pass->x, top = pass->y < 0 ? 0 : pass->y, right, bottom, i;
+    unsigned width, height;
+    void *copy, *copySurface;
+    float values[9];
+
+    RB_SceneCopyFlush();
+    RB_SetRenderTarget(R_RENDERTARGET_FRAME_BUFFER);
+    width = (unsigned)dxState.renderTargetWidth;
+    height = (unsigned)dxState.renderTargetHeight;
+    right = endX > (int64_t)width ? (int)width : (int)endX;
+    bottom = endY > (int64_t)height ? (int)height : (int)endY;
+    if (right <= left || bottom <= top || !dxState.renderTargetSurface)
+        return NULL;
+    copy = RB_SceneTarget_Scratch(dx.device, 2, width, height, (unsigned)dx.backBufferFormat, &copySurface);
+    if (!copy || !RB_SceneTarget_Shrink(dx.device, dxState.renderTargetSurface, copySurface))
+        return "the picture could not be copied";
+    values[0] = s->contrast;
+    values[1] = s->brightness + 0.5f - 0.5f * s->contrast;
+    values[2] = 1.0f / (s->gamma < 0.5f ? 0.5f : s->gamma);
+    for (i = 0; i < 3; i++) {
+        values[3 + i] = s->color[i] * s->darkTint[i];
+        values[6 + i] = s->color[i] * (s->lightTint[i] - s->darkTint[i]);
+    }
+    return RB_ScreenPass_Film(dx.device, copy, RB_SceneTarget_InScene() ? NULL : RB_SceneTarget_PlainDepth(), width, height,
+                              (float)left, (float)top, (float)(right - left), (float)(bottom - top), values,
+                              s->saturation, s->skySaturation);
+}
+#endif
+
 #if COD2X_FILM
 static void RB_Cod2xFilmCmd(GfxRenderCommandExecState *execState)
 {
@@ -2499,6 +2544,10 @@ static void RB_RenderDrawSurfListFxLayer(GfxDrawSurf *drawSurfs, int drawSurfCou
     /* The layer tests effects against the float-Z pass's depth, so it needs the models
      * there as well. They go in afterwards and without colour, so the float-Z picture
      * that soft particles read is the one the pass has always made. */
+    if (techType == TECHNIQUE_BUILD_FLOAT_Z && RB_FxLayer_Wanted()) {
+        extern void RB_FxLayer_SceneDepthDrawn(void);
+        RB_FxLayer_SceneDepthDrawn(); /* either way the models are in it */
+    }
     if (techType == TECHNIQUE_BUILD_FLOAT_Z && RB_FxLayer_Wanted() && !r_depthPrepassModels->current.enabled) {
         RB_RenderDrawSurfList(drawSurfs, drawSurfCount, techType, order);
         RB_FxLayer_DepthOnly(dx.device, 1);

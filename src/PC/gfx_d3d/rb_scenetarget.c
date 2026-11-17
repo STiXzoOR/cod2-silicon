@@ -60,7 +60,7 @@ typedef struct {
     void *texture, *surface;
     unsigned width, height;
 } Scratch;
-static Scratch s_scratch[2];
+static Scratch s_scratch[3];
 
 static void ScratchRelease(Scratch *scratch)
 {
@@ -88,6 +88,7 @@ void RB_SceneTarget_Release(void)
     }
     ScratchRelease(&s_scratch[0]);
     ScratchRelease(&s_scratch[1]);
+    ScratchRelease(&s_scratch[2]);
     s_sceneColor = s_sceneDepth = s_backBuffer = NULL;
     s_colorSlot = s_depthSlot = NULL;
     s_inScene = s_plain = 0;
@@ -128,6 +129,13 @@ int RB_SceneTarget_Plain(void)
     return s_plain;
 }
 
+/* Without anti-aliasing the scene's depth buffer fits the back buffer too: a pass drawn
+ * there after the scene may bind it to tell the sky from the world. NULL otherwise. */
+void *RB_SceneTarget_PlainDepth(void)
+{
+    return s_plain ? s_sceneDepth : NULL;
+}
+
 /* The frame is over. Without anti-aliasing the next one starts on the back buffer with
  * its depth buffer, as the game has it, and takes the scene's target only if glow runs.
  * Returns 1 if that changed the engine's record. */
@@ -166,8 +174,8 @@ void RB_SceneTarget_Resolve(void)
 
 /* A render-target texture of this size and format, kept in `slot` and made again when
  * the size changes. Returns the texture and puts its surface in *surface; NULL if it
- * cannot be made. rb_backend.c uses slot 0 for the scene at half size (blur) and slot
- * 1 for glow's set-up picture, where the reduced targets are an eighth of the screen
+ * cannot be made. rb_backend.c uses slot 0 for the scene at half size (blur), slot 2
+ * for the copy CoD2x's film pass reads, and slot 1 for glow's set-up picture, where the reduced targets are an eighth of the screen
  * (r_rendertarget.c: R_ReducedTargetPicmip). */
 void *RB_SceneTarget_Scratch(void *device, int slot, unsigned width, unsigned height, DWORD format, void **surface)
 {

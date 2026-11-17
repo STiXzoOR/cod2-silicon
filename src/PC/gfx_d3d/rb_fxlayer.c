@@ -175,6 +175,10 @@ static void *s_savedColor, *s_savedDepth;
 static Viewport s_viewport;             /* what the engine last asked for, at full size */
 /* The count of pixels the effects cover. */
 static void *s_opaqueShader; /* writes 1 to every channel it may */
+static void *s_filmShader[3]; /* RB_ScreenPass_Film: everything, sky alone, sky told apart by the prepass's depth */
+static float s_filmValues[11]; /* the settings those were written for */
+static int s_filmValued;
+static int s_sceneDepthDrawn; /* the prepass has put this frame's scene, models included, into its depth */
 static void *s_redShader;    /* a texture's red channel in every channel */
 static int s_alphaPass;      /* the sprites that blend into alpha are being drawn a second time */
 static int s_alphaDrawn;     /* ...and the frame buffer's alpha is owed the result */
@@ -262,6 +266,10 @@ void RB_FxLayer_Release(void)
     Release(&s_sceneDepthTexture);
     Release(&s_query);
     Release(&s_opaqueShader);
+    Release(&s_filmShader[0]);
+    Release(&s_filmShader[1]);
+    Release(&s_filmShader[2]);
+    s_filmValued = s_sceneDepthDrawn = 0;
     Release(&s_redShader);
     s_alphaPass = s_alphaDrawn = 0;
     s_active = s_depthOnly = s_queryPending = s_measuring = s_farPass = 0;
@@ -745,6 +753,127 @@ void RB_ScreenPass_Copy(void *device, void *texture, unsigned width, unsigned he
     PassTexture(0, texture, 1);
     PassDraw(0.0f, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1.0f, 1.0f);
     PassEnd(&saved);
+}
+
+/* The float-Z prepass has drawn the scene, models included, into the depth texture. */
+void RB_FxLayer_SceneDepthDrawn(void)
+{
+    s_sceneDepthDrawn = 1;
+}
+
+/* The film pass's shader. `values` are contrast, bias, exponent, the gain at black
+ * (three) and what full brightness adds to it (three). The numbers are written into
+ * the source, like every shader here, so none of the engine's constants are touched;
+ * players change these settings by hand and rarely. */
+static void *FilmShader(const float *values, const char *saturation)
+{
+    char source[2048];
+    snprintf(source, sizeof source,
+             "sampler image : register(s0);\n"
+             "sampler depthMap : register(s1);\n"
+             "float4 main(float2 uv : TEXCOORD0) : COLOR0\n"
+             "{\n"
+             "    float4 pixel = tex2D(image, uv);\n"
+             "    float3 rgb = pixel.rgb * %.9g + %.9g;\n"
+             "    float grey = dot(rgb, float3(0.299, 0.587, 0.114));\n"
+             "    rgb = grey + (rgb - grey) * %s;\n"
+             "    rgb *= float3(%.9g, %.9g, %.9g) + float3(%.9g, %.9g, %.9g) * saturate(grey);\n"
+             "    return float4(pow(saturate(rgb), %.9g), pixel.a);\n"
+             "}\n",
+             values[0], values[1], saturation, values[3], values[4], values[5], values[6], values[7], values[8], values[2]);
+    return CompileShader("screenpass_film", source);
+}
+
+/* CoD2x's film colour controls: the rectangle x, y, w, h of the bound target, taken
+ * from `source` (a copy of that target, `width` by `height`) and graded. The sky has a
+ * saturation of its own. Where that differs it is told apart by depth: with a depth
+ * buffer bound (or `depthIfNone` to bind), by drawing at the far plane twice, as the
+ * OpenGL pass does; without one, from the prepass's depth texture. With neither, the
+ * sky takes the scene's saturation. Returns NULL, or what went wrong. */
+const char *RB_ScreenPass_Film(void *device, void *source, void *depthIfNone, unsigned width, unsigned height, float x,
+                               float y, float w, float h, const float *values, float saturation, float skySaturation)
+{
+    enum { PLAIN, DEPTH_TEST, DEPTH_TEXTURE };
+    static int told;
+    float key[11], u0 = x / width, v0 = y / height, u1 = (x + w) / width, v1 = (y + h) / height;
+    Viewport full = { 0, 0, width, height, 0.0f, 1.0f }, before;
+    void *depth = NULL;
+    char text[128];
+    int how = PLAIN, boundDepth = 0, i;
+    Saved saved;
+
+    s_device = device;
+    memcpy(key, values, 9 * sizeof(float));
+    key[9] = saturation;
+    key[10] = skySaturation;
+    if (!s_filmValued || memcmp(key, s_filmValues, sizeof key)) {
+        for (i = 0; i < 3; i++)
+            Release(&s_filmShader[i]);
+        memcpy(s_filmValues, key, sizeof key);
+        s_filmValued = 1;
+    }
+    if (skySaturation != saturation) {
+        CALL(GetDepthFn, device, DEV_GetDepthStencilSurface)(device, &depth);
+        if (!depth && depthIfNone) {
+            CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, depthIfNone);
+            boundDepth = 1;
+        }
+        if (depth || boundDepth) {
+            how = DEPTH_TEST;
+        } else if (s_sceneDepthTexture && s_sceneDepthDrawn) {
+            how = DEPTH_TEXTURE;
+        } else if (!told) {
+            told = 1;
+            fprintf(stderr, "r_filmTweakSkySaturation: no scene depth to tell the sky by; it takes r_filmTweakSaturation\n");
+        }
+        Release(&depth);
+    }
+    s_sceneDepthDrawn = 0;
+
+    if (how != DEPTH_TEXTURE && !s_filmShader[0]) {
+        snprintf(text, sizeof text, "%.9g", saturation);
+        s_filmShader[0] = FilmShader(values, text);
+    }
+    if (how == DEPTH_TEST && !s_filmShader[1]) {
+        snprintf(text, sizeof text, "%.9g", skySaturation);
+        s_filmShader[1] = FilmShader(values, text);
+    }
+    if (how == DEPTH_TEXTURE && !s_filmShader[2]) {
+        snprintf(text, sizeof text, "lerp(%.9g, %.9g, step(1.0, tex2D(depthMap, uv).r))", saturation, skySaturation);
+        s_filmShader[2] = FilmShader(values, text);
+    }
+    if (!s_filmShader[how == DEPTH_TEXTURE ? 2 : 0] || (how == DEPTH_TEST && !s_filmShader[1])) {
+        if (boundDepth)
+            CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, NULL);
+        return "the film shader could not be compiled";
+    }
+
+    CALL(ViewportFn, device, DEV_GetViewport)(device, &before);
+    PassBegin(&saved);
+    CALL(ViewportFn, device, DEV_SetViewport)(device, &full);
+    SetState(RS_ALPHABLENDENABLE, 0);
+    SetState(RS_COLORWRITEENABLE, 0xf); /* alpha is written as it was read */
+    PassTexture(0, source, 1);
+    if (how == DEPTH_TEST) {
+        SetState(RS_ZENABLE, 1);
+        SetState(RS_ZFUNC, 4); /* less or equal: the far plane shows only where nothing was drawn */
+        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_filmShader[1]);
+        PassDrawAt(1.0f, x, y, w, h, u0, v0, u1, v1);
+        SetState(RS_ZFUNC, CMP_GREATER);
+        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_filmShader[0]);
+        PassDrawAt(1.0f, x, y, w, h, u0, v0, u1, v1);
+    } else {
+        SetState(RS_ZENABLE, 0);
+        if (how == DEPTH_TEXTURE)
+            PassTexture(1, s_sceneDepthTexture, 1);
+        CALL(SetObjectFn, device, DEV_SetPixelShader)(device, s_filmShader[how == DEPTH_TEXTURE ? 2 : 0]);
+        PassDraw(x, y, w, h, u0, v0, u1, v1);
+    }
+    PassEnd(&saved);
+    CALL(ViewportFn, device, DEV_SetViewport)(device, &before);
+    if (boundDepth)
+        CALL(SetDepthFn, device, DEV_SetDepthStencilSurface)(device, NULL);
+    return NULL;
 }
 
 /* Fill the layer's smaller depth buffer from the scene's. The layer's colour target
